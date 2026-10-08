@@ -78,4 +78,76 @@ class JdbcJsonbUtilsTest {
         assertThat(result).isNotNull();
         assertThat(result.data()).doesNotContain("\\u0000");
     }
+
+    @Test
+    void shouldReplaceLoneHighSurrogateWrittenByJackson() throws JsonProcessingException {
+        // Given - the formula from kestra#14806, cut in the middle of a surrogate pair. Jackson writes the lone
+        // surrogate as a raw character, which PostgreSQL rejects in a JSONB value.
+        String json = MAPPER.writeValueAsString(Map.of("key", "x\uD835 = lower limit"));
+
+        // When
+        JSONB result = JdbcJsonbUtils.valueOf(json);
+
+        // Then
+        assertThat(result.data()).isEqualTo("{\"key\":\"x\uFFFD = lower limit\"}");
+    }
+
+    @Test
+    void shouldReplaceLoneLowSurrogateWrittenByJackson() throws JsonProcessingException {
+        // Given
+        String json = MAPPER.writeValueAsString(Map.of("key", "\uDC59 test"));
+
+        // When
+        JSONB result = JdbcJsonbUtils.valueOf(json);
+
+        // Then
+        assertThat(result.data()).isEqualTo("{\"key\":\"\uFFFD test\"}");
+    }
+
+    @Test
+    void shouldReplaceJsonEscapedLoneSurrogates() {
+        // Given - lone surrogates written as JSON escapes, as an escaping serializer or a client would send them
+        String json = "{\"high\":\"x\\uD835 y\",\"low\":\"\\udc59\"}";
+
+        // When
+        JSONB result = JdbcJsonbUtils.valueOf(json);
+
+        // Then
+        assertThat(result.data()).isEqualTo("{\"high\":\"x\\uFFFD y\",\"low\":\"\\uFFFD\"}");
+    }
+
+    @Test
+    void shouldKeepValidSurrogatePairs() throws JsonProcessingException {
+        // Given - U+1D459 MATHEMATICAL ITALIC SMALL L, both as JSON escapes and as raw characters
+        String escaped = "{\"key\":\"\\uD835\\uDC59\"}";
+        String raw = MAPPER.writeValueAsString(Map.of("key", "\uD835\uDC59"));
+
+        // When / Then
+        assertThat(JdbcJsonbUtils.valueOf(escaped).data()).isEqualTo(escaped);
+        assertThat(JdbcJsonbUtils.valueOf(raw).data()).isEqualTo(raw);
+    }
+
+    @Test
+    void shouldReplaceRawLoneSurrogates() {
+        // Given - raw lone surrogates that did not go through Jackson escaping (defensive)
+        String json = "{\"key\":\"a\uD800b\uDC00c\"}";
+
+        // When
+        JSONB result = JdbcJsonbUtils.valueOf(json);
+
+        // Then
+        assertThat(result.data()).isEqualTo("{\"key\":\"a\uFFFDb\uFFFDc\"}");
+    }
+
+    @Test
+    void shouldNotTreatAnEscapedBackslashFollowedByUAsAnEscape() {
+        // Given - a literal backslash followed by the text uD835, which is not an escape
+        String json = "{\"key\":\"\\\\uD835\"}";
+
+        // When
+        JSONB result = JdbcJsonbUtils.valueOf(json);
+
+        // Then
+        assertThat(result.data()).isEqualTo(json);
+    }
 }

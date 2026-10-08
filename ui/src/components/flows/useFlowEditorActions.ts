@@ -140,7 +140,7 @@ export function useFlowEditorActions() {
             notificationHandle = KsNotification({
                 title: t("plugins.autoInstall.title", count),
                 message: h(PluginInstallToast, {
-                    jobId: job.id,
+                    jobId: job.id ?? "",
                     onSuccess: () => {
                         pluginsStore.list()
                         setTimeout(() => notificationHandle?.close(), 3000)

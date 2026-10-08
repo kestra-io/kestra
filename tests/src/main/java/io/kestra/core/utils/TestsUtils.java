@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -81,12 +80,6 @@ abstract public class TestsUtils {
         return new String[] { packageSplit[packageSplit.length - 1].toLowerCase(), stackTraceElement.getMethodName().toLowerCase() };
     }
 
-    /**
-     * there is at least one bug in {@link io.kestra.cli.services.FileChangedEventListener#getTenantIdFromPath(Path)} forbidding use to use '_' character
-     * 
-     * @param prefix
-     * @return
-     */
     public static String randomString(String... prefix) {
         if (prefix.length == 0) {
             prefix = new String[] { String.join("-", stackTraceToParts()) };

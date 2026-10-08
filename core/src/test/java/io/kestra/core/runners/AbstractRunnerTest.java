@@ -716,6 +716,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/sla-flow-trigger-source.yaml", "flows/valids/sla-flow-trigger-listener.yaml" })
+    void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws Exception {
+        slaTestCase.shouldNotKillFlowTriggeredExecutionWhenSLAFails();
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/if.yaml" })
     void multipleIf() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(

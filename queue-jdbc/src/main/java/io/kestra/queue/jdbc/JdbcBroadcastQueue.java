@@ -22,10 +22,18 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
     private final JdbcQueueClient jdbcQueueClient;
     private final MetricRegistry metricRegistry;
     private final IgnoreExecutionService ignoreExecutionService;
+    private final boolean recheck;
 
     public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
         IgnoreExecutionService ignoreExecutionService) {
+        this(cls, queueService, jdbcQueueClient, executorsUtils, metricRegistry, ignoreExecutionService, true);
+    }
+
+    public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService, boolean recheck) {
         super(cls, queueService, executorsUtils, metricRegistry);
+
+        this.recheck = recheck;
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.metricRegistry = metricRegistry;
@@ -40,7 +48,8 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
             jdbcQueueClient,
             queueName(),
             metricRegistry,
-            ignoreExecutionService
+            ignoreExecutionService,
+            recheck
         );
     }
 

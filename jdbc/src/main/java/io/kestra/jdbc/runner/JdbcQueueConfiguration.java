@@ -12,5 +12,6 @@ public record JdbcQueueConfiguration(
     @Bindable(defaultValue = "PT60S") Duration pollSwitchInterval,
     @Bindable(defaultValue = "100") Integer pollSize,
     @Bindable(defaultValue = "5") Integer switchSteps,
-    @Bindable(defaultValue = "true") Boolean immediateRepoll) {
+    @Bindable(defaultValue = "true") Boolean immediateRepoll,
+    @Bindable(defaultValue = "PT5S") Duration broadcastRecheckWindow) {
 }

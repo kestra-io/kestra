@@ -2,6 +2,7 @@ package io.kestra.queue.jdbc.client;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -305,6 +306,53 @@ public class JdbcQueueClient {
 
             return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
         });
+    }
+
+    public record BroadcastRecord(long offset, byte[] value) {
+    }
+
+    public record BroadcastRef(long offset, Instant created) {
+    }
+
+    /**
+     * Reads the next committed broadcast rows of a queue after the given offset, in offset order.
+     */
+    public List<BroadcastRecord> fetchBroadcast(String queue, long afterOffset, int limit) {
+        return dslContextWrapper.transactionResult(conf -> DSL.using(conf)
+            .select(OFFSET, VALUE)
+            .from(this.queueTable)
+            .where(TYPE.eq(queue))
+            .and(ROUTING_KEY.isNull())
+            .and(OFFSET.gt(afterOffset))
+            .orderBy(OFFSET.asc())
+            .limit(limit)
+            .fetch(record -> new BroadcastRecord(record.get(OFFSET), record.get(VALUE).data().getBytes(StandardCharsets.UTF_8))));
+    }
+
+    /**
+     * Lists the committed broadcast rows of a queue in {@code (afterOffset, untilOffset]} without their payload.
+     */
+    public List<BroadcastRef> fetchBroadcastRefs(String queue, long afterOffset, long untilOffset) {
+        return dslContextWrapper.transactionResult(conf -> DSL.using(conf)
+            .select(OFFSET, CREATED)
+            .from(this.queueTable)
+            .where(TYPE.eq(queue))
+            .and(ROUTING_KEY.isNull())
+            .and(OFFSET.gt(afterOffset))
+            .and(OFFSET.le(untilOffset))
+            .orderBy(OFFSET.asc())
+            .fetch(record -> new BroadcastRef(record.get(OFFSET), record.get(CREATED))));
+    }
+
+    public List<BroadcastRecord> fetchBroadcastByOffsets(String queue, Collection<Long> offsets) {
+        return dslContextWrapper.transactionResult(conf -> DSL.using(conf)
+            .select(OFFSET, VALUE)
+            .from(this.queueTable)
+            .where(TYPE.eq(queue))
+            .and(ROUTING_KEY.isNull())
+            .and(OFFSET.in(offsets))
+            .orderBy(OFFSET.asc())
+            .fetch(record -> new BroadcastRecord(record.get(OFFSET), record.get(VALUE).data().getBytes(StandardCharsets.UTF_8))));
     }
 
     public Pair<Integer, Long> subscribeBroadcastBatch(String queue, Long maxOffset, Consumer<List<byte[]>> consumer) {

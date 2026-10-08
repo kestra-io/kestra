@@ -1937,7 +1937,7 @@ public class ExecutionController {
     @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
-    @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+    @ApiResponse(responseCode = "409", description = "if the execution is already finished and has no running task or sub-execution left to kill")
     @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public Mono<HttpResponse<?>> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -1956,9 +1956,8 @@ public class ExecutionController {
     }
 
     protected Mono<HttpResponse<?>> killExecution(Execution execution, Boolean isOnKillCascade) {
-        // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
-        if (execution.getState().isTerminated() && !isOnKillCascade) {
-            throw new ConflictException("Cannot kill execution: execution is already terminated.");
+        if (execution.getState().isTerminated() && !hasWorkToKill(execution, isOnKillCascade)) {
+            throw new ConflictException("Cannot kill execution: execution is already terminated and has no running task or sub-execution.");
         }
 
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
@@ -1976,6 +1975,12 @@ public class ExecutionController {
                     .build()
             )
         ).map(r -> (HttpResponse<?>) r);
+    }
+
+    private boolean hasWorkToKill(Execution execution, boolean isOnKillCascade) {
+        return flowMetaStore.findByExecutionForRuntime(execution)
+            .map(flow -> executionService.hasWorkToKill(flow, execution, isOnKillCascade))
+            .orElse(isOnKillCascade);
     }
 
     @ExecuteOn(TaskExecutors.IO)

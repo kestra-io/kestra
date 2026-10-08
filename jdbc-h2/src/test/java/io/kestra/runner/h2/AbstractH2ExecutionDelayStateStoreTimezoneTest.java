@@ -35,10 +35,7 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
 
     private TimeZone originalTimeZone;
 
-    // jOOQ binds the cutoff with Timestamp.valueOf, which reads the JVM zone, so it must equal the
-    // TIME ZONE= of this class' datasource URL or a bad cutoff bind stays invisible. Set from the
-    // contract's own hook because JUnit runs a superclass @BeforeEach first. Both subclasses are
-    // SAME_THREAD and the module sets maxParallelForks = 1, so nothing else observes this zone.
+    // The JVM zone must equal this class' TIME ZONE=, since jOOQ binds the cutoff via Timestamp.valueOf, which reads it.
     @Override
     protected void prepare() {
         originalTimeZone = TimeZone.getDefault();

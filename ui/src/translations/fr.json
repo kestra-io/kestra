@@ -1111,7 +1111,6 @@
     "pause backfills": "Mettre en pause les backfills",
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
-    "relative": "Relative",
     "relative start date": "Date de début relative",
     "absolute": "Absolu",
     "backfill": "Backfill",

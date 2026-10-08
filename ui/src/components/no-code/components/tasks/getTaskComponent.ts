@@ -1,9 +1,14 @@
 import {pascalCase} from "change-case"
+import type {Component} from "vue"
 import {resolve$ref} from "../../../../utils/utils"
 import {SECTIONS_IDS} from "../../utils/useFlowFields"
 import {isImplementationPicker} from "./discriminatedUnion"
 
-const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true})
+type TaskComponent = Component & {
+    ksTaskName?: string
+}
+
+const TasksComponents = import.meta.glob<{ default: TaskComponent }>("./Task*.vue", {eager: true})
 
 export interface Schema{
     $ref?: string;
@@ -14,7 +19,7 @@ export interface Schema{
     markdownDescription?: string;
     properties?: Record<string, Schema>;
     required?: string[];
-    default?: any;
+    default?: unknown;
     allOf?: Schema[];
     anyOf?: Schema[];
     oneOf?: Schema[];
@@ -29,7 +34,7 @@ export interface Schema{
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
 
-export function getType(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): string {
+export function getType(property: Schema, definitions: Record<string, Schema>, key?: string, siblingKeys?: string[]): string {
 
     if (property.enum !== undefined) {
         return "enum"
@@ -151,7 +156,7 @@ export function getType(property: any, definitions: Record<string, any>, key?: s
     return property.type || "expression"
 }
 
-export function getTaskComponent(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): any {
+export function getTaskComponent(property: Schema, definitions: Record<string, Schema>, key?: string, siblingKeys?: string[]): TaskComponent | Record<string, never> {
     const typeString = getType(property, definitions, key, siblingKeys)
     const type = pascalCase(typeString)
     const component = TasksComponents[`./Task${type}.vue`]?.default

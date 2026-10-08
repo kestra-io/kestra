@@ -93,9 +93,9 @@
         },
     ])
 
-    const date = computed(() => [new Date(props.startDate!), new Date(props.endDate!)])
+    const date = computed<[Date, Date]>(() => [new Date(props.startDate!), new Date(props.endDate!)])
 
-    function onDate(value: [Date, Date] | null) {
+    function onDate(value: [Date, Date] | null | undefined) {
         emit("update:modelValue", {
             "startDate": value != null && value[0] ? dateUtils.toIsoKeepOffset(dayjs(value[0])) : undefined,
             "endDate": value != null && value[1] ? dateUtils.toIsoKeepOffset(dayjs(value[1])) : undefined,

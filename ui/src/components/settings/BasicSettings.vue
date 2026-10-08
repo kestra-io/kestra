@@ -584,42 +584,66 @@
         persist("defaultLogLevel", value)
     }
 
-    function onLogDisplay(value: string) {
+    function onLogDisplay(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.logDisplay = value
         persist("logDisplay", value)
     }
 
-    function onEditorType(value: string) {
+    function onEditorType(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.editorType = value
         persist(storageKeys.EDITOR_VIEW_TYPE, value)
     }
 
-    function onTopologyOrientation(value: string) {
+    function onTopologyOrientation(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.topologyOrientation = value
         persist(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION, value)
     }
 
-    function onTaskEditDefaultMode(value: string) {
+    function onTaskEditDefaultMode(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.taskEditDefaultMode = value
         persist(storageKeys.TASK_EDIT_DEFAULT_MODE, value)
     }
 
-    function onExecuteFlowBehaviour(value: string) {
+    function onExecuteFlowBehaviour(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.executeFlowBehaviour = value
         persist(storageKeys.EXECUTE_FLOW_BEHAVIOUR, value)
     }
 
-    function onExecuteDefaultTab(value: string) {
+    function onExecuteDefaultTab(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.executeDefaultTab = value
         persist(DEFAULT_TAB_STORAGE_KEY, value)
     }
 
-    function onFlowDefaultTab(value: string) {
+    function onFlowDefaultTab(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.flowDefaultTab = value
         persist("flowDefaultTab", value)
     }
 
-    function onTriggersDefaultTab(value: string) {
+    function onTriggersDefaultTab(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.triggersDefaultTab = value
         persist("triggersDefaultTab", value)
     }
@@ -642,7 +666,10 @@
         persist(storageKeys.FLOW_TEMPLATE, "")
     }
 
-    function onAutoRefreshInterval(value: number) {
+    function onAutoRefreshInterval(value: number | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.autoRefreshInterval = value
         persist(storageKeys.AUTO_REFRESH_INTERVAL, value)
     }
@@ -654,7 +681,10 @@
         notifySaved(`${THEME}.fields.color_mode`, undefined, t(`${THEME}.confirmations.color_mode`, {mode}))
     }
 
-    function onAppFontSize(value: AppFontSizeMode) {
+    function onAppFontSize(value: AppFontSizeMode | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.appFontSize = value
         appFontSizeMode.value = value
         applyFontScale(value)
@@ -662,17 +692,26 @@
         notifySaved(meta?.[0], meta?.[1])
     }
 
-    function onLogsFontSize(value: number) {
+    function onLogsFontSize(value: number | undefined) {
+        if (value === undefined) {
+            return
+        }
         logsFontSizeOverride.value = value
         persist("logsFontSize", value)
     }
 
-    function onFontFamily(value: string) {
+    function onFontFamily(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.editorFontFamily = value
         persist("editorFontFamily", value)
     }
 
-    function onFontSize(value: number) {
+    function onFontSize(value: number | undefined) {
+        if (value === undefined) {
+            return
+        }
         editorFontSizeOverride.value = value
         persist("editorFontSize", value)
     }
@@ -703,7 +742,10 @@
         notifySaved(`${THEME}.fields.environment_color`)
     }
 
-    function onLang(value: string) {
+    function onLang(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         const previous = settings.lang
         settings.lang = value
         persist("lang", value)
@@ -713,12 +755,18 @@
         }
     }
 
-    function onTimezone(value: string) {
+    function onTimezone(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.timezone = value
         persist(storageKeys.TIMEZONE_STORAGE_KEY, value)
     }
 
-    function onDateFormat(value: string) {
+    function onDateFormat(value: string | undefined) {
+        if (value === undefined) {
+            return
+        }
         settings.dateFormat = value
         persist(storageKeys.DATE_FORMAT_STORAGE_KEY, value)
     }

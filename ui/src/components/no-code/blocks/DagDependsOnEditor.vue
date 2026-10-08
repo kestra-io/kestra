@@ -38,7 +38,10 @@
         (e: "update", dependsOn: string[]): void
     }>()
 
-    function onUpdate(value: string[]) {
+    function onUpdate(value: string[] | undefined) {
+        if (value === undefined) {
+            return
+        }
         emit("update", value)
     }
 </script>

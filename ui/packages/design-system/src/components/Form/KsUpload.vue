@@ -1,6 +1,6 @@
 <template>
     <ElUpload
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as UploadProps)"
         @change="emit('change', $event, [])"
         @exceed="emit('exceed', $event, [])"
     >
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElUpload} from "element-plus"
+    import {ElUpload, type UploadFile, type UploadFiles, type UploadProps, type UploadUserFile} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -27,7 +27,7 @@
         limit?: number
         action?: string
         showFileList?: boolean
-        fileList?: any[]
+        fileList?: UploadUserFile[]
     }>(), {
         accept: undefined,
         autoUpload: undefined,
@@ -38,8 +38,8 @@
     })
 
     const emit = defineEmits<{
-        change: [file: any, fileList: any[]]
-        exceed: [files: any[], fileList: any[]]
+        change: [file: UploadFile, fileList: UploadFiles]
+        exceed: [files: File[], fileList: UploadUserFile[]]
     }>()
 
     defineSlots<{

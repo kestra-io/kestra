@@ -22,10 +22,21 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
     private final JdbcQueueClient jdbcQueueClient;
     private final MetricRegistry metricRegistry;
     private final IgnoreExecutionService ignoreExecutionService;
+    private final boolean newTransaction;
 
     public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
         IgnoreExecutionService ignoreExecutionService) {
+        this(cls, queueService, jdbcQueueClient, executorsUtils, metricRegistry, ignoreExecutionService, true);
+    }
+
+    /**
+     * @param newTransaction commits each emit on its own connection so that subscribers cannot skip a message committed late by a caller transaction; pass {@code false} for high-volume queues.
+     */
+    public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient, ExecutorsUtils executorsUtils, MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService, boolean newTransaction) {
         super(cls, queueService, executorsUtils, metricRegistry);
+
+        this.newTransaction = newTransaction;
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.metricRegistry = metricRegistry;
@@ -46,7 +57,7 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
 
     @Override
     protected void doEmit(byte[] message, String key) throws QueueException {
-        jdbcQueueClient.publish(this.queueName(), null, key, new String(message, StandardCharsets.UTF_8));
+        jdbcQueueClient.publish(this.queueName(), null, key, new String(message, StandardCharsets.UTF_8), newTransaction);
     }
 
     @Override
@@ -56,7 +67,8 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractBroadc
             messages
                 .stream()
                 .map(e -> new JdbcQueueClient.PublishedMessage(queueName, null, e.key(), new String(e.value(), StandardCharsets.UTF_8)))
-                .toList()
+                .toList(),
+            newTransaction
         );
     }
 

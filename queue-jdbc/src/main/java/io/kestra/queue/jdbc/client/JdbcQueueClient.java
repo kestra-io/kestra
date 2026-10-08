@@ -85,8 +85,16 @@ public class JdbcQueueClient {
     }
 
     public void publish(String queue, @Nullable String routingKey, String key, String value) throws QueueException {
+        publish(queue, routingKey, key, value, false);
+    }
+
+    /**
+     * @param newTransaction when {@code true}, the message is committed on its own connection even if the calling thread
+     *        already has a transaction open, which briefly holds a second connection.
+     */
+    public void publish(String queue, @Nullable String routingKey, String key, String value, boolean newTransaction) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration ->
+            runInTransaction(newTransaction, configuration ->
             {
                 DSLContext context = DSL.using(configuration);
 
@@ -137,8 +145,12 @@ public class JdbcQueueClient {
     }
 
     public void publish(List<PublishedMessage> messages) throws QueueException {
+        publish(messages, false);
+    }
+
+    public void publish(List<PublishedMessage> messages, boolean newTransaction) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration ->
+            runInTransaction(newTransaction, configuration ->
             {
                 DSLContext context = DSL.using(configuration);
 
@@ -167,6 +179,14 @@ public class JdbcQueueClient {
                 throw new UnsupportedMessageException(e.getMessage(), e);
             }
             throw new QueueException("Unable to emit a message to the queue", e);
+        }
+    }
+
+    private void runInTransaction(boolean newTransaction, TransactionalRunnable transactional) {
+        if (newTransaction) {
+            dslContextWrapper.requireNewTransaction(transactional);
+        } else {
+            dslContextWrapper.transaction(transactional);
         }
     }
 

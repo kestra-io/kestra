@@ -139,9 +139,10 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     @QueueBean
     @Override
     public BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue(JdbcDependencies dependencies) {
+        // High volume: skip the dedicated emit transaction to avoid holding a second pooled connection.
         return new JdbcBroadcastQueue<>(
             FollowExecutionEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), false
         );
     }
 
@@ -165,9 +166,10 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     @QueueBean
     @Override
     public BroadcastQueueInterface<FollowLogEvent> followLogEventQueue(JdbcDependencies dependencies) {
+        // High volume: skip the dedicated emit transaction to avoid holding a second pooled connection.
         return new JdbcBroadcastQueue<>(
             FollowLogEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
+            dependencies.ignoreExecutionService(), false
         );
     }
 

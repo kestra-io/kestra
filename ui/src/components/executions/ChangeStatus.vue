@@ -166,7 +166,7 @@
     }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
     .alert-status-change {
         ul {
             margin-bottom: 0;

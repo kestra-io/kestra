@@ -56,7 +56,7 @@ function mountActions(propsData: Partial<TaskRunActionsProps>) {
                     template: "<span><slot /></span>",
                 },
                 KsDropdownItem: {
-                    template: "<div class=\"ks-dropdown-item\" @click=\"$emit('click', $event)\"><slot /></div>",
+                    template: "<div @click=\"$emit('click', $event)\"><slot /></div>",
                     props: ["divided"],
                 },
                 KsButton: {
@@ -98,7 +98,7 @@ describe("TaskRunActions", () => {
             execution,
         })
 
-        const options = wrapper.findAll(".iteration-selector .ks-dropdown-item")
+        const options = wrapper.findAll("[data-test='task-run-iteration']")
         expect(options).toHaveLength(2)
         expect(options[0].text()).toBe("Iteration 1")
         expect(options[1].text()).toBe("iteration_number")
@@ -118,10 +118,10 @@ describe("TaskRunActions", () => {
             execution: execution2,
         })
 
-        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
         await iter2!.trigger("click")
-        const deleteBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("delete_log") || w.text().includes("delete logs"))
-        await deleteBtn!.trigger("click")
+        const deleteBtn = wrapper.find("[data-test='task-run-delete-logs']")
+        await deleteBtn.trigger("click")
 
         expect(executionsStore.deleteLogs).toHaveBeenCalledWith({
             executionId: "ex-2",
@@ -143,10 +143,10 @@ describe("TaskRunActions", () => {
             execution: execution3,
         })
 
-        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
         await iter2!.trigger("click")
-        const downloadBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("download"))
-        await downloadBtn!.trigger("click")
+        const downloadBtn = wrapper.find("[data-test='task-run-download-logs']")
+        await downloadBtn.trigger("click")
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-3",
@@ -168,10 +168,10 @@ describe("TaskRunActions", () => {
             execution: execution4,
         })
 
-        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
         await iter2!.trigger("click")
-        const copyBtn = wrapper.findAll(".ks-dropdown-item").find(w => w.text().includes("copy"))
-        await copyBtn!.trigger("click")
+        const copyBtn = wrapper.find("[data-test='task-run-copy-logs']")
+        await copyBtn.trigger("click")
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-4",
@@ -210,7 +210,7 @@ describe("TaskRunActions", () => {
 
         expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(1)
 
-        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
         await iter2!.trigger("click")
         expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(0)
     })
@@ -223,7 +223,7 @@ describe("TaskRunActions", () => {
             execution,
         })
 
-        expect(wrapper.find(".iteration-selector").exists()).toBe(false)
+        expect(wrapper.find("[data-test='task-run-iteration']").exists()).toBe(false)
     })
 
     it("persists selection across unmount and remount for the same execution", async () => {
@@ -238,7 +238,7 @@ describe("TaskRunActions", () => {
 
         let wrapper = mountActions(props)
 
-        const iter2 = wrapper.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2"))
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2"))
         await iter2!.trigger("click")
         expect((wrapper.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
 
@@ -260,7 +260,7 @@ describe("TaskRunActions", () => {
         }
 
         const wrapper1 = mountActions(props1)
-        const iter2 = wrapper1.findAll(".iteration-selector .ks-dropdown-item").find(w => w.text().includes("Iter 2"))
+        const iter2 = wrapper1.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2"))
         await iter2!.trigger("click")
         expect((wrapper1.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
 

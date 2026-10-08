@@ -431,6 +431,7 @@
 
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
+    let disposed = false
     const rawLogs = ref<LogEntry[]>([])
     const timer = ref<ReturnType<typeof dayjs> | undefined>(undefined)
     const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -779,6 +780,8 @@
                 )
             }
 
+            if (disposed) return
+
             for (const taskRun of currentTaskRuns.value) {
                 if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
                     updateLoopStatus(taskRun.id)
@@ -840,6 +843,9 @@
     })
 
     onBeforeUnmount(() => {
+        disposed = true
+        closeTargetExecutionSSE()
+        throttledExecutionUpdate.value?.cancel()
         closeLogsSSE()
         closeTargetExecutionSSE()
         clearTimeout(timeout.value)
@@ -916,6 +922,7 @@
     }
 
     function autoExpandBasedOnSettings() {
+        if (disposed) return
         if (autoExpandTaskRunStates.value.length === 0) {
             return
         }
@@ -984,6 +991,10 @@
         cancelLogsSSEClose()
         logsExecutionId.value = executionId
         executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse) => {
+            if (disposed) {
+                sse.close()
+                return
+            }
             logsSSE.value = sse
 
             logsSSE.value.onmessage = (event: MessageEvent<string>) => {

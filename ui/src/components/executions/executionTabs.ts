@@ -1,6 +1,7 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
-import {resolveDefaultTab} from "../../utils/routeTabs"
+import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
 import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
+import {extraExecutionTabRoutes} from "override/components/executions/executionTabsExtension"
 
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
@@ -12,7 +13,8 @@ export const DEFAULT_TAB_STORAGE_KEY = "executeDefaultTab"
 export const DEFAULT_EXECUTION_TAB = "gantt"
 
 /**
- * Single source of truth for the Executions detail tabs.
+ * The OSS Executions detail tabs; {@link EXECUTION_TAB_ROUTES} is this list with the edition's own
+ * tabs merged in.
  *
  * Each entry is the vue-router child route that `<router-view>` renders; the
  * horizontal tab bar is derived from these records (see {@link useExecutionRoot}),
@@ -25,7 +27,7 @@ export const DEFAULT_EXECUTION_TAB = "gantt"
  * - `meta.maximized` / `meta.noOverflow` / `meta.fullHeight` drive the content section layout.
  * - `meta.locked` flags an Enterprise-locked tab (lock badge in the bar).
  */
-export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
+const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
     {
         name: `${EXECUTION_PARENT_ROUTE}/overview`,
         path: "overview",
@@ -77,6 +79,8 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         meta: {tab: "assets", title: "assets.title", maximized: true, locked: true},
     },
 ]
+
+export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = mergeTabRoutes(OSS_EXECUTION_TAB_ROUTES, extraExecutionTabRoutes(EXECUTION_PARENT_ROUTE))
 
 /**
  * Loads the execution the detail page is about into the store (EE reuses this for its own route

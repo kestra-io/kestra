@@ -1,6 +1,6 @@
 <template>
     <DynamicScroller
-        v-if="followedExecution && currentTaskRuns.length > 0"
+        v-if="followedExecution && (currentTaskRuns.length > 0 || executionLogs.length > 0)"
         ref="taskRunScroller"
         :items="currentTaskRuns"
         :minItemSize="50"
@@ -14,6 +14,28 @@
         @update="emit('scroller-update')"
         @resize="emit('scroller-update')"
     >
+        <template #before>
+            <KsCard
+                v-if="executionLogs.length > 0"
+                class="attempt-wrapper"
+                shadow="never"
+                data-test="execution-logs"
+            >
+                <LogLine
+                    v-for="item in executionLogs"
+                    :key="item.index"
+                    class="line"
+                    :cursor="logCursor === `${EXECUTION_LOGS_INDEX}/${item.index}`"
+                    :class="{
+                        ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level,
+                        'opacity-40': levelToHighlight && levelToHighlight !== item.level,
+                    }"
+                    :level="level"
+                    :log="item"
+                    :excludeMetas="excludeMetas"
+                />
+            </KsCard>
+        </template>
         <template
             #default="{
                 item: currentTaskRun,
@@ -430,7 +452,7 @@
     const loopOutputsByTaskRunId = ref<Record<string, LoopOutputs>>({})
 
     // Template ref
-    const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller>("taskRunScroller")
+    const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller & Pick<DynamicScrollerExposed, "scrollToPosition">>("taskRunScroller")
     const taskRunViewportHeight = ref(0)
     // Seed the cap before Teleport so virtual rows stay bounded until ResizeObserver measures the dialog.
     watch(() => props.fullHeight, (fullHeight) => {
@@ -595,6 +617,17 @@
         }
     })
 
+    // Logs written by the executor itself (e.g. a concurrency-limit failure) carry no task run.
+    const EXECUTION_LOGS_INDEX = -1
+
+    const executionLogs = computed<LogLineItem[]>(() => {
+        if (props.taskRunId) return []
+        const search = props.filter.toLowerCase()
+        return filteredLogs.value
+            .filter((log) => !log.taskRunId && (search === "" || (log.message ?? "").toLowerCase().includes(search)))
+            .map((log, index) => ({...log, index}))
+    })
+
     const currentTaskRunsLogIndicesByLevel = computed(() =>
         currentTaskRuns.value.reduce(
             (indicesByLevel: Record<string, string[]>, taskRun, taskRunIndex: number) => {
@@ -616,7 +649,12 @@
                 }
                 return indicesByLevel
             },
-            {},
+            executionLogs.value.reduce((indicesByLevel: Record<string, string[]>, log) => {
+                if (log.level) {
+                    (indicesByLevel[log.level] ??= []).push(`${EXECUTION_LOGS_INDEX}/${log.index}`)
+                }
+                return indicesByLevel
+            }, {}),
         ),
     )
 
@@ -1182,6 +1220,10 @@
         const split = logId.split("/")
         const taskRunIndex = Number(split[0])
         const globalIndex = Number(split[1])
+        if (taskRunIndex === EXECUTION_LOGS_INDEX) {
+            taskRunScroller.value?.scrollToPosition(0)
+            return
+        }
         taskRunScroller.value?.scrollToItem(taskRunIndex)
 
         const taskRun = currentTaskRuns.value[taskRunIndex]

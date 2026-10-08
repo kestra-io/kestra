@@ -46,20 +46,18 @@
 </script>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
-
-    import {ElButton,type ButtonProps} from "element-plus"
+    import {ElButton, type ButtonProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     defineOptions({inheritAttrs: false})
 
-   const props = defineProps<ButtonProps & {
-    square?: boolean
-    tooltip?: string
-    tooltipPlacement?: string
-}>()
+    const props = defineProps<ButtonProps & {
+        square?: boolean
+        tooltip?: string
+        tooltipPlacement?: string
+    }>()
 
     const emit = defineEmits<{
         click: [evt: MouseEvent]

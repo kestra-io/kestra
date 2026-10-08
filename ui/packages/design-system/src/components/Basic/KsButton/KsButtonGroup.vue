@@ -7,13 +7,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ElButtonGroup, type ButtonGroupProps} from "element-plus"
+    import {ElButtonGroup} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps<ButtonGroupProps>()
+    const props = defineProps<{
+        size?: "small" | "default" | "large" | ""
+        direction?: "horizontal" | "vertical"
+    }>()
 
     const filteredProps = useFilteredProps(props)
 

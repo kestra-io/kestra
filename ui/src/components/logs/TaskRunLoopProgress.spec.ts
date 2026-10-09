@@ -22,7 +22,7 @@ const KsButtonStub = defineComponent({
 function mountProgress(loopOutputsByTaskRunId: Record<string, {iterationCount: number; terminatedIterations?: Record<string, number>}>) {
     return mount(TaskRunLoopProgress, {
         props: {
-            executionId: "exec-1",
+            execution: {id: "exec-1"},
             currentTaskRunId: "taskrun-1",
             taskId: "loop",
             loopOutputsByTaskRunId,

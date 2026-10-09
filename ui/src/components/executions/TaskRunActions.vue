@@ -185,6 +185,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
+    import {loopIterationsRoute} from "./loopIterationsRoute"
 
     const props = withDefaults(defineProps<{
         taskRun: any
@@ -267,14 +268,7 @@
     )
 
     function openIterations() {
-        router.push({
-            name: "executions/list",
-            query: {
-                "filters[parentId][EQUALS]": props.execution.id,
-                "filters[kind][EQUALS]": "LOOP",
-                "filters[taskId][EQUALS]": props.taskRun.taskId,
-            },
-        })
+        router.push(loopIterationsRoute(props.execution, props.taskRun.taskId))
     }
 
     function downloadNameFor(currentTaskRunId: string): string {

@@ -331,6 +331,8 @@
     "restart tooltip": "从 <code>{state}</code> 任务重新开始执行",
     "restarted": "执行已重启",
     "restart confirm": "您确定要重启执行 <code>{id}</code> 吗？",
+    "restart subflow warning": "此执行由父执行创建，应从父执行处重新启动。单独重新启动此执行将使父执行处于 FAILED 状态，并且其后续任务将不会运行。请前往 {parent} 重新启动。",
+    "restart subflow warning link": "父级 Execution",
     "replay": "重放",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
     "replay from beginning tooltip": "从头开始创建相似的执行",
@@ -347,6 +349,10 @@
     "no": "否",
     "change state done": "任务状态已更新",
     "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
+    "interrupt": "中断",
+    "interrupt confirm": "您确定要中断执行 <code>{id}</code> 中 <code>{task}</code> Task 的 Task Run 吗？<br/>它将终止 Worker 中正在运行的 Task 并设置其状态。",
+    "interrupt done": "Task 运行已被中断",
+    "interrupt target state": "目标状态",
     "change state current state": "当前状态是：",
     "change state hint": {
       "WARNING": [
@@ -448,6 +454,11 @@
     "show task source": "显示任务源代码",
     "stream": "流",
     "execution statistics": "执行统计",
+    "execution_banner": {
+      "revision": "修订版 {revision}",
+      "attempts": "{count} 次尝试 | {count} 次尝试",
+      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+    },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
     "usage": "使用情况",
@@ -558,6 +569,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "插件组件加载失败。",
       "autoInstall": {
         "failed": "插件安装失败",
         "failedHint": "flow 未保存。请修复问题或从 flow 中移除该插件，然后重新保存。",
@@ -687,6 +699,17 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
+    "session expired": "您的会话已过期",
+    "session expired description": "请再次登录以继续。",
+    "go to login": "前往登录页面",
+    "use another sign-in method": "使用其他登录方式",
+    "sign in in a new tab": "在新标签页中登录",
+    "sign in in a new tab hint": "在刚打开的标签页中登录，然后回到这里继续。",
+    "continue after sign in": "继续",
+    "sign in failed": "无法登录。请检查您的网络连接并重试。",
+    "sign in not confirmed": "我们无法确认您已登录。请在另一个标签页中登录，然后继续。",
+    "server unreachable": "无法连接到 Kestra 服务器",
+    "server unreachable description": "在刷新此页面之前，请将所有未保存的工作（例如 Flow YAML）复制到安全位置。此横幅将在服务器响应后消失。",
     "unsaved changes": "未保存的更改",
     "unsaved changes warning": "您有未保存的更改。如果您离开此页面，您的更改将会丢失。",
     "leave page": "离开页面",
@@ -1034,6 +1057,8 @@
         "folder": "删除文件夹",
         "files": "删除 {count} 个已选择的文件",
         "bulk_success": "所选文件已成功删除。",
+        "bulk_partial_error": "未能删除所选 {totalCount} 个文件中的 {failedCount} 个。",
+        "all_failed_error": "删除所选文件失败。",
         "folders": "删除 {count} 个已选文件夹"
       },
       "move": {
@@ -1086,7 +1111,6 @@
     "pause backfills": "暂停回填",
     "backfill executions": "回填执行",
     "execute backfill": "执行回填",
-    "relative": "相对",
     "relative start date": "相对开始日期",
     "absolute": "绝对",
     "backfill": "回填",
@@ -1698,6 +1722,7 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
+      "task_details": "task 详情",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",
@@ -1753,7 +1778,8 @@
         "inputs": "选择一个input字段类型",
         "charts": "选择图表类型",
         "where": "选择筛选器类型",
-        "numerator": "选择一个分子"
+        "numerator": "选择一个分子",
+        "namespace_first": "请先选择 namespace"
       },
       "creation": {
         "default": "添加",
@@ -2206,7 +2232,6 @@
       "run_all_tasks": "运行所有Tasks",
       "history": "最近10次运行",
       "clear_history": "清除历史记录",
-      "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
       "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
     "submit": "提交",
@@ -2400,6 +2425,7 @@
         "label": "{count} 错误"
       }
     },
+    "invalid_source_code": "源代码无效",
     "source_search": {
       "cannot_select_read_only": "无法选择 — 您没有 {namespace} / {id} 的编辑权限",
       "collapse_all": "全部收起",

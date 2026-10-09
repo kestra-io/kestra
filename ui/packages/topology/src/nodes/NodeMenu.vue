@@ -34,11 +34,12 @@
     import {KsIconButton, KsDropdown, KsDropdownMenu} from "@kestra-io/design-system"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import NodeMenuItem from "./NodeMenuItem.vue"
+    import type {Component} from "vue"
 
     export interface NodeAction {
         key: string;
         label: string;
-        icon: unknown;
+        icon: Component;
         tooltip?: string;
         danger?: boolean;
         divided?: boolean;

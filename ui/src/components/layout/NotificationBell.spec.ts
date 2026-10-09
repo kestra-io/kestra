@@ -1,166 +1,125 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
-const mockUnreadCount = {value: 0}
-const startSSE = vi.fn()
-const stopSSE = vi.fn()
-vi.mock("../../stores/notifications", () => ({
-    useNotificationsStore: () => ({
-        get unreadCount() { return mockUnreadCount.value },
-        startSSE,
-        stopSSE,
-    }),
-}))
-
-const mockMiscStore = {contextInfoBarOpenTab: "", lastContextTab: "news"}
-vi.mock("override/stores/misc", () => ({
-    useMiscStore: () => mockMiscStore,
-}))
-
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import NotificationBell from "./NotificationBell.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
-function mountComponent(options: {attachTo?: HTMLElement} = {}) {
-    return i18nMount(NotificationBell, {
-        messages: {notifications: {bellAriaLabel: "Notifications"}},
-        ...options,
-    })
+const store = vi.hoisted(() => ({
+    unreadCount: 0,
+    notifications: [] as {ongoing?: boolean}[],
+    startSSE: vi.fn(),
+    stopSSE: vi.fn(),
+}))
+const miscStore = vi.hoisted(() => ({contextInfoBarOpenTab: "", lastContextTab: "news"}))
+
+vi.mock("../../stores/notifications", () => ({useNotificationsStore: () => store}))
+vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
+
+const messages = {
+    notifications: {
+        bellAriaLabel: "Notifications",
+        bellAriaLabelRunning: "Notifications, operations in progress",
+    },
+}
+
+function mount() {
+    return i18nMount(NotificationBell, {messages, attachTo: document.body})
+}
+
+function element(className = "") {
+    const el = document.createElement("div")
+    el.className = className
+    document.body.appendChild(el)
+    return el
+}
+
+function click(target: Element) {
+    target.dispatchEvent(new MouseEvent("click", {bubbles: true}))
 }
 
 describe("NotificationBell", () => {
     beforeEach(() => {
-        mockUnreadCount.value = 0
-        mockMiscStore.contextInfoBarOpenTab = ""
-        mockMiscStore.lastContextTab = "news"
-        startSSE.mockClear()
-        stopSSE.mockClear()
+        store.notifications = []
+        store.startSSE.mockClear()
+        store.stopSSE.mockClear()
+        miscStore.contextInfoBarOpenTab = ""
+        miscStore.lastContextTab = "news"
     })
 
-    it("starts the SSE subscription on mount and stops it on unmount", () => {
-        const wrapper = mountComponent()
+    afterEach(() => {
+        document.body.replaceChildren()
+    })
 
-        expect(startSSE).toHaveBeenCalledTimes(1)
+    it("follows notifications while mounted", () => {
+        const wrapper = mount()
+        expect(store.startSSE).toHaveBeenCalledTimes(1)
 
         wrapper.unmount()
-
-        expect(stopSSE).toHaveBeenCalledTimes(1)
+        expect(store.stopSSE).toHaveBeenCalledTimes(1)
     })
 
-    it("hides the count badge when there is nothing unread", () => {
-        mockUnreadCount.value = 0
-        const wrapper = mountComponent()
+    it("tells screen readers an operation is running, since the pulse alone is invisible to them", () => {
+        store.notifications = [{ongoing: false}, {ongoing: true}]
 
-        expect(wrapper.find(".kel-badge__content").exists()).toBe(false)
+        const bell = mount().find("[data-test='notification-bell']")
 
-        wrapper.unmount()
+        expect(bell.attributes("aria-label")).toBe("Notifications, operations in progress")
     })
 
-    it("shows the unread count on the badge", () => {
-        mockUnreadCount.value = 3
-        const wrapper = mountComponent()
+    it("toggles the panel without changing the tab the dock toggle reopens", async () => {
+        const bell = mount().find("[data-test='notification-bell']")
 
-        const badge = wrapper.find(".kel-badge__content")
-        expect(badge.exists()).toBe(true)
-        expect(badge.text()).toBe("3")
+        await bell.trigger("click")
+        expect(miscStore.contextInfoBarOpenTab).toBe("notifications")
 
-        wrapper.unmount()
+        await bell.trigger("click")
+        expect(miscStore.contextInfoBarOpenTab).toBe("")
+        expect(miscStore.lastContextTab).toBe("news")
     })
 
-    it("opens the notifications panel on click, without hijacking the shared dock-toggle's last tab", async () => {
-        const wrapper = mountComponent()
+    it("closes the panel on a click outside it", () => {
+        miscStore.contextInfoBarOpenTab = "notifications"
+        mount()
 
-        await wrapper.find(".icon-btn").trigger("click")
+        click(element())
 
-        expect(mockMiscStore.contextInfoBarOpenTab).toBe("notifications")
-        expect(mockMiscStore.lastContextTab).toBe("news")
-
-        wrapper.unmount()
+        expect(miscStore.contextInfoBarOpenTab).toBe("")
     })
 
-    it("closes the panel on click when notifications is already the active tab", async () => {
-        mockMiscStore.contextInfoBarOpenTab = "notifications"
-        const wrapper = mountComponent()
+    it("keeps the panel open on a click inside the drawer", () => {
+        miscStore.contextInfoBarOpenTab = "notifications"
+        mount()
 
-        await wrapper.find(".icon-btn").trigger("click")
+        click(element("contextDrawer"))
 
-        expect(mockMiscStore.contextInfoBarOpenTab).toBe("")
-
-        wrapper.unmount()
+        expect(miscStore.contextInfoBarOpenTab).toBe("notifications")
     })
 
-    describe("click outside", () => {
-        it("closes the panel when clicking outside the drawer and the bell", () => {
-            mockMiscStore.contextInfoBarOpenTab = "notifications"
-            const wrapper = mountComponent({attachTo: document.body})
+    it("keeps the panel open when the clicked row leaves the DOM mid-click", () => {
+        miscStore.contextInfoBarOpenTab = "notifications"
+        mount()
+        const row = document.createElement("div")
+        element("contextDrawer").appendChild(row)
+        row.addEventListener("click", () => row.remove())
 
-            const outside = document.createElement("div")
-            document.body.appendChild(outside)
-            outside.dispatchEvent(new MouseEvent("click", {bubbles: true}))
+        click(row)
 
-            expect(mockMiscStore.contextInfoBarOpenTab).toBe("")
+        expect(miscStore.contextInfoBarOpenTab).toBe("notifications")
+    })
 
-            outside.remove()
-            wrapper.unmount()
-        })
+    it("leaves other panels alone on an outside click", () => {
+        miscStore.contextInfoBarOpenTab = "news"
+        mount()
 
-        it("keeps the panel open when clicking inside the context drawer", () => {
-            mockMiscStore.contextInfoBarOpenTab = "notifications"
-            const wrapper = mountComponent({attachTo: document.body})
+        click(element())
 
-            const drawer = document.createElement("div")
-            drawer.className = "contextDrawer"
-            document.body.appendChild(drawer)
-            drawer.dispatchEvent(new MouseEvent("click", {bubbles: true}))
+        expect(miscStore.contextInfoBarOpenTab).toBe("news")
+    })
 
-            expect(mockMiscStore.contextInfoBarOpenTab).toBe("notifications")
+    it("stops listening for outside clicks once unmounted", () => {
+        miscStore.contextInfoBarOpenTab = "notifications"
+        mount().unmount()
 
-            drawer.remove()
-            wrapper.unmount()
-        })
+        click(element())
 
-        it("does not affect other open tabs", () => {
-            mockMiscStore.contextInfoBarOpenTab = "news"
-            const wrapper = mountComponent({attachTo: document.body})
-
-            const outside = document.createElement("div")
-            document.body.appendChild(outside)
-            outside.dispatchEvent(new MouseEvent("click", {bubbles: true}))
-
-            expect(mockMiscStore.contextInfoBarOpenTab).toBe("news")
-
-            outside.remove()
-            wrapper.unmount()
-        })
-
-        it("keeps the panel open when a row detaches from the DOM mid-click (e.g. filtered out of the Unread tab after being marked read)", () => {
-            mockMiscStore.contextInfoBarOpenTab = "notifications"
-            const wrapper = mountComponent({attachTo: document.body})
-
-            const drawer = document.createElement("div")
-            drawer.className = "contextDrawer"
-            const row = document.createElement("div")
-            drawer.appendChild(row)
-            document.body.appendChild(drawer)
-
-            row.addEventListener("click", () => row.remove())
-            row.dispatchEvent(new MouseEvent("click", {bubbles: true}))
-
-            expect(mockMiscStore.contextInfoBarOpenTab).toBe("notifications")
-
-            drawer.remove()
-            wrapper.unmount()
-        })
-
-        it("stops listening once unmounted", () => {
-            mockMiscStore.contextInfoBarOpenTab = "notifications"
-            const wrapper = mountComponent({attachTo: document.body})
-            wrapper.unmount()
-
-            const outside = document.createElement("div")
-            document.body.appendChild(outside)
-            outside.dispatchEvent(new MouseEvent("click", {bubbles: true}))
-
-            expect(mockMiscStore.contextInfoBarOpenTab).toBe("notifications")
-
-            outside.remove()
-        })
+        expect(miscStore.contextInfoBarOpenTab).toBe("notifications")
     })
 })

@@ -15,6 +15,7 @@ vi.mock("../../../../src/components/flows/FlowRootTopBar.vue", () => ({default: 
 vi.mock("../../../../src/components/flows/FlowConcurrency.vue", () => ({default: {}}))
 vi.mock("../../../../src/components/demo/AuditLogs.vue", () => ({default: {}}))
 
+// @ts-expect-error no types for it (FlowRoot.vue is plain JS on this release)
 import FlowRoot from "../../../../src/components/flows/FlowRoot.vue"
 
 function tabNames(configs: Record<string, any> | undefined) {

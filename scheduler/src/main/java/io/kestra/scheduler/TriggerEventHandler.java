@@ -303,9 +303,9 @@ public class TriggerEventHandler {
         RunContext runContext = runContextFactory.of(flow, trigger);
         ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
         try {
-            ZonedDateTime previousDate = ((Schedulable) trigger).previousEvaluationDate(conditionContext);
-            if (previousDate.toInstant().isAfter(state.getEvaluatedAt())) {
-                return state.updateForNextEvaluationDate(clock, previousDate);
+            Optional<ZonedDateTime> previousDate = ((Schedulable) trigger).previousEvaluationDate(conditionContext);
+            if (previousDate.isPresent() && previousDate.get().toInstant().isAfter(state.getEvaluatedAt())) {
+                return state.updateForNextEvaluationDate(clock, previousDate.get());
             }
             // Nothing was missed: keep the stored next evaluation date.
             return state;

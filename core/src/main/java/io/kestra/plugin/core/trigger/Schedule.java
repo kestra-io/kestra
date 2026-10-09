@@ -317,7 +317,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     @Override
-    public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
+    public Optional<ZonedDateTime> previousEvaluationDate(ConditionContext conditionContext) {
         ExecutionTime executionTime = this.executionTime();
         if (hasWhenCondition()) {
             try {
@@ -328,15 +328,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 );
 
                 if (previous.isPresent()) {
-                    return previous.get().truncatedTo(ChronoUnit.SECONDS);
+                    return Optional.of(previous.get().truncatedTo(ChronoUnit.SECONDS));
                 }
             } catch (InternalException e) {
                 conditionContext.getRunContext().logger()
                     .warn("Unable to evaluate the `when` condition for the next evaluation date for trigger '{}', condition will not be evaluated", this.getId());
             }
         }
-        return computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now()))
-            .orElseThrow(this::noValidExecutionDate);
+        return Optional.of(computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now()))
+            .orElseThrow(this::noValidExecutionDate));
     }
 
     @Override

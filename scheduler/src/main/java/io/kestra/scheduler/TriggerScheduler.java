@@ -210,9 +210,9 @@ public class TriggerScheduler {
                         TriggerState currentTriggerState = triggerState;
                         switch (recoverMissedSchedules) {
                             case LAST -> {
-                                ZonedDateTime previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
-                                if (previousDate.toInstant().isAfter(currentTriggerState.getEvaluatedAt())) {
-                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate);
+                                Optional<ZonedDateTime> previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
+                                if (previousDate.isPresent() && previousDate.get().toInstant().isAfter(currentTriggerState.getEvaluatedAt())) {
+                                    currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate.get());
                                     triggerStateStore.save(currentTriggerState);
                                 }
                             }

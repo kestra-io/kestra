@@ -4,6 +4,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -162,30 +164,55 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             // Content-Disposition parts are separated by ';'
             String[] parts = contentDisposition.split(";");
             String filename = null;
+            String extendedFilename = null;
             for (String part : parts) {
-                String stripped = part.strip();
-                if (stripped.startsWith("filename")) {
-                    filename = stripped.substring(stripped.lastIndexOf('=') + 1);
+                int separator = part.indexOf('=');
+                if (separator < 0) {
+                    continue;
                 }
-                if (stripped.startsWith("filename*")) {
-                    // following https://datatracker.ietf.org/doc/html/rfc5987 the filename* should be <ENCODING>'(lang)'<filename>
-                    filename = stripped.substring(stripped.lastIndexOf('\'') + 2, stripped.length() - 1);
+                String name = part.substring(0, separator).strip();
+                String value = unquote(part.substring(separator + 1).strip());
+                if ("filename*".equalsIgnoreCase(name)) {
+                    extendedFilename = decodeExtendedValue(value);
+                } else if ("filename".equalsIgnoreCase(name)) {
+                    filename = value;
                 }
             }
-            // filename may be in double-quotes
-            if (filename != null && filename.charAt(0) == '"') {
-                filename = filename.substring(1, filename.length() - 1);
+            // RFC 6266 section 4.3: filename* wins over filename whatever their order.
+            if (extendedFilename != null) {
+                filename = extendedFilename;
             }
-            // if filename contains a path: use only the last part to avoid security issues due to host file overwriting
-            if (filename != null && filename.contains(File.separator)) {
-                filename = filename.substring(filename.lastIndexOf(File.separator) + 1);
+            if (filename != null) {
+                filename = filename.substring(Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\')) + 1);
             }
-            return filename;
+            return filename == null || filename.isBlank() || ".".equals(filename) || "..".equals(filename) ? null : filename;
         } catch (Exception e) {
             // if we cannot parse the Content-Disposition header, we return null
             runContext.logger().debug("Unable to parse the Content-Disposition header: {}", contentDisposition, e);
             return null;
         }
+    }
+
+    private static String decodeExtendedValue(String value) {
+        int firstQuote = value.indexOf('\'');
+        int secondQuote = firstQuote < 0 ? -1 : value.indexOf('\'', firstQuote + 1);
+        if (secondQuote < 0) {
+            return null;
+        }
+        try {
+            Charset charset = Charset.forName(value.substring(0, firstQuote));
+            // URLDecoder is a form decoder: keep a literal '+' instead of turning it into a space.
+            return URLDecoder.decode(value.substring(secondQuote + 1).replace("+", "%2B"), charset);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static String unquote(String value) {
+        if (value.length() >= 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     private String filenameFromURI(URI uri) {

@@ -28,6 +28,11 @@ public final class ExecutionTerminator {
             return execution.withState(State.Type.KILLED);
         }
 
+        return cascade(execution, startingTaskRun, state).withState(state);
+    }
+
+    /** Same cascade as {@link #terminate} but leaves the execution state alone, so the flow can still run its {@code finally} and end itself. */
+    public static Execution cascade(Execution execution, @Nullable TaskRun startingTaskRun, State.Type state) {
         return Optional.ofNullable(startingTaskRun)
             .map(taskRun -> {
                 try {
@@ -43,7 +48,6 @@ public final class ExecutionTerminator {
                     return execution;
                 }
             })
-            .orElse(execution)
-            .withState(state);
+            .orElse(execution);
     }
 }

@@ -1,0 +1,17 @@
+id: approval-pause-inputs-mix
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: approval
+        type: io.kestra.plugin.core.flow.Approval
+        inputs:
+          - id: reason
+            type: STRING
+      - id: pause
+        type: io.kestra.plugin.core.flow.Pause
+        onResume:
+          - id: ticket
+            type: STRING

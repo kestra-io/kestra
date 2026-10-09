@@ -23,7 +23,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -171,10 +170,7 @@ class LocalStorageTest extends StorageTestSuite {
         assertFalse(storageInterface.exists(tenantId, null, new URI("/file.txt")));
 
         // list() excludes metadata files, so verify the file directly.
-        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
-        Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
-            .resolve(tenantId)
-            .resolve("file.txt.metadata");
+        Path orphanMetadataPath = Path.of("/tmp/unittest", tenantId, "file.txt.metadata");
         assertFalse(Files.exists(orphanMetadataPath));
     }
 

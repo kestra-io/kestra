@@ -276,6 +276,19 @@ describe("notifications store", () => {
         store.stopSSE()
     })
 
+    it("startSSE() keeps following when refreshing the unread count after a push fails", async () => {
+        fetchHistory.mockResolvedValue({notifications: []})
+        api.unreadCount.mockResolvedValueOnce(0).mockRejectedValueOnce(new Error("offline"))
+        api.listenUserNotifications.mockImplementationOnce(() => streamOf(notification({id: "pushed"}))).mockImplementation(streamOpenUntilAborted)
+        const store = await useStore()
+
+        store.startSSE()
+
+        await vi.waitFor(() => expect(api.unreadCount).toHaveBeenCalledTimes(2))
+        expect(store.notifications.map((n) => n.id)).toEqual(["pushed"])
+        store.stopSSE()
+    })
+
     it("stopSSE() aborts the stream and does not reconnect", async () => {
         fetchHistory.mockResolvedValue({notifications: []})
         api.listenUserNotifications.mockImplementation(streamOpenUntilAborted)

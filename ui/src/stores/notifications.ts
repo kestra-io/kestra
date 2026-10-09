@@ -127,7 +127,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
     function receive(notification: Notification) {
         merge([notification])
         if (!notification.ongoing) {
-            fetchUnreadCount()
+            fetchUnreadCount().catch(() => undefined)
         }
     }
 

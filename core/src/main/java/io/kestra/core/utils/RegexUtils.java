@@ -1,6 +1,8 @@
 package io.kestra.core.utils;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -173,26 +175,50 @@ public final class RegexUtils {
      */
     private static final String QUANTIFIER = "(?:(?<!\\\\)[+*?]|\\{\\d+(?:,\\d*)?})";
 
+    private static final Pattern QUANTIFIER_FINDER = Pattern.compile(QUANTIFIER);
+
     /**
      * A group containing a quantifier (including {@code ?}, e.g. {@code (a?)}) that is itself
      * followed by another quantifier, e.g. {@code (a+)+}, {@code (a*)*}, {@code (a?){25}}. Nesting an
      * optional/unbounded quantifier inside a repeated group is the classic signature of catastrophic
      * backtracking (ReDoS), whether the outer repetition is unbounded ({@code +}/{@code *}) or a large
-     * bounded count ({@code {25}}).
+     * bounded count ({@code {25}}). Group 1 is the group body, group 2 the outer quantifier.
      */
     private static final Pattern NESTED_QUANTIFIER = Pattern.compile(
-        "\\([^()]*" + QUANTIFIER + "[^()]*\\)\\s*" + QUANTIFIER
+        "\\(([^()]*" + QUANTIFIER + "[^()]*)\\)\\s*(" + QUANTIFIER + ")"
     );
 
     /**
      * A group containing a top-level alternation ({@code |}) that is itself followed by a
      * quantifier, e.g. {@code (a|a)+}, {@code (a|ab)*}. Ambiguous alternation combined with
      * repetition is another classic catastrophic-backtracking shape, distinct from a nested
-     * quantifier.
+     * quantifier. Group 1 is the group body, group 2 the outer quantifier.
      */
     private static final Pattern ALTERNATION_WITH_REPETITION = Pattern.compile(
-        "\\([^()|]*\\|[^()]*\\)\\s*" + QUANTIFIER
+        "\\(([^()|]*\\|[^()]*)\\)\\s*(" + QUANTIFIER + ")"
     );
+
+    /**
+     * Largest outer repetition count of a group whose inner quantifiers are all bounded for which the
+     * total backtracking stays polynomial with a small degree, e.g. {@code (\\d{1,3}\\.){3}}.
+     */
+    private static final int MAX_BOUNDED_NESTED_REPETITION = 5;
+
+    /**
+     * Total number of quantifiers that all the exempted repeated groups of one pattern may carry, since
+     * each additional group multiplies the backtracking cost of the previous ones.
+     */
+    private static final int MAX_EXEMPT_QUANTIFIERS = 3;
+
+    private static final Pattern BOUNDED_QUANTIFIER = Pattern.compile("\\?|\\{(\\d+)(?:,(\\d+))?}");
+
+    /**
+     * One atom of a flat group body: a character class, an escape or a single character, with its
+     * optional quantifier. Group 1 is the atom, group 2 its quantifier.
+     */
+    private static final Pattern ATOM = Pattern.compile("(\\[(?:\\\\.|[^\\]])*]|\\\\.|[^\\\\\\[])(" + QUANTIFIER + ")?");
+
+    private static final String REGEX_META_CHARACTERS = ".^$|?*+(){}[]\\";
 
     /**
      * Checks whether a user-supplied regex pattern is safe to execute against a database engine
@@ -207,16 +233,131 @@ public final class RegexUtils {
      * across multiple sibling groups) are not covered.
      * </p>
      *
+     * <p>
+     * A repeated group is still accepted when it cannot backtrack catastrophically: it is repeated at
+     * most once ({@code (a+)?}), it is repeated a small bounded number of times around small bounded
+     * quantifiers only ({@code (\\d{1,3}\\.){3}}), or, for nested quantifiers, each iteration starts or
+     * ends with a literal separator that no quantified part of the group can match
+     * ({@code ([a-z]+\\.)*}, {@code (-[a-z]+)*}). The first two exemptions share a small budget per pattern.
+     * </p>
+     *
      * @param pattern the user-supplied regex pattern.
-     * @return {@code true} if the pattern is within the length limit and contains neither a nested
-     *         quantifier nor a repeated alternation.
+     * @return {@code true} if the pattern is within the length limit and every nested quantifier or
+     *         repeated alternation it contains is covered by one of the exemptions above.
      */
     public static boolean isSafeUserRegex(String pattern) {
         if (pattern == null || pattern.length() > MAX_USER_REGEX_LENGTH) {
             return false;
         }
-        return !NESTED_QUANTIFIER.matcher(pattern).find()
-            && !ALTERNATION_WITH_REPETITION.matcher(pattern).find();
+        int[] budget = { MAX_EXEMPT_QUANTIFIERS };
+        return !hasUnsafeRepetition(NESTED_QUANTIFIER, pattern, true, budget)
+            && !hasUnsafeRepetition(ALTERNATION_WITH_REPETITION, pattern, false, budget);
+    }
+
+    private static boolean hasUnsafeRepetition(Pattern detector, String pattern, boolean nested, int[] budget) {
+        Matcher matcher = detector.matcher(pattern);
+        while (matcher.find()) {
+            String body = matcher.group(1);
+            if (body.startsWith("?:")) {
+                body = body.substring(2);
+            }
+            if (nested && !QUANTIFIER_FINDER.matcher(body).find()) {
+                continue;
+            }
+            if (nested && !body.contains("|") && hasSeparator(body)) {
+                continue;
+            }
+            if (!isExemptRepetition(body, matcher.group(2), nested, budget)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isExemptRepetition(String body, String outer, boolean nested, int[] budget) {
+        int outerBound = upperBound(outer);
+        boolean exempt = outerBound <= 1 || (nested && outerBound <= MAX_BOUNDED_NESTED_REPETITION && hasSmallBoundedQuantifiers(body));
+        if (!exempt) {
+            return false;
+        }
+        budget[0] -= Math.max(1, quantifiedAtoms(body));
+        return budget[0] >= 0;
+    }
+
+    private static int upperBound(String quantifier) {
+        Matcher matcher = BOUNDED_QUANTIFIER.matcher(quantifier);
+        if (!matcher.matches()) {
+            return Integer.MAX_VALUE;
+        }
+        if (matcher.group(1) == null) {
+            return 1;
+        }
+        String upper = matcher.group(2) != null ? matcher.group(2) : matcher.group(1);
+        return upper.length() > 4 ? Integer.MAX_VALUE : Integer.parseInt(upper);
+    }
+
+    private static boolean hasSmallBoundedQuantifiers(String body) {
+        Matcher atoms = ATOM.matcher(body);
+        while (atoms.find()) {
+            String quantifier = atoms.group(2);
+            if (quantifier != null && (!BOUNDED_QUANTIFIER.matcher(quantifier).matches() || upperBound(quantifier) > MAX_BOUNDED_NESTED_REPETITION)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int quantifiedAtoms(String body) {
+        int count = 0;
+        Matcher atoms = ATOM.matcher(body);
+        while (atoms.find()) {
+            if (atoms.group(2) != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static boolean hasSeparator(String body) {
+        List<String[]> atoms = new ArrayList<>();
+        Matcher matcher = ATOM.matcher(body);
+        while (matcher.find()) {
+            atoms.add(new String[] { matcher.group(1), matcher.group(2) });
+        }
+        if (atoms.isEmpty()) {
+            return false;
+        }
+
+        for (String[] candidate : List.of(atoms.getFirst(), atoms.getLast())) {
+            String literal = literalOf(candidate);
+            if (literal != null && atoms.stream().noneMatch(atom -> atom[1] != null && canMatch(atom[0], literal))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String literalOf(String[] atom) {
+        if (atom[1] != null) {
+            return null;
+        }
+        String text = atom[0];
+        if (text.length() == 1 && REGEX_META_CHARACTERS.indexOf(text.charAt(0)) < 0) {
+            return text;
+        }
+        if (text.length() == 2 && text.charAt(0) == '\\' && !Character.isLetterOrDigit(text.charAt(1))) {
+            return text.substring(1);
+        }
+        return null;
+    }
+
+    // Case-insensitive and dot-all keep this conservative when the full pattern enables those flags inline.
+    private static boolean canMatch(String atom, String literal) {
+        try {
+            return Pattern.compile(atom, Pattern.CASE_INSENSITIVE | Pattern.DOTALL).matcher(literal).matches();
+        } catch (PatternSyntaxException e) {
+            return true;
+        }
     }
 
     /**
@@ -233,9 +374,11 @@ public final class RegexUtils {
             Pattern.compile(pattern);
             return Optional.empty();
         } catch (PatternSyntaxException e) {
-            return Optional.of(e.getIndex() >= 0
-                ? "%s near index %d".formatted(e.getDescription(), e.getIndex())
-                : e.getDescription());
+            return Optional.of(
+                e.getIndex() >= 0
+                    ? "%s near index %d".formatted(e.getDescription(), e.getIndex())
+                    : e.getDescription()
+            );
         }
     }
 

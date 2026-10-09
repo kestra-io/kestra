@@ -12,6 +12,7 @@ import lombok.Getter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@SuppressWarnings("removal")
 class RegexTest {
     @Inject
     private ModelValidator modelValidator;

@@ -88,10 +88,41 @@
                                     <div class="d-flex flex-column">
                                         <div
                                             class="gantt-row d-flex cursor-icon"
-                                            :class="{'is-expanded': selectedTaskRuns.includes(item.id)}"
+                                            :class="{
+                                                'is-expanded': selectedTaskRuns.includes(item.id),
+                                                'gantt-block-alt': item.blockIndex % 2 === 1,
+                                                'gantt-block-start': item.isBlockStart,
+                                            }"
                                             @click="onTaskSelect(item.id)"
                                         >
-                                            <div v-if="!verticalLayout" class="d-inline-flex">
+                                            <div
+                                                v-if="!verticalLayout"
+                                                class="gantt-rails"
+                                                aria-hidden="true"
+                                            >
+                                                <span
+                                                    v-if="hasChildren(item)"
+                                                    class="gantt-rail gantt-rail--outgoing"
+                                                    :style="{'--rail-depth': item.depth || 0}"
+                                                />
+                                                <span
+                                                    v-for="segment in railSegments(item)"
+                                                    :key="`vertical-${segment.depth}`"
+                                                    class="gantt-rail gantt-rail--vertical"
+                                                    :class="{'is-terminal': segment.isTerminal}"
+                                                    :style="{'--rail-depth': segment.depth}"
+                                                />
+                                                <span
+                                                    v-if="(item.depth ?? 0) > 0"
+                                                    class="gantt-rail gantt-rail--elbow"
+                                                    :style="{'--rail-depth': (item.depth ?? 1) - 1}"
+                                                />
+                                            </div>
+                                            <div
+                                                v-if="!verticalLayout"
+                                                class="d-inline-flex gantt-chevron"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
@@ -249,6 +280,9 @@
     interface TaskWrapper {
         task: TaskRun;
         depth: number;
+        siblingIndex: number;
+        blockIndex: number;
+        isBlockStart: boolean;
     }
 
     interface SeriesItem {
@@ -265,6 +299,9 @@
         executionId?: string;
         attempts: number;
         depth: number | undefined;
+        siblingIndex: number;
+        blockIndex: number;
+        isBlockStart: boolean;
         parentEndPercent?: number;
     }
 
@@ -409,6 +446,79 @@
 
     const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
 
+    const seriesById = computed(() => new Map(series.value.map((item) => [item.id, item])))
+
+    const childrenByTaskId = computed(() => {
+        const children = new Set<string>()
+
+        for (const item of series.value) {
+            if (item.task.parentTaskRunId) {
+                children.add(item.task.parentTaskRunId)
+            }
+        }
+
+        return children
+    })
+
+    const siblingMaxIndex = computed(() => {
+        const maxIndex = new Map<string, number>()
+
+        for (const item of series.value) {
+            const parentKey = item.task.parentTaskRunId ?? "__root__"
+            const currentMax = maxIndex.get(parentKey) ?? -1
+            maxIndex.set(parentKey, Math.max(currentMax, item.siblingIndex))
+        }
+
+        return maxIndex
+    })
+
+    const hasChildren = (item: SeriesItem): boolean =>
+        childrenByTaskId.value.has(item.id)
+
+    const isLastSibling = (item: SeriesItem): boolean => {
+        const parentKey = item.task.parentTaskRunId ?? "__root__"
+        return item.siblingIndex === siblingMaxIndex.value.get(parentKey)
+    }
+
+    const railSegments = (
+        item: SeriesItem,
+    ): Array<{depth: number; isTerminal: boolean}> => {
+        const segments: Array<{depth: number; isTerminal: boolean}> = []
+
+        let ancestorId = item.task.parentTaskRunId
+
+        while (ancestorId) {
+            const ancestor = seriesById.value.get(ancestorId)
+
+            if (!ancestor) {
+                break
+            }
+
+            let isTerminal = !hasChildren(item)
+            let cursor: SeriesItem | undefined = item
+
+            while (cursor && cursor.id !== ancestor.id) {
+                if (!isLastSibling(cursor)) {
+                    isTerminal = false
+                }
+
+                const parentId: string | undefined = cursor.task.parentTaskRunId
+                cursor = parentId
+                    ? seriesById.value.get(parentId)
+                    : undefined
+            }
+
+            segments.push({
+                depth: ancestor.depth ?? 0,
+                isTerminal,
+            })
+
+            ancestorId = ancestor.task.parentTaskRunId
+        }
+
+        return segments
+    }
+
     const isProgressing = computed<boolean>(() => execution.value?.state?.current === State.RUNNING)
 
     // Supporting line shown under the status badge when the Gantt has no task runs to plot.
@@ -518,6 +628,9 @@
                 executionId: task.outputs?.executionId as string | undefined,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
+                siblingIndex: taskWrapper.siblingIndex,
+                blockIndex: taskWrapper.blockIndex,
+                isBlockStart: taskWrapper.isBlockStart,
                 parentEndPercent: barPercents.parentEndPercent,
             }
             newSeries.push(seriesItem)
@@ -787,6 +900,14 @@
                 background: var(--ks-dropdown-bg);
                 border-top: 1px solid var(--ks-border-default);
 
+                &.gantt-block-alt {
+                    background: color-mix(in srgb, var(--ks-dropdown-bg), var(--ks-white) 5.5%);
+                }
+
+                &.gantt-block-start {
+                    box-shadow: inset 0 2px 0 var(--ks-border-default);
+                }
+
                 &.is-expanded {
                     background: var(--ks-dropdown-bg-active);
                 }
@@ -798,6 +919,57 @@
 
                 > * {
                     padding: 1rem .25rem;
+                }
+
+                .gantt-rails {
+                    position: absolute;
+                    inset: 0;
+                    padding: 0 !important;
+                    pointer-events: none;
+                    z-index: 0;
+                }
+
+                > *:not(.gantt-rails) {
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .gantt-rail {
+                    position: absolute;
+                    display: block;
+                    background: var(--ks-border-default);
+                }
+
+                .gantt-rail--vertical {
+                    left: calc(.25rem + 12px + var(--rail-depth, 0) * 30.5px);
+                    top: -10px;
+                    bottom: 0;
+                    width: 1px;
+
+                    &.is-terminal {
+                        top: -10px;
+                        bottom: auto;
+                        height: calc(50% + 10px);
+                    }
+                }
+
+                .gantt-rail--outgoing {
+                    left: calc(.25rem + 12px + var(--rail-depth, 0) * 30.5px);
+                    top: 50%;
+                    height: calc(50% + 10px);
+                    width: 1px;
+                }
+
+                .gantt-rail--elbow {
+                    left: calc(.25rem + 12px + var(--rail-depth, 0) * 30.5px);
+                    top: 50%;
+                    width: 30.5px;
+                    height: 1px;
+                }
+
+                .gantt-chevron {
+                    flex-shrink: 0;
+                    transform: translateX(calc(var(--depth, 0) * 30.5px));
                 }
 
                 .task-label {
@@ -847,7 +1019,7 @@
                     }
                 }
 
-                .attempt_warn{
+                .attempt_warn {
                     color: var(--ks-text-warning);
                     vertical-align: middle;
                 }
@@ -876,22 +1048,6 @@
                     transition: all 0.3s;
                     min-width: 5px;
                 }
-            }
-
-            .task-details {
-                interpolate-size: allow-keywords;
-                overflow: hidden;
-                background: var(--ks-dropdown-bg-active);
-            }
-
-            .expand-enter-active,
-            .expand-leave-active {
-                transition: height 150ms ease;
-            }
-
-            .expand-enter-from,
-            .expand-leave-to {
-                height: 0;
             }
         }
     }

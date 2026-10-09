@@ -3,6 +3,7 @@ package io.kestra.core.docs;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
@@ -870,25 +871,37 @@ class JsonSchemaGeneratorTest {
         });
     }
 
-
     @SuperBuilder
     @ToString
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
     @Plugin
-    public static class TaskWithTicketingFields extends Task implements RunnableTask<VoidOutput> {
+    public static class TaskWithTicketingFields extends Task implements RunnableTask<TaskWithTicketingFields.Output> {
         @TicketingField(role = TicketingField.Role.CASE_TITLE)
         private Property<String> subject;
 
         @TicketingField(defaultValue = "incident")
         private String table;
 
+        @TicketingField(defaultValue = "3")
+        private Property<Integer> priority;
+
         private String untouched;
 
         @Override
-        public VoidOutput run(RunContext runContext) throws Exception {
+        public Output run(RunContext runContext) throws Exception {
             return null;
+        }
+
+        @Builder
+        @Getter
+        public static class Output implements io.kestra.core.models.tasks.Output {
+            @TicketingField(role = TicketingField.Role.TICKET_KEY)
+            private final Integer number;
+
+            @TicketingField(role = TicketingField.Role.TICKET_URL)
+            private final URL link;
         }
     }
 
@@ -903,5 +916,16 @@ class JsonSchemaGeneratorTest {
         assertThat(props.get("table").get("$ticketingDefault"), is("incident"));
         assertThat(props.get("table").containsKey("$ticketingRole"), is(false));
         assertThat(props.get("untouched").containsKey("$ticketingRole"), is(false));
+        assertThat(props.get("priority").get("$ticketingDefault"), is("3"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeTicketingFieldHintsOnOutputs() {
+        Map<String, Object> generate = jsonSchemaGenerator.outputs(Task.class, TaskWithTicketingFields.class);
+        Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+        assertThat(props.get("number").get("$ticketingRole"), is("TICKET_KEY"));
+        assertThat(props.get("link").get("$ticketingRole"), is("TICKET_URL"));
     }
 }

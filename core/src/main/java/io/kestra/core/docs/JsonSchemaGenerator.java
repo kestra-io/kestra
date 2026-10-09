@@ -467,6 +467,8 @@ public class JsonSchemaGenerator {
                             Map.entry("description", Optional.empty()),
                             Map.entry("$deprecated", Optional.empty()),
                             Map.entry("$group", Optional.empty()),
+                            Map.entry("$ticketingRole", Optional.empty()),
+                            Map.entry("$ticketingDefault", Optional.empty()),
                             Map.entry("$index", Optional.empty())
                         )
                     );
@@ -738,8 +740,12 @@ public class JsonSchemaGenerator {
 
             TicketingField ticketingField = member.getAnnotationConsideringFieldAndGetter(TicketingField.class);
             if (ticketingField != null) {
-                if (ticketingField.role() != TicketingField.Role.NONE) {
-                    memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                try {
+                    if (ticketingField.role() != TicketingField.Role.NONE) {
+                        memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                    }
+                } catch (EnumConstantNotPresentException ignored) {
+                    // a plugin built against a newer core may name a role this core does not know
                 }
                 if (!ticketingField.defaultValue().isEmpty()) {
                     memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());

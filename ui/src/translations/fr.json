@@ -474,7 +474,8 @@
         "task-runs": "{runs} exécution | {runs} exécutions",
         "task-runs-failed": "{runs} exécution · {failed} en échec | {runs} exécutions · {failed} en échec",
         "retry": "Réessayer",
-        "load-more": "Charger plus"
+        "load-more": "Charger plus",
+        "retry-loading": "Réessayer de charger les itérations"
       },
       "loop-chip": {
         "failed": {

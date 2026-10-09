@@ -33,11 +33,18 @@ describe("LoopScopeBar", () => {
     })
 
     it("shouldHideJumpWhenNoFailureIsKnownAndOfferRetryOnFailure", async () => {
-        const wrapper = mountBar({failed: true})
+        const wrapper = mountBar({failure: "unknown"})
 
         expect(wrapper.find("[data-test='loop-scope-jump']").exists()).toBe(false)
         await wrapper.find("[data-test='loop-scope-retry']").trigger("click")
         expect(wrapper.emitted("retry")).toHaveLength(1)
+    })
+
+    it("shouldExplainAForbiddenScopeWithoutOfferingARetry", () => {
+        const wrapper = mountBar({failure: "forbidden"})
+
+        expect(wrapper.find("[data-test='loop-scope-forbidden']").text()).toContain("do not have access")
+        expect(wrapper.find("[data-test='loop-scope-retry']").exists()).toBe(false)
     })
 
     it("shouldReflectTheFailuresOnlyToggleInAriaPressed", () => {

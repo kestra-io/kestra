@@ -474,7 +474,8 @@
         "task-runs": "{runs} 回の実行 | {runs} 回の実行",
         "task-runs-failed": "{runs} 回の実行 · {failed} 件失敗 | {runs} 回の実行 · {failed} 件失敗",
         "retry": "再試行",
-        "load-more": "さらに読み込む"
+        "load-more": "さらに読み込む",
+        "retry-loading": "イテレーションの読み込みを再試行"
       },
       "loop-chip": {
         "failed": {

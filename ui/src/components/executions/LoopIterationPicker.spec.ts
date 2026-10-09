@@ -67,6 +67,17 @@ describe("LoopIterationPicker", () => {
         expect(rows[0].querySelector("[data-test='loop-picker-number']")?.textContent).toBe("#2")
         expect(rows[0].querySelector("[data-test='loop-picker-value']")?.textContent).toBe("AMER")
         expect(rows[0].className).toContain("loop-picker-option-active")
+        expect(rows[0].getAttribute("aria-current")).toBe("true")
+        expect(document.body.querySelector("[data-test='loop-picker-all']")?.hasAttribute("aria-current")).toBe(false)
+    })
+
+    it("shouldMarkAllIterationsAsCurrentWhenNothingIsScoped", async () => {
+        mocks.search.mockResolvedValue(page([iteration(2, "AMER")]))
+
+        await openPicker(lane({}))
+
+        expect(document.body.querySelector("[data-test='loop-picker-all']")?.getAttribute("aria-current")).toBe("true")
+        expect(document.body.querySelector("[data-test='loop-picker-option']")?.hasAttribute("aria-current")).toBe(false)
     })
 
     it("shouldLoadMoreFailedIterationsBeyondTheFirstPage", async () => {

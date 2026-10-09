@@ -80,7 +80,7 @@
                     :entries="loopScoping.scopeTrail.value"
                     :canJumpToFailure="Boolean(loopScoping.firstFailedLaneUid())"
                     :failuresOnly="isFailuresOnly(collapsedLanes)"
-                    :failed="loopScoping.scopeFailure.value"
+                    :failure="loopScoping.scopeFailure.value"
                     @clear="loopScoping.clearScope()"
                     @retry="loopScoping.retryScope()"
                     @jump-to-failure="jumpToFirstFailure"

@@ -81,8 +81,9 @@
         DRAGGING_NODE_INJECTION_KEY,
         LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
         LOOP_LANES_INJECTION_KEY,
+        SCOPED_LONGEST_DURATIONS_INJECTION_KEY,
     } from "../injectionKeys"
-    import {memoizedLongestTaskRunDuration} from "../misc/durationBreakdown"
+    import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
     import {loopTaskContext} from "../utils/loopOutcome"
 
     import PlayIcon from "vue-material-design-icons/Play.vue"
@@ -192,6 +193,7 @@
     const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
     const longestTaskRunDuration = inject(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => 0))
     const loopLanes = inject(LOOP_LANES_INJECTION_KEY, undefined)
+    const scopedLongestDurations = inject(SCOPED_LONGEST_DURATIONS_INJECTION_KEY, undefined)
 
     function onCardClick() {
         const task = props.data.node.task
@@ -274,7 +276,7 @@
 
     const durationDenominator = computed(() =>
         taskExecution.value && taskExecution.value !== execution?.value
-            ? memoizedLongestTaskRunDuration(taskExecution.value.taskRunList ?? [])
+            ? scopedLongestDurations?.value[taskExecution.value.id ?? ""] ?? computeLongestTaskRunDuration(taskExecution.value.taskRunList ?? [])
             : longestTaskRunDuration.value,
     )
 

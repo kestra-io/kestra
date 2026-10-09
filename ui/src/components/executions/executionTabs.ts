@@ -2,12 +2,10 @@ import type {RouteMeta, RouteRecordRaw} from "vue-router"
 import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
 import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 import {extraExecutionTabRoutes} from "override/components/executions/executionTabsExtension"
-
 import {storageKeys} from "../../utils/constants"
+
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
-
-/** localStorage key remembering the last tab the user viewed, used as the redirect fallback below. */
 
 /** Where an execution opens with no preference set. Shared by the redirect, `submitTask` and Settings. */
 export const DEFAULT_EXECUTION_TAB = "gantt"

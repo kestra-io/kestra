@@ -25,8 +25,12 @@
                         <code class="vars-key">{{ item.key }}</code>
 
                         <div class="vars-value">
-                            <KsDateAgo v-if="item.date" :inverted="true" :date="item.value" />
-                            <template v-else-if="item.subflow">
+                            <KsDateAgo
+                                v-if="item.date && typeof item.value === 'string'"
+                                :inverted="true"
+                                :date="item.value"
+                            />
+                            <template v-else-if="item.subflow && typeof item.value === 'string'">
                                 {{ item.value }}
                                 <SubFlowLink :executionId="item.value" />
                             </template>
@@ -49,10 +53,9 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import {useExecutionsStore} from "../../stores/executions"
 
-
     interface VariableRow {
         key: string;
-        value: unknown;
+        value: string | object | boolean | number;
         date?: boolean;
         subflow?: boolean;
     }

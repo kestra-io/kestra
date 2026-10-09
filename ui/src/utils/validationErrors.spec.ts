@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {errorsByFieldPath, errorsOnFieldOrItems, fieldPathOf, hasErrorUnder} from "../../../src/utils/validationErrors"
+import {errorsByFieldPath, errorsOnFieldOrItems, fieldPathOf, hasErrorUnder} from "./validationErrors"
 
 describe("fieldPathOf", () => {
     it("should render list indices in brackets and keys in dots", () => {

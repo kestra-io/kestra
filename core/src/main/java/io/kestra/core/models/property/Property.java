@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
@@ -57,6 +58,8 @@ public class Property<T> {
     private final boolean skipCache;
     private String expression;
     private T value;
+    // The T of the field this property was read into, when Jackson knows it.
+    private transient JavaType declaredType;
 
     private Property(String expression) {
         this(expression, false);
@@ -69,6 +72,18 @@ public class Property<T> {
 
     String getExpression() {
         return expression;
+    }
+
+    // The literal converted to its declared type, as rendering would; null when that is not possible.
+    Object literalValue() {
+        if (declaredType == null) {
+            return null;
+        }
+        try {
+            return deserialize(expression, declaredType);
+        } catch (IllegalVariableEvaluationException e) {
+            return null;
+        }
     }
 
     /**
@@ -314,12 +329,28 @@ public class Property<T> {
     /**
      * Jackson 2 counterpart of {@link Jackson3PropertyDeserializer}.
      */
-    static class PropertyDeserializer extends StdDeserializer<Property<?>> {
+    static class PropertyDeserializer extends StdDeserializer<Property<?>> implements ContextualDeserializer {
         @Serial
         private static final long serialVersionUID = 1L;
 
+        private final JavaType declaredType;
+
         protected PropertyDeserializer() {
+            this(null);
+        }
+
+        private PropertyDeserializer(JavaType declaredType) {
             super(Property.class);
+            this.declaredType = declaredType;
+        }
+
+        @Override
+        public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) {
+            JavaType type = ctxt.getContextualType();
+            if (type == null && property != null) {
+                type = property.getType();
+            }
+            return new PropertyDeserializer(type != null && type.hasRawClass(Property.class) ? type.containedType(0) : null);
         }
 
         @Override
@@ -334,7 +365,9 @@ public class Property<T> {
             } else {
                 s = p.getValueAsString();
             }
-            return new Property<>(s);
+            Property<?> property = new Property<>(s);
+            property.declaredType = declaredType;
+            return property;
         }
     }
 

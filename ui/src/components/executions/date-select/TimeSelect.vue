@@ -11,7 +11,7 @@
         <template #content>
             <span v-if="allowInfinite">{{ $t('datepicker.leave empty for infinite') }}</span>
             <span v-else>{{ $t('datepicker.duration example') }}</span>
-            <div class="mt-2 duration-examples">
+            <div class="duration-examples">
                 <strong>{{ $t("datepicker.examples") }}</strong>
                 <table class="duration-table">
                     <tbody>
@@ -22,7 +22,13 @@
                 </table>
             </div>
         </template>
-        <KsInput class="mt-2" data-test="custom-duration" :modelValue="timeRange" :placeholder="$t('datepicker.custom duration')" @update:model-value="onTimeRangeChange" />
+        <KsInput
+            class="custom-duration"
+            data-test="custom-duration"
+            :modelValue="timeRange"
+            :placeholder="$t('datepicker.custom duration')"
+            @update:model-value="onTimeRangeChange"
+        />
     </KsTooltip>
 </template>
 
@@ -119,7 +125,12 @@
 
 <style scoped lang="scss">
 .duration-examples {
+    margin-top: var(--ks-spacing-2);
     line-height: 1.5;
+}
+
+.custom-duration {
+    margin-top: var(--ks-spacing-2);
 }
 
 .duration-table {

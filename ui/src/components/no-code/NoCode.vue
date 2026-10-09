@@ -62,8 +62,8 @@
     import {useFlowFields} from "./utils/useFlowFields"
     import {debounce} from "@kestra-io/design-system"
     import {NoCodeProps} from "../flows/noCodeTypes"
-    import {useFlowStore} from "../../stores/flow"
-    import {usePluginsStore} from "../../stores/plugins"
+    import {useFlowStore, type ParsedFlow} from "../../stores/flow"
+    import {usePluginsStore, type JsonSchemaDef} from "../../stores/plugins"
     import {useKeyboardSave} from "./utils/useKeyboardSave"
     import {deepEqual} from "../../utils/utils"
     import {useScrollMemory} from "../../composables/useScrollMemory"
@@ -71,12 +71,12 @@
     import {LIST_FIELDS} from "./components/tasks/getTaskComponent"
     const props = defineProps<NoCodeProps>()
 
-    function shouldMerge(schema: any): boolean {
-        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf
+    function shouldMerge(schema?: JsonSchemaDef): boolean {
+        const complexObject = Boolean((schema?.type && ["object", "array"].includes(schema.type)) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf)
         return !complexObject
     }
 
-    function onTaskUpdateField(key: string, val: any) {
+    function onTaskUpdateField(key: string, val: unknown) {
         const realValue = val === null || val === undefined ? undefined :
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
@@ -117,9 +117,9 @@
     const timeout = ref()
 
     const editorUpdate = (source: string) => {
-        let parsedSource: any = {}
+        let parsedSource: ParsedFlow = {}
         try {
-            parsedSource = YAML_UTILS.parse(source)
+            parsedSource = YAML_UTILS.parse<ParsedFlow>(source) ?? {}
         } catch {
             return
         }

@@ -13,7 +13,7 @@ const schema = {
     required: ["enabled"],
 }
 
-function mountObject(modelValue: Record<string, unknown> | undefined) {
+function mountObject(modelValue: Record<string, unknown> | null | undefined) {
     return i18nMount(TaskObject, {
         props: {schema, modelValue, root: "taskCache"},
         global: {plugins: [KestraDesignSystem]},
@@ -23,6 +23,13 @@ function mountObject(modelValue: Record<string, unknown> | undefined) {
 describe("TaskObject required-field indicator", () => {
     test("does not flag a required field inside an optional object that is not set", () => {
         const wrapper = mountObject(undefined)
+
+        expect(wrapper.find("[data-test='field-required-missing']").exists()).toBe(false)
+        expect(wrapper.find("[data-required-path]").exists()).toBe(false)
+    })
+
+    test("does not flag a required field inside an object that is null", () => {
+        const wrapper = mountObject(null)
 
         expect(wrapper.find("[data-test='field-required-missing']").exists()).toBe(false)
         expect(wrapper.find("[data-required-path]").exists()).toBe(false)

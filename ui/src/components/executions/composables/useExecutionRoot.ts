@@ -63,7 +63,7 @@ export function useExecutionRoot() {
 
     const follow = () => {
         previousExecutionId.value = route.params.id as string
-        executionsStore.followExecution(route.params as any, t)
+        executionsStore.followExecution({id: route.params.id as string}, t)
     }
 
     // The bar is derived from the canonical tab/route definitions (executionTabs.ts):

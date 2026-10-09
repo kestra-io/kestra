@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {effectScope, nextTick, ref} from "vue"
-import {AUTO_REFRESH_MS, useLoopMergedLogs} from "./useLoopMergedLogs"
+import {AUTO_REFRESH_MS, POST_FINISH_REFRESH_DELAYS_MS, useLoopMergedLogs} from "./useLoopMergedLogs"
 
 const collectFailedTargets = vi.hoisted(() => vi.fn())
 const collectScopedTargets = vi.hoisted(() => vi.fn())
@@ -70,8 +70,40 @@ describe("useLoopMergedLogs", () => {
         await vi.advanceTimersByTimeAsync(0)
 
         expect(searchMergedLogs).toHaveBeenCalledTimes(1)
-        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS * 2)
-        expect(searchMergedLogs).toHaveBeenCalledTimes(1)
+        scope.stop()
+    })
+
+    it("shouldKeepRefreshingAfterFinishUntilALateIndexedLineAppears", async () => {
+        const {options, logs, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        searchMergedLogs.mockClear()
+        let calls = 0
+        searchMergedLogs.mockImplementation(async () => {
+            calls++
+            const results = calls >= 3 ? [{message: "b"}, {message: "d"}] : [{message: "b"}]
+            return {results, total: results.length, nextCursor: undefined, cursorMode: false}
+        })
+
+        options.running.value = false
+        await vi.advanceTimersByTimeAsync(0)
+        expect(logs.lines.value.map((line) => line.message)).toEqual(["b"])
+
+        await vi.advanceTimersByTimeAsync(POST_FINISH_REFRESH_DELAYS_MS[0] + POST_FINISH_REFRESH_DELAYS_MS[1])
+
+        expect(logs.lines.value.map((line) => line.message)).toEqual(["b", "d"])
+        scope.stop()
+    })
+
+    it("shouldStopRefreshingAfterTheFinishBackoffIsExhausted", async () => {
+        const {options, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        options.running.value = false
+        await vi.advanceTimersByTimeAsync(POST_FINISH_REFRESH_DELAYS_MS.reduce((a, b) => a + b, 0))
+        searchMergedLogs.mockClear()
+
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS * 3)
+
+        expect(searchMergedLogs).not.toHaveBeenCalled()
         scope.stop()
     })
 

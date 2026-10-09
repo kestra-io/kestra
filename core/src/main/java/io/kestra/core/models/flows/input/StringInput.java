@@ -3,7 +3,7 @@ package io.kestra.core.models.flows.input;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.utils.RegexUtils;
-import io.kestra.core.validations.Regex;
+import io.kestra.core.validations.SafeRegexValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -18,7 +18,7 @@ public class StringInput extends Input<String> {
     @Schema(
         title = "Regular expression validating the value."
     )
-    @Regex
+    @SafeRegexValidation
     String validator;
 
     @Override

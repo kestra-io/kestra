@@ -13,6 +13,7 @@ import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
 @Singleton
+@SuppressWarnings("removal")
 public class RegexValidator implements ConstraintValidator<Regex, String> {
     @Override
     public boolean isValid(

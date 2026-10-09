@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {parseLoopScope, scopedExecutionId, serializeLoopScope, withScopedIteration} from "../../../src/utils/loopScope"
+import {parseLoopScope, scopedExecutionId, serializeLoopScope, withScopedIteration} from "./loopScope"
 
 describe("loop scope query", () => {
     it("shouldParseNestedScopesInOrder", () => {

@@ -75,6 +75,8 @@ export interface KestraHttpError extends Error {
         config: {method: string; url: string}
     }
     config?: {method: string; url: string}
+    /** Set when the request left this page's origin: a 401 from elsewhere is not a lost session. */
+    crossOrigin?: boolean
     __kestra_handled?: boolean
 }
 
@@ -190,7 +192,7 @@ export function setupKestraHttp(
                 return await fn(...args)
             } catch (error) {
                 const kestraError = error as KestraHttpError
-                if (kestraError.status === 401) {
+                if (kestraError.status === 401 && !kestraError.crossOrigin) {
                     if (!isLoggedIn()) {
                         const shouldRetry = await onUnauthorized(navigateToLogin, kestraError)
                         if (shouldRetry) return fn(...args)
@@ -266,6 +268,7 @@ export function setupKestraHttp(
             },
         }
         kestraError.config = kestraError.response.config
+        if (request && !isSameOrigin(request)) kestraError.crossOrigin = true
 
         // A 400 rejects like any other error, so `instanceof Error`, `.status` and `.response` all hold on
         // the status the bulk endpoints use. handleErrorCentrally still keeps it out of the global toast.

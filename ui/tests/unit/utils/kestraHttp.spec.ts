@@ -328,6 +328,22 @@ describe("setupKestraHttp 401 retry", () => {
         expect(get).toHaveBeenCalledTimes(2)
     })
 
+    it("leaves a 401 from another origin alone instead of treating it as a lost session", async () => {
+        const unauthorized = Object.assign(new Error("401"), {status: 401})
+        const get = vi.fn().mockRejectedValue(unauthorized)
+        fakeAxiosClient.get = get
+        const onUnauthorized = vi.fn().mockResolvedValue(true)
+
+        setupKestraHttp({}, {isLoggedIn: () => false, onUnauthorized})
+        const onError = fakeClient.interceptors.error.use.mock.calls.at(-1)![0]
+        const catalog = "https://api.kestra.io/v1/blueprints"
+        onError(unauthorized, {status: 401, statusText: "Unauthorized", url: catalog, headers: {forEach: () => {}}}, new Request(catalog), {})
+
+        await expect(fakeAxiosClient.get(catalog)).rejects.toBe(unauthorized)
+        expect(onUnauthorized).not.toHaveBeenCalled()
+        expect(get).toHaveBeenCalledTimes(1)
+    })
+
     it("does not replay a 401 for a session that was already signed in when the request left", async () => {
         const unauthorized = Object.assign(new Error("401"), {status: 401})
         const get = vi.fn().mockRejectedValue(unauthorized)

@@ -233,4 +233,45 @@ class DateFilterTest {
             """);
     }
 
+    @Test
+    void shouldRenderNegativeMillisTimestamp() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            """
+                {{ -1234567890123 | date(format="iso_milli", timeZone="UTC") }}
+                {{ 1234567890123 | date(format="iso_milli", timeZone="UTC") }}
+                """,
+            Map.of()
+        );
+
+        assertThat(render).isEqualTo("""
+            1930-11-18T00:28:29.877Z
+            2009-02-13T23:31:30.123Z
+            """);
+    }
+
+    @Test
+    void shouldKeepOffsetWhenNoTimeZoneGiven() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            """
+                {{ "2025-08-26T15:00:00+05:45" | date("yyyyMMddHHmmss") }}
+                {{ zoned | date("yyyyMMddHHmmss") }}
+                """,
+            Map.of("zoned", ZonedDateTime.parse("2025-08-26T15:00:00+05:45[Asia/Kathmandu]"))
+        );
+
+        assertThat(render).isEqualTo("""
+            20250826150000
+            20250826150000
+            """);
+    }
+
+    @Test
+    void shouldKeepOffsetInDateAddWhenNoTimeZoneGiven() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ \"2025-08-26T15:00:00+05:45\" | dateAdd(1, \"HOURS\") }}",
+            Map.of()
+        );
+
+        assertThat(render).isEqualTo("2025-08-26T16:00:00.000000+05:45");
+    }
 }

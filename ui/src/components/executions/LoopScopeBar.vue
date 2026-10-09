@@ -4,7 +4,7 @@
         <span class="loop-scope-trail" data-test="loop-scope-trail">
             <template v-if="entries.length">
                 <KsTag v-for="entry in entries" :key="entry.taskId" size="small">
-                    {{ entry.taskId }}: #{{ entry.number }}
+                    {{ entry.taskId }}: {{ iterationLabel($t, entry.number, entry.value) }}
                 </KsTag>
             </template>
             <KsTag v-else size="small">{{ $t("topology-graph.loop.whole-execution") }}</KsTag>
@@ -29,10 +29,10 @@
 </template>
 
 <script setup lang="ts">
-    import type {LoopScopeEntry} from "../../utils/loopScope"
+    import {iterationLabel, type LoopScopeTrailEntry} from "../../utils/loopScope"
 
     defineProps<{
-        entries: LoopScopeEntry[];
+        entries: LoopScopeTrailEntry[];
         canJumpToFailure: boolean;
         failuresOnly: boolean;
     }>()

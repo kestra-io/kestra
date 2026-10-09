@@ -19,6 +19,7 @@ export interface LoopLaneData {
     taskRunStateCounts?: TaskRunStateCounts;
     loopIterationCounts?: TaskRunStateCounts;
     scopedNumber?: number;
+    scopedValue?: string;
     parentLaneUid?: string;
     parentTaskId?: string;
     parentScoped: boolean;

@@ -104,6 +104,7 @@
     import MenuDown from "vue-material-design-icons/MenuDown.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import {iterationLabel} from "../../utils/loopScope"
     import {
         ITERATIONS_PAGE_SIZE,
         LoopIterationError,
@@ -146,7 +147,7 @@
     const triggerLabel = computed(() =>
         props.lane.scopedNumber === undefined
             ? t("topology-graph.loop.all-iterations")
-            : t("topology-graph.loop.iteration-number", {number: props.lane.scopedNumber}),
+            : iterationLabel(t, props.lane.scopedNumber, props.lane.scopedValue),
     )
 
     const failedCount = computed(() => props.lane.terminatedIterations?.FAILED ?? 0)

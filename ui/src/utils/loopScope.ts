@@ -37,3 +37,11 @@ export function scopedExecutionId(nodeUid: string, executionsByPath: Record<stri
         .sort((a, b) => b.length - a.length)[0]
     return path ? executionsByPath[path]?.id : undefined
 }
+
+export interface LoopScopeTrailEntry extends LoopScopeEntry {
+    value?: string;
+}
+
+export function iterationLabel(t: (key: string, named?: Record<string, unknown>) => string, number: number, value?: string): string {
+    return value ? t("topology-graph.loop.iteration-label", {number, value}) : t("topology-graph.loop.iteration-fallback", {number})
+}

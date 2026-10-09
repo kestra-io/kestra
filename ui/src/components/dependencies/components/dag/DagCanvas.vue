@@ -54,7 +54,7 @@
     import {computeTrace, traceEdgeKey} from "../../utils/dagTrace"
     import {DAG_CARD, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
     import {ASSET, nodesOf, edgesOf} from "../../utils/types"
-    import type {Element} from "../../utils/types"
+    import type {Element, DbtTestFields} from "../../utils/types"
 
     const props = defineProps<{
         elements: Element[];
@@ -113,7 +113,7 @@
             return []
         }
 
-        const metadata = node.metadata as {
+        const metadata = node.metadata as DbtTestFields & {
             assetType?: string;
             producer?: string;
             status?: string;
@@ -138,6 +138,9 @@
                 assetType: isAsset ? metadata.assetType : undefined,
                 status: isAsset ? (metadata.status ?? "unknown") : "unknown",
                 updated: metadata.updated,
+                dbtTestStatus: isAsset ? metadata.dbtTestStatus : undefined,
+                dbtTestsTotal: isAsset ? metadata.dbtTestsTotal : undefined,
+                dbtTestsFailed: isAsset ? metadata.dbtTestsFailed : undefined,
             },
         }]
     }))

@@ -304,15 +304,17 @@ public abstract class AbstractWorker extends AbstractService {
 
     /**
      * Stop the worker immediately, without waiting for job completion.
+     * <p>
+     * Killing the threads is not enough. The process-wide liveness heartbeat keeps
+     * refreshing whichever worker is still registered as {@code RUNNING}, so a worker
+     * that only stops its own threads stays alive to the coordinator and its triggers
+     * are never released. {@link #stop()} with graceful termination skipped publishes
+     * {@code TERMINATED_FORCED}, which stops that heartbeat.
      */
     public void stopNow() {
         log.info("Stopping now");
-        this.disposables.forEach(Disposable::dispose);
-
-        this.jobFetcher.stop(Duration.ZERO);
-        stopAllWorkerIOThreads();
-        this.workerJobExecutor.shutdownNow();
-        log.info("Stopped");
+        skipGracefulTermination(true);
+        stop();
     }
 
     private void stopAllWorkerIOThreads() {

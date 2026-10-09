@@ -101,7 +101,5 @@
   "src/utils/unsavedChange.ts": 1,
   "src/utils/utils.ts": 14,
   "tests/unit/components/logs/logsWrapperPaginationWiring.spec.ts": 2,
-  "tests/unit/leakGuard.ts": 1,
-  "tests/unit/monacoCssEscapePolyfill.ts": 2,
   "tests/unit/setup.ts": 6
 }

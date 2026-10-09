@@ -28,6 +28,7 @@ import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.ResumeFromBreakpoint;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -324,7 +325,9 @@ public class ExecutionService {
             .filter(Objects::nonNull)
             .toList();
 
-        ExecutionMetadata metadata = execution.getMetadata().withTaskRunStatisticPlus(TaskRunStatistic.of(discarded));
+        ExecutionMetadata metadata = execution.getMetadata()
+            .withTaskRunStatisticPlus(TaskRunStatistic.of(discarded))
+            .withTaskRunStateCountsPlus(TaskRunStateCounts.of(discarded));
 
         return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);
     }
@@ -927,7 +930,7 @@ public class ExecutionService {
 
     private void notifyLoopParent(Execution execution, State.Type state) throws QueueException {
         if (execution.getKind() == ExecutionKind.LOOP) {
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), state, null, null, null));
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), state, null, null, null, null));
         }
     }
 
@@ -1914,7 +1917,7 @@ public class ExecutionService {
      */
     public Execution suspendAtLoopBreakpoint(Execution execution) throws QueueException {
         if (execution.getKind() == ExecutionKind.LOOP) {
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.BREAKPOINT, null, null, null));
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.BREAKPOINT, null, null, null, null));
         }
         return execution.withState(State.Type.BREAKPOINT);
     }

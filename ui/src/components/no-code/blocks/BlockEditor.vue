@@ -265,7 +265,6 @@
         props,
         flowYaml,
         validationIssuesByTask,
-        inlineEditPanel,
         createTask: onCreateBlockInList,
         editTask: (parentPath, blockSchemaPath, refPath, split) => emit("editTask", parentPath, blockSchemaPath, refPath, split),
         closeTask: () => emit("closeTask"),

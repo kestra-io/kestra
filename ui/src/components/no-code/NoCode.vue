@@ -152,7 +152,6 @@
         },
     )
 
-    const panel = ref()
     const pluginsStore = usePluginsStore()
 
     provide(FULL_SOURCE_INJECTION_KEY, computed(() => lastValidFlowYaml.value))

@@ -18,9 +18,6 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     return {
         ...actual,
         KsMarkdown: {name: "KsMarkdown", props: ["content"], template: "<div />"},
-        // The real KsEditor is Monaco and doesn't run in jsdom; this mirrors its own
-        // `monaco-editor-hidden-synced-textarea` accessibility/testing hook so a jump that
-        // must focus a string field's editor has a real, focusable element to land on.
         KsEditor: {name: "KsEditor", props: ["modelValue", "path", "schemaType", "lang", "readOnly"], template: "<div data-test=\"ks-editor\"><textarea data-test=\"monaco-editor-hidden-synced-textarea\" /></div>"},
     }
 })

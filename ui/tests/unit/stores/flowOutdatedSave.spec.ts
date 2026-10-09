@@ -1,12 +1,15 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
+import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import {KsMessageBox} from "@kestra-io/design-system"
+import type {Flow} from "../../../src/stores/flow"
 
 const axiosGet = vi.fn()
 const axiosPost = vi.fn()
 const axiosPut = vi.fn()
-const validateFlows = vi.fn()
-const updateFlow = vi.fn()
+const validateFlows = vi.fn<typeof FlowsAPI.validateFlows>()
+const updateFlow = vi.fn<typeof FlowsAPI.updateFlow>()
+const CONFIRMED = "confirm" as unknown as Awaited<ReturnType<typeof KsMessageBox>>
 
 vi.mock("nprogress", () => ({
     start: vi.fn(),
@@ -37,8 +40,8 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 
 // validateFlow()/saveFlow() go through the SDK's flows submodule, not useClient()'s axios instance
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
-    validateFlows: (...args: any[]) => validateFlows(...args),
-    updateFlow: (...args: any[]) => updateFlow(...args),
+    validateFlows: (...args: Parameters<typeof FlowsAPI.validateFlows>) => validateFlows(...args),
+    updateFlow: (...args: Parameters<typeof FlowsAPI.updateFlow>) => updateFlow(...args),
 }))
 
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
@@ -60,7 +63,8 @@ async function setupOutdatedStore() {
     const {useFlowStore} = await import("../../../src/stores/flow")
     const store = useFlowStore()
 
-    store.flow = {id: "my-flow", namespace: "my.ns", revision: 1} as any
+    const flow: Flow = {id: "my-flow", namespace: "my.ns", revision: 1, source: FLOW_YAML}
+    store.flow = flow
     store.flowYaml = FLOW_YAML
     store.flowYamlOrigin = ""
     store.isCreating = false
@@ -79,9 +83,18 @@ describe("flow store outdated save confirmation", () => {
         updateFlow.mockReset()
 
         // /flows/validate -> backend flags the in-progress edit as outdated
-        validateFlows.mockResolvedValue([{outdated: true}])
+        validateFlows.mockResolvedValue([{index: 0, outdated: true}])
         // /flows/{ns}/{id} (save) -> succeeds
-        updateFlow.mockResolvedValue({id: "my-flow", namespace: "my.ns", revision: 2, source: FLOW_YAML})
+        updateFlow.mockResolvedValue({
+            id: "my-flow",
+            namespace: "my.ns",
+            revision: 2,
+            source: FLOW_YAML,
+            disabled: false,
+            draft: false,
+            deleted: false,
+            tasks: [],
+        })
 
         setActivePinia(createPinia())
         localStorage.clear()
@@ -99,7 +112,8 @@ describe("flow store outdated save confirmation", () => {
     })
 
     it("overwrites the outdated revision when the prompt is confirmed", async () => {
-        vi.mocked(KsMessageBox).mockResolvedValue("confirm" as any)
+        // Element Plus types this resolved value as an intersection that no literal test value satisfies.
+        vi.mocked(KsMessageBox).mockResolvedValue(CONFIRMED)
 
         const store = await setupOutdatedStore()
         const outcome = await store.saveAll()
@@ -110,7 +124,7 @@ describe("flow store outdated save confirmation", () => {
     })
 
     it("does not prompt when the edited revision is up to date", async () => {
-        validateFlows.mockResolvedValue([{}])
+        validateFlows.mockResolvedValue([{index: 0, outdated: false}])
 
         const store = await setupOutdatedStore()
         const outcome = await store.saveAll()
@@ -133,7 +147,7 @@ describe("flow store outdated save confirmation", () => {
     })
 
     it("overwrites the outdated revision via save() when the prompt is confirmed", async () => {
-        vi.mocked(KsMessageBox).mockResolvedValue("confirm" as any)
+        vi.mocked(KsMessageBox).mockResolvedValue(CONFIRMED)
 
         const store = await setupOutdatedStore()
         const outcome = await store.save()

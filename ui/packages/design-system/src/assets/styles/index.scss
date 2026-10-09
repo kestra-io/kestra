@@ -79,7 +79,7 @@ body {
 
 a {
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: color var(--ks-duration-base) ease;
 }
 
 b {

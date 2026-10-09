@@ -1,5 +1,5 @@
-import {describe, it, expect, vi} from "vitest"
-import {buildCommandMenuItems, type BlockCommandMenuContext} from "./blockCommandMenu"
+import {afterEach, describe, it, expect, vi} from "vitest"
+import type {BlockCommandMenuContext} from "./blockCommandMenu"
 
 function makeContext(): BlockCommandMenuContext {
     const noop = vi.fn()
@@ -27,13 +27,22 @@ function makeContext(): BlockCommandMenuContext {
     } as unknown as BlockCommandMenuContext
 }
 
-describe("buildCommandMenuItems shortcuts", () => {
-    it("renders modifier shortcuts with the platform glyph, like the footer and help", () => {
-        // Given
-        const items = buildCommandMenuItems(makeContext())
+async function shortcutsFor(platform: string) {
+    vi.resetModules()
+    vi.stubGlobal("navigator", {platform, userAgent: platform})
+    const {buildCommandMenuItems} = await import("./blockCommandMenu")
+    const items = buildCommandMenuItems(makeContext())
+    return Object.fromEntries(items.map(item => [item.id, item.shortcut]))
+}
 
-        // When
-        const shortcuts = Object.fromEntries(items.map(item => [item.id, item.shortcut]))
+describe("buildCommandMenuItems shortcuts", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    it("renders modifier shortcuts with Ctrl and Shift words on non-Mac platforms", async () => {
+        // Given / When
+        const shortcuts = await shortcutsFor("Win32")
 
         // Then
         expect(shortcuts).toMatchObject({
@@ -42,6 +51,20 @@ describe("buildCommandMenuItems shortcuts", () => {
             paste: "Ctrl+V",
             save: "Ctrl+S",
             "insert-before": "Shift+A",
+        })
+    })
+
+    it("renders modifier shortcuts with Mac glyphs on Mac", async () => {
+        // Given / When
+        const shortcuts = await shortcutsFor("MacIntel")
+
+        // Then
+        expect(shortcuts).toMatchObject({
+            copy: "⌘C",
+            cut: "⌘X",
+            paste: "⌘V",
+            save: "⌘S",
+            "insert-before": "⇧A",
         })
     })
 })

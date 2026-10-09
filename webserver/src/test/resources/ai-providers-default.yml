@@ -1,0 +1,14 @@
+kestra:
+  ai:
+    providers:
+      - id: gemini-not-default
+        type: gemini
+        configuration:
+          model-name: gemini-2.5-flash
+          api-key: fake-key
+      - id: gemini-default
+        type: gemini
+        default: true
+        configuration:
+          model-name: gemini-2.5-flash
+          api-key: fake-key

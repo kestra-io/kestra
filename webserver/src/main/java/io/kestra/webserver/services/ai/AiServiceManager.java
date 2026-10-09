@@ -103,7 +103,7 @@ public class AiServiceManager {
                 log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
                 continue;
             }
-            if (provider.isDefault()) {
+            if (provider.isDefaultProvider()) {
                 defaultProviderId = provider.id();
             }
             aiServices.put(provider.id(), aiService);
@@ -168,7 +168,7 @@ public class AiServiceManager {
     public AiServiceInterface getDefaultAiService() {
         if (providersConfiguration.providers() != null) {
             for (AiProviderConfiguration provider : providersConfiguration.providers()) {
-                if (provider.isDefault()) {
+                if (provider.isDefaultProvider()) {
                     return aiServices.get(provider.id());
                 }
             }
@@ -210,7 +210,7 @@ public class AiServiceManager {
             provider.id(),
             provider.displayName(),
             provider.type(),
-            provider.isDefault(),
+            provider.isDefaultProvider(),
             configuration,
             provider.systemPrompt()
         );

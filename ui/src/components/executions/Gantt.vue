@@ -97,6 +97,7 @@
                                             </div>
                                             <div
                                                 class="task-label"
+                                                data-test="gantt-task-label"
                                                 :style="{'--depth': item.depth || 0}"
                                             >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
@@ -152,12 +153,12 @@
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
                                                 <div class="task-details__inner p-2">
-                                                    <TaskRunDetails
-                                                        :taskRunId="item.id"
-                                                        :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                                    <GanttTaskLogs
+                                                        :taskRun="item.task"
+                                                        :taskType="taskTypeByTaskRunId[item.id]"
+                                                        :execution="execution"
+                                                        :flow="executionsStore.flow"
                                                         :levelFilter="effectiveSelectedLogLevel"
-                                                        hideTaskHeader
-                                                        :targetFlow="executionsStore.flow"
                                                         class="mh-100 mx-3"
                                                     />
                                                 </div>
@@ -216,7 +217,7 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {usePluginsStore} from "../../stores/plugins"
     import {useGanttExecutionFilter} from "../filter/configurations/ganttExecutionFilter"
-    import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import GanttTaskLogs from "./GanttTaskLogs.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import ExecutionProgress from "./ExecutionProgress.vue"
@@ -263,7 +264,6 @@
         task: TaskRun;
         flowId?: string;
         namespace?: string;
-        executionId?: string;
         attempts: number;
         depth: number | undefined;
         parentEndPercent?: number;
@@ -516,7 +516,6 @@
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,
-                executionId: task.outputs?.executionId as string | undefined,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
                 parentEndPercent: barPercents.parentEndPercent,

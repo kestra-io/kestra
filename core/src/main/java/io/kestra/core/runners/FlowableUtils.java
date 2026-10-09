@@ -428,6 +428,8 @@ public class FlowableUtils {
                             {
                                 if (obj instanceof String s) {
                                     return s;
+                                } else if (obj instanceof Integer || obj instanceof Long || obj instanceof Boolean) {
+                                    return obj.toString();
                                 } else if (obj == null) {
                                     throw new IllegalVariableEvaluationException(
                                         "Found a null value inside the iteration values=" + serializeAsString(values)

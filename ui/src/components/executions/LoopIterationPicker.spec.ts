@@ -57,6 +57,18 @@ describe("LoopIterationPicker", () => {
         expect(mocks.search).toHaveBeenNthCalledWith(2, expect.objectContaining({excludeState: "FAILED"}))
     })
 
+    it("shouldOfferAllIterationsFirstAndLabelRowsWithANumberAndValue", async () => {
+        mocks.search.mockResolvedValue(page([iteration(2, "AMER")]))
+
+        await openPicker(lane({scopedNumber: 2}))
+
+        expect(body("[data-test='loop-picker-all']")).toEqual(["All iterations"])
+        const rows = [...document.body.querySelectorAll("[data-test='loop-picker-option']")]
+        expect(rows[0].querySelector("[data-test='loop-picker-number']")?.textContent).toBe("#2")
+        expect(rows[0].querySelector("[data-test='loop-picker-value']")?.textContent).toBe("AMER")
+        expect(rows[0].className).toContain("loop-picker-option-active")
+    })
+
     it("shouldLoadMoreFailedIterationsBeyondTheFirstPage", async () => {
         const first = Array.from({length: 50}, (_, index) => iteration(index + 1, `V${index}`, "FAILED"))
         mocks.search

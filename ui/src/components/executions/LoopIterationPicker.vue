@@ -25,15 +25,16 @@
                     :aria-label="$t('topology-graph.loop.search-placeholder')"
                 />
                 <KsScrollbar maxHeight="15rem">
-                    <KsButton
-                        v-if="lane.scopedNumber !== undefined"
-                        text
+                    <button
+                        type="button"
                         class="loop-picker-option"
+                        :class="{'loop-picker-option-active': lane.scopedNumber === undefined}"
                         data-test="loop-picker-all"
                         @click="emit('clear')"
                     >
-                        {{ $t("topology-graph.loop.all-iterations") }}
-                    </KsButton>
+                        <KsIcon size="xs" class="loop-picker-check"><Check /></KsIcon>
+                        <span class="loop-picker-value">{{ $t("topology-graph.loop.all-iterations") }}</span>
+                    </button>
                     <KsAlert v-if="failure" type="error" :closable="false" data-test="loop-picker-failure">
                         {{ $t(`topology-graph.loop.failure-${failure}`) }}
                         <KsButton v-if="failure === 'unknown'" link size="small" data-test="loop-picker-retry" @click="load()">
@@ -46,19 +47,20 @@
                             <KsText size="small" class="loop-picker-group" :data-test="`loop-picker-group-${group.key}`">
                                 {{ group.label }}
                             </KsText>
-                            <KsButton
+                            <button
                                 v-for="iteration in group.items"
                                 :key="iteration.id"
-                                text
+                                type="button"
                                 class="loop-picker-option"
                                 :class="{'loop-picker-option-active': iteration.number === lane.scopedNumber}"
                                 data-test="loop-picker-option"
                                 @click="select(iteration.number)"
                             >
-                                <span class="loop-picker-number">#{{ iteration.number }}</span>
-                                <span class="loop-picker-value">{{ iteration.value }}</span>
+                                <KsIcon size="xs" class="loop-picker-check"><Check /></KsIcon>
+                                <span class="loop-picker-number" data-test="loop-picker-number">#{{ iteration.number }}</span>
+                                <span class="loop-picker-value" data-test="loop-picker-value">{{ iteration.value }}</span>
                                 <KsExecutionStatus size="small" :status="iteration.state" />
-                            </KsButton>
+                            </button>
                             <KsButton
                                 v-if="group.key === 'failed' && failedItems.length < failedTotal"
                                 link
@@ -116,6 +118,7 @@
     import type {LoopLaneData} from "@kestra-io/topology"
     import MenuDown from "vue-material-design-icons/MenuDown.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
+    import Check from "vue-material-design-icons/Check.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {iterationLabel} from "../../utils/loopScope"
     import {
@@ -305,19 +308,39 @@
 
     .loop-picker-option {
         display: flex;
-        justify-content: flex-start;
+        align-items: center;
         gap: var(--ks-spacing-2);
         width: 100%;
-        margin: 0;
+        min-width: 0;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        border: 0;
+        background: transparent;
+        color: var(--ks-text-primary);
+        font: inherit;
+        font-size: var(--ks-font-size-xs);
+        font-weight: 400;
+        text-align: left;
+        cursor: pointer;
     }
 
+    .loop-picker-option:hover,
     .loop-picker-option-active {
         background: var(--ks-bg-hover-elevated);
     }
 
+    .loop-picker-check {
+        flex: 0 0 auto;
+        visibility: hidden;
+        color: var(--ks-text-link);
+    }
+
+    .loop-picker-option-active .loop-picker-check {
+        visibility: visible;
+    }
+
     .loop-picker-number {
         flex-shrink: 0;
-        color: var(--ks-text-secondary);
+        color: var(--ks-text-muted);
     }
 
     .loop-picker-value {

@@ -373,6 +373,36 @@ class RequestTest {
     }
 
     @Test
+    void headersWithTrailingNewlineAreStripped() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
+            .uri(Property.ofValue(serverUrl() + "/post/url-encoded"))
+            .headers(
+                Property.ofValue(
+                    Map.of(
+                        "test", "{{ inputs.secret_token }}"
+                    )
+                )
+            )
+            .formData(Property.ofValue(ImmutableMap.of("hello", "world")))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, task, ImmutableMap.of(
+                "secret_token", "Bearer token-with-trailing-newline\n"
+            )
+        );
+
+        Request.Output output = task.run(runContext);
+
+        assertThat(output.getBody()).isEqualTo("world > Bearer token-with-trailing-newline");
+        assertThat(output.getCode()).isEqualTo(200);
+    }
+
+    @Test
     void formPreservesCharsetAndEncodesNonAsciiValues() throws Exception {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())

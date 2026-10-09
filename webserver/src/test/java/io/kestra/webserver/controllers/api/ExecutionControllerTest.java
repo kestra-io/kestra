@@ -956,6 +956,21 @@ class ExecutionControllerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
+    @Test
+    void shouldReturnUnprocessableEntityWhenChangingTaskRunStateWithoutState() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + IdUtils.create() + "/actions/state",
+                    Map.of("taskRunId", "taskrun_id_not_found")
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
     /**
      * A running execution holding, in order: a running parent task run, a running child of that parent,
      * a terminated child of that parent, and a running task run of another branch.

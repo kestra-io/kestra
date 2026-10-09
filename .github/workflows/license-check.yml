@@ -1,0 +1,72 @@
+name: License Check
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-license-check
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gradle:
+    name: Gradle licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: 'temurin'
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Generate the license report
+        run: ./gradlew licenseReport
+
+      - name: Check the licenses
+        run: python3 dev-tools/check-licenses.py build/reports/licenses/licenseReport.json --sarif gradle-licenses.sarif
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: gradle-licenses
+          path: |
+            gradle-licenses.sarif
+            build/reports/licenses/licenseReport.json
+          if-no-files-found: ignore
+
+  ui:
+    name: UI licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: 'ui/.nvmrc'
+
+      - name: Install Node dependencies
+        run: npm ci
+        working-directory: ui
+
+      - name: Generate the license report
+        run: npx license-compliance --report detailed --production --format json > "$RUNNER_TEMP/ui-licenses.json"
+        working-directory: ui
+
+      - name: Check the licenses
+        run: python3 dev-tools/check-licenses.py "$RUNNER_TEMP/ui-licenses.json" --sarif ui-licenses.sarif
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: ui-licenses
+          path: |
+            ui-licenses.sarif
+            ${{ runner.temp }}/ui-licenses.json
+          if-no-files-found: ignore

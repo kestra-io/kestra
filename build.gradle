@@ -26,6 +26,7 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.37.0"
+    id("com.jaredsburrows.license") version "0.9.91"
 
     // Kestra gradle plugin
     id "io.kestra.gradle.spotless-conventions" version '1.2.11'
@@ -634,6 +635,21 @@ tasks.register('runStandalone') {
     group = "application"
     description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     dependsOn ':cli:runStandalone'
+}
+
+/**********************************************************************************************************************\
+ * License report
+ **********************************************************************************************************************/
+licenseReport {
+    // Generate reports
+    generateCsvReport = false
+    generateHtmlReport = false
+    generateJsonReport = true
+    generateJsonFullReport = false
+    generateTextReport = false
+
+    // Show versions in the report - default is false
+    showVersions = true
 }
 
 /**********************************************************************************************************************\

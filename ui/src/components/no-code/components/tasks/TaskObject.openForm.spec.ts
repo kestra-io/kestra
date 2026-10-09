@@ -1,5 +1,6 @@
-import {describe, test, expect} from "vitest"
-import {ref} from "vue"
+import {describe, test, expect, vi} from "vitest"
+import {nextTick, ref} from "vue"
+import {flushPromises} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObject from "./TaskObject.vue"
 import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys"
@@ -20,13 +21,17 @@ describe("TaskObject opening a form", () => {
         ["plain", {type: "boolean", default: false}],
         ["anyOf", {anyOf: [{type: "boolean"}, {type: "string"}], default: false}],
         ["dynamic", {type: "boolean", default: false, $dynamic: true}],
-    ])("does not rewrite an invalid boolean (%s)", async (_name, field) => {
+        ["pebble", {type: "boolean", default: false}, "{{ inputs.flag }}"],
+    ])("does not rewrite an invalid boolean (%s)", async (_name, field, value = "sometimes") => {
         const wrapper = mountForm(
             {type: "object", properties: {allowConcurrent: field}},
-            {allowConcurrent: "sometimes"},
+            {allowConcurrent: value},
         )
-        await new Promise(resolve => setTimeout(resolve, 50))
+        await vi.waitFor(() => expect(wrapper.find("input[role=switch]").exists()).toBe(true))
+        await flushPromises()
+        await nextTick()
 
         expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+        expect((wrapper.find("input[role=switch]").element as HTMLInputElement).checked).toBe(false)
     })
 })

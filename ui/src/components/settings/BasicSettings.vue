@@ -568,7 +568,7 @@
             })
     }
 
-    function onNamespace(value: string | string[] | undefined) {
+    function onNamespace(value: string | string[] | null | undefined) {
         const namespace = (Array.isArray(value) ? value[0] : value) ?? ""
         const previous = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE) || ""
         settings.defaultNamespace = namespace

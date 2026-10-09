@@ -470,7 +470,7 @@
         selectedTypes.value = [...SEARCH_RESOURCE_TYPES]
     }
 
-    function onNamespaceChange(val: string | string[] | undefined) {
+    function onNamespaceChange(val: string | string[] | null | undefined) {
         pushQuery((q) => {
             if (val === undefined || val === "" || val === null || (Array.isArray(val) && val.length === 0)) {
                 delete q.namespace

@@ -283,14 +283,12 @@
     provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
 
     async function jumpToFirstUnsetRequired() {
-        const first = unsetRequiredFields.value[0]
-        if (!first) return
-
-        const selector = `[data-required-path="${first.path}"]`
-        let el = panelRef.value?.querySelector<HTMLElement>(selector)
-        if (!el && navigateToRequiredField.value?.(first.path)) {
+        let el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
+        if (!el) {
+            const first = unsetRequiredFields.value[0]
+            if (!first || !navigateToRequiredField.value?.(first.path)) return
             await nextTick()
-            el = panelRef.value?.querySelector<HTMLElement>(selector)
+            el = panelRef.value?.querySelector<HTMLElement>(`[data-required-path="${first.path}"]`)
         }
         if (!el) return
 

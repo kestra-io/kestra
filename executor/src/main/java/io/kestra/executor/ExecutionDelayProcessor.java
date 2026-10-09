@@ -170,6 +170,18 @@ public class ExecutionDelayProcessor {
                     Execution newExecution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                     executor = executor.withExecution(newExecution, "continueLoop");
                 }
+                // Handle flowable retries (RETRY_FLOWABLE): wipe the flowable's children and run it again
+                // Skip if the execution is being killed so the retry does not race the kill
+                else if (
+                    executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FLOWABLE)
+                        && execution.getState().getCurrent() != State.Type.KILLING
+                ) {
+                    Execution newAttempt = executionService.retryFlowable(
+                        executor.getExecution(),
+                        executionDelay.getTaskRunId()
+                    );
+                    executor = executor.withExecution(newAttempt, "retryFlowable");
+                }
             } catch (Exception e) {
                 executor = executorService.handleFailedExecutionFromExecutor(executor, e);
             }

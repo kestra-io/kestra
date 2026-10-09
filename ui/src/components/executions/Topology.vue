@@ -43,7 +43,6 @@
     const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
 
-    // execution is Execution | undefined — the store's ref is already typed.
     const execution = computed(() => executionsStore.execution)
     const flowGraph = computed(() => executionsStore.flowGraph)
 
@@ -51,7 +50,6 @@
     const previousExecutionId = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const previousExpandedSubflows = ref<string[]>([])
-    // sseBySubflow holds the subscription handles returned by subscribeToExecution.
     const sseBySubflow = ref<Record<string, {close: () => void}>>({})
 
     // Live lifecycle-step progress (see RunContext#emitProgress) rides the existing follow-logs
@@ -62,6 +60,7 @@
     // EventSource would land in a ref no one closes again. Guard against it explicitly instead
     // of relying on onUnmounted alone.
     let unmounted = false
+    const sseRetries = new Map<string, ReturnType<typeof setTimeout>>()
 
     function closeProgressSSE() {
         progressSSE?.close()
@@ -141,6 +140,7 @@
 
     onUnmounted(() => {
         unmounted = true
+        sseRetries.forEach((retry) => clearTimeout(retry))
         Object.keys(sseBySubflow.value).forEach(closeSSE)
         closeProgressSSE()
     })
@@ -208,10 +208,18 @@
         if (generateGraphBeforeDelay) {
             loadGraph(true)
         }
-        setTimeout(() => addSSE(subflow), 500)
+        clearTimeout(sseRetries.get(subflow))
+        sseRetries.set(subflow, setTimeout(() => {
+            sseRetries.delete(subflow)
+            addSSE(subflow)
+        }, 500))
     }
 
     function addSSE(subflow: string, generateGraphOnWaiting?: boolean) {
+        if (unmounted) {
+            return
+        }
+
         let parentExecution: Execution | undefined = execution.value
 
         const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
@@ -237,10 +245,6 @@
             }
 
             delaySSE(!!generateGraphOnWaiting, subflow)
-            return
-        }
-
-        if (unmounted) {
             return
         }
 

@@ -1179,7 +1179,7 @@ public class ExecutorService {
             if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
                 loopExecutionEventQueue.emit(
                     new LoopExecutionEvent(
-                        executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null, null, null
+                        executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null, null, null, null
                     )
                 );
             }

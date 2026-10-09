@@ -390,7 +390,12 @@ public class ExecutorCore {
                         .plus(execution.getMetadata().getTaskRunStatistic());
                     TaskRunStateCounts taskRunStateCounts = TaskRunStateCounts.of(execution.getTaskRunList())
                         .plus(execution.getMetadata().getTaskRunStateCounts());
-                    loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs, taskRunStatistic, taskRunStateCounts));
+                    loopExecutionEventQueue.emit(
+                        new LoopExecutionEvent(
+                            execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs, taskRunStatistic, taskRunStateCounts,
+                            execution.getMetadata().getLoopIterationCounts()
+                        )
+                    );
                 }
 
                 // purge SLA monitors

@@ -78,6 +78,20 @@ public class ExecutionMetadata {
         return this.withTaskRunStateCounts(this.taskRunStateCounts == null ? other : this.taskRunStateCounts.plus(other));
     }
 
+    /**
+     * Per loop task id and state counts of the iterations of the loops nested in Loop sub-executions.
+     */
+    @With
+    TaskRunStateCounts loopIterationCounts;
+
+    public ExecutionMetadata withLoopIterationCountsPlus(TaskRunStateCounts other) {
+        if (other == null || other.isEmpty()) {
+            return this;
+        }
+
+        return this.withLoopIterationCounts(this.loopIterationCounts == null ? other : this.loopIterationCounts.plus(other));
+    }
+
     public ExecutionMetadata nextAttempt() {
         return this.toBuilder()
             .attemptNumber(this.attemptNumber + 1)

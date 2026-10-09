@@ -593,7 +593,7 @@ public class ExecutorService {
                             list.add(flowableResult.get());
                             // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                             if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
                             }
                         }
                     }
@@ -974,7 +974,7 @@ public class ExecutorService {
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, RunContext runContext) throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
@@ -1000,6 +1000,13 @@ public class ExecutorService {
             } else {
                 leafTaskRunIds.add(descendant.getId());
             }
+            // No worker job or state transition of its own records why the task stopped: without this the task run
+            // shows a terminal state with no log line naming the sibling that failed. Logged on the interrupted task
+            // run itself so an operator looking at it sees the cause inline.
+            RunContext childRunContext = descendantTask != null
+                ? runContextFactory.of(executor.getFlow(), descendantTask, executor.getExecution(), descendant)
+                : runContextFactory.of(executor.getFlow(), executor.getExecution());
+            childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedTaskRun.getTaskId());
         }
 
         if (!resolvedFlowables.isEmpty()) {

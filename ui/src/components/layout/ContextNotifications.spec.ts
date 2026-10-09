@@ -19,6 +19,7 @@ const routes = vi.hoisted(() => ({resolve: vi.fn(), isLinkable: vi.fn()}))
 
 vi.mock("../../stores/notifications", () => ({useNotificationsStore: () => store}))
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
+vi.mock("../../composables/useScrollMemory", () => ({useScrollMemory: vi.fn()}))
 vi.mock("../../utils/notificationRoute", () => ({
     resolveNotificationRoute: routes.resolve,
     isNotificationLinkable: routes.isLinkable,

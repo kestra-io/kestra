@@ -296,6 +296,11 @@
         outline-offset: 2px;
     }
 
+    .node-core.node-core--error {
+        border-color: var(--ks-border-error);
+        box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-error);
+    }
+
     /* The card the user picked up: it stays in the layout as the hole the task came out of. */
     .node-wrapper--dragging .node-core {
         opacity: 0.35;

@@ -292,12 +292,17 @@ public class FileChangedEventListener {
     }
 
     static String getTenantIdFromPath(Path path, GenericFlow flow) {
-        // FIXME there is probably a bug here when a tenant has '_' in its name,
-        //  a valid tenant name is defined with following regex: "^[a-z0-9][a-z0-9_-]*"
         String filename = path.getFileName().toString();
         String unprefixedName = flow.getNamespace() + "." + flow.getId();
         if (filename.equals(unprefixedName + ".yml") || filename.equals(unprefixedName + ".yaml")) {
             return MAIN_TENANT;
+        }
+        String basename = filename.substring(0, filename.lastIndexOf('.'));
+        for (String separator : List.of(".", "_")) {
+            String flowSuffix = "_" + flow.getNamespace() + separator + flow.getId();
+            if (basename.endsWith(flowSuffix)) {
+                return basename.substring(0, basename.length() - flowSuffix.length());
+            }
         }
         return filename.split("_")[0];
     }

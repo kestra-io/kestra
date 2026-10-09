@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -22,6 +24,7 @@ import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
+import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.IdUtils;
 
 import jakarta.inject.Inject;
@@ -155,10 +158,53 @@ class ScheduleOnDatesTest {
         var conditionContext = conditionContext(scheduleOnDates);
 
         // when
-        ZonedDateTime previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
+        Optional<ZonedDateTime> previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
 
         // then
-        assertThat(previousDate).isEqualTo(before);
+        assertThat(previousDate).hasValue(before);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoDateIsBeforeNow() throws Exception {
+        // given
+        var now = ZonedDateTime.now();
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .dates(Property.ofValue(List.of(now.plusMinutes(1), now.plusDays(1))))
+            .build();
+        var conditionContext = conditionContext(scheduleOnDates);
+
+        // when
+        Optional<ZonedDateTime> previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
+
+        // then
+        assertThat(previousDate).isEmpty();
+    }
+
+    @Test
+    void shouldReturnPreviousDateInTimezoneFromSchedulerClockWhenPreviousEvaluationDate() throws Exception {
+        // given
+        var first = ZonedDateTime.parse("2025-01-01T10:00:00.500Z");
+        var second = ZonedDateTime.parse("2025-01-02T10:00:00Z");
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .timezone("Asia/Tokyo")
+            .dates(Property.ofValue(List.of(second, first)))
+            .build();
+        var conditionContext = conditionContext(scheduleOnDates);
+        SchedulerClock.setClock(Clock.fixed(Instant.parse("2025-01-02T00:00:00Z"), ZoneId.systemDefault()));
+
+        try {
+            // when
+            Optional<ZonedDateTime> previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
+
+            // then
+            assertThat(previousDate).hasValue(ZonedDateTime.parse("2025-01-01T19:00:00+09:00[Asia/Tokyo]"));
+        } finally {
+            SchedulerClock.setClock(Clock.systemDefaultZone());
+        }
     }
 
     private ConditionContext conditionContext(AbstractTrigger trigger) {

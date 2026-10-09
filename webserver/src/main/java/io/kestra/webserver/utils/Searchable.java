@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.RegexUtils;
 
@@ -193,7 +194,7 @@ public final class Searchable<T> {
                     }
                     String fv = fieldValue.toString();
                     String qv = queryValue.toString();
-                    return fv.equals(qv) || fv.startsWith(qv + ".");
+                    return NamespaceInterface.isDescendantOrSelf(qv, fv);
                 };
                 default -> throw new UnsupportedOperationException(
                     "Operator " + operator + " has no default extractor for field " + field

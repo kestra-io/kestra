@@ -122,6 +122,21 @@ public class PurgeKVTest {
     }
 
     @Test
+    void should_not_find_sibling_namespace_sharing_prefix_with_child() throws IllegalVariableEvaluationException {
+        addNamespaces();
+        addNamespace(PARENT_NAMESPACE + "2");
+
+        PurgeKV purgeKV = PurgeKV.builder()
+            .type(PurgeKV.class.getName())
+            .namespaces(Property.ofValue(List.of(PARENT_NAMESPACE)))
+            .includeChildNamespaces(Property.ofValue(true))
+            .build();
+        List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));
+
+        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE, CHILD_NAMESPACE);
+    }
+
+    @Test
     void should_find_parent_namespace_even_if_no_flows() throws IllegalVariableEvaluationException {
         addNamespace(CHILD_NAMESPACE);
 

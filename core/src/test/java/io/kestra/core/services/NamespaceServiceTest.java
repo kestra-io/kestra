@@ -31,6 +31,15 @@ class NamespaceServiceTest {
     }
 
     @Test
+    void shouldNotFindNamespaceWhenOnlySiblingSharingPrefixExists() {
+        Flow flow = Flow.builder().id("test").namespace("prefixtest2.child").tenantId(TenantService.MAIN_TENANT).build();
+        flowRepository.create(GenericFlow.of(flow));
+
+        assertThat(namespaceService.isNamespaceExists(TenantService.MAIN_TENANT, "prefixtest")).isFalse();
+        assertThat(namespaceService.isNamespaceExists(TenantService.MAIN_TENANT, "prefixtest2")).isTrue();
+    }
+
+    @Test
     void isNamespaceExistsShouldReturnFalseWhenNotFond() {
         assertThat(namespaceService.isNamespaceExists(TenantService.MAIN_TENANT, "notFound")).isFalse();
     }

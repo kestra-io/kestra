@@ -597,6 +597,7 @@ export type CheckStyle = 'ERROR' | 'SUCCESS' | 'WARNING' | 'INFO';
 export type Concurrency = {
     limit: number;
     behavior: ConcurrencyBehavior;
+    queueLimit?: number;
 };
 
 export type ConcurrencyBehavior = 'QUEUE' | 'CANCEL' | 'FAIL';

@@ -16,6 +16,8 @@ export interface LoopIteration {
     value?: string;
     state: string;
     parentId?: string;
+    taskId?: string;
+    loopRun?: IterationLoopRun;
 }
 
 export interface LoopRoot {
@@ -23,11 +25,19 @@ export interface LoopRoot {
     namespace: string;
     flowId: string;
     startDate?: string;
+    endDate?: string;
+}
+
+export interface IterationLoopRun {
+    taskId?: string;
+    index?: number;
+    value?: string;
+    parent?: IterationParent & {id?: string};
 }
 
 export interface IterationParent {
     parentId?: string;
-    loopRun?: {taskId?: string; index?: number};
+    loopRun?: IterationLoopRun;
 }
 
 export interface FailedIterationChain {
@@ -38,7 +48,7 @@ export interface FailedIterationChain {
 export interface LoopIterationSearch {
     parentId?: string;
     root?: LoopRoot;
-    taskId: string;
+    taskId?: string;
     page?: number;
     size?: number;
     state?: string;
@@ -69,14 +79,19 @@ export function failureOf(error: unknown): LoopIterationFailure {
 export async function searchLoopIterations(search: LoopIterationSearch): Promise<LoopIterationPage> {
     const filters: QueryFilter[] = [
         {field: "kind", operation: "EQUALS", value: "LOOP"},
-        {field: "taskId", operation: "EQUALS", value: search.taskId},
     ]
+    if (search.taskId) filters.push({field: "taskId", operation: "EQUALS", value: search.taskId})
     if (search.parentId) filters.push({field: "parentId", operation: "EQUALS", value: search.parentId})
     if (search.root) {
         filters.push({field: "namespace", operation: "EQUALS", value: search.root.namespace})
         filters.push({field: "flowId", operation: "EQUALS", value: search.root.flowId})
         if (search.root.startDate) {
             filters.push({field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: search.root.startDate.replace(/\.\d+/, "")})
+        }
+        if (search.root.endDate) {
+            const ceiling = new Date(search.root.endDate)
+            ceiling.setSeconds(ceiling.getSeconds() + 1)
+            filters.push({field: "endDate", operation: "LESS_THAN_OR_EQUAL_TO", value: ceiling.toISOString().replace(/\.\d+/, "")})
         }
     }
     if (search.state) filters.push({field: "state", operation: "IN", value: [search.state]})
@@ -94,6 +109,8 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
                 value: item.loopRun?.value,
                 state: item.state.current,
                 parentId: item.parentId,
+                taskId: item.loopRun?.taskId,
+                loopRun: item.loopRun as IterationLoopRun | undefined,
             })),
             total: response.total ?? 0,
         }

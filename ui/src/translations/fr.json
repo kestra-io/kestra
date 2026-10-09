@@ -1709,7 +1709,18 @@
       "compact": "Vue par défaut",
       "compact_details": "Affiche les logs dans un format compacte regroupé par tâche",
       "fullscreen": "Logs en plein écran",
-      "exit_fullscreen": "Quitter le mode plein écran"
+      "exit_fullscreen": "Quitter le mode plein écran",
+      "loop": {
+        "this-execution": "Cette exécution",
+        "with-iterations": "Avec les itérations du loop",
+        "truncated": "Affichage des logs de la première itération en échec | Affichage des logs des {count} premières itérations en échec",
+        "empty-title": "Aucun log correspondant",
+        "empty-description": "Aucun log ne correspond au niveau sélectionné dans cette exécution ni dans ses itérations de loop en échec. Abaissez le niveau pour en voir plus.",
+        "scope-to": "Limiter le graphe et les logs à {scope}",
+        "show-in-overview": "Afficher dans la vue générale",
+        "show-in-overview-for": "Afficher {scope} dans la vue générale",
+        "mode-label": "Source des logs"
+      }
     },
     "execution_deletion": {
       "logs": "Supprimer les journaux",

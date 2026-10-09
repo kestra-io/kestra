@@ -1709,7 +1709,18 @@
       "compact": "पूर्व-निर्धारित दृश्य",
       "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं",
       "fullscreen": "Logs पूर्ण स्क्रीन में",
-      "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें"
+      "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
+      "loop": {
+        "this-execution": "यह निष्पादन",
+        "with-iterations": "Loop इटरेशन के साथ",
+        "truncated": "पहले विफल इटरेशन के logs दिखाए जा रहे हैं | पहले {count} विफल इटरेशन के logs दिखाए जा रहे हैं",
+        "empty-title": "कोई मेल खाते logs नहीं",
+        "empty-description": "इस निष्पादन या इसके विफल Loop इटरेशन में चयनित स्तर से कोई log मेल नहीं खाता। अधिक देखने के लिए स्तर घटाएँ।",
+        "scope-to": "ग्राफ़ और logs को {scope} तक सीमित करें",
+        "show-in-overview": "अवलोकन में दिखाएँ",
+        "show-in-overview-for": "{scope} को अवलोकन में दिखाएँ",
+        "mode-label": "Logs का स्रोत"
+      }
     },
     "execution_deletion": {
       "logs": "Logs हटाएं",

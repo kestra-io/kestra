@@ -1709,7 +1709,18 @@
       "compact": "デフォルトビュー",
       "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示",
       "fullscreen": "Logsを全画面表示",
-      "exit_fullscreen": "フルスクリーンを終了"
+      "exit_fullscreen": "フルスクリーンを終了",
+      "loop": {
+        "this-execution": "この実行",
+        "with-iterations": "ループのイテレーションを含む",
+        "truncated": "最初の失敗したイテレーションのログを表示しています | 最初の{count}件の失敗したイテレーションのログを表示しています",
+        "empty-title": "一致するログがありません",
+        "empty-description": "この実行および失敗したループのイテレーションに、選択したレベルに一致するログはありません。より多く表示するにはレベルを下げてください。",
+        "scope-to": "グラフとログを{scope}に絞り込む",
+        "show-in-overview": "概要で表示",
+        "show-in-overview-for": "{scope}を概要で表示",
+        "mode-label": "ログのソース"
+      }
     },
     "execution_deletion": {
       "logs": "ログを削除",

@@ -19,14 +19,22 @@
                 :tableOptions="{
                     chart: {shown: false},
                     columns: {shown: false},
-                    refresh: {shown: true, callback: loadLogs}
+                    refresh: {shown: true, callback: refreshLogs}
                 }"
                 @search="filter = $event"
-                @filter="syncFromAppliedFilters"
+                @filter="applyLevelFilter"
             />
             <div class="logs-toolbar" data-test="logs-toolbar">
                 <div class="logs-toolbar__left">
-                    <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
+                    <KsSegmented
+                        v-if="hasLoopIterations"
+                        v-model="selectedMode"
+                        :options="modeOptions"
+                        size="small"
+                        :aria-label="$t('logs_view.loop.mode-label')"
+                        data-test="logs-mode-switch"
+                    />
+                    <template v-for="logLevel in (merged ? [] : currentLevelOrLower)" :key="logLevel">
                         <LogLevelNavigator
                             v-if="countByLogLevel[logLevel] > 0"
                             :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
@@ -37,10 +45,10 @@
                             @close="logCursor = undefined"
                         />
                     </template>
-                    <KsButton class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+                    <KsButton v-if="!merged" class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                         {{ logDisplayButtonText }}
                     </KsButton>
-                    <KsTooltip :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')">
+                    <KsTooltip v-if="!merged" :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')">
                         <KsButton class="logs-toolbar__text-btn" @click="toggleViewType" :icon="logViewTypeButtonIcon">
                             {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
                         </KsButton>
@@ -60,13 +68,21 @@
                         :tooltip="fullscreenModalOpen ? $t('logs_view.exit_fullscreen') : $t('logs_view.fullscreen')"
                         @click="toggleFullscreenModal"
                     />
-                    <KsButton square type="default" size="default" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="downloadContent()" />
-                    <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs()" />
+                    <KsButton square type="default" size="default" :disabled="merged" :icon="Download" :aria-label="$t('download logs')" :tooltip="$t('download logs')" @click="downloadContent()" />
+                    <KsButton square type="default" size="default" :disabled="merged" :icon="ContentCopy" :aria-label="$t('copy logs')" :tooltip="$t('copy logs')" @click="copyAllLogs()" />
                 </div>
             </div>
 
+            <LoopMergedLogs
+                v-if="merged"
+                ref="mergedLogs"
+                :levelParams="mergedLevelParams"
+                :running="isExecutionRunning"
+                :filter="filter"
+                :fullHeight="fullscreenModalOpen"
+            />
             <TaskRunDetails
-                v-if="!raw_view"
+                v-else-if="!raw_view"
                 ref="logs"
                 :levelFilter="effectiveLevelValue"
                 :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as any)"
@@ -144,6 +160,7 @@
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import LoopMergedLogs from "./LoopMergedLogs.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -166,6 +183,7 @@
     import type {LogEntry} from "@kestra-io/kestra-sdk"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
+    import {flowHasLoop} from "../../utils/loopLogScope"
     import {
         hasUnsupportedRouteLevelComparator,
         levelToRequestParams,
@@ -173,6 +191,7 @@
         readAppliedLevelFilter,
         readRouteLevelFilter,
         State,
+        type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
@@ -233,17 +252,39 @@
         return params
     })
 
+    const route = useRoute()
+
+    type LogsMode = "execution" | "merged"
+
+    const hasLoopIterations = computed(() => !props.playground && flowHasLoop(executionsStore.flow))
+    const modeOverride = ref<LogsMode>()
+    const mode = computed<LogsMode>(() => modeOverride.value ?? (hasLoopIterations.value ? "merged" : "execution"))
+    const merged = computed(() => hasLoopIterations.value && mode.value === "merged")
+    const selectedMode = computed({
+        get: () => mode.value,
+        set: (value: string) => {
+            modeOverride.value = value as LogsMode
+        },
+    })
+    const modeOptions = computed(() => [
+        {label: t("logs_view.loop.this-execution"), value: "execution"},
+        {label: t("logs_view.loop.with-iterations"), value: "merged"},
+    ])
+
     const logExecutionsFilter = useLogExecutionsFilter(() => props.playground, () => executionKind.value)
     const defaultLogLevel = computed(
         () => localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO",
     )
 
+    const levelInUrlAtMount = readRouteLevelFilter(route.query) !== undefined
+
     const {
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
+        setRouteValue: setRouteLevel,
     } = useRouteFilterPolicy({
-        defaultValue: () => ({value: defaultLogLevel.value, direction: "min" as const}),
+        defaultValue: () => ({value: merged.value ? "ERROR" : defaultLogLevel.value, direction: "min" as const}),
         applyDefaultIfMissing: () => true,
         fallbackValue: () => ({value: "TRACE", direction: "min" as const}),
         readFromRoute: readRouteLevelFilter,
@@ -255,6 +296,33 @@
     // Narrow the type from the composable's union return type
     const effectiveLevelValue = computed(() => effectiveLevel.value as LevelFilterValue | undefined)
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
+
+    const ERRORS_ONLY: LevelFilterValue = {value: "ERROR", direction: "min"}
+    const defaultLevelValue = (): LevelFilterValue => ({value: defaultLogLevel.value, direction: "min"})
+    const levelPicked = ref(levelInUrlAtMount)
+    let levelBeforeErrorsOnly: LevelFilterValue | undefined = !levelInUrlAtMount && merged.value ? defaultLevelValue() : undefined
+    const mergedUsesDefaultLevel = computed(() => merged.value && !levelPicked.value)
+    const mergedLevelParams = computed(() => levelToRequestParams(mergedUsesDefaultLevel.value ? ERRORS_ONLY : effectiveLevelValue.value))
+
+    watch(merged, (isMerged) => {
+        if (levelPicked.value) return
+        if (isMerged) {
+            levelBeforeErrorsOnly = routeLevelValue.value ?? defaultLevelValue()
+            if (routeLevelValue.value?.value !== ERRORS_ONLY.value) setRouteLevel(ERRORS_ONLY)
+        } else if (levelBeforeErrorsOnly) {
+            setRouteLevel(levelBeforeErrorsOnly)
+            levelBeforeErrorsOnly = undefined
+        }
+    })
+
+    function applyLevelFilter(filters: AppliedFilter[]) {
+        const applied = readAppliedLevelFilter(filters)
+        if (routeLevelValue.value !== undefined && JSON.stringify(applied) !== JSON.stringify(routeLevelValue.value)) {
+            levelPicked.value = true
+            levelBeforeErrorsOnly = undefined
+        }
+        syncFromAppliedFilters(filters)
+    }
 
     const filter = ref<string | undefined>(undefined)
     const openedTaskrunsCount = ref(0)
@@ -273,6 +341,7 @@
     const fullscreenModalOpen = ref(false)
 
     const logs = useTemplateRef<InstanceType<typeof TaskRunDetails>>("logs")
+    const mergedLogs = useTemplateRef<InstanceType<typeof LoopMergedLogs>>("mergedLogs")
     const logScroller = useTemplateRef<any>("logScroller") // FIXME: any
     const inlineLogsTarget = useTemplateRef<HTMLElement>("inlineLogsTarget")
     const fullscreenLogsTarget = useTemplateRef<HTMLElement>("fullscreenLogsTarget")
@@ -300,8 +369,6 @@
         pendingLogScrollPositions.clear()
     })
 
-    // created hook equivalent
-    const route = useRoute()
     filter.value = (route.query.q as string) || undefined
 
     const logsSSE = ref<EventSource | undefined>(undefined)
@@ -378,8 +445,10 @@
         return !!current && State.isRunning(current)
     })
 
+    const streamsRawLogs = computed(() => raw_view.value && !merged.value)
+
     watch(
-        [executionId, isExecutionRunning, raw_view],
+        [executionId, isExecutionRunning, streamsRawLogs],
         ([id, , isRaw]) => {
             if (!id || !isRaw) {
                 closeLogsSSE()
@@ -391,7 +460,7 @@
     )
 
     watch(routeLevel, () => {
-        if (raw_view.value && executionId.value) {
+        if (streamsRawLogs.value && executionId.value) {
             refreshTemporalLogs()
         }
     })
@@ -497,6 +566,11 @@
             logsLoading.value = false
             logsLoaded.value = true
         })
+    }
+
+    function refreshLogs() {
+        if (merged.value) mergedLogs.value?.refresh()
+        else loadLogs()
     }
 
     function downloadContent() {

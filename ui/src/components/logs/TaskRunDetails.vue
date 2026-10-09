@@ -262,14 +262,7 @@
                 >
                     <KsButton
                         :tag="RouterLink"
-                        :to="{
-                            name: 'executions/list',
-                            query: {
-                                'filters[parentId][EQUALS]': followedExecution.id,
-                                'filters[kind][EQUALS]': 'LOOP',
-                                'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
-                            }
-                        }"
+                        :to="loopIterationsRoute(followedExecution, asTaskRun(currentTaskRun).taskId)"
                         size="small"
                     >
                         {{ $t("iterations") }}
@@ -277,7 +270,7 @@
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
-                        :executionId="followedExecution.id"
+                        :execution="followedExecution"
                         :taskId="asTaskRun(currentTaskRun).taskId"
                         :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
@@ -320,6 +313,7 @@
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
+    import {loopIterationsRoute} from "../executions/loopIterationsRoute"
 
     const {t} = useI18n()
 

@@ -96,8 +96,8 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
 
 async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
-    const item = (sidebar.props("sections") as any[])
-        .find((section) => section.key === sectionKey)
+    const item = sidebar.props("sections")
+        .find((section: {key: string; items: {label: string}[]}) => section.key === sectionKey)
         .items
         .find((candidate: {label: string}) => candidate.label === itemName)
 
@@ -143,12 +143,12 @@ describe("ExecutionVariableExplorer", () => {
         await flushPromises()
 
         const sidebar = wrapper.findComponent({name: "SidebarList"})
-        const variables = (sidebar.props("sections") as any[])
-            .find((section) => section.key === "variables")
+        const variables = sidebar.props("sections")
+            .find((section: {key: string; items: {label: string}[]}) => section.key === "variables")
             .items
 
-        expect(variables.find((item: any) => item.label === "greeting").isExpression).toBe(true)
-        expect(variables.find((item: any) => item.label === "plain").isExpression).toBe(false)
+        expect(variables.find((item: {label: string; isExpression: boolean}) => item.label === "greeting").isExpression).toBe(true)
+        expect(variables.find((item: {label: string; isExpression: boolean}) => item.label === "plain").isExpression).toBe(false)
     })
 
     test("previews a nested file selected from the tree", async () => {
@@ -250,8 +250,8 @@ describe("ExecutionVariableExplorer", () => {
         await flushPromises()
 
         const sidebar = wrapper.findComponent({name: "SidebarList"})
-        const triggerItems = (sidebar.props("sections") as any[])
-            .find((section) => section.key === "triggers")
+        const triggerItems = sidebar.props("sections")
+            .find((section: {key: string; items: {label: string}[]}) => section.key === "triggers")
             .items as {label: string}[]
 
         // trigger variables sit at the top level, id/type only under `_context` — mirroring

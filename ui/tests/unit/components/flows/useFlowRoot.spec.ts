@@ -29,10 +29,11 @@ vi.mock("../../../../src/stores/flow", async () => {
     return {useFlowStore: () => flowStore}
 })
 
+const routeTabsMock = vi.hoisted(() => ({setTabs: vi.fn()}))
+
 vi.mock("../../../../src/stores/routeTabs", () => ({
     useRouteTabsStore: () => ({
-        setTabs: vi.fn(),
-        clearTabsIfOwner: vi.fn(),
+        setTabs: routeTabsMock.setTabs,
     }),
 }))
 
@@ -66,10 +67,21 @@ describe("useFlowRoot", () => {
         // useFlowRoot ignores what loadFlow resolves with, so the stub does not build a whole flow.
         loadFlow.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof flowStore.loadFlow>>)
         vi.mocked(flowStore.loadGraph).mockReset()
+        routeTabsMock.setTabs.mockReset()
     })
 
     afterEach(() => {
         vi.useRealTimers()
+    })
+
+    it("does not register flow tabs in the app header selector", () => {
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot())
+
+        expect(routeTabsMock.setTabs).not.toHaveBeenCalled()
+
+        scope.stop()
     })
 
     it("keeps the dependencies tab enabled when the store reports one dependency", async () => {

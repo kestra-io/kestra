@@ -60,7 +60,7 @@
     const color = computed(() => data.color ?? "primary")
     const triggerId = computed(() => Utils.afterLastDot(id))
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
-    const validationIssues = computed<string[]>(() => validationIssuesByTask?.value?.get(triggerId.value) ?? [])
+    const validationIssues = computed<string[]>(() => validationIssuesByTask?.value?.get(triggerId.value ?? "") ?? [])
     const formattedData = computed(() => ({
         ...data,
         unused: data.node?.triggerDeclaration?.disabled || data.node?.trigger?.disabled,

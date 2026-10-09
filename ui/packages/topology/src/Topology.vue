@@ -160,7 +160,7 @@
             </template>
 
             <Panel v-if="$slots.scopeBar" position="top-left">
-                <slot name="scopeBar" :setLanesCollapsed="setLanesCollapsed" />
+                <slot name="scopeBar" :setLanesCollapsed="setLanesCollapsed" :collapsedLanes="collapsed" />
             </Panel>
 
             <Controls :showZoom="false" :showInteractive="false" :showFitView="false">

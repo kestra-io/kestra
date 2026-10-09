@@ -140,13 +140,27 @@ export async function resolveIterationChain(
     return parentId === rootId ? {entries, leafId: candidate.id} : undefined
 }
 
-export async function findFailedIterationChain(root: LoopRoot, taskId: string): Promise<FailedIterationChain | undefined> {
-    const {results} = await searchLoopIterations({root, taskId, state: "FAILED", size: 10})
-    const fetchParent = async (executionId: string) => (await loadIterationExecution(executionId)) as IterationParent
+export interface FailedChainDeps {
+    search: typeof searchLoopIterations;
+    fetchParent: (executionId: string) => Promise<IterationParent | undefined>;
+}
 
-    for (const candidate of results) {
-        const chain = await resolveIterationChain({...candidate, taskId}, root.id, fetchParent).catch(() => undefined)
-        if (chain) return chain
+const defaultDeps: FailedChainDeps = {
+    search: searchLoopIterations,
+    fetchParent: async (executionId) => (await loadIterationExecution(executionId)) as IterationParent,
+}
+
+export async function findFailedIterationChain(root: LoopRoot, taskId: string, deps: FailedChainDeps = defaultDeps): Promise<FailedIterationChain | undefined> {
+    const {results} = await deps.search({root, taskId, state: "FAILED", size: 10})
+
+    const parents = new Map<string, Promise<IterationParent | undefined>>()
+    const fetchParent = (executionId: string) => {
+        if (!parents.has(executionId)) parents.set(executionId, deps.fetchParent(executionId))
+        return parents.get(executionId)!
     }
-    return undefined
+
+    const chains = await Promise.all(results.map((candidate) =>
+        resolveIterationChain({...candidate, taskId}, root.id, fetchParent).catch(() => undefined),
+    ))
+    return chains.find((chain) => chain !== undefined)
 }

@@ -15,6 +15,9 @@
         <KsButton v-if="canJumpToFailure" link size="small" data-test="loop-scope-jump" @click="emit('jumpToFailure')">
             {{ $t("topology-graph.loop.jump-to-first-failure") }}
         </KsButton>
+        <KsButton v-if="failed" link size="small" type="danger" data-test="loop-scope-retry" @click="emit('retry')">
+            {{ $t("topology-graph.loop.failure-unknown") }} {{ $t("topology-graph.loop.retry") }}
+        </KsButton>
         <KsButton
             link
             size="small"
@@ -35,12 +38,14 @@
         entries: LoopScopeTrailEntry[];
         canJumpToFailure: boolean;
         failuresOnly: boolean;
+        failed?: boolean;
     }>()
 
     const emit = defineEmits<{
         clear: [];
         jumpToFailure: [];
         toggleFailuresOnly: [];
+        retry: [];
     }>()
 </script>
 

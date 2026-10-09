@@ -471,8 +471,10 @@
         "clear-scopes": "Сбросить области",
         "jump-to-first-failure": "Перейти к первой ошибке",
         "loops-with-failures": "Циклы с ошибками",
-        "task-runs": "{runs} запуск | {runs} запусков",
-        "task-runs-failed": "{runs} запуск · {failed} с ошибкой | {runs} запусков · {failed} с ошибкой"
+        "task-runs": "{runs} запуск | {runs} запуска | {runs} запусков",
+        "task-runs-failed": "{runs} запуск · {failed} с ошибкой | {runs} запуска · {failed} с ошибкой | {runs} запусков · {failed} с ошибкой",
+        "retry": "Повторить",
+        "load-more": "Загрузить ещё"
       },
       "loop-chip": {
         "failed": {
@@ -496,7 +498,7 @@
           "min": "{done}"
         },
         "success": {
-          "full": "{total} итерация | {total} итераций",
+          "full": "{total} итерация | {total} итерации | {total} итераций",
           "mid": "{total}",
           "min": "{total}"
         }

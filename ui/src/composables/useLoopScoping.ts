@@ -1,5 +1,5 @@
 import {computed, onBeforeUnmount, ref, watch, type ComputedRef} from "vue"
-import {throttle} from "@kestra-io/design-system"
+import {stringUtils, throttle} from "@kestra-io/design-system"
 import {isLoopTaskType, loopIterationCountsOf, taskRunStateCountsOf, type LoopLaneData} from "@kestra-io/topology"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {useExecutionsStore, type Execution} from "../stores/executions"
@@ -10,6 +10,7 @@ import {
     findFirstFailedIteration,
     findIterationByNumber,
     loadIterationExecution,
+    LoopIterationError,
     type LoopIteration,
 } from "../utils/loopIterations"
 import {withScopedIteration, type LoopScopeEntry} from "../utils/loopScope"
@@ -27,7 +28,15 @@ interface LaneOutputs {
 
 const settle = <T>(promise: Promise<T>) => promise.catch(() => undefined)
 
-const afterLastDot = (uid: string) => uid.slice(uid.lastIndexOf(".") + 1)
+const afterLastDot = (uid: string) => stringUtils.afterLastDot(uid) ?? uid
+
+const RUNNING_STATES = ["CREATED", "QUEUED", "RUNNING", "RESTARTED", "KILLING", "PAUSED", "RETRYING"]
+const TERMINAL_STATES = ["SUCCESS", "FAILED", "KILLED", "WARNING", "CANCELLED"]
+
+interface FollowedExecution {
+    executionId: string;
+    close: () => void;
+}
 
 export function loopLaneNodes(graph: Pick<FlowGraph, "clusters"> | undefined): LoopLaneNode[] {
     const uids = (graph?.clusters ?? [])
@@ -42,15 +51,16 @@ export function loopLaneNodes(graph: Pick<FlowGraph, "clusters"> | undefined): L
     }))
 }
 
-export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
+export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, enabled: ComputedRef<boolean>) {
     const executionsStore = useExecutionsStore()
     const {entries, key: scopeKey, setEntries} = useLoopScope()
 
-    const laneNodes = computed(() => loopLaneNodes(flowGraph.value))
+    const laneNodes = computed(() => (enabled.value ? loopLaneNodes(flowGraph.value) : []))
     const laneNodesKey = computed(() => laneNodes.value.map((lane) => lane.uid).join("|"))
     const outputsByLane = ref<Record<string, LaneOutputs>>({})
-    const resolving = ref(false)
-    const subscriptions = new Map<string, {close: () => void}>()
+    const scopeFailure = ref(false)
+    const subscriptions = new Map<string, FollowedExecution>()
+    let userScopeSeq = 0
     let unmounted = false
 
     const executionOf = (laneUid: string): Execution | undefined => executionsStore.subflowsExecutions[laneUid]
@@ -142,22 +152,19 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
             if (!host?.id || !taskRun) return []
             const cacheKey = `${taskRun.id}:${taskRun.state.current}:${host.id}`
             const cached = outputsByLane.value[lane.uid]
-            const terminal = ["SUCCESS", "FAILED", "KILLED", "WARNING", "CANCELLED"].includes(taskRun.state.current)
+            const terminal = TERMINAL_STATES.includes(taskRun.state.current)
             if (cached?.key === cacheKey && terminal) return []
             return [{uid: lane.uid, cacheKey, hostId: host.id, taskRunId: taskRun.id}]
         })
 
         const loaded = await Promise.all(pending.map(async (item) => {
-            try {
-                return {...item, outputs: await loadTaskRunOutputs(item.hostId, item.taskRunId)}
-            } catch {
-                return {...item, outputs: {}}
-            }
+            const outputs = await settle(loadTaskRunOutputs(item.hostId, item.taskRunId))
+            return outputs ? {...item, outputs} : undefined
         }))
         if (seq !== outputsSeq || unmounted) return
 
         const next = {...outputsByLane.value}
-        loaded.forEach((item) => (next[item.uid] = {key: item.cacheKey, outputs: item.outputs}))
+        loaded.forEach((item) => item && (next[item.uid] = {key: item.cacheKey, outputs: item.outputs}))
         outputsByLane.value = next
     }
 
@@ -174,29 +181,36 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
         const seq = ++resolveSeq
         if (!laneNodes.value.length || !executionsStore.execution?.id) return
 
-        resolving.value = true
         const resolved: {lane: LoopLaneNode; iteration: LoopIteration; execution: Execution}[] = []
         let parentId = executionsStore.execution.id
         let parentLane: LoopLaneNode | undefined
+        let transientFailure = false
 
-        try {
-            for (const entry of entries.value) {
-                const lane = laneNodes.value.find((candidate) => candidate.taskId === entry.taskId && candidate.parentUid === parentLane?.uid)
-                if (!lane) break
-                const iteration = await settle(findIterationByNumber(parentId, lane.taskId, entry.number))
-                if (seq !== resolveSeq) return
-                if (!iteration) break
-                const execution = await settle(loadIterationExecution(iteration.id))
-                if (seq !== resolveSeq) return
-                if (!execution) break
-                resolved.push({lane, iteration, execution})
-                parentId = iteration.id
-                parentLane = lane
+        const definitive = async <T>(promise: Promise<T>): Promise<T | undefined> => {
+            try {
+                return await promise
+            } catch (error) {
+                if (!(error instanceof LoopIterationError) || error.failure !== "not-found") transientFailure = true
+                return undefined
             }
-        } finally {
-            if (seq === resolveSeq) resolving.value = false
         }
-        if (seq !== resolveSeq) return
+
+        for (const entry of entries.value) {
+            const lane = laneNodes.value.find((candidate) => candidate.taskId === entry.taskId && candidate.parentUid === parentLane?.uid)
+            if (!lane) break
+            const iteration = await definitive(findIterationByNumber(parentId, lane.taskId, entry.number))
+            if (seq !== resolveSeq) return
+            if (!iteration) break
+            const execution = await definitive(loadIterationExecution(iteration.id))
+            if (seq !== resolveSeq) return
+            if (!execution) break
+            resolved.push({lane, iteration, execution})
+            parentId = iteration.id
+            parentLane = lane
+        }
+
+        scopeFailure.value = transientFailure
+        if (transientFailure) return
 
         const keep = new Set(resolved.map(({lane}) => lane.uid))
         laneNodes.value.filter((lane) => !keep.has(lane.uid)).forEach((lane) => {
@@ -221,15 +235,21 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
     }
 
     function follow(laneUid: string, execution: Execution) {
-        const running = execution.state?.current && ["CREATED", "QUEUED", "RUNNING", "RESTARTED", "KILLING", "PAUSED", "RETRYING"].includes(execution.state.current)
-        if (!running || subscriptions.has(laneUid) || unmounted) return
-        subscriptions.set(laneUid, executionsStore.subscribeToExecution(execution.id, {
+        const current = subscriptions.get(laneUid)
+        if (current?.executionId === execution.id) return
+        closeSubscription(laneUid)
+        if (!execution.state?.current || !RUNNING_STATES.includes(execution.state.current) || unmounted) return
+
+        const subscription = executionsStore.subscribeToExecution(execution.id, {
             onExecution: (updated) => {
-                if (entries.value.length === 0 || !executionsStore.subflowsExecutions[laneUid]) return
+                if (executionsStore.subflowsExecutions[laneUid]?.id !== execution.id) return
                 executionsStore.addSubflowExecution({subflow: laneUid, execution: updated})
             },
-            onEnd: () => closeSubscription(laneUid),
-        }))
+            onEnd: () => {
+                if (subscriptions.get(laneUid)?.executionId === execution.id) closeSubscription(laneUid)
+            },
+        })
+        subscriptions.set(laneUid, {executionId: execution.id, close: subscription.close})
     }
 
     watch([scopeKey, laneNodesKey, () => executionsStore.execution?.id], () => resolveScope(), {immediate: true})
@@ -247,16 +267,19 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
 
     function scopeLane(laneUid: string, number: number) {
         const lane = laneByUid(laneUid)
+        userScopeSeq++
         if (!lane) return
         setEntries(withScopedIteration(entries.value, loopDepth(lane), lane.taskId, number))
     }
 
     function clearLane(laneUid: string) {
         const lane = laneByUid(laneUid)
+        userScopeSeq++
         if (lane) setEntries(entries.value.slice(0, loopDepth(lane)))
     }
 
     function clearScope() {
+        userScopeSeq++
         setEntries([])
     }
 
@@ -271,6 +294,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
     }
 
     async function scopeFirstFailure(laneUid: string) {
+        const seq = ++userScopeSeq
         const lane = laneByUid(laneUid)
         const root = executionsStore.execution
         if (!lane || !root?.id) return
@@ -289,7 +313,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
                 {id: root.id, namespace: root.namespace, flowId: root.flowId, startDate: root.state?.startDate},
                 lane.taskId,
             ))
-            if (!found) return
+            if (seq !== userScopeSeq || !found) return
             chain = found.entries
             parentId = found.leafId
             current = laneNodes.value.find((child) => child.parentUid === lane.uid)
@@ -297,6 +321,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
 
         while (current) {
             const failed = await settle(findFirstFailedIteration(parentId, current.taskId))
+            if (seq !== userScopeSeq) return
             if (!failed) break
             chain.push({taskId: current.taskId, number: failed.number})
             parentId = failed.id
@@ -343,7 +368,8 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
         laneNodes,
         entries,
         scopeTrail,
-        resolving,
+        scopeFailure,
+        retryScope: resolveScope,
         lanesWithoutFailures,
         scopeLane,
         clearLane,

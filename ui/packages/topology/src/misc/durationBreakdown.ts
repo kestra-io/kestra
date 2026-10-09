@@ -97,3 +97,13 @@ export function computeLongestTaskRunDuration(
         return total > longest ? total : longest
     }, 0)
 }
+
+const longestByTaskRunList = new WeakMap<object, number>()
+
+export function memoizedLongestTaskRunDuration(taskRunList: Parameters<typeof computeLongestTaskRunDuration>[0]): number {
+    const cached = longestByTaskRunList.get(taskRunList)
+    if (cached !== undefined) return cached
+    const longest = computeLongestTaskRunDuration(taskRunList)
+    longestByTaskRunList.set(taskRunList, longest)
+    return longest
+}

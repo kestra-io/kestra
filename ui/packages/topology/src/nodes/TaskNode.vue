@@ -82,7 +82,7 @@
         LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
         LOOP_LANES_INJECTION_KEY,
     } from "../injectionKeys"
-    import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
+    import {memoizedLongestTaskRunDuration} from "../misc/durationBreakdown"
     import {loopTaskContext} from "../utils/loopOutcome"
 
     import PlayIcon from "vue-material-design-icons/Play.vue"
@@ -274,7 +274,7 @@
 
     const durationDenominator = computed(() =>
         taskExecution.value && taskExecution.value !== execution?.value
-            ? computeLongestTaskRunDuration(taskExecution.value.taskRunList ?? [])
+            ? memoizedLongestTaskRunDuration(taskExecution.value.taskRunList ?? [])
             : longestTaskRunDuration.value,
     )
 

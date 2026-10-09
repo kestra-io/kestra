@@ -472,7 +472,9 @@
         "jump-to-first-failure": "Aller au premier échec",
         "loops-with-failures": "Boucles en échec",
         "task-runs": "{runs} exécution | {runs} exécutions",
-        "task-runs-failed": "{runs} exécution · {failed} en échec | {runs} exécutions · {failed} en échec"
+        "task-runs-failed": "{runs} exécution · {failed} en échec | {runs} exécutions · {failed} en échec",
+        "retry": "Réessayer",
+        "load-more": "Charger plus"
       },
       "loop-chip": {
         "failed": {

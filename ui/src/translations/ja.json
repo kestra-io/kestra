@@ -472,7 +472,9 @@
         "jump-to-first-failure": "最初の失敗へ移動",
         "loops-with-failures": "失敗のあるループ",
         "task-runs": "{runs} 回の実行 | {runs} 回の実行",
-        "task-runs-failed": "{runs} 回の実行 · {failed} 件失敗 | {runs} 回の実行 · {failed} 件失敗"
+        "task-runs-failed": "{runs} 回の実行 · {failed} 件失敗 | {runs} 回の実行 · {failed} 件失敗",
+        "retry": "再試行",
+        "load-more": "さらに読み込む"
       },
       "loop-chip": {
         "failed": {

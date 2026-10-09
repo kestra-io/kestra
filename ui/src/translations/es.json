@@ -472,7 +472,9 @@
         "jump-to-first-failure": "Ir al primer fallo",
         "loops-with-failures": "Bucles con fallos",
         "task-runs": "{runs} ejecución | {runs} ejecuciones",
-        "task-runs-failed": "{runs} ejecución · {failed} fallidas | {runs} ejecuciones · {failed} fallidas"
+        "task-runs-failed": "{runs} ejecución · {failed} fallidas | {runs} ejecuciones · {failed} fallidas",
+        "retry": "Reintentar",
+        "load-more": "Cargar más"
       },
       "loop-chip": {
         "failed": {

@@ -1,21 +1,21 @@
 <template>
     <span v-if="disabledReason" class="loop-picker" data-test="loop-picker">
-        <button type="button" class="loop-picker-trigger" disabled data-test="loop-picker-disabled">
+        <KsButton size="small" disabled data-test="loop-picker-disabled">
             {{ $t("topology-graph.loop.pick-first", {loop: lane.parentTaskId}) }}
-        </button>
+        </KsButton>
     </span>
     <span v-else-if="lane.status === 'ready'" class="loop-picker" data-test="loop-picker" @click.stop>
-        <KsPopover v-model:visible="open" trigger="click" placement="bottom-start" :width="320" :showArrow="false">
+        <KsPopover v-model:visible="open" trigger="click" placement="bottom-start" width="20rem" :showArrow="false">
             <template #reference>
-                <button
-                    type="button"
+                <KsButton
+                    size="small"
                     class="loop-picker-trigger"
                     data-test="loop-picker-trigger"
                     :aria-label="$t('topology-graph.loop.picker-label', {loop: lane.taskId})"
                 >
                     <span>{{ triggerLabel }}</span>
                     <MenuDown class="loop-picker-caret" />
-                </button>
+                </KsButton>
             </template>
             <div class="loop-picker-panel" data-test="loop-picker-panel">
                 <KsSearch
@@ -24,28 +24,32 @@
                     :placeholder="$t('topology-graph.loop.search-placeholder')"
                     :aria-label="$t('topology-graph.loop.search-placeholder')"
                 />
-                <KsScrollbar :maxHeight="240">
-                    <button
+                <KsScrollbar maxHeight="15rem">
+                    <KsButton
                         v-if="lane.scopedNumber !== undefined"
-                        type="button"
+                        text
                         class="loop-picker-option"
                         data-test="loop-picker-all"
                         @click="emit('clear')"
                     >
                         {{ $t("topology-graph.loop.all-iterations") }}
-                    </button>
+                    </KsButton>
                     <KsAlert v-if="failure" type="error" :closable="false" data-test="loop-picker-failure">
                         {{ $t(`topology-graph.loop.failure-${failure}`) }}
+                        <KsButton v-if="failure === 'unknown'" link size="small" data-test="loop-picker-retry" @click="load()">
+                            {{ $t("topology-graph.loop.retry") }}
+                        </KsButton>
                     </KsAlert>
+                    <KsSkeleton v-else-if="loading && !groups.length" :rows="4" animated data-test="loop-picker-loading" />
                     <template v-else>
                         <template v-for="group in groups" :key="group.key">
                             <KsText size="small" class="loop-picker-group" :data-test="`loop-picker-group-${group.key}`">
                                 {{ group.label }}
                             </KsText>
-                            <button
+                            <KsButton
                                 v-for="iteration in group.items"
                                 :key="iteration.id"
-                                type="button"
+                                text
                                 class="loop-picker-option"
                                 :class="{'loop-picker-option-active': iteration.number === lane.scopedNumber}"
                                 data-test="loop-picker-option"
@@ -54,7 +58,16 @@
                                 <span class="loop-picker-number">#{{ iteration.number }}</span>
                                 <span class="loop-picker-value">{{ iteration.value }}</span>
                                 <KsExecutionStatus size="small" :status="iteration.state" />
-                            </button>
+                            </KsButton>
+                            <KsButton
+                                v-if="group.key === 'failed' && failedItems.length < failedTotal"
+                                link
+                                size="small"
+                                data-test="loop-picker-more-failed"
+                                @click="loadMoreFailed()"
+                            >
+                                {{ $t("topology-graph.loop.load-more") }}
+                            </KsButton>
                         </template>
                         <KsText v-if="!loading && !groups.length" size="small" class="loop-picker-empty" data-test="loop-picker-empty">
                             {{ $t("dependency.search.no_results", {term: query}) }}
@@ -138,7 +151,10 @@
     const page = ref(1)
     const loading = ref(false)
     const failure = ref<LoopIterationFailure>()
-    const groups = ref<IterationGroup[]>([])
+    const failedItems = ref<LoopIteration[]>([])
+    const failedTotal = ref(0)
+    const otherItems = ref<LoopIteration[]>([])
+    const matchItems = ref<LoopIteration[]>([])
     const total = ref(0)
     let latestSearch = 0
 
@@ -158,46 +174,81 @@
         return match ? Number(match[1]) : undefined
     })
 
+    const groups = computed<IterationGroup[]>(() => {
+        const result: IterationGroup[] = []
+        if (matchItems.value.length) result.push({key: "match", label: t("topology-graph.loop.matching"), items: matchItems.value})
+        if (failedItems.value.length) {
+            result.push({key: "failed", label: t("topology-graph.loop.failed-group", {count: failedTotal.value}), items: failedItems.value})
+        }
+        if (otherItems.value.length) result.push({key: "others", label: t("topology-graph.loop.other-group"), items: otherItems.value})
+        return result
+    })
+
+    function reset() {
+        failedItems.value = []
+        otherItems.value = []
+        matchItems.value = []
+        failedTotal.value = 0
+        total.value = 0
+    }
+
     async function load() {
         const parentId = props.hostExecutionId
         if (!parentId) return
         const search = ++latestSearch
         loading.value = true
         failure.value = undefined
+        reset()
 
         try {
             const base = {parentId, taskId: props.lane.taskId}
-            const next: IterationGroup[] = []
-            let nextTotal = 0
+            const hasText = Boolean(query.value.trim())
 
-            if (query.value.trim() && numberQuery.value === undefined) {
-                // value search is not supported by the executions API yet (kestra-io/kestra#19605)
-            } else if (numberQuery.value !== undefined) {
+            // TODO: kestra-io/kestra#19605 search by item value once the executions API supports it
+            if (hasText && numberQuery.value === undefined) return
+
+            if (numberQuery.value !== undefined) {
                 const response = await searchLoopIterations({...base, page: Math.ceil(numberQuery.value / ITERATIONS_PAGE_SIZE)})
-                const match = response.results.filter((iteration) => iteration.number === numberQuery.value)
-                if (match.length) next.push({key: "match", label: t("topology-graph.loop.matching"), items: match})
-            } else {
-                if (failedCount.value > 0 && page.value === 1) {
-                    const failed = await searchLoopIterations({...base, state: "FAILED"})
-                    if (failed.results.length) {
-                        next.push({key: "failed", label: t("topology-graph.loop.failed-group", {count: failedCount.value}), items: failed.results})
-                    }
-                    if (search !== latestSearch) return
-                }
-                const others = await searchLoopIterations({...base, excludeState: failedCount.value > 0 ? "FAILED" : undefined, page: page.value})
-                nextTotal = others.total
-                if (others.results.length) next.push({key: "others", label: t("topology-graph.loop.other-group"), items: others.results})
+                if (search !== latestSearch) return
+                matchItems.value = response.results.filter((iteration) => iteration.number === numberQuery.value)
+                return
             }
 
+            if (failedCount.value > 0 && page.value === 1) {
+                const failed = await searchLoopIterations({...base, state: "FAILED"})
+                if (search !== latestSearch) return
+                failedItems.value = failed.results
+                failedTotal.value = failed.total
+            }
+            const others = await searchLoopIterations({...base, excludeState: failedCount.value > 0 ? "FAILED" : undefined, page: page.value})
             if (search !== latestSearch) return
-            groups.value = next
-            total.value = nextTotal
+            otherItems.value = others.results
+            total.value = others.total
         } catch (error) {
             if (search !== latestSearch) return
-            groups.value = []
+            reset()
             failure.value = error instanceof LoopIterationError ? error.failure : failureOf(error)
         } finally {
             if (search === latestSearch) loading.value = false
+        }
+    }
+
+    async function loadMoreFailed() {
+        const parentId = props.hostExecutionId
+        if (!parentId) return
+        const search = ++latestSearch
+        try {
+            const next = await searchLoopIterations({
+                parentId,
+                taskId: props.lane.taskId,
+                state: "FAILED",
+                page: Math.floor(failedItems.value.length / ITERATIONS_PAGE_SIZE) + 1,
+            })
+            if (search !== latestSearch) return
+            failedItems.value = [...failedItems.value, ...next.results]
+        } catch (error) {
+            if (search !== latestSearch) return
+            failure.value = error instanceof LoopIterationError ? error.failure : failureOf(error)
         }
     }
 
@@ -231,25 +282,8 @@
     }
 
     .loop-picker-trigger {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-1);
         max-width: 12rem;
-        padding: 0 var(--ks-spacing-2);
-        border: 1px solid var(--ks-border-strong);
-        border-radius: var(--ks-radius-base);
-        background: var(--ks-bg-surface);
-        color: var(--ks-text-primary);
-        font: inherit;
-        font-size: var(--ks-font-size-2xs);
-        line-height: var(--ks-spacing-5);
         white-space: nowrap;
-        cursor: pointer;
-    }
-
-    .loop-picker-trigger:disabled {
-        color: var(--ks-text-muted);
-        cursor: not-allowed;
     }
 
     .loop-picker-caret {
@@ -271,20 +305,12 @@
 
     .loop-picker-option {
         display: flex;
-        align-items: center;
+        justify-content: flex-start;
         gap: var(--ks-spacing-2);
         width: 100%;
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
-        border: 0;
-        background: transparent;
-        color: var(--ks-text-primary);
-        font: inherit;
-        font-size: var(--ks-font-size-xs);
-        text-align: left;
-        cursor: pointer;
+        margin: 0;
     }
 
-    .loop-picker-option:hover,
     .loop-picker-option-active {
         background: var(--ks-bg-hover-elevated);
     }
@@ -299,6 +325,7 @@
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-align: left;
         white-space: nowrap;
     }
 

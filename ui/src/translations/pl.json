@@ -471,8 +471,10 @@
         "clear-scopes": "Wyczyść zakresy",
         "jump-to-first-failure": "Przejdź do pierwszego błędu",
         "loops-with-failures": "Pętle z błędami",
-        "task-runs": "{runs} uruchomienie | {runs} uruchomień",
-        "task-runs-failed": "{runs} uruchomienie · {failed} nieudanych | {runs} uruchomień · {failed} nieudanych"
+        "task-runs": "{runs} uruchomienie | {runs} uruchomienia | {runs} uruchomień",
+        "task-runs-failed": "{runs} uruchomienie · {failed} nieudanych | {runs} uruchomienia · {failed} nieudanych | {runs} uruchomień · {failed} nieudanych",
+        "retry": "Ponów",
+        "load-more": "Załaduj więcej"
       },
       "loop-chip": {
         "failed": {
@@ -496,7 +498,7 @@
           "min": "{done}"
         },
         "success": {
-          "full": "{total} iteracja | {total} iteracji",
+          "full": "{total} iteracja | {total} iteracje | {total} iteracji",
           "mid": "{total}",
           "min": "{total}"
         }

@@ -472,7 +472,9 @@
         "jump-to-first-failure": "पहली विफलता पर जाएँ",
         "loops-with-failures": "विफलताओं वाले लूप",
         "task-runs": "{runs} रन | {runs} रन",
-        "task-runs-failed": "{runs} रन · {failed} विफल | {runs} रन · {failed} विफल"
+        "task-runs-failed": "{runs} रन · {failed} विफल | {runs} रन · {failed} विफल",
+        "retry": "पुनः प्रयास करें",
+        "load-more": "और लोड करें"
       },
       "loop-chip": {
         "failed": {

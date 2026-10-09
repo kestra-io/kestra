@@ -345,9 +345,13 @@
         return execution.value?.state?.histories?.[0] ? ts(execution.value.state.histories[0].date) : 0
     })
 
+    const taskRunsWithHistories = computed(() =>
+        ((execution.value?.taskRunList ?? []) as TaskRun[]).filter(tr => (tr.state?.histories?.length ?? 0) > 0),
+    )
+
     const tasks = computed<TaskWrapper[]>(() =>
         buildTaskRunHierarchy(
-            (execution.value?.taskRunList || []) as TaskRun[],
+            taskRunsWithHistories.value,
             (n1, n2) => ts(n1.state.histories[0].date) - ts(n2.state.histories[0].date),
         ),
     )
@@ -447,7 +451,7 @@
         }
 
         return Math.max(
-            ...(execution.value.taskRunList as TaskRun[] || []).map(r => {
+            ...taskRunsWithHistories.value.map(r => {
                 const lastIndex = r.state.histories.length - 1
                 return ts(r.state.histories[lastIndex].date)
             }),

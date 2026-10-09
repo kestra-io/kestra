@@ -489,6 +489,19 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void requiredIsRemovedForSubtypedFieldWithBuilderDefault() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, RequiredSubtypedWithDefault.class);
+
+        assertThat((List<String>) generate.get("required"), not(hasItem("taskRunner")));
+        assertThat((List<String>) generate.get("required"), hasItem("taskRunnerWithNoDefault"));
+
+        Map<String, Object> inputs = new AbstractClassDocumentation<Task>(jsonSchemaGenerator, RequiredSubtypedWithDefault.class, Task.class) {}.getInputs();
+        assertThat(((Map<String, Object>) inputs.get("taskRunner")).get("$required"), is(false));
+        assertThat(((Map<String, Object>) inputs.get("taskRunnerWithNoDefault")).get("$required"), is(true));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void testDocumentation() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithDynamicDocumentedFields.class);
         assertThat(generate, is(not(nullValue())));
@@ -723,6 +736,22 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @NotNull
         private Property<TaskWithEnum.TestClass> requiredWithNoDefault;
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class RequiredSubtypedWithDefault extends Task {
+        @PluginProperty
+        @NotNull
+        @Builder.Default
+        private TaskRunner<?> taskRunner = io.kestra.plugin.core.runner.Process.instance();
+
+        @PluginProperty
+        @NotNull
+        private TaskRunner<?> taskRunnerWithNoDefault;
     }
 
     @SuperBuilder

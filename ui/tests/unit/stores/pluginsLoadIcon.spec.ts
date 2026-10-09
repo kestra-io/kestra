@@ -1,5 +1,7 @@
 import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {usePluginsStore} from "../../../src/stores/plugins"
+import type {PluginControllerPluginIconResponse, PluginIcon} from "@kestra-io/kestra-sdk"
 
 const getMock = vi.fn()
 
@@ -39,7 +41,7 @@ class FakeImage {
 }
 
 describe("plugins store loadIcon", () => {
-    let store: any
+    let store: ReturnType<typeof usePluginsStore>
 
     beforeEach(async () => {
         // Another spec may already have imported the store against the real SDK;
@@ -134,7 +136,7 @@ describe("plugins store loadIcon", () => {
     })
 
     it("dedupes concurrent requests for the same class", async () => {
-        let resolveRequest: (value: any) => void = () => {}
+        let resolveRequest: (value: {data: PluginControllerPluginIconResponse}) => void = () => {}
         getMock.mockReturnValueOnce(new Promise(resolve => {
             resolveRequest = resolve
         }))
@@ -152,7 +154,7 @@ describe("plugins store loadIcon", () => {
 
     it("waits for an in-flight catalog fetch instead of issuing its own per-class request", async () => {
         // Given a catalog fetch in flight that will carry the class
-        let resolveCatalog: (value: any) => void = () => {}
+        let resolveCatalog: (value: {data: Record<string, PluginIcon>}) => void = () => {}
         getMock.mockReturnValueOnce(new Promise(resolve => {
             resolveCatalog = resolve
         }))

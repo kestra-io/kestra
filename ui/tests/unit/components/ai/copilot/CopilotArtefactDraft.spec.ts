@@ -28,18 +28,18 @@ describe("CopilotArtefactDraft", () => {
     it("renders the kind title, a valid badge and the YAML", () => {
         const w = mountDraft({draftId: "d1", kind: "FLOW", yaml: "id: demo", valid: true, constraints: null})
         expect(w.text()).toContain("Proposed flow")
-        expect(w.find(".ks-code-status").attributes("data-status")).toBe("valid")
+        expect(w.find("[data-test='copilot-draft-status']").attributes("data-status")).toBe("valid")
         // Rendered via KsMarkdown as a highlighted yaml fence, so assert the YAML is present.
         expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: demo")
         // A valid draft shows no constraints alert.
-        expect(w.find(".ks-alert").exists()).toBe(false)
+        expect(w.find("[data-test='copilot-draft-constraints']").exists()).toBe(false)
     })
 
     it("shows an error badge and the constraints when the draft is invalid", () => {
         const w = mountDraft({draftId: "d2", kind: "DASHBOARD", yaml: "x: 1", valid: false, constraints: "charts is required"})
         expect(w.text()).toContain("Proposed dashboard")
-        expect(w.find(".ks-code-status").attributes("data-status")).toBe("error")
-        const alert = w.find(".ks-alert")
+        expect(w.find("[data-test='copilot-draft-status']").attributes("data-status")).toBe("error")
+        const alert = w.find("[data-test='copilot-draft-constraints']")
         expect(alert.exists()).toBe(true)
         expect(alert.text()).toContain("charts is required")
     })

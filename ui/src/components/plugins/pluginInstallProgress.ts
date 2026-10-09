@@ -10,15 +10,15 @@ function escapeRegExp(value: string): string {
  * against a "plugin-aws-s3" resource.
  */
 export function progressFor(progress: Record<string, ArtifactProgress>, artifact: PluginArtifact): ArtifactProgress | undefined {
-    const pattern = new RegExp(`(^|/)${escapeRegExp(artifact.artifactId)}-\\d`)
+    const pattern = new RegExp(`(^|/)${escapeRegExp(artifact.artifactId ?? "")}-\\d`)
     const key = Object.keys(progress).find(k => pattern.test(k))
     return key ? progress[key] : undefined
 }
 
 export function artifactPercentage(progress: Record<string, ArtifactProgress>, artifact: PluginArtifact): number {
     const p = progressFor(progress, artifact)
-    if (!p || p.total <= 0) return 0
-    return Math.round((p.transferred / p.total) * 100)
+    if (!p?.total || p.total <= 0) return 0
+    return Math.round(((p.transferred ?? 0) / p.total) * 100)
 }
 
 export function humanBytes(bytes: number): string {

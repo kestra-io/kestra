@@ -349,6 +349,10 @@
     "no": "Não",
     "change state done": "O estado da task foi atualizado",
     "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task para a task <code>{task}</code> na execução <code>{id}</code>?<br/>Isso reiniciará a execução a partir da próxima task e reiniciará a execução pai, se houver.",
+    "interrupt": "Interromper",
+    "interrupt confirm": "Tem certeza de que deseja interromper a execução da Task para a Task <code>{task}</code> na egzekucja <code>{id}</code>?<br/>Isso encerrará a Task em execução dentro do Worker e definirá seu Status.",
+    "interrupt done": "A execução da Task foi interrompida",
+    "interrupt target state": "Estado alvo",
     "change state current state": "Status atual é:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "Mostrar fonte da task",
     "stream": "Stream",
     "execution statistics": "Estatísticas de execução",
+    "execution_banner": {
+      "revision": "Revisão {revision}",
+      "attempts": "{count} tentativa | {count} tentativas",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Limites de Concurrency",
     "system overview": "Visão Geral do Sistema",
     "usage": "Uso",
@@ -560,6 +569,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "Não foi possível carregar um componente do plugin.",
       "autoInstall": {
         "failed": "Falha na instalação do plugin",
         "failedHint": "O flow não foi salvo. Corrija o problema ou remova o plugin do flow e salve novamente.",
@@ -1101,7 +1111,6 @@
     "pause backfills": "Pausar backfills",
     "backfill executions": "Execuções de backfill",
     "execute backfill": "Executar backfill",
-    "relative": "Relativo",
     "relative start date": "Data de início relativa",
     "absolute": "Absoluto",
     "backfill": "Backfill",
@@ -1713,6 +1722,7 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
+      "task_details": "Detalhes da task",
       "toggle_pebble": "Alternar editor Pebble",
       "version_oss_placeholder": "Desbloqueie a Versionamento de Plugin com a Enterprise Edition",
       "adding": "+ Adicionar um {what}",
@@ -1768,7 +1778,8 @@
         "inputs": "Selecione um tipo de campo de input",
         "charts": "Selecione um tipo de gráfico",
         "where": "Selecione um tipo de filtro",
-        "numerator": "Selecione um numerador"
+        "numerator": "Selecione um numerador",
+        "namespace_first": "Selecione primeiro um namespace"
       },
       "creation": {
         "default": "Adicionar",
@@ -2414,6 +2425,7 @@
         "label": "{count} Erro(s)"
       }
     },
+    "invalid_source_code": "Código-fonte inválido",
     "source_search": {
       "cannot_select_read_only": "Não é possível selecionar — você não tem permissão de edição em {namespace} / {id}",
       "collapse_all": "Recolher tudo",

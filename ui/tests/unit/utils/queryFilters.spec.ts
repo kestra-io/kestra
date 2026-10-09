@@ -2,18 +2,18 @@ import {describe, expect, it} from "vitest"
 import {parseQuery, stringifyQuery} from "vue-router"
 import {Comparators, encodeFilterGroupsToQuery, keyOfComparator} from "@kestra-io/design-system"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
-import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
+import {createConfigureClient, type ConfigurableFetchClient} from "../../../packages/hey-api-plugin/src/runtime"
 import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
 
-const serializeQuery = (query: Record<string, any>) => {
-    let config: any
+const serializeQuery = (query: Record<string, unknown>) => {
+    let config: Parameters<ConfigurableFetchClient["setConfig"]>[0] = {}
     const slot = {clear() {}, use() {}}
-    const client = {
-        setConfig(value: any) { config = value },
+    const client: ConfigurableFetchClient = {
+        setConfig(value) { config = value },
         interceptors: {request: slot, response: slot, error: slot},
     }
     createConfigureClient(client, {bodySerializer() {}})()
-    return config.querySerializer(query) as string
+    return config.querySerializer?.(query)
 }
 
 const serializeQueryFilters = (filters: QueryFilter[]) => serializeQuery({filters})
@@ -270,7 +270,7 @@ describe("routeQueryToQueryFilters", () => {
         })()],
         ["a null member", ["RUNNING", null]],
         ["a self-cycle", (() => {
-            const value: any[] = []
+            const value: unknown[] = []
             value.push(value)
             return value
         })()],
@@ -324,7 +324,7 @@ describe("routeQueryToQueryFilters", () => {
     })
 
     it("rejects atomically when a valid leaf accessor truncates a later invalid filter", () => {
-        const filters: any[] = []
+        const filters: unknown[] = []
         const firstFilter = {field: "namespace", operation: "EQUALS"}
         Object.defineProperty(firstFilter, "value", {
             enumerable: true,
@@ -342,7 +342,7 @@ describe("routeQueryToQueryFilters", () => {
     it("rejects a custom logical node whose child accessor truncates a later invalid child", () => {
         class LogicalFilter {
             logical = "and"
-            children: any[] = []
+            children: unknown[] = []
         }
 
         const filter = new LogicalFilter()

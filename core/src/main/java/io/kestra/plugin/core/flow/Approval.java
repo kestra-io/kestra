@@ -131,6 +131,32 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     private Property<Behavior> expireBehavior = Property.ofValue(Behavior.CANCEL);
 
     @Schema(
+        title = "Title of the request, shown to the reviewers.",
+        description = "Enterprise Edition only."
+    )
+    private Property<String> title;
+
+    @Schema(
+        title = "Users and groups allowed to review the request.",
+        description = "Enterprise Edition only."
+    )
+    private Assignment assignment;
+
+    @JsonProperty("case")
+    @Getter(AccessLevel.NONE)
+    @Schema(
+        title = "Approval case opened for the request.",
+        description = "Enterprise Edition only."
+    )
+    private CaseConfig _case;
+
+    @Schema(
+        title = "Whether the assignees and the requester get in-app notifications, true when unset.",
+        description = "Enterprise Edition only."
+    )
+    private Property<Boolean> inAppNotification;
+
+    @Schema(
         title = "Tasks executed before the execution pauses."
     )
     @PluginProperty
@@ -156,6 +182,10 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
     public List<Task> getFinally() {
         return this._finally;
+    }
+
+    public CaseConfig getCase() {
+        return this._case;
     }
 
     @Override
@@ -190,8 +220,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        // decision is checked before isWaiting so autoApprove (a decision recorded at creation, on a task
-        // run that never pauses) goes straight to its branch instead of running onWait.
+        // checked before isWaiting so autoApprove goes straight to its branch instead of running onWait.
         Decision.Type decision = this.decisionType(runContext);
         if (decision != null) {
             if (decision == Decision.Type.EXPIRED) {
@@ -210,8 +239,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (this.decisionType(runContext) == null && this.isWaiting(parentTaskRun)) {
-            // 'finally' is only scheduled here when onWait just terminated in error, since the Branch
-            // phase (which schedules it otherwise) is never reached in that case.
+            // the Branch phase never schedules 'finally' when onWait failed, so it is scheduled here.
             Optional<State.Type> waitState = this.resolveWaitState(runContext, execution, parentTaskRun);
             boolean onWaitFailed = waitState.isPresent() && waitState.get().isTerminatedInError();
 
@@ -258,9 +286,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
         List<ResolvedTask> finallyTasks = FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun);
 
-        // guessFinalState(null, ...) resolves immediately regardless of any real scheduled child, so it
-        // is only safe when there is truly nothing left to wait for — an empty branch (e.g. EXPIRED) with
-        // a configured 'finally' must still go through resolveState() so that finally is awaited.
+        // guessFinalState(null, ...) ignores real children, so an empty branch with a 'finally' must go through resolveState().
         if (ListUtils.isEmpty(childTasks) && ListUtils.isEmpty(finallyTasks)) {
             return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
         }
@@ -297,7 +323,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         };
     }
 
-    /** The execution-level target state for a terminal decided task run (SUCCEED/CANCEL/KILL only), recomputing the branch's own pre-{@link #applyBehavior} state so a genuine failure is never mistaken for one. */
+    /** Execution-level target state of a decided task run (SUCCEED/CANCEL/KILL only), empty when the branch itself failed. */
     public Optional<State.Type> executionLevelOutcome(RunContext runContext, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
         Decision.Type decision = this.decisionType(runContext);
         if (decision == null) {
@@ -365,24 +391,28 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Approval.Output outputs(RunContext runContext) throws Exception {
-        String url = this.executionUrl(runContext);
+        Map<String, Object> current = runContext.currentOutput();
         Decision.Type decision = this.decisionType(runContext);
 
+        // skipCache: the task instance is shared across executions.
+        String title = current != null && current.get("title") != null ? (String) current.get("title") : this.renderTitle(runContext);
+        String url = current != null && current.get("url") != null ? (String) current.get("url") : this.executionUrl(runContext);
+        String caseId = current == null ? null : (String) current.get("caseId");
+
         if (decision == null) {
-            // the executor reuses this task instance across every execution of the flow, so the property's
-            // render cache must be skipped or a later execution would reuse the first execution's value.
             boolean autoApprove = runContext.render(this.autoApprove.skipCache()).as(Boolean.class).orElse(false);
             if (autoApprove) {
-                return Output.builder().url(url).decision(Decision.Type.APPROVED).auto(true).build();
+                return Output.builder().url(url).title(title).decision(Decision.Type.APPROVED).auto(true).build();
             }
-            return Output.builder().url(url).build();
+            return Output.builder().url(url).title(title).caseId(caseId).build();
         }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> current = runContext.currentOutput();
         return Output.builder()
             .url(url)
+            .title(title)
+            .caseId(caseId)
             .decision(decision)
             .auto(Boolean.TRUE.equals(current.get("auto")))
             .by((String) current.get("by"))
@@ -391,6 +421,10 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .inputs((Map<String, Object>) current.get("inputs"))
             .due((String) current.get("due"))
             .build();
+    }
+
+    private String renderTitle(RunContext runContext) throws IllegalVariableEvaluationException {
+        return this.title == null ? null : runContext.render(this.title.skipCache()).as(String.class).orElse(null);
     }
 
     private String executionUrl(RunContext runContext) {
@@ -435,8 +469,6 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             return Optional.empty();
         }
 
-        // the executor reuses this task instance across every execution of the flow, so the property's
-        // render cache must be skipped or a later execution would reuse the first execution's value.
         Duration timeout = runContext.render(this.getTimeout().skipCache()).as(Duration.class).orElse(null);
         if (timeout == null) {
             return Optional.empty();
@@ -478,6 +510,47 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
         @Schema(title = "A link to the execution page.")
         private String url;
+
+        @Schema(title = "The rendered request title. Enterprise Edition only.")
+        private String title;
+
+        @Schema(title = "Identifier of the approval case. Enterprise Edition only.")
+        private String caseId;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @ToString
+    public static class Assignment {
+        @Schema(title = "Users allowed to review the request.")
+        private List<String> users;
+
+        @Schema(title = "Groups allowed to review the request.")
+        private List<String> groups;
+    }
+
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @ToString
+    public static class CaseConfig {
+        @Schema(title = "Open an approval case for the request.")
+        private Property<Boolean> enabled;
+
+        @Schema(title = "Identifier of an existing case of the same execution to reuse, for multi-step approvals.")
+        private Property<String> id;
+
+        @Schema(title = "Severity of the case.")
+        private Property<String> severity;
+
+        @Schema(title = "Description of the case.")
+        private Property<String> description;
+
+        @Schema(title = "Deadline of the case, defaults to `timeout`.")
+        private Property<Duration> sla;
     }
 
     public record Decision(Type type, @Nullable String comment) {

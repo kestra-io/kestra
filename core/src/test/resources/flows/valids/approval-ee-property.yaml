@@ -1,0 +1,7 @@
+id: approval-ee-property
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    title: "Deploy to production"

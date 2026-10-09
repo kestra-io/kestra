@@ -10,19 +10,13 @@ import io.kestra.core.models.flows.State;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Terminates an execution in a chosen state, starting from a given task run and cascading the same
- * state up through its parents. Shared by {@link io.kestra.plugin.core.execution.Exit} and by
- * {@code Approval}'s {@code SUCCEED}/{@code CANCEL}/{@code KILL} behaviors, so the two never drift.
- */
+/** Terminates an execution in a chosen state, cascading it from a task run up through its parents; shared by {@code Exit} and {@code Approval}. */
 @Slf4j
 public final class ExecutionTerminator {
     private ExecutionTerminator() {
     }
 
-    /**
-     * {@code KILLED} bypasses {@code startingTaskRun} entirely: the caller must separately emit the kill event that stops running task runs.
-     */
+    /** {@code KILLED} bypasses {@code startingTaskRun}: the caller must emit the kill event that stops running task runs. */
     public static Execution terminate(Execution execution, @Nullable TaskRun startingTaskRun, State.Type state) {
         if (state == State.Type.KILLED) {
             return execution.withState(State.Type.KILLED);

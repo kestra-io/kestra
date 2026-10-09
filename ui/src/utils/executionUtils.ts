@@ -4,26 +4,28 @@ import type {Execution} from "../stores/executions"
 
 type KestraClient = ReturnType<typeof useClient>
 
-export function waitFor($http: KestraClient, execution: {id: string}, predicate: (data: any) => boolean) {
-    return new Promise((resolve) => {
-        const callback = () => {
-            $http.get(`${apiUrl()}/executions/${execution.id}`).then(response => {
-                const result = predicate(response.data)
+const POLL_INTERVAL_MS = 300
+const MAX_POLLS = 100
 
-                if (result === true) {
+/**
+ * Resolves with the execution once `predicate` accepts it, or with the last state seen after
+ * {@link MAX_POLLS} polls so a caller never waits forever, and rejects when a poll request fails.
+ */
+export function waitFor($http: KestraClient, execution: {id: string}, predicate: (data: any) => boolean) {
+    return new Promise((resolve, reject) => {
+        let remaining = MAX_POLLS
+        const poll = () => {
+            $http.get(`${apiUrl()}/executions/${execution.id}`).then((response) => {
+                remaining--
+                if (predicate(response.data) === true || remaining <= 0) {
                     resolve(response.data)
                 } else {
-                    window.setTimeout(() => {
-                        callback()
-                    }, 300)
+                    window.setTimeout(poll, POLL_INTERVAL_MS)
                 }
-            })
-
+            }, reject)
         }
 
-        window.setTimeout(() => {
-            callback()
-        }, 300)
+        window.setTimeout(poll, POLL_INTERVAL_MS)
     })
 }
 

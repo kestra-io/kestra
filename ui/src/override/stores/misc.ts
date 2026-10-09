@@ -4,6 +4,7 @@ import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import * as MiscAPI from "@kestra-io/kestra-sdk/misc"
 import * as BasicAuth from "../../utils/basicAuth"
 import {initPosthogIfEnabled} from "../../utils/posthog"
+import {sendPosthogEvent} from "../../utils/analytics/posthogEvents"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
 import {useApiStore} from "../../stores/api"
@@ -35,7 +36,7 @@ export const useMiscStore = defineStore("misc", () => {
     async function loadConfigs() {
         const data = await MiscAPI.configuration()
         configs.value = data
-        void useApiStore().flushQueuedEvents()
+        useApiStore().flushQueuedEvents()
         return data
     }
 

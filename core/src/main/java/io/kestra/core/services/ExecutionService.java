@@ -1075,6 +1075,26 @@ public class ExecutionService {
     }
 
     /**
+     * Whether killing the execution would still stop something: a task not yet terminated (including
+     * afterExecution tasks), or, when cascading, a direct subflow execution that is not terminated.
+     */
+    public boolean hasWorkToKill(Flow flow, Execution execution, boolean isOnKillCascade) {
+        if (!isTerminated(flow, execution)) {
+            return true;
+        }
+
+        if (!isOnKillCascade) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(
+            executionRepository.findAllByTriggerExecutionId(execution.getTenantId(), execution.getId())
+                .any(child -> !child.getState().isTerminated())
+                .block()
+        );
+    }
+
+    /**
      * Lookup for all loop sub-executions created by the given execution that are still running or paused,
      * and returns the relevant {@link ExecutionKilledExecution} events that should be requested.
      * This method is not responsible for executing the events.

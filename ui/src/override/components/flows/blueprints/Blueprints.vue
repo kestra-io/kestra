@@ -18,7 +18,7 @@
                 @back="selectedBlueprintId = undefined"
             />
             <BlueprintsBrowser
-                :class="{'d-none': !!selectedBlueprintId}"
+                :style="{ display: selectedBlueprintId ? 'none' : '' }"
                 :embed
                 :blueprintKind="kind"
                 blueprintType="community"

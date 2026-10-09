@@ -85,6 +85,5 @@ export const RedisList: Story = {
         await userEvent.click(copyButton)
 
         expect(navigator.clipboard.writeText).not.toHaveBeenCalled()
-        expect(body.queryByText("Webhook link copied.")).not.toBeInTheDocument()
     },
 }

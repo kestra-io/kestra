@@ -4,8 +4,11 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import io.kestra.core.models.executions.TaskRun;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -40,6 +43,20 @@ public record TaskRunStateCounts(Map<String, Map<State.Type, Long>> counts) {
         return new TaskRunStateCounts(counts);
     }
 
+    /**
+     * Counts a loop's own terminated iterations per state, keyed by the loop task id.
+     */
+    public static TaskRunStateCounts ofLoopIterations(String loopTaskId, @Nullable Map<String, Integer> terminatedByState) {
+        if (MapUtils.isEmpty(terminatedByState)) {
+            return EMPTY;
+        }
+
+        Map<State.Type, Long> byState = new EnumMap<>(State.Type.class);
+        terminatedByState.forEach((state, count) -> toState(state).ifPresent(type -> byState.put(type, count.longValue())));
+        return byState.isEmpty() ? EMPTY : new TaskRunStateCounts(Map.of(loopTaskId, byState));
+    }
+
+    @JsonIgnore
     public boolean isEmpty() {
         return counts.isEmpty();
     }
@@ -77,7 +94,7 @@ public record TaskRunStateCounts(Map<String, Map<State.Type, Long>> counts) {
 
     /**
      * Reads back a map produced by {@link #toMap()}. Counts are read as {@link Number} since a JSON round trip
-     * may deserialize them as {@code Integer} or {@code Long}. Returns an empty instance for a null or empty map.
+     * may deserialize them as {@code Integer} or {@code Long}. Unknown state names are skipped; returns an empty instance for a null or empty map.
      */
     public static TaskRunStateCounts fromMap(@Nullable Map<String, Map<String, Number>> map) {
         if (MapUtils.isEmpty(map)) {
@@ -87,9 +104,19 @@ public record TaskRunStateCounts(Map<String, Map<State.Type, Long>> counts) {
         Map<String, Map<State.Type, Long>> counts = HashMap.newHashMap(map.size());
         map.forEach((taskId, byState) -> {
             Map<State.Type, Long> states = new EnumMap<>(State.Type.class);
-            byState.forEach((state, count) -> states.put(State.Type.valueOf(state), count.longValue()));
-            counts.put(taskId, states);
+            byState.forEach((state, count) -> toState(state).ifPresent(type -> states.put(type, count.longValue())));
+            if (!states.isEmpty()) {
+                counts.put(taskId, states);
+            }
         });
-        return new TaskRunStateCounts(counts);
+        return counts.isEmpty() ? EMPTY : new TaskRunStateCounts(counts);
+    }
+
+    private static Optional<State.Type> toState(String name) {
+        try {
+            return Optional.of(State.Type.valueOf(name));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 }

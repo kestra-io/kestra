@@ -14,7 +14,7 @@
             <div class="revision-grid-col" v-if="revisionLeft !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
-                        <KsSelect v-model="revisionLeft" @change="addQuery">
+                        <KsSelect v-model="revisionLeft" @change="addQuery" data-test="revision-left">
                             <KsOption
                                 v-for="item in leftOptions"
                                 :key="item.value"
@@ -40,7 +40,7 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionLeft === currentRevision"
+                                :disabled="revisionLeft === currentRevision || isLoadingRevisions || revisionLeftText === undefined"
                                 @click="restoreRevision(revisionLeft, revisionLeftText)"
                                 data-testid="restore-left"
                             >
@@ -56,7 +56,7 @@
             <div class="revision-grid-col" v-if="revisionRight !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
-                        <KsSelect v-model="revisionRight" @change="addQuery">
+                        <KsSelect v-model="revisionRight" @change="addQuery" data-test="revision-right">
                             <KsOption
                                 v-for="item in rightOptions"
                                 :key="item.value"
@@ -82,7 +82,7 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionRight === currentRevision"
+                                :disabled="revisionRight === currentRevision || isLoadingRevisions || revisionRightText === undefined"
                                 @click="restoreRevision(revisionRight, revisionRightText)"
                                 data-testid="restore-right"
                             >
@@ -98,6 +98,7 @@
         </div>
 
         <KsEditor
+            data-test="revision-diff"
             v-bind="editorBindings"
             class="mt-1"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
@@ -126,6 +127,7 @@
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import * as monaco from "monaco-editor/editor/editor.api"
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
@@ -137,6 +139,7 @@
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 
     const flowStore = useFlowStore()
 
@@ -252,8 +255,6 @@
     }
 
     function addQuery() {
-        if (isLoadingRevisions.value) return
-
         if (props.editRouteQuery) {
             router.push({
                 query: {
@@ -328,21 +329,27 @@
         })
     }
 
-    watch(revisionLeft, async (newValue) => {
+    watch([revisionLeft, revisionRight, sortedRevisions], async ([left, right], _previous, onCleanup) => {
+        let cancelled = false
+        onCleanup(() => {cancelled = true})
         isLoadingRevisions.value = true
         try {
-            revisionLeftText.value = await loadRevisionContent(newValue)
-        } finally {
-            isLoadingRevisions.value = false
-        }
-    })
+            const [leftText, rightText] = await Promise.all([
+                loadRevisionContent(left),
+                loadRevisionContent(right),
+            ])
+            if (cancelled) return
 
-    watch(revisionRight, async (newValue) => {
-        isLoadingRevisions.value = true
-        try {
-            revisionRightText.value = await loadRevisionContent(newValue)
+            revisionLeftText.value = leftText
+            revisionRightText.value = rightText
+        } catch (error: unknown) {
+            if (!cancelled) {
+                revisionLeftText.value = undefined
+                revisionRightText.value = undefined
+                if (!isReportedCentrally(error as KestraHttpError)) toast.error(asProblem(error)?.detail ?? t("error"))
+            }
         } finally {
-            isLoadingRevisions.value = false
+            if (!cancelled) isLoadingRevisions.value = false
         }
     })
 
@@ -366,8 +373,11 @@
 
     watch(
         () => sortedRevisions.value.map(r => r.revision).join(","),
-        async (newKey, oldKey) => {
+        (newKey, oldKey) => {
             if (newKey === oldKey) return
+
+            const previousLeft = revisionLeft.value
+            const previousRight = revisionRight.value
 
             if (!revisionExists(revisionLeft.value)) {
                 const rightIdx = sortedRevisions.value.findIndex(r => r.revision === revisionRight.value)
@@ -384,14 +394,7 @@
                 revisionRight.value = currentRevisionWithSource.value?.revision
             }
 
-            const [leftText, rightText] = await Promise.all([
-                loadRevisionContent(revisionLeft.value),
-                loadRevisionContent(revisionRight.value),
-            ])
-            revisionLeftText.value = leftText
-            revisionRightText.value = rightText
-
-            addQuery()
+            if (previousLeft !== revisionLeft.value || previousRight !== revisionRight.value) addQuery()
         },
     )
 

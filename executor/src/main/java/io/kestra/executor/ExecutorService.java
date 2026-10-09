@@ -888,13 +888,16 @@ public class ExecutorService {
     private void handleLoopCreated(ExecutorContext executor, Loop loop, TaskRun taskRun) throws InternalException, IOException {
         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), taskRun);
         var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
+        int iterationCount;
 
         if (valuesUri.isPresent()) {
             var init = loop.initFromUri(runContext, valuesUri.get());
+            iterationCount = init.totalCount();
+
             // save the iteration information in outputs to know how many loop iterations we already triggered
             taskOutputService.saveOutputs(
                 taskRun, Map.of(
-                    Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
                     Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
                     Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
                     Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
@@ -906,23 +909,17 @@ public class ExecutorService {
             }
         } else {
             var init = loop.initFromValues(runContext);
+            iterationCount = init.totalCount();
             // save the iteration information in outputs to know how many loop iterations we already triggered
             taskOutputService.saveOutputs(
                 taskRun, Map.of(
-                    Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
                     Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
                     Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
                 )
             );
 
-            if (init.totalCount() == 0) {
-                // if no loop iteration, we end the task immediately
-                executor.withExecution(
-                    executor.getExecution()
-                        .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
-                    "handleLoop"
-                );
-            } else {
+            if (iterationCount > 0) {
                 if (init.values().isLeft()) {
                     List<String> values = init.values().getLeft();
                     for (int i = 0; i < init.limit(); i++) {
@@ -944,6 +941,14 @@ public class ExecutorService {
                     "handleLoop"
                 );
             }
+        }
+
+        if (iterationCount == 0) {
+            executor.withExecution(
+                executor.getExecution()
+                    .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
+                "handleLoop"
+            );
         }
     }
 

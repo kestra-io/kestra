@@ -321,14 +321,14 @@
         void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
-    function isOutputTaskAFile(item: any): item is { uri: string } {
+    function isOutputTaskAFile(item: unknown): item is { uri: string } {
         if(!item || typeof item !== "object") {
             return false
         }
-        if(!Utils.isFile(item.uri)) {
-            return false
-        }
-        return true
+
+        const uri = (item as { uri?: unknown }).uri
+
+        return typeof uri === "string" && Utils.isFile(uri)
     }
 
     const taskItems = computed<ExplorerItem[]>(() => {

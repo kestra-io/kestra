@@ -25,6 +25,7 @@ export interface LoopRoot {
     namespace: string;
     flowId: string;
     startDate?: string;
+    endDate?: string;
 }
 
 export interface IterationLoopRun {
@@ -86,6 +87,11 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
         filters.push({field: "flowId", operation: "EQUALS", value: search.root.flowId})
         if (search.root.startDate) {
             filters.push({field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: search.root.startDate.replace(/\.\d+/, "")})
+        }
+        if (search.root.endDate) {
+            const ceiling = new Date(search.root.endDate)
+            ceiling.setSeconds(ceiling.getSeconds() + 1)
+            filters.push({field: "endDate", operation: "LESS_THAN_OR_EQUAL_TO", value: ceiling.toISOString().replace(/\.\d+/, "")})
         }
     }
     if (search.state) filters.push({field: "state", operation: "IN", value: [search.state]})

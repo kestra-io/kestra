@@ -5,7 +5,10 @@ import {LoopIterationError, type LoopRoot} from "../utils/loopIterations"
 import {
     collectFailedTargets,
     collectScopedTargets,
+    createChainCache,
+    logUrlReserve,
     searchMergedLogs,
+    type ChainCache,
     type LoopLogTargets,
 } from "../utils/loopLogScope"
 import type {LoopScopeEntry} from "../utils/loopScope"
@@ -19,6 +22,7 @@ export interface MergedLogsOptions {
     scope: Ref<LoopScopeEntry[]>;
     levelParams: Ref<Record<string, string>>;
     running: Ref<boolean>;
+    q?: Ref<string | undefined>;
 }
 
 export function useLoopMergedLogs(options: MergedLogsOptions) {
@@ -33,33 +37,57 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
     const cursorMode = ref(false)
     let page = 1
     let seq = 0
+    let cache: ChainCache = createChainCache()
+    let cacheRootId: string | undefined
 
     const hasMore = computed(() => cursorMode.value ? Boolean(nextCursor.value) : lines.value.length < total.value)
 
     const kinds = () => [options.root.value?.kind ?? "NORMAL", "LOOP"].filter((kind, index, all) => all.indexOf(kind) === index)
 
-    async function load() {
+    const search = (executionIds: string[], pageNumber: number, cursor?: string) => searchMergedLogs({
+        executionIds,
+        kinds: kinds(),
+        levelParams: options.levelParams.value,
+        q: options.q?.value,
+        page: pageNumber,
+        cursor,
+    })
+
+    async function load(keepExtent = false) {
         const root = options.root.value
         if (!root?.id) return
+        if (cacheRootId !== root.id) {
+            cache = createChainCache()
+            cacheRootId = root.id
+        }
         const current = ++seq
         loading.value = true
         try {
+            const collectOptions = {reserve: logUrlReserve({levelParams: options.levelParams.value, kinds: kinds(), q: options.q?.value}), cache}
             const resolved = options.scope.value.length
-                ? await collectScopedTargets(root, options.scope.value)
-                : await collectFailedTargets(root)
-            const result = await searchMergedLogs({
-                executionIds: resolved.executionIds,
-                kinds: kinds(),
-                levelParams: options.levelParams.value,
-                page: 1,
-            })
+                ? await collectScopedTargets(root, options.scope.value, undefined, collectOptions)
+                : await collectFailedTargets(root, undefined, collectOptions)
+
+            const pagesToLoad = keepExtent ? page : 1
+            let collected: LogEntry[] = []
+            let cursor: string | undefined
+            let result = await search(resolved.executionIds, 1)
+            let pagesLoaded = 1
+            collected = collected.concat(result.results)
+            cursor = result.nextCursor
+            while (pagesLoaded < pagesToLoad && (result.cursorMode ? Boolean(cursor) : collected.length < result.total)) {
+                result = await search(resolved.executionIds, pagesLoaded + 1, cursor)
+                collected = collected.concat(result.results)
+                cursor = result.nextCursor
+                pagesLoaded++
+            }
             if (current !== seq) return
             targets.value = resolved
-            lines.value = result.results
+            lines.value = collected
             total.value = result.total
-            nextCursor.value = result.nextCursor
+            nextCursor.value = cursor
             cursorMode.value = result.cursorMode
-            page = 1
+            page = pagesLoaded
             failure.value = undefined
         } catch (error) {
             if (current !== seq) return
@@ -77,16 +105,11 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         const current = seq
         loadingMore.value = true
         try {
-            const result = await searchMergedLogs({
-                executionIds: targets.value.executionIds,
-                kinds: kinds(),
-                levelParams: options.levelParams.value,
-                page: page + 1,
-                cursor: nextCursor.value,
-            })
+            const result = await search(targets.value.executionIds, page + 1, nextCursor.value)
             if (current !== seq) return
             page += 1
             lines.value = lines.value.concat(result.results)
+            total.value = result.total
             nextCursor.value = result.nextCursor
         } catch {
             failure.value = "unknown"
@@ -96,17 +119,24 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
     }
 
     const scopeKey = computed(() => options.scope.value.map(({taskId, number}) => `${taskId}:${number}`).join(","))
-    const searchKey = computed(() => `${options.root.value?.id ?? ""}|${scopeKey.value}|${JSON.stringify(options.levelParams.value)}`)
-    watch(searchKey, load, {immediate: true})
+    const searchKey = computed(() => `${options.root.value?.id ?? ""}|${scopeKey.value}|${JSON.stringify(options.levelParams.value)}|${options.q?.value ?? ""}`)
+    watch(searchKey, () => load(), {immediate: true})
 
     const refreshTimer = useIntervalFn(() => {
-        if (!loading.value) load()
+        if (!loading.value) load(true)
     }, AUTO_REFRESH_MS, {immediate: false})
-    watch(options.running, (running) => running ? refreshTimer.resume() : refreshTimer.pause(), {immediate: true})
+    watch(options.running, (running, wasRunning) => {
+        if (running) {
+            refreshTimer.resume()
+            return
+        }
+        refreshTimer.pause()
+        if (wasRunning) load(true)
+    }, {immediate: true})
     onScopeDispose(() => {
         seq++
         refreshTimer.pause()
     })
 
-    return {targets, lines, total, loading, loadingMore, loaded, failure, hasMore, refresh: load, loadMore}
+    return {targets, lines, total, loading, loadingMore, loaded, failure, hasMore, refresh: () => load(true), loadMore}
 }

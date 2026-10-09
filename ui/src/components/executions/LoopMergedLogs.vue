@@ -37,14 +37,14 @@
 
             <KsSkeleton v-if="!loaded || (loading && !lines.length)" :rows="4" animated data-test="loop-merged-logs-loading" />
             <KsNoData
-                v-else-if="!visibleLines.length"
+                v-else-if="!rows.length"
                 :title="$t('logs_view.loop.empty-title')"
                 :description="$t('logs_view.loop.empty-description')"
                 data-test="loop-merged-logs-empty"
             />
             <template v-else>
                 <DynamicScroller
-                    :items="visibleLines"
+                    :items="rows"
                     :minItemSize="50"
                     keyField="uid"
                     class="loop-merged-scroller"
@@ -70,6 +70,7 @@
                                         v-if="asRow(item).chain.length"
                                         class="loop-merged-overview-link"
                                         data-test="loop-merged-overview-link"
+                                        :aria-label="$t('logs_view.loop.show-in-overview-for', {scope: asRow(item).label})"
                                         :to="overviewLocation(asRow(item).chain)"
                                     >
                                         {{ $t("logs_view.loop.show-in-overview") }}
@@ -140,6 +141,7 @@
             namespace: execution.namespace,
             flowId: execution.flowId,
             startDate: execution.state?.startDate,
+            endDate: props.running ? undefined : execution.state?.endDate ?? undefined,
             kind: (execution as {kind?: string}).kind,
         }
     })
@@ -149,6 +151,7 @@
         scope: entries,
         levelParams: computed(() => props.levelParams),
         running: computed(() => props.running),
+        q: computed(() => props.filter || undefined),
     })
 
     const scopeChain = computed(() => targets.value?.scope ?? [])
@@ -165,11 +168,6 @@
             log: line as Partial<Log>,
         }
     }))
-
-    const visibleLines = computed(() => {
-        const needle = props.filter?.toLowerCase()
-        return needle ? rows.value.filter((row) => row.log.message?.toLowerCase().includes(needle)) : rows.value
-    })
 
     const asRow = (item: unknown) => item as MergedRow
 

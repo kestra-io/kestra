@@ -13,9 +13,14 @@ import {
 } from "./loopIterations"
 import {iterationLabel, type LoopScopeEntry} from "./loopScope"
 
-export const MAX_LOG_EXECUTION_IDS = 120
 export const LOG_PAGE_SIZE = 100
+export const MAX_LOG_URL_LENGTH = 3500
+export const CHAIN_CONCURRENCY = 6
+const URL_PREFIX_MARGIN = 200
+const CURSOR_MARGIN = 400
+const FAILED_SEARCH_SIZE = 100
 const MAX_CHAIN_DEPTH = 8
+const EXECUTION_ID_FILTER_LENGTH = "&filters[executionId][IN]=".length
 
 export interface ScopeNode {
     id: string;
@@ -41,6 +46,19 @@ export interface LogTargetDeps {
     findByNumber: typeof findIterationByNumber;
 }
 
+export interface ChainCache {
+    fetched: Map<string, Promise<IterationNode | undefined>>;
+    chains: Map<string, Promise<ScopeNode[] | undefined>>;
+}
+
+export interface CollectOptions {
+    reserve?: number;
+    limit?: number;
+    cache?: ChainCache;
+}
+
+export const createChainCache = (): ChainCache => ({fetched: new Map(), chains: new Map()})
+
 const defaultDeps: LogTargetDeps = {
     search: searchLoopIterations,
     fetchIteration: async (executionId) => (await loadIterationExecution(executionId)) as unknown as IterationNode,
@@ -61,18 +79,49 @@ export const scopeLabel = (t: (key: string, named?: Record<string, unknown>) => 
 export const scopeEntriesOf = (chain: ScopeNode[]): LoopScopeEntry[] =>
     chain.map(({taskId, number}) => ({taskId, number}))
 
-function chainResolver(rootId: string, fetchIteration: LogTargetDeps["fetchIteration"]) {
-    const fetched = new Map<string, Promise<IterationNode | undefined>>()
-    const chains = new Map<string, Promise<ScopeNode[] | undefined>>()
+export function logUrlReserve(params: {levelParams: Record<string, string>; kinds: string[]; q?: string}): number {
+    const others = [
+        ...Object.entries(params.levelParams).map(([key, value]) => `&${key}=${encodeURIComponent(value)}`),
+        `&filters[kind][IN]=${encodeURIComponent(params.kinds.join(","))}`,
+        params.q ? `&filters[q][EQUALS]=${encodeURIComponent(params.q)}` : "",
+        "&page=1&size=100&sort=timestamp:asc",
+    ].join("")
+    return URL_PREFIX_MARGIN + CURSOR_MARGIN + others.length
+}
 
+export const executionIdsUrlLength = (ids: Iterable<string>): number =>
+    EXECUTION_ID_FILTER_LENGTH + encodeURIComponent([...ids].join(",")).length
+
+async function mapLimit<T, R>(items: T[], limit: number, task: (item: T) => Promise<R>): Promise<R[]> {
+    const results = new Array<R>(items.length)
+    let next = 0
+    const workers = Array.from({length: Math.min(limit, items.length)}, async () => {
+        while (next < items.length) {
+            const index = next++
+            results[index] = await task(items[index])
+        }
+    })
+    await Promise.all(workers)
+    return results
+}
+
+function chainResolver(rootId: string, fetchIteration: LogTargetDeps["fetchIteration"], cache: ChainCache) {
     const fetchOnce = (id: string) => {
-        if (!fetched.has(id)) fetched.set(id, fetchIteration(id))
-        return fetched.get(id)!
+        if (!cache.fetched.has(id)) {
+            const pending = fetchIteration(id)
+            cache.fetched.set(id, pending)
+            pending.catch(() => cache.fetched.delete(id))
+        }
+        return cache.fetched.get(id)!
     }
 
     function chainOf(node: IterationNode, depth: number): Promise<ScopeNode[] | undefined> {
-        if (!chains.has(node.id)) chains.set(node.id, resolve(node, depth))
-        return chains.get(node.id)!
+        if (!cache.chains.has(node.id)) {
+            const pending = resolve(node, depth)
+            cache.chains.set(node.id, pending)
+            pending.catch(() => cache.chains.delete(node.id))
+        }
+        return cache.chains.get(node.id)!
     }
 
     async function resolve(node: IterationNode, depth: number): Promise<ScopeNode[] | undefined> {
@@ -94,13 +143,16 @@ function chainResolver(rootId: string, fetchIteration: LogTargetDeps["fetchItera
     )
 }
 
-function withinBudget(chainsInOrder: ScopeNode[][], seed: Set<string>, maxIds: number) {
+function withinBudget(chainsInOrder: ScopeNode[][], seed: Set<string>, options: CollectOptions) {
+    const limit = options.limit ?? MAX_LOG_URL_LENGTH
+    const reserve = options.reserve ?? 0
     const ids = new Set(seed)
     const kept: ScopeNode[][] = []
     for (const chain of chainsInOrder) {
-        const missing = chain.filter((node) => !ids.has(node.id))
-        if (ids.size + missing.length > maxIds) break
-        missing.forEach((node) => ids.add(node.id))
+        const candidate = new Set(ids)
+        chain.forEach((node) => candidate.add(node.id))
+        if (reserve + executionIdsUrlLength(candidate) > limit) break
+        candidate.forEach((id) => ids.add(id))
         kept.push(chain)
     }
     return {ids, kept}
@@ -115,18 +167,18 @@ const chainsById = (chains: ScopeNode[][], into: Record<string, ScopeNode[]> = {
     return into
 }
 
-export async function collectFailedTargets(root: LoopRoot, deps: LogTargetDeps = defaultDeps, maxIds = MAX_LOG_EXECUTION_IDS): Promise<LoopLogTargets> {
+export async function collectFailedTargets(root: LoopRoot, deps: LogTargetDeps = defaultDeps, options: CollectOptions = {}): Promise<LoopLogTargets> {
     const [topLevel, anyDepth] = await Promise.all([
-        deps.search({parentId: root.id, state: "FAILED", size: maxIds}),
-        deps.search({root, state: "FAILED", size: maxIds}),
+        deps.search({parentId: root.id, state: "FAILED", size: FAILED_SEARCH_SIZE}),
+        deps.search({root, state: "FAILED", size: FAILED_SEARCH_SIZE}),
     ])
 
     const candidates = [...new Map([...topLevel.results, ...anyDepth.results].map((item) => [item.id, item])).values()]
-    const resolveChain = chainResolver(root.id, deps.fetchIteration)
-    const resolved = await Promise.all(candidates.map((candidate) => resolveChain(candidate)))
+    const resolveChain = chainResolver(root.id, deps.fetchIteration, options.cache ?? createChainCache())
+    const resolved = await mapLimit(candidates, CHAIN_CONCURRENCY, resolveChain)
     const chains = resolved.filter((chain): chain is ScopeNode[] => chain !== undefined)
 
-    const {ids, kept} = withinBudget(chains, new Set([root.id]), maxIds)
+    const {ids, kept} = withinBudget(chains, new Set([root.id]), options)
     const searchedAll = topLevel.total <= topLevel.results.length && anyDepth.total <= anyDepth.results.length
 
     return {
@@ -139,24 +191,49 @@ export async function collectFailedTargets(root: LoopRoot, deps: LogTargetDeps =
     }
 }
 
+async function collectFailedDescendants(scope: ScopeNode[], deps: LogTargetDeps) {
+    const chains: ScopeNode[][] = []
+    let truncated = false
+    let frontier: ScopeNode[][] = [scope]
+
+    for (let depth = 0; frontier.length && depth < MAX_CHAIN_DEPTH; depth++) {
+        const parents = frontier
+        const pages = await mapLimit(parents, CHAIN_CONCURRENCY, (parent) =>
+            deps.search({parentId: parent[parent.length - 1].id, state: "FAILED", size: FAILED_SEARCH_SIZE}),
+        )
+        frontier = []
+        pages.forEach((page, index) => {
+            if (page.total > page.results.length) truncated = true
+            for (const child of page.results) {
+                if (child.taskId === undefined) continue
+                const chain = [...parents[index], {id: child.id, taskId: child.taskId, number: child.number, value: child.value}]
+                chains.push(chain)
+                frontier.push(chain)
+            }
+        })
+    }
+    return {chains, truncated}
+}
+
 export async function collectScopedTargets(
     root: LoopRoot,
     entries: LoopScopeEntry[],
     deps: LogTargetDeps = defaultDeps,
-    maxIds = MAX_LOG_EXECUTION_IDS,
+    options: CollectOptions = {},
 ): Promise<LoopLogTargets> {
-    const [failed, scope] = await Promise.all([collectFailedTargets(root, deps, maxIds), resolveScope(root.id, entries, deps)])
-    const deepest = scope[scope.length - 1]
-    const descendants = failed.failedChains.filter((chain) => chain.some((node) => node.id === deepest?.id))
+    const scope = await resolveScope(root.id, entries, deps)
+    const {chains: descendants, truncated: searchTruncated} = scope.length
+        ? await collectFailedDescendants(scope, deps)
+        : {chains: [], truncated: false}
 
-    const {ids, kept} = withinBudget(descendants, new Set([root.id, ...scope.map((node) => node.id)]), maxIds)
+    const {ids, kept} = withinBudget(descendants, new Set([root.id, ...scope.map((node) => node.id)]), options)
 
     return {
         executionIds: [...ids],
         chains: chainsById([...kept, scope]),
         failedChains: kept,
         failedShown: kept.length,
-        truncated: false,
+        truncated: searchTruncated || kept.length < descendants.length,
         scope,
     }
 }
@@ -177,6 +254,7 @@ export interface MergedLogSearch {
     executionIds: string[];
     kinds: string[];
     levelParams: Record<string, string>;
+    q?: string;
     page: number;
     cursor?: string;
 }
@@ -187,6 +265,7 @@ export async function searchMergedLogs(search: MergedLogSearch) {
         {field: "kind", operation: "IN", value: search.kinds},
         ...routeQueryToQueryFilters(search.levelParams),
     ]
+    if (search.q) filters.push({field: "q", operation: "EQUALS", value: search.q})
     const response = await LogsAPI.searchLogs(
         {page: search.page, size: LOG_PAGE_SIZE, sort: ["timestamp:asc"], cursor: search.cursor, filters},
         {showMessageOnError: false},

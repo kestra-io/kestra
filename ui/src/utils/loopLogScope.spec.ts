@@ -1,5 +1,15 @@
 import {describe, expect, it, vi} from "vitest"
-import {collectFailedTargets, collectScopedTargets, flowHasLoop, scopeLabel, type LogTargetDeps} from "./loopLogScope"
+import {
+    CHAIN_CONCURRENCY,
+    collectFailedTargets,
+    collectScopedTargets,
+    createChainCache,
+    executionIdsUrlLength,
+    flowHasLoop,
+    logUrlReserve,
+    scopeLabel,
+    type LogTargetDeps,
+} from "./loopLogScope"
 import type {LoopIteration} from "./loopIterations"
 
 const root = {id: "root", namespace: "company.team", flowId: "close_lite", startDate: "2026-10-09T09:49:13.994699Z"}
@@ -80,7 +90,7 @@ describe("collectFailedTargets", () => {
         const failures = Array.from({length: 10}, (_, index) => iteration(`f${index}`, "root", "per_region", index))
         const deps = depsFor(failures, failures)
 
-        const targets = await collectFailedTargets(root, deps, 4)
+        const targets = await collectFailedTargets(root, deps, {limit: executionIdsUrlLength(["root", "f0", "f1", "f2"])})
 
         expect(targets.executionIds).toEqual(["root", "f0", "f1", "f2"])
         expect(targets.failedShown).toBe(3)
@@ -98,15 +108,50 @@ describe("collectFailedTargets", () => {
 })
 
 describe("collectScopedTargets", () => {
-    it("shouldKeepTheScopedChainAndTheFailedDescendantsOfTheDeepestScope", async () => {
-        const deps = depsFor([], [nestedFailure("f13", 12), nestedFailure("f26", 25)])
-        deps.findByNumber = vi.fn(async (_parent: string, taskId: string, number: number) => ({id: `customer-${number}`, number, value: String(number), state: "SUCCESS", taskId}))
+    const customer = async (_parent: string, taskId: string, number: number) => ({id: `customer-${number}`, number, value: String(number), state: "SUCCESS", taskId})
+    const childOf = (id: string, parentId: string, index: number) => iteration(id, parentId, "per_invoice", index)
+
+    it("shouldSearchTheFailedChildrenOfTheDeepestScopeEvenWhenTheyAreOutsideTheGlobalFirstPage", async () => {
+        const deps = depsFor([], [])
+        deps.search = vi.fn(async (search) => {
+            const results = search.parentId === "customer-13" ? [childOf("f13", "customer-13", 6)] : []
+            return {results, total: results.length}
+        })
+        deps.findByNumber = vi.fn(customer)
 
         const targets = await collectScopedTargets(root, [{taskId: "per_customer", number: 13}], deps)
 
         expect(targets.executionIds).toEqual(["root", "customer-13", "f13"])
+        expect(targets.chains["f13"].map((node) => `${node.taskId}:${node.number}`)).toEqual(["per_customer:13", "per_invoice:7"])
         expect(targets.scope).toEqual([{id: "customer-13", taskId: "per_customer", number: 13, value: "13"}])
         expect(targets.truncated).toBe(false)
+    })
+
+    it("shouldRecurseThroughFailedChildren", async () => {
+        const deps = depsFor([], [])
+        deps.search = vi.fn(async (search) => {
+            const byParent: Record<string, LoopIteration[]> = {
+                "customer-13": [childOf("inv-7", "customer-13", 6)],
+                "inv-7": [iteration("line-2", "inv-7", "per_line", 1)],
+            }
+            const results = byParent[search.parentId ?? ""] ?? []
+            return {results, total: results.length}
+        })
+        deps.findByNumber = vi.fn(customer)
+
+        const targets = await collectScopedTargets(root, [{taskId: "per_customer", number: 13}], deps)
+
+        expect(targets.executionIds).toEqual(["root", "customer-13", "inv-7", "line-2"])
+    })
+
+    it("shouldFlagTruncationWhenTheChildrenSearchHasMoreResultsThanItReturned", async () => {
+        const deps = depsFor([], [])
+        deps.search = vi.fn(async () => ({results: [childOf("f13", "customer-13", 6)], total: 900}))
+        deps.findByNumber = vi.fn(customer)
+
+        const targets = await collectScopedTargets(root, [{taskId: "per_customer", number: 13}], deps)
+
+        expect(targets.truncated).toBe(true)
     })
 
     it("shouldRejectAScopeThatNoLongerExists", async () => {
@@ -114,6 +159,59 @@ describe("collectScopedTargets", () => {
         deps.findByNumber = vi.fn(async () => undefined)
 
         await expect(collectScopedTargets(root, [{taskId: "per_customer", number: 99}], deps)).rejects.toMatchObject({failure: "not-found"})
+    })
+})
+
+describe("chain resolution", () => {
+    const bare = (id: string, parent: string) => ({...iteration(id, parent, "per_invoice", 6), loopRun: {taskId: "per_invoice", index: 6}})
+
+    it("shouldNeverResolveMoreChainsAtOnceThanTheConcurrencyLimit", async () => {
+        let active = 0
+        let peak = 0
+        const candidates = Array.from({length: 20}, (_, index) => bare(`i${index}`, `p${index}`))
+        const deps = depsFor([], candidates)
+        deps.fetchIteration = vi.fn(async (id: string) => {
+            active++
+            peak = Math.max(peak, active)
+            await new Promise((resolve) => setTimeout(resolve, 1))
+            active--
+            return embeddedParent(id, "root", "per_customer", 1) as never
+        })
+
+        await collectFailedTargets(root, deps)
+
+        expect(peak).toBeLessThanOrEqual(CHAIN_CONCURRENCY)
+        expect(peak).toBeGreaterThan(1)
+    })
+
+    it("shouldNotResolveAKnownChainAgainOnTheNextCollection", async () => {
+        const candidates = [bare("a", "customer-13")]
+        const deps = depsFor([], candidates, {"customer-13": embeddedParent("customer-13", "root", "per_customer", 12)})
+        const cache = createChainCache()
+
+        await collectFailedTargets(root, deps, {cache})
+        await collectFailedTargets(root, deps, {cache})
+
+        expect(deps.fetchIteration).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe("logUrlReserve", () => {
+    it("shouldGrowWithTheLevelFilterAndTheTextSearch", () => {
+        const base = {levelParams: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"}, kinds: ["NORMAL", "LOOP"]}
+
+        expect(logUrlReserve({...base, q: "a long search text"})).toBeGreaterThan(logUrlReserve(base))
+    })
+
+    it("shouldKeepTheFullUrlUnderTheLimitWithTheCursorMargin", async () => {
+        const failures = Array.from({length: 300}, (_, index) => iteration(`${"x".repeat(22)}${index}`, "root", "per_region", index))
+        const deps = depsFor(failures, failures)
+        const reserve = logUrlReserve({levelParams: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"}, kinds: ["NORMAL", "LOOP"], q: "needle"})
+
+        const targets = await collectFailedTargets(root, deps, {reserve})
+
+        expect(reserve + executionIdsUrlLength(targets.executionIds)).toBeLessThanOrEqual(3500)
+        expect(targets.truncated).toBe(true)
     })
 })
 

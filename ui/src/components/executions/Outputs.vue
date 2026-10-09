@@ -7,7 +7,7 @@
         <div v-ks-loading="isLoading">
             <Vars
                 :execution="props.execution"
-                class="mt-1"
+                class="outputs-vars"
                 :data="outputs"
             />
         </div>
@@ -63,3 +63,9 @@
         }
     })
 </script>
+
+<style scoped lang="scss">
+.outputs-vars {
+    margin-top: var(--ks-spacing-1);
+}
+</style>

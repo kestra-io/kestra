@@ -168,6 +168,7 @@
     import * as Utils from "../../utils/utils"
     import {findTaskById} from "../../utils/flowUtils"
     import {useToast} from "../../utils/toast"
+    import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useCoreStore} from "../../stores/core"
@@ -337,8 +338,10 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
-                showMessageOnError: false,
-            }).catch(() => [])
+            }).catch((e: unknown) => {
+                handledIf(e, [403, 404])
+                return []
+            })
         }
         const errorLines = (() => {
             const errors = taskRunLogs

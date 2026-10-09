@@ -4,7 +4,6 @@ import {defineStore} from "pinia"
 import type {AxiosLikeConfig, AxiosLikeResponse, ExportFormat} from "@kestra-io/kestra-sdk"
 
 const response: AxiosLikeConfig = {responseType: "blob" as const}
-const validateStatus = (status: number) => status === 200 || status === 404
 /** Returns false when the export carried nothing the user can open. Only ION can end up that way:
  *  a CSV export always carries its header row, so an empty chart is still a valid file, while ION
  *  has no header concept and an empty chart really is a 0 byte body that looks like a failed
@@ -21,6 +20,7 @@ import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
 
 import * as Utils from "../utils/utils"
+import {handledIf} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
 
@@ -32,7 +32,6 @@ import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
 import type {RouteLocation} from "vue-router"
-import type {KestraHttpError} from "../utils/kestraHttp"
 
 type ParsedDashboardSource = {id?: string} & Record<string, unknown>
 type DashboardListOptions = Omit<NonNullable<Parameters<typeof DashboardsAPI.searchDashboards>[0]>, "sort"> & {sort?: string}
@@ -136,9 +135,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
-        const res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
-        if (res.status === 404) return []
-        return (res.data as Dashboard).charts ?? []
+        try {
+            const res = await axios.get(`${apiUrl()}/dashboards/${id}`)
+            return (res.data as Dashboard).charts ?? []
+        } catch (e: unknown) {
+            if (handledIf(e, [404])) return []
+            throw e
+        }
     }
 
     async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {
@@ -231,13 +234,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
-    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
-
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
-        } catch {
+            data = await DashboardsAPI.dashboard({id}) as Dashboard
+        } catch (e: unknown) {
+            // The page falls back to the bundled default on any failure; only the 404 is its own report.
+            handledIf(e, [404])
             return undefined
         }
 
@@ -301,10 +304,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
             return data
         } catch (e: unknown) {
-            if ((e as KestraHttpError).status === 404) return undefined
+            if (handledIf(e, [404])) return undefined
             throw e
         }
     }

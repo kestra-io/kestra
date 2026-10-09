@@ -446,7 +446,64 @@
       "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo.",
       "add-task": "Añadir task",
       "add-trigger": "Añadir trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "No ejecutado",
+        "pick-first": "Elige primero {loop}",
+        "picker-label": "Iteración de {loop}",
+        "search-placeholder": "Buscar por #número",
+        "all-iterations": "Todas las iteraciones",
+        "iteration-label": "#{number} {value}",
+        "iteration-fallback": "Iteración {number}",
+        "step-of": "{current} de {total}",
+        "previous-iteration": "Iteración anterior",
+        "next-iteration": "Iteración siguiente",
+        "previous-page": "Página anterior",
+        "next-page": "Página siguiente",
+        "failed-group": "Fallidas · {count}",
+        "other-group": "Otras iteraciones",
+        "matching": "Coincidencia",
+        "failure-forbidden": "No tienes acceso a esta iteración.",
+        "failure-not-found": "Esta iteración ya no existe.",
+        "failure-unknown": "No se pudieron cargar las iteraciones.",
+        "scope": "Ámbito",
+        "whole-execution": "Ejecución completa",
+        "clear-scopes": "Borrar ámbitos",
+        "jump-to-first-failure": "Ir al primer fallo",
+        "loops-with-failures": "Bucles con fallos",
+        "task-runs": "{runs} ejecución | {runs} ejecuciones",
+        "task-runs-failed": "{runs} ejecución · {failed} fallidas | {runs} ejecuciones · {failed} fallidas",
+        "retry": "Reintentar",
+        "load-more": "Cargar más",
+        "retry-loading": "Reintentar la carga de iteraciones"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} de {total} fallidas",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} fallidas · {notStarted} sin iniciar de {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} de {total} completadas",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} de {total} completadas · {failed} fallidas",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iteración | {total} iteraciones",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Mostrar task logs",
     "show task condition": "Mostrar condición de task",

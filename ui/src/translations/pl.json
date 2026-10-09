@@ -446,7 +446,64 @@
       "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
       "add-task": "Dodaj task",
       "add-trigger": "Dodaj trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Nie uruchomiono",
+        "pick-first": "Najpierw wybierz {loop}",
+        "picker-label": "Iteracja pętli {loop}",
+        "search-placeholder": "Szukaj według #numeru",
+        "all-iterations": "Wszystkie iteracje",
+        "iteration-label": "#{number} {value}",
+        "iteration-fallback": "Iteracja {number}",
+        "step-of": "{current} z {total}",
+        "previous-iteration": "Poprzednia iteracja",
+        "next-iteration": "Następna iteracja",
+        "previous-page": "Poprzednia strona",
+        "next-page": "Następna strona",
+        "failed-group": "Nieudane · {count}",
+        "other-group": "Pozostałe iteracje",
+        "matching": "Dopasowanie",
+        "failure-forbidden": "Nie masz dostępu do tej iteracji.",
+        "failure-not-found": "Ta iteracja już nie istnieje.",
+        "failure-unknown": "Nie udało się załadować iteracji.",
+        "scope": "Zakres",
+        "whole-execution": "Całe wykonanie",
+        "clear-scopes": "Wyczyść zakresy",
+        "jump-to-first-failure": "Przejdź do pierwszego błędu",
+        "loops-with-failures": "Pętle z błędami",
+        "task-runs": "{runs} uruchomienie | {runs} uruchomienia | {runs} uruchomień",
+        "task-runs-failed": "{runs} uruchomienie · {failed} nieudanych | {runs} uruchomienia · {failed} nieudanych | {runs} uruchomień · {failed} nieudanych",
+        "retry": "Ponów",
+        "load-more": "Załaduj więcej",
+        "retry-loading": "Ponów ładowanie iteracji"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} z {total} nieudanych",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} nieudanych · {notStarted} nieuruchomionych z {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} z {total} zakończonych",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} z {total} zakończonych · {failed} nieudanych",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iteracja | {total} iteracje | {total} iteracji",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",

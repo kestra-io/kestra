@@ -446,7 +446,64 @@
       "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。",
       "add-task": "Taskを追加",
       "add-trigger": "Triggerを追加",
-      "child-count": "task {count}個 | task {count}個"
+      "child-count": "task {count}個 | task {count}個",
+      "loop": {
+        "not-run": "未実行",
+        "pick-first": "先に {loop} を選択してください",
+        "picker-label": "{loop} のイテレーション",
+        "search-placeholder": "#番号で検索",
+        "all-iterations": "すべてのイテレーション",
+        "iteration-label": "#{number} {value}",
+        "iteration-fallback": "イテレーション {number}",
+        "step-of": "{current} / {total}",
+        "previous-iteration": "前のイテレーション",
+        "next-iteration": "次のイテレーション",
+        "previous-page": "前のページ",
+        "next-page": "次のページ",
+        "failed-group": "失敗 · {count}",
+        "other-group": "その他のイテレーション",
+        "matching": "一致",
+        "failure-forbidden": "このイテレーションにアクセスする権限がありません。",
+        "failure-not-found": "このイテレーションは存在しません。",
+        "failure-unknown": "イテレーションを読み込めませんでした。",
+        "scope": "スコープ",
+        "whole-execution": "実行全体",
+        "clear-scopes": "スコープをクリア",
+        "jump-to-first-failure": "最初の失敗へ移動",
+        "loops-with-failures": "失敗のあるループ",
+        "task-runs": "{runs} 回の実行 | {runs} 回の実行",
+        "task-runs-failed": "{runs} 回の実行 · {failed} 件失敗 | {runs} 回の実行 · {failed} 件失敗",
+        "retry": "再試行",
+        "load-more": "さらに読み込む",
+        "retry-loading": "イテレーションの読み込みを再試行"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} 件中 {failed} 件が失敗",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} 件失敗 · {total} 件中 {notStarted} 件未開始",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} 件中 {done} 件完了",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} 件中 {done} 件完了 · {failed} 件失敗",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} 件のイテレーション | {total} 件のイテレーション",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",

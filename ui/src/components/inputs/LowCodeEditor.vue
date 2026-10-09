@@ -26,6 +26,9 @@
             :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
+            :loopLanes="loopLanes"
+            @loop-step="({uid, delta}) => loopScoping.stepLane(uid, delta)"
+            @loop-scope-failed="({uid}) => loopScoping.scopeFirstFailure(uid)"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -62,6 +65,27 @@
                         :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
                     />
                 </slot>
+            </template>
+            <template #loopScope="{uid, lane}">
+                <LoopIterationPicker
+                    :lane="lane"
+                    :hostExecutionId="loopScoping.hostExecutionId(uid)"
+                    @select="loopScoping.scopeLane(uid, $event)"
+                    @clear="loopScoping.clearLane(uid)"
+                    @step="loopScoping.stepLane(uid, $event)"
+                />
+            </template>
+            <template v-if="hasLoopLanes" #scopeBar="{setLanesCollapsed, collapsedLanes}">
+                <LoopScopeBar
+                    :entries="loopScoping.scopeTrail.value"
+                    :canJumpToFailure="Boolean(loopScoping.firstFailedLaneUid())"
+                    :failuresOnly="isFailuresOnly(collapsedLanes)"
+                    :failure="loopScoping.scopeFailure.value"
+                    @clear="loopScoping.clearScope()"
+                    @retry="loopScoping.retryScope()"
+                    @jump-to-failure="jumpToFirstFailure"
+                    @toggle-failures-only="toggleFailuresOnly(setLanesCollapsed, collapsedLanes)"
+                />
             </template>
             <template #taskActions="taskProps">
                 <TaskRunActions
@@ -299,6 +323,9 @@
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import type {FlowGraph, AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
     import TaskRunActions from "../executions/TaskRunActions.vue"
+    import LoopIterationPicker from "../executions/LoopIterationPicker.vue"
+    import LoopScopeBar from "../executions/LoopScopeBar.vue"
+    import {useLoopScoping} from "../../composables/useLoopScoping"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {getAllTasks} from "../../utils/flowUtils"
@@ -620,6 +647,27 @@
             toggleOrientationButton: true,
             expandedSubflows: () => [],
         })
+
+    const loopScoping = useLoopScoping(computed(() => augmentedFlowGraph.value), computed(() => props.isReadOnly && Boolean(exec.value?.id)))
+    const loopLanes = computed(() => (exec.value?.id ? loopScoping.lanes.value : {}))
+    const hasLoopLanes = computed(() => Boolean(exec.value?.id) && loopScoping.laneNodes.value.length > 0)
+
+    const isCollapsedLane = (collapsedLanes: Set<string>, uid: string) =>
+        [...collapsedLanes].some((collapsedUid) => uid === collapsedUid || uid.startsWith(`${collapsedUid}.`))
+
+    function isFailuresOnly(collapsedLanes: Set<string>) {
+        const uids = loopScoping.lanesWithoutFailures.value
+        return uids.length > 0 && uids.every((uid) => isCollapsedLane(collapsedLanes, uid))
+    }
+
+    function toggleFailuresOnly(setLanesCollapsed: (uids: string[], collapsed: boolean) => void, collapsedLanes: Set<string>) {
+        setLanesCollapsed(loopScoping.lanesWithoutFailures.value, !isFailuresOnly(collapsedLanes))
+    }
+
+    function jumpToFirstFailure() {
+        const uid = loopScoping.firstFailedLaneUid()
+        if (uid) loopScoping.scopeFirstFailure(uid)
+    }
 
     watch(
         () => props.flowGraph,

@@ -43,3 +43,49 @@ describe("Topology flow bar", () => {
         expect(wrapper.find("[data-test=\"topology-flow-configure\"]").exists()).toBe(true)
     })
 })
+
+describe("Topology collapse all", () => {
+    const PARALLEL = "io.kestra.plugin.core.flow.Parallel"
+    const graph: FlowGraph = {
+        nodes: [
+            {uid: "parallel", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "parallel", type: PARALLEL}},
+            {uid: "parallel.a", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "a", type: "io.kestra.plugin.core.log.Log"}},
+        ],
+        edges: [{source: "parallel", target: "parallel.a"}],
+        clusters: [{
+            cluster: {uid: "cluster_parallel", type: "io.kestra.core.models.hierarchies.GraphCluster", taskNode: {uid: "parallel", task: {type: PARALLEL}}},
+            nodes: ["parallel", "parallel.a"],
+            parents: [],
+            start: "parallel",
+            end: "parallel.a",
+        }],
+    }
+
+    const mountWithControls = (flowGraph: FlowGraph) => i18nMount(Topology, {
+        props: {id: "collapse-all", source: "", flowGraph, isReadOnly: false, isAllowedEdit: true},
+        global: {
+            stubs: {
+                VueFlow: {template: "<div><slot /></div>"},
+                Controls: {template: "<div><slot /></div>"},
+                ControlButton: {template: "<button><slot /></button>"},
+                Background: true,
+                Panel: true,
+            },
+        },
+    })
+
+    it("offers collapse all in the flow editor when the graph has a flowable lane", async () => {
+        const wrapper = mountWithControls(graph)
+
+        expect(wrapper.find("[data-test='topology-collapse-all']").exists()).toBe(true)
+        const before = wrapper.findAll("button").length
+        await wrapper.find("[data-test='topology-collapse-all']").trigger("click")
+        expect(wrapper.findAll("button").length).toBe(before + 1)
+    })
+
+    it("offers nothing to collapse when the graph has no flowable lane", () => {
+        const wrapper = mountWithControls({nodes: [], edges: [], clusters: []})
+
+        expect(wrapper.find("[data-test='topology-collapse-all']").exists()).toBe(false)
+    })
+})

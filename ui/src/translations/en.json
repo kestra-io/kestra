@@ -302,19 +302,19 @@
     "steps": "Steps",
     "state": "State",
     "state_history": {
-        "title": "State history",
-        "open": "State history",
-        "aria_open": "Show the state history",
-        "aria_open_for": "Show the state history for {subject}",
-        "started_at": "Started {time}",
-        "failed_at": "Failed at {time}",
-        "skipped_at": "Skipped at {time}",
-        "created_at": "Created {time}",
-        "did_not_run": "This task did not run",
-        "waiting_to_start": "Waiting to start",
-        "attempt_n": "Attempt {index}",
-        "attempt_count": "{count} attempts",
-        "copy": "Copy state history"
+      "title": "State history",
+      "open": "State history",
+      "aria_open": "Show the state history",
+      "aria_open_for": "Show the state history for {subject}",
+      "started_at": "Started {time}",
+      "failed_at": "Failed at {time}",
+      "skipped_at": "Skipped at {time}",
+      "created_at": "Created {time}",
+      "did_not_run": "This task did not run",
+      "waiting_to_start": "Waiting to start",
+      "attempt_n": "Attempt {index}",
+      "attempt_count": "{count} attempts",
+      "copy": "Copy state history"
     },
     "search": "Search",
     "source search": "Source search",
@@ -446,7 +446,64 @@
       "load_error": "Could not load the topology graph. Please try again.",
       "add-task": "Add task",
       "add-trigger": "Add a trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Not run",
+        "pick-first": "Pick {loop} first",
+        "picker-label": "Iteration of {loop}",
+        "search-placeholder": "Search by #number",
+        "all-iterations": "All iterations",
+        "iteration-label": "#{number} {value}",
+        "iteration-fallback": "Iteration {number}",
+        "step-of": "{current} of {total}",
+        "previous-iteration": "Previous iteration",
+        "next-iteration": "Next iteration",
+        "previous-page": "Previous page",
+        "next-page": "Next page",
+        "failed-group": "Failed · {count}",
+        "other-group": "Other iterations",
+        "matching": "Match",
+        "failure-forbidden": "You do not have access to this iteration.",
+        "failure-not-found": "This iteration no longer exists.",
+        "failure-unknown": "Iterations could not be loaded.",
+        "scope": "Scope",
+        "whole-execution": "Whole execution",
+        "clear-scopes": "Clear scopes",
+        "jump-to-first-failure": "Jump to first failure",
+        "loops-with-failures": "Loops with failures",
+        "task-runs": "{runs} run | {runs} runs",
+        "task-runs-failed": "{runs} run · {failed} failed | {runs} runs · {failed} failed",
+        "retry": "Retry",
+        "load-more": "Load more",
+        "retry-loading": "Retry loading iterations"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} of {total} failed",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} failed · {notStarted} not started of {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} of {total} done",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} of {total} done · {failed} failed",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iteration | {total} iterations",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Show task logs",
     "show task condition": "Show task condition",

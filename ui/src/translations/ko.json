@@ -454,6 +454,11 @@
     "show task source": "Task 소스 보기",
     "stream": "스트림",
     "execution statistics": "실행 통계",
+    "execution_banner": {
+      "revision": "수정본 {revision}",
+      "attempts": "{count}회 시도 | {count}회 시도",
+      "tasks": "task {completed}/{count}개 | task {completed}/{count}개"
+    },
     "concurrency limits": "동시성 제한",
     "system overview": "시스템 개요",
     "usage": "사용량",
@@ -564,6 +569,7 @@
       "blueprints": "블루프린트 | 블루프린트"
     },
     "plugins": {
+      "ui_load_error": "플러그인 구성 요소를 로드할 수 없습니다.",
       "autoInstall": {
         "failed": "플러그인 설치에 실패했습니다",
         "failedHint": "flow가 저장되지 않았습니다. 문제를 해결하거나 flow에서 plugin을 제거한 후 다시 저장하세요.",
@@ -1105,7 +1111,6 @@
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
-    "relative": "상대적",
     "relative start date": "상대적 시작 날짜",
     "absolute": "절대적",
     "backfill": "Backfill",
@@ -1717,6 +1722,7 @@
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "no_code": {
+      "task_details": "작업 세부 정보",
       "toggle_pebble": "Pebble 편집기 전환",
       "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화",
       "adding": "+ {what} 추가",
@@ -1772,7 +1778,8 @@
         "inputs": "입력 필드 유형 선택",
         "charts": "차트 유형 선택",
         "where": "필터 유형 선택",
-        "numerator": "분자를 선택하세요"
+        "numerator": "분자를 선택하세요",
+        "namespace_first": "먼저 namespace를 선택하세요"
       },
       "creation": {
         "default": "추가",
@@ -2418,6 +2425,7 @@
         "label": "{count} 오류"
       }
     },
+    "invalid_source_code": "잘못된 소스 코드",
     "source_search": {
       "cannot_select_read_only": "선택할 수 없습니다. {namespace} / {id}에 대한 편집 권한이 없습니다.",
       "collapse_all": "모두 접기",

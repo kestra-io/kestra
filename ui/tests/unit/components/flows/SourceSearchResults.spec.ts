@@ -134,7 +134,7 @@ describe("SourceSearchResults", () => {
         const wrapper = mountResults({flowsResults, replaceMode: false})
         await flushPromises()
 
-        expect(wrapper.findAll(".kel-checkbox").length).toBe(0)
+        expect(wrapper.findAll("[data-test='source-search-group-checkbox']").length).toBe(0)
     })
 
     test("emits toggle-flow when the group checkbox is toggled in replace mode", async () => {

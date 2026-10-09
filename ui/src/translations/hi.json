@@ -454,6 +454,11 @@
     "show task source": "Task स्रोत दिखाएं",
     "stream": "स्ट्रीम",
     "execution statistics": "निष्पादन सांख्यिकी",
+    "execution_banner": {
+      "revision": "संशोधन {revision}",
+      "attempts": "{count} प्रयास | {count} प्रयास",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "समानांतरता सीमाएँ",
     "system overview": "सिस्टम अवलोकन",
     "usage": "उपयोग",
@@ -564,6 +569,7 @@
       "blueprints": "ब्लूप्रिंट | ब्लूप्रिंट"
     },
     "plugins": {
+      "ui_load_error": "एक प्लगइन घटक लोड नहीं हो सका।",
       "autoInstall": {
         "failed": "plugin इंस्टॉलेशन विफल रहा",
         "failedHint": "flow सेव नहीं हुआ। समस्या ठीक करें या flow से plugin हटाएं, फिर दोबारा सेव करें।",
@@ -1105,7 +1111,6 @@
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
-    "relative": "सापेक्ष",
     "relative start date": "सापेक्ष प्रारंभ तिथि",
     "absolute": "पूर्ण",
     "backfill": "Backfill",
@@ -1717,6 +1722,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "task_details": "Task विवरण",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",
@@ -1772,7 +1778,8 @@
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "charts": "चार्ट प्रकार चुनें",
         "where": "एक फ़िल्टर प्रकार चुनें",
-        "numerator": "एक अंश चुनें"
+        "numerator": "एक अंश चुनें",
+        "namespace_first": "पहले एक namespace चुनें"
       },
       "creation": {
         "default": "जोड़ें",
@@ -2418,6 +2425,7 @@
         "label": "{count} त्रुटि(याँ)"
       }
     },
+    "invalid_source_code": "अमान्य स्रोत कोड",
     "source_search": {
       "cannot_select_read_only": "चयन नहीं किया जा सकता — आपके पास {namespace} / {id} पर संपादन की अनुमति नहीं है",
       "collapse_all": "सभी को संक्षिप्त करें",

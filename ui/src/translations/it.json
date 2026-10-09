@@ -454,6 +454,11 @@
     "show task source": "Mostra sorgente del task",
     "stream": "Stream",
     "execution statistics": "Statistiche di esecuzione",
+    "execution_banner": {
+      "revision": "Revisione {revision}",
+      "attempts": "{count} tentativo | {count} tentativi",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Limiti di Concorrenza",
     "system overview": "Panoramica del sistema",
     "usage": "Utilizzo",
@@ -564,6 +569,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "Impossibile caricare un componente del plugin.",
       "autoInstall": {
         "failed": "Installazione del plugin non riuscita",
         "failedHint": "Il flow non è stato salvato. Correggi il problema o rimuovi il plugin dal flow, poi salva di nuovo.",
@@ -1105,7 +1111,6 @@
     "pause backfills": "Metti in pausa i backfills",
     "backfill executions": "Esecuzioni di backfill",
     "execute backfill": "Esegui backfill",
-    "relative": "Relativo",
     "relative start date": "Data di inizio relativa",
     "absolute": "Assoluto",
     "backfill": "Backfill",
@@ -1717,6 +1722,7 @@
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
     "no_code": {
+      "task_details": "Dettagli del task",
       "toggle_pebble": "Attiva/disattiva editor Pebble",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",
       "adding": "+ Aggiungi un {what}",
@@ -1772,7 +1778,8 @@
         "inputs": "Seleziona un tipo di input field",
         "charts": "Seleziona un tipo di grafico",
         "where": "Seleziona un tipo di filtro",
-        "numerator": "Seleziona un numeratore"
+        "numerator": "Seleziona un numeratore",
+        "namespace_first": "Seleziona prima un namespace"
       },
       "creation": {
         "default": "Aggiungi",
@@ -2418,6 +2425,7 @@
         "label": "{count} Errore/i"
       }
     },
+    "invalid_source_code": "Codice sorgente non valido",
     "source_search": {
       "cannot_select_read_only": "Impossibile selezionare — non hai i permessi di modifica su {namespace} / {id}",
       "collapse_all": "Comprimi tutto",

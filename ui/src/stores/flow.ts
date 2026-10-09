@@ -643,8 +643,8 @@ export const useFlowStore = defineStore("flow", () => {
     // The editor wants this count twice - tab badge and toolbar stat - so they share one request.
     const inFlightDependencyCounts = new Map<string, ReturnType<typeof requestDependencies>>()
 
-    function requestDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount: boolean) {
-        return FlowsAPI.flowDependencies({namespace: options.namespace, id: options.id, expandAll: !onlyCount}).then(data => {
+    function requestDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount: boolean, requestOptions?: KestraRequestOptions) {
+        return FlowsAPI.flowDependencies({namespace: options.namespace, id: options.id, expandAll: !onlyCount}, requestOptions as Parameters<typeof FlowsAPI.flowDependencies>[1]).then(data => {
             const totalNodes = data.nodes ? new Set(data.nodes.map((r:{uid:string}) => r.uid)).size : 0
             const count = Math.max(0, totalNodes - 1)
             dependenciesCount.value = count
@@ -655,9 +655,9 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
+    function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false, requestOptions?: KestraRequestOptions) {
         if (!onlyCount) {
-            return requestDependencies(options, onlyCount)
+            return requestDependencies(options, onlyCount, requestOptions)
         }
 
         const key = `${options.namespace}/${options.id}`
@@ -666,7 +666,7 @@ export const useFlowStore = defineStore("flow", () => {
             return inFlight
         }
 
-        const request = requestDependencies(options, onlyCount)
+        const request = requestDependencies(options, onlyCount, requestOptions)
         inFlightDependencyCounts.set(key, request)
         // Both handlers, so this derived promise never becomes an unhandled rejection.
         const settle = () => {

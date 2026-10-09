@@ -1,5 +1,5 @@
 <template>
-    <div id="buttons">
+    <div v-if="canList" id="buttons">
         <KsButton
             :icon="ChevronLeft"
             :disabled="!results.previous"
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue"
+    import {computed, onMounted, ref} from "vue"
 
     import {useRouter} from "vue-router"
     const router = useRouter()
@@ -31,11 +31,17 @@
     const store = useExecutionsStore()
 
     import {createLink} from "../../utils/links"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../../../../models/resource"
+    import action from "../../../../../models/action"
 
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
     const props = defineProps<{ execution: Execution }>()
+
+    const authStore = useAuthStore()
+    const canList = computed(() => !authStore.user || authStore.user.hasAnyAction(resource.EXECUTION, action.LIST))
 
     // The search endpoint returns light executions; only the routing fields are read here.
     const results = ref<{
@@ -84,7 +90,9 @@
     }
 
     onMounted(async () => {
-        await loadExecutions()
+        if (canList.value) {
+            await loadExecutions()
+        }
     })
 </script>
 

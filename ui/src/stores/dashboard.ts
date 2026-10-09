@@ -19,10 +19,13 @@ const downloadHandler = (res: AxiosLikeResponse, filename: string, format: Expor
 
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
+import {useAuthStore} from "override/stores/auth"
 
 import * as Utils from "../utils/utils"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
+import resource from "../models/resource"
+import action from "../models/action"
 
 import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
 import {useClient, type ChartFiltersOverrides} from "@kestra-io/kestra-sdk"
@@ -87,7 +90,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function list(options: DashboardListOptions, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
-        const res = await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined})
+        const canList = useAuthStore().user?.hasAnyAction(resource.DASHBOARD, action.LIST) ?? true
+        const res = canList ? await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined}) : {results: []}
         await loadDefaults()
         let isThereADefault = false
         dashboardList.value = (res.results as { id: string; title: string }[]).map(dashboard => {

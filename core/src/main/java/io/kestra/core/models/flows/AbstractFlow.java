@@ -1,8 +1,11 @@
 package io.kestra.core.models.flows;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+
+import org.hibernate.validator.constraints.time.DurationMin;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -105,4 +108,12 @@ public abstract class AbstractFlow implements FlowInterface {
     @Valid
     @Schema(description = "Routing requirements (tags + fallback) for this flow.")
     private WorkerSelector workerSelector;
+
+    @Schema(
+        title = "Flow timeout",
+        description = "The maximum execution duration of the flow. If the execution exceeds this duration, it will be killed."
+    )
+    @PluginProperty
+    @DurationMin(millis = 1, message = "must be a positive duration")
+    Duration timeout;
 }

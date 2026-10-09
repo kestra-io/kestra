@@ -390,7 +390,7 @@ public class ExecutorCore {
                 }
 
                 // purge SLA monitors
-                if (!ListUtils.isEmpty(executor.getFlow().getSla()) && executor.getFlow().getSla().stream().anyMatch(ExecutionMonitoringSLA.class::isInstance)) {
+                if (!ListUtils.isEmpty(executor.getFlow().allSLA()) && executor.getFlow().allSLA().stream().anyMatch(ExecutionMonitoringSLA.class::isInstance)) {
                     slaMonitorStateStore.purge(executor.getExecution().getId());
                 }
 

@@ -21,7 +21,7 @@ public class SLAService {
      * Each violated SLA will be logged.
      */
     public List<Violation> evaluateExecutionChangedSLA(RunContext runContext, FlowInterface flow, Execution execution) {
-        return ListUtils.emptyOnNull(flow.getSla()).stream()
+        return ListUtils.emptyOnNull(flow.allSLA()).stream()
             .filter(ExecutionChangedSLA.class::isInstance)
             .map(
                 sla ->

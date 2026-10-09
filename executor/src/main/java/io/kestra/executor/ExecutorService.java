@@ -1868,7 +1868,7 @@ public class ExecutorService {
      *      WARNING: ATM, only the first violation will update the execution.
      */
     public ExecutorContext handleExecutionChangedSLA(ExecutorContext executor) throws QueueException {
-        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
+        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().allSLA()) || executor.getExecution().getState().isTerminated() ||
             executor.getExecution().getKind() ==  ExecutionKind.LOOP) {
             return executor;
         }

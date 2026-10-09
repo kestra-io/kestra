@@ -128,6 +128,7 @@
         :editorKey="modalItemPath"
         :parentPath="modalTarget.parentPath"
         :refPath="modalTarget.refPath"
+        :editedPath="modalPath"
         :blockSchemaPath="modalTarget.blockSchemaPath"
         :crumbs="modalCrumbs"
         :creating="modalTarget.creating"
@@ -147,6 +148,7 @@
 
 <script setup lang="ts">
     import {computed, provide, ref, watch} from "vue"
+    import {useShownValidationErrors} from "../utils/useFieldValidationErrors"
     import {useI18n} from "vue-i18n"
     import FlowIcon from "vue-material-design-icons/FileDocumentOutline.vue"
     import Cog from "vue-material-design-icons/Cog.vue"
@@ -170,13 +172,14 @@
     import BlockCommandMenu, {type BlockCommandMenuItem} from "./BlockCommandMenu.vue"
     import TaskEdit from "../../flows/TaskEdit.vue"
     import TaskEditModal from "./TaskEditModal.vue"
+    import {useFieldValidationErrors} from "../utils/useFieldValidationErrors"
     import BlockTaskPicker from "./BlockTaskPicker.vue"
     import BlockEditorStatusBar from "./BlockEditorStatusBar.vue"
     import {useBlockEditorProvides} from "./useBlockEditorProvides"
     import type {Crumb} from "../utils/useFieldNavigation"
     import {taskCrumbAt, useEditTarget} from "./useEditTarget"
     import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
-    import {BLOCK_DRAG_INJECTION_KEY} from "../injectionKeys"
+    import {BLOCK_DRAG_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../injectionKeys"
     import {useBlockOperations} from "./useBlockOperations"
     import {modalItemPathOf, useBlockSelection} from "./useBlockSelection"
     import {useBlockMutations} from "./useBlockMutations"
@@ -238,8 +241,10 @@
         }
     }
 
+    const shownValidationErrors = useShownValidationErrors()
+
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+        groupValidationIssuesByTask(shownValidationErrors.value, flowStore.flowParsed),
     )
 
     const inlineEditPanel = ref()
@@ -328,6 +333,8 @@
     const modalCrumbs = computed<Crumb[]>(() =>
         modalStack.value.map((target) => taskCrumbAt(flowYaml.value, modalItemPathOf(target))),
     )
+
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => editingPath.value || undefined))
 
     const alwaysResolved = computed(() => true)
 

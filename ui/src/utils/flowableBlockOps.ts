@@ -1,6 +1,6 @@
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 
-import {pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
+import {fieldPathOf, pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
 
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 
@@ -703,6 +703,45 @@ export function rewireDagDependency(
 }
 
 /**
+ * Keeps only the errors of blocks the saved flow already has: a block added in this session is
+ * incomplete by construction, so flagging it the moment it lands reads as a mistake the user made.
+ * A save attempt reveals every error, since that is the point where they are what blocks the user.
+ */
+export function errorsToShow(
+    errors: ValidationError[] | undefined,
+    flow: Record<string, unknown> | undefined,
+    savedSource: string | undefined,
+    saveAttempted: boolean,
+): ValidationError[] {
+    if (saveAttempted) return errors ?? []
+    if (!errors?.length || !flow) return errors ?? []
+    const saved = savedSource ? collectAllIds(savedSource) : new Set<string>()
+    return errors.filter(({pointer}) => {
+        if (!pointer) return true
+        const taskId = locateTask(pointerSegments(pointer), flow).taskId
+        return taskId === undefined || saved.has(taskId)
+    })
+}
+
+function locateTask(segments: string[], flow: Record<string, unknown>): {taskId?: string; fieldStart: number} {
+    let node: unknown = flow
+    let taskId: string | undefined
+    let fieldStart = 0
+    for (const [depth, segment] of segments.entries()) {
+        const parent = node
+        node = childAt(node, segment)
+        if (node === undefined) break
+        if (!Array.isArray(parent) || !node || typeof node !== "object") continue
+        const task = displayTaskOf(node as Record<string, unknown>)
+        if (task.id == null) continue
+        taskId = String(task.id)
+        // A task inside a Dag is addressed through its wrapper, which the badge should not echo.
+        fieldStart = depth + (isWrappedLaneItem(node) && segments[depth + 1] === "task" ? 2 : 1)
+    }
+    return {taskId, fieldStart}
+}
+
+/**
  * Groups located errors under the id of the deepest task their pointer runs through, the rest of the
  * pointer naming the field. An error without a pointer is flow-level and stays out of the map.
  */
@@ -715,22 +754,9 @@ export function groupValidationIssuesByTask(
     for (const {pointer, detail} of errors ?? []) {
         if (!pointer || !detail) continue
         const segments = pointerSegments(pointer)
-        let node: unknown = flow
-        let taskId: string | undefined
-        let fieldStart = 0
-        for (const [depth, segment] of segments.entries()) {
-            const parent = node
-            node = childAt(node, segment)
-            if (node === undefined) break
-            if (!Array.isArray(parent) || !node || typeof node !== "object") continue
-            const task = displayTaskOf(node as Record<string, unknown>)
-            if (task.id == null) continue
-            taskId = String(task.id)
-            // A task inside a Dag is addressed through its wrapper, which the badge should not echo.
-            fieldStart = depth + (isWrappedLaneItem(node) && segments[depth + 1] === "task" ? 2 : 1)
-        }
+        const {taskId, fieldStart} = locateTask(segments, flow)
         if (taskId === undefined) continue
-        const field = friendlyField(segments.slice(fieldStart))
+        const field = fieldPathOf(segments.slice(fieldStart))
         const entry = field ? `${field}: ${detail}` : detail
         grouped.set(taskId, [...(grouped.get(taskId) ?? []), entry])
     }
@@ -742,12 +768,6 @@ function childAt(node: unknown, segment: string): unknown {
     if (!node || typeof node !== "object") return undefined
     const key = pointerKeys(segment).find(candidate => !UNSAFE_KEYS.has(candidate) && candidate in node)
     return key === undefined ? undefined : (node as Record<string, unknown>)[key]
-}
-
-function friendlyField(segments: string[]): string {
-    return segments.reduce((field, segment) => /^\d+$/.test(segment)
-        ? `${field}[${segment}]`
-        : `${field}${field ? "." : ""}${pointerKeys(segment).at(-1)}`, "")
 }
 
 export {collectAllIds}

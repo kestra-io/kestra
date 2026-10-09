@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { revealApp } from "../../../src/utils/loaderReveal";
-
+import { revealApp } from "./loaderReveal";
 type KestraWindow = Window & {
     __kestraLoader?: {
         showDelay?: number;

@@ -213,7 +213,13 @@ export function generateDagreGraph(
         const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== nodeUid
 
         if (collapsed.has(nodeUid) && !absorbedByParent) {
-            const node = {uid: nodeUid, type: "collapsedcluster", isFlowableLane: isTrueFlowableCluster(cluster.cluster), executionId: flowGraph.nodes.find((n) => n.uid === nodeUid)?.executionId}
+            const flowableNode = flowGraph.nodes.find((n) => n.uid === nodeUid)
+            const node = {
+                uid: nodeUid,
+                type: "collapsedcluster",
+                isFlowableLane: isTrueFlowableCluster(cluster.cluster),
+                executionId: flowableNode?.executionId,
+            }
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
             clusterToNode.push(node)

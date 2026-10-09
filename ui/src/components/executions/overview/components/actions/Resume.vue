@@ -31,20 +31,19 @@
     import PlayBox from "vue-material-design-icons/PlayBox.vue"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State, escapeHtml, type FormInstance} from "@kestra-io/design-system"
     import * as FlowUtils from "../../../../../utils/flowUtils"
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import InputsForm from "../../../../../components/inputs/InputsForm.vue"
     import {inputsToFormData} from "../../../../../utils/submitTask"
-    import {useExecutionsStore} from "../../../../../stores/executions"
+    import {Execution, InputMetaData, useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../../../../utils/toast"
 
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        // FIXME: any - execution is an untyped domain object
-        execution: any // FIXME: any
+        execution: Execution
     }>()
 
     const {t} = useI18n()
@@ -54,7 +53,7 @@
 
     const inputs = ref<Record<string, unknown>>({})
     const isDrawerOpen = ref(false)
-    const form = ref<any>(null) // FIXME: any
+    const form = ref<FormInstance | null>(null)
 
     const enabled = computed(() => {
         if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
@@ -64,14 +63,13 @@
         return State.isPaused(props.execution.state.current)
     })
 
-    // FIXME: any - findTaskRunsByState and findTaskById return untyped objects
-    const inputsList = computed<any[]>(() => { // FIXME: any
-        const findTaskRunByState = ExecutionUtils.findTaskRunsByState(props.execution, State.PAUSED) as any[] // FIXME: any
-        if (findTaskRunByState.length === 0) {
+    const inputsList = computed<InputMetaData[]>(() => {
+        const findTaskRunByState = ExecutionUtils.findTaskRunsByState(props.execution, State.PAUSED)
+        if (findTaskRunByState.length === 0 || !findTaskRunByState[0].taskId) {
             return []
         }
 
-        const findTaskById = FlowUtils.findTaskById(executionsStore.flow as any, findTaskRunByState[0].taskId) as {inputs?: any[]} | undefined // FIXME: any
+        const findTaskById = FlowUtils.findTaskById(executionsStore.flow, findTaskRunByState[0].taskId) as {inputs?: InputMetaData[]} | undefined
 
         return findTaskById && findTaskById.inputs !== null ? findTaskById.inputs ?? [] : []
     })
@@ -95,11 +93,11 @@
         })
     }
 
-    function resumeWithInputs(formRef: {validate: (cb: (valid: boolean) => void) => void} | null) {
+    function resumeWithInputs(formRef: FormInstance | null) {
         if (formRef) {
             formRef.validate((valid: boolean) => {
                 if (!valid) {
-                    return false
+                    return
                 }
 
                 const formData = inputsToFormData(inputsList.value, inputs.value)

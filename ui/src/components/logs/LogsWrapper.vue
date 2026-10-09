@@ -216,7 +216,7 @@
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
-            ? localStorage.getItem("defaultLogLevel") || "INFO"
+            ? localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO"
             : "INFO",
     )
     const {

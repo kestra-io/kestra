@@ -46,9 +46,9 @@ const execution = (id: string, state: string) => ({
 
 const logsFor = (id: string) => [{level: "INFO", taskRunId: "tr-1", message: `log of ${id}`}]
 
-function mountDetails() {
+function mountDetails(props: {targetExecutionId?: string} = {}) {
     return mount(TaskRunDetails, {
-        props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}},
+        props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}, ...props},
         global: {plugins: [i18n, KestraDesignSystem]},
     })
 }
@@ -141,6 +141,16 @@ describe("TaskRunDetails log loading across executions", () => {
         const stream = await store.executions.followLogs.mock.results[0].value
         vi.advanceTimersByTime(5000)
         expect(stream.close).not.toHaveBeenCalled()
+    })
+
+    it("should close the execution subscription when it unmounts", async () => {
+        const wrapper = mountDetails({targetExecutionId: "exec-sub"})
+        await flushPromises()
+        const subscription = store.executions.subscribeToExecution.mock.results[0].value
+
+        wrapper.unmount()
+
+        expect(subscription.close).toHaveBeenCalledOnce()
     })
 
     it("should show the logs of an execution that failed before any task run", async () => {

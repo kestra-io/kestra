@@ -240,7 +240,7 @@ class ServiceTest {
 - Flaky tests: Use `@Tag("flaky")` for unreliable tests
 
 ### Frontend Tests
-- Unit tests with Vitest and `@vue/test-utils`
+- Unit tests with Vitest and `@vue/test-utils`, next to the file they cover (`Foo.vue` beside `Foo.spec.ts` and `Foo.stories.ts`), see [ui/AGENTS.md](ui/AGENTS.md)
 - E2E tests with Playwright
 - Storybook component tests
 - Use JSdom environment for DOM testing

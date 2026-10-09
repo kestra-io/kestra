@@ -1,11 +1,13 @@
 // inspired from https://kerkour.com/vuejs-3-router-links-dynamic-vhtml
 import type {RouteLocationRaw, Router} from "vue-router"
 
-/**
- * Converts [[link execution="..." flowId="..." namespace="..."]] patterns
- * in a message string into <router-md> tags for later DOM linkification.
- */
-export function processLinkTags(message: string): string {
+interface LinkTag {
+    execution: string
+    flowId: string
+    namespace: string
+}
+
+function replaceLinkTags(message: string, render: (link: LinkTag) => string): string {
     return message.replace(/\[\[link\s+([^[\]]+)\]\]/g, (match, attrs) => {
         const attrMap: Record<string, string> = {}
         const attrRegex = /(\w+)="([^"]*)"/g
@@ -17,8 +19,22 @@ export function processLinkTags(message: string): string {
         if (!execution || !flowId || !namespace) {
             return match
         }
-        return `<router-md execution="${execution}" flowId="${flowId}" namespace="${namespace}"></router-md>`
+        return render({execution, flowId, namespace})
     })
+}
+
+/**
+ * Converts [[link execution="..." flowId="..." namespace="..."]] patterns
+ * in a message string into <router-md> tags for later DOM linkification.
+ */
+export function processLinkTags(message: string): string {
+    return replaceLinkTags(message, ({execution, flowId, namespace}) =>
+        `<router-md execution="${execution}" flowId="${flowId}" namespace="${namespace}"></router-md>`,
+    )
+}
+
+export function linkTagsAsText(message: string): string {
+    return replaceLinkTags(message, ({execution}) => execution)
 }
 
 function gotoRoute(event: MouseEvent, route: RouteLocationRaw, router: Router) {

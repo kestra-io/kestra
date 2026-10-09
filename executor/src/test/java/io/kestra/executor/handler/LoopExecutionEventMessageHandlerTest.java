@@ -413,6 +413,86 @@ class LoopExecutionEventMessageHandlerTest {
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 1, "SKIPPED", 1, "FAILED", 1));
     }
 
+    @Test
+    void shouldKeepLoopFailedWhenAnIterationEndsAfterTheFailure() throws InternalException {
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution, State.Type.FAILED);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SUCCESS", 1)
+            )
+        );
+
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null);
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-2", State.Type.SUCCESS, null, null));
+
+        assertThat(maybeExecutor).isEmpty();
+        assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
+            .findTaskRunByTaskRunId(loopTaskRunId).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SUCCESS", 2));
+    }
+
+    @Test
+    void shouldNotStartAnotherIterationWhenTheLoopAlreadyFailed() throws InternalException {
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution, State.Type.FAILED);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1)
+            )
+        );
+
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null);
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-1", State.Type.SUCCESS, null, null));
+
+        assertThat(maybeExecutor).isEmpty();
+        assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
+            .findTaskRunByTaskRunId(loopTaskRunId).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SUCCESS", 1));
+    }
+
+    @Test
+    void shouldLogEveryFailedIterationWhenTheLoopAlreadyFailed() throws InternalException {
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution, State.Type.FAILED);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SUCCESS", 1)
+            )
+        );
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null);
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-2", State.Type.FAILED, null, null));
+
+        assertThat(maybeExecutor).isEmpty();
+        assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
+            .findTaskRunByTaskRunId(loopTaskRunId).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 2, "SUCCESS", 1));
+        assertThat(TestsUtils.awaitLogs(logs, 1).getFirst().getMessage()).contains("sub-execution-2").contains("FAILED");
+    }
+
     private Flow loopFlow() {
         return loopFlow(true);
     }
@@ -469,6 +549,10 @@ class LoopExecutionEventMessageHandlerTest {
     }
 
     private TaskRun loopTaskRun(String id, Execution execution) {
+        return loopTaskRun(id, execution, State.Type.RUNNING);
+    }
+
+    private TaskRun loopTaskRun(String id, Execution execution, State.Type state) {
         return TaskRun.builder()
             .id(id)
             .tenantId(execution.getTenantId())
@@ -476,11 +560,11 @@ class LoopExecutionEventMessageHandlerTest {
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
             .taskId("loop")
-            .state(new State().withState(State.Type.RUNNING))
+            .state(new State().withState(state))
             .attempts(
                 List.of(
                     TaskRunAttempt.builder()
-                        .state(new State().withState(State.Type.RUNNING))
+                        .state(new State().withState(state))
                         .build()
                 )
             )

@@ -277,10 +277,10 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                         $.object()
                             .prop("Accept", $.literal("application/yaml")),
                     )
-                : isOctetStreamTextResponse
+                               : isOctetStreamTextResponse
                     ? $.object()
                         .spread($("options"))
-                        .prop("parseAs", $.literal("text"))
+                        .prop("parseAs", $.literal("auto"))
                     : $("options")
 
             const operationOptionsType = (sym: Parameters<typeof $.type.query>[0], idx: 0 | 1 = 1) =>

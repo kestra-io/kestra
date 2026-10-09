@@ -258,7 +258,7 @@
         }
     }
 
-    const onNamespaceChange = (ns: string | string[] | undefined) => {
+    const onNamespaceChange = (ns: string | string[] | null | undefined) => {
         formModel.value.flowId = ""
         loadFlows(typeof ns === "string" ? ns : "")
     }

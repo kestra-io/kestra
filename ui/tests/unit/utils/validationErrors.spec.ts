@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {errorsByFieldPath, fieldPathOf, hasErrorUnder} from "../../../src/utils/validationErrors"
+import {errorsByFieldPath, errorsOnFieldOrItems, fieldPathOf, hasErrorUnder} from "../../../src/utils/validationErrors"
 
 describe("fieldPathOf", () => {
     it("should render list indices in brackets and keys in dots", () => {
@@ -68,5 +68,18 @@ describe("errorsByFieldPath through a wrapper", () => {
             [{detail: "must not be null", pointer: "/tasks/0/tasks/0/task/message"}],
             ["tasks", 0, "tasks", 0],
         )).toEqual(new Map([["task.message", ["must not be null"]]]))
+    })
+})
+
+describe("errorsOnFieldOrItems", () => {
+    const errors = new Map([
+        ["stopAfter", ["on field"]],
+        ["stopAfter[0]", ["on item"]],
+        ["stopAfter[0].state", ["inside item"]],
+        ["stopAfterOther", ["other field"]],
+    ])
+
+    it("should gather errors on the field and its direct items only", () => {
+        expect(errorsOnFieldOrItems(errors, "stopAfter")).toEqual(["on field", "on item"])
     })
 })

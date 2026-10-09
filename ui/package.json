@@ -141,7 +141,7 @@
     "overrides": {
         "axios": "1.18.1",
         "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
-        "dompurify": "^3.4.13"
+        "dompurify": "^3.4.16"
     },
     "lint-staged": {
         "**/*.{scss,css}": [

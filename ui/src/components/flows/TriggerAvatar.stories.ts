@@ -3,7 +3,7 @@ import {expect, spyOn, userEvent, waitFor, within} from "storybook/test"
 import {KsNotification} from "@kestra-io/design-system"
 import {apiUrl} from "override/utils/route"
 
-import TriggerAvatar from "../../../../src/components/flows/TriggerAvatar.vue"
+import TriggerAvatar from "./TriggerAvatar.vue"
 
 const flow = {
     namespace: "company.team",

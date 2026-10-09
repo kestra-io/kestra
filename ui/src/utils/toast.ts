@@ -23,7 +23,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                     tableLayout: "auto",
                     fixed: true,
                     data: message,
-                    class: ["mt-2"],
+                    class: ["ks-mt-2"],
                     size: "small",
                 },
                 [

@@ -104,7 +104,7 @@
         merge?: boolean;
         properties?: any;
         metadataInputs?: boolean;
-        modelValue?: Model;
+        modelValue?: Model | null;
         required?: boolean;
         schema?: Schema;
         root?: string;

@@ -261,9 +261,11 @@ class JdbcSqlSanitizerTest {
         // check and keeps the tag useful if that ever changes; the inner list-based IN still collapses
         DSLContext pg = pg();
         String sql = pg.select(field("value")).from(table("queues"))
-            .where(field("b").in(
-                pg.select(field("c")).from(table("executions")).where(field("d").in(List.of(1, 2, 3)))
-            )).getSQL();
+            .where(
+                field("b").in(
+                    pg.select(field("c")).from(table("executions")).where(field("d").in(List.of(1, 2, 3)))
+                )
+            ).getSQL();
 
         // When / Then
         assertThat(JdbcSqlSanitizer.sanitize(sql)).isEqualTo("""
@@ -319,7 +321,9 @@ class JdbcSqlSanitizerTest {
             String sanitized = JdbcSqlSanitizer.sanitize(sql);
             String reversedOrder = JdbcSqlSanitizer.collapseInLists(
                 JdbcSqlSanitizer.redactQuotedIdentifiers(
-                    JdbcSqlSanitizer.redactOrderByColumns(sql)));
+                    JdbcSqlSanitizer.redactOrderByColumns(sql)
+                )
+            );
 
             // Then
             assertThat(JdbcSqlSanitizer.sanitize(sanitized)).as("idempotent for: %s", sql).isEqualTo(sanitized);

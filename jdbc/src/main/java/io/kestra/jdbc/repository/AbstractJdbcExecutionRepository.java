@@ -783,7 +783,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
             Stream<?> values = descriptor instanceof In inFilter ? inFilter.getValues().stream()
                 : descriptor instanceof EqualTo equalToFilter ? Stream.of(equalToFilter.getValue())
-                : Stream.empty();
+                    : Stream.empty();
             List<State.Type> states = values.map(value -> State.Type.valueOf(value.toString())).toList();
 
             if (!states.isEmpty()) {

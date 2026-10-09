@@ -66,7 +66,7 @@ public abstract class AbstractV2_0_02QueueMigration extends AbstractSQLMigration
             DatabaseMetaData metaData = connection.getMetaData();
 
             boolean tableExists = false;
-            try (ResultSet tables = metaData.getTables(null, null, "%", new String[]{"TABLE"})) {
+            try (ResultSet tables = metaData.getTables(null, null, "%", new String[] { "TABLE" })) {
                 while (tables.next()) {
                     if ("queues".equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
                         tableExists = true;
@@ -80,8 +80,10 @@ public abstract class AbstractV2_0_02QueueMigration extends AbstractSQLMigration
 
             try (ResultSet columns = metaData.getColumns(null, null, "%", "%")) {
                 while (columns.next()) {
-                    if ("queues".equalsIgnoreCase(columns.getString("TABLE_NAME"))
-                        && "routing_key".equalsIgnoreCase(columns.getString("COLUMN_NAME"))) {
+                    if (
+                        "queues".equalsIgnoreCase(columns.getString("TABLE_NAME"))
+                            && "routing_key".equalsIgnoreCase(columns.getString("COLUMN_NAME"))
+                    ) {
                         return false;
                     }
                 }

@@ -11,9 +11,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.kestra.core.migration.MigrationScript;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.jdbc.JdbcJsonbUtils;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
 

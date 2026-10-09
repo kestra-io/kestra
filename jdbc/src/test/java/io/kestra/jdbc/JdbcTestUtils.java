@@ -3,8 +3,6 @@ package io.kestra.jdbc;
 import java.util.List;
 import java.util.Optional;
 
-import javax.sql.DataSource;
-
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -24,9 +22,6 @@ public class JdbcTestUtils {
     protected JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    private DataSource dataSource;
-
-    @Inject
     private JdbcTableConfigs tableConfigs;
 
     List<Table<?>> tables;
@@ -38,14 +33,15 @@ public class JdbcTestUtils {
         dslContextWrapper.transaction((configuration) ->
         {
             DSLContext dslContext = DSL.using(configuration);
+            String schema = dslContext.connectionResult(
+                connection -> Optional.ofNullable(connection.getSchema()).orElse(connection.getCatalog())
+            );
 
             this.tables = dslContext
                 .meta()
                 .getTables()
                 .stream()
-                .filter(
-                    throwPredicate(table -> (table.getSchema().getName().equals(Optional.ofNullable(dataSource.getConnection().getSchema()).orElse(dataSource.getConnection().getCatalog()))))
-                )
+                .filter(throwPredicate(table -> table.getSchema().getName().equals(schema)))
                 .filter(table -> tableConfigs.getTableConfigs().stream().anyMatch(conf -> conf.table().equalsIgnoreCase(table.getName())))
                 .toList();
         });

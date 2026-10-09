@@ -19,6 +19,7 @@ import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.repositories.ArrayListTotal;
+
 import io.micronaut.data.model.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -112,7 +113,8 @@ class AbstractJdbcRepositoryTest {
         Record record = partsRecord(2026, 7, 29, 14, 30);
 
         // When / Then each bucket is anchored in UTC, whatever the host's zone is
-        underEachNonUtcDefaultZone(() -> {
+        underEachNonUtcDefaultZone(() ->
+        {
             assertThat(repository.getDate(record, "minute")).isEqualTo(Instant.parse("2026-07-29T14:30:00Z"));
             assertThat(repository.getDate(record, "hour")).isEqualTo(Instant.parse("2026-07-29T14:00:00Z"));
             assertThat(repository.getDate(record, "day")).isEqualTo(Instant.parse("2026-07-29T00:00:00Z"));
@@ -126,8 +128,8 @@ class AbstractJdbcRepositoryTest {
         Record record = weekRecord(2021, 24);
 
         // When / Then the Monday start-of-day is in UTC, whatever the host's zone is
-        underEachNonUtcDefaultZone(() ->
-            assertThat(repository.getDate(record, "week")).isEqualTo(Instant.parse("2021-06-14T00:00:00Z"))
+        underEachNonUtcDefaultZone(
+            () -> assertThat(repository.getDate(record, "week")).isEqualTo(Instant.parse("2021-06-14T00:00:00Z"))
         );
     }
 

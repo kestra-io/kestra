@@ -344,7 +344,6 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             TaskRun taskRun = taskRunWithOutput.taskRun().withState(state);
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, dynamicTaskRuns, taskRunWithOutput.outputs());
-            workerTaskResultQueue.put(workerTaskResult);
 
             // upload the cache file, hash may not be present if we didn't succeed in computing it
             if (
@@ -372,6 +371,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 }
             }
 
+            workerTaskResultQueue.put(workerTaskResult);
             this.logTerminated(workerTask, taskRun);
             return workerTaskResult;
         } finally {

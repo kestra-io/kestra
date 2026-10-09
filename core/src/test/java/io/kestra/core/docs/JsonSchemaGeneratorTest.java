@@ -23,6 +23,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Custom;
 import io.kestra.core.models.assets.External;
 import io.kestra.core.models.dashboards.Dashboard;
@@ -869,4 +870,38 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class TaskWithTicketingFields extends Task implements RunnableTask<VoidOutput> {
+        @TicketingField(role = TicketingField.Role.CASE_TITLE)
+        private Property<String> subject;
+
+        @TicketingField(defaultValue = "incident")
+        private String table;
+
+        private String untouched;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeTicketingFieldHintsInSchema() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithTicketingFields.class);
+        Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+        assertThat(props.get("subject").get("$ticketingRole"), is("CASE_TITLE"));
+        assertThat(props.get("subject").containsKey("$ticketingDefault"), is(false));
+        assertThat(props.get("table").get("$ticketingDefault"), is("incident"));
+        assertThat(props.get("table").containsKey("$ticketingRole"), is(false));
+        assertThat(props.get("untouched").containsKey("$ticketingRole"), is(false));
+    }
 }

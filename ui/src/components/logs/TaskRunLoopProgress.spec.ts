@@ -19,7 +19,7 @@ const KsButtonStub = defineComponent({
     template: "<button data-test=\"pill\"><slot /></button>",
 })
 
-function mountProgress(loopOutputsByTaskRunId: Record<string, any>) {
+function mountProgress(loopOutputsByTaskRunId: Record<string, {iterationCount: number; terminatedIterations?: Record<string, number>}>) {
     return mount(TaskRunLoopProgress, {
         props: {
             executionId: "exec-1",

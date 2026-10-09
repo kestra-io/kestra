@@ -349,6 +349,10 @@
     "no": "Non",
     "change state done": "L'état de la task a été mis à jour",
     "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?<br/>Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
+    "interrupt": "Interrompre",
+    "interrupt confirm": "Voulez-vous vraiment interrompre l'exécution du Task Run pour le Task <code>{task}</code> dans l'Execution <code>{id}</code> ?<br/>Cela mettra fin au Task en cours d'exécution dans le Worker et définira son état.",
+    "interrupt done": "L'exécution de la Task a été interrompue",
+    "interrupt target state": "État cible",
     "change state current state": "Statut actuel :",
     "change state hint": {
       "WARNING": [
@@ -464,6 +468,11 @@
     "show task source": "Afficher le code source de la tâche",
     "stream": "Flow",
     "execution statistics": "Statistiques d'exécution ",
+    "execution_banner": {
+      "revision": "Révision {revision}",
+      "attempts": "{count} tentative | {count} tentatives",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Limites de Concurrence",
     "system overview": "Vue d'ensemble du système",
     "usage": "Utilisation",
@@ -574,6 +583,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "Un composant du plugin n'a pas pu être chargé.",
       "autoInstall": {
         "failed": "Échec de l'installation du plugin",
         "failedHint": "Le flow n'a pas été enregistré. Corrigez le problème ou retirez le plugin du flow, puis enregistrez à nouveau.",
@@ -1115,7 +1125,6 @@
     "pause backfills": "Mettre en pause les backfills",
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
-    "relative": "Relative",
     "relative start date": "Date de début relative",
     "absolute": "Absolu",
     "backfill": "Backfill",
@@ -1727,6 +1736,7 @@
     "custom value": "Valeur personnalisée",
     "chart": "Graphique",
     "no_code": {
+      "task_details": "Détails de la task",
       "toggle_pebble": "Basculer l'éditeur Pebble",
       "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins",
       "adding": "+ Ajouter un {what}",
@@ -1782,7 +1792,8 @@
         "inputs": "Sélectionnez un type de champ input",
         "charts": "Sélectionner un type de graphique",
         "where": "Sélectionnez un type de filtre",
-        "numerator": "Sélectionnez un numérateur"
+        "numerator": "Sélectionnez un numérateur",
+        "namespace_first": "Sélectionnez d'abord un namespace"
       },
       "creation": {
         "default": "Ajouter",
@@ -2428,6 +2439,7 @@
         "label": "{count} Erreur(s)"
       }
     },
+    "invalid_source_code": "Code source invalide",
     "source_search": {
       "cannot_select_read_only": "Impossible de sélectionner — vous n'avez pas la permission de modifier {namespace} / {id}",
       "collapse_all": "Tout réduire",

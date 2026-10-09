@@ -412,9 +412,10 @@
     import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
-    import {ref, computed, watch, h, useTemplateRef} from "vue"
+    import {ref, computed, watch, useTemplateRef} from "vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
+    import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -1116,62 +1117,19 @@
         return t("bulk change state", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
     }
 
-    const deleteExecutions = () => {
-        const includeNonTerminated = ref(false)
-        const deleteLogs = ref(true)
-        const deleteMetrics = ref(true)
-        const deleteStorage = ref(true)
+    const {confirmExecutionDeletion} = useExecutionDeletionDialog()
 
-        const message = () => h("div", null, [
-            h(
-                "p",
-                {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})},
-            ),
-            h(KsFormItem, {
-                class: "mt-3",
-                label: t("execution-include-non-terminated"),
-            }, [
-                h(KsSwitch, {
-                    modelValue: includeNonTerminated.value,
-                    "onUpdate:modelValue": (val: unknown) => {
-                        includeNonTerminated.value = Boolean(val)
-                    },
-                }),
-            ]),
-            includeNonTerminated.value ? h(KsAlert, {
-                title: t("execution-warn-title"),
-                description: t("execution-warn-deleting-still-running"),
-                type: "warning",
-                closable: false,
-            }) : null,
-            h(KsCheckbox, {
-                modelValue: deleteLogs.value,
-                label: t("execution_deletion.logs"),
-                "onUpdate:modelValue": (val: unknown) => (deleteLogs.value = Boolean(val)),
-            }),
-            h(KsCheckbox, {
-                modelValue: deleteMetrics.value,
-                label: t("execution_deletion.metrics"),
-                "onUpdate:modelValue": (val: unknown) => (deleteMetrics.value = Boolean(val)),
-            }),
-            h(KsCheckbox, {
-                modelValue: deleteStorage.value,
-                label: t("execution_deletion.storage"),
-                "onUpdate:modelValue": (val: unknown) => (deleteStorage.value = Boolean(val)),
-            }),
-        ])
-        KsMessageBox.confirm(message, t("confirmation")).then(() => {
-            actionOptions.value.includeNonTerminated = includeNonTerminated.value
-            actionOptions.value.deleteLogs = deleteLogs.value
-            actionOptions.value.deleteMetrics = deleteMetrics.value
-            actionOptions.value.deleteStorage = deleteStorage.value
+    const deleteExecutions = async () => {
+        const count = queryBulkAction.value ? executionsStore.total : selection.value.length
+        const options = await confirmExecutionDeletion(t("bulk delete", {"executionCount": count}), {offerNonTerminated: true})
+        if (!options) return
 
-            genericConfirmCallback(
-                "queryDeleteExecution",
-                "bulkDeleteExecution",
-                "executions deleted",
-            )
-        })
+        Object.assign(actionOptions.value, options)
+        genericConfirmCallback(
+            "queryDeleteExecution",
+            "bulkDeleteExecution",
+            "executions deleted",
+        )
     }
 
     const killExecutions = () => {

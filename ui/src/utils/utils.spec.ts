@@ -1,99 +1,179 @@
-import {describe, expect, it, vi} from "vitest"
-import {boundForDisplay, capForDisplay, DISPLAY_MAX_LINE_CHARS, flatten, PREVIEW_MAX_ENTRIES, PREVIEW_MAX_STRING_CHARS} from "./utils"
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "./utils"
 
-vi.mock("@kestra-io/design-system", () => ({
-    fileUtils: {isFileUri: () => false},
-    copyToClipboard: vi.fn(),
-}))
-vi.mock("override/stores/misc", () => ({
-    useMiscStore: () => ({configs: {}}),
-}))
+function mockSystemPrefersDark(prefersDark: boolean) {
+    vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
+        matches: prefersDark,
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+    })))
+}
 
-describe("flatten", () => {
-    it("should key every leaf by its path, keeping nulls and empty containers", () => {
-        expect(flatten({a: {b: 1}, c: null, d: {}, e: [1, 2]})).toEqual({
-            "a.b": 1,
-            "c": null,
-            "d": {},
-            "e.0": 1,
-            "e.1": 2,
+describe("downloadUrl()", () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    // https://github.com/kestra-io/kestra/issues/17322
+    it("does not set a target attribute", () => {
+        const createElementSpy = vi.spyOn(document, "createElement")
+
+        downloadUrl("blob:http://localhost/fake", "flow.yaml")
+
+        const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
+        expect(link.getAttribute("download")).toBe("flow.yaml")
+        expect(link.getAttribute("target")).toBeNull()
+    })
+})
+
+describe("theme utils", () => {
+    beforeEach(() => {
+        localStorage.clear()
+        document.documentElement.className = ""
+        mockSystemPrefersDark(false)
+    })
+
+    afterAll(() => {
+        localStorage.clear()
+        document.documentElement.className = ""
+        vi.unstubAllGlobals()
+    })
+
+    describe("getTheme()", () => {
+        it("collapses dark-2 to dark so consumers branching on 'dark' render dark", () => {
+            localStorage.setItem("theme", "dark-2")
+            expect(getTheme()).toBe("dark")
+        })
+
+        it("returns the concrete value for dark and light", () => {
+            localStorage.setItem("theme", "dark")
+            expect(getTheme()).toBe("dark")
+            localStorage.setItem("theme", "light")
+            expect(getTheme()).toBe("light")
+        })
+
+        it("resolves syncWithSystem via prefers-color-scheme", () => {
+            localStorage.setItem("theme", "syncWithSystem")
+            mockSystemPrefersDark(true)
+            expect(getTheme()).toBe("dark")
+            mockSystemPrefersDark(false)
+            expect(getTheme()).toBe("light")
         })
     })
 
-    it("should flatten more leaves than a spread can carry as arguments", () => {
-        const wide = Object.fromEntries(Array.from({length: 150_000}, (_, index) => [`item_${index}`, index]))
+    describe("getSelectedTheme()", () => {
+        it("preserves the raw selection (dark-2) for the settings picker", () => {
+            localStorage.setItem("theme", "dark-2")
+            expect(getSelectedTheme()).toBe("dark-2")
+        })
 
-        expect(Object.keys(flatten(wide))).toHaveLength(150_000)
+        it("defaults to syncWithSystem when nothing is stored", () => {
+            expect(getSelectedTheme()).toBe("syncWithSystem")
+        })
+    })
+
+    describe("switchTheme()", () => {
+        const newStore = () => ({theme: undefined} as unknown as {theme: SelectedTheme})
+
+        it("layers both dark and dark-2 classes for the dark-2 theme", () => {
+            switchTheme(newStore(), "dark-2")
+            const cls = document.documentElement.classList
+            expect(cls.contains("dark")).toBe(true)
+            expect(cls.contains("dark-2")).toBe(true)
+        })
+
+        it("clears the dark-2 class when switching back to light", () => {
+            switchTheme(newStore(), "dark-2")
+            switchTheme(newStore(), "light")
+            const cls = document.documentElement.classList
+            expect(cls.contains("dark-2")).toBe(false)
+            expect(cls.contains("dark")).toBe(false)
+            expect(cls.contains("light")).toBe(true)
+        })
+
+        it("stores the raw selection (not the effective value) in localStorage", () => {
+            switchTheme(newStore(), "dark-2")
+            expect(localStorage.getItem("theme")).toBe("dark-2")
+            expect(getSelectedTheme()).toBe("dark-2")
+        })
     })
 })
 
-describe("capForDisplay", () => {
-    it("should clip a single long line even when the value is under every other limit", () => {
-        const text = ["short", "x".repeat(5000), "short"].join("\n")
+describe("flatten()", () => {
+    it("keeps flat keys as-is", () => {
+        expect(flatten({a: 1, b: "x"})).toEqual({a: 1, b: "x"})
+    })
 
-        const capped = capForDisplay(text)
+    it("flattens nested objects to dotted keys", () => {
+        expect(flatten({values: {greeting: "hello", count: "42"}, uri: "kestra:///x"}))
+            .toEqual({"values.greeting": "hello", "values.count": "42", uri: "kestra:///x"})
+    })
 
-        expect(capped.split("\n").map((line) => line.length)).toEqual([5, DISPLAY_MAX_LINE_CHARS, 5])
+    // An empty output used to vanish from the Outputs view: recursion found no leaves and
+    // contributed nothing, so the user could not tell an empty value from a missing one.
+    it("keeps an empty object as its own value instead of dropping the key", () => {
+        expect(flatten({data: "Code finished", outputFiles: {}}))
+            .toEqual({data: "Code finished", outputFiles: {}})
+    })
+
+    it("keeps an empty array as its own value instead of dropping the key", () => {
+        expect(flatten({data: "x", outputFiles: []})).toEqual({data: "x", outputFiles: []})
+    })
+
+    it("keeps a nested empty object at its dotted path", () => {
+        expect(flatten({a: {b: {}}})).toEqual({"a.b": {}})
+    })
+
+    it("still flattens a top-level empty object to an empty result", () => {
+        expect(flatten({})).toEqual({})
+    })
+
+    it("flattens arrays with index keys and keeps nulls", () => {
+        expect(flatten({list: ["a", "b"], empty: null}))
+            .toEqual({"list.0": "a", "list.1": "b", empty: null})
     })
 })
 
-describe("boundForDisplay", () => {
-    it("should stay parseable where clipping the serialized text does not", () => {
-        const value = {tasks: Array.from({length: 15_000}, (_, index) => ({uid: `task ${index}`}))}
-
-        const {value: bounded, truncated} = boundForDisplay(value)
-
-        expect(truncated).toBe(true)
-        expect(() => JSON.parse(JSON.stringify(bounded, null, 2))).not.toThrow()
-        expect(() => JSON.parse(capForDisplay(JSON.stringify(value, null, 2)))).toThrow()
+describe("getDateGrouping()", () => {
+    it("returns a date-only day grouping when no dates and no time range are provided", () => {
+        expect(getDateGrouping(undefined, undefined, undefined)).toEqual({format: "YYYY-MM-DD", unit: "day"})
     })
 
-    it("should name how many entries it dropped, per container kind", () => {
-        const {value: bounded} = boundForDisplay({
-            list: Array.from({length: 150}, (_, index) => index),
-            record: Object.fromEntries(Array.from({length: 150}, (_, index) => [`k${index}`, index])),
-        }) as {value: {list: unknown[]; record: Record<string, unknown>}}
-
-        expect(bounded.list).toHaveLength(PREVIEW_MAX_ENTRIES + 1)
-        expect(bounded.list.at(-1)).toBe(`… ${150 - PREVIEW_MAX_ENTRIES}`)
-        expect(bounded.record["…"]).toBe(150 - PREVIEW_MAX_ENTRIES)
+    it("returns a month grouping for ranges over a year", () => {
+        expect(getDateGrouping(undefined, undefined, "P400D")).toEqual({format: "YYYY-MM", unit: "month"})
     })
 
-    it("should clip a long key, which is otherwise a whole document on one line", () => {
-        const value = {["k".repeat(2_000_000)]: "value"}
-
-        const {value: bounded, truncated} = boundForDisplay(value)
-
-        expect(truncated).toBe(true)
-        expect(JSON.stringify(bounded).length).toBeLessThan(2 * PREVIEW_MAX_STRING_CHARS)
+    it("returns a week grouping for ranges over 180 days", () => {
+        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "YYYY-[W]ww", unit: "week"})
     })
 
-    it("should bound the preview when depth, not content, is what makes it large", () => {
-        let value: unknown = {leaf: "y".repeat(600)}
-        for (let depth = 0; depth < 1200; depth++) {
-            value = {[`level_${depth}`]: value, sibling: "z".repeat(600)}
-        }
-
-        const preview = JSON.stringify(boundForDisplay(value).value, null, 2)
-
-        // Indentation is the whole cost here: unbounded, this serializes to some 3 MB.
-        expect(preview.length).toBeLessThan(256 * 1024)
+    it("returns a day grouping for ranges over a day", () => {
+        expect(getDateGrouping(undefined, undefined, "P7D")).toEqual({format: "YYYY-MM-DD", unit: "day"})
     })
 
-    it("should count a key clipped into a collision as dropped, not merge it into the first", () => {
-        const prefix = "p".repeat(PREVIEW_MAX_STRING_CHARS + 100)
-        const value = {[`${prefix}a`]: 1, [`${prefix}b`]: 2, other: 3}
-
-        const {value: bounded} = boundForDisplay(value) as {value: Record<string, unknown>}
-
-        // The survivor, `other`, and the marker: the collided key is counted as dropped.
-        expect(Object.keys(bounded)).toHaveLength(3)
-        expect(bounded["…"]).toBe(1)
+    it("returns an hour grouping, date and hour separated with a space, for ranges over an hour", () => {
+        expect(getDateGrouping(undefined, undefined, "PT24H")).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
     })
 
-    it("should return a small value untouched and unflagged", () => {
-        const value = {a: {b: [1, null, "x"]}, c: {}}
+    it("returns a minute grouping, date and time separated with a space, for ranges up to an hour", () => {
+        expect(getDateGrouping(undefined, undefined, "PT30M")).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
+    })
 
-        expect(boundForDisplay(value)).toEqual({value, truncated: false})
+    it("derives the duration from start and end dates when no time range is provided", () => {
+        expect(getDateGrouping("2026-08-17T00:00:00Z", "2026-08-17T12:00:00Z", undefined)).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
+    })
+})
+
+describe("executionVars()", () => {
+    it("returns one row per flattened output", () => {
+        const rows = executionVars({values: {greeting: "hello"}})
+        expect(rows).toEqual([{key: "values.greeting", value: "hello"}])
+    })
+
+    it("returns an empty list when data is undefined", () => {
+        expect(executionVars(undefined as unknown as Record<string, unknown>)).toEqual([])
     })
 })

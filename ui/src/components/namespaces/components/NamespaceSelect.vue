@@ -107,7 +107,7 @@
         const ids = [modelValue.value].flat().filter(Boolean) as string[]
         namespacesStore.loadAutocomplete({ids})
 
-        if (props.autoDefault && (modelValue.value === undefined || modelValue.value.length === 0)) {
+        if (props.autoDefault && modelValue.value !== null && (modelValue.value === undefined || modelValue.value.length === 0)) {
             const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {

@@ -118,12 +118,12 @@
             <div class="execution-banner__labels">
                 <LabelMultiple class="icon" />
                 <div class="list">
+                    <SetLabels :execution />
                     <span
                         v-for="(label, idx) in execution.labels"
                         :key="idx"
                         class="label-tag"
                     >{{ label.key }}: {{ label.value }}</span>
-                    <SetLabels :execution />
                 </div>
             </div>
 

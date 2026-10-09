@@ -127,21 +127,32 @@ describe("collectScopedTargets", () => {
         expect(targets.truncated).toBe(false)
     })
 
-    it("shouldRecurseThroughFailedChildren", async () => {
-        const deps = depsFor([], [])
-        deps.search = vi.fn(async (search) => {
-            const byParent: Record<string, LoopIteration[]> = {
-                "customer-13": [childOf("inv-7", "customer-13", 6)],
-                "inv-7": [iteration("line-2", "inv-7", "per_line", 1)],
-            }
-            const results = byParent[search.parentId ?? ""] ?? []
-            return {results, total: results.length}
-        })
+    it("shouldFindAFailedIterationUnderSuccessfulIntermediateIterationsWhenScopedAboveThem", async () => {
+        const invoice = {
+            ...iteration("inv-7", "customer-13", "per_invoice", 6),
+            loopRun: {
+                taskId: "per_invoice",
+                index: 6,
+                value: "7",
+                parent: {id: "customer-13", parentId: "region-2", loopRun: {taskId: "per_customer", index: 12, value: "13", parent: embeddedParent("region-2", "root", "per_region", 1)}},
+            },
+        }
+        const deps = depsFor([], [invoice])
+        deps.findByNumber = vi.fn(async (_parent: string, taskId: string, number: number) => ({id: `region-${number}`, number, value: String(number), state: "SUCCESS", taskId}))
+
+        const targets = await collectScopedTargets(root, [{taskId: "per_region", number: 2}], deps)
+
+        expect(targets.executionIds).toEqual(["root", "region-2", "customer-13", "inv-7"])
+        expect(targets.chains["inv-7"].map((node) => `${node.taskId}:${node.number}`)).toEqual(["per_region:2", "per_customer:13", "per_invoice:7"])
+    })
+
+    it("shouldIgnoreWindowFailuresThatDoNotPassThroughTheScope", async () => {
+        const deps = depsFor([], [nestedFailure("f13", 12)])
         deps.findByNumber = vi.fn(customer)
 
-        const targets = await collectScopedTargets(root, [{taskId: "per_customer", number: 13}], deps)
+        const targets = await collectScopedTargets(root, [{taskId: "per_customer", number: 26}], deps)
 
-        expect(targets.executionIds).toEqual(["root", "customer-13", "inv-7", "line-2"])
+        expect(targets.executionIds).toEqual(["root", "customer-26"])
     })
 
     it("shouldFlagTruncationWhenTheChildrenSearchHasMoreResultsThanItReturned", async () => {
@@ -193,6 +204,20 @@ describe("chain resolution", () => {
         await collectFailedTargets(root, deps, {cache})
 
         expect(deps.fetchIteration).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe("request budget", () => {
+    it("shouldStopFetchingParentsAtTheRequestCapAndFlagTheTruncation", async () => {
+        const bare = (id: string) => ({...iteration(id, `p-${id}`, "per_invoice", 6), loopRun: {taskId: "per_invoice", index: 6}})
+        const deps = depsFor([], Array.from({length: 30}, (_, index) => bare(`i${index}`)))
+        deps.fetchIteration = vi.fn(async (id: string) => embeddedParent(id, "root", "per_customer", 1) as never)
+
+        const targets = await collectFailedTargets(root, deps, {maxRequests: 12})
+
+        expect(deps.fetchIteration).toHaveBeenCalledTimes(10)
+        expect(targets.failedShown).toBe(10)
+        expect(targets.truncated).toBe(true)
     })
 })
 

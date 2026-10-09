@@ -94,6 +94,40 @@ describe("useLoopMergedLogs", () => {
         scope.stop()
     })
 
+    it("shouldStopTheFinishSequenceWhenTheExecutionRunsAgain", async () => {
+        const {options, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        options.running.value = false
+        await vi.advanceTimersByTimeAsync(0)
+        options.running.value = true
+        await vi.advanceTimersByTimeAsync(0)
+        searchMergedLogs.mockClear()
+
+        await vi.advanceTimersByTimeAsync(POST_FINISH_REFRESH_DELAYS_MS[0] + POST_FINISH_REFRESH_DELAYS_MS[1])
+
+        expect(searchMergedLogs).not.toHaveBeenCalled()
+        scope.stop()
+    })
+
+    it("shouldWalkEveryCursorPageToKeepTheLoadedExtentOnRefresh", async () => {
+        searchMergedLogs.mockImplementation(async ({cursor}) => {
+            if (!cursor) return {results: [{message: "a"}], total: 0, nextCursor: "c1", cursorMode: true}
+            if (cursor === "c1") return {results: [{message: "b"}], total: 0, nextCursor: "c2", cursorMode: true}
+            return {results: [{message: "c"}], total: 0, nextCursor: undefined, cursorMode: true}
+        })
+        const {logs, scope} = setup(false)
+        await vi.advanceTimersByTimeAsync(0)
+        await logs.loadMore()
+        await logs.loadMore()
+        searchMergedLogs.mockClear()
+
+        await logs.refresh()
+
+        expect(searchMergedLogs.mock.calls.map(([search]) => search.cursor)).toEqual([undefined, "c1", "c2"])
+        expect(logs.lines.value.map((line) => line.message)).toEqual(["a", "b", "c"])
+        scope.stop()
+    })
+
     it("shouldStopRefreshingAfterTheFinishBackoffIsExhausted", async () => {
         const {options, scope} = setup(true)
         await vi.advanceTimersByTimeAsync(0)

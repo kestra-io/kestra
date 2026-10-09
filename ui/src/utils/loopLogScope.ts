@@ -20,6 +20,7 @@ const URL_PREFIX_MARGIN = 200
 const CURSOR_MARGIN = 400
 const FAILED_SEARCH_SIZE = 100
 const MAX_CHAIN_DEPTH = 8
+export const MAX_COLLECTION_REQUESTS = 60
 const EXECUTION_ID_FILTER_LENGTH = "&filters[executionId][IN]=".length
 
 export interface ScopeNode {
@@ -55,6 +56,7 @@ export interface CollectOptions {
     reserve?: number;
     limit?: number;
     cache?: ChainCache;
+    maxRequests?: number;
 }
 
 export const createChainCache = (): ChainCache => ({fetched: new Map(), chains: new Map()})
@@ -167,16 +169,53 @@ const chainsById = (chains: ScopeNode[][], into: Record<string, ScopeNode[]> = {
     return into
 }
 
+class RequestBudgetExceeded extends Error {}
+
+function budgeted(deps: LogTargetDeps, maxRequests: number) {
+    let remaining = maxRequests
+    const state = {exhausted: false}
+    const spend = () => {
+        if (remaining <= 0) {
+            state.exhausted = true
+            throw new RequestBudgetExceeded()
+        }
+        remaining--
+    }
+    const limited: LogTargetDeps = {
+        ...deps,
+        search: (search) => {
+            spend()
+            return deps.search(search)
+        },
+        fetchIteration: (id) => {
+            spend()
+            return deps.fetchIteration(id)
+        },
+    }
+    return {limited, state}
+}
+
+async function resolveChains(candidates: LoopIteration[], rootId: string, deps: LogTargetDeps, cache: ChainCache) {
+    const resolveChain = chainResolver(rootId, deps.fetchIteration, cache)
+    const resolved = await mapLimit(candidates, CHAIN_CONCURRENCY, (candidate) =>
+        resolveChain(candidate).catch((error) => {
+            if (error instanceof RequestBudgetExceeded) return undefined
+            throw error
+        }),
+    )
+    return resolved.filter((chain): chain is ScopeNode[] => chain !== undefined)
+}
+
+const uniqueById = (iterations: LoopIteration[]) => [...new Map(iterations.map((item) => [item.id, item])).values()]
+
 export async function collectFailedTargets(root: LoopRoot, deps: LogTargetDeps = defaultDeps, options: CollectOptions = {}): Promise<LoopLogTargets> {
+    const {limited, state} = budgeted(deps, options.maxRequests ?? MAX_COLLECTION_REQUESTS)
     const [topLevel, anyDepth] = await Promise.all([
-        deps.search({parentId: root.id, state: "FAILED", size: FAILED_SEARCH_SIZE}),
-        deps.search({root, state: "FAILED", size: FAILED_SEARCH_SIZE}),
+        limited.search({parentId: root.id, state: "FAILED", size: FAILED_SEARCH_SIZE}),
+        limited.search({root, state: "FAILED", size: FAILED_SEARCH_SIZE}),
     ])
 
-    const candidates = [...new Map([...topLevel.results, ...anyDepth.results].map((item) => [item.id, item])).values()]
-    const resolveChain = chainResolver(root.id, deps.fetchIteration, options.cache ?? createChainCache())
-    const resolved = await mapLimit(candidates, CHAIN_CONCURRENCY, resolveChain)
-    const chains = resolved.filter((chain): chain is ScopeNode[] => chain !== undefined)
+    const chains = await resolveChains(uniqueById([...topLevel.results, ...anyDepth.results]), root.id, limited, options.cache ?? createChainCache())
 
     const {ids, kept} = withinBudget(chains, new Set([root.id]), options)
     const searchedAll = topLevel.total <= topLevel.results.length && anyDepth.total <= anyDepth.results.length
@@ -186,33 +225,9 @@ export async function collectFailedTargets(root: LoopRoot, deps: LogTargetDeps =
         chains: chainsById(kept),
         failedChains: kept,
         failedShown: kept.length,
-        truncated: kept.length < chains.length || !searchedAll,
+        truncated: kept.length < chains.length || !searchedAll || state.exhausted,
         scope: [],
     }
-}
-
-async function collectFailedDescendants(scope: ScopeNode[], deps: LogTargetDeps) {
-    const chains: ScopeNode[][] = []
-    let truncated = false
-    let frontier: ScopeNode[][] = [scope]
-
-    for (let depth = 0; frontier.length && depth < MAX_CHAIN_DEPTH; depth++) {
-        const parents = frontier
-        const pages = await mapLimit(parents, CHAIN_CONCURRENCY, (parent) =>
-            deps.search({parentId: parent[parent.length - 1].id, state: "FAILED", size: FAILED_SEARCH_SIZE}),
-        )
-        frontier = []
-        pages.forEach((page, index) => {
-            if (page.total > page.results.length) truncated = true
-            for (const child of page.results) {
-                if (child.taskId === undefined) continue
-                const chain = [...parents[index], {id: child.id, taskId: child.taskId, number: child.number, value: child.value}]
-                chains.push(chain)
-                frontier.push(chain)
-            }
-        })
-    }
-    return {chains, truncated}
 }
 
 export async function collectScopedTargets(
@@ -222,18 +237,32 @@ export async function collectScopedTargets(
     options: CollectOptions = {},
 ): Promise<LoopLogTargets> {
     const scope = await resolveScope(root.id, entries, deps)
-    const {chains: descendants, truncated: searchTruncated} = scope.length
-        ? await collectFailedDescendants(scope, deps)
-        : {chains: [], truncated: false}
+    const deepest = scope[scope.length - 1]
+    const {limited, state} = budgeted(deps, options.maxRequests ?? MAX_COLLECTION_REQUESTS)
 
+    const [direct, anyDepth] = deepest
+        ? await Promise.all([
+            limited.search({parentId: deepest.id, state: "FAILED", size: FAILED_SEARCH_SIZE}),
+            limited.search({root, state: "FAILED", size: FAILED_SEARCH_SIZE}),
+        ])
+        : [{results: [], total: 0}, {results: [], total: 0}]
+
+    const directChains = direct.results
+        .filter((child) => child.taskId !== undefined)
+        .map((child) => [...scope, {id: child.id, taskId: child.taskId!, number: child.number, value: child.value}])
+    const windowChains = (await resolveChains(anyDepth.results, root.id, limited, options.cache ?? createChainCache()))
+        .filter((chain) => chain.length > scope.length && chain.some((node) => node.id === deepest?.id))
+
+    const descendants = [...new Map([...directChains, ...windowChains].map((chain) => [chain[chain.length - 1].id, chain])).values()]
     const {ids, kept} = withinBudget(descendants, new Set([root.id, ...scope.map((node) => node.id)]), options)
+    const searchedAll = direct.total <= direct.results.length && anyDepth.total <= anyDepth.results.length
 
     return {
         executionIds: [...ids],
         chains: chainsById([...kept, scope]),
         failedChains: kept,
         failedShown: kept.length,
-        truncated: searchTruncated || kept.length < descendants.length,
+        truncated: !searchedAll || kept.length < descendants.length || state.exhausted,
         scope,
     }
 }

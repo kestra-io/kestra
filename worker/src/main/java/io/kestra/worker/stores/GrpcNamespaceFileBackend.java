@@ -136,7 +136,7 @@ public class GrpcNamespaceFileBackend implements NamespaceFileBackend {
     }
 
     private static String object(NamespaceFile file) {
-        return file.uri().getPath().substring(StorageContext.namespaceFilePrefix(file.namespace()).length() + 1);
+        return StorageContext.logicalPath(file.uri()).substring(StorageContext.namespaceFilePrefix(file.namespace()).length() + 1);
     }
 
     private RequestOrResponseHeader header() {

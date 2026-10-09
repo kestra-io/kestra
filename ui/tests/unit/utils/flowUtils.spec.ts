@@ -125,4 +125,118 @@ tasks:
     it("getAllTasks handles missing tasks", () => {
         expect(FlowUtils.getAllTasks(undefined)).toEqual([])
     })
+
+    it("loopOver traverses nested arrays and objects in order", () => {
+        const input = {
+            first: [
+                {id: "a", type: "task"},
+                {
+                    nested: [
+                        {id: "b", type: "task"},
+                        {id: "c", type: "task"},
+                    ],
+                },
+            ],
+            last: {id: "d", type: "task"},
+        }
+
+        const result = FlowUtils.loopOver(
+            input,
+            (value) => value instanceof Object && value.type === "task",
+        )
+
+        expect(result.map((value) => value.id)).toEqual(["a", "b", "c", "d"])
+    })
+
+    it("loopOver handles empty and primitive values", () => {
+        expect(FlowUtils.loopOver([], () => true)).toEqual([[]])
+        expect(FlowUtils.loopOver({}, () => true)).toEqual([{}])
+        expect(FlowUtils.loopOver(null, () => true)).toEqual([null])
+        expect(FlowUtils.loopOver("value", () => true)).toEqual(["value"])
+    })
+
+    it("getAllTaskIds returns task ids from top-level and deeply nested tasks", () => {
+        const flow = YAML_UTILS.parse(flowable)
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "nest-1",
+            "nest-2",
+            "nest-3",
+            "nest-4",
+            "1-1",
+            "1-2",
+            "end",
+        ])
+    })
+
+    it("getAllTaskIds includes tasks from errors", () => {
+        const flow = {
+            tasks: [
+                {
+                    id: "main",
+                    type: "io.kestra.plugin.core.log.Log",
+                },
+            ],
+            errors: [
+                {
+                    id: "error-handler",
+                    type: "io.kestra.plugin.core.log.Log",
+                },
+                {
+                    id: "nested-error",
+                    type: "io.kestra.plugin.core.flow.Parallel",
+                    tasks: [
+                        {
+                            id: "nested-error-task",
+                            type: "io.kestra.plugin.core.log.Log",
+                        },
+                    ],
+                },
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "main",
+            "error-handler",
+            "nested-error",
+            "nested-error-task",
+        ])
+    })
+
+    it("getAllTaskIds includes tasks from finally and afterExecution", () => {
+        const flow = {
+            tasks: [
+                {id: "main", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            finally: [
+                {id: "finally-task", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            afterExecution: [
+                {id: "after-execution-task", type: "io.kestra.plugin.core.log.Log"},
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
+            "main",
+            "finally-task",
+            "after-execution-task",
+        ])
+    })
+    it("getAllTaskIds removes duplicate task ids", () => {
+        const flow = {
+            tasks: [
+                {id: "duplicate", type: "task"},
+                {id: "duplicate", type: "task"},
+            ],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual(["duplicate"])
+    })
+
+    it("getAllTaskIds handles empty or missing flows", () => {
+        expect(FlowUtils.getAllTaskIds(undefined)).toEqual([])
+        expect(FlowUtils.getAllTaskIds(null)).toEqual([])
+        expect(FlowUtils.getAllTaskIds({})).toEqual([])
+        expect(FlowUtils.getAllTaskIds({tasks: []})).toEqual([])
+    })
 })

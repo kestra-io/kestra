@@ -46,6 +46,7 @@
                                 <KsCheckbox
                                     v-if="replaceMode"
                                     class="result-group-checkbox"
+                                    data-test="source-search-group-checkbox"
                                     :modelValue="isGroupChecked(group)"
                                     :indeterminate="isGroupIndeterminate(group)"
                                     :disabled="!group.editable"

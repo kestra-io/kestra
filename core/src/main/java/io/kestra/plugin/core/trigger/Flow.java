@@ -300,6 +300,14 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Positive
     private Integer minSatisfied;
 
+    @Schema(
+        title = "Wait for all retries to complete before evaluating the trigger",
+        description = "When set to true, the trigger will wait for all upstream flow retries to complete before evaluating the trigger. This only applies to terminal states."
+    )
+    @PluginProperty
+    @Builder.Default
+    private boolean waitForAllRetries = false;
+
     /**
      * Evaluates this trigger against a terminated execution.
      *

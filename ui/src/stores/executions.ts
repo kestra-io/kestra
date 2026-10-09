@@ -220,6 +220,11 @@ export const useExecutionsStore = defineStore("executions", () => {
         }) as unknown as Promise<Execution>
     }
 
+    const validateReplay = (options: { executionId: string; taskRunId?: string; revision?: number }) => {
+        const requestOptions: KestraRequestOptions = {showMessageOnError: false}
+        return ExecutionsAPI.validateReplayExecution(options, requestOptions)
+    }
+
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
     // Don't set Content-Type - the browser must generate the multipart boundary itself; an
     // explicit "multipart/form-data" header (needed under the old axios client) has no boundary
@@ -908,6 +913,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryReplayExecution,
         queryChangeExecutionStatus,
         replayExecution,
+        validateReplay,
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,

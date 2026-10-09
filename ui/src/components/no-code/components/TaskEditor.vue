@@ -317,7 +317,7 @@
                     cls: val,
                     version: taskModel.value?.version,
                 })
-                versionedSchema.value = schema?.properties
+                versionedSchema.value = schema?.properties as Schemas | undefined
             } catch {
                 versionedSchema.value = undefined
             } finally {

@@ -21,6 +21,7 @@ import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -224,7 +225,9 @@ public class ExecutionService {
             .filter(Objects::nonNull)
             .toList();
 
-        ExecutionMetadata metadata = execution.getMetadata().withTaskRunStatisticPlus(TaskRunStatistic.of(discarded));
+        ExecutionMetadata metadata = execution.getMetadata()
+            .withTaskRunStatisticPlus(TaskRunStatistic.of(discarded))
+            .withTaskRunStateCountsPlus(TaskRunStateCounts.of(discarded));
 
         return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);
     }
@@ -1012,7 +1015,7 @@ public class ExecutionService {
         this.eventPublisher.publishEvent(CrudEvent.of(execution, unpausedExecution));
         if (execution.getKind() == ExecutionKind.LOOP) {
             // notify the parent execution
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(unpausedExecution.getLoopRun(), unpausedExecution.getId(), unpausedExecution.getState().getCurrent(), null, null));
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(unpausedExecution.getLoopRun(), unpausedExecution.getId(), unpausedExecution.getState().getCurrent(), null, null, null, null));
         }
         return unpausedExecution;
     }

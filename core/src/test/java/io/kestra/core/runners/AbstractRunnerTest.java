@@ -577,6 +577,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-state-counts.yaml")
+    protected void loopNestedStateCounts(Execution execution) throws Exception {
+        loopCaseTest.loopNestedStateCounts(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-with-loop-until.yaml")
     protected void loopWithLoopUntil(Execution execution) throws Exception {
         loopCaseTest.loopWithLoopUntil(execution);

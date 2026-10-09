@@ -203,6 +203,8 @@ public class Loop extends AbstractBranch<Loop.Output> {
     public static final String OUTPUTS_OUTPUT = "outputs";
     // Internal bookkeeping: sub-execution statistics aggregated as task run statistics
     public static final String TASK_RUN_STATISTIC_OUTPUT = "taskRunStatistic";
+    public static final String TASK_RUN_STATE_COUNTS_OUTPUT = "taskRunStateCounts";
+    public static final String LOOP_ITERATION_COUNTS_OUTPUT = "loopIterationCounts";
 
     private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
 

@@ -11,6 +11,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -125,13 +126,20 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 @SuppressWarnings("unchecked")
                 TaskRunStatistic taskRunStatistic = TaskRunStatistic.fromMap((Map<String, Object>) outputs.get(Loop.TASK_RUN_STATISTIC_OUTPUT))
                     .plus(message.taskRunStatistic());
+                @SuppressWarnings("unchecked")
+                TaskRunStateCounts stateCounts = TaskRunStateCounts.fromMap((Map<String, Map<String, Number>>) outputs.get(Loop.TASK_RUN_STATE_COUNTS_OUTPUT))
+                    .plus(message.taskRunStateCounts());
+                @SuppressWarnings("unchecked")
+                TaskRunStateCounts loopIterationCounts = TaskRunStateCounts.fromMap((Map<String, Map<String, Number>>) outputs.get(Loop.LOOP_ITERATION_COUNTS_OUTPUT))
+                    .plus(message.loopIterationCounts());
+                Accumulated accumulated = new Accumulated(taskRunStatistic, stateCounts, loopIterationCounts);
 
                 if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
                     // the failure happened inside an isolated loop sub-execution: log inside the parent exec
-                    computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                    computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, accumulated);
                     logLoopIterationFailure(parentTaskRun, loop, executor, message);
                     // immediately terminate the loop
-                    return terminateLoop(parentTaskRun, loop, executor, message.state(), taskRunStatistic);
+                    return terminateLoop(parentTaskRun, loop, executor, message.state(), accumulated, terminatedByState);
                 } else {
                     // Check the next iteration index
                     int nextIndex = runningIteration + terminatedIteration;
@@ -152,12 +160,12 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                             if (shouldBreak) {
                                 // update the outputs with SKIPPED iterations
                                 terminatedByState.put(State.Type.SKIPPED.name(), iterationCount - nextIndex);
-                                computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                                computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, accumulated);
                                 if (runningIteration > 0) {
                                     followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
                                     return null;
                                 }
-                                return terminateLoop(parentTaskRun, loop, executor, State.Type.SUCCESS, taskRunStatistic);
+                                return terminateLoop(parentTaskRun, loop, executor, State.Type.SUCCESS, accumulated, terminatedByState);
                             }
                         }
 
@@ -173,12 +181,12 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                 );
                             }
                             String value = valuesAndOffset.getLeft().getFirst();
-                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedByState, valuesAndOffset.getRight(), taskRunStatistic);
+                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedByState, valuesAndOffset.getRight(), accumulated);
                             var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value);
                             executionQueue.emit(loopExecution);
                         } else {
                             // Non-URI mode: resolve all values in memory and pick by index
-                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedByState, null, taskRunStatistic);
+                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedByState, null, accumulated);
                             var either = FlowableUtils.resolveValues(runContext, loop.getValues());
                             if (either.isLeft()) {
                                 List<String> values = either.getLeft();
@@ -211,10 +219,10 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                     } else {
                         // All iterations have been started — save the decremented counts and either
                         // terminate (if all are done) or wait for the remaining in-flight ones.
-                        computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                        computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, accumulated);
                         if (terminatedIteration == iterationCount) {
                             // All iterations have completed — end the loop with success.
-                            return terminateLoop(parentTaskRun, loop, executor, State.Type.SUCCESS, taskRunStatistic);
+                            return terminateLoop(parentTaskRun, loop, executor, State.Type.SUCCESS, accumulated, terminatedByState);
                         } else {
                             // Some iterations are still running — wait for them.
                             // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
@@ -301,7 +309,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
     }
 
     private void computeOutputs(TaskRun parentTaskRun, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Map<String, Integer> terminatedByState,
-        Long offset, TaskRunStatistic taskRunStatistic)
+        Long offset, Accumulated accumulated)
         throws InternalException {
         Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
         outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);
@@ -313,23 +321,35 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (!ListUtils.isEmpty(taskOutputs)) {
             outputs.put(Loop.OUTPUTS_OUTPUT, taskOutputs);
         }
-        if (taskRunStatistic.count() > 0) {
-            outputs.put(Loop.TASK_RUN_STATISTIC_OUTPUT, taskRunStatistic.toMap());
+        if (accumulated.taskRunStatistic().count() > 0) {
+            outputs.put(Loop.TASK_RUN_STATISTIC_OUTPUT, accumulated.taskRunStatistic().toMap());
+        }
+        if (!accumulated.stateCounts().isEmpty()) {
+            outputs.put(Loop.TASK_RUN_STATE_COUNTS_OUTPUT, accumulated.stateCounts().toMap());
+        }
+        if (!accumulated.loopIterationCounts().isEmpty()) {
+            outputs.put(Loop.LOOP_ITERATION_COUNTS_OUTPUT, accumulated.loopIterationCounts().toMap());
         }
         taskOutputService.saveOutputs(parentTaskRun, outputs);
     }
 
     // terminate the loop and its attempts
-    private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state, TaskRunStatistic taskRunStatistic) throws InternalException {
+    private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state, Accumulated accumulated,
+        Map<String, Integer> terminatedByState) throws InternalException {
         State.Type finalState = state == State.Type.FAILED ? stateFailure(task) : State.Type.SUCCESS;
         // as loops can run concurrently, the state might already be set by another task run
         TaskRun newTaskRun = parentTaskRun.getState().getCurrent() == finalState ? parentTaskRun : parentTaskRun.withStateAndAttempt(finalState);
 
-        // fold the loop's accumulated task-run statistic into the parent execution's own accumulator
-        if (taskRunStatistic.count() > 0) {
+        // a late iteration event must not fold the cumulative accumulators again once the loop already terminated
+        if (accumulated.taskRunStatistic().count() > 0 && !parentTaskRun.getState().isTerminated()) {
             Execution execution = executor.getExecution();
             executor.withExecution(
-                execution.withMetadata(execution.getMetadata().withTaskRunStatisticPlus(taskRunStatistic)),
+                execution.withMetadata(
+                    execution.getMetadata()
+                        .withTaskRunStatisticPlus(accumulated.taskRunStatistic())
+                        .withTaskRunStateCountsPlus(accumulated.stateCounts())
+                        .withLoopIterationCountsPlus(accumulated.loopIterationCounts().plus(TaskRunStateCounts.ofLoopIterations(task.getId(), terminatedByState)))
+                ),
                 "loopTaskRunStatistic"
             );
         }
@@ -337,6 +357,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         WorkerTaskResult workerTaskResult = new WorkerTaskResult(newTaskRun);
         executorService.addWorkerTaskResult(executor, () -> executor.getFlow(), workerTaskResult);
         return executor;
+    }
+
+    private record Accumulated(TaskRunStatistic taskRunStatistic, TaskRunStateCounts stateCounts, TaskRunStateCounts loopIterationCounts) {
     }
 
     private State.Type stateFailure(Task task) {

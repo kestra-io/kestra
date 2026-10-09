@@ -135,7 +135,7 @@ public class ExecutionDelayProcessor {
 
                         if (markAsExecution.getKind() == ExecutionKind.LOOP) {
                             // notify the parent execution
-                            loopExecutionEventQueue.emit(new LoopExecutionEvent(markAsExecution.getLoopRun(), markAsExecution.getId(), markAsExecution.getState().getCurrent(), null, null));
+                            loopExecutionEventQueue.emit(new LoopExecutionEvent(markAsExecution.getLoopRun(), markAsExecution.getId(), markAsExecution.getState().getCurrent(), null, null, null, null));
                         }
 
                         executor = executor.withExecution(markAsExecution, "pausedRestart");

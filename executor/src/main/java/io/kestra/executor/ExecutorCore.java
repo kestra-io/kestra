@@ -27,6 +27,7 @@ import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -387,7 +388,14 @@ public class ExecutorCore {
                     }
                     TaskRunStatistic taskRunStatistic = TaskRunStatistic.of(execution.getTaskRunList())
                         .plus(execution.getMetadata().getTaskRunStatistic());
-                    loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs, taskRunStatistic));
+                    TaskRunStateCounts taskRunStateCounts = TaskRunStateCounts.of(execution.getTaskRunList())
+                        .plus(execution.getMetadata().getTaskRunStateCounts());
+                    loopExecutionEventQueue.emit(
+                        new LoopExecutionEvent(
+                            execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs, taskRunStatistic, taskRunStateCounts,
+                            execution.getMetadata().getLoopIterationCounts()
+                        )
+                    );
                 }
 
                 // purge SLA monitors

@@ -411,7 +411,7 @@ class ExecutionControllerTest {
         );
         Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
         assertThat(Problems.detail(exception)).isEqualTo(
-            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
+            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID, LOOP_RUN_VALUE"
         );
 
         exception = assertThrows(

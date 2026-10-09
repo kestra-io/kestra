@@ -169,6 +169,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
     abstract public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
 
+    /**
+     * The loop item value of the execution, read from its JSON document: deliberately not a generated column
+     * as values can be arbitrarily large and are only filtered together with a parent execution id.
+     */
+    protected abstract Field<Object> loopRunValueField();
+
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
             .in(state.stream().map(Enum::name).toList());
@@ -259,6 +265,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             return DSL.quotedName("loop_run_task_id");
         }
         return super.getColumnName(field);
+    }
+
+    @Override
+    protected Field<Object> getColumn(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.LOOP_RUN_VALUE) {
+            return loopRunValueField();
+        }
+        return super.getColumn(field);
     }
 
     private Condition buildDateFilterCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {

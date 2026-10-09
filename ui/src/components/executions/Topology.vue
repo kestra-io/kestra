@@ -110,9 +110,7 @@
         {immediate: true},
     )
 
-    // The backend adds runtime `outputs` to task runs (e.g. subflow executionId), but this
-    // field is not part of the OpenAPI-generated SDK type — following the same pattern as
-    // TaskRunDetails.vue which intersects the execution task run type with the outputs shape.
+    // `outputs` (e.g. a subflow's executionId) is added by the backend at runtime but is missing from the generated SDK `TaskRun` type.
     type TaskRunWithOutputs = NonNullable<Execution["taskRunList"]>[number] & {
         outputs?: {executionId?: string; [key: string]: unknown}
     }

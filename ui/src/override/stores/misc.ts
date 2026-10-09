@@ -2,7 +2,8 @@ import {defineStore} from "pinia"
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
-import {useClient, type AxiosLikeConfig, type MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
+import {useClient, type MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
+import {handled} from "../../utils/kestraHttp"
 import {initPosthogIfEnabled} from "../../utils/posthog"
 import {sendPosthogEvent} from "../../utils/analytics/posthogEvents"
 import {ensureUid} from "../../utils/uid"
@@ -110,7 +111,10 @@ export const useMiscStore = defineStore("misc", () => {
             username: options.username,
             password: options.password,
             currentPassword: options.currentPassword,
-        }, {showMessageOnError: false} as AxiosLikeConfig)
+        }).catch((e: unknown) => {
+            handled(e)
+            throw e
+        })
     }
 
     return {

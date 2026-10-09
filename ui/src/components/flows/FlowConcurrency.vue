@@ -55,9 +55,8 @@
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
     import {useClient} from "@kestra-io/kestra-sdk"
-    import {handled} from "../../utils/kestraHttp"
     import {apiUrl} from "override/utils/route"
-    import type {KestraHttpError} from "../../utils/kestraHttp"
+    import {handled, type KestraHttpError} from "../../utils/kestraHttp"
     import Loading from "vue-material-design-icons/Loading.vue"
 
     defineOptions({inheritAttrs: false})

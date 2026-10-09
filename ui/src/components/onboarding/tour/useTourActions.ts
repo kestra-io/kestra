@@ -2,7 +2,7 @@ import {useRoute, useRouter} from "vue-router"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import type {Flow} from "@kestra-io/kestra-sdk"
 import {State} from "@kestra-io/design-system"
-import {handled} from "../../../utils/kestraHttp"
+import {handledIf} from "../../../utils/kestraHttp"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -221,9 +221,7 @@ export function useTourActions() {
             await FlowsAPI.createFlow({
                 body: source,
             } as Parameters<typeof FlowsAPI.createFlow>[0]).catch((e: unknown) => {
-                const err = e as {status?: number; response?: {status?: number}}
-                const status = err?.status || err?.response?.status
-                if (status === 409) handled(e)
+                handledIf(e, [409])
                 throw e
             })
             await flowStore.loadFlow({namespace: TOUR_NAMESPACE, id: TOUR_FLOW_ID})
@@ -398,9 +396,7 @@ export function useTourActions() {
             await FlowsAPI.createFlow({
                 body: TOUR_REPORT_FLOW,
             } as Parameters<typeof FlowsAPI.createFlow>[0]).catch((e: unknown) => {
-                const err = e as {status?: number; response?: {status?: number}}
-                const status = err?.status || err?.response?.status
-                if (status === 409) handled(e)
+                handledIf(e, [409])
                 throw e
             })
         }

@@ -7,8 +7,7 @@ import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 import * as FilesAPI from "@kestra-io/kestra-sdk/files"
 import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
-import {handled} from "../utils/kestraHttp"
-import type {KestraHttpError} from "../utils/kestraHttp"
+import {handled, handledIf, type KestraHttpError} from "../utils/kestraHttp"
 
 export {PagedResultsNamespace}
 
@@ -242,10 +241,8 @@ export const useBaseNamespacesStore = () => {
 
     async function fileMetadata(payload: {namespace: string; path: string}) {
         // A file removed server-side (e.g. by a delete-sync) is reported by the caller, so its 404 must not also toast.
-        return await FilesAPI.fileMetadatas(payload).catch(e => {
-            if (e.status === 404) {
-                handled(e)
-            }
+        return await FilesAPI.fileMetadatas(payload).catch((e: unknown) => {
+            handledIf(e, [404])
             throw e
         })
     }

@@ -325,6 +325,7 @@
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import {handledIf} from "../../utils/kestraHttp"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -880,15 +881,16 @@
             return
         }
 
-        const axiosResponse = await $http.get(
-            `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
-            {
-                validateStatus: (status: number) =>
-                    status === 200 || status === 404 || status === 422,
-            },
-        )
+        let axiosResponse
+        try {
+            axiosResponse = await $http.get(
+                `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
+            )
+        } catch (e: unknown) {
+            if (!handledIf(e, [404, 422])) throw e
+        }
         logFileSizeByPath.value[path] = Utils.humanFileSize(
-            axiosResponse.data.size,
+            axiosResponse?.data.size,
         )
     }
 

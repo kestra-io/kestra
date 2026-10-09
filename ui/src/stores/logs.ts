@@ -158,10 +158,10 @@ export const useLogsStore = defineStore("logs", () => {
         for (;;) {
             let response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>
             try {
-                // This failure is reported by the caller, so opt out of the SDKs global error toast:
-                // otherwise a 500 raises a raw internal-error message alongside it.
                 response = await LogsAPI.searchLogs(toSearchParams({...options, page, size}, cursor))
             } catch (error: unknown) {
+                // This failure is reported by the caller, so keep it out of the global error toast:
+                // otherwise a 500 raises a raw internal-error message alongside it.
                 handled(error)
                 // Deep offset paging can be refused outright rather than returning a short page:
                 // Elasticsearch caps `from + size` at `index.max_result_window` (10 000 by

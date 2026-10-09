@@ -2,7 +2,6 @@ import {ref, watch, type ComputedRef, type Ref} from "vue"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 import {handledIf} from "../utils/kestraHttp"
 
-
 // Since Kestra 2.0, task run outputs are no longer embedded on the Execution
 // payload (`taskRun.outputs` is a deprecated pre-2.0 compatibility field) — they
 // live behind the dedicated /outputs endpoints. This module fetches "which task
@@ -18,18 +17,14 @@ function fetchTaskRunIdsWithOutputs(executionId: string, forceRefresh: boolean):
         }
     }
 
-    const pending = OutputsAPI.taskOutputsInformation({executionId}).catch((e: unknown) => {
-        handledIf(e, [404])
-        const status = (e as {status?: number, response?: {status?: number}})?.status || (e as {status?: number, response?: {status?: number}})?.response?.status
-        if (status === 404) return []
-        throw e
-    }).then((data: any) => new Set<string>((data ?? []).map((task: any) => task.taskRunId).filter(Boolean)))
-    const pending = OutputsAPI.taskOutputsInformation(
-        {executionId},
-        {validateStatus: (status: number) => status === 200 || status === 404},
-    ).then((data) =>
-        new Set((data ?? []).map((task) => task.taskRunId).filter((id): id is string => Boolean(id))),
-    )
+    const pending = OutputsAPI.taskOutputsInformation({executionId})
+        .catch((e: unknown) => {
+            if (handledIf(e, [404])) return []
+            throw e
+        })
+        .then((data) =>
+            new Set((data ?? []).map((task) => task.taskRunId).filter((id): id is string => Boolean(id))),
+        )
 
     taskRunIdsWithOutputsCache.set(executionId, pending)
     return pending
@@ -75,9 +70,7 @@ export async function loadTaskRunOutputs(executionId: string, taskRunId: string)
         const data = await OutputsAPI.taskRunOutputs({executionId, taskRunId})
         return data ?? {}
     } catch (e: unknown) {
-        handledIf(e, [404])
-        const status = (e as {status?: number, response?: {status?: number}})?.status || (e as {status?: number, response?: {status?: number}})?.response?.status
-        if (status === 404) return {}
+        if (handledIf(e, [404])) return {}
         throw e
     }
 }
@@ -90,9 +83,7 @@ export async function loadExecutionOutputs(executionId: string): Promise<Record<
         const data = await OutputsAPI.executionOutputs({executionId})
         return data ?? {}
     } catch (e: unknown) {
-        handledIf(e, [404])
-        const status = (e as {status?: number, response?: {status?: number}})?.status || (e as {status?: number, response?: {status?: number}})?.response?.status
-        if (status === 404) return {}
+        if (handledIf(e, [404])) return {}
         throw e
     }
 }

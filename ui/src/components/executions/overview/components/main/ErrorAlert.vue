@@ -42,7 +42,7 @@
 
     import {Execution, useExecutionsStore} from "../../../../../stores/executions"
     import {Log} from "../../../../../stores/logs"
-    import {handled} from "../../../../../utils/kestraHttp"
+    import {handledIf} from "../../../../../utils/kestraHttp"
     import LogLine from "../../../../logs/LogLine.vue"
 
     const MAX_PREVIEW_LOGS = 4
@@ -87,12 +87,8 @@
 
             if (response.length) logs.value = response as any
         } catch (e: unknown) {
-            const err = e as {status?: number; response?: {status?: number}}
-            const status = err?.status || err?.response?.status
-            if (status === 403 || status === 404) {
-                // User may not have ACCESS_LOGS permission — silently skip expected failures
-                handled(e)
-            }
+            // The user may lack ACCESS_LOGS; anything else is left to the global toast.
+            handledIf(e, [403, 404])
         }
     })
 </script>

@@ -60,7 +60,7 @@ describe("logs store downloadLogs", () => {
 
         await useLogsStore().downloadLogs({})
 
-        expect((error as {__kestra_handled?: boolean}).__kestra_handled).toBe(true)
+        expect(error).toHaveProperty("__kestra_handled", true)
     })
 
     it("should follow nextCursor under cursor pagination until an empty page", async () => {

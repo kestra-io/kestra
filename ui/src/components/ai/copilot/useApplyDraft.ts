@@ -7,7 +7,7 @@ import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {asProblem, isProblemType, ProblemTypes, useClient} from "@kestra-io/kestra-sdk"
 import type {AxiosLikeConfig} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
-import {handled} from "../../../utils/kestraHttp"
+import {handled, handledIf} from "../../../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
 import {useMiscStore} from "override/stores/misc"
@@ -189,12 +189,7 @@ export function useApplyDraft() {
             const data = await flowStore.loadFlow({namespace, id, store: false})
             return data?.source ?? ""
         } catch (e: unknown) {
-            const err = e as {status?: number; response?: {status?: number}}
-            const status = err?.status || err?.response?.status
-            if (status === 404) {
-                handled(e)
-                return ""
-            }
+            if (handledIf(e, [404])) return ""
             throw e
         }
     }

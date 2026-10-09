@@ -9,7 +9,7 @@ import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type Pl
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient, type PluginArtifact, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
-import {handled, handledIf} from "../utils/kestraHttp"
+import {handledIf} from "../utils/kestraHttp"
 
 export type {PluginArtifact, PluginInstallJob, PluginInstallJobArtifactProgress as ArtifactProgress} from "@kestra-io/kestra-sdk"
 
@@ -583,13 +583,9 @@ export const usePluginsStore = defineStore("plugins", () => {
             )
             return response.data
         } catch (error: unknown) {
-            const err = error as {status?: number; response?: {status?: number}}
-            const status = err?.status || err?.response?.status
-            if (status === 403 || status === 404) {
-                handled(error)
-                return null
-            }
-            throw error
+            // The install toast counts a null as one failed poll and gives up after a few.
+            handledIf(error, [403, 404])
+            return null
         }
     }
 

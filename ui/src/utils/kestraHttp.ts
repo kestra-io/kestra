@@ -79,8 +79,8 @@ export interface KestraHttpError extends Error {
 }
 
 /**
- * Marks an error as handled so that it does not trigger the global error toast.
- * Use this in a catch block when you want to handle the error locally.
+ * Keeps a failure out of the global error toast. The toast is deferred past the caller's `catch`,
+ * so calling this there, even after an async hop, is enough; the caller reports it instead.
  */
 export function handled(error: unknown) {
     if (error && typeof error === "object") {
@@ -88,16 +88,13 @@ export function handled(error: unknown) {
     }
 }
 
-/**
- * Conditionally marks an error as handled if its status (or response status) matches
- * any of the provided expected statuses.
- */
-export function handledIf(error: unknown, expectedStatuses: number[]) {
-    const err = error as {status?: number; response?: {status?: number}}
+/** {@link handled} when the status is one the caller expects, telling whether it was. */
+export function handledIf(error: unknown, expectedStatuses: number[]): boolean {
+    const err = error as {status?: number; response?: {status?: number}} | undefined
     const status = err?.status ?? err?.response?.status
-    if (status !== undefined && expectedStatuses.includes(status)) {
-        handled(error)
-    }
+    if (status === undefined || !expectedStatuses.includes(status)) return false
+    handled(error)
+    return true
 }
 
 /**

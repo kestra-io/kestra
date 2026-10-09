@@ -247,10 +247,7 @@
                     path: props.value.toString(),
                 })
             } catch (e: unknown) {
-                handledIf(e, [404, 422])
-                const status = (e as {status?: number, response?: {status?: number}})?.status || (e as {status?: number, response?: {status?: number}})?.response?.status
-                if (status === 404 || status === 422) data = undefined
-                else throw e
+                if (!handledIf(e, [404, 422])) throw e
             }
             if(!data){
                 fileStatus.value = "missing"

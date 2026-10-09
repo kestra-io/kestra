@@ -44,7 +44,8 @@
     import {DASHBOARD_CHART_MAX_PIXEL_RATIO, fillTimeBucketLabels, getConsistentHEXColor, useLegendToggle, type EchartsParams} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import {getDateGrouping, useTheme} from "../../../utils/utils"
+    import {getDateGrouping} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     use([BarChart, LineChart])

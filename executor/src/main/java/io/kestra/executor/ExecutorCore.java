@@ -529,19 +529,21 @@ public class ExecutorCore {
             Collection<FlowWithSource> allFlows = flowMetaStore.allLastVersion();
 
             // directly process simple conditions
-            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+            List<Execution> executions = flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> ListUtils.isEmpty(f.getTrigger().getDependsOn()))
                 .map(f -> f.getFlow())
                 .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
-                .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
+                .toList();
+            executionQueue.emit(executions);
 
             // send multiple conditions to the multiple condition queue for later processing
-            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+            List<MultipleConditionEvent> multipleConditionEvents = flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> !ListUtils.isEmpty(f.getTrigger().getDependsOn()))
                 .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
                 .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
-                .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
+                .toList();
+            multipleConditionEventQueue.emit(multipleConditionEvents);
         }));
     }
 }

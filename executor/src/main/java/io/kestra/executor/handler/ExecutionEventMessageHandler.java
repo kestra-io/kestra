@@ -341,11 +341,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         // subflow execution results
                         if (!executor.getSubflowExecutionResults().isEmpty()) {
-                            executor.getSubflowExecutionResults()
-                                .forEach(throwConsumer(subflowExecutionResult ->
-                                {
-                                    subflowExecutionResultQueue.emit(subflowExecutionResult);
-                                }));
+                            subflowExecutionResultQueue.emit(executor.getSubflowExecutionResults());
                         }
 
                         // schedulerDelay
@@ -391,7 +387,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         // trigger new loop executions
                         if (!executor.getLoopExecutions().isEmpty()) {
-                            executor.getLoopExecutions().forEach(throwConsumer(loopExecution -> executionQueue.emit(loopExecution)));
+                            executionQueue.emit(executor.getLoopExecutions());
                         }
 
                         if (executor.getExecution().getState().getCurrent().isTerminatedInError()) {

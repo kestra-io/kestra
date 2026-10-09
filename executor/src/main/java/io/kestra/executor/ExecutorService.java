@@ -107,12 +107,7 @@ public class ExecutorService {
         this.pausedTaskNotifier = pausedTaskNotifier;
     }
 
-    /**
-     * Evaluate the scoped concurrency limits in order against their running counts: the first
-     * limit reached defines the behavior applied to the execution; when none is reached the
-     * execution runs.
-     */
-    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, ExecutionRunning executionRunning) {
+    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
         for (int i = 0; i < limits.size(); i++) {
             ScopedConcurrencyLimit limit = limits.get(i);
             int runningCount = runningCounts.get(i);
@@ -122,6 +117,22 @@ public class ExecutorService {
 
             return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
+                    if (limit.scope() == ScopedConcurrencyLimit.Scope.FLOW && limit.concurrency().getQueueLimit() != null && queuedCount >= limit.concurrency().getQueueLimit()) {
+                        Logs.logExecution(
+                            executionRunning.getExecution(),
+                            Level.INFO,
+                            "Execution cancelled: concurrency queue limit reached ({}/{})", queuedCount, limit.concurrency().getQueueLimit()
+                        );
+
+                        yield executionRunning
+                            .withExecution(
+                                executionRunning
+                                    .getExecution()
+                                    .withState(io.kestra.core.models.flows.State.Type.CANCELLED)
+                            )
+                            .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
+                    }
+
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
@@ -597,9 +608,9 @@ public class ExecutorService {
                             }
                         }
                     }
-                } catch (ConstraintViolationException e) {
-                    // An invalid flowable configuration fails the flowable task run, which terminates the
-                    // execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                } catch (ConstraintViolationException | InternalException e) {
+                    // An invalid flowable configuration fails the flowable task run, which terminates the execution cleanly (failing the execution while the task run stays RUNNING would loop).
+                    // An InternalException is thrown when the onChildFailure value is CONTINUE or UNKNOWN, which never trigger an interrupt.
                     runContext.logger().error("Failed to process flowable task {}: {}", taskRun.getId(), e.getMessage(), e);
                     executor.withExecution(executor.getExecution().withTaskRun(taskRun.withState(State.Type.FAILED)), "flowableValidation");
                 }
@@ -627,7 +638,8 @@ public class ExecutorService {
                     if (task.getRetry() != null) {
                         AbstractRetry retry = task.getRetry();
                         behavior = retry.getBehavior();
-                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : retriedTaskRun.nextRetryDate(retry);
+                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                            : retriedTaskRun.nextRetryDate(retry);
                     } else {
                         // Case parent task has a retry
                         Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
@@ -637,7 +649,10 @@ public class ExecutorService {
                             if (retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
                                     && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
                                 behavior = retry.getBehavior();
-                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : retriedTaskRun.nextRetryDate(retry);
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                                    : taskRun.nextRetryDate(retry);
+                                nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
+                                    : retriedTaskRun.nextRetryDate(retry);
                             }
                         }
                         // Case flow has a retry
@@ -1466,8 +1481,10 @@ public class ExecutorService {
         return taskRun.getState().getCurrent().isCreated()
             && !taskRun.getState().isResumingFromBreakpoint()
             && breakpoints.stream()
-                .anyMatch(breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
-                    && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue())));
+                .anyMatch(
+                    breakpoint -> taskRun.getTaskId().equals(breakpoint.getId())
+                        && (breakpoint.getValue() == null || Objects.equals(taskRun.getValue(), breakpoint.getValue()))
+                );
     }
 
     private ExecutorContext handleExecutableTasks(final ExecutorContext executor) {
@@ -1868,8 +1885,10 @@ public class ExecutorService {
      *      WARNING: ATM, only the first violation will update the execution.
      */
     public ExecutorContext handleExecutionChangedSLA(ExecutorContext executor) throws QueueException {
-        if (executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
-            executor.getExecution().getKind() ==  ExecutionKind.LOOP) {
+        if (
+            executor.getFlow() == null || ListUtils.isEmpty(executor.getFlow().getSla()) || executor.getExecution().getState().isTerminated() ||
+                executor.getExecution().getKind() == ExecutionKind.LOOP
+        ) {
             return executor;
         }
 

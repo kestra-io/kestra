@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
@@ -34,7 +35,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 import static io.kestra.core.models.Label.READ_ONLY;
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
@@ -124,7 +124,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
         // system labels
         ListUtils.emptyOnNull(value.getLabels()).stream()
-            .filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX) && !label.key().equals(READ_ONLY))
+            .filter(label -> Label.isSystem(label.key()) && !label.key().equals(READ_ONLY))
             .forEach(label -> violations.add("System labels can only be set by Kestra itself, offending label: " + label.key() + "=" + label.value()));
 
         List<Pattern> inputsWithMinusPatterns = ListUtils.emptyOnNull(value.getInputs())

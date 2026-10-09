@@ -74,6 +74,7 @@
     import {useFlowFields} from "../utils/useFlowFields"
     import {removeNullAndUndefined} from "../utils/cleanUp"
     import {getFlowFields} from "./flowFields"
+    import type {JsonSchemaDef} from "../../../stores/plugins"
     import {useMiscStore} from "override/stores/misc"
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
@@ -171,12 +172,12 @@
             .filter((field): field is NonNullable<typeof field> => Boolean(field))
     })
 
-    function shouldMerge(schema: any): boolean {
-        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf
+    function shouldMerge(schema?: JsonSchemaDef): boolean {
+        const complexObject = Boolean((schema?.type && ["object", "array"].includes(schema.type)) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf)
         return !complexObject
     }
 
-    function onUpdateField(key: string, val: any) {
+    function onUpdateField(key: string, val: unknown) {
         const realValue = val === null || val === undefined
             ? undefined
             : typeof val === "object" && !Array.isArray(val)

@@ -118,19 +118,19 @@
             <div class="execution-banner__labels">
                 <LabelMultiple class="icon" />
                 <div class="list">
+                    <SetLabels :execution />
                     <span
                         v-for="(label, idx) in execution.labels"
                         :key="idx"
                         class="label-tag"
                     >{{ label.key }}: {{ label.value }}</span>
-                    <SetLabels :execution />
                 </div>
             </div>
 
             <div class="execution-banner__stats">
                 <span v-if="execution.flowRevision !== undefined" class="footer-stat">
                     <History />
-                    {{ execution.flowRevision }} {{ $t("revision") }}(s)
+                    {{ $t("execution_banner.revision", {revision: execution.flowRevision}) }}
                 </span>
                 <span class="footer-stat">
                     <ClockTimeFourOutline />
@@ -138,11 +138,11 @@
                 </span>
                 <span v-if="(execution.metadata?.attemptNumber ?? 0) > 0" class="footer-stat">
                     <GraphOutline />
-                    {{ execution.metadata.attemptNumber }} {{ $t("attempt") }}(s)
+                    {{ $t("execution_banner.attempts", execution.metadata?.attemptNumber ?? 0) }}
                 </span>
                 <span v-if="taskCount > 0" class="footer-stat">
                     <LayersTripleOutline />
-                    {{ completedTaskCount }}/{{ taskCount }} {{ $t("task") }}(s)
+                    {{ $t("execution_banner.tasks", {completed: completedTaskCount}, taskCount) }}
                 </span>
             </div>
         </div>

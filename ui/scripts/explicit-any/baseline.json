@@ -51,7 +51,6 @@
   "src/components/inputs/InputsForm.vue": 3,
   "src/components/inputs/LowCodeEditor.vue": 38,
   "src/components/logs/LogsWrapper.cursor.spec.ts": 6,
-  "src/components/logs/LogsWrapper.initialLoad.spec.ts": 4,
   "src/components/no-code/NoCode.vue": 3,
   "src/components/no-code/components/TaskEditor.vue": 7,
   "src/components/no-code/components/tasks/MixinTask.ts": 1,
@@ -100,7 +99,6 @@
   "src/utils/triggers.ts": 3,
   "src/utils/unsavedChange.ts": 1,
   "src/utils/utils.ts": 14,
-  "tests/unit/components/logs/logsWrapperPaginationWiring.spec.ts": 2,
   "tests/unit/leakGuard.ts": 1,
   "tests/unit/monacoCssEscapePolyfill.ts": 2,
   "tests/unit/setup.ts": 6

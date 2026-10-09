@@ -1709,7 +1709,16 @@
       "compact": "Widok domyślny",
       "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska",
       "fullscreen": "Logs na pełnym ekranie",
-      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
+      "loop": {
+        "this-execution": "To wykonanie",
+        "with-iterations": "Z iteracjami pętli",
+        "truncated": "Wyświetlanie logów pierwszej nieudanej iteracji | Wyświetlanie logów pierwszych {count} nieudanych iteracji | Wyświetlanie logów pierwszych {count} nieudanych iteracji",
+        "empty-title": "Brak pasujących logów",
+        "empty-description": "Żaden log nie pasuje do wybranego poziomu w tym wykonaniu ani w jego nieudanych iteracjach pętli. Obniż poziom, aby zobaczyć więcej.",
+        "scope-to": "Ogranicz graf i logi do {scope}",
+        "show-in-overview": "Pokaż w przeglądzie"
+      }
     },
     "execution_deletion": {
       "logs": "Usuń logi",

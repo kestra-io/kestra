@@ -1709,7 +1709,16 @@
       "compact": "Visualização padrão",
       "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task",
       "fullscreen": "Logs em tela cheia",
-      "exit_fullscreen": "Sair da tela cheia"
+      "exit_fullscreen": "Sair da tela cheia",
+      "loop": {
+        "this-execution": "Esta execução",
+        "with-iterations": "Com iterações do loop",
+        "truncated": "Mostrando os logs da primeira iteração com falha | Mostrando os logs das primeiras {count} iterações com falha",
+        "empty-title": "Nenhum log correspondente",
+        "empty-description": "Nenhum log corresponde ao nível selecionado nesta execução nem em suas iterações do loop com falha. Reduza o nível para ver mais.",
+        "scope-to": "Limitar o gráfico e os logs a {scope}",
+        "show-in-overview": "Mostrar na visão geral"
+      }
     },
     "execution_deletion": {
       "logs": "Excluir logs",

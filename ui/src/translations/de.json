@@ -1709,7 +1709,16 @@
       "compact": "Standardansicht",
       "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
       "fullscreen": "Logs im Vollbild",
-      "exit_fullscreen": "Vollbild verlassen"
+      "exit_fullscreen": "Vollbild verlassen",
+      "loop": {
+        "this-execution": "Diese Ausführung",
+        "with-iterations": "Mit Loop-Iterationen",
+        "truncated": "Logs der ersten fehlgeschlagenen Iteration werden angezeigt | Logs der ersten {count} fehlgeschlagenen Iterationen werden angezeigt",
+        "empty-title": "Keine passenden Logs",
+        "empty-description": "Kein Log entspricht der gewählten Stufe in dieser Ausführung oder ihren fehlgeschlagenen Loop-Iterationen. Senke die Stufe, um mehr zu sehen.",
+        "scope-to": "Graph und Logs auf {scope} eingrenzen",
+        "show-in-overview": "In der Übersicht anzeigen"
+      }
     },
     "execution_deletion": {
       "logs": "Logs löschen",

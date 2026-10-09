@@ -1709,7 +1709,16 @@
       "compact": "默认视图",
       "compact_details": "按任务分组显示任务日志",
       "fullscreen": "全屏日志",
-      "exit_fullscreen": "退出全屏"
+      "exit_fullscreen": "退出全屏",
+      "loop": {
+        "this-execution": "此执行",
+        "with-iterations": "包含循环迭代",
+        "truncated": "正在显示第一个失败迭代的日志 | 正在显示前 {count} 个失败迭代的日志",
+        "empty-title": "没有匹配的日志",
+        "empty-description": "在此执行或其失败的循环迭代中，没有日志匹配所选级别。降低级别以查看更多。",
+        "scope-to": "将图形和日志限定到 {scope}",
+        "show-in-overview": "在概览中显示"
+      }
     },
     "execution_deletion": {
       "logs": "删除日志",

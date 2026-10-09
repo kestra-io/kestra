@@ -1709,7 +1709,16 @@
       "compact": "Default view",
       "compact_details": "Show task logs in a compact view grouped by each task",
       "fullscreen": "Full screen logs",
-      "exit_fullscreen": "Exit fullscreen"
+      "exit_fullscreen": "Exit fullscreen",
+      "loop": {
+        "this-execution": "This execution",
+        "with-iterations": "With loop iterations",
+        "truncated": "Showing logs of the first {count} failed iteration | Showing logs of the first {count} failed iterations",
+        "empty-title": "No matching logs",
+        "empty-description": "No log matches the selected level in this execution or its failed loop iterations. Lower the level to see more.",
+        "scope-to": "Scope the graph and logs to {scope}",
+        "show-in-overview": "Show in Overview"
+      }
     },
     "execution_deletion": {
       "logs": "Delete logs",

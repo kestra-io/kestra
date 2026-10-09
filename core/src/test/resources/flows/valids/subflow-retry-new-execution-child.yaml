@@ -1,0 +1,21 @@
+id: subflow-retry-new-execution-child
+namespace: io.kestra.tests
+
+retry:
+  behavior: CREATE_NEW_EXECUTION
+  type: constant
+  interval: PT1S
+  maxAttempts: 2
+
+tasks:
+  - id: fail_first_execution
+    type: io.kestra.plugin.core.execution.Fail
+    runIf: "{{ execution.originalId == execution.id }}"
+  - id: write
+    type: io.kestra.plugin.core.storage.Write
+    content: dummy
+
+outputs:
+  - id: file
+    type: FILE
+    value: "{{ outputs.write.uri }}"

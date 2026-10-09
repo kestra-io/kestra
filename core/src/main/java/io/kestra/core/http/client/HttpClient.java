@@ -27,6 +27,8 @@ import javax.net.ssl.SSLHandshakeException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.ContextBuilder;
+import org.apache.hc.client5.http.DnsResolver;
+import org.apache.hc.client5.http.SystemDefaultDnsResolver;
 import org.apache.hc.client5.http.auth.*;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.ChainElement;
@@ -84,6 +86,7 @@ public class HttpClient implements Closeable {
 
     private transient CloseableHttpClient client;
     private transient BasicCredentialsProvider defaultCredentialsProvider;
+    private boolean hasProxy;
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
@@ -169,6 +172,7 @@ public class HttpClient implements Closeable {
             String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
 
             if (StringUtils.isNotEmpty(proxyAddress)) {
+                this.hasProxy = true;
                 int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
                     .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
                 SocketAddress proxyAddr = new InetSocketAddress(
@@ -202,6 +206,11 @@ public class HttpClient implements Closeable {
                     );
                 }
             }
+        }
+
+        // Behind a proxy this resolver would only see the proxy host, which may legitimately sit in a denied range.
+        if (!this.hasProxy) {
+            connectionManagerBuilder.setDnsResolver(new DeniedAddressDnsResolver());
         }
 
         // ssl
@@ -654,9 +663,14 @@ public class HttpClient implements Closeable {
     }
 
     @SuppressWarnings("unchecked")
+    private List<String> deniedList() {
+        return (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
+    }
+
+    @SuppressWarnings("unchecked")
     private void validateUri(URI uri) {
         List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
-        List<String> deniedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
+        List<String> deniedList = deniedList();
 
         if (allowedList.isEmpty() && deniedList.isEmpty()) {
             return;
@@ -678,6 +692,18 @@ public class HttpClient implements Closeable {
         // then check that there are no exclusion for it
         if (deniedList.stream().anyMatch(entry -> isListEntryMatch(entry, uri))) {
             throw new IllegalArgumentException("The URI %s is in the configured denied list (kestra.tasks.http.denied-list).".formatted(uri));
+        }
+
+        if (this.hasProxy && !deniedList.isEmpty()) {
+            // The proxy resolves the target, so the best Kestra can do is resolve it too; a name only the proxy can resolve is let through.
+            String host = resolveAuthority(uri).host();
+            if (parseIpLiteral(host).isEmpty()) {
+                try {
+                    rejectDeniedAddresses(host, SystemDefaultDnsResolver.INSTANCE.resolve(host), deniedList);
+                } catch (UnknownHostException e) {
+                    log.debug("Cannot resolve the host '{}' locally to check it against the denied list, leaving it to the proxy.", host);
+                }
+            }
         }
     }
 
@@ -729,6 +755,12 @@ public class HttpClient implements Closeable {
             candidate = candidate.substring(1, candidate.length() - 1);
         }
 
+        // ofLiteral rejects an interface-name zone id such as "%lo", yet the JDK resolver still connects to it.
+        int zoneIndex = candidate.indexOf('%');
+        if (zoneIndex != -1 && candidate.indexOf(':') != -1) {
+            candidate = candidate.substring(0, zoneIndex);
+        }
+
         try {
             return Optional.of(InetAddress.ofLiteral(candidate));
         } catch (IllegalArgumentException e) {
@@ -778,12 +810,11 @@ public class HttpClient implements Closeable {
         }
 
         boolean contains(String host) {
-            Optional<InetAddress> address = parseIpLiteral(host);
-            if (address.isEmpty()) {
-                return false;
-            }
+            return parseIpLiteral(host).map(this::contains).orElse(false);
+        }
 
-            byte[] addressBytes = address.get().getAddress();
+        boolean contains(InetAddress address) {
+            byte[] addressBytes = address.getAddress();
             byte[] networkBytes = network.getAddress();
             if (addressBytes.length != networkBytes.length) {
                 return false;
@@ -872,6 +903,54 @@ public class HttpClient implements Closeable {
         }
 
         return true;
+    }
+
+    /**
+     * Only CIDR and IP literal entries can match an address, and their scheme, port and path are ignored since a name is resolved without them.
+     */
+    private static boolean isDeniedAddress(String entry, InetAddress address) {
+        Cidr cidr = Cidr.parsed(entry);
+        if (cidr != null) {
+            return cidr.contains(address);
+        }
+
+        String strippedEntry = entry.replace("://*.", "://").replaceFirst("^\\*\\.", "");
+        try {
+            ResolvedAuthority entryAuthority = resolveAuthority(URI.create(strippedEntry.contains("://") ? strippedEntry : "//" + strippedEntry));
+            return entryAuthority != null && parseIpLiteral(entryAuthority.host()).map(address::equals).orElse(false);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private static void rejectDeniedAddresses(String host, InetAddress[] addresses, List<String> deniedList) {
+        for (InetAddress address : addresses) {
+            if (deniedList.stream().anyMatch(entry -> isDeniedAddress(entry, address))) {
+                throw new IllegalArgumentException("The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(host, address.getHostAddress()));
+            }
+        }
+    }
+
+    /**
+     * The addresses returned are the ones connected to, so a name cannot resolve to something else after the check.
+     * IP literals are left to {@link #validateUri(URI)}, which also honors the scheme, port and path of an entry.
+     */
+    private final class DeniedAddressDnsResolver implements DnsResolver {
+        @Override
+        public InetAddress[] resolve(String host) throws UnknownHostException {
+            InetAddress[] addresses = SystemDefaultDnsResolver.INSTANCE.resolve(host);
+            if (parseIpLiteral(host).isPresent()) {
+                return addresses;
+            }
+
+            rejectDeniedAddresses(host, addresses, deniedList());
+            return addresses;
+        }
+
+        @Override
+        public String resolveCanonicalHostname(String host) throws UnknownHostException {
+            return SystemDefaultDnsResolver.INSTANCE.resolveCanonicalHostname(host);
+        }
     }
 
     /**

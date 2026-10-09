@@ -1,5 +1,6 @@
 import {defineStore} from "pinia"
 import {ref} from "vue"
+import {storageKeys} from "../utils/constants"
 
 const MENU_SECTIONS_COLLAPSED_KEY = "menuSectionsCollapsed"
 const MENU_ITEM_VISIBILITY_KEY = "menuItemVisibility"
@@ -16,14 +17,14 @@ function readObject<T>(key: string): T {
 
 export const useLayoutStore = defineStore("layout", () => {
     const topNavbar = ref<unknown>()
-    const envName = ref<string | undefined>(localStorage.getItem("envName") || undefined)
-    const envColor = ref<string | undefined>(localStorage.getItem("envColor") || undefined)
+    const envName = ref<string | undefined>(localStorage.getItem(storageKeys.ENV_NAME) || undefined)
+    const envColor = ref<string | undefined>(localStorage.getItem(storageKeys.ENV_COLOR) || undefined)
     const sideMenuCollapsed = ref<boolean>((() => {
         if (typeof window === "undefined") {
             return false
         }
 
-        return localStorage.getItem("menuCollapsed") === "true" || window.matchMedia("(max-width: 768px)").matches
+        return localStorage.getItem(storageKeys.MENU_COLLAPSED) === "true" || window.matchMedia("(max-width: 768px)").matches
     })())
     const menuSectionsCollapsed = ref<Record<string, boolean>>(readObject<Record<string, boolean>>(MENU_SECTIONS_COLLAPSED_KEY))
     const menuItemVisibility = ref<Record<string, boolean>>(readObject<Record<string, boolean>>(MENU_ITEM_VISIBILITY_KEY))
@@ -35,25 +36,25 @@ export const useLayoutStore = defineStore("layout", () => {
 
     function setEnvName(value: string | undefined) {
         if (value) {
-            localStorage.setItem("envName", value)
+            localStorage.setItem(storageKeys.ENV_NAME, value)
         } else {
-            localStorage.removeItem("envName")
+            localStorage.removeItem(storageKeys.ENV_NAME)
         }
         envName.value = value
     }
 
     function setEnvColor(value: string | undefined) {
         if (value) {
-            localStorage.setItem("envColor", value)
+            localStorage.setItem(storageKeys.ENV_COLOR, value)
         } else {
-            localStorage.removeItem("envColor")
+            localStorage.removeItem(storageKeys.ENV_COLOR)
         }
         envColor.value = value
     }
 
     function setSideMenuCollapsed(value: boolean) {
         sideMenuCollapsed.value = value
-        localStorage.setItem("menuCollapsed", value ? "true" : "false")
+        localStorage.setItem(storageKeys.MENU_COLLAPSED, value ? "true" : "false")
 
         const htmlElement = document.documentElement
         htmlElement.classList.toggle("menu-collapsed", value)

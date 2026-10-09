@@ -349,6 +349,10 @@
     "no": "No",
     "change state done": "El estado del task ha sido actualizado",
     "change state confirm": "¿Estás seguro de que quieres cambiar el estado de ejecución de la task <code>{task}</code> en la ejecución <code>{id}</code>?<br/>Luego, reiniciará la ejecución desde la siguiente task y reiniciará la ejecución padre si existe.",
+    "interrupt": "Interrumpir",
+    "interrupt confirm": "¿Estás seguro de que quieres interrumpir la ejecución de la task <code>{task}</code> en la egzekucja <code>{id}</code>?<br/>Esto finalizará la task en ejecución dentro del worker y establecerá su estado.",
+    "interrupt done": "La ejecución de la Task ha sido interrumpida",
+    "interrupt target state": "Estado objetivo",
     "change state current state": "Estado actual es:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "Mostrar fuente de tarea",
     "stream": "Stream",
     "execution statistics": "Estadísticas de ejecución",
+    "execution_banner": {
+      "revision": "Revisión {revision}",
+      "attempts": "{count} intento | {count} intentos",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Límites de Concurrencia",
     "system overview": "Visión General del Sistema",
     "usage": "Uso",
@@ -560,6 +569,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "No se pudo cargar un componente del plugin.",
       "autoInstall": {
         "failed": "Fallo en la instalación del plugin",
         "failedHint": "El flow no se guardó. Corrige el problema o elimina el plugin del flow y vuelve a guardar.",
@@ -1101,7 +1111,6 @@
     "pause backfills": "Pausar backfills",
     "backfill executions": "Ejecuciones de backfill",
     "execute backfill": "Ejecutar backfill",
-    "relative": "Relativo",
     "relative start date": "Fecha de inicio relativa",
     "absolute": "Absoluto",
     "backfill": "Backfill",
@@ -1713,6 +1722,7 @@
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "no_code": {
+      "task_details": "Detalles de la task",
       "toggle_pebble": "Alternar editor de Pebble",
       "version_oss_placeholder": "Desbloquea la Versionado de Plugins con la Enterprise Edition",
       "adding": "+ Agregar un {what}",
@@ -1768,7 +1778,8 @@
         "inputs": "Seleccione un tipo de campo de input",
         "charts": "Seleccione un tipo de gráfico",
         "where": "Seleccione un tipo de filtro",
-        "numerator": "Seleccione un numerador"
+        "numerator": "Seleccione un numerador",
+        "namespace_first": "Selecciona primero un namespace"
       },
       "creation": {
         "default": "Agregar",
@@ -2221,7 +2232,6 @@
       "run_all_tasks": "Ejecutar Todas las Tasks",
       "history": "Últimas 10 ejecuciones",
       "clear_history": "Borrar historial",
-      "confirm_create": "No puedes ejecutar el playground mientras creas un flow. Iniciar una ejecución de playground creará el flow.",
       "tooltip_persistence": "Si desactivas y vuelves a activar el Playground, la información permanece mientras te mantengas en la página."
     },
     "submit": "Enviar",
@@ -2415,6 +2425,7 @@
         "label": "{count} Error(es)"
       }
     },
+    "invalid_source_code": "Código fuente no válido",
     "source_search": {
       "cannot_select_read_only": "No se puede seleccionar — no tienes permiso de edición en {namespace} / {id}",
       "collapse_all": "Contraer todo",

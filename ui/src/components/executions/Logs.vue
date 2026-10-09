@@ -235,7 +235,7 @@
 
     const logExecutionsFilter = useLogExecutionsFilter(() => props.playground, () => executionKind.value)
     const defaultLogLevel = computed(
-        () => localStorage.getItem("defaultLogLevel") || "INFO",
+        () => localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO",
     )
 
     const {

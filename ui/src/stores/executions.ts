@@ -10,7 +10,9 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {
     TaskRun,
     useClient,
+    type Check,
     type Execution as SDKExecution,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as ApiInputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
@@ -29,20 +31,10 @@ import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 import type {KestraRequestOptions} from "../utils/kestraHttp"
 
-export interface Check {
-    message: string
-    style: string
-    behavior: string
-}
+export type {Check} from "@kestra-io/kestra-sdk"
 
-export interface InputError {
-    message: string;
-    // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
-    // input `defaults` Pebble expression that threw) rather than a value validation error
-    renderError?: boolean;
-    /** Where the offending value sits inside a structured input, as `disks[2].size_gb`; absent when it is about the input as a whole. */
-    path?: string;
-}
+// `path` is added to `ApiInputError` on this branch, and the generated SDK only picks it up once `develop` regenerates it.
+export type InputError = ApiInputError & {path?: string}
 
 export interface ValidationResponse {
     checks?: Check[];
@@ -262,6 +254,12 @@ export const useExecutionsStore = defineStore("executions", () => {
             taskRunId: options.taskRunId!,
             state: options.state as Parameters<typeof ExecutionsAPI.updateTaskRunState>[0]["state"],
         }) as unknown as Promise<Execution>
+    }
+    const interrupt = (options: { executionId: string; taskRunId: string; state: string }) => {
+        return axios.post(`${apiUrl()}/executions/${options.executionId}/actions/interrupt`, {
+            taskRunId: options.taskRunId,
+            state: options.state,
+        })
     }
     const waitForStateChange = async (source: Execution) => {
         const updated = await ExecutionUtils.waitForState(axios, source) as Execution
@@ -920,6 +918,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,
+        interrupt,
         waitForStateChange,
         kill,
         bulkKill,

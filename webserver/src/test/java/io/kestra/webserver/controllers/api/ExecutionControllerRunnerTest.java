@@ -3251,6 +3251,61 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldbulkresumefrombreakpoint")
+    void shouldResumeExecutionsFromBreakpointByIds() {
+        String tenantId = "shouldbulkresumefrombreakpoint";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution execution1 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
+        Execution execution2 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
+        assertThat(execution1).isNotNull();
+        assertThat(execution2).isNotNull();
+
+        // check that both executions are suspended at the breakpoint
+        Execution suspended1 = awaitExecution(tenantId, execution1.getId(), exec -> exec.getState().isBreakpoint());
+        Execution suspended2 = awaitExecution(tenantId, execution2.getId(), exec -> exec.getState().isBreakpoint());
+        assertThat(suspended1.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
+        assertThat(suspended2.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
+
+        // bulk resume both executions from breakpoint via the existing resume/by-ids endpoint
+        HttpResponse<ApiAsyncOperationResponse> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/" + tenantId + "/executions/resume/by-ids",
+                List.of(execution1.getId(), execution2.getId())
+            ),
+            ApiAsyncOperationResponse.class
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(resumeResponse.body().operationId()).isNotBlank();
+        assertThat(resumeResponse.body().totalItems()).isEqualTo(2);
+
+        // wait for both executions to terminate successfully
+        Execution terminated1 = runnerUtils.awaitExecution(
+            it -> execution1.getId().equals(it.getId()) && it.getState().isTerminated(),
+            suspended1,
+            Duration.ofSeconds(30)
+        );
+        Execution terminated2 = runnerUtils.awaitExecution(
+            it -> execution2.getId().equals(it.getId()) && it.getState().isTerminated(),
+            suspended2,
+            Duration.ofSeconds(30)
+        );
+        assertThat(terminated1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(terminated2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // attempting to resume again must fail: the executions are neither PAUSED nor BREAKPOINT
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    "/api/v1/" + tenantId + "/executions/resume/by-ids",
+                    List.of(execution1.getId(), execution2.getId())
+                )
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+    }
+
     @FlakyTest(description = "SSE event stream race: Thread.sleep workaround can miss 'end' events under CI load")
     @Test
     @LoadFlows(

@@ -277,7 +277,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                         $.object()
                             .prop("Accept", $.literal("application/yaml")),
                     )
-                : isOctetStreamTextResponse
+                               : isOctetStreamTextResponse
                     ? $.object()
                         .spread($("options"))
                         .prop("parseAs", $.literal("auto"))

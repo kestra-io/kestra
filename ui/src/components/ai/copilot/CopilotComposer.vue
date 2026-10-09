@@ -41,6 +41,7 @@
                         <KsDropdownItem
                             v-for="option in modeOptions"
                             :key="option.value"
+                            data-test="copilot-mode-option"
                             :class="{'copilot-mode-item--active': option.value === mode}"
                             @click="emit('update:mode', option.value)"
                         >

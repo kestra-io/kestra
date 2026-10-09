@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
     import {useId, computed, useTemplateRef} from "vue"
+    import {KsInput} from "@kestra-io/design-system"
     import Lock from "vue-material-design-icons/Lock.vue"
 
     const SuffixIcon = computed(() => {
@@ -33,7 +34,7 @@
     defineOptions({inheritAttrs: false})
 
     const uid = useId()
-    const elInputRef = useTemplateRef("elInputRef")
+    const elInputRef = useTemplateRef<InstanceType<typeof KsInput>>("elInputRef")
 
     const emits = defineEmits(["update:modelValue"])
     const props = defineProps({
@@ -58,7 +59,7 @@
 
     defineExpose({
         focus: () => {
-            (elInputRef.value as any)?.focus?.()
+            elInputRef.value?.focus()
         },
     })
 </script>

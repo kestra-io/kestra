@@ -151,6 +151,19 @@ class ParallelTest {
         assertThat(execution.findTaskRunsByTaskId("sleep2")).isEmpty();
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/parallel-fail-fast-invalid.yaml" })
+    void shouldFailParallelWhenOnChildFailureIsInvalid() throws QueueException, TimeoutException {
+        Execution execution = runnerUtils.runOneUntil(
+            MAIN_TENANT,
+            "io.kestra.tests", "parallel-fail-fast-invalid", null, null, Duration.ofSeconds(20),
+            this::allTaskRunsTerminated
+        );
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("parallel").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
     private boolean allTaskRunsTerminated(Execution execution) {
         return execution.getState().isTerminated()
             && execution.getTaskRunList() != null

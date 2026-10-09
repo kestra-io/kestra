@@ -1,5 +1,5 @@
 <template>
-    <ElMain v-bind="($attrs as any)">
+    <ElMain v-bind="$attrs">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

@@ -39,6 +39,8 @@ import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
+import io.kestra.core.models.validations.ViolationPaths;
 import io.kestra.core.plugins.PluginAutoInstallService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginSchemaBundleService;
@@ -60,6 +62,8 @@ import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.serializers.ParseReport;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
@@ -72,6 +76,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -81,6 +86,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowService {
+    private static final String AUTO_INSTALL_NOTICE = ". The plugin is not installed yet and will be installed automatically when the flow is saved.";
     private static final Pattern PEBBLE_FUNCTION_PATTERN = Pattern.compile("\\b([a-zA-Z0-9_]+)\\s*\\(");
 
     @Inject
@@ -402,6 +408,27 @@ public class FlowService {
         this.triggerEventQueue.send(event);
     }
 
+    private boolean isAutoInstallable(String typeId) {
+        return pluginAutoInstallService.isEnabled() && pluginSchemaBundleService.containsType(typeId);
+    }
+
+    /** Parses strictly and scans only a rejected source for its problems, so a valid flow is parsed once. */
+    private TolerantParse parseTolerantly(String tenantId, String source) throws FlowProcessingException {
+        try {
+            return new TolerantParse(flowParsingService.parse(tenantId, source, true), null);
+        } catch (FlowProcessingException e) {
+            if (!(e.getCause() instanceof ConstraintViolationException)) {
+                throw e;
+            }
+            ParseReport report = YamlParser.scan(source, FlowWithSource.class, "Flow");
+            if (!report.hasProblems()) {
+                throw e;
+            }
+            Optional<String> recovered = report.recoveredSource();
+            return new TolerantParse(recovered.isPresent() ? flowParsingService.parse(tenantId, recovered.get(), false) : null, report);
+        }
+    }
+
     private static String formatValidationError(String message) {
         if (message.startsWith("Illegal flow source:")) {
             // Already formatted by YamlParser, return as-is
@@ -477,57 +504,89 @@ public class FlowService {
 
             try {
                 String source = flowSource.content();
-                FlowWithSource flow = flowParsingService.parse(tenantId, source, true);
+                TolerantParse parsed = parseTolerantly(tenantId, source);
+                FlowWithSource flow = parsed.flow();
+                ParseReport report = parsed.report();
+                List<String> relocationInfos = relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList();
+                constraintsBuilder.infos(relocationInfos);
 
-                Integer sentRevision = flow.getRevision();
-                if (sentRevision != null) {
-                    Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantId, flow.getNamespace(), flow.getId())).orElse(0);
-                    constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
+                if (flow == null) {
+                    ScanProblems problems = scanProblems(report, List.of());
+                    constraintsBuilder.infos(ListUtils.concat(relocationInfos, problems.installNotices()));
+                    constraintsBuilder.errors(problems.errors());
+                } else {
+                    Integer sentRevision = flow.getRevision();
+                    if (sentRevision != null) {
+                        Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantId, flow.getNamespace(), flow.getId())).orElse(0);
+                        constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
+                    }
+
+                    FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
+                    constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
+                    constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
+                    constraintsBuilder.flow(flow.getId());
+                    constraintsBuilder.namespace(flow.getNamespace());
+
+                    if (report == null) {
+                        modelValidator.validate(parsedFlow);
+                        throwOnCyclicDependency(parsedFlow);
+                    } else {
+                        List<ValidationError> violations = modelValidator.isValid(parsedFlow).stream()
+                            .flatMap(e -> e.getConstraintViolations().stream())
+                            .flatMap(v -> report.locate(v).stream())
+                            .toList();
+                        ScanProblems problems = scanProblems(report, violations);
+                        constraintsBuilder.infos(ListUtils.concat(relocationInfos, problems.installNotices()));
+                        if (problems.errors().isEmpty()) {
+                            throwOnCyclicDependency(parsedFlow);
+                        } else {
+                            constraintsBuilder.errors(problems.errors());
+                        }
+                    }
                 }
-
-                FlowWithSource parsedFlow = flowParsingService.parseForValidation(flow);
-                constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
-                constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
-                constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
-                constraintsBuilder.flow(flow.getId());
-                constraintsBuilder.namespace(flow.getNamespace());
-
-                modelValidator.validate(parsedFlow);
-                throwOnCyclicDependency(parsedFlow);
             } catch (ConstraintViolationException e) {
-                String friendlyMessage = formatValidationError(e.getMessage());
-                constraintsBuilder.constraints(friendlyMessage);
+                constraintsBuilder.errors(ValidationError.ofException(e));
             } catch (FlowProcessingException e) {
                 if (e.getCause() instanceof ConstraintViolationException cve) {
-                    String friendlyMessage = formatValidationError(cve.getMessage());
                     // A missing plugin type is only recoverable when auto-install is on AND the type
                     // exists in the schema bundle: it is then a simple notice (installed on save); a
                     // type unknown to the bundle is a genuine error.
-                    if (
-                        pluginAutoInstallService.isEnabled()
-                            && cve instanceof InvalidTypeConstraintViolationException invalidType
-                            && pluginSchemaBundleService.containsType(invalidType.getTypeId())
-                    ) {
-                        constraintsBuilder.infos(List.of(friendlyMessage + ". The plugin is not installed yet and will be installed automatically when the flow is saved."));
+                    if (cve instanceof InvalidTypeConstraintViolationException invalidType && isAutoInstallable(invalidType.getTypeId())) {
+                        constraintsBuilder.infos(List.of(formatValidationError(cve.getMessage()) + AUTO_INSTALL_NOTICE));
                     } else {
-                        constraintsBuilder.constraints(friendlyMessage);
+                        constraintsBuilder.errors(ValidationError.ofException(cve));
                     }
                 } else {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    constraintsBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
+                    constraintsBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + cause.getMessage())));
                 }
             } catch (RuntimeException e) {
                 // In case of any error, we add a validation violation so the error is displayed in the UI.
                 // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
                 // in dev like incompatible plugin versions.
                 log.error("Unable to validate the flow", e);
-                constraintsBuilder.constraints("Unable to validate the flow: " + e.getMessage());
+                constraintsBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + e.getMessage())));
             }
 
             constraints.add(constraintsBuilder.build());
         });
 
         return constraints;
+    }
+
+    /** Splits the scan's problems into errors and notices, auto-installable plugin types being only notices. */
+    private ScanProblems scanProblems(ParseReport report, List<ValidationError> violations) {
+        List<ValidationError> errors = new ArrayList<>(report.errors());
+        List<String> installNotices = new ArrayList<>();
+        for (ParseReport.InvalidType invalidType : report.invalidTypes()) {
+            if (isAutoInstallable(invalidType.typeId())) {
+                installNotices.add(formatValidationError(invalidType.error().detail()) + AUTO_INSTALL_NOTICE);
+            } else {
+                errors.add(invalidType.error());
+            }
+        }
+        errors.addAll(violations);
+        return new ScanProblems(errors, installNotices);
     }
 
     public FlowWithSource importFlow(String tenantId, String source) throws FlowProcessingException {
@@ -1162,5 +1221,11 @@ public class FlowService {
 
     private IllegalStateException noRepositoryException() {
         return new IllegalStateException("No repository found. Make sure the `kestra.repository.type` property is set.");
+    }
+
+    private record TolerantParse(@Nullable FlowWithSource flow, @Nullable ParseReport report) {
+    }
+
+    private record ScanProblems(List<ValidationError> errors, List<String> installNotices) {
     }
 }

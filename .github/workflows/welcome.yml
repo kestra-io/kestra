@@ -49,10 +49,27 @@ jobs:
             ### Welcome to Kestra 👋
 
             Hey @{author}, thanks for opening your first pull request in this repository - we really appreciate it! ❤️
-
             Questions along the way? Ask us on [Slack](https://kestra.io/slack).
 
-            Thanks for all the efforts so far! 🍀
+            Claim Your Contributor Badge!
+            We want you to be able to showcase your contribution on your GitHub profile page.
+            
+            Since GitHub's native Achievements section is reserved for GitHub-system badges, custom open-source badges are displayed in your Profile README. Here's how to add your badge.
+            
+            Step 1: Set Up Your Profile README (if you haven't already)
+            Create a new repository on GitHub named exactly after your GitHub username (e.g., myusername/myusername).
+            Make sure the repository is Public and Initialize it with a README.
+            This README.md will now automatically appear at the top of your public profile ([github.com/myusername](https://github.com/myusername)).
+            
+            Step 2: Add Your Contributor Badge
+            Open your profile repository's README.md and click the Edit (pencil) icon.
+            Paste the following Markdown snippet wherever you'd like your badge to appear:
+
+            ```
+            ###  Open Source Contributions
+            [![Contributor](https://img.shields.io/badge/1st%20PR%20MERGED-KESTRA-1F232C?style=for-the-badge&logo=github&logoColor=200062&labelColor=CDC5FF)](https://kestra.io/community?from=github-badge)
+            ```
+            
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |

@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithPath;
@@ -28,6 +31,7 @@ import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
@@ -135,27 +139,28 @@ public class FileChangedEventListener {
                                 try {
                                     String content = Files.readString(filePath, Charset.defaultCharset());
 
-                                    Optional<FlowWithSource> flow = parseFlow(content, entry);
-                                    if (flow.isPresent()) {
+                                    Optional<ParsedFlow> parsed = parseFlow(content, entry);
+                                    if (parsed.isPresent()) {
+                                        FlowWithSource flow = parsed.get().flow();
                                         if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                             // Check if we already have a file with the given path
                                             if (flows.stream().anyMatch(flowWithPath -> flowWithPath.getPath().equals(filePath.toString()))) {
                                                 Optional<FlowWithPath> previous = flows.stream().filter(flowWithPath -> flowWithPath.getPath().equals(filePath.toString())).findFirst();
                                                 // Check if Flow from file has id/namespace updated
-                                                if (previous.isPresent() && !previous.get().uidWithoutRevision().equals(flow.get().uidWithoutRevision())) {
+                                                if (previous.isPresent() && !previous.get().uidWithoutRevision().equals(flow.uidWithoutRevision())) {
                                                     flows.removeIf(flowWithPath -> flowWithPath.getPath().equals(filePath.toString()));
                                                     flowFilesManager.deleteFlow(previous.get().getTenantId(), previous.get().getNamespace(), previous.get().getId());
-                                                    flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
+                                                    flows.add(FlowWithPath.of(flow, filePath.toString()));
                                                 }
                                             } else {
-                                                flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
+                                                flows.add(FlowWithPath.of(flow, filePath.toString()));
                                             }
                                         } else {
-                                            flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
+                                            flows.add(FlowWithPath.of(flow, filePath.toString()));
                                         }
 
-                                        flowFilesManager.createOrUpdateFlow(GenericFlow.fromYaml(getTenantIdFromPath(filePath), content));
-                                        log.info("Flow {} from file {} has been created or modified", flow.get().getId(), entry);
+                                        flowFilesManager.createOrUpdateFlow(parsed.get().genericFlow());
+                                        log.info("Flow {} from file {} has been created or modified", flow.getId(), entry);
                                     }
 
                                 } catch (NoSuchFileException e) {
@@ -215,12 +220,12 @@ public class FileChangedEventListener {
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (file.toString().endsWith(".yml") || file.toString().endsWith(".yaml")) {
                         String content = Files.readString(file, Charset.defaultCharset());
-                        Optional<FlowWithSource> flow = parseFlow(content, file);
+                        Optional<ParsedFlow> parsed = parseFlow(content, file);
 
-                        if (flow.isPresent() && flows.stream().noneMatch(flowWithPath -> flowWithPath.uidWithoutRevision().equals(flow.get().uidWithoutRevision()))) {
-                            flows.add(FlowWithPath.of(flow.get(), file.toString()));
+                        if (parsed.isPresent() && flows.stream().noneMatch(flowWithPath -> flowWithPath.uidWithoutRevision().equals(parsed.get().flow().uidWithoutRevision()))) {
+                            flows.add(FlowWithPath.of(parsed.get().flow(), file.toString()));
                             try {
-                                flowFilesManager.createOrUpdateFlow(GenericFlow.fromYaml(getTenantIdFromPath(file), content));
+                                flowFilesManager.createOrUpdateFlow(parsed.get().genericFlow());
                             } catch (Exception e) {
                                 log.error("Unexpected error while watching flows", e);
                             }
@@ -235,7 +240,8 @@ public class FileChangedEventListener {
         }
     }
 
-    private void flowToFile(FlowInterface flow, Path path) {
+    @VisibleForTesting
+    void flowToFile(FlowInterface flow, Path path) {
         Path defaultPath = path != null ? path : this.buildPath(flow);
 
         String source = flow.sourceOrGenerateIfNull();
@@ -245,6 +251,10 @@ public class FileChangedEventListener {
         }
 
         try {
+            // Rewriting identical content fires ENTRY_MODIFY, which saves the flow again and calls back here forever.
+            if (Files.exists(defaultPath) && source.equals(Files.readString(defaultPath))) {
+                return;
+            }
             Files.writeString(defaultPath, source);
             log.info("Flow {} has been written to file {}", flow.getId(), defaultPath);
         } catch (IOException e) {
@@ -252,12 +262,14 @@ public class FileChangedEventListener {
         }
     }
 
-    private Optional<FlowWithSource> parseFlow(String content, Path entry) {
+    private Optional<ParsedFlow> parseFlow(String content, Path entry) {
         try {
-            FlowWithSource flow = flowParsingService.parse(getTenantIdFromPath(entry), content, false);
+            GenericFlow genericFlow = GenericFlow.fromYaml(MAIN_TENANT, content);
+            String tenantId = getTenantIdFromPath(entry, genericFlow);
+            FlowWithSource flow = flowParsingService.parse(tenantId, content, false);
             modelValidator.validate(flow);
-            return Optional.of(flow);
-        } catch (ConstraintViolationException | FlowProcessingException e) {
+            return Optional.of(new ParsedFlow(flow, genericFlow.toBuilder().tenantId(tenantId).build()));
+        } catch (ConstraintViolationException | DeserializationException | FlowProcessingException e) {
             log.warn("Error while parsing flow: {}", entry, e);
         }
         return Optional.empty();
@@ -279,9 +291,17 @@ public class FileChangedEventListener {
         return fileWatchConfiguration.getPaths().getFirst().resolve(flow.uidWithoutRevision() + ".yml");
     }
 
-    private String getTenantIdFromPath(Path path) {
+    static String getTenantIdFromPath(Path path, GenericFlow flow) {
         // FIXME there is probably a bug here when a tenant has '_' in its name,
         //  a valid tenant name is defined with following regex: "^[a-z0-9][a-z0-9_-]*"
-        return path.getFileName().toString().split("_")[0];
+        String filename = path.getFileName().toString();
+        String unprefixedName = flow.getNamespace() + "." + flow.getId();
+        if (filename.equals(unprefixedName + ".yml") || filename.equals(unprefixedName + ".yaml")) {
+            return MAIN_TENANT;
+        }
+        return filename.split("_")[0];
+    }
+
+    private record ParsedFlow(FlowWithSource flow, GenericFlow genericFlow) {
     }
 }

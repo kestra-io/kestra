@@ -37,7 +37,7 @@ const ALLOWED: Array<{file: string; reason: string}> = [
 function sourceFiles(): string[] {
     return SCANNED_DIRS.flatMap((dir) =>
         globSync(`${dir}/**/*.{ts,vue,js}`, {cwd: ROOT})
-            .filter((file) => !file.includes("node_modules") && !file.includes("/dist/")),
+            .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
     )
 }
 

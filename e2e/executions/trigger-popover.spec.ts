@@ -41,7 +41,7 @@ test("long webhook details scroll without moving the trigger on hover", async ({
             const popover = page.getByRole("tooltip").filter({hasText: "Trigger details: webhook", visible: true})
             await expect(popover).toBeVisible()
             const title = popover.getByText("Trigger details: webhook", {exact: true})
-            const details = popover.getByTestId("trigger-details")
+            const details = popover.locator('[data-test="trigger-details"]')
             await expect(title).toBeVisible()
             await expect(details).toBeVisible()
             await expect(details).toHaveCSS("overflow-y", "auto")

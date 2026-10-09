@@ -1,11 +1,13 @@
 import {describe, it, expect, vi} from "vitest"
 import {defineComponent, h} from "vue"
+import {createPinia, setActivePinia} from "pinia"
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "executions/list", query: {}}),
 }))
 
 import {useExecutionFilter} from "../../../../../src/components/filter/configurations/executionFilter"
 import {useFlowExecutionFilter} from "../../../../../src/components/filter/configurations/flowExecutionFilter"
+import {useValues} from "../../../../../src/components/filter/composables/useValues"
 import {i18nMount} from "../../../i18nMount"
 
 function setup<T>(useComposable: () => T): T {
@@ -48,5 +50,34 @@ describe("execution filter configurations declare triggerId", () => {
     it("useFlowExecutionFilter", () => {
         const config = setup(() => useFlowExecutionFilter())
         expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("triggerId")
+    })
+})
+
+describe("execution kind filter offers Standard instead of a broken NORMAL option", () => {
+    it.each([
+        ["useExecutionFilter", () => useExecutionFilter()],
+        ["useFlowExecutionFilter", () => useFlowExecutionFilter()],
+    ])("%s wires the Standard wording onto the unfiltered option", (_name, useComposable) => {
+        const config = setup(useComposable)
+        const kind = config.value.keys.find((k: {key: string}) => k.key === "kind")
+
+        expect(kind).toBeDefined()
+        expect(kind!.allLabel).toBe("filter.execution_kind.standard")
+        expect(kind!.allDescription).toBe("filter.execution_kind.standard_description")
+    })
+
+    it("drops NORMAL from the selectable kinds", () => {
+        setActivePinia(createPinia())
+        let kinds!: {value: string}[]
+        const Comp = defineComponent({
+            setup() {
+                kinds = useValues("executions").VALUES.KINDS
+                return () => h("div")
+            },
+        })
+        i18nMount(Comp)
+
+        expect(kinds.map(k => k.value)).not.toContain("NORMAL")
+        expect(kinds.map(k => k.value)).toContain("PLAYGROUND")
     })
 })

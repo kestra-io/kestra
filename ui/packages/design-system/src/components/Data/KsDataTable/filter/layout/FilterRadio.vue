@@ -2,8 +2,8 @@
     <div class="radio">
         <div class="option" :class="{selected: selectedOption === 'ALL'}" @click="selectOption('ALL')">
             <div class="content">
-                <span class="title">{{ $t("filter.hierarchy.all") }}</span>
-                <span class="desc">{{ $t("filter.show default") }}</span>
+                <span class="title">{{ allLabel ?? $t("filter.hierarchy.all") }}</span>
+                <span class="desc">{{ allDescription ?? $t("filter.show default") }}</span>
             </div>
             <KsRadio :modelValue="selectedOption" :value="'ALL'" label="" />
         </div>
@@ -31,6 +31,8 @@
     const props = defineProps<{
         modelValue: string;
         options: FilterValue[];
+        allLabel?: string;
+        allDescription?: string;
     }>()
 
     const emits = defineEmits<{

@@ -162,7 +162,8 @@ describe("LogsWrapper cursor pagination", () => {
         searchLogs.mockImplementation((params: SearchLogsParams) => {
             if (params.size === 1) {
                 const level = params.filters?.find((f) => f.field === "level")?.value
-                return Promise.resolve({total: countsByLevel[level] ?? 0})
+                const total = level ? countsByLevel[level] ?? 0 : 0
+                return Promise.resolve({total})
             }
             return Promise.resolve({results: [logWith("offset")], total: 1, type: "OFFSET"})
         })

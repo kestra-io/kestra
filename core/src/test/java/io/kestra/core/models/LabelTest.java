@@ -194,4 +194,13 @@ class LabelTest {
         Optional<ConstraintViolationException> digitStartResult = modelValidator.isValid(new Label("9test", "value"));
         assertThat(digitStartResult.isPresent()).isTrue();
     }
+
+    @Test
+    void shouldReserveTheSystemKeyAndEverythingUnderIt() {
+        assertThat(Label.isSystem("system")).isTrue();
+        assertThat(Label.isSystem(Label.CORRELATION_ID)).isTrue();
+
+        assertThat(Label.isSystem("systems")).isFalse();
+        assertThat(Label.isSystem(null)).isFalse();
+    }
 }

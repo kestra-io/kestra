@@ -349,6 +349,10 @@
     "no": "いいえ",
     "change state done": "タスクの状態が更新されました",
     "change state confirm": "実行 <code>{id}</code> の <code>{task}</code> タスクのタスク実行状態を変更してもよろしいですか？<br/>これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
+    "interrupt": "中断",
+    "interrupt confirm": "実行 <code>{id}</code> 内の <code>{task}</code> Task の Task Run を中断してもよろしいですか？<br/>これにより、Worker 内で実行中の Task が終了し、その状態が設定されます。",
+    "interrupt done": "Task実行が中断されました",
+    "interrupt target state": "ターゲット状態",
     "change state current state": "現在のステータスは:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "Taskソースを表示",
     "stream": "ストリーム",
     "execution statistics": "実行統計",
+    "execution_banner": {
+      "revision": "リビジョン {revision}",
+      "attempts": "{count} 回の試行 | {count} 回の試行",
+      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
+    },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
     "usage": "使用",
@@ -560,6 +569,7 @@
       "blueprints": "Blueprint | Blueprint"
     },
     "plugins": {
+      "ui_load_error": "プラグインのコンポーネントを読み込めませんでした。",
       "autoInstall": {
         "failed": "プラグインのインストールに失敗しました",
         "failedHint": "flow は保存されませんでした。問題を修正するか、flow から plugin を削除してから再度保存してください。",
@@ -1101,7 +1111,6 @@
     "pause backfills": "backfillを一時停止",
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
-    "relative": "相対",
     "relative start date": "相対開始日",
     "absolute": "絶対",
     "backfill": "Backfill",
@@ -1713,6 +1722,7 @@
     "custom value": "カスタム value",
     "chart": "チャート",
     "no_code": {
+      "task_details": "タスクの詳細",
       "toggle_pebble": "ペブルエディタを切り替え",
       "version_oss_placeholder": "エンタープライズエディションでプラグインバージョニングをアンロック",
       "adding": "+ {what}を追加",
@@ -1768,7 +1778,8 @@
         "inputs": "入力フィールドタイプを選択",
         "charts": "チャートタイプを選択",
         "where": "フィルタータイプを選択",
-        "numerator": "分子を選択"
+        "numerator": "分子を選択",
+        "namespace_first": "先に namespace を選択してください"
       },
       "creation": {
         "default": "追加",
@@ -2414,6 +2425,7 @@
         "label": "{count} エラー"
       }
     },
+    "invalid_source_code": "無効なソースコード",
     "source_search": {
       "cannot_select_read_only": "選択できません — {namespace} / {id} の編集権限がありません",
       "collapse_all": "すべて折りたたむ",

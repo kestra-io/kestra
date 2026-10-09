@@ -569,7 +569,12 @@ public class JsonSchemaGenerator {
                     JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
                     JakartaValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                     JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
-                )
+                ) {
+                    @Override
+                    protected boolean isRequired(MemberScope<?, ?> member) {
+                        return super.isRequired(member) && !(member instanceof FieldScope field && builderDefault(field) != null);
+                    }
+                }
             )
             .with(new Swagger2Module() {
                 @Override
@@ -1303,6 +1308,10 @@ public class JsonSchemaGenerator {
             return null;
         }
 
+        return builderDefault(target);
+    }
+
+    private Object builderDefault(FieldScope target) {
         // class is abstract we try with cls passed to method, we try to find a derived one, optimistic approach
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {

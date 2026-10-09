@@ -11,25 +11,25 @@
     <TaskString
         v-else-if="constraintOnlySchema"
         :schema="constraintOnlySchema"
-        :modelValue="model"
+        :modelValue="stringModel"
         @update:model-value="onInput"
     />
     <TaskString
         v-else-if="durationSchema"
         :schema="durationSchema"
-        :modelValue="model"
+        :modelValue="stringModel"
         @update:model-value="onInput"
     />
     <TaskString
         v-else-if="booleanStringSchema"
         :schema="booleanStringSchema"
-        :modelValue="model"
+        :modelValue="stringModel"
         @update:model-value="onInput"
     />
     <TaskString
         v-else-if="singleStringSchema"
         :schema="singleStringSchema"
-        :modelValue="model"
+        :modelValue="stringModel"
         @update:model-value="onInput"
     />
     <template v-else>
@@ -73,8 +73,20 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    type ModelValue =
+        | string
+        | number
+        | boolean
+        | unknown[]
+        | Record<string, unknown>
+        | undefined
 
+    const model = defineModel<ModelValue>()
+    const stringModel = computed(() =>
+        typeof model.value === "string" || typeof model.value === "boolean"
+            ? model.value
+            : undefined,
+    )
     const emit = defineEmits(["update:selectedSchema"])
 
     const selectedSchema = ref<string>()
@@ -217,7 +229,7 @@
     }
 
     const schemaByType = computed(() => {
-        return schemas.value.reduce((acc: Record<string, any>, schema: any) => {
+        return schemas.value.reduce((acc: Record<string, Schema>, schema: Schema) => {
             acc[makeKey(schema) ?? ""] = schema
             return acc
         }, {})
@@ -253,8 +265,8 @@
 
                 return {
                     label: itemsTypeString ? itemsTypeString.charAt(0).toUpperCase() + itemsTypeString.slice(1) : "Unknown",
-                    value: makeKey(schema),
-                    id: itemsTypeString,
+                    value: makeKey(schema) ?? "",
+                    id: itemsTypeString ?? "",
                 }
             })
         }
@@ -279,7 +291,7 @@
             .map((schemaRef: string) => `${schemaRef}.`)
             .join("")
 
-        return schemas.value.map((schema: any) => {
+        return schemas.value.map((schema: Schema) => {
             const schemaRef = schema.$ref
                 ? schema.$ref.split("/").pop()
                 : schema.type
@@ -292,15 +304,15 @@
                 }
             }
 
-            const cleanSchemaRef = schemaRef.replace(/-\d+$/, "")
+            const cleanSchemaRef = typeof schemaRef === "string" ? schemaRef.replace(/-\d+$/, "") : schemaRef.const
             const lastPartOfValue = cleanSchemaRef.slice(commonPart.length)
 
             return {
                 label: lastPartOfValue?.charAt(0).toUpperCase() + lastPartOfValue?.slice(1),
-                value: schemaRef,
+                value: typeof schemaRef === "string" ? schemaRef : schemaRef.const,
                 id: cleanSchemaRef,
             }
-        }).filter((schema: any) => schema.value !== undefined)
+        }).filter((schema) => schema.value !== undefined)
     })
 
     watch(() => constantType.value, (val) => {
@@ -309,14 +321,18 @@
             onInput(undefined)
             return
         }
-        if (model.value) {
+        if (model.value && typeof model.value === "object" && !Array.isArray(model.value)) {
             for (const key in model.value) {
                 if (key !== "type" && !filteredProperties.value?.some(([k]) => k === key)) {
                     delete model.value[key]
                 }
             }
         }
-        onAnyOfInput(model.value ? {...model.value} : {type: val})
+        onAnyOfInput(
+            model.value && typeof model.value === "object" && !Array.isArray(model.value)
+                ? {...model.value}
+                : {type: val},
+        )
     })
 
     watch(selectedSchema, (val) => {
@@ -328,31 +344,39 @@
 
     onMounted(() => {
         if (durationSchema.value || constraintOnlySchemas.value) return
-        let schema = schemaOptions.value?.find((item: any) =>
-            item.value === model.value?.type ||
+        let schema = schemaOptions.value?.find((item) =>
+            item.value === (
+                model.value && typeof model.value === "object" && !Array.isArray(model.value)
+                    ? model.value.type
+                    : undefined
+            ) ||
             (typeof model.value === "string" && item.value === "string") ||
             (typeof model.value === "number" && item.value === "integer") ||
             (Array.isArray(model.value) && item.value === "array") ||
             (typeof model.value === "object" && item.value === "object") ||
             (Array.isArray(model.value) && typeof model.value[0] === "number" && item.value === "array.number") ||
-            (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value[0])) && item.value === "array.string.date-time") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && typeof item.value === "string" && !isNaN(Date.parse(item.value)) && item.value === "array.string.date-time") ||
             (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string"),
         )
 
         if (!schema && model.value && typeof model.value === "object" && !Array.isArray(model.value) && model.value.type) {
-            schema = schemaOptions.value?.find((item: any) => {
-                const raw = definitions.value[item.value] ?? schemaByType.value[item.value]
-                return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === model.value.type
+            schema = schemaOptions.value?.find((item) => {
+                const raw = typeof item.value === "string" ? (definitions.value[item.value] ?? schemaByType.value[item.value]) : undefined
+                return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === (
+                    model.value && typeof model.value === "object" && !Array.isArray(model.value)
+                        ? model.value.type
+                        : undefined
+                )
             })
         }
 
-        selectedSchema.value = schema?.value
+        selectedSchema.value = typeof schema?.value === "string" ? schema.value : undefined
 
         if (!selectedSchema.value && schemas.value.length > 0 && props.required) {
             selectedSchema.value = typeof schemas.value[0].type === "object" ? schemas.value[0].type.const : schemas.value[0].type
         }
 
-        if (schema) {
+        if (schema && typeof schema.value === "string") {
             onSelectType(schema.value)
         }
         nextTick(() => {
@@ -362,7 +386,7 @@
 
     function onSelectType(value: string) {
         if (typeof model.value === "string" && (value === "object" || value === "array")) {
-            let parsedValue: any = {}
+            let parsedValue: unknown = {}
             try {
                 parsedValue = YAML_UTILS.parse(model.value) ?? {}
                 if (value === "array" && !Array.isArray(parsedValue)) {
@@ -373,14 +397,14 @@
         }
         if (value === "string") {
             if (Array.isArray(model.value) && model.value.length === 1) {
-                model.value = model.value[0]
+                model.value = model.value[0] as string
             } else if (typeof model.value !== "string") {
                 model.value = YAML_UTILS.stringify(model.value)
             }
         }
         selectedSchema.value = value
         if (currentSchema.value?.properties && model.value === undefined) {
-            const defaultValues: Record<string, any> = {}
+            const defaultValues: Record<string, unknown> = {}
             for (let prop in currentSchema.value.properties) {
                 if (
                     currentSchema.value.properties[prop].$required &&
@@ -394,15 +418,23 @@
         delayedSelectedSchema.value = value
     }
 
-    function onAnyOfInput(value: any) {
-        if (constantType.value?.length && typeof value === "object") {
-            value.type = constantType.value
+    function onAnyOfInput(value: unknown) {
+        if (
+            constantType.value?.length &&
+            typeof value === "object" &&
+            value !== null &&
+            !Array.isArray(value)
+        ) {
+            value = {
+                ...value,
+                type: constantType.value,
+            }
         }
         onInput(value)
     }
 
-    function onInput(value: any) {
-        model.value = value
+    function onInput(value: unknown) {
+        model.value = value as ModelValue
     }
 
     function resetSelectType() {

@@ -149,6 +149,15 @@
                                                 />
                                             </div>
                                         </div>
+                                        <LoopIterationTree
+                                            v-if="taskTypeByTaskRunId[item.id] === 'io.kestra.plugin.core.flow.Loop'"
+                                            :key="`${execution!.id}-${item.task.taskId}-${item.id}`"
+                                            :executionId="execution!.id"
+                                            :taskId="item.task.taskId"
+                                            :namespace="execution!.namespace"
+                                            :flowId="execution!.flowId"
+                                            :depth="item.depth || 0"
+                                        />
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
                                                 <div class="task-details__inner p-2">
@@ -223,6 +232,7 @@
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
+    import LoopIterationTree from "./LoopIterationTree.vue"
 
     // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
     const TICK_FORMAT = "HH:mm:ss"

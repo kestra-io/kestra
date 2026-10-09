@@ -3,7 +3,7 @@ import {defineComponent, h, nextTick, ref, type Ref} from "vue"
 import {mount, VueWrapper} from "@vue/test-utils"
 import useRouteContext from "../../../src/composables/useRouteContext"
 
-function mountRouteContext(routeInfo: Ref<{title: string}>, embed = false) {
+function mountRouteContext(routeInfo: Ref<{title?: string | null}>, embed = false) {
     return mount(defineComponent({
         setup() {
             useRouteContext(routeInfo, embed)
@@ -61,6 +61,16 @@ describe("useRouteContext", () => {
 
     it("does not touch document.title when embed is true", () => {
         wrapper = mountRouteContext(ref({title: "Ignored"}), true)
+        expect(document.title).toBe("Kestra EE")
+    })
+
+    it("restores the base title when the route title is cleared", async () => {
+        const routeInfo = ref({title: "Executions"})
+        wrapper = mountRouteContext(routeInfo)
+
+        routeInfo.value = {title: ""}
+        await nextTick()
+
         expect(document.title).toBe("Kestra EE")
     })
 

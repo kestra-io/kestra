@@ -48,6 +48,7 @@
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
     import {revealApp} from "./utils/loaderReveal"
+    import {setDocumentTitle} from "./utils/documentTitle"
 
     // Dev-only, dynamically imported so the component is entirely absent from production bundles:
     // `import.meta.env.DEV` is statically replaced with `false` by Vite in prod builds, so this
@@ -112,7 +113,9 @@
     }
 
     watch(() => route?.meta?.anonymous, async (anonymous) => {
-        if (!anonymous && BasicAuth.isLoggedIn()) {
+        if (anonymous) {
+            setDocumentTitle()
+        } else if (BasicAuth.isLoggedIn()) {
             try {
                 await loadGeneralResources()
             } catch (error) {

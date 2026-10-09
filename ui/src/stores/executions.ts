@@ -137,7 +137,7 @@ export function normalizeFilePreview(data: FilePreview): FilePreview {
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
+export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList" | "originalId" | "metadata"> & {
     tenantId?: string;
     taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, unknown>;

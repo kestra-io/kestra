@@ -30,11 +30,8 @@ function job(status: PluginInstallJob["status"], overrides: Partial<PluginInstal
     return {
         id: "job-1",
         status,
-        artifacts: [{groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", classifier: null, version: "1.0.0"}],
+        artifacts: [{groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", version: "1.0.0"}],
         progress: {},
-        startedAt: null,
-        finishedAt: null,
-        error: null,
         ...overrides,
     }
 }
@@ -132,6 +129,22 @@ describe("PluginInstallToast", () => {
         expect(getInstallJobMock.mock.calls.length).toBe(callsAtFailure)
     })
 
+    it("does not start polling when unmounted before the first poll resolves", async () => {
+        let resolveFirstPoll: (value: PluginInstallJob) => void = () => {}
+        getInstallJobMock
+            .mockImplementationOnce(() => new Promise<PluginInstallJob>((resolve) => { resolveFirstPoll = resolve }))
+            .mockResolvedValue(job("RUNNING"))
+
+        wrapper = await mountToast()
+        wrapper.unmount()
+        wrapper = undefined
+        resolveFirstPoll(job("RUNNING"))
+        await flushPromises()
+
+        await tick(4)
+        expect(getInstallJobMock).toHaveBeenCalledOnce()
+    })
+
     it("shows the plugin's human title when the store knows it", async () => {
         findPluginByNameMock.mockImplementation((name: string) => name === "plugin-aws" ? {title: "Amazon Web Services"} : null)
         getInstallJobMock.mockResolvedValue(job("RUNNING"))
@@ -144,8 +157,8 @@ describe("PluginInstallToast", () => {
     it("matches each artifact's own progress entry, not a prefix-sharing sibling", async () => {
         const running = job("RUNNING", {
             artifacts: [
-                {groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", classifier: null, version: "1.0.0"},
-                {groupId: "io.kestra.plugin", artifactId: "plugin-aws-s3", extension: "jar", classifier: null, version: "1.0.0"},
+                {groupId: "io.kestra.plugin", artifactId: "plugin-aws", extension: "jar", version: "1.0.0"},
+                {groupId: "io.kestra.plugin", artifactId: "plugin-aws-s3", extension: "jar", version: "1.0.0"},
             ],
             progress: {
                 "io/kestra/plugin/plugin-aws-1.0.0.jar": {resource: "plugin-aws", transferred: 50, total: 100, state: "PROGRESSING"},

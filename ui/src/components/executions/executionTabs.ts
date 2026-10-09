@@ -1,17 +1,17 @@
 import type {RouteMeta, RouteRecordRaw} from "vue-router"
-import {resolveDefaultTab} from "../../utils/routeTabs"
+import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
+import {extraExecutionTabRoutes} from "override/components/executions/executionTabsExtension"
+import {storageKeys} from "../../utils/constants"
 
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
-
-/** localStorage key remembering the last tab the user viewed, used as the redirect fallback below. */
-export const DEFAULT_TAB_STORAGE_KEY = "executeDefaultTab"
 
 /** Where an execution opens with no preference set. Shared by the redirect, `submitTask` and Settings. */
 export const DEFAULT_EXECUTION_TAB = "gantt"
 
 /**
- * Single source of truth for the Executions detail tabs.
+ * The OSS Executions detail tabs; {@link EXECUTION_TAB_ROUTES} is this list with the edition's own
+ * tabs merged in.
  *
  * Each entry is the vue-router child route that `<router-view>` renders; the
  * horizontal tab bar is derived from these records (see {@link useExecutionRoot}),
@@ -24,7 +24,7 @@ export const DEFAULT_EXECUTION_TAB = "gantt"
  * - `meta.maximized` / `meta.noOverflow` / `meta.fullHeight` drive the content section layout.
  * - `meta.locked` flags an Enterprise-locked tab (lock badge in the bar).
  */
-export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
+const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
     {
         name: `${EXECUTION_PARENT_ROUTE}/overview`,
         path: "overview",
@@ -77,6 +77,8 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
     },
 ]
 
+export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = mergeTabRoutes(OSS_EXECUTION_TAB_ROUTES, extraExecutionTabRoutes(EXECUTION_PARENT_ROUTE))
+
 /**
  * Loads the execution the detail page is about into the store (EE reuses this for its own route
  * record). The page itself only learns of a missing execution when its SSE stream fails, which
@@ -102,7 +104,7 @@ export const EXECUTION_ROUTE: RouteRecordRaw = {
     // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {
-        const requested = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY)
+        const requested = (to.params.tab as string) || localStorage.getItem(storageKeys.EXECUTION_DEFAULT_TAB)
         const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, requested, DEFAULT_EXECUTION_TAB)
         return {name: `${EXECUTION_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
     },

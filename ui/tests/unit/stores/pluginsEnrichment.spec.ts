@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
-import axios from "axios"
+import axios, {type AxiosResponse} from "axios"
+import type {usePluginsEnrichmentStore, PluginVersion} from "../../../src/stores/pluginsEnrichment"
 
 vi.mock("axios")
 vi.mock("../../../src/stores/api", () => ({API_URL: "https://api.test"}))
@@ -8,7 +9,7 @@ vi.mock("../../../src/stores/api", () => ({API_URL: "https://api.test"}))
 const mockedGet = vi.mocked(axios.get)
 
 describe("pluginsEnrichment store — fetchVersions cache", () => {
-    let store: any
+    let store: ReturnType<typeof usePluginsEnrichmentStore>
 
     beforeEach(async () => {
         vi.clearAllMocks()
@@ -18,8 +19,8 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
     })
 
     it("caches a successful response and does not refetch", async () => {
-        const data = [{version: "1.0.0"}, {version: "0.9.0"}]
-        mockedGet.mockResolvedValue({data} as any)
+        const data: PluginVersion[] = [{version: "1.0.0"}, {version: "0.9.0"}]
+        mockedGet.mockResolvedValue({data} as AxiosResponse<PluginVersion[]>)
 
         const first = await store.fetchVersions("io.kestra.plugin.x.Y")
         const second = await store.fetchVersions("io.kestra.plugin.x.Y")
@@ -31,7 +32,7 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
     })
 
     it("dedupes concurrent in-flight requests for the same cls", async () => {
-        mockedGet.mockResolvedValue({data: [{version: "1.0.0"}]} as any)
+        mockedGet.mockResolvedValue({data: [{version: "1.0.0"}]} as AxiosResponse<PluginVersion[]>)
 
         const [a, b] = await Promise.all([
             store.fetchVersions("io.kestra.plugin.x.Y"),
@@ -52,8 +53,8 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
         expect(failed).toEqual([])
         expect(store.getVersions("io.kestra.plugin.x.Y")).toEqual([])
 
-        const data = [{version: "1.0.0"}]
-        mockedGet.mockResolvedValueOnce({data} as any)
+        const data: PluginVersion[] = [{version: "1.0.0"}]
+        mockedGet.mockResolvedValueOnce({data} as AxiosResponse<PluginVersion[]>)
         const retried = await store.fetchVersions("io.kestra.plugin.x.Y")
 
         expect(retried).toEqual(data)
@@ -64,7 +65,7 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
 })
 
 describe("pluginsEnrichment store — fetchEnrichment titles", () => {
-    let store: any
+    let store: ReturnType<typeof usePluginsEnrichmentStore>
 
     beforeEach(async () => {
         vi.clearAllMocks()
@@ -74,21 +75,21 @@ describe("pluginsEnrichment store — fetchEnrichment titles", () => {
     })
 
     it("enriches display titles from the public subgroups catalog", async () => {
-        mockedGet.mockImplementation(((url: string) => {
+        mockedGet.mockImplementation((url: string) => {
             if (url.endsWith("/v1/plugins/subgroups")) {
                 return Promise.resolve({data: [
                     {group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug", title: "Debug"},
                     {group: "io.kestra.plugin.core", subGroup: null, title: "Core Plugins and tasks"},
                     {group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"},
-                ]})
+                ]} as AxiosResponse<unknown>)
             }
             return Promise.reject(new Error("unavailable"))
-        }) as any)
+        })
 
         await store.fetchEnrichment()
 
-        expect(store.getEnrichment({group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug"})?.title).toBe("Debug")
-        expect(store.getEnrichment({group: "io.kestra.plugin.core"})?.title).toBe("Core Plugins and tasks")
-        expect(store.getEnrichment({group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"})).toBeNull()
+        expect(store.getEnrichment({name: "core", title: "Core", group: "io.kestra.plugin.core", subGroup: "io.kestra.plugin.core.debug"})?.title).toBe("Debug")
+        expect(store.getEnrichment({name: "core", title: "Core", group: "io.kestra.plugin.core"})?.title).toBe("Core Plugins and tasks")
+        expect(store.getEnrichment({name: "x", title: "X", group: "io.kestra.plugin.x", subGroup: "io.kestra.plugin.x.y"})).toBeNull()
     })
 })

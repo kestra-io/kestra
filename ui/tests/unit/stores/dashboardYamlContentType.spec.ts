@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {AxiosRequestConfig} from "axios"
 
 vi.mock("@kestra-io/design-system", () => ({
     stringUtils: {afterLastDot: (s: string) => s?.split(".").pop() ?? s},
@@ -60,7 +61,7 @@ describe("dashboard store yaml writes", () => {
         setActivePinia(createPinia())
     })
 
-    const yamlContentType = (call: any[]) => call[2]?.headers?.["Content-Type"]
+    const yamlContentType = (call: unknown[]) => (call[2] as AxiosRequestConfig | undefined)?.headers?.["Content-Type"]
 
     it("sends application/x-yaml when creating", {timeout: TEST_TIMEOUT_MS}, async () => {
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
@@ -94,5 +95,15 @@ describe("dashboard store yaml writes", () => {
             "/api/v1/main/dashboards/validate/chart",
         ])
         expect(post.mock.calls.map(yamlContentType)).toEqual(["application/x-yaml", "application/x-yaml"])
+    })
+
+    it("reports each chart validation error as its own line", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const store = useDashboardStore()
+        post.mockResolvedValueOnce({data: {errors: [{detail: "must not be null", path: "chartOptions"}, {detail: "boom"}]}})
+
+        await store.validateChart("id: c")
+
+        expect(store.chartErrors).toEqual(["chartOptions: must not be null", "boom"])
     })
 })

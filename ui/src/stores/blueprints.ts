@@ -2,13 +2,14 @@ import {computed, ref} from "vue"
 import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
-import {handled} from "../utils/kestraHttp"
+import {handledIf} from "../utils/kestraHttp"
 import {apiUrl} from "override/utils/route"
 
 import {useMiscStore} from "override/stores/misc"
 
 import {trackBlueprintSelection} from "../utils/tabTracking"
 import type {KestraHttpError} from "../utils/kestraHttp"
+import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {Input} from "./flow.ts"
 import type {ValidationResponse} from "./executions"
 
@@ -51,6 +52,7 @@ export interface BlueprintTag {
 }
 
 const API_URL = "https://api.kestra.io/v1"
+// Not an error-toast opt-out: a 401 from api.kestra.io must not be taken for a lost Kestra session.
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
 
 export const useBlueprintsStore = defineStore("blueprints", () => {
@@ -63,11 +65,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     const validateYAML = ref<boolean>(true) // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
 
-    const validation = ref<{constraints?: string} | undefined>(undefined)
+    const validation = ref<{errors?: ValidationError[]} | undefined>(undefined)
 
-    const validationErrors = computed<string[] | undefined>(
-        () => validation.value?.constraints ? [validation.value.constraints] : undefined,
-    )
+    const validationErrors = computed<string[] | undefined>(() => {
+        const lines = validationErrorLines(validation.value?.errors)
+        return lines.length ? lines : undefined
+    })
 
     const getBlueprints = async (options: Options) => {
         if (options.type === "community") {
@@ -178,14 +181,12 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     const validateFlowBlueprint = async (source: string): Promise<void> => {
         try {
-            const {data} = await axios.post<{constraints?: string}>(`${apiUrl()}/blueprints/flows/validate`, source, {
+            const {data} = await axios.post<{errors?: ValidationError[]}>(`${apiUrl()}/blueprints/flows/validate`, source, {
                 headers: {"Content-Type": "application/x-yaml"},
             })
             validation.value = data
         } catch (e: unknown) {
-            const err = e as {status?: number; response?: {status?: number}}
-            const status = err?.status || err?.response?.status
-            if (status === 422) handled(e)
+            handledIf(e, [422])
             throw e
         }
     }
@@ -194,7 +195,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         await axios.delete(`${apiUrl()}/blueprints/flows/${idToDelete}`)
     }
 
-    const useFlowBlueprintTemplate = async (id: string, inputs: Record<string, object>): Promise<{generatedFlowSource: string}> => {
+    const useFlowBlueprintTemplate = async (id: string, inputs: Record<string, unknown>): Promise<{generatedFlowSource: string}> => {
         const {data} = await axios.post<{generatedFlowSource: string}>(`${apiUrl()}/blueprints/flows/${id}/use-template`, {templateArgumentsInputs: inputs})
         return data
     }

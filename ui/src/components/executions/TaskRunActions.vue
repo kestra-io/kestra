@@ -18,6 +18,7 @@
                             <KsDropdownItem
                                 v-for="(run, index) in filteredTaskRuns"
                                 :key="run.id"
+                                data-test="task-run-iteration"
                                 @click.stop="selectedTaskRunId = run.id"
                             >
                                 <span :class="['row', {active: run.id === selectedTaskRunId}]">
@@ -106,18 +107,21 @@
                 />
                 <KsDropdownItem
                     :icon="Download"
+                    data-test="task-run-download-logs"
                     @click="downloadContent(currentTaskRun.id)"
                 >
                     {{ $t("download logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Copy"
+                    data-test="task-run-copy-logs"
                     @click="copyContent(currentTaskRun.id)"
                 >
                     {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Delete"
+                    data-test="task-run-delete-logs"
                     @click="deleteLogs(currentTaskRun)"
                 >
                     {{ $t("delete logs") }}
@@ -126,6 +130,15 @@
                     component="KsDropdownItem"
                     v-if="hasWorkerId"
                     :taskRun="currentTaskRun"
+                    @follow="emit('follow', $event)"
+                />
+
+                <Interrupt
+                    component="KsDropdownItem"
+                    :key="`interrupt-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :execution="execution"
+                    :taskRun="currentTaskRun"
+                    :attemptIndex="currentAttemptIndex"
                     @follow="emit('follow', $event)"
                 />
 
@@ -166,6 +179,7 @@
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
+    import Interrupt from "./Interrupt.vue"
     import Outputs from "./Outputs.vue"
     import WorkerInfo from "./WorkerInfo.vue"
     import TaskEdit from "../flows/TaskEdit.vue"
@@ -274,7 +288,7 @@
     function downloadContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {taskRunId: currentTaskRunId},
+            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
         }).then((response: unknown) => {
             Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadNameFor(currentTaskRunId))
         })
@@ -283,7 +297,7 @@
     function copyContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {taskRunId: currentTaskRunId},
+            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
         }).then((response: unknown) => {
             Utils.copy(response as string).then(() => {
                 coreStore.message = {

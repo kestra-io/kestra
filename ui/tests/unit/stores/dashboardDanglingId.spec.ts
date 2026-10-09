@@ -31,11 +31,11 @@ const dashboardFn = vi.fn()
 const dashboardChartDataFn = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
-    dashboard: (...args: any[]) => dashboardFn(...args),
+    dashboard: (...args: unknown[]) => dashboardFn(...args),
 }))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({get: vi.fn(), post: (...args: any[]) => dashboardChartDataFn(...args), put: vi.fn(), delete: vi.fn()}),
+    useClient: () => ({get: vi.fn(), post: (...args: unknown[]) => dashboardChartDataFn(...args), put: vi.fn(), delete: vi.fn()}),
 }))
 
 vi.mock("override/utils/route", () => ({

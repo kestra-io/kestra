@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
+import type {usePluginsStore} from "../../../src/stores/plugins"
 
 const getMock = vi.fn()
 
@@ -18,7 +19,7 @@ vi.mock("../../../src/utils/tabTracking", () => ({
 }))
 
 describe("plugins store fetchIcons", () => {
-    let store: any
+    let store: ReturnType<typeof usePluginsStore>
 
     beforeEach(async () => {
         getMock.mockReset()

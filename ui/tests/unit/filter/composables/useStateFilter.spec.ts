@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 
 const {route, push} = vi.hoisted(() => ({
-    route: {query: {} as Record<string, any>, params: {} as Record<string, any>},
+    route: {query: {} as Record<string, unknown>, params: {} as Record<string, unknown>},
     push: vi.fn(),
 }))
 

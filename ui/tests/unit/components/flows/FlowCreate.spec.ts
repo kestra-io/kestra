@@ -110,6 +110,21 @@ describe("FlowCreate recipe hand-off", () => {
     })
 })
 
+describe("FlowCreate source hand-off", () => {
+    test("opens the YAML carried by the create link without a blueprint id", async () => {
+        // Given
+        route.query = {blueprintSourceYaml: "id: ttl_expiring\nnamespace: system\n"}
+
+        // When
+        mountCreate()
+        await flushPromises()
+
+        // Then
+        expect(flowStore.flow?.id).toBe("ttl_expiring")
+        expect(flowStore.flow?.namespace).toBe("system")
+    })
+})
+
 describe("FlowCreate default template", () => {
     const INSTANCE_TEMPLATE = "tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log"
     const USER_TEMPLATE = "labels:\n  owner: Thibault\ntasks:\n  - id: mine\n    type: io.kestra.plugin.core.log.Log"

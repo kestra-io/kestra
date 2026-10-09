@@ -12,6 +12,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -22,15 +25,22 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledTaskRuns;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
@@ -50,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.GET;
+import static io.micronaut.http.HttpRequest.POST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -60,7 +71,13 @@ class ExecutionControllerTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
+    private BroadcastQueueInterface<ExecutionKilled> killQueue;
+
+    @Inject
     private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
     private StorageInterface storageInterface;
@@ -561,6 +578,424 @@ class ExecutionControllerTest {
             Execution reloaded = client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId()), Execution.class);
             assertThat(reloaded.getLabels()).doesNotContain(new Label(Label.CORRELATION_ID, "spoofed"));
         }
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenExecutionIsNotTerminated() {
+        // Given
+        Execution execution = seedReplayExecution(flowSource(IdUtils.create(), "first", "hello", ""), "first", State.Type.RUNNING);
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 1));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldAcceptReplayValidationWhenReplayingWholeExecutionOnChangedRevision() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "first", State.Type.SUCCESS);
+        updateFlow(flowId, flowSource(flowId, "first", "changed", ""));
+
+        // When
+        var response = validateReplay(execution, false, 2);
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenTaskBeforeTaskRunChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "second", State.Type.SUCCESS);
+        updateFlow(flowId, flowSource(flowId, "first", "changed", ""));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldAcceptReplayValidationWhenTaskAfterTaskRunChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "first", State.Type.SUCCESS);
+        updateFlow(flowId, flowSourceSecondTaskChanged(flowId));
+
+        // When
+        var response = validateReplay(execution, true, 2);
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void shouldAcceptReplayValidationWhenOnlyIgnoredTaskAttributeChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "second", State.Type.SUCCESS);
+        updateFlow(flowId, flowSource(flowId, "first", "hello", "description: a new description"));
+
+        // When
+        var response = validateReplay(execution, true, 2);
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenInputWasRemoved() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "first", State.Type.SUCCESS);
+        updateFlow(flowId, flowSource(flowId, "first", "hello", "").replace("inputs:\n  - id: name\n    type: STRING\n", ""));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenInputTypeChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "first", State.Type.SUCCESS);
+        updateFlow(flowId, flowSource(flowId, "first", "hello", "").replace("type: STRING", "type: INT"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenVariableChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "first", State.Type.SUCCESS);
+        updateFlow(flowId, flowSource(flowId, "first", "hello", "").replace("greeting: hi", "greeting: bye"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenSiblingBeforeTaskRunInsideFlowableChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowWithSequentialSource(flowId, "a", "b", "last"), "b", State.Type.SUCCESS);
+        updateFlow(flowId, flowWithSequentialSource(flowId, "changed", "b", "last"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldAcceptReplayValidationWhenOnlyTasksAfterTaskRunInsideFlowableChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowWithSequentialSource(flowId, "a", "b", "last"), "a", State.Type.SUCCESS);
+        updateFlow(flowId, flowWithSequentialSource(flowId, "a", "changed", "changed"));
+
+        // When
+        var response = validateReplay(execution, true, 2);
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void shouldRejectReplayValidationWhenChildOfFlowableBeforeTaskRunChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowWithSequentialSource(flowId, "a", "b", "last"), "last", State.Type.SUCCESS);
+        updateFlow(flowId, flowWithSequentialSource(flowId, "a", "changed", "last"));
+
+        // When
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> validateReplay(execution, true, 2));
+
+        // Then
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldAcceptReplayValidationWhenFlowableBeforeTaskRunIsUnchanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowWithSequentialSource(flowId, "a", "b", "last"), "last", State.Type.SUCCESS);
+        updateFlow(flowId, flowWithSequentialSource(flowId, "a", "b", "last").replace("- id: seq\n", "- id: seq\n    description: a new description\n"));
+
+        // When
+        var response = validateReplay(execution, true, 2);
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void shouldAcceptReplayValidationWhenOnlyIgnoredAttributeOfFlowableChildBeforeTaskRunChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowWithSequentialSource(flowId, "a", "b", "last"), "last", State.Type.SUCCESS);
+        updateFlow(flowId, flowWithSequentialSource(flowId, "a", "b", "last").replace("- id: a\n", "- id: a\n        description: a new description\n"));
+
+        // When
+        var response = validateReplay(execution, true, 2);
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    private String flowWithSequentialSource(String flowId, String messageA, String messageB, String messageLast) {
+        return """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: seq
+                type: io.kestra.plugin.core.flow.Sequential
+                tasks:
+                  - id: a
+                    type: io.kestra.plugin.core.log.Log
+                    message: %s
+                  - id: b
+                    type: io.kestra.plugin.core.log.Log
+                    message: %s
+              - id: last
+                type: io.kestra.plugin.core.log.Log
+                message: %s
+            """.formatted(flowId, TESTS_FLOW_NS, messageA, messageB, messageLast);
+    }
+
+    @Test
+    void shouldAcceptReplayValidationWhenReplayedTaskItselfChanged() {
+        // Given
+        String flowId = IdUtils.create();
+        Execution execution = seedReplayExecution(flowSource(flowId, "first", "hello", ""), "first", State.Type.SUCCESS);
+        updateFlow(flowId, flowSource(flowId, "first", "changed", ""));
+
+        // When
+        var response = validateReplay(execution, true, 2);
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    private HttpResponse<Void> validateReplay(Execution execution, boolean fromTaskRun, int revision) {
+        String uri = "/api/v1/main/executions/" + execution.getId() + "/actions/replay/validate?revision=" + revision
+            + (fromTaskRun ? "&taskRunId=" + execution.getTaskRunList().getFirst().getId() : "");
+        return client.toBlocking().exchange(HttpRequest.POST(uri, null));
+    }
+
+    private String flowSource(String flowId, String firstTaskId, String firstMessage, String firstTaskExtra) {
+        return """
+            id: %s
+            namespace: %s
+            inputs:
+              - id: name
+                type: STRING
+            variables:
+              greeting: hi
+            tasks:
+              - id: %s
+                type: io.kestra.plugin.core.log.Log
+                message: %s
+                %s
+              - id: second
+                type: io.kestra.plugin.core.log.Log
+                message: second
+            """.formatted(flowId, TESTS_FLOW_NS, firstTaskId, firstMessage, firstTaskExtra);
+    }
+
+    private String flowSourceSecondTaskChanged(String flowId) {
+        return flowSource(flowId, "first", "hello", "").replace("message: second", "message: changed");
+    }
+
+    private void updateFlow(String flowId, String source) {
+        FlowWithSource previous = flowRepository.findByIdWithSource(MAIN_TENANT, TESTS_FLOW_NS, flowId).orElseThrow();
+        flowRepository.update(GenericFlow.fromYaml(MAIN_TENANT, source), previous);
+    }
+
+    private Execution seedReplayExecution(String source, String replayedTaskId, State.Type state) {
+        FlowWithSource flow = flowRepository.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .state(new State().withState(state))
+            .taskRunList(List.of(TaskRun.builder()
+                .id(IdUtils.create())
+                .tenantId(MAIN_TENANT)
+                .executionId("unused")
+                .namespace(flow.getNamespace())
+                .flowId(flow.getId())
+                .taskId(replayedTaskId)
+                .state(new State().withState(State.Type.SUCCESS))
+                .build()))
+            .build();
+        executionRepository.save(execution);
+        return execution;
+    }
+
+    @Test
+    void shouldInterruptTaskRunAndItsNonTerminatedChildrenWhenInterruptingARunningTaskRun() throws Exception {
+        // Given
+        Execution execution = runningExecution();
+        String parentTaskRunId = execution.getTaskRunList().getFirst().getId();
+        String runningChildTaskRunId = execution.getTaskRunList().get(1).getId();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<ExecutionKilledTaskRuns> interrupted = new AtomicReference<>();
+        killQueue.addListener(killed -> {
+            if (killed instanceof ExecutionKilledTaskRuns taskRuns && execution.getId().equals(taskRuns.getExecutionId())) {
+                interrupted.set(taskRuns);
+                latch.countDown();
+            }
+        });
+
+        // When
+        HttpResponse<Void> response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                new ExecutionController.StateRequest(parentTaskRunId, State.Type.CANCELLED)
+            )
+        );
+
+        // Then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(ExecutionControllerRunnerTest.ExecutionCrudEventListener.events())
+            .anySatisfy(event -> assertThat(event.getModel().getId()).isEqualTo(execution.getId()));
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+        // The terminated child and the task run of another branch are left alone.
+        assertThat(interrupted.get().getTaskRunIds()).containsExactlyInAnyOrder(parentTaskRunId, runningChildTaskRunId);
+        assertThat(interrupted.get().getTaskRunState()).isEqualTo(State.Type.CANCELLED);
+        assertThat(interrupted.get().getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenInterruptingATaskRunToANonInterruptedState() {
+        Execution execution = runningExecution();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest(execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void shouldReturnConflictWhenInterruptingATaskRunThatIsNotRunning() {
+        Execution execution = runningExecution();
+        String terminatedTaskRunId = execution.getTaskRunList().get(2).getId();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest(terminatedTaskRunId, State.Type.FAILED)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldReturnConflictWhenInterruptingATaskRunOfATerminatedExecution() {
+        Execution execution = terminatedExecution();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest(IdUtils.create(), State.Type.FAILED)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenInterruptingAnUnknownTaskRun() {
+        Execution execution = runningExecution();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + execution.getId() + "/actions/interrupt",
+                    new ExecutionController.StateRequest("taskrun_id_not_found", State.Type.FAILED)
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    /**
+     * A running execution holding, in order: a running parent task run, a running child of that parent,
+     * a terminated child of that parent, and a running task run of another branch.
+     */
+    private Execution runningExecution() {
+        String executionId = IdUtils.create();
+        TaskRun parent = taskRun(executionId, "parent", null, State.Type.RUNNING);
+        TaskRun runningChild = taskRun(executionId, "running-child", parent.getId(), State.Type.RUNNING);
+        TaskRun terminatedChild = taskRun(executionId, "terminated-child", parent.getId(), State.Type.SUCCESS);
+        TaskRun otherBranch = taskRun(executionId, "other-branch", null, State.Type.RUNNING);
+
+        Execution execution = Execution.builder()
+            .id(executionId)
+            .tenantId(MAIN_TENANT)
+            .namespace(TESTS_FLOW_NS)
+            .flowId("minimal")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .taskRunList(List.of(parent, runningChild, terminatedChild, otherBranch))
+            .build();
+        executionRepository.save(execution);
+        return execution;
+    }
+
+    private static TaskRun taskRun(String executionId, String taskId, String parentTaskRunId, State.Type state) {
+        State taskRunState = new State().withState(State.Type.RUNNING);
+        if (State.Type.RUNNING != state) {
+            taskRunState = taskRunState.withState(state);
+        }
+
+        return TaskRun.builder()
+            .id(IdUtils.create())
+            .executionId(executionId)
+            .tenantId(MAIN_TENANT)
+            .namespace(TESTS_FLOW_NS)
+            .flowId("minimal")
+            .taskId(taskId)
+            .parentTaskRunId(parentTaskRunId)
+            .state(taskRunState)
+            .build();
     }
 
     private Execution terminatedExecution() {

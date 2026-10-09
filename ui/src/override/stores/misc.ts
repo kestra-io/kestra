@@ -1,10 +1,10 @@
 import {defineStore} from "pinia"
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
-import {useApiStore} from "../../stores/api"
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue"
 import {useClient, type AxiosLikeConfig, type MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import {initPosthogIfEnabled} from "../../utils/posthog"
+import {sendPosthogEvent} from "../../utils/analytics/posthogEvents"
 import {ensureUid} from "../../utils/uid"
 import type {SelectedTheme} from "../../utils/utils"
 
@@ -47,8 +47,6 @@ export const useMiscStore = defineStore("misc", () => {
     async function loadConfigs() {
         const response = await axios.get(`${apiUrlWithoutTenants()}/configs`)
         configs.value = response.data
-        // Best-effort: flush any queued analytics events once configs are known.
-        void useApiStore().flushQueuedEvents()
         return response.data
     }
 
@@ -92,9 +90,7 @@ export const useMiscStore = defineStore("misc", () => {
             void initPosthogIfEnabled(freshConfigs)
         }
 
-        const apiStore = useApiStore()
-
-        return apiStore.posthogEvents({
+        sendPosthogEvent(freshConfigs, {
             type: "ossauth",
             iid: freshConfigs?.uuid,
             uid,

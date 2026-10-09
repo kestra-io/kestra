@@ -232,6 +232,19 @@ describe("KsDataTable", () => {
             expect(scrollIntoView).not.toHaveBeenCalled()
         })
 
+        test("looks for the scrolling ancestor once, not on every page change", () => {
+            const {wrapper} = mountScrolledPastTheTop()
+            const scroller = wrapper.element.parentElement as HTMLElement
+            const getComputedStyle = vi.spyOn(window, "getComputedStyle")
+
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 2)
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 3)
+
+            expect(getComputedStyle.mock.calls.filter(([element]) => element === scroller)).toHaveLength(1)
+            expect(scrollIntoView).toHaveBeenCalledTimes(2)
+            getComputedStyle.mockRestore()
+        })
+
         test("keeps the scroll position when the page changes from outside, as on back navigation", async () => {
             const {wrapper, rows} = mountScrolledPastTheTop()
 

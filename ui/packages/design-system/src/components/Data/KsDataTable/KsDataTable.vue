@@ -232,6 +232,7 @@
         toggleAllSelection: () => void
         getSelectionRows: () => DataRow[]
         toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
+        setScrollTop: (top: number) => void
         $el?: HTMLElement
     }
     const tableRef = ref<KsTableHandle>()
@@ -435,18 +436,18 @@
 
     watch([currentPageValue, currentSizeValue, loadRequest], () => callLoad(), {flush: "post"})
 
-    const scrollingAncestor = (element: HTMLElement) => {
-        for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) {
+    const scrollingAncestor = computed(() => {
+        for (let ancestor = wrapper.value?.parentElement; ancestor; ancestor = ancestor.parentElement) {
             if (/auto|scroll/.test(getComputedStyle(ancestor).overflowY)) return ancestor
         }
         return undefined
-    }
+    })
 
     const scrollBackToTop = () => {
         tableRef.value?.setScrollTop(0)
 
         if (!wrapper.value) return
-        const visibleTop = scrollingAncestor(wrapper.value)?.getBoundingClientRect().top ?? 0
+        const visibleTop = scrollingAncestor.value?.getBoundingClientRect().top ?? 0
         if (wrapper.value.getBoundingClientRect().top < visibleTop) wrapper.value.scrollIntoView({block: "start"})
     }
 

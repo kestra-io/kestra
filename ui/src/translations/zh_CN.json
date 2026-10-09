@@ -349,6 +349,10 @@
     "no": "否",
     "change state done": "任务状态已更新",
     "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
+    "interrupt": "中断",
+    "interrupt confirm": "您确定要中断执行 <code>{id}</code> 中 <code>{task}</code> Task 的 Task Run 吗？<br/>它将终止 Worker 中正在运行的 Task 并设置其状态。",
+    "interrupt done": "Task 运行已被中断",
+    "interrupt target state": "目标状态",
     "change state current state": "当前状态是：",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "显示任务源代码",
     "stream": "流",
     "execution statistics": "执行统计",
+    "execution_banner": {
+      "revision": "修订版 {revision}",
+      "attempts": "{count} 次尝试 | {count} 次尝试",
+      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+    },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
     "usage": "使用情况",
@@ -560,6 +569,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "插件组件加载失败。",
       "autoInstall": {
         "failed": "插件安装失败",
         "failedHint": "flow 未保存。请修复问题或从 flow 中移除该插件，然后重新保存。",
@@ -1101,7 +1111,6 @@
     "pause backfills": "暂停回填",
     "backfill executions": "回填执行",
     "execute backfill": "执行回填",
-    "relative": "相对",
     "relative start date": "相对开始日期",
     "absolute": "绝对",
     "backfill": "回填",
@@ -1713,6 +1722,7 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
+      "task_details": "task 详情",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",
@@ -1768,7 +1778,8 @@
         "inputs": "选择一个input字段类型",
         "charts": "选择图表类型",
         "where": "选择筛选器类型",
-        "numerator": "选择一个分子"
+        "numerator": "选择一个分子",
+        "namespace_first": "请先选择 namespace"
       },
       "creation": {
         "default": "添加",
@@ -2221,7 +2232,6 @@
       "run_all_tasks": "运行所有Tasks",
       "history": "最近10次运行",
       "clear_history": "清除历史记录",
-      "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
       "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
     "submit": "提交",
@@ -2415,6 +2425,7 @@
         "label": "{count} 错误"
       }
     },
+    "invalid_source_code": "源代码无效",
     "source_search": {
       "cannot_select_read_only": "无法选择 — 您没有 {namespace} / {id} 的编辑权限",
       "collapse_all": "全部收起",

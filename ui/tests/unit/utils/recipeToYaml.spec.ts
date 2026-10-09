@@ -91,7 +91,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const slackTask = parsed.tasks.find((t: any) => t.id === "notify_slack")
+            const slackTask = parsed.tasks.find(t => t.id === "notify_slack")
             expect(slackTask?.type).toBe("io.kestra.plugin.slack.notifications.SlackExecution")
             expect(slackTask?.executionId).toBe("{{ trigger.executionId }}")
         })
@@ -108,7 +108,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const taskTypes = parsed.tasks.map((t: any) => t.type)
+            const taskTypes = parsed.tasks.map(t => t.type)
             expect(taskTypes).toContain("io.kestra.plugin.microsoft365.teams.TeamsExecution")
             expect(taskTypes).toContain("io.kestra.plugin.email.MailExecution")
         })
@@ -123,7 +123,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const emailTask = parsed.tasks.find((t: any) => t.id === "notify_email")
+            const emailTask = parsed.tasks.find(t => t.id === "notify_email")
             expect(emailTask?.type).toBe("io.kestra.plugin.email.MailExecution")
             expect(emailTask?.executionId).toContain("trigger.executionId")
         })
@@ -141,7 +141,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const slackTask = parsed.tasks.find((t: any) => t.id === "notify_slack")
+            const slackTask = parsed.tasks.find(t => t.id === "notify_slack")
             expect(slackTask?.type).toBe("io.kestra.plugin.slack.notifications.SlackIncomingWebhook")
             expect(slackTask?.executionId).toBeUndefined()
         })
@@ -157,7 +157,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const slackTask = parsed.tasks.find((t: any) => t.id === "notify_slack")
+            const slackTask = parsed.tasks.find(t => t.id === "notify_slack")
             expect(slackTask?.messageText).toContain("flow.id")
             expect(slackTask?.channel).toBeUndefined()
         })
@@ -192,7 +192,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const emailTask = parsed.tasks.find((t: any) => t.id === "notify_email")
+            const emailTask = parsed.tasks.find(t => t.id === "notify_email")
             expect(emailTask?.type).toBe("io.kestra.plugin.email.MailSend")
             expect(emailTask?.executionId).toBeUndefined()
             expect(emailTask?.htmlTextContent).not.toContain("trigger.executionId")
@@ -208,7 +208,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const customTask = parsed.tasks.find((t: any) => t.id === "notify_custom")
+            const customTask = parsed.tasks.find(t => t.id === "notify_custom")
             expect(customTask?.type).toBe("io.kestra.plugin.core.log.Log")
             expect(customTask?.message).toContain("trigger.executionId")
         })
@@ -224,8 +224,8 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            expect(parsed.tasks.find((t: any) => t.id === "notify_slack")).toBeUndefined()
-            expect(parsed.tasks.find((t: any) => t.id === "notify_custom")).toBeDefined()
+            expect(parsed.tasks.find(t => t.id === "notify_slack")).toBeUndefined()
+            expect(parsed.tasks.find(t => t.id === "notify_custom")).toBeDefined()
         })
     })
 
@@ -258,7 +258,7 @@ describe("recipeToYaml", () => {
 
             // Then
             const parsed = parseBlock(yaml)
-            const teamsTask = parsed.tasks.find((t: any) => t.id === "notify_teams")
+            const teamsTask = parsed.tasks.find(t => t.id === "notify_teams")
             expect(teamsTask?.type).toBe("io.kestra.plugin.microsoft365.teams.TeamsIncomingWebhook")
         })
     })
@@ -290,7 +290,7 @@ describe("recipeToYaml", () => {
             const flowObj = recipeToFlowObject(state, "system")
 
             // Then
-            expect((flowObj.triggers as any[]).length).toBe(0)
+            expect((flowObj.triggers as unknown[]).length).toBe(0)
         })
     })
 
@@ -306,7 +306,7 @@ describe("recipeToYaml", () => {
             const flowObj = recipeToFlowObject(state, "system", available)
 
             // Then
-            const taskIds = (flowObj.tasks as any[]).map(t => t.id)
+            const taskIds = (flowObj.tasks as unknown as {id: string}[]).map(t => t.id)
             expect(taskIds).not.toContain("notify_slack")
             expect(taskIds).toContain("notify_email")
         })
@@ -321,7 +321,7 @@ describe("recipeToYaml", () => {
             const flowObj = recipeToFlowObject(state, "system", new Set())
 
             // Then
-            const taskIds = (flowObj.tasks as any[]).map(t => t.id)
+            const taskIds = (flowObj.tasks as unknown as {id: string}[]).map(t => t.id)
             expect(taskIds).toContain("notify_slack")
             expect(taskIds).toContain("notify_email")
         })
@@ -371,7 +371,7 @@ describe("recipeToYaml", () => {
     })
     describe("notify task properties match the plugin schemas", () => {
         const notifyTask = (state: RecipeState, id: string) => {
-            const task = parseBlock(recipeToYaml(state, "system")).tasks.find((t: any) => t.id === id)
+            const task = parseBlock(recipeToYaml(state, "system")).tasks.find(t => t.id === id)
             if (!task) throw new Error(`The generated flow has no task "${id}".`)
             return task
         }

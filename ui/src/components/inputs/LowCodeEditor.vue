@@ -488,21 +488,6 @@
         return merged
     }
 
-    const loopScoping = useLoopScoping(computed(() => augmentedFlowGraph.value))
-    const loopLanes = computed(() => (exec.value?.id ? loopScoping.lanes.value : {}))
-    const hasLoopLanes = computed(() => Boolean(exec.value?.id) && loopScoping.laneNodes.value.length > 0)
-    const failuresOnly = ref(false)
-
-    function toggleFailuresOnly(setLanesCollapsed: (uids: string[], collapsed: boolean) => void) {
-        failuresOnly.value = !failuresOnly.value
-        setLanesCollapsed(loopScoping.lanesWithoutFailures.value, failuresOnly.value)
-    }
-
-    function jumpToFirstFailure() {
-        const uid = loopScoping.firstFailedLaneUid()
-        if (uid) loopScoping.scopeFirstFailure(uid)
-    }
-
     const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent, componentTypeFor: detailsTypeFor} = useFederatedModule("topology-details")
     const {RemoteComponent: TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
     const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent, componentTypeFor: modalTypeFor} = useFederatedModule("topology-task-modal")
@@ -660,6 +645,21 @@
             toggleOrientationButton: true,
             expandedSubflows: () => [],
         })
+
+    const loopScoping = useLoopScoping(computed(() => augmentedFlowGraph.value))
+    const loopLanes = computed(() => (exec.value?.id ? loopScoping.lanes.value : {}))
+    const hasLoopLanes = computed(() => Boolean(exec.value?.id) && loopScoping.laneNodes.value.length > 0)
+    const failuresOnly = ref(false)
+
+    function toggleFailuresOnly(setLanesCollapsed: (uids: string[], collapsed: boolean) => void) {
+        failuresOnly.value = !failuresOnly.value
+        setLanesCollapsed(loopScoping.lanesWithoutFailures.value, failuresOnly.value)
+    }
+
+    function jumpToFirstFailure() {
+        const uid = loopScoping.firstFailedLaneUid()
+        if (uid) loopScoping.scopeFirstFailure(uid)
+    }
 
     watch(
         () => props.flowGraph,

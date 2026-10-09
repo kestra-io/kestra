@@ -5,6 +5,7 @@ import action from "../../models/action"
 import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
 import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 import {extraFlowTabRoutes} from "override/components/flows/flowTabsExtension"
+import {storageKeys} from "../../utils/constants"
 
 /** Parent route name for the Flows detail page. */
 export const FLOW_PARENT_ROUTE = "flows/update"
@@ -32,9 +33,6 @@ export function isFlowTabAllowed(tabName: string, ctx: {user: Pick<Me, "hasAny" 
         return true
     }
 }
-
-/** localStorage key remembering the user's preferred default tab (see BasicSettings.vue), used as the redirect fallback below. */
-const DEFAULT_TAB_STORAGE_KEY = "flowDefaultTab"
 
 /**
  * The OSS Flows detail tabs; {@link FLOW_TAB_ROUTES} is this list with the edition's own tabs
@@ -157,7 +155,7 @@ export const FLOW_ROUTE: RouteRecordRaw = {
     // Resolve legacy deep-links `{name: "flows/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {
-        const requested = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY)
+        const requested = (to.params.tab as string) || localStorage.getItem(storageKeys.FLOW_DEFAULT_TAB)
         const tab = resolveDefaultTab(FLOW_TAB_ROUTES, requested, "edit")
         return {name: `${FLOW_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
     },

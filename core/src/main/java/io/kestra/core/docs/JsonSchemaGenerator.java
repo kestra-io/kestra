@@ -453,15 +453,6 @@ public class JsonSchemaGenerator {
     // By default, the 'default' is in each anyOf which Monaco editor didn't take into account.
     // So, we pull off the 'default' from any of the anyOf to the parent.
     // same thing for documentation fields: 'title', 'description', '$deprecated'
-    private static void putTicketingValueMap(ObjectNode target, String[] pairs) {
-        for (String pair : pairs) {
-            int separator = pair.indexOf('=');
-            if (separator > 0) {
-                target.put(pair.substring(0, separator), pair.substring(separator + 1));
-            }
-        }
-    }
-
     private void pullDocumentationAndDefaultFromAnyOf(ObjectNode objectNode) {
         objectNode.findParents("anyOf").forEach(jsonNode ->
         {
@@ -505,6 +496,21 @@ public class JsonSchemaGenerator {
                 }
             }
         });
+    }
+
+    private static Map<String, String> ticketingValueMap(String[] pairs) {
+        Map<String, String> valueMap = new LinkedHashMap<>();
+        for (String pair : pairs) {
+            int separator = pair.indexOf('=');
+            if (separator >= 0) {
+                String from = pair.substring(0, separator).trim();
+                String to = pair.substring(separator + 1).trim();
+                if (!from.isEmpty() && !to.isEmpty()) {
+                    valueMap.put(from, to);
+                }
+            }
+        }
+        return valueMap;
     }
 
     private void mutateDescription(ObjectNode collectedTypeAttributes) {
@@ -760,8 +766,10 @@ public class JsonSchemaGenerator {
                 if (!ticketingField.defaultValue().isEmpty()) {
                     memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
                 }
-                if (ticketingField.valueMap().length > 0) {
-                    putTicketingValueMap(memberAttributes.putObject("$ticketingValueMap"), ticketingField.valueMap());
+                Map<String, String> valueMap = ticketingValueMap(ticketingField.valueMap());
+                if (!valueMap.isEmpty()) {
+                    ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
+                    valueMap.forEach(valueMapNode::put);
                 }
             }
 

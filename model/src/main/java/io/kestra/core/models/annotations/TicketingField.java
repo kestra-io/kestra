@@ -32,17 +32,20 @@ public @interface TicketingField {
     }
 
     /**
-     * @return what the property carries: an input receiving a field of the case, or an output holding the created ticket's key or URL.
+     * @return what the property carries: an input receiving a field of the case, or an output holding the created ticket's key or URL. Use each role once per task, except {@link Role#CASE_SEVERITY}, which may fill several fields.
      */
     Role role() default Role.NONE;
 
     /**
-     * @return {@code CASE_VALUE=TASK_VALUE} pairs translating a case value into the task's own, for example {@code CRITICAL=urgent}; a value without a pair is passed unchanged.
+     * Only read for {@link Role#CASE_SEVERITY}: {@code CASE_VALUE=TASK_VALUE} pairs translating a case severity into the task's own, for example {@code CRITICAL=urgent}.
+     * A severity without a pair is passed unchanged, so on a property that is not a string the map must cover every severity.
+     *
+     * @return the pairs; keys and values are trimmed and malformed pairs are ignored
      */
     String[] valueMap() default {};
 
     /**
-     * @return the value pre-filled when a Cases ticketing flow is generated; it does not change the task's own default.
+     * @return the value pre-filled when a Cases ticketing flow is generated; it does not change the task's own default, and only applies to a field the connect form shows (a required property or one in the {@code destination} or {@code connection} group).
      */
     String defaultValue() default "";
 }

@@ -887,8 +887,11 @@ class JsonSchemaGeneratorTest {
         @TicketingField(defaultValue = "3")
         private Property<Integer> priority;
 
-        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {"CRITICAL=urgent", "HIGH=high", "malformed"})
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {"CRITICAL=urgent", "HIGH=high", "malformed", "LOW=", " =x"})
         private Property<String> urgency;
+
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {" CRITICAL = 1 ", "HIGH=2"})
+        private Property<Integer> level;
 
         private String untouched;
 
@@ -922,6 +925,8 @@ class JsonSchemaGeneratorTest {
         assertThat(props.get("priority").get("$ticketingDefault"), is("3"));
         assertThat(props.get("urgency").get("$ticketingRole"), is("CASE_SEVERITY"));
         assertThat(props.get("urgency").get("$ticketingValueMap"), is(Map.of("CRITICAL", "urgent", "HIGH", "high")));
+        assertThat(props.get("level").get("$ticketingRole"), is("CASE_SEVERITY"));
+        assertThat(props.get("level").get("$ticketingValueMap"), is(Map.of("CRITICAL", "1", "HIGH", "2")));
     }
 
     @SuppressWarnings("unchecked")

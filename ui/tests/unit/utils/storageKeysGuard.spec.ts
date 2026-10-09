@@ -10,7 +10,7 @@ const sources = (dir: string): string[] =>
     readdirSync(dir, {withFileTypes: true}).flatMap((entry) => {
         const path = join(dir, entry.name)
         if (entry.isDirectory()) return sources(path)
-        return /\.(vue|ts)$/.test(entry.name) ? [path] : []
+        return /\.(vue|ts)$/.test(entry.name) && !/\.(spec|test|stories)\.ts$/.test(entry.name) ? [path] : []
     })
 
 describe("storageKeys", () => {

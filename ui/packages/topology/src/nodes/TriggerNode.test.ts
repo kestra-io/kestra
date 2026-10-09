@@ -1,11 +1,11 @@
 import {defineComponent} from "vue"
 import {describe, expect, it} from "vitest"
 import {Handle, Position} from "@vue-flow/core"
-import NodeMenu from "../../../src/nodes/NodeMenu.vue"
-import TriggerNode from "../../../src/nodes/TriggerNode.vue"
-import {EVENTS} from "../../../src/utils/constants"
+import NodeMenu from "./NodeMenu.vue";
+import TriggerNode from "./TriggerNode.vue";
+import { EVENTS } from "../utils/constants";
 import {SECTIONS} from "@kestra-io/design-system"
-import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import { i18nMount } from "../../../../tests/unit/i18nMount";
 
 type MenuAction = {
     key: string;

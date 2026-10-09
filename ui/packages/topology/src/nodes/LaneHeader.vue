@@ -4,6 +4,7 @@
         :class="{'lane-header--card': layout === 'card', 'lane-header--pill': isPill}"
         :style="headerStyle"
         :tabindex="loopLane ? 0 : undefined"
+        :aria-keyshortcuts="loopLane ? '[ ]' : undefined"
         data-test="topology-lane-header"
         @click="onHeaderClick"
         @keydown="onKeydown"
@@ -33,6 +34,8 @@
                 class="lane-outcome"
                 :class="`lane-outcome--${chip.kind}`"
                 data-test="loop-outcome"
+                :aria-label="chipText.full"
+                :title="chipText.full"
                 @click.stop="chip.failed > 0 && emit(EVENTS.LOOP_SCOPE_FAILED, {uid: laneUid})"
             >
                 <component :is="chipIcon" v-if="chipIcon" class="lane-outcome-icon" />
@@ -241,7 +244,7 @@
     )
 
     function onKeydown(event: KeyboardEvent) {
-        if (!loopLane.value || event.altKey || event.ctrlKey || event.metaKey) return
+        if (!loopLane.value || event.metaKey || (event.ctrlKey && !event.altKey)) return
         if ((event.target as HTMLElement | null)?.closest("input, textarea")) return
         if (event.key !== "[" && event.key !== "]") return
         event.preventDefault()

@@ -472,7 +472,9 @@
         "jump-to-first-failure": "첫 번째 실패로 이동",
         "loops-with-failures": "실패가 있는 루프",
         "task-runs": "{runs}회 실행 | {runs}회 실행",
-        "task-runs-failed": "{runs}회 실행 · {failed}회 실패 | {runs}회 실행 · {failed}회 실패"
+        "task-runs-failed": "{runs}회 실행 · {failed}회 실패 | {runs}회 실행 · {failed}회 실패",
+        "retry": "다시 시도",
+        "load-more": "더 보기"
       },
       "loop-chip": {
         "failed": {

@@ -789,7 +789,6 @@ export const useExecutionsStore = defineStore("executions", () => {
                     return
                 }
 
-                node.executionId = options.id
                 baseExecutionIds[node.uid] = options.id
                 node.executionId = scopedExecutionId(node.uid, subflowsExecutions.value) ?? options.id
 

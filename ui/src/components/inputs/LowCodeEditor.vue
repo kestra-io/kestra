@@ -75,14 +75,16 @@
                     @step="loopScoping.stepLane(uid, $event)"
                 />
             </template>
-            <template v-if="hasLoopLanes" #scopeBar="{setLanesCollapsed}">
+            <template v-if="hasLoopLanes" #scopeBar="{setLanesCollapsed, collapsedLanes}">
                 <LoopScopeBar
                     :entries="loopScoping.scopeTrail.value"
                     :canJumpToFailure="Boolean(loopScoping.firstFailedLaneUid())"
-                    :failuresOnly="failuresOnly"
+                    :failuresOnly="isFailuresOnly(collapsedLanes)"
+                    :failed="loopScoping.scopeFailure.value"
                     @clear="loopScoping.clearScope()"
+                    @retry="loopScoping.retryScope()"
                     @jump-to-failure="jumpToFirstFailure"
-                    @toggle-failures-only="toggleFailuresOnly(setLanesCollapsed)"
+                    @toggle-failures-only="toggleFailuresOnly(setLanesCollapsed, collapsedLanes)"
                 />
             </template>
             <template #taskActions="taskProps">
@@ -646,14 +648,20 @@
             expandedSubflows: () => [],
         })
 
-    const loopScoping = useLoopScoping(computed(() => augmentedFlowGraph.value))
+    const loopScoping = useLoopScoping(computed(() => augmentedFlowGraph.value), computed(() => props.isReadOnly && Boolean(exec.value?.id)))
     const loopLanes = computed(() => (exec.value?.id ? loopScoping.lanes.value : {}))
     const hasLoopLanes = computed(() => Boolean(exec.value?.id) && loopScoping.laneNodes.value.length > 0)
-    const failuresOnly = ref(false)
 
-    function toggleFailuresOnly(setLanesCollapsed: (uids: string[], collapsed: boolean) => void) {
-        failuresOnly.value = !failuresOnly.value
-        setLanesCollapsed(loopScoping.lanesWithoutFailures.value, failuresOnly.value)
+    const isCollapsedLane = (collapsedLanes: Set<string>, uid: string) =>
+        [...collapsedLanes].some((collapsedUid) => uid === collapsedUid || uid.startsWith(`${collapsedUid}.`))
+
+    function isFailuresOnly(collapsedLanes: Set<string>) {
+        const uids = loopScoping.lanesWithoutFailures.value
+        return uids.length > 0 && uids.every((uid) => isCollapsedLane(collapsedLanes, uid))
+    }
+
+    function toggleFailuresOnly(setLanesCollapsed: (uids: string[], collapsed: boolean) => void, collapsedLanes: Set<string>) {
+        setLanesCollapsed(loopScoping.lanesWithoutFailures.value, !isFailuresOnly(collapsedLanes))
     }
 
     function jumpToFirstFailure() {

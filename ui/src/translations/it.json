@@ -472,7 +472,9 @@
         "jump-to-first-failure": "Vai al primo errore",
         "loops-with-failures": "Cicli con errori",
         "task-runs": "{runs} esecuzione | {runs} esecuzioni",
-        "task-runs-failed": "{runs} esecuzione · {failed} fallite | {runs} esecuzioni · {failed} fallite"
+        "task-runs-failed": "{runs} esecuzione · {failed} fallite | {runs} esecuzioni · {failed} fallite",
+        "retry": "Riprova",
+        "load-more": "Carica altro"
       },
       "loop-chip": {
         "failed": {

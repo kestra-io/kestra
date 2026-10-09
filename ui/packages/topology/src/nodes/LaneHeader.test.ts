@@ -96,6 +96,34 @@ describe("LaneHeader loop outcome", () => {
         expect(wrapper.emitted(EVENTS.LOOP_STEP)).toEqual([[{uid: "per_region", delta: 1}], [{uid: "per_region", delta: -1}]])
     })
 
+    it("shouldStepWithAltGrAndOptionModifiersButNotWithCtrlOrMeta", async () => {
+        const wrapper = mountLane({per_region: lane({iterationCount: 4, terminatedIterations: {SUCCESS: 4}, state: "SUCCESS"})})
+        const header = wrapper.find("[data-test='topology-lane-header']")
+
+        await header.trigger("keydown", {key: "]", altKey: true})
+        await header.trigger("keydown", {key: "]", ctrlKey: true, altKey: true})
+        await header.trigger("keydown", {key: "]", ctrlKey: true})
+        await header.trigger("keydown", {key: "]", metaKey: true})
+
+        expect(wrapper.emitted(EVENTS.LOOP_STEP)).toHaveLength(2)
+    })
+
+    it("shouldNotStepWhileTypingInAnInput", async () => {
+        const wrapper = mountLane({per_region: lane({iterationCount: 4, terminatedIterations: {SUCCESS: 4}, state: "SUCCESS"})}, {slots: {loopScope: "<template #loopScope><input data-test='typing' /></template>"}})
+
+        await wrapper.find("[data-test='typing']").trigger("keydown", {key: "]"})
+
+        expect(wrapper.emitted(EVENTS.LOOP_STEP)).toBeUndefined()
+    })
+
+    it("shouldNameTheChipAtEveryWidthAndAdvertiseTheShortcuts", () => {
+        const wrapper = mountLane({per_region: lane({iterationCount: 4, terminatedIterations: {FAILED: 1, SUCCESS: 3}, state: "FAILED"})})
+
+        expect(wrapper.find("[data-test='loop-outcome']").attributes("aria-label")).toBe("1 of 4 failed")
+        expect(wrapper.find("[data-test='loop-outcome']").attributes("title")).toBe("1 of 4 failed")
+        expect(wrapper.find("[data-test='topology-lane-header']").attributes("aria-keyshortcuts")).toBe("[ ]")
+    })
+
     it("shouldMoveTheChildCountToTheTypeLineOnACollapsedCard", () => {
         const wrapper = mountLane({per_region: lane({iterationCount: 4, terminatedIterations: {SUCCESS: 4}, state: "SUCCESS"})}, {layout: "card"})
 

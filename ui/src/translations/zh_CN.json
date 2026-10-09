@@ -472,7 +472,9 @@
         "jump-to-first-failure": "跳转到第一个失败",
         "loops-with-failures": "存在失败的循环",
         "task-runs": "{runs} 次运行 | {runs} 次运行",
-        "task-runs-failed": "{runs} 次运行 · {failed} 次失败 | {runs} 次运行 · {failed} 次失败"
+        "task-runs-failed": "{runs} 次运行 · {failed} 次失败 | {runs} 次运行 · {failed} 次失败",
+        "retry": "重试",
+        "load-more": "加载更多"
       },
       "loop-chip": {
         "failed": {

@@ -446,7 +446,60 @@
       "load_error": "Не удалось загрузить граф топологии. Повторите попытку.",
       "add-task": "Добавить task",
       "add-trigger": "Добавить trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Не запускалось",
+        "pick-first": "Сначала выберите {loop}",
+        "picker-label": "Итерация {loop}",
+        "search-placeholder": "Поиск по #номеру",
+        "all-iterations": "Все итерации",
+        "iteration-number": "#{number}",
+        "step-of": "{current} из {total}",
+        "previous-iteration": "Предыдущая итерация",
+        "next-iteration": "Следующая итерация",
+        "previous-page": "Предыдущая страница",
+        "next-page": "Следующая страница",
+        "failed-group": "С ошибкой · {count}",
+        "other-group": "Другие итерации",
+        "matching": "Совпадение",
+        "failure-forbidden": "У вас нет доступа к этой итерации.",
+        "failure-not-found": "Этой итерации больше не существует.",
+        "failure-unknown": "Не удалось загрузить итерации.",
+        "scope": "Область",
+        "whole-execution": "Весь запуск",
+        "clear-scopes": "Сбросить области",
+        "jump-to-first-failure": "Перейти к первой ошибке",
+        "loops-with-failures": "Циклы с ошибками",
+        "task-runs": "{runs} запуск | {runs} запусков",
+        "task-runs-failed": "{runs} запуск · {failed} с ошибкой | {runs} запусков · {failed} с ошибкой"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} из {total} с ошибкой",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} с ошибкой · {notStarted} не запущено из {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} из {total} завершено",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} из {total} завершено · {failed} с ошибкой",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} итерация | {total} итераций",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Показать логи задачи",
     "show task condition": "Показать условие task",

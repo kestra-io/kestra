@@ -7,6 +7,7 @@ import {useRoute, type LocationQuery} from "vue-router"
 import {CLUSTER_PREFIX, throttle} from "@kestra-io/design-system"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
+import {scopedExecutionId} from "../utils/loopScope"
 import {
     TaskRun,
     useClient,
@@ -755,6 +756,8 @@ export const useExecutionsStore = defineStore("executions", () => {
 
         }
 
+    let baseExecutionIds: Record<string, string | undefined> = {}
+
     const loadAugmentedGraph = async (options: GraphOptions) => {
         const params = options.params ? options.params : {}
         const graph = await fetchGraph({id: options.id, params})
@@ -766,6 +769,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
             ?? []
         const nodeByUid: Record<string, FlowGraphNode> = {}
+        baseExecutionIds = {}
 
         graph.nodes
             // lowest depth first to be available in nodeByUid map for child-to-parent unused check
@@ -780,11 +784,14 @@ export const useExecutionsStore = defineStore("executions", () => {
                     if(parentSubflow in subflowsExecutions.value) {
                         node.executionId = subflowsExecutions.value[parentSubflow]?.id
                     }
+                    baseExecutionIds[node.uid] = node.executionId
 
                     return
                 }
 
                 node.executionId = options.id
+                baseExecutionIds[node.uid] = options.id
+                node.executionId = scopedExecutionId(node.uid, subflowsExecutions.value) ?? options.id
 
                 // reduce opacity for cluster root & end
                 if(!node.task && isUnused(nodeByUid, node.uid)) {
@@ -802,6 +809,18 @@ export const useExecutionsStore = defineStore("executions", () => {
         flowGraph.value = Object.assign({}, graph)
 
         return graph
+    }
+
+    const applyScopedExecutionIds = () => {
+        const graph = flowGraph.value
+        if (!graph) return
+        flowGraph.value = {
+            ...graph,
+            nodes: graph.nodes.map(node => ({
+                ...node,
+                executionId: scopedExecutionId(node.uid, subflowsExecutions.value) ?? baseExecutionIds[node.uid],
+            })),
+        }
     }
 
     const loadNamespaces = () => {
@@ -959,6 +978,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLatestExecutions,
         addSubflowExecution,
         removeSubflowExecution,
+        applyScopedExecutionIds,
         addProgressEvent,
         resetLogs,
         appendLogs,

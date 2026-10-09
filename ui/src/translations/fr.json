@@ -446,7 +446,60 @@
       "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
       "add-task": "Ajouter une task",
       "add-trigger": "Ajouter un trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Non exécuté",
+        "pick-first": "Choisissez d'abord {loop}",
+        "picker-label": "Itération de {loop}",
+        "search-placeholder": "Rechercher par #numéro",
+        "all-iterations": "Toutes les itérations",
+        "iteration-number": "#{number}",
+        "step-of": "{current} sur {total}",
+        "previous-iteration": "Itération précédente",
+        "next-iteration": "Itération suivante",
+        "previous-page": "Page précédente",
+        "next-page": "Page suivante",
+        "failed-group": "Échouées · {count}",
+        "other-group": "Autres itérations",
+        "matching": "Correspondance",
+        "failure-forbidden": "Vous n'avez pas accès à cette itération.",
+        "failure-not-found": "Cette itération n'existe plus.",
+        "failure-unknown": "Impossible de charger les itérations.",
+        "scope": "Périmètre",
+        "whole-execution": "Exécution entière",
+        "clear-scopes": "Effacer les périmètres",
+        "jump-to-first-failure": "Aller au premier échec",
+        "loops-with-failures": "Boucles en échec",
+        "task-runs": "{runs} exécution | {runs} exécutions",
+        "task-runs-failed": "{runs} exécution · {failed} en échec | {runs} exécutions · {failed} en échec"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} sur {total} en échec",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} en échec · {notStarted} non démarrées sur {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} sur {total} terminées",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} sur {total} terminées · {failed} en échec",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} itération | {total} itérations",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task condition": "Afficher la condition de la task",

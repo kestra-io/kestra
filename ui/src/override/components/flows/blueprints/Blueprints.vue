@@ -18,7 +18,7 @@
                 @back="selectedBlueprintId = undefined"
             />
             <BlueprintsBrowser
-                :class="{'d-none': !!selectedBlueprintId}"
+                v-show="!selectedBlueprintId"
                 :embed
                 :blueprintKind="kind"
                 blueprintType="community"

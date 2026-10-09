@@ -153,7 +153,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -1195,7 +1194,7 @@ public class ExecutionController {
         // system.from value (scheduler/trigger/worker/…) would let a caller spoof the origin.
         Optional<Label> first = parsedLabels.stream()
             .filter(
-                label -> label.key().startsWith(SYSTEM_PREFIX)
+                label -> Label.isSystem(label.key())
                     && !label.key().equals(CORRELATION_ID)
                     && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value()))
             )
@@ -2493,8 +2492,8 @@ public class ExecutionController {
         // check for system labels: none can be passed at runtime
         // as all existing labels will be passed here, we compare existing system label with the new one and fail if they are different
 
-        List<Label> existingSystemLabels = ListUtils.emptyOnNull(execution.getLabels()).stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).toList();
-        Optional<Label> first = labels.stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).filter(label -> !existingSystemLabels.contains(label)).findAny();
+        List<Label> existingSystemLabels = ListUtils.emptyOnNull(execution.getLabels()).stream().filter(label -> Label.isSystem(label.key())).toList();
+        Optional<Label> first = labels.stream().filter(label -> Label.isSystem(label.key())).filter(label -> !existingSystemLabels.contains(label)).findAny();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }

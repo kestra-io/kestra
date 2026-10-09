@@ -14,6 +14,7 @@ import {
 import type {LoopScopeEntry} from "../utils/loopScope"
 
 export const AUTO_REFRESH_MS = 10_000
+export const POST_FINISH_REFRESH_DELAYS_MS = [1_000, 3_000, 6_000, 10_000, 15_000]
 
 export type MergedLogsFailure = "forbidden" | "not-found" | "unknown"
 
@@ -125,16 +126,34 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
     const refreshTimer = useIntervalFn(() => {
         if (!loading.value) load(true)
     }, AUTO_REFRESH_MS, {immediate: false})
+    let settleTimers: ReturnType<typeof setTimeout>[] = []
+    const cancelSettling = () => {
+        settleTimers.forEach(clearTimeout)
+        settleTimers = []
+    }
+
+    // Logs are indexed asynchronously: the last lines of a finished execution can land after its state flips.
+    const settleAfterFinish = () => {
+        load(true)
+        let elapsed = 0
+        for (const delay of POST_FINISH_REFRESH_DELAYS_MS) {
+            elapsed += delay
+            settleTimers.push(setTimeout(() => load(true), elapsed))
+        }
+    }
+
     watch(options.running, (running, wasRunning) => {
+        cancelSettling()
         if (running) {
             refreshTimer.resume()
             return
         }
         refreshTimer.pause()
-        if (wasRunning) load(true)
+        if (wasRunning) settleAfterFinish()
     }, {immediate: true})
     onScopeDispose(() => {
         seq++
+        cancelSettling()
         refreshTimer.pause()
     })
 

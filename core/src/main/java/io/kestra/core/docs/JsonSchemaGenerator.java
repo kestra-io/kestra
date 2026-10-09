@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.assets.Custom;
@@ -466,6 +467,9 @@ public class JsonSchemaGenerator {
                             Map.entry("description", Optional.empty()),
                             Map.entry("$deprecated", Optional.empty()),
                             Map.entry("$group", Optional.empty()),
+                            Map.entry("$ticketingRole", Optional.empty()),
+                            Map.entry("$ticketingDefault", Optional.empty()),
+                            Map.entry("$ticketingValueMap", Optional.empty()),
                             Map.entry("$index", Optional.empty())
                         )
                     );
@@ -732,6 +736,26 @@ public class JsonSchemaGenerator {
                 }
                 if (pluginPropertyAnnotation.index() != -1) {
                     memberAttributes.put("$index", pluginPropertyAnnotation.index());
+                }
+            }
+
+            TicketingField ticketingField = member.getAnnotationConsideringFieldAndGetter(TicketingField.class);
+            if (ticketingField != null) {
+                try {
+                    if (ticketingField.role() != TicketingField.Role.NONE) {
+                        memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                    }
+                } catch (EnumConstantNotPresentException ignored) {
+                    // a plugin built against a newer core may name a role this core does not know
+                }
+                if (!ticketingField.defaultValue().isEmpty()) {
+                    memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
+                }
+                if (ticketingField.valueMap().length > 0) {
+                    ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
+                    for (TicketingField.Mapping mapping : ticketingField.valueMap()) {
+                        valueMapNode.put(mapping.from(), mapping.to());
+                    }
                 }
             }
 

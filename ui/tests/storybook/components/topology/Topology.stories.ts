@@ -415,7 +415,7 @@ DurationBarComparison.play = async ({canvasElement}) => {
     const nodeOf = (taskId: string) => canvasElement.querySelector(`[data-id="root.${taskId}"]`) as HTMLElement | null
     const barOf = (taskId: string) => nodeOf(taskId)?.querySelector("[data-test=\"duration-compact-bar\"]") as HTMLElement | null
     const filledWidthOf = (taskId: string) =>
-        Array.from(barOf(taskId)!.querySelectorAll<HTMLElement>(".split-bar-seg"))
+        Array.from(barOf(taskId)!.querySelectorAll<HTMLElement>("[data-test^='duration-segment-']"))
             .reduce((sum, segment) => sum + segment.getBoundingClientRect().width, 0)
 
     await waitFor(() => expect(barOf("transform_data")).not.toBeNull())

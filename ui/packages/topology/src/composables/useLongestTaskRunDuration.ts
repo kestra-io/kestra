@@ -1,20 +1,10 @@
 import {computed, onScopeDispose, ref, watch, type Ref} from "vue"
-import {State} from "@kestra-io/design-system"
-import {computeLongestTaskRunDuration, toMillis, type DurationHistoryEntry, type TaskRunLike} from "../misc/durationBreakdown"
-
-function latestState(histories: DurationHistoryEntry[]): string | undefined {
-    let latest: DurationHistoryEntry | undefined
-    for (const history of histories) {
-        if (!latest || toMillis(history.date) >= toMillis(latest.date)) latest = history
-    }
-    return latest?.state
-}
+import {computeDurationBreakdown, computeLongestTaskRunDuration, type TaskRunLike} from "../misc/durationBreakdown"
 
 function isStillRunning(taskRun: TaskRunLike): boolean {
     const histories = taskRun.state?.histories
     if (!histories?.length) return false
-    const state = latestState(histories)
-    return Boolean(state && State.isRunning(state))
+    return computeDurationBreakdown(histories).isRunning
 }
 
 export function useLongestTaskRunDuration(taskRuns: Ref<TaskRunLike[]>, interval = 500) {

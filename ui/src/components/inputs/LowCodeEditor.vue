@@ -693,7 +693,7 @@
     const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
     const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
-    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem("defaultLogLevel")))
+    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL)))
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)

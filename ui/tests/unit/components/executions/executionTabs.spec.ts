@@ -2,11 +2,11 @@ import {afterEach, beforeEach, describe, expect, it} from "vitest"
 
 import {
     DEFAULT_EXECUTION_TAB,
-    DEFAULT_TAB_STORAGE_KEY,
     EXECUTION_PARENT_ROUTE,
     EXECUTION_ROUTE,
     EXECUTION_TAB_ROUTES,
 } from "../../../../src/components/executions/executionTabs"
+import {storageKeys} from "../../../../src/utils/constants"
 
 // The redirect is a pure function of `to` plus localStorage, so it can be called directly.
 const redirectTo = (params: Record<string, string> = {}, query: Record<string, string> = {}) => {
@@ -19,7 +19,7 @@ describe("EXECUTION_ROUTE redirect", () => {
     afterEach(() => localStorage.clear())
 
     it("should send an execution to the stored default tab", () => {
-        localStorage.setItem(DEFAULT_TAB_STORAGE_KEY, "logs")
+        localStorage.setItem(storageKeys.EXECUTION_DEFAULT_TAB, "logs")
 
         expect(redirectTo().name).toBe(`${EXECUTION_PARENT_ROUTE}/logs`)
     })
@@ -30,14 +30,14 @@ describe("EXECUTION_ROUTE redirect", () => {
     })
 
     it("should fall back to the shared default for a tab that no longer exists", () => {
-        localStorage.setItem(DEFAULT_TAB_STORAGE_KEY, "topology-that-was-renamed")
+        localStorage.setItem(storageKeys.EXECUTION_DEFAULT_TAB, "topology-that-was-renamed")
 
         expect(redirectTo().name).toBe(`${EXECUTION_PARENT_ROUTE}/${DEFAULT_EXECUTION_TAB}`)
     })
 
     // A legacy deep link names its tab in the params, which has to win over the stored preference.
     it("should honour an explicitly requested tab over the stored one", () => {
-        localStorage.setItem(DEFAULT_TAB_STORAGE_KEY, "logs")
+        localStorage.setItem(storageKeys.EXECUTION_DEFAULT_TAB, "logs")
 
         expect(redirectTo({tab: "overview"}).name).toBe(`${EXECUTION_PARENT_ROUTE}/overview`)
     })

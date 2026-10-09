@@ -77,7 +77,7 @@
             </template>
             <template v-if="hasLoopLanes" #scopeBar="{setLanesCollapsed}">
                 <LoopScopeBar
-                    :entries="loopScoping.entries.value"
+                    :entries="loopScoping.scopeTrail.value"
                     :canJumpToFailure="Boolean(loopScoping.firstFailedLaneUid())"
                     :failuresOnly="failuresOnly"
                     @clear="loopScoping.clearScope()"

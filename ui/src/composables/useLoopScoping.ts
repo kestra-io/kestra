@@ -6,6 +6,7 @@ import {useExecutionsStore, type Execution} from "../stores/executions"
 import {loadTaskRunOutputs} from "./useTaskRunOutputs"
 import {useLoopScope} from "./useLoopScope"
 import {
+    findFailedIterationChain,
     findFirstFailedIteration,
     findIterationByNumber,
     loadIterationExecution,
@@ -81,6 +82,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
                 parentTaskId: parent?.taskId,
                 parentScoped: !parent || Boolean(executionOf(parent.uid)),
                 scopedNumber: scopedNumberOf(lane),
+                scopedValue: scopedNumberOf(lane) === undefined ? undefined : executionOf(lane.uid)?.loopRun?.value,
             }
             const host = hostOf(lane)
             const taskRun = taskRunOf(lane)
@@ -270,14 +272,31 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
 
     async function scopeFirstFailure(laneUid: string) {
         const lane = laneByUid(laneUid)
-        const host = lane && hostOf(lane)
-        if (!lane || !host?.id) return
+        const root = executionsStore.execution
+        if (!lane || !root?.id) return
 
-        const chain: LoopScopeEntry[] = entries.value.slice(0, loopDepth(lane))
-        let current: LoopLaneNode | undefined = lane
-        let parentId = host.id
+        const host = hostOf(lane)
+        let chain: LoopScopeEntry[]
+        let parentId: string
+        let current: LoopLaneNode | undefined
+
+        if (host?.id) {
+            chain = entries.value.slice(0, loopDepth(lane))
+            parentId = host.id
+            current = lane
+        } else {
+            const found = await settle(findFailedIterationChain(
+                {id: root.id, namespace: root.namespace, flowId: root.flowId, startDate: root.state?.startDate},
+                lane.taskId,
+            ))
+            if (!found) return
+            chain = found.entries
+            parentId = found.leafId
+            current = laneNodes.value.find((child) => child.parentUid === lane.uid)
+        }
+
         while (current) {
-            const failed = await findFirstFailedIteration(parentId, current.taskId)
+            const failed = await settle(findFirstFailedIteration(parentId, current.taskId))
             if (!failed) break
             chain.push({taskId: current.taskId, number: failed.number})
             parentId = failed.id
@@ -288,11 +307,24 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
     }
 
     function firstFailedLaneUid(): string | undefined {
-        return laneNodes.value.find((lane) => {
+        for (const lane of laneNodes.value) {
             const data = lanes.value[lane.uid]
-            return !lane.parentUid && data?.status === "ready" && (data.terminatedIterations?.FAILED ?? 0) > 0
-        })?.uid
+            if (data?.status !== "ready") continue
+            if ((data.terminatedIterations?.FAILED ?? 0) > 0) return lane.uid
+            const child = laneNodes.value.find((other) =>
+                other.parentUid === lane.uid && (data.loopIterationCounts?.[other.taskId]?.FAILED ?? 0) > 0,
+            )
+            if (child) return child.uid
+        }
+        return undefined
     }
+
+    const scopeTrail = computed(() =>
+        entries.value.map((entry, depth) => {
+            const lane = laneNodes.value.find((candidate) => candidate.taskId === entry.taskId && loopDepth(candidate) === depth)
+            return {...entry, value: lane ? lanes.value[lane.uid]?.scopedValue : undefined}
+        }),
+    )
 
     function hostExecutionId(laneUid: string): string | undefined {
         const lane = laneByUid(laneUid)
@@ -310,6 +342,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>) {
         lanes,
         laneNodes,
         entries,
+        scopeTrail,
         resolving,
         lanesWithoutFailures,
         scopeLane,

@@ -33,14 +33,20 @@ describe("LoopIterationPicker", () => {
     })
 
     it("shouldShowTheStepperOnceScopedAndEmitTheStep", async () => {
-        const wrapper = mountPicker(lane({scopedNumber: 2}))
+        const wrapper = mountPicker(lane({scopedNumber: 2, scopedValue: "AMER"}))
 
-        expect(wrapper.find("[data-test='loop-picker-trigger']").text()).toBe("#2")
+        expect(wrapper.find("[data-test='loop-picker-trigger']").text()).toBe("#2 AMER")
         expect(wrapper.find("[data-test='loop-stepper-label']").text()).toBe("2 of 4")
 
         await wrapper.find("[data-test='loop-step-next']").trigger("click")
 
         expect(wrapper.emitted("step")).toEqual([[1]])
+    })
+
+    it("shouldFallBackToTheIterationNumberWhenTheItemHasNoValue", () => {
+        const wrapper = mountPicker(lane({scopedNumber: 3}))
+
+        expect(wrapper.find("[data-test='loop-picker-trigger']").text()).toBe("Iteration 3")
     })
 
     it("shouldDisableTheStepperAtTheBounds", () => {

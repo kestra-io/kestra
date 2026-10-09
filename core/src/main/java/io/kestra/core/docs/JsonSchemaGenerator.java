@@ -101,7 +101,7 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
+    Map<Class<?>, Optional<Object>> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
@@ -1327,9 +1327,11 @@ public class JsonSchemaGenerator {
             }
         }
 
-        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
+        Class<?> instanceCls = baseCls;
 
-        return instance == null ? null : defaultValue(instance, baseCls, target.getName());
+        return defaultInstances.computeIfAbsent(baseCls, clazz -> Optional.ofNullable(buildDefaultInstance(clazz)))
+            .map(instance -> defaultValue(instance, instanceCls, target.getName()))
+            .orElse(null);
     }
 
     private ObjectNode extractMainRef(ObjectNode objectNode) {

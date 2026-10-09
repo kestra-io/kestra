@@ -99,17 +99,11 @@
     // FIXME: any - execution/taskRun are untyped domain objects
     const states = computed(() => {
         const taskRun = props.taskRun as any // FIXME: any
-        return (taskRun.state.current === "PAUSED" ?
-            [
-                State.FAILED,
-                State.RUNNING,
-            ] :
-            [
-                State.FAILED,
-                State.SUCCESS,
-                State.WARNING,
-            ]
-        )
+        return [
+            State.FAILED,
+            State.SUCCESS,
+            State.WARNING,
+        ]
             .filter((value: string) => value !== taskRun.state.current)
             .map((value: string) => {
                 return {
@@ -132,15 +126,7 @@
             return false
         }
 
-        if (taskRun.state.current === "PAUSED" || taskRun.state.current === "CREATED") {
-            return true
-        }
-
-        if (State.isRunning(execution.state.current)) {
-            return false
-        }
-
-        return true
+        return State.isTerminated(execution.state.current) && execution.state.current !== State.KILLED
     })
 
     function changeStatus() {

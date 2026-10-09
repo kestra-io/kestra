@@ -2278,7 +2278,13 @@
         "groups": "Grupy ({n})",
         "group_none": "Bez grupowania",
         "group_dataset": "Zbiór danych",
-        "ungrouped": "Bez grupy"
+        "ungrouped": "Bez grupy",
+        "hub": {
+          "notice": "Ten węzeł ma {count} relacji — pokazano tylko najnowsze, aby wykres był czytelny.",
+          "expand": "Załaduj więcej relacji",
+          "expand_failed": "Nie można załadować więcej relacji. Spróbuj ponownie."
+        },
+        "truncated": "Ten wykres był zbyt duży, aby wyświetlić go w całości; niektóre relacje zostały pominięte."
       },
       "search": {
         "placeholders": {

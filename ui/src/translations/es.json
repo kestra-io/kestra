@@ -2278,7 +2278,13 @@
         "groups": "Grupos ({n})",
         "group_none": "Sin agrupación",
         "group_dataset": "Dataset",
-        "ungrouped": "Sin agrupar"
+        "ungrouped": "Sin agrupar",
+        "hub": {
+          "notice": "Este nodo tiene {count} relaciones; solo se muestran las más recientes para mantener el gráfico legible.",
+          "expand": "Cargar más relaciones",
+          "expand_failed": "No se pudieron cargar más relaciones. Por favor, inténtalo de nuevo."
+        },
+        "truncated": "Este gráfico era demasiado grande para mostrarlo completo; algunas relaciones se omitieron."
       },
       "search": {
         "placeholders": {

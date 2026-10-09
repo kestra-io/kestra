@@ -8,19 +8,27 @@ export const ASSET = "ASSET" as const
 
 export type Types = typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET;
 
+type HubInfo = {
+    collapsed?: boolean;
+    totalDegree?: number;
+    /** Not derivable from `node.id`, which falls back to the graph uid once anonymized. */
+    expandable?: boolean;
+    exhausted?: boolean;
+};
+
 type Flow = {
     subtype: typeof FLOW;
-};
+} & HubInfo;
 
 type Execution = {
     subtype: typeof EXECUTION;
     id?: string;
     state?: string;
-};
+} & HubInfo;
 
 type Namespace = {
     subtype: typeof NAMESPACE;
-};
+} & HubInfo;
 
 type Asset = {
     subtype: typeof ASSET;
@@ -38,7 +46,7 @@ type Asset = {
     status?: string;
     /** Most recent runs that wrote the asset, newest first. */
     runs?: AssetRun[];
-};
+} & HubInfo;
 
 export type AssetRun = {
     executionId?: string;
@@ -75,3 +83,11 @@ export const nodesOf = (elements: Element[]): Node[] =>
 
 export const edgesOf = (elements: Element[]): Edge[] =>
     elements.filter((el): el is {data: Edge} => el.data.type === EDGE).map(({data}) => data)
+
+/** The shape every dependency data source resolves to, whether an asset graph, a flow graph or a namespace graph. */
+export type ElementsResult = {
+    data: Element[];
+    count: number;
+    /** True only when the asset graph's node budget was hit; absent/false for every other subtype. */
+    truncated?: boolean;
+};

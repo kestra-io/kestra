@@ -101,6 +101,12 @@ vi.mock("vue-router", () => ({
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
 
+const toastError = vi.fn()
+vi.mock("../../../../src/utils/toast", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../../../../src/utils/toast")>(),
+  useToast: () => ({error: toastError}),
+}))
+
 // Minimal KsGraph ref mock that satisfies the KsGraphRef interface.
 function makeGraphRef() {
   return ref({
@@ -505,6 +511,151 @@ describe("useDependencies composable", () => {
 
         const focusCalls = cameraCalls(chartMock.setOption.mock.calls)
         expect(focusCalls).toHaveLength(0)
+    })
+  })
+
+  describe("expandNode", () => {
+    function mountWithExpand() {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "hub", type: "NODE", flow: "hub", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-1", type: "NODE", flow: "peer-1", namespace: "ns", metadata: {subtype: "ASSET"}}},
+        ],
+        count: 2,
+      })
+      const expandAssetNode = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "hub", type: "NODE", flow: "hub", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-1", type: "NODE", flow: "peer-1", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-2", type: "NODE", flow: "peer-2", namespace: "ns", metadata: {subtype: "ASSET"}}},
+        ],
+        count: 3,
+      })
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(
+            graphRef, FLOW, "hub", {}, fetchAssetDependencies, undefined, true, expandAssetNode,
+          )
+          return {composable}
+        },
+      })
+      return {wrapper, expandAssetNode, ...(wrapper.vm.composable as ReturnType<typeof useDependencies>)}
+    }
+
+    it("merges a hub's expanded relations without duplicating nodes already on screen", async () => {
+      const {getElements, expandNode, expandAssetNode} = mountWithExpand()
+      await nextTick()
+      await nextTick()
+
+      expect(getElements()).toHaveLength(2)
+
+      await expandNode("hub")
+      expect(getElements()).toHaveLength(3)
+      expect(getElements().filter((el) => el.data.id === "peer-2")).toHaveLength(1)
+
+      // A second expand (e.g. clicking "Load more" again) must not duplicate what's already shown.
+      await expandNode("hub")
+      expect(getElements()).toHaveLength(3)
+      expect(expandAssetNode).toHaveBeenCalledTimes(2)
+    })
+
+    function mountWithHubs(expandResult: unknown) {
+      const graphRef = makeGraphRef()
+      const hub = (id: string, metadata = {}) => ({data: {id, type: "NODE", flow: id, namespace: "ns", metadata: {subtype: "ASSET", collapsed: true, expandable: true, ...metadata}}})
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [hub("hub-a"), hub("hub-b")], count: 2})
+      const expandAssetNode = vi.fn().mockImplementation(() => expandResult instanceof Error ? Promise.reject(expandResult) : Promise.resolve(expandResult))
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "hub-a", {}, fetchAssetDependencies, undefined, true, expandAssetNode)
+          return {composable}
+        },
+      })
+      return {...(wrapper.vm.composable as ReturnType<typeof useDependencies>)}
+    }
+
+    const nodeMeta = (getElements: () => {data: {id: string; metadata?: unknown}}[], id: string) =>
+      getElements().find((el) => el.data.id === id)?.data.metadata
+
+    it("refreshes only the expanded hub and leaves other collapsed hubs untouched", async () => {
+      const plain = (id: string) => ({data: {id, type: "NODE", flow: id, namespace: "ns", metadata: {subtype: "ASSET"}}})
+      const {getElements, expandNode} = mountWithHubs({
+        data: [plain("hub-a"), plain("hub-b"), plain("peer")],
+        count: 3,
+      })
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(nodeMeta(getElements, "hub-a")).not.toHaveProperty("collapsed")
+      expect(nodeMeta(getElements, "hub-b")).toMatchObject({collapsed: true, expandable: true})
+      expect(getElements().map((el) => el.data.id)).toContain("peer")
+    })
+
+    it("updates the expanded hub's own metadata even when no new peer is added", async () => {
+      const {getElements, expandNode} = mountWithHubs({
+        data: [{data: {id: "hub-a", type: "NODE", flow: "hub-a", namespace: "ns", metadata: {subtype: "ASSET", collapsed: true, expandable: false, exhausted: true}}}],
+        count: 1,
+      })
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(nodeMeta(getElements, "hub-a")).toMatchObject({expandable: false, exhausted: true})
+      expect(getElements()).toHaveLength(2)
+    })
+
+    it("shows an error toast and keeps the graph when the expand request fails", async () => {
+      toastError.mockClear()
+      const {getElements, expandNode, expandingNodeID} = mountWithHubs(new Error("boom"))
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(toastError).toHaveBeenCalledTimes(1)
+      expect(getElements()).toHaveLength(2)
+      expect(expandingNodeID.value).toBeUndefined()
+    })
+
+    it("is a no-op when no expandAssetNode was supplied", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [], count: 0})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "hub", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+      await nextTick()
+      const {expandNode, getElements} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      await expandNode("hub")
+
+      expect(getElements()).toHaveLength(0)
+    })
+  })
+
+  describe("graphTruncated", () => {
+    it("reflects the truncated flag from fetchAssetDependencies", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [], count: 0, truncated: true})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "x", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+      await nextTick()
+      const {graphTruncated} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      expect(graphTruncated.value).toBe(true)
     })
   })
 

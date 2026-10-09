@@ -33,7 +33,7 @@
                         <EnterpriseBadge :enable="(tab as Tab).locked">
                             <span class="tab-label-wrapper">
                                 {{ tab.title }}
-                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" inline />
+                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" :max="tab.max" type="primary" inline />
                             </span>
                         </EnterpriseBadge>
                     </component>

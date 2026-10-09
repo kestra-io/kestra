@@ -1,4 +1,4 @@
-import {defineComponent, h, toRaw} from "vue"
+import {defineComponent, h, toRaw, type Ref} from "vue"
 import {describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 
@@ -49,8 +49,21 @@ const mountPairs = (comparator: Comparators) => mount(FilterKVPairs, {
     },
 })
 
+interface FilterKVPairsSetupState {
+    newKey: Ref<string>
+    newValue: Ref<string>
+    detailPairs: Ref<Array<{key: string; value: string}>>
+    addPair: () => void
+}
+
+interface FilterKVPairsInstance {
+    $: {
+        setupState: FilterKVPairsSetupState
+    }
+}
+
 const addPair = async (wrapper: ReturnType<typeof mountPairs>, key: string, value: string) => {
-    const state = (wrapper.vm as any).$?.setupState
+    const state = (wrapper.vm as unknown as FilterKVPairsInstance).$.setupState
     const rawState = toRaw(state)
     rawState.newKey.value = key
     rawState.newValue.value = value
@@ -106,7 +119,7 @@ describe("FilterKVPairs", () => {
         await wrapper.setProps({comparator: Comparators.EQUALS})
         await wrapper.vm.$nextTick()
 
-        const state = toRaw((wrapper.vm as any).$?.setupState)
+        const state = toRaw((wrapper.vm as unknown as FilterKVPairsInstance).$.setupState)
         expect(state.detailPairs.value).toEqual([
             {key: "environment", value: "staging"},
             {key: "team", value: "platform"},

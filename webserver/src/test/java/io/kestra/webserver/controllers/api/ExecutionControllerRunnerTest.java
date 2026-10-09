@@ -1761,6 +1761,23 @@ class ExecutionControllerRunnerTest {
         assertThat((Map<String, Object>) outputs.get("resumed")).containsKey("on");
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/resume-validate.yaml" })
+    void shouldReturnConflictWhenValidatingResumeOfNonPausedExecution() throws QueueException, InternalException {
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "resume-validate");
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", null));
+        awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume/validate", null)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({ "flows/valids/pause_on_resume.yaml" })

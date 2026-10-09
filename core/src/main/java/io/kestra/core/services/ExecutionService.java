@@ -15,6 +15,7 @@ import org.reactivestreams.Publisher;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
@@ -128,7 +129,7 @@ public class ExecutionService {
         Execution execution = getExecution(tenant, executionId, withACL);
 
         if (!execution.getState().isPaused()) {
-            throw new IllegalStateException("Execution '" + executionId + "' is not paused, can't resume it");
+            throw new ConflictException("Cannot resume execution '%s': it is not paused.".formatted(executionId));
         }
 
         return execution;

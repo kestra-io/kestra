@@ -91,7 +91,7 @@ class LoopExecutionEventMessageHandlerTest {
         // Given
         var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
         var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "nonExistingExecution", State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, "nonExistingExecution", State.Type.SUCCESS, null, null, null);
 
         // When
         var maybeExecutor = handler.handle(message);
@@ -119,7 +119,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null ,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -150,7 +150,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When — one iteration fails, loop should terminate immediately
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.FAILED, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.FAILED, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
@@ -190,7 +190,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — handler emits next loop execution and returns empty (null from inner lambda)
@@ -299,7 +299,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When — the second iteration fails
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — the loop keeps running (emits the last iteration) and records both terminal states
@@ -313,7 +313,7 @@ class LoopExecutionEventMessageHandlerTest {
         // Given — sub execution is kill-switched
         var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
         var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null, null);
         when(killSwitchService.evaluate("sub-exec-1")).thenReturn(EvaluationType.IGNORE);
 
         // When
@@ -328,7 +328,7 @@ class LoopExecutionEventMessageHandlerTest {
         // Given — sub execution passes but parent is kill-switched
         var execution = Execution.newExecution(loopFlow(), Collections.emptyList());
         var loopRun = new LoopRun(execution, "loop", "taskrun", 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-exec-1", State.Type.SUCCESS, null, null, null);
         when(killSwitchService.evaluate(execution.getId())).thenReturn(EvaluationType.IGNORE);
 
         // When
@@ -367,7 +367,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — fails only this execution, does not throw and crash the whole instance
@@ -387,7 +387,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.RESTARTED, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.RESTARTED, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — the execution is failed instead of being resumed
@@ -417,7 +417,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.SUCCESS, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — fails only this execution, does not throw and crash the whole instance
@@ -445,7 +445,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When — the first iteration fails
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null);
+        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null, null, null);
         var maybeExecutor = handler.handle(message);
 
         // Then — the loop ends in SUCCESS: 1 sub-execution ran (and failed), the 2 remaining iterations are skipped
@@ -475,7 +475,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When: the first iteration succeeds and triggers the break while the second one is still running
         var firstRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null,false);
-        var firstResult = handler.handle(new LoopExecutionEvent(firstRun, "sub-execution-0", State.Type.SUCCESS, null, null));
+        var firstResult = handler.handle(new LoopExecutionEvent(firstRun, "sub-execution-0", State.Type.SUCCESS, null, null, null));
 
         // Then: the loop is not terminated and the never-started iteration is skipped
         assertThat(firstResult).isEmpty();
@@ -485,7 +485,7 @@ class LoopExecutionEventMessageHandlerTest {
 
         // When: the running iteration fails
         var secondRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null,false);
-        var secondResult = handler.handle(new LoopExecutionEvent(secondRun, "sub-execution-1", State.Type.FAILED, null, null));
+        var secondResult = handler.handle(new LoopExecutionEvent(secondRun, "sub-execution-1", State.Type.FAILED, null, null, null));
 
         // Then: the loop ends once, in FAILED, without evaluating breakWhen again
         assertThat(secondResult).isPresent();

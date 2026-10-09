@@ -287,4 +287,29 @@ public class InternalStorage implements Storage {
     public List<FileAttributes> list(URI uri) throws IOException {
         return this.storage.list(context.getTenantId(), context.getNamespace(), uri);
     }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Optional<SignedUrl> sign(URI uri, SignedUrlCapable.Operation operation, Duration ttl) throws IOException {
+        uriGuard(uri);
+
+        return this.storage instanceof SignedUrlCapable capable
+            ? capable.sign(context.getTenantId(), context.getNamespace(), uri, operation, ttl)
+            : Optional.empty();
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Optional<URI> copyFrom(String name, URI source) throws IOException {
+        URI uri = context.getContextStorageURI();
+        URI target = buildStorageUri(uri, toLogicalPath(name));
+
+        return this.storage instanceof ServerSideCopyCapable capable
+            ? capable.copyFrom(context.getTenantId(), context.getNamespace(), target, source)
+            : Optional.empty();
+    }
 }

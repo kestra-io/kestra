@@ -41,7 +41,6 @@ logger.warnOnce = (msg, options) => {
 
 import {commit} from "./plugins/commit"
 import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
-import {codecovVitePlugin} from "@codecov/vite-plugin"
 import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {consolidateChunks} from "./plugins/consolidateChunks.js"
 import {VitePWA} from "vite-plugin-pwa"
@@ -108,12 +107,6 @@ export default defineConfig(({mode}) => {
             !process.env.STORYBOOK && consolidateChunks(),
             stripDeadPrebuildDefault(),
             commit(),
-            codecovVitePlugin({
-                enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
-                bundleName: "ui",
-                uploadToken: process.env.CODECOV_TOKEN,
-                telemetry: false,
-            }),
             !process.env.STORYBOOK && VitePWA({
                 // registered manually (serviceWorker.ts) so scope derives from the runtime base path
                 injectRegister: null,
@@ -165,9 +158,12 @@ export default defineConfig(({mode}) => {
         },
         optimizeDeps: {
             entries: [
+                "src/**/*.stories.{ts,tsx}",
                 "tests/storybook/**/*.stories.{ts,tsx}",
                 "packages/design-system/src/**/*.{ts,vue}",
+                "!packages/design-system/src/**/*.test.ts",
                 "node_modules/@kestra-io/design-system/src/**/*.{ts,vue}",
+                "!node_modules/@kestra-io/design-system/src/**/*.test.ts",
             ],
             include: [
                 "debug",

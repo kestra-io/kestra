@@ -22,6 +22,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
+import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -519,6 +520,25 @@ class ExecutionServiceTest {
         assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(killed.getState().getHistories()).hasSize(5);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldHaveWorkToKillOnlyForRunningSubExecutionWhenCascading() {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution parent = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.SUCCESS);
+        executionRepository.save(parent);
+        assertThat(executionService.hasWorkToKill(flow, parent, true)).isFalse();
+
+        Execution child = Execution.newExecution(flow, Collections.emptyList())
+            .toBuilder()
+            .trigger(ExecutionTrigger.builder().id("subflow").type("subflow").variables(Map.of("executionId", parent.getId())).build())
+            .build()
+            .withState(State.Type.RUNNING);
+        executionRepository.save(child);
+
+        assertThat(executionService.hasWorkToKill(flow, parent, true)).isTrue();
+        assertThat(executionService.hasWorkToKill(flow, parent, false)).isFalse();
     }
 
     @Test

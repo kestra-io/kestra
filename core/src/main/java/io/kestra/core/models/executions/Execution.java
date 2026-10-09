@@ -455,7 +455,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             null, // we don't copy triggers to reduce the size, the RunVariables must get them from the parent execution
             this.deleted,
             // reset the task-run statistic accumulator to avoid double counting task runs
-            this.metadata.withTaskRunStatistic(null),
+            this.metadata.withTaskRunStatistic(null).withTaskRunStateCounts(null),
             null,
             this.traceParent,
             this.fixtures,

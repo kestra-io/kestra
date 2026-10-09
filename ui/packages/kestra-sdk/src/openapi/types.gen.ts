@@ -6613,7 +6613,7 @@ export type KillExecutionErrors = {
      */
     404: ProblemDetail;
     /**
-     * if the executions is already finished
+     * if the execution is already finished and has no running task or sub-execution left to kill
      */
     409: ProblemDetail;
     /**

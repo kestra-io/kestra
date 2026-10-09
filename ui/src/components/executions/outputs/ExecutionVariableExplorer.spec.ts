@@ -85,9 +85,6 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
             histories: [],
             startDate: "2026-01-01T00:00:00Z",
             duration: "PT1S",
-            getStartDate: "2026-01-01T00:00:00Z",
-            getEndDate: "",
-            getDuration: "PT1S",
         },
     }
 

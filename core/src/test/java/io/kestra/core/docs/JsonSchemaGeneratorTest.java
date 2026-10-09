@@ -489,7 +489,7 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void requiredIsRemovedForSubtypedFieldWithBuilderDefault() {
+    void shouldNotRequireSubtypedFieldWhenBuilderDefaultExists() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, RequiredSubtypedWithDefault.class);
 
         assertThat((List<String>) generate.get("required"), not(hasItem("taskRunner")));

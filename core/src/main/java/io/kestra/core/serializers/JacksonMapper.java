@@ -6,7 +6,9 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.TimeZone;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -19,6 +21,7 @@ import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -171,8 +174,19 @@ public final class JacksonMapper {
             .registerModule(new ParameterNamesModule())
             .registerModules(new GuavaModule())
             .registerModule(new PluginModule())
+            .registerModules(additionalModules())
             .registerModule(durationDeserialization)
             .setTimeZone(TimeZone.getDefault());
+    }
+
+    /** Modules contributed via {@link JacksonMapperModuleProvider}, since {@code core} can't depend on them directly. */
+    private static Module[] additionalModules() {
+        return StreamSupport.stream(
+            ServiceLoader.load(JacksonMapperModuleProvider.class, JacksonMapper.class.getClassLoader()).spliterator(),
+            false
+        )
+            .map(JacksonMapperModuleProvider::module)
+            .toArray(Module[]::new);
     }
 
     private static ObjectMapper createIonObjectMapper(boolean binary) {

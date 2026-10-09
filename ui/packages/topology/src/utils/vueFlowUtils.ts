@@ -189,7 +189,7 @@ export function generateDagreGraph(
     dagreGraph.setDefaultEdgeLabel(() => ({}))
     // Vertically, a lane's own first node carries the header's height, so dagre grows the cluster
     // around it and still leaves a full rank apart from whatever sits above. Horizontally the
-    // header is across the flow, on the axis `nodesep` governs, where no node can carry it.
+    // header is across the flow, where no node can carry it: `insertLaneHeaderBands` makes room after layout.
     dagreGraph.setGraph({
         rankdir: isHorizontal ? "LR" : "TB",
         ranksep: DAGRE_RANK_SEP,
@@ -252,12 +252,7 @@ export function generateDagreGraph(
 function insertLaneHeaderBands(dagreGraph: dagre.graphlib.Graph) {
     const boxOf = (uid: string) => {
         const node = dagreGraph.node(uid)
-        return {
-            top: node.y - node.height / 2,
-            bottom: node.y + node.height / 2,
-            left: node.x - node.width / 2,
-            right: node.x + node.width / 2,
-        }
+        return {top: node.y - node.height / 2, bottom: node.y + node.height / 2}
     }
     const ancestorsOf = (uid: string) => {
         const ancestors: string[] = []
@@ -270,27 +265,20 @@ function insertLaneHeaderBands(dagreGraph: dagre.graphlib.Graph) {
     const childrenOf = (uid: string) => (dagreGraph.children(uid) as unknown as string[] | undefined) ?? []
     const descendantsOf = (uid: string): string[] =>
         childrenOf(uid).flatMap((child) => [child, ...descendantsOf(child)])
+    const siblingsOf = (uid: string) => {
+        const parent = dagreGraph.parent(uid)
+        const siblings = parent ? childrenOf(parent) : dagreGraph.nodes().filter((each) => !dagreGraph.parent(each))
+        return siblings.filter((each) => each !== uid)
+    }
 
     for (const lane of dagreGraph.nodes().filter((uid) => childrenOf(uid).length)) {
         const growing = [lane, ...ancestorsOf(lane)]
-        const pushers = growing.map(boxOf)
         const moved = new Set(descendantsOf(lane))
-        const move = (uid: string) => {
-            for (const each of [uid, ...descendantsOf(uid)]) {
-                moved.add(each)
-                pushers.push(boxOf(each))
-            }
-        }
-
-        let found = true
-        while (found) {
-            found = false
-            for (const uid of dagreGraph.nodes()) {
-                if (moved.has(uid) || growing.includes(uid)) continue
-                const box = boxOf(uid)
-                if (pushers.some((pusher) => box.top >= pusher.bottom && box.left < pusher.right && box.right > pusher.left)) {
-                    move(uid)
-                    found = true
+        for (const box of growing) {
+            const bottom = boxOf(box).bottom
+            for (const sibling of siblingsOf(box).filter((each) => boxOf(each).top >= bottom)) {
+                for (const each of [sibling, ...descendantsOf(sibling)]) {
+                    moved.add(each)
                 }
             }
         }
@@ -794,8 +782,7 @@ export function generateGraph(
         }))
         .filter((edge) => edge.source !== edge.target)
 
-    // `generateDagreGraph` already makes room for every header, so the cluster box and its children
-    // need no adjustment afterwards — vertically, only the node carrying it renders lower.
+    // `generateDagreGraph` already makes room for every header; vertically only the node carrying it renders lower.
     const laneStartUids = new Set(
         clusters
             .filter((c) => !edgeReplacer[c.cluster.uid] && !collapsed.has(c.cluster.uid.replace(CLUSTER_PREFIX, "")) && c.start)

@@ -26,6 +26,7 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.37.0"
+    id 'org.cyclonedx.bom' version '3.4.1'
 
     // Kestra gradle plugin
     id "io.kestra.gradle.spotless-conventions" version '1.2.11'
@@ -637,6 +638,61 @@ tasks.register('runStandalone') {
 }
 
 /**********************************************************************************************************************\
+ * UI SBOM
+ **********************************************************************************************************************/
+tasks.register('uiSbom', Exec) {
+    group = 'build'
+    description = 'Generate the CycloneDX SBOM of the UI production dependencies (requires `npm ci` in ui/)'
+    workingDir = file('ui')
+    commandLine 'npm', 'run', 'generate:sbom'
+    outputs.file('ui/build/sbom/bom.json')
+    outputs.upToDateWhen { false }
+}
+
+tasks.register('sbom') {
+    group = 'build'
+    description = 'Generate the CycloneDX SBOM of the Kestra executable, merging the backend and the UI dependencies'
+    dependsOn ':cli:cyclonedxDirectBom', 'uiSbom'
+
+    def backendSbom = provider { project(':cli').tasks.named('cyclonedxDirectBom').get().jsonOutput.get().asFile }
+    def uiSbom = file('ui/build/sbom/bom.json')
+    def mergedSbom = layout.buildDirectory.file('sbom/kestra-sbom.json')
+    inputs.files(backendSbom, uiSbom)
+    outputs.file(mergedSbom)
+
+    doLast {
+        def slurper = new groovy.json.JsonSlurper()
+        def bom = slurper.parse(backendSbom.get(), 'UTF-8')
+        def ui = slurper.parse(uiSbom, 'UTF-8')
+
+        def uiRoot = ui.metadata.component
+        uiRoot.name = 'kestra-ui'
+        def uiRootRef = uiRoot['bom-ref']
+
+        def knownRefs = bom.components.collect { it['bom-ref'] } as Set
+        bom.components = bom.components + [uiRoot] + ui.components.findAll { !knownRefs.contains(it['bom-ref']) }
+
+        def rootRef = bom.metadata.component['bom-ref']
+        def dependencies = bom.dependencies.collect { it }
+        def rootDependency = dependencies.find { it.ref == rootRef }
+        rootDependency.dependsOn = ((rootDependency.dependsOn ?: []) + [uiRootRef]).unique()
+        def knownDependencies = dependencies.collect { it.ref } as Set
+        dependencies = dependencies + ui.dependencies.findAll { !knownDependencies.contains(it.ref) }
+
+        // cyclonedx-npm emits references to nested packages it does not list, which strict validators reject
+        def knownComponents = (bom.components.collect { it['bom-ref'] } + [rootRef]) as Set
+        bom.dependencies = dependencies.findAll { knownComponents.contains(it.ref) }.collect { dependency ->
+            dependency.dependsOn = (dependency.dependsOn ?: []).findAll { knownComponents.contains(it) }
+            dependency
+        }
+
+        def output = mergedSbom.get().asFile
+        output.parentFile.mkdirs()
+        output.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(bom)), 'UTF-8')
+    }
+}
+
+/**********************************************************************************************************************\
  * Publish
  **********************************************************************************************************************/
 subprojects {subProject ->
@@ -679,6 +735,29 @@ subprojects {subProject ->
         def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
         if (subProject.name in unpublishedModules){
             return
+        }
+
+        // Test and benchmark helper modules do not ship runtime code, so they get no SBOM
+        def hasSbom = !(subProject.name in ["tests", "jmh-benchmarks"])
+
+        if (hasSbom) {
+            apply plugin: 'org.cyclonedx.bom'
+
+            tasks.named('cyclonedxDirectBom') {
+                buildSystemEnvironmentVariable = '${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}'
+            if (subProject.name == 'cli') {
+                projectType = org.cyclonedx.model.Component.Type.APPLICATION
+            }
+
+                def organization = new org.cyclonedx.model.OrganizationalEntity()
+                organization.name = "Kestra Technology"
+                organization.urls = ["https://kestra.io"]
+                def contact = new org.cyclonedx.model.OrganizationalContact()
+                contact.name = "Security Team"
+                contact.email = "security@kestra.io"
+                organization.addContact(contact)
+                organizationalEntity = organization
+            }
         }
 
         mavenPublishing {
@@ -724,6 +803,11 @@ subprojects {subProject ->
                         if (subProject.name == "platform") {
                             // Clear all artifacts except the BOM
                             publication.artifacts.clear()
+                        } else if (hasSbom) {
+                            publication.artifact(tasks.named('cyclonedxDirectBom').flatMap { it.jsonOutput }) {
+                                classifier = "cyclonedx"
+                                extension = "json"
+                            }
                         }
                     }
                 }
@@ -754,6 +838,12 @@ subprojects {subProject ->
                     }
                     pub.artifact(tasks.named("sourcesJar").get())
                     pub.artifact(tasks.named("javadocJar").get())
+                    // The shadow jar bundles the UI, so its SBOM covers the backend and the UI dependencies
+                    pub.artifact(rootProject.layout.buildDirectory.file('sbom/kestra-sbom.json')) {
+                        builtBy rootProject.tasks.named('sbom')
+                        classifier = "cyclonedx"
+                        extension = "json"
+                    }
 
                 }
 

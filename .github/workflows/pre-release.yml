@@ -19,6 +19,11 @@ jobs:
   build-artifacts:
     name: Build Artifacts
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
@@ -28,6 +33,7 @@ jobs:
       # Embed the plugin schema bundle in the jar, so the zip/tar and executable published
       # to the GitHub release carry it just like the Docker images do.
       embed-plugins-schema-bundle: true
+      sbom: true
 
   backend-tests:
     name: Backend tests
@@ -107,6 +113,8 @@ jobs:
     if: "!failure() && !cancelled()"
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main
     secrets: inherit
+    with:
+      sbom: true
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace

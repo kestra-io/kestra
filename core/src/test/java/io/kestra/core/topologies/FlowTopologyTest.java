@@ -1,6 +1,9 @@
 package io.kestra.core.topologies;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -12,6 +15,7 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -62,7 +66,7 @@ public class FlowTopologyTest {
             """);
 
         // When
-        computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
+        awaitTopologies(List.of(child, parent, unrelatedFlow));
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
 
@@ -128,7 +132,7 @@ public class FlowTopologyTest {
             """);
 
         // When
-        computeAndSaveTopologies(List.of(subChild, child, superParent, parent, unrelatedFlow));
+        awaitTopologies(List.of(subChild, child, superParent, parent, unrelatedFlow));
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
 
@@ -178,7 +182,7 @@ public class FlowTopologyTest {
             """);
 
         // When
-        computeAndSaveTopologies(List.of(triggeredFlowOne, triggeredFlowTwo));
+        awaitTopologies(List.of(triggeredFlowOne, triggeredFlowTwo));
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", triggeredFlowTwo.getId(), false, true).toList();
 
@@ -243,7 +247,7 @@ public class FlowTopologyTest {
             """);
 
         // When
-        computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
+        awaitTopologies(List.of(child, parent, unrelatedFlow));
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
 
@@ -308,7 +312,7 @@ public class FlowTopologyTest {
                 """
         );
 
-        computeAndSaveTopologies(List.of(subChild, child, parent, unrelated));
+        awaitTopologies(List.of(subChild, child, parent, unrelated));
 
         FlowTopologyGraph graph = flowTopologyService.namespaceGraph(tenantId, "io.kestra.unittest");
 
@@ -319,18 +323,17 @@ public class FlowTopologyTest {
         assertThat(graph.getEdges().size()).isEqualTo(2);
     }
 
-    /**
-     * this function mimics the production behaviour
-     */
-    private void computeAndSaveTopologies(List<@NotNull FlowWithSource> flows) {
-        flows.forEach(
-            flow -> flowTopologyService
-                .topology(
-                    flow,
-                    flows
-                ).distinct()
-                .forEach(topology -> flowTopologyRepository.save(topology))
-        );
+    private void awaitTopologies(List<@NotNull FlowWithSource> flows) {
+        Set<String> expected = flows.stream()
+            .flatMap(flow -> flowTopologyService.topology(flow, flows))
+            .map(FlowTopology::uid)
+            .collect(Collectors.toSet());
+
+        Await.await()
+            .atMost(Duration.ofSeconds(10))
+            .untilAsserted(() -> assertThat(flowTopologyRepository.findAll(flows.getFirst().getTenantId()))
+                .extracting(FlowTopology::uid)
+                .containsAll(expected));
     }
 
     record FlowTopologyTestData(String sourceUid, String destinationUid) {

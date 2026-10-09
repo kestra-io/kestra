@@ -14,6 +14,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.AccessScope;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -24,7 +25,6 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.AccessScope;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.repositories.NamespaceAccessControl;

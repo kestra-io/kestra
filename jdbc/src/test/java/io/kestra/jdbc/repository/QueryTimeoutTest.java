@@ -47,7 +47,8 @@ class QueryTimeoutTest {
     }
 
     private static void run(SQLException failure) {
-        Configuration configuration = DSL.using(new MockConnection(context -> {
+        Configuration configuration = DSL.using(new MockConnection(context ->
+        {
             throw failure;
         }), SQLDialect.POSTGRES).configuration();
 

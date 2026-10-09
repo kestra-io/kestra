@@ -234,8 +234,8 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             : DSL.row(dateField, KEY_FIELD).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
 
         final Condition finalCondition = condition;
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
-            DSL.using(configuration)
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(
+            configuration -> DSL.using(configuration)
                 .select(KEY_FIELD, VALUE_FIELD)
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter(tenantId))

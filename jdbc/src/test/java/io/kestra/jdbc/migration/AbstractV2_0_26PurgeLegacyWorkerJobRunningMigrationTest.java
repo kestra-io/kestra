@@ -10,10 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;

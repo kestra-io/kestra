@@ -33,6 +33,6 @@ public class JdbcTableConfigs {
 
     @ConfigurationProperties("kestra.jdbc.metrics")
     public record MetricConfig(
-        @Bindable(defaultValue = "10") long queryDurationThresholdMs
-    ) { }
+        @Bindable(defaultValue = "10") long queryDurationThresholdMs) {
+    }
 }

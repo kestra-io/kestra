@@ -158,9 +158,12 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
 
     @Override
     public void updateChecksum(final MigrationScript script) throws SQLException {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(
-                 "UPDATE " + HISTORY_TABLE + " SET checksum = ? WHERE script_id = ? AND success = TRUE")) {
+        try (
+            Connection connection = dataSource.getConnection();
+            PreparedStatement ps = connection.prepareStatement(
+                "UPDATE " + HISTORY_TABLE + " SET checksum = ? WHERE script_id = ? AND success = TRUE"
+            )
+        ) {
             ps.setString(1, script.checksum());
             ps.setString(2, script.scriptId());
             int updated = ps.executeUpdate();

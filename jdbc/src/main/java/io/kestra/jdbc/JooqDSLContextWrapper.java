@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 
 import javax.sql.DataSource;
 
+import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.TransactionalCallable;
@@ -41,9 +42,10 @@ public class JooqDSLContextWrapper {
 
     private final DSLContext dslContext;
     private final DataSource rawDataSource;
+    private final ThreadLocal<Configuration> transactionConfiguration = new ThreadLocal<>();
 
     /**
-     * @param dataSource used by {@link #requireNewTransaction(TransactionalRunnable)}, and an
+     * @param dataSource the pool transactions are acquired from, and an
      *        explicit dependency to ensure Micronaut destroys this bean before the DataSource.
      *        Without it, the @EachBean-derived DSLContext/Configuration may be destroyed
      *        together with the DataSource, leaving this wrapper with a stale DSLContext.
@@ -52,7 +54,8 @@ public class JooqDSLContextWrapper {
     public JooqDSLContextWrapper(DSLContext dslContext, DataSource dataSource) {
         this.dslContext = dslContext;
         // Unwrap any Micronaut Data AOP proxy: the wrapped DataSource hands back the current
-        // thread's transaction-bound connection instead of a new one.
+        // thread's Micronaut transaction-bound connection instead of a new one, while transactions
+        // here are managed by this wrapper itself.
         this.rawDataSource = DelegatingDataSource.unwrapDataSource(dataSource);
     }
 
@@ -70,16 +73,39 @@ public class JooqDSLContextWrapper {
         DEADLOCK_RETRYER.<Void> run(
             () ->
             {
-                dslContext.transaction(transactional);
+                runInTransaction(configuration ->
+                {
+                    transactional.run(configuration);
+                    return null;
+                });
                 return null;
             }
         );
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        return DEADLOCK_RETRYER.run(
-            () -> dslContext.transactionResult(transactional)
-        );
+        return DEADLOCK_RETRYER.run(() -> runInTransaction(transactional));
+    }
+
+    private <T> T runInTransaction(TransactionalCallable<T> transactional) throws Throwable {
+        Configuration ongoing = transactionConfiguration.get();
+        if (ongoing != null) {
+            return transactional.run(ongoing);
+        }
+
+        try (Connection connection = rawDataSource.getConnection()) {
+            return DSL.using(configuration(connection)).transactionResult(configuration ->
+            {
+                transactionConfiguration.set(configuration);
+                try {
+                    return transactional.run(configuration);
+                } finally {
+                    transactionConfiguration.remove();
+                }
+            });
+        } catch (SQLException e) {
+            throw new DataAccessException("Unable to acquire a database connection for the transaction", e);
+        }
     }
 
     /**
@@ -98,22 +124,42 @@ public class JooqDSLContextWrapper {
         DEADLOCK_RETRYER.<Void> run(
             () ->
             {
-                try (Connection connection = rawDataSource.getConnection()) {
-                    // Same configuration (dialect, settings, execute listeners), but jOOQ-managed
-                    // transactions on this connection instead of the thread-bound ones.
-                    ConnectionProvider connectionProvider = new DefaultConnectionProvider(connection);
-                    DSL.using(
-                        dslContext.configuration()
-                            .derive(connectionProvider)
-                            .derive(new DefaultTransactionProvider(connectionProvider))
-                    )
-                        .transaction(transactional);
-                } catch (SQLException e) {
-                    throw new DataAccessException("Unable to run a transaction on a new connection", e);
-                }
+                runRequiresNew(configuration ->
+                {
+                    transactional.run(configuration);
+                    return null;
+                });
                 return null;
             }
         );
+    }
+
+    private <T> T runRequiresNew(TransactionalCallable<T> transactional) throws Throwable {
+        Configuration suspended = transactionConfiguration.get();
+        try (Connection connection = rawDataSource.getConnection()) {
+            return DSL.using(configuration(connection)).transactionResult(configuration ->
+            {
+                transactionConfiguration.set(configuration);
+                try {
+                    return transactional.run(configuration);
+                } finally {
+                    if (suspended != null) {
+                        transactionConfiguration.set(suspended);
+                    } else {
+                        transactionConfiguration.remove();
+                    }
+                }
+            });
+        } catch (SQLException e) {
+            throw new DataAccessException("Unable to acquire a database connection for the transaction", e);
+        }
+    }
+
+    private Configuration configuration(Connection connection) {
+        ConnectionProvider connectionProvider = new DefaultConnectionProvider(connection);
+        return dslContext.configuration()
+            .derive(connectionProvider)
+            .derive(new DefaultTransactionProvider(connectionProvider));
     }
 
     /**

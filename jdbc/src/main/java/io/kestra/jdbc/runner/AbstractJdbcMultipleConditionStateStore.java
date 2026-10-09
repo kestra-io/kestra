@@ -83,8 +83,8 @@ public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJd
     public void purgeExpired(Instant now) {
         this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration ->
-                DSL.using(configuration)
+            .transaction(
+                configuration -> DSL.using(configuration)
                     .delete(this.jdbcRepository.getTable())
                     .where(getEndDateCondition(now))
                     .execute()

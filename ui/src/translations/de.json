@@ -2723,6 +2723,8 @@
     },
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
-    "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?"
+    "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
+    "in flight": "In Ausführung",
+    "not started": "Nicht gestartet"
   }
 }

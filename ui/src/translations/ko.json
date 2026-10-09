@@ -2723,6 +2723,8 @@
     },
     "iteration": "반복",
     "iteration_number": "반복 {number}",
-    "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?"
+    "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?",
+    "in flight": "진행 중",
+    "not started": "시작되지 않음"
   }
 }

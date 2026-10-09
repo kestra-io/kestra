@@ -36,16 +36,27 @@ public @interface TicketingField {
      */
     Role role() default Role.NONE;
 
-    /**
-     * Only read for {@link Role#CASE_SEVERITY}: {@code CASE_VALUE=TASK_VALUE} pairs translating a case severity into the task's own, for example {@code CRITICAL=urgent}.
-     * A severity without a pair is passed unchanged, so on a property that is not a string the map must cover every severity.
-     *
-     * @return the pairs; keys and values are trimmed and malformed pairs are ignored
-     */
-    String[] valueMap() default {};
+    @Documented
+    @Retention(RUNTIME)
+    @Target({})
+    @interface Mapping {
+        /** @return the case value, for example {@code CRITICAL}. */
+        String from();
+
+        /** @return the task's own value it is translated to. */
+        String to();
+    }
 
     /**
-     * @return the value pre-filled when a Cases ticketing flow is generated; it does not change the task's own default, and only applies to a field the connect form shows (a required property or one in the {@code destination} or {@code connection} group).
+     * Only used for {@link Role#CASE_SEVERITY}: translates a case severity into the task's own vocabulary.
+     * A severity without a mapping is passed unchanged, so on a property that is not a string the mappings must cover every severity.
+     *
+     * @return the mappings, in order
+     */
+    Mapping[] valueMap() default {};
+
+    /**
+     * @return the value suggested when a Cases ticketing flow is generated; it does not change the task's own default. Always a string, so it suits scalar properties.
      */
     String defaultValue() default "";
 }

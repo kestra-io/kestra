@@ -887,10 +887,10 @@ class JsonSchemaGeneratorTest {
         @TicketingField(defaultValue = "3")
         private Property<Integer> priority;
 
-        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {"CRITICAL=urgent", "HIGH=high", "malformed", "LOW=", " =x"})
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "urgent"), @TicketingField.Mapping(from = "HIGH", to = "high")})
         private Property<String> urgency;
 
-        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {" CRITICAL = 1 ", "HIGH=2"})
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "1"), @TicketingField.Mapping(from = "HIGH", to = "2")})
         private Property<Integer> level;
 
         private String untouched;
@@ -913,7 +913,7 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldExposeTicketingFieldHintsInSchema() {
+    void shouldExposeTicketingHintsWhenPropertyIsAnnotated() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithTicketingFields.class);
         Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
 
@@ -921,7 +921,7 @@ class JsonSchemaGeneratorTest {
         assertThat(props.get("subject").containsKey("$ticketingDefault"), is(false));
         assertThat(props.get("table").get("$ticketingDefault"), is("incident"));
         assertThat(props.get("table").containsKey("$ticketingRole"), is(false));
-        assertThat(props.get("untouched").containsKey("$ticketingRole"), is(false));
+        assertThat(props.get("untouched").keySet().stream().filter(k -> k.startsWith("$ticketing")).toList(), is(List.of()));
         assertThat(props.get("priority").get("$ticketingDefault"), is("3"));
         assertThat(props.get("urgency").get("$ticketingRole"), is("CASE_SEVERITY"));
         assertThat(props.get("urgency").get("$ticketingValueMap"), is(Map.of("CRITICAL", "urgent", "HIGH", "high")));
@@ -931,7 +931,7 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldExposeTicketingFieldHintsOnOutputs() {
+    void shouldExposeTicketingRoleWhenOutputIsAnnotated() {
         Map<String, Object> generate = jsonSchemaGenerator.outputs(Task.class, TaskWithTicketingFields.class);
         Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
 

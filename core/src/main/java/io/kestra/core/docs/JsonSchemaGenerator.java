@@ -498,21 +498,6 @@ public class JsonSchemaGenerator {
         });
     }
 
-    private static Map<String, String> ticketingValueMap(String[] pairs) {
-        Map<String, String> valueMap = new LinkedHashMap<>();
-        for (String pair : pairs) {
-            int separator = pair.indexOf('=');
-            if (separator >= 0) {
-                String from = pair.substring(0, separator).trim();
-                String to = pair.substring(separator + 1).trim();
-                if (!from.isEmpty() && !to.isEmpty()) {
-                    valueMap.put(from, to);
-                }
-            }
-        }
-        return valueMap;
-    }
-
     private void mutateDescription(ObjectNode collectedTypeAttributes) {
         if (collectedTypeAttributes.has("description")) {
             collectedTypeAttributes.set("markdownDescription", collectedTypeAttributes.get("description"));
@@ -766,10 +751,11 @@ public class JsonSchemaGenerator {
                 if (!ticketingField.defaultValue().isEmpty()) {
                     memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
                 }
-                Map<String, String> valueMap = ticketingValueMap(ticketingField.valueMap());
-                if (!valueMap.isEmpty()) {
+                if (ticketingField.valueMap().length > 0) {
                     ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
-                    valueMap.forEach(valueMapNode::put);
+                    for (TicketingField.Mapping mapping : ticketingField.valueMap()) {
+                        valueMapNode.put(mapping.from(), mapping.to());
+                    }
                 }
             }
 

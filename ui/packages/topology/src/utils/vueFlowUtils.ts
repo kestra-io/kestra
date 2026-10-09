@@ -189,7 +189,7 @@ export function generateDagreGraph(
     dagreGraph.setDefaultEdgeLabel(() => ({}))
     // Vertically, a lane's own first node carries the header's height, so dagre grows the cluster
     // around it and still leaves a full rank apart from whatever sits above. Horizontally the
-    // header is across the flow, on the axis `nodesep` governs, where no node can carry it.
+    // header is across the flow, where no node can carry it: `insertLaneHeaderBands` makes room after layout.
     dagreGraph.setGraph({
         rankdir: isHorizontal ? "LR" : "TB",
         ranksep: DAGRE_RANK_SEP,
@@ -243,7 +243,54 @@ export function generateDagreGraph(
     }
 
     dagre.layout(dagreGraph)
+    if (isHorizontal) {
+        insertLaneHeaderBands(dagreGraph)
+    }
     return dagreGraph
+}
+
+function insertLaneHeaderBands(dagreGraph: dagre.graphlib.Graph) {
+    const boxOf = (uid: string) => {
+        const node = dagreGraph.node(uid)
+        return {top: node.y - node.height / 2, bottom: node.y + node.height / 2}
+    }
+    const ancestorsOf = (uid: string) => {
+        const ancestors: string[] = []
+        for (let parent = dagreGraph.parent(uid); parent; parent = dagreGraph.parent(parent)) {
+            ancestors.push(parent)
+        }
+        return ancestors
+    }
+    // @types/dagre declares children() as a single string; graphlib returns an array.
+    const childrenOf = (uid: string) => (dagreGraph.children(uid) as unknown as string[] | undefined) ?? []
+    const descendantsOf = (uid: string): string[] =>
+        childrenOf(uid).flatMap((child) => [child, ...descendantsOf(child)])
+    const siblingsOf = (uid: string) => {
+        const parent = dagreGraph.parent(uid)
+        const siblings = parent ? childrenOf(parent) : dagreGraph.nodes().filter((each) => !dagreGraph.parent(each))
+        return siblings.filter((each) => each !== uid)
+    }
+
+    for (const lane of dagreGraph.nodes().filter((uid) => childrenOf(uid).length)) {
+        const growing = [lane, ...ancestorsOf(lane)]
+        const moved = new Set(descendantsOf(lane))
+        for (const box of growing) {
+            const bottom = boxOf(box).bottom
+            for (const sibling of siblingsOf(box).filter((each) => boxOf(each).top >= bottom)) {
+                for (const each of [sibling, ...descendantsOf(sibling)]) {
+                    moved.add(each)
+                }
+            }
+        }
+
+        for (const uid of moved) {
+            dagreGraph.node(uid).y += NODE_SIZES.LANE_HEADER_HEIGHT
+        }
+        for (const uid of growing) {
+            dagreGraph.node(uid).y += NODE_SIZES.LANE_HEADER_HEIGHT / 2
+            dagreGraph.node(uid).height += NODE_SIZES.LANE_HEADER_HEIGHT
+        }
+    }
 }
 
 export function getNodePosition(
@@ -735,15 +782,12 @@ export function generateGraph(
         }))
         .filter((edge) => edge.source !== edge.target)
 
-    // Vertically dagre holds the header's height itself (see `generateDagreGraph`), so the cluster
-    // box and its children need no adjustment afterwards — only the node carrying it renders lower.
+    // `generateDagreGraph` already makes room for every header; vertically only the node carrying it renders lower.
     const laneStartUids = new Set(
         clusters
             .filter((c) => !edgeReplacer[c.cluster.uid] && !collapsed.has(c.cluster.uid.replace(CLUSTER_PREFIX, "")) && c.start)
             .map((c) => c.start),
     )
-    const headerHeldByLayout = !isHorizontal
-    const clusterHeaderHeight = headerHeldByLayout ? 0 : NODE_SIZES.LANE_HEADER_HEIGHT
 
     const dagreGraph = generateDagreGraph(
         {...flowGraph, clusters, edges},
@@ -796,9 +840,6 @@ export function generateGraph(
                 dagreNode,
                 parentNode ? dagreGraph.node(parentNode) : undefined,
             )
-            if (parentNode) {
-                clusterPosition.y += clusterHeaderHeight
-            }
 
             elements.push({
                 id: clusterUid,
@@ -816,7 +857,7 @@ export function generateGraph(
                     height:
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
-                            : dagreNode.height + clusterHeaderHeight + "px",
+                            : dagreNode.height + "px",
                     borderRadius: "var(--ks-radius-base)",
                     padding: "0.5rem",
                 },
@@ -887,12 +928,9 @@ export function generateGraph(
                 dagreNode,
                 cluster ? dagreGraph.node(cluster.uid) : undefined,
             )
-            if (cluster) {
-                nodePosition.y += clusterHeaderHeight
-            }
             // Its dagre box is a header taller than the node; the node itself sits at the bottom
             // of it, leaving the header the space above.
-            if (headerHeldByLayout && laneStartUids.has(node.uid)) {
+            if (!isHorizontal && laneStartUids.has(node.uid)) {
                 nodePosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
             }
 

@@ -21,7 +21,8 @@ public record LoopExecutionEvent(
     State.Type state,
     @Nullable Map<String, Object> outputs,
     @Nullable TaskRunStatistic taskRunStatistic,
-    @Nullable TaskRunStateCounts taskRunStateCounts) implements DispatchEvent {
+    @Nullable TaskRunStateCounts taskRunStateCounts,
+    @Nullable TaskRunStateCounts loopIterationCounts) implements DispatchEvent {
 
     @Override
     public String key() {
@@ -36,6 +37,8 @@ public record LoopExecutionEvent(
             ", index=" + this.loopRun.index() +
             ", state=" + state +
             ", taskRunStatistic=" + taskRunStatistic +
+            ", taskRunStateCounts=" + taskRunStateCounts +
+            ", loopIterationCounts=" + loopIterationCounts +
             ")";
     }
 }

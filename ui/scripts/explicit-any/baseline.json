@@ -58,7 +58,6 @@
   "src/components/inputs/LowCodeEditor.vue": 38,
   "src/components/logs/LogsWrapper.cursor.spec.ts": 6,
   "src/components/logs/LogsWrapper.initialLoad.spec.ts": 4,
-  "src/components/no-code/blocks/FlowPropertiesEdit.vue": 2,
   "src/components/no-code/components/TaskEditor.vue": 7,
   "src/components/no-code/components/tasks/MixinTask.ts": 1,
   "src/components/no-code/components/tasks/TaskAnyOf.vue": 11,

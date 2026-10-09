@@ -6,7 +6,7 @@ import TaskObject from "./TaskObject.vue"
 import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
-function mountForm(schema: Record<string, any>, modelValue: Record<string, any>) {
+function mountForm(schema: Record<string, unknown>, modelValue: Record<string, unknown>) {
     return i18nMount(TaskObject, {
         props: {schema, modelValue},
         global: {

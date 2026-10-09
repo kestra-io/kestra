@@ -1619,6 +1619,60 @@ afterExecution:
             expect(upstreamTaskIds(dagFlow, "d_c")).toEqual(["before", "d_b", "d_a"])
         })
 
+        it("does not offer concurrent siblings to each other", () => {
+            const concurrentFlow = {
+                tasks: [
+                    {id: "fetch", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "par", type: "io.kestra.plugin.core.flow.Parallel", tasks: [
+                        {id: "p_a", type: "io.kestra.plugin.core.log.Log"},
+                        {id: "p_b", type: "io.kestra.plugin.core.log.Log"},
+                    ]},
+                    {id: "each", type: "io.kestra.plugin.core.flow.ForEach", concurrencyLimit: 0, values: [1], tasks: [
+                        {id: "e_a", type: "io.kestra.plugin.core.log.Log"},
+                        {id: "e_b", type: "io.kestra.plugin.core.log.Log"},
+                    ]},
+                    {id: "seq_each", type: "io.kestra.plugin.core.flow.ForEach", values: [1], tasks: [
+                        {id: "s_a", type: "io.kestra.plugin.core.log.Log"},
+                        {id: "s_b", type: "io.kestra.plugin.core.log.Log"},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(concurrentFlow, "p_b")).toEqual(["fetch"])
+            expect(upstreamTaskIds(concurrentFlow, "e_b")).toEqual(["fetch", "par", "p_a", "p_b"])
+            expect(upstreamTaskIds(concurrentFlow, "s_b")).toEqual(["fetch", "par", "p_a", "p_b", "each", "e_a", "e_b", "s_a"])
+        })
+
+        it("offers a flowable's tasks to its own errors and finally", () => {
+            const nestedFlow = {
+                tasks: [
+                    {id: "before", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "wrap", type: "io.kestra.plugin.core.flow.Sequential",
+                        tasks: [{id: "w_task", type: "io.kestra.plugin.core.log.Log"}],
+                        errors: [{id: "w_err", type: "io.kestra.plugin.core.log.Log"}],
+                        finally: [{id: "w_fin", type: "io.kestra.plugin.core.log.Log"}],
+                    },
+                ],
+            }
+
+            expect(upstreamTaskIds(nestedFlow, "w_err")).toEqual(["before", "w_task"])
+            expect(upstreamTaskIds(nestedFlow, "w_fin")).toEqual(["before", "w_task", "w_err"])
+        })
+
+        it("tolerates a null entry in a Dag", () => {
+            const dagFlow = {
+                tasks: [
+                    {id: "dag", type: "io.kestra.plugin.core.flow.Dag", tasks: [
+                        {task: {id: "d_a", type: "io.kestra.plugin.core.log.Log"}},
+                        null,
+                        {task: {id: "d_b", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(dagFlow, "d_b")).toEqual(["d_a"])
+        })
+
         it("falls back to every other task when the task is not in the flow yet", () => {
             expect(upstreamTaskIds(flow, "brand_new")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify", "on_error", "cleanup"])
         })

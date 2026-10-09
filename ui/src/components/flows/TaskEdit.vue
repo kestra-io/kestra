@@ -434,7 +434,7 @@
             })})
         }
 
-        const upstream = [...new Set(upstreamTaskIds(flow, currentTaskId.value))].filter(Boolean)
+        const upstream = upstreamTaskIds(flow, currentTaskId.value)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }

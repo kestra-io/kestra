@@ -12,7 +12,7 @@ import {
     useClient,
     type Check,
     type Execution as SDKExecution,
-    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as ApiInputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
@@ -31,7 +31,10 @@ import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 import type {KestraRequestOptions} from "../utils/kestraHttp"
 
-export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
+export type {Check} from "@kestra-io/kestra-sdk"
+
+// `path` is added to `ApiInputError` on this branch, and the generated SDK only picks it up once `develop` regenerates it.
+export type InputError = ApiInputError & {path?: string}
 
 export interface ValidationResponse {
     checks?: Check[];
@@ -77,6 +80,10 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
+    /** Set on a TABLE input only: one input definition per column, each evaluated once per row. */
+    columns?: InputMetaData[];
+    minRows?: number;
+    maxRows?: number;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

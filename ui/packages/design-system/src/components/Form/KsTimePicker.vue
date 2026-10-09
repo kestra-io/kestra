@@ -1,14 +1,17 @@
 <template>
-    <ElTimePicker
-        v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event)"
-    />
+    <span ref="host" class="ks-picker-host">
+        <ElTimePicker
+            v-model="model"
+            v-bind="({...filteredProps(), ...pickerAttrs()} as any)"
+            @change="emit('change', $event)"
+        />
+    </span>
 </template>
 
 <script setup lang="ts">
     import {ElTimePicker} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import {useInputAttrs} from "../../composables/useInputAttrs"
 
     defineOptions({inheritAttrs: false})
 
@@ -34,9 +37,14 @@
     }>()
 
     const filteredProps = useFilteredProps(props)
+    const {pickerAttrs} = useInputAttrs("host")
 </script>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/time-picker';
+
+    .ks-picker-host {
+        display: contents;
+    }
 </style>

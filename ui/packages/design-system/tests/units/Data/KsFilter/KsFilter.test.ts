@@ -82,12 +82,12 @@ describe("KsFilter saved-filter analytics", () => {
 
     const mountWithTracker = async () => {
         const tracker = vi.fn()
-        const router = createRouter({
+        const testRouter = createRouter({
             history: createMemoryHistory(),
             routes: [{path: "/executions", name: "executions", component: {template: "<div/>"}}],
         })
-        await router.push("/executions")
-        await router.isReady()
+        await testRouter.push("/executions")
+        await testRouter.isReady()
 
         let context: FilterContext | undefined
         const Harness = defineComponent({
@@ -101,7 +101,7 @@ describe("KsFilter saved-filter analytics", () => {
             props: {configuration: {title: "", keys: []}, prefix: "test"},
             slots: {extra: () => h(Harness)},
             global: {
-                plugins: [router],
+                plugins: [testRouter],
                 provide: {[SAVED_FILTER_ANALYTICS_INJECTION_KEY as symbol]: tracker},
             },
         })
@@ -147,7 +147,7 @@ describe("KsFilter saved-filter analytics", () => {
     })
 
     test("does not throw when no analytics tracker is provided", async () => {
-        const router = createRouter({
+        const testRouter = createRouter({
             history: createMemoryHistory(),
             routes: [{path: "/", component: {template: "<div/>"}}],
         })
@@ -161,7 +161,7 @@ describe("KsFilter saved-filter analytics", () => {
         i18nMount(KsFilter, {
             props: {configuration: {title: "", keys: []}, prefix: "test"},
             slots: {extra: () => h(Harness)},
-            global: {plugins: [router]},
+            global: {plugins: [testRouter]},
         })
 
         expect(() => context!.saveFilter("X", "", [makeAppliedFilter()])).not.toThrow()

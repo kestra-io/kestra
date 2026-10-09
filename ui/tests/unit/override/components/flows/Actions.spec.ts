@@ -91,15 +91,15 @@ const messages = {
 
 // The unit project shares one jsdom per worker, so a wrapper left mounted keeps the teleported
 // poppers of its two dropdowns attached to <body> and fails the whole file (tests/unit/leakGuard.ts).
-let wrapper: VueWrapper | undefined
+let activeWrapper: VueWrapper | undefined
 
 afterEach(() => {
-    wrapper?.unmount()
-    wrapper = undefined
+    activeWrapper?.unmount()
+    activeWrapper = undefined
 })
 
 function mountActions() {
-    wrapper = i18nMount(Actions, {
+    activeWrapper = i18nMount(Actions, {
         messages,
         global: {
             plugins: [KestraDesignSystem],
@@ -107,7 +107,7 @@ function mountActions() {
         },
     })
 
-    return wrapper
+    return activeWrapper
 }
 
 function findButtonByText(wrapper: ReturnType<typeof mountActions>, text: string) {

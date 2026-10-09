@@ -686,7 +686,7 @@
     }
 
     function removeKvs() {
-        const groupedByNamespace = groupBy(selection.value, (kv) => kv.namespace)
+        const groupedByNamespace = groupBy(selection.value, (item) => item.namespace)
         const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, namespace)))
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs)
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n))

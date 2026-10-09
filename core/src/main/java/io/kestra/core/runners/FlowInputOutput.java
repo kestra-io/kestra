@@ -31,11 +31,14 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.flows.input.ObjectInput;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.storages.StorageContext;
@@ -50,6 +53,7 @@ import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
@@ -444,8 +448,8 @@ public class FlowInputOutput {
                     resolvable.resolveWithValue(null);
                 }
             } else {
-                var parsedInput = parseData(execution, input, value);
                 try {
+                    var parsedInput = parseData(execution, input, value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
@@ -479,6 +483,8 @@ public class FlowInputOutput {
             case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
+            case OBJECT -> resolveDefaultPropertyAs(input, renderer, Object.class);
+            case TABLE -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }
@@ -617,7 +623,7 @@ public class FlowInputOutput {
             case DATE -> TypeConverter.toLocalDate(current);
             case TIME -> TypeConverter.toLocalTime(current);
             case DURATION -> TypeConverter.toDuration(current);
-            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, FORM, REUSABLE_INPUTS -> null;
+            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, OBJECT, TABLE, FORM, REUSABLE_INPUTS -> null;
         });
     }
 
@@ -691,6 +697,8 @@ public class FlowInputOutput {
                         yield asList;
                     }
                 }
+                case OBJECT -> parseObject(execution, (ObjectInput) data, current);
+                case TABLE -> parseTable(execution, (TableInput) data, current);
                 case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {
@@ -698,6 +706,88 @@ public class FlowInputOutput {
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");
         }
+    }
+
+    private Map<String, Object> parseObject(Execution execution, ObjectInput object, Object current) throws Exception {
+        Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
+        Map<String, Object> parsed = parseRecord(execution, object.getProperties(), asMap(current), "property ", violations);
+        if (!violations.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(violations);
+        }
+        return parsed;
+    }
+
+    private List<Map<String, Object>> parseTable(Execution execution, TableInput table, Object current) throws Exception {
+        List<?> rows = switch (current) {
+            case List<?> list -> list;
+            case String json -> JacksonMapper.toList(json);
+            default -> throw new IllegalArgumentException("expected a list of objects");
+        };
+
+        Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
+        List<Map<String, Object>> parsed = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            Object row = rows.get(i);
+            if (!(row instanceof Map<?, ?> map)) {
+                violations.add(violation("row " + (i + 1) + ": expected an object", table, row));
+                continue;
+            }
+            parsed.add(parseRecord(execution, table.getColumns(), map, "row " + (i + 1) + ", column ", violations));
+        }
+        if (!violations.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(violations);
+        }
+        return parsed;
+    }
+
+    /**
+     * Coerces and validates one record against its typed fields, the unit shared by {@code OBJECT} (one record) and
+     * {@code TABLE} (one record per row). Every failing field is reported into {@code violations} with
+     * {@code prefix} + the field id in front of the cause, so a caller can surface all of them at once.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> raw, String prefix, Set<ConstraintViolation<?>> violations) {
+        Map<String, Object> record = new LinkedHashMap<>();
+        for (Input<?> field : fields) {
+            String path = prefix + "`" + field.getId() + "`";
+            Object value = raw.get(field.getId());
+            if (value instanceof String s && s.isEmpty() && !isTextType(field.getType())) {
+                value = null;
+            }
+            if (value == null) {
+                if (Boolean.TRUE.equals(field.getRequired())) {
+                    violations.add(violation(path + ": missing required value", field, null));
+                } else {
+                    record.put(field.getId(), null);
+                }
+                continue;
+            }
+            try {
+                Type itemType = field instanceof ItemTypeInterface item ? item.getItemType() : null;
+                Object parsed = parseType(execution, field.getType(), field.getId(), itemType, value, field);
+                ((Input) field).validate(parsed);
+                record.put(field.getId(), parsed);
+            } catch (ConstraintViolationException e) {
+                Object invalid = value;
+                e.getConstraintViolations().forEach(c -> violations.add(violation(path + ": " + c.getMessage(), field, invalid)));
+            } catch (Exception e) {
+                violations.add(violation(path + ": " + e.getMessage(), field, value));
+            }
+        }
+        return record;
+    }
+
+    private static Map<?, ?> asMap(Object current) throws Exception {
+        return switch (current) {
+            case Map<?, ?> map -> map;
+            case String json when JacksonMapper.toObject(json) instanceof Map<?, ?> map -> map;
+            default -> throw new IllegalArgumentException("expected an object");
+        };
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static ConstraintViolation<?> violation(String message, Input<?> input, Object invalidValue) {
+        return ManualConstraintViolation.of(message, (Input) input, Input.class, input.getId(), invalidValue);
     }
 
     private static Execution minimalExecution(FlowInterface flow, String executionId, @Nullable List<Label> contributed) {

@@ -144,6 +144,8 @@ public class FlowToolSchemaMapper {
             case TimeInput i -> toTimeType((TimeInput) input, baseSchema);
             case URIInput i -> toURIType((URIInput) input, baseSchema);
             case YamlInput i -> toObjectType(input, baseSchema);
+            case ObjectInput i -> toRecordType(i.getProperties(), baseSchema);
+            case TableInput i -> toTableType(i, baseSchema);
             default -> throw new IllegalStateException("Unexpected value: " + input);
         };
     }
@@ -160,6 +162,28 @@ public class FlowToolSchemaMapper {
         return Map.of(
             "type", getJsonSchemaType(arrayInput.getItemType())
         );
+    }
+
+    private Map<String, Object> toRecordType(List<Input<?>> fields, Map<String, Object> baseSchema) {
+        baseSchema.put("properties", fields.stream().collect(Collectors.toMap(Input::getId, this::convert)));
+        baseSchema.put("required", findRequiredInputFields(fields));
+        baseSchema.put("additionalProperties", false);
+
+        return baseSchema;
+    }
+
+    private Map<String, Object> toTableType(TableInput input, Map<String, Object> baseSchema) {
+        baseSchema.put("items", toRecordType(input.getColumns(), new HashMap<>(Map.of("type", "object"))));
+        if (input.getRows() != null) {
+            if (input.getRows().min() != null) {
+                baseSchema.put("minItems", input.getRows().min());
+            }
+            if (input.getRows().max() != null) {
+                baseSchema.put("maxItems", input.getRows().max());
+            }
+        }
+
+        return baseSchema;
     }
 
     private static Map<String, Object> toBoolType(BoolInput input, Map<String, Object> baseSchema) {
@@ -346,7 +370,8 @@ public class FlowToolSchemaMapper {
             case INT -> "integer";
             case FLOAT -> "number";
             case BOOL -> "boolean";
-            case ARRAY, MULTISELECT -> "array";
+            case ARRAY, MULTISELECT, TABLE -> "array";
+            case OBJECT -> "object";
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }

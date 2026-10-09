@@ -24,6 +24,8 @@ public class MultiselectInputValidator implements ConstraintValidator<Multiselec
                 || value.getItemType() == Type.SECRET
                 || value.getItemType() == Type.MULTISELECT
                 || value.getItemType() == Type.SELECT
+                || value.getItemType() == Type.OBJECT
+                || value.getItemType() == Type.TABLE
         ) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("`itemType` cannot be " + value.getItemType())

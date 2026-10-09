@@ -126,6 +126,13 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 TaskRunStatistic taskRunStatistic = TaskRunStatistic.fromMap((Map<String, Object>) outputs.get(Loop.TASK_RUN_STATISTIC_OUTPUT))
                     .plus(message.taskRunStatistic());
 
+                boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated();
+                if (loopAlreadyEnded) {
+                    computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                    followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                    return null;
+                }
+
                 if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
                     // the failure happened inside an isolated loop sub-execution: log inside the parent exec
                     computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);

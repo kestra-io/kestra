@@ -618,7 +618,7 @@
     )
 
     /** `autoExpandGantt` route query: `true` (all), `failed`, or a comma-separated task id list. */
-    function applyAutoExpandFromRoute(currentExecution: any) {
+    function applyAutoExpandFromRoute(currentExecution: Execution | undefined) {
         const autoExpand = route.query.autoExpandGantt
         if (typeof autoExpand !== "string" || !autoExpand) {
             return
@@ -632,13 +632,13 @@
             : autoExpand.split(",").map((id) => id.trim()).filter(Boolean)
 
         const taskRuns = autoExpand === "failed"
-            ? currentExecution.taskRunList.filter((taskRun: any) => taskRun.state?.current === "FAILED")
+            ? currentExecution.taskRunList.filter((taskRun: TaskRun) => taskRun.state?.current === "FAILED")
             : taskIds
-                ? currentExecution.taskRunList.filter((taskRun: any) => taskIds.includes(taskRun.taskId))
+                ? currentExecution.taskRunList.filter((taskRun: TaskRun) => taskIds.includes(taskRun.taskId))
                 : currentExecution.taskRunList
 
         if (taskRuns.length) {
-            selectedTaskRuns.value = taskRuns.map((taskRun: any) => taskRun.id)
+            selectedTaskRuns.value = taskRuns.map((taskRun: TaskRun) => taskRun.id)
             expandedFromRoute.value = true
         }
     }

@@ -458,9 +458,39 @@ class LoopExecutionEventMessageHandlerTest {
         var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-1", State.Type.SUCCESS, null, null));
 
         assertThat(maybeExecutor).isEmpty();
+        assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
+            .findTaskRunByTaskRunId(loopTaskRunId).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(taskOutputService.getOutputs(loopTaskRun))
             .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 0)
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SUCCESS", 1));
+    }
+
+    @Test
+    void shouldLogEveryFailedIterationWhenTheLoopAlreadyFailed() throws InternalException {
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution, State.Type.FAILED);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SUCCESS", 1)
+            )
+        );
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 2, null, "c", null);
+        var maybeExecutor = handler.handle(new LoopExecutionEvent(loopRun, "sub-execution-2", State.Type.FAILED, null, null));
+
+        assertThat(maybeExecutor).isEmpty();
+        assertThat(executionRepository.findById(execution.getTenantId(), execution.getId()).orElseThrow()
+            .findTaskRunByTaskRunId(loopTaskRunId).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 2, "SUCCESS", 1));
+        assertThat(TestsUtils.awaitLogs(logs, 1).getFirst().getMessage()).contains("sub-execution-2").contains("FAILED");
     }
 
     private Flow loopFlow() {

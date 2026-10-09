@@ -753,19 +753,23 @@
         },
     )
 
-    const observeWidth = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(function () {
-                clearTimeout(timer.value)
-                timer.value = setTimeout(() => {
-                    nextTick(() => {
-                        fitView()
-                    })
-                }, 50) as any
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
+    let resizeObserver: ResizeObserver | undefined
+
+    const observeResize = (onResize: () => void) => {
+        resizeObserver?.disconnect()
+        if (!vueFlow.value) return
+        resizeObserver = new ResizeObserver(onResize)
+        resizeObserver.observe(vueFlow.value)
     }
+
+    const observeWidth = () => observeResize(() => {
+        clearTimeout(timer.value)
+        timer.value = setTimeout(() => {
+            nextTick(() => {
+                fitView()
+            })
+        }, 50) as any
+    })
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
@@ -958,7 +962,10 @@
         }
     })
 
-    onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
+    onBeforeUnmount(() => {
+        window.removeEventListener("keydown", onPickerEscape)
+        resizeObserver?.disconnect()
+    })
 
     const shortcutsOpen = ref(false)
     const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
@@ -1206,17 +1213,12 @@
         saveFlow: () => saveFlow(),
     })
 
-    const fitViewOrientation = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(() => {
-                clearTimeout(timer.value)
-                nextTick(() => {
-                    fitView()
-                })
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
-    }
+    const fitViewOrientation = () => observeResize(() => {
+        clearTimeout(timer.value)
+        nextTick(() => {
+            fitView()
+        })
+    })
 
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value

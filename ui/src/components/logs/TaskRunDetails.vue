@@ -440,6 +440,7 @@
     // Execution `rawLogs` and any open logs SSE belong to, so both can be dropped on a change.
     const logsExecutionId = ref<string | undefined>(undefined)
     const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
+    const retryTimers = new Set<ReturnType<typeof setTimeout>>()
     const flow = ref<FlowForExecution | undefined>(undefined)
     const logsBuffer = ref<LogEntry[]>([])
     const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
@@ -840,7 +841,18 @@
 
     onBeforeUnmount(() => {
         closeLogsSSE()
+        closeTargetExecutionSSE()
+        clearTimeout(timeout.value)
+        retryTimers.forEach((handle) => clearTimeout(handle))
     })
+
+    function retryShortly(callback: () => void) {
+        const handle = setTimeout(() => {
+            retryTimers.delete(handle)
+            callback()
+        }, 50)
+        retryTimers.add(handle)
+    }
 
     // Methods
     async function updateLoopStatus(taskRunId: string) {
@@ -909,7 +921,7 @@
         }
 
         if (followedExecution.value === undefined) {
-            setTimeout(() => autoExpandBasedOnSettings(), 50)
+            retryShortly(autoExpandBasedOnSettings)
             return
         }
         currentTaskRuns.value.forEach((taskRun) => {
@@ -1032,7 +1044,7 @@
 
     function expandAll() {
         if (!followedExecution.value) {
-            setTimeout(() => expandAll(), 50)
+            retryShortly(expandAll)
             return
         }
 
@@ -1057,7 +1069,7 @@
                 subflowTaskRunDetailsRefs.value,
             )
             if (subflowLogsElements.length === 0) {
-                setTimeout(() => expandSubflows(), 50)
+                retryShortly(expandSubflows)
             }
 
             subflowLogsElements.forEach((subflowLogs) =>

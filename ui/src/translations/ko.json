@@ -2275,9 +2275,12 @@
         },
         "recent_runs": "최근 실행",
         "group_by": "그룹화 기준",
-        "groups": "그룹 ({n})",
+        "groups": "그룹",
         "group_none": "그룹화 없음",
         "group_dataset": "데이터셋",
+        "group_consumer": "컨슈머",
+        "no_consumer": "소비자 없음",
+        "hidden_consumer": "숨겨진 Flow",
         "ungrouped": "그룹 해제됨",
         "hub": {
           "notice": "이 노드에는 {count}개의 관계가 있습니다. 그래프를 읽기 쉽게 하기 위해 가장 최근 관계만 표시됩니다.",

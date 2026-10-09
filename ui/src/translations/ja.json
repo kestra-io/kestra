@@ -2275,9 +2275,12 @@
         },
         "recent_runs": "最近の実行",
         "group_by": "グループ化",
-        "groups": "グループ（{n}）",
+        "groups": "グループ",
         "group_none": "グループ化なし",
         "group_dataset": "データセット",
+        "group_consumer": "コンシューマー",
+        "no_consumer": "コンシューマーなし",
+        "hidden_consumer": "非表示のFlow",
         "ungrouped": "グループ化されていません",
         "hub": {
           "notice": "このノードには{count}個のリレーションがあります。グラフを読みやすくするため、最新のもののみが表示されています。",

@@ -14,6 +14,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.AccessScope;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -24,7 +25,6 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.AccessScope;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.repositories.NamespaceAccessControl;
@@ -48,6 +48,20 @@ public abstract class AbstractJdbcRepository {
     public static final Field<Object> VALUE_FIELD = field("value", Object.class);
 
     protected static final int FETCH_SIZE = 100;
+
+    /**
+     * The {@code notification_items} table, correlated against {@code executions} to answer
+     * {@link QueryFilter.Field#OPERATION_ID}/{@link QueryFilter.Field#OPERATION_OUTCOME} filters.
+     * Safe to reference unconditionally here since those two fields are only reachable through
+     * {@link QueryFilter.Resource#EXECUTION}.
+     * <p>
+     * Built from a plain (single-argument) {@code DSL.table(String)}, like every other table in
+     * this module — that renders the identifier unquoted, matching how the table was declared in
+     * its migration and how {@code executions} itself is referenced, so H2's uppercase-folding of
+     * unquoted identifiers resolves both consistently. Its columns, in contrast, are declared
+     * quoted in every migration, hence {@code DSL.quotedName(...)} below.
+     */
+    static final Table<?> NOTIFICATION_ITEMS_TABLE = DSL.table("notification_items");
 
     /**
      * Operations valid on the {@link QueryFilter.Field#LABELS} field when its value is a plain
@@ -495,6 +509,11 @@ public abstract class AbstractJdbcRepository {
             return timeRangeCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.OPERATION_ID || field == QueryFilter.Field.OPERATION_OUTCOME) {
+            Condition leaf = notificationItemCorrelation().and(notificationItemLeafCondition(field, value, operation));
+            return DSL.exists(DSL.selectOne().from(NOTIFICATION_ITEMS_TABLE).where(leaf));
+        }
+
         return defaultHandlers(field, value, operation);
     }
 
@@ -597,6 +616,49 @@ public abstract class AbstractJdbcRepository {
 
     protected Name getColumnName(QueryFilter.Field field) {
         return DSL.quotedName(field.name().toLowerCase());
+    }
+
+    /**
+     * A table-qualified column reference where the table part is unquoted (matching an
+     * unqualified {@code DSL.table(String)}) and the column part is quoted (matching how every
+     * column is declared in these tables' migrations).
+     */
+    private static <T> Field<T> qualifiedColumn(String table, String column, Class<T> type) {
+        return DSL.field(DSL.unquotedName(table).append(DSL.quotedName(column)), type);
+    }
+
+    /**
+     * {@code notification_items.resource_id = executions.key}, correlating a subquery against
+     * {@code notification_items} to the outer {@code executions} row being filtered.
+     */
+    static Condition notificationItemCorrelation() {
+        Field<String> resourceId = qualifiedColumn("notification_items", "resource_id", String.class);
+        Field<String> executionKey = qualifiedColumn("executions", "key", String.class);
+        return resourceId.eq(executionKey);
+    }
+
+    /**
+     * Builds an {@code EQUALS} condition on {@code notification_items.operation_id}/{@code outcome}
+     * (correlation not included — see {@link #notificationItemCorrelation()}). Used both standalone
+     * (see {@link #getConditionOnField}) and combined by {@code AbstractJdbcExecutionRepository} when
+     * both fields are filtered together.
+     */
+    static Condition notificationItemLeafCondition(QueryFilter.Field field, Object value, QueryFilter.Op operation) {
+        if (operation != QueryFilter.Op.EQUALS) {
+            throw new InvalidQueryFiltersException("Unsupported operation for " + field + ": " + operation);
+        }
+        String column = field == QueryFilter.Field.OPERATION_ID ? "operation_id" : "outcome";
+        Field<String> notificationColumn = qualifiedColumn("notification_items", column, String.class);
+        return notificationColumn.eq((String) primitiveOrToString(value));
+    }
+
+    /**
+     * {@code notification_items.resource_id}, selected to build an {@code IN} subquery against
+     * the outer {@code executions.key}; see
+     * {@link AbstractJdbcExecutionRepository#combinedNotificationItemCondition}.
+     */
+    static Field<String> notificationItemResourceIdField() {
+        return qualifiedColumn("notification_items", "resource_id", String.class);
     }
 
     protected Condition findQueryCondition(String query) {

@@ -291,7 +291,46 @@
       "help": "帮助",
       "issue": "问题",
       "demo": "演示",
-      "star": "点赞我们"
+      "star": "点赞我们",
+      "notifications": "通知"
+    },
+    "notifications": {
+      "heading": "通知",
+      "ongoing": "进行中",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "正在终止 {count} 个执行",
+          "EXECUTION_PAUSE": "正在暂停 {count} 个执行",
+          "EXECUTION_RESUME": "正在恢复 {count} 个执行",
+          "EXECUTION_RESTART": "正在重新开始 {count} 个执行",
+          "EXECUTION_REPLAY": "正在重放 {count} 个执行",
+          "EXECUTION_FORCE_RUN": "正在强制运行 {count} 个执行",
+          "EXECUTION_UNQUEUE": "正在将 {count} 个执行移出队列",
+          "EXECUTION_CHANGE_STATUS": "正在更改 {count} 个执行的状态",
+          "EXECUTION_SET_LABELS": "正在为 {count} 个执行设置 label",
+          "TRIGGER_UNLOCK": "正在解锁 {count} 个 trigger",
+          "TRIGGER_DELETE": "正在删除 {count} 个 trigger",
+          "TRIGGER_DISABLE": "正在禁用 {count} 个 trigger",
+          "TRIGGER_ENABLE": "正在启用 {count} 个 trigger",
+          "BACKFILL_PAUSE": "正在暂停 {count} 个 backfill",
+          "BACKFILL_RESUME": "正在恢复 {count} 个 backfill",
+          "BACKFILL_DELETE": "正在删除 {count} 个 backfill"
+        },
+        "processed": "已处理 {count} 个",
+        "rejected": "已拒绝 {count} 个",
+        "elapsed": "已运行 {duration}"
+      },
+      "markAllRead": "全部标记为已读",
+      "markUnread": "标记为未读",
+      "markRead": "标记为已读",
+      "empty": "暂无通知",
+      "emptyUnread": "没有未读通知",
+      "tabs": {
+        "all": "全部",
+        "unread": "未读"
+      },
+      "bellAriaLabel": "通知",
+      "bellAriaLabelRunning": "通知，有操作正在进行"
     },
     "source": "来源",
     "home": "首页",

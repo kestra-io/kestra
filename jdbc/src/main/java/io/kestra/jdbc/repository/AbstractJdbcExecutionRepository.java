@@ -181,7 +181,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<QueryFilter> filters
 
     ) {
-        return findPage(pageable, tenantId, this.computeFindCondition(filters, null));
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, null, tenantId));
     }
 
     @Override
@@ -190,7 +190,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters,
         @Nullable DateFilter dateFilter) {
-        return findPage(pageable, tenantId, this.computeFindCondition(filters, dateFilter));
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, dateFilter, tenantId));
     }
 
     @Override
@@ -240,10 +240,45 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         );
     }
 
-    private Condition computeFindCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
-        boolean hasKindFilter = filters != null && filters.stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
-        Condition dateFilterCondition = buildDateFilterCondition(filters, dateFilter);
-        return hasKindFilter ? dateFilterCondition : dateFilterCondition.and(NORMAL_KIND_CONDITION);
+    private Condition computeFindCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter, @Nullable String tenantId) {
+        // Validated here, on the full list, because OPERATION_ID/OPERATION_OUTCOME leaves are
+        // pulled out below before `remainingFilters` ever reaches the nested `this.filter(...)`
+        // call (in buildDateFilterCondition) that would otherwise run this same validation.
+        QueryFilter.validateQueryFilters(filters, Resource.EXECUTION);
+
+        List<QueryFilter> operationFilters = filters == null ? List.of()
+            : filters.stream()
+                .filter(f -> f.isLeaf() && (f.field() == QueryFilter.Field.OPERATION_ID || f.field() == QueryFilter.Field.OPERATION_OUTCOME))
+                .toList();
+        List<QueryFilter> remainingFilters = filters == null ? null
+            : filters.stream()
+                .filter(f -> !operationFilters.contains(f))
+                .toList();
+
+        boolean hasKindFilter = remainingFilters != null && remainingFilters.stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
+        Condition dateFilterCondition = buildDateFilterCondition(remainingFilters, dateFilter);
+        Condition baseCondition = hasKindFilter ? dateFilterCondition : dateFilterCondition.and(NORMAL_KIND_CONDITION);
+        return baseCondition.and(combinedNotificationItemCondition(tenantId, operationFilters));
+    }
+
+    /**
+     * {@code operationId}/{@code operationOutcome} filtered together must match the same
+     * {@code notification_items} row (an execution can be targeted by more than one bulk
+     * operation), so both predicates — plus the tenant scope — are combined into a single
+     * {@code IN} subquery rather than built as two independent conditions.
+     */
+    private Condition combinedNotificationItemCondition(@Nullable String tenantId, List<QueryFilter> operationFilters) {
+        if (operationFilters.isEmpty()) {
+            return DSL.noCondition();
+        }
+        Condition combined = operationFilters.stream()
+            .map(f -> AbstractJdbcRepository.notificationItemLeafCondition(f.field(), f.value(), f.operation()))
+            .reduce(this.buildTenantCondition(tenantId), Condition::and);
+        return KEY_FIELD.in(
+            DSL.select(AbstractJdbcRepository.notificationItemResourceIdField())
+                .from(AbstractJdbcRepository.NOTIFICATION_ITEMS_TABLE)
+                .where(combined)
+        );
     }
 
     private static boolean containsLeafForKind(QueryFilter filter) {
@@ -328,7 +363,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     @Override
     public Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters) {
         // same condition as find(Pageable, String, List) so that streaming consumers see exactly what the search returns
-        return findAsync(defaultFilter(tenantId), this.computeFindCondition(filters, null));
+        return findAsync(defaultFilter(tenantId), this.computeFindCondition(filters, null, tenantId));
     }
 
     private <T extends Record> SelectConditionStep<T> filteringQuery(
@@ -783,7 +818,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
             Stream<?> values = descriptor instanceof In inFilter ? inFilter.getValues().stream()
                 : descriptor instanceof EqualTo equalToFilter ? Stream.of(equalToFilter.getValue())
-                : Stream.empty();
+                    : Stream.empty();
             List<State.Type> states = values.map(value -> State.Type.valueOf(value.toString())).toList();
 
             if (!states.isEmpty()) {

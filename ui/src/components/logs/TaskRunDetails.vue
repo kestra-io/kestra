@@ -324,7 +324,8 @@
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import * as ExecutionsSDK from "@kestra-io/kestra-sdk/executions"
     import {handledIf} from "../../utils/kestraHttp"
 
     // Recursive component - self reference
@@ -332,8 +333,6 @@
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
 
     const {t} = useI18n()
-
-    const $http = useClient()
 
     type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
 
@@ -881,17 +880,15 @@
             return
         }
 
-        let axiosResponse
-        try {
-            axiosResponse = await $http.get(
-                `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
-            )
-        } catch (e: unknown) {
+        const fileMetadatas = await ExecutionsSDK.fileMetadatasFromExecution({executionId: followedExecution.value?.id ?? "", path}).catch((e) => {
             if (!handledIf(e, [404, 422])) throw e
+            return undefined
+        })
+        if(fileMetadatas){
+            logFileSizeByPath.value[path] = Utils.humanFileSize(
+                fileMetadatas.size,
+            )
         }
-        logFileSizeByPath.value[path] = Utils.humanFileSize(
-            axiosResponse?.data.size,
-        )
     }
 
     function cancelLogsSSEClose() {

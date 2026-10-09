@@ -16,6 +16,7 @@ import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 
 /**
  * Base class for the services managing outputs, either task outputs or execution outputs.
@@ -68,6 +69,26 @@ public abstract class AbstractOutputService {
             File file = Files.createTempFile("output-", ".ion").toFile();
             Files.write(file.toPath(), outputBytes);
             return storage.putFile(file);
+        } catch (IOException e) {
+            throw new InternalException(e);
+        }
+    }
+
+    protected URI copyInInternalStorage(StorageContext sourceContext, StorageContext destinationContext, URI uri) throws InternalException {
+        try {
+            var source = new InternalStorage(sourceContext, storageInterface, namespaceFactory);
+            var destination = new InternalStorage(destinationContext, storageInterface, namespaceFactory);
+            long expectedSize = source.getAttributes(uri).getSize();
+            URI copiedUri;
+            try (var input = source.getFile(uri)) {
+                copiedUri = destination.putFile(input, "output-" + IdUtils.create() + ".ion");
+            }
+            long storedSize = destination.getAttributes(copiedUri).getSize();
+            // A storage retry can reuse a consumed stream, so verify the copy before publishing its URI.
+            if (storedSize != expectedSize) {
+                throw new IOException("Cannot copy the output blob: expected %d bytes but stored %d.".formatted(expectedSize, storedSize));
+            }
+            return copiedUri;
         } catch (IOException e) {
             throw new InternalException(e);
         }

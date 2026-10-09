@@ -2,6 +2,8 @@ import type {ComputedRef, InjectionKey, Ref} from "vue"
 import {NoCodeElement, TopologyClickParams} from "./utils/types"
 import {Panel} from "../../utils/multiPanelTypes"
 import type {FieldNavigation} from "./utils/useFieldNavigation"
+import type {BlockDragContext} from "./blocks/useBlockDragAndDrop"
+import type {UnsetRequiredField} from "./utils/requiredFields"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
@@ -26,6 +28,7 @@ export const PANEL_MAXIMIZED_INJECTION_KEY = Symbol("panel-maximized-injection-k
 export const EDITOR_CURSOR_INJECTION_KEY = Symbol("editor-cursor-injection-key") as InjectionKey<Ref<number | undefined>>
 export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection-key") as InjectionKey<Ref<number | undefined>>
 export const EDITOR_WRAPPER_INJECTION_KEY = Symbol("editor-wrapper-injection-key") as InjectionKey<boolean>
+export const FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY = Symbol("focused-expression-editor-injection-key") as InjectionKey<Ref<((text: string) => void) | null>>
 
 export const ROOT_SCHEMA_INJECTION_KEY = Symbol("root-schema-injection-key") as InjectionKey<Ref<Record<string, any>>>
 
@@ -47,3 +50,7 @@ export const TENANTS_INJECTION_KEY = Symbol("tenants-injection-key") as Injectio
 export const FIELD_NAV_INJECTION_KEY = Symbol("field-nav-injection-key") as InjectionKey<FieldNavigation>
 
 export const BLOCK_VALIDATION_ISSUES_INJECTION_KEY = Symbol("block-validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>
+
+export const BLOCK_DRAG_INJECTION_KEY = Symbol("block-drag-injection-key") as InjectionKey<BlockDragContext>
+export const UNSET_REQUIRED_FIELDS_INJECTION_KEY = Symbol("unset-required-fields-injection-key") as InjectionKey<Ref<UnsetRequiredField[]>>
+export const NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY = Symbol("navigate-to-required-field-injection-key") as InjectionKey<Ref<((path: string) => boolean) | undefined>>

@@ -130,7 +130,6 @@
     "description": "Descrizione",
     "show description": "Mostra una descrizione",
     "show details": "Mostra dettagli",
-    "show more details": "Mostra più dettagli",
     "skipped": "Saltato",
     "revision": "Revisione",
     "theme": "Tema",
@@ -329,10 +328,11 @@
     "start date": "Data di inizio",
     "end date": "Data di fine",
     "restart": "Riavvia",
-    "restart latest revision": "Riavvia ultima revisione",
     "restart tooltip": "Riavvia l'esecuzione dal task <code>{state}</code>",
     "restarted": "L'esecuzione è Riavviata",
     "restart confirm": "Sei sicuro di voler riavviare l'esecuzione <code>{id}</code>?",
+    "restart subflow warning": "Questa esecuzione è stata creata da un'esecuzione padre e dovrebbe essere riavviata da lì. Riavviarla da sola lascia l'esecuzione padre FAILED e i suoi Task successivi non verranno eseguiti. Vai a {parent} per riavviarla.",
+    "restart subflow warning link": "esecuzione padre",
     "replay": "Ripeti",
     "replay from task tooltip": "Crea un'esecuzione simile a partire dal task <code>{taskId}</code>",
     "replay from beginning tooltip": "Crea un'esecuzione simile a partire dall'inizio",
@@ -349,6 +349,10 @@
     "no": "No",
     "change state done": "Lo stato del task è stato aggiornato",
     "change state confirm": "Sei sicuro di voler cambiare lo stato di esecuzione del task per il task <code>{task}</code> nell'esecuzione <code>{id}</code>?<br/>Riavvvierà quindi l'esecuzione dal task successivo e riavvierà l'esecuzione padre, se presente.",
+    "interrupt": "Interrompi",
+    "interrupt confirm": "Sei sicuro di voler interrompere l'esecuzione del Task per il Task <code>{task}</code> nell'Execution <code>{id}</code>?<br/>Terminerà il Task in esecuzione all'interno del Worker e ne imposterà lo stato.",
+    "interrupt done": "L'esecuzione del Task è stata interrotta",
+    "interrupt target state": "Stato di destinazione",
     "change state current state": "Lo stato attuale è:",
     "change state hint": {
       "WARNING": [
@@ -441,7 +445,8 @@
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
       "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
       "add-task": "Aggiungi task",
-      "add-trigger": "Aggiungi trigger"
+      "add-trigger": "Aggiungi trigger",
+      "child-count": "{count} task | {count} tasks"
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -449,6 +454,11 @@
     "show task source": "Mostra sorgente del task",
     "stream": "Stream",
     "execution statistics": "Statistiche di esecuzione",
+    "execution_banner": {
+      "revision": "Revisione {revision}",
+      "attempts": "{count} tentativo | {count} tentativi",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Limiti di Concorrenza",
     "system overview": "Panoramica del sistema",
     "usage": "Utilizzo",
@@ -459,6 +469,12 @@
     "email": "Email",
     "password": "Password",
     "confirm password": "Conferma password",
+    "change_password": {
+      "title": "Cambia Password",
+      "current_password": "Password attuale",
+      "new_password": "Nuova password",
+      "success": "Le tue credenziali sono state aggiornate."
+    },
     "invalid flow": "Flow non valido",
     "invalid yaml": "YAML non valido",
     "inputs": "Inputs",
@@ -553,6 +569,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "Impossibile caricare un componente del plugin.",
       "autoInstall": {
         "failed": "Installazione del plugin non riuscita",
         "failedHint": "Il flow non è stato salvato. Correggi il problema o rimuovi il plugin dal flow, poi salva di nuovo.",
@@ -682,6 +699,17 @@
     "execute the flow": "Esegui il flow <code>{id}</code>",
     "discard execution confirmation": "Hai degli input non salvati. Sei sicuro di voler scartare questa esecuzione?",
     "unsaved changed ?": "Hai modifiche non salvate, vuoi lasciare questa pagina?",
+    "session expired": "La tua sessione è scaduta",
+    "session expired description": "Accedi di nuovo per continuare.",
+    "go to login": "Vai alla pagina di login",
+    "use another sign-in method": "Usa un altro metodo di accesso",
+    "sign in in a new tab": "Accedi in una nuova scheda",
+    "sign in in a new tab hint": "Accedi nella scheda appena aperta, quindi torna qui e continua.",
+    "continue after sign in": "Continua",
+    "sign in failed": "Impossibile accedere. Controlla la tua connessione e riprova.",
+    "sign in not confirmed": "Non è stato possibile confermare che hai effettuato l'accesso. Accedi nell'altra scheda, quindi continua.",
+    "server unreachable": "Impossibile raggiungere il server Kestra",
+    "server unreachable description": "Copia qualsiasi lavoro non salvato (ad esempio il Flow YAML) in un luogo sicuro prima di aggiornare questa pagina. Questo banner scomparirà una volta che il server risponderà di nuovo.",
     "unsaved changes": "Modifiche Non Salvate",
     "unsaved changes warning": "Hai modifiche non salvate. Se lasci questa pagina, le modifiche andranno perse.",
     "leave page": "Lascia Pagina",
@@ -1029,6 +1057,8 @@
         "folder": "Elimina cartella",
         "files": "Elimina {count} file selezionati",
         "bulk_success": "File selezionati eliminati con successo.",
+        "bulk_partial_error": "Impossibile eliminare {failedCount} dei {totalCount} file selezionati.",
+        "all_failed_error": "Impossibile eliminare i file selezionati.",
         "folders": "Elimina {count} cartelle selezionate"
       },
       "move": {
@@ -1081,7 +1111,6 @@
     "pause backfills": "Metti in pausa i backfills",
     "backfill executions": "Esecuzioni di backfill",
     "execute backfill": "Esegui backfill",
-    "relative": "Relativo",
     "relative start date": "Data di inizio relativa",
     "absolute": "Assoluto",
     "backfill": "Backfill",
@@ -1693,6 +1722,7 @@
     "custom value": "Valore personalizzato",
     "chart": "Grafico",
     "no_code": {
+      "task_details": "Dettagli del task",
       "toggle_pebble": "Attiva/disattiva editor Pebble",
       "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition",
       "adding": "+ Aggiungi un {what}",
@@ -1748,7 +1778,8 @@
         "inputs": "Seleziona un tipo di input field",
         "charts": "Seleziona un tipo di grafico",
         "where": "Seleziona un tipo di filtro",
-        "numerator": "Seleziona un numeratore"
+        "numerator": "Seleziona un numeratore",
+        "namespace_first": "Seleziona prima un namespace"
       },
       "creation": {
         "default": "Aggiungi",
@@ -2201,7 +2232,6 @@
       "run_all_tasks": "Esegui Tutti i Task",
       "history": "Ultime 10 esecuzioni",
       "clear_history": "Cancella cronologia",
-      "confirm_create": "Non puoi eseguire il playground mentre crei un flow. Avviare un'esecuzione del playground creerà il flow.",
       "tooltip_persistence": "Se disattivi e riattivi il Playground, le informazioni rimangono finché resti sulla pagina."
     },
     "submit": "Invia",
@@ -2270,8 +2300,10 @@
     "bulk delete triggers": "Sei sicuro di voler eliminare {count} trigger?",
     "bulk success delete triggers": "{count} trigger sono stati eliminati con successo",
     "delete trigger confirmation": "Sei sicuro di voler eliminare il trigger {id}? WARNING: eliminare un trigger potrebbe portare a esecuzioni duplicate se il trigger è ancora attivo in un flow.",
+    "delete trigger still declared": "Questo trigger è ancora dichiarato sul flow. Rimuovilo dal flow o usa Restart.",
     "delete trigger success": "Il trigger {id} è stato eliminato con successo",
     "delete trigger error": "Errore durante l'eliminazione del trigger {id}",
+    "delete triggers orphans only": "Verrà eliminato solo lo stato del trigger non più dichiarato su un flow. I trigger ancora dichiarati su un flow vengono mantenuti.",
     "revision deleted": "La revisione {revision} è stata eliminata con successo",
     "delete revision confirm": "Sei sicuro di voler eliminare la revisione {revision}?",
     "delete revision error": "Errore durante l'eliminazione della revisione {revision} con errore {error}",
@@ -2393,6 +2425,7 @@
         "label": "{count} Errore/i"
       }
     },
+    "invalid_source_code": "Codice sorgente non valido",
     "source_search": {
       "cannot_select_read_only": "Impossibile selezionare — non hai i permessi di modifica su {namespace} / {id}",
       "collapse_all": "Comprimi tutto",
@@ -2532,6 +2565,8 @@
       "command_menu": {
         "context_flow": "contesto: flow",
         "context_selected": "contesto: {name}",
+        "copy": "Copia {name}",
+        "cut": "Taglia {name}",
         "delete": "Elimina {name}",
         "duplicate": "Duplica {name}",
         "goto": "Vai a {section}",
@@ -2547,6 +2582,7 @@
         "insert_kind": "Inserisci {kind}",
         "no_match": "Nessuna corrispondenza",
         "open": "Apri {name}",
+        "paste": "Incolla",
         "save": "Salva il flow",
         "search_placeholder": "Digita un comando o cerca un task...",
         "title": "Menu comandi"
@@ -2563,6 +2599,7 @@
       "depends_on_placeholder": "Seleziona i task…",
       "depth_pill": "Profondità {depth}",
       "drag_reorder": "Trascina per riordinare",
+      "drop_forbidden": "Impossibile rilasciare qui",
       "duplicate": "Duplica",
       "empty_add_hint": "o premi / per cercare i task",
       "empty_add_lead": "Clicca per aggiungere {label}",
@@ -2591,6 +2628,9 @@
       "lane_then": "Poi",
       "move_down": "Sposta in basso",
       "move_up": "Sposta su",
+      "namespace_files": "File del namespace",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Segreti",
       "no_data_matches": "Nessun elemento corrisponde al tuo filtro",
       "no_recent": "Nessun tipo di task recente ancora",
       "no_task_results": "Nessun tipo di task corrispondente.",
@@ -2601,7 +2641,30 @@
       "picker_more_results": "{count} altri, affina la tua ricerca",
       "plugin_default": "default: {value}",
       "plugin_default_tooltip": "Valore predefinito da pluginDefaults del flow",
+      "plugin_implementation": {
+        "change": "Modifica",
+        "choose_title": "Scegli {label}",
+        "count_available": "{count} disponibili",
+        "exactly_one": "1 implementazione",
+        "items_set": "{count} impostati",
+        "no_results_description": "{count} implementazioni sono installate su questa istanza. Una fornita da un plugin non installato non comparirà qui.",
+        "no_results_title": "Nessuna implementazione corrisponde a «{query}»",
+        "picker_count": "{shown} di {total}",
+        "remove": "Rimuovi {label}",
+        "remove_from": "Rimuovi {name} da {field}",
+        "replace": "Sostituisci…",
+        "search_placeholder": "Cerca…",
+        "secret_summary": "{label} da Secret",
+        "stored_value": "Valore memorizzato",
+        "summary_overflow": "+{count}",
+        "unresolved_message": "{type} non è una delle {count} implementazioni che questa istanza conosce per {label}. Il plugin potrebbe non essere installato oppure essere stato rimosso in un aggiornamento.",
+        "unresolved_name": "Implementazione sconosciuta",
+        "unresolved_untouched": "Il tuo YAML resta invariato. Non viene scritto nulla nel flow finché non sostituisci l'implementazione."
+      },
       "required_missing": "Campo obbligatorio non impostato",
+      "required_unset_jump": "Vai al primo",
+      "required_unset_plural": "{count} campi obbligatori non sono ancora impostati",
+      "required_unset_singular": "1 campo obbligatorio non è ancora impostato",
       "save_blocked": {
         "message": "Correggi gli errori prima di salvare.",
         "title": "Impossibile salvare il flow"
@@ -2615,6 +2678,8 @@
         "clear": "Chiudi / cancella selezione",
         "collapse_expand": "Comprimi / espandi",
         "command_palette": "Menu dei comandi (contestuale)",
+        "copy": "Copia",
+        "cut": "Taglia",
         "group_edit": "Modifica",
         "group_global": "Globale",
         "group_insert": "Inserisci",
@@ -2623,6 +2688,8 @@
         "open": "Apri blocco selezionato",
         "open_split": "Apri il blocco selezionato in visualizzazione divisa",
         "or": "o",
+        "paste": "Incolla",
+        "redo": "Ripeti",
         "reorder": "Riordina su / giù",
         "save": "Salva il flow",
         "step_into": "Espandi / entra in un gruppo",

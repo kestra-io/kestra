@@ -1,5 +1,6 @@
 import {describe, test, expect, vi, beforeEach, afterEach} from "vitest"
 import {ElNotification} from "element-plus"
+import type {NotificationHandle} from "element-plus"
 import {KsNotification} from "../../../src/components/Feedback/KsNotification"
 import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
 import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -21,7 +22,7 @@ vi.mock("element-plus", () => ({
 
 describe("KsNotification", () => {
     beforeEach(() => {
-        vi.mocked(ElNotification).mockReturnValue({close: vi.fn()} as any)
+        vi.mocked(ElNotification).mockReturnValue({close: vi.fn()} as NotificationHandle)
     })
 
     afterEach(() => {

@@ -57,7 +57,7 @@ describe("Duration", () => {
     it("should disable the trigger and show a dash when there is no history", () => {
         const wrapper = mountDuration([])
 
-        const trigger = wrapper.find("button.ks-duration-value")
+        const trigger = wrapper.find("[data-test='duration-value']")
         expect(trigger.text()).toBe("—")
         expect(trigger.attributes("disabled")).toBeDefined()
     })
@@ -186,27 +186,27 @@ describe("Duration", () => {
             {date: 1, state: "SUCCESS"},
         ])
         expect(oneMillisecond.find(".duration-total").text()).toContain("1ms")
-        expect(oneMillisecond.find("button.ks-duration-value").text()).not.toContain("1ms")
+        expect(oneMillisecond.find("[data-test='duration-value']").text()).not.toContain("1ms")
 
         const overOneSecond = mountDuration([
             {date: 0, state: "CREATED"},
             {date: 13_558, state: "SUCCESS"},
         ])
         expect(overOneSecond.find(".duration-total").text()).toContain("13.55s")
-        expect(overOneSecond.find("button.ks-duration-value").text()).toContain("13.55s")
+        expect(overOneSecond.find("[data-test='duration-value']").text()).toContain("13.55s")
     })
 
     it("should use a generic aria-label by default and a subject-specific one when provided", () => {
         const withoutSubject = mountDuration([
             {date: "2026-08-07T15:36:15.804Z", state: "SUCCESS"},
         ])
-        expect(withoutSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("state_history.aria_open")
+        expect(withoutSubject.find("[data-test='duration-value']").attributes("aria-label")).toBe("state_history.aria_open")
 
         const withSubject = mountDuration(
             [{date: "2026-08-07T15:36:15.804Z", state: "SUCCESS"}],
             {subject: "extract"},
         )
-        expect(withSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("Show the state history for extract")
+        expect(withSubject.find("[data-test='duration-value']").attributes("aria-label")).toBe("Show the state history for extract")
     })
 
     it("should disambiguate a task's attempt-level trigger from its aggregate row via the subject", () => {
@@ -215,8 +215,8 @@ describe("Duration", () => {
         const aggregate = mountDuration(RETRIED_HISTORY, {subject: "flaky"})
         const attempt = mountDuration(RETRIED_HISTORY, {subject: "flaky, Attempt 2"})
 
-        const aggregateLabel = aggregate.find("button.ks-duration-value").attributes("aria-label")
-        const attemptLabel = attempt.find("button.ks-duration-value").attributes("aria-label")
+        const aggregateLabel = aggregate.find("[data-test='duration-value']").attributes("aria-label")
+        const attemptLabel = attempt.find("[data-test='duration-value']").attributes("aria-label")
 
         expect(aggregateLabel).toBe("Show the state history for flaky")
         expect(attemptLabel).toBe("Show the state history for flaky, Attempt 2")
@@ -234,7 +234,7 @@ describe("Duration", () => {
             {date: 3_000, state: "RETRYING"},
         ]
         const wrapper = mountDuration(firstAttempt, {interval: 100})
-        const label = () => wrapper.find("button.ks-duration-value").text()
+        const label = () => wrapper.find("[data-test='duration-value']").text()
 
         // RETRYING is not a running state, so the elapsed time is frozen at the last transition.
         expect(label()).toBe("3.00s")
@@ -253,5 +253,81 @@ describe("Duration", () => {
 
         const openButton = wrapper.findAll("button").find((btn) => btn.text() === "state_history.open")
         expect(openButton).toBeUndefined()
+    })
+
+    it("should render the compact bar without a popover or trigger button when compact", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                histories: [
+                    {date: 0, state: "RUNNING"},
+                    {date: 1_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        expect(wrapper.find("[data-test='duration-value']").exists()).toBe(false)
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(true)
+    })
+
+    it("should show no compact bar for a task that never ran", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                histories: [{date: 0, state: "SKIPPED"}],
+            },
+        })
+
+        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
+    })
+
+    it("should scale compact segments against the provided denominator instead of its own total", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                denominator: 4_000,
+                histories: [
+                    {date: 0, state: "RUNNING"},
+                    {date: 1_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
+        expect((running.element as HTMLElement).style.width).toBe("25%")
+    })
+
+    it("should not let the segments overfill the track when a run outgrows a stale denominator", () => {
+        // The denominator is the execution's longest task run and only refreshes with the execution,
+        // while this component re-measures on its own interval — so a still-running task outgrows it.
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                denominator: 1_000,
+                histories: [
+                    {date: 0, state: "CREATED"},
+                    {date: 1_000, state: "RUNNING"},
+                    {date: 4_000, state: "SUCCESS"},
+                ],
+            },
+        })
+
+        const widthOf = (name: string) => {
+            const el = wrapper.find(`[data-test="duration-segment-${name}"]`)
+            return el.exists() ? parseFloat((el.element as HTMLElement).style.width) : 0
+        }
+        const total = widthOf("queued") + widthOf("running") + widthOf("paused")
+
+        expect(total).toBeLessThanOrEqual(100)
+    })
+
+    it("should fall back to its own total for the tier-1 split bar when no denominator is provided", () => {
+        const wrapper = mountDuration([
+            {date: 0, state: "RUNNING"},
+            {date: 1_000, state: "SUCCESS"},
+        ])
+
+        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
+        expect((running.element as HTMLElement).style.width).toBe("100%")
     })
 })

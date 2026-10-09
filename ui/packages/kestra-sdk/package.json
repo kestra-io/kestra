@@ -14,6 +14,7 @@
     "./client": "./dist/client.js",
     "./dashboards": "./dist/dashboards.js",
     "./default": "./dist/default.js",
+    "./default-admin": "./dist/default-admin.js",
     "./executions": "./dist/executions.js",
     "./expressions": "./dist/expressions.js",
     "./files": "./dist/files.js",
@@ -41,7 +42,7 @@
     "@hey-api/openapi-ts": "^0.97.0",
     "@kestra-io/hey-api-plugin": "*",
     "@types/node": "^26.1.1",
-    "tsdown": "^0.22.0",
+    "tsdown": "^0.22.13",
     "typescript": "^6.0.3",
     "unrun": "^0.3.1"
   }

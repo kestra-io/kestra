@@ -130,7 +130,6 @@
     "description": "Beschreibung",
     "show description": "Beschreibung anzeigen",
     "show details": "Details anzeigen",
-    "show more details": "Mehr Details anzeigen",
     "skipped": "Übersprungen",
     "revision": "Revision",
     "theme": "Theme",
@@ -329,10 +328,11 @@
     "start date": "Startdatum",
     "end date": "Enddatum",
     "restart": "Neu starten",
-    "restart latest revision": "Neueste Revision neu starten",
     "restart tooltip": "Die Execution ab dem Task <code>{state}</code> neu starten",
     "restarted": "Execution wird neu gestartet",
     "restart confirm": "Execution <code>{id}</code> wirklich neu starten?",
+    "restart subflow warning": "Diese Execution wurde von einer übergeordneten Execution erstellt und sollte von dort neu gestartet werden. Ein alleiniger Neustart würde die übergeordnete Execution im FAILED-Status belassen und ihre nächsten Tasks würden nicht ausgeführt. Gehe zur {parent}, um sie neu zu starten.",
+    "restart subflow warning link": "übergeordnete Execution",
     "replay": "Replay",
     "replay from task tooltip": "Eine ähnliche Execution ab dem Task <code>{taskId}</code> erstellen",
     "replay from beginning tooltip": "Eine ähnliche Execution von Anfang an erstellen",
@@ -349,6 +349,10 @@
     "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
     "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
+    "interrupt": "Unterbrechen",
+    "interrupt confirm": "Möchtest du den Task Run für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich unterbrechen?<br/>Dadurch wird der laufende Task im Worker beendet und sein Status festgelegt.",
+    "interrupt done": "Task Run wurde unterbrochen",
+    "interrupt target state": "Ziel-Status",
     "change state current state": "Aktueller Status:",
     "change state hint": {
       "WARNING": [
@@ -441,7 +445,8 @@
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
       "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
       "add-task": "Task hinzufügen",
-      "add-trigger": "Trigger hinzufügen"
+      "add-trigger": "Trigger hinzufügen",
+      "child-count": "{count} Task | {count} Tasks"
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -449,6 +454,11 @@
     "show task source": "Task-Quelle anzeigen",
     "stream": "Stream",
     "execution statistics": "Execution-Statistiken",
+    "execution_banner": {
+      "revision": "Revision {revision}",
+      "attempts": "{count} Versuch | {count} Versuche",
+      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
+    },
     "concurrency limits": "Concurrency-Limits",
     "system overview": "Systemübersicht",
     "usage": "Verwendung",
@@ -459,6 +469,12 @@
     "email": "E-Mail",
     "password": "Passwort",
     "confirm password": "Passwort bestätigen",
+    "change_password": {
+      "title": "Passwort ändern",
+      "current_password": "Aktuelles Passwort",
+      "new_password": "Neues Passwort",
+      "success": "Deine Credentials wurden aktualisiert."
+    },
     "invalid flow": "Ungültiger Flow",
     "invalid yaml": "Ungültiges YAML",
     "inputs": "Inputs",
@@ -553,6 +569,7 @@
       "blueprints": "Blueprint | Blueprints"
     },
     "plugins": {
+      "ui_load_error": "Eine Plugin-Komponente konnte nicht geladen werden.",
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
         "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
@@ -682,6 +699,17 @@
     "execute the flow": "Den Flow <code>{id}</code> ausführen",
     "discard execution confirmation": "Du hast ungespeicherte Inputs. Möchtest du diese Execution wirklich verwerfen?",
     "unsaved changed ?": "Du hast ungespeicherte Änderungen. Möchtest du diese Seite verlassen?",
+    "session expired": "Deine Sitzung ist abgelaufen",
+    "session expired description": "Melde dich erneut an, um fortzufahren.",
+    "go to login": "Zur Login-Seite gehen",
+    "use another sign-in method": "Eine andere Anmeldemethode verwenden",
+    "sign in in a new tab": "In einem neuen Tab anmelden",
+    "sign in in a new tab hint": "Melde dich im gerade geöffneten Tab an, kehre dann hierher zurück und fahre fort.",
+    "continue after sign in": "Weiter",
+    "sign in failed": "Anmeldung fehlgeschlagen. Überprüfe deine Verbindung und versuche es erneut.",
+    "sign in not confirmed": "Wir konnten nicht bestätigen, dass du angemeldet bist. Melde dich im anderen Tab an und fahre dann fort.",
+    "server unreachable": "Kestra-Server nicht erreichbar",
+    "server unreachable description": "Kopiere alle ungespeicherten Arbeiten (z. B. den Flow YAML) an einen sicheren Ort, bevor du diese Seite aktualisierst. Dieses Banner verschwindet, sobald der Server wieder antwortet.",
     "unsaved changes": "Nicht gespeicherte Änderungen",
     "unsaved changes warning": "Du hast ungespeicherte Änderungen. Wenn du diese Seite verlässt, gehen sie verloren.",
     "leave page": "Seite verlassen",
@@ -1029,6 +1057,8 @@
         "folder": "Ordner löschen",
         "files": "{count} ausgewählte Dateien löschen",
         "bulk_success": "Ausgewählte Dateien erfolgreich gelöscht.",
+        "bulk_partial_error": "Fehler beim Löschen von {failedCount} der ausgewählten {totalCount} Datei(en).",
+        "all_failed_error": "Fehler beim Löschen der ausgewählten Dateien.",
         "folders": "{count} ausgewählte Ordner löschen"
       },
       "move": {
@@ -1081,7 +1111,6 @@
     "pause backfills": "Backfills pausieren",
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
-    "relative": "Relativ",
     "relative start date": "Relatives Startdatum",
     "absolute": "Absolut",
     "backfill": "Backfill",
@@ -1693,6 +1722,7 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "no_code": {
+      "task_details": "Task-Details",
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",
@@ -1748,7 +1778,8 @@
         "inputs": "Input-Typ auswählen",
         "charts": "Diagrammtyp auswählen",
         "where": "Filtertyp auswählen",
-        "numerator": "Zähler auswählen"
+        "numerator": "Zähler auswählen",
+        "namespace_first": "Zuerst einen Namespace auswählen"
       },
       "creation": {
         "default": "Hinzufügen",
@@ -2201,7 +2232,6 @@
       "run_all_tasks": "Alle Tasks ausführen",
       "history": "Letzte 10 Runs",
       "clear_history": "Verlauf löschen",
-      "confirm_create": "Du kannst den Playground nicht ausführen, während du einen Flow erstellst. Wenn du einen Playground-Run startest, wird der Flow erstellt.",
       "tooltip_persistence": "Wenn du den Playground aus- und wieder einschaltest, bleiben die Informationen erhalten, solange du auf der Seite bleibst."
     },
     "submit": "Absenden",
@@ -2270,8 +2300,10 @@
     "bulk delete triggers": "Möchtest du wirklich {count} Trigger löschen?",
     "bulk success delete triggers": "{count} Trigger wurden erfolgreich gelöscht",
     "delete trigger confirmation": "Möchtest du den Trigger {id} wirklich löschen? WARNUNG: Das Löschen eines Triggers kann zu doppelten Executions führen, wenn der Trigger noch in einem Flow aktiv ist",
+    "delete trigger still declared": "Dieser trigger ist noch im flow deklariert. Entferne ihn aus dem flow oder verwende Restart.",
     "delete trigger success": "Trigger {id} wurde erfolgreich gelöscht",
     "delete trigger error": "Fehler beim Löschen des Triggers {id}",
+    "delete triggers orphans only": "Nur trigger-State, der nicht mehr im flow deklariert ist, wird gelöscht. Trigger, die noch im flow deklariert sind, bleiben erhalten.",
     "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "delete revision confirm": "Möchtest du die Revision {revision} wirklich löschen?",
     "delete revision error": "Fehler beim Löschen der Revision {revision}: {error}",
@@ -2393,6 +2425,7 @@
         "label": "{count} Fehler"
       }
     },
+    "invalid_source_code": "Ungültiger Quellcode",
     "source_search": {
       "cannot_select_read_only": "Kann nicht ausgewählt werden – dir fehlt die Bearbeitungsberechtigung für {namespace} / {id}",
       "collapse_all": "Alle einklappen",
@@ -2532,6 +2565,8 @@
       "command_menu": {
         "context_flow": "Kontext: Flow",
         "context_selected": "Kontext: {name}",
+        "copy": "{name} kopieren",
+        "cut": "{name} ausschneiden",
         "delete": "{name} löschen",
         "duplicate": "{name} duplizieren",
         "goto": "Gehe zu {section}",
@@ -2547,6 +2582,7 @@
         "insert_kind": "{kind} einfügen",
         "no_match": "Keine Übereinstimmung",
         "open": "{name} öffnen",
+        "paste": "Einfügen",
         "save": "Flow speichern",
         "search_placeholder": "Befehl eingeben oder Task suchen…",
         "title": "Befehlsmenü"
@@ -2563,6 +2599,7 @@
       "depends_on_placeholder": "Tasks auswählen…",
       "depth_pill": "Tiefe {depth}",
       "drag_reorder": "Zum Neuanordnen ziehen",
+      "drop_forbidden": "Hier ablegen nicht möglich",
       "duplicate": "Duplizieren",
       "empty_add_hint": "oder drücke /, um nach Tasks zu suchen",
       "empty_add_lead": "Klicken, um {label} hinzuzufügen",
@@ -2591,6 +2628,9 @@
       "lane_then": "Then",
       "move_down": "Nach unten verschieben",
       "move_up": "Nach oben verschieben",
+      "namespace_files": "Namespace-Dateien",
+      "namespace_kv": "KV Store Keys",
+      "namespace_secrets": "Secrets",
       "no_data_matches": "Nichts entspricht deinem Filter",
       "no_recent": "Noch keine aktuellen Task-Typen",
       "no_task_results": "Keine passenden Task-Typen.",
@@ -2601,7 +2641,30 @@
       "picker_more_results": "Noch {count} weitere, verfeinere deine Suche",
       "plugin_default": "Standard: {value}",
       "plugin_default_tooltip": "Standardwert aus den pluginDefaults des Flows",
+      "plugin_implementation": {
+        "change": "Ändern",
+        "choose_title": "{label} auswählen",
+        "count_available": "{count} verfügbar",
+        "exactly_one": "1 Implementierung",
+        "items_set": "{count} festgelegt",
+        "no_results_description": "{count} Implementierungen sind auf dieser Instanz installiert. Eine von einem nicht installierten Plugin bereitgestellte Implementierung wird hier nicht angezeigt.",
+        "no_results_title": "Keine Implementierung entspricht „{query}“",
+        "picker_count": "{shown} von {total}",
+        "remove": "{label} entfernen",
+        "remove_from": "{name} aus {field} entfernen",
+        "replace": "Ersetzen…",
+        "search_placeholder": "Suchen…",
+        "secret_summary": "{label} aus Secret",
+        "stored_value": "Gespeicherter Wert",
+        "summary_overflow": "+{count}",
+        "unresolved_message": "{type} ist keine der {count} Implementierungen, die diese Instanz für {label} kennt. Das Plugin ist möglicherweise nicht installiert oder wurde bei einem Upgrade entfernt.",
+        "unresolved_name": "Unbekannte Implementierung",
+        "unresolved_untouched": "Ihr YAML bleibt unverändert. Es wird nichts in den Flow zurückgeschrieben, bis Sie die Implementierung ersetzen."
+      },
       "required_missing": "Erforderliches Feld nicht gesetzt",
+      "required_unset_jump": "Zum ersten springen",
+      "required_unset_plural": "{count} Pflichtfelder sind noch nicht gesetzt",
+      "required_unset_singular": "1 Pflichtfeld ist noch nicht gesetzt",
       "save_blocked": {
         "message": "Behebe die Fehler vor dem Speichern.",
         "title": "Der Flow kann nicht gespeichert werden"
@@ -2615,6 +2678,8 @@
         "clear": "Auswahl schließen / löschen",
         "collapse_expand": "Einklappen / Ausklappen",
         "command_palette": "Befehlsmenü (kontextbezogen)",
+        "copy": "Kopieren",
+        "cut": "Ausschneiden",
         "group_edit": "Bearbeiten",
         "group_global": "Global",
         "group_insert": "Einfügen",
@@ -2623,6 +2688,8 @@
         "open": "Ausgewählten Block öffnen",
         "open_split": "Ausgewählten Block in geteilter Ansicht öffnen",
         "or": "oder",
+        "paste": "Einfügen",
+        "redo": "Wiederholen",
         "reorder": "Neu anordnen nach oben / unten",
         "save": "Flow speichern",
         "step_into": "Gruppe ausklappen / betreten",

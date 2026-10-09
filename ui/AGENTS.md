@@ -205,6 +205,10 @@ Guards are wired through `initApp`, and three things about that are easy to get 
 
 **There is one `beforeEach` slot.** OSS spends it on `tenantGuard` and can only do so because its auth guard is a `beforeResolve`; EE spends it on `authGuard`. A second `beforeEach` has to be composed into the existing one, or `initApp` has to grow to accept a list, rather than being registered afterwards, since "afterwards" is exactly the case that misses the first navigation.
 
+### Session loss and an unreachable server
+
+A 401 on a logged-out session opens `ReauthDialog` through `requestReauth(signIn)` and replays the failed request once the user signs in, so the page and its unsaved state survive; the edition supplies its own `signIn` from `onUnauthorized`. A request that fails without a response (or behind a 502/503/504) raises `ServerUnreachableBanner`, which clears on the next response. Don't add per-page handling for either, and don't clear `unsavedChange` before the user has chosen to leave. The native basic-auth dialog is suppressed for fetch and XHR only: `EventSource` cannot set headers and relies on `Sec-Fetch-Dest`, which browsers send only over HTTPS or localhost, so on plain HTTP its streams can still open the dialog.
+
 ### Unsaved input in modals (discard guard)
 
 Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. `KsDialog` and `KsDrawer` take a `dirty` prop and ask for confirmation themselves; never reimplement the confirm-before-discard logic per modal.
@@ -449,9 +453,9 @@ If your `<style>` block needs to exist:
 | `KsTabs` / `KsTabPane` | Tabbed interface |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
-| `KsTopNavBar` | Top navigation bar |
+| `KsTopNavBar` | Top navigation bar; `titleSiblings` reaches the breadcrumb's current page |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
-| `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
+| `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation. An item's `siblings` loader (or `children` on the first item, and the `titleSiblings` prop for the current page) adds a chevron whose hover menu lists that level, headed by the level above (its `scope` when the label is not the right name for its content); an entry with a `children` loader flies out its own content to the right, as deep as the tree goes. Level loaders run as soon as the bar renders and an empty result shows no chevron; fly-outs load on hover. Namespace and flow pages build theirs with `useNamespaceBreadcrumb` |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 
 ## Utilities (import from the design system)
@@ -508,3 +512,5 @@ When a needed token is missing, **add it** to all three of `ks-theme-light.scss`
 - **Radii:** `$border-radius` (0.25rem), `$border-radius-sm` (0.15rem), `$border-radius-lg` (0.5rem)
 
 These exist so the *design system itself* can compose tokens from a single palette. They are not API for feature code — feature code should reach the same values through `--ks-*` tokens.
+
+A package that genuinely needs the palette (`@kestra-io/topology`, an external app) imports it with `@use "@kestra-io/design-system/styles/color-palette"`, never through a `src/assets/styles/...` path: only the dedicated export resolves the same way on every OS and in the published package.

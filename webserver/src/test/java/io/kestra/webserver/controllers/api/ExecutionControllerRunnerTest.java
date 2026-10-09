@@ -169,6 +169,9 @@ class ExecutionControllerRunnerTest {
     @Inject
     private TaskOutputService taskOutputService;
 
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
+
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
 
@@ -968,6 +971,25 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenReplayWithInputsCalledOnUnknownExecution() {
+        MultipartBody multipartBody = MultipartBody.builder()
+            .addPart("condition", "success")
+            .build();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST("/api/v1/main/executions/notfound/actions/replay-with-inputs", multipartBody)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
@@ -1872,6 +1894,59 @@ class ExecutionControllerRunnerTest {
             )
         );
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume.yaml" })
+    void shouldResumeLoopFromMainExecution() throws QueueException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "loop-pause-resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // resume the execution two times as there are two iterations
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().isPaused());
+        resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // check that the execution is no more paused
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume.yaml" })
+    @SuppressWarnings("unchecked")
+    void shouldResumeLoopFromSubExecution() throws QueueException, InternalException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "loop-pause-resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // resume each loop sub-execution
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(pausedExecution.getTenantId(), pausedExecution.getId(), null);
+        assertThat(subExecutions).hasSize(1);
+        Execution iteration1 = subExecutions.getFirst();
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + iteration1.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().getHistories().stream().filter(h -> h.getState().isPaused()).count() == 2);
+
+        subExecutions = executionRepository.findLoopSubExecutions(pausedExecution.getTenantId(), pausedExecution.getId(), null);
+        assertThat(subExecutions).hasSize(2);
+        Execution iteration2 = subExecutions.get(1);
+        resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + iteration2.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // check that the execution terminates successfully
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().isSuccess());
     }
 
     @Test
@@ -3548,6 +3623,101 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
+    void shouldReturnConflictWhenReplayCalledOnPausedExecution(String tenantId) throws QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/%s/actions/replay".formatted(tenantId, pausedExecution.getId()),
+                    List.of(pausedExecution.getId())
+                ),
+                Execution.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Cannot replay execution: current state is 'PAUSED', expected terminated.");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/replay/by-ids".formatted(tenantId),
+                    List.of(pausedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be replayed, current state is 'PAUSED'");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/replay/by-query?filters[q][EQUALS]=%s".formatted(tenantId, pausedExecution.getId()),
+                    List.of(pausedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("must be terminated to be replayed, current state is 'PAUSED'");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldreplayplaygroundatbreakpoint")
+    void shouldReplayOnlyPlaygroundExecutionWhenSuspendedAtBreakpoint() {
+        String tenantId = "shouldreplayplaygroundatbreakpoint";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution playground = triggerSuspendedExecution(tenantId, "&kind=PLAYGROUND");
+        Execution playgroundReplay = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, playground.getId(), playground.getTaskRunList().getFirst().getId()),
+                ImmutableMap.of()
+            ),
+            Execution.class
+        );
+        assertThat(playgroundReplay.getId()).isNotEqualTo(playground.getId());
+
+        Execution regular = triggerSuspendedExecution(tenantId, "");
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, regular.getId(), regular.getTaskRunList().getFirst().getId()),
+                    ImmutableMap.of()
+                ),
+                Execution.class
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Cannot replay execution: current state is 'BREAKPOINT', expected terminated.");
+    }
+
+    private Execution triggerSuspendedExecution(String tenantId, String extraQuery) {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/" + tenantId + "/executions/" + TESTS_FLOW_NS + "/minimal?breakpoints=date" + extraQuery, null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        return awaitExecution(execution.getId(), State.Type.BREAKPOINT);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/logs.yaml" })
     void shouldReturnBadRequestWhenKillByIdsCalledOnInvalidExecutions() {
         Execution execution = client.toBlocking().retrieve(
@@ -3769,7 +3939,7 @@ class ExecutionControllerRunnerTest {
     private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }

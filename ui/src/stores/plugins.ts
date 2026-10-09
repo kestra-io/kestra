@@ -7,34 +7,10 @@ import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type PluginArtifact, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 
-/** Mirrors io.kestra.core.plugins.PluginInstallJob */
-export interface PluginArtifact {
-    groupId: string;
-    artifactId: string;
-    extension: string;
-    classifier: string | null;
-    version: string;
-}
-
-export interface ArtifactProgress {
-    resource: string;
-    transferred: number;
-    total: number;
-    state: "STARTED" | "PROGRESSING" | "SUCCEEDED" | "FAILED";
-}
-
-export interface PluginInstallJob {
-    id: string;
-    status: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED";
-    artifacts: PluginArtifact[];
-    progress: Record<string, ArtifactProgress>;
-    startedAt: string | null;
-    finishedAt: string | null;
-    error: string | null;
-}
+export type {PluginArtifact, PluginInstallJob, PluginInstallJobArtifactProgress as ArtifactProgress} from "@kestra-io/kestra-sdk"
 
 export interface PluginAutoInstallDetectResult {
     enabled: boolean;
@@ -497,6 +473,10 @@ export const usePluginsStore = defineStore("plugins", () => {
             // catalog-only type: no local doc until the plugin is actually installed
             editorPlugin.value = undefined
             currentlyLoading = undefined
+            return
+        }
+
+        if (currentlyLoading?.cls !== cls || currentlyLoading?.version !== version) {
             return
         }
 

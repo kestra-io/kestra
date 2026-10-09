@@ -7,6 +7,7 @@
         :class="classes"
         :icons="icons"
         :loadIcon="loadIcon"
+        :lod="lod"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
         :focused="isKeyboardFocused"
@@ -15,15 +16,15 @@
         :dragging="props.dragging"
         @taskDragEnd="emit(EVENTS.TASK_DRAG_END)"
     >
-        <template #badge>
+        <template #subtitle>
+            <span class="type-label">{{ typeLabel }}</span>
             <span v-if="runnerLabel" class="runner-badge" :title="runnerLabel">{{ runnerLabel }}</span>
         </template>
         <template #details>
-            <Transition name="details-slide">
-                <div v-if="globalShowExtraDetails" class="details-wrapper">
-                    <slot name="details" />
-                </div>
-            </Transition>
+            <slot name="details" />
+        </template>
+        <template #footer>
+            <Duration compact :histories="histories" :denominator="longestTaskRunDuration" />
         </template>
         <template #content>
             <button
@@ -45,29 +46,7 @@
                     <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
-            <KsTooltip v-if="validationIssues.length" :persistent="false">
-                <template #content>
-                    <div class="task-validation-tooltip">
-                        <div class="task-validation-tooltip-head">
-                            <AlertCircle :size="14" />
-                            <span>{{ $t("error detected") }}</span>
-                        </div>
-                        <ul class="task-validation-tooltip-list">
-                            <li v-for="issue in validationIssues" :key="issue">{{ issue }}</li>
-                        </ul>
-                    </div>
-                </template>
-                <span
-                    class="task-validation-badge"
-                    data-test="topology-task-validation-badge"
-                    role="img"
-                    tabindex="0"
-                    :aria-label="$t('flow_editor_stats.errors.label', {count: validationIssues.length})"
-                >
-                    <AlertCircle :size="14" />
-                    <span v-if="validationIssues.length > 1" class="task-validation-badge-count">{{ validationIssues.length }}</span>
-                </span>
-            </KsTooltip>
+            <ValidationBadge :issues="validationIssues" />
         </template>
         <template #title-actions>
             <slot name="taskActions" :task="data.node.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRunsWithDynamicChildren" :taskRun="taskRuns[0]">
@@ -82,37 +61,27 @@
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {State, KsTooltip, SECTIONS, dayjs} from "@kestra-io/design-system"
+    import {KsTooltip, SECTIONS, dayjs, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
-    import {getStatusStyle} from "../utils/status"
+    import {getStatusStyle, pickWorstState} from "../utils/status"
+    import {buildNodeActions, type NodeActionsContext} from "../utils/nodeActions"
     import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
+    import ValidationBadge from "./ValidationBadge.vue"
     import {
         EXECUTION_INJECTION_KEY,
         SUBFLOWS_EXECUTIONS_INJECTION_KEY,
-        SHOW_EXTRA_DETAILS_INJECTION_KEY,
+        LOD_INJECTION_KEY,
         VALIDATION_ISSUES_INJECTION_KEY,
         FOCUSED_TASK_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
+        LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
     } from "../injectionKeys"
 
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
-    import LocationExit from "vue-material-design-icons/LocationExit.vue"
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
-    import SendLock from "vue-material-design-icons/SendLock.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import Delete from "vue-material-design-icons/Delete.vue"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
-    import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import PlayIcon from "vue-material-design-icons/Play.vue"
-    
 
     export interface TaskType {
         id: string;
@@ -132,12 +101,11 @@
         flowId?: string;
     }
 
-    interface NodeData {
+    export interface NodeData {
         node: {
             uid: string;
             type?: string;
             task: TaskType;
-            taskRun: GraphTaskRun
         };
         executionId?: string;
         color?: string;
@@ -151,7 +119,7 @@
         };
     }
 
-    interface ExpandData {
+    export interface ExpandData {
         id: string;
         type: string;
     }
@@ -167,8 +135,8 @@
         sourcePosition?: Position;
         targetPosition?: Position;
         id: string;
-        icons?: Record<string, unknown>;
-        loadIcon?: (cls: string) => Promise<unknown>;
+        icons?: PluginIconMap;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -216,8 +184,9 @@
 
     const execution = inject(EXECUTION_INJECTION_KEY)
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
-    const globalShowExtraDetails = inject(SHOW_EXTRA_DETAILS_INJECTION_KEY)
+    const lod = inject(LOD_INJECTION_KEY, computed(() => "default"))
     const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const longestTaskRunDuration = inject(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => 0))
 
     function onCardClick() {
         const task = props.data.node.task
@@ -231,6 +200,8 @@
     const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
 
     const taskId = computed(() => Utils.afterLastDot(props.id))
+
+    const typeLabel = computed(() => Utils.shortPluginType(props.data.node.task?.type))
 
     const validationIssues = computed<string[]>(() =>
         validationIssuesByTask?.value?.get(taskId.value ?? "") ?? [],
@@ -292,21 +263,8 @@
             return taskRuns.value[0].state.current
         }
 
-        const SORT_STATUS: string[] = [
-            State.FAILED,
-            State.KILLED,
-            State.WARNING,
-            State.SKIPPED,
-            State.KILLING,
-            State.RUNNING,
-            State.SUCCESS,
-            State.RESTARTED,
-            State.CREATED,
-        ]
-
-        return taskRuns.value
-            .map((t) => t.state.current)
-            .sort((a, b) => SORT_STATUS.indexOf(a) - SORT_STATUS.indexOf(b))[0]
+        const allStates = taskRuns.value.map((t) => t.state.current)
+        return pickWorstState(allStates) ?? allStates[0]
     })
 
     const classes = computed(() => ({
@@ -338,12 +296,7 @@
                 link: {
                     namespace: subflowIdContainer.namespace,
                     id: subflowIdContainer.flowId,
-                    executionId: taskExecution.value?.taskRunList
-                        ?.filter((taskRun) =>
-                            taskRun.id === props.data.node.taskRun.id &&
-                            taskRun.outputs?.executionId,
-                        )
-                        ?.[0]?.outputs?.executionId,
+                    executionId: taskRuns.value.find((taskRun) => taskRun.outputs?.executionId)?.outputs?.executionId,
                 },
             }
         }
@@ -354,122 +307,43 @@
         const taskType = props.data.node.task?.type as string | undefined
         if (!taskType) return undefined
         const customAction = props.customActions?.[taskType] ?? (runnerType.value ? props.customActions?.[runnerType.value] : undefined)
-        if (customAction) return {config: customAction, eventName: EVENTS.SHOW_CUSTOM_ACTION} as const
+        if (customAction) return {config: customAction, eventName: "showCustomAction"} as const
         const showDetail = props.showDetails?.[taskType]
-        if (showDetail) return {config: showDetail, eventName: EVENTS.SHOW_DETAILS} as const
+        if (showDetail) return {config: showDetail, eventName: "showDetails"} as const
         return undefined
     })
 
     const {t} = useI18n()
 
     const actions = computed<NodeAction[]>(() => {
-        const task = props.data.node.task
-        const readOnly = props.data.isReadOnly
-        const list: NodeAction[] = []
-
-        const description = task?.description
-        if (description) {
-            list.push({
-                key: "description",
-                label: t("show description"),
-                icon: InformationOutline,
-                onClick: () => emit(EVENTS.SHOW_DESCRIPTION, {id: taskId.value, description}),
-            })
+        const ctx: NodeActionsContext = {
+            task: props.data.node.task,
+            taskId: taskId.value ?? "",
+            isReadOnly: Boolean(props.data.isReadOnly),
+            isFlowable: Boolean(props.data.isFlowable),
+            expandable: Boolean(props.data.expandable),
+            taskExecution: taskExecution.value,
+            taskRuns: taskRuns.value,
+            taskRunsWithDynamicChildren: taskRunsWithDynamicChildren.value,
+            replayEnabled: props.replayEnabled,
+            link: dataWithLink.value.link,
+            actionConfig: actionConfig.value,
         }
-        if (task?.runIf) {
-            list.push({
-                key: "condition",
-                label: t("show task condition"),
-                icon: SendLock,
-                onClick: () => emit(EVENTS.SHOW_CONDITION, {id: taskId.value, task, section: SECTIONS.TASKS}),
-            })
-        }
-        if (taskExecution.value) {
-            list.push({
-                key: "logs",
-                label: t("show task logs"),
-                icon: TextBoxSearch,
-                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
-            })
-        }
-        if (taskExecution.value) {
-            list.push({
-                key: "outputs",
-                label: t("show task outputs"),
-                icon: LocationExit,
-                onClick: () => emit(EVENTS.SHOW_OUTPUTS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
-            })
-        }
-        if (dataWithLink.value.link) {
-            list.push({
-                key: "open",
-                label: t("open"),
-                icon: OpenInNew,
-                onClick: () => emit(EVENTS.OPEN_LINK, {link: dataWithLink.value.link}),
-            })
-        }
-        if (props.data.expandable) {
-            list.push({
-                key: "expand",
-                label: t("expand"),
-                icon: UnfoldMoreHorizontal,
-                onClick: () => emit(EVENTS.EXPAND, expandData.value),
-            })
-        }
-        if (!taskExecution.value && !readOnly && props.data.isFlowable && !task?.errors?.length) {
-            list.push({
-                key: "add-error",
-                label: t("add error handler"),
-                icon: AlertOutline,
-                onClick: () => emit(EVENTS.ADD_ERROR, {task}),
-            })
-        }
-        if (actionConfig.value && task) {
-            list.push({
-                key: "show-details",
-                label: actionConfig.value.config.label || t("show details"),
-                icon: EyeOutline,
-                onClick: () => onShowDetails(),
-            })
-        }
-        if (!readOnly) {
-            list.push({
-                key: "duplicate",
-                label: t("block_editor.duplicate"),
-                icon: ContentCopy,
-                divided: true,
-                onClick: () => emit(EVENTS.DUPLICATE, {id: taskId.value}),
-            })
-            list.push({
-                key: "delete",
-                label: t("delete"),
-                icon: Delete,
-                danger: true,
-                divided: true,
-                onClick: () => emit(EVENTS.DELETE, {id: taskId.value, section: SECTIONS.TASKS}),
-            })
-        }
-        if (props.replayEnabled && taskExecution.value && taskRuns.value.length > 0) {
-            list.push({
-                key: "replay",
-                label: t("replay"),
-                icon: PlayBoxMultiple,
-                divided: true,
-                onClick: () => emit(EVENTS.REPLAY_TASK, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
-            })
-        }
-
-        return list
+        return buildNodeActions(ctx, t, {
+            onShowDescription: (payload) => emit(EVENTS.SHOW_DESCRIPTION, payload),
+            onShowCondition: (payload) => emit(EVENTS.SHOW_CONDITION, {...payload, task: props.data.node.task}),
+            onShowLogs: (payload) => emit(EVENTS.SHOW_LOGS, {...payload, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
+            onShowOutputs: (payload) => emit(EVENTS.SHOW_OUTPUTS, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
+            onOpenLink: (payload) => emit(EVENTS.OPEN_LINK, payload),
+            onExpand: (payload) => emit(EVENTS.EXPAND, payload),
+            onAddError: () => emit(EVENTS.ADD_ERROR, {task: props.data.node.task}),
+            onShowCustomAction: (payload) => emit(EVENTS.SHOW_CUSTOM_ACTION, {...payload, task: props.data.node.task}),
+            onShowDetails: (payload) => emit(EVENTS.SHOW_DETAILS, {...payload, task: props.data.node.task}),
+            onDuplicate: (payload) => emit(EVENTS.DUPLICATE, payload),
+            onDelete: (payload) => emit(EVENTS.DELETE, payload),
+            onReplayTask: (payload) => emit(EVENTS.REPLAY_TASK, {...payload, execution: taskExecution.value, taskRuns: taskRuns.value}),
+        }, expandData.value)
     })
-
-    function onShowDetails() {
-        if (!actionConfig.value || !props.data.node.task) return
-        if (actionConfig.value.eventName === EVENTS.SHOW_CUSTOM_ACTION) {
-            emit(EVENTS.SHOW_CUSTOM_ACTION, {task: props.data.node.task, customAction: actionConfig.value.config as CustomActionConfig})
-        } else {
-            emit(EVENTS.SHOW_DETAILS, {task: props.data.node.task, showDetails: actionConfig.value.config as ShowDetailsConfig})
-        }
-    }
 
 </script>
 
@@ -509,86 +383,22 @@ button.playground-button {
     white-space: nowrap;
 }
 
-.details-wrapper {
-    font-size: var(--ks-font-size-2xs);
-
-    &:has(> *) {
-        border-top: 1px solid var(--ks-border-default);
-        background: var(--ks-bg-base);
-    }
+.type-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .runner-badge {
-    align-self: flex-start;
-    max-width: 100%;
-    margin-bottom: var(--ks-spacing-1);
-    padding: 0 var(--ks-spacing-2);
-    border-radius: var(--ks-radius-base);
+    flex-shrink: 0;
+    padding: 0 var(--ks-spacing-1);
+    border-radius: var(--ks-radius-xs);
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-info);
-    font-size: var(--ks-font-size-2xs);
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.details-slide-enter-active,
-.details-slide-leave-active {
-    transition: max-height 0.25s ease, opacity 0.25s ease;
-    overflow: hidden;
-    max-height: 200px;
-}
-
-.details-slide-enter-from,
-.details-slide-leave-to {
-    max-height: 0;
-    opacity: 0;
-}
-
-.task-validation-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    padding: 0 var(--ks-spacing-1);
-    height: 1.125rem;
-    border-radius: var(--ks-radius-sm);
-    background: var(--ks-bg-error);
-    color: var(--ks-text-error);
-    cursor: help;
-}
-
-.task-validation-badge-count {
-    font-size: var(--ks-font-size-xs);
-    font-weight: 600;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.task-validation-tooltip {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-2);
-    max-width: 22rem;
-}
-
-.task-validation-tooltip-head {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    color: var(--ks-text-error);
-    font-weight: 600;
-    font-size: var(--ks-font-size-sm);
-}
-
-.task-validation-tooltip-list {
-    margin: 0;
-    padding-left: var(--ks-spacing-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-1);
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-secondary);
-    font-family: var(--ks-font-family-mono);
-}
 </style>

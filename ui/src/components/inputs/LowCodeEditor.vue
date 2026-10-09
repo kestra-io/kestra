@@ -23,7 +23,6 @@
             :replayEnabled="replayEnabled"
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
-            :showDetailsToggle="props.showDetailsToggle && hasExtraDetails"
             :taskDetailsVersion="taskDetailsVersion"
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
@@ -51,7 +50,7 @@
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">
                     <TopologyDetailsRemote
-                        :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
+                        :taskType="detailsTypeFor(taskProps.data.node?.task)"
                         :task="taskWithSource(taskProps.data.node?.task)"
                         :execution="exec"
                         :namespace="props.namespace"
@@ -122,7 +121,7 @@
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
-            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
+            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? $t('no_code.task_details')"
             :destroyOnClose="true"
             :appendToBody="true"
             scrollable
@@ -302,6 +301,7 @@
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import TaskEditModal from "../no-code/blocks/TaskEditModal.vue"
@@ -463,9 +463,9 @@
         return merged
     }
 
-    const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
+    const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent, componentTypeFor: detailsTypeFor} = useFederatedModule("topology-details")
     const {RemoteComponent: TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
-    const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
+    const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent, componentTypeFor: modalTypeFor} = useFederatedModule("topology-task-modal")
 
 
     const customActions = computed(() => {
@@ -477,14 +477,6 @@
             }
         }
         return result
-    })
-
-    const hasExtraDetails = computed(() => {
-        const types = taskAdditionalInfoRemote.value
-        return (augmentedFlowGraph.value?.nodes ?? []).some((n: any) =>
-            (n.task?.type && types[n.task.type]) ||
-            (n.task?.taskRunner?.type && types[n.task.taskRunner.type]),
-        )
     })
 
     // progressEvents are never reset across execution navigations (taskRunId is globally
@@ -560,7 +552,8 @@
     const resolveTaskTopologyDetails = async (tasks: any[] = []) => {
         const taskTypes = new Set<string>()
         const runnerTypes = new Set<string>()
-        tasks.forEach((task: any) => {
+        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
+        getAllTasks(tasks).forEach((task: any) => {
             if (!task?.type) {
                 return
             }
@@ -614,7 +607,6 @@
             isAllowedEdit?: boolean;
             horizontalDefault?: boolean;
             toggleOrientationButton?: boolean;
-            showDetailsToggle?: boolean;
             expandedSubflows?: string[];
         }>(),
         {
@@ -626,7 +618,6 @@
             isAllowedEdit: false,
             horizontalDefault: undefined,
             toggleOrientationButton: true,
-            showDetailsToggle: true,
             expandedSubflows: () => [],
         })
 
@@ -653,8 +644,8 @@
         async (source) => {
             if (!source) return
             const parsed = YAML_UTILS.parse<ParsedFlow>(source)
-            const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
-            const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+            const sourceHasRunners = getAllTasks(parsed?.tasks).some((t: any) => t?.taskRunner?.type)
+            const flowParsedHasRunners = getAllTasks(flowStore.flowParsed?.tasks).some((t: any) => t?.taskRunner?.type)
             if (sourceHasRunners && !flowParsedHasRunners) {
                 await resolveTaskTopologyDetails(parsed?.tasks ?? [])
             }
@@ -778,7 +769,7 @@
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
-    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml: applyYamlWithUndo, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
@@ -911,7 +902,7 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({
@@ -970,7 +961,7 @@
     onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
 
     const shortcutsOpen = ref(false)
-    const shortcutGroups = buildShortcutGroups()
+    const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
     const commandMenuOpen = ref(false)
     const flowPropertiesOpen = ref(false)
 
@@ -1105,6 +1096,8 @@
             return reorderFocusedTask(event.key === "ArrowDown" ? "down" : "up") ? undefined : false
         case "undo":
             return performUndo()
+        case "redo":
+            return performRedo()
         case "save":
             saveFlow()
             return
@@ -1337,9 +1330,8 @@
     const showCustomAction = (event: { task: any; customAction: { label: string; taskProp: string; lang: string } }) => {
         const fullTask = taskWithSource(event.task)
         if (!event.customAction.taskProp) {
-            const runnerType = fullTask?.taskRunner?.type as string | undefined
             taskModalCtx.value = {
-                taskType: runnerType ?? fullTask?.type,
+                taskType: modalTypeFor(fullTask),
                 title: event.customAction.label,
                 task: fullTask,
                 execution: exec.value,

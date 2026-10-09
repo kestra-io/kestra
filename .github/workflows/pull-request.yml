@@ -192,6 +192,10 @@ jobs:
 
       - name: Commit them onto the pull request
         if: env.GEMINI_API_KEY != ''
+        # The branch name is chosen by whoever pushed it, so keep it out of the script itself:
+        # interpolated directly, a `$(...)` in the name would run on the runner.
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
@@ -203,7 +207,7 @@ jobs:
           fi
           git commit -m "chore(core): localize to languages other than english"
           # Generation is idempotent, so the run this push triggers finds nothing to do and stops.
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin "HEAD:${HEAD_REF}"
 
   # Kept off the frontend test path: a translation typo shouldn't block those, and this check needs
   # neither a build nor `npm ci` — just the checked-out files and Node itself. It is what stops an
@@ -245,7 +249,8 @@ jobs:
           owner: kestra-io
           repositories: kestra-ee
 
-      # The same-name EE branch when the PR has a companion, otherwise the branch it targets.
+      # The same-name EE branch when the PR has a companion, otherwise the branch it targets. A stacked
+      # PR targets another OSS branch, which has no EE counterpart, hence the fall back to develop.
       - name: Resolve the EE branch
         id: ee-branch
         if: steps.ee-token.outputs.token != ''
@@ -254,11 +259,14 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if gh api "repos/kestra-io/kestra-ee/branches/$HEAD_REF" --silent 2>/dev/null; then
-            echo "ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=$BASE_REF" >> "$GITHUB_OUTPUT"
-          fi
+          for candidate in "$HEAD_REF" "$BASE_REF" develop; do
+            if gh api "repos/kestra-io/kestra-ee/branches/$candidate" --silent 2>/dev/null; then
+              echo "ref=$candidate" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "::error::No kestra-ee branch found for $HEAD_REF, $BASE_REF or develop."
+          exit 1
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout - EE sources
@@ -313,7 +321,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   design-system-frontend:
     name: Frontend - Design System tests
@@ -356,8 +363,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:

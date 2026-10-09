@@ -2,7 +2,7 @@ import {describe, test, expect, afterEach, vi} from "vitest"
 
 // buildFullQuery reads the default chart duration from the misc store; mock it so each test
 // controls that value directly instead of depending on a real Pinia + API-backed store.
-const miscState = vi.hoisted(() => ({configs: undefined as Record<string, any> | undefined}))
+const miscState = vi.hoisted(() => ({configs: undefined as Record<string, unknown> | undefined}))
 vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: miscState.configs}),
 }))

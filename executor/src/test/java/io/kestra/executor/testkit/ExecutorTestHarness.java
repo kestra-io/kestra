@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
@@ -25,11 +26,14 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
-import io.kestra.core.queues.event.Event;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
+import io.kestra.core.queues.event.Event;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -51,10 +55,16 @@ import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.runners.configuration.LoggingConfiguration;
 import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.ConcurrencyLimitResolver;
+import io.kestra.core.services.ConcurrencyLimitService;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
@@ -62,9 +72,9 @@ import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.services.configuration.ExecutionOutputConfiguration;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.NamespaceFileBackend;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.executor.ConcurrencySlotReleaseProcessor;
 import io.kestra.executor.DefaultExecutor;
@@ -199,13 +209,13 @@ public final class ExecutorTestHarness {
         TaskOutputService taskOutputService = new TaskOutputService(
             taskOutputRepository,
             Mockito.mock(StorageInterface.class),
-            new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class)),
+            new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
             new TaskOutputConfiguration(-1)
         );
         this.executionOutputService = new ExecutionOutputService(
             executionOutputRepository,
             Mockito.mock(StorageInterface.class),
-            new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class)),
+            new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
             new ExecutionOutputConfiguration(-1)
         );
         // Real Pebble engine without Micronaut: the mocked ApplicationContext returns no Extension
@@ -257,8 +267,27 @@ public final class ExecutorTestHarness {
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
-        // the executor-facing ExecutionService methods are pure and never touch its injected fields
-        this.executionService = Mockito.mock(ExecutionService.class, Mockito.CALLS_REAL_METHODS);
+        // a spy so tests can stub the methods that reach for other services while the rest stays real
+        this.executionService = Mockito.spy(
+            new ExecutionService(
+                Mockito.mock(StorageInterface.class),
+                Mockito.mock(ExecutionRepositoryInterface.class),
+                Mockito.mock(LogDataStoreInterface.class),
+                Mockito.mock(MetricRepositoryInterface.class),
+                Mockito.mock(FlowInputOutput.class),
+                Mockito.mock(ApplicationEventPublisher.class),
+                Mockito.mock(ConcurrencyLimitService.class),
+                Mockito.mock(FlowParsingService.class),
+                taskOutputService,
+                executionOutputService,
+                executionCommandQueue,
+                killQueue,
+                loopExecutionEventQueue,
+                Mockito.mock(AsyncOperationWaiter.class),
+                Mockito.mock(AsyncOperationsConfiguration.class),
+                Optional.empty()
+            )
+        );
         // every evaluate overload defaults to PASS; tests re-stub the overload they exercise
         this.killSwitchService = Mockito.mock(
             KillSwitchService.class,
@@ -271,8 +300,20 @@ public final class ExecutorTestHarness {
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
         this.asyncOperationService = Mockito.mock(AsyncOperationService.class);
-        this.flowTriggerService = Mockito.mock(FlowTriggerService.class);
-        this.multipleConditionStateStore = Mockito.mock(MultipleConditionStateStore.class);
+        // a real FlowTriggerService so a full executor cycle actually evaluates flow-trigger `when` conditions
+        // and emits the executions they produce; the only dependency the harness cannot provide for real is
+        // FlowService, and the trigger paths only use removeUnwanted() (recursion guard) — stub it to allow processing
+        FlowService flowService = Mockito.mock(FlowService.class);
+        Mockito.when(flowService.removeUnwanted(Mockito.any(), Mockito.any())).thenReturn(true);
+        this.flowTriggerService = new FlowTriggerService(
+            new ConditionService(),
+            runContextFactory,
+            flowService,
+            flowMetaStore,
+            executionOutputService,
+            new ExecutionDepthConfiguration(100)
+        );
+        this.multipleConditionStateStore = new InMemoryMultipleConditionStateStore();
 
         this.executorService = new ExecutorService(
             runContextFactory,
@@ -382,7 +423,8 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            metricRegistry
+            metricRegistry,
+            loopExecutionEventQueue
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
             concurrencyLimitStateStore,

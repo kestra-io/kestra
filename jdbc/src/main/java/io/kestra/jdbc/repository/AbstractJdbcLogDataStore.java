@@ -519,7 +519,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         }
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<Logs.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
@@ -553,7 +553,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         }
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
             Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                 .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))

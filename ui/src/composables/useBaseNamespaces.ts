@@ -12,7 +12,7 @@ import type {KestraHttpError, KestraRequestOptions} from "../utils/kestraHttp"
 export {PagedResultsNamespace}
 
 type NamespaceSearchParameters = NonNullable<Parameters<typeof NamespaceAPI.searchNamespaces>[0]>
-type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
+export type NamespaceSearchOptions = Omit<NamespaceSearchParameters, "sort"> & {commit?: boolean; sort?: string}
 type DeleteKvsRequest = Omit<Parameters<typeof KvAPI.deleteKeyValues>[0], "namespace">
 
 function base(namespace: string) {
@@ -22,6 +22,9 @@ function base(namespace: string) {
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
 export const safePath = (path: string) => encodeURIComponent(path).replace(/%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
+
+// The server picks a file's next revision without locking, so two overlapping saves of one file can record a revision that was never stored.
+const pendingFileSaves = new Map<string, {content: string; save: Promise<void>; settled: Promise<void>}>()
 
 export const useBaseNamespacesStore = () => {
     const namespace = ref<Namespace | undefined>(undefined)
@@ -34,9 +37,14 @@ export const useBaseNamespacesStore = () => {
 
     const axios = useClient()
 
+    let latestAutocomplete = 0
+
     async function loadAutocomplete(options?: {q?: string, ids?: string[], existingOnly?: boolean}) {
+        const current = ++latestAutocomplete
         const response = await NamespaceAPI.autocompleteNamespaces({existingOnly: false, ...options})
-        autocomplete.value = response
+        if (current === latestAutocomplete) {
+            autocomplete.value = response
+        }
         return response
     }
 
@@ -189,7 +197,24 @@ export const useBaseNamespacesStore = () => {
         }
     }
 
-    async function createFile(payload: {namespace: string; path: string; content: string}) {
+    function createFile(payload: {namespace: string; path: string; content: string}): Promise<void> {
+        const key = `${payload.namespace}:${slashPrefix(payload.path)}`
+        const pending = pendingFileSaves.get(key)
+        if (pending?.content === payload.content) {
+            return pending.save
+        }
+        const save = (pending?.settled ?? Promise.resolve()).then(() => postFile(payload))
+        const settled = save.then(() => undefined, () => undefined)
+        pendingFileSaves.set(key, {content: payload.content, save, settled})
+        settled.then(() => {
+            if (pendingFileSaves.get(key)?.settled === settled) {
+                pendingFileSaves.delete(key)
+            }
+        })
+        return save
+    }
+
+    async function postFile(payload: {namespace: string; path: string; content: string}) {
         const DATA = new FormData()
         const BLOB = new Blob([payload.content], {type: "text/plain"})
         DATA.append("fileContent", BLOB)

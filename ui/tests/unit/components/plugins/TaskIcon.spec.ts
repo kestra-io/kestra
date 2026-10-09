@@ -26,7 +26,7 @@ function svgUrlFor(cls: string): string {
 beforeEach(() => {
     // Reset HTML class to light mode before each test
     document.documentElement.className = ""
-    delete (window as any).KESTRA_BASE_PATH
+    delete (window as {KESTRA_BASE_PATH?: string}).KESTRA_BASE_PATH
 })
 
 describe("TaskIcon", () => {
@@ -89,7 +89,7 @@ describe("TaskIcon", () => {
     })
 
     test("prefixes the svg endpoint with KESTRA_BASE_PATH when the app is served behind a subpath", () => {
-        (window as any).KESTRA_BASE_PATH = "/kestra"
+        window.KESTRA_BASE_PATH = "/kestra"
         const wrapper = mount(TaskIcon, {
             props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
             global: globalConfig,
@@ -99,7 +99,7 @@ describe("TaskIcon", () => {
     })
 
     test("does not produce a protocol-relative // url when KESTRA_BASE_PATH is the root path", () => {
-        (window as any).KESTRA_BASE_PATH = "/"
+        window.KESTRA_BASE_PATH = "/"
         const wrapper = mount(TaskIcon, {
             props: {cls: "io.kestra.plugin.core.log.Log", icons: mockIcons, onlyIcon: true},
             global: globalConfig,

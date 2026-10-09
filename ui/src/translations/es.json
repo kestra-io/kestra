@@ -1717,7 +1717,9 @@
         "empty-title": "No hay logs coincidentes",
         "empty-description": "Ningún log coincide con el nivel seleccionado en esta ejecución ni en sus iteraciones fallidas del loop. Baja el nivel para ver más.",
         "scope-to": "Limitar el gráfico y los logs a {scope}",
-        "show-in-overview": "Mostrar en Resumen"
+        "show-in-overview": "Mostrar en Resumen",
+        "show-in-overview-for": "Mostrar {scope} en Resumen",
+        "mode-label": "Origen de los logs"
       }
     },
     "execution_deletion": {

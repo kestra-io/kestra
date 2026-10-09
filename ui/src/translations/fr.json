@@ -1717,7 +1717,9 @@
         "empty-title": "Aucun log correspondant",
         "empty-description": "Aucun log ne correspond au niveau sélectionné dans cette exécution ni dans ses itérations de loop en échec. Abaissez le niveau pour en voir plus.",
         "scope-to": "Limiter le graphe et les logs à {scope}",
-        "show-in-overview": "Afficher dans la vue générale"
+        "show-in-overview": "Afficher dans la vue générale",
+        "show-in-overview-for": "Afficher {scope} dans la vue générale",
+        "mode-label": "Source des logs"
       }
     },
     "execution_deletion": {

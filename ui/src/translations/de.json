@@ -1717,7 +1717,9 @@
         "empty-title": "Keine passenden Logs",
         "empty-description": "Kein Log entspricht der gewählten Stufe in dieser Ausführung oder ihren fehlgeschlagenen Loop-Iterationen. Senke die Stufe, um mehr zu sehen.",
         "scope-to": "Graph und Logs auf {scope} eingrenzen",
-        "show-in-overview": "In der Übersicht anzeigen"
+        "show-in-overview": "In der Übersicht anzeigen",
+        "show-in-overview-for": "{scope} in der Übersicht anzeigen",
+        "mode-label": "Log-Quelle"
       }
     },
     "execution_deletion": {

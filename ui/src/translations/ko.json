@@ -1717,7 +1717,9 @@
         "empty-title": "일치하는 로그 없음",
         "empty-description": "이 실행 또는 실패한 루프 반복에 선택한 수준과 일치하는 로그가 없습니다. 더 보려면 수준을 낮추세요.",
         "scope-to": "그래프와 로그를 {scope}(으)로 범위 지정",
-        "show-in-overview": "개요에서 보기"
+        "show-in-overview": "개요에서 보기",
+        "show-in-overview-for": "개요에서 {scope} 보기",
+        "mode-label": "로그 소스"
       }
     },
     "execution_deletion": {

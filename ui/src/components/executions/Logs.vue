@@ -22,7 +22,7 @@
                     refresh: {shown: true, callback: refreshLogs}
                 }"
                 @search="filter = $event"
-                @filter="syncFromAppliedFilters"
+                @filter="applyLevelFilter"
             />
             <div class="logs-toolbar" data-test="logs-toolbar">
                 <div class="logs-toolbar__left">
@@ -31,6 +31,7 @@
                         v-model="selectedMode"
                         :options="modeOptions"
                         size="small"
+                        :aria-label="$t('logs_view.loop.mode-label')"
                         data-test="logs-mode-switch"
                     />
                     <template v-for="logLevel in (merged ? [] : currentLevelOrLower)" :key="logLevel">
@@ -190,6 +191,7 @@
         readAppliedLevelFilter,
         readRouteLevelFilter,
         State,
+        type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
@@ -254,7 +256,7 @@
 
     type LogsMode = "execution" | "merged"
 
-    const hasLoopIterations = computed(() => flowHasLoop(executionsStore.flow))
+    const hasLoopIterations = computed(() => !props.playground && flowHasLoop(executionsStore.flow))
     const modeOverride = ref<LogsMode>()
     const mode = computed<LogsMode>(() => modeOverride.value ?? (hasLoopIterations.value ? "merged" : "execution"))
     const merged = computed(() => hasLoopIterations.value && mode.value === "merged")
@@ -296,21 +298,31 @@
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
 
     const ERRORS_ONLY: LevelFilterValue = {value: "ERROR", direction: "min"}
+    const defaultLevelValue = (): LevelFilterValue => ({value: defaultLogLevel.value, direction: "min"})
     const levelPicked = ref(levelInUrlAtMount)
+    let levelBeforeErrorsOnly: LevelFilterValue | undefined = !levelInUrlAtMount && merged.value ? defaultLevelValue() : undefined
     const mergedUsesDefaultLevel = computed(() => merged.value && !levelPicked.value)
     const mergedLevelParams = computed(() => levelToRequestParams(mergedUsesDefaultLevel.value ? ERRORS_ONLY : effectiveLevelValue.value))
-    let programmaticLevelChanges = levelInUrlAtMount ? 0 : 1
 
-    watch(mergedUsesDefaultLevel, (usesDefault) => {
-        if (!usesDefault || routeLevelValue.value?.value === ERRORS_ONLY.value) return
-        programmaticLevelChanges++
-        setRouteLevel(ERRORS_ONLY)
+    watch(merged, (isMerged) => {
+        if (levelPicked.value) return
+        if (isMerged) {
+            levelBeforeErrorsOnly = routeLevelValue.value ?? defaultLevelValue()
+            if (routeLevelValue.value?.value !== ERRORS_ONLY.value) setRouteLevel(ERRORS_ONLY)
+        } else if (levelBeforeErrorsOnly) {
+            setRouteLevel(levelBeforeErrorsOnly)
+            levelBeforeErrorsOnly = undefined
+        }
     })
 
-    watch(routeLevel, () => {
-        if (programmaticLevelChanges > 0) programmaticLevelChanges--
-        else levelPicked.value = true
-    })
+    function applyLevelFilter(filters: AppliedFilter[]) {
+        const applied = readAppliedLevelFilter(filters)
+        if (routeLevelValue.value !== undefined && JSON.stringify(applied) !== JSON.stringify(routeLevelValue.value)) {
+            levelPicked.value = true
+            levelBeforeErrorsOnly = undefined
+        }
+        syncFromAppliedFilters(filters)
+    }
 
     const filter = ref<string | undefined>(undefined)
     const openedTaskrunsCount = ref(0)

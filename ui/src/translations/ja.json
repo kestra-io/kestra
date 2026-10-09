@@ -1717,7 +1717,9 @@
         "empty-title": "一致するログがありません",
         "empty-description": "この実行および失敗したループのイテレーションに、選択したレベルに一致するログはありません。より多く表示するにはレベルを下げてください。",
         "scope-to": "グラフとログを{scope}に絞り込む",
-        "show-in-overview": "概要で表示"
+        "show-in-overview": "概要で表示",
+        "show-in-overview-for": "{scope}を概要で表示",
+        "mode-label": "ログのソース"
       }
     },
     "execution_deletion": {

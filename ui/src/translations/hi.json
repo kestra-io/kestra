@@ -1717,7 +1717,9 @@
         "empty-title": "कोई मेल खाते logs नहीं",
         "empty-description": "इस निष्पादन या इसके विफल Loop इटरेशन में चयनित स्तर से कोई log मेल नहीं खाता। अधिक देखने के लिए स्तर घटाएँ।",
         "scope-to": "ग्राफ़ और logs को {scope} तक सीमित करें",
-        "show-in-overview": "अवलोकन में दिखाएँ"
+        "show-in-overview": "अवलोकन में दिखाएँ",
+        "show-in-overview-for": "{scope} को अवलोकन में दिखाएँ",
+        "mode-label": "Logs का स्रोत"
       }
     },
     "execution_deletion": {

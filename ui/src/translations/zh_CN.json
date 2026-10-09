@@ -1717,7 +1717,9 @@
         "empty-title": "没有匹配的日志",
         "empty-description": "在此执行或其失败的循环迭代中，没有日志匹配所选级别。降低级别以查看更多。",
         "scope-to": "将图形和日志限定到 {scope}",
-        "show-in-overview": "在概览中显示"
+        "show-in-overview": "在概览中显示",
+        "show-in-overview-for": "在概览中显示 {scope}",
+        "mode-label": "日志来源"
       }
     },
     "execution_deletion": {

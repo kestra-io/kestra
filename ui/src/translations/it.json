@@ -1717,7 +1717,9 @@
         "empty-title": "Nessun log corrispondente",
         "empty-description": "Nessun log corrisponde al livello selezionato in questa esecuzione o nelle sue iterazioni del loop fallite. Abbassa il livello per vederne di più.",
         "scope-to": "Limita il grafo e i log a {scope}",
-        "show-in-overview": "Mostra nella panoramica"
+        "show-in-overview": "Mostra nella panoramica",
+        "show-in-overview-for": "Mostra {scope} nella panoramica",
+        "mode-label": "Origine dei log"
       }
     },
     "execution_deletion": {

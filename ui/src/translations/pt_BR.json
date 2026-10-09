@@ -1717,7 +1717,9 @@
         "empty-title": "Nenhum log correspondente",
         "empty-description": "Nenhum log corresponde ao nível selecionado nesta execução nem em suas iterações do loop com falha. Reduza o nível para ver mais.",
         "scope-to": "Limitar o gráfico e os logs a {scope}",
-        "show-in-overview": "Mostrar na visão geral"
+        "show-in-overview": "Mostrar na visão geral",
+        "show-in-overview-for": "Mostrar {scope} na visão geral",
+        "mode-label": "Origem dos logs"
       }
     },
     "execution_deletion": {

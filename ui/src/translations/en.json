@@ -1717,7 +1717,9 @@
         "empty-title": "No matching logs",
         "empty-description": "No log matches the selected level in this execution or its failed loop iterations. Lower the level to see more.",
         "scope-to": "Scope the graph and logs to {scope}",
-        "show-in-overview": "Show in Overview"
+        "show-in-overview": "Show in Overview",
+        "show-in-overview-for": "Show {scope} in Overview",
+        "mode-label": "Log source"
       }
     },
     "execution_deletion": {

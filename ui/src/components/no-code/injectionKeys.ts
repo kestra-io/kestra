@@ -21,8 +21,6 @@ export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
 export const UPDATE_YAML_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
 export const SAVE_FLOW_FUNCTION_INJECTION_KEY = Symbol("save-flow-function-injection-key") as InjectionKey<() => void>
-export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey<Ref<unknown>>
-
 export const TOPOLOGY_CLICK_INJECTION_KEY = Symbol("topology-click-injection-key") as InjectionKey<Ref<TopologyClickParams | undefined>>
 export const VISIBLE_PANELS_INJECTION_KEY = Symbol("visible-panels-injection-key") as InjectionKey<Ref<Panel[]>>
 export const PANEL_MAXIMIZED_INJECTION_KEY = Symbol("panel-maximized-injection-key") as InjectionKey<ComputedRef<boolean>>

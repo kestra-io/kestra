@@ -1,5 +1,6 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div data-component="FILENAME_PLACEHOLDER" :style="{'--execution-banner-height': `${bannerHeight}px`}">
+        <ExecutionSummaryCard v-if="props.showBanner && execution" v-model:height="bannerHeight" :execution />
         <div ref="inlineLogsTarget" />
         <KsDialog
             v-model="fullscreenModalOpen"
@@ -104,7 +105,7 @@
                     data-test="logs-scroller"
                     data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'calc(100vh - 335px)', marginTop: '0.5rem'}"
+                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'max(15rem, calc(100vh - 335px - var(--execution-banner-height, 0px)))', marginTop: '0.5rem'}"
                     :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
@@ -144,6 +145,7 @@
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -209,11 +211,16 @@
 
     const props = withDefaults(defineProps<{
         playground?: boolean
+        showBanner?: boolean
     }>(), {
         playground: false,
+        showBanner: false,
     })
 
     const executionsStore = useExecutionsStore()
+    const execution = computed(() => executionsStore.execution)
+
+    const bannerHeight = ref(0)
 
     // The kind this execution's logs belong to, or undefined for NORMAL (the backend default).
     const executionKind = computed<string | undefined>(() => {

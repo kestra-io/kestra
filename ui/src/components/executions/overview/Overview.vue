@@ -36,7 +36,7 @@
 
     import {State} from "@kestra-io/design-system"
 
-    import Banner from "./components/Banner.vue"
+    import Banner from "../components/Banner.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
@@ -62,7 +62,6 @@
         flex-direction: column;
         height: 100%;
         gap: var(--ks-spacing-4);
-        min-width: 0;
     }
 
     .banner {
@@ -76,10 +75,6 @@
             height: 100%;
             padding: 0;
         }
-    }
-
-    #alerts {
-        min-width: 0;
     }
 
     #alerts:empty {

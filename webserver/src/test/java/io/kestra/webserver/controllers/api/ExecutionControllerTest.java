@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -474,13 +476,14 @@ class ExecutionControllerTest {
         Assertions.assertTrue(response.inputs().stream().allMatch(ExecutionController.ApiValidateExecutionInputsResponse.ApiInputAndValue::enabled));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "system.label:system", "system:value" })
     @LoadFlows(value = { "flows/valids/minimal.yaml" })
-    void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
+    void shouldRefuseSystemLabelsWhenCreatingAnExecution(String label) {
         var error = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest
-                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=system.label:system", null)
+                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=" + label, null)
                     .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                 Execution.class
             )
@@ -554,8 +557,9 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
-    @Test
-    void shouldNotPartiallyApplyLabelsWhenSetLabelsOnTerminatedByIdsRejectsASystemLabel() {
+    @ParameterizedTest
+    @ValueSource(strings = { Label.CORRELATION_ID, "system" })
+    void shouldNotPartiallyApplyLabelsWhenSetLabelsOnTerminatedByIdsRejectsASystemLabel(String key) {
         Execution execution1 = terminatedExecution();
         Execution execution2 = terminatedExecution();
 
@@ -566,7 +570,7 @@ class ExecutionControllerTest {
                     "/api/v1/main/executions/labels/by-ids",
                     new ExecutionController.SetLabelsByIdsRequest(
                         List.of(execution1.getId(), execution2.getId()),
-                        List.of(new Label(Label.CORRELATION_ID, "spoofed"))
+                        List.of(new Label(key, "spoofed"))
                     )
                 )
             )
@@ -576,7 +580,7 @@ class ExecutionControllerTest {
         // the batch is all-or-nothing: neither execution gained the spoofed label
         for (Execution execution : List.of(execution1, execution2)) {
             Execution reloaded = client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId()), Execution.class);
-            assertThat(reloaded.getLabels()).doesNotContain(new Label(Label.CORRELATION_ID, "spoofed"));
+            assertThat(reloaded.getLabels()).doesNotContain(new Label(key, "spoofed"));
         }
     }
 

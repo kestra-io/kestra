@@ -4,6 +4,7 @@ import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
 import switchCaseLabels from "../../../fixtures/flowgraphs/switch-case-labels.json"
+import nestedLoopDemo from "../../../fixtures/flowgraphs/nested-loop-demo.json"
 
 const ALLOW_FAILURE_SOURCE = `
 id: allow-failure-demo
@@ -233,7 +234,7 @@ const MIXED_LANE_EXECUTION = {
 // Mirrors the `executionId` the app stamps onto every node once an execution is loaded
 // (executions.ts's loadAugmentedGraph) — without it, TaskNode/ClusterNode never resolve a
 // task run for a node, and the story would render as if no execution existed at all.
-function withExecutionId(flowGraph: typeof STATUS_SHOWCASE_GRAPH, executionId: string) {
+function withExecutionId<T extends {nodes: object[]}>(flowGraph: T, executionId: string) {
     return {
         ...flowGraph,
         nodes: flowGraph.nodes.map((node) => ({...node, executionId})),
@@ -524,5 +525,61 @@ export const FootprintInvariance: StoryObj<typeof Topology> = {
         expect(dimensionsOf(pill!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
         expect(dimensionsOf(atRest!)).toEqual(dimensionsOf(pill!))
         expect(dimensionsOf(expanded!)).toEqual(dimensionsOf(pill!))
+    },
+}
+
+const NESTED_LOOP_SOURCE = `
+id: nested_loop_demo
+namespace: company.team
+tasks:
+  - id: per_region
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["EMEA", "AMER", "APAC"]
+    tasks:
+      - id: per_quarter
+        type: io.kestra.plugin.core.flow.Loop
+        values: ["Q1", "Q2", "Q3", "Q4"]
+        tasks:
+          - id: fetch_sales
+            type: io.kestra.plugin.core.log.Log
+            message: "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+          - id: summarize
+            type: io.kestra.plugin.core.log.Log
+            message: "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+`.trim()
+
+const NESTED_LOOP_EXECUTION = {
+    id: "story-execution-nested-loop",
+    state: {current: "SUCCESS"},
+    taskRunList: [
+        taskRun("per_region", "SUCCESS"),
+        taskRun("per_quarter", "SUCCESS"),
+        taskRun("fetch_sales", "SUCCESS"),
+        taskRun("summarize", "SUCCESS"),
+    ],
+}
+
+export const NestedFlowableLanes: StoryObj<typeof Topology> = {
+    name: "Nested Flowable Lanes",
+    render: Template,
+    args: {
+        id: "story-nested-flowable-lanes",
+        source: NESTED_LOOP_SOURCE,
+        flowGraph: withExecutionId(nestedLoopDemo, NESTED_LOOP_EXECUTION.id) as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+        execution: NESTED_LOOP_EXECUTION,
+    },
+    play: async ({canvasElement}) => {
+        const rectOf = (id: string) => canvasElement.querySelector(`[data-id="${id}"]`)?.getBoundingClientRect()
+
+        await waitFor(() => expect(rectOf("cluster_root.per_region.per_quarter")).toBeDefined())
+        const outer = rectOf("cluster_root.per_region")!
+        const inner = rectOf("cluster_root.per_region.per_quarter")!
+
+        expect(inner.top).toBeGreaterThanOrEqual(outer.top)
+        expect(inner.left).toBeGreaterThanOrEqual(outer.left)
+        expect(inner.bottom).toBeLessThanOrEqual(outer.bottom)
+        expect(inner.right).toBeLessThanOrEqual(outer.right)
     },
 }

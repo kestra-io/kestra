@@ -1012,6 +1012,30 @@ public record QueryFilter(
                 )
             );
         }
+        collectRegexErrors(filter, errors);
+    }
+
+    /**
+     * Validates only the REGEX filters, for callers whose filters do not map to a {@link Resource}.
+     *
+     * @throws InvalidQueryFiltersException when a REGEX value is unsafe or not a valid regular expression.
+     */
+    public static void validateRegexFilters(List<QueryFilter> filters) {
+        if (filters == null) {
+            return;
+        }
+        List<String> errors = new ArrayList<>();
+        filters.forEach(filter -> collectRegexErrors(filter, errors));
+        if (!errors.isEmpty()) {
+            throw new InvalidQueryFiltersException(errors);
+        }
+    }
+
+    private static void collectRegexErrors(QueryFilter filter, List<String> errors) {
+        if (filter.isNode()) {
+            filter.children().forEach(child -> collectRegexErrors(child, errors));
+            return;
+        }
         if (filter.operation() == Op.REGEX && filter.value() instanceof String pattern) {
             if (!RegexUtils.isSafeUserRegex(pattern)) {
                 errors.add(

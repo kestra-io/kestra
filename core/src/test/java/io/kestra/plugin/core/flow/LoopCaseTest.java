@@ -19,6 +19,7 @@ import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.ResumeFromBreakpoint;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -122,7 +123,19 @@ public class LoopCaseTest {
                 "fail", Map.of("FAILED", 1, "SKIPPED", 11)
             )
         );
-        assertThat(execution.getMetadata().getTaskRunStateCounts()).isNotNull();
+        assertThat(outputs.get(Loop.LOOP_ITERATION_COUNTS_OUTPUT)).isEqualTo(Map.of("inner", Map.of("SUCCESS", 11, "FAILED", 1)));
+        assertThat(execution.getMetadata().getTaskRunStateCounts()).isEqualTo(
+            TaskRunStateCounts.fromMap(
+                Map.of(
+                    "inner", Map.of("SUCCESS", 3),
+                    "log", Map.of("SUCCESS", 12),
+                    "fail", Map.of("FAILED", 1, "SKIPPED", 11)
+                )
+            )
+        );
+        assertThat(execution.getMetadata().getLoopIterationCounts()).isEqualTo(
+            TaskRunStateCounts.fromMap(Map.of("inner", Map.of("SUCCESS", 11, "FAILED", 1), "outer", Map.of("SUCCESS", 3)))
+        );
     }
 
     public void loopWithLoopUntil(Execution execution) throws InternalException {
@@ -146,6 +159,9 @@ public class LoopCaseTest {
         // bubbled up and summed over the 2 Loop iterations: counted exactly once, not lost or doubled
         assertThat(execution.getMetadata().getTaskRunStatistic()).isNotNull();
         assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(6);
+        assertThat(execution.getMetadata().getTaskRunStateCounts().counts().values().stream().flatMap(m -> m.values().stream()).mapToLong(Long::longValue).sum())
+            .isEqualTo(6);
+        assertThat(execution.getMetadata().getTaskRunStateCounts().counts().get("log")).isEqualTo(Map.of(State.Type.SUCCESS, 4L));
     }
 
     public void loopFailed(Execution execution) throws InternalException {

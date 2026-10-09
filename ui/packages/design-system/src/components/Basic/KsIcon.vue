@@ -7,7 +7,7 @@
         :enterable="false"
     >
         <ElIcon
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="{...filteredProps(), ...$attrs}"
             :size="resolvedSize"
             @click="emit('click', $event)"
         >
@@ -18,7 +18,7 @@
     </KsTooltip>
     <ElIcon
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         :size="resolvedSize"
         @click="emit('click', $event)"
     >

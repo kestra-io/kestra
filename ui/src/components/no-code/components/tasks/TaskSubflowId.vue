@@ -5,7 +5,7 @@
         filterable
         clearable
         allowCreate
-        :placeholder="task?.namespace ? 'Select' : 'Select namespace first'"
+        :placeholder="task?.namespace ? $t('select') : $t('no_code.select.namespace_first')"
         :disabled="!task?.namespace"
     >
         <KsOption

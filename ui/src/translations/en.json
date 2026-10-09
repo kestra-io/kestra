@@ -331,6 +331,8 @@
     "restart tooltip": "Restart the execution from the <code>{state}</code> task",
     "restarted": "Execution is Restarted",
     "restart confirm": "Are you sure you want to restart execution <code>{id}</code>?",
+    "restart subflow warning": "This execution was created by a parent execution and should be restarted from there. Restarting it alone leaves the parent execution FAILED and its next tasks will not run. Go to the {parent} to restart it.",
+    "restart subflow warning link": "parent execution",
     "replay": "Replay",
     "replay from task tooltip": "Create a similar execution starting from task <code>{taskId}</code>",
     "replay from beginning tooltip": "Create a similar execution starting from the beginning",
@@ -347,6 +349,10 @@
     "no": "No",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
+    "interrupt": "Interrupt",
+    "interrupt confirm": "Are you sure you want to interrupt the task run for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will terminate the running task inside the worker and set its state.",
+    "interrupt done": "Task run has been interrupted",
+    "interrupt target state": "Target state",
     "change state current state": "Current status is:",
     "change state hint": {
       "WARNING": [
@@ -448,6 +454,11 @@
     "show task source": "Show task source",
     "stream": "Stream",
     "execution statistics": "Execution statistics",
+    "execution_banner": {
+      "revision": "Revision {revision}",
+      "attempts": "{count} attempt | {count} attempts",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
     "usage": "Usage",
@@ -473,6 +484,7 @@
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Expression",
       "tree": "Tree",
       "raw_json": "Raw JSON",
       "select_prompt": "Select a variable to inspect its value.",
@@ -558,6 +570,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "A plugin component failed to load.",
       "autoInstall": {
         "failed": "Plugin installation failed",
         "failedHint": "The flow was not saved. Fix the issue or remove the plugin from the flow, then save again.",
@@ -687,6 +700,17 @@
     "execute the flow": "Execute the flow <code>{id}</code>",
     "discard execution confirmation": "You have unsaved inputs. Are you sure you want to discard this execution?",
     "unsaved changed ?": "You have unsaved changes, do you want to leave this page?",
+    "session expired": "Your session has expired",
+    "session expired description": "Sign in again to continue.",
+    "go to login": "Go to login page",
+    "use another sign-in method": "Use another sign-in method",
+    "sign in in a new tab": "Sign in in a new tab",
+    "sign in in a new tab hint": "Sign in in the tab that just opened, then come back here and continue.",
+    "continue after sign in": "Continue",
+    "sign in failed": "Could not sign in. Check your connection and try again.",
+    "sign in not confirmed": "We could not confirm that you are signed in. Sign in in the other tab, then continue.",
+    "server unreachable": "Cannot reach the Kestra server",
+    "server unreachable description": "Copy any unsaved work (for example the flow YAML) somewhere safe before refreshing this page. This banner disappears once the server responds again.",
     "unsaved changes": "Unsaved Changes",
     "unsaved changes warning": "You have unsaved changes. If you leave this page, your changes will be lost.",
     "leave page": "Leave Page",
@@ -1034,6 +1058,8 @@
         "folder": "Delete folder",
         "files": "Delete {count} selected files",
         "bulk_success": "Selected files deleted successfully.",
+        "bulk_partial_error": "Failed to delete {failedCount} of the selected {totalCount} file(s).",
+        "all_failed_error": "Failed to delete the selected files.",
         "folders": "Delete {count} selected folders"
       },
       "move": {
@@ -1086,7 +1112,6 @@
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
-    "relative": "Relative",
     "relative start date": "Relative start date",
     "absolute": "Absolute",
     "backfill": "Backfill",
@@ -1698,6 +1723,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
+      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -1753,7 +1779,8 @@
         "inputs": "Select an input field type",
         "charts": "Select a chart type",
         "where": "Select a filter type",
-        "numerator": "Select a numerator"
+        "numerator": "Select a numerator",
+        "namespace_first": "Select a namespace first"
       },
       "creation": {
         "default": "Add",
@@ -2206,7 +2233,6 @@
       "run_all_tasks": "Run All Tasks",
       "history": "Last 10 runs",
       "clear_history": "Clear history",
-      "confirm_create": "You cannot run the playground while creating a flow. Launching a playground run will create the flow.",
       "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
     },
     "submit": "Submit",
@@ -2400,6 +2426,7 @@
         "label": "{count} Error(s)"
       }
     },
+    "invalid_source_code": "Invalid source code",
     "source_search": {
       "cannot_select_read_only": "Cannot select — you lack edit permission on {namespace} / {id}",
       "collapse_all": "Collapse all",

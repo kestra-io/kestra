@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
     import {computed, type Component} from "vue"
-    import {State} from "@kestra-io/design-system"
+    import {State, type KsBreadcrumbItem} from "@kestra-io/design-system"
 
     import Badge from "../global/Badge.vue"
     import TopNavBar from "../layout/TopNavBar.vue"
@@ -85,8 +85,11 @@
     import {overflowActionComponents} from "override/components/executions/executionsExtensions"
 
     defineProps<{
-        // FIXME: any - routeInfo shape varies across usage
-        routeInfo: any // FIXME: any
+        routeInfo: {
+            title: string;
+            breadcrumb?: KsBreadcrumbItem[];
+            bookmarkLabel?: string;
+        };
     }>()
 
     const executionsStore = useExecutionsStore()

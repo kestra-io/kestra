@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, type ComponentPublicInstance} from "vue"
+    import {computed, watch, type ComponentPublicInstance} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
     import {isKPIChart, isCanvasChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
@@ -176,6 +176,11 @@
         }
 
         return baseFilters
+    })
+
+    const filterQueryKey = computed(() => `${JSON.stringify(route.query)}__${JSON.stringify(filters.value)}`)
+    watch(filterQueryKey, () => {
+        refreshCharts()
     })
 
     async function exportChart(chart: Chart, format: "CSV" | "ION") {

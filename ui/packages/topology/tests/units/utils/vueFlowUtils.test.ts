@@ -953,21 +953,32 @@ describe("getNodeWidth / getNodeHeight (per node-kind footprint)", () => {
 describe("buildEffectiveGetNodeDimensions (footprint invariance)", () => {
     const taskNode = {uid: "root.a", type: "io.kestra.core.models.hierarchies.GraphTask"}
 
-    test("returns the constant task footprint with no execution", () => {
+    test("returns the compact task footprint with no execution, with no room for a duration bar", () => {
         const getDimensions = VueFlowUtils.buildEffectiveGetNodeDimensions(false)
         const dimensions = getDimensions(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
 
-        expect(dimensions).toEqual({width: NODE_SIZES.TASK_WIDTH, height: NODE_SIZES.TASK_HEIGHT})
+        expect(dimensions).toEqual({width: NODE_SIZES.TASK_WIDTH, height: 56})
     })
 
-    // The only thing this function ever varies by is whether an execution is loaded — never a
-    // zoom level, since it has no zoom parameter to read one from in the first place.
-    test("varies only the width when an execution is loaded, never the height", () => {
-        const withoutExecution = VueFlowUtils.buildEffectiveGetNodeDimensions(false)(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
+    test("reserves the duration bar row for every task node once an execution is loaded", () => {
         const withExecution = VueFlowUtils.buildEffectiveGetNodeDimensions(true)(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
 
-        expect(withExecution.height).toBe(withoutExecution.height)
-        expect(withExecution.width).toBe(273)
+        expect(withExecution).toEqual({width: 273, height: 80})
+    })
+
+    test("gives a collapsed lane the same footprint as a task node in an execution", () => {
+        const lane = {uid: "root.seq", type: "collapsedcluster", isFlowableLane: true}
+        const getDimensions = VueFlowUtils.buildEffectiveGetNodeDimensions(true)
+
+        expect(getDimensions(lane, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight).height)
+            .toBe(getDimensions(taskNode, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight).height)
+    })
+
+    test("keeps a trigger at its own height in an execution", () => {
+        const trigger = {uid: "Triggers.cron", type: "io.kestra.core.models.hierarchies.GraphTrigger"}
+        const dimensions = VueFlowUtils.buildEffectiveGetNodeDimensions(true)(trigger, VueFlowUtils.getNodeWidth, VueFlowUtils.getNodeHeight)
+
+        expect(dimensions.height).toBe(NODE_SIZES.TRIGGER_HEIGHT)
     })
 
     test("is deterministic: calling it repeatedly for the same node never drifts", () => {

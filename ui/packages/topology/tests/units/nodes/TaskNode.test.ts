@@ -286,6 +286,13 @@ describe("TaskNode anatomy", () => {
         expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
     })
 
+    it("should reserve no footer band outside of an execution context", () => {
+        const wrapper = mountTaskNode({realBasicNode: true})
+
+        expect(wrapper.find(".node-footer").exists()).toBe(false)
+        expect(wrapper.find(".node-core").classes()).not.toContain("node-core--with-footer")
+    })
+
     it("should show no duration bar for a task that never ran", () => {
         const wrapper = mountTaskNode({
             execution: {state: {current: "SUCCESS"}},

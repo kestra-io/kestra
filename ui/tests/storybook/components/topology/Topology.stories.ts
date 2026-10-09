@@ -431,7 +431,7 @@ DurationBarComparison.play = async ({canvasElement}) => {
     for (const taskId of ["quick_query", "transform_data", "notify_team"]) {
         const box = nodeOf(taskId)!.getBoundingClientRect()
         const card = nodeOf(taskId)!.querySelector(".node-core")!.getBoundingClientRect()
-        expect(nodeOf(taskId)!.style.height).toBe(`${NODE_SIZES.TASK_HEIGHT}px`)
+        expect(nodeOf(taskId)!.style.height).toBe(`${NODE_SIZES.TASK_HEIGHT_EXECUTION}px`)
         expect(Math.round(card.height)).toBe(Math.round(box.height))
         expect(Math.round(card.top)).toBe(Math.round(box.top))
     }
@@ -476,7 +476,7 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         await new Promise((resolve) => setTimeout(resolve, 350))
 
         expect(dimensionsOf(node()!)).toEqual(before)
-        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
+        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT_EXECUTION}px`})
     },
 }
 

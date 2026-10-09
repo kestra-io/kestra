@@ -484,6 +484,7 @@
       "title": "Entrada/Salida",
       "search_placeholder": "Buscar Key o value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Expresión",
       "tree": "Árbol",
       "raw_json": "JSON sin procesar",
       "select_prompt": "Selecciona una variable para inspeccionar su value.",

@@ -79,7 +79,7 @@ export const ManualScroll: Story = {
     render: () => ({
         components: {KsScrollbar},
         setup() {
-            const scrollbarRef = ref<any>(null)
+            const scrollbarRef = ref<InstanceType<typeof KsScrollbar> | null>(null)
             function scrollToTop() { scrollbarRef.value?.setScrollTop(0) }
             function scrollToBottom() { scrollbarRef.value?.setScrollTop(9999) }
             return {scrollbarRef, scrollToTop, scrollToBottom}

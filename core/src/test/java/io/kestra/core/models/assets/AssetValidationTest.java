@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.flows.FlowAction;
+import io.kestra.core.models.flows.FlowActionCondition;
 import io.kestra.core.models.validations.ModelValidator;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -112,5 +114,53 @@ class AssetValidationTest {
         assertThat(modelValidator.isValid(asset))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
+    }
+
+    @Test
+    void shouldRejectAConditionThatComparesToNoValue() {
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.EQUALS, null))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.IS_NULL, null))))
+            .isEmpty();
+    }
+
+    @Test
+    void shouldRejectAnInConditionWhoseValueIsNotAList() {
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.IN, "active,expiring"))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.IN, List.of("active", "expiring")))))
+            .isEmpty();
+    }
+
+    @Test
+    void shouldRejectARegexConditionProneToCatastrophicBacktracking() {
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("id", Op.REGEX, "(a+)+$"))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+    }
+
+    @Test
+    void shouldRejectAConditionOnAFieldTheAssetDoesNotHave() {
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("region", Op.EQUALS, "eu"))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.", Op.EQUALS, "x"))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.region", Op.EQUALS, "eu"))))
+            .isEmpty();
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("owner", Op.IS_NULL, null))))
+            .isEmpty();
+    }
+
+    private static Asset assetWithCondition(FlowActionCondition condition) {
+        return Custom.builder()
+            .namespace("io.kestra")
+            .id("my-asset")
+            .type("MY_OWN_ASSET_TYPE")
+            .build()
+            .withAssetActions(List.of(new FlowAction("io.kestra", "resize", null, List.of(condition))));
     }
 }

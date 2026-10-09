@@ -2,8 +2,18 @@ import {mount} from "@vue/test-utils"
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
-import TaskRunActions from "./TaskRunActions.vue"
+import type {State, StateType} from "@kestra-io/kestra-sdk"
+import type {Execution} from "../../stores/executions"
 import {useExecutionsStore} from "../../stores/executions"
+import TaskRunActions from "./TaskRunActions.vue"
+
+function state(current: StateType): State {
+    return {current, histories: [], getDuration: "PT0S", getStartDate: "", getEndDate: ""}
+}
+
+function executionProps(id: string): Execution {
+    return {id, flowId: "flow-1", namespace: "ns-1", flowRevision: 1, originalId: id, metadata: {originalCreatedDate: ""}, state: state("SUCCESS")}
+}
 
 vi.mock("vue-router", () => ({
     useRoute: vi.fn(() => ({
@@ -12,7 +22,7 @@ vi.mock("vue-router", () => ({
     useRouter: vi.fn(() => ({})),
 }))
 
-vi.mock("../../utils/toast", () => ({
+vi.mock("../../../../src/utils/toast", () => ({
     useToast: vi.fn(() => ({
         confirm: vi.fn((_msg: string, callback: () => void) => callback()),
     })),
@@ -86,14 +96,14 @@ describe("TaskRunActions", () => {
         setActivePinia(createPinia())
     })
 
-    const execution = {id: "ex-1", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}}
+    const execution = executionProps("ex-1")
 
     it("renders options and resolves labels", () => {
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iteration 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: undefined, state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iteration 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: undefined, state: state("SUCCESS")},
             ],
             execution,
         })
@@ -110,10 +120,10 @@ describe("TaskRunActions", () => {
         executionsStore.deleteLogs = vi.fn().mockResolvedValue({})
 
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
             execution: execution2,
         })
@@ -135,10 +145,10 @@ describe("TaskRunActions", () => {
         executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
 
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
             execution: execution3,
         })
@@ -160,10 +170,10 @@ describe("TaskRunActions", () => {
         executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
 
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
             execution: execution4,
         })
@@ -185,26 +195,26 @@ describe("TaskRunActions", () => {
                 id: "tr-1",
                 taskId: "task-1",
                     value: "Iter 1",
-                    state: {current: "FAILED"},
-                    attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
+                    state: state("FAILED"),
+                    attempts: [{state: state("FAILED")}, {state: state("SUCCESS")}],
             },
             taskRuns: [
                 {
                     id: "tr-1",
                     taskId: "task-1",
                     value: "Iter 1",
-                    state: {current: "FAILED"},
-                    attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
+                    state: state("FAILED"),
+                    attempts: [{state: state("FAILED")}, {state: state("SUCCESS")}],
                 },
                 {
                     id: "tr-2",
                     taskId: "task-1",
                     value: "Iter 2",
-                    state: {current: "SUCCESS"},
-                    attempts: [{state: {current: "SUCCESS"}}],
+                    state: state("SUCCESS"),
+                    attempts: [{state: state("SUCCESS")}],
                 },
             ],
-            execution: {id: "ex-5", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-5"),
             attemptIndex: 1,
         })
 
@@ -216,9 +226,9 @@ describe("TaskRunActions", () => {
     })
     it("hides selector for single-iteration tasks", () => {
         const wrapper = mountActions({
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: undefined, state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: undefined, state: state("SUCCESS")},
             ],
             execution,
         })
@@ -228,12 +238,12 @@ describe("TaskRunActions", () => {
 
     it("persists selection across unmount and remount for the same execution", async () => {
         const props = {
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
-            execution: {id: "ex-store-test", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-store-test"),
         }
 
         let wrapper = mountActions(props)
@@ -251,12 +261,12 @@ describe("TaskRunActions", () => {
 
     it("starts clean for a different execution id", async () => {
         const props1 = {
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
-            execution: {id: "ex-diff-1", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-diff-1"),
         }
 
         const wrapper1 = mountActions(props1)
@@ -266,12 +276,12 @@ describe("TaskRunActions", () => {
 
         // Use a new execution id, but same task
         const props2 = {
-            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRun: {id: "tr-1", taskId: "task-1", state: state("SUCCESS")},
             taskRuns: [
-                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
-                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: state("SUCCESS")},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: state("SUCCESS")},
             ],
-            execution: {id: "ex-diff-2", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            execution: executionProps("ex-diff-2"),
         }
 
         const wrapper2 = mountActions(props2)

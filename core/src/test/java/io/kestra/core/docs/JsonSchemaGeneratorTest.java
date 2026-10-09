@@ -887,6 +887,9 @@ class JsonSchemaGeneratorTest {
         @TicketingField(defaultValue = "3")
         private Property<Integer> priority;
 
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {"CRITICAL=urgent", "HIGH=high", "malformed"})
+        private Property<String> urgency;
+
         private String untouched;
 
         @Override
@@ -917,6 +920,8 @@ class JsonSchemaGeneratorTest {
         assertThat(props.get("table").containsKey("$ticketingRole"), is(false));
         assertThat(props.get("untouched").containsKey("$ticketingRole"), is(false));
         assertThat(props.get("priority").get("$ticketingDefault"), is("3"));
+        assertThat(props.get("urgency").get("$ticketingRole"), is("CASE_SEVERITY"));
+        assertThat(props.get("urgency").get("$ticketingValueMap"), is(Map.of("CRITICAL", "urgent", "HIGH", "high")));
     }
 
     @SuppressWarnings("unchecked")

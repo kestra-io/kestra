@@ -453,6 +453,15 @@ public class JsonSchemaGenerator {
     // By default, the 'default' is in each anyOf which Monaco editor didn't take into account.
     // So, we pull off the 'default' from any of the anyOf to the parent.
     // same thing for documentation fields: 'title', 'description', '$deprecated'
+    private static void putTicketingValueMap(ObjectNode target, String[] pairs) {
+        for (String pair : pairs) {
+            int separator = pair.indexOf('=');
+            if (separator > 0) {
+                target.put(pair.substring(0, separator), pair.substring(separator + 1));
+            }
+        }
+    }
+
     private void pullDocumentationAndDefaultFromAnyOf(ObjectNode objectNode) {
         objectNode.findParents("anyOf").forEach(jsonNode ->
         {
@@ -469,6 +478,7 @@ public class JsonSchemaGenerator {
                             Map.entry("$group", Optional.empty()),
                             Map.entry("$ticketingRole", Optional.empty()),
                             Map.entry("$ticketingDefault", Optional.empty()),
+                            Map.entry("$ticketingValueMap", Optional.empty()),
                             Map.entry("$index", Optional.empty())
                         )
                     );
@@ -749,6 +759,9 @@ public class JsonSchemaGenerator {
                 }
                 if (!ticketingField.defaultValue().isEmpty()) {
                     memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
+                }
+                if (ticketingField.valueMap().length > 0) {
+                    putTicketingValueMap(memberAttributes.putObject("$ticketingValueMap"), ticketingField.valueMap());
                 }
             }
 

@@ -1,6 +1,7 @@
 import {describe, it, expect} from "vitest"
 import {
     menuSectionId,
+    flattenMenuItems,
     resolveSectionItemIds,
     pickItemsByIds,
     isMenuItemVisible,
@@ -33,6 +34,81 @@ describe("menuCustomization", () => {
 
         it("shouldDeriveSlugFromTitleWhenNoId", () => {
             expect(menuSectionId({title: "Tenant Admin"})).toBe("tenant-admin")
+        })
+    })
+
+    describe("flattenMenuItems", () => {
+        it("shouldReturnFlatMenuUnchanged", () => {
+            const flatMenu: MenuItem[] = [
+                {id: "flows", title: "Flows"},
+                {id: "executions", title: "Executions"},
+            ]
+            expect(flattenMenuItems(flatMenu)).toEqual([
+                {id: "flows", title: "Flows"},
+                {id: "executions", title: "Executions"},
+            ])
+        })
+
+        it("shouldFlattenChildrenWithParentsInDisplayOrder", () => {
+            expect(flattenMenuItems(menu)).toEqual([
+                menu[0],
+                menu[0].child![0],
+                menu[0].child![1],
+                menu[0].child![2],
+                menu[1],
+                menu[1].child![0],
+                menu[1].child![1],
+            ])
+        })
+
+        it("shouldFullyFlattenArbitrarilyDeepNesting", () => {
+            const deepMenu: MenuItem[] = [
+                {
+                    id: "level-1",
+                    title: "Level 1",
+                    child: [
+                        {
+                            id: "level-2",
+                            title: "Level 2",
+                            child: [
+                                {
+                                    id: "level-3",
+                                    title: "Level 3",
+                                    child: [
+                                        {id: "deep-item", title: "Deep Item"},
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ]
+            expect(flattenMenuItems(deepMenu).map((item) => item.id)).toEqual([
+                "level-1",
+                "level-2",
+                "level-3",
+                "deep-item",
+            ])
+        })
+
+        it("shouldKeepItemWithEmptyChildrenArray", () => {
+            const menuWithEmptyChild: MenuItem[] = [
+                {
+                    id: "workspace",
+                    title: "Workspace",
+                    child: [
+                        {id: "empty-item", title: "Empty", child: []},
+                    ],
+                },
+            ]
+            expect(flattenMenuItems(menuWithEmptyChild).map((item) => item.id)).toEqual([
+                "workspace",
+                "empty-item",
+            ])
+        })
+
+        it("shouldReturnEmptyListForEmptyMenu", () => {
+            expect(flattenMenuItems([])).toEqual([])
         })
     })
 

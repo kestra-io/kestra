@@ -92,6 +92,21 @@ public class LoopCaseTest {
         assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(4);
     }
 
+    public void loopNestedStateCounts(Execution execution) throws InternalException {
+        // Then
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().getFirst());
+        assertThat(outputs).containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
+        assertThat(outputs.get(Loop.TASK_RUN_STATE_COUNTS_OUTPUT)).isEqualTo(
+            Map.of(
+                "inner", Map.of("SUCCESS", 3),
+                "log", Map.of("SUCCESS", 12),
+                "fail", Map.of("FAILED", 1, "SKIPPED", 11)
+            )
+        );
+        assertThat(execution.getMetadata().getTaskRunStateCounts()).isNotNull();
+    }
+
     public void loopWithLoopUntil(Execution execution) throws InternalException {
         // Then — a LoopUntil nested inside a Loop: each of the 2 Loop iterations runs its own
         // LoopUntil for 2 iterations of 1 task, discarding the first iteration's task run

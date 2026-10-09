@@ -1012,7 +1012,7 @@ public class ExecutionService {
         this.eventPublisher.publishEvent(CrudEvent.of(execution, unpausedExecution));
         if (execution.getKind() == ExecutionKind.LOOP) {
             // notify the parent execution
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(unpausedExecution.getLoopRun(), unpausedExecution.getId(), unpausedExecution.getState().getCurrent(), null, null));
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(unpausedExecution.getLoopRun(), unpausedExecution.getId(), unpausedExecution.getState().getCurrent(), null, null, null));
         }
         return unpausedExecution;
     }

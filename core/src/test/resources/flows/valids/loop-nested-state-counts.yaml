@@ -1,0 +1,19 @@
+id: loop-nested-state-counts
+namespace: io.kestra.tests
+
+tasks:
+  - id: outer
+    type: io.kestra.plugin.core.flow.Loop
+    values: [a, b, c]
+    tasks:
+      - id: inner
+        type: io.kestra.plugin.core.flow.Loop
+        values: [1, 2, 3, 4]
+        transmitFailed: false
+        tasks:
+          - id: log
+            type: io.kestra.plugin.core.log.Log
+            message: "{{ item.parent.value }}-{{ item.value }}"
+          - id: fail
+            type: io.kestra.plugin.core.execution.Fail
+            runIf: "{{ item.parent.value == 'b' and item.value == '3' }}"

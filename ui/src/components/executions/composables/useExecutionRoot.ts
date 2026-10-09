@@ -6,6 +6,7 @@ import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
+import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
 
 export function useExecutionRoot() {
     const {t} = useI18n()
@@ -69,7 +70,8 @@ export function useExecutionRoot() {
     // the component, props and section flags live on each child route and are resolved
     // by `<router-view>`; here we only build the bar metadata from their `meta`.
     const getBaseTabs = () => {
-        return EXECUTION_TAB_ROUTES.map((tabRoute) => {
+        const namespace = executionsStore.execution?.namespace
+        return EXECUTION_TAB_ROUTES.filter((tabRoute) => isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})).map((tabRoute) => {
             const meta = tabRoute.meta ?? {}
             const name = meta.tab as string
             return {

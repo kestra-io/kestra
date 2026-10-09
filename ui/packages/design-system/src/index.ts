@@ -13,6 +13,9 @@ import {
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
 
+type InstalledApp = App & {
+    [INSTALLED_KEY]?: boolean
+}
 // defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
 // real name lets consumers stub the component by name in tests and read it in
 // devtools, exactly as they could before it was made async.
@@ -85,7 +88,7 @@ const KsEditor = asyncComponent("KsEditor",
 ) as unknown as typeof KsEditorSfc
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
-export type {TaskIconProps} from "./composables/taskIcon"
+export type {TaskIconProps, PluginIconData, PluginIconMap} from "./composables/taskIcon"
 export {findDuplicateTaskIds} from "./utils/yamlValidation"
 export type {EditorMarker} from "./utils/yamlValidation"
 export {isOffsetInPebbleBlock} from "./utils/pebbleBlock"
@@ -516,13 +519,14 @@ export {
 
 const KestraDesignSystem = {
     install(app: App) {
-        if (!(app as any)[INSTALLED_KEY]) {
+        const installedApp = app as InstalledApp
+        if (!installedApp[INSTALLED_KEY]) {
             // Every Ks* component imports its own El* dependency directly, so global registration
             // is unneeded and only defeats tree-shaking of the ~96 Element Plus components. The
             // services below still need app.use(): it's what wires their _context to this app, so
             // their detached render trees (e.g. an ElNotification's content) can still resolve
             // globally-registered Ks* components like KsButton/KsMarkdown.
-            (app as any)[INSTALLED_KEY] = true
+            installedApp[INSTALLED_KEY] = true
             provideGlobalConfig({namespace: "kel"}, app, true)
             for (const plugin of [ElInfiniteScroll, ElLoading, ElMessage, ElMessageBox, ElNotification, ElPopoverDirective]) {
                 app.use(plugin)

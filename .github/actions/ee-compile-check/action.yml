@@ -83,6 +83,15 @@ runs:
         COMPILE_FAILED=$(jq -r '.compileFailed // ""' "$BODY")
         COMPILE_ERROR=$(jq -r '.compileError // ""' "$BODY")
 
+        # The flow skips the build when the PR was merged or closed before it
+        # ran (e.g. a re-run racing the merge): the head branch is gone and
+        # there is nothing left to verify.
+        if [ "$(jq -r '.skipped // ""' "$BODY")" = "pr_closed" ]; then
+          echo "## EE compile check skipped for \`$REF\`: the PR was merged or closed" >> "$GITHUB_STEP_SUMMARY"
+          echo "EE compile check skipped: PR ${PR_NUMBER:-} was merged or closed before the build ran"
+          exit 0
+        fi
+
         # The flow always sets compileFailed to "true"/"false". An empty value means
         # it produced no verdict, which is inconclusive rather than a pass.
         if [ "$COMPILE_FAILED" != "true" ] && [ "$COMPILE_FAILED" != "false" ]; then

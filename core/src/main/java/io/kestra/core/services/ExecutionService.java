@@ -147,7 +147,12 @@ public class ExecutionService {
      **/
     public Execution retryTask(Execution execution, Flow flow, String taskRunId) throws InternalException {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId).withState(State.Type.CREATED);
-        List<TaskRun> taskRunList = execution.getTaskRunList();
+        List<TaskRun> taskRunList = new ArrayList<>(execution.getTaskRunList());
+
+        if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof WorkingDirectory) {
+            // a retried WorkingDirectory runs all its children again, under new task runs
+            taskRunList.removeIf(child -> taskRun.getId().equals(child.getParentTaskRunId()));
+        }
 
         if (taskRun.getParentTaskRunId() != null) {
             // we need to find the parent to remove any errors or finally tasks already executed
@@ -187,7 +192,7 @@ public class ExecutionService {
             return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
         }
 
-        return execution.withTaskRun(taskRun).withState(State.Type.RUNNING);
+        return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
@@ -222,6 +227,32 @@ public class ExecutionService {
         ExecutionMetadata metadata = execution.getMetadata().withTaskRunStatisticPlus(TaskRunStatistic.of(discarded));
 
         return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);
+    }
+
+    public Execution retryFlowable(Execution execution, String flowableTaskRunId) {
+        if (execution.getTaskRunList() == null) {
+            return execution.withState(State.Type.RUNNING);
+        }
+
+        Map<String, TaskRun> byId = execution.getTaskRunList().stream()
+            .collect(Collectors.toMap(TaskRun::getId, t -> t));
+
+        List<TaskRun> newTaskRuns = execution.getTaskRunList().stream()
+            .map(taskRun -> {
+                if (taskRun.getId().equals(flowableTaskRunId)) {
+                    return taskRun.run();
+                }
+
+                return isDescendantOf(taskRun, flowableTaskRunId, byId)
+                    ? null
+                    : taskRun;
+            })
+            .filter(Objects::nonNull)
+            .toList();
+
+        return execution
+            .withTaskRunList(newTaskRuns)
+            .withState(State.Type.RUNNING);
     }
 
     private boolean isDescendantOf(TaskRun taskRun, String ancestorId, Map<String, TaskRun> byId) {
@@ -364,14 +395,21 @@ public class ExecutionService {
             .stream()
             .map(
                 throwFunction(
-                    originalTaskRun -> this.mapTaskRun(
-                        flow,
-                        originalTaskRun,
-                        mappingTaskRunId,
-                        newExecutionId,
-                        State.Type.RESTARTED,
-                        taskRunToRestart.contains(originalTaskRun.getId())
-                    )
+                    originalTaskRun ->
+                    {
+                        TaskRun newTaskRun = this.mapTaskRun(
+                            flow,
+                            originalTaskRun,
+                            mappingTaskRunId,
+                            newExecutionId,
+                            State.Type.RESTARTED,
+                            taskRunToRestart.contains(originalTaskRun.getId())
+                        );
+                        if (revision != null) {
+                            taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        }
+                        return newTaskRun;
+                    }
                 )
             )
             .collect(Collectors.toCollection(ArrayList::new));
@@ -1034,6 +1072,26 @@ public class ExecutionService {
     }
 
     /**
+     * Whether killing the execution would still stop something: a task not yet terminated (including
+     * afterExecution tasks), or, when cascading, a direct subflow execution that is not terminated.
+     */
+    public boolean hasWorkToKill(Flow flow, Execution execution, boolean isOnKillCascade) {
+        if (!isTerminated(flow, execution)) {
+            return true;
+        }
+
+        if (!isOnKillCascade) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(
+            executionRepository.findAllByTriggerExecutionId(execution.getTenantId(), execution.getId())
+                .any(child -> !child.getState().isTerminated())
+                .block()
+        );
+    }
+
+    /**
      * Lookup for all loop sub-executions created by the given execution that are still running or paused,
      * and returns the relevant {@link ExecutionKilledExecution} events that should be requested.
      * This method is not responsible for executing the events.
@@ -1097,6 +1155,11 @@ public class ExecutionService {
                 log.warn("Unable to resume a paused execution before killing it", e);
                 newExecution = execution.withState(killingOrAfterKillState);
             }
+        } else if (execution.getState().isBreakpoint()) {
+            // Taskruns waiting at a breakpoint are never sent to a worker, so back to CREATED they are killed as never-run taskruns by the executor.
+            newExecution = execution
+                .withTaskRunList(breakpointTaskRunsToCreated(execution))
+                .withState(killingOrAfterKillState);
         } else {
             newExecution = execution.withState(killingOrAfterKillState);
         }
@@ -1450,22 +1513,18 @@ public class ExecutionService {
         }
 
         // continue the execution: SUSPENDED taskrun will go back to CREATED, so the executor will send them to the WORKER
-        List<TaskRun> newTaskRuns = execution.getTaskRunList().stream().map(
-            taskRun ->
-            {
-                if (taskRun.getState().isBreakpoint()) {
-                    return taskRun.withState(State.Type.CREATED);
-                }
-                return taskRun;
-            }
-        ).toList();
-
         Execution resumed = execution.withState(State.Type.RUNNING)
-            .withTaskRunList(newTaskRuns)
+            .withTaskRunList(breakpointTaskRunsToCreated(execution))
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
         eventPublisher.publishEvent(CrudEvent.of(execution, resumed));
         return resumed;
+    }
+
+    private static List<TaskRun> breakpointTaskRunsToCreated(Execution execution) {
+        return execution.getTaskRunList().stream()
+            .map(taskRun -> taskRun.getState().isBreakpoint() ? taskRun.withState(State.Type.CREATED) : taskRun)
+            .toList();
     }
 
     /**

@@ -14,6 +14,7 @@
     "./client": "./dist/client.js",
     "./dashboards": "./dist/dashboards.js",
     "./default": "./dist/default.js",
+    "./default-admin": "./dist/default-admin.js",
     "./executions": "./dist/executions.js",
     "./expressions": "./dist/expressions.js",
     "./files": "./dist/files.js",

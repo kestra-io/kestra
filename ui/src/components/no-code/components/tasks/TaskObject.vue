@@ -104,7 +104,7 @@
         merge?: boolean;
         properties?: any;
         metadataInputs?: boolean;
-        modelValue?: Model;
+        modelValue?: Model | null;
         required?: boolean;
         schema?: Schema;
         root?: string;
@@ -313,7 +313,7 @@
             fieldKey: key,
             task: props.modelValue,
             schema: schema,
-            required: props.schema?.required,
+            required: props.modelValue == null ? undefined : props.schema?.required,
             siblingKeys: Object.keys(props.properties ?? props.schema?.properties ?? {}),
         } as const
     }

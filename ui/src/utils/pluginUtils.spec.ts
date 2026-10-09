@@ -1,5 +1,5 @@
 import {describe, it, expect} from "vitest"
-import {countUniquePluginElements, getPluginReleaseUrl, isEnterpriseEditionPlugin, type Plugin} from "./pluginUtils"
+import {countUniquePluginElements, extractPluginElements, getPluginReleaseUrl, isEnterpriseEditionPlugin, isEntryAPluginElementPredicate, isPluginMatched, type Plugin} from "./pluginUtils"
 
 describe("getPluginReleaseUrl", () => {
     it("returns the Kestra core repo for core plugins", () => {
@@ -87,5 +87,44 @@ describe("isEnterpriseEditionPlugin", () => {
     it("returns false for null/undefined", () => {
         expect(isEnterpriseEditionPlugin(undefined)).toBe(false)
         expect(isEnterpriseEditionPlugin(null)).toBe(false)
+    })
+})
+
+describe("extractPluginElements", () => {
+    const plugin = (elements: Partial<Plugin>): Plugin => ({name: "io.kestra.plugin.a", title: "io.kestra.plugin.a", group: "io.kestra.plugin.a", ...elements})
+    it("collects every element across a plugin's sections, skipping deprecated ones", () => {
+        expect(extractPluginElements(plugin({
+            tasks: [{cls: "io.kestra.plugin.a.Run"}, {cls: "io.kestra.plugin.a.Old", deprecated: true}],
+            triggers: [{cls: "io.kestra.plugin.a.Watch"}],
+        }))).toEqual({tasks: ["io.kestra.plugin.a.Run"], triggers: ["io.kestra.plugin.a.Watch"]})
+    })
+    it("splits camelCase section keys into words", () => {
+        expect(extractPluginElements(plugin({taskRunners: [{cls: "io.kestra.plugin.a.Runner"}]}))).toEqual({"task Runners": ["io.kestra.plugin.a.Runner"]})
+    })
+    it("returns an empty object for a plugin with no elements", () => {
+        expect(extractPluginElements(plugin({}))).toEqual({})
+        expect(extractPluginElements(plugin({categories: ["CLOUD"]}))).toEqual({})
+    })
+})
+
+describe("isPluginMatched", () => {
+    const plugin = (elements: Partial<Plugin>): Plugin => ({name: "io.kestra.plugin.azure", title: "Azure", group: "io.kestra.plugin.azure", ...elements})
+    it("matches on the plugin name, case-insensitively", () => {
+        expect(isPluginMatched({name: "io.kestra.plugin.a", title: "Azure Storage", group: "io.kestra.plugin.a"}, "STORAGE")).toBe(true)
+    })
+    it("matches on an element's class name", () => {
+        expect(isPluginMatched(plugin({tasks: [{cls: "io.kestra.plugin.azure.storage.blob.Download"}]}), "blob.download")).toBe(true)
+    })
+    it("is false for a term that appears nowhere", () => {
+        expect(isPluginMatched(plugin({tasks: [{cls: "io.kestra.plugin.azure.storage.blob.Download"}]}), "snowflake")).toBe(false)
+    })
+})
+
+describe("isEntryAPluginElementPredicate", () => {
+    it("accepts a real element entry and rejects metadata keys", () => {
+        expect(isEntryAPluginElementPredicate("tasks", [{cls: "io.kestra.plugin.a.Run"}])).toBe(true)
+        expect(isEntryAPluginElementPredicate("categories", ["CLOUD"])).toBe(false)
+        expect(isEntryAPluginElementPredicate("aliases", [{cls: "io.kestra.plugin.a.Run"}])).toBe(false)
+        expect(isEntryAPluginElementPredicate("tasks", [{title: "Run"}])).toBe(false)
     })
 })

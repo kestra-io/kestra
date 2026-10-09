@@ -2,20 +2,15 @@ package io.kestra.runner.postgres;
 
 import java.util.Map;
 
-import org.jooq.exception.DataException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.UnsupportedMessageException;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.runner.JdbcQueueTest;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PostgresQueueTest extends JdbcQueueTest {
     @Test
@@ -40,7 +35,7 @@ class PostgresQueueTest extends JdbcQueueTest {
     }
 
     @Test
-    void invalidWorkerTaskWithLoneHighSurrogateShouldThrowDataException() throws QueueException {
+    void invalidWorkerTaskWithLoneHighSurrogateShouldBeSanitized() {
         var workerTaskResult = WorkerTaskResult.builder()
             .taskRun(
                 TaskRun.builder()
@@ -55,13 +50,12 @@ class PostgresQueueTest extends JdbcQueueTest {
             .outputs(Map.of("value", "test\uD800text"))
             .build();
 
-        var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
-        assertThat(exception).isInstanceOf(UnsupportedMessageException.class);
-        assertThat(exception.getCause()).isInstanceOf(DataException.class);
+        // JdbcJsonbUtils replaces lone surrogates by U+FFFD before storage, so the emit must succeed rather than throw.
+        assertThatNoException().isThrownBy(() -> workerTaskResultQueue.emit(workerTaskResult));
     }
 
     @Test
-    void invalidWorkerTaskWithLoneLowSurrogateShouldThrowDataException() throws QueueException {
+    void invalidWorkerTaskWithLoneLowSurrogateShouldBeSanitized() {
         var workerTaskResult = WorkerTaskResult.builder()
             .taskRun(
                 TaskRun.builder()
@@ -76,8 +70,7 @@ class PostgresQueueTest extends JdbcQueueTest {
             .outputs(Map.of("value", "\uDC59 test"))
             .build();
 
-        var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
-        assertThat(exception).isInstanceOf(UnsupportedMessageException.class);
-        assertThat(exception.getCause()).isInstanceOf(DataException.class);
+        // JdbcJsonbUtils replaces lone surrogates by U+FFFD before storage, so the emit must succeed rather than throw.
+        assertThatNoException().isThrownBy(() -> workerTaskResultQueue.emit(workerTaskResult));
     }
 }

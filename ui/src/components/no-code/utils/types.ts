@@ -1,12 +1,11 @@
 import {defineComponent} from "vue"
 import type {RouteRecordName, RouteParams} from "vue-router"
+import type {Schema} from "../components/tasks/getTaskComponent"
 
 export type Schemas = {
     $ref?: string;
     $schema?: string;
-    properties?: {
-        [key: string]: any;
-    };
+    properties?: Record<string, Schema>;
     definitions?: {
         [key: string]: object;
     };
@@ -14,7 +13,7 @@ export type Schemas = {
 
 export type Field = {
     component: ReturnType<typeof defineComponent>;
-    value: any;
+    value: unknown;
     label: string;
     required?: boolean;
     disabled?: boolean;
@@ -26,7 +25,7 @@ export type PairField = Omit<Field, "value"> & {
 };
 
 type InputField = Field & {
-    inputs: any[];
+    inputs: unknown[];
 };
 
 type ConcurrencyField = Field & {
@@ -61,7 +60,9 @@ export type Fields = {
 export interface NoCodeElement {
     id: string;
     type: string;
-    [key:string]: any;
+    version?: string;
+    data?: {type?: string};
+    [key: string]: unknown;
 }
 
 export type CollapseItem = {

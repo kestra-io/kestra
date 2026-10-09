@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 import io.kestra.core.models.executions.Execution;
@@ -27,4 +28,9 @@ public interface ExecutionQueuedStateStore {
      * see {@link io.kestra.executor.ConcurrencyLimitStateStore#decrementAndPop(FlowInterface, ExecutionQueuedStateStore, BiConsumer)}
      */
     void pop(TransactionContext txContext, String tenantId, String namespace, String flowId, BiConsumer<TransactionContext, Execution> consumer);
+
+    /**
+     * Every queued execution across all tenants, oldest first; used to resubmit them all from the CLI.
+     */
+    List<ExecutionQueued> getAllForAllTenants();
 }

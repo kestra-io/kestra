@@ -49,9 +49,7 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
         }
     }
 
-    /**
-     * This method should only be used for administration purpose via a command
-     */
+    @Override
     public List<ExecutionQueued> getAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -60,7 +58,8 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
-                    .from(this.jdbcRepository.getTable());
+                    .from(this.jdbcRepository.getTable())
+                    .orderBy(field("date").asc());
 
                 return this.jdbcRepository.fetch(select);
             });

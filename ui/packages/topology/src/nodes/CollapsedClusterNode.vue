@@ -33,6 +33,9 @@
                 </KsTooltip>
             </span>
         </template>
+        <template #taskActions="taskActionProps">
+            <slot name="taskActions" v-bind="taskActionProps" />
+        </template>
     </LaneHeader>
     <div v-else class="collapsed-cluster-node">
         <span

@@ -593,6 +593,22 @@ describe("generateGraph collapsed nested clusters", () => {
         const innerCluster = asElements(elements).find(e => e.id === "cluster_root.outer.inner")
         expect(innerCluster).toBeUndefined()
     })
+
+    test("keeps the execution id on a collapsed flowable lane", () => {
+        const executedGraph = {
+            ...nestedClustersGraph,
+            nodes: nestedClustersGraph.nodes.map((node) =>
+                node.uid === "root.outer" ? {...node, executionId: "execution-id"} : node,
+            ),
+        } as unknown as VueFlowUtils.FlowGraph
+
+        const elements = VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", executedGraph, undefined, ["root.outer.inner", "cluster_root.outer.inner", "root.outer.inner.task", "cluster_root.outer"], false, {}, new Set(["root.outer"]), [], false, true, false,
+        ) ?? []
+
+        const outerCollapsed = asElements(elements).find(e => e.id === "root.outer" && e.type === "collapsedcluster")
+        expect(outerCollapsed?.data?.executionId).toBe("execution-id")
+    })
 })
 
 describe("generateGraph flowable lane header", () => {

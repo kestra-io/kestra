@@ -33,6 +33,9 @@
                     </KsTooltip>
                 </span>
             </template>
+            <template #taskActions="taskActionProps">
+                <slot name="taskActions" v-bind="taskActionProps" />
+            </template>
         </LaneHeader>
         <div v-else class="cluster-heading" :style="{height: `${NODE_SIZES.LANE_HEADER_HEIGHT}px`}">
             <span

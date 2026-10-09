@@ -224,6 +224,7 @@
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
 
+    import {storageKeys} from "../../utils/constants"
     // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
     const TICK_FORMAT = "HH:mm:ss"
     const PRECISE_TICK_FORMAT = "HH:mm:ss.SSS"
@@ -290,7 +291,7 @@
     const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined)
     const expandedFromRoute = ref(false)
 
-    const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
+    const defaultLogLevel = computed(() => localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO")
     const {
         effectiveValue: effectiveSelectedLogLevel,
     } = useRouteFilterPolicy<LevelFilterValue>({

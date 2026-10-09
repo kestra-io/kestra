@@ -284,6 +284,10 @@ export function buildEffectiveGetNodeDimensions(
             dimensions.width = NODE_SIZES.TASK_WIDTH_EXECUTION
         }
 
+        if (hasExecution && (isTaskNode(node) || isCollapsedLane(node))) {
+            dimensions.height = NODE_SIZES.TASK_HEIGHT_EXECUTION
+        }
+
         return dimensions
     }
 }

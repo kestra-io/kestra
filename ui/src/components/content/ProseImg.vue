@@ -1,5 +1,5 @@
 <template>
-    <span class="text-center d-block img-block">
+    <span style="text-align: center; display: block;" class="img-block">
         <img
             v-bind="$attrs"
             :alt="alt"

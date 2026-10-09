@@ -10,7 +10,7 @@ type TaskComponent = Component & {
 
 const TasksComponents = import.meta.glob<{ default: TaskComponent }>("./Task*.vue", {eager: true})
 
-export interface Schema{
+export interface Schema {
     $ref?: string;
     $required?: boolean;
     type?: string | {const: string};
@@ -44,16 +44,17 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
         return "secret"
     }
 
-    if (Object.prototype.hasOwnProperty.call(property, "$ref")) {
-        if (property.$ref.includes("tasks.Task")) {
+    const ref = property.$ref
+    if (ref) {
+        if (ref.includes("tasks.Task")) {
             return "task"
         }
 
-        if (property.$ref.includes("tasks.runners.TaskRunner")) {
+        if (ref.includes("tasks.runners.TaskRunner")) {
             return "task"
         }
 
-        if (property.$ref.includes("io.kestra.preload")) {
+        if (ref.includes("io.kestra.preload")) {
             return "list"
         }
 
@@ -64,22 +65,24 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
         return "complex"
     }
 
-    if (Object.prototype.hasOwnProperty.call(property, "allOf")) {
-        if (property.allOf.length === 2
-            && property.allOf[0].$ref && !property.allOf[1].properties) {
+    const allOf = property.allOf
+    if (allOf && allOf.length === 2) {
+        if (allOf[0].$ref && !allOf[1].properties) {
             return "complex"
         }
     }
 
-    if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
-        if (key === "labels" && property.anyOf.length === 2
-            && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
+    const anyOf = property.anyOf
+    if (anyOf) {
+        if (key === "labels" && anyOf.length === 2
+            && anyOf[0].type === "array" && anyOf[1].type === "object") {
             return "dict"
         }
 
         if (isImplementationPicker(property, definitions)) {
             return "plugin-implementation"
         }
+
         return "any-of"
     }
 
@@ -126,7 +129,10 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
     }
 
     if (property.type === "array") {
-        const items = definitions ? resolve$ref({definitions: definitions}, property.items) : property.items
+        const items = definitions && property.items
+            ? resolve$ref({definitions}, property.items)
+            : property.items
+
         if (LIST_FIELDS.includes(key ?? "")) {
             return "list"
         }
@@ -136,8 +142,8 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
         }
 
         // A discriminated union too large to page through in a plain TaskArray, but not
-        // plugin-provided (e.g. flow Input's ~15 short-named types: string, int, json, ...) — the
-        // implementation control doesn't apply, so it keeps the collapsible counted-header list.
+        // plugin-provided (e.g. flow Input's ~15 short-named types: string, int, json, ...) —
+        // the implementation control doesn't apply, so it keeps the collapsible counted-header list.
         if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10) {
             return "list"
         }
@@ -153,15 +159,17 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
         return "dict"
     }
 
-    return property.type || "expression"
+    return typeof property.type === "string" ? property.type : "expression"
 }
 
 export function getTaskComponent(property: Schema, definitions: Record<string, Schema>, key?: string, siblingKeys?: string[]): TaskComponent | Record<string, never> {
     const typeString = getType(property, definitions, key, siblingKeys)
     const type = pascalCase(typeString)
     const component = TasksComponents[`./Task${type}.vue`]?.default
+
     if (component) {
         component.ksTaskName = typeString
     }
+
     return component ?? {}
 }

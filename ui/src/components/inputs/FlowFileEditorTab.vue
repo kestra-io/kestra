@@ -104,6 +104,7 @@
     import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
+    import {useAiEnabled} from "../../composables/useAiEnabled"
     import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
     import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
@@ -134,7 +135,7 @@
     // Ctrl/⌘+Alt+Shift+K opens the AI Copilot (the v2 context-dock tab). Suppressed during the
     // guided onboarding tour.
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (tourStore.isGuidedActive) {
+        if (tourStore.isGuidedActive || !aiEnabled.value) {
             return
         }
         if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && props.flow) {
@@ -322,6 +323,7 @@
     const namespacesStore = useNamespacesStore()
     const miscStore = useMiscStore()
     const tourStore = useProductTourStore()
+    const aiEnabled = useAiEnabled()
     const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0)
 
     const editorScrollKey = computed(() => {

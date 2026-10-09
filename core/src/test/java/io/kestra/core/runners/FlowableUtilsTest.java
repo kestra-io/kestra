@@ -260,6 +260,18 @@ class FlowableUtilsTest {
     }
 
     @Test
+    void resolveValues_withStringJsonArrayOfMixedScalars_shouldReturnTheirJsonForm() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "[1, 3000000000, 2.5, true, \"a\", {\"k\": 1}]");
+
+        // Then
+        assertThat(result.getLeft()).containsExactly("1", "3000000000", "2.5", "true", "a", "{\"k\":1}");
+    }
+
+    @Test
     void resolveValues_withNullElementInJsonArray_shouldThrow() {
         // Given
         RunContext runContext = runContextFactory.of();

@@ -1205,7 +1205,6 @@
         props: {},
         flowYaml: flowSource,
         validationIssuesByTask,
-        inlineEditPanel: ref(),
         createTask: createNestedBlock,
         editTask: (parentPath, blockSchemaPath, refPath) => pushModalTarget({parentPath, blockSchemaPath, refPath}),
         closeTask: () => closeModal(),

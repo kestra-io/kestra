@@ -927,7 +927,7 @@ public class ExecutionService {
 
     private void notifyLoopParent(Execution execution, State.Type state) throws QueueException {
         if (execution.getKind() == ExecutionKind.LOOP) {
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), state, null, null));
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), state, null, null, null));
         }
     }
 
@@ -1914,7 +1914,7 @@ public class ExecutionService {
      */
     public Execution suspendAtLoopBreakpoint(Execution execution) throws QueueException {
         if (execution.getKind() == ExecutionKind.LOOP) {
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.BREAKPOINT, null, null));
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.BREAKPOINT, null, null, null));
         }
         return execution.withState(State.Type.BREAKPOINT);
     }

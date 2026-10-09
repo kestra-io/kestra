@@ -277,11 +277,14 @@
                     });
                 }
 
-                tabs.push({
-                    name: "concurrency",
-                    title: this.$t("concurrency"),
-                    component: FlowConcurrency
-                })
+                // The Kafka backend cannot read concurrency limits, so the endpoint behind this tab fails.
+                if (this.miscStore.configs?.isConcurrencyViewEnabled !== false) {
+                    tabs.push({
+                        name: "concurrency",
+                        title: this.$t("concurrency"),
+                        component: FlowConcurrency
+                    })
+                }
 
                 tabs.push(                    {
                     name: "auditlogs",

@@ -52,6 +52,12 @@ class AiServiceManagerTest {
 
     private final PropertyPlaceholderResolver placeholderResolver = mock(PropertyPlaceholderResolver.class);
 
+    private static AiFreeTierConfiguration freeTierDisabled() {
+        AiFreeTierConfiguration configuration = new AiFreeTierConfiguration();
+        configuration.setEnabled(false);
+        return configuration;
+    }
+
     private AiServiceManager buildManager(List<AiProviderConfiguration> providers) {
         when(providersConfiguration.providers()).thenReturn(providers);
         // Only exercised when at least one provider is configured, hence lenient.
@@ -70,7 +76,11 @@ class AiServiceManagerTest {
             namespaceContextTool,
             kestraDocsContextTool,
             expressionContextService,
-            flowParsingService
+            flowParsingService,
+            // These cases assert how *configured* providers resolve; leaving the free tier on would register
+            // a fallback for the no-provider case.
+            freeTierDisabled(),
+            null
         );
     }
 

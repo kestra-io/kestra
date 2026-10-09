@@ -45,6 +45,7 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     :streaming="streaming"
                     :placeholder="$t('ai.copilot.emptyHelper')"
@@ -133,6 +134,7 @@
                     v-model:mode="mode"
                     v-model:provider="selectedProvider"
                     :providers="providers"
+                    :usage="usage"
                     :disabled="!canSend"
                     :streaming="streaming"
                     @submit="onSubmit"
@@ -159,6 +161,7 @@
     import CopilotContextChip from "./CopilotContextChip.vue"
     import CopilotHelp from "./CopilotHelp.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
+    import {useAiUsage} from "./useAiUsage"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
     import {isViewingFlow, parseArtefactYaml} from "./useApplyDraft"
@@ -250,6 +253,10 @@
     // sent as providerId on each turn. Falls back to the server default when unset.
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
+
+    // Where the selected provider stands against its ceiling, so an exhausted allowance is visible before a
+    // turn is spent finding out. Re-read after each turn, which is the only thing that moves the figure.
+    const {status: usage, refresh: refreshUsage} = useAiUsage(selectedProvider)
 
     onMounted(async () => {
         try {
@@ -459,6 +466,8 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            // Ahead of the cancel guard below: a cancelled turn still spent whatever the provider generated.
+            refreshUsage()
             const last = lastMessage.value
             // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
             if (!last || last.type === "CANCELLED") {

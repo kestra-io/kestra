@@ -13,3 +13,4 @@ export const DRAGGING_NODE_INJECTION_KEY = Symbol("dragging-node-injection-key")
 export const CANVAS_HOVERED_INJECTION_KEY = Symbol("canvas-hovered-injection-key") as InjectionKey<ComputedRef<boolean>>
 export const LONGEST_TASK_RUN_DURATION_INJECTION_KEY = Symbol("longest-task-run-duration-injection-key") as InjectionKey<ComputedRef<number>>
 export const LOOP_LANES_INJECTION_KEY = Symbol("loop-lanes-injection-key") as InjectionKey<ComputedRef<Record<string, LoopLaneData>>>
+export const SCOPED_LONGEST_DURATIONS_INJECTION_KEY = Symbol("scoped-longest-durations-injection-key") as InjectionKey<ComputedRef<Record<string, number>>>

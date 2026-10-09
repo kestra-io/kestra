@@ -474,7 +474,8 @@
         "task-runs": "{runs} esecuzione | {runs} esecuzioni",
         "task-runs-failed": "{runs} esecuzione · {failed} fallite | {runs} esecuzioni · {failed} fallite",
         "retry": "Riprova",
-        "load-more": "Carica altro"
+        "load-more": "Carica altro",
+        "retry-loading": "Riprova a caricare le iterazioni"
       },
       "loop-chip": {
         "failed": {

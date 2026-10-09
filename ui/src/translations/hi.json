@@ -474,7 +474,8 @@
         "task-runs": "{runs} रन | {runs} रन",
         "task-runs-failed": "{runs} रन · {failed} विफल | {runs} रन · {failed} विफल",
         "retry": "पुनः प्रयास करें",
-        "load-more": "और लोड करें"
+        "load-more": "और लोड करें",
+        "retry-loading": "इटरेशन लोड करना पुनः प्रयास करें"
       },
       "loop-chip": {
         "failed": {

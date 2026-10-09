@@ -13,7 +13,7 @@ import {
     LoopIterationError,
     type LoopIteration,
 } from "../utils/loopIterations"
-import {withScopedIteration, type LoopScopeEntry} from "../utils/loopScope"
+import {iterationNumber, withScopedIteration, type LoopScopeEntry} from "../utils/loopScope"
 
 interface LoopLaneNode {
     uid: string;
@@ -58,7 +58,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
     const laneNodes = computed(() => (enabled.value ? loopLaneNodes(flowGraph.value) : []))
     const laneNodesKey = computed(() => laneNodes.value.map((lane) => lane.uid).join("|"))
     const outputsByLane = ref<Record<string, LaneOutputs>>({})
-    const scopeFailure = ref(false)
+    const scopeFailure = ref<"forbidden" | "unknown">()
     const subscriptions = new Map<string, FollowedExecution>()
     let userScopeSeq = 0
     let unmounted = false
@@ -73,7 +73,9 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
     const scopedNumberOf = (lane: LoopLaneNode) => {
         const index = loopDepth(lane)
         const entry = entries.value[index]
-        return entry?.taskId === lane.taskId && executionOf(lane.uid) ? entry.number : undefined
+        const loaded = executionOf(lane.uid)
+        const matches = entry?.taskId === lane.taskId && loaded?.loopRun?.index !== undefined && iterationNumber(loaded.loopRun.index) === entry.number
+        return matches ? entry.number : undefined
     }
 
     function loopDepth(lane: LoopLaneNode): number {
@@ -185,12 +187,14 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         let parentId = executionsStore.execution.id
         let parentLane: LoopLaneNode | undefined
         let transientFailure = false
+        let forbidden = false
 
         const definitive = async <T>(promise: Promise<T>): Promise<T | undefined> => {
             try {
                 return await promise
             } catch (error) {
-                if (!(error instanceof LoopIterationError) || error.failure !== "not-found") transientFailure = true
+                if (error instanceof LoopIterationError && error.failure === "forbidden") forbidden = true
+                else if (!(error instanceof LoopIterationError) || error.failure !== "not-found") transientFailure = true
                 return undefined
             }
         }
@@ -209,7 +213,9 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
             parentLane = lane
         }
 
-        scopeFailure.value = transientFailure
+        if (transientFailure) scopeFailure.value = "unknown"
+        else if (forbidden) scopeFailure.value = "forbidden"
+        else if (entries.value.length > 0) scopeFailure.value = undefined
         if (transientFailure) return
 
         const keep = new Set(resolved.map(({lane}) => lane.uid))
@@ -268,6 +274,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
     function scopeLane(laneUid: string, number: number) {
         const lane = laneByUid(laneUid)
         userScopeSeq++
+        scopeFailure.value = undefined
         if (!lane) return
         setEntries(withScopedIteration(entries.value, loopDepth(lane), lane.taskId, number))
     }
@@ -275,11 +282,13 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
     function clearLane(laneUid: string) {
         const lane = laneByUid(laneUid)
         userScopeSeq++
+        scopeFailure.value = undefined
         if (lane) setEntries(entries.value.slice(0, loopDepth(lane)))
     }
 
     function clearScope() {
         userScopeSeq++
+        scopeFailure.value = undefined
         setEntries([])
     }
 
@@ -295,6 +304,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
 
     async function scopeFirstFailure(laneUid: string) {
         const seq = ++userScopeSeq
+        scopeFailure.value = undefined
         const lane = laneByUid(laneUid)
         const root = executionsStore.execution
         if (!lane || !root?.id) return

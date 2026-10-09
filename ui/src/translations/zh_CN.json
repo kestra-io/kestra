@@ -474,7 +474,8 @@
         "task-runs": "{runs} 次运行 | {runs} 次运行",
         "task-runs-failed": "{runs} 次运行 · {failed} 次失败 | {runs} 次运行 · {failed} 次失败",
         "retry": "重试",
-        "load-more": "加载更多"
+        "load-more": "加载更多",
+        "retry-loading": "重试加载迭代"
       },
       "loop-chip": {
         "failed": {

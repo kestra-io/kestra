@@ -474,7 +474,8 @@
         "task-runs": "{runs} запуск | {runs} запуска | {runs} запусков",
         "task-runs-failed": "{runs} запуск · {failed} с ошибкой | {runs} запуска · {failed} с ошибкой | {runs} запусков · {failed} с ошибкой",
         "retry": "Повторить",
-        "load-more": "Загрузить ещё"
+        "load-more": "Загрузить ещё",
+        "retry-loading": "Повторить загрузку итераций"
       },
       "loop-chip": {
         "failed": {

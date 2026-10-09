@@ -474,7 +474,8 @@
         "task-runs": "{runs}회 실행 | {runs}회 실행",
         "task-runs-failed": "{runs}회 실행 · {failed}회 실패 | {runs}회 실행 · {failed}회 실패",
         "retry": "다시 시도",
-        "load-more": "더 보기"
+        "load-more": "더 보기",
+        "retry-loading": "반복 불러오기 다시 시도"
       },
       "loop-chip": {
         "failed": {

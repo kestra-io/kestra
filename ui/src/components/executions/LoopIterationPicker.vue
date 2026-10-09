@@ -29,6 +29,7 @@
                         type="button"
                         class="loop-picker-option"
                         :class="{'loop-picker-option-active': lane.scopedNumber === undefined}"
+                        :aria-current="lane.scopedNumber === undefined ? 'true' : undefined"
                         data-test="loop-picker-all"
                         @click="emit('clear')"
                     >
@@ -53,6 +54,7 @@
                                 type="button"
                                 class="loop-picker-option"
                                 :class="{'loop-picker-option-active': iteration.number === lane.scopedNumber}"
+                                :aria-current="iteration.number === lane.scopedNumber ? 'true' : undefined"
                                 data-test="loop-picker-option"
                                 @click="select(iteration.number)"
                             >

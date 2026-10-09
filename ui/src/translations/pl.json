@@ -474,7 +474,8 @@
         "task-runs": "{runs} uruchomienie | {runs} uruchomienia | {runs} uruchomień",
         "task-runs-failed": "{runs} uruchomienie · {failed} nieudanych | {runs} uruchomienia · {failed} nieudanych | {runs} uruchomień · {failed} nieudanych",
         "retry": "Ponów",
-        "load-more": "Załaduj więcej"
+        "load-more": "Załaduj więcej",
+        "retry-loading": "Ponów ładowanie iteracji"
       },
       "loop-chip": {
         "failed": {

@@ -60,3 +60,32 @@ export function computeTrace(
 
     return {nodes, edges: traced}
 }
+
+/**
+ * Extends a lineage trace with the direct (one-hop) non-lineage edges touching the focused node,
+ * so a directly-connected PART_OF/RELATED neighbor lights up without inheriting its own lineage.
+ */
+export function extendTraceWithDirectEdges(
+    trace: Trace | null,
+    edges: (TraceEdge & {kind?: string})[],
+    focusID: string | undefined,
+    isLineage: (kind?: string) => boolean,
+): Trace | null {
+    if (!focusID) return trace
+
+    const nodes = new Set(trace?.nodes ?? [focusID])
+    const traced = new Set(trace?.edges ?? [])
+
+    edges.forEach((edge) => {
+        if (isLineage(edge.kind)) return
+        if (edge.source === focusID) {
+            nodes.add(edge.target)
+            traced.add(traceEdgeKey(edge.source, edge.target))
+        } else if (edge.target === focusID) {
+            nodes.add(edge.source)
+            traced.add(traceEdgeKey(edge.source, edge.target))
+        }
+    })
+
+    return {nodes, edges: traced}
+}

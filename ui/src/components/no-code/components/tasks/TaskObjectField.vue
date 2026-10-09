@@ -157,6 +157,7 @@
     import {KsMarkdown} from "@kestra-io/design-system"
     import Help from "vue-material-design-icons/Information.vue"
     import FieldValidationErrors from "../FieldValidationErrors.vue"
+    import {errorsOnFieldOrItems} from "../../../../utils/validationErrors"
     import IconCodeTags from "vue-material-design-icons/CodeTags.vue"
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
 
@@ -195,7 +196,7 @@
     const pebbleState = ref(false)
 
     const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
-    const fieldErrors = computed<string[]>(() => validationErrors?.value.get(fieldPath.value) ?? [])
+    const fieldErrors = computed<string[]>(() => validationErrors ? errorsOnFieldOrItems(validationErrors.value, fieldPath.value) : [])
 
     const componentProps = computed(() => {
         return {

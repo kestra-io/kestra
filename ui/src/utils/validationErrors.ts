@@ -49,3 +49,9 @@ export function hasErrorUnder(errors: Map<string, string[]>, path: string): bool
     }
     return false
 }
+
+/** Errors on the field itself plus those on its array items, which have no input of their own to carry them. */
+export function errorsOnFieldOrItems(errors: Map<string, string[]>, path: string): string[] {
+    return [...errors].flatMap(([key, details]) =>
+        key === path || (key.startsWith(path) && /^\[\d+\]$/.test(key.slice(path.length))) ? details : [])
+}

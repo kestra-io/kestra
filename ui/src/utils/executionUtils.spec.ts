@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {findTaskRunsByState, statePredicate, waitFor} from "../../../src/utils/executionUtils"
-import type {Execution} from "../../../src/stores/executions"
+import {findTaskRunsByState, statePredicate, waitFor} from "./executionUtils"
+import type {Execution} from "../stores/executions"
 
 type Client = Parameters<typeof waitFor>[0]
 

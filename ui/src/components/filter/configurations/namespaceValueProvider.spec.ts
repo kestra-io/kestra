@@ -5,7 +5,7 @@ const {loadAutocomplete, hasAnyActionOnAnyNamespace} = vi.hoisted(() => ({loadAu
 vi.mock("override/stores/namespaces", () => ({useNamespacesStore: () => ({loadAutocomplete})}))
 vi.mock("override/stores/auth", () => ({useAuthStore: () => ({user: {hasAnyActionOnAnyNamespace}})}))
 
-import {namespaceValueProvider} from "./configurations/namespaceValueProvider"
+import {namespaceValueProvider} from "./namespaceValueProvider"
 
 describe("namespaceValueProvider", () => {
     beforeEach(() => {

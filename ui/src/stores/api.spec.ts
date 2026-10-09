@@ -98,7 +98,7 @@ describe("api store events", () => {
     })
 
     it("flushes the queued events by itself once the configs arrive", async () => {
-        const {useApiStore} = await import("../../../src/stores/api")
+        const {useApiStore} = await import("./api")
         const {useMiscStore} = await import("override/stores/misc")
 
         const apiStore = useApiStore()

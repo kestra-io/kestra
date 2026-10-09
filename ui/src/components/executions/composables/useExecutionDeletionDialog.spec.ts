@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent, type VNode} from "vue"
 import {mount} from "@vue/test-utils"
-import {i18nMount} from "../../../tests/unit/i18nMount"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 const {confirm} = vi.hoisted(() => ({confirm: vi.fn()}))
 
@@ -11,7 +11,7 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
 })
 
 import {KsSwitch} from "@kestra-io/design-system"
-import {useExecutionDeletionDialog, type ExecutionDeletionOptions} from "./composables/useExecutionDeletionDialog"
+import {useExecutionDeletionDialog, type ExecutionDeletionOptions} from "./useExecutionDeletionDialog"
 
 const openDialog = async (offerNonTerminated: boolean) => {
     let result: Promise<ExecutionDeletionOptions | undefined> | undefined

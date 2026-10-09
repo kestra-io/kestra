@@ -145,6 +145,7 @@
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
     } from "../../no-code/injectionKeys"
+    import type {Schema} from "../../no-code/components/tasks/getTaskComponent"
 
     const visible = defineModel<boolean>("visible", {required: true})
     const props = defineProps<{trigger: TriggerPluginDto; displayName: string}>()
@@ -171,12 +172,14 @@
 
     // Provide schema injection context so TaskObject can resolve $ref fields
     // (e.g. inherited labels, workerSelector from parent trigger types).
+    // The docs-oriented JSONSchema of the plugin is the raw backend schema the no-code editor reads as Schema.
+    const triggerDefinitions = computed(() => (triggerPlugin.value?.schema?.definitions ?? {}) as Record<string, Schema>)
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => ({
         ...(triggerPlugin.value?.schema ?? {}),
-        definitions: triggerPlugin.value?.schema?.definitions ?? {},
+        definitions: triggerDefinitions.value,
         $ref: "",
     })))
-    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => triggerPlugin.value?.schema?.definitions ?? {}))
+    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, triggerDefinitions)
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
         return props.trigger.type ? `#/definitions/${props.trigger.type}` : ""
     }))

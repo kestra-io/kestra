@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill'}"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -18,7 +18,7 @@
             <div
                 class="node-core"
                 :style="nodeStyle"
-                :class="[classes, {'node-core--focused': focused}]"
+                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
             >
                 <div class="main-content">
                     <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
@@ -44,6 +44,9 @@
                     </div>
                     <slot name="title-status" />
                     <slot name="title-actions" />
+                </div>
+                <div v-if="$slots.footer" class="node-footer">
+                    <slot name="footer" />
                 </div>
             </div>
             <Transition name="node-details-overlay">
@@ -251,6 +254,10 @@
             width: 100%;
             height: 100%;
         }
+
+        &.node-wrapper--with-footer {
+            height: 100%;
+        }
     }
 
     .node-pill {
@@ -344,6 +351,23 @@
 
     .node-core--execution .main-content {
         width: 273px;
+    }
+
+    .node-core--with-footer {
+        height: 100%;
+        box-sizing: border-box;
+
+        .main-content {
+            flex-shrink: 0;
+        }
+    }
+
+    .node-footer {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        min-height: 0;
+        padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
     }
 
     .node-content {

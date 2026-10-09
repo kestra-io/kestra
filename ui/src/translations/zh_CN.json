@@ -454,6 +454,11 @@
     "show task source": "显示任务源代码",
     "stream": "流",
     "execution statistics": "执行统计",
+    "execution_banner": {
+      "revision": "修订版 {revision}",
+      "attempts": "{count} 次尝试 | {count} 次尝试",
+      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+    },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
     "usage": "使用情况",
@@ -479,6 +484,7 @@
       "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "表达式",
       "tree": "树",
       "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",
@@ -564,6 +570,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "插件组件加载失败。",
       "autoInstall": {
         "failed": "插件安装失败",
         "failedHint": "flow 未保存。请修复问题或从 flow 中移除该插件，然后重新保存。",
@@ -1105,7 +1112,6 @@
     "pause backfills": "暂停回填",
     "backfill executions": "回填执行",
     "execute backfill": "执行回填",
-    "relative": "相对",
     "relative start date": "相对开始日期",
     "absolute": "绝对",
     "backfill": "回填",
@@ -1717,6 +1723,7 @@
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
+      "task_details": "task 详情",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",
@@ -1772,7 +1779,8 @@
         "inputs": "选择一个input字段类型",
         "charts": "选择图表类型",
         "where": "选择筛选器类型",
-        "numerator": "选择一个分子"
+        "numerator": "选择一个分子",
+        "namespace_first": "请先选择 namespace"
       },
       "creation": {
         "default": "添加",
@@ -2418,6 +2426,7 @@
         "label": "{count} 错误"
       }
     },
+    "invalid_source_code": "源代码无效",
     "source_search": {
       "cannot_select_read_only": "无法选择 — 您没有 {namespace} / {id} 的编辑权限",
       "collapse_all": "全部收起",

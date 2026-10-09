@@ -36,7 +36,11 @@
       "files": [
         "scripts/**",
         "**/scripts/**",
-        "**/tests/**"
+        "**/tests/**",
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.stories.ts",
+        "**/*.stories.tsx"
       ],
       "rules": {
         "no-console": "off"

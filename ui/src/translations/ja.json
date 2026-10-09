@@ -297,6 +297,29 @@
     "notifications": {
       "heading": "通知",
       "ongoing": "進行中",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "{count} 件の実行をキル中",
+          "EXECUTION_PAUSE": "{count} 件の実行を一時停止中",
+          "EXECUTION_RESUME": "{count} 件の実行を再開中",
+          "EXECUTION_RESTART": "{count} 件の実行を再起動中",
+          "EXECUTION_REPLAY": "{count} 件の実行をリプレイ中",
+          "EXECUTION_FORCE_RUN": "{count} 件の実行を強制実行中",
+          "EXECUTION_UNQUEUE": "{count} 件の実行をキューから削除中",
+          "EXECUTION_CHANGE_STATUS": "{count} 件の実行のステータスを変更中",
+          "EXECUTION_SET_LABELS": "{count} 件の実行に label を設定中",
+          "TRIGGER_UNLOCK": "{count} 件の trigger をロック解除中",
+          "TRIGGER_DELETE": "{count} 件の trigger を削除中",
+          "TRIGGER_DISABLE": "{count} 件の trigger を無効化中",
+          "TRIGGER_ENABLE": "{count} 件の trigger を有効化中",
+          "BACKFILL_PAUSE": "{count} 件の backfill を一時停止中",
+          "BACKFILL_RESUME": "{count} 件の backfill を再開中",
+          "BACKFILL_DELETE": "{count} 件の backfill を削除中"
+        },
+        "processed": "{count} 件処理済み",
+        "rejected": "{count} 件拒否",
+        "elapsed": "経過時間 {duration}"
+      },
       "markAllRead": "すべて既読にする",
       "markUnread": "未読にする",
       "markRead": "既読にする",
@@ -306,7 +329,8 @@
         "all": "すべて",
         "unread": "未読"
       },
-      "bellAriaLabel": "通知"
+      "bellAriaLabel": "通知",
+      "bellAriaLabelRunning": "通知、実行中の操作があります"
     },
     "source": "ソース",
     "home": "ホーム",

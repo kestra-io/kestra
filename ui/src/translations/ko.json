@@ -297,6 +297,29 @@
     "notifications": {
       "heading": "알림",
       "ongoing": "진행 중",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "실행 {count}개 종료 중",
+          "EXECUTION_PAUSE": "실행 {count}개 일시 중지 중",
+          "EXECUTION_RESUME": "실행 {count}개 재개 중",
+          "EXECUTION_RESTART": "실행 {count}개 재시작 중",
+          "EXECUTION_REPLAY": "실행 {count}개 재실행 중",
+          "EXECUTION_FORCE_RUN": "실행 {count}개 강제 실행 중",
+          "EXECUTION_UNQUEUE": "실행 {count}개 대기열에서 제거 중",
+          "EXECUTION_CHANGE_STATUS": "실행 {count}개 상태 변경 중",
+          "EXECUTION_SET_LABELS": "실행 {count}개에 label 설정 중",
+          "TRIGGER_UNLOCK": "trigger {count}개 잠금 해제 중",
+          "TRIGGER_DELETE": "trigger {count}개 삭제 중",
+          "TRIGGER_DISABLE": "trigger {count}개 비활성화 중",
+          "TRIGGER_ENABLE": "trigger {count}개 활성화 중",
+          "BACKFILL_PAUSE": "backfill {count}개 일시 중지 중",
+          "BACKFILL_RESUME": "backfill {count}개 재개 중",
+          "BACKFILL_DELETE": "backfill {count}개 삭제 중"
+        },
+        "processed": "{count}개 처리됨",
+        "rejected": "{count}개 거부됨",
+        "elapsed": "{duration} 동안 진행 중"
+      },
       "markAllRead": "모두 읽음으로 표시",
       "markUnread": "읽지 않음으로 표시",
       "markRead": "읽음으로 표시",
@@ -306,7 +329,8 @@
         "all": "모두",
         "unread": "읽지 않음"
       },
-      "bellAriaLabel": "알림"
+      "bellAriaLabel": "알림",
+      "bellAriaLabelRunning": "알림, 작업 진행 중"
     },
     "source": "소스",
     "home": "홈",

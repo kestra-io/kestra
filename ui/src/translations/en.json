@@ -297,6 +297,29 @@
     "notifications": {
       "heading": "Notifications",
       "ongoing": "In progress",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
+          "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
+          "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
+          "EXECUTION_RESTART": "Restarting {count} execution | Restarting {count} executions",
+          "EXECUTION_REPLAY": "Replaying {count} execution | Replaying {count} executions",
+          "EXECUTION_FORCE_RUN": "Force running {count} execution | Force running {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueuing {count} execution | Unqueuing {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Changing the status of {count} execution | Changing the status of {count} executions",
+          "EXECUTION_SET_LABELS": "Setting labels on {count} execution | Setting labels on {count} executions",
+          "TRIGGER_UNLOCK": "Unlocking {count} trigger | Unlocking {count} triggers",
+          "TRIGGER_DELETE": "Deleting {count} trigger | Deleting {count} triggers",
+          "TRIGGER_DISABLE": "Disabling {count} trigger | Disabling {count} triggers",
+          "TRIGGER_ENABLE": "Enabling {count} trigger | Enabling {count} triggers",
+          "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
+          "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
+          "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "processed": "{count} processed",
+        "rejected": "{count} rejected",
+        "elapsed": "running for {duration}"
+      },
       "markAllRead": "Mark all as read",
       "markUnread": "Mark as unread",
       "markRead": "Mark as read",
@@ -306,7 +329,8 @@
         "all": "All",
         "unread": "Unread"
       },
-      "bellAriaLabel": "Notifications"
+      "bellAriaLabel": "Notifications",
+      "bellAriaLabelRunning": "Notifications, operations in progress"
     },
     "source": "Source",
     "home": "Home",

@@ -297,6 +297,29 @@
     "notifications": {
       "heading": "Notifiche",
       "ongoing": "In corso",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Terminazione di {count} esecuzione | Terminazione di {count} esecuzioni",
+          "EXECUTION_PAUSE": "Messa in pausa di {count} esecuzione | Messa in pausa di {count} esecuzioni",
+          "EXECUTION_RESUME": "Ripresa di {count} esecuzione | Ripresa di {count} esecuzioni",
+          "EXECUTION_RESTART": "Riavvio di {count} esecuzione | Riavvio di {count} esecuzioni",
+          "EXECUTION_REPLAY": "Ripetizione di {count} esecuzione | Ripetizione di {count} esecuzioni",
+          "EXECUTION_FORCE_RUN": "Avvio forzato di {count} esecuzione | Avvio forzato di {count} esecuzioni",
+          "EXECUTION_UNQUEUE": "Rimozione dalla coda di {count} esecuzione | Rimozione dalla coda di {count} esecuzioni",
+          "EXECUTION_CHANGE_STATUS": "Modifica dello stato di {count} esecuzione | Modifica dello stato di {count} esecuzioni",
+          "EXECUTION_SET_LABELS": "Impostazione dei label su {count} esecuzione | Impostazione dei label su {count} esecuzioni",
+          "TRIGGER_UNLOCK": "Sblocco di {count} trigger | Sblocco di {count} trigger",
+          "TRIGGER_DELETE": "Eliminazione di {count} trigger | Eliminazione di {count} trigger",
+          "TRIGGER_DISABLE": "Disattivazione di {count} trigger | Disattivazione di {count} trigger",
+          "TRIGGER_ENABLE": "Attivazione di {count} trigger | Attivazione di {count} trigger",
+          "BACKFILL_PAUSE": "Messa in pausa di {count} backfill | Messa in pausa di {count} backfill",
+          "BACKFILL_RESUME": "Ripresa di {count} backfill | Ripresa di {count} backfill",
+          "BACKFILL_DELETE": "Eliminazione di {count} backfill | Eliminazione di {count} backfill"
+        },
+        "processed": "{count} elaborate",
+        "rejected": "{count} rifiutate",
+        "elapsed": "in corso da {duration}"
+      },
       "markAllRead": "Segna tutti come letti",
       "markUnread": "Segna come non letto",
       "markRead": "Segna come letto",
@@ -306,7 +329,8 @@
         "all": "Tutto",
         "unread": "Non letto"
       },
-      "bellAriaLabel": "Notifiche"
+      "bellAriaLabel": "Notifiche",
+      "bellAriaLabelRunning": "Notifiche, operazioni in corso"
     },
     "source": "Fonte",
     "home": "Home",

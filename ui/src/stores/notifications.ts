@@ -1,19 +1,15 @@
 import {defineStore} from "pinia"
-
-import {computed, ref} from "vue"
-import {apiUrlWithoutTenants} from "override/utils/route"
-
-import {useClient} from "@kestra-io/kestra-sdk"
+import {ref} from "vue"
+import * as NotificationsAPI from "@kestra-io/kestra-sdk/notifications"
+import {history_ as fetchHistory} from "@kestra-io/kestra-sdk/notifications"
 import type {Notification} from "@kestra-io/kestra-sdk"
 
 export type {Notification} from "@kestra-io/kestra-sdk"
 
 const HISTORY_PAGE_SIZE = 20
+const RECONNECT_DELAY_MS = 3000
 
-function isOngoing(notification: Notification): boolean {
-    return notification.ongoing === true
-}
-
+/** Compares instants, not strings, since dates can carry different offset formats. */
 function sortNewestFirst(notifications: Notification[]) {
     return [...notifications].sort((a, b) => {
         const diff = Date.parse(b.createdDate) - Date.parse(a.createdDate)
@@ -23,68 +19,54 @@ function sortNewestFirst(notifications: Notification[]) {
 }
 
 export const useNotificationsStore = defineStore("notifications", () => {
-    const axios = useClient()
-
     const notifications = ref<Notification[]>([])
     const unreadCount = ref(0)
     const nextCursor = ref<string | null>(null)
-
-    const hasMoreHistory = computed(() => nextCursor.value !== null)
-
-    const ongoingOperations = computed(() => notifications.value.filter(isOngoing))
-    const staticNotifications = computed(() => notifications.value.filter(n => !isOngoing(n)))
-    const hasOngoingOperation = computed(() => ongoingOperations.value.length > 0)
-    const hasUnreadNotification = computed(() => notifications.value.some(n => !n.read))
-    // DynamicScroller's scroll-end is level-triggered (re-fires on every render tick while the
-    // last item stays visible, e.g. a short/still-loading list) — without this guard, a burst of
-    // scroll-end events fires loadMore() concurrently, all reading the same not-yet-updated
-    // nextCursor and requesting the same page over and over.
+    /** The scroller's scroll-end fires on every render while the last row is visible, so pages must not overlap. */
     const isLoadingHistory = ref(false)
 
-    // Replaces an existing row in place (progress/read updates), or prepends a new one.
+    /** Server clock of the last full read: what a dropped stream catches up from through `/since`. */
+    let serverTime: string | null = null
+    let followController: AbortController | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+
+    /** Keeps the newer copy of a row, since a catch-up response can land after a pushed update and must not roll an operation back to ongoing. */
     function merge(incoming: Notification[]) {
         if (incoming.length === 0) return
         const byId = new Map(notifications.value.map(n => [n.id, n]))
-        incoming.forEach(n => byId.set(n.id, n))
+        incoming.forEach(n => {
+            const current = byId.get(n.id)
+            if (!current || Date.parse(n.updatedDate) >= Date.parse(current.updatedDate)) {
+                byId.set(n.id, n)
+            }
+        })
         notifications.value = sortNewestFirst(Array.from(byId.values()))
     }
 
     async function fetchUnreadCount() {
-        const {data} = await axios.get(`${apiUrlWithoutTenants()}/notifications/unread-count`)
-        unreadCount.value = data
+        unreadCount.value = await NotificationsAPI.unreadCount()
     }
 
-    // First page of history.
     async function loadInitial() {
-        const {data} = await axios.get(`${apiUrlWithoutTenants()}/notifications/history`, {
-            params: {limit: HISTORY_PAGE_SIZE},
-        })
-        notifications.value = sortNewestFirst(data.notifications)
-        // The backend omits `nextCursor` entirely (not `null`) once history is exhausted, so
-        // `data.nextCursor` is `undefined` there — coerce to `null` or hasMoreHistory's
-        // `!== null` check never flips false and loadMore() keeps firing forever.
+        const data = await fetchHistory({limit: HISTORY_PAGE_SIZE})
+        notifications.value = sortNewestFirst(data.notifications ?? [])
         nextCursor.value = data.nextCursor ?? null
+        serverTime = data.serverTime ?? null
         await fetchUnreadCount()
     }
 
-    // Older page for infinite scroll — appended, never replaces what's already loaded.
     async function loadMore() {
-        if (!hasMoreHistory.value || isLoadingHistory.value) return
+        if (nextCursor.value === null || isLoadingHistory.value) return
         isLoadingHistory.value = true
         try {
-            const {data} = await axios.get(`${apiUrlWithoutTenants()}/notifications/history`, {
-                params: {limit: HISTORY_PAGE_SIZE, before: nextCursor.value},
-            })
-            merge(data.notifications)
+            const data = await fetchHistory({limit: HISTORY_PAGE_SIZE, before: nextCursor.value})
+            merge(data.notifications ?? [])
             nextCursor.value = data.nextCursor ?? null
         } finally {
             isLoadingHistory.value = false
         }
     }
 
-    // Optimistic: flip `read` locally first for instant feedback, then persist. If the POST
-    // fails (e.g. the row was already deleted/purged server-side), revert the local flag and
-    // refresh the badge from the server so the UI never shows a read state that didn't stick.
     async function markRead(id: string) {
         const notification = notifications.value.find(n => n.id === id)
         if (!notification || notification.read) return
@@ -92,7 +74,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
         notification.read = true
         unreadCount.value = Math.max(0, unreadCount.value - 1)
         try {
-            await axios.post(`${apiUrlWithoutTenants()}/notifications/${id}/read`)
+            await NotificationsAPI.markRead({id})
         } catch (error) {
             notification.read = false
             await fetchUnreadCount()
@@ -100,7 +82,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
         }
     }
 
-    // Mirror of markRead(): optimistic flip, revert + refresh the badge on failure.
     async function markUnread(id: string) {
         const notification = notifications.value.find(n => n.id === id)
         if (!notification || !notification.read) return
@@ -108,7 +89,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
         notification.read = false
         unreadCount.value += 1
         try {
-            await axios.post(`${apiUrlWithoutTenants()}/notifications/${id}/unread`)
+            await NotificationsAPI.markUnread({id})
         } catch (error) {
             notification.read = true
             await fetchUnreadCount()
@@ -123,7 +104,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
         })
         unreadCount.value = 0
         try {
-            await axios.post(`${apiUrlWithoutTenants()}/notifications/read-all`)
+            await NotificationsAPI.markAllRead()
         } catch (error) {
             previouslyUnread.forEach(n => {
                 n.read = false
@@ -133,48 +114,58 @@ export const useNotificationsStore = defineStore("notifications", () => {
         }
     }
 
-    // Live push channel: a created/updated notification arrives here immediately. The SSE
-    // frame's `id:` field carries "created"/"updated" (see NotificationEventType) — not
-    // consumed here since merge() handles either the same way.
-    let eventSource: EventSource | null = null
+    /** Without a baseline yet, the newest page stands in for one, which also surfaces operations started before this page loaded. */
+    async function catchUp() {
+        const data = serverTime === null
+            ? await fetchHistory({limit: HISTORY_PAGE_SIZE})
+            : await NotificationsAPI.pollSince({since: serverTime})
+        merge(data.notifications ?? [])
+        serverTime = data.serverTime ?? serverTime
+        await fetchUnreadCount()
+    }
 
-    function handleSseMessage(event: MessageEvent<string>) {
-        const notification = JSON.parse(event.data) as Notification
+    function receive(notification: Notification) {
         merge([notification])
-        if (!isOngoing(notification)) {
+        if (!notification.ongoing) {
             fetchUnreadCount()
         }
     }
 
+    /** Reconnects itself rather than through SDK retries, which leaked server memory (kestra-io/kestra#16982). */
     function startSSE() {
         stopSSE()
-        eventSource = new EventSource(`${apiUrlWithoutTenants()}/notifications/follow`, {withCredentials: true})
-        eventSource.onmessage = handleSseMessage
-        fetchUnreadCount()
+        const controller = new AbortController()
+        followController = controller
+        catchUp().catch(() => undefined)
+        NotificationsAPI.listenUserNotifications({signal: controller.signal, sseMaxRetryAttempts: 1})
+            .then(async ({stream}) => {
+                for await (const event of stream) {
+                    receive(event as unknown as Notification)
+                }
+            })
+            .catch(() => undefined)
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    reconnectTimer = setTimeout(startSSE, RECONNECT_DELAY_MS)
+                }
+            })
     }
 
     function stopSSE() {
-        if (eventSource !== null) {
-            eventSource.close()
-            eventSource = null
-        }
+        clearTimeout(reconnectTimer)
+        followController?.abort()
+        followController = null
     }
 
     return {
         notifications,
         unreadCount,
-        hasMoreHistory,
-        ongoingOperations,
-        staticNotifications,
-        hasOngoingOperation,
-        hasUnreadNotification,
 
         loadInitial,
         loadMore,
         markRead,
         markUnread,
         markAllRead,
-        fetchUnreadCount,
         startSSE,
         stopSSE,
     }

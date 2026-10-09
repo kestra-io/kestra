@@ -297,6 +297,29 @@
     "notifications": {
       "heading": "Notificações",
       "ongoing": "Em andamento",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Encerrando {count} execução | Encerrando {count} execuções",
+          "EXECUTION_PAUSE": "Pausando {count} execução | Pausando {count} execuções",
+          "EXECUTION_RESUME": "Retomando {count} execução | Retomando {count} execuções",
+          "EXECUTION_RESTART": "Reiniciando {count} execução | Reiniciando {count} execuções",
+          "EXECUTION_REPLAY": "Repetindo {count} execução | Repetindo {count} execuções",
+          "EXECUTION_FORCE_RUN": "Forçando {count} execução | Forçando {count} execuções",
+          "EXECUTION_UNQUEUE": "Desenfileirando {count} execução | Desenfileirando {count} execuções",
+          "EXECUTION_CHANGE_STATUS": "Alterando o status de {count} execução | Alterando o status de {count} execuções",
+          "EXECUTION_SET_LABELS": "Definindo labels em {count} execução | Definindo labels em {count} execuções",
+          "TRIGGER_UNLOCK": "Desbloqueando {count} trigger | Desbloqueando {count} triggers",
+          "TRIGGER_DELETE": "Excluindo {count} trigger | Excluindo {count} triggers",
+          "TRIGGER_DISABLE": "Desativando {count} trigger | Desativando {count} triggers",
+          "TRIGGER_ENABLE": "Ativando {count} trigger | Ativando {count} triggers",
+          "BACKFILL_PAUSE": "Pausando {count} backfill | Pausando {count} backfills",
+          "BACKFILL_RESUME": "Retomando {count} backfill | Retomando {count} backfills",
+          "BACKFILL_DELETE": "Excluindo {count} backfill | Excluindo {count} backfills"
+        },
+        "processed": "{count} processadas",
+        "rejected": "{count} rejeitadas",
+        "elapsed": "em andamento há {duration}"
+      },
       "markAllRead": "Marcar tudo como lido",
       "markUnread": "Marcar como não lida",
       "markRead": "Marcar como lido",
@@ -306,7 +329,8 @@
         "all": "Todos",
         "unread": "Não lido"
       },
-      "bellAriaLabel": "Notificações"
+      "bellAriaLabel": "Notificações",
+      "bellAriaLabelRunning": "Notificações, operações em andamento"
     },
     "source": "Fonte",
     "home": "Início",

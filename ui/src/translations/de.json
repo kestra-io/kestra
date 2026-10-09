@@ -297,6 +297,29 @@
     "notifications": {
       "heading": "Benachrichtigungen",
       "ongoing": "In Bearbeitung",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "{count} Ausführung wird beendet | {count} Ausführungen werden beendet",
+          "EXECUTION_PAUSE": "{count} Ausführung wird pausiert | {count} Ausführungen werden pausiert",
+          "EXECUTION_RESUME": "{count} Ausführung wird fortgesetzt | {count} Ausführungen werden fortgesetzt",
+          "EXECUTION_RESTART": "{count} Ausführung wird neu gestartet | {count} Ausführungen werden neu gestartet",
+          "EXECUTION_REPLAY": "Replay von {count} Ausführung | Replay von {count} Ausführungen",
+          "EXECUTION_FORCE_RUN": "Erzwungener Start von {count} Ausführung | Erzwungener Start von {count} Ausführungen",
+          "EXECUTION_UNQUEUE": "{count} Ausführung wird aus der Warteschlange entfernt | {count} Ausführungen werden aus der Warteschlange entfernt",
+          "EXECUTION_CHANGE_STATUS": "Status von {count} Ausführung wird geändert | Status von {count} Ausführungen wird geändert",
+          "EXECUTION_SET_LABELS": "Labels für {count} Ausführung werden gesetzt | Labels für {count} Ausführungen werden gesetzt",
+          "TRIGGER_UNLOCK": "{count} Trigger wird entsperrt | {count} Trigger werden entsperrt",
+          "TRIGGER_DELETE": "{count} Trigger wird gelöscht | {count} Trigger werden gelöscht",
+          "TRIGGER_DISABLE": "{count} Trigger wird deaktiviert | {count} Trigger werden deaktiviert",
+          "TRIGGER_ENABLE": "{count} Trigger wird aktiviert | {count} Trigger werden aktiviert",
+          "BACKFILL_PAUSE": "{count} Backfill wird pausiert | {count} Backfills werden pausiert",
+          "BACKFILL_RESUME": "{count} Backfill wird fortgesetzt | {count} Backfills werden fortgesetzt",
+          "BACKFILL_DELETE": "{count} Backfill wird gelöscht | {count} Backfills werden gelöscht"
+        },
+        "processed": "{count} verarbeitet",
+        "rejected": "{count} abgelehnt",
+        "elapsed": "läuft seit {duration}"
+      },
       "markAllRead": "Alle als gelesen markieren",
       "markUnread": "Als ungelesen markieren",
       "markRead": "Als gelesen markieren",
@@ -306,7 +329,8 @@
         "all": "Alle",
         "unread": "Ungelesen"
       },
-      "bellAriaLabel": "Benachrichtigungen"
+      "bellAriaLabel": "Benachrichtigungen",
+      "bellAriaLabelRunning": "Benachrichtigungen, Vorgänge laufen"
     },
     "source": "Quelle",
     "home": "Startseite",

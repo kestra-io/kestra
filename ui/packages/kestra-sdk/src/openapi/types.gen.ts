@@ -1381,6 +1381,7 @@ export type LogEntry = {
 
 export type LoopRun = {
     parent?: Execution;
+    rootExecutionId?: string | null;
     taskId?: string;
     taskRunId?: string;
     index?: number;
@@ -1390,6 +1391,8 @@ export type LoopRun = {
 };
 
 export type LoopRunParent = {
+    executionId?: string;
+    taskId?: string;
     index?: number;
     key?: string | null;
     value?: string;
@@ -2630,6 +2633,7 @@ export type ExecutionStatusEventWritable = {
 
 export type LoopRunWritable = {
     parent?: ExecutionWritable;
+    rootExecutionId?: string | null;
     taskId?: string;
     taskRunId?: string;
     index?: number;

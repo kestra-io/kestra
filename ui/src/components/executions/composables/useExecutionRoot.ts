@@ -1,12 +1,21 @@
 import {ref, computed, onMounted, onUnmounted, watch} from "vue"
 import {useRoute} from "vue-router"
 import {useI18n} from "vue-i18n"
+import type {KsBreadcrumbItem} from "@kestra-io/design-system"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
 import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
+
+const MAX_CRUMB_VALUE_LENGTH = 20
+
+function formatLoopCrumbLabel(taskId: string | undefined, value: string | undefined, index: number | undefined): string {
+    const raw = value ?? (index !== undefined ? String(index) : "")
+    const displayValue = raw.length > MAX_CRUMB_VALUE_LENGTH ? `${raw.slice(0, MAX_CRUMB_VALUE_LENGTH)}…` : raw
+    return taskId ? `${taskId} (${displayValue})` : displayValue
+}
 
 export function useExecutionRoot() {
     const {t} = useI18n()
@@ -31,23 +40,89 @@ export function useExecutionRoot() {
             return {title: ""}
         }
 
-        return {
-            title: route.params.id as string,
-            bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
-            breadcrumb: [
-                ...namespaceBreadcrumb.value,
-                {
-                    label: flowId,
-                    link: {
-                        name: "flows/update",
-                        params: {
-                            namespace: ns,
-                            id: flowId,
-                        },
+        const breadcrumb: KsBreadcrumbItem[] = [
+            ...namespaceBreadcrumb.value,
+            {
+                label: flowId,
+                link: {
+                    name: "flows/update",
+                    params: {
+                        namespace: ns,
+                        id: flowId,
                     },
                 },
-            ],
+            },
+        ]
+
+        const base = {
+            title: route.params.id as string,
+            bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
+            breadcrumb,
         }
+
+        if (executionsStore.execution?.loopRun) {
+            const loopRun = executionsStore.execution.loopRun
+            let rootId = loopRun.rootExecutionId
+            if (!rootId) {
+                if (!loopRun.parents || loopRun.parents.length === 0) {
+                    rootId = executionsStore.execution.parentId
+                } else {
+                    let ancestor = loopRun.parent
+                    while (ancestor?.loopRun) {
+                        ancestor = ancestor.loopRun.parent
+                    }
+                    rootId = ancestor?.id
+                }
+            }
+
+            if (rootId) {
+                base.breadcrumb.push({
+                    label: t("root_execution"),
+                    link: {
+                        name: "executions/update",
+                        params: {
+                            namespace: ns,
+                            flowId: flowId,
+                            id: rootId,
+                        },
+                    },
+                })
+            }
+
+            if (loopRun.parents && loopRun.parents.length > 0) {
+                loopRun.parents.forEach(p => {
+                    if (!p.executionId) return
+
+                    base.breadcrumb.push({
+                        label: formatLoopCrumbLabel(p.taskId, p.value, p.index),
+                        link: {
+                            name: "executions/update",
+                            params: {
+                                namespace: ns,
+                                flowId: flowId,
+                                id: p.executionId,
+                            },
+                        },
+                    })
+                })
+            }
+
+            if (loopRun.taskId) {
+                base.breadcrumb.push({
+                    label: formatLoopCrumbLabel(loopRun.taskId, loopRun.value, loopRun.index),
+                    link: {
+                        name: "executions/update",
+                        params: {
+                            namespace: ns,
+                            flowId: flowId,
+                            id: executionsStore.execution.id,
+                        },
+                    },
+                })
+            }
+        }
+
+        return base
     })
 
     const routeName = computed(() => route.params && route.params.id ? EXECUTION_PARENT_ROUTE : "")

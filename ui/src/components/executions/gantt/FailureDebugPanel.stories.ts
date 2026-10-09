@@ -1,9 +1,9 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, userEvent, waitFor, within} from "storybook/test"
 import {vueRouter} from "storybook-vue3-router"
-import {mockStoryApiRoutes} from "../../../../../.storybook/apiMock"
-import FailureDebugPanel from "../../../../../src/components/executions/gantt/FailureDebugPanel.vue"
-import type {Execution} from "../../../../../src/stores/executions"
+import {mockStoryApiRoutes} from "../../../../.storybook/apiMock"
+import FailureDebugPanel from "./FailureDebugPanel.vue"
+import type {Execution} from "../../../stores/executions"
 
 function history(state: string, date: string) {
     return {state, date}

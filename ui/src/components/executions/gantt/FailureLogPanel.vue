@@ -69,9 +69,10 @@
     const visibleLogs = computed(() => {
         if (!props.timeRange) return logs.value
         const {start, end} = props.timeRange
-        return logs.value.filter((log) => {
-            const timestamp = new Date(log.timestamp).getTime()
-            return timestamp >= start && timestamp <= end
+        return logs.value.filter(({timestamp}) => {
+            if (!timestamp) return false
+            const logTime = new Date(timestamp).getTime()
+            return logTime >= start && logTime <= end
         })
     })
 

@@ -2,11 +2,13 @@ package io.kestra.core.executor.command;
 
 import java.time.Instant;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 
 import jakarta.annotation.Nullable;
+import lombok.With;
 
 public record UpdateStatus(String tenantId,
     String namespace,
@@ -15,7 +17,8 @@ public record UpdateStatus(String tenantId,
     Instant timestamp,
     EventId eventId,
     State.Type state,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @With @Nullable Actor actor) implements ExecutionCommand {
     public static UpdateStatus from(Execution execution, State.Type state) {
         return new UpdateStatus(
             execution.getTenantId(),
@@ -25,11 +28,12 @@ public record UpdateStatus(String tenantId,
             Instant.now(),
             EventId.create(),
             state,
+            null,
             null
         );
     }
 
     public UpdateStatus withOperationId(String operationId) {
-        return new UpdateStatus(tenantId, namespace, flowId, executionId, timestamp, eventId, state, operationId);
+        return new UpdateStatus(tenantId, namespace, flowId, executionId, timestamp, eventId, state, operationId, actor);
     }
 }

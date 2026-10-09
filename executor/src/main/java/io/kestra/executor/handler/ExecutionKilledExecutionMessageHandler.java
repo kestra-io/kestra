@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.events.Actor;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
@@ -22,6 +23,8 @@ import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
 import io.kestra.executor.ExecutorService;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.propagation.PropagatedContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -113,7 +116,7 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
             log.error("Unable to kill the execution {}", message.getExecutionId(), e);
         }
 
-        Optional<ExecutorContext> maybeExecutor = killingOrAfterKillState(message.getExecutionId(), Optional.ofNullable(message.getExecutionState()));
+        Optional<ExecutorContext> maybeExecutor = killingOrAfterKillState(message.getExecutionId(), Optional.ofNullable(message.getExecutionState()), message.getActor());
 
         // Check whether kill event should be propagated to downstream executions.
         // By default, always propagate the ExecutionKill to sub-flows (for backward compatibility).
@@ -144,7 +147,7 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
         return maybeExecutor;
     }
 
-    private Optional<ExecutorContext> killingOrAfterKillState(final String executionId, Optional<State.Type> afterKillState) {
+    private Optional<ExecutorContext> killingOrAfterKillState(final String executionId, Optional<State.Type> afterKillState, @Nullable Actor actor) {
         return executionStateStore.lock(executionId, execution ->
         {
             FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
@@ -154,7 +157,10 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
                 executionQueuedStateStore.remove(execution);
             }
 
-            Execution killing = executionService.kill(execution, flow, afterKillState);
+            Execution killing;
+            try (PropagatedContext.Scope _ = Actor.propagate(actor)) {
+                killing = executionService.kill(execution, flow, afterKillState);
+            }
             // kill() returns the same object unchanged when the execution is already terminal.
             // Calling withExecution() in that case would set executionUpdated=true and trigger
             // a spurious toExecution() cycle that re-emits SubflowExecutionEnd for subflows.

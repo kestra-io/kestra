@@ -2,10 +2,12 @@ package io.kestra.core.executor.command;
 
 import java.time.Instant;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
 import jakarta.annotation.Nullable;
+import lombok.With;
 
 public record Restart(String tenantId,
     String namespace,
@@ -14,7 +16,8 @@ public record Restart(String tenantId,
     Instant timestamp,
     EventId eventId,
     @Nullable Integer revision,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @With @Nullable Actor actor) implements ExecutionCommand {
     public static Restart from(Execution execution, Integer revision) {
         return new Restart(
             execution.getTenantId(),
@@ -24,11 +27,12 @@ public record Restart(String tenantId,
             Instant.now(),
             EventId.create(),
             revision,
+            null,
             null
         );
     }
 
     public Restart withOperationId(String operationId) {
-        return new Restart(tenantId, namespace, flowId, executionId, timestamp, eventId, revision, operationId);
+        return new Restart(tenantId, namespace, flowId, executionId, timestamp, eventId, revision, operationId, actor);
     }
 }

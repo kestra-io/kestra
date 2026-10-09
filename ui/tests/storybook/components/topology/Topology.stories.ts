@@ -571,13 +571,14 @@ export const NestedFlowableLanes: StoryObj<typeof Topology> = {
         execution: NESTED_LOOP_EXECUTION,
     },
     play: async ({canvasElement}) => {
-        const rectOf = (id: string) => canvasElement.querySelector(`[data-id="${id}"]`)?.getBoundingClientRect()
+        const laneOf = (id: string) => canvasElement.querySelector<HTMLElement>(`[data-id="${id}"]`)
 
-        await waitFor(() => expect(rectOf("cluster_root.per_region.per_quarter")).toBeDefined())
-        const outer = rectOf("cluster_root.per_region")!
-        const inner = rectOf("cluster_root.per_region.per_quarter")!
+        await waitFor(() => expect(laneOf("cluster_root.per_region.per_quarter")).not.toBeNull())
+        const outer = laneOf("cluster_root.per_region")!.getBoundingClientRect()
+        const inner = laneOf("cluster_root.per_region.per_quarter")!.getBoundingClientRect()
+        const zoom = outer.height / parseFloat(laneOf("cluster_root.per_region")!.style.height)
 
-        expect(inner.top).toBeGreaterThanOrEqual(outer.top)
+        expect(inner.top).toBeGreaterThanOrEqual(outer.top + NODE_SIZES.LANE_HEADER_HEIGHT * zoom)
         expect(inner.left).toBeGreaterThanOrEqual(outer.left)
         expect(inner.bottom).toBeLessThanOrEqual(outer.bottom)
         expect(inner.right).toBeLessThanOrEqual(outer.right)

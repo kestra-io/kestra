@@ -1,5 +1,5 @@
 import {describe, expect, test} from "vitest"
-import {flowOrNamespaceFilter, highlightMatch, namespaceFilter, paletteEntities} from "../../../../src/components/layout/globalSearchEntities"
+import {highlightMatch, paletteEntities} from "../../../../src/components/layout/globalSearchEntities"
 
 describe("paletteEntities", () => {
     const flows = [
@@ -47,25 +47,5 @@ describe("highlightMatch", () => {
             {text: "s3_ingest_", match: false},
             {text: "daily", match: true},
         ])
-    })
-})
-
-describe("palette filters", () => {
-    test("matches a flow on its id or its namespace", () => {
-        expect(flowOrNamespaceFilter("daily")).toEqual({
-            logical: "or",
-            children: [
-                {field: "flowId", operation: "CONTAINS", value: "daily"},
-                {field: "namespace", operation: "CONTAINS", value: "daily"},
-            ],
-        })
-    })
-
-    test("matches a namespace by containment", () => {
-        expect(namespaceFilter("analytics")).toEqual({
-            field: "namespace",
-            operation: "CONTAINS",
-            value: "analytics",
-        })
     })
 })

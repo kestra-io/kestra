@@ -141,6 +141,20 @@ class AssetValidationTest {
             .isInstanceOf(ConstraintViolationException.class);
     }
 
+    @Test
+    void shouldRejectAConditionOnAFieldTheAssetDoesNotHave() {
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("region", Op.EQUALS, "eu"))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.", Op.EQUALS, "x"))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.region", Op.EQUALS, "eu"))))
+            .isEmpty();
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("owner", Op.IS_NULL, null))))
+            .isEmpty();
+    }
+
     private static Asset assetWithCondition(FlowActionCondition condition) {
         return Custom.builder()
             .namespace("io.kestra")

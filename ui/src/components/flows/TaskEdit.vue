@@ -198,7 +198,7 @@
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
-    import {flattenTaskIds} from "../../utils/flowableBlockOps"
+    import {upstreamTaskIds} from "../../utils/flowableBlockOps"
     import {useContextSections} from "../../composables/useContextSections"
     import type {DataSection} from "./contextSections/types"
     import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
@@ -434,11 +434,7 @@
             })})
         }
 
-        const ids: string[] = []
-        flattenTaskIds(flow.tasks, ids)
-        flattenTaskIds(flow.errors, ids)
-        flattenTaskIds(flow.finally, ids)
-        const upstream = [...new Set(ids)].filter(id => id && id !== currentTaskId.value)
+        const upstream = [...new Set(upstreamTaskIds(flow, currentTaskId.value))].filter(Boolean)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }

@@ -13,6 +13,7 @@ import {
     duplicateBlockAtPath,
     errorsLaneTarget,
     flattenTaskIds,
+    upstreamTaskIds,
     groupValidationIssuesByTask,
     healDagRemoval,
     isFlowableType,
@@ -1568,6 +1569,58 @@ afterExecution:
 
             // Then
             expect(ids).toEqual([])
+        })
+    })
+
+    describe("upstreamTaskIds", () => {
+        const flow = {
+            tasks: [
+                {id: "fetch", type: "io.kestra.plugin.core.log.Log"},
+                {id: "loop", type: "io.kestra.plugin.core.flow.Sequential", tasks: [
+                    {id: "inner_a", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "inner_b", type: "io.kestra.plugin.core.log.Log"},
+                ]},
+                {id: "notify", type: "io.kestra.plugin.core.log.Log"},
+            ],
+            errors: [{id: "on_error", type: "io.kestra.plugin.core.log.Log"}],
+            finally: [{id: "cleanup", type: "io.kestra.plugin.core.log.Log"}],
+        }
+
+        it("lists nothing before the first task", () => {
+            expect(upstreamTaskIds(flow, "fetch")).toEqual([])
+        })
+
+        it("lists only earlier siblings and their descendants", () => {
+            expect(upstreamTaskIds(flow, "notify")).toEqual(["fetch", "loop", "inner_a", "inner_b"])
+        })
+
+        it("lists preceding tasks of enclosing flowables and earlier siblings inside", () => {
+            expect(upstreamTaskIds(flow, "inner_b")).toEqual(["fetch", "inner_a"])
+        })
+
+        it("offers every main task to errors and finally tasks", () => {
+            expect(upstreamTaskIds(flow, "on_error")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify"])
+            expect(upstreamTaskIds(flow, "cleanup")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify", "on_error"])
+        })
+
+        it("follows dependsOn transitively inside a Dag", () => {
+            const dagFlow = {
+                tasks: [
+                    {id: "before", type: "io.kestra.plugin.core.log.Log"},
+                    {id: "dag", type: "io.kestra.plugin.core.flow.Dag", tasks: [
+                        {task: {id: "d_c", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_b"]},
+                        {task: {id: "d_a", type: "io.kestra.plugin.core.log.Log"}},
+                        {task: {id: "d_b", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                        {task: {id: "d_x", type: "io.kestra.plugin.core.log.Log"}},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(dagFlow, "d_c")).toEqual(["before", "d_b", "d_a"])
+        })
+
+        it("falls back to every other task when the task is not in the flow yet", () => {
+            expect(upstreamTaskIds(flow, "brand_new")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify", "on_error", "cleanup"])
         })
     })
 

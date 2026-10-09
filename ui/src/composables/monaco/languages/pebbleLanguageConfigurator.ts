@@ -59,7 +59,7 @@ export function registerPebbleAutocompletion(
 ) {
     // Pebble autocompletion
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(langIds, {
-        triggerCharacters: ["{"],
+        triggerCharacters: ["{", "%"],
         async provideCompletionItems(model, position) {
             // Not a subfield access
             const rootPebbleVariableMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarRoot + "$", position, true, false, null, true)
@@ -187,10 +187,10 @@ export function registerFilterAutoCompletion(
             const lineContent = model.getLineContent(position.lineNumber)
             const textBeforeCursor = lineContent.substring(0, position.column - 1)
 
-            const openBraces = (textBeforeCursor.match(/\{\{/g) || []).length
-            const closeBraces = (textBeforeCursor.match(/\}\}/g) || []).length
+            const openBlocks = (textBeforeCursor.match(/\{\{|\{%/g) || []).length
+            const closeBlocks = (textBeforeCursor.match(/\}\}|%\}/g) || []).length
 
-            if (openBraces <= closeBraces) {
+            if (openBlocks <= closeBlocks) {
                 return NO_SUGGESTIONS
             }
 
@@ -233,9 +233,13 @@ function registerPebbleLanguage(language: string) {
         tokenizer: {
             root: [
                 [/\{\{/, {token: "delimiter.bracket", next: "@pebbleInDoubleCurly"}],
+                [/\{%/, {token: "delimiter.bracket", next: "@pebbleInPercent"}],
             ],
             pebbleInDoubleCurly: [
                 [/-?\}\}/, {token: "delimiter.bracket", next: "@pop"}],
+            ],
+            pebbleInPercent: [
+                [/-?%\}/, {token: "delimiter.bracket", next: "@pop"}],
             ],
         },
     }

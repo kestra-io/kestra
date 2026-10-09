@@ -1,7 +1,7 @@
 import {watch, type Ref} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
 
-const PEBBLE_BLOCK_PATTERN = "\\{\\{(.+?)}}"
+const PEBBLE_BLOCK_PATTERN = "\\{\\{([\\s\\S]*?)\\}\\}|\\{%([\\s\\S]*?)%\\}"
 
 type CodeEditor = monaco.editor.IStandaloneCodeEditor
 

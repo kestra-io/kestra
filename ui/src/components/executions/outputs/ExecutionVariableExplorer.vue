@@ -205,6 +205,7 @@
             type: valueType(value),
             preview: preview(value),
             expression: `${prefix}${formatStep(label)}`,
+            isExpression: typeof value === "string" && (value.includes("{{") || value.includes("{%")),
         }))
     }
 
@@ -464,7 +465,9 @@
             previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
             expression.value = `{{ ${debugPath} }}`
         }else {
-            expression.value = `{{ ${baseExpressionPath} }}`
+            expression.value = item.isExpression
+                ? `{{ render(${baseExpressionPath}) }}`
+                : `{{ ${baseExpressionPath} }}`
         }
     }
 

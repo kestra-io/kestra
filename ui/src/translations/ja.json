@@ -484,6 +484,7 @@
       "title": "入力/出力",
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "式",
       "tree": "ツリー",
       "raw_json": "生JSON",
       "select_prompt": "value を確認する変数を選択してください。",

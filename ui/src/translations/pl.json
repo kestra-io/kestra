@@ -284,6 +284,14 @@
     "last execution status": "Status ostatniej egzekucji",
     "jump to": "Przejdź do",
     "jump to...": "Przejdź do…",
+    "global_search": {
+        "open_flow": "Otwórz flow",
+        "flow_executions": "Egzekucje flow",
+        "move": "Przesuń",
+        "menu": "Menu",
+        "sources": "Menu + flows + namespaces",
+        "search_failed": "Nie udało się wczytać flows ani namespaces"
+    },
     "contextBar": {
       "ai": "AI",
       "news": "Wiadomości",

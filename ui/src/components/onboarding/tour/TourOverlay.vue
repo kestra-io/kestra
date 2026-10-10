@@ -148,7 +148,7 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
-    import {useTopLayer} from "@kestra-io/design-system"
+    import {cssVar, useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
@@ -287,14 +287,38 @@
 
     const px = (value: number) => `${value}px`
 
-    const scrimClipPath = (hole: Hole) => [
-        "0 0", "100% 0", "100% 100%", "0 100%", "0 0",
-        `${px(hole.left)} ${px(hole.top)}`,
-        `${px(hole.left)} ${px(hole.bottom)}`,
-        `${px(hole.right)} ${px(hole.bottom)}`,
-        `${px(hole.right)} ${px(hole.top)}`,
-        `${px(hole.left)} ${px(hole.top)}`,
-    ].join(", ")
+    const parsePx = (value: string, fallback = 10): number => {
+        if (!value) return fallback
+        const num = parseFloat(value)
+        if (isNaN(num)) return fallback
+        if (value.endsWith("rem")) {
+            const rootFontSize = typeof window !== "undefined"
+                ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+                : 16
+            return num * rootFontSize
+        }
+        return num
+    }
+
+    const scrimCornerRadius = () => parsePx(cssVar("--ks-radius-lg"))
+
+    const scrimClipPath = (hole: Hole) => {
+        const r = scrimCornerRadius()
+        const w = hole.right - hole.left
+        const h = hole.bottom - hole.top
+        const cr = Math.min(r, w / 2, h / 2)
+        const {top, left} = hole
+
+        return `path("M0,0 L${window.innerWidth},0 L${window.innerWidth},${window.innerHeight} L0,${window.innerHeight} Z `
+            + `M${left + cr},${top} `
+            + `A${cr},${cr} 0 0 0 ${left},${top + cr} `
+            + `L${left},${top + h - cr} `
+            + `A${cr},${cr} 0 0 0 ${left + cr},${top + h} `
+            + `L${left + w - cr},${top + h} `
+            + `A${cr},${cr} 0 0 0 ${left + w},${top + h - cr} `
+            + `L${left + w},${top + cr} `
+            + `A${cr},${cr} 0 0 0 ${left + w - cr},${top} Z")`
+    }
 
     const dialogOpen = () =>
         Array.from(document.querySelectorAll(".kel-overlay-dialog, .kel-overlay")).some((element) => {
@@ -354,7 +378,7 @@
         spotlight.value = {
             // A ranked selector matches nested elements, so the scrim keeps one union hole:
             // overlapping holes cancel each other out and re-dim what the step points at.
-            scrim: scene.value?.dim === false ? null : {clipPath: `polygon(${scrimClipPath(hole)})`},
+            scrim: scene.value?.dim === false ? null : {clipPath: scrimClipPath(hole)},
             rings: rects.map((rect) => ({
                 top: px(rect.top - RING_PADDING),
                 left: px(rect.left - RING_PADDING),

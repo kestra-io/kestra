@@ -1717,6 +1717,8 @@
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",
     "last error was": "마지막 오류는",
+    "execution_paused": "실행 일시 중지",
+    "execution_paused_description": "이 실행은 검증 및 재개를 기다리고 있습니다.",
     "active": "활성화됨",
     "flows imported": "Flow가 가져왔습니다.",
     "flows not imported": "가져오지 않은 Flow",

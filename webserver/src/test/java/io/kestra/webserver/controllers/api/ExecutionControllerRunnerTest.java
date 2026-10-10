@@ -1820,7 +1820,7 @@ class ExecutionControllerRunnerTest {
             )
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
-        assertThat(Problems.detail(exception)).isEqualTo("Missing required input:asked");
+        assertThat(Problems.detail(exception)).contains("Missing required input:asked", "Missing required input:secret_pause");
     }
 
     @Test

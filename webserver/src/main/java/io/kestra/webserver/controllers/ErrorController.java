@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
+import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.webserver.errors.ProblemDetail;
@@ -66,6 +67,17 @@ public class ErrorController {
             e,
             ProblemTypes.VALIDATION_FAILED,
             ProblemError.ofViolations(e.getConstraintViolations())
+        );
+    }
+
+    /** Flow input validation: one {@code errors} entry per invalid input or constraint violation. */
+    @Error(global = true)
+    public HttpResponse<ProblemDetail> error(HttpRequest<?> request, InputOutputValidationException e) {
+        return this.problems.response(
+            request,
+            e,
+            ProblemTypes.INVALID_ENTITY,
+            ProblemError.ofInputErrors(e)
         );
     }
 

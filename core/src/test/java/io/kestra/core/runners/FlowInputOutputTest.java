@@ -1371,6 +1371,50 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions()).isNull();
     }
 
+    @Test
+    void shouldAccumulateAllValidationExceptionsAcrossInputsWhenReadingExecutionInputs() {
+        // Given
+        StringInput input1 = StringInput.builder()
+            .id("input1")
+            .type(Type.STRING)
+            .required(true)
+            .validator("^[a-z]+$")
+            .build();
+        IntInput input2 = IntInput.builder()
+            .id("input2")
+            .type(Type.INT)
+            .required(true)
+            .min(10)
+            .build();
+        StringInput input3 = StringInput.builder()
+            .id("input3")
+            .type(Type.STRING)
+            .required(true)
+            .build();
+
+        Flow flow = Flow.builder()
+            .id("test-multi-validation")
+            .namespace("io.kestra.test")
+            .inputs(List.of(input1, input2, input3))
+            .build();
+
+        // When / Then
+        InputOutputValidationException exception = Assertions.assertThrows(
+            InputOutputValidationException.class,
+            () -> flowInputOutput.readExecutionInputs(
+                flow,
+                DEFAULT_TEST_EXECUTION,
+                Map.of("input1", "123", "input2", 5)
+            )
+        );
+
+        assertThat(exception.getExceptions()).hasSize(3);
+        assertThat(exception.getFieldErrors()).containsKeys("input1", "input2", "input3");
+        assertThat(exception.getMessage()).contains("input1");
+        assertThat(exception.getMessage()).contains("input2");
+        assertThat(exception.getMessage()).contains("Missing required input:input3");
+    }
+
     private static CompletedPart memoryCompletedPart(String name, byte[] content) {
         return CompletedAttribute.create(
             new FormFieldMetadata(name, null, null),

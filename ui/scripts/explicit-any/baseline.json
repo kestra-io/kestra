@@ -61,8 +61,6 @@
   "src/components/no-code/components/tasks/TaskObject.vue": 17,
   "src/components/no-code/components/tasks/TaskObjectField.vue": 7,
   "src/components/no-code/components/tasks/TaskSecret.vue": 1,
-  "src/components/no-code/components/tasks/TaskString.vue": 1,
-  "src/components/no-code/components/tasks/TaskTask.vue": 2,
   "src/components/no-code/components/tasks/fieldNesting.ts": 16,
   "src/components/no-code/components/tasks/getTaskComponent.ts": 7,
   "src/components/no-code/components/tasks/useBlockComponent.ts": 3,

@@ -3,7 +3,7 @@ import {describe, it, expect, vi, beforeEach} from "vitest"
 const posthogEventsMock = vi.fn()
 const mockConfigs: {isUiAnonymousUsageEnabled?: boolean} = {}
 
-vi.mock("../../../src/stores/api", () => ({
+vi.mock("../stores/api", () => ({
     useApiStore: () => ({posthogEvents: posthogEventsMock}),
 }))
 
@@ -11,7 +11,7 @@ vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: mockConfigs}),
 }))
 
-import {trackSavedFilter} from "../../../src/utils/savedFilterTracking"
+import {trackSavedFilter} from "./savedFilterTracking"
 
 describe("trackSavedFilter", () => {
     beforeEach(() => {

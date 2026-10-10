@@ -42,6 +42,7 @@ const VARIABLES: Record<string, unknown> = {
     replyTo: "noreply@acme.io",
     maxRetries: 3,
     featureFlags: {betaUi: true, newScheduler: false},
+    largeValue: Object.fromEntries(Array.from({length: 100}, (_, index) => [`key${index}`, `value${index}`])),
 };
 
 const TRIGGER: ExecutionTrigger = {
@@ -135,6 +136,26 @@ export const SelectVariable: Story = {
             },
             {timeout: 3000},
         );
+    },
+};
+
+export const ScrollableValue: Story = {
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+        await userEvent.click(await waitFor(() => canvas.getByText("largeValue"), {timeout: 5000}));
+
+        const viewer = canvasElement.querySelector<HTMLElement>(".viewer");
+        expect(viewer).not.toBeNull();
+        expect(getComputedStyle(viewer!).overflowY).toBe("auto");
+        expect(viewer!.scrollHeight).toBeGreaterThan(viewer!.clientHeight);
+
+        const rect = viewer!.getBoundingClientRect();
+        const scrollbarWidth = viewer!.offsetWidth - viewer!.clientWidth;
+        const scrollbarX = rect.right - Math.max(1, scrollbarWidth / 2);
+        const scrollbarY = rect.top + 1;
+        const hitTarget = document.elementFromPoint(scrollbarX, scrollbarY);
+        expect(viewer!.contains(hitTarget)).toBe(true);
+        expect(hitTarget?.closest(".kel-splitter-bar__dragger")).toBeNull();
     },
 };
 

@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
@@ -103,9 +105,13 @@ public class LogController {
     @Operation(tags = { "Logs" }, summary = "Get logs for a specific execution, taskrun or task")
     public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters,
+        @Deprecated @Parameter(description = "The min log level filter, use the `level` filter instead", deprecated = true) @Nullable @QueryValue Level minLevel,
+        @Deprecated @Parameter(description = "The taskrun id, use the `taskRunId` filter instead", deprecated = true) @Nullable @QueryValue String taskRunId,
+        @Deprecated @Parameter(description = "The task id, use the `taskId` filter instead", deprecated = true) @Nullable @QueryValue String taskId,
+        @Deprecated @Parameter(description = "The attempt number, use the `attemptNumber` filter instead", deprecated = true) @Nullable @QueryValue Integer attempt) {
         return logRepository
-            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
+            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, ListUtils.concat(filters, legacyFilters(minLevel, taskRunId, taskId, attempt))))
             .collectList()
             .block();
     }
@@ -115,9 +121,13 @@ public class LogController {
     @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
     public HttpResponse<StreamedFile> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters,
+        @Deprecated @Parameter(description = "The min log level filter, use the `level` filter instead", deprecated = true) @Nullable @QueryValue Level minLevel,
+        @Deprecated @Parameter(description = "The taskrun id, use the `taskRunId` filter instead", deprecated = true) @Nullable @QueryValue String taskRunId,
+        @Deprecated @Parameter(description = "The task id, use the `taskId` filter instead", deprecated = true) @Nullable @QueryValue String taskId,
+        @Deprecated @Parameter(description = "The attempt number, use the `attemptNumber` filter instead", deprecated = true) @Nullable @QueryValue Integer attempt) {
         List<LogEntry> logs = logRepository
-            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
+            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, ListUtils.concat(filters, legacyFilters(minLevel, taskRunId, taskId, attempt))))
             .collectList()
             .block();
         InputStream inputStream = new java.io.ByteArrayInputStream(
@@ -188,6 +198,27 @@ public class LogController {
                 .build()
         );
         return merged;
+    }
+
+    // Same semantics as the 1.x parameters, which the 2.0 SDK still sends: taskId takes precedence over taskRunId, and attempt only applies to a taskRunId.
+    private static List<QueryFilter> legacyFilters(@Nullable Level minLevel, @Nullable String taskRunId, @Nullable String taskId, @Nullable Integer attempt) {
+        List<QueryFilter> filters = new ArrayList<>();
+        if (minLevel != null) {
+            filters.add(queryFilter(QueryFilter.Field.LEVEL, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO, minLevel));
+        }
+        if (taskId != null) {
+            filters.add(queryFilter(QueryFilter.Field.TASK_ID, QueryFilter.Op.EQUALS, taskId));
+        } else if (taskRunId != null) {
+            filters.add(queryFilter(QueryFilter.Field.TASK_RUN_ID, QueryFilter.Op.EQUALS, taskRunId));
+            if (attempt != null) {
+                filters.add(queryFilter(QueryFilter.Field.ATTEMPT_NUMBER, QueryFilter.Op.EQUALS, attempt));
+            }
+        }
+        return filters;
+    }
+
+    private static QueryFilter queryFilter(QueryFilter.Field field, QueryFilter.Op operation, Object value) {
+        return QueryFilter.builder().field(field).operation(operation).value(value).build();
     }
 
     @ExecuteOn(TaskExecutors.IO)

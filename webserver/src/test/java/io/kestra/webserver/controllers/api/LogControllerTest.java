@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -404,10 +405,56 @@ class LogControllerTest {
             );
     }
 
+    @ParameterizedTest
+    @FieldSource("legacyParametersTestCases")
+    @SuppressWarnings("unchecked")
+    void listLogsFromExecutionShouldRespectLegacyParameters(LegacyParametersTestCase testCase) {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        seedLogs(tenant, TEST_EXECUTION_ID, allLogs);
+
+        List<LogEntry> result = client.toBlocking().retrieve(
+            GET(legacyParametersUri(tenant, "", testCase.parameters())),
+            Argument.of(List.class, LogEntry.class)
+        );
+
+        assertThat(result)
+            .extracting(LogEntry::getMessage)
+            .containsExactlyInAnyOrderElementsOf(
+                testCase.expectedLogs().stream().map(LogEntry::getMessage).toList()
+            );
+    }
+
+    @ParameterizedTest
+    @FieldSource("legacyParametersTestCases")
+    void downloadLogsFromExecutionShouldRespectLegacyParameters(LegacyParametersTestCase testCase) {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        seedExecution(tenant, TEST_EXECUTION_ID);
+        seedLogs(tenant, TEST_EXECUTION_ID, allLogs);
+
+        String body = client.toBlocking().retrieve(
+            GET(legacyParametersUri(tenant, "/download", testCase.parameters())),
+            String.class
+        );
+
+        for (LogEntry log : allLogs) {
+            if (testCase.expectedLogs().contains(log)) {
+                assertThat(body).contains(log.getMessage());
+            } else {
+                assertThat(body).doesNotContain(log.getMessage());
+            }
+        }
+    }
+
     private void seedLogs(String tenant, FiltersTestCase testCase) {
-        testCase.logs().forEach(
+        seedLogs(tenant, testCase.executionId(), testCase.logs());
+    }
+
+    private void seedLogs(String tenant, String executionId, List<LogEntry> logs) {
+        logs.forEach(
             log -> logRepository.save(
-                log.toBuilder().tenantId(tenant).executionId(testCase.executionId()).build()
+                log.toBuilder().tenantId(tenant).executionId(executionId).build()
             )
         );
     }
@@ -439,6 +486,12 @@ class LogControllerTest {
     private static String filterUri(String tenant, String executionId, String suffix, List<QueryFilter> filters) {
         UriBuilder builder = UriBuilder.of("/api/v1/" + tenant + "/logs/" + executionId + suffix);
         QueryFilterTestUtils.toQueryParams(filters).forEach(builder::queryParam);
+        return builder.build().toString();
+    }
+
+    private static String legacyParametersUri(String tenant, String suffix, Map<String, String> parameters) {
+        UriBuilder builder = UriBuilder.of("/api/v1/" + tenant + "/logs/" + TEST_EXECUTION_ID + suffix);
+        parameters.forEach(builder::queryParam);
         return builder.build().toString();
     }
 
@@ -623,6 +676,16 @@ class LogControllerTest {
             .build()
     );
 
+    private static final List<LegacyParametersTestCase> legacyParametersTestCases = List.of(
+        new LegacyParametersTestCase(Map.of("minLevel", "INFO"), List.of(infoLog, warnLog, errorLog)),
+        new LegacyParametersTestCase(Map.of("taskId", "transform"), List.of(warnLog, errorLog)),
+        new LegacyParametersTestCase(Map.of("taskRunId", "task-run-1", "minLevel", "DEBUG"), List.of(debugLog, infoLog)),
+        new LegacyParametersTestCase(Map.of("taskRunId", "task-run-2", "attempt", "1"), List.of(errorLog)),
+        new LegacyParametersTestCase(Map.of("taskId", "load-data", "taskRunId", "task-run-2"), List.of(traceLog, debugLog, infoLog)),
+        new LegacyParametersTestCase(Map.of("taskId", "transform", "attempt", "1"), List.of(warnLog, errorLog)),
+        new LegacyParametersTestCase(Map.of("minLevel", "DEBUG", "filters[taskId][EQUALS]", "load-data"), List.of(debugLog, infoLog))
+    );
+
     private static LogEntry baseLog(Level level, String taskId, String taskRunId, Integer attempt, String message) {
         return LogEntry.builder()
             .flowId("filter-test-flow")
@@ -643,5 +706,8 @@ class LogControllerTest {
         List<LogEntry> logs,
         List<LogEntry> expectedLogs,
         List<QueryFilter> filters) {
+    }
+
+    private record LegacyParametersTestCase(Map<String, String> parameters, List<LogEntry> expectedLogs) {
     }
 }

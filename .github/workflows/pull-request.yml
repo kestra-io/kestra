@@ -368,6 +368,20 @@ jobs:
     with:
       java-version: 25
 
+  security-scan:
+    name: Security scan
+    if: ${{ github.event.pull_request.draft == false }}
+    uses: kestra-io/actions/.github/workflows/security-scan.yml@main
+    with:
+      components: |
+        frontend=ui/**
+        backend=**
+      npm-lockfile: ui/package-lock.json
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
   # Built once here, consumed by both the E2E tests and the PR docker image
   # publish (previously each of them rebuilt the whole product themselves).
   build-artifacts:
@@ -441,7 +455,7 @@ jobs:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
+    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, e2e-checks, backend, security-scan, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:

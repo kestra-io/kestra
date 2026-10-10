@@ -9,6 +9,7 @@ import {
     isSeq,
     parseDocument,
     visit,
+    type Node,
     type Pair,
 } from "yaml"
 import {parseDocumentTyped, scalarKey} from "./document.ts"
@@ -184,6 +185,54 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
             element.range[0] <= valueStartIndex && valueStartIndex <= element.range[2],
     )
     return filter.sort((a, b) => b.range[0] - a.range[0])?.[0]
+}
+
+function chartItemsOf(map: YAMLMap<unknown, unknown>): Node[] {
+    const items: Node[] = []
+    for (const item of map.items) {
+        if (scalarKey(item) === "charts" && isSeq<Node>(item.value)) {
+            items.push(...item.value.items)
+        }
+    }
+    return items
+}
+
+export function getAllCharts(source: string) {
+    const yamlDoc = parseDocumentTyped(source)
+    const charts: unknown[] = []
+
+    visit(yamlDoc, {
+        Map(_, map) {
+            for (const chartItem of chartItemsOf(map)) {
+                charts.push(chartItem.toJSON())
+            }
+        },
+    })
+
+    return charts
+}
+
+export function getChartAtPosition(source: string, position: { lineNumber: number; column: number }) {
+    const yamlDoc = parseDocumentTyped(source)
+    const lineCounter = new LineCounter()
+    parseDocument(source, {lineCounter})
+    const cursorIndex =
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column
+
+    let chart: Node | undefined
+    visit(yamlDoc, {
+        Map(_, map) {
+            for (const chartItem of chartItemsOf(map)) {
+                const range = chartItem.range
+                if (range && range[0] <= cursorIndex && range[1] >= cursorIndex) {
+                    chart = chartItem
+                    return visit.BREAK
+                }
+            }
+        },
+    })
+
+    return chart ? chart.toJSON() : null
 }
 
 export function getTasksLines(

@@ -7,5 +7,5 @@ export {getPathFromSectionAndId, extractBlock, extractBlockWithPath, replaceBloc
 export {replaceIdAndNamespace, updateMetadata, getMetadata, deleteMetadata} from "./yaml/metadata.ts"
 export {extractFieldFromMaps, extractTypedBlocks, extractTypedBlocksWithMeta} from "./yaml/fields.ts"
 export type {FieldMatch, TypedBlock, FlowSourceData} from "./yaml/fields.ts"
-export {getTypeAtPosition, getVersionAtPosition, localizeElementAtIndex, getTasksLines} from "./yaml/positions.ts"
+export {getTypeAtPosition, getVersionAtPosition, localizeElementAtIndex, getAllCharts, getChartAtPosition, getTasksLines} from "./yaml/positions.ts"
 export type {YamlElement} from "./yaml/positions.ts"

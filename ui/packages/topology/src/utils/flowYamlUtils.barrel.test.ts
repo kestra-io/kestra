@@ -13,6 +13,8 @@ const EXPECTED = [
     "extractTypedBlocks",
     "extractTypedBlocksWithMeta",
     "flowHaveTasks",
+    "getAllCharts",
+    "getChartAtPosition",
     "getMetadata",
     "getPathFromSectionAndId",
     "getTasksLines",

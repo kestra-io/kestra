@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill'}"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -18,7 +18,7 @@
             <div
                 class="node-core"
                 :style="nodeStyle"
-                :class="[classes, {'node-core--focused': focused}]"
+                :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
             >
                 <div class="main-content">
                     <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
@@ -45,6 +45,9 @@
                     <slot name="title-status" />
                     <slot name="title-actions" />
                 </div>
+                <div v-if="$slots.footer" class="node-footer">
+                    <slot name="footer" />
+                </div>
             </div>
             <Transition name="node-details-overlay">
                 <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay">
@@ -57,7 +60,12 @@
 
 <script lang="ts" setup>
     import {computed, inject} from "vue"
-    import {KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        useTaskIcon,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import {EVENTS} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
@@ -143,10 +151,10 @@
         disabled?: boolean;
         state?: string;
         data: BasicNodeData;
-        icons?: Record<string, unknown>;
+        icons?: PluginIconMap;
         // Resolves an icon the `icons` index doesn't carry; without it a node whose plugin isn't
         // in the index has no way to ever get an icon (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<unknown>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         class?: string | string[] | Record<string, boolean>;
         focused?: boolean;
         dragging?: boolean;
@@ -246,6 +254,10 @@
             width: 100%;
             height: 100%;
         }
+
+        &.node-wrapper--with-footer {
+            height: 100%;
+        }
     }
 
     .node-pill {
@@ -339,6 +351,23 @@
 
     .node-core--execution .main-content {
         width: 273px;
+    }
+
+    .node-core--with-footer {
+        height: 100%;
+        box-sizing: border-box;
+
+        .main-content {
+            flex-shrink: 0;
+        }
+    }
+
+    .node-footer {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        min-height: 0;
+        padding: 0 var(--ks-spacing-2) var(--ks-spacing-2);
     }
 
     .node-content {

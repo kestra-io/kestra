@@ -69,6 +69,7 @@
     import * as BasicAuth from "../../utils/basicAuth"
     import {shouldShowWelcome} from "../../utils/welcomeGuard"
     import {identifyPosthogUser} from "../../utils/posthog"
+    import {storageKeys} from "../../utils/constants"
 
     interface Credentials {
         username: string
@@ -162,14 +163,14 @@
             if (!isInitialized) { router.push({name: "setup"}); return }
 
             const {username: trimmedUsername} = await BasicAuth.signIn(credentials.value)
-            localStorage.removeItem("basicAuthSetupInProgress")
-            sessionStorage.setItem("sessionActive", "true")
+            localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
+            sessionStorage.setItem(storageKeys.SESSION_ACTIVE, "true")
 
             const configs = await miscStore.loadConfigs()
             await identifyPosthogUser(configs, {email: trimmedUsername})
             credentials.value = {username: "", password: ""}
 
-            if (shouldShowHelloDialog()) localStorage.setItem("showSurveyDialogAfterLogin", "true")
+            if (shouldShowHelloDialog()) localStorage.setItem(storageKeys.SHOW_SURVEY_DIALOG_AFTER_LOGIN, "true")
 
             if (await shouldShowWelcome()) {
                 router.push({name: "ai"})

@@ -237,7 +237,7 @@ public class SubflowFunction implements KestraFunction {
             {
                 if (value != null) {
                     // system labels are reserved for Kestra; only system.correlationId may be propagated by the caller
-                    if (key.startsWith(Label.SYSTEM_PREFIX) && !key.equals(Label.CORRELATION_ID)) {
+                    if (Label.isSystem(key) && !key.equals(Label.CORRELATION_ID)) {
                         throw new PebbleException(
                             null, "The 'subflow' function cannot set the system label '" + key + "'; system labels are reserved (except '" + Label.CORRELATION_ID + "').", lineNumber,
                             self.getName()

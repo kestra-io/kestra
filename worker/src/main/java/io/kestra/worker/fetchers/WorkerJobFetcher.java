@@ -3,6 +3,8 @@ package io.kestra.worker.fetchers;
 import java.time.Duration;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -132,6 +134,12 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      * sit when permits aren't changing.
      */
     private final Queue<String> pendingCompletions = new ConcurrentLinkedQueue<>();
+
+    /**
+     * UIDs of jobs received from the controller and not yet completed, queued or running. Keyed by UID rather
+     * than counted so that a completion for a job this fetcher never received cannot release a permit.
+     */
+    private final Set<String> inFlightJobs = ConcurrentHashMap.newKeySet();
 
     /**
      * Latch to detect when stream completes.
@@ -356,7 +364,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         // Advertise the worker's true maximum in-flight capacity: threads currently
         // executing plus jobs pending in the buffer. Controller bases its reservation
         // math (guaranteedCapacity / sharedCapacity) on this value.
-        int maxConcurrency = workerContext.workerThreads() + workerJobQueue.capacity();
+        int maxConcurrency = maxConcurrency();
 
         WorkerJobRequest.Builder requestBuilder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
@@ -389,7 +397,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             "Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
             workerContext.workerGroupId(),
-            workerContext.workerThreads() + workerJobQueue.capacity(),
+            maxConcurrency(),
             calculatePermits()
         );
         for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {
@@ -439,6 +447,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
                 log.debug("Received job: {}", jobId);
 
+                inFlightJobs.add(job.uid());
                 // Put job in local queue (blocking if full - provides local backpressure)
                 workerJobQueue.put(job);
                 receivedJobs++;
@@ -515,14 +524,22 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     }
 
     /**
-     * Calculates the number of permits to request based on local queue remaining capacity.
+     * Calculates the number of permits to request: the jobs the worker can still take on, threads plus job buffer
+     * minus the jobs in flight, never more than the local queue can hold so that receiving them never blocks.
      * <p>
      * Reports zero while intake is paused (maintenance / cordon) so every outgoing request — the
      * initial request on (re)connect, periodic updates and completion piggy-backs — advertises no
      * capacity and the controller stops dispatching. In-flight jobs still drain normally.
      */
     private int calculatePermits() {
-        return fetchingPaused.get() ? 0 : workerJobQueue.remainingCapacity();
+        if (fetchingPaused.get()) {
+            return 0;
+        }
+        return Math.max(0, Math.min(maxConcurrency() - inFlightJobs.size(), workerJobQueue.remainingCapacity()));
+    }
+
+    private int maxConcurrency() {
+        return workerContext.workerThreads() + workerContext.jobBufferSize();
     }
 
     /**
@@ -562,6 +579,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (jobId == null || jobId.isEmpty()) {
             return;
         }
+        inFlightJobs.remove(jobId);
         pendingCompletions.offer(jobId);
 
         // lastSentPermits is reset to -1 before a new stream's observer is published and only

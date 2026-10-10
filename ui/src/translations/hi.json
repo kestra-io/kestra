@@ -328,10 +328,11 @@
     "start date": "प्रारंभ तिथि",
     "end date": "समाप्ति तिथि",
     "restart": "पुनः प्रारंभ करें",
-    "restart latest revision": "नवीनतम पुनरीक्षण पुनः प्रारंभ करें",
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
     "restarted": "Execution पुनः आरंभ हो गया है",
     "restart confirm": "क्या आप वाकई execution <code>{id}</code> को पुनरारंभ करना चाहते हैं?",
+    "restart subflow warning": "यह execution एक पैरेंट execution द्वारा बनाई गई थी और इसे वहीं से पुनरारंभ किया जाना चाहिए। इसे अकेले पुनरारंभ करने से पैरेंट execution FAILED हो जाती है और इसके अगले Task नहीं चलेंगे। इसे पुनरारंभ करने के लिए {parent} पर जाएं।",
+    "restart subflow warning link": "पैरेंट execution",
     "replay": "पुनः चलाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
@@ -348,6 +349,10 @@
     "no": "नहीं",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
     "change state confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run state बदलना चाहते हैं?<br/>यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
+    "interrupt": "बाधित करें",
+    "interrupt confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run को बाधित करना चाहते हैं?<br/>यह worker के अंदर चल रहे task को समाप्त कर देगा और उसकी स्थिति निर्धारित करेगा।",
+    "interrupt done": "Task रन बाधित हो गया है",
+    "interrupt target state": "लक्ष्य स्थिति",
     "change state current state": "वर्तमान स्थिति है:",
     "change state hint": {
       "WARNING": [
@@ -449,6 +454,11 @@
     "show task source": "Task स्रोत दिखाएं",
     "stream": "स्ट्रीम",
     "execution statistics": "निष्पादन सांख्यिकी",
+    "execution_banner": {
+      "revision": "संशोधन {revision}",
+      "attempts": "{count} प्रयास | {count} प्रयास",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "समानांतरता सीमाएँ",
     "system overview": "सिस्टम अवलोकन",
     "usage": "उपयोग",
@@ -474,6 +484,7 @@
       "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "एक्सप्रेशन",
       "tree": "ट्री",
       "raw_json": "रॉ JSON",
       "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
@@ -559,6 +570,7 @@
       "blueprints": "ब्लूप्रिंट | ब्लूप्रिंट"
     },
     "plugins": {
+      "ui_load_error": "एक प्लगइन घटक लोड नहीं हो सका।",
       "autoInstall": {
         "failed": "plugin इंस्टॉलेशन विफल रहा",
         "failedHint": "flow सेव नहीं हुआ। समस्या ठीक करें या flow से plugin हटाएं, फिर दोबारा सेव करें।",
@@ -688,6 +700,17 @@
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "unsaved changed ?": "आपके पास असहेजे गए परिवर्तन हैं, क्या आप इस पृष्ठ को छोड़ना चाहते हैं?",
+    "session expired": "आपका सत्र समाप्त हो गया है",
+    "session expired description": "जारी रखने के लिए फिर से साइन इन करें।",
+    "go to login": "लॉगिन पेज पर जाएं",
+    "use another sign-in method": "किसी अन्य साइन-इन विधि का उपयोग करें",
+    "sign in in a new tab": "एक नए टैब में साइन इन करें",
+    "sign in in a new tab hint": "जो टैब अभी खुला है, उसमें साइन इन करें, फिर यहां वापस आएं और जारी रखें।",
+    "continue after sign in": "जारी रखें",
+    "sign in failed": "साइन इन नहीं कर सके। अपना कनेक्शन जांचें और पुनः प्रयास करें।",
+    "sign in not confirmed": "हम पुष्टि नहीं कर सके कि आप साइन इन हैं। दूसरे टैब में साइन इन करें, फिर जारी रखें।",
+    "server unreachable": "Kestra सर्वर तक नहीं पहुंचा जा सकता है",
+    "server unreachable description": "इस पृष्ठ को रीफ़्रेश करने से पहले किसी भी बिना सहेजे गए काम (उदाहरण के लिए Flow YAML) को कहीं सुरक्षित जगह पर कॉपी कर लें। सर्वर के फिर से प्रतिक्रिया देने पर यह बैनर गायब हो जाएगा।",
     "unsaved changes": "असहेजित परिवर्तन",
     "unsaved changes warning": "आपके पास बिना सहेजे गए परिवर्तन हैं। यदि आप इस पृष्ठ को छोड़ते हैं, तो आपके परिवर्तन खो जाएंगे।",
     "leave page": "पृष्ठ छोड़ें",
@@ -1035,6 +1058,8 @@
         "folder": "फ़ोल्डर हटाएं",
         "files": "{count} चयनित फ़ाइलें हटाएं",
         "bulk_success": "चयनित फ़ाइलें सफलतापूर्वक हटा दी गईं।",
+        "bulk_partial_error": "चयनित {totalCount} फ़ाइल(फ़ाइलों) में से {failedCount} को हटाने में विफल रहा।",
+        "all_failed_error": "चयनित फ़ाइलों को हटाने में विफल।",
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
       "move": {
@@ -1087,7 +1112,6 @@
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
-    "relative": "सापेक्ष",
     "relative start date": "सापेक्ष प्रारंभ तिथि",
     "absolute": "पूर्ण",
     "backfill": "Backfill",
@@ -1699,6 +1723,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "task_details": "Task विवरण",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",
@@ -1754,7 +1779,8 @@
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "charts": "चार्ट प्रकार चुनें",
         "where": "एक फ़िल्टर प्रकार चुनें",
-        "numerator": "एक अंश चुनें"
+        "numerator": "एक अंश चुनें",
+        "namespace_first": "पहले एक namespace चुनें"
       },
       "creation": {
         "default": "जोड़ें",
@@ -2207,7 +2233,6 @@
       "run_all_tasks": "सभी Tasks चलाएं",
       "history": "पिछले 10 रन",
       "clear_history": "इतिहास साफ़ करें",
-      "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
       "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
     },
     "submit": "प्रस्तुत करें",
@@ -2276,8 +2301,10 @@
     "bulk delete triggers": "क्या आप वाकई {count} triggers को हटाना चाहते हैं?",
     "bulk success delete triggers": "{count} triggers सफलतापूर्वक हटा दिए गए हैं",
     "delete trigger confirmation": "क्या आप वाकई trigger {id} को हटाना चाहते हैं? WARNING: यदि trigger अभी भी किसी flow में सक्रिय है, तो उसे हटाने से duplicate executions हो सकते हैं।",
+    "delete trigger still declared": "यह trigger अभी भी flow पर declared है। इसे flow से हटाएँ या Restart का उपयोग करें।",
     "delete trigger success": "ट्रिगर {id} को सफलतापूर्वक हटा दिया गया है",
     "delete trigger error": "ट्रिगर {id} को हटाने में त्रुटि",
+    "delete triggers orphans only": "केवल वही trigger state हटेगा जो अब flow पर declared नहीं है। flow पर अभी भी declared trigger बने रहेंगे।",
     "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",
     "delete revision confirm": "क्या आप वाकई संशोधन {revision} को हटाना चाहते हैं?",
     "delete revision error": "त्रुटि {error} के साथ संशोधन {revision} हटाने में त्रुटि",
@@ -2399,6 +2426,7 @@
         "label": "{count} त्रुटि(याँ)"
       }
     },
+    "invalid_source_code": "अमान्य स्रोत कोड",
     "source_search": {
       "cannot_select_read_only": "चयन नहीं किया जा सकता — आपके पास {namespace} / {id} पर संपादन की अनुमति नहीं है",
       "collapse_all": "सभी को संक्षिप्त करें",

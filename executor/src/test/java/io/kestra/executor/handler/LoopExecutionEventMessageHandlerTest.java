@@ -374,6 +374,45 @@ class LoopExecutionEventMessageHandlerTest {
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("FAILED", 1, "SKIPPED", 2));
     }
 
+    @Test
+    void shouldWaitForRunningIterationsWhenBreakWhenTriggers() throws InternalException {
+        // Given: 3 iterations, 2 running concurrently, breakWhen triggers on the first one
+        var logTask = Log.builder().id("log").type(Log.class.getName()).message("Hello").build();
+        var flow = flowRepository.create(GenericFlow.of(loopFlowWithBreakWhen(logTask, true, "{{ item.index == 0 }}")));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 2,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        // When: the first iteration succeeds and triggers the break while the second one is still running
+        var firstRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
+        var firstResult = handler.handle(new LoopExecutionEvent(firstRun, "sub-execution-0", State.Type.SUCCESS, null, null));
+
+        // Then: the loop is not terminated and the never-started iteration is skipped
+        assertThat(firstResult).isEmpty();
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.RUNNING_ITERATIONS_OUTPUT, 1)
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 1, "SKIPPED", 1));
+
+        // When: the running iteration fails
+        var secondRun = new LoopRun(execution, "loop", loopTaskRunId, 1, null, "b", null);
+        var secondResult = handler.handle(new LoopExecutionEvent(secondRun, "sub-execution-1", State.Type.FAILED, null, null));
+
+        // Then: the loop ends once, in FAILED, without evaluating breakWhen again
+        assertThat(secondResult).isPresent();
+        var taskRun = secondResult.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(taskOutputService.getOutputs(loopTaskRun))
+            .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 1, "SKIPPED", 1, "FAILED", 1));
+    }
+
     private Flow loopFlow() {
         return loopFlow(true);
     }

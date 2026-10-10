@@ -203,7 +203,7 @@ class YamlParserTest {
         assertThat(exception.getMessage()).startsWith("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable");
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString())
-            .isEqualTo("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]");
+            .isEqualTo("tasks[0].invalid");
     }
 
     @Test

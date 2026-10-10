@@ -153,7 +153,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -1195,7 +1194,7 @@ public class ExecutionController {
         // system.from value (scheduler/trigger/worker/…) would let a caller spoof the origin.
         Optional<Label> first = parsedLabels.stream()
             .filter(
-                label -> label.key().startsWith(SYSTEM_PREFIX)
+                label -> Label.isSystem(label.key())
                     && !label.key().equals(CORRELATION_ID)
                     && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value()))
             )
@@ -1337,7 +1336,7 @@ public class ExecutionController {
     }
 
     private URI nsFileToInternalStorageURI(URI path, Execution execution) throws IOException {
-        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace(), storageInterface);
+        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace());
         return namespace.get(Path.of(path.getPath())).uri();
     }
 
@@ -1377,12 +1376,17 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/restart")
-    @Operation(tags = { "Executions" }, summary = "Restart a new execution from an old one")
+    @Operation(
+        tags = { "Executions" }, summary = "Restart an execution",
+        description = "Restarts the execution from its failed task runs, on the revision it already ran on. Passing a revision creates a new execution instead, which is deprecated: use the replay action for that."
+    )
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be restarted")
     public Mono<HttpResponse<Execution>> restartExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision) throws Exception {
+        @Parameter(
+            description = "Deprecated, will be removed in 2.2: creates a new execution on this revision, use replay instead.", deprecated = true
+        ) @Nullable @QueryValue Integer revision) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         this.controlRevision(execution, revision);
 
@@ -1407,7 +1411,9 @@ public class ExecutionController {
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
-        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
+        @Parameter(
+            description = "Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.", deprecated = true
+        ) @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = getExecutionsByIds(executionsId, "be restarted");
 
         return restartExecutions(latestRevision, executions);
@@ -1424,7 +1430,9 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
 
-        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
+        @Parameter(
+            description = "Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.", deprecated = true
+        ) @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         var executions = getExecutions(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
         return restartExecutions(latestRevision, executions);
     }
@@ -1862,10 +1870,73 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/interrupt")
+    @Operation(tags = { "Executions" }, summary = "Interrupt a running task run")
+    @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "409", description = "if the task run cannot be interrupted")
+    @ApiResponse(responseCode = "404", description = "if the execution or the task run is not found")
+    public HttpResponse<Void> interruptTaskRun(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @RequestBody(description = "the taskRun id and the state to apply to it") @Valid @Body StateRequest stateRequest) throws QueueException {
+        if (State.Type.FAILED != stateRequest.state() && State.Type.CANCELLED != stateRequest.state()) {
+            throw new IllegalArgumentException(
+                "Cannot interrupt task run: only the FAILED and CANCELLED states are supported, but '%s' was requested.".formatted(stateRequest.state())
+            );
+        }
+
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        if (execution.getState().isTerminated()) {
+            throw new ConflictException("Cannot interrupt task run: execution '%s' is already terminated.".formatted(executionId));
+        }
+
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(stateRequest.taskRunId())
+            .orElseThrow(() -> new NoSuchElementException(
+                "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
+            ));
+
+        if (State.Type.RUNNING != taskRun.getState().getCurrent()) {
+            throw new ConflictException(
+                "Cannot interrupt task run '%s': the task run is not running, its current state is %s.".formatted(taskRun.getId(), taskRun.getState().getCurrent())
+            );
+        }
+
+        // Emitted in the EXECUTED state so it goes straight to the Workers: unlike a whole-execution kill, interrupting
+        // a task run needs no Executor-side bookkeeping, the resulting task run result drives the execution forward.
+        killQueue.emit(
+            ExecutionKilledTaskRuns
+                .builder()
+                .state(ExecutionKilled.State.EXECUTED)
+                .tenantId(tenantService.resolveTenant())
+                .executionId(execution.getId())
+                .taskRunIds(interruptedTaskRunIds(execution, taskRun))
+                .taskRunState(stateRequest.state())
+                .build()
+        );
+
+        eventPublisher.publishEvent(CrudEvent.of(execution, execution));
+
+        return HttpResponse.ok();
+    }
+
+    /**
+     * The task run to interrupt, plus every one of its descendants that has not terminated yet.
+     * Interrupting a flowable task run alone would leave the tasks it spawned running on the Workers.
+     */
+    private static List<String> interruptedTaskRunIds(Execution execution, TaskRun taskRun) {
+        return Stream.concat(
+                Stream.of(taskRun),
+                execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
+            )
+            .map(TaskRun::getId)
+            .toList();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
-    @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+    @ApiResponse(responseCode = "409", description = "if the execution is already finished and has no running task or sub-execution left to kill")
     @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public Mono<HttpResponse<?>> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -1884,9 +1955,8 @@ public class ExecutionController {
     }
 
     protected Mono<HttpResponse<?>> killExecution(Execution execution, Boolean isOnKillCascade) {
-        // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
-        if (execution.getState().isTerminated() && !isOnKillCascade) {
-            throw new ConflictException("Cannot kill execution: execution is already terminated.");
+        if (execution.getState().isTerminated() && !hasWorkToKill(execution, isOnKillCascade)) {
+            throw new ConflictException("Cannot kill execution: execution is already terminated and has no running task or sub-execution.");
         }
 
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
@@ -1904,6 +1974,12 @@ public class ExecutionController {
                     .build()
             )
         ).map(r -> (HttpResponse<?>) r);
+    }
+
+    private boolean hasWorkToKill(Execution execution, boolean isOnKillCascade) {
+        return flowMetaStore.findByExecutionForRuntime(execution)
+            .map(flow -> executionService.hasWorkToKill(flow, execution, isOnKillCascade))
+            .orElse(isOnKillCascade);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2421,8 +2497,8 @@ public class ExecutionController {
         // check for system labels: none can be passed at runtime
         // as all existing labels will be passed here, we compare existing system label with the new one and fail if they are different
 
-        List<Label> existingSystemLabels = ListUtils.emptyOnNull(execution.getLabels()).stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).toList();
-        Optional<Label> first = labels.stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).filter(label -> !existingSystemLabels.contains(label)).findAny();
+        List<Label> existingSystemLabels = ListUtils.emptyOnNull(execution.getLabels()).stream().filter(label -> Label.isSystem(label.key())).toList();
+        Optional<Label> first = labels.stream().filter(label -> Label.isSystem(label.key())).filter(label -> !existingSystemLabels.contains(label)).findAny();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }

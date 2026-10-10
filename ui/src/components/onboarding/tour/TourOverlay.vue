@@ -148,7 +148,7 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
-    import {useTopLayer} from "@kestra-io/design-system"
+    import {cssVar, useTopLayer} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
@@ -287,10 +287,23 @@
 
     const px = (value: number) => `${value}px`
 
-    const SCRIM_CORNER_RADIUS = 12
+    const parsePx = (value: string, fallback = 10): number => {
+        if (!value) return fallback
+        const num = parseFloat(value)
+        if (isNaN(num)) return fallback
+        if (value.endsWith("rem")) {
+            const rootFontSize = typeof window !== "undefined"
+                ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+                : 16
+            return num * rootFontSize
+        }
+        return num
+    }
+
+    const scrimCornerRadius = () => parsePx(cssVar("--ks-radius-lg"))
 
     const scrimClipPath = (hole: Hole) => {
-        const r = SCRIM_CORNER_RADIUS
+        const r = scrimCornerRadius()
         const w = hole.right - hole.left
         const h = hole.bottom - hole.top
         const cr = Math.min(r, w / 2, h / 2)

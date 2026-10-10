@@ -739,7 +739,7 @@ export function useKsEditor(
             }])
         }
         window.clearEditor = () => localEditor.value?.getModel()?.setValue("")
-        window .acceptSuggestion = () =>
+        window.acceptSuggestion = () =>
             localEditor.value?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {})
         window.nextSuggestion = () =>
             localEditor.value?.trigger("selectNextSuggestion", "selectNextSuggestion", {})

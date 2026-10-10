@@ -18,7 +18,11 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {SECTIONS, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {
+        SECTIONS,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Delete from "vue-material-design-icons/Delete.vue"

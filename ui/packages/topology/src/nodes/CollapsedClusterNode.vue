@@ -59,7 +59,11 @@
     import {computed} from "vue"
     import {Handle, Position} from "@vue-flow/core"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
-    import {KsTooltip, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
     import * as Utils from "../utils/utils"
     import LaneHeader, {type LaneTaskNode} from "./LaneHeader.vue"

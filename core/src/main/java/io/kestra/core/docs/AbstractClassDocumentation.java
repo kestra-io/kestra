@@ -76,6 +76,7 @@ public abstract class AbstractClassDocumentation<T> {
                 .map(
                     r -> new ExampleDoc(
                         (String) r.get("title"),
+                        (String) r.get("lang"),
                         String.join(
                             "\n", ArrayUtils.addAll(
                                 ((Boolean) r.get("full") ? new ArrayList<String>()
@@ -159,6 +160,7 @@ public abstract class AbstractClassDocumentation<T> {
     @Getter
     public static class ExampleDoc {
         String title;
+        String lang;
         String task;
     }
 }

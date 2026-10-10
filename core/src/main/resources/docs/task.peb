@@ -114,8 +114,8 @@ type: "{{ cls }}"
     {%- for entry in docMetrics %}
 ### `{{ entry.name }}`
 * **Type:** =={{ entry.type }}== {% if entry.unit %} ({{ entry.unit }}) {% endif %}
-{%- if data.description %}
-{{ data.description }}
+{%- if entry.description %}
+{{ entry.description }}
 {%- endif %}
 
     {%- endfor -%}

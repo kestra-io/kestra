@@ -107,7 +107,7 @@ class UiIndexServiceTest {
         assertThat(html).contains("KESTRA_GOOGLE_ANALYTICS = 'GA-123';");
         assertThat(html).contains("<title>My Kestra</title>");
         assertThat(html).contains("<meta name=\"custom\" content=\"here\">");
-        assertThat(html).doesNotContain("<meta name=\"htmlHead\" content=\"replace\">");
+        assertThat(html).doesNotContain("<meta name=\"html-head\" content=\"replace\">");
     }
 
     @Test

@@ -14,7 +14,7 @@ public record MavenPluginRepositoryConfig(
     @Nullable BasicAuth basicAuth) {
 
     @Builder
-    @ConfigurationProperties("basicAuth")
+    @ConfigurationProperties("basic-auth")
     public record BasicAuth(
         String username,
         String password) {

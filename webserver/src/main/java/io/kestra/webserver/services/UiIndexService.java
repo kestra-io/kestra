@@ -160,7 +160,7 @@ public class UiIndexService {
             line = line.replaceFirst("<title>(.*)</title>", "<title>" + webserverConfiguration.htmlTitle() + "</title>");
         }
 
-        line = line.replace("<meta name=\"htmlHead\" content=\"replace\">", webserverConfiguration.htmlHead() == null ? "" : webserverConfiguration.htmlHead());
+        line = line.replace("<meta name=\"html-head\" content=\"replace\">", webserverConfiguration.htmlHead() == null ? "" : webserverConfiguration.htmlHead());
 
         return line;
     }

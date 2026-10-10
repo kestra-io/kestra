@@ -11,6 +11,7 @@ function createTestRouter(): Router {
         history: createMemoryHistory(),
         routes: [
             {name: "home", path: "/:tenant?/dashboards/:dashboard?", component: {template: "<div/>"}},
+            {name: "flows/update/executions", path: "/:tenant?/flows/edit/:namespace/:id/executions", component: {template: "<div/>"}},
         ],
     })
 }
@@ -132,5 +133,47 @@ describe("useRestoreUrl", () => {
         expect(result.query).toEqual({})
         expect(result.change).toBe(false)
         expect(result.localStorageValue).toEqual({})
+    })
+
+    it("does not restore another flow's saved query on a different flow's executions tab", async () => {
+        const router = createTestRouter()
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowA"}})
+        const flowA = mountRestoreUrl(router)
+        window.sessionStorage.setItem(flowA.vm.localStorageName as unknown as string, JSON.stringify(SAVED_QUERY))
+        flowA.unmount()
+
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowB"}})
+        wrapper = mountRestoreUrl(router)
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual({})
+    })
+
+    it("restores a flow's own saved query on its executions tab", async () => {
+        const router = createTestRouter()
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowA"}})
+        window.sessionStorage.setItem("flows_update/executions_company.team_flowA_main_restore_url", JSON.stringify(SAVED_QUERY))
+
+        wrapper = mountRestoreUrl(router)
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual(SAVED_QUERY)
+    })
+
+    it("keeps the saved query when the page cancels the restore with its own default filter", async () => {
+        const router = createTestRouter()
+        const key = "flows_update/executions_company.team_flowA_main_restore_url"
+        await router.push({name: "flows/update/executions", params: {tenant: "main", namespace: "company.team", id: "flowA"}})
+        window.sessionStorage.setItem(key, JSON.stringify(SAVED_QUERY))
+
+        wrapper = mountRestoreUrl(router)
+
+        // Mimics Executions.vue replacing its own URL with a default time range right
+        // after mount: a same-path navigation, so it also fires the save watcher.
+        await router.replace({query: {"filters[state][IN]": "FAILED"}})
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual({...SAVED_QUERY, "filters[state][IN]": "FAILED"})
+        expect(JSON.parse(window.sessionStorage.getItem(key) as string)).toMatchObject(SAVED_QUERY)
     })
 })

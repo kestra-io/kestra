@@ -20,6 +20,7 @@ test("long webhook details scroll without moving the trigger on hover", async ({
             // Give overlay-scrollbar platforms the same width-changing scrollbars as Windows.
             await page.addStyleTag({content: "::-webkit-scrollbar { width: 15px; height: 15px; }"})
             const row = page.getByRole("row").filter({has: page.locator(`a[href$="/${execution.id}"]`)})
+            await expect(row.getByText("Success", {exact: true})).toBeVisible()
             const icon = row.getByRole("img", {name: "io.kestra.plugin.core.trigger.Webhook", exact: true})
             await expect(icon).toBeVisible()
             await icon.scrollIntoViewIfNeeded()

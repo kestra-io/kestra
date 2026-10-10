@@ -86,6 +86,19 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
 
+  security-scan:
+    name: Security scan
+    uses: kestra-io/actions/.github/workflows/security-scan.yml@main
+    with:
+      components: |
+        frontend=ui/**
+        backend=**
+      npm-lockfile: ui/package-lock.json
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
   publish-develop-docker:
     name: Publish Docker
     needs: [backend-tests, frontend-tests, design-system-frontend-tests]
@@ -168,7 +181,7 @@ jobs:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, backend-tests, frontend-tests, design-system-frontend-tests, publish-develop-docker, publish-develop-maven, generate-configuration-schema, end ]
+    needs: [ trigger-ee, backend-tests, frontend-tests, design-system-frontend-tests, security-scan, publish-develop-docker, publish-develop-maven, generate-configuration-schema, end ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:

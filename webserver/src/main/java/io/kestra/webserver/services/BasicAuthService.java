@@ -36,7 +36,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class BasicAuthService {
     public static final String BASIC_AUTH_SETTINGS_KEY = "kestra.server.basic-auth";
@@ -382,7 +382,7 @@ public class BasicAuthService {
     @Getter
     @NoArgsConstructor
     @EqualsAndHashCode
-    @ConfigurationProperties("kestra.server.basic-auth")
+    @ConfigurationProperties("kestra.server.basicAuth")
     @VisibleForTesting
     public static class BasicAuthConfiguration {
         private String username;

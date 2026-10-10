@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a route that {@link io.kestra.webserver.filter.AuthenticationFilter} may serve without
- * credentials, and only when its path is also listed in {@code kestra.server.basic-auth.open-urls}.
+ * credentials, and only when its path is also listed in {@code kestra.server.basicAuth.openUrls}.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

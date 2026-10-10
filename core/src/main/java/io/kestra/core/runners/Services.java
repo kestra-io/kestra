@@ -23,7 +23,7 @@ public class Services {
 
     Services(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
-        this.isWorker = applicationContext.getProperty("kestra.server-type", String.class).map(p -> p.equals(ServerType.WORKER.name())).orElse(false);
+        this.isWorker = applicationContext.getProperty("kestra.serverType", String.class).map(p -> p.equals(ServerType.WORKER.name())).orElse(false);
     }
 
     /**

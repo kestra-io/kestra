@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Requires(property = "kestra." + UsageReportConfig.ANONYMOUS_USAGE_REPORT + ".enabled", value = "true")
-@Requires(property = "kestra.server-type")
+@Requires(property = "kestra.serverType")
 @Slf4j
 public class ReportableScheduler {
 
@@ -26,7 +26,7 @@ public class ReportableScheduler {
         this.clock = Clock.systemDefaultZone();
     }
 
-    @Scheduled(fixedDelay = "5m", initialDelay = "${kestra.anonymous-usage-report.initial-delay:5m}")
+    @Scheduled(fixedDelay = "5m", initialDelay = "${kestra.anonymousUsageReport.initialDelay:5m}")
     public void tick() {
         Instant now = clock.instant();
         for (Reportable<?> r : registry.getAll()) {

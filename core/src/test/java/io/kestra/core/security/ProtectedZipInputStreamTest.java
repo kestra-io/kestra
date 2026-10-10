@@ -90,7 +90,7 @@ class ProtectedZipInputStreamTest {
         })
             .isInstanceOf(ZipBombDetectedException.class)
             .hasMessageContaining("more than 2 entries")
-            .hasMessageContaining("kestra.security.zip-bomb-protection.max-number-of-entries");
+            .hasMessageContaining("kestra.security.zipBombProtection.maxNumberOfEntries");
     }
 
     @Test
@@ -109,7 +109,7 @@ class ProtectedZipInputStreamTest {
         })
             .isInstanceOf(ZipBombDetectedException.class)
             .hasMessageContaining("exceeds 10 bytes")
-            .hasMessageContaining("kestra.security.zip-bomb-protection.max-entry-size");
+            .hasMessageContaining("kestra.security.zipBombProtection.maxEntrySize");
     }
 
     @Test

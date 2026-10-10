@@ -30,7 +30,7 @@ class ServicesTest {
     }
 
     @Test
-    @Property(name = "kestra.server-type", value = "WORKER")
+    @Property(name = "kestra.serverType", value = "WORKER")
     void shouldThrowForAdditionalServicesInTheWorker() {
         var services = new Services(applicationContext);
 

@@ -17,13 +17,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * are the exception: metrics must run wherever they are scraped, and Scheduler- or Worker-specific
  * housekeeping belongs to those components.
  *
- * <p>The default value keeps such jobs enabled when {@code kestra.server-type} is not set, as in
+ * <p>The default value keeps such jobs enabled when {@code kestra.serverType} is not set, as in
  * tests and {@code runLocal}.
  *
  * @see io.kestra.core.models.ServerType
  */
 @Documented
-@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)", defaultValue = "STANDALONE")
+@Requires(property = "kestra.serverType", pattern = "(EXECUTOR|STANDALONE)", defaultValue = "STANDALONE")
 @Retention(RUNTIME)
 @Target({ElementType.PACKAGE, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 public @interface RequiresExecutor {

@@ -20,9 +20,9 @@ class WorkerControllersConfigurationTest {
             "kestra.worker.controllers.static.endpoints[0].port", "9096",
             "kestra.worker.controllers.static.endpoints[1].host", "controller-2.example.com",
             "kestra.worker.controllers.static.endpoints[1].port", "9097",
-            "kestra.worker.controllers.load-balancing.policy", "ROUND_ROBIN",
-            "kestra.worker.controllers.health-check.enabled", "true",
-            "kestra.worker.controllers.health-check.interval", "10s"
+            "kestra.worker.controllers.loadBalancing.policy", "ROUND_ROBIN",
+            "kestra.worker.controllers.healthCheck.enabled", "true",
+            "kestra.worker.controllers.healthCheck.interval", "10s"
         );
 
         try (ApplicationContext context = ApplicationContext.run(PropertySource.of("test", properties))) {
@@ -45,8 +45,8 @@ class WorkerControllersConfigurationTest {
         Map<String, Object> properties = Map.of(
             "kestra.worker.controllers.type", "DNS",
             "kestra.worker.controllers.dns.hostname", "controllers.internal.company.com",
-            "kestra.worker.controllers.dns.default-port", "9096",
-            "kestra.worker.controllers.dns.refresh-interval", "60s"
+            "kestra.worker.controllers.dns.defaultPort", "9096",
+            "kestra.worker.controllers.dns.refreshInterval", "60s"
         );
 
         try (ApplicationContext context = ApplicationContext.run(PropertySource.of("test", properties))) {
@@ -86,7 +86,7 @@ class WorkerControllersConfigurationTest {
         Map<String, Object> properties = Map.of(
             "kestra.worker.controllers.type", "STATIC",
             "kestra.worker.controllers.static.endpoints[0].host", "localhost",
-            "kestra.worker.controllers.load-balancing.policy", "PICK_FIRST"
+            "kestra.worker.controllers.loadBalancing.policy", "PICK_FIRST"
         );
 
         try (ApplicationContext context = ApplicationContext.run(PropertySource.of("test", properties))) {
@@ -101,7 +101,7 @@ class WorkerControllersConfigurationTest {
         Map<String, Object> properties = Map.of(
             "kestra.worker.controllers.type", "STATIC",
             "kestra.worker.controllers.static.endpoints[0].host", "localhost",
-            "kestra.worker.controllers.health-check.enabled", "false"
+            "kestra.worker.controllers.healthCheck.enabled", "false"
         );
 
         try (ApplicationContext context = ApplicationContext.run(PropertySource.of("test", properties))) {

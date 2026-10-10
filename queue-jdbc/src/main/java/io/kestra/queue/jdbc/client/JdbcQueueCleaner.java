@@ -51,7 +51,7 @@ public class JdbcQueueCleaner {
         this.queueTable = DSL.table(jdbcTableConfig.table());
     }
 
-    @Scheduled(initialDelay = "${kestra.jdbc.queue.cleaner.initial-delay:1h}", fixedDelay = "${kestra.jdbc.queue.cleaner.fixed-delay:1h}")
+    @Scheduled(initialDelay = "${kestra.jdbc.queue.cleaner.initialDelay:1h}", fixedDelay = "${kestra.jdbc.queue.cleaner.fixedDelay:1h}")
     public long deleteQueue() {
         LongAdder totalDeleted = new LongAdder();
         broadcastQueues.forEach(queue -> dslContextWrapper.transaction(configuration ->

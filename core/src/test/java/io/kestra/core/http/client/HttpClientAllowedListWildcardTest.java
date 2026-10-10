@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-@Property(name = "kestra.tasks.http.allowed-list", value = "http://*.localhost")
+@Property(name = "kestra.tasks.http.allowedList", value = "http://*.localhost")
 class HttpClientAllowedListWildcardTest {
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -45,7 +45,7 @@ class HttpClientAllowedListWildcardTest {
                 HttpRequest.of(URI.create("http://localhost/")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://localhost/ is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://localhost/ is not in the configured allowed list (kestra.tasks.http.allowedList).");
         }
     }
 }

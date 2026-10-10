@@ -49,7 +49,7 @@ Auto-download is therefore **on by default only for OSS + local-filesystem stora
 everywhere else. The computed default is `edition == OSS && storage.type == local` — the storage
 type is the discriminating signal because `server local` extends the standalone command and always
 reports `ServerType.STANDALONE`, so the server type alone cannot tell a local dev instance from a
-generic standalone deployment on S3/GCS. An explicit `kestra.plugins.auto-install.enabled` always
+generic standalone deployment on S3/GCS. An explicit `kestra.plugins.autoInstall.enabled` always
 overrides it (so an operator can still opt in elsewhere), and `server local` also sets it to `true`
 explicitly in its property overrides. These are deliberately **out of scope** and stay off by
 default:
@@ -194,7 +194,7 @@ Maven mirror — all three already exist in the sibling `docker` job of
 The bundle is **not** published anywhere. `main-build.yml` / `pre-release.yml` upload only
 `oss.json` (the instance-configuration schema) to GCS; the earlier step that also pushed
 `plugins-schema.json` there was removed once the jar carried it, and
-`kestra.plugins.schema-bundle-url-template` ships with no default as a result. A `develop` or
+`kestra.plugins.schemaBundleUrlTemplate` ships with no default as a result. A `develop` or
 `-SNAPSHOT` build has no embedded bundle and no URL to fall back to, so catalog completion is simply
 inactive there — as it effectively already was, since dev bundles were published under a `develop/`
 prefix the stable-version URL never matched.
@@ -204,12 +204,12 @@ prefix the stable-version URL never matched.
 `PluginSchemaBundleService` resolves a single bundle source once, at construction, in priority
 order (`resolveBundleSource`):
 
-1. `kestra.plugins.schema-bundle-path` — an explicit local file. Highest priority so a developer
+1. `kestra.plugins.schemaBundlePath` — an explicit local file. Highest priority so a developer
    (or `plugin-devtools`' `kestra-core-run`, which wires it as a `-D`) can point at a full-catalog
    bundle and always win over the JAR-bundled default.
 2. the `/plugins-schema.json` classpath resource — the bundle embedded in the JAR by release CI.
    No network access, so completion works offline / air-gapped out of the box.
-3. `kestra.plugins.schema-bundle-url-template` (`{version}` → current stable version) — a remote
+3. `kestra.plugins.schemaBundleUrlTemplate` (`{version}` → current stable version) — a remote
    bundle you host yourself. No default: nothing is published for Kestra to fetch, so this is purely
    an escape hatch for custom builds that ship no embedded bundle.
 
@@ -224,7 +224,7 @@ This is pure JSON — **no plugin JAR is ever downloaded here.**
 > relies on the live plugin catalog and the Maven repositories, so it works identically on a
 > source build. To get catalog completion on such a build, generate a bundle
 > (`kestra plugins-schema --plugins <catalog-dir> -o bundle.json`) and point
-> `kestra.plugins.schema-bundle-path` at it — `plugin-devtools`' `kestra-core-run` does exactly
+> `kestra.plugins.schemaBundlePath` at it — `plugin-devtools`' `kestra-core-run` does exactly
 > that.
 
 ### (c) Serve — merge on the fly
@@ -330,7 +330,7 @@ When a flow referencing an uninstalled plugin is saved, `PluginAutoInstallServic
 
 On by default **only for OSS + local-filesystem storage** (`edition == OSS && storage.type == local`),
 off everywhere else — a standalone deployment on S3/GCS stays inert. Setting
-`kestra.plugins.auto-install.enabled` explicitly (`true`/`false`) always wins over that computed
+`kestra.plugins.autoInstall.enabled` explicitly (`true`/`false`) always wins over that computed
 default, and `server local` sets it to `true` explicitly. Resolved once in
 `PluginAutoInstallService` from `EditionProvider` and the `kestra.storage.type` property.
 
@@ -354,7 +354,7 @@ bytes.
 
 1. Ask the `PluginRegistry` for a registered renderer supporting the extension.
 2. On a miss, `PluginAutoInstallService.installRendererForExtension()` installs the artifact the
-   bundle declares for that extension — same gating (`auto-install.enabled`), same catalog allowlist,
+   bundle declares for that extension — same gating (`autoInstall.enabled`), same catalog allowlist,
    same bounded wait as the save path — and resolution is retried.
 3. Still nothing: `TextFileRenderer` as before, so behaviour never regresses for an unknown format.
 
@@ -385,13 +385,13 @@ cannot be fetched on demand — there is no way to know what it renders.
 
 | Property | Default | Effect |
 |----------|---------|--------|
-| `kestra.plugins.schema-bundle-path` | unset | Explicit local-file bundle, highest priority — wins over the JAR-embedded resource and the URL template. Used by `plugin-devtools` to inject a full-catalog dev bundle. |
-| `kestra.plugins.schema-bundle-url-template` | empty | URL of a self-hosted bundle (`{version}` placeholder, resolved to the stripped stable version, e.g. `1.2.3`). Lowest priority, and empty by default because the bundle ships in the jar — set it only for a custom build that has no embedded bundle. |
-| `kestra.plugins.auto-install.enabled` | unset → `true` on OSS+local storage, else `false` | Auto-download missing plugins on save. Unset → computed default (`edition == OSS && storage.type == local`); an explicit value always wins. `server local` sets it to `true` explicitly. |
-| `kestra.plugins.auto-install.install-timeout` | `PT2M` | Bounded wait for the boot-time and first-sync-migration installs. |
-| `kestra.plugins.auto-install.save-timeout` | `PT30S` | Bounded wait for the synchronous save-path install hook — shorter so a bulk import never serializes minutes per flow behind the install pool. |
+| `kestra.plugins.schemaBundlePath` | unset | Explicit local-file bundle, highest priority — wins over the JAR-embedded resource and the URL template. Used by `plugin-devtools` to inject a full-catalog dev bundle. |
+| `kestra.plugins.schemaBundleUrlTemplate` | empty | URL of a self-hosted bundle (`{version}` placeholder, resolved to the stripped stable version, e.g. `1.2.3`). Lowest priority, and empty by default because the bundle ships in the jar — set it only for a custom build that has no embedded bundle. |
+| `kestra.plugins.autoInstall.enabled` | unset → `true` on OSS+local storage, else `false` | Auto-download missing plugins on save. Unset → computed default (`edition == OSS && storage.type == local`); an explicit value always wins. `server local` sets it to `true` explicitly. |
+| `kestra.plugins.autoInstall.installTimeout` | `PT2M` | Bounded wait for the boot-time and first-sync-migration installs. |
+| `kestra.plugins.autoInstall.saveTimeout` | `PT30S` | Bounded wait for the synchronous save-path install hook — shorter so a bulk import never serializes minutes per flow behind the install pool. |
 
-> **No instance phones home for the bundle.** It is read from the jar's own classpath, so an air-gapped or offline deployment gets catalog completion with no egress and nothing to configure. Both remaining sources are opt-in and empty by default: an explicit local file (`schema-bundle-path`) or a self-hosted URL (`schema-bundle-url-template`). Downloading the plugin **JARs** on save is a separate, gated concern — see `kestra.plugins.auto-install.enabled` and the table below.
+> **No instance phones home for the bundle.** It is read from the jar's own classpath, so an air-gapped or offline deployment gets catalog completion with no egress and nothing to configure. Both remaining sources are opt-in and empty by default: an explicit local file (`schemaBundlePath`) or a self-hosted URL (`schemaBundleUrlTemplate`). Downloading the plugin **JARs** on save is a separate, gated concern — see `kestra.plugins.autoInstall.enabled` and the table below.
 
 ## Who downloads what
 

@@ -34,7 +34,7 @@ public abstract class WorkerAccessFromControllerCondition implements Condition {
 
     @SuppressWarnings("unchecked")
     private static ServerType serverType(ConditionContext context) {
-        return ((Optional<String>) context.get("kestra.server-type", String.class))
+        return ((Optional<String>) context.get("kestra.serverType", String.class))
             .map(value -> Enums.getForNameIgnoreCase(value, ServerType.class))
             .orElse(ServerType.STANDALONE);
     }

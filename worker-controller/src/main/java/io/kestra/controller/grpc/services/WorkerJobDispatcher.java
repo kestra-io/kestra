@@ -1067,7 +1067,7 @@ public class WorkerJobDispatcher {
 
     private static String oversizedPayloadMessage(String jobKind, String workerId, int payloadSize, int workerLimit) {
         return ("Cannot dispatch this %s to worker '%s': its serialized payload is %d bytes and exceeds the maximum inbound gRPC message size of %d bytes configured on that worker. "
-            + "Increase 'kestra.grpc.max-inbound-message-size' on the workers and on the worker controller, or reduce the amount of data it carries such as large inputs, variables or outputs.")
+            + "Increase 'kestra.grpc.maxInboundMessageSize' on the workers and on the worker controller, or reduce the amount of data it carries such as large inputs, variables or outputs.")
             .formatted(jobKind, workerId, payloadSize, workerLimit);
     }
 

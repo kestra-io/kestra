@@ -24,7 +24,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
-@Property(name = "kestra.server-type", value = "STANDALONE")
+@Property(name = "kestra.serverType", value = "STANDALONE")
 @Execution(ExecutionMode.SAME_THREAD)
 class ErrorLogsFunctionTest {
     @Inject

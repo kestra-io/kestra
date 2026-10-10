@@ -25,7 +25,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Requires(property = "kestra.kv.purge-expired.enabled", value = "true", defaultValue = "true")
+@Requires(property = "kestra.kv.purgeExpired.enabled", value = "true", defaultValue = "true")
 @RequiresExecutor
 @Singleton
 public class KVPurgeCleaner {
@@ -42,7 +42,7 @@ public class KVPurgeCleaner {
     @Inject
     private KVPurgeConfiguration kvPurgeConfiguration;
 
-    @Scheduled(initialDelay = "${kestra.kv.purge-expired.initial-delay:PT1H}", fixedDelay = "${kestra.kv.purge-expired.fixed-delay:PT1H}")
+    @Scheduled(initialDelay = "${kestra.kv.purgeExpired.initialDelay:PT1H}", fixedDelay = "${kestra.kv.purgeExpired.fixedDelay:PT1H}")
     public void purgeExpired() {
         log.info("Start cleaning expired KV store entries");
         List<String> tenants = findTenants();

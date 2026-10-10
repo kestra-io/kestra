@@ -34,11 +34,11 @@ class BasicAuthInterceptorActivationTest {
 
     private static ApplicationContext run(boolean enabled) {
         Map<String, Object> properties = new HashMap<>();
-        properties.put("kestra.server-type", "STANDALONE");
-        properties.put("kestra.grpc.basic-auth.enabled", String.valueOf(enabled));
+        properties.put("kestra.serverType", "STANDALONE");
+        properties.put("kestra.grpc.basicAuth.enabled", String.valueOf(enabled));
         if (enabled) {
-            properties.put("kestra.grpc.basic-auth.username", "worker");
-            properties.put("kestra.grpc.basic-auth.password", "Passw0rd");
+            properties.put("kestra.grpc.basicAuth.username", "worker");
+            properties.put("kestra.grpc.basicAuth.password", "Passw0rd");
         }
         return ApplicationContext.run(PropertySource.of("test", properties));
     }

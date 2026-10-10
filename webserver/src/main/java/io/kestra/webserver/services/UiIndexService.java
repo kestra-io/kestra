@@ -86,7 +86,7 @@ public class UiIndexService {
             // all share one stable token. Generate only when the cookie is absent or holds a
             // token this instance cannot validate: a cookie left behind by another Kestra
             // instance on the same host (an OSS deployment replaced by EE, a rotated
-            // kestra.encryption.secret-key) is signed with a key this instance rejects, and
+            // kestra.encryption.secretKey) is signed with a key this instance rejects, and
             // echoing it into the page would make every cookie-authenticated write fail CSRF
             // validation until the browser's cookies are cleared.
             String csrfToken = request.getCookies()

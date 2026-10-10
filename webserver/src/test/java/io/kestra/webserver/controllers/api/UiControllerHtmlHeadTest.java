@@ -17,7 +17,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
-@Property(name = "kestra.webserver.html-head", value = UiControllerHtmlHeadTest.NON_ASCII_HTML_HEAD)
+@Property(name = "kestra.webserver.htmlHead", value = UiControllerHtmlHeadTest.NON_ASCII_HTML_HEAD)
 class UiControllerHtmlHeadTest {
     // Contains characters whose UTF-8 byte length differs from the character count.
     static final String NON_ASCII_HTML_HEAD = "<meta name=\"description\" content=\"héllo wörld — 日本語\">";

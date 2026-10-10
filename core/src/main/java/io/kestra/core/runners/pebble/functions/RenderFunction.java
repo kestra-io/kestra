@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
+@Requires(property = "kestra.variables.recursiveRendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
 public class RenderFunction implements KestraFunction, RenderingFunctionInterface {
     public static final String NAME = "render";
 

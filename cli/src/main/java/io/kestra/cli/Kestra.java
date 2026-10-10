@@ -61,10 +61,10 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
      */
     private static final String MICRONAUT_JDBC_PACKAGE = "io.micronaut.configuration.jdbc.";
 
-    private static final String SERVER_TYPE_PROPERTY = "kestra.server-type";
+    private static final String SERVER_TYPE_PROPERTY = "kestra.serverType";
 
     /**
-     * A Kestra bean that exists only for a declared {@code kestra.server-type}: a server facet, a
+     * A Kestra bean that exists only for a declared {@code kestra.serverType}: a server facet, a
      * liveness service, a repository, the migration trigger.
      *
      * <p>
@@ -288,11 +288,11 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
 
     /**
      * The server type is read from the resolved command properties rather than from the command
-     * class, so any command forcing {@code kestra.server-type} to {@code WORKER} — including the EE
+     * class, so any command forcing {@code kestra.serverType} to {@code WORKER} — including the EE
      * ones — gets the worker context.
      */
     private static boolean isWorkerServerType(Map<String, Object> properties) {
-        return Optional.ofNullable(properties.get("kestra.server-type"))
+        return Optional.ofNullable(properties.get("kestra.serverType"))
             .map(String::valueOf)
             .filter(ServerType.WORKER.name()::equalsIgnoreCase)
             .isPresent();
@@ -369,8 +369,8 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
      *
      * <p>
      * A worker owns no repository and reaches the rest of the cluster over gRPC, but Micronaut turns
-     * every {@code datasources.<name>} entry into an eagerly-initialized, fail-fast Hikari pool
-     * regardless of {@code kestra.server-type}. Deployments commonly share one configuration across
+     * every {@code datasources.<name>} entry into an eagerly-initialized, failFast Hikari pool
+     * regardless of {@code kestra.serverType}. Deployments commonly share one configuration across
      * all server types, so a worker with no route to the database — the normal case for a remote
      * worker — died at startup on a datasource it never uses.
      *
@@ -399,7 +399,7 @@ public class Kestra implements Callable<Integer>, NoDatabaseCommandInterface {
      * <p>
      * Both are needed. The datasource beans are dropped for the reason given on
      * {@link #workerApplicationContextBuilder()}. The server beans are dropped because a configuration
-     * shared across server types commonly declares {@code kestra.server-type}, and everything gated
+     * shared across server types commonly declares {@code kestra.serverType}, and everything gated
      * on it then registers for a command that is not a server — the liveness coordinator, the MCP
      * change notifier, the migration trigger — and fails on the datasource that is no longer there.
      *

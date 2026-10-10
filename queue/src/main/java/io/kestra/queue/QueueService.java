@@ -96,7 +96,7 @@ public class QueueService {
                     throw new MessageTooBigException(
                         "[" + cls.getSimpleName() + "] message of size " + serialize.length + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit()
                             + ".\n" +
-                            " Please consider increasing the limit using 'kestra.queue.message-protection.limit'. Even if not recommended, you can also disable message protection by setting 'kestra.queue.message-protection.enabled=false'.\n"
+                            " Please consider increasing the limit using 'kestra.queue.messageProtection.limit'. Even if not recommended, you can also disable message protection by setting 'kestra.queue.messageProtection.enabled=false'.\n"
                             +
                             " For worker task result messages, consider storing outputs inside the internal storage by setting 'kestra.task.outputs.limit'."
                     );
@@ -118,7 +118,7 @@ public class QueueService {
     }
 
     /**
-     * @return true if the fail-fast mode is enabled (true by default)
+     * @return true if the failFast mode is enabled (true by default)
      */
     public boolean failFast() {
         return Boolean.TRUE.equals(queueConfiguration.getFailFast());

@@ -59,7 +59,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @KestraTest
-@Property(name = "kestra.ai.agent.model-call-timeout", value = "PT1S")
+@Property(name = "kestra.ai.agent.modelCallTimeout", value = "PT1S")
 class AgentOrchestratorTest {
     private static final String TENANT = TenantService.MAIN_TENANT;
 

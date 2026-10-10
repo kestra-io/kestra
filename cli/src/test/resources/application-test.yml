@@ -6,7 +6,7 @@ kestra:
   storage:
     type: local
     local:
-      base-path: /tmp/unittest
+      basePath: /tmp/unittest
   plugins:
     path: /tmp/plugins
     repositories:
@@ -17,7 +17,7 @@ kestra:
   server:
     liveness:
       enabled: false
-    termination-grace-period: 5s
+    terminationGracePeriod: 5s
   grpc:
     maxRetryAttempts: 1
     shutdownTimeout: 3s

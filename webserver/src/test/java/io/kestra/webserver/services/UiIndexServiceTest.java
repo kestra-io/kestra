@@ -112,7 +112,7 @@ class UiIndexServiceTest {
 
     @Test
     void shouldUseUtf8ByteLengthForContentLengthWhenHtmlHeadContainsNonAscii() {
-        // Given - a html-head whose UTF-8 byte length differs from its character count
+        // Given - a htmlHead whose UTF-8 byte length differs from its character count
         String htmlHead = "<meta name=\"description\" content=\"héllo wörld — 日本語\">";
         UiIndexService service = service(null, new WebserverConfiguration(null, null, htmlHead));
 

@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Singleton
 @Replaces(ServerEventSender.class)
-@Requires(property = "kestra.server-type", value = "WORKER")
+@Requires(property = "kestra.serverType", value = "WORKER")
 @Slf4j
 public class GrpcServerEventSender extends ServerEventSender {
 

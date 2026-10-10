@@ -65,8 +65,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * Supports three service discovery strategies:
  * <ul>
- * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
- * <li>DNS: DNS A-record resolution with gRPC load-balancing</li>
+ * <li>STATIC: Explicit list of controller endpoints with gRPC loadBalancing</li>
+ * <li>DNS: DNS A-record resolution with gRPC loadBalancing</li>
  * <li>STORAGE: Dynamic discovery via Kestra internal storage (controllers self-register)</li>
  * </ul>
  * <p>
@@ -85,7 +85,7 @@ public class GrpcChannelManager {
 
     /**
      * The one status on which replaying a call is unambiguously safe: the controller went away — recycled by
-     * {@code kestra.controller.max-connection-age}, restarting, or unreachable — so the call can be retried
+     * {@code kestra.controller.maxConnectionAge}, restarting, or unreachable — so the call can be retried
      * against another replica. Deliberately excludes {@code DEADLINE_EXCEEDED} (the deadline has already
      * elapsed, so a replay cannot help) and {@code RESOURCE_EXHAUSTED} (a replay amplifies the load that
      * caused it). {@code GrpcWorkerIOSender.isRetryable} does accept {@code DEADLINE_EXCEEDED} because
@@ -114,7 +114,7 @@ public class GrpcChannelManager {
      * <li>{@code sendReport} — best-effort telemetry whose failures are already swallowed at debug level.</li>
      * <li>{@code KVMetadataService.save} / {@code deleteByName}, {@code NamespaceFileMetadataService.save} —
      * mutations.</li>
-     * <li>{@code connect} — already guarded by wait-for-ready and a per-call deadline; a replay risks a
+     * <li>{@code connect} — already guarded by waitForReady and a per-call deadline; a replay risks a
      * duplicate registration.</li>
      * <li>{@code streamWorkerJobs} — a bidi stream, where gRPC retry only applies before the first response;
      * {@code WorkerJobFetcher} owns the reconnect loop instead.</li>
@@ -165,7 +165,7 @@ public class GrpcChannelManager {
      * @param storageInterface the internal storage used for STORAGE discovery. May be {@code null}
      *        when Kestra is started without storage (only STATIC/DNS are then usable).
      * @param basicAuthClientInterceptor presents the basic authentication credentials on every call.
-     *        {@code null} when {@code kestra.grpc.basic-auth.enabled} is false.
+     *        {@code null} when {@code kestra.grpc.basicAuth.enabled} is false.
      */
     @Inject
     public GrpcChannelManager(
@@ -441,7 +441,7 @@ public class GrpcChannelManager {
         }
         if (retry.maxAttempts() < MIN_RETRY_ATTEMPTS) {
             log.warn(
-                "gRPC retries are disabled because kestra.grpc.channel.retry.max-attempts is {}, below the minimum of {} required for a retry policy. Set it to {} or more to retry replay-safe RPCs.",
+                "gRPC retries are disabled because kestra.grpc.channel.retry.maxAttempts is {}, below the minimum of {} required for a retry policy. Set it to {} or more to retry replay-safe RPCs.",
                 retry.maxAttempts(), MIN_RETRY_ATTEMPTS, MIN_RETRY_ATTEMPTS
             );
             return false;

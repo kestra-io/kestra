@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @KestraTest
-@Property(name = "kestra.tasks.http.denied-list", value = "127.0.0.0/8,::1/128")
+@Property(name = "kestra.tasks.http.deniedList", value = "127.0.0.0/8,::1/128")
 class HttpClientDeniedAddressTest {
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -40,7 +40,7 @@ class HttpClientDeniedAddressTest {
             ));
             assertThat(exception.getMessage())
                 .startsWith("The host 'localhost' resolves to the address '")
-                .endsWith("', which is in the configured denied list (kestra.tasks.http.denied-list).");
+                .endsWith("', which is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 
@@ -74,7 +74,7 @@ class HttpClientDeniedAddressTest {
                 HttpRequest.of(URI.create("http://[::1%lo]:1/")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://[::1%lo]:1/ is in the configured denied list (kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://[::1%lo]:1/ is in the configured denied list (kestra.tasks.http.deniedList).");
         }
     }
 }

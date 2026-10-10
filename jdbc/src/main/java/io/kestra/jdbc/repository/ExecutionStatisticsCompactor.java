@@ -48,7 +48,7 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
  */
 @Singleton
 @JdbcRepositoryEnabled
-@Requires(property = "kestra.server-type", pattern = "(STANDALONE|WEBSERVER|INDEXER)")
+@Requires(property = "kestra.serverType", pattern = "(STANDALONE|WEBSERVER|INDEXER)")
 @Slf4j
 public class ExecutionStatisticsCompactor {
     // Safety cap on the number of findKeysWithRawRows() batches drained within a single tick, so
@@ -85,8 +85,8 @@ public class ExecutionStatisticsCompactor {
     // keys and defaults here must stay in sync with that config's prefix (same pattern as
     // io.kestra.core.storages.kv.KVPurgeCleaner + KVPurgeConfiguration).
     @Scheduled(
-        initialDelay = "${kestra.jdbc.execution-statistics.compactor.initial-delay:1m}",
-        fixedDelay = "${kestra.jdbc.execution-statistics.compactor.fixed-delay:1m}"
+        initialDelay = "${kestra.jdbc.executionStatistics.compactor.initialDelay:1m}",
+        fixedDelay = "${kestra.jdbc.executionStatistics.compactor.fixedDelay:1m}"
     )
     public void compact() {
         compactionDurationTimer.record(this::drainBacklog);

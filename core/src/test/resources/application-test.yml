@@ -19,9 +19,9 @@ datasources:
 
 kestra:
   encryption:
-    secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
+    secretKey: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
   url: https://mysuperhost.com/subpath
-  server-type: STANDALONE
+  serverType: STANDALONE
   repository:
     type: h2
   queue:
@@ -29,21 +29,21 @@ kestra:
   storage:
     type: local
     local:
-      base-path: /tmp/unittest
-  local-files:
+      basePath: /tmp/unittest
+  localFiles:
     # relative to the Gradle test working directory (the module directory)
-    allowed-paths:
+    allowedPaths:
       - build/resources/test
   jdbc:
     queues:
-      min-poll-interval: 10ms
-      max-poll-interval: 100ms
-      poll-switch-interval: 5s
+      minPollInterval: 10ms
+      maxPollInterval: 100ms
+      pollSwitchInterval: 5s
 
   executor:
-    execution-delay-loop-periodicity-ms: 250
-    monitor-sla-loop-periodicity-ms: 250
-    multiple-condition-purge-loop-periodicity-ms: 1000
+    executionDelayLoopPeriodicityMs: 250
+    monitorSlaLoopPeriodicityMs: 250
+    multipleConditionPurgeLoopPeriodicityMs: 1000
 
   variables:
     globals:
@@ -58,12 +58,12 @@ kestra:
       enabled: false
     service:
       purge:
-        initial-delay: 1h
-        fixed-delay: 1d
+        initialDelay: 1h
+        fixedDelay: 1d
         retention: 30d
-    termination-grace-period: 5s
+    terminationGracePeriod: 5s
 
-  anonymous-usage-report:
+  anonymousUsageReport:
     enabled: false
     uri: http://localhost:8080/
 
@@ -89,7 +89,7 @@ kestra:
 
   tasks:
     http:
-      denied-list:
+      deniedList:
         - http://dangerous-url.com
         - http://169.254.169.254
         - http://kestra_internal_db

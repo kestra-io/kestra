@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * around the unauthenticated assertions.
  */
 @KestraTest
-@Property(name = "kestra.plugins.auto-install.enabled", value = "true")
+@Property(name = "kestra.plugins.autoInstall.enabled", value = "true")
 class PluginInstallAuthTest {
 
     private static final String PATH = "/api/v1/plugins";

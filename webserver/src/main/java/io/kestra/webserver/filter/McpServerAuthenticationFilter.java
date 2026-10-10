@@ -26,7 +26,7 @@ import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @Filter("/api/v1/*/mcp/*")
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "micronaut.security.enabled", notEquals = "true")
 public class McpServerAuthenticationFilter implements HttpServerFilter {
 

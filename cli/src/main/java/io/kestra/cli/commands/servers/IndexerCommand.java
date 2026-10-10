@@ -34,7 +34,7 @@ public class IndexerCommand extends AbstractServerCommand {
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return ImmutableMap.of(
-            "kestra.server-type", ServerType.INDEXER
+            "kestra.serverType", ServerType.INDEXER
         );
     }
 

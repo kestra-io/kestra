@@ -28,7 +28,7 @@ public class ConfigurationUsage {
             .storageType(applicationContext.getProperty("kestra.storage.type", String.class).orElse(null))
             .secretType(applicationContext.getProperty("kestra.secret.type", String.class).orElse(null))
             .logDataStoreType(applicationContext.getProperty("kestra.logs.type", String.class).orElse(null))
-            .javaSecurityEnabled(applicationContext.getProperty("kestra.ee.java-security.enabled", Boolean.class).orElse(null))
+            .javaSecurityEnabled(applicationContext.getProperty("kestra.ee.javaSecurity.enabled", Boolean.class).orElse(null))
             .build();
     }
 }

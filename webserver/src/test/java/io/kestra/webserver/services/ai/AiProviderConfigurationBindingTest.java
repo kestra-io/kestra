@@ -21,12 +21,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @KestraTest
 // The test environment already declares the legacy single-provider configuration, which only lacks custom headers.
-@Property(name = "kestra.ai.gemini.custom-headers.X-Api-Key", value = "secret")
-@Property(name = "kestra.ai.gemini.custom-headers.Authorization", value = "Bearer token")
+@Property(name = "kestra.ai.gemini.customHeaders.X-Api-Key", value = "secret")
+@Property(name = "kestra.ai.gemini.customHeaders.Authorization", value = "Bearer token")
 @Property(name = "kestra.ai.providers[0].id", value = AiProviderConfigurationBindingTest.HEADERLESS_PROVIDER_ID)
 @Property(name = "kestra.ai.providers[0].type", value = "gemini")
-@Property(name = "kestra.ai.providers[0].configuration.model-name", value = "gemini-2.5-flash")
-@Property(name = "kestra.ai.providers[0].configuration.api-key", value = "fake-key")
+@Property(name = "kestra.ai.providers[0].configuration.modelName", value = "gemini-2.5-flash")
+@Property(name = "kestra.ai.providers[0].configuration.apiKey", value = "fake-key")
 class AiProviderConfigurationBindingTest {
     static final String HEADERLESS_PROVIDER_ID = "gemini-without-headers";
 
@@ -51,9 +51,9 @@ class AiProviderConfigurationBindingTest {
     @Test
     void shouldCamelCaseProviderPropertiesWrittenInKebabCase() {
         Map<String, Object> normalized = AiServiceManager.normalizeConfigurationKeys(Map.of(
-            "model-name", "gemini-2.5-flash",
-            "api-key", "fake-key",
-            "custom-headers", Map.of("X-Api-Key", "secret")
+            "modelName", "gemini-2.5-flash",
+            "apiKey", "fake-key",
+            "customHeaders", Map.of("X-Api-Key", "secret")
         ));
 
         // Only the provider properties are normalized: the nested header names are left alone

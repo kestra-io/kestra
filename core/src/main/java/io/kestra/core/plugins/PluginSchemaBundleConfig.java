@@ -5,7 +5,7 @@ import java.util.Optional;
 import io.micronaut.context.annotation.ConfigurationProperties;
 
 /**
- * Configuration of the pre-baked plugin schema bundle ({@code kestra.plugins.schema-bundle-*}),
+ * Configuration of the pre-baked plugin schema bundle ({@code kestra.plugins.schemaBundle*}),
  * consumed by {@link PluginSchemaBundleService}.
  *
  * @param schemaBundlePath an explicit local file, highest priority — see

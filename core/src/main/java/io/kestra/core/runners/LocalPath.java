@@ -15,10 +15,10 @@ public interface LocalPath {
     String FILE_SCHEME = "file";
     String FILE_PROTOCOL = FILE_SCHEME + "://";
 
-    String LOCAL_FILES_CONFIG = "kestra.local-files";
-    String ALLOWED_PATHS_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".allowed-paths";
-    String ENABLE_FILE_FUNCTIONS_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".enable-file-functions";
-    String ENABLE_PREVIEW_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".enable-preview";
+    String LOCAL_FILES_CONFIG = "kestra.localFiles";
+    String ALLOWED_PATHS_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".allowedPaths";
+    String ENABLE_FILE_FUNCTIONS_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".enableFileFunctions";
+    String ENABLE_PREVIEW_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".enablePreview";
 
     /**
      * Get an InputStream of a local file denoted by this URI.

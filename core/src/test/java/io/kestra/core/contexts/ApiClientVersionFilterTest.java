@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ApiClientVersionFilterTest implements TestPropertyProvider {
-    private static final String ENABLED = "kestra.test.api-client-version-filter";
+    private static final String ENABLED = "kestra.test.apiClientVersionFilter";
     private static final String NO_HEADER = "none";
 
     @Inject

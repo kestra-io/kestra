@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * The lock is session-scoped and persists across transactions, making it safe for
  * multi-node deployments. The acquire timeout is configurable via
- * {@code kestra.migration.lock-acquire-timeout} (default 1 hour).
+ * {@code kestra.migration.lockAcquireTimeout} (default 1 hour).
  */
 @Slf4j
 @Singleton
@@ -45,7 +45,7 @@ public class MysqlMigrationLock implements MigrationLock {
     @Inject
     public MysqlMigrationLock(final DataSource dataSource,
         @Nullable final DataSourceResolver dataSourceResolver,
-        @Property(name = "kestra.migration.lock-acquire-timeout", defaultValue = "PT1H") final Duration lockTimeout) {
+        @Property(name = "kestra.migration.lockAcquireTimeout", defaultValue = "PT1H") final Duration lockTimeout) {
         this.dataSource = dataSourceResolver != null ? dataSourceResolver.resolve(dataSource) : dataSource;
         this.lockTimeout = lockTimeout;
     }
@@ -62,7 +62,7 @@ public class MysqlMigrationLock implements MigrationLock {
                     lockConnection.close();
                     lockConnection = null;
                     throw new IllegalStateException(
-                        "Could not acquire MySQL migration lock '%s' within %s (configurable via kestra.migration.lock-acquire-timeout)"
+                        "Could not acquire MySQL migration lock '%s' within %s (configurable via kestra.migration.lockAcquireTimeout)"
                             .formatted(LOCK_NAME, lockTimeout)
                     );
                 }

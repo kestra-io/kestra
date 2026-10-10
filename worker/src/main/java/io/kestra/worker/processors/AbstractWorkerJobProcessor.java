@@ -124,7 +124,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     /**
      * Interrupts the currently running job, marking it to report {@code state} as its outcome.
-     * Used both for a real kill ({@code KILLED}) and for a fail-fast interrupt targeting a
+     * Used both for a real kill ({@code KILLED}) and for a failFast interrupt targeting a
      * caller-chosen state (e.g. {@code CANCELLED}).
      */
     protected void interrupt(State.Type state) {

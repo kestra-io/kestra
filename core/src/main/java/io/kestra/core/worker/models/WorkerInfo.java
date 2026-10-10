@@ -13,6 +13,7 @@ import jakarta.inject.Provider;
  * Provides information about the current worker.
  */
 @Context
+@io.micronaut.context.annotation.Requires(beans = Worker.class)
 public class WorkerInfo {
 
     private final Supplier<String> workerId;

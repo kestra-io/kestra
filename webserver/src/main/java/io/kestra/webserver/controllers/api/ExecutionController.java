@@ -325,7 +325,7 @@ public class ExecutionController {
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantService.resolveTenant(),
-            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, false),
             dateFilter
         );
         var apiExecution = executions.stream()

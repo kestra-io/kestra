@@ -69,6 +69,7 @@
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
+                    :defaultTimeRange="false"
                     :defaultDuration="chartDefaultDuration"
                 />
             </template>

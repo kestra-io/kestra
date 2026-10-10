@@ -1,14 +1,24 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {effectScope, nextTick} from "vue"
 
+interface MockRoute {
+    params: {namespace: string; id: string}
+    query: Record<string, string | undefined>
+    meta: {tab?: string}
+    name: string
+}
+
+const routerReplace = vi.fn()
+const currentRoute: MockRoute = {
+    params: {namespace: "company.team", id: "myflow"},
+    query: {},
+    meta: {tab: "edit"},
+    name: "flows/update/edit",
+}
+
 vi.mock("vue-router", () => ({
-    useRoute: () => ({
-        params: {namespace: "company.team", id: "myflow"},
-        query: {},
-        meta: {tab: "edit"},
-        name: "flows/update/edit",
-    }),
-    useRouter: () => ({replace: vi.fn()}),
+    useRoute: () => currentRoute,
+    useRouter: () => ({replace: routerReplace}),
 }))
 
 vi.mock("vue-i18n", () => ({
@@ -59,6 +69,10 @@ describe("useFlowRoot", () => {
 
     beforeEach(() => {
         vi.useFakeTimers()
+        currentRoute.meta = {tab: "edit"}
+        currentRoute.name = "flows/update/edit"
+        currentRoute.query = {}
+        routerReplace.mockReset()
         flowStore.flow = undefined
         flowStore.dependenciesCount = undefined
         loadDependencies.mockReset()
@@ -125,6 +139,38 @@ describe("useFlowRoot", () => {
             allowDeleted: true,
         }))
 
+        scope.stop()
+    })
+
+    it("does not reinsert PT24H when activeTab is executions with no time filter in query", async () => {
+        currentRoute.meta = {tab: "executions"}
+        currentRoute.name = "flows/update/executions"
+        currentRoute.query = {}
+        routerReplace.mockReset()
+
+        const scope = effectScope()
+        scope.run(() => useFlowRoot())
+        await nextTick()
+
+        expect(routerReplace).not.toHaveBeenCalled()
+        scope.stop()
+    })
+
+    it("injects default duration when activeTab is overview with no time filter in query", async () => {
+        currentRoute.meta = {tab: "overview"}
+        currentRoute.name = "flows/update/overview"
+        currentRoute.query = {}
+        routerReplace.mockReset()
+
+        const scope = effectScope()
+        scope.run(() => useFlowRoot())
+        await nextTick()
+
+        expect(routerReplace).toHaveBeenCalledWith({
+            name: "flows/update/overview",
+            params: {namespace: "company.team", id: "myflow"},
+            query: {"filters[timeRange][EQUALS]": "PT24H"},
+        })
         scope.stop()
     })
 })

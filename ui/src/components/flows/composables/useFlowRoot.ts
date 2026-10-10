@@ -120,7 +120,7 @@ export function useFlowRoot() {
     watch(() => [route.params.namespace, route.params.id], () => load())
 
     watch(activeTabName, (newTab) => {
-        if (newTab === "overview" || newTab === "executions") {
+        if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
                 const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"

@@ -122,42 +122,30 @@ export function extractBlock({source, section, key, keyName}: {
         : new Document(blockNode).toString(TOSTRING_OPTIONS)
 }
 
-function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
+function extractBlockFromDocument({yamlDoc, keyName, key}: {
     yamlDoc: Node,
     keyName: string,
     key: string,
-    callback?: (element: YAMLMap<Scalar<string>, string | Node>) => Node | Document,
 }) {
-    function find(element?: Node): Node | Document | void {
+    function find(element?: Node): Node | void {
         if (!element) {
             return
         }
         if (isMap<Scalar<string>, string | Node>(element)) {
             if (element.get("type") !== undefined && key === element.get(keyName)) {
-                return callback ? callback(element) : element
+                return element
             }
         }
         if (isSeq<Node>(element) || isMap<Scalar<string>, Node>(element)) {
-            for (const [itemIndex, item] of element.items.entries()) {
+            for (const item of element.items) {
                 const result = isMap(item)
                     ? find(item)
                     : isPair(item)
                         ? find(item.value ?? undefined)
                         : undefined
 
-                if (!result) {
-                    continue
-                }
-                if (!callback) {
+                if (result) {
                     return result
-                }
-                // swapBlocks' callback yields a Document, which only reaches
-                // output because Document stringifies where a node is expected
-                const replacement = result as Node
-                if (isMap(element) && isPair<Scalar<string>, Node>(item)) {
-                    element.set(item.key, replacement)
-                } else {
-                    element.items[itemIndex] = replacement
                 }
             }
         }
@@ -213,48 +201,6 @@ export function replaceBlockWithPath({source, path, newContent}: {
         && yamlDoc.contents && isMap(yamlDoc.contents)) {
         yamlDoc.contents.items.sort((a, b) => sortPredicate(a.key.value ?? a.key, b.key.value ?? a.key))
     }
-
-    return yamlDoc.toString(TOSTRING_OPTIONS)
-}
-
-export function swapBlocks({source, section, key1, key2, keyName}: {
-    source: string,
-    section: string,
-    key1: string,
-    key2: string,
-    keyName?: string
-}) {
-    if (!keyName) {
-        keyName = "id"
-    }
-    const {yamlDoc, sectionNode} = getSectionNodeAndDocumentFromSource({source, section})
-    if (!sectionNode) {
-        return source
-    }
-    const task1 = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key1})
-    const task2 = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key2})
-
-    if (!task1 || !task2) {
-        return source
-    }
-
-    visit(yamlDoc, {
-        Pair(_, pair) {
-            if (
-                scalarKey(pair) === "dependsOn" &&
-                isSeq(pair.value) &&
-                pair.value.items.some((e) => isScalar(e) && e.value === key1)
-            ) {
-                throw {
-                    message: "dependency task",
-                    messageOptions: {taskId: key2},
-                }
-            }
-        },
-    })
-
-    extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key1, callback: () => task2})
-    extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: key2, callback: () => task1})
 
     return yamlDoc.toString(TOSTRING_OPTIONS)
 }
@@ -429,38 +375,4 @@ export function flowHaveTasks(source: string) {
     return isSeq(sectionNode) && sectionNode.items.length > 0
 }
 
-function isChildrenOf(source: string, section: string, parentKey: string, childKey: string, keyName: string) {
-    const {sectionNode} = getSectionNodeAndDocumentFromSource({source, section})
-    if (!sectionNode) return false
 
-    const parentDoc = extractBlockFromDocument({yamlDoc: sectionNode, keyName, key: parentKey})
-    if (!parentDoc) return false
-
-    let result = false
-    visit(parentDoc, {
-        Map(_, map) {
-            if (map.get(keyName) === childKey) {
-                result = true
-                return visit.BREAK
-            }
-        },
-    })
-    return result
-}
-
-export function isParentChildrenRelation({source, sections, key1, key2, keyName}: {
-    source: string;
-    sections: string[];
-    key1: string;
-    key2: string;
-    keyName: string;
-}) {
-    if (!keyName) keyName = "id"
-    return sections.reduce(
-        (acc, section) =>
-            acc ||
-            isChildrenOf(source, section, key2, key1, keyName) ||
-            isChildrenOf(source, section, key1, key2, keyName),
-        false,
-    )
-}

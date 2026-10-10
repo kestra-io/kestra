@@ -52,10 +52,12 @@ import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.server.LocalServiceState;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
@@ -178,6 +180,168 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertThat(workerTaskResult.get().getTaskRun().getAttempts()).hasSize(2);
         assertThat(workerTaskResult.get().getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
         newWorker.close();
+    }
+
+    @Test
+    void shouldCompleteResubmittedTaskWhenWorkerRestartsAfterRecovery() throws Exception {
+        CountDownLatch holdLatch = new CountDownLatch(1);
+        CountDownLatch runningLatch = new CountDownLatch(1);
+        CountDownLatch resubmitLatch = new CountDownLatch(1);
+
+        // GIVEN - a worker running a task, like a STANDALONE with a separate WORKER.
+        WorkerAgent worker = (WorkerAgent) newWorker();
+        worker.start(1);
+
+        final WorkerTask workerTask = workerTaskWithLatch(holdLatch, null);
+        final AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
+        workerTaskResultQueue.addListener(item ->
+        {
+            if (!item.uid().equals(workerTask.uid())) {
+                return;
+            }
+            if (item.getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
+                workerTaskResult.set(item);
+                resubmitLatch.countDown();
+            }
+            if (item.getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
+                runningLatch.countDown();
+            }
+        });
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
+        assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event ->
+        {
+            if (event.job().uid().equals(workerTask.uid())) {
+                resubmitted.add(event.job().uid());
+            }
+        });
+
+        try {
+            // WHEN - the worker exits unexpectedly and stays offline until the
+            // standalone has detected its departure and resubmitted its job.
+            worker.stopNow();
+            ServiceRegistry serviceRegistry = applicationContext.getBean(ServiceRegistry.class);
+            LocalServiceState holder = serviceRegistry.get(ServiceType.WORKER);
+            assertThat(holder).isNotNull();
+            assertThat(holder.service().getId()).isEqualTo(worker.getId());
+            holder.isStateUpdatable().set(false);
+
+            Await.until(() -> !resubmitted.isEmpty(), Duration.ofMillis(200), Duration.ofSeconds(30));
+
+            // WHEN - a worker (re)starts after the recovery: the resubmitted job waiting
+            // in the queue must be dispatched to it.
+            Worker newWorker = newWorker();
+            newWorker.start(1);
+            try {
+                holdLatch.countDown();
+
+                // THEN - the task completes successfully with a resubmitted attempt.
+                assertThat(resubmitLatch.await(30, TimeUnit.SECONDS)).isTrue();
+                assertThat(workerTaskResult.get()).isNotNull();
+                assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+                assertThat(workerTaskResult.get().getTaskRun().getAttempts()).hasSize(2);
+                assertThat(workerTaskResult.get().getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
+            } finally {
+                newWorker.close();
+            }
+        } finally {
+            holdLatch.countDown();
+        }
+    }
+
+    @Test
+    void shouldResubmitTaskWhenWorkerShutsDownGracefullyAndStaysOffline() throws Exception {
+        CountDownLatch holdLatch = new CountDownLatch(1);
+        CountDownLatch runningLatch = new CountDownLatch(1);
+
+        // GIVEN - a worker running a task, like a STANDALONE with a separate WORKER.
+        Worker worker = newWorker();
+        worker.start(1);
+
+        final WorkerTask workerTask = workerTaskWithLatch(holdLatch, null);
+        workerTaskResultQueue.addListener(item ->
+        {
+            if (item.uid().equals(workerTask.uid()) && item.getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
+                runningLatch.countDown();
+            }
+        });
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
+        assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event ->
+        {
+            if (event.job().uid().equals(workerTask.uid())) {
+                resubmitted.add(event.job().uid());
+            }
+        });
+
+        try {
+            // WHEN - the worker shuts down gracefully while the task is still running
+            // (e.g. SIGTERM with a task outliving the grace period) and stays offline:
+            // no other worker ever connects.
+            worker.close();
+
+            // THEN - the standalone resubmits its job without any worker restart.
+            Await.until(() -> !resubmitted.isEmpty(), Duration.ofMillis(200), Duration.ofSeconds(30));
+
+            assertThat(resubmitted).hasSize(1);
+        } finally {
+            holdLatch.countDown();
+        }
+    }
+
+    @Test
+    void shouldResubmitTaskWhenWorkerExitsAndStaysOffline() throws Exception {
+        CountDownLatch holdLatch = new CountDownLatch(1);
+        CountDownLatch runningLatch = new CountDownLatch(1);
+
+        // GIVEN - a worker running a task, like a STANDALONE with a separate WORKER.
+        WorkerAgent worker = (WorkerAgent) newWorker();
+        worker.start(1);
+
+        final WorkerTask workerTask = workerTaskWithLatch(holdLatch, null);
+        workerTaskResultQueue.addListener(item ->
+        {
+            if (item.uid().equals(workerTask.uid()) && item.getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
+                runningLatch.countDown();
+            }
+        });
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
+        assertThat(runningLatch.await(30, TimeUnit.SECONDS)).isTrue();
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event ->
+        {
+            if (event.job().uid().equals(workerTask.uid())) {
+                resubmitted.add(event.job().uid());
+            }
+        });
+
+        try {
+            // WHEN - the worker exits unexpectedly (crash) and stays offline: no graceful
+            // state transition is published, no heartbeat is sent anymore, and no other
+            // worker ever connects. Stopping the heartbeat simulates the dead process, as
+            // heartbeats otherwise keep flowing from the shared test JVM.
+            worker.stopNow();
+            ServiceRegistry serviceRegistry = applicationContext.getBean(ServiceRegistry.class);
+            LocalServiceState holder = serviceRegistry.get(ServiceType.WORKER);
+            assertThat(holder).isNotNull();
+            assertThat(holder.service().getId()).isEqualTo(worker.getId());
+            holder.isStateUpdatable().set(false);
+
+            // THEN - the standalone detects the departed worker and resubmits its job
+            // without any worker restart (session timeout 3s + grace period 1s + probes).
+            Await.until(() -> !resubmitted.isEmpty(), Duration.ofMillis(200), Duration.ofSeconds(30));
+
+            // The running entry is released so a later sweep cannot resubmit it again.
+            assertThat(resubmitted).hasSize(1);
+            assertThat(leasesHeldBy(worker.getId())).doesNotContain(workerTask.uid());
+        } finally {
+            holdLatch.countDown();
+        }
     }
 
     private Worker newWorker() {

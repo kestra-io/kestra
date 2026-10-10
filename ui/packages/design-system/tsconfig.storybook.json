@@ -19,5 +19,6 @@
         "tests/storybook",
         ".storybook",
         "src"
-    ]
+    ],
+    "exclude": ["src/**/*.test.ts"]
 }

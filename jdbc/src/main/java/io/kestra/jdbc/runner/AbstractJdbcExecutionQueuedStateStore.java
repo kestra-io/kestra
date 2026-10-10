@@ -29,6 +29,18 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
     }
 
     @Override
+    public int count(TransactionContext txContext, String tenantId, String namespace, String flowId) {
+        var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
+        return dslContext
+            .fetchCount(
+                this.jdbcRepository.getTable(),
+                buildTenantCondition(tenantId)
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId))
+            );
+    }
+
+    @Override
     public void pop(TransactionContext txContext, String tenantId, String namespace, String flowId, BiConsumer<TransactionContext, Execution> consumer) {
         var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
         var select = dslContext

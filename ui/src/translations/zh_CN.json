@@ -484,6 +484,7 @@
       "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "表达式",
       "tree": "树",
       "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",

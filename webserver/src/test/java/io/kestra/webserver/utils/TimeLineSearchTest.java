@@ -174,4 +174,35 @@ class TimeLineSearchTest {
                 }
             );
     }
+
+    @Test
+    void testExtractFrom_withoutDefault_whenNoDateFilter_doesNotSetStartDate() {
+        // GIVEN
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(Field.LABELS).operation(Op.EQUALS).value("foo:bar").build()
+        );
+
+        // WHEN
+        TimeLineSearch result = TimeLineSearch.extractFrom(filters, false);
+
+        // THEN
+        assertThat(result.getStartDate()).isNull();
+        assertThat(result.getEndDate()).isNull();
+        assertThat(result.getTimeRange()).isNull();
+    }
+
+    @Test
+    void testExtractFrom_withDefault_whenNoDateFilter_setsDefaultStartDate() {
+        // GIVEN
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(Field.LABELS).operation(Op.EQUALS).value("foo:bar").build()
+        );
+
+        // WHEN
+        TimeLineSearch result = TimeLineSearch.extractFrom(filters, true);
+
+        // THEN
+        assertThat(result.getStartDate()).isNotNull();
+        assertThat(result.getStartDate()).isBefore(ZonedDateTime.now());
+    }
 }

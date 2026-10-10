@@ -62,6 +62,7 @@
     // EventSource would land in a ref no one closes again. Guard against it explicitly instead
     // of relying on onUnmounted alone.
     let unmounted = false
+    const sseRetries = new Map<string, ReturnType<typeof setTimeout>>()
 
     function closeProgressSSE() {
         progressSSE?.close()
@@ -134,6 +135,7 @@
 
     onUnmounted(() => {
         unmounted = true
+        sseRetries.forEach((retry) => clearTimeout(retry))
         Object.keys(sseBySubflow.value).forEach(closeSSE)
         closeProgressSSE()
     })
@@ -201,10 +203,18 @@
         if (generateGraphBeforeDelay) {
             loadGraph(true)
         }
-        setTimeout(() => addSSE(subflow), 500)
+        clearTimeout(sseRetries.get(subflow))
+        sseRetries.set(subflow, setTimeout(() => {
+            sseRetries.delete(subflow)
+            addSSE(subflow)
+        }, 500))
     }
 
     function addSSE(subflow: string, generateGraphOnWaiting?: boolean) {
+        if (unmounted) {
+            return
+        }
+
         let parentExecution = execution.value
 
         const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
@@ -231,10 +241,6 @@
             }
 
             delaySSE(!!generateGraphOnWaiting, subflow)
-            return
-        }
-
-        if (unmounted) {
             return
         }
 

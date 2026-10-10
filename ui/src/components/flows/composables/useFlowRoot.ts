@@ -10,6 +10,7 @@ import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
 import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
+import {isFlowTabEnabled} from "override/components/flows/flowTabsExtension"
 
 export function useFlowRoot() {
     const {t} = useI18n()
@@ -65,7 +66,10 @@ export function useFlowRoot() {
     const tabs = computed(() => {
         const namespace = flowStore.flow?.namespace
         return FLOW_TAB_ROUTES
-            .filter((tabRoute) => isFlowTabAllowed(tabRoute.meta?.tab as string, {user: user.value, namespace}))
+            .filter((tabRoute) => {
+                const tabName = tabRoute.meta?.tab as string
+                return isFlowTabAllowed(tabName, {user: user.value, namespace}) && isFlowTabEnabled(tabName, {namespace})
+            })
             .map((tabRoute) => {
                 const meta = tabRoute.meta ?? {}
                 const name = meta.tab as string

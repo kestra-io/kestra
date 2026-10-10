@@ -22,6 +22,13 @@ public interface ExecutionQueuedStateStore {
     void save(TransactionContext txContext, ExecutionQueued executionQueued);
 
     /**
+     * Count queued executions for a flow.
+     *
+     * @implNote Implementors that support transaction must use the provided {@link TransactionContext} to attach to the current transaction.
+     */
+    int count(TransactionContext txContext, String tenantId, String namespace, String flowId);
+
+    /**
      * Pop the next queued execution.
      * This method is intended to be part of a larger transaction,
      * see {@link io.kestra.executor.ConcurrencyLimitStateStore#decrementAndPop(FlowInterface, ExecutionQueuedStateStore, BiConsumer)}

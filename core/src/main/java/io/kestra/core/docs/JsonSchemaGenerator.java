@@ -101,7 +101,7 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
+    Map<Class<?>, Optional<Object>> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
@@ -569,7 +569,12 @@ public class JsonSchemaGenerator {
                     JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
                     JakartaValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                     JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
-                )
+                ) {
+                    @Override
+                    protected boolean isRequired(MemberScope<?, ?> member) {
+                        return super.isRequired(member) && !(member instanceof FieldScope field && builderDefault(field) != null);
+                    }
+                }
             )
             .with(new Swagger2Module() {
                 @Override
@@ -1303,6 +1308,10 @@ public class JsonSchemaGenerator {
             return null;
         }
 
+        return builderDefault(target);
+    }
+
+    private Object builderDefault(FieldScope target) {
         // class is abstract we try with cls passed to method, we try to find a derived one, optimistic approach
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
@@ -1318,9 +1327,11 @@ public class JsonSchemaGenerator {
             }
         }
 
-        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
+        Class<?> instanceCls = baseCls;
 
-        return instance == null ? null : defaultValue(instance, baseCls, target.getName());
+        return defaultInstances.computeIfAbsent(baseCls, clazz -> Optional.ofNullable(buildDefaultInstance(clazz)))
+            .map(instance -> defaultValue(instance, instanceCls, target.getName()))
+            .orElse(null);
     }
 
     private ObjectNode extractMainRef(ObjectNode objectNode) {

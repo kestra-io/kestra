@@ -14,16 +14,7 @@
                 v-for="loopTerminatedSegment in loopTerminatedSegments" 
                 :key="loopTerminatedSegment.state" 
                 size="small"
-                :to="{
-                    // execution list filtered by Parent execution, Loop task and state
-                    name: 'executions/list',
-                    query: {
-                        'filters[parentId][EQUALS]': executionId,
-                        'filters[kind][EQUALS]': 'LOOP',
-                        'filters[taskId][EQUALS]': taskId,
-                        'filters[state][IN]': loopTerminatedSegment.state
-                    }
-                }"
+                :to="loopIterationsRoute(execution, taskId, {'filters[state][IN]': loopTerminatedSegment.state})"
             >
                 <span :style="{backgroundColor: loopTerminatedSegment.color}" class="colored-dot"/>
                 {{ loopTerminatedSegment.count }} {{ loopTerminatedSegment.state.toLowerCase().capitalize() }}
@@ -36,12 +27,13 @@
     import {computed} from "vue"
     import {State} from "@kestra-io/design-system"
     import {RouterLink} from "vue-router"
+    import {loopIterationsRoute, type LoopParentExecution} from "../executions/loopIterationsRoute"
 
     // Color for each execution state, used to render the Loop task's per-state progress segments
     const loopStateColors = State.color()
 
     const props = defineProps<{
-        executionId: string;
+        execution: LoopParentExecution;
         currentTaskRunId: string;
         taskId: string;
         loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations?: Record<string, number> }>;

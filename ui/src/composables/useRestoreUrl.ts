@@ -80,10 +80,7 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
 
     const localStorageName = computed(() => getLocalStorageName(route))
 
-    const localStorageValue = computed(() => {
-        const raw = window.sessionStorage.getItem(localStorageName.value)
-        return raw ? JSON.parse(raw) : null
-    })
+    const localStorageValue = computed(() => getRestoredUrlValue(route))
 
     const saveRestoreUrl = () => {
         if (!restoreUrl || route.query.noRestore) return

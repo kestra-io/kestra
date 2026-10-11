@@ -1,0 +1,46 @@
+id: dag-disabled-dependency
+namespace: io.kestra.tests
+
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: first
+          type: io.kestra.plugin.core.flow.Sleep
+          duration: PT0.5S
+      - task:
+          id: disabled1
+          type: io.kestra.plugin.core.log.Log
+          message: "{{ task.id }}"
+          disabled: true
+        dependsOn:
+          - first
+      - task:
+          id: disabled2
+          type: io.kestra.plugin.core.log.Log
+          message: "{{ task.id }}"
+          disabled: true
+        dependsOn:
+          - disabled1
+      - task:
+          id: last
+          type: io.kestra.plugin.core.log.Log
+          message: "{{ task.id }}"
+        dependsOn:
+          - disabled2
+      - task:
+          id: disabledRoot
+          type: io.kestra.plugin.core.log.Log
+          message: "{{ task.id }}"
+          disabled: true
+      - task:
+          id: afterDisabledRoot
+          type: io.kestra.plugin.core.log.Log
+          message: "{{ task.id }}"
+        dependsOn:
+          - disabledRoot
+
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ task.id }}"

@@ -316,7 +316,7 @@
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
     import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes, topologyOrientations} from "../../utils/constants"
-    import {DEFAULT_EXECUTION_TAB, DEFAULT_TAB_STORAGE_KEY} from "../executions/executionTabs"
+    import {DEFAULT_EXECUTION_TAB} from "../executions/executionTabs"
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
     import {defaultNamespace} from "../../composables/useNamespaces"
@@ -344,24 +344,24 @@
     const LOCALE = "settings.blocks.localization"
 
     const SETTING_TOASTS = {
-        defaultNamespace: [`${CONFIG}.fields.default_namespace`, `${CONFIG}.descriptions.default_namespace`],
-        defaultLogLevel: [`${CONFIG}.fields.log_level`, `${CONFIG}.descriptions.log_level`],
-        logDisplay: [`${CONFIG}.fields.log_display`, `${CONFIG}.descriptions.log_display`],
+        [storageKeys.DEFAULT_NAMESPACE]: [`${CONFIG}.fields.default_namespace`, `${CONFIG}.descriptions.default_namespace`],
+        [storageKeys.DEFAULT_LOG_LEVEL]: [`${CONFIG}.fields.log_level`, `${CONFIG}.descriptions.log_level`],
+        [storageKeys.LOG_DISPLAY]: [`${CONFIG}.fields.log_display`, `${CONFIG}.descriptions.log_display`],
         [storageKeys.EDITOR_VIEW_TYPE]: [`${CONFIG}.fields.editor_type`, `${CONFIG}.descriptions.editor_type`],
         [storageKeys.TASK_EDIT_DEFAULT_MODE]: [`${CONFIG}.fields.task_edit_default_mode`, `${CONFIG}.descriptions.task_edit_default_mode`],
         [storageKeys.EXECUTE_FLOW_BEHAVIOUR]: [`${CONFIG}.fields.execute_flow`, `${CONFIG}.descriptions.execute_flow`],
-        executeDefaultTab: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
-        flowDefaultTab: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
-        triggersDefaultTab: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
+        [storageKeys.EXECUTION_DEFAULT_TAB]: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
+        [storageKeys.FLOW_DEFAULT_TAB]: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
+        [storageKeys.TRIGGERS_DEFAULT_TAB]: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
-        editorPlayground: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [storageKeys.EDITOR_PLAYGROUND]: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
         [storageKeys.FLOW_TEMPLATE]: [`${CONFIG}.fields.flow_template`, `${CONFIG}.descriptions.flow_template`],
         [APP_FONT_SIZE_KEY]: [`${THEME}.fields.app_font_size`, `${THEME}.descriptions.app_font_size`],
-        logsFontSize: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
-        editorFontFamily: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
-        editorFontSize: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
-        autofoldTextEditor: [`${THEME}.fields.editor_folding_stratgy`, `${THEME}.descriptions.editor_folding_stratgy`],
-        hoverTextEditor: [`${THEME}.fields.editor_hover_description`, `${THEME}.descriptions.editor_hover_description`],
+        [storageKeys.LOGS_FONT_SIZE]: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
+        [storageKeys.EDITOR_FONT_FAMILY]: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
+        [storageKeys.EDITOR_FONT_SIZE]: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
+        [storageKeys.AUTOFOLD_TEXT_EDITOR]: [`${THEME}.fields.editor_folding_stratgy`, `${THEME}.descriptions.editor_folding_stratgy`],
+        [storageKeys.HOVER_TEXT_EDITOR]: [`${THEME}.fields.editor_hover_description`, `${THEME}.descriptions.editor_hover_description`],
         [storageKeys.TIMEZONE_STORAGE_KEY]: [`${LOCALE}.fields.time_zone`, `${LOCALE}.descriptions.time_zone`],
         [storageKeys.DATE_FORMAT_STORAGE_KEY]: [`${LOCALE}.fields.date_format`, `${LOCALE}.descriptions.date_format`],
     }
@@ -382,25 +382,25 @@
 
     const settings = reactive({
         defaultNamespace: defaultNamespace(),
-        defaultLogLevel: localStorage.getItem("defaultLogLevel") || "INFO",
-        logDisplay: localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT,
+        defaultLogLevel: localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO",
+        logDisplay: localStorage.getItem(storageKeys.LOG_DISPLAY) || logDisplayTypes.DEFAULT,
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
         topologyOrientation: localStorage.getItem(storageKeys.DEFAULT_TOPOLOGY_ORIENTATION) || topologyOrientations.VERTICAL,
         taskEditDefaultMode: localStorage.getItem(storageKeys.TASK_EDIT_DEFAULT_MODE) || taskEditDefaultModes.MODAL,
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
-        executeDefaultTab: localStorage.getItem(DEFAULT_TAB_STORAGE_KEY) || DEFAULT_EXECUTION_TAB,
-        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
-        triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
+        executeDefaultTab: localStorage.getItem(storageKeys.EXECUTION_DEFAULT_TAB) || DEFAULT_EXECUTION_TAB,
+        flowDefaultTab: localStorage.getItem(storageKeys.FLOW_DEFAULT_TAB) || "edit",
+        triggersDefaultTab: localStorage.getItem(storageKeys.TRIGGERS_DEFAULT_TAB) || "add",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
         appFontSize: appFontSizeMode.value,
-        editorFontFamily: localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace",
-        autofoldTextEditor: localStorage.getItem("autofoldTextEditor") === "true",
-        hoverTextEditor: localStorage.getItem("hoverTextEditor") === "true",
+        editorFontFamily: localStorage.getItem(storageKeys.EDITOR_FONT_FAMILY) || "'JetBrains Mono', monospace",
+        autofoldTextEditor: localStorage.getItem(storageKeys.AUTOFOLD_TEXT_EDITOR) === "true",
+        hoverTextEditor: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
         lang: Utils.getLang(),
         timezone: dateUtils.currentTimezone(),
         dateFormat: localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) || "llll",
-        editorPlayground: localStorage.getItem("editorPlayground") !== "false",
+        editorPlayground: localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false",
         envName: layoutStore.envName || miscStore.configs?.environment?.name,
         envColor: layoutStore.envColor || miscStore.configs?.environment?.color,
         flowTemplate: localStorage.getItem(storageKeys.FLOW_TEMPLATE) ?? "",
@@ -570,9 +570,9 @@
 
     function onNamespace(value: string | string[] | undefined) {
         const namespace = (Array.isArray(value) ? value[0] : value) ?? ""
-        const previous = localStorage.getItem("defaultNamespace") || ""
+        const previous = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE) || ""
         settings.defaultNamespace = namespace
-        persist("defaultNamespace", namespace)
+        persist(storageKeys.DEFAULT_NAMESPACE, namespace)
 
         if (previous !== namespace) {
             clearNamespaceFilters()
@@ -581,12 +581,12 @@
 
     function onLogLevel(value: string) {
         settings.defaultLogLevel = value
-        persist("defaultLogLevel", value)
+        persist(storageKeys.DEFAULT_LOG_LEVEL, value)
     }
 
     function onLogDisplay(value: string) {
         settings.logDisplay = value
-        persist("logDisplay", value)
+        persist(storageKeys.LOG_DISPLAY, value)
     }
 
     function onEditorType(value: string) {
@@ -611,17 +611,17 @@
 
     function onExecuteDefaultTab(value: string) {
         settings.executeDefaultTab = value
-        persist(DEFAULT_TAB_STORAGE_KEY, value)
+        persist(storageKeys.EXECUTION_DEFAULT_TAB, value)
     }
 
     function onFlowDefaultTab(value: string) {
         settings.flowDefaultTab = value
-        persist("flowDefaultTab", value)
+        persist(storageKeys.FLOW_DEFAULT_TAB, value)
     }
 
     function onTriggersDefaultTab(value: string) {
         settings.triggersDefaultTab = value
-        persist("triggersDefaultTab", value)
+        persist(storageKeys.TRIGGERS_DEFAULT_TAB, value)
     }
 
     function onFlowTemplate(value?: string) {
@@ -664,32 +664,32 @@
 
     function onLogsFontSize(value: number) {
         logsFontSizeOverride.value = value
-        persist("logsFontSize", value)
+        persist(storageKeys.LOGS_FONT_SIZE, value)
     }
 
     function onFontFamily(value: string) {
         settings.editorFontFamily = value
-        persist("editorFontFamily", value)
+        persist(storageKeys.EDITOR_FONT_FAMILY, value)
     }
 
     function onFontSize(value: number) {
         editorFontSizeOverride.value = value
-        persist("editorFontSize", value)
+        persist(storageKeys.EDITOR_FONT_SIZE, value)
     }
 
     function onAutofold(value: boolean | string | number) {
         settings.autofoldTextEditor = Boolean(value)
-        persist("autofoldTextEditor", settings.autofoldTextEditor)
+        persist(storageKeys.AUTOFOLD_TEXT_EDITOR, settings.autofoldTextEditor)
     }
 
     function onHover(value: boolean | string | number) {
         settings.hoverTextEditor = Boolean(value)
-        persist("hoverTextEditor", settings.hoverTextEditor)
+        persist(storageKeys.HOVER_TEXT_EDITOR, settings.hoverTextEditor)
     }
 
     function onEditorPlayground(value: boolean | string | number) {
         settings.editorPlayground = Boolean(value)
-        persist("editorPlayground", settings.editorPlayground)
+        persist(storageKeys.EDITOR_PLAYGROUND, settings.editorPlayground)
     }
 
     function onEnvName() {
@@ -706,7 +706,7 @@
     function onLang(value: string) {
         const previous = settings.lang
         settings.lang = value
-        persist("lang", value)
+        persist(storageKeys.LANG, value)
 
         if (value !== previous) {
             document.location.assign(document.location.href)

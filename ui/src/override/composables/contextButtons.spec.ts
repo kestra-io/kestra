@@ -1,0 +1,72 @@
+import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
+import {defineComponent} from "vue"
+const mockFeeds: {value: Array<{publicationDate: string}>} = {value: []}
+vi.mock("../../stores/api", () => ({
+    useApiStore: () => ({feeds: mockFeeds.value}),
+}))
+
+vi.mock("@vueuse/core", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@vueuse/core")>()
+    return {...actual, useNetwork: () => ({isOnline: {value: true}})}
+})
+
+import {useContextButtons} from "./contextButtons"
+import {i18nMount} from "../../../tests/unit/i18nMount"
+
+function mountButtons() {
+    let api: ReturnType<typeof useContextButtons>
+    const Comp = defineComponent({
+        setup() {
+            api = useContextButtons()
+            return () => null
+        },
+    })
+    i18nMount(Comp, {messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star"}}})
+    return api!
+}
+
+describe("useContextButtons news unread", () => {
+    beforeEach(() => {
+        localStorage.clear()
+        mockFeeds.value = []
+    })
+
+    afterAll(() => {
+        localStorage.clear()
+    })
+
+    it("is unread when no read date has been stored yet", () => {
+        mockFeeds.value = [{publicationDate: "2024-01-01T00:00:00Z"}]
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.news.unread?.value).toBe(true)
+    })
+
+    it("is unread when the latest feed is newer than the last read date", () => {
+        localStorage.setItem("feeds", "2024-01-01T00:00:00Z")
+        mockFeeds.value = [{publicationDate: "2024-06-01T00:00:00Z"}]
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.news.unread?.value).toBe(true)
+    })
+
+    it("is read once the last read date is at or after the latest feed", () => {
+        localStorage.setItem("feeds", "2024-06-01T00:00:00Z")
+        mockFeeds.value = [{publicationDate: "2024-01-01T00:00:00Z"}]
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.news.unread?.value).toBe(false)
+    })
+
+    it("is read when there are no feeds at all", () => {
+        localStorage.setItem("feeds", "2024-01-01T00:00:00Z")
+        mockFeeds.value = []
+
+        const {buttons} = mountButtons()
+
+        expect(buttons.news.unread?.value).toBe(false)
+    })
+})

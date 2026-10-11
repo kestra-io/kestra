@@ -304,7 +304,7 @@ public final class ExecutableUtils {
 
     private static List<Label> systemLabels(Execution execution) {
         return Streams.of(execution.getLabels())
-            .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
+            .filter(label -> Label.isSystem(label.key()))
             .toList();
     }
 

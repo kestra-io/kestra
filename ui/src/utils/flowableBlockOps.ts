@@ -309,11 +309,10 @@ export function withFreeIds(
     return rewireDependsOnInSubtree(renamed, idMap)
 }
 
-/** Collects every task id under `tasks`, walking nested Flowable lanes, for the Inputs panel and paste. */
 export function flattenTaskIds(tasks: unknown, acc: string[]): void {
     if (!Array.isArray(tasks)) return
     for (const rawTask of tasks) {
-        const task = rawTask as Record<string, unknown> | undefined
+        const task = displayTaskOf(rawTask as Record<string, unknown>) as Record<string, unknown> | undefined
         if (task?.id) acc.push(String(task.id))
         for (const key of FLOWABLE_BRANCH_KEYS) {
             if (key === "cases") continue
@@ -323,6 +322,99 @@ export function flattenTaskIds(tasks: unknown, acc: string[]): void {
             for (const branch of Object.values(task.cases as Record<string, unknown>)) flattenTaskIds(branch, acc)
         }
     }
+}
+
+export function upstreamTaskIds(
+    flow: {tasks?: unknown; errors?: unknown; finally?: unknown},
+    taskId: string,
+): string[] {
+    const upstream: string[] = []
+    if (collectUpstream(flow.tasks, taskId, upstream)) return upstream
+
+    const afterMain: string[] = []
+    flattenTaskIds(flow.tasks, afterMain)
+    if (collectUpstream(flow.errors, taskId, afterMain)) return afterMain
+
+    flattenTaskIds(flow.errors, afterMain)
+    if (collectUpstream(flow.finally, taskId, afterMain)) return afterMain
+
+    const everyId: string[] = []
+    for (const section of [flow.tasks, flow.errors, flow.finally]) flattenTaskIds(section, everyId)
+    return everyId.filter(id => id !== taskId)
+}
+
+function isConcurrentFlowable(task: Record<string, unknown>): boolean {
+    const type = String(task.type ?? "")
+    if (type.endsWith(".Parallel") || type.endsWith(".EachParallel")) return true
+    return type.endsWith(".ForEach") && task.concurrencyLimit !== undefined && Number(task.concurrencyLimit) !== 1
+}
+
+function containsTaskId(list: unknown, targetId: string): boolean {
+    const ids: string[] = []
+    flattenTaskIds(list, ids)
+    return ids.includes(targetId)
+}
+
+function branchesPrecedingKey(key: string): readonly string[] {
+    if (key === "errors") return ["tasks", "then", "else", "cases"]
+    if (key === "finally") return ["tasks", "then", "else", "cases", "errors"]
+    return []
+}
+
+function flattenBranch(branch: unknown, acc: string[]): void {
+    if (branch && typeof branch === "object" && !Array.isArray(branch)) {
+        for (const caseTasks of Object.values(branch)) flattenTaskIds(caseTasks, acc)
+    } else {
+        flattenTaskIds(branch, acc)
+    }
+}
+
+function collectUpstream(list: unknown, targetId: string, acc: string[], concurrent = false): boolean {
+    if (!Array.isArray(list)) return false
+    const items = list as Record<string, unknown>[]
+    const targetIndex = items.findIndex(item => containsTaskId([item], targetId))
+    if (targetIndex < 0) return false
+
+    const isDag = items.some(isWrappedLaneItem)
+    let precedingItems: Record<string, unknown>[] = []
+    if (isDag) precedingItems = dagAncestorItems(items, items[targetIndex])
+    else if (!concurrent) precedingItems = items.slice(0, targetIndex)
+    for (const item of precedingItems) flattenTaskIds([item], acc)
+
+    const target = displayTaskOf(items[targetIndex])
+    if (target.id === targetId) return true
+    const targetConcurrent = isConcurrentFlowable(target)
+    for (const key of FLOWABLE_BRANCH_KEYS) {
+        const branch = target[key]
+        if (key === "cases" && branch && typeof branch === "object") {
+            if (Object.values(branch).some(caseTasks => collectUpstream(caseTasks, targetId, acc))) return true
+        } else if (containsTaskId(branch, targetId)) {
+            for (const earlier of branchesPrecedingKey(key)) flattenBranch(target[earlier], acc)
+            return collectUpstream(branch, targetId, acc, key === "tasks" && targetConcurrent)
+        }
+    }
+    return true
+}
+
+function dependsOnOf(item: Record<string, unknown>): string[] {
+    return Array.isArray(item.dependsOn) ? item.dependsOn.map(String) : []
+}
+
+function dagAncestorItems(items: Record<string, unknown>[], item: Record<string, unknown>): Record<string, unknown>[] {
+    const itemById = new Map(items.map(candidate => [String(displayTaskOf(candidate)?.id), candidate]))
+    const ancestors: Record<string, unknown>[] = []
+    const visited = new Set<string>([String(displayTaskOf(item).id)])
+    const queue = [...dependsOnOf(item)]
+    while (queue.length) {
+        const id = queue.shift() as string
+        if (visited.has(id)) continue
+        visited.add(id)
+        const ancestor = itemById.get(id)
+        if (!ancestor) continue
+        ancestors.push(ancestor)
+        queue.push(...dependsOnOf(ancestor))
+    }
+    return ancestors
 }
 
 function collectAllIds(source: string): Set<string> {

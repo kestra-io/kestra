@@ -38,6 +38,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.storages.StorageContext;
@@ -1037,7 +1038,7 @@ public class ExecutionService {
     }
 
     /**
-     * Lookup for all executions triggered by given execution id, and returns all the relevant
+     * Lookup for all subflow executions triggered by given execution id, and returns all the relevant
      * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.
      *
      * @param tenantId of the parent execution.
@@ -1055,6 +1056,8 @@ public class ExecutionService {
         // subsequent kill events (that will be re-handled by the Executor).
 
         return executions
+            // a Flow trigger execution also references the execution that triggered it, but it is not its subflow
+            .filter(ExecutableUtils::isSubflow)
             .filter(childExecution ->
             {
                 State state = childExecution.getState();

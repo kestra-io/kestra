@@ -39,6 +39,7 @@
             <button
                 type="button"
                 class="ks-duration-value"
+                data-test="duration-value"
                 :disabled="!hasHistory"
                 :aria-label="ariaLabel"
             >
@@ -165,6 +166,7 @@
         KsIconButton,
         KsScrollbar,
         KsExecutionStatus,
+        copyToClipboard,
         type ExecutionStatus,
     } from "@kestra-io/design-system"
     import History from "vue-material-design-icons/History.vue"
@@ -450,7 +452,7 @@
             .map((h) => `${formatInTimezone(h.date, "YYYY-MM-DD HH:mm:ss.SSS")}  ${h.state}`)
             .join("\n")
 
-        navigator.clipboard?.writeText(text).then(() => {
+        copyToClipboard(text).then(() => {
             copied.value = true
             setTimeout(() => {
                 copied.value = false

@@ -40,6 +40,7 @@ import {
 } from "./taskCompletionScoping"
 import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
+import {storageKeys} from "../../../utils/constants"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
@@ -66,7 +67,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         // Base YAML language setup shared across all YAML editors.
         const monacoYaml = configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
-            hover: localStorage.getItem("hoverTextEditor") === "true",
+            hover: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
             completion: true,
             validate: validateYAML.value ?? true,
             schemas: yamlSchemas(),

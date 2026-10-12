@@ -85,7 +85,7 @@
                 showMessageOnError: false,
             })
 
-            if (response.length) logs.value = response as any
+            if (response.length) logs.value = response
         } catch {
             // User may not have ACCESS_LOGS permission — silently skip
         }

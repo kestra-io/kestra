@@ -5,13 +5,14 @@ import {API_URL} from "./api"
 
 const PATH_PLACEHOLDER = "{path}"
 
-interface DocMetadata {
+export interface DocMetadata {
     parsedUrl?: string;
     title: string;
     description?: string;
     release?: string;
     isHomepage?: boolean;
     hideSidebar?: boolean;
+    sidebarTitle?: string;
     [key: string]: unknown;
 }
 
@@ -120,7 +121,7 @@ export const useDocStore = defineStore("doc", () => {
             const url = resourceUrl.value(undefined, "search")
             if (!url) throw new Error("Resource URL template not initialized")
 
-            const response = await axios.get<{results: Array<{url: string; title: string; highlights?: string[]}>}>(`${url}?q=${q}&type=DOCS`)
+            const response = await axios.get<{results: Array<{url: string; title: string; highlights?: string[]}>}>(url, {params: {q, type: "DOCS"}})
             return response.data.results.map(({url: itemUrl, title, highlights}: {url: string; title: string; highlights?: string[]}): SearchResult => ({
                 parsedUrl: itemUrl,
                 title,
@@ -131,7 +132,7 @@ export const useDocStore = defineStore("doc", () => {
         const url = resourceUrl.value()
         if (!url) throw new Error("Resource URL template not initialized")
 
-        const response = await axios.get<SearchResult[]>(`${url}/search?q=${q}`)
+        const response = await axios.get<SearchResult[]>(`${url}/search`, {params: {q}})
         return response.data
     }
 

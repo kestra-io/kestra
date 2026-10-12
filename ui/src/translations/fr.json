@@ -2734,6 +2734,7 @@
     },
     "iteration": "Itération",
     "iteration_number": "Itération {number}",
-    "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?"
+    "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?",
+    "not started": "Non démarré"
   }
 }

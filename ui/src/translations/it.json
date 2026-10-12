@@ -2734,6 +2734,7 @@
     },
     "iteration": "Iterazione",
     "iteration_number": "Iterazione {number}",
-    "delete_log_iteration": "Sei sicuro di voler eliminare il registro per {iteration}?"
+    "delete_log_iteration": "Sei sicuro di voler eliminare il registro per {iteration}?",
+    "not started": "Non avviato"
   }
 }

@@ -48,6 +48,7 @@
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
     import {revealApp} from "./utils/loaderReveal"
+    import {storageKeys} from "./utils/constants"
 
     // Dev-only, dynamically imported so the component is entirely absent from production bundles:
     // `import.meta.env.DEV` is statically replaced with `false` by Vite in prod builds, so this
@@ -81,9 +82,9 @@
 
     async function loadGeneralResources() {
         const config = await miscStore.loadConfigs()
-        const uid = localStorage.getItem("uid") || (() => {
+        const uid = localStorage.getItem(storageKeys.UID) || (() => {
             const newUid = Utils.uid()
-            localStorage.setItem("uid", newUid)
+            localStorage.setItem(storageKeys.UID, newUid)
             return newUid
         })()
 

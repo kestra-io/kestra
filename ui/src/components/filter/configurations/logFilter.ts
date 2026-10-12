@@ -6,6 +6,7 @@ import {useRoute} from "vue-router"
 import {routeFamily} from "../../../utils/routeFamily"
 import {namespaceValueProvider} from "./namespaceValueProvider"
 
+import {storageKeys} from "../../../utils/constants"
 export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
     const route = useRoute()
@@ -52,7 +53,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     defaultValue: () => (
                         typeof window !== "undefined"
-                            ? localStorage.getItem("defaultLogLevel") || "INFO"
+                            ? localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO"
                             : "INFO"
                     ),
                     visibleByDefault: true,

@@ -484,6 +484,7 @@
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Выражение",
       "tree": "Дерево",
       "raw_json": "Необработанный JSON",
       "select_prompt": "Выберите переменную, чтобы просмотреть её value.",

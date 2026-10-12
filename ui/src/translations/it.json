@@ -484,6 +484,7 @@
       "title": "Input/Output",
       "search_placeholder": "Cerca Key o value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Espressione",
       "tree": "Albero",
       "raw_json": "JSON grezzo",
       "select_prompt": "Seleziona una variabile per ispezionarne la value.",

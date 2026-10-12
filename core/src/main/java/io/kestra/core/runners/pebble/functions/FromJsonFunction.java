@@ -35,6 +35,10 @@ public class FromJsonFunction implements KestraFunction {
             return null;
         }
 
+        if (args.get("json") instanceof Map<?, ?> || args.get("json") instanceof List<?>) {
+            return args.get("json");
+        }
+
         if (!(args.get("json") instanceof String)) {
             throw new PebbleException(null, "The 'fromJson' function expects an argument 'json' with type string.", lineNumber, self.getName());
         }

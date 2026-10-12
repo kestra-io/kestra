@@ -5,15 +5,19 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.RunVariables;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.debug.Return;
 
@@ -243,6 +247,60 @@ class LoopTest {
         assertThat(result.totalCount()).isEqualTo(3);
         assertThat(result.limit()).isEqualTo(2);
         assertThat(result.values().isRight()).isTrue();
+    }
+
+    @Test
+    void itemValue_ofAnObjectInAList_shouldExposeItsFields() throws Exception {
+        // Given an input holding a list of objects, looped over as `values: "{{ inputs.additional_disks }}"`
+        RunContext runContext = runContextFactory.of(Map.of("inputs", Map.of("additional_disks", List.of(
+            disk(20, "data", "/data"),
+            disk(30, "logs", "/logs")
+        ))));
+        Loop loop = Loop.builder()
+            .id("attach")
+            .type(Loop.class.getName())
+            .values("{{ inputs.additional_disks }}")
+            .tasks(List.of(Return.builder().id("t").type(Return.class.getName()).format(Property.ofValue("x")).build()))
+            .concurrencyLimit(0)
+            .build();
+        List<String> items = loop.initFromValues(runContext).values().getLeft();
+
+        // When each iteration renders the child task's message
+        List<String> messages = new ArrayList<>();
+        for (int index = 0; index < items.size(); index++) {
+            messages.add(itemContext(index, items.get(index)).render("{{ item.value.size_gb }} "));
+        }
+
+        // Then
+        assertThat(messages).containsExactly("20 ", "30 ");
+    }
+
+    @Test
+    void itemValue_ofAnObject_shouldStillRenderAndDecodeAsBefore() throws Exception {
+        // Given an iteration over an object, and one over a string that only looks like JSON
+        RunContext object = itemContext(0, "{\"size_gb\":20,\"name\":\"data\"}");
+        RunContext text = itemContext(1, "[INFO] not json");
+
+        // Then the object prints as the same JSON, and the expressions written for a JSON string keep working
+        assertThat(object.render("{{ item.value }}")).isEqualTo("{\"size_gb\":20,\"name\":\"data\"}");
+        assertThat(object.render("{{ fromJson(item.value).size_gb }}")).isEqualTo("20");
+        assertThat(object.render("{{ item.value | jq('.name') | first }}")).isEqualTo("data");
+        assertThat(object.render("{{ item.value is json }}")).isEqualTo("true");
+        assertThat(text.render("{{ item.value }}")).isEqualTo("[INFO] not json");
+        assertThat(text.render("{{ item.value is json }}")).isEqualTo("false");
+    }
+
+    private RunContext itemContext(int index, String value) {
+        LoopRun loopRun = new LoopRun(null, "attach", "attach-run", index, null, value, null);
+        return runContextFactory.of(Map.of("item", RunVariables.of(loopRun)));
+    }
+
+    private static Map<String, Object> disk(int sizeGb, String name, String mountpoint) {
+        Map<String, Object> disk = new LinkedHashMap<>();
+        disk.put("size_gb", sizeGb);
+        disk.put("name", name);
+        disk.put("mountpoint", mountpoint);
+        return disk;
     }
 
     private Loop loop(int concurrencyLimit) {

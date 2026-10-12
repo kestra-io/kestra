@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,15 @@ class FromJsonFunctionTest {
 
         render = variableRenderer.render("{{ fromJson(null) }}", Map.of());
         assertThat(render).isEmpty();
+    }
+
+    @Test
+    void shouldReturnAnAlreadyDecodedValueUnchanged() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ fromJson(row).size_gb }}", Map.of("row", Map.of("size_gb", 20)));
+        assertThat(render).isEqualTo("20");
+
+        render = variableRenderer.render("{{ fromJson(rows)[1] }}", Map.of("rows", List.of(1, 2)));
+        assertThat(render).isEqualTo("2");
     }
 
     @Test

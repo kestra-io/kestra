@@ -4,6 +4,7 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -20,6 +21,7 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 
@@ -220,7 +222,7 @@ public final class RunVariables {
         if (loopRun.key() != null) {
             loopRunMap.put("key", loopRun.key());
         }
-        loopRunMap.put("value", loopRun.value());
+        loopRunMap.put("value", loopValue(loopRun.value()));
         if (loopRun.parents() != null) {
             loopRunMap.put("parent", of(loopRun.parents().getLast()));
             List<Map<String, Object>> parents = new ArrayList<>();
@@ -236,8 +238,24 @@ public final class RunVariables {
         if (parent.key() != null) {
             parentMap.put("key", parent.key());
         }
-        parentMap.put("value", parent.value());
+        parentMap.put("value", loopValue(parent.value()));
         return parentMap;
+    }
+
+    /**
+     * A loop carries each item as a string, an object or a list being its JSON. That JSON is decoded so the item
+     * can be navigated ({@code item.value.size_gb} when looping over a list of objects); it still prints as the same
+     * JSON, and any other string is kept as is.
+     */
+    private static Object loopValue(String value) {
+        if (value == null || value.isEmpty() || (value.charAt(0) != '{' && value.charAt(0) != '[')) {
+            return value;
+        }
+        try {
+            return JacksonMapper.toObject(value);
+        } catch (JsonProcessingException e) {
+            return value;
+        }
     }
 
     /**

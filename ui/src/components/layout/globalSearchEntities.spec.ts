@@ -1,5 +1,5 @@
 import {describe, expect, test} from "vitest"
-import {highlightMatch, paletteEntities} from "../../../../src/components/layout/globalSearchEntities"
+import {highlightMatch, paletteEntities} from "./globalSearchEntities"
 
 describe("paletteEntities", () => {
     const flows = [

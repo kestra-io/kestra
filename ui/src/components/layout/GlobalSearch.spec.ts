@@ -3,7 +3,7 @@ import {describe, expect, test, beforeEach, afterEach, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createRouter, createWebHistory} from "vue-router"
-import {i18nMount} from "../../i18nMount"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 import {useAuthStore} from "override/stores/auth"
 import {searchFlows} from "@kestra-io/kestra-sdk/flows"
 import {searchNamespaces} from "@kestra-io/kestra-sdk/namespaces"
@@ -18,7 +18,7 @@ vi.mock("override/components/useLeftMenu", () => ({
     useLeftMenu: () => ({menu: {value: []}}),
 }))
 
-import GlobalSearch from "../../../../src/components/layout/GlobalSearch.vue"
+import GlobalSearch from "./GlobalSearch.vue"
 
 const searchFlowsMock = vi.mocked(searchFlows)
 const searchNamespacesMock = vi.mocked(searchNamespaces)

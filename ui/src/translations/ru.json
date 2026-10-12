@@ -2715,6 +2715,8 @@
     "blocks": "Блоки",
     "split_horizontal": "Разделить по горизонтали",
     "split_vertical": "Разделить по вертикали",
+    "move_panel_to_bottom": "Переместить панель вниз",
+    "move_panel_to_side": "Переместить панель в сторону",
     "pwa": {
       "install_title": "Установить Kestra",
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",

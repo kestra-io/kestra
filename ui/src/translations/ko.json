@@ -2715,6 +2715,8 @@
     "blocks": "블록",
     "split_horizontal": "수평으로 분할",
     "split_vertical": "세로로 분할",
+    "move_panel_to_bottom": "패널을 하단으로 이동",
+    "move_panel_to_side": "패널을 옆으로 이동",
     "pwa": {
       "install_title": "Kestra 설치",
       "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",

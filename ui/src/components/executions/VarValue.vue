@@ -98,7 +98,7 @@
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {apiUrl} from "override/utils/route"
+    import {executionFileUrl} from "../../utils/executionUtils"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
     import * as Utils from "../../utils/utils"
@@ -227,7 +227,7 @@
     )
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`
+        return executionFileUrl(props.execution?.id, value)
     }
 
     const jsonlUrl = (value: string): string => {

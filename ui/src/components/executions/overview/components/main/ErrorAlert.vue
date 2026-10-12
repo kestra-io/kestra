@@ -85,7 +85,7 @@
                 },
             })
 
-            if (response.length) logs.value = response as any
+            if (response.length) logs.value = response
         } catch (e: unknown) {
             // The user may lack ACCESS_LOGS; anything else is left to the global toast.
             handledIf(e, [403, 404])

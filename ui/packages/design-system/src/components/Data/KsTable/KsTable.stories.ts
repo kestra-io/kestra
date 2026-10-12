@@ -137,7 +137,7 @@ export const MultipleSelect: Story = {
     render: () => ({
         components: {KsTable, KsTableColumn, KsTag},
         setup() {
-            const selected = ref<any[]>([])
+            const selected = ref<typeof SAMPLE_DATA[number][]>([])
             return {SAMPLE_DATA, selected}
         },
         template: `

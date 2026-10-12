@@ -484,6 +484,7 @@
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Выражение",
       "tree": "Дерево",
       "raw_json": "Необработанный JSON",
       "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
@@ -2714,6 +2715,8 @@
     "blocks": "Блоки",
     "split_horizontal": "Разделить по горизонтали",
     "split_vertical": "Разделить по вертикали",
+    "move_panel_to_bottom": "Переместить панель вниз",
+    "move_panel_to_side": "Переместить панель в сторону",
     "pwa": {
       "install_title": "Установить Kestra",
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",
@@ -2722,6 +2725,7 @@
     },
     "iteration": "Итерация",
     "iteration_number": "Итерация {number}",
-    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?",
+    "not started": "Не начато"
   }
 }

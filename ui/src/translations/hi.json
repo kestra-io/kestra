@@ -484,6 +484,7 @@
       "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "एक्सप्रेशन",
       "tree": "ट्री",
       "raw_json": "रॉ JSON",
       "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
@@ -2714,6 +2715,8 @@
     "blocks": "ब्लॉक",
     "split_horizontal": "क्षैतिज रूप से विभाजित करें",
     "split_vertical": "लंबवत विभाजित करें",
+    "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",
+    "move_panel_to_side": "पैनल को एक तरफ ले जाएँ",
     "pwa": {
       "install_title": "Kestra इंस्टॉल करें",
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
@@ -2722,6 +2725,7 @@
     },
     "iteration": "पुनरावृत्ति",
     "iteration_number": "पुनरावृत्ति {number}",
-    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?"
+    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?",
+    "not started": "शुरू नहीं हुआ"
   }
 }

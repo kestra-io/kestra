@@ -60,43 +60,17 @@ describe("Restart (replay)", () => {
 })
 
 describe("Restart (subflow child)", () => {
-    const messages = {
-        en: {
-            "restart subflow warning": "Created by a {parent}.",
-            "restart subflow warning link": "parent execution",
-        },
-    }
+    const messages = {en: {"restart subflow warning": "Created by a {parent}.", "restart subflow warning link": "parent execution"}}
 
     function mountChild(trigger: Record<string, unknown> | undefined) {
         setActivePinia(createPinia())
         const wrapper = mount(Restart, {
             props: {
-                execution: {
-                    id: "child1",
-                    namespace: "tests",
-                    flowId: "child-flow",
-                    state: {current: "FAILED"},
-                    trigger,
-                },
+                execution: {id: "child1", namespace: "tests", flowId: "child-flow", state: {current: "FAILED"}, trigger},
             },
             global: {
-                plugins: [
-                    createI18n({
-                        legacy: false,
-                        locale: "en",
-                        missingWarn: false,
-                        fallbackWarn: false,
-                        messages,
-                    }),
-                    KestraDesignSystem,
-                ],
-                stubs: {
-                    KsDialog: {template: "<div><slot /></div>"},
-                    RouterLink: {
-                        props: ["to"],
-                        template: "<a data-test='parent-link'><slot /></a>",
-                    },
-                },
+                plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages}), KestraDesignSystem],
+                stubs: {KsDialog: {template: "<div><slot /></div>"}, RouterLink: {props: ["to"], template: "<a data-test='parent-link'><slot /></a>"}},
             },
         })
         mounted.push(wrapper)
@@ -110,11 +84,7 @@ describe("Restart (subflow child)", () => {
     it("shouldWarnAboutTheParentWhenExecutionWasCreatedBySubflowTask", async () => {
         const wrapper = mountChild({
             type: "io.kestra.plugin.core.flow.Subflow",
-            variables: {
-                executionId: "parent1",
-                namespace: "tests",
-                flowId: "parent-flow",
-            },
+            variables: {executionId: "parent1", namespace: "tests", flowId: "parent-flow"},
         })
 
         await openDialog(wrapper)

@@ -407,6 +407,34 @@ class PropertyTest {
         assertThat(renderedList.get(0)).isInstanceOf(MySubtype.class);
     }
 
+    @Test
+    void asMapShouldKeepTheListOrMapAnExpressionRendersTo() throws IllegalVariableEvaluationException {
+        Property<Map<String, Object>> property = Property.ofExpression("""
+            {"labels": "{{ labels }}", "filter": "{{ filter }}", "tags": "{{ 'a,b' | split(',') }}", "nested": {"labels": "{{ labels }}"},
+             "page": "{{ page }}", "query": "page {{ page }}", "mixed": "{{ labels }} or {{ page }}"}""");
+        Map<String, Object> variables = Map.of("labels", List.of("first:label", "second:label"), "filter", Map.of("status", "open"), "page", 2);
+
+        Map<String, Object> rendered = runContextFactory.of().render(property).asMap(String.class, Object.class, variables);
+
+        assertThat(rendered.get("labels")).isEqualTo(List.of("first:label", "second:label"));
+        assertThat(rendered.get("filter")).isEqualTo(Map.of("status", "open"));
+        assertThat(rendered.get("tags")).isEqualTo(List.of("a", "b"));
+        assertThat(rendered.get("nested")).isEqualTo(Map.of("labels", List.of("first:label", "second:label")));
+        assertThat(rendered.get("page")).isEqualTo("2");
+        assertThat(rendered.get("query")).isEqualTo("page 2");
+        assertThat(rendered.get("mixed")).isEqualTo("[\"first:label\",\"second:label\"] or 2");
+    }
+
+    @Test
+    void asMapShouldStillRenderAStringMapAsText() throws IllegalVariableEvaluationException {
+        Property<Map<String, String>> property = Property.ofExpression("""
+            {"labels": "{{ labels }}"}""");
+
+        Map<String, String> rendered = runContextFactory.of().render(property).asMap(String.class, String.class, Map.of("labels", List.of("first:label", "second:label")));
+
+        assertThat(rendered.get("labels")).isEqualTo("[\"first:label\",\"second:label\"]");
+    }
+
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
     @JsonSubTypes(
         {

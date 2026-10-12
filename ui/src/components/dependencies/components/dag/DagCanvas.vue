@@ -48,7 +48,7 @@
     import {Background} from "@vue-flow/background"
     import {GRAPH_BACKGROUND, MIN_ZOOM, untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
     import {cssVar, stringUtils} from "@kestra-io/design-system"
-    import {useTheme} from "../../../../utils/utils"
+    import {useTheme} from "../../../../composables/useTheme"
     import AssetNode from "./AssetNode.vue"
     import {computeDagLayout} from "../../utils/dagLayout"
     import {computeTrace, traceEdgeKey} from "../../utils/dagTrace"

@@ -1,4 +1,5 @@
 import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured, type Component} from "vue"
+import {useI18n} from "vue-i18n"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
@@ -12,6 +13,7 @@ function wrapWithErrorBoundary(inner: Component) {
         name: "FederatedModuleBoundary",
         inheritAttrs: false,
         setup(_, {attrs, slots}) {
+            const {t} = useI18n()
             const error = ref<Error | null>(null)
 
             onErrorCaptured((err: Error) => {
@@ -22,7 +24,7 @@ function wrapWithErrorBoundary(inner: Component) {
 
             return () => {
                 if (error.value) {
-                    return h("div", {class: "federated-module-error"}, "A plugin component failed to load.")
+                    return h("div", {class: "federated-module-error"}, t("plugins.ui_load_error"))
                 }
                 return h(inner, attrs, slots)
             }

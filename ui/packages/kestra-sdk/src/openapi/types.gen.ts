@@ -597,6 +597,7 @@ export type CheckStyle = 'ERROR' | 'SUCCESS' | 'WARNING' | 'INFO';
 export type Concurrency = {
     limit: number;
     behavior: ConcurrencyBehavior;
+    queueLimit?: number;
 };
 
 export type ConcurrencyBehavior = 'QUEUE' | 'CANCEL' | 'FAIL';
@@ -1530,6 +1531,7 @@ export type MiscControllerConfiguration = {
     isBasicAuthManagedByConfig?: boolean;
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
+    isPluginEndpointsEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -2079,11 +2081,10 @@ export type ServerInstanceType = 'SERVER' | 'STANDALONE';
 export type ServiceServiceState = 'CREATED' | 'RUNNING' | 'ERROR' | 'DISCONNECTED' | 'TERMINATING' | 'TERMINATED_GRACEFULLY' | 'TERMINATED_FORCED' | 'NOT_RUNNING' | 'INACTIVE' | 'MAINTENANCE';
 
 export type ServiceInstance = {
-    server?: ServerInstance;
-    metrics?: Array<Metric>;
-    state?: ServiceServiceState;
     id?: string;
     type?: ServiceType;
+    state?: ServiceServiceState;
+    server?: ServerInstance;
     createdAt?: string;
     updatedAt?: string;
     events?: Array<ServiceInstanceTimestampedEvent>;
@@ -2092,6 +2093,7 @@ export type ServiceInstance = {
             [key: string]: unknown;
         };
     };
+    metrics?: Array<Metric>;
     seqId?: number;
 };
 
@@ -2207,9 +2209,6 @@ export type State = {
     readonly endDate?: string | null;
     current: StateType;
     histories: Array<StateHistory>;
-    readonly getDuration: string;
-    readonly getStartDate: string;
-    readonly getEndDate: string;
 };
 
 export type StateHistory = {
@@ -2410,15 +2409,37 @@ export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
+    errors?: Array<ValidationError>;
+    /**
+     * @deprecated
+     */
+    constraints?: string;
     index: number;
     filename?: string;
     namespace?: string;
     flow?: string;
-    constraints?: string;
     outdated?: boolean;
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;
     infos?: Array<string>;
+};
+
+/**
+ * A single validation error, located in the submitted source.
+ */
+export type ValidationError = {
+    /**
+     * What is wrong.
+     */
+    detail?: string;
+    /**
+     * RFC 6901 JSON Pointer locating the error in the submitted document.
+     */
+    pointer?: string;
+    /**
+     * Human-friendly path locating the error, naming tasks and inputs by id. Not a JSON Pointer.
+     */
+    path?: string;
 };
 
 export type VersionServiceVersionUpgrade = {
@@ -6512,6 +6533,54 @@ export type ForceRunExecutionResponses = {
 
 export type ForceRunExecutionResponse = ForceRunExecutionResponses[keyof ForceRunExecutionResponses];
 
+export type InterruptTaskRunData = {
+    /**
+     * the taskRun id and the state to apply to it
+     */
+    body: ExecutionControllerStateRequest;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/interrupt';
+};
+
+export type InterruptTaskRunErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution or the task run is not found
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run cannot be interrupted
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type InterruptTaskRunError = InterruptTaskRunErrors[keyof InterruptTaskRunErrors];
+
+export type InterruptTaskRunResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type KillExecutionData = {
     body?: never;
     path: {
@@ -6544,7 +6613,7 @@ export type KillExecutionErrors = {
      */
     404: ProblemDetail;
     /**
-     * if the executions is already finished
+     * if the execution is already finished and has no running task or sub-execution left to kill
      */
     409: ProblemDetail;
     /**
@@ -7702,6 +7771,10 @@ export type DeleteFlowsByIdsData = {
 };
 
 export type DeleteFlowsByIdsErrors = {
+    /**
+     * Validation errors
+     */
+    400: ProblemDetail;
     /**
      * Authentication required
      */
@@ -11089,6 +11162,88 @@ export type GetTaskRunOutputsResponses = {
 };
 
 export type GetTaskRunOutputsResponse = GetTaskRunOutputsResponses[keyof GetTaskRunOutputsResponses];
+
+export type Get1Data = {
+    body?: never;
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type Get1Errors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type Get1Error = Get1Errors[keyof Get1Errors];
+
+export type Get1Responses = {
+    /**
+     * get_1 200 response
+     */
+    200: Blob | File;
+};
+
+export type Get1Response = Get1Responses[keyof Get1Responses];
+
+export type PostData = {
+    body?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type PostErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PostError = PostErrors[keyof PostErrors];
+
+export type PostResponses = {
+    /**
+     * post 200 response
+     */
+    200: Blob | File;
+};
+
+export type PostResponse = PostResponses[keyof PostResponses];
 
 export type ListSecretsData = {
     body?: never;

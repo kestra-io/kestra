@@ -1,3 +1,5 @@
+import type {DocMetadata} from "../../stores/doc"
+
 export const SECTIONS = {
     "Get Started with Kestra": [
         "Quickstart",
@@ -49,7 +51,7 @@ export interface DocsTocItem {
     children?: DocsTocItem[];
 }
 
-export function buildDocsToc(rawStructure: Record<string, any> | undefined): DocsTocItem[] | undefined {
+export function buildDocsToc(rawStructure: Record<string, DocMetadata> | undefined): DocsTocItem[] | undefined {
     if (rawStructure === undefined) {
         return undefined
     }

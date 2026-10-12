@@ -1,6 +1,6 @@
 <template>
     <DynamicScroller
-        v-if="followedExecution && currentTaskRuns.length > 0"
+        v-if="followedExecution && (currentTaskRuns.length > 0 || executionLogs.length > 0)"
         ref="taskRunScroller"
         :items="currentTaskRuns"
         :minItemSize="50"
@@ -14,6 +14,28 @@
         @update="emit('scroller-update')"
         @resize="emit('scroller-update')"
     >
+        <template #before>
+            <KsCard
+                v-if="executionLogs.length > 0"
+                class="attempt-wrapper"
+                shadow="never"
+                data-test="execution-logs"
+            >
+                <LogLine
+                    v-for="item in executionLogs"
+                    :key="item.index"
+                    class="line"
+                    :cursor="logCursor === `${EXECUTION_LOGS_INDEX}/${item.index}`"
+                    :class="{
+                        ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level,
+                        'opacity-40': levelToHighlight && levelToHighlight !== item.level,
+                    }"
+                    :level="level"
+                    :log="item"
+                    :excludeMetas="excludeMetas"
+                />
+            </KsCard>
+        </template>
         <template
             #default="{
                 item: currentTaskRun,
@@ -290,7 +312,7 @@
     import LogLine from "./LogLine.vue"
     import {State, levelToRequestParams, type LevelFilterValue, type Scheduled, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import {logDisplayTypes} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys} from "../../utils/constants"
     import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
@@ -418,6 +440,7 @@
     // Execution `rawLogs` and any open logs SSE belong to, so both can be dropped on a change.
     const logsExecutionId = ref<string | undefined>(undefined)
     const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
+    const retryTimers = new Set<ReturnType<typeof setTimeout>>()
     const flow = ref<FlowForExecution | undefined>(undefined)
     const logsBuffer = ref<LogEntry[]>([])
     const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
@@ -430,7 +453,7 @@
     const loopOutputsByTaskRunId = ref<Record<string, LoopOutputs>>({})
 
     // Template ref
-    const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller>("taskRunScroller")
+    const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller & Pick<DynamicScrollerExposed, "scrollToPosition">>("taskRunScroller")
     const taskRunViewportHeight = ref(0)
     // Seed the cap before Teleport so virtual rows stay bounded until ResizeObserver measures the dialog.
     watch(() => props.fullHeight, (fullHeight) => {
@@ -581,7 +604,7 @@
 
     const autoExpandTaskRunStates = computed<string[]>(() => {
         switch (
-            localStorage.getItem("logDisplay") ||
+            localStorage.getItem(storageKeys.LOG_DISPLAY) ||
             logDisplayTypes.DEFAULT
         ) {
         case logDisplayTypes.ERROR:
@@ -593,6 +616,17 @@
         default:
             return State.arrayAllStates().map((s) => s.name)
         }
+    })
+
+    // Logs written by the executor itself (e.g. a concurrency-limit failure) carry no task run.
+    const EXECUTION_LOGS_INDEX = -1
+
+    const executionLogs = computed<LogLineItem[]>(() => {
+        if (props.taskRunId) return []
+        const search = props.filter.toLowerCase()
+        return filteredLogs.value
+            .filter((log) => !log.taskRunId && (search === "" || (log.message ?? "").toLowerCase().includes(search)))
+            .map((log, index) => ({...log, index}))
     })
 
     const currentTaskRunsLogIndicesByLevel = computed(() =>
@@ -616,7 +650,12 @@
                 }
                 return indicesByLevel
             },
-            {},
+            executionLogs.value.reduce((indicesByLevel: Record<string, string[]>, log) => {
+                if (log.level) {
+                    (indicesByLevel[log.level] ??= []).push(`${EXECUTION_LOGS_INDEX}/${log.index}`)
+                }
+                return indicesByLevel
+            }, {}),
         ),
     )
 
@@ -802,7 +841,18 @@
 
     onBeforeUnmount(() => {
         closeLogsSSE()
+        closeTargetExecutionSSE()
+        clearTimeout(timeout.value)
+        retryTimers.forEach((handle) => clearTimeout(handle))
     })
+
+    function retryShortly(callback: () => void) {
+        const handle = setTimeout(() => {
+            retryTimers.delete(handle)
+            callback()
+        }, 50)
+        retryTimers.add(handle)
+    }
 
     // Methods
     async function updateLoopStatus(taskRunId: string) {
@@ -871,7 +921,7 @@
         }
 
         if (followedExecution.value === undefined) {
-            setTimeout(() => autoExpandBasedOnSettings(), 50)
+            retryShortly(autoExpandBasedOnSettings)
             return
         }
         currentTaskRuns.value.forEach((taskRun) => {
@@ -994,7 +1044,7 @@
 
     function expandAll() {
         if (!followedExecution.value) {
-            setTimeout(() => expandAll(), 50)
+            retryShortly(expandAll)
             return
         }
 
@@ -1019,7 +1069,7 @@
                 subflowTaskRunDetailsRefs.value,
             )
             if (subflowLogsElements.length === 0) {
-                setTimeout(() => expandSubflows(), 50)
+                retryShortly(expandSubflows)
             }
 
             subflowLogsElements.forEach((subflowLogs) =>
@@ -1182,6 +1232,10 @@
         const split = logId.split("/")
         const taskRunIndex = Number(split[0])
         const globalIndex = Number(split[1])
+        if (taskRunIndex === EXECUTION_LOGS_INDEX) {
+            taskRunScroller.value?.scrollToPosition(0)
+            return
+        }
         taskRunScroller.value?.scrollToItem(taskRunIndex)
 
         const taskRun = currentTaskRuns.value[taskRunIndex]

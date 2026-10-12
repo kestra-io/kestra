@@ -193,6 +193,36 @@ import lombok.experimental.SuperBuilder;
                                   Further up (table types): {{item.parents[1].value}}
                 """
         ),
+        @Example(
+            full = true,
+            title = """
+                Collect outputs across iterations. By default, outputs produced inside a loop are not visible to tasks \
+                that run after it. Declare an `outputs:` block on the Loop task to surface values explicitly. \
+                After the loop, `outputs.loop.outputs` is a list of per-iteration results. Use `loopOutputs()` to extract \
+                one field across all iterations as a flat list.""",
+            code = """
+                id: loop_outputs
+                namespace: company.team
+
+                tasks:
+                  - id: loop
+                    type: io.kestra.plugin.core.flow.Loop
+                    values: ["alpha", "beta", "gamma"]
+                    fetchType: AUTO
+                    outputs:
+                      - id: label
+                        type: STRING
+                        value: "{{ outputs.process.value }}"
+                    tasks:
+                      - id: process
+                        type: io.kestra.plugin.core.debug.Return
+                        format: "processed {{ item.value }}"
+
+                  - id: read_outputs
+                    type: io.kestra.plugin.core.log.Log
+                    message: "All results: {{ loopOutputs(outputs.loop.outputs, 'label') }}"
+                """
+        ),
     }
 )
 public class Loop extends AbstractBranch<Loop.Output> {
@@ -233,7 +263,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
             """
     )
     @PluginProperty
-    private Integer concurrencyLimit = 1;
+    private Integer concurrencyLimit = 0;
 
     @Builder.Default
     @Schema(

@@ -100,4 +100,21 @@ describe("overview Cascader", () => {
         expect(leaf.tooLarge).toBeUndefined();
         expect(leaf.label).toHaveLength(9 * 1024);
     });
+
+    // Truthy leaf checks dropped 0 / false / "" / null from the variables column (#16194).
+    test("keeps falsy scalar leaves in the tree", () => {
+        const nodes = options({
+            zero: 0,
+            flag: false,
+            empty: "",
+            missing: null,
+        });
+
+        expect(nodes).toHaveLength(4);
+        expect(nodes.map((n: {label: string}) => n.label)).toEqual(["zero", "flag", "empty", "missing"]);
+        expect(nodes[0].children[0]).toMatchObject({label: 0, value: 0});
+        expect(nodes[1].children[0]).toMatchObject({label: false, value: false});
+        expect(nodes[2].children[0]).toMatchObject({label: "", value: ""});
+        expect(nodes[3].children[0]).toMatchObject({label: null, value: null});
+    });
 });

@@ -158,9 +158,9 @@
             const currentPath = path ? `${path}.${k}` : k;
 
             const children = isObject ? format(v, currentPath) : [leaf(v, currentPath)];
-            // An oversized leaf carries no label, so keep it on its own merit or it drops out
-            // of the column and the value becomes unreachable.
-            const filteredChildren = children.filter((c) => c.tooLarge || (c.label ?? c.value));
+            // Keep leaves whose value is set, including falsy ones (0, false, "", null).
+            // Oversized leaves have an empty label; keep them so the download stays reachable.
+            const filteredChildren = children.filter((c) => c.tooLarge || c.value !== undefined);
 
             const node: Node = {label: k, value: k, path: currentPath};
 

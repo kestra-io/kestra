@@ -324,19 +324,32 @@ export function flattenTaskIds(tasks: unknown, acc: string[]): void {
     }
 }
 
+type TaskMatcher = (task: Record<string, unknown>) => boolean
+
+function matcherFor(flow: Record<string, unknown>, taskId: string, taskPath?: string): TaskMatcher {
+    const located = taskPath ? getAtPath(flow, taskPath) : undefined
+    if (located && typeof located === "object" && !Array.isArray(located)) {
+        const edited = displayTaskOf(located as Record<string, unknown>)
+        return task => task === edited
+    }
+    return task => Boolean(task.id) && String(task.id) === taskId
+}
+
 export function upstreamTaskIds(
     flow: {tasks?: unknown; errors?: unknown; finally?: unknown},
     taskId: string,
+    taskPath?: string,
 ): string[] {
+    const isTarget = matcherFor(flow, taskId, taskPath)
     const upstream: string[] = []
-    if (collectUpstream(flow.tasks, taskId, upstream)) return upstream
+    if (collectUpstream(flow.tasks, isTarget, upstream)) return upstream
 
     const afterMain: string[] = []
     flattenTaskIds(flow.tasks, afterMain)
-    if (collectUpstream(flow.errors, taskId, afterMain)) return afterMain
+    if (collectUpstream(flow.errors, isTarget, afterMain)) return afterMain
 
     flattenTaskIds(flow.errors, afterMain)
-    if (collectUpstream(flow.finally, taskId, afterMain)) return afterMain
+    if (collectUpstream(flow.finally, isTarget, afterMain)) return afterMain
 
     const everyId: string[] = []
     for (const section of [flow.tasks, flow.errors, flow.finally]) flattenTaskIds(section, everyId)
@@ -349,15 +362,25 @@ function isConcurrentFlowable(task: Record<string, unknown>): boolean {
     return type.endsWith(".ForEach") && task.concurrencyLimit !== undefined && Number(task.concurrencyLimit) !== 1
 }
 
-function containsTaskId(list: unknown, targetId: string): boolean {
-    const ids: string[] = []
-    flattenTaskIds(list, ids)
-    return ids.includes(targetId)
+function containsTask(list: unknown, isTarget: TaskMatcher): boolean {
+    if (!Array.isArray(list)) return false
+    return list.some(rawTask => {
+        const task = displayTaskOf(rawTask as Record<string, unknown>) as Record<string, unknown> | undefined
+        if (!task || typeof task !== "object") return false
+        if (isTarget(task)) return true
+        return FLOWABLE_BRANCH_KEYS.some(key => {
+            const branch = task[key]
+            if (key === "cases" && branch && typeof branch === "object") {
+                return Object.values(branch as Record<string, unknown>).some(caseTasks => containsTask(caseTasks, isTarget))
+            }
+            return containsTask(branch, isTarget)
+        })
+    })
 }
 
 function branchesPrecedingKey(key: string): readonly string[] {
-    if (key === "errors") return ["tasks", "then", "else", "cases"]
-    if (key === "finally") return ["tasks", "then", "else", "cases", "errors"]
+    if (key === "errors") return ["tasks", "then", "else", "cases", "defaults"]
+    if (key === "finally") return ["tasks", "then", "else", "cases", "defaults", "errors"]
     return []
 }
 
@@ -369,10 +392,10 @@ function flattenBranch(branch: unknown, acc: string[]): void {
     }
 }
 
-function collectUpstream(list: unknown, targetId: string, acc: string[], concurrent = false): boolean {
+function collectUpstream(list: unknown, isTarget: TaskMatcher, acc: string[], concurrent = false): boolean {
     if (!Array.isArray(list)) return false
     const items = list as Record<string, unknown>[]
-    const targetIndex = items.findIndex(item => containsTaskId([item], targetId))
+    const targetIndex = items.findIndex(item => containsTask([item], isTarget))
     if (targetIndex < 0) return false
 
     const isDag = items.some(isWrappedLaneItem)
@@ -382,15 +405,15 @@ function collectUpstream(list: unknown, targetId: string, acc: string[], concurr
     for (const item of precedingItems) flattenTaskIds([item], acc)
 
     const target = displayTaskOf(items[targetIndex])
-    if (target.id === targetId) return true
+    if (isTarget(target)) return true
     const targetConcurrent = isConcurrentFlowable(target)
     for (const key of FLOWABLE_BRANCH_KEYS) {
         const branch = target[key]
         if (key === "cases" && branch && typeof branch === "object") {
-            if (Object.values(branch).some(caseTasks => collectUpstream(caseTasks, targetId, acc))) return true
-        } else if (containsTaskId(branch, targetId)) {
+            if (Object.values(branch).some(caseTasks => collectUpstream(caseTasks, isTarget, acc))) return true
+        } else if (containsTask(branch, isTarget)) {
             for (const earlier of branchesPrecedingKey(key)) flattenBranch(target[earlier], acc)
-            return collectUpstream(branch, targetId, acc, key === "tasks" && targetConcurrent)
+            return collectUpstream(branch, isTarget, acc, key === "tasks" && targetConcurrent)
         }
     }
     return true

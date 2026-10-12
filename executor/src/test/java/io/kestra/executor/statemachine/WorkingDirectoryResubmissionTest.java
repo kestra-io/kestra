@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 class WorkingDirectoryResubmissionTest {
 
     private static final Instant T0 = Instant.parse("2026-01-01T00:00:00Z");
+    private static final Instant AFTER_ANY_RETRY_DELAY = Instant.parse("2100-01-01T00:00:00Z");
 
     private final ExecutorTestHarness harness = ExecutorTestHarness.create();
     private final AtomicReference<WorkerTask> dispatched = new AtomicReference<>();
@@ -41,6 +42,26 @@ class WorkingDirectoryResubmissionTest {
         namespace: io.kestra.tests
         concurrency:
           limit: 1
+        tasks:
+          - id: working-directory
+            type: io.kestra.plugin.core.flow.WorkingDirectory
+            tasks:
+              - id: checkout
+                type: io.kestra.plugin.core.log.Log
+                message: checkout
+              - id: build
+                type: io.kestra.plugin.core.log.Log
+                message: build
+        """);
+    private final FlowWithSource retriedFlow = Flows.yaml("""
+        id: working-directory-retried-resubmission
+        namespace: io.kestra.tests
+        concurrency:
+          limit: 1
+        retry:
+          type: constant
+          interval: PT1S
+          maxAttempts: 2
         tasks:
           - id: working-directory
             type: io.kestra.plugin.core.flow.WorkingDirectory
@@ -81,6 +102,52 @@ class WorkingDirectoryResubmissionTest {
 
         // Then
         assertThat(harness).hasExecutionInState(created, State.Type.FAILED).hasRunning(flow, 0);
+    }
+
+    @Test
+    void shouldSucceedWhenARetriedRunIsResubmitted() {
+        // Given
+        Execution created = retryThenLoseWorkerDuringBuild();
+
+        // When: the second run is resubmitted and runs both subtasks again
+        WorkerTask resubmitted = resubmitted();
+        harness.run(List.of(subtaskResult(resubmitted, "checkout", State.Type.SUCCESS), subtaskResult(resubmitted, "build", State.Type.SUCCESS)), ScriptedWorker.succeeding(T0));
+
+        // Then
+        assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS).hasRunning(retriedFlow, 0);
+        assertThat(subtasks(created)).hasSize(2).allSatisfy(subtask -> assertThat(subtask.getState().getCurrent()).isEqualTo(State.Type.SUCCESS));
+    }
+
+    @Test
+    void shouldFailWhenARetriedRunIsResubmittedAndFailsBeforeReachingTheLostSubtask() {
+        // Given
+        Execution created = retryThenLoseWorkerDuringBuild();
+
+        // When: the resubmitted run fails on its first subtask, so the lost subtask is never run again
+        harness.run(List.of(subtaskResult(resubmitted(), "checkout", State.Type.FAILED)), ScriptedWorker.succeeding(T0));
+
+        // Then: the flow retry is exhausted, so the execution ends instead of waiting for the lost subtask
+        assertThat(harness).hasExecutionInState(created, State.Type.FAILED).hasRunning(retriedFlow, 0);
+    }
+
+    // the first run fails on its first subtask and is retried, and the worker of the second run dies during build
+    private Execution retryThenLoseWorkerDuringBuild() {
+        harness.registerFlow(retriedFlow);
+        Execution created = Executions.created(retriedFlow);
+        harness.run(created, task ->
+        {
+            dispatched.set(task);
+            return subtaskResult(task, "checkout", State.Type.FAILED);
+        });
+        harness.tickExecutionDelays(AFTER_ANY_RETRY_DELAY);
+        harness.run(List.of(), task ->
+        {
+            dispatched.set(task);
+            return subtaskResult(task, "checkout", State.Type.SUCCESS);
+        });
+        harness.run(List.of(subtaskResult(dispatched.get(), "build", State.Type.RUNNING)), ScriptedWorker.succeeding(T0));
+        assertThat(harness).hasExecutionInState(created, State.Type.RUNNING);
+        return created;
     }
 
     private Execution startAndLoseWorkerDuringBuild() {

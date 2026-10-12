@@ -2713,8 +2713,6 @@
       "open_mode_hint": "任务默认在模态框中打开。您可以在{settings}中将选项卡设为默认。"
     },
     "blocks": "区块",
-    "split_horizontal": "水平拆分",
-    "split_vertical": "垂直拆分",
     "move_panel_to_bottom": "将面板移到底部",
     "move_panel_to_side": "将面板移至侧面",
     "pwa": {

@@ -2713,8 +2713,6 @@
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
-    "split_horizontal": "Split horizontally",
-    "split_vertical": "Split vertically",
     "move_panel_to_bottom": "Move panel to bottom",
     "move_panel_to_side": "Move panel to side",
     "pwa": {

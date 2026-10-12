@@ -2713,8 +2713,6 @@
       "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
     "blocks": "Blocchi",
-    "split_horizontal": "Dividi orizzontalmente",
-    "split_vertical": "Dividi verticalmente",
     "move_panel_to_bottom": "Sposta il pannello in basso",
     "move_panel_to_side": "Sposta il pannello lateralmente",
     "pwa": {

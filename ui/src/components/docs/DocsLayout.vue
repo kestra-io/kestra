@@ -262,8 +262,7 @@
             max-width: 100vw;
             z-index: calc(var(--ks-z-overlay) + 1);
             transform: translateX(-100%);
-            transition: transform 300ms var(--ks-ease-out);
-            box-shadow: 2px 0 8px var(--ks-shadow-elevated);
+            transition: transform var(--ks-duration-slow) var(--ks-ease-out);
             padding: 1rem;
             padding-top: 3.5rem;
             padding-right: 0.5rem;
@@ -273,6 +272,7 @@
 
             &.mobile-open {
                 transform: translateX(0);
+                box-shadow: 2px 0 8px var(--ks-shadow-elevated);
             }
 
             & > div {

@@ -253,7 +253,7 @@
         border-left: 1px solid transparent;
         width: 0;
         overflow: hidden;
-        transition: width 200ms ease, border-color 200ms ease;
+        transition: width var(--ks-duration-base) ease, border-color var(--ks-duration-base) ease;
         h3{
             display: flex;
             align-items: center;

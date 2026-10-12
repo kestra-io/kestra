@@ -25,4 +25,15 @@ describe("searchLoopIterations", () => {
         const {filters} = vi.mocked(ExecutionsAPI.searchExecutions).mock.calls[0][0] as {filters: {field: string}[]}
         expect(filters.some((filter) => filter.field === "endDate")).toBe(false)
     })
+
+    it("shouldExposeTheStartAndEndDatesOfEachIteration", async () => {
+        vi.mocked(ExecutionsAPI.searchExecutions).mockResolvedValue({
+            results: [{id: "customer-13", state: {current: "SUCCESS", startDate: "2026-10-09T09:49:14.1Z", endDate: "2026-10-09T09:49:16.2Z"}, loopRun: {taskId: "per_customer", index: 12}}],
+            total: 1,
+        } as never)
+
+        const {results} = await searchLoopIterations({parentId: "root"})
+
+        expect(results[0]).toMatchObject({startDate: "2026-10-09T09:49:14.1Z", endDate: "2026-10-09T09:49:16.2Z"})
+    })
 })

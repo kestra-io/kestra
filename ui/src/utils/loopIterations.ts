@@ -15,6 +15,8 @@ export interface LoopIteration {
     number: number;
     value?: string;
     state: string;
+    startDate?: string;
+    endDate?: string;
     parentId?: string;
     taskId?: string;
     loopRun?: IterationLoopRun;
@@ -108,6 +110,8 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
                 number: iterationNumber(item.loopRun?.index ?? 0),
                 value: item.loopRun?.value,
                 state: item.state.current,
+                startDate: item.state.startDate,
+                endDate: item.state.endDate ?? undefined,
                 parentId: item.parentId,
                 taskId: item.loopRun?.taskId,
                 loopRun: item.loopRun as IterationLoopRun | undefined,

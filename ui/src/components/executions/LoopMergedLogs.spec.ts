@@ -20,6 +20,10 @@ function buildMerged() {
         loaded: ref(true),
         failure: ref<string>(),
         hasMore: ref(false),
+        hasPreviousBatch: ref(false),
+        hasNextBatch: ref(false),
+        previousBatch: vi.fn(),
+        nextBatch: vi.fn(),
         refresh: vi.fn(),
         loadMore: vi.fn(),
     }
@@ -53,7 +57,7 @@ const globalConfig = {
 
 const mountMerged = () => i18nMount(LoopMergedLogs, {
     props: {levelParams: {}, running: false},
-    messages: {logs_view: {loop: {"show-in-overview-for": "Show {scope} in Overview"}}},
+    messages: {logs_view: {loop: {"show-in-overview-for": "Show {scope} in Overview", "batch-range": "Failed iterations {from}-{to} of {total}"}}},
     global: globalConfig,
 })
 
@@ -70,7 +74,7 @@ describe("executions/LoopMergedLogs", () => {
     })
 
     test("shouldRenderEachLineWithItsScopeAndAnAccessibleOverviewLink", () => {
-        state.merged.targets.value = {chains: {i7: chain}, truncated: false, failedShown: 1, scope: []}
+        state.merged.targets.value = {chains: {i7: chain}, offset: 0, end: 1, total: 1, scope: []}
         state.merged.lines.value = [
             {executionId: "i7", message: "Task failure", timestamp: "2026-10-09T09:49:15Z"},
             {executionId: "root", message: "root line", timestamp: "2026-10-09T09:49:16Z"},
@@ -87,7 +91,7 @@ describe("executions/LoopMergedLogs", () => {
     })
 
     test("shouldWriteTheLoopScopeWhenAScopeIsClicked", async () => {
-        state.merged.targets.value = {chains: {i7: chain}, truncated: false, failedShown: 1, scope: []}
+        state.merged.targets.value = {chains: {i7: chain}, offset: 0, end: 1, total: 1, scope: []}
         state.merged.lines.value = [{executionId: "i7", message: "Task failure", timestamp: "2026-10-09T09:49:15Z"}]
         const wrapper = mountMerged()
 
@@ -96,13 +100,38 @@ describe("executions/LoopMergedLogs", () => {
         expect(state.setEntries).toHaveBeenCalledWith([{taskId: "per_customer", number: 13}, {taskId: "per_invoice", number: 7}])
     })
 
-    test("shouldShowTheTruncationNoticeWhenTheFailedIterationsWereCapped", () => {
-        state.merged.targets.value = {chains: {}, truncated: true, failedShown: 42, scope: []}
+    test("shouldShowTheRangeOfFailedIterationsOfTheCurrentBatchWhenThereAreSeveral", () => {
+        state.merged.targets.value = {chains: {}, offset: 0, end: 148, total: 12480, scope: []}
+        state.merged.hasNextBatch.value = true
         state.merged.lines.value = [{executionId: "root", message: "x", timestamp: "2026-10-09T09:49:16Z"}]
 
         const wrapper = mountMerged()
 
-        expect(wrapper.find("[data-test='loop-merged-logs-truncated']").exists()).toBe(true)
+        expect(wrapper.find("[data-test='loop-merged-batch-range']").text()).toBe(`Failed iterations 1-148 of ${(12480).toLocaleString()}`)
+        expect(wrapper.find("[data-test='loop-merged-batch-previous']").attributes("disabled")).toBeDefined()
+        expect(wrapper.find("[data-test='loop-merged-batch-next']").attributes("disabled")).toBeUndefined()
+    })
+
+    test("shouldNavigateBetweenBatchesWithPreviousAndNext", async () => {
+        state.merged.targets.value = {chains: {}, offset: 148, end: 300, total: 400, scope: []}
+        state.merged.hasPreviousBatch.value = true
+        state.merged.hasNextBatch.value = true
+        const wrapper = mountMerged()
+
+        await wrapper.find("[data-test='loop-merged-batch-next']").trigger("click")
+        await wrapper.find("[data-test='loop-merged-batch-previous']").trigger("click")
+
+        expect(state.merged.nextBatch).toHaveBeenCalledTimes(1)
+        expect(state.merged.previousBatch).toHaveBeenCalledTimes(1)
+    })
+
+    test("shouldHideTheBatchNavigatorWhenEveryFailedIterationFitsInOneBatch", () => {
+        state.merged.targets.value = {chains: {}, offset: 0, end: 3, total: 3, scope: []}
+        state.merged.lines.value = [{executionId: "root", message: "x", timestamp: "2026-10-09T09:49:16Z"}]
+
+        const wrapper = mountMerged()
+
+        expect(wrapper.find("[data-test='loop-merged-batches']").exists()).toBe(false)
     })
 
     test("shouldShowTheEmptyStateWhenNothingMatches", () => {

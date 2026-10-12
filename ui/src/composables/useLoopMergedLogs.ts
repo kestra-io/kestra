@@ -36,12 +36,16 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
     const failure = ref<MergedLogsFailure>()
     const nextCursor = ref<string>()
     const cursorMode = ref(false)
+    const batchHistory = ref<number[]>([])
+    let batchOffset = 0
     let page = 1
     let seq = 0
     let cache: ChainCache = createChainCache()
     let cacheRootId: string | undefined
 
     const hasMore = computed(() => cursorMode.value ? Boolean(nextCursor.value) : lines.value.length < total.value)
+    const hasPreviousBatch = computed(() => batchHistory.value.length > 0)
+    const hasNextBatch = computed(() => Boolean(targets.value) && targets.value!.end < targets.value!.total)
 
     const kinds = () => [options.root.value?.kind ?? "NORMAL", "LOOP"].filter((kind, index, all) => all.indexOf(kind) === index)
 
@@ -54,9 +58,9 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         cursor,
     })
 
-    async function load(keepExtent = false) {
+    async function load(keepExtent = false, offset = batchOffset): Promise<boolean> {
         const root = options.root.value
-        if (!root?.id) return
+        if (!root?.id) return false
         if (cacheRootId !== root.id) {
             cache = createChainCache()
             cacheRootId = root.id
@@ -64,7 +68,7 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         const current = ++seq
         loading.value = true
         try {
-            const collectOptions = {reserve: logUrlReserve({levelParams: options.levelParams.value, kinds: kinds(), q: options.q?.value}), cache}
+            const collectOptions = {reserve: logUrlReserve({levelParams: options.levelParams.value, kinds: kinds(), q: options.q?.value}), cache, offset}
             const resolved = options.scope.value.length
                 ? await collectScopedTargets(root, options.scope.value, undefined, collectOptions)
                 : await collectFailedTargets(root, undefined, collectOptions)
@@ -82,7 +86,8 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
                 cursor = result.nextCursor
                 pagesLoaded++
             }
-            if (current !== seq) return
+            if (current !== seq) return false
+            batchOffset = offset
             targets.value = resolved
             lines.value = collected
             total.value = result.total
@@ -90,9 +95,10 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
             cursorMode.value = result.cursorMode
             page = pagesLoaded
             failure.value = undefined
+            return true
         } catch (error) {
-            if (current !== seq) return
-            failure.value = error instanceof LoopIterationError ? error.failure : "unknown"
+            if (current === seq) failure.value = error instanceof LoopIterationError ? error.failure : "unknown"
+            return false
         } finally {
             if (current === seq) {
                 loading.value = false
@@ -119,9 +125,24 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         }
     }
 
+    async function nextBatch() {
+        if (!hasNextBatch.value || loading.value) return
+        const from = batchOffset
+        if (await load(false, targets.value!.end)) batchHistory.value = [...batchHistory.value, from]
+    }
+
+    async function previousBatch() {
+        if (!hasPreviousBatch.value || loading.value) return
+        if (await load(false, batchHistory.value[batchHistory.value.length - 1])) batchHistory.value = batchHistory.value.slice(0, -1)
+    }
+
     const scopeKey = computed(() => options.scope.value.map(({taskId, number}) => `${taskId}:${number}`).join(","))
     const searchKey = computed(() => `${options.root.value?.id ?? ""}|${scopeKey.value}|${JSON.stringify(options.levelParams.value)}|${options.q?.value ?? ""}`)
-    watch(searchKey, () => load(), {immediate: true})
+    watch(searchKey, () => {
+        batchOffset = 0
+        batchHistory.value = []
+        load()
+    }, {immediate: true})
 
     const refreshTimer = useIntervalFn(() => {
         if (!loading.value) load(true)
@@ -157,5 +178,5 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         refreshTimer.pause()
     })
 
-    return {targets, lines, total, loading, loadingMore, loaded, failure, hasMore, refresh: () => load(true), loadMore}
+    return {targets, lines, total, loading, loadingMore, loaded, failure, hasMore, hasPreviousBatch, hasNextBatch, refresh: () => load(true), loadMore, nextBatch, previousBatch}
 }

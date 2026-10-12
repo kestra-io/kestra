@@ -1714,7 +1714,7 @@
       "loop": {
         "this-execution": "This execution",
         "with-iterations": "With loop iterations",
-        "truncated": "Showing logs of the first {count} failed iteration | Showing logs of the first {count} failed iterations",
+        "batch-range": "Failed iterations {from}–{to} of {total}",
         "empty-title": "No matching logs",
         "empty-description": "No log matches the selected level in this execution or its failed loop iterations. Lower the level to see more.",
         "scope-to": "Scope the graph and logs to {scope}",

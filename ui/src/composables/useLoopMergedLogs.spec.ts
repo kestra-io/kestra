@@ -13,7 +13,8 @@ vi.mock("../utils/loopLogScope", async (importOriginal) => ({
     searchMergedLogs,
 }))
 
-const targets = {executionIds: ["root"], chains: {}, failedChains: [], failedShown: 0, truncated: false, scope: []}
+const targets = {executionIds: ["root"], chains: {}, failedChains: [], scope: [], offset: 0, end: 0, total: 0}
+const batch = (offset: number, end: number, total: number) => ({...targets, offset, end, total})
 const pageOf = (page: number, total = 200) => ({results: [{message: `line-${page}`}], total, nextCursor: undefined, cursorMode: false})
 
 function setup(running: boolean) {
@@ -235,6 +236,83 @@ describe("useLoopMergedLogs", () => {
 
         expect(logs.failure.value).toBeUndefined()
         expect(logs.lines.value).toHaveLength(1)
+        scope.stop()
+    })
+
+    it("shouldMoveToTheNextBatchAtTheOffsetWhereTheCurrentOneStopped", async () => {
+        collectFailedTargets.mockResolvedValueOnce(batch(0, 148, 400))
+        const {logs, scope} = setup(false)
+        await vi.advanceTimersByTimeAsync(0)
+        expect(logs.hasNextBatch.value).toBe(true)
+        expect(logs.hasPreviousBatch.value).toBe(false)
+        collectFailedTargets.mockResolvedValueOnce(batch(148, 400, 400))
+
+        await logs.nextBatch()
+
+        expect(collectFailedTargets.mock.calls[1][2]).toMatchObject({offset: 148})
+        expect(logs.targets.value).toMatchObject({offset: 148, end: 400})
+        expect(logs.hasNextBatch.value).toBe(false)
+        expect(logs.hasPreviousBatch.value).toBe(true)
+        scope.stop()
+    })
+
+    it("shouldGoBackToTheStartOfThePreviousBatch", async () => {
+        collectFailedTargets.mockResolvedValueOnce(batch(0, 148, 400))
+        const {logs, scope} = setup(false)
+        await vi.advanceTimersByTimeAsync(0)
+        collectFailedTargets.mockResolvedValueOnce(batch(148, 300, 400))
+        await logs.nextBatch()
+        collectFailedTargets.mockResolvedValueOnce(batch(0, 148, 400))
+
+        await logs.previousBatch()
+
+        expect(collectFailedTargets.mock.calls[2][2]).toMatchObject({offset: 0})
+        expect(logs.hasPreviousBatch.value).toBe(false)
+        scope.stop()
+    })
+
+    it("shouldRestartAtTheFirstBatchWhenTheScopeChanges", async () => {
+        collectFailedTargets.mockResolvedValueOnce(batch(0, 148, 400))
+        const {options, logs, scope} = setup(false)
+        await vi.advanceTimersByTimeAsync(0)
+        collectFailedTargets.mockResolvedValueOnce(batch(148, 300, 400))
+        await logs.nextBatch()
+
+        options.scope.value = [{taskId: "per_customer", number: 13}] as never
+        await nextTick()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(collectScopedTargets.mock.calls[0][3]).toMatchObject({offset: 0})
+        expect(logs.hasPreviousBatch.value).toBe(false)
+        scope.stop()
+    })
+
+    it("shouldKeepTheCurrentBatchWhenAutoRefreshing", async () => {
+        collectFailedTargets.mockResolvedValueOnce(batch(0, 148, 400))
+        const {logs, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        collectFailedTargets.mockResolvedValueOnce(batch(148, 300, 400))
+        await logs.nextBatch()
+        collectFailedTargets.mockClear()
+
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS)
+
+        expect(collectFailedTargets.mock.calls[0][2]).toMatchObject({offset: 148})
+        scope.stop()
+    })
+
+    it("shouldStayOnTheCurrentBatchWhenTheNextOneFailsToLoad", async () => {
+        collectFailedTargets.mockResolvedValueOnce(batch(0, 148, 400))
+        const {logs, scope} = setup(false)
+        await vi.advanceTimersByTimeAsync(0)
+        collectFailedTargets.mockRejectedValueOnce(new Error("boom"))
+
+        await logs.nextBatch()
+        collectFailedTargets.mockClear()
+        await logs.refresh()
+
+        expect(logs.hasPreviousBatch.value).toBe(false)
+        expect(collectFailedTargets.mock.calls[0][2]).toMatchObject({offset: 0})
         scope.stop()
     })
 })

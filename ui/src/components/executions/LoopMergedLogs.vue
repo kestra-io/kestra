@@ -20,13 +20,27 @@
                 </KsButton>
             </div>
 
-            <KsAlert
-                v-if="targets?.truncated"
-                type="info"
-                :closable="false"
-                :title="$t('logs_view.loop.truncated', {count: targets.failedShown}, targets.failedShown)"
-                data-test="loop-merged-logs-truncated"
-            />
+            <div v-if="batchRange" class="loop-merged-batches" data-test="loop-merged-batches">
+                <KsText size="small" data-test="loop-merged-batch-range">
+                    {{ $t("logs_view.loop.batch-range", batchRange) }}
+                </KsText>
+                <KsButton
+                    size="small"
+                    :disabled="!hasPreviousBatch || loading"
+                    data-test="loop-merged-batch-previous"
+                    @click="previousBatch()"
+                >
+                    {{ $t("previous") }}
+                </KsButton>
+                <KsButton
+                    size="small"
+                    :disabled="!hasNextBatch || loading"
+                    data-test="loop-merged-batch-next"
+                    @click="nextBatch()"
+                >
+                    {{ $t("next") }}
+                </KsButton>
+            </div>
             <KsAlert
                 v-if="failure"
                 type="error"
@@ -146,7 +160,7 @@
         }
     })
 
-    const {targets, lines, loading, loadingMore, loaded, failure, hasMore, refresh, loadMore} = useLoopMergedLogs({
+    const {targets, lines, loading, loadingMore, loaded, failure, hasMore, hasPreviousBatch, hasNextBatch, refresh, loadMore, previousBatch, nextBatch} = useLoopMergedLogs({
         root,
         scope: entries,
         levelParams: computed(() => props.levelParams),
@@ -155,6 +169,12 @@
     })
 
     const scopeChain = computed(() => targets.value?.scope ?? [])
+
+    const batchRange = computed(() => {
+        if (!targets.value || !(hasPreviousBatch.value || hasNextBatch.value)) return undefined
+        const {offset, end, total} = targets.value
+        return {from: (offset + 1).toLocaleString(), to: end.toLocaleString(), total: total.toLocaleString()}
+    })
 
     const failureMessage = computed(() => t(`topology-graph.loop.failure-${failure.value ?? "unknown"}`))
 
@@ -192,6 +212,12 @@
     }
 
     .loop-merged-scope {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
+
+    .loop-merged-batches {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2);

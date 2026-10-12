@@ -71,6 +71,7 @@ import io.kestra.core.services.configuration.ExecutionOutputConfiguration;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.NamespaceFileBackend;
+import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -166,6 +167,7 @@ public final class ExecutorTestHarness {
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
     private final KitRunContextFactory runContextFactory;
+    private final Storage storage;
     private final MutableClock clock;
 
     public static ExecutorTestHarness create() {
@@ -261,7 +263,8 @@ public final class ExecutorTestHarness {
             }
             return Mockito.RETURNS_DEFAULTS.answer(invocation);
         });
-        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator);
+        this.storage = Mockito.mock(Storage.class);
+        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator, storage);
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
@@ -843,5 +846,9 @@ public final class ExecutorTestHarness {
 
     public KitRunContextFactory runContextFactory() {
         return runContextFactory;
+    }
+
+    public Storage storage() {
+        return storage;
     }
 }

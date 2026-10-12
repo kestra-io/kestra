@@ -1062,6 +1062,45 @@ export function generateGraph(
         }
     }
 
+    for (const cluster of clusters) {
+        const clusterUid = cluster.cluster.uid
+        const taskNode = cluster.cluster.taskNode
+        if (
+            !taskNode?.task?.type?.endsWith("LoopUntil") ||
+            edgeReplacer[clusterUid] ||
+            collapsed.has(clusterUid.replace(CLUSTER_PREFIX, "")) ||
+            hiddenOrAliased.includes(cluster.start) ||
+            hiddenOrAliased.includes(cluster.end) ||
+            !nodeByUid[cluster.start] ||
+            !nodeByUid[cluster.end]
+        ) {
+            continue
+        }
+
+        const dagreNode = dagreGraph.node(clusterUid)
+        if (!dagreNode) continue
+
+        elements.push({
+            id: `loop-until-return|${cluster.end}|${cluster.start}`,
+            source: cluster.end,
+            target: cluster.start,
+            type: "edge",
+            markerEnd: {
+                id: "marker-custom",
+                type: MarkerType.ArrowClosed,
+                color: "var(--ks-topology-border-flowable-task)",
+            },
+            data: {
+                loopUntilReturn: true,
+                loopUntilReturnPosition: isHorizontal
+                    ? dagreNode.y + dagreNode.height / 2 - 12
+                    : dagreNode.x + dagreNode.width / 2 - 12,
+            },
+            style: {zIndex: 10},
+            animated: false,
+        })
+    }
+
     return elements
 }
 

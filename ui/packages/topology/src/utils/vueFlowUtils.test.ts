@@ -537,6 +537,8 @@ interface GeneratedElement {
     target?: string
     parentNode?: string
     position?: {x: number; y: number}
+    style?: Record<string, string>
+    markerEnd?: unknown
     data?: Record<string, unknown>
 }
 
@@ -882,6 +884,95 @@ describe("generateGraph flowable lane header", () => {
             taskNode: {uid: "root.parallel_task"},
             childTaskIds: ["branch_a", "branch_b"],
         })
+    })
+})
+
+describe("generateGraph LoopUntil return path", () => {
+    const loopUntilFlowGraph = {
+        nodes: [
+            {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+            {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            {
+                uid: "root.loop_until",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "loop_until", type: "io.kestra.plugin.core.flow.LoopUntil"},
+            },
+            {
+                uid: "root.loop_until.child",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "child", type: "io.kestra.plugin.core.log.Log"},
+            },
+        ],
+        edges: [{source: "root.loop_until", target: "root.loop_until.child"}],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.loop_until",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {
+                        uid: "root.loop_until",
+                        task: {id: "loop_until", type: "io.kestra.plugin.core.flow.LoopUntil"},
+                    },
+                },
+                nodes: ["root.root-1", "root.end-1", "root.loop_until", "root.loop_until.child"],
+                parents: [],
+                start: "root.root-1",
+                end: "root.end-1",
+            },
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    const generate = (isHorizontal = false) =>
+        asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", loopUntilFlowGraph, undefined, [], isHorizontal, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+    test("draws a directed return path from the LoopUntil end marker to its start marker", () => {
+        const elements = generate()
+        const returnPath = elements.find((element) => element.data?.loopUntilReturn)
+        const cluster = elements.find((element) => element.id === "cluster_root.loop_until")
+        const track = Number(returnPath?.data?.loopUntilReturnPosition)
+        const rightEdge = (cluster?.position?.x ?? 0) + Number.parseFloat(cluster?.style?.width ?? "0")
+
+        expect(returnPath).toMatchObject({
+            type: "edge",
+            source: "root.end-1",
+            target: "root.root-1",
+            data: {loopUntilReturn: true},
+        })
+        expect(returnPath?.markerEnd).toBeDefined()
+        expect(track).toBeGreaterThan(rightEdge - 32)
+        expect(track).toBeLessThan(rightEdge)
+    })
+
+    test("places the return path along the lower lane edge for a horizontal graph", () => {
+        const elements = generate(true)
+        const loop = elements.find((element) => element.data?.loopUntilReturn)
+        const cluster = elements.find((element) => element.id === "cluster_root.loop_until")
+        const track = Number(loop?.data?.loopUntilReturnPosition)
+        const lowerEdge = (cluster?.position?.y ?? 0) + Number.parseFloat(cluster?.style?.height ?? "0")
+
+        expect(track).toBeGreaterThan(lowerEdge - 32)
+        expect(track).toBeLessThan(lowerEdge)
+        expect(loop?.source).toBe("root.end-1")
+        expect(loop?.target).toBe("root.root-1")
+    })
+
+    test("omits the return path when the LoopUntil lane is collapsed", () => {
+        const hiddenNodes = [
+            "root.root-1", "root.end-1", "root.loop_until", "root.loop_until.child", "cluster_root.loop_until",
+        ]
+        const edgeReplacer = {
+            "cluster_root.loop_until": "root.loop_until",
+            "root.root-1": "root.loop_until",
+            "root.end-1": "root.loop_until",
+        }
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", loopUntilFlowGraph, undefined, hiddenNodes, false, edgeReplacer,
+            new Set(["root.loop_until"]), [], true, false, false,
+        ) ?? [])
+
+        expect(elements.some((element) => element.data?.loopUntilReturn)).toBe(false)
     })
 })
 

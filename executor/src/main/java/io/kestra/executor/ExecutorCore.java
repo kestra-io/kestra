@@ -356,8 +356,9 @@ public class ExecutorCore {
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
                 }
 
-                // if it was a loop execution, we send a terminated loop execution message to the parent execution
-                if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
+                // Send a terminated loop execution message to the parent execution.
+                // Exclude RETRIED executions as they are replaced by a new one, which will report to the parent itself.
+                if (State.Type.RETRIED != execution.getState().getCurrent() && executor.getExecution().getKind() == ExecutionKind.LOOP) {
                     var loop = (Loop) executor.getFlow().findTaskByTaskId(executor.getExecution().getLoopRun().taskId());
                     Map<String, Object> outputs = null;
                     if (!ListUtils.isEmpty(loop.getOutputs())) {

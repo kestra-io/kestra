@@ -65,8 +65,6 @@
         close()
     })
 
-    // Only an error toast is a telemetry event: a success or info toast reusing this
-    // component would otherwise be captured as an error.
     const isErrorVariant = computed(() =>
         props.message.variant === undefined || props.message.variant === "error")
 

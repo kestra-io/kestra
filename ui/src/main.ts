@@ -173,13 +173,11 @@ initApp(app, routes, null, en as Record<string, unknown>, {}, {
     beforeEach: tenantGuard,
     beforeResolve,
 }).then(({router, piniaStore}) => {
-
     app.config.errorHandler = (error, _instance, info) => {
         console.error(error)
         capturePosthogException(useMiscStore().configs, error, {handler: "vue", info})
     }
 
-    // Setup tenant router
     setupTenantRouter(router, app)
 
     const $http = setupAxios(router)

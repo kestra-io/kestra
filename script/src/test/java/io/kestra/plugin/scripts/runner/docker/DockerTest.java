@@ -22,6 +22,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
 import io.kestra.core.models.tasks.runners.ScriptService;
+import io.kestra.core.models.tasks.runners.TaskException;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.RunContext;
@@ -34,6 +35,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
@@ -113,6 +115,24 @@ class DockerTest extends AbstractTaskRunnerTest {
         assertThat(result.getExitCode()).isZero();
         MatcherAssert.assertThat((String) result.getLogConsumer().getOutputs().get("cpuLimit"), containsString("150000"));
         assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldNotReportOomForExitCode137WithoutDockerOomEvidence() {
+        var runContext = runContext(this.runContextFactory);
+        var docker = Docker.builder().image("rockylinux:9.3-minimal").build();
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(
+                List.of(
+                    "/bin/sh", "-c",
+                    "exit 137"
+                )
+            )
+        );
+
+        assertThatThrownBy(() -> docker.run(runContext, taskCommands, Collections.emptyList()))
+            .isInstanceOf(TaskException.class)
+            .hasMessage("Command failed with exit code 137");
     }
 
     public static void callOnKill(TaskRunner<?> taskRunner, Runnable runnable) throws Exception {

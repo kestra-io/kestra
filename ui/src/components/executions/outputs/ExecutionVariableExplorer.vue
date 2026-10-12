@@ -490,7 +490,6 @@
         }
     }
 
-    // A Loop over an empty list has no iteration to send the reader to.
     const selectedLoopTaskId = computed(() => {
         const taskId = selectedTaskId.value
         if (!taskId || !loopTaskIds(executionsStore.flow).has(taskId)) {

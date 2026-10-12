@@ -3,8 +3,18 @@ import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent, reactive} from "vue"
 
+type ExecutionsStoreStub = {
+    flow: unknown;
+    execution?: {
+        id: string;
+        kind?: string;
+        loopRun?: {taskId: string; taskRunId: string};
+        taskRunList: {id: string; taskId: string; parentTaskRunId?: string}[];
+    };
+}
+
 const store = vi.hoisted(() => ({
-    executions: {} as Record<string, any>,
+    executions: {} as ExecutionsStoreStub,
 }))
 
 vi.mock("../../stores/executions", () => ({
@@ -48,7 +58,7 @@ function mountNotice() {
 
 describe("LoopIterationsNotice", () => {
     beforeEach(() => {
-        store.executions = reactive({flow, execution: undefined as any})
+        store.executions = reactive<ExecutionsStoreStub>({flow, execution: undefined})
     })
 
     it("should show the notice when the execution ran a Loop task", () => {

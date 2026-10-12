@@ -72,7 +72,7 @@
         modelValue?: string | boolean;
         schema?: Schema;
         root?: string;
-        task?: any;
+        task?: Record<string, unknown>;
     }>()
 
     const emit = defineEmits<{

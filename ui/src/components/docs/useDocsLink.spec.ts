@@ -1,7 +1,7 @@
 import {describe, it, expect, beforeEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {ref} from "vue"
-import {useDocsLink} from "../../../../src/components/docs/useDocsLink"
+import {useDocsLink} from "./useDocsLink"
 
 const UTM = "?utm_source=app&utm_medium=referral&utm_campaign=embed-docs"
 const PANEL = "docs/workflow-components/inputs"

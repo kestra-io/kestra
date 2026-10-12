@@ -32,6 +32,7 @@
     import LeafBlockCard from "../../blocks/LeafBlockCard.vue"
     import BlockEmptyDrop from "../../blocks/BlockEmptyDrop.vue"
     import {getValueAtJsonPath} from "../../../../utils/utils"
+    import {Schema} from "./getTaskComponent"
     import {useI18n} from "vue-i18n"
 
     const {t} = useI18n()
@@ -69,7 +70,7 @@
         const schema = localSchema.value
 
         if(schema?.anyOf && Array.isArray(schema.anyOf)){
-            const titles: string[] = schema.anyOf.map((s: any) => s.allOf?.find((a: any) => a.title)?.title ?? s.title)
+            const titles: string[] = schema.anyOf.map((s: Schema) => s.allOf?.find((a: Schema) => a.title)?.title ?? s.title)
 
             if(titles.every((title) => title === titles[0])){
                 return titles[0]

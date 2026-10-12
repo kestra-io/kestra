@@ -36,6 +36,20 @@ public class WebhookValidator implements ConstraintValidator<WebhookValidation, 
             return false;
         }
 
+        if (value.getResponseBody() != null && !Boolean.TRUE.equals(value.getWait())) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("invalid webhook: responseBody requires wait to be true")
+                .addConstraintViolation();
+            return false;
+        }
+
+        if (value.getResponseBody() != null && Boolean.TRUE.equals(value.getReturnOutputs())) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("invalid webhook: responseBody cannot be combined with returnOutputs")
+                .addConstraintViolation();
+            return false;
+        }
+
         return true;
     }
 }

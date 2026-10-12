@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.http.HttpRequest;
@@ -46,7 +47,7 @@ import reactor.core.publisher.Mono;
     description = """
         Exposes an endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow without signing in. The required `key` is its only protection: store it as a secret and reference it with `{{ secret('...') }}`.
 
-        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. It is untrusted input: pass it to script tasks through `env`, never inside `commands`, `beforeCommands`, `script`, or `interpreter`, where it would be run as code. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
+        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. It is untrusted input: pass it to script tasks through `env`, never inside `commands`, `beforeCommands`, `script`, or `interpreter`, where it would be run as code. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, `responseBody` to return a custom body instead, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
 
         Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
@@ -95,6 +96,7 @@ import reactor.core.publisher.Mono;
             title = """
                 Webhook with text/plain response for Microsoft Graph validation handshakes.
                 When a service like Microsoft Graph validates the webhook endpoint, it sends a validationToken that must be echoed back as plain text.
+                `responseBody` sends the token as the raw body; `returnOutputs` would wrap it in a JSON object of the flow outputs.
                 """,
             code = """
                 id: microsoft_graph_webhook
@@ -102,21 +104,16 @@ import reactor.core.publisher.Mono;
 
                 tasks:
                   - id: handle_request
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
-
-                outputs:
-                  - id: response
-                    type: STRING
-                    value: "{{ outputs.handle_request.value }}"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ trigger.parameters.validationToken[0] ?? 'notification received' }}"
 
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
                     key: "{{ secret('WEBHOOK_KEY') }}"
                     wait: true
-                    returnOutputs: true
                     responseContentType: "text/plain"
+                    responseBody: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
                 """,
             full = true
         ),
@@ -203,7 +200,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         title = "Custom response content type.",
         description = """
             If set, the webhook response will use this content type instead of the default `application/json`.
-            Requires `wait` and `returnOutputs` to be `true`.
+            Requires `wait` to be `true`, and either `returnOutputs` to be `true` or `responseBody` to be set.
             This is useful for webhook validation handshakes that require specific content types (e.g., Microsoft Graph Change Notifications require `text/plain` responses).
             """,
         allowableValues = { "application/json", "text/plain" }
@@ -215,10 +212,26 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         title = "Custom response code.",
         description = """
             If set, the webhook response code will use this response code instead of the default `200`.
-            Requires `wait` and `returnOutputs` to be `true`.
+            Requires `wait` to be `true`.
             """
     )
     private Property<Integer> responseCode;
+
+    @PluginProperty
+    @Schema(
+        title = "Custom response body.",
+        description = """
+            If set, the webhook response body will be this rendered string instead of the execution or its outputs.
+            It is rendered once the execution has finished, so it can use the trigger variables (`trigger.body`,
+            `trigger.headers`, `trigger.parameters`) and the outputs of the tasks.
+            It is sent with `responseContentType`, or `application/json` if not set.
+            Requires `wait` to be `true`, and cannot be combined with `returnOutputs`.
+            If it cannot be rendered, the error is logged on the execution and the webhook responds with `500`.
+
+            The response body is sent to anyone who calls the webhook, so it should not contain secrets.
+            """
+    )
+    private Property<String> responseBody;
 
     @Override
     public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
@@ -266,11 +279,30 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                     {
                         try {
                             RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
-                            int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
+                            // The trigger instance is shared by every call of the webhook: skip the property cache so that
+                            // each call is rendered against its own execution.
+                            int responseCode = runContext.render(this.responseCode).skipCache().as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
 
-                            HttpResponse<?> response = this.getReturnOutputs()
-                                ? buildOutputResponse(context.webhookService().executionOutputs(event.getData()), responseContentType, HttpResponse.Status.valueOf(responseCode))
-                                : HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
+                            Optional<String> renderedBody;
+                            try {
+                                renderedBody = runContext.render(this.responseBody).skipCache().as(String.class);
+                            } catch (IllegalVariableEvaluationException e) {
+                                runContext.logger().error("Unable to render the webhook responseBody: {}", e.getMessage(), e);
+                                throw e;
+                            }
+
+                            HttpResponse<?> response;
+                            if (renderedBody.isPresent()) {
+                                response = HttpResponse.of(
+                                    HttpResponse.Status.valueOf(responseCode),
+                                    renderedBody.get(),
+                                    responseContentType != null ? responseContentType : MediaType.APPLICATION_JSON
+                                );
+                            } else if (this.getReturnOutputs()) {
+                                response = buildOutputResponse(context.webhookService().executionOutputs(event.getData()), responseContentType, HttpResponse.Status.valueOf(responseCode));
+                            } else {
+                                response = HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
+                            }
                             return Mono.<HttpResponse<?>> just(response);
                         } catch (Exception e) {
                             return Mono.error(e);

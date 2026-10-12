@@ -172,6 +172,7 @@ public class RunContextProperty<T> {
     }
 
     private Property<T> getProperty() {
-        return skipCache ? this.property.skipCache() : this.property;
+        // a property that is not set renders to an empty Optional, whether the cache is skipped or not
+        return skipCache && this.property != null ? this.property.skipCache() : this.property;
     }
 }

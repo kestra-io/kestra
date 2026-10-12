@@ -2722,8 +2722,6 @@
       "open_mode_hint": "Las tasks se abren en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
     },
     "blocks": "Bloques",
-    "split_horizontal": "Dividir horizontalmente",
-    "split_vertical": "Dividir verticalmente",
     "move_panel_to_bottom": "Mover panel a la parte inferior",
     "move_panel_to_side": "Mover panel a un lado",
     "pwa": {

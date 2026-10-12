@@ -2722,8 +2722,6 @@
       "open_mode_hint": "Tasks werden standardmäßig in einem Modal geöffnet. Unter {settings} kannst du Tabs als Standard festlegen."
     },
     "blocks": "Blöcke",
-    "split_horizontal": "Horizontal teilen",
-    "split_vertical": "Vertikal teilen",
     "move_panel_to_bottom": "Panel nach unten verschieben",
     "move_panel_to_side": "Panel zur Seite verschieben",
     "pwa": {

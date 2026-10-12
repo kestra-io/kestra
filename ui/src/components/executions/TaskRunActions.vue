@@ -166,6 +166,7 @@
     import {State} from "@kestra-io/design-system"
     import type {LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
     import type {Execution} from "../../stores/executions"
+    import type {ExecutionTaskRun} from "./executionTaskRun"
     import type {Flow} from "../../stores/flow"
 
     import * as Utils from "../../utils/utils"
@@ -188,8 +189,6 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
-
-    type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number] & {outputs?: Record<string, unknown>}
 
     const props = withDefaults(defineProps<{
         taskRun: ExecutionTaskRun

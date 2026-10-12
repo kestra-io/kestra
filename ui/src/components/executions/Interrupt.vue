@@ -66,12 +66,12 @@
     import action from "../../models/action"
     import {State} from "@kestra-io/design-system"
     import type {Execution} from "../../stores/executions"
-    
+    import type {ExecutionTaskRun} from "./executionTaskRun"
 
     const props = withDefaults(defineProps<{
         component?: string
         execution: Execution
-        taskRun: NonNullable<Execution["taskRunList"]>[number] & {outputs?: Record<string, unknown>}
+        taskRun: ExecutionTaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",

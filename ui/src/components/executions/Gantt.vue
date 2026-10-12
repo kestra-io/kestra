@@ -185,6 +185,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
+    import type {ExecutionTaskRun} from "./executionTaskRun"
     import {date as dateFilter} from "../../utils/filters"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
@@ -229,7 +230,7 @@
     const TICK_FORMAT = "HH:mm:ss"
     const PRECISE_TICK_FORMAT = "HH:mm:ss.SSS"
 
-    type TaskRun = NonNullable<Execution["taskRunList"]>[number] & {outputs?: Record<string, unknown>}
+    type TaskRun = ExecutionTaskRun
 
     interface TaskWrapper {
         task: TaskRun;

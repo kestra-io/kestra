@@ -8,7 +8,7 @@ import {useExecutionsStore} from "../../stores/executions"
 import TaskRunActions from "./TaskRunActions.vue"
 
 function state(current: StateType): State {
-    return {current, histories: [], getDuration: "PT0S", getStartDate: "", getEndDate: ""}
+    return {current, histories: []}
 }
 
 function executionProps(id: string): Execution {
@@ -22,7 +22,7 @@ vi.mock("vue-router", () => ({
     useRouter: vi.fn(() => ({})),
 }))
 
-vi.mock("../../../../src/utils/toast", () => ({
+vi.mock("../../utils/toast", () => ({
     useToast: vi.fn(() => ({
         confirm: vi.fn((_msg: string, callback: () => void) => callback()),
     })),

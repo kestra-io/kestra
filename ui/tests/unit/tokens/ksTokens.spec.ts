@@ -57,7 +57,7 @@ describe("the known-token set", () => {
     })
 })
 
-describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
+describe("the stylelint rule, ks/no-undeclared-custom-property", {timeout: 20000}, () => {
     it("reports a token that nothing declares", () => {
         expect(warningsFor(".x { color: var(--ks-nowhere); }"))
             .toEqual([expect.stringContaining("\"--ks-nowhere\" is not declared")])

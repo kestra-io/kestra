@@ -42,7 +42,24 @@ function sourceFiles(): string[] {
 }
 
 function isAllowed(file: string): boolean {
-    return ALLOWED.some((entry) => file.startsWith(entry.file))
+    const normalized = file.replaceAll("\\", "/")
+    return ALLOWED.some((entry) => normalized.startsWith(entry.file))
+}
+
+const readSources = () => sourceFiles()
+    .filter((file) => !isAllowed(file))
+    .map((file) => ({
+        path: relative(ROOT, join(ROOT, file)),
+        lines: readFileSync(join(ROOT, file), "utf8").split("\n"),
+    }))
+
+let cachedSources: Array<{path: string; lines: string[]}> | undefined
+
+function getSources() {
+    if (!cachedSources) {
+        cachedSources = readSources()
+    }
+    return cachedSources
 }
 
 describe("no legacy error fields", () => {
@@ -53,12 +70,10 @@ describe("no legacy error fields", () => {
     it.each(FORBIDDEN)("does not read $what", ({pattern}) => {
         const offenders: string[] = []
 
-        for (const file of sourceFiles()) {
-            if (isAllowed(file)) continue
-            const content = readFileSync(join(ROOT, file), "utf8")
-            content.split("\n").forEach((line, index) => {
+        for (const {path, lines} of getSources()) {
+            lines.forEach((line, index) => {
                 if (pattern.test(line)) {
-                    offenders.push(`${relative(ROOT, join(ROOT, file))}:${index + 1}: ${line.trim()}`)
+                    offenders.push(`${path}:${index + 1}: ${line.trim()}`)
                 }
             })
         }

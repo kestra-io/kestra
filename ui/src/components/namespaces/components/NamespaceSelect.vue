@@ -75,7 +75,7 @@
         inheritAttrs: false,
     })
 
-    const modelValue = defineModel<string | string[] | null>()
+    const modelValue = defineModel<string | string[]>()
 
     const namespacesStore = useNamespacesStore()
 

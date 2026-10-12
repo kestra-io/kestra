@@ -16,8 +16,9 @@ vi.mock("../../../composables/useNamespaces", () => ({
 async function mountSelect(modelValue: string | string[] | null | undefined) {
     setActivePinia(createPinia())
     const errors: unknown[] = []
+    const yamlProps: Record<string, unknown> = {modelValue, multiple: true}
     const wrapper = i18nMount(NamespaceSelect, {
-        props: {modelValue, multiple: true},
+        props: yamlProps,
         global: {
             plugins: [KestraDesignSystem],
             config: {errorHandler: (error: unknown) => errors.push(error)},

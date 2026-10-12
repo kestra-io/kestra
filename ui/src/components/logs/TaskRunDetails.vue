@@ -846,7 +846,6 @@
 
     onBeforeUnmount(() => {
         disposed = true
-        closeTargetExecutionSSE()
         throttledExecutionUpdate.value?.cancel()
         closeLogsSSE()
         closeTargetExecutionSSE()

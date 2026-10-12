@@ -54,6 +54,19 @@ describe("GanttTaskLogs output resolution", () => {
         expect(wrapper.getComponent({name: "TaskRunDetails"}).props("targetExecutionId")).toBe("child-a")
     })
 
+    it("shouldKeepResolvedChildViewerWhenSubflowStateChangesAfterwards", async () => {
+        mocks.load.mockResolvedValue({executionId: "child-a"})
+        const wrapper = mountLogs()
+        await flushPromises()
+        const viewer = wrapper.getComponent({name: "TaskRunDetails"})
+
+        await wrapper.setProps({taskRun: {...taskRun, state: {current: "RUNNING"}}})
+        await flushPromises()
+
+        expect(mocks.load).toHaveBeenCalledOnce()
+        expect(wrapper.getComponent({name: "TaskRunDetails"}).vm).toBe(viewer.vm)
+    })
+
     it("shouldIgnorePreviousIterationOutputsWhenSelectionChangesBeforeTheyLoad", async () => {
         let resolveOld!: (value: Record<string, unknown>) => void
         mocks.load.mockReturnValueOnce(new Promise(resolve => {resolveOld = resolve}))

@@ -23,7 +23,7 @@
         execution: Execution
         taskRun: {id: string; state: {current: string}; outputs?: Record<string, unknown>}
         taskType?: string
-        flow: FlowForExecution
+        flow?: FlowForExecution
         levelFilter?: LevelFilterValue
     }>()
 
@@ -39,7 +39,7 @@
         async ([executionId, taskRunId], previous, onCleanup) => {
             if (executionId !== previous?.[0] || taskRunId !== previous?.[1]) outputs.value = {}
             loading.value = false
-            if (props.taskType !== "io.kestra.plugin.core.flow.Subflow" || typeof props.taskRun.outputs?.executionId === "string") return
+            if (props.taskType !== "io.kestra.plugin.core.flow.Subflow" || childExecutionId.value) return
 
             let cancelled = false
             onCleanup(() => { cancelled = true })

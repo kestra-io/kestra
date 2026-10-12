@@ -24,7 +24,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @MultiselectInputValidation
-public class MultiselectInput extends Input<List<String>> implements ItemTypeInterface, RenderableInput {
+public class MultiselectInput extends Input<List<?>> implements ItemTypeInterface, RenderableInput {
     @Schema(
         title = "List of values available.",
         description = "Each item is either a plain string (used as both label and value) or an object `{label, value}` to decouple the displayed label from the workflow value."
@@ -59,23 +59,25 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     Boolean autoSelectFirst = false;
 
     @Override
-    public Property<List<String>> getDefaults() {
-        Property<List<String>> baseDefaults = super.getDefaults();
+    public Property<List<?>> getDefaults() {
+        Property<List<?>> baseDefaults = super.getDefaults();
         if (baseDefaults == null && autoSelectFirst && !Optional.ofNullable(values).map(Collection::isEmpty).orElse(true)) {
-            return Property.ofValue(List.of(values.getFirst().value()));
+            List<?> defaultList = List.of(values.getFirst().value());
+            return Property.ofValue(defaultList);
         }
 
         return baseDefaults;
     }
 
     @Override
-    public void validate(List<String> inputs) throws ConstraintViolationException {
+    public void validate(List<?> inputs) throws ConstraintViolationException {
         Set<ConstraintViolation<?>> violations = new HashSet<>();
 
-        if (!this.getAllowCustomValue()) {
+        if (!this.getAllowCustomValue() && this.values != null) {
             Set<String> allowedValues = this.values.stream().map(ValueOption::value).collect(java.util.stream.Collectors.toSet());
-            for (String input : inputs) {
-                if (!allowedValues.contains(input)) {
+            for (Object input : inputs) {
+                String inputStr = Objects.toString(input, null);
+                if (!allowedValues.contains(inputStr)) {
                     violations.add(
                         ManualConstraintViolation.of(
                             "value `" + input + "` doesn't match the values `" + this.values.stream().map(ValueOption::value).toList() + "`",

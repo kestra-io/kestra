@@ -10,6 +10,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 
@@ -167,5 +168,46 @@ class MultiselectInputTest {
         // labels fail
         assertThatThrownBy(() -> input.validate(List.of("Prod")))
             .hasMessageContaining("[123, 456]");
+    }
+
+    @Test
+    void validateAcceptsValuesForNonStringItemTypes() {
+        MultiselectInput inputInt = MultiselectInput
+            .builder()
+            .id("items")
+            .itemType(Type.INT)
+            .values(List.of(new ValueOption("1", "1"), new ValueOption("2", "2"), new ValueOption("3", "3")))
+            .build();
+
+        // integer values pass
+        inputInt.validate(List.of(1, 2));
+
+        // integer values not in values list fail
+        assertThatThrownBy(() -> inputInt.validate(List.of(9)))
+            .hasMessageContaining("[1, 2, 3]");
+
+        MultiselectInput inputFloat = MultiselectInput
+            .builder()
+            .id("items")
+            .itemType(Type.FLOAT)
+            .values(List.of(new ValueOption("1.5", "1.5"), new ValueOption("2.5", "2.5")))
+            .build();
+
+        // float values pass
+        inputFloat.validate(List.of(1.5f));
+
+        // float values not in values list fail
+        assertThatThrownBy(() -> inputFloat.validate(List.of(9.9f)))
+            .hasMessageContaining("[1.5, 2.5]");
+
+        MultiselectInput inputBool = MultiselectInput
+            .builder()
+            .id("items")
+            .itemType(Type.BOOL)
+            .values(List.of(new ValueOption("true", "true"), new ValueOption("false", "false")))
+            .build();
+
+        // bool values pass
+        inputBool.validate(List.of(true));
     }
 }

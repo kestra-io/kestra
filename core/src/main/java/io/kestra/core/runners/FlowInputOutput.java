@@ -477,8 +477,7 @@ public class FlowInputOutput {
             case DURATION -> resolveDefaultPropertyAs(input, renderer, Duration.class);
             case FILE, URI -> resolveDefaultPropertyAs(input, renderer, URI.class);
             case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
-            case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
-            case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
+            case ARRAY, MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }

@@ -2729,6 +2729,7 @@
     },
     "iteration": "反復",
     "iteration_number": "反復 {number}",
-    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？"
+    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？",
+    "not started": "未開始"
   }
 }

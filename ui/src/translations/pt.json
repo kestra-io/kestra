@@ -2729,6 +2729,7 @@
     },
     "iteration": "Iteração",
     "iteration_number": "Iteração {number}",
-    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?"
+    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?",
+    "not started": "Não iniciado"
   }
 }

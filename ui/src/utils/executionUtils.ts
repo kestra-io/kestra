@@ -43,6 +43,10 @@ export function waitForState($http: KestraClient, execution: Execution) {
     })
 }
 
+export function executionFileUrl(executionId: string | undefined, path: string): string {
+    return `${apiUrl()}/executions/${executionId}/file?path=${encodeURIComponent(path)}`
+}
+
 export function loopIterationsRoute(executionId: string | undefined, taskId?: string) {
     return {
         name: "executions/list",

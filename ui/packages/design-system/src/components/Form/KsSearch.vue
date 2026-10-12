@@ -3,7 +3,7 @@
         ref="elInputRef"
         v-model="model"
         class="ks-search"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         @change="emit('change', $event)"
     >
         <template #prefix>
@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
-    import {ElInput} from "element-plus"
+    import {ElInput, type InputProps} from "element-plus"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 

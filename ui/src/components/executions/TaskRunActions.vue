@@ -18,6 +18,7 @@
                             <KsDropdownItem
                                 v-for="(run, index) in filteredTaskRuns"
                                 :key="run.id"
+                                data-test="task-run-iteration"
                                 @click.stop="selectedTaskRunId = run.id"
                             >
                                 <span :class="['row', {active: run.id === selectedTaskRunId}]">
@@ -106,18 +107,21 @@
                 />
                 <KsDropdownItem
                     :icon="Download"
+                    data-test="task-run-download-logs"
                     @click="downloadContent(currentTaskRun.id)"
                 >
                     {{ $t("download logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Copy"
+                    data-test="task-run-copy-logs"
                     @click="copyContent(currentTaskRun.id)"
                 >
                     {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Delete"
+                    data-test="task-run-delete-logs"
                     @click="deleteLogs(currentTaskRun)"
                 >
                     {{ $t("delete logs") }}

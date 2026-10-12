@@ -16,7 +16,7 @@
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
-                    <KsButton @click="emit('on-copy', null)" size="small" class="ms-2">
+                    <KsButton @click="emit('on-copy')" size="small" class="ms-2">
                         {{ $t('copy url') }}
                     </KsButton>
                 </template>
@@ -38,11 +38,11 @@
     const {t, te} = useI18n()
 
     defineProps<{
-        data: Record<string, any>;
+        data: Record<string, unknown>;
         execution?: Execution;
     }>()
 
-    const emit = defineEmits<{ (e: "on-copy", event: any): void }>()
+    const emit = defineEmits<{ (e: "on-copy"): void }>()
 
     const getHumanizeLabel = (key: string): string => {
         const mappings: Record<string, string> = {

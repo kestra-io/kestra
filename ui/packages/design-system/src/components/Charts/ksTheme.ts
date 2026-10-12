@@ -34,7 +34,7 @@ export default () => {
         splitArea: {
             show: false,
             areaStyle: {
-                color: [cssVar("--ks-gray-cool-500", 0.00), cssVar("--ks-gray-inverted-900", 0.5)],
+                color: [cssVar("--ks-gray-cool-500", 0.00), cssVar("--ks-gray-cool-900", 0.5)],
                 shadowBlur: 0,
             },
         },
@@ -101,7 +101,7 @@ export default () => {
                 fontSize: 10,
                 textBorderWidth: 1,
                 color: cssVar("--ks-text-primary"),
-                textBorderColor: cssVar("--ks-bg-body"),
+                textBorderColor: cssVar("--ks-bg-base"),
             },
             lineStyle: {
                 color: cssVar("--kel-text-color-placeholder"),
@@ -112,7 +112,7 @@ export default () => {
                 scale: 1.1,
                 itemStyle: {
                     shadowBlur: 10,
-                    shadowColor: "rgba(0,0,0,0.3)",
+                    shadowColor: cssVar("--ks-shadow-elevated", 0.3),
                 },
             },
             edgeSymbol: ["none", "arrow"],

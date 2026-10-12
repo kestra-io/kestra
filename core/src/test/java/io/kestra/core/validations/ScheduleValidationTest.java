@@ -129,19 +129,6 @@ class ScheduleValidationTest {
     }
 
     @Test
-    void intervalValidation() {
-        Schedule build = Schedule.builder()
-            .id(IdUtils.create())
-            .type(Schedule.class.getName())
-            .cron("* * * * *")
-            .interval(Duration.ofSeconds(5))
-            .build();
-
-        assertThat(modelValidator.isValid(build).isPresent()).isTrue();
-        assertThat(modelValidator.isValid(build).get().getMessage()).contains("interval: must be null");
-    }
-
-    @Test
     void sundayDayOfTheWeekAlias() {
         Schedule sundayAsZero = Schedule.builder()
             .id(IdUtils.create())

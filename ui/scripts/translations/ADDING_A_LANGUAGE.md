@@ -19,7 +19,7 @@ This guide covers everything needed to ship a new UI locale end to end, based on
 | `pl` | Polish | Tone + declension overhauled 2026-08 (https://github.com/kestra-io/kestra/pull/18212, EE https://github.com/kestra-io/kestra-ee/pull/9984); custom plural rule (`polishPluralIndex` in `i18n.ts`) |
 | `pt` | Portuguese | |
 | `pt_BR` | Portuguese (Brazil) | Moment locale key differs: `pt-br` |
-| `ru` | Russian | Three-form plurals, deliberately left on the default rule (unreviewed) |
+| `ru` | Russian | Custom plural rule (`russianPluralIndex` in `i18n.ts`) |
 | `zh_CN` | Simplified Chinese | Moment locale key differs: `zh-cn` |
 
 Volume per new language (as of 2026-08): **~1,900 OSS keys** (`ui/src/translations/en.json`) + **~1,900 EE keys** (`ui-ee/src/translations/ee_translations/en.json` in EE) + the design-system `*.locale.ts` strings. All of it is generated via Gemini, one request per key, so a full new language is roughly 4,000 API calls - plan for the generator to run for a long time (run it in the background).
@@ -72,7 +72,7 @@ This list is hand-maintained and does NOT derive from `languages.ts` - forgettin
 
 ### 3.4 Plural rule (only if the language needs one)
 
-vue-i18n's default rule handles two-form languages (and `tr`, `vi`, `id`, `zh_TW` are fine with it). For a language with three or more plural forms (Slavic family, Arabic), add a custom rule to the `pluralRules` option in `ui/src/translations/i18n.ts`, next to `polishPluralIndex`, and have a native speaker review the three-form messages before enabling it - see the Russian comment there for why an unreviewed rule is worse than the default.
+vue-i18n's default rule handles two-form languages (and `tr`, `vi`, `id`, `zh_TW` are fine with it). For a language with three or more plural forms (Slavic family, Arabic), add a custom rule to the `pluralRules` option in `ui/src/translations/i18n.ts`, next to `polishPluralIndex` and `russianPluralIndex`, and add a matching "Plural Forms" line to the generator prompt so the model writes the form layout the rule expects. Audit the existing three-form messages of that locale before enabling the rule: a message whose English source has a zero form ("no workers | worker | workers") needs four forms (zero | one | few | many) under these rules, and a three-form one in that layout renders the zero text for a count of 1.
 
 ### 3.5 Write the language's generator rules BEFORE generating
 

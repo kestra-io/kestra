@@ -3,18 +3,10 @@ import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {displayTaskOf, type BlockSection} from "../../../utils/flowableBlockOps"
 import {sectionFromParentPath} from "./blockSections"
 import {opensInModalByDefault} from "./taskEditMode"
+import {useTaskEditModalStack, type ModalTarget} from "./useTaskEditModalStack"
 
-export interface ModalTarget {
-    parentPath: string
-    blockSchemaPath: string
-    refPath?: number
-    /** Builds a new entry at parentPath; cleared once it exists and the modal edits it. */
-    creating?: boolean
-}
-
-export function modalItemPathOf(target: ModalTarget): string {
-    return target.refPath !== undefined ? `${target.parentPath}[${target.refPath}]` : target.parentPath
-}
+export type {ModalTarget}
+export {modalItemPathOf} from "./useTaskEditModalStack"
 
 export interface BlockSelectionContext {
     selectedId: Ref<string | undefined>
@@ -39,8 +31,7 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
     })
 
     const activeSelectedPath = ref<string | undefined>()
-    const modalStack = ref<ModalTarget[]>([])
-    const modalTarget = computed<ModalTarget | undefined>(() => modalStack.value[modalStack.value.length - 1])
+    const {modalStack, modalTarget, pushModalTarget, resolveCreatedTarget, popModalTo, closeModal} = useTaskEditModalStack()
 
     watch(ctx.selectedId, async (id) => {
         internalSelectedId.value = id
@@ -61,27 +52,6 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
         } else {
             ctx.onEditTask(parentPath, blockSchemaPathFor(section), refPath, split)
         }
-    }
-
-    function pushModalTarget(target: ModalTarget) {
-        modalStack.value = [...modalStack.value, target]
-    }
-
-    /** The entry now exists, so the top of the stack stops building it and starts editing it. */
-    function resolveCreatedTarget(parentPath: string, blockSchemaPath: string, refPath: number | undefined) {
-        if (!modalStack.value.length) return
-        modalStack.value = [
-            ...modalStack.value.slice(0, -1),
-            {parentPath, blockSchemaPath, refPath},
-        ]
-    }
-
-    function popModalTo(index: number) {
-        modalStack.value = modalStack.value.slice(0, index + 1)
-    }
-
-    function closeModal() {
-        modalStack.value = []
     }
 
     function selectBlock(section: BlockSection, block: Record<string, unknown>, split = false) {

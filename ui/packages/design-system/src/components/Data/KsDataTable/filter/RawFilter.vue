@@ -99,7 +99,7 @@
     box-shadow: 0 1px 2px var(--ks-shadow-surface);
 
     &:focus-within {
-        border-color: var(--ks-content-link, var(--ks-text-link));
+        border-color: var(--ks-text-link);
     }
 }
 
@@ -138,7 +138,7 @@
 }
 
 .raw-apply:not(:disabled):hover {
-    color: var(--ks-content-success, var(--ks-status-success));
+    color: var(--ks-status-success);
 }
 
 .raw-clear:not(:disabled):hover {

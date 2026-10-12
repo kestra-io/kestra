@@ -62,6 +62,7 @@
     // EventSource would land in a ref no one closes again. Guard against it explicitly instead
     // of relying on onUnmounted alone.
     let unmounted = false
+    const sseRetries = new Map<string, ReturnType<typeof setTimeout>>()
 
     function closeProgressSSE() {
         progressSSE?.close()
@@ -134,6 +135,7 @@
 
     onUnmounted(() => {
         unmounted = true
+        sseRetries.forEach((retry) => clearTimeout(retry))
         Object.keys(sseBySubflow.value).forEach(closeSSE)
         closeProgressSSE()
     })
@@ -201,10 +203,18 @@
         if (generateGraphBeforeDelay) {
             loadGraph(true)
         }
-        setTimeout(() => addSSE(subflow), 500)
+        clearTimeout(sseRetries.get(subflow))
+        sseRetries.set(subflow, setTimeout(() => {
+            sseRetries.delete(subflow)
+            addSSE(subflow)
+        }, 500))
     }
 
     function addSSE(subflow: string, generateGraphOnWaiting?: boolean) {
+        if (unmounted) {
+            return
+        }
+
         let parentExecution = execution.value
 
         const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
@@ -234,10 +244,6 @@
             return
         }
 
-        if (unmounted) {
-            return
-        }
-
         // subscribeToExecution (not followExecution) is required here — followExecution treats
         // its target as *the* displayed execution: it nulls executionsStore.execution, closes,
         // and overwrites the shared subscription handle. Expanding a subflow would silently kill
@@ -263,7 +269,9 @@
 </script>
 <style scoped lang="scss">
     .kel-card {
-        height: var(--topology-height, calc(100vh - 174px));
+        // A fixed height left most of a tall viewport unused:
+        // https://github.com/kestra-io/kestra/issues/19685.
+        height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
 

@@ -145,6 +145,7 @@
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
     } from "../../no-code/injectionKeys"
+    import type {Schema} from "../../no-code/components/tasks/getTaskComponent"
 
     const visible = defineModel<boolean>("visible", {required: true})
     const props = defineProps<{trigger: TriggerPluginDto; displayName: string}>()
@@ -171,8 +172,14 @@
 
     // Provide schema injection context so TaskObject can resolve $ref fields
     // (e.g. inherited labels, workerSelector from parent trigger types).
-    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => (triggerPlugin.value?.schema ?? {}) as any))
-    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => triggerPlugin.value?.schema?.definitions ?? {}))
+    // The docs-oriented JSONSchema of the plugin is the raw backend schema the no-code editor reads as Schema.
+    const triggerDefinitions = computed(() => (triggerPlugin.value?.schema?.definitions ?? {}) as Record<string, Schema>)
+    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => ({
+        ...(triggerPlugin.value?.schema ?? {}),
+        definitions: triggerDefinitions.value,
+        $ref: "",
+    })))
+    provide(SCHEMA_DEFINITIONS_INJECTION_KEY, triggerDefinitions)
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
         return props.trigger.type ? `#/definitions/${props.trigger.type}` : ""
     }))
@@ -183,7 +190,7 @@
         flowId: "",
         triggerId: generateId(),
     })
-    const triggerPropertiesModel = ref<Record<string, any>>({})
+    const triggerPropertiesModel = ref<Record<string, unknown>>({})
 
     // Fields handled by the modal itself, not rendered through the no-code form.
     const RESERVED_FIELDS = new Set(["id", "type", "description"])
@@ -224,7 +231,7 @@
     const getTriggerId = () => formModel.value.triggerId.trim() || "mytrigger"
 
     const triggerBlock = computed(() => {
-        const trigger: Record<string, any> = {
+        const trigger: Record<string, unknown> = {
             id: getTriggerId(),
             type: props.trigger.type,
             ...triggerPropertiesModel.value,
@@ -248,7 +255,7 @@
         flowsLoading.value = true
         try {
             const response = await flowStore.findFlows({"filters[namespace][EQUALS]": namespace, sort: "id:asc"})
-            flowOptions.value = (response?.results ?? []).map((f: any) => ({id: f.id, namespace: f.namespace}))
+            flowOptions.value = (response?.results ?? []).map((f) => ({id: f.id, namespace: f.namespace}))
         } finally {
             flowsLoading.value = false
         }
@@ -259,7 +266,7 @@
         loadFlows(typeof ns === "string" ? ns : "")
     }
 
-    const onPropertiesUpdate = (value: Record<string, any> | undefined) => {
+    const onPropertiesUpdate = (value: Record<string, unknown> | undefined) => {
         triggerPropertiesModel.value = value ?? {}
     }
 

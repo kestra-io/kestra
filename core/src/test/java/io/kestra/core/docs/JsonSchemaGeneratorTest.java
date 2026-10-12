@@ -110,7 +110,9 @@ class JsonSchemaGeneratorTest {
             .orElseThrow();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
+        Map<String, Map<String, Object>> generatedProperties = (Map<String, Map<String, Object>>) generate.get("properties");
+        assertThat(generatedProperties.size(), is(7));
+        assertThat(generatedProperties.containsKey("assets"), is(true));
 
         Map<String, Object> format = properties(generate).get("format");
         assertThat(format.get("default"), is("{}"));
@@ -170,8 +172,8 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
-            // an asset type provided by a plugin keeps its constant, which is what the editor autocompletes
-            assertThat(properties(definitions.get(External.class.getName())).get("type").get("const"), is(External.class.getName()));
+            // External is inferred, never declared, so it is not offered as an asset type
+            assertThat(definitions, not(hasKey(External.class.getName())));
             // the custom asset is the free-form branch, so its type stays an open string
             var customType = properties(definitions.get(Custom.class.getName())).get("type");
             assertThat(customType.get("type"), is("string"));
@@ -460,7 +462,7 @@ class JsonSchemaGeneratorTest {
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(7));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"), is(true));
     }
@@ -471,7 +473,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
         assertThat(generate, is(not(nullValue())));
         assertThat(generate.get("$beta"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(2));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(3));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$language"), is(MonacoLanguages.PYTHON.toString()));
     }
@@ -590,7 +592,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
         // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
-        assertThat(definitions.size(), is(12));
+        assertThat(definitions.size(), is(11));
     }
 
     @SuppressWarnings("unchecked")

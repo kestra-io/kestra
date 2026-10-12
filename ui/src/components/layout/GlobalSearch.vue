@@ -73,7 +73,7 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted, nextTick, watch} from "vue"
-    import {useTopLayer} from "@kestra-io/design-system"
+    import {useTopLayer, KsSearch} from "@kestra-io/design-system"
     import {useRouter} from "vue-router"
     import {useLeftMenu} from "override/components/useLeftMenu"
     import type {MenuItem} from "override/components/useLeftMenu"
@@ -101,7 +101,7 @@
     const query = ref("")
     const isOpen = ref(false)
     const topLayer = useTopLayer()
-    const searchInput = ref<{ focus?: () => void } | null>(null)
+    const searchInput = ref<InstanceType<typeof KsSearch> | null>(null)
     const activeIndex = ref(0)
     const scopeStack = ref<ScopeNode[]>([])
 
@@ -198,7 +198,7 @@
         isOpen.value = true
         activeIndex.value = 0
         nextTick(() => {
-            searchInput.value?.focus?.()
+            searchInput.value?.focus()
         })
     }
 
@@ -234,7 +234,7 @@
         scopeStack.value = [...scopeStack.value, {title: item.title, items: item.children}]
         query.value = ""
         activeIndex.value = 0
-        nextTick(() => searchInput.value?.focus?.())
+        nextTick(() => searchInput.value?.focus())
     }
 
     const onItemClick = (item: SearchItem) => {
@@ -333,7 +333,8 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: var(--kel-overlay-color-lighter);
+        background: var(--ks-bg-scrim);
+        z-index: var(--ks-z-overlay);
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -348,8 +349,7 @@
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
-            box-shadow:
-                0 8px 24px rgba(0,0,0,0.35);
+            box-shadow: 0 8px 24px var(--ks-shadow-elevated);
             overflow: hidden;
             font-size: var(--ks-font-size-sm);
         }

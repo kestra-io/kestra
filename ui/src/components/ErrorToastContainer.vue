@@ -23,7 +23,7 @@
 
     <footer v-if="traceId" class="problem-trace">
         <span>{{ $t("errors.trace id") }}</span>
-        <KsId :value="traceId" :shrink="false" />
+        <KsId :value="traceId" :shrink="false" data-test="error-toast-trace-id" />
     </footer>
 </template>
 
@@ -100,6 +100,6 @@
         gap: var(--ks-spacing-2);
         margin-top: var(--ks-spacing-4);
         font-size: var(--ks-font-size-sm);
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

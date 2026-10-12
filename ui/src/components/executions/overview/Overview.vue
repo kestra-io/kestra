@@ -62,6 +62,7 @@
         flex-direction: column;
         height: 100%;
         gap: var(--ks-spacing-4);
+        min-width: 0;
     }
 
     .banner {
@@ -77,13 +78,18 @@
         }
     }
 
+    #alerts {
+        min-width: 0;
+    }
+
     #alerts:empty {
         display: none;
     }
 
     .topology {
-        flex-shrink: 0;
-        --topology-height: 650px;
+        flex: 1;
+        // Floor so a short viewport still gets a usable graph; the page scrolls from there.
+        min-height: 400px;
     }
 
     #empty {

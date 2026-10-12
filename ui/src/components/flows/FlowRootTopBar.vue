@@ -1,5 +1,5 @@
 <template>
-    <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title">
+    <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title" :bookmarkLabel="routeInfo.bookmarkLabel">
         <template #title>
             <template v-if="isDeleted">
                 <Alert class="text-warning me-2" />{{ $t('deleted_label') }}
@@ -24,6 +24,7 @@
     import Badge from "../global/Badge.vue"
     import Actions from "override/components/flows/Actions.vue"
     import NavBar from "../layout/TopNavBar.vue"
+    import type {KsBreadcrumbItem} from "@kestra-io/design-system"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useAuthStore} from "override/stores/auth"
@@ -32,7 +33,8 @@
     defineProps<{
         routeInfo: {
             title: string;
-            breadcrumb: Array<any>;
+            breadcrumb: KsBreadcrumbItem[];
+            bookmarkLabel?: string;
             beta?: boolean;
         };
     }>()

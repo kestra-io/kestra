@@ -82,6 +82,21 @@ public class KitRunContextFactory extends RunContextFactory {
             .build();
     }
 
+    @Override
+    public RunContext of(FlowInterface flow, io.kestra.core.models.triggers.AbstractTrigger trigger) {
+        RunContextLogger runContextLogger = loggerFactory.create(flow, trigger);
+
+        return newKitBuilder(runContextLogger)
+            .withTrigger(trigger)
+            .withVariables(
+                new RunVariables.DefaultBuilder()
+                    .withFlow(flow)
+                    .withTrigger(trigger)
+                    .build(runContextLogger, PropertyContext.create(renderer))
+            )
+            .build();
+    }
+
     private DefaultRunContext.Builder newKitBuilder(RunContextLogger runContextLogger) {
         return new DefaultRunContext.Builder()
             .withApplicationContext(applicationContext)

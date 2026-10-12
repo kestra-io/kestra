@@ -70,8 +70,32 @@ public class GrpcStubFactory {
 
     @Bean
     @Singleton
+    public KVStoreServiceGrpc.KVStoreServiceStub kvStoreServiceStub(GrpcChannelManager manager) {
+        return KVStoreServiceGrpc.newStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public KVStoreServiceGrpc.KVStoreServiceBlockingStub kvStoreServiceBlockingStub(GrpcChannelManager manager) {
+        return KVStoreServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
     public NamespaceFileMetadataServiceBlockingStub namespaceFileMetadataServiceBlockingStub(GrpcChannelManager manager) {
         return NamespaceFileMetadataServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public NamespaceFileContentServiceGrpc.NamespaceFileContentServiceStub namespaceFileContentServiceStub(GrpcChannelManager manager) {
+        return NamespaceFileContentServiceGrpc.newStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public NamespaceFileContentServiceGrpc.NamespaceFileContentServiceBlockingStub namespaceFileContentServiceBlockingStub(GrpcChannelManager manager) {
+        return NamespaceFileContentServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
 
     @Bean

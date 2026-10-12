@@ -53,6 +53,8 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
     description = """
         Fires when upstream Flow executions meet `dependsOn` (required) and optional trigger `when` condition. Lets you chain Flows owned by different teams.
 
+        The trigger `when` and each `dependsOn` `when` are evaluated against the upstream execution: `flow` is the upstream flow (use `flow.namespace` and `flow.id`), `execution` the upstream execution (`execution.state`, `execution.attemptNumber`), `labels` its labels and `outputs` its task outputs; its flow outputs are under `execution.outputs`.
+
         Upstream execution outputs are exposed under `trigger.outputs`; you can also pass `inputs` to the downstream Flow."""
 )
 @Plugin(
@@ -264,13 +266,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Builder.Default
     private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
 
-    @Valid
     @Schema(
         title = "Dependencies on upstream flow executions",
         description = "Express dependencies on upstream flow executions, which must be met for the flow trigger to be evaluated."
     )
     @PluginProperty
-    private List<Dependency> dependsOn;
+    private List<@Valid Dependency> dependsOn;
 
     @Valid
     @Schema(
@@ -298,6 +299,14 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     @Positive
     private Integer minSatisfied;
+
+    @Schema(
+        title = "Wait for all retries to complete before evaluating the trigger",
+        description = "When set to true, the trigger will wait for all upstream flow retries to complete before evaluating the trigger. This only applies to terminal states."
+    )
+    @PluginProperty
+    @Builder.Default
+    private boolean waitForAllRetries = false;
 
     /**
      * Evaluates this trigger against a terminated execution.

@@ -1,4 +1,6 @@
 import type * as monaco from "monaco-editor/editor/editor.api"
+import type {TaskIconProps} from "../composables/taskIcon"
+import type {DatePickerInstance} from "../composables/useEditorDatePicker"
 
 export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & {
     renderSideBySide?: boolean
@@ -37,6 +39,7 @@ export interface KsEditorExposes {
     clearLinesRangeHighlights: () => void
     addContentWidget: (widget: {id: string, position: monaco.IPosition, height: number, right: string}) => Promise<void>
     removeContentWidget: (id: string) => void
+    insertTextAtCursor: (text: string) => void
     monaco: typeof monaco
     getEditor: () => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined
 }
@@ -54,7 +57,7 @@ export interface KsEditorProps {
     inline?: boolean
     navbar?: boolean
     configureLanguage?: (editor: monaco.editor.ICodeEditor | undefined, language: string, schemaType?: string) => Promise<void>
-    loadTaskIcon?: (cls: string) => Promise<any>
+    loadTaskIcon?: TaskIconProps["loadIcon"]
     options?: KsEditorOptions
 }
 
@@ -65,6 +68,7 @@ export type ResolvedKsEditorProps = KsEditorProps & Required<Pick<KsEditorProps,
 export interface KsEditorEmit {
     (e: "save", value?: string): void
     (e: "execute", value?: string): void
+    (e: "focus"): void
     (e: "focusout", value?: string): void
     (e: "update:modelValue", value: string): void
     (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void
@@ -78,5 +82,5 @@ export interface KsEditorTemplateRefs {
     editorRef: import("vue").Ref<HTMLDivElement | null>
     container: import("vue").Ref<HTMLDivElement | undefined>
     datePickerWrapper: import("vue").Ref<HTMLElement | undefined>
-    datePicker: import("vue").Ref<any>
+    datePicker: import("vue").Ref<DatePickerInstance>
 }

@@ -3,7 +3,7 @@
     <section
         v-if="vertical && activeTab"
         v-bind="attrsWithoutClass"
-        :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow}]"
+        :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow, 'full-height': (activeTab as Tab).fullHeight}]"
     >
         <TabBody />
     </section>
@@ -45,7 +45,7 @@
              Events flow through Pinia stores, so the wrapper injects no handlers. -->
         <router-view v-if="useRouterView" v-slot="{Component, route: childRoute}">
             <section
-                :class="[containerClass, {maximized: childRoute.meta.maximized, 'no-overflow': childRoute.meta.noOverflow}]"
+                :class="[containerClass, {maximized: childRoute.meta.maximized, 'no-overflow': childRoute.meta.noOverflow, 'full-height': childRoute.meta.fullHeight}]"
             >
                 <component :is="Component" :embed="childRoute.meta.embed ?? true" />
             </section>
@@ -58,7 +58,7 @@
         <section
             v-else-if="activeTab && hasTabBody"
             v-bind="attrsWithoutClass"
-            :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow}]"
+            :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow, 'full-height': (activeTab as Tab).fullHeight}]"
         >
             <TabBody />
         </section>

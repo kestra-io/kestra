@@ -10,7 +10,9 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {
     TaskRun,
     useClient,
+    type Check,
     type Execution as SDKExecution,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
@@ -29,18 +31,7 @@ import {useApiStore} from "./api"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 import type {KestraRequestOptions} from "../utils/kestraHttp"
 
-export interface Check {
-    message: string
-    style: string
-    behavior: string
-}
-
-export interface InputError {
-    message: string;
-    // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
-    // input `defaults` Pebble expression that threw) rather than a value validation error
-    renderError?: boolean;
-}
+export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
 
 export interface ValidationResponse {
     checks?: Check[];
@@ -146,7 +137,7 @@ export function normalizeFilePreview(data: FilePreview): FilePreview {
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
+export type Execution = Omit<Optional<SDKExecution, "deleted" | "metadata" | "originalId">, "taskRunList" > & {
     tenantId?: string;
     taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, unknown>;
@@ -166,6 +157,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
     const flow = ref<FlowForExecution | undefined>(undefined)
     const flowGraph = ref<FlowGraph | undefined>(undefined)
+    const taskRunSelections = ref<Map<string, string>>(new Map())
     const namespaces = ref<string[]>([])
     const flowsExecutable = ref<FlowForExecution[]>([])
 
@@ -175,6 +167,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         if(!newExecution){
             flowGraph.value = undefined
             flow.value = undefined
+            taskRunSelections.value.clear()
         }
     })
 
@@ -182,16 +175,16 @@ export const useExecutionsStore = defineStore("executions", () => {
     const axios = useClient()
 
     // Actions
-    const restartExecution = (options: { executionId: string; revision?: number }) => {
-        return ExecutionsAPI.restartExecution({executionId: options.executionId, revision: options.revision}) as unknown as Promise<Execution>
+    const restartExecution = (options: { executionId: string }) => {
+        return ExecutionsAPI.restartExecution({executionId: options.executionId}) as unknown as Promise<Execution>
     }
 
-    const bulkRestartExecution = (options: { executionsId: string[]; latestRevision?: boolean }) => {
-        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId, latestRevision: options.latestRevision})
+    const bulkRestartExecution = (options: { executionsId: string[] }) => {
+        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId})
     }
 
-    const queryRestartExecution = (options: FilterQuery & { latestRevision?: boolean }) => {
-        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(options), latestRevision: options.latestRevision})
+    const queryRestartExecution = (options: FilterQuery) => {
+        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
@@ -254,6 +247,12 @@ export const useExecutionsStore = defineStore("executions", () => {
             taskRunId: options.taskRunId!,
             state: options.state as Parameters<typeof ExecutionsAPI.updateTaskRunState>[0]["state"],
         }) as unknown as Promise<Execution>
+    }
+    const interrupt = (options: { executionId: string; taskRunId: string; state: string }) => {
+        return axios.post(`${apiUrl()}/executions/${options.executionId}/actions/interrupt`, {
+            taskRunId: options.taskRunId,
+            state: options.state,
+        })
     }
     const waitForStateChange = async (source: Execution) => {
         const updated = await ExecutionUtils.waitForState(axios, source) as Execution
@@ -464,6 +463,8 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
         const flowValue = flow.value
+        execution.value = parsedExecution
+        const currentExecution = execution.value
 
         if ((!flowValue ||
             parsedExecution.flowId !== flowValue.id ||
@@ -476,11 +477,11 @@ export const useExecutionsStore = defineStore("executions", () => {
                     revision: route.query.revision?.toString(),
                 },
             ).then(() => {
-                execution.value = parsedExecution
+                if (execution.value === currentExecution) {
+                    execution.value = parsedExecution
+                }
             })
         }
-
-        execution.value = parsedExecution
     }, 500)
 
     /**
@@ -542,10 +543,11 @@ export const useExecutionsStore = defineStore("executions", () => {
             .then(async ({stream}) => {
                 for await (const event of stream) {
                     if (closed) break
+                    const executionEvent = event as unknown as Execution
                     // The server emits a first "fake" event carrying only an id to force the
                     // connection open; skip it as it has no state to display.
-                    if (!(event as Execution).state) continue
-                    handlers.onExecution(event as Execution)
+                    if (!executionEvent.state) continue
+                    handlers.onExecution(executionEvent)
                 }
                 finish(!receivedEnd)
             })
@@ -884,6 +886,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     return {
         // State
+        taskRunSelections,
         executions,
         execution,
         total,
@@ -908,6 +911,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,
+        interrupt,
         waitForStateChange,
         kill,
         bulkKill,

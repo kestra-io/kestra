@@ -33,21 +33,8 @@
         @update:model-value="onInput"
     />
     <template v-else>
-        <KsFormItem :class="{'anyof-switch': !isSelectingPlugins}">
-            <KsSelect
-                v-if="isSelectingPlugins"
-                v-model="selectedSchema"
-                filterable
-            >
-                <KsOption
-                    v-for="item in schemaOptions"
-                    :key="item.value"
-                    :label="item.id"
-                    :value="item.value"
-                />
-            </KsSelect>
+        <KsFormItem class="anyof-switch">
             <KsSegmented
-                v-else
                 v-model="selectedSchema"
                 :options="schemaOptions"
                 size="small"
@@ -231,7 +218,7 @@
 
     const schemaByType = computed(() => {
         return schemas.value.reduce((acc: Record<string, any>, schema: any) => {
-            acc[makeKey(schema)] = schema
+            acc[makeKey(schema) ?? ""] = schema
             return acc
         }, {})
     })
@@ -257,8 +244,6 @@
     const currentSchemaType = computed(() =>
         delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined,
     )
-
-    const isSelectingPlugins = computed(() => schemas.value.length > 4)
 
     const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
         if(allSchemaSameType.value){

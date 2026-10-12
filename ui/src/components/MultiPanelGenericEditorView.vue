@@ -34,9 +34,10 @@
     import MultiPanelEditorTabs from "./MultiPanelEditorTabs.vue"
     import MultiPanelTabs from "./MultiPanelTabs.vue"
     import {EditorElement, Panel} from "../utils/multiPanelTypes"
-    import {useStoredPanels} from "../composables/useStoredPanels"
+    import {useStoredPanels, type PreSerializedPanel} from "../composables/useStoredPanels"
+    import {storageKeys} from "../utils/constants"
 
-    const splitOrientation = useStorage<"vertical" | "horizontal">("editor-split-orientation", "vertical")
+    const splitOrientation = useStorage<"vertical" | "horizontal">(storageKeys.EDITOR_SPLIT_ORIENTATION, "vertical")
 
     function toggleOrientation() {
         splitOrientation.value = splitOrientation.value === "vertical" ? "horizontal" : "vertical"
@@ -47,7 +48,7 @@
         defaultActiveTabs: string[];
         saveKey?: string;
         bottomVisible?: boolean;
-        preSerializePanels?: (panels: Panel[]) => any;
+        preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[];
     }>(), {
         bottomVisible: false,
         preSerializePanels: undefined,

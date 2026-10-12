@@ -3,7 +3,7 @@ package io.kestra.core.validations.validator;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.kestra.core.validations.ExecutionsDataFilterValidation;
+import io.kestra.core.validations.ExecutionsDataFilterKPIValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.dashboard.data.ExecutionsKPI;
 
@@ -15,11 +15,11 @@ import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<ExecutionsDataFilterValidation, ExecutionsKPI<?>> {
+public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<ExecutionsDataFilterKPIValidation, ExecutionsKPI<?>> {
     @Override
     public boolean isValid(
         @Nullable ExecutionsKPI<?> executionsDataFilter,
-        @NonNull AnnotationValue<ExecutionsDataFilterValidation> annotationMetadata,
+        @NonNull AnnotationValue<ExecutionsDataFilterKPIValidation> annotationMetadata,
         @NonNull ConstraintValidatorContext context) {
         if (executionsDataFilter == null) {
             return true;
@@ -31,12 +31,14 @@ public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<Exe
             violations.add("Column must have a `key`.");
         }
 
-        executionsDataFilter.getNumerator().forEach(filter ->
-        {
-            if (filter.getField() == Executions.Fields.LABELS && filter.getKey() == null) {
-                violations.add("Label filters must have a `key`.");
-            }
-        });
+        if (executionsDataFilter.getNumerator() != null) {
+            executionsDataFilter.getNumerator().forEach(filter ->
+            {
+                if (filter.getField() == Executions.Fields.LABELS && filter.getKey() == null) {
+                    violations.add("Label filters must have a `key`.");
+                }
+            });
+        }
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();

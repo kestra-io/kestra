@@ -129,7 +129,7 @@
         transition: background 0.15s;
 
         &:hover {
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
         }
     }
 

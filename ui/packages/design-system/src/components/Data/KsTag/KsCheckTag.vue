@@ -1,6 +1,6 @@
 <template>
     <ElCheckTag
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as CheckTagProps)"
         :class="[
             `kel-check-tag--${size}`,
             {'kel-check-tag--pill': pill},
@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckTag} from "element-plus"
+    import {ElCheckTag, type CheckTagProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -77,6 +77,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            vertical-align: middle;
         }
     }
 

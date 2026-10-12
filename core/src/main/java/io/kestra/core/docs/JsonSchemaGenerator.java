@@ -586,10 +586,10 @@ public class JsonSchemaGenerator {
 
                 @Override
                 protected String resolveDefault(MemberScope<?, ?> member) {
-                    // swagger-annotations 2.2.46+ returns Schema.DEFAULT_SENTINEL rather than "" for an unset
-                    // @Schema.defaultValue, which victools' emptiness check treats as a declared default.
+                    // swagger-annotations since 2.2.46 returns this sentinel rather than "" for an unset
+                    // @Schema.defaultValue, which victools's emptiness check treats as a declared default.
                     String resolved = super.resolveDefault(member);
-                    return Schema.DEFAULT_SENTINEL.equals(resolved) ? null : resolved;
+                    return "##default".equals(resolved) ? null : resolved;
                 }
             })
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)

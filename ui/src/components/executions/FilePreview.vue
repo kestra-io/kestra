@@ -152,13 +152,15 @@
         return isTextString(preview.value?.content)
     })
 
-    function isTextString(str: any, sampleSize = 8192) {
+    function isTextString(str: unknown, sampleSize = 8192) {
         if(!str) return false
-        let normalizedStr = str
-        if (typeof str !== "string") {
+        let normalizedStr: string
+        if (typeof str === "string") {
+            normalizedStr = str
+        } else {
             try {
                 normalizedStr = JSON.stringify(str)
-            } catch(e) {
+            } catch {
                 return false
             }
         }

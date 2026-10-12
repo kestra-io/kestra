@@ -1,6 +1,6 @@
 <template>
     <ElBadge
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as BadgeProps)"
         :class="{'kel-badge--inline': inline}"
     >
         <template v-if="$slots.default" #default>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElBadge} from "element-plus"
+    import {ElBadge, type BadgeProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 

@@ -36,7 +36,8 @@ public class KestraTestExtension extends MicronautJunit5Extension {
                     kestraTestAnnotation.contextBuilder(),
                     kestraTestAnnotation.transactionMode(),
                     kestraTestAnnotation.startApplication(),
-                    kestraTestAnnotation.resolveParameters()
+                    kestraTestAnnotation.resolveParameters(),
+                    kestraTestAnnotation.deduceEnvironment()
                 );
             })
             .orElse(null);

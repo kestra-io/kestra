@@ -70,6 +70,7 @@ function mountWrapper() {
 describe("LowCodeEditorWrapper", () => {
     beforeEach(() => {
         flowStore.expandedSubflows = []
+        flowStore.invalidGraph = false
         flowStore.fetchGraph.mockReset()
         toastError.mockReset()
         vi.spyOn(console, "error").mockImplementation(() => {})
@@ -111,6 +112,15 @@ describe("LowCodeEditorWrapper", () => {
         expect(flowStore.expandedSubflows).toEqual(["existing"])
         expect(toastError).toHaveBeenCalledWith("Could not load the topology graph. Please try again.")
         expect(wrapper.get("#topologyWrapper").attributes("data-loading")).toBe("false")
+    })
+
+    it("should flag the canvas as stale when the source stops compiling", async () => {
+        flowStore.invalidGraph = true
+        const wrapper = mountWrapper()
+        await nextTick()
+
+        expect(wrapper.find("[data-test='topology-stale-graph']").exists()).toBe(true)
+        expect(wrapper.find("[data-test='expand']").exists()).toBe(true)
     })
 
     it("should not duplicate the store error when expanding a missing subflow", async () => {

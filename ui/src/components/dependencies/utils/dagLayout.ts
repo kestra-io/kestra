@@ -3,7 +3,10 @@ interface DagEdge {
     target: string;
 }
 
-/** Deterministic left-to-right layout: ranks by longest path from a root and returns the centre position per node id. */
+/**
+ * Deterministic left-to-right layout: ranks by longest path from a root and returns the centre position per node id.
+ * `ownColumn` nodes lead the graph; the edges that would cycle back into them are dropped from the ranking.
+ */
 export function computeDagLayout(
     nodeIDs: string[],
     edges: DagEdge[],
@@ -25,10 +28,36 @@ export function computeDagLayout(
     const ids = [...new Set(nodeIDs)].sort()
     const known = new Set(ids)
 
+    const candidates = options.ownColumn ? ids.filter(options.ownColumn) : []
+    const pinned = candidates.length < ids.length ? candidates : []
+    const pinnedSet = new Set(pinned)
+
+    const children = new Map<string, string[]>()
+    edges.forEach(({source, target}) => {
+        if (!children.has(source)) {
+            children.set(source, [])
+        }
+        children.get(source)!.push(target)
+    })
+    const descendants = new Map(pinned.map((root) => {
+        const seen = new Set<string>()
+        const stack = [...(children.get(root) ?? [])]
+        while (stack.length) {
+            const id = stack.pop()!
+            if (!seen.has(id)) {
+                seen.add(id)
+                stack.push(...(children.get(id) ?? []))
+            }
+        }
+        return [root, seen]
+    }))
+    const closesPinnedCycle = ({source, target}: DagEdge): boolean => descendants.get(target)?.has(source) ?? false
+
     const links = [
         ...new Map(
             edges
                 .filter((edge) => known.has(edge.source) && known.has(edge.target) && edge.source !== edge.target)
+                .filter((edge) => !closesPinnedCycle(edge))
                 .map((edge) => [`${edge.source} ${edge.target}`, edge]),
         ).values(),
     ]
@@ -81,9 +110,7 @@ export function computeDagLayout(
         columns[index] = sorted
     })
 
-    const pinned = options.ownColumn ? ids.filter(options.ownColumn) : []
-    if (pinned.length && pinned.length < ids.length) {
-        const pinnedSet = new Set(pinned)
+    if (pinned.length) {
         const remaining = columns
             .map((column) => column.filter((id) => !pinnedSet.has(id)))
             .filter((column) => column.length)

@@ -28,4 +28,4 @@ export default {
     MANAGE_MEMBERS: "MANAGE_MEMBERS",
     MANAGE_GROUP_MEMBERSHIP: "MANAGE_GROUP_MEMBERSHIP",
     USE: "USE",
-}
+} as const

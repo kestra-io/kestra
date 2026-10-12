@@ -1,6 +1,6 @@
 <template>
     <ElTableColumn
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as ColumnProps)"
     >
         <template v-if="$slots.default" #default="scope">
             <slot v-if="scope.$index !== -1" v-bind="scope" />
@@ -12,10 +12,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTableColumn} from "element-plus"
+    import {ElTableColumn, type TableColumnCtx, type TableColumnInstance, type TableProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
+
+    type TableRow = NonNullable<TableProps["data"]>[number]
+    type ColumnProps = TableColumnInstance["$props"]
 
     const props = withDefaults(defineProps<{
         type?: string
@@ -44,8 +47,8 @@
     })
 
     defineSlots<{
-        default?: (scope: {row: any; column: any; $index: number}) => unknown
-        header?: (scope: {column: any; $index: number}) => unknown
+        default?: (scope: {row: TableRow; column: TableColumnCtx<TableRow>; $index: number}) => unknown
+        header?: (scope: {column: TableColumnCtx<TableRow>; $index: number}) => unknown
     }>()
 
     const filteredProps = useFilteredProps(props)

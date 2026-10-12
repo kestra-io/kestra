@@ -25,6 +25,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -38,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
+@Property(name = "micronaut.server.max-request-size", value = "10GB")
 class ErrorControllerTest {
     @Inject
     @Client("/")
@@ -86,6 +88,33 @@ class ErrorControllerTest {
                 assertThat(error.detail()).contains("io.kestra.invalid");
                 assertThat(error.pointer()).isNotNull();
             });
+    }
+
+    // Micronaut 5's body binder wraps a raw JSON syntax error in io.micronaut.json.JsonSyntaxException before
+    // it reaches ErrorController, instead of letting the Jackson exception propagate directly as under
+    // Micronaut 4. Without a mapping for that wrapper type this fell through to a generic 500.
+    @Test
+    void malformedJson() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/executions/labels/by-ids", "{\"this\":is not json}").contentType(MediaType.APPLICATION_JSON)
+            )
+        );
+
+        Problems.assertProblem(exception, ProblemTypes.INVALID_JSON);
+    }
+
+    @Test
+    void shouldReportPayloadTooLargeWhenBodyExceedsTheBufferLimit() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/executions/labels/by-ids", "\"" + "x".repeat(10_500_000) + "\"").contentType(MediaType.APPLICATION_JSON)
+            )
+        );
+
+        Problems.assertProblem(exception, ProblemTypes.PAYLOAD_TOO_LARGE);
     }
 
     @Test

@@ -1,6 +1,6 @@
 <template>
     <ElMenuItem
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as MenuItemProps)"
         @click="emit('click', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElMenuItem} from "element-plus"
+    import {ElMenuItem, type MenuItemProps, type MenuItemRegistered} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -25,7 +25,7 @@
     }>()
 
     const emit = defineEmits<{
-        click: [item: any]
+        click: [item: MenuItemRegistered]
     }>()
 
     defineSlots<{

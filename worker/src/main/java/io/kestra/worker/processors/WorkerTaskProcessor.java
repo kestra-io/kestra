@@ -494,10 +494,18 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
                     bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
                 }
-                runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
+                for (AssetEmit emit : runContext.assets().emitted()) {
+                    try {
+                        emit.outputs().forEach(runContext::validate);
+                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
+                    } catch (ConstraintViolationException e) {
+                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
+                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                    }
+                }
 
                 if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(withDefaultNamespace(bundles, taskRun.getNamespace()));
+                    taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));
                 }
             }
         } catch (ConstraintViolationException e) {
@@ -526,19 +534,20 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     }
 
     /**
-     * An asset emitted without a namespace belongs to the flow emitting it, and left null it is filtered
-     * out of the view of every user whose asset permission is scoped to namespaces rather than global.
+     * A declared asset input without a namespace belongs to the flow referencing it, and left null it is
+     * filtered out of the view of every user whose asset permission is scoped to namespaces rather than
+     * global. Outputs are untouched here: an omitted output namespace must reach {@link Asset#toUpdated}
+     * as {@code null} so it keeps the stored asset's namespace instead of being silently rewritten to the
+     * flow's own.
      */
-    private static List<AssetsInOut> withDefaultNamespace(List<AssetsInOut> bundles, String namespace) {
+    private static List<AssetsInOut> withDefaultInputNamespace(List<AssetsInOut> bundles, String namespace) {
         return bundles.stream()
             .map(
                 bundle -> new AssetsInOut(
                     bundle.getInputs().stream()
                         .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
                         .toList(),
-                    bundle.getOutputs().stream()
-                        .map(output -> output.getNamespace() == null ? output.withNamespace(namespace) : output)
-                        .toList()
+                    bundle.getOutputs()
                 )
             )
             .toList();

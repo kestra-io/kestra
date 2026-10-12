@@ -150,7 +150,7 @@ class WorkerTaskProcessorTest {
     }
 
     @Test
-    void shouldDefaultAssetNamespaceToTheFlowNamespaceWhenNotDeclared() throws Exception {
+    void shouldDefaultInputNamespaceButLeaveOutputNamespaceNullWhenNotDeclared() throws Exception {
         // Given a task declaring an input and an output that carry no namespace
         InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
         WorkerTaskProcessor processor = newProcessor(resultQueue);
@@ -158,7 +158,8 @@ class WorkerTaskProcessorTest {
         // When the task runs
         processor.process(namespacelessAssetsWorkerTask());
 
-        // Then both inherit the namespace of the flow
+        // Then the input inherits the flow's namespace, but the output namespace is left null so
+        // Asset#toUpdated can keep the stored asset's own namespace instead of defaulting it here
         List<WorkerTaskResult> results = drain(resultQueue);
         TaskRun taskRun = results.getLast().getTaskRun();
         assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -167,7 +168,7 @@ class WorkerTaskProcessorTest {
             .satisfies(bundle ->
             {
                 assertThat(bundle.getInputs()).extracting(AssetIdentifier::namespace).containsExactly("io.kestra.unit-test");
-                assertThat(bundle.getOutputs()).extracting(Asset::getNamespace).containsExactly("io.kestra.unit-test");
+                assertThat(bundle.getOutputs()).extracting(Asset::getNamespace).containsExactly((String) null);
             });
     }
 
@@ -305,6 +306,24 @@ class WorkerTaskProcessorTest {
         LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
         assertThat(errorLog).isNotNull();
         assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
+    }
+
+    @Test
+    void shouldFailTaskWhenAssetOutputHasMalformedTtl() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        processor.process(assetOutputMalformedTtlWorkerTask());
+
+        List<WorkerTaskResult> results = drain(resultQueue);
+        String taskRunId = results.getLast().getTaskRun().getId();
+        assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
+        assertThat(errorLog).isNotNull();
+        assertThat(errorLog.getMessage()).contains("assets.outputs[0].ttl").contains("must be a UTC instant");
     }
 
     @Test
@@ -504,6 +523,25 @@ class WorkerTaskProcessorTest {
                     Property.ofValue(List.of()),
                     Property.ofValue(List.of(Custom.builder().namespace("io.kestra.tests").type("custom").build())),
                     Property.ofValue(assetFailureBehavior)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    private WorkerTask assetOutputMalformedTtlWorkerTask() {
+        Custom asset = Custom.builder().id("asset-with-bad-ttl").namespace("io.kestra.tests").type("custom").build();
+        asset.setTtl("2026-09-15");
+        AssetEmissionFailure task = AssetEmissionFailure.builder()
+            .type(AssetEmissionFailure.class.getName())
+            .id("asset-output-malformed-ttl-task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    Property.ofValue(List.of()),
+                    Property.ofValue(List.of(asset)),
+                    Property.ofValue(AssetFailureBehavior.WARN)
                 )
             )
             .build();

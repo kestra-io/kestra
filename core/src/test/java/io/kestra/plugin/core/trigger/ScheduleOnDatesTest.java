@@ -46,7 +46,6 @@ class ScheduleOnDatesTest {
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
-            .interval(null)
             .dates(Property.ofValue(List.of(before, after, later)))
             .build();
 
@@ -70,7 +69,6 @@ class ScheduleOnDatesTest {
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
-            .interval(null)
             .dates(Property.ofValue(List.of(before, after, later)))
             .build();
         var conditionContext = conditionContext(scheduleOnDates);
@@ -89,7 +87,6 @@ class ScheduleOnDatesTest {
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
-            .interval(null)
             .timezone("Europe/Paris")
             .dates(Property.ofValue(List.of(fireDate)))
             .build();
@@ -121,7 +118,6 @@ class ScheduleOnDatesTest {
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
-            .interval(null)
             .timezone("Asia/Tokyo")
             .dates(Property.ofValue(List.of(fireDateUtc)))
             .build();
@@ -154,7 +150,6 @@ class ScheduleOnDatesTest {
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
             .type(ScheduleOnDates.class.getName())
-            .interval(null)
             .dates(Property.ofValue(List.of(first, before, next)))
             .build();
         var conditionContext = conditionContext(scheduleOnDates);

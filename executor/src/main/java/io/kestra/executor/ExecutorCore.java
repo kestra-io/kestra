@@ -7,11 +7,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import io.kestra.core.models.flows.Flow;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
@@ -21,10 +25,13 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LoopExecutionEvent;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -37,6 +44,7 @@ import io.kestra.core.runners.ExecutionTerminatedNotifier;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.SubflowExecutionEnd;
@@ -57,6 +65,7 @@ import io.kestra.executor.handler.SubflowExecutionEndMessageHandler;
 import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 import io.kestra.plugin.core.flow.Loop;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micrometer.core.instrument.Timer;
@@ -97,6 +106,7 @@ public class ExecutorCore {
     private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
     private final TriggerEventQueue triggerEventQueue;
     private final ExecutionTerminatedNotifier executionTerminatedNotifier;
+    private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final ExecutionCommandMessageHandler executionCommandMessageHandler;
     private final ExecutionEventMessageHandler executionEventMessageHandler;
     private final WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
@@ -133,6 +143,7 @@ public class ExecutorCore {
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         TriggerEventQueue triggerEventQueue,
         ExecutionTerminatedNotifier executionTerminatedNotifier,
+        WorkerJobRunningStateStore workerJobRunningStateStore,
         ExecutionCommandMessageHandler executionCommandMessageHandler,
         ExecutionEventMessageHandler executionEventMessageHandler,
         WorkerTaskResultMessageHandler workerTaskResultMessageHandler,
@@ -162,6 +173,7 @@ public class ExecutorCore {
         this.executionStatisticQueue = executionStatisticQueue;
         this.triggerEventQueue = triggerEventQueue;
         this.executionTerminatedNotifier = executionTerminatedNotifier;
+        this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.executionCommandMessageHandler = executionCommandMessageHandler;
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.workerTaskResultMessageHandler = workerTaskResultMessageHandler;
@@ -286,14 +298,13 @@ public class ExecutorCore {
                 executorService.log(log, false, executor);
             }
 
-            // the terminated state can come from the execution queue, in this case we always have a flow in the executor
-            // or from a worker task in an afterExecution block, in this case we need to load the flow
-            if (executor.getFlow() == null && executor.getExecution().getState().isTerminated()) {
+            // If we come from the execution queue, we always have a flow in the executor, otherwise we load it
+            if (executor.getFlow() == null) {
                 var execution = executor.getExecution();
                 FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 executor = executor.withFlow(flow);
             }
-            boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
+            boolean isTerminated = executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
             Execution execution = executor.getExecution();
             // Fire flow triggers for every distinct state transition that occurred in this cycle.
@@ -304,7 +315,7 @@ public class ExecutorCore {
             List<State.Type> transitions = executor.getStateTransitions();
             for (int i = 1; i < transitions.size(); i++) {
                 State.Type transitionState = transitions.get(i);
-                processFlowTriggers(transitionState == execution.getState().getCurrent() ? execution : execution.withState(transitions.get(i)));
+                processFlowTriggers(executor.getFlow(), transitionState == execution.getState().getCurrent() ? execution : execution.withState(transitions.get(i)));
             }
 
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
@@ -327,11 +338,16 @@ public class ExecutorCore {
                     executionQueue.emit(popped.get());
 
                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(popped.get());
+                    processFlowTriggers(executor.getFlow(), popped.get());
                 }
 
-                // if there is a parent, we send a subflow execution result to it
-                if (ExecutableUtils.isSubflow(execution)) {
+                if (terminatedByThisCycle) {
+                    releaseWorkingDirectoryLeases(executor);
+                }
+
+                // Send a SubflowExecutionEnd if there is a parent execution.
+                // Exclude RETRIED executions as they are replaced by a new one with the same trigger, which will report to the parent itself.
+                if (State.Type.RETRIED != execution.getState().getCurrent() && ExecutableUtils.isSubflow(execution)) {
                     // locate the parent execution to find the parent task run
                     String parentExecutionId = (String) execution.getTrigger().getVariables().get("executionId");
                     String taskRunId = (String) execution.getTrigger().getVariables().get("taskRunId");
@@ -369,7 +385,9 @@ public class ExecutorCore {
                         }
 
                     }
-                    loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs));
+                    TaskRunStatistic taskRunStatistic = TaskRunStatistic.of(execution.getTaskRunList())
+                        .plus(execution.getMetadata().getTaskRunStatistic());
+                    loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), execution.getState().getCurrent(), outputs, taskRunStatistic));
                 }
 
                 // purge SLA monitors
@@ -431,6 +449,32 @@ public class ExecutorCore {
     }
 
     /**
+     * A WorkingDirectory reports the results of its children only, so the controller never sees a terminal result under
+     * its own key. Its lease is released once the execution ends, whatever path ended the WorkingDirectory. Until then, a
+     * lease left on an ended task run is discarded instead of resubmitted, so a failure here is only logged.
+     */
+    private void releaseWorkingDirectoryLeases(ExecutorContext executor) {
+        Set<String> workingDirectoryTaskIds = executor.getFlow().allTasksWithChilds().stream()
+            .filter(WorkingDirectory.class::isInstance)
+            .map(Task::getId)
+            .collect(Collectors.toSet());
+        if (workingDirectoryTaskIds.isEmpty()) {
+            return;
+        }
+
+        for (TaskRun taskRun : ListUtils.emptyOnNull(executor.getExecution().getTaskRunList())) {
+            if (!workingDirectoryTaskIds.contains(taskRun.getTaskId())) {
+                continue;
+            }
+            try {
+                workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, taskRun.getId());
+            } catch (Exception e) {
+                log.error("Failed to release the lease of task run '{}' of execution '{}'.", taskRun.getId(), taskRun.getExecutionId(), e);
+            }
+        }
+    }
+
+    /**
      * Asynchronously emits a raw execution-statistic row for the indexer to persist for every terminal NORMAL-kind execution.
      */
 
@@ -480,14 +524,16 @@ public class ExecutorCore {
         return false;
     }
 
-    private void processFlowTriggers(Execution execution) throws QueueException {
+    private void processFlowTriggers(Flow flow, Execution execution) throws QueueException {
         flowTriggerProcessingTimer.record(throwRunnable(() ->
         {
             Collection<FlowWithSource> allFlows = flowMetaStore.allLastVersion();
+            boolean shouldRetry = shouldRetry(flow, execution);
 
             // directly process simple conditions
             flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> ListUtils.isEmpty(f.getTrigger().getDependsOn()))
+                .filter(f -> !f.getTrigger().isWaitForAllRetries() || !shouldRetry) // filter out triggers that wait for all retries for executions that should retry
                 .map(f -> f.getFlow())
                 .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
@@ -496,9 +542,17 @@ public class ExecutorCore {
             // send multiple conditions to the multiple condition queue for later processing
             flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> !ListUtils.isEmpty(f.getTrigger().getDependsOn()))
+                .filter(f -> !f.getTrigger().isWaitForAllRetries() || !shouldRetry) // filter out triggers that wait for all retries for executions that should retry
                 .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
                 .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
                 .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
         }));
+    }
+
+    private boolean shouldRetry(Flow flow, Execution execution) {
+        if (execution.getState().isFailed() && flow.getRetry() != null) {
+            return executionService.nextRetryDate(flow.getRetry(), execution) != null;
+        }
+        return false;
     }
 }

@@ -14,8 +14,10 @@
     import {computed} from "vue"
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 
+    type ModelValue = object | string | number | boolean | unknown[]
+
     const props = withDefaults(defineProps<{
-        modelValue?: object | string | number | boolean | unknown[]
+        modelValue?: ModelValue
         schema?: Record<string, unknown>
         required?: boolean
         task?: Record<string, unknown>
@@ -31,7 +33,7 @@
     })
 
     const emit = defineEmits<{
-        "update:modelValue": [value: unknown]
+        "update:modelValue": [value: ModelValue | undefined]
     }>()
 
     const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
@@ -52,7 +54,7 @@
         return values.value ? parseInt(values.value.toString(), 10) : undefined
     })
 
-    function onInput(value: unknown) {
+    function onInput(value: number | undefined) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

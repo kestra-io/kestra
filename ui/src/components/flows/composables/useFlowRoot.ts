@@ -8,7 +8,9 @@ import {useRouteTabsStore} from "../../../stores/routeTabs"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
+import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {FLOW_PARENT_ROUTE, FLOW_TAB_ROUTES, isFlowTabAllowed} from "../flowTabs"
+import {isFlowTabEnabled} from "override/components/flows/flowTabsExtension"
 
 export function useFlowRoot() {
     const {t} = useI18n()
@@ -45,10 +47,11 @@ export function useFlowRoot() {
         // so fetching it again here would double every flow page open.
         if (!isFlowLoaded()) {
             await flowStore.loadFlow({
-                ...route.params,
-                ...route.query,
+                namespace: String(route.params.namespace),
+                id: String(route.params.id),
+                revision: route.query.revision ? String(route.query.revision) : undefined,
                 allowDeleted: true,
-            } as any)
+            })
         }
 
         if (flowStore.flow) {
@@ -63,7 +66,10 @@ export function useFlowRoot() {
     const tabs = computed(() => {
         const namespace = flowStore.flow?.namespace
         return FLOW_TAB_ROUTES
-            .filter((tabRoute) => isFlowTabAllowed(tabRoute.meta?.tab as string, {user: user.value, namespace}))
+            .filter((tabRoute) => {
+                const tabName = tabRoute.meta?.tab as string
+                return isFlowTabAllowed(tabName, {user: user.value, namespace}) && isFlowTabEnabled(tabName, {namespace})
+            })
             .map((tabRoute) => {
                 const meta = tabRoute.meta ?? {}
                 const name = meta.tab as string
@@ -93,21 +99,15 @@ export function useFlowRoot() {
 
     const routeName = computed(() => route.params && route.params.id ? FLOW_PARENT_ROUTE : "")
 
+    const namespaceBreadcrumb = useNamespaceBreadcrumb(() => route.params.namespace?.toString(), {
+        tab: "flows",
+        root: {label: t("flows"), link: {name: "flows/list"}, scope: t("namespaces")},
+    })
+
     const routeInfo = computed(() => ({
         title: route.params.id.toString(),
-        breadcrumb: [
-            {
-                label: t("flows"),
-                link: {name: "flows/list"},
-            },
-            {
-                label: route.params.namespace,
-                link: {
-                    name: "namespaces/update/flows",
-                    params: {id: route.params.namespace},
-                },
-            },
-        ],
+        breadcrumb: namespaceBreadcrumb.value,
+        bookmarkLabel: `${route.params.namespace}: ${route.params.id}`,
         beta: route.meta?.beta as boolean | undefined,
     }))
 
@@ -156,6 +156,7 @@ export function useFlowRoot() {
         onUnmounted(() => {
             flowStore.flow = undefined
             flowStore.flowGraph = undefined
+            flowStore.invalidGraph = false
         })
     }
 

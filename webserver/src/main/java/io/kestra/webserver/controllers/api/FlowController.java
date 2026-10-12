@@ -2,8 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -96,7 +94,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/{tenant}/flows")
 @Slf4j
 public class FlowController {
-    private static final Pattern DOCUMENT_SEPARATOR = Pattern.compile("(?m)^---[ \\t]*(?:#.*)?\\r?$");
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -740,7 +737,7 @@ public class FlowController {
         } else {
             // Fallback to YAML body
             String content = (body == null ? "" : body).trim();
-            List<FlowSource> flowSources = Arrays.stream(content.split("\\n+---\\n*?"))
+            List<FlowSource> flowSources = YamlParser.splitDocuments(content)
                 .map(flow -> new FlowSource(null, flow))
                 .toList();
 
@@ -1043,13 +1040,8 @@ public class FlowController {
     }
 
     protected List<GenericFlow> parseMultiFlowSource(@Nullable String flows) {
-        if (flows == null || flows.isBlank()) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.stream(DOCUMENT_SEPARATOR.split(flows))
-            .map(String::trim)
-            .filter(Predicate.not(String::isEmpty))
+        return YamlParser.splitDocuments(flows)
+            .stream()
             .map(this::parseFlowSource)
             .toList();
     }

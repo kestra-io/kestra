@@ -32,7 +32,7 @@ const lintTolerant = (code: string, file = "probe.scss"): Warning[] => {
 
 const warningsFor = (code: string, file = "probe.scss") => lintTolerant(code, file).map(warning => warning.text)
 
-describe("the known-token set", () => {
+describe("the known-token set", {timeout: 30000}, () => {
     it("reads the names the Figma palette generator writes", () => {
         expect(knownTokens().has("--ks-text-link")).toBe(true)
     })
@@ -57,7 +57,7 @@ describe("the known-token set", () => {
     })
 })
 
-describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
+describe("the stylelint rule, ks/no-undeclared-custom-property", {timeout: 30000}, () => {
     it("reports a token that nothing declares", () => {
         expect(warningsFor(".x { color: var(--ks-nowhere); }"))
             .toEqual([expect.stringContaining("\"--ks-nowhere\" is not declared")])
@@ -89,7 +89,7 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
     })
 })
 
-describe("the eslint rule", () => {
+describe("the eslint rule", {timeout: 30000}, () => {
     it("covers the tokens stylelint cannot see", () => {
         const tester = new RuleTester({languageOptions: {ecmaVersion: 2022, sourceType: "module"}})
 

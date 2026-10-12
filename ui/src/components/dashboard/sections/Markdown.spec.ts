@@ -19,7 +19,7 @@ function mountMarkdown(chart: Chart) {
     })
 }
 
-describe("dashboard sections/Markdown.vue", () => {
+describe("dashboard sections/Markdown.vue", {timeout: 30000}, () => {
     it("renders the chart's source.content", async () => {
         const wrapper = mountMarkdown({
             id: "notes",

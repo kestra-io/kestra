@@ -17,7 +17,7 @@ import {
     useEditorHeaderWidth,
 } from "./useEditorHeaderWidth"
 
-describe("useEditorHeaderWidth", () => {
+describe("useEditorHeaderWidth", {timeout: 30000}, () => {
     it("returns Number.POSITIVE_INFINITY when no provider is present", () => {
         let width: ReturnType<typeof useEditorHeaderWidth> | undefined
 

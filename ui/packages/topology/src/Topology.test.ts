@@ -1,7 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
 import {nextTick} from "vue"
-import {createI18n} from "vue-i18n"
 import {useVueFlow} from "@vue-flow/core"
 import Topology from "./Topology.vue"
 import type {FlowGraph} from "./utils/vueFlowUtils"
@@ -47,14 +45,6 @@ describe("Topology flow bar", () => {
     })
 })
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {en: {}},
-    missingWarn: false,
-    fallbackWarn: false,
-})
-
 const FLOW_GRAPH: FlowGraph = {
     nodes: [
         {uid: "1", type: "task", task: {id: "task1", type: "io.kestra.plugin.core.log.Log", namespace: "io.kestra.tests", flowId: "flow"}},
@@ -65,18 +55,13 @@ const FLOW_GRAPH: FlowGraph = {
 }
 
 function mountForRefit(id: string) {
-    return mount(Topology, {
+    return i18nMount(Topology, {
         props: {
             id,
             flowGraph: FLOW_GRAPH,
             source: "",
         },
-        global: {
-            plugins: [i18n],
-            stubs: {
-                VueFlow: {template: "<div></div>"},
-            },
-        },
+        global: {stubs: {VueFlow: {template: "<div></div>"}}},
     })
 }
 

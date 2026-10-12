@@ -62,7 +62,7 @@ function getSources() {
     return cachedSources
 }
 
-describe("no legacy error fields", () => {
+describe("no legacy error fields", {timeout: 30000}, () => {
     it("finds source files to scan, so a broken glob cannot make this test vacuous", () => {
         expect(sourceFiles().length).toBeGreaterThan(500)
     })

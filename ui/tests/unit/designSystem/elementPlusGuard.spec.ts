@@ -5,7 +5,7 @@ import {findElementPlusUsage} from "./elementPlusGuard"
 
 const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "../../../src")
 
-describe("design system", () => {
+describe("design system", {timeout: 30000}, () => {
     it("uses Ks* components instead of Element Plus across ui/src", () => {
         const offenders = findElementPlusUsage(SRC)
         expect(

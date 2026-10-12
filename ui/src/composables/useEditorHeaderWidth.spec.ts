@@ -15,7 +15,7 @@ import {
     EDITOR_HEADER_BREAKPOINTS,
     provideEditorHeaderWidth,
     useEditorHeaderWidth,
-} from "../../../src/composables/useEditorHeaderWidth"
+} from "./useEditorHeaderWidth"
 
 describe("useEditorHeaderWidth", () => {
     it("returns Number.POSITIVE_INFINITY when no provider is present", () => {

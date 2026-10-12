@@ -42,3 +42,14 @@ export function waitForState($http: KestraClient, execution: Execution) {
         return statePredicate(execution, current)
     })
 }
+
+export function loopIterationsRoute(executionId: string | undefined, taskId?: string) {
+    return {
+        name: "executions/list",
+        query: {
+            "filters[parentId][EQUALS]": executionId,
+            "filters[kind][EQUALS]": "LOOP",
+            ...(taskId ? {"filters[taskId][EQUALS]": taskId} : {}),
+        },
+    }
+}

@@ -1,5 +1,5 @@
 <template>
-    <div v-if="hasLoopIterations" class="loop-iterations-notice">
+    <div v-if="hasLoopIterations" class="loop-iterations-notice" data-test="loop-iterations-notice">
         <KsAlert type="info" :closable="false">
             <div class="notice-body">
                 <span>{{ $t(`loop_iterations_notice.${props.kind}`) }}</span>
@@ -17,6 +17,7 @@
     import {RouterLink} from "vue-router"
 
     import {useExecutionsStore} from "../../stores/executions"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
     import {loopTaskIds} from "../../utils/flowUtils"
 
     const props = defineProps<{
@@ -31,14 +32,7 @@
         return (executionsStore.execution?.taskRunList ?? []).some((taskRun) => ids.has(taskRun.taskId))
     })
 
-    const iterationsRoute = computed(() => ({
-        name: "executions/list",
-        query: {
-            "filters[parentId][EQUALS]": executionsStore.execution?.id,
-            "filters[kind][EQUALS]": "LOOP",
-            ...(props.taskId ? {"filters[taskId][EQUALS]": props.taskId} : {}),
-        },
-    }))
+    const iterationsRoute = computed(() => loopIterationsRoute(executionsStore.execution?.id, props.taskId))
 </script>
 
 <style scoped lang="scss">

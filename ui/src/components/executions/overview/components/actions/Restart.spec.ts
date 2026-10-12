@@ -1,5 +1,5 @@
-import {describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
+import {afterEach, describe, expect, it, vi} from "vitest"
+import {mount, type VueWrapper} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -7,20 +7,39 @@ import Restart from "./Restart.vue"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "executions/update"}),
-    useRouter: () => ({push: vi.fn(), resolve: vi.fn(() => ({href: ""})), currentRoute: {value: {params: {}}}}),
+    useRouter: () => ({
+        push: vi.fn(),
+        resolve: vi.fn(() => ({href: ""})),
+        currentRoute: {value: {params: {}}},
+    }),
 }))
+
+const mounted: VueWrapper[] = []
+
+afterEach(() => mounted.splice(0).forEach((wrapper) => wrapper.unmount()))
 
 function mountRestart(state: string) {
     setActivePinia(createPinia())
-    return mount(Restart, {
+    const wrapper = mount(Restart, {
         props: {
             isReplay: true,
             execution: {id: "exec1", namespace: "tests", flowId: "flow1", state: {current: state}},
         },
         global: {
-            plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}}), KestraDesignSystem],
+            plugins: [
+                createI18n({
+                    legacy: false,
+                    locale: "en",
+                    missingWarn: false,
+                    fallbackWarn: false,
+                    messages: {en: {}},
+                }),
+                KestraDesignSystem,
+            ],
         },
     })
+    mounted.push(wrapper)
+    return wrapper
 }
 
 describe("Restart (replay)", () => {
@@ -41,17 +60,43 @@ describe("Restart (replay)", () => {
 })
 
 describe("Restart (subflow child)", () => {
-    const messages = {en: {"restart subflow warning": "Created by a {parent}.", "restart subflow warning link": "parent execution"}}
+    const messages = {
+        en: {
+            "restart subflow warning": "Created by a {parent}.",
+            "restart subflow warning link": "parent execution",
+        },
+    }
 
     function mountChild(trigger: Record<string, unknown> | undefined) {
         setActivePinia(createPinia())
         const wrapper = mount(Restart, {
             props: {
-                execution: {id: "child1", namespace: "tests", flowId: "child-flow", state: {current: "FAILED"}, trigger},
+                execution: {
+                    id: "child1",
+                    namespace: "tests",
+                    flowId: "child-flow",
+                    state: {current: "FAILED"},
+                    trigger,
+                },
             },
             global: {
-                plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages}), KestraDesignSystem],
-                stubs: {KsDialog: {template: "<div><slot /></div>"}, RouterLink: {props: ["to"], template: "<a data-test='parent-link'><slot /></a>"}},
+                plugins: [
+                    createI18n({
+                        legacy: false,
+                        locale: "en",
+                        missingWarn: false,
+                        fallbackWarn: false,
+                        messages,
+                    }),
+                    KestraDesignSystem,
+                ],
+                stubs: {
+                    KsDialog: {template: "<div><slot /></div>"},
+                    RouterLink: {
+                        props: ["to"],
+                        template: "<a data-test='parent-link'><slot /></a>",
+                    },
+                },
             },
         })
         mounted.push(wrapper)
@@ -65,7 +110,11 @@ describe("Restart (subflow child)", () => {
     it("shouldWarnAboutTheParentWhenExecutionWasCreatedBySubflowTask", async () => {
         const wrapper = mountChild({
             type: "io.kestra.plugin.core.flow.Subflow",
-            variables: {executionId: "parent1", namespace: "tests", flowId: "parent-flow"},
+            variables: {
+                executionId: "parent1",
+                namespace: "tests",
+                flowId: "parent-flow",
+            },
         })
 
         await openDialog(wrapper)
@@ -96,7 +145,16 @@ describe("Restart (restart)", () => {
                 execution: {id: "exec1", namespace: "tests", flowId: "flow1", state: {current: state}},
             },
             global: {
-                plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}}), KestraDesignSystem],
+                plugins: [
+                    createI18n({
+                        legacy: false,
+                        locale: "en",
+                        missingWarn: false,
+                        fallbackWarn: false,
+                        messages: {en: {}},
+                    }),
+                    KestraDesignSystem,
+                ],
             },
         })
         mounted.push(wrapper)
@@ -120,4 +178,3 @@ describe("Restart (restart)", () => {
         expect(wrapper.find("button").exists()).toBe(false)
     })
 })
-

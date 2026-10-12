@@ -423,7 +423,7 @@ public abstract class AbstractJdbcRepository {
         }
 
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
-            return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
+            return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase(Locale.ROOT));
         }
 
         if (field == QueryFilter.Field.SCOPE) {
@@ -592,7 +592,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Name getColumnName(QueryFilter.Field field) {
-        return DSL.quotedName(field.name().toLowerCase());
+        return DSL.quotedName(field.name().toLowerCase(Locale.ROOT));
     }
 
     protected Condition findQueryCondition(String query) {

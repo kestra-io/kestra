@@ -108,7 +108,7 @@
         if (!isLoopTerminated && inFlightCount > 0) {
             segments.push({
                 key: "IN_FLIGHT",
-                label: t("in flight"),
+                label: t("running"),
                 count: inFlightCount,
                 color: loopStateColors.RUNNING,
                 filterStates: allStates.filter(s => !State.isTerminated(s)),

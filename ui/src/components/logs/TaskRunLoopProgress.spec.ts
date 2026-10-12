@@ -7,7 +7,7 @@ import {State} from "@kestra-io/design-system"
 
 vi.mock("vue-i18n", () => ({
     useI18n: () => ({
-        t: (key: string) => key === "in flight" ? "In flight" : key === "not started" ? "Not started" : key,
+        t: (key: string) => key === "running" ? "Running" : key === "not started" ? "Not started" : key,
     }),
 }))
 
@@ -141,7 +141,7 @@ describe("TaskRunLoopProgress", () => {
         const pills = wrapper.findAll("[data-test=pill]")
         expect(pills).toHaveLength(3)
         expect(pills[0].text()).toBe("3 Success")
-        expect(pills[1].text()).toBe("2 In flight")
+        expect(pills[1].text()).toBe("2 Running")
         expect(pills[2].text()).toBe("5 Not started")
     })
 
@@ -173,7 +173,7 @@ describe("TaskRunLoopProgress", () => {
         const pills = wrapper.findAll("[data-test=pill]")
         expect(pills).toHaveLength(2)
         expect(pills[0].text()).toBe("4 Success")
-        expect(pills[1].text()).toBe("1 In flight")
+        expect(pills[1].text()).toBe("1 Running")
     })
 
     it("should sort terminal state pills according to the real arrayAllStates order", () => {

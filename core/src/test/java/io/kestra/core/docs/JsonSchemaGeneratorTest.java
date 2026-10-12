@@ -237,6 +237,7 @@ class JsonSchemaGeneratorTest {
             // anyOf branch reaching them by $ref have to go too, or a reusable-inputs input still validates, minus its
             // discriminator
             assertThat(schema, not(containsString("ReusableInputsInput")));
+            assertThat(schema, not(containsString("TableInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
         });

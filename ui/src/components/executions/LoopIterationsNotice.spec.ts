@@ -1,7 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
-import {defineComponent, reactive} from "vue"
+import {reactive} from "vue"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 
 type ExecutionsStoreStub = {
     flow: unknown;
@@ -23,23 +22,6 @@ vi.mock("../../stores/executions", () => ({
 
 import LoopIterationsNotice from "./LoopIterationsNotice.vue"
 
-const i18n = createI18n({
-    legacy: false,
-    globalInjection: true,
-    locale: "en",
-    messages: {en: {loop_iterations_notice: {logs: "Loop iterations logs live in their sub-executions", view_iterations: "View iterations"}}},
-})
-
-const KsAlertStub = defineComponent({
-    name: "KsAlert",
-    template: "<div data-test=\"notice\"><slot /></div>",
-})
-
-const KsButtonStub = defineComponent({
-    name: "KsButton",
-    template: "<button><slot /></button>",
-})
-
 const flow = {
     id: "loop",
     namespace: "company.team",
@@ -49,11 +31,15 @@ const flow = {
     ],
 }
 
-function mountNotice() {
-    return mount(LoopIterationsNotice, {
-        props: {kind: "logs"},
-        global: {plugins: [i18n], stubs: {KsAlert: KsAlertStub, KsButton: KsButtonStub}},
+function mountNotice(taskId?: string) {
+    return i18nMount(LoopIterationsNotice, {
+        props: {kind: "logs", taskId},
+        messages: {loop_iterations_notice: {logs: "Loop iterations logs live in their sub-executions", view_iterations: "View iterations"}},
     })
+}
+
+function iterationsQuery(wrapper: ReturnType<typeof mountNotice>) {
+    return wrapper.findComponent({name: "RouterLink"}).props("to").query
 }
 
 describe("LoopIterationsNotice", () => {
@@ -64,7 +50,20 @@ describe("LoopIterationsNotice", () => {
     it("should show the notice when the execution ran a Loop task", () => {
         store.executions.execution = {id: "exec-1", taskRunList: [{id: "tr-1", taskId: "loop"}, {id: "tr-2", taskId: "out"}]}
 
-        expect(mountNotice().find("[data-test=notice]").exists()).toBe(true)
+        const wrapper = mountNotice()
+
+        expect(wrapper.get("[data-test=loop-iterations-notice]").text()).toContain("Loop iterations logs live in their sub-executions")
+        expect(iterationsQuery(wrapper)).toEqual({"filters[parentId][EQUALS]": "exec-1", "filters[kind][EQUALS]": "LOOP"})
+    })
+
+    it("should narrow the iterations link to the given Loop task", () => {
+        store.executions.execution = {id: "exec-1", taskRunList: [{id: "tr-1", taskId: "loop"}]}
+
+        expect(iterationsQuery(mountNotice("loop"))).toEqual({
+            "filters[parentId][EQUALS]": "exec-1",
+            "filters[kind][EQUALS]": "LOOP",
+            "filters[taskId][EQUALS]": "loop",
+        })
     })
 
     it("should hide the notice on an iteration sub-execution, whose task runs are the loop children", () => {
@@ -75,6 +74,6 @@ describe("LoopIterationsNotice", () => {
             taskRunList: [{id: "tr-3", taskId: "hello", parentTaskRunId: "tr-1"}],
         }
 
-        expect(mountNotice().find("[data-test=notice]").exists()).toBe(false)
+        expect(mountNotice().find("[data-test=loop-iterations-notice]").exists()).toBe(false)
     })
 })

@@ -28,7 +28,7 @@ describe("revealApp", () => {
         const timerCallback = vi["fn"]();
         (window as KestraWindow)["__kestraLoader"] = {
             showDelay: 1000,
-            timer: window["setTimeout"](timerCallback, 1000),
+            timer: setTimeout(timerCallback, 1000),
         };
 
         revealApp();

@@ -25,6 +25,7 @@ import io.kestra.core.models.tasks.retrys.Random;
 import io.kestra.core.utils.RetryUtils;
 
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
+import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -70,7 +71,11 @@ public class JooqDSLContextWrapper {
         DEADLOCK_RETRYER.<Void> run(
             () ->
             {
-                dslContext.transaction(transactional);
+                try {
+                    dslContext.transaction(transactional);
+                } catch (RuntimeException e) {
+                    throw connectionFailure(e);
+                }
                 return null;
             }
         );
@@ -78,8 +83,32 @@ public class JooqDSLContextWrapper {
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
         return DEADLOCK_RETRYER.run(
-            () -> dslContext.transactionResult(transactional)
+            () ->
+            {
+                try {
+                    return dslContext.transactionResult(transactional);
+                } catch (RuntimeException e) {
+                    throw connectionFailure(e);
+                }
+            }
         );
+    }
+
+    /**
+     * Micronaut's jOOQ transaction provider opens a transaction by asking the transaction manager for a
+     * connection, so a pool failure surfaces as a {@link CannotGetJdbcConnectionException} whose message
+     * never mentions the real reason. jOOQ then rolls back the transaction that was never opened, which
+     * NPEs inside the provider and is attached as a suppressed exception, burying the pool error deeper.
+     *
+     * @return the pool's own error when no connection could be obtained, {@code e} for any other failure
+     */
+    private static RuntimeException connectionFailure(RuntimeException e) {
+        if (!(e instanceof CannotGetJdbcConnectionException failure) || failure.getCause() == null) {
+            return e;
+        }
+
+        Throwable cause = failure.getCause();
+        return new DataAccessException("Unable to obtain a database connection: %s".formatted(cause.getMessage()), cause);
     }
 
     /**

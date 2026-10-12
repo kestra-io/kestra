@@ -621,11 +621,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 Await.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
+                    TaskException failure = new TaskException(exitCode, defaultLogConsumer);
+                    if (isContainerOomKilled(dockerClient, runContainerId, logger)) {
+                        failure = new TaskException(
+                            "Container '%s' was killed by the Docker OOM killer (exit code %d). Increase the task runner memory limit or reduce the task's memory usage."
+                                .formatted(runContainerId, exitCode),
+                            exitCode,
+                            defaultLogConsumer
+                        );
+                    }
+
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                         downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
                     }
 
-                    throw new TaskException(exitCode, defaultLogConsumer);
+                    throw failure;
                 } else if (logger.isDebugEnabled()) {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
@@ -662,6 +672,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
      * during normal completion cleanup (attach/wait phase finally), so a container is never leaked regardless
      * of where in {@link #run} the interruption or failure occurs.
      */
+    static boolean isContainerOomKilled(InspectContainerResponse container) {
+        return container != null
+            && container.getState() != null
+            && Boolean.TRUE.equals(container.getState().getOOMKilled());
+    }
+
+    private boolean isContainerOomKilled(DockerClient dockerClient, String containerId, Logger logger) {
+        try {
+            return isContainerOomKilled(dockerClient.inspectContainerCmd(containerId).exec());
+        } catch (RuntimeException e) {
+            logger.debug("Unable to inspect container '{}' for OOM termination; preserving the original exit-code failure.", containerId, e);
+            return false;
+        }
+    }
+
     private void cleanupContainer(DockerClient dockerClient, String containerId, boolean needVolume, FileHandlingStrategy strategy, String filesVolumeName, Boolean renderedDelete,
         Logger logger) {
         // Clear the interrupted flag so Docker HTTP cleanup calls are not rejected.

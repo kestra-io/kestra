@@ -1,4 +1,5 @@
 import {nextTick} from "vue"
+import type {LogDensity} from "./useLogDisplay"
 import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
 
 describe("useLogDisplay", () => {
@@ -185,49 +186,66 @@ describe("useLogDisplay", () => {
         expect(logsExpandByDefault.value).toBe(false)
     })
 
-    it("malformed stored value falls back to the default instead of throwing", async () => {
+    it("malformed font size overrides fall back to the mono base px instead of throwing", async () => {
         localStorage.setItem("logsFontSize", "not-a-number")
         localStorage.setItem("editorFontSize", "invalid")
 
-        const {logsFontSize, effectiveEditorFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} =
+        const {logsFontSize, effectiveEditorFontSize} = await import("./useLogDisplay")
+
+        expect(logsFontSize.value).toBe(12)
+        expect(effectiveEditorFontSize.value).toBe(12)
+    })
+
+    // useStorage does not validate these four: it passes the raw value through its type serializer
+    it("malformed stored values do not throw and are read as the serializer parses them", async () => {
+        localStorage.setItem("logsDensity", "bogus")
+        localStorage.setItem("logsBodyClamp", "not-a-number")
+        localStorage.setItem("logsPrettyJson", "not-a-boolean")
+        localStorage.setItem("logsExpandByDefault", "not-a-boolean")
+
+        const {logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} =
             await import("./useLogDisplay")
 
-        expect(() => logsFontSize.value).not.toThrow()
-        expect(logsFontSize.value).toBe(12)
-        expect(() => effectiveEditorFontSize.value).not.toThrow()
-        expect(effectiveEditorFontSize.value).toBe(12)
-
-        expect(() => logsDensity.value).not.toThrow()
-        expect(() => logsBodyClamp.value).not.toThrow()
-        expect(() => logsPrettyJson.value).not.toThrow()
-        expect(() => logsExpandByDefault.value).not.toThrow()
+        expect(logsDensity.value).toBe("bogus")
+        expect(Number.isNaN(logsBodyClamp.value)).toBe(true)
+        expect(logsPrettyJson.value).toBe(false)
+        expect(logsExpandByDefault.value).toBe(false)
     })
 
     it("same preference shared between two callers stays in sync", async () => {
-        const first = await import("./useLogDisplay")
-        const second = await import("./useLogDisplay")
+        const {logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault} =
+            await import("./useLogDisplay")
+        const {useStorage} = await import("@vueuse/core")
 
-        first.logsDensity.value = "compact"
-        expect(second.logsDensity.value).toBe("compact")
+        const otherDensity = useStorage<LogDensity>("logsDensity", "normal")
+        const otherBodyClamp = useStorage<number>("logsBodyClamp", 0)
+        const otherPrettyJson = useStorage<boolean>("logsPrettyJson", true)
+        const otherExpandByDefault = useStorage<boolean>("logsExpandByDefault", false)
 
-        second.logsPrettyJson.value = false
-        expect(first.logsPrettyJson.value).toBe(false)
+        logsDensity.value = "compact"
+        logsBodyClamp.value = 15
+        logsPrettyJson.value = false
+        logsExpandByDefault.value = true
+        await nextTick()
 
-        first.logsBodyClamp.value = 15
-        expect(second.logsBodyClamp.value).toBe(15)
+        expect(otherDensity.value).toBe("compact")
+        expect(otherBodyClamp.value).toBe(15)
+        expect(otherPrettyJson.value).toBe(false)
+        expect(otherExpandByDefault.value).toBe(true)
 
-        second.logsExpandByDefault.value = true
-        expect(first.logsExpandByDefault.value).toBe(true)
+        otherDensity.value = "expanded"
+        await nextTick()
+        expect(logsDensity.value).toBe("expanded")
     })
 
     it("DENSITY_PADDING has an entry for every density the picker offers", async () => {
         const {DENSITY_PADDING} = await import("./useLogDisplay")
-        const pickerDensities = ["compact", "normal", "expanded"] as const
+        // Record<LogDensity, true> fails the type check when a density is added to the type but not listed here
+        const densities: Record<LogDensity, true> = {compact: true, normal: true, expanded: true}
 
-        for (const density of pickerDensities) {
-            expect(DENSITY_PADDING[density]).toBeDefined()
-            expect(typeof DENSITY_PADDING[density]).toBe("string")
-            expect(DENSITY_PADDING[density].length).toBeGreaterThan(0)
+        expect(Object.keys(DENSITY_PADDING).sort()).toEqual(Object.keys(densities).sort())
+        for (const density of Object.keys(densities) as LogDensity[]) {
+            expect(DENSITY_PADDING[density]).toMatch(/^\d+px$/)
         }
     })
 })

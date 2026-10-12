@@ -185,6 +185,7 @@
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
+    import type {ExecutionTaskRun} from "./executionTaskRun"
     import {date as dateFilter} from "../../utils/filters"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
@@ -224,27 +225,12 @@
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
 
+    import {storageKeys} from "../../utils/constants"
     // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
     const TICK_FORMAT = "HH:mm:ss"
     const PRECISE_TICK_FORMAT = "HH:mm:ss.SSS"
 
-    interface TaskRun {
-        id: string;
-        taskId: string;
-        parentTaskRunId?: string;
-        value?: string;
-        flowId?: string;
-        namespace?: string;
-        outputs?: Record<string, unknown>;
-        attempts?: unknown[];
-        state: {
-            current: string;
-            histories: Array<{
-                state: string;
-                date: string;
-            }>;
-        };
-    }
+    type TaskRun = ExecutionTaskRun
 
     interface TaskWrapper {
         task: TaskRun;
@@ -306,7 +292,7 @@
     const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined)
     const expandedFromRoute = ref(false)
 
-    const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
+    const defaultLogLevel = computed(() => localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO")
     const {
         effectiveValue: effectiveSelectedLogLevel,
     } = useRouteFilterPolicy<LevelFilterValue>({
@@ -345,9 +331,13 @@
         return execution.value?.state?.histories?.[0] ? ts(execution.value.state.histories[0].date) : 0
     })
 
+    const taskRunsWithHistories = computed(() =>
+        ((execution.value?.taskRunList ?? []) as TaskRun[]).filter(tr => (tr.state?.histories?.length ?? 0) > 0),
+    )
+
     const tasks = computed<TaskWrapper[]>(() =>
         buildTaskRunHierarchy(
-            (execution.value?.taskRunList || []) as TaskRun[],
+            taskRunsWithHistories.value,
             (n1, n2) => ts(n1.state.histories[0].date) - ts(n2.state.histories[0].date),
         ),
     )
@@ -447,7 +437,7 @@
         }
 
         return Math.max(
-            ...(execution.value.taskRunList as TaskRun[] || []).map(r => {
+            ...taskRunsWithHistories.value.map(r => {
                 const lastIndex = r.state.histories.length - 1
                 return ts(r.state.histories[lastIndex].date)
             }),

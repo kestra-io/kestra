@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import io.kestra.core.exceptions.ResourceAccessDeniedException;
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVBackend;
@@ -83,7 +84,7 @@ public class KVStoreService {
      */
     public void checkAccessNamespaceIsAllowed(String tenant, String namespace, @Nullable String fromNamespace) {
         // A namespace inherits the K/V store of its ancestors, so the allow-list only governs access to any other namespace.
-        boolean inheritsTargetNamespace = fromNamespace != null && isDescendantOrSelf(namespace, fromNamespace);
+        boolean inheritsTargetNamespace = NamespaceInterface.isDescendantOrSelf(namespace, fromNamespace);
 
         if (fromNamespace != null && !inheritsTargetNamespace) {
             try {
@@ -109,12 +110,5 @@ public class KVStoreService {
                 );
             }
         }
-    }
-
-    /**
-     * The trailing dot is required: without it 'prod2' would be treated as a descendant of 'prod' and skip the allow-list.
-     */
-    private static boolean isDescendantOrSelf(final String parentNamespace, final String childNamespace) {
-        return childNamespace.equals(parentNamespace) || childNamespace.startsWith(parentNamespace + ".");
     }
 }

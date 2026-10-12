@@ -484,6 +484,7 @@
       "title": "Entrada/Saída",
       "search_placeholder": "Pesquisar Key ou value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Expressão",
       "tree": "Árvore",
       "raw_json": "JSON Bruto",
       "select_prompt": "Selecione uma variável para inspecionar o seu value.",
@@ -1111,7 +1112,6 @@
     "pause backfills": "Pausar backfills",
     "backfill executions": "Execuções de backfill",
     "execute backfill": "Executar backfill",
-    "relative": "Relativo",
     "relative start date": "Data de início relativa",
     "absolute": "Absoluto",
     "backfill": "Backfill",
@@ -2723,6 +2723,7 @@
     },
     "iteration": "Iteração",
     "iteration_number": "Iteração {number}",
-    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?"
+    "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?",
+    "not started": "Não iniciado"
   }
 }

@@ -546,6 +546,31 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldKeepNextEvaluationDateWhenReEnablingScheduleOnDatesWithRecoverTrueAndConfiguredLastAndNoPastDate() {
+        // GIVEN
+        ZonedDateTime futureDate = SchedulerClock.now().plusDays(4);
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, SchedulerClock.now().minusDays(2))
+                .updateForNextEvaluationDate(CLOCK, futureDate)
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithScheduleOnDate(
+            "UTC", List.of(futureDate), builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.LAST).build()
+        )));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(futureDate.toInstant());
+    }
+
+    @Test
     void shouldIgnoreRecoverMissedSchedulesWhenDisablingTrigger() {
         // GIVEN
         ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().plusMinutes(5);

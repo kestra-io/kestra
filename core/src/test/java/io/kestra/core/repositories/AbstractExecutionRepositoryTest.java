@@ -1172,6 +1172,53 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void shouldFilterLoopSubExecutionsByLoopRunValue() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution parent = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+        TaskRun loopTaskRun = TaskRun.of(
+            parent, ResolvedTask.of(
+                Return.builder().id("loop").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+        for (int i = 0; i < 3; i++) {
+            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i));
+        }
+        QueryFilter parentFilter = QueryFilter.builder().field(QueryFilter.Field.PARENT_ID).operation(QueryFilter.Op.EQUALS).value(parent.getId()).build();
+        QueryFilter kindFilter = QueryFilter.builder().field(QueryFilter.Field.KIND).operation(QueryFilter.Op.EQUALS).value(ExecutionKind.LOOP).build();
+
+        List<Execution> equals = executionRepository.find(
+            Pageable.UNPAGED, tenant,
+            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build())
+        );
+        assertThat(equals).hasSize(1);
+        assertThat(equals.getFirst().getLoopRun().value()).isEqualTo("CUST-1");
+
+        List<Execution> in = executionRepository.find(
+            Pageable.UNPAGED, tenant,
+            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.IN).value(List.of("CUST-0", "CUST-2")).build())
+        );
+        assertThat(in).hasSize(2);
+
+        List<Execution> notEquals = executionRepository.find(
+            Pageable.UNPAGED, tenant,
+            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.NOT_EQUALS).value("CUST-1").build())
+        );
+        assertThat(notEquals).hasSize(2);
+
+        List<Execution> failed = executionRepository.find(
+            Pageable.UNPAGED, tenant,
+            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
+                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build())
+        );
+        assertThat(failed).isEmpty();
+
+        List<String> distinct = executionRepository.findDistinctFieldValues(
+            tenant, QueryFilter.Field.LOOP_RUN_VALUE, List.of(parentFilter, kindFilter), Pageable.from(1, 10)
+        );
+        assertThat(distinct).containsExactly("CUST-0", "CUST-1", "CUST-2");
+    }
+
+    @Test
     protected void shouldFindByLabel() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var exec1 = executionRepository.save(

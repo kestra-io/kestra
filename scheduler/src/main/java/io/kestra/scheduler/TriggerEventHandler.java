@@ -555,11 +555,15 @@ public class TriggerEventHandler {
      */
     private void maySendExecutionKilled(TriggerState state) {
         if (TriggerType.REALTIME.equals(state.getType())) {
-            sendExecutionKilled(state);
+            sendExecutionKilled(state, state.getDispatchEpoch());
         }
     }
 
     private void sendExecutionKilled(TriggerId id) {
+        sendExecutionKilled(id, null);
+    }
+
+    private void sendExecutionKilled(TriggerId id, Long dispatchEpoch) {
         try {
             this.executionKilledQueue.emit(
                 ExecutionKilledTrigger
@@ -571,6 +575,7 @@ public class TriggerEventHandler {
                     .namespace(id.getNamespace())
                     .flowId(id.getFlowId())
                     .triggerId(id.getTriggerId())
+                    .dispatchEpoch(dispatchEpoch)
                     .build()
             );
         } catch (QueueException e) {

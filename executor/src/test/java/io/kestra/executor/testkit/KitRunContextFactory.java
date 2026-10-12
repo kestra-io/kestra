@@ -17,6 +17,7 @@ import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.runners.RunVariables;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.storages.Storage;
 
 /**
  * {@link RunContextFactory} for executor unit tests: builds {@link DefaultRunContext}s with a real
@@ -33,18 +34,21 @@ public class KitRunContextFactory extends RunContextFactory {
     private final MetricRegistry meterRegistry;
     private final TaskOutputService taskOutputService;
     private final io.micronaut.context.ApplicationContext applicationContext;
+    private final Storage storage;
 
     public KitRunContextFactory(
         VariableRenderer renderer,
         RunContextLoggerFactory loggerFactory,
         MetricRegistry meterRegistry,
         TaskOutputService taskOutputService,
-        io.micronaut.context.ApplicationContext applicationContext) {
+        io.micronaut.context.ApplicationContext applicationContext,
+        Storage storage) {
         this.renderer = renderer;
         this.loggerFactory = loggerFactory;
         this.meterRegistry = meterRegistry;
         this.taskOutputService = taskOutputService;
         this.applicationContext = applicationContext;
+        this.storage = storage;
     }
 
     @Override
@@ -103,6 +107,7 @@ public class KitRunContextFactory extends RunContextFactory {
             .withLogger(runContextLogger)
             .withMeterRegistry(meterRegistry)
             .withVariableRenderer(renderer)
-            .withPluginConfiguration(Map.of());
+            .withPluginConfiguration(Map.of())
+            .withStorage(storage);
     }
 }

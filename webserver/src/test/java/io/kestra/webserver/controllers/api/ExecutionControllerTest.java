@@ -413,7 +413,7 @@ class ExecutionControllerTest {
         );
         Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
         assertThat(Problems.detail(exception)).isEqualTo(
-            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
+            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID, LOOP_RUN_VALUE"
         );
 
         exception = assertThrows(
@@ -958,6 +958,21 @@ class ExecutionControllerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityWhenChangingTaskRunStateWithoutState() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + IdUtils.create() + "/actions/state",
+                    Map.of("taskRunId", "taskrun_id_not_found")
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     /**

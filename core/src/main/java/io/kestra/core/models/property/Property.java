@@ -2,6 +2,9 @@ package io.kestra.core.models.property;
 
 import java.io.IOException;
 import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -278,7 +281,8 @@ public class Property<T> {
                 // Otherwise if it's already a map we read it as a map first then render it from run context which handle map rendering by rendering each entry of the map (otherwise it will fail with nested expressions in values for eg.)
                 else {
                     Map asRawMap = MAPPER.readValue(property.expression, Map.class);
-                    property.value = deserialize(runContext.render(asRawMap, variables), targetMapType);
+                    Map<String, Object> rendered = valueClass == Object.class ? renderKeepingCollections(asRawMap, runContext, variables) : runContext.render(asRawMap, variables);
+                    property.value = deserialize(rendered, targetMapType);
                 }
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
@@ -286,6 +290,40 @@ public class Property<T> {
         }
 
         return property.value;
+    }
+
+    /**
+     * Renders a map literal like {@link RunContext#render(Map, Map)}, except that a value written as a single expression keeps the list or map it
+     * renders to instead of its JSON text. Scalars still render as text, so callers expecting strings keep working.
+     */
+    private static Map<String, Object> renderKeepingCollections(Map<String, Object> map, RunContext runContext, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        Map<String, Object> rendered = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            rendered.putIfAbsent(runContext.render(entry.getKey(), variables), renderValueKeepingCollections(entry.getValue(), runContext, variables));
+        }
+        return rendered;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object renderValueKeepingCollections(Object value, RunContext runContext, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        if (value instanceof Map<?, ?> map) {
+            return renderKeepingCollections((Map<String, Object>) map, runContext, variables);
+        }
+        if (value instanceof List<?> list) {
+            List<Object> rendered = new ArrayList<>(list.size());
+            for (Object item : list) {
+                rendered.add(renderValueKeepingCollections(item, runContext, variables));
+            }
+            return rendered;
+        }
+        if (value instanceof String string) {
+            if (PebbleUtil.isSingleExpression(string.trim())) {
+                Object typed = runContext.renderTyped(string, variables);
+                return typed == null || typed instanceof Map || typed instanceof Collection || typed.getClass().isArray() ? typed : String.valueOf(typed);
+            }
+            return runContext.render(string, variables);
+        }
+        return value;
     }
 
     @Override

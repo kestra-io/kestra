@@ -33,6 +33,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.kestra.core.utils.Rethrow.throwBiConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
@@ -80,7 +81,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
             runContext
                 .render(this.params)
                 .asMap(String.class, Object.class)
-                .forEach((s, o) ->
+                .forEach(throwBiConsumer((s, o) ->
                 {
                     if (o instanceof List<?> oList) {
                         oList.stream().map(Object::toString).forEach(s1 ->
@@ -89,10 +90,12 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                         });
                     } else if (o instanceof String oString) {
                         uriBuilder.addParameter(s, oString);
+                    } else if (o instanceof Map<?, ?> oMap) {
+                        uriBuilder.addParameter(s, JacksonMapper.ofJson().writeValueAsString(oMap));
                     } else {
                         throw new IllegalArgumentException("Unsupported param type: " + o.getClass());
                     }
-                });
+                }));
         }
 
         HttpRequest.HttpRequestBuilder request = HttpRequest.builder()

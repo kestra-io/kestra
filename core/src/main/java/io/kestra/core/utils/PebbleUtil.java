@@ -73,6 +73,14 @@ public final class PebbleUtil {
     }
 
     /**
+     * Returns {@code true} if the given string is a single print block ({@code {{ ... }}}) and nothing else, like {@code {{ vars.labels }}}.
+     */
+    public static boolean isSingleExpression(String value) {
+        String closing = DEFAULT_SYNTAX.getPrintCloseDelimiter();
+        return value.startsWith(DEFAULT_SYNTAX.getPrintOpenDelimiter()) && value.indexOf(closing) == value.length() - closing.length();
+    }
+
+    /**
      * Applies {@code transform} to the content of each Pebble block ({@code {{ ... }}} or {@code {% ... %}}) found in
      * {@code value}, leaving any text outside a block untouched.
      */

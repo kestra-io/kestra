@@ -51,7 +51,6 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
-            await page.locator(".tab-select").click()
             await page.getByRole("tab", {name: "Overview"}).click()
         })
 
@@ -90,7 +89,6 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
-            await page.locator(".tab-select").click()
             await page.getByRole("tab", {name: "Overview"}).click()
             // Scoped to the topnav title, not #app: the Monaco editor (still disposing during
             // the tab switch) also contains the flowId, so a broader match is a strict-mode

@@ -6,6 +6,7 @@ import io.kestra.core.mcp.models.McpSessionEvent;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.tasks.TaskRunStatistic;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
@@ -61,4 +62,6 @@ public interface QueueFactoryInterface<D> {
     BroadcastQueueInterface<ClusterEvent> clusterEventQueue(D dependencies);
 
     DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue(D dependencies);
+
+    DispatchQueueInterface<TaskRunStatistic> taskRunStatisticQueue(D dependencies);
 }

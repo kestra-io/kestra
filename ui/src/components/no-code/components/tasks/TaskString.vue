@@ -2,10 +2,10 @@
     <div class="wrapper" :class="{'wrapper--toggle': hasToggle, 'wrapper--boolean': schema?.type === 'boolean'}">
         <KsDatePicker
             v-if="!pebble && schema?.format === 'date-time'"
-            :modelValue="modelValue"
+            :modelValue="typeof modelValue === 'string' ? modelValue : undefined"
             type="date"
             :placeholder="$t('no_code.choose_placeholder', {field: root || 'date'})"
-            @update:model-value="(v: Date | string | null) => onInput(v instanceof Date ? v.toISOString() : '')"
+            @update:model-value="(v: Date | string | null | undefined) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
         <TaskDuration
             v-if="!pebble && schema?.format === 'duration'"

@@ -28,6 +28,17 @@ public class InMemoryExecutionQueuedStateStore implements ExecutionQueuedStateSt
     }
 
     @Override
+    public int count(TransactionContext txContext, String tenantId, String namespace, String flowId) {
+        return (int) queued.stream()
+            .filter(
+                entry -> java.util.Objects.equals(entry.getTenantId(), tenantId)
+                    && java.util.Objects.equals(entry.getNamespace(), namespace)
+                    && java.util.Objects.equals(entry.getFlowId(), flowId)
+            )
+            .count();
+    }
+
+    @Override
     public void pop(TransactionContext txContext, String tenantId, String namespace, String flowId, BiConsumer<TransactionContext, Execution> consumer) {
         Optional<ExecutionQueued> next = queued.stream()
             .filter(entry -> entry.getTenantId().equals(tenantId) && entry.getNamespace().equals(namespace) && entry.getFlowId().equals(flowId))

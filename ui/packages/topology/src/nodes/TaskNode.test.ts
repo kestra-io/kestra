@@ -43,13 +43,14 @@ function taskRunWithHistory(taskId: string, histories: {date: number; state: str
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false}: {
+function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false}: {
     execution?: Record<string, unknown>,
     taskRuns?: GraphTaskRun[],
     replayEnabled?: boolean,
     task?: typeof TASK & {errors?: unknown[]},
     isReadOnly?: boolean,
     isFlowable?: boolean,
+    realBasicNode?: boolean,
 }) {
     return i18nMount(TaskNode, {
         props: {
@@ -73,9 +74,13 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
             stubs: {
                 Handle: true,
                 NodeMenu: true,
-                BasicNode: {
-                    template: "<div><slot name='badge'/><slot name='subtitle'/><slot name='details'/><slot name='content'/><slot name='footer'/><slot name='title-status'/><slot name='title-actions'/></div>",
-                },
+                ...(realBasicNode
+                    ? {KsTooltip: {template: "<span><slot /></span>"}}
+                    : {
+                        BasicNode: {
+                            template: "<div><slot name='subtitle'/><slot name='details'/><slot name='content'/><slot name='footer'/><slot name='title-status'/><slot name='title-actions'/></div>",
+                        },
+                    }),
             },
             provide: {
                 [EXECUTION_INJECTION_KEY as symbol]: computed(() =>
@@ -281,6 +286,13 @@ describe("TaskNode anatomy", () => {
         expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
     })
 
+    it("should reserve no footer band outside of an execution context", () => {
+        const wrapper = mountTaskNode({realBasicNode: true})
+
+        expect(wrapper.find(".node-footer").exists()).toBe(false)
+        expect(wrapper.find(".node-core").classes()).not.toContain("node-core--with-footer")
+    })
+
     it("should show no duration bar for a task that never ran", () => {
         const wrapper = mountTaskNode({
             execution: {state: {current: "SUCCESS"}},
@@ -314,5 +326,20 @@ describe("TaskNode anatomy", () => {
 
         const running = wrapper.find("[data-test=\"duration-segment-running\"]")
         expect((running.element as HTMLElement).style.width).toBe("25%")
+    })
+
+    it("should render the duration bar in the card footer", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [
+                taskRunWithHistory("my-task", [{date: 0, state: "RUNNING"}, {date: 1_000, state: "SUCCESS"}]),
+                taskRunWithHistory("other-task", [{date: 0, state: "RUNNING"}, {date: 4_000, state: "SUCCESS"}]),
+            ],
+            realBasicNode: true,
+        })
+
+        const bar = wrapper.find(".node-core > .node-footer [data-test=\"duration-compact-bar\"]")
+        expect(bar.exists()).toBe(true)
+        expect((bar.find("[data-test=\"duration-segment-running\"]").element as HTMLElement).style.width).toBe("25%")
     })
 })

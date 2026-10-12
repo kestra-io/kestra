@@ -2715,6 +2715,8 @@
     "blocks": "Blocchi",
     "split_horizontal": "Dividi orizzontalmente",
     "split_vertical": "Dividi verticalmente",
+    "move_panel_to_bottom": "Sposta il pannello in basso",
+    "move_panel_to_side": "Sposta il pannello lateralmente",
     "pwa": {
       "install_title": "Installa Kestra",
       "install_description": "Installa Kestra come app per un accesso più rapido e un'esperienza a schermo intero.",

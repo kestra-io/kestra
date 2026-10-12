@@ -76,7 +76,7 @@ public class ReadFileFunction extends AbstractFileFunction {
     }
 
     private InputStream contentInputStream(URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
-        Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
+        Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace);
 
         if (args.containsKey(REVISION)) {
             Integer revision;

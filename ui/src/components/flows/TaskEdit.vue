@@ -190,7 +190,7 @@
     import type {UnsetRequiredField} from "../no-code/utils/requiredFields"
     import {openCollapsedGroups, scrollThenFocus} from "../no-code/utils/useFieldNavigation"
     import {canSaveFlowTemplate} from "../../utils/flowTemplate"
-    import {splitValidationErrors} from "../../utils/validationErrors"
+    import {validationErrorLines, type ValidationError as ApiValidationError} from "../../utils/validationErrors"
     import ValidationError from "./ValidationError.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useAuthStore} from "override/stores/auth"
@@ -202,6 +202,7 @@
     import {useContextSections} from "../../composables/useContextSections"
     import type {DataSection} from "./contextSections/types"
     import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
+    import {FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY} from "../no-code/injectionKeys"
 
     interface Props {
         component?: string;
@@ -271,6 +272,8 @@
 
     const ARMED_FIELD_CLASS = "task-edit-chip-insert-target"
     const armedField = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+    const focusedExpressionEditorInsert = ref<((text: string) => void) | null>(null)
+    provide(FOCUSED_EXPRESSION_EDITOR_INJECTION_KEY, focusedExpressionEditorInsert)
 
     const unsetRequiredFields = ref<UnsetRequiredField[]>([])
     provide(UNSET_REQUIRED_FIELDS_INJECTION_KEY, unsetRequiredFields)
@@ -298,6 +301,11 @@
 
     const onPanelFocusIn = (event: FocusEvent) => {
         panelHasFocus.value = true
+        if (event.target instanceof HTMLElement && event.target.closest(".monaco-editor")) {
+            armedField.value?.classList.remove(ARMED_FIELD_CLASS)
+            armedField.value = null
+            return
+        }
         if (isArmableField(event.target)) {
             armedField.value?.classList.remove(ARMED_FIELD_CLASS)
             armedField.value = event.target
@@ -314,6 +322,8 @@
             armedField.value.classList.remove(ARMED_FIELD_CLASS)
             armedField.value = null
         }
+        // Tabbing out of Monaco fires focusout while focus is still inside the panel.
+        if (leavingPanel) focusedExpressionEditorInsert.value = null
     }
 
     function insertAndNotify(field: HTMLInputElement | HTMLTextAreaElement, expr: string) {
@@ -325,6 +335,10 @@
     function onChipActivate(expr: string, sectionKey: string) {
         if (armedField.value) {
             insertAndNotify(armedField.value, expr)
+            trackChipInserted(`inputs.${sectionKey}`)
+        } else if (focusedExpressionEditorInsert.value) {
+            focusedExpressionEditorInsert.value(expr)
+            KsMessage.success(t("block_editor.chip_inserted"))
             trackChipInserted(`inputs.${sectionKey}`)
         } else {
             copyToClipboard(expr)
@@ -392,9 +406,9 @@
 
     const flowStore = useFlowStore()
     const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
-    const localTaskError = ref<string | undefined>()
+    const localTaskErrors = ref<ApiValidationError[] | undefined>()
     const errors = computed(() => {
-        const split = splitValidationErrors(localTaskError.value)
+        const split = validationErrorLines(localTaskErrors.value)
         return split.length === 0 ? undefined : split
     })
     const pluginMarkdown = computed(() => {
@@ -561,10 +575,10 @@
         if (taskYaml.value) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
-                .then((result) => { localTaskError.value = (result as {constraints?: string})?.constraints })
-                .catch(() => { localTaskError.value = undefined })
+                .then((result) => { localTaskErrors.value = result?.errors })
+                .catch(() => { localTaskErrors.value = undefined })
         } else {
-            localTaskError.value = undefined
+            localTaskErrors.value = undefined
         }
     }
 
@@ -575,7 +589,7 @@
                 task: taskYaml.value,
                 section: props.section,
             }).then((result) => {
-                localTaskError.value = (result as {constraints?: string})?.constraints
+                localTaskErrors.value = result?.errors
             }).catch(() => { /* leave prior errors in place on transient failure */ })
         }
         if (props.presentation === "panel") {

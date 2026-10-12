@@ -181,6 +181,40 @@ class RequestTest {
     }
 
     @Test
+    void paramsShouldRepeatForEachItemOfAListExpression() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/params"))
+            .params(Property.ofExpression("""
+                {"labels": "{{ inputs.labels }}"}"""))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of("labels", List.of("first:label", "second:label")));
+
+        Request.Output output = task.run(runContext);
+
+        assertThat((String) output.getBody()).isEqualTo("labels=first%3Alabel&labels=second%3Alabel");
+    }
+
+    @Test
+    void paramsShouldSendAMapExpressionAsJson() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/params"))
+            .params(Property.ofExpression("""
+                {"filter": "{{ inputs.filter }}"}"""))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of("filter", Map.of("status", "open")));
+
+        Request.Output output = task.run(runContext);
+
+        assertThat((String) output.getBody()).isEqualTo("filter=%7B%22status%22%3A%22open%22%7D");
+    }
+
+    @Test
     void noRedirect() throws Exception {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())

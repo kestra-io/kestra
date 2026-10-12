@@ -738,6 +738,7 @@ public class FlowController {
             // Fallback to YAML body
             String content = (body == null ? "" : body).trim();
             List<FlowSource> flowSources = YamlParser.splitDocuments(content)
+                .stream()
                 .map(flow -> new FlowSource(null, flow))
                 .toList();
 

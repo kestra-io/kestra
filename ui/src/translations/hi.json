@@ -1714,7 +1714,7 @@
       "loop": {
         "this-execution": "यह निष्पादन",
         "with-iterations": "Loop इटरेशन के साथ",
-        "truncated": "पहले विफल इटरेशन के logs दिखाए जा रहे हैं | पहले {count} विफल इटरेशन के logs दिखाए जा रहे हैं",
+        "batch-range": "विफल पुनरावृत्तियाँ {from}–{to} कुल {total} में से",
         "empty-title": "कोई मेल खाते logs नहीं",
         "empty-description": "इस निष्पादन या इसके विफल Loop इटरेशन में चयनित स्तर से कोई log मेल नहीं खाता। अधिक देखने के लिए स्तर घटाएँ।",
         "scope-to": "ग्राफ़ और logs को {scope} तक सीमित करें",

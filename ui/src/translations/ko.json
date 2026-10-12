@@ -1714,7 +1714,7 @@
       "loop": {
         "this-execution": "이 실행",
         "with-iterations": "루프 반복 포함",
-        "truncated": "첫 번째 실패한 반복의 로그를 표시하는 중 | 처음 {count}개의 실패한 반복의 로그를 표시하는 중",
+        "batch-range": "실패한 반복 {total}개 중 {from}–{to}",
         "empty-title": "일치하는 로그 없음",
         "empty-description": "이 실행 또는 실패한 루프 반복에 선택한 수준과 일치하는 로그가 없습니다. 더 보려면 수준을 낮추세요.",
         "scope-to": "그래프와 로그를 {scope}(으)로 범위 지정",

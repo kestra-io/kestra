@@ -1714,7 +1714,7 @@
       "loop": {
         "this-execution": "Esta execução",
         "with-iterations": "Com iterações do loop",
-        "truncated": "A mostrar os logs da primeira iteração falhada | A mostrar os logs das primeiras {count} iterações falhadas",
+        "batch-range": "Iterações com falha {from}–{to} de {total}",
         "empty-title": "Nenhum log correspondente",
         "empty-description": "Nenhum log corresponde ao nível selecionado nesta execução nem nas suas iterações do loop falhadas. Baixe o nível para ver mais.",
         "scope-to": "Limitar o gráfico e os logs a {scope}",

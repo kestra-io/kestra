@@ -33,7 +33,7 @@
 
     import {Chart, getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor} from "../composables/charts"
-    import {useTheme} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;

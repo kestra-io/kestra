@@ -19,6 +19,7 @@ import Slack from "vue-material-design-icons/Slack.vue"
 import Github from "vue-material-design-icons/Github.vue"
 import Calendar from "vue-material-design-icons/Calendar.vue"
 import Star from "vue-material-design-icons/Star.vue"
+import {storageKeys} from "../../utils/constants"
 
 export interface Button {
     title: string;
@@ -39,7 +40,7 @@ export function useContextButtons() {
     const route = useRoute()
 
     const apiStore = useApiStore()
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    const lastNewsReadDate = useStorage<string | null>(storageKeys.LAST_NEWS_READ_DATE, null)
     const newsUnread = computed<boolean>(() => {
         const feeds = apiStore.feeds
         return Boolean(

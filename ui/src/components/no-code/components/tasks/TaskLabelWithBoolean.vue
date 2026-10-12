@@ -11,7 +11,7 @@
     interface Props {
         type?: string
         isBoolean?: boolean
-        componentProps?: Record<string, any>
+        componentProps?: Record<string, unknown>
     }
 
     withDefaults(defineProps<Props>(), {

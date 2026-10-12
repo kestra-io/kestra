@@ -186,7 +186,7 @@ public class State {
      */
     @JsonIgnore
     public boolean canBeRestarted() {
-        return this.current.isFailed() || this.current.isKilled();
+        return this.current.isFailed();
     }
 
     @JsonIgnore

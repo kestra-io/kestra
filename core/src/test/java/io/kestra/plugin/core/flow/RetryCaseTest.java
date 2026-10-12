@@ -182,13 +182,6 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(1).attemptNumber()).isEqualTo(3);
     }
 
-    public void retryFlowableChildErrors(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.findTaskRunsByTaskId("child").getFirst().attemptNumber()).isEqualTo(2);
-        assertThat(execution.findTaskRunsByTaskId("handler")).hasSize(1);
-        assertThat(execution.findTaskRunsByTaskId("handler").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-    }
-
     public void retryFlowableNestedChild(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().get(2).attemptNumber()).isEqualTo(3);

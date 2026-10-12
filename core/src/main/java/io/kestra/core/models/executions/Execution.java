@@ -23,7 +23,6 @@ import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.runners.RunContextLogger;
@@ -772,9 +771,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             );
             return false;
         }
-        // a flowable's retry is spent on its failed children, or, with RETRY_FLOWABLE, moves it straight to RETRYING:
-        // a FAILED flowable task run is never retried itself
-        if (resolvedTask.getTask() instanceof FlowableTask<?>) {
+        if (!resolvedTask.getTask().isRetriedOnFailure()) {
             return true;
         }
         return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry());

@@ -138,6 +138,12 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/retry-flowable-child-errors.yaml")
+    void retryFlowableChildErrors(Execution execution) {
+        retryCaseTest.retryFlowableChildErrors(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/retry-flowable-nested-child.yaml")
     void retryFlowableNestedChild(Execution execution) {
         retryCaseTest.retryFlowableNestedChild(execution);

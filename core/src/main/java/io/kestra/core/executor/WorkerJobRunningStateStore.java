@@ -49,6 +49,12 @@ public interface WorkerJobRunningStateStore {
     void deleteByKeyAndWorker(TransactionContext txContext, String key, String workerUid);
 
     /**
+     * Returns whether the running worker job for the given key is held by the given worker, reading the
+     * latest write rather than a possibly stale search index.
+     */
+    boolean existsByKeyAndWorker(String key, String workerUid);
+
+    /**
      * Save a running worker job.
      *
      * @implNote Implementors that support transaction must use the provided {@link TransactionContext} to attach to the current transaction.

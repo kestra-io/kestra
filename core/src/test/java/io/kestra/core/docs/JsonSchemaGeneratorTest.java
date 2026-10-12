@@ -172,8 +172,8 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
-            // an asset type provided by a plugin keeps its constant, which is what the editor autocompletes
-            assertThat(properties(definitions.get(External.class.getName())).get("type").get("const"), is(External.class.getName()));
+            // External is inferred, never declared, so it is not offered as an asset type
+            assertThat(definitions, not(hasKey(External.class.getName())));
             // the custom asset is the free-form branch, so its type stays an open string
             var customType = properties(definitions.get(Custom.class.getName())).get("type");
             assertThat(customType.get("type"), is("string"));
@@ -592,7 +592,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
         // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
-        assertThat(definitions.size(), is(12));
+        assertThat(definitions.size(), is(11));
     }
 
     @SuppressWarnings("unchecked")

@@ -4,7 +4,9 @@ import {useI18n} from "vue-i18n"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
+import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
+import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
 
 export function useExecutionRoot() {
     const {t} = useI18n()
@@ -16,6 +18,11 @@ export function useExecutionRoot() {
     const dependenciesCount = ref<number>()
     const previousExecutionId = ref<string>()
 
+    const namespaceBreadcrumb = useNamespaceBreadcrumb(() => route.params.namespace?.toString(), {
+        tab: "executions",
+        root: {label: t("executions"), link: {name: "executions/list"}, scope: t("namespaces")},
+    })
+
     const routeInfo = computed(() => {
         const ns = route.params.namespace as string
         const flowId = route.params.flowId as string
@@ -26,15 +33,11 @@ export function useExecutionRoot() {
 
         return {
             title: route.params.id as string,
+            bookmarkLabel: `${ns}.${flowId}: ${route.params.id}`,
             breadcrumb: [
+                ...namespaceBreadcrumb.value,
                 {
-                    label: t("executions"),
-                    link: {
-                        name: "executions/list",
-                    },
-                },
-                {
-                    label: `${ns}.${flowId}`,
+                    label: flowId,
                     link: {
                         name: "flows/update",
                         params: {
@@ -67,7 +70,8 @@ export function useExecutionRoot() {
     // the component, props and section flags live on each child route and are resolved
     // by `<router-view>`; here we only build the bar metadata from their `meta`.
     const getBaseTabs = () => {
-        return EXECUTION_TAB_ROUTES.map((tabRoute) => {
+        const namespace = executionsStore.execution?.namespace
+        return EXECUTION_TAB_ROUTES.filter((tabRoute) => isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})).map((tabRoute) => {
             const meta = tabRoute.meta ?? {}
             const name = meta.tab as string
             return {

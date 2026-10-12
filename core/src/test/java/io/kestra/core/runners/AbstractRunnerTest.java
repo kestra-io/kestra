@@ -595,6 +595,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-empty-values-from-uri.yaml")
+    protected void loopEmptyValuesFromUri(Execution execution) throws Exception {
+        loopCaseTest.loopEmptyValuesFromUri(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-expression-context.yaml")
     protected void loopExecutionContext(Execution execution) throws Exception {
         loopCaseTest.loopExpressionContext(execution);
@@ -659,6 +665,18 @@ public abstract class AbstractRunnerTest {
     @LoadFlows("flows/valids/minimal.yaml")
     public void loopWithSubflow(Execution execution) {
         loopCaseTest.loopWithSubflow(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-with-pause.yaml")
+    public void loopWithPause(Execution execution) {
+        loopCaseTest.loopWithPause(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/loop-break.yaml")
+    public void loopBreak(Execution execution) throws InternalException {
+        loopCaseTest.loopBreak(execution);
     }
 
     @Test

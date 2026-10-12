@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
@@ -58,6 +59,20 @@ class KillReleasesConcurrencySlotTest {
         assertThat(trace.emitted("execution").map(e -> e.as(Execution.class).getId()))
             .as("the queued execution re-entered the execution queue when the slot freed")
             .contains(queued.getId());
+    }
+
+    @Test
+    void killingTheSlotHolderSuspendedAtABreakpointReleasesTheSlotAndPopsTheQueue() {
+        FlowWithSource flow = singleSlotFlow();
+        Execution slotHolder = Executions.created(flow).withBreakpoints(List.of(Breakpoint.of("a")));
+        Execution queued = Executions.created(flow);
+        harness.step(slotHolder);
+        harness.step(queued);
+        assertThat(harness).as("before the kill: the holder waits at its breakpoint, on no worker").hasExecutionInState(slotHolder, State.Type.BREAKPOINT).hasQueuedExactly(queued).hasRunning(flow, 1);
+
+        harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
+
+        assertKilledAndQueueDrained(flow, slotHolder, queued);
     }
 
     @Test

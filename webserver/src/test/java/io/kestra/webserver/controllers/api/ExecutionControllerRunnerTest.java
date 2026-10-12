@@ -33,6 +33,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InternalException;
@@ -78,6 +79,8 @@ import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.ActorResolver;
+import io.kestra.webserver.services.DefaultActorResolver;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.context.annotation.Property;
@@ -120,6 +123,8 @@ import static org.mockito.Mockito.when;
 class ExecutionControllerRunnerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
+    private static final Actor ACTOR = new Actor("actor-id", "10.0.0.1", "impersonator-id");
+    private static final Label AUDITED = new Label("audited", "true");
 
     @Inject
     protected BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
@@ -166,8 +171,16 @@ class ExecutionControllerRunnerTest {
         return mock(TenantValidationFilter.class);
     }
 
+    @MockBean(DefaultActorResolver.class)
+    public ActorResolver getActorResolver() {
+        return () -> ACTOR;
+    }
+
     @Inject
     private TaskOutputService taskOutputService;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
@@ -406,6 +419,68 @@ class ExecutionControllerRunnerTest {
         assertThat(creations.getFirst().getRequest())
             .as("the event must carry the HTTP request so the execution can be attributed to its author")
             .isNotNull();
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void shouldAttributeASetLabelsUpdateToTheRequestActor(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/%s/executions/%s/actions/labels".formatted(tenantId, execution.getId()), List.of(AUDITED)),
+            Execution.class
+        );
+
+        CrudEvent<Execution> update = awaitEvent(CrudEventType.UPDATE, execution.getId(), it -> it.getLabels().contains(AUDITED));
+        assertThat(update.getActor()).isEqualTo(ACTOR);
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void shouldAttributeABulkSetLabelsUpdateToTheRequestActor(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        client.toBlocking().exchange(
+            HttpRequest.POST(
+                "/api/v1/%s/executions/labels/by-ids".formatted(tenantId),
+                new ExecutionController.SetLabelsByIdsRequest(List.of(execution.getId()), List.of(AUDITED))
+            ),
+            ApiAsyncOperationResponse.class
+        );
+
+        CrudEvent<Execution> update = awaitEvent(CrudEventType.UPDATE, execution.getId(), it -> it.getLabels().contains(AUDITED));
+        assertThat(update.getActor()).isEqualTo(ACTOR);
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
+    void shouldAttributeAReplayToTheRequestActor(String tenantId) throws TimeoutException, QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution execution = runnerUtils.runOne(tenantId, TESTS_FLOW_NS, "minimal");
+
+        Execution replay = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/%s/executions/%s/actions/replay".formatted(tenantId, execution.getId()), null),
+            Execution.class
+        );
+
+        CrudEvent<Execution> creation = awaitEvent(CrudEventType.CREATE, replay.getId(), _ -> true);
+        CrudEvent<Execution> sourceUpdate = awaitEvent(CrudEventType.UPDATE, execution.getId(), it -> it.getLabels().contains(new Label(Label.REPLAYED, "true")));
+        assertThat(creation.getActor()).isEqualTo(ACTOR);
+        assertThat(sourceUpdate.getActor()).isEqualTo(ACTOR);
+    }
+
+    @Test
+    @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
+    void shouldAttributeKillingAPausedExecutionToTheRequestActor(String tenantId) throws QueueException {
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution paused = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/%s/executions/%s/actions/kill".formatted(tenantId, paused.getId())));
+
+        CrudEvent<Execution> wakeUp = awaitEvent(CrudEventType.UPDATE, paused.getId(), it -> it.getState().getCurrent() == State.Type.RESTARTED);
+        assertThat(wakeUp.getActor()).isEqualTo(ACTOR);
     }
 
     @Test
@@ -1894,6 +1969,59 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume.yaml" })
+    void shouldResumeLoopFromMainExecution() throws QueueException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "loop-pause-resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // resume the execution two times as there are two iterations
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().isPaused());
+        resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // check that the execution is no more paused
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume.yaml" })
+    @SuppressWarnings("unchecked")
+    void shouldResumeLoopFromSubExecution() throws QueueException, InternalException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "loop-pause-resume");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // resume each loop sub-execution
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(pausedExecution.getTenantId(), pausedExecution.getId(), null);
+        assertThat(subExecutions).hasSize(1);
+        Execution iteration1 = subExecutions.getFirst();
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + iteration1.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().getHistories().stream().filter(h -> h.getState().isPaused()).count() == 2);
+
+        subExecutions = executionRepository.findLoopSubExecutions(pausedExecution.getTenantId(), pausedExecution.getId(), null);
+        assertThat(subExecutions).hasSize(2);
+        Execution iteration2 = subExecutions.get(1);
+        resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + iteration2.getId() + "/actions/resume", null)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // check that the execution terminates successfully
+        awaitExecution(pausedExecution.getId(), exec -> exec.getState().isSuccess());
+    }
+
+    @Test
     @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldReturnUpdatedExecutionWhenUpdateExecutionStatusSucceeds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2179,6 +2307,22 @@ class ExecutionControllerRunnerTest {
         // check that the execution is killed
         Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
         assertThat(killedExecution.getTaskRunList()).hasSize(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldReturnConflictWhenKillExecutionCalledOnTerminatedExecution() throws Exception {
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.DELETE("/api/v1/main/executions/" + execution.getId() + "/actions/kill")
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
     }
 
     @Test
@@ -3621,6 +3765,47 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldreplayplaygroundatbreakpoint")
+    void shouldReplayOnlyPlaygroundExecutionWhenSuspendedAtBreakpoint() {
+        String tenantId = "shouldreplayplaygroundatbreakpoint";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution playground = triggerSuspendedExecution(tenantId, "&kind=PLAYGROUND");
+        Execution playgroundReplay = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, playground.getId(), playground.getTaskRunList().getFirst().getId()),
+                ImmutableMap.of()
+            ),
+            Execution.class
+        );
+        assertThat(playgroundReplay.getId()).isNotEqualTo(playground.getId());
+
+        Execution regular = triggerSuspendedExecution(tenantId, "");
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST(
+                    "/api/v1/%s/executions/%s/actions/replay?taskRunId=%s".formatted(tenantId, regular.getId(), regular.getTaskRunList().getFirst().getId()),
+                    ImmutableMap.of()
+                ),
+                Execution.class
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Cannot replay execution: current state is 'BREAKPOINT', expected terminated.");
+    }
+
+    private Execution triggerSuspendedExecution(String tenantId, String extraQuery) {
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/" + tenantId + "/executions/" + TESTS_FLOW_NS + "/minimal?breakpoints=date" + extraQuery, null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        return awaitExecution(execution.getId(), State.Type.BREAKPOINT);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/logs.yaml" })
     void shouldReturnBadRequestWhenKillByIdsCalledOnInvalidExecutions() {
         Execution execution = client.toBlocking().retrieve(
@@ -3842,7 +4027,7 @@ class ExecutionControllerRunnerTest {
     private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
@@ -3899,6 +4084,15 @@ class ExecutionControllerRunnerTest {
                     .orElse(null),
                 execution -> execution != null && execution.getState().isTerminated()
             );
+    }
+
+    private static CrudEvent<Execution> awaitEvent(CrudEventType type, String executionId, Predicate<Execution> matching) {
+        return await().atMost(Duration.ofSeconds(10)).until(
+            () -> ExecutionCrudEventListener.events().stream()
+                .filter(event -> type.equals(event.getType()) && executionId.equals(event.getModel().getId()) && matching.test(event.getModel()))
+                .findFirst(),
+            Optional::isPresent
+        ).orElseThrow();
     }
 
     /**

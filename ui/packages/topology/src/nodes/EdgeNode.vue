@@ -60,7 +60,7 @@
     import type {PropType} from "vue"
     import {getSmoothStepPath, EdgeLabelRenderer, Position} from "@vue-flow/core"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import type {AddTaskTarget} from "../utils/vueFlowUtils"
+    import {edgeTurnPosition, fanOutSplitPosition, type AddTaskTarget} from "../utils/vueFlowUtils"
     import {
         CANVAS_HOVERED_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
@@ -73,6 +73,9 @@
         unused?: boolean;
         value?: string;
         relationType?: string;
+        fansOut?: boolean;
+        laneGap?: {leaving: number; entering: number};
+        bypass?: "source" | "target";
     }
 
     const props = defineProps({
@@ -128,11 +131,29 @@
             : {}
     })
 
-    const path = computed(() => getSmoothStepPath(props))
+    const flowsHorizontally = computed(() => props.targetPosition === "left" || props.targetPosition === "right")
+    const along = computed(() => ({
+        from: flowsHorizontally.value ? props.sourceX ?? 0 : props.sourceY ?? 0,
+        to: flowsHorizontally.value ? props.targetX ?? 0 : props.targetY ?? 0,
+    }))
+
+    const laneTurn = computed(() =>
+        edgeTurnPosition(along.value.from, along.value.to, {
+            gap: props.data?.laneGap,
+            bypass: props.data?.bypass,
+        }),
+    )
+
+    const path = computed(() => getSmoothStepPath({
+        ...props,
+        centerX: flowsHorizontally.value ? laneTurn.value : undefined,
+        centerY: flowsHorizontally.value ? undefined : laneTurn.value,
+    }))
 
     const showCaseLabel = computed(
         () => props.data?.relationType === "CHOICE" && Boolean(props.data?.value),
     )
+
 
     const CASE_LABEL_GAP = 18
     const caseLabelX = computed(() => {
@@ -148,8 +169,17 @@
         return ty
     })
 
-    const addButtonX = computed(() => path.value?.[1] ?? 0)
-    const addButtonY = computed(() => path.value?.[2] ?? 0)
+    // A fan-out's one button belongs on the run every branch still shares — between the lane's own
+    // marker and the split — rather than on the drop into whichever branch happens to carry it.
+    const splitPoint = computed(() => {
+        const middle = fanOutSplitPosition(along.value.from, along.value.to, laneTurn.value)
+        return flowsHorizontally.value
+            ? {x: middle, y: props.sourceY ?? 0}
+            : {x: props.sourceX ?? 0, y: middle}
+    })
+
+    const addButtonX = computed(() => (props.data?.fansOut ? splitPoint.value.x : path.value?.[1] ?? 0))
+    const addButtonY = computed(() => (props.data?.fansOut ? splitPoint.value.y : path.value?.[2] ?? 0))
 
     const labelAnchor = computed(() => {
         switch (props.targetPosition) {

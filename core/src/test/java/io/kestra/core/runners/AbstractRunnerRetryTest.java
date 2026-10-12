@@ -80,6 +80,15 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
+    @LoadFlows(
+        value = { "flows/valids/subflow-retry-new-execution-parent.yaml", "flows/valids/subflow-retry-new-execution-child.yaml" },
+        tenantId = "retrynewexecutionsubflowtenant"
+    )
+    void retryNewExecutionSubflowOutputs() throws TimeoutException, QueueException {
+        retryCaseTest.retryNewExecutionSubflowOutputs("retrynewexecutionsubflowtenant");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/retry-failed-task-duration.yml")
     void retryFailedTaskDuration(Execution execution) {
         retryCaseTest.retryFailedTaskDuration(execution);
@@ -143,5 +152,29 @@ public abstract class AbstractRunnerRetryTest {
     @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
     void retryWithFlowableErrors(Execution execution) {
         retryCaseTest.retryWithFlowableErrors(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior.yaml")
+    void retryFlowableBehavior(Execution execution) {
+        retryCaseTest.retryFlowableBehavior(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-success.yaml")
+    void retryFlowableBehaviorSuccess(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorSuccess(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-allow-failure.yaml")
+    void retryFlowableBehaviorAllowFailure(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorAllowFailure(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-nested-leaf.yaml")
+    void retryFlowableBehaviorNestedLeaf(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorNestedLeaf(execution);
     }
 }

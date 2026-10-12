@@ -1,6 +1,6 @@
 <template>
     <ElCollapseItem
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as CollapseItemProps)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -15,7 +15,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCollapseItem} from "element-plus"
+    import {ElCollapseItem, type CollapseItemProps} from "element-plus"
+    import type {Component} from "vue"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -25,7 +26,7 @@
         name?: string | number
         title?: string
         disabled?: boolean
-        icon?: any
+        icon?: string | Component
     }>()
 
     const filteredProps = useFilteredProps(props)

@@ -104,10 +104,10 @@ const stripEmptySlots = (params: Params) => {
 
 export const buildClientParams = (args: ReadonlyArray<unknown>, fields: FieldsConfig) => {
   const params: Params = {
-    body: {},
-    headers: {},
-    path: {},
-    query: {},
+    body: Object.create(null),
+    headers: Object.create(null),
+    path: Object.create(null),
+    query: Object.create(null),
   };
 
   const map = buildKeyMap(fields);

@@ -81,7 +81,6 @@
                             :icons="pluginsStore.icons"
                             :selectedId="activeSelectedId"
                             :focusedId="focusedId"
-                            :dnd="dndFor(lane.section)"
                             @add="(e) => openTaskPicker(lane.section, e)"
                             @select="(block) => selectBlock(lane.section, block)"
                             @open-split="(block) => selectBlock(lane.section, block, true)"
@@ -94,7 +93,6 @@
                             @duplicate-path="onDuplicateAtPath"
                             @add-at-path="openTaskPickerAtPath"
                             @update-depends-on="onUpdateDependsOn"
-                            @reorder="onNestedReorder"
                         />
                     </div>
                 </div>
@@ -148,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, provide, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import FlowIcon from "vue-material-design-icons/FileDocumentOutline.vue"
     import Cog from "vue-material-design-icons/Cog.vue"
@@ -178,6 +176,7 @@
     import type {Crumb} from "../utils/useFieldNavigation"
     import {taskCrumbAt, useEditTarget} from "./useEditTarget"
     import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
+    import {BLOCK_DRAG_INJECTION_KEY} from "../injectionKeys"
     import {useBlockOperations} from "./useBlockOperations"
     import {modalItemPathOf, useBlockSelection} from "./useBlockSelection"
     import {useBlockMutations} from "./useBlockMutations"
@@ -196,6 +195,7 @@
         sectionSentinelId,
     } from "./blockSections"
     import {useYamlUndo} from "./useYamlUndo"
+    import {useBlockClipboard} from "./useBlockClipboard"
     import {useCanvasFocus} from "./useCanvasFocus"
     import {useTaskPicker} from "./useTaskPicker"
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
@@ -239,10 +239,8 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
     )
-
-    const inlineEditPanel = ref()
 
     // Only a lane of tasks can be filled from the task picker; every other list needs its own
     // schema-driven form, which opens exactly where editing a task would — modal or tab.
@@ -265,7 +263,6 @@
         props,
         flowYaml,
         validationIssuesByTask,
-        inlineEditPanel,
         createTask: onCreateBlockInList,
         editTask: (parentPath, blockSchemaPath, refPath, split) => emit("editTask", parentPath, blockSchemaPath, refPath, split),
         closeTask: () => emit("closeTask"),
@@ -457,10 +454,12 @@
         onCloseTask: () => emit("closeTask"),
     })
 
-    const {undoState, applyYaml, deleteWithUndo, performUndo} = useYamlUndo(
+    const {undoState, applyYaml, deleteWithUndo, performUndo, performRedo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
+
+    const clipboard = useBlockClipboard()
 
     const {
         deleteInSection: onDelete,
@@ -506,7 +505,8 @@
         if (movedIndex >= lo && movedIndex <= hi) deselectIfCurrent(id)
     }
 
-    const {dndFor, reorder: onNestedReorder} = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    const dragContext = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
+    provide(BLOCK_DRAG_INJECTION_KEY, dragContext)
 
     const lanes = computed(() => buildSectionLanes(t, {
         triggers: parsedTriggers.value,
@@ -573,6 +573,9 @@
         if (id === "undo") {
             return performUndo()
         }
+        if (id === "redo") {
+            return performRedo()
+        }
         if (id === "command-menu") {
             openCommandMenu()
             return
@@ -615,6 +618,12 @@
             } else if (activeSelectedId.value) {
                 duplicateSelected()
             }
+        } else if (id === "copy") {
+            copyFocusedOrSelected()
+        } else if (id === "cut") {
+            cutFocusedOrSelected()
+        } else if (id === "paste") {
+            return pasteRelative()
         } else if (id === "delete") {
             if (focusedId.value) {
                 requestDeleteFocused()
@@ -645,6 +654,10 @@
         requestDeleteFocused,
         requestDeleteSelected,
         duplicateSelected,
+        copyFocusedOrSelected,
+        cutFocusedOrSelected,
+        canPasteHere,
+        pasteRelative,
         moveFocused,
         moveSelected,
     } = useBlockOperations({
@@ -660,9 +673,10 @@
         deleteAtPath: onDeleteAtPath,
         duplicateInSection: onDuplicate,
         duplicateAtPath: onDuplicateAtPath,
+        clipboard,
     })
 
-    const shortcutGroups = computed(buildShortcutGroups)
+    const shortcutGroups = computed(() => buildShortcutGroups())
 
     const footerContext = computed(() => {
         if (commandMenuOpen.value) return t("block_editor.footer.command_menu")
@@ -695,6 +709,10 @@
         openFocused,
         duplicateFocused: () => actionInFocused("[data-test='block-card-duplicate']"),
         deleteFocused: requestDeleteFocused,
+        copyFocused: copyFocusedOrSelected,
+        cutFocused: cutFocusedOrSelected,
+        pasteRelative,
+        canPaste: canPasteHere(),
         goToSection: (section) => {
             const list = sectionList(section)
             // A palette jump crosses the whole canvas, unlike an arrow-key step

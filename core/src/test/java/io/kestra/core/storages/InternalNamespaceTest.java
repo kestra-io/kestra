@@ -365,6 +365,18 @@ class InternalNamespaceTest {
     }
 
     @Test
+    void shouldRefuseToReadAFileOfAnotherNamespace() throws IOException, URISyntaxException {
+        final String otherNamespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace otherNamespace = new InternalNamespace(log, MAIN_TENANT, otherNamespaceId, storageInterface, namespaceFileMetadataStateStore);
+        otherNamespace.putFile(Path.of("/secret.txt"), new ByteArrayInputStream("secret".getBytes()));
+        NamespaceFile otherFile = otherNamespace.get(Path.of("/secret.txt"));
+
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, TestsUtils.randomNamespace(), storageInterface, namespaceFileMetadataStateStore);
+
+        assertThatThrownBy(() -> namespace.getFileContent(otherFile)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void shouldThrowWhenNoRevisionObjectExistsInStorage() throws IOException, URISyntaxException {
         // Given a file whose every revision object has been removed from storage
         final String namespaceId = TestsUtils.randomNamespace();

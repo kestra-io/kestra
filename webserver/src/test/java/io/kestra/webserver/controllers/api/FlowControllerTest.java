@@ -647,6 +647,28 @@ class FlowControllerTest {
     }
 
     @Test
+    void shouldRejectSiblingNamespaceSharingPrefixWhenBulkUpdatingWithChildNamespaces() {
+        String uri = "/api/v1/main/flows/bulk?namespace=io.kestra.bulkprefix&allowNamespaceChild=true&delete=false";
+        String sibling = generateFlowAsString("sibling", "io.kestra.bulkprefix2", "a");
+        String child = generateFlowAsString("child", "io.kestra.bulkprefix.child", "a");
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(uri, sibling).contentType(MediaType.APPLICATION_YAML_TYPE)
+            )
+        );
+        assertThat(exception.getMessage()).contains("flow namespace is invalid");
+
+        List<FlowWithSource> updated = client.toBlocking().retrieve(
+            HttpRequest.POST(uri, child).contentType(MediaType.APPLICATION_YAML_TYPE),
+            Argument.listOf(FlowWithSource.class)
+        );
+        assertThat(updated).hasSize(1);
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulkprefix.child/child"));
+    }
+
+    @Test
     void updateFlowsInNamespaceWithMissingNamespaceReturns422() {
         String flowWithoutNamespace = """
             id: crashflow

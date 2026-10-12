@@ -59,6 +59,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue"
     import {Schema} from "./getTaskComponent"
+    import {isPlainObject} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
@@ -321,7 +322,7 @@
             onInput(undefined)
             return
         }
-        if (model.value && typeof model.value === "object" && !Array.isArray(model.value)) {
+        if (isPlainObject(model.value)) {
             for (const key in model.value) {
                 if (key !== "type" && !filteredProperties.value?.some(([k]) => k === key)) {
                     delete model.value[key]
@@ -329,9 +330,7 @@
             }
         }
         onAnyOfInput(
-            model.value && typeof model.value === "object" && !Array.isArray(model.value)
-                ? {...model.value}
-                : {type: val},
+            isPlainObject(model.value) ? {...model.value} : {type: val},
         )
     })
 
@@ -346,37 +345,28 @@
         if (durationSchema.value || constraintOnlySchemas.value) return
         let schema = schemaOptions.value?.find((item) =>
             item.value === (
-                model.value && typeof model.value === "object" && !Array.isArray(model.value)
-                    ? model.value.type
-                    : undefined
+                isPlainObject(model.value) ? model.value.type : undefined
             ) ||
             (typeof model.value === "string" && item.value === "string") ||
             (typeof model.value === "number" && item.value === "integer") ||
             (Array.isArray(model.value) && item.value === "array") ||
             (typeof model.value === "object" && item.value === "object") ||
             (Array.isArray(model.value) && typeof model.value[0] === "number" && item.value === "array.number") ||
-            (Array.isArray(model.value) && typeof model.value[0] === "string" && typeof item.value === "string" && !isNaN(Date.parse(item.value)) && item.value === "array.string.date-time") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value)) && item.value === "array.string.date-time") ||
             (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string"),
         )
-
-        if (!schema && model.value && typeof model.value === "object" && !Array.isArray(model.value) && model.value.type) {
+        if (!schema && isPlainObject(model.value) && model.value.type) {
+            const type = model.value.type
             schema = schemaOptions.value?.find((item) => {
-                const raw = typeof item.value === "string" ? (definitions.value[item.value] ?? schemaByType.value[item.value]) : undefined
-                return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === (
-                    model.value && typeof model.value === "object" && !Array.isArray(model.value)
-                        ? model.value.type
-                        : undefined
-                )
+                const raw = definitions.value[item.value] ?? schemaByType.value[item.value]
+                return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === type
             })
         }
-
-        selectedSchema.value = typeof schema?.value === "string" ? schema.value : undefined
-
+        selectedSchema.value = schema?.value
         if (!selectedSchema.value && schemas.value.length > 0 && props.required) {
             selectedSchema.value = typeof schemas.value[0].type === "object" ? schemas.value[0].type.const : schemas.value[0].type
         }
-
-        if (schema && typeof schema.value === "string") {
+        if (schema) {
             onSelectType(schema.value)
         }
         nextTick(() => {

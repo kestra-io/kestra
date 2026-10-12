@@ -1,6 +1,6 @@
 import {describe, expect, it, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
-import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 
 const searchLogs = vi.fn()
 const deleteLogsByIds = vi.fn()
@@ -8,7 +8,7 @@ const deleteLogsByQuery = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({searchLogs, deleteLogsByIds, deleteLogsByQuery}))
 
-const {useLogsStore} = await import("../../../src/stores/logs")
+const {useLogsStore} = await import("./logs")
 
 describe("logs store", () => {
     beforeEach(() => {

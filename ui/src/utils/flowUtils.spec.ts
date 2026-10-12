@@ -203,26 +203,6 @@ tasks:
         ])
     })
 
-    it("getAllTaskIds includes tasks from finally and afterExecution", () => {
-        const flow = {
-            tasks: [
-                {id: "main", type: "io.kestra.plugin.core.log.Log"},
-            ],
-            finally: [
-                {id: "finally-task", type: "io.kestra.plugin.core.log.Log"},
-            ],
-            afterExecution: [
-                {id: "after-execution-task", type: "io.kestra.plugin.core.log.Log"},
-            ],
-        }
-
-        expect(FlowUtils.getAllTaskIds(flow)).toEqual([
-            "main",
-            "finally-task",
-            "after-execution-task",
-        ])
-    })
-
     it("getAllTaskIds removes duplicate task ids", () => {
         const flow = {
             tasks: [

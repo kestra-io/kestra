@@ -20,7 +20,6 @@
 </template>
 
 <script setup lang="ts">
-    import {Schema} from "./getTaskComponent"
     import {computed, inject, ref} from "vue"
     import {
         PARENT_PATH_INJECTION_KEY,
@@ -33,6 +32,7 @@
     import LeafBlockCard from "../../blocks/LeafBlockCard.vue"
     import BlockEmptyDrop from "../../blocks/BlockEmptyDrop.vue"
     import {getValueAtJsonPath} from "../../../../utils/utils"
+    import {Schema} from "./getTaskComponent"
     import {useI18n} from "vue-i18n"
 
     const {t} = useI18n()

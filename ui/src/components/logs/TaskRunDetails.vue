@@ -293,6 +293,7 @@
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
                         :executionId="followedExecution.id"
                         :taskId="asTaskRun(currentTaskRun).taskId"
+                        :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
                 </div>
             </DynamicScrollerItem>
@@ -321,6 +322,7 @@
     import * as FlowUtils from "../../utils/flowUtils"
     import FilePreview from "../executions/FilePreviewDrawer.vue"
     import {apiUrl} from "override/utils/route"
+    import {executionFileUrl} from "../../utils/executionUtils"
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
@@ -367,7 +369,7 @@
         return typeof el === "object" && el !== null && "expandAll" in el && "scrollToLog" in el
     }
 
-    type LoopOutputs = {iterationCount: number; terminatedIterations?: Record<string, number>}
+    type LoopOutputs = {iterationCount: number; terminatedIterations?: Record<string, number>; runningIterations?: number}
 
     function isLoopOutputs(outputs: Record<string, unknown> | null): outputs is LoopOutputs {
         return outputs !== null && typeof outputs.iterationCount === "number"
@@ -431,6 +433,7 @@
 
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
+    let disposed = false
     const rawLogs = ref<LogEntry[]>([])
     const timer = ref<ReturnType<typeof dayjs> | undefined>(undefined)
     const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -779,6 +782,8 @@
                 )
             }
 
+            if (disposed) return
+
             for (const taskRun of currentTaskRuns.value) {
                 if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
                     updateLoopStatus(taskRun.id)
@@ -840,6 +845,8 @@
     })
 
     onBeforeUnmount(() => {
+        disposed = true
+        throttledExecutionUpdate.value?.cancel()
         closeLogsSSE()
         closeTargetExecutionSSE()
         clearTimeout(timeout.value)
@@ -872,7 +879,7 @@
     }
 
     function fileUrl(path: string): string {
-        return `${apiUrl()}/executions/${followedExecution.value?.id}/file?path=${path}`
+        return executionFileUrl(followedExecution.value?.id, path)
     }
 
     async function fetchAndStoreLogFileSize(path: string) {
@@ -916,6 +923,7 @@
     }
 
     function autoExpandBasedOnSettings() {
+        if (disposed) return
         if (autoExpandTaskRunStates.value.length === 0) {
             return
         }
@@ -984,6 +992,10 @@
         cancelLogsSSEClose()
         logsExecutionId.value = executionId
         executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse) => {
+            if (disposed) {
+                sse.close()
+                return
+            }
             logsSSE.value = sse
 
             logsSSE.value.onmessage = (event: MessageEvent<string>) => {

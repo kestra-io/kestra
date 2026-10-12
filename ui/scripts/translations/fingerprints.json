@@ -1049,6 +1049,8 @@
   "modify inputs": "bf9cb2e31c00",
   "monogram": "b8c930984fc6",
   "more actions": "f8d46c2570e7",
+  "move_panel_to_bottom": "6c29b9982464",
+  "move_panel_to_side": "7c6747502c92",
   "multi_panel_editor|close_all_panels": "62d968ef2e7b",
   "multi_panel_editor|close_all_tabs": "67c11036f5e9",
   "multi_panel_editor|exit_fullscreen": "37fd4e355ba3",

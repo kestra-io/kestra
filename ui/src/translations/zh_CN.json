@@ -2715,6 +2715,8 @@
     "blocks": "区块",
     "split_horizontal": "水平拆分",
     "split_vertical": "垂直拆分",
+    "move_panel_to_bottom": "将面板移到底部",
+    "move_panel_to_side": "将面板移至侧面",
     "pwa": {
       "install_title": "安装 Kestra",
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",

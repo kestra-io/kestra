@@ -2715,6 +2715,8 @@
     "blocks": "Bloki",
     "split_horizontal": "Podziel w poziomie",
     "split_vertical": "Podziel pionowo",
+    "move_panel_to_bottom": "Przenieś panel na dół",
+    "move_panel_to_side": "Przenieś panel na bok",
     "pwa": {
       "install_title": "Zainstaluj Kestrę",
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",

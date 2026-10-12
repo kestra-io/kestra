@@ -463,6 +463,8 @@
     "system overview": "System Overview",
     "usage": "Usage",
     "namespaces": "Namespaces",
+    "workspace": "Workspace",
+    "resources": "Resources",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Total executions duration (in minutes)",
     "last 48 hours": "last 48 hours",

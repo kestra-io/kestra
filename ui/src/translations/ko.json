@@ -463,6 +463,8 @@
     "system overview": "시스템 개요",
     "usage": "사용량",
     "namespaces": "Namespaces",
+    "workspace": "워크스페이스",
+    "resources": "리소스",
     "tasks": "Tasks",
     "executions duration (in minutes)": "총 실행 시간 (분 단위)",
     "last 48 hours": "지난 48시간",

@@ -463,6 +463,8 @@
     "system overview": "Przegląd systemu",
     "usage": "Użycie",
     "namespaces": "Namespaces",
+    "workspace": "Obszar roboczy",
+    "resources": "Zasoby",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Całkowity czas trwania egzekucji (w minutach)",
     "last 48 hours": "ostatnie 48 godzin",

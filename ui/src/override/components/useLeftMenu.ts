@@ -94,7 +94,7 @@ export function useLeftMenu() {
         const generated = [
             {
                 id: "workspace",
-                title: "Workspace",
+                title: t("workspace"),
                 child: [
                     {
                         id: "dashboards",
@@ -183,7 +183,7 @@ export function useLeftMenu() {
             },
             {
                 id: "resources",
-                title: "Resources",
+                title: t("resources"),
                 child: [
                     {
                         id: "namespaces",

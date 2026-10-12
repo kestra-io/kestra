@@ -463,6 +463,8 @@
     "system overview": "सिस्टम अवलोकन",
     "usage": "उपयोग",
     "namespaces": "Namespaces",
+    "workspace": "कार्यक्षेत्र",
+    "resources": "संसाधन",
     "tasks": "Tasks",
     "executions duration (in minutes)": "कुल निष्पादन अवधि (मिनटों में)",
     "last 48 hours": "पिछले 48 घंटे",

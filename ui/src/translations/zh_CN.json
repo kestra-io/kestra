@@ -463,6 +463,8 @@
     "system overview": "系统概览",
     "usage": "使用情况",
     "namespaces": "命名空间",
+    "workspace": "工作空间",
+    "resources": "资源",
     "tasks": "任务",
     "executions duration (in minutes)": "总执行持续时间（分钟）",
     "last 48 hours": "最近48小时",

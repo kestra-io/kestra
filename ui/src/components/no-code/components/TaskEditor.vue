@@ -396,7 +396,7 @@
                     acc[key] = firstSchemaProps[key]
                 }
                 return acc
-            }, {} as Record<string, unknown>)
+            }, {} as Record<string, Schema>)
 
             if(dataTypes.value.length > 1){
                 commonProps["data"] = {

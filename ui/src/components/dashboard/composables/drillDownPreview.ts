@@ -4,6 +4,7 @@ import {useFlowStore} from "../../../stores/flow"
 
 export interface PreviewColumn {
     prop: string;
+    /** i18n key, resolved by DrillDownDrawer when rendering the header. */
     label: string;
     type?: "status" | "date" | "labels";
 }
@@ -22,11 +23,11 @@ const previewRegistry: Record<string, PreviewConfig> = {
     "executions/list": {
         mode: "table",
         columns: [
-            {prop: "id", label: "Id"},
-            {prop: "namespace", label: "Namespace"},
-            {prop: "flowId", label: "Flow"},
-            {prop: "state.current", label: "State", type: "status"},
-            {prop: "state.startDate", label: "Start Date", type: "date"},
+            {prop: "id", label: "id"},
+            {prop: "namespace", label: "namespace"},
+            {prop: "flowId", label: "flow"},
+            {prop: "state.current", label: "state", type: "status"},
+            {prop: "state.startDate", label: "start date", type: "date"},
         ],
         fetch: (params) => useExecutionsStore().findExecutions({...params, commit: false}),
         rowDetail: (row, tenant) => ({
@@ -37,9 +38,9 @@ const previewRegistry: Record<string, PreviewConfig> = {
     "flows/list": {
         mode: "table",
         columns: [
-            {prop: "id", label: "Id"},
-            {prop: "namespace", label: "Namespace"},
-            {prop: "labels", label: "Labels", type: "labels"},
+            {prop: "id", label: "id"},
+            {prop: "namespace", label: "namespace"},
+            {prop: "labels", label: "labels", type: "labels"},
         ],
         fetch: (params) => useFlowStore().findFlows({...params, commit: false}),
         rowDetail: (row, tenant) => ({

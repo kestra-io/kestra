@@ -106,6 +106,28 @@ describe("DrillDownDrawer", () => {
         expect(store.isOpen).toBe(false)
     })
 
+    test("mode: table — column headers resolve to real translated strings, not raw i18n keys", async () => {
+        const fetchMock = vi.fn().mockResolvedValue({results: [{id: "e1"}], total: 1})
+        registerDrillDownPreview("test/drawer-headers/list", {
+            mode: "table",
+            columns: [
+                {prop: "id", label: "id"},
+                {prop: "state.startDate", label: "start date", type: "date"},
+            ],
+            fetch: fetchMock,
+            rowDetail: () => ({name: "executions/update", params: {}}),
+        })
+
+        const wrapper = mountDrawer()
+        useDrillDownStore().open({name: "test/drawer-headers/list", query: {}, timeFiltered: false})
+        await flushPromises()
+
+        const headers = wrapper.findAll("th").map((th) => th.text())
+        expect(headers).toContain("Id")
+        expect(headers).toContain("Start date")
+        expect(headers.join(" ")).not.toContain("start date")
+    })
+
     test("mode: table — page-changed re-fetches the next page", async () => {
         const fetchMock = vi.fn().mockResolvedValue({
             results: [{id: "e1", namespace: "ns", flowId: "f1"}],

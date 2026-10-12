@@ -204,6 +204,7 @@
             type: valueType(value),
             preview: preview(value),
             expression: `${prefix}${formatStep(label)}`,
+            isExpression: typeof value === "string" && (value.includes("{{") || value.includes("{%")),
         }))
     }
 
@@ -471,7 +472,9 @@
             previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
             expression.value = `{{ ${debugPath} }}`
         }else {
-            expression.value = `{{ ${baseExpressionPath} }}`
+            expression.value = item.isExpression
+                ? `{{ render(${baseExpressionPath}) }}`
+                : `{{ ${baseExpressionPath} }}`
         }
     }
 
@@ -548,7 +551,6 @@
     &__panel--main {
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-spacing-2);
-        padding-inline-end: var(--ks-spacing-2);
         overflow: hidden;
     }
 
@@ -574,8 +576,10 @@
 .viewer {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    min-height: 100%;
+    width: calc(100% - var(--ks-spacing-2));
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
     background-color: var(--ks-bg-surface);
 
     &__header {

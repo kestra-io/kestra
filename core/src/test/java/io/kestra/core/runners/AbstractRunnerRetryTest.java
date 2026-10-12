@@ -80,6 +80,15 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
+    @LoadFlows(
+        value = { "flows/valids/subflow-retry-new-execution-parent.yaml", "flows/valids/subflow-retry-new-execution-child.yaml" },
+        tenantId = "retrynewexecutionsubflowtenant"
+    )
+    void retryNewExecutionSubflowOutputs() throws TimeoutException, QueueException {
+        retryCaseTest.retryNewExecutionSubflowOutputs("retrynewexecutionsubflowtenant");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/retry-failed-task-duration.yml")
     void retryFailedTaskDuration(Execution execution) {
         retryCaseTest.retryFailedTaskDuration(execution);

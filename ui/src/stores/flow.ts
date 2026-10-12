@@ -538,7 +538,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (data.exception) {
             coreStore.message = {
-                title: "Invalid source code",
+                title: t("invalid_source_code"),
                 content: data.exception,
                 variant: "error",
             }

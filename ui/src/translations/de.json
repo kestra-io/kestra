@@ -454,6 +454,11 @@
     "show task source": "Task-Quelle anzeigen",
     "stream": "Stream",
     "execution statistics": "Execution-Statistiken",
+    "execution_banner": {
+      "revision": "Revision {revision}",
+      "attempts": "{count} Versuch | {count} Versuche",
+      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
+    },
     "concurrency limits": "Concurrency-Limits",
     "system overview": "Systemübersicht",
     "usage": "Verwendung",
@@ -479,6 +484,7 @@
       "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder Value suchen…",
       "tasks_outputs": "Task-Outputs",
+      "expression": "Expression",
       "tree": "Baum",
       "raw_json": "Rohes JSON",
       "select_prompt": "Wähle eine Variable aus, um ihren Wert anzuzeigen.",
@@ -564,6 +570,7 @@
       "blueprints": "Blueprint | Blueprints"
     },
     "plugins": {
+      "ui_load_error": "Eine Plugin-Komponente konnte nicht geladen werden.",
       "autoInstall": {
         "failed": "Plugin-Installation fehlgeschlagen",
         "failedHint": "Der Flow wurde nicht gespeichert. Behebe das Problem oder entferne das Plugin aus dem Flow und speichere erneut.",
@@ -621,6 +628,15 @@
       "nav_overview": "Übersicht",
       "nav_properties": "Eigenschaften",
       "non_dynamic": "nicht dynamisch",
+      "format": "Format",
+      "max_items": "Max. Elemente",
+      "max_length": "Max. Länge",
+      "maximum": "Maximum",
+      "min_items": "Min-Elemente",
+      "min_length": "Minimale Länge",
+      "minimum": "Min.",
+      "unit": "Einheit",
+      "validation_regexp": "Validierungs-RegExp",
       "possible_values": "Mögliche Werte",
       "sub_type": "Untertyp",
       "required": "Erforderlich"
@@ -1105,7 +1121,6 @@
     "pause backfills": "Backfills pausieren",
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
-    "relative": "Relativ",
     "relative start date": "Relatives Startdatum",
     "absolute": "Absolut",
     "backfill": "Backfill",
@@ -1717,6 +1732,7 @@
     "custom value": "Benutzerdefinierter Wert",
     "chart": "Diagramm",
     "no_code": {
+      "task_details": "Task-Details",
       "toggle_pebble": "Pebble-Editor umschalten",
       "version_oss_placeholder": "Plugin-Versionierung mit der Enterprise Edition freischalten",
       "adding": "+ {what} hinzufügen",
@@ -1772,7 +1788,8 @@
         "inputs": "Input-Typ auswählen",
         "charts": "Diagrammtyp auswählen",
         "where": "Filtertyp auswählen",
-        "numerator": "Zähler auswählen"
+        "numerator": "Zähler auswählen",
+        "namespace_first": "Zuerst einen Namespace auswählen"
       },
       "creation": {
         "default": "Hinzufügen",
@@ -2418,6 +2435,7 @@
         "label": "{count} Fehler"
       }
     },
+    "invalid_source_code": "Ungültiger Quellcode",
     "source_search": {
       "cannot_select_read_only": "Kann nicht ausgewählt werden – dir fehlt die Bearbeitungsberechtigung für {namespace} / {id}",
       "collapse_all": "Alle einklappen",
@@ -2704,8 +2722,8 @@
       "open_mode_hint": "Tasks werden standardmäßig in einem Modal geöffnet. Unter {settings} kannst du Tabs als Standard festlegen."
     },
     "blocks": "Blöcke",
-    "split_horizontal": "Horizontal teilen",
-    "split_vertical": "Vertikal teilen",
+    "move_panel_to_bottom": "Panel nach unten verschieben",
+    "move_panel_to_side": "Panel zur Seite verschieben",
     "pwa": {
       "install_title": "Kestra installieren",
       "install_description": "Installiere Kestra als App für schnelleren Zugriff und eine Vollbild-Ansicht.",
@@ -2714,6 +2732,7 @@
     },
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
-    "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?"
+    "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
+    "not started": "Nicht gestartet"
   }
 }

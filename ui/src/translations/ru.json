@@ -454,6 +454,11 @@
     "show task source": "Показать исходный код задачи",
     "stream": "Поток",
     "execution statistics": "Статистика выполнения",
+    "execution_banner": {
+      "revision": "Редакция {revision}",
+      "attempts": "{count} попытка | {count} попытки | {count} попыток",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+    },
     "concurrency limits": "Ограничения на параллелизм",
     "system overview": "Обзор системы",
     "usage": "Использование",
@@ -479,6 +484,7 @@
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Выражение",
       "tree": "Дерево",
       "raw_json": "Необработанный JSON",
       "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
@@ -564,6 +570,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "Не удалось загрузить компонент плагина.",
       "autoInstall": {
         "failed": "Не удалось установить плагин",
         "failedHint": "Flow не был сохранён. Исправьте проблему или удалите плагин из flow, затем сохраните снова.",
@@ -621,6 +628,15 @@
       "nav_overview": "Обзор",
       "nav_properties": "Свойства",
       "non_dynamic": "не динамический",
+      "format": "Формат",
+      "max_items": "Макс. элементов",
+      "max_length": "Максимальная длина",
+      "maximum": "Максимум",
+      "min_items": "Мин. элементов",
+      "min_length": "Мин. длина",
+      "minimum": "Минимум",
+      "unit": "Единица измерения",
+      "validation_regexp": "Регулярное выражение для валидации",
       "possible_values": "Возможные значения",
       "sub_type": "Подтип",
       "required": "Обязательный"
@@ -1105,7 +1121,6 @@
     "pause backfills": "Приостановить заполнения",
     "backfill executions": "Выполнения заполнение",
     "execute backfill": "Выполнить заполнение",
-    "relative": "Относительный",
     "relative start date": "Относительная дата начала",
     "absolute": "Абсолютный",
     "backfill": "Заполнение",
@@ -1717,6 +1732,7 @@
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
+      "task_details": "Детали task",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",
@@ -1772,7 +1788,8 @@
         "inputs": "Выберите тип поля input",
         "charts": "Выберите тип диаграммы",
         "where": "Выберите тип фильтра",
-        "numerator": "Выберите числитель"
+        "numerator": "Выберите числитель",
+        "namespace_first": "Сначала выберите namespace"
       },
       "creation": {
         "default": "Добавить",
@@ -2418,6 +2435,7 @@
         "label": "{count} Ошибка(и)"
       }
     },
+    "invalid_source_code": "Недопустимый исходный код",
     "source_search": {
       "cannot_select_read_only": "Невозможно выбрать — у вас нет разрешения на редактирование {namespace} / {id}",
       "collapse_all": "Свернуть все",
@@ -2704,8 +2722,8 @@
       "open_mode_hint": "Задачи по умолчанию открываются в модальном окне. Вы можете сделать вкладки по умолчанию в {settings}."
     },
     "blocks": "Блоки",
-    "split_horizontal": "Разделить по горизонтали",
-    "split_vertical": "Разделить по вертикали",
+    "move_panel_to_bottom": "Переместить панель вниз",
+    "move_panel_to_side": "Переместить панель в сторону",
     "pwa": {
       "install_title": "Установить Kestra",
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",
@@ -2714,6 +2732,7 @@
     },
     "iteration": "Итерация",
     "iteration_number": "Итерация {number}",
-    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?",
+    "not started": "Не начато"
   }
 }

@@ -222,6 +222,7 @@
         presentation?: "drawer" | "panel";
         hideTabstrip?: boolean;
         editorKey?: string;
+        taskPath?: string;
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -240,6 +241,7 @@
         presentation: "drawer",
         hideTabstrip: false,
         editorKey: undefined,
+        taskPath: undefined,
     })
 
     const emit = defineEmits<{
@@ -434,7 +436,7 @@
             })})
         }
 
-        const upstream = upstreamTaskIds(flow, currentTaskId.value)
+        const upstream = upstreamTaskIds(flow, currentTaskId.value, props.taskPath)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }

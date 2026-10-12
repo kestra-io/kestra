@@ -1673,8 +1673,48 @@ afterExecution:
             expect(upstreamTaskIds(dagFlow, "d_b")).toEqual(["d_a"])
         })
 
+        it("offers a Switch's defaults to its own errors and finally", () => {
+            const switchFlow = {
+                tasks: [
+                    {id: "route", type: "io.kestra.plugin.core.flow.Switch", value: "x",
+                        cases: {prod: [{id: "c_prod", type: "io.kestra.plugin.core.log.Log"}]},
+                        defaults: [{id: "c_default", type: "io.kestra.plugin.core.log.Log"}],
+                        errors: [{id: "s_err", type: "io.kestra.plugin.core.log.Log"}],
+                        finally: [{id: "s_fin", type: "io.kestra.plugin.core.log.Log"}],
+                    },
+                ],
+            }
+
+            expect(upstreamTaskIds(switchFlow, "s_err")).toEqual(["c_prod", "c_default"])
+            expect(upstreamTaskIds(switchFlow, "s_fin")).toEqual(["c_prod", "c_default", "s_err"])
+        })
+
         it("falls back to every other task when the task is not in the flow yet", () => {
             expect(upstreamTaskIds(flow, "brand_new")).toEqual(["fetch", "loop", "inner_a", "inner_b", "notify", "on_error", "cleanup"])
+        })
+
+        it("locates the edited task by its path while its id is cleared", () => {
+            const renamingFlow = {
+                ...flow,
+                tasks: [flow.tasks[0], flow.tasks[1], {id: "", type: "io.kestra.plugin.core.log.Log"}, {id: "after", type: "io.kestra.plugin.core.log.Log"}],
+            }
+
+            expect(upstreamTaskIds(renamingFlow, "", "tasks[2]")).toEqual(["fetch", "loop", "inner_a", "inner_b"])
+        })
+
+        it("locates an id-less Dag task by its item or task path", () => {
+            const dagFlow = {
+                tasks: [
+                    {id: "dag", type: "io.kestra.plugin.core.flow.Dag", tasks: [
+                        {task: {id: "d_a", type: "io.kestra.plugin.core.log.Log"}},
+                        {task: {type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                        {task: {id: "d_c", type: "io.kestra.plugin.core.log.Log"}, dependsOn: ["d_a"]},
+                    ]},
+                ],
+            }
+
+            expect(upstreamTaskIds(dagFlow, "", "tasks[0].tasks[1]")).toEqual(["d_a"])
+            expect(upstreamTaskIds(dagFlow, "", "tasks[0].tasks[1].task")).toEqual(["d_a"])
         })
     })
 

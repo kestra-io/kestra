@@ -1,13 +1,13 @@
 <template>
     <ElTimePicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as TimePickerDefaultPropsPublic)"
         @change="emit('change', $event)"
     />
 </template>
 
 <script setup lang="ts">
-    import {ElTimePicker} from "element-plus"
+    import {ElTimePicker, type TimePickerDefaultPropsPublic} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -30,7 +30,7 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: Date | string | null]
     }>()
 
     const filteredProps = useFilteredProps(props)

@@ -15,9 +15,6 @@ interface UseRestoreUrlOptions {
 }
 
 function getLocalStorageName(route: RouteLocation): string {
-    // Only entity-identifying params present from first render: the dashboard route
-    // appends its `dashboard` param after mount, and including it here would change
-    // the key mid-restore, breaking the re-assert loop in goToRestoreUrl().
     const scope = (["tab", "namespace", "id", "kind", "tenant"] as const)
         .map((key) => route.params[key])
         .filter((value) => value)
@@ -96,8 +93,6 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
     let restoring = false
 
     const saveRestoreUrl = () => {
-        // The navigation that cancels our restore reaches this watcher first, so saving
-        // here would overwrite the very state the retry below is about to re-assert.
         if (restoring) return
         if (!restoreUrl || route.query.noRestore) return
         if (Object.keys(route.query).length === 0) {
@@ -112,8 +107,6 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         // fires before router.replace's .then, and that reload must see loadInit=true.
         loadInit.value = true
 
-        // A second call would clear the flag below while the first is still awaiting its
-        // own replace, reopening the save window this guard closes.
         if (restoring) return
 
         // A page that rewrites its own URL on mount (e.g. the dashboard appending its

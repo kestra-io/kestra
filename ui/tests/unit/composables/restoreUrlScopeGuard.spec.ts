@@ -9,9 +9,6 @@ import {findRestoreUrlConsumers} from "./restoreUrlScopeGuard"
 
 const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "../../../src")
 
-// Every page that saves its URL query. A new entry here is a new chance to leak one entity's
-// filters onto another (kestra-io/kestra#20135), so adding one means adding the matching
-// SCOPES case below — or, when the page is genuinely global, saying so in GLOBAL.
 const CONSUMERS = [
     "components/admin/triggers/TriggersManage.vue",
     "components/dashboard/Dashboard.vue",
@@ -70,9 +67,6 @@ const SCOPES: Scope[] = [
     },
 ]
 
-// Shrink-only. `dashboard` is appended to the URL after mount, so keying on it would change the
-// key mid-restore and break the re-assert loop in goToRestoreUrl() — see the issue for the two
-// approaches that would actually fix it.
 const KNOWN_UNSCOPED: Scope[] = [
     {
         label: "two dashboards (https://github.com/kestra-io/kestra/issues/20142)",

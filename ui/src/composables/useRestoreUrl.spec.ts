@@ -168,8 +168,6 @@ describe("useRestoreUrl", () => {
 
         wrapper = mountRestoreUrl(router)
 
-        // Mimics Executions.vue replacing its own URL with a default time range right
-        // after mount: a same-path navigation, so it also fires the save watcher.
         await router.replace({query: {"filters[state][IN]": "FAILED"}})
         await new Promise((resolve) => setTimeout(resolve, 150))
 

@@ -10,7 +10,6 @@ const sources = (dir: string): string[] =>
 
 const COMPOSABLE = "composables/useRestoreUrl.ts"
 
-/** Returns the `ui/src`-relative path of every file that calls `useRestoreUrl(`. */
 export const findRestoreUrlConsumers = (srcDir: string): string[] =>
     sources(srcDir)
         .filter((file) => /\buseRestoreUrl\s*\(/.test(readFileSync(file, "utf8")))

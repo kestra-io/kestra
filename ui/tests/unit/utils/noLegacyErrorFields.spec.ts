@@ -42,7 +42,8 @@ function sourceFiles(): string[] {
 }
 
 function isAllowed(file: string): boolean {
-    return ALLOWED.some((entry) => file.startsWith(entry.file))
+    const normalized = file.replaceAll("\\", "/")
+    return ALLOWED.some((entry) => normalized.startsWith(entry.file))
 }
 
 describe("no legacy error fields", () => {

@@ -72,31 +72,41 @@ export interface KestraHttpError extends Error {
         statusText: string
         headers: Record<string, string>
         request: {responseURL: string}
-        config: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
+        config: {method: string; url: string}
     }
-    config?: {method: string; url: string; showMessageOnError?: boolean; ignoreNotFound?: boolean}
+    config?: {method: string; url: string}
+    /** Set when the request left this page's origin: a 401 from elsewhere is not a lost session. */
+    crossOrigin?: boolean
+    __kestra_handled?: boolean
+}
+
+/**
+ * Keeps a failure out of the global error toast. The toast is deferred past the caller's `catch`,
+ * so calling this there, even after an async hop, is enough; the caller reports it instead.
+ */
+export function handled(error: unknown) {
+    if (error && typeof error === "object") {
+        (error as {__kestra_handled?: boolean}).__kestra_handled = true
+    }
+}
+
+/** {@link handled} when the status is one the caller expects, telling whether it was. */
+export function handledIf(error: unknown, expectedStatuses: number[]): boolean {
+    const err = error as {status?: number; response?: {status?: number}} | undefined
+    const status = err?.status ?? err?.response?.status
+    if (status === undefined || !expectedStatuses.includes(status)) return false
+    handled(error)
+    return true
 }
 
 /**
  * Whether this failure raises the global error toast, so a caller that reports failures itself can
  * skip the ones already on screen. A 400 or a 401 is left to the caller, as is a failure with no
- * response body, and so is anything the request opted out of.
+ * response body.
  */
 export function isReportedCentrally(error: KestraHttpError): boolean {
-    if (error.config?.showMessageOnError === false) return false
-    if (error.status === 404) return error.config?.ignoreNotFound !== true
+    if (error.__kestra_handled) return false
     return error.status !== 401 && error.status !== 400 && Boolean(error.response?.data)
-}
-
-/**
- * Per-request options the interceptors above read. Declared here rather than derived from the
- * SDK's own option type, which is bound to one edition's generated client.
- */
-export interface KestraRequestOptions {
-    /** `false` silences the error toast, leaving the caller to report the failure. */
-    showMessageOnError?: boolean
-    /** Marks a 404 as an expected outcome the caller handles itself. */
-    ignoreNotFound?: boolean
 }
 
 /**
@@ -161,14 +171,16 @@ export function setupKestraHttp(
     }
 
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
-        if (!isReportedCentrally(error)) return error
+        setTimeout(() => {
+            if (!isReportedCentrally(error)) return
 
-        if (error.status === 404) {
-            // A 404 is reported where it happened rather than by swapping the page for the
-            // not-found screen: that hid which request failed and left no way back.
-            console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
-        }
-        onError(error)
+            if (error.status === 404) {
+                // A 404 is reported where it happened rather than by swapping the page for the
+                // not-found screen: that hid which request failed and left no way back.
+                console.error(`${(error.config?.method ?? "GET").toUpperCase()} ${error.config?.url ?? ""} failed with 404`, error)
+            }
+            onError(error)
+        }, 0)
 
         return error
     }
@@ -180,7 +192,7 @@ export function setupKestraHttp(
                 return await fn(...args)
             } catch (error) {
                 const kestraError = error as KestraHttpError
-                if (kestraError.status === 401) {
+                if (kestraError.status === 401 && !kestraError.crossOrigin) {
                     if (!isLoggedIn()) {
                         const shouldRetry = await onUnauthorized(navigateToLogin, kestraError)
                         if (shouldRetry) return fn(...args)
@@ -253,11 +265,10 @@ export function setupKestraHttp(
             config: {
                 method: request?.method ?? "",
                 url: request?.url ?? "",
-                showMessageOnError: (opts as {showMessageOnError?: boolean} | undefined)?.showMessageOnError,
-                ignoreNotFound: (opts as {ignoreNotFound?: boolean} | undefined)?.ignoreNotFound,
             },
         }
         kestraError.config = kestraError.response.config
+        if (request && !isSameOrigin(request)) kestraError.crossOrigin = true
 
         // A 400 rejects like any other error, so `instanceof Error`, `.status` and `.response` all hold on
         // the status the bulk endpoints use. handleErrorCentrally still keeps it out of the global toast.

@@ -1,6 +1,7 @@
 import type {Component} from "vue"
 import TestTube from "vue-material-design-icons/TestTube.vue"
 import TestTubeOff from "vue-material-design-icons/TestTubeOff.vue"
+import type {DbtTestFields} from "./types"
 
 const STATES = ["pass", "warn", "fail"] as const
 
@@ -21,13 +22,17 @@ const count = (value: unknown): number | undefined => (typeof value === "number"
  */
 export const normalizeDbtTests = (status: unknown, total: unknown, failed: unknown): DbtTests | undefined => {
     const totalCount = count(total)
+    const failedCount = count(failed)
     const state = STATES.find((known) => known === status)
-    if (!totalCount || !state) {
+    if (!totalCount || failedCount === undefined || !state) {
         return undefined
     }
 
-    return {state, total: totalCount, failed: count(failed) ?? 0}
+    return {state, total: totalCount, failed: failedCount}
 }
+
+export const hasDbtTests = (fields: DbtTestFields): boolean =>
+    normalizeDbtTests(fields.dbtTestStatus, fields.dbtTestsTotal, fields.dbtTestsFailed) !== undefined
 
 export const dbtTestIconOf = (state: DbtTestState): Component => (state === "fail" ? TestTubeOff : TestTube)
 

@@ -42,16 +42,18 @@
                 >{{ typeName }}</KsText>
             </div>
 
-            <div
+            <KsTooltip
                 v-if="tests"
-                :class="['tests', tests.state]"
-                :title="testsTooltip"
+                :content="testsTooltip"
+                :enterable="false"
             >
-                <KsIcon size="xs" :color="dbtTestColorOf(tests.state)">
-                    <component :is="dbtTestIconOf(tests.state)" />
-                </KsIcon>
-                <KsText size="small" class="tests-label">{{ testsLabel }}</KsText>
-            </div>
+                <div :class="['tests', tests.state]">
+                    <KsIcon size="xs" :color="dbtTestColorOf(tests.state)">
+                        <component :is="dbtTestIconOf(tests.state)" />
+                    </KsIcon>
+                    <KsText size="small" class="tests-label">{{ testsLabel }}</KsText>
+                </div>
+            </KsTooltip>
         </div>
 
         <Handle type="source" :position="Position.Right" />

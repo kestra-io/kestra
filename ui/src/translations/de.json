@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "Der {count} dbt Test ist bestanden | Alle {count} dbt Tests sind bestanden",
             "warn": "{count} dbt Test mit Warnungen bestanden | {count} dbt Tests bestanden, einige mit Warnungen",
-            "fail": "{failed} von {total} dbt-Tests fehlgeschlagen"
+            "fail": "Der dbt-Test ist fehlgeschlagen | {failed} von {total} dbt-Tests sind fehlgeschlagen"
           }
         },
         "recent_runs": "Letzte Runs",

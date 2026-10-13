@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "Il test dbt è stato superato | Tutti i {count} test dbt sono stati superati",
             "warn": "{count} test dbt superato con avvisi | {count} test dbt superati, alcuni con avvisi",
-            "fail": "{failed} di {total} test dbt non riusciti"
+            "fail": "Il test dbt non è riuscito | {failed} di {total} test dbt non sono riusciti"
           }
         },
         "recent_runs": "Esecuzioni recenti",

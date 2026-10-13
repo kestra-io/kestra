@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "{count} dbt टेस्ट पास हुआ | सभी {count} dbt टेस्ट पास हुए",
             "warn": "{count} dbt test चेतावनी के साथ पास हुआ | {count} dbt tests पास हुए, कुछ चेतावनी के साथ",
-            "fail": "{total} dbt परीक्षणों में से {failed} विफल रहे"
+            "fail": "dbt टेस्ट विफल रहा | {total} dbt टेस्ट में से {failed} विफल रहे"
           }
         },
         "recent_runs": "हाल की रन",

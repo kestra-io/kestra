@@ -60,6 +60,16 @@ describe("AssetNode dbt test footer", () => {
         expect(wrapper.find(".tests").exists()).toBe(false)
     })
 
+    it("explains the footer in a design-system tooltip, pluralised on the total", () => {
+        const tooltipOf = (tests: Tests) => mountCard(tests)
+            .findAllComponents({name: "KsTooltip"})
+            .find((tooltip) => tooltip.find(".tests").exists())
+            ?.props("content")
+
+        expect(tooltipOf({dbtTestStatus: "fail", dbtTestsTotal: 22, dbtTestsFailed: 2})).toBe("2 of 22 dbt tests failed")
+        expect(tooltipOf({dbtTestStatus: "fail", dbtTestsTotal: 1, dbtTestsFailed: 1})).toBe("The dbt test failed")
+    })
+
     it("pluralises a single test", () => {
         expect(mountCard({dbtTestStatus: "pass", dbtTestsTotal: 1, dbtTestsFailed: 0}).find(".tests").text())
             .toBe("1 test")

@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "Le {count} test dbt a réussi | Tous les {count} tests dbt ont réussi",
             "warn": "{count} test dbt réussi avec avertissements | {count} tests dbt réussis, certains avec avertissements",
-            "fail": "{failed} sur {total} tests dbt ont échoué"
+            "fail": "Le test dbt a échoué | {failed} des {total} tests dbt ont échoué"
           }
         },
         "recent_runs": "Exécutions récentes",

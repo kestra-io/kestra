@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "{count} 个 dbt 测试通过 | 所有 {count} 个 dbt 测试通过",
             "warn": "{count} 个 dbt 测试通过，部分带有警告",
-            "fail": "{failed} / {total} 个 dbt 测试失败"
+            "fail": "dbt 测试失败 | {total} 个 dbt 测试中有 {failed} 个失败"
           }
         },
         "recent_runs": "最近运行",

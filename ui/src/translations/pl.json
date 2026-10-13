@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "{count} test dbt przeszedł | Wszystkie {count} testy dbt przeszły",
             "warn": "{count} test dbt zakończony z ostrzeżeniami | {count} testy dbt zakończone z ostrzeżeniami | {count} testów dbt zakończonych z ostrzeżeniami",
-            "fail": "{failed} z {total} testów dbt nie powiodło się"
+            "fail": "Test dbt nie powiódł się | {failed} z {total} testów dbt nie powiodło się | {failed} z {total} testów dbt nie powiodło się"
           }
         },
         "recent_runs": "Ostatnie uruchomienia",

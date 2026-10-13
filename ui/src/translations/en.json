@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "The {count} dbt test passed | All {count} dbt tests passed",
             "warn": "{count} dbt test passed with warnings | {count} dbt tests passed, some with warnings",
-            "fail": "{failed} of {total} dbt tests failed"
+            "fail": "The dbt test failed | {failed} of {total} dbt tests failed"
           }
         },
         "recent_runs": "Recent runs",

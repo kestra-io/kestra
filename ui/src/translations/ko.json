@@ -2275,7 +2275,7 @@
           "tooltip": {
             "pass": "{count} dbt 테스트 통과 | 모든 {count} dbt 테스트 통과",
             "warn": "{count} dbt 테스트 경고와 함께 통과 | {count} dbt 테스트 통과, 일부 경고 포함",
-            "fail": "{total}개의 dbt 테스트 중 {failed}개가 실패했습니다."
+            "fail": "dbt 테스트 실패 | dbt 테스트 {total}개 중 {failed}개 실패"
           }
         },
         "recent_runs": "최근 실행",

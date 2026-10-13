@@ -41,13 +41,26 @@ public final class ScriptService {
     public static final String VAR_WORKING_DIR = "workingDir";
     public static final String VAR_OUTPUT_DIR = "outputDir";
     public static final String VAR_BUCKET_PATH = "bucketPath";
+    public static final String VAR_CHECKPOINTS = "checkpoints";
 
     // These are the three common environment variables task runners must add to the process/container that runs the script.
     public static final String ENV_WORKING_DIR = "WORKING_DIR";
     public static final String ENV_OUTPUT_DIR = "OUTPUT_DIR";
     public static final String ENV_BUCKET_PATH = "BUCKET_PATH";
+    public static final String ENV_CHECKPOINTS_PREFIX = "CHECKPOINTS_";
+
+    private static final Pattern NON_ENV_NAME_CHARACTERS = Pattern.compile("[^A-Za-z0-9_]");
 
     private ScriptService() {
+    }
+
+    /**
+     * Returns the name of the environment variable that exposes the checkpoint with the given key to a script:
+     * the key upper-cased with every character that is not valid in a shell variable name replaced by {@code _}.
+     * Keys that only differ by case or by such characters map to the same name.
+     */
+    public static String checkpointEnvName(String key) {
+        return ENV_CHECKPOINTS_PREFIX + NON_ENV_NAME_CHARACTERS.matcher(key).replaceAll("_").toUpperCase(Locale.ROOT);
     }
 
     public static String replaceInternalStorage(

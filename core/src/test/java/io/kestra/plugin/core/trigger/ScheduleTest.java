@@ -13,10 +13,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
-import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import com.cronutils.model.time.ExecutionTime;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -380,6 +382,32 @@ class ScheduleTest {
             assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
             assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "2024-02-29T11:00:00+05:30, 2024-01-31T11:00:00+05:30, 2024-03-31T11:00:00+05:30",
+            "2025-02-28T11:00:00+05:30, 2025-01-31T11:00:00+05:30, 2025-03-31T11:00:00+05:30",
+            "2025-04-30T11:00:00+05:30, 2025-03-31T11:00:00+05:30, 2025-05-31T11:00:00+05:30"
+        }
+    )
+    void shouldEvaluateLastCalendarDaySchedulesWithoutAWeekday(String current, String previous, String next) throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 11 * * *")
+            .timezone("Asia/Kolkata")
+            .when("{{ isLastDayOfMonth(trigger.date) }}")
+            .build();
+        ZonedDateTime date = ZonedDateTime.parse(current);
+        var evaluated = trigger.eval(conditionContext(trigger), triggerContext(date, trigger));
+
+        assertThat(evaluated).isPresent();
+        var variables = evaluated.orElseThrow().trigger().getVariables();
+        assertThat(dateFromVars((String) variables.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars((String) variables.get("previous"), ZonedDateTime.parse(previous))).isEqualTo(ZonedDateTime.parse(previous));
+        assertThat(dateFromVars((String) variables.get("next"), ZonedDateTime.parse(next))).isEqualTo(ZonedDateTime.parse(next));
     }
 
     @Test

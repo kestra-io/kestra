@@ -628,6 +628,15 @@
       "nav_overview": "개요",
       "nav_properties": "속성",
       "non_dynamic": "비동적",
+      "format": "형식",
+      "max_items": "최대 항목",
+      "max_length": "최대 길이",
+      "maximum": "최대",
+      "min_items": "최소 항목",
+      "min_length": "최소 길이",
+      "minimum": "최소",
+      "unit": "단위",
+      "validation_regexp": "유효성 검사 RegExp",
       "possible_values": "가능한 값",
       "sub_type": "하위 유형",
       "required": "필수"
@@ -2713,8 +2722,8 @@
       "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
-    "split_horizontal": "수평으로 분할",
-    "split_vertical": "세로로 분할",
+    "move_panel_to_bottom": "패널을 하단으로 이동",
+    "move_panel_to_side": "패널을 옆으로 이동",
     "pwa": {
       "install_title": "Kestra 설치",
       "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
@@ -2723,6 +2732,7 @@
     },
     "iteration": "반복",
     "iteration_number": "반복 {number}",
-    "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?"
+    "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?",
+    "not started": "시작되지 않음"
   }
 }

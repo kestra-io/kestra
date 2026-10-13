@@ -628,6 +628,15 @@
       "nav_overview": "Panoramica",
       "nav_properties": "Proprietà",
       "non_dynamic": "non dinamico",
+      "format": "Formato",
+      "max_items": "Numero massimo di elementi",
+      "max_length": "Lunghezza massima",
+      "maximum": "Massimo",
+      "min_items": "Min elementi",
+      "min_length": "Lunghezza min",
+      "minimum": "Minimo",
+      "unit": "Unità",
+      "validation_regexp": "RegExp di convalida",
       "possible_values": "Valori consentiti",
       "sub_type": "Sottotipo",
       "required": "Obbligatorio"
@@ -2713,8 +2722,8 @@
       "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
     "blocks": "Blocchi",
-    "split_horizontal": "Dividi orizzontalmente",
-    "split_vertical": "Dividi verticalmente",
+    "move_panel_to_bottom": "Sposta il pannello in basso",
+    "move_panel_to_side": "Sposta il pannello lateralmente",
     "pwa": {
       "install_title": "Installa Kestra",
       "install_description": "Installa Kestra come app per un accesso più rapido e un'esperienza a schermo intero.",
@@ -2723,6 +2732,7 @@
     },
     "iteration": "Iterazione",
     "iteration_number": "Iterazione {number}",
-    "delete_log_iteration": "Sei sicuro di voler eliminare il registro per {iteration}?"
+    "delete_log_iteration": "Sei sicuro di voler eliminare il registro per {iteration}?",
+    "not started": "Non avviato"
   }
 }

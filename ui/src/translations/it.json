@@ -291,7 +291,46 @@
       "help": "Aiuto",
       "issue": "Problema",
       "demo": "Demo",
-      "star": "Metti una stella"
+      "star": "Metti una stella",
+      "notifications": "Notifiche"
+    },
+    "notifications": {
+      "heading": "Notifiche",
+      "ongoing": "In corso",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Terminazione di {count} esecuzione | Terminazione di {count} esecuzioni",
+          "EXECUTION_PAUSE": "Messa in pausa di {count} esecuzione | Messa in pausa di {count} esecuzioni",
+          "EXECUTION_RESUME": "Ripresa di {count} esecuzione | Ripresa di {count} esecuzioni",
+          "EXECUTION_RESTART": "Riavvio di {count} esecuzione | Riavvio di {count} esecuzioni",
+          "EXECUTION_REPLAY": "Ripetizione di {count} esecuzione | Ripetizione di {count} esecuzioni",
+          "EXECUTION_FORCE_RUN": "Avvio forzato di {count} esecuzione | Avvio forzato di {count} esecuzioni",
+          "EXECUTION_UNQUEUE": "Rimozione dalla coda di {count} esecuzione | Rimozione dalla coda di {count} esecuzioni",
+          "EXECUTION_CHANGE_STATUS": "Modifica dello stato di {count} esecuzione | Modifica dello stato di {count} esecuzioni",
+          "EXECUTION_SET_LABELS": "Impostazione dei label su {count} esecuzione | Impostazione dei label su {count} esecuzioni",
+          "TRIGGER_UNLOCK": "Sblocco di {count} trigger | Sblocco di {count} trigger",
+          "TRIGGER_DELETE": "Eliminazione di {count} trigger | Eliminazione di {count} trigger",
+          "TRIGGER_DISABLE": "Disattivazione di {count} trigger | Disattivazione di {count} trigger",
+          "TRIGGER_ENABLE": "Attivazione di {count} trigger | Attivazione di {count} trigger",
+          "BACKFILL_PAUSE": "Messa in pausa di {count} backfill | Messa in pausa di {count} backfill",
+          "BACKFILL_RESUME": "Ripresa di {count} backfill | Ripresa di {count} backfill",
+          "BACKFILL_DELETE": "Eliminazione di {count} backfill | Eliminazione di {count} backfill"
+        },
+        "processed": "{count} elaborate",
+        "rejected": "{count} rifiutate",
+        "elapsed": "in corso da {duration}"
+      },
+      "markAllRead": "Segna tutti come letti",
+      "markUnread": "Segna come non letto",
+      "markRead": "Segna come letto",
+      "empty": "Nessuna notifica ancora",
+      "emptyUnread": "Nessuna notifica non letta",
+      "tabs": {
+        "all": "Tutto",
+        "unread": "Non letto"
+      },
+      "bellAriaLabel": "Notifiche",
+      "bellAriaLabelRunning": "Notifiche, operazioni in corso"
     },
     "source": "Fonte",
     "home": "Home",
@@ -628,6 +667,15 @@
       "nav_overview": "Panoramica",
       "nav_properties": "Proprietà",
       "non_dynamic": "non dinamico",
+      "format": "Formato",
+      "max_items": "Numero massimo di elementi",
+      "max_length": "Lunghezza massima",
+      "maximum": "Massimo",
+      "min_items": "Min elementi",
+      "min_length": "Lunghezza min",
+      "minimum": "Minimo",
+      "unit": "Unità",
+      "validation_regexp": "RegExp di convalida",
       "possible_values": "Valori consentiti",
       "sub_type": "Sottotipo",
       "required": "Obbligatorio"
@@ -975,7 +1023,6 @@
     "warning detected": "Avviso/i rilevato/i.",
     "informative notice": "Note(s)",
     "open": "Apri",
-    "dependency task": "Il task {taskId} è una dipendenza di un altro task",
     "admin": "Amministratore",
     "main_configuration": "Configurazione Principale",
     "commit_id": "ID commit",
@@ -1713,6 +1760,12 @@
     "item": "elemento",
     "items": "elementi",
     "iterations": "Iterazioni",
+    "loop_iterations_notice": {
+      "logs": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi i loro log non vengono visualizzati qui.",
+      "outputs": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi i loro output non vengono visualizzati qui.",
+      "metrics": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi le loro metriche non vengono visualizzate qui.",
+      "view_iterations": "Visualizza iterazioni"
+    },
     "cron": "Cron",
     "execution_started": "L'esecuzione è iniziata!",
     "execution_failed": "Esecuzione fallita!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} obsoleto",
           "failed": "{n} fallito",
           "last_run": "ultima esecuzione {ago}",
-          "unknown": "{n} non tracciato"
+          "unknown": "{n} non tracciato",
+          "tests_failed": "{n} con test falliti"
+        },
+        "tests": {
+          "pass": "{count} test | {count} test",
+          "warn": "{count} test · avviso | {count} test · avvisi",
+          "fail": "{failed}/{total} falliti",
+          "tooltip": {
+            "pass": "Il test dbt è stato superato | Tutti i {count} test dbt sono stati superati",
+            "warn": "{count} test dbt superato con avvisi | {count} test dbt superati, alcuni con avvisi",
+            "fail": "Il test dbt non è riuscito | {failed} di {total} test dbt non sono riusciti"
+          }
         },
         "recent_runs": "Esecuzioni recenti",
         "group_by": "Raggruppa per",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "I task si aprono in una modale per impostazione predefinita. Puoi impostare le schede come predefinite in {settings}."
     },
     "blocks": "Blocchi",
-    "split_horizontal": "Dividi orizzontalmente",
-    "split_vertical": "Dividi verticalmente",
     "move_panel_to_bottom": "Sposta il pannello in basso",
     "move_panel_to_side": "Sposta il pannello lateralmente",
     "pwa": {

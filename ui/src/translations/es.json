@@ -291,7 +291,46 @@
       "help": "Ayuda",
       "issue": "Problema",
       "demo": "Demo",
-      "star": "Danos una estrella"
+      "star": "Danos una estrella",
+      "notifications": "Notificaciones"
+    },
+    "notifications": {
+      "heading": "Notificaciones",
+      "ongoing": "En curso",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Terminando {count} ejecución | Terminando {count} ejecuciones",
+          "EXECUTION_PAUSE": "Pausando {count} ejecución | Pausando {count} ejecuciones",
+          "EXECUTION_RESUME": "Reanudando {count} ejecución | Reanudando {count} ejecuciones",
+          "EXECUTION_RESTART": "Reiniciando {count} ejecución | Reiniciando {count} ejecuciones",
+          "EXECUTION_REPLAY": "Repitiendo {count} ejecución | Repitiendo {count} ejecuciones",
+          "EXECUTION_FORCE_RUN": "Forzando {count} ejecución | Forzando {count} ejecuciones",
+          "EXECUTION_UNQUEUE": "Desencolando {count} ejecución | Desencolando {count} ejecuciones",
+          "EXECUTION_CHANGE_STATUS": "Cambiando el estado de {count} ejecución | Cambiando el estado de {count} ejecuciones",
+          "EXECUTION_SET_LABELS": "Aplicando labels a {count} ejecución | Aplicando labels a {count} ejecuciones",
+          "TRIGGER_UNLOCK": "Desbloqueando {count} trigger | Desbloqueando {count} triggers",
+          "TRIGGER_DELETE": "Eliminando {count} trigger | Eliminando {count} triggers",
+          "TRIGGER_DISABLE": "Deshabilitando {count} trigger | Deshabilitando {count} triggers",
+          "TRIGGER_ENABLE": "Habilitando {count} trigger | Habilitando {count} triggers",
+          "BACKFILL_PAUSE": "Pausando {count} backfill | Pausando {count} backfills",
+          "BACKFILL_RESUME": "Reanudando {count} backfill | Reanudando {count} backfills",
+          "BACKFILL_DELETE": "Eliminando {count} backfill | Eliminando {count} backfills"
+        },
+        "processed": "{count} procesadas",
+        "rejected": "{count} rechazadas",
+        "elapsed": "en curso desde hace {duration}"
+      },
+      "markAllRead": "Marcar todo como leído",
+      "markUnread": "Marcar como no leído",
+      "markRead": "Marcar como leído",
+      "empty": "No hay notificaciones aún",
+      "emptyUnread": "No hay notificaciones sin leer",
+      "tabs": {
+        "all": "Todo",
+        "unread": "No leído"
+      },
+      "bellAriaLabel": "Notificaciones",
+      "bellAriaLabelRunning": "Notificaciones, operaciones en curso"
     },
     "source": "Fuente",
     "home": "Inicio",
@@ -628,6 +667,15 @@
       "nav_overview": "Resumen",
       "nav_properties": "Propiedades",
       "non_dynamic": "no dinámico",
+      "format": "Formato",
+      "max_items": "Máximo de elementos",
+      "max_length": "Longitud máxima",
+      "maximum": "Máximo",
+      "min_items": "Mín. elementos",
+      "min_length": "Longitud min",
+      "minimum": "Mínimo",
+      "unit": "Unidad",
+      "validation_regexp": "RegExp de validación",
       "possible_values": "Valores posibles",
       "sub_type": "Subtipo",
       "required": "Obligatorio"
@@ -975,7 +1023,6 @@
     "warning detected": "Advertencia(s) detectada(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
-    "dependency task": "Task {taskId} es una dependencia de otra task",
     "admin": "Administrador",
     "main_configuration": "Configuración Principal",
     "commit_id": "ID de commit",
@@ -1713,6 +1760,12 @@
     "item": "elemento",
     "items": "elementos",
     "iterations": "Iteraciones",
+    "loop_iterations_notice": {
+      "logs": "Las iteraciones de bucle se ejecutan como subejecuciones separadas, por lo que sus logs no se muestran aquí.",
+      "outputs": "Las iteraciones de bucle se ejecutan como sub-executions separadas, por lo que sus outputs no se muestran aquí.",
+      "metrics": "Las iteraciones de bucle se ejecutan como sub-executions separadas, por lo que sus métricas no se muestran aquí.",
+      "view_iterations": "Ver iteraciones"
+    },
     "cron": "Cron",
     "execution_started": "¡La ejecución ha comenzado!",
     "execution_failed": "¡Ejecución fallida!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} obsoleto",
           "failed": "{n} fallido",
           "last_run": "última ejecución {ago}",
-          "unknown": "{n} no rastreado"
+          "unknown": "{n} no rastreado",
+          "tests_failed": "{n} con pruebas fallidas"
+        },
+        "tests": {
+          "pass": "{count} prueba | {count} pruebas",
+          "warn": "{count} prueba · advertencia | {count} pruebas · advertencia",
+          "fail": "{failed}/{total} fallidos",
+          "tooltip": {
+            "pass": "La prueba dbt {count} pasó | Todas las pruebas dbt {count} pasaron",
+            "warn": "{count} prueba dbt superada con advertencias | {count} pruebas dbt superadas, algunas con advertencias",
+            "fail": "La prueba dbt falló | {failed} de {total} pruebas dbt fallaron"
+          }
         },
         "recent_runs": "Ejecuciones recientes",
         "group_by": "Agrupar por",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "Las tasks se abren en un modal por defecto. Puedes hacer que las pestañas sean el valor por defecto en {settings}."
     },
     "blocks": "Bloques",
-    "split_horizontal": "Dividir horizontalmente",
-    "split_vertical": "Dividir verticalmente",
     "move_panel_to_bottom": "Mover panel a la parte inferior",
     "move_panel_to_side": "Mover panel a un lado",
     "pwa": {

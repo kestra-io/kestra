@@ -291,7 +291,46 @@
       "help": "도움말",
       "issue": "문제",
       "demo": "데모",
-      "star": "우리를 Star 하세요"
+      "star": "우리를 Star 하세요",
+      "notifications": "알림"
+    },
+    "notifications": {
+      "heading": "알림",
+      "ongoing": "진행 중",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "실행 {count}개 종료 중",
+          "EXECUTION_PAUSE": "실행 {count}개 일시 중지 중",
+          "EXECUTION_RESUME": "실행 {count}개 재개 중",
+          "EXECUTION_RESTART": "실행 {count}개 재시작 중",
+          "EXECUTION_REPLAY": "실행 {count}개 재실행 중",
+          "EXECUTION_FORCE_RUN": "실행 {count}개 강제 실행 중",
+          "EXECUTION_UNQUEUE": "실행 {count}개 대기열에서 제거 중",
+          "EXECUTION_CHANGE_STATUS": "실행 {count}개 상태 변경 중",
+          "EXECUTION_SET_LABELS": "실행 {count}개에 label 설정 중",
+          "TRIGGER_UNLOCK": "trigger {count}개 잠금 해제 중",
+          "TRIGGER_DELETE": "trigger {count}개 삭제 중",
+          "TRIGGER_DISABLE": "trigger {count}개 비활성화 중",
+          "TRIGGER_ENABLE": "trigger {count}개 활성화 중",
+          "BACKFILL_PAUSE": "backfill {count}개 일시 중지 중",
+          "BACKFILL_RESUME": "backfill {count}개 재개 중",
+          "BACKFILL_DELETE": "backfill {count}개 삭제 중"
+        },
+        "processed": "{count}개 처리됨",
+        "rejected": "{count}개 거부됨",
+        "elapsed": "{duration} 동안 진행 중"
+      },
+      "markAllRead": "모두 읽음으로 표시",
+      "markUnread": "읽지 않음으로 표시",
+      "markRead": "읽음으로 표시",
+      "empty": "아직 알림이 없습니다.",
+      "emptyUnread": "읽지 않은 알림 없음",
+      "tabs": {
+        "all": "모두",
+        "unread": "읽지 않음"
+      },
+      "bellAriaLabel": "알림",
+      "bellAriaLabelRunning": "알림, 작업 진행 중"
     },
     "source": "소스",
     "home": "홈",
@@ -628,6 +667,15 @@
       "nav_overview": "개요",
       "nav_properties": "속성",
       "non_dynamic": "비동적",
+      "format": "형식",
+      "max_items": "최대 항목",
+      "max_length": "최대 길이",
+      "maximum": "최대",
+      "min_items": "최소 항목",
+      "min_length": "최소 길이",
+      "minimum": "최소",
+      "unit": "단위",
+      "validation_regexp": "유효성 검사 RegExp",
       "possible_values": "가능한 값",
       "sub_type": "하위 유형",
       "required": "필수"
@@ -975,7 +1023,6 @@
     "warning detected": "경고가 감지되었습니다.",
     "informative notice": "노트(s)",
     "open": "열기",
-    "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
     "admin": "관리자",
     "main_configuration": "주요 설정",
     "commit_id": "커밋 id",
@@ -1713,6 +1760,12 @@
     "item": "항목",
     "items": "항목",
     "iterations": "반복",
+    "loop_iterations_notice": {
+      "logs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 로그는 여기에 표시되지 않습니다.",
+      "outputs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 출력은 여기에 표시되지 않습니다.",
+      "metrics": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 메트릭은 여기에 표시되지 않습니다.",
+      "view_iterations": "반복 보기"
+    },
     "cron": "크론",
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} 고정",
           "failed": "{n} 실패함",
           "last_run": "마지막 실행 {ago}",
-          "unknown": "{n} 추적되지 않음"
+          "unknown": "{n} 추적되지 않음",
+          "tests_failed": "실패한 테스트가 있는 {n}개"
+        },
+        "tests": {
+          "pass": "{count} 테스트 | {count} 테스트",
+          "warn": "{count} 테스트 · 경고 | {count} 테스트 · 경고",
+          "fail": "{failed}/{total} 실패",
+          "tooltip": {
+            "pass": "{count} dbt 테스트 통과 | 모든 {count} dbt 테스트 통과",
+            "warn": "{count} dbt 테스트 경고와 함께 통과 | {count} dbt 테스트 통과, 일부 경고 포함",
+            "fail": "dbt 테스트 실패 | dbt 테스트 {total}개 중 {failed}개 실패"
+          }
         },
         "recent_runs": "최근 실행",
         "group_by": "그룹화 기준",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "Task는 기본적으로 모달에서 열립니다. {settings}에서 탭을 기본값으로 설정할 수 있습니다."
     },
     "blocks": "블록",
-    "split_horizontal": "수평으로 분할",
-    "split_vertical": "세로로 분할",
     "move_panel_to_bottom": "패널을 하단으로 이동",
     "move_panel_to_side": "패널을 옆으로 이동",
     "pwa": {

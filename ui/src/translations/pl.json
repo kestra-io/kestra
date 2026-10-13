@@ -291,7 +291,46 @@
       "help": "Pomoc",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Daj nam gwiazdkę"
+      "star": "Daj nam gwiazdkę",
+      "notifications": "Powiadomienia"
+    },
+    "notifications": {
+      "heading": "Powiadomienia",
+      "ongoing": "W toku",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Zabijanie wykonań: {count}",
+          "EXECUTION_PAUSE": "Wstrzymywanie wykonań: {count}",
+          "EXECUTION_RESUME": "Wznawianie wykonań: {count}",
+          "EXECUTION_RESTART": "Ponowne uruchamianie wykonań: {count}",
+          "EXECUTION_REPLAY": "Powtarzanie wykonań: {count}",
+          "EXECUTION_FORCE_RUN": "Wymuszanie uruchomienia wykonań: {count}",
+          "EXECUTION_UNQUEUE": "Usuwanie wykonań z kolejki: {count}",
+          "EXECUTION_CHANGE_STATUS": "Zmiana statusu wykonań: {count}",
+          "EXECUTION_SET_LABELS": "Ustawianie labels dla wykonań: {count}",
+          "TRIGGER_UNLOCK": "Odblokowywanie Triggerów: {count}",
+          "TRIGGER_DELETE": "Usuwanie Triggerów: {count}",
+          "TRIGGER_DISABLE": "Wyłączanie Triggerów: {count}",
+          "TRIGGER_ENABLE": "Włączanie Triggerów: {count}",
+          "BACKFILL_PAUSE": "Wstrzymywanie Backfilli: {count}",
+          "BACKFILL_RESUME": "Wznawianie Backfilli: {count}",
+          "BACKFILL_DELETE": "Usuwanie Backfilli: {count}"
+        },
+        "processed": "Przetworzone: {count}",
+        "rejected": "Odrzucone: {count}",
+        "elapsed": "trwa od {duration}"
+      },
+      "markAllRead": "Oznacz wszystkie jako przeczytane",
+      "markUnread": "Oznacz jako nieprzeczytane",
+      "markRead": "Oznacz jako przeczytane",
+      "empty": "Brak powiadomień",
+      "emptyUnread": "Brak nieprzeczytanych powiadomień",
+      "tabs": {
+        "all": "Wszystkie",
+        "unread": "Nieprzeczytane"
+      },
+      "bellAriaLabel": "Powiadomienia",
+      "bellAriaLabelRunning": "Powiadomienia, operacje w toku"
     },
     "source": "Źródło",
     "home": "Strona główna",
@@ -628,6 +667,15 @@
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
+      "format": "Format",
+      "max_items": "Maksymalna liczba elementów",
+      "max_length": "Maksymalna długość",
+      "maximum": "Maksimum",
+      "min_items": "Min elementów",
+      "min_length": "Min długość",
+      "minimum": "Min",
+      "unit": "Jednostka",
+      "validation_regexp": "RegExp walidacji",
       "possible_values": "Możliwe wartości",
       "sub_type": "Podtyp",
       "required": "Wymagane"
@@ -975,7 +1023,6 @@
     "warning detected": "Wykryto ostrzeżenie(-a).",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
-    "dependency task": "Task {taskId} jest zależnością innego Taska",
     "admin": "Administrator",
     "main_configuration": "Główna konfiguracja",
     "commit_id": "Id commit",
@@ -1713,6 +1760,12 @@
     "item": "element",
     "items": "elementy",
     "iterations": "Iteracje",
+    "loop_iterations_notice": {
+      "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",
+      "outputs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich outputy nie są tutaj wyświetlane.",
+      "metrics": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich metryki nie są tutaj wyświetlane.",
+      "view_iterations": "Wyświetl iteracje"
+    },
     "cron": "Cron",
     "execution_started": "Egzekucja została uruchomiona!",
     "execution_failed": "Egzekucja nie powiodła się!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} stałych",
           "failed": "{n} niepowodzenie",
           "last_run": "ostatnie uruchomienie {ago}",
-          "unknown": "{n} nieśledzonych"
+          "unknown": "{n} nieśledzonych",
+          "tests_failed": "{n} z nieudanymi testami"
+        },
+        "tests": {
+          "pass": "{count} test | {count} testy | {count} testów",
+          "warn": "{count} test · ostrzeżenie | {count} testy · ostrzeżenia | {count} testów · ostrzeżeń",
+          "fail": "{failed}/{total} niepowodzeń",
+          "tooltip": {
+            "pass": "{count} test dbt przeszedł | Wszystkie {count} testy dbt przeszły",
+            "warn": "{count} test dbt zakończony z ostrzeżeniami | {count} testy dbt zakończone z ostrzeżeniami | {count} testów dbt zakończonych z ostrzeżeniami",
+            "fail": "Test dbt nie powiódł się | {failed} z {total} testów dbt nie powiodło się | {failed} z {total} testów dbt nie powiodło się"
+          }
         },
         "recent_runs": "Ostatnie uruchomienia",
         "group_by": "Grupuj według",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
     },
     "blocks": "Bloki",
-    "split_horizontal": "Podziel w poziomie",
-    "split_vertical": "Podziel pionowo",
     "move_panel_to_bottom": "Przenieś panel na dół",
     "move_panel_to_side": "Przenieś panel na bok",
     "pwa": {

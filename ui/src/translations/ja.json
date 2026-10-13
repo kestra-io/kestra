@@ -291,7 +291,46 @@
       "help": "ヘルプ",
       "issue": "問題",
       "demo": "デモ",
-      "star": "お気に入りに追加"
+      "star": "お気に入りに追加",
+      "notifications": "通知"
+    },
+    "notifications": {
+      "heading": "通知",
+      "ongoing": "進行中",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "{count} 件の実行をキル中",
+          "EXECUTION_PAUSE": "{count} 件の実行を一時停止中",
+          "EXECUTION_RESUME": "{count} 件の実行を再開中",
+          "EXECUTION_RESTART": "{count} 件の実行を再起動中",
+          "EXECUTION_REPLAY": "{count} 件の実行をリプレイ中",
+          "EXECUTION_FORCE_RUN": "{count} 件の実行を強制実行中",
+          "EXECUTION_UNQUEUE": "{count} 件の実行をキューから削除中",
+          "EXECUTION_CHANGE_STATUS": "{count} 件の実行のステータスを変更中",
+          "EXECUTION_SET_LABELS": "{count} 件の実行に label を設定中",
+          "TRIGGER_UNLOCK": "{count} 件の trigger をロック解除中",
+          "TRIGGER_DELETE": "{count} 件の trigger を削除中",
+          "TRIGGER_DISABLE": "{count} 件の trigger を無効化中",
+          "TRIGGER_ENABLE": "{count} 件の trigger を有効化中",
+          "BACKFILL_PAUSE": "{count} 件の backfill を一時停止中",
+          "BACKFILL_RESUME": "{count} 件の backfill を再開中",
+          "BACKFILL_DELETE": "{count} 件の backfill を削除中"
+        },
+        "processed": "{count} 件処理済み",
+        "rejected": "{count} 件拒否",
+        "elapsed": "経過時間 {duration}"
+      },
+      "markAllRead": "すべて既読にする",
+      "markUnread": "未読にする",
+      "markRead": "既読にする",
+      "empty": "まだ通知はありません",
+      "emptyUnread": "未読の通知はありません",
+      "tabs": {
+        "all": "すべて",
+        "unread": "未読"
+      },
+      "bellAriaLabel": "通知",
+      "bellAriaLabelRunning": "通知、実行中の操作があります"
     },
     "source": "ソース",
     "home": "ホーム",
@@ -628,6 +667,15 @@
       "nav_overview": "概要",
       "nav_properties": "プロパティ",
       "non_dynamic": "非動的",
+      "format": "フォーマット",
+      "max_items": "最大項目数",
+      "max_length": "最大長",
+      "maximum": "最大",
+      "min_items": "最小項目数",
+      "min_length": "最小の長さ",
+      "minimum": "最小",
+      "unit": "単位",
+      "validation_regexp": "検証正規表現",
       "possible_values": "指定可能な値",
       "sub_type": "サブタイプ",
       "required": "必須"
@@ -975,7 +1023,6 @@
     "warning detected": "警告が検出されました。",
     "informative notice": "注記",
     "open": "開く",
-    "dependency task": "Task {taskId}は他のtaskの依存関係です",
     "admin": "管理者",
     "main_configuration": "メイン設定",
     "commit_id": "コミット id",
@@ -1713,6 +1760,12 @@
     "item": "アイテム",
     "items": "アイテム",
     "iterations": "イテレーション",
+    "loop_iterations_notice": {
+      "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",
+      "outputs": "ループのイテレーションは個別のサブExecutionとして実行されるため、そのOutputはここに表示されません。",
+      "metrics": "ループのイテレーションは個別のサブ実行として実行されるため、そのメトリクスはここに表示されません。",
+      "view_iterations": "イテレーションを表示"
+    },
     "cron": "Cron（クーロン）",
     "execution_started": "実行が開始されました！",
     "execution_failed": "実行が失敗しました！",
@@ -2265,7 +2318,18 @@
           "issues": "{n} ステーブル",
           "failed": "{n} 失敗",
           "last_run": "最終実行 {ago}",
-          "unknown": "{n} は追跡されていません"
+          "unknown": "{n} は追跡されていません",
+          "tests_failed": "失敗したテストを含む{n}"
+        },
+        "tests": {
+          "pass": "{count} テスト | {count} テスト",
+          "warn": "{count} テスト · 警告",
+          "fail": "{failed}/{total} 失敗",
+          "tooltip": {
+            "pass": "{count} dbtテストが合格しました | すべての{count} dbtテストが合格しました",
+            "warn": "{count} 個のdbtテストが警告付きで合格しました | {count} 個のdbtテストが警告付きで合格しました",
+            "fail": "dbtテストに失敗しました | {total}個のdbtテストのうち{failed}個が失敗しました"
+          }
         },
         "recent_runs": "最近の実行",
         "group_by": "グループ化",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "タスクはデフォルトでモーダルで開きます。{settings}でタブをデフォルトに設定できます。"
     },
     "blocks": "ブロック",
-    "split_horizontal": "水平分割",
-    "split_vertical": "垂直分割",
     "move_panel_to_bottom": "パネルを下に移動",
     "move_panel_to_side": "パネルを横に移動",
     "pwa": {

@@ -266,7 +266,7 @@ public class TriggerEventHandler {
      * By default (no recovery requested), missed schedules are skipped by re-computing the next evaluation date.
      */
     private TriggerState updateForReEnabledTrigger(Clock clock, TriggerState state, Flow flow,
-            AbstractTrigger trigger, @Nullable Boolean recoverMissedSchedules) {
+        AbstractTrigger trigger, @Nullable Boolean recoverMissedSchedules) {
         return switch (resolveRecoverMissedSchedules(flow, trigger, recoverMissedSchedules)) {
             // Keep the frozen past nextEvaluationDate so the scheduling loop replays each missed tick.
             case ALL -> state.getNextEvaluationDate() != null
@@ -281,7 +281,7 @@ public class TriggerEventHandler {
     }
 
     private RecoverMissedSchedules resolveRecoverMissedSchedules(Flow flow, AbstractTrigger trigger,
-            @Nullable Boolean recoverMissedSchedules) {
+        @Nullable Boolean recoverMissedSchedules) {
         if (!Boolean.TRUE.equals(recoverMissedSchedules) || !(trigger instanceof Schedulable schedulable)) {
             return RecoverMissedSchedules.NONE;
         }
@@ -554,11 +554,15 @@ public class TriggerEventHandler {
      */
     private void maySendExecutionKilled(TriggerState state) {
         if (TriggerType.REALTIME.equals(state.getType())) {
-            sendExecutionKilled(state);
+            sendExecutionKilled(state, state.getDispatchEpoch());
         }
     }
 
     private void sendExecutionKilled(TriggerId id) {
+        sendExecutionKilled(id, null);
+    }
+
+    private void sendExecutionKilled(TriggerId id, Long dispatchEpoch) {
         try {
             this.executionKilledQueue.emit(
                 ExecutionKilledTrigger
@@ -570,6 +574,7 @@ public class TriggerEventHandler {
                     .namespace(id.getNamespace())
                     .flowId(id.getFlowId())
                     .triggerId(id.getTriggerId())
+                    .dispatchEpoch(dispatchEpoch)
                     .build()
             );
         } catch (QueueException e) {

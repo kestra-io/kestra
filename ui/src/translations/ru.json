@@ -291,7 +291,46 @@
       "help": "Помощь",
       "issue": "Проблема",
       "demo": "Демо",
-      "star": "Добавьте нас в избранное"
+      "star": "Добавьте нас в избранное",
+      "notifications": "Уведомления"
+    },
+    "notifications": {
+      "heading": "Уведомления",
+      "ongoing": "В процессе",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Остановка выполнений: {count}",
+          "EXECUTION_PAUSE": "Приостановка выполнений: {count}",
+          "EXECUTION_RESUME": "Возобновление выполнений: {count}",
+          "EXECUTION_RESTART": "Перезапуск выполнений: {count}",
+          "EXECUTION_REPLAY": "Повтор выполнений: {count}",
+          "EXECUTION_FORCE_RUN": "Принудительный запуск выполнений: {count}",
+          "EXECUTION_UNQUEUE": "Удаление выполнений из очереди: {count}",
+          "EXECUTION_CHANGE_STATUS": "Изменение статуса выполнений: {count}",
+          "EXECUTION_SET_LABELS": "Установка labels для выполнений: {count}",
+          "TRIGGER_UNLOCK": "Разблокировка triggers: {count}",
+          "TRIGGER_DELETE": "Удаление triggers: {count}",
+          "TRIGGER_DISABLE": "Отключение triggers: {count}",
+          "TRIGGER_ENABLE": "Включение triggers: {count}",
+          "BACKFILL_PAUSE": "Приостановка backfills: {count}",
+          "BACKFILL_RESUME": "Возобновление backfills: {count}",
+          "BACKFILL_DELETE": "Удаление backfills: {count}"
+        },
+        "processed": "Обработано: {count}",
+        "rejected": "Отклонено: {count}",
+        "elapsed": "выполняется {duration}"
+      },
+      "markAllRead": "Отметить все как прочитанное",
+      "markUnread": "Пометить как непрочитанное",
+      "markRead": "Пометить как прочитанное",
+      "empty": "Уведомлений пока нет",
+      "emptyUnread": "Нет непрочитанных уведомлений",
+      "tabs": {
+        "all": "Все",
+        "unread": "Непрочитанные"
+      },
+      "bellAriaLabel": "Уведомления",
+      "bellAriaLabelRunning": "Уведомления, операции выполняются"
     },
     "source": "Источник",
     "home": "Домой",
@@ -628,6 +667,15 @@
       "nav_overview": "Обзор",
       "nav_properties": "Свойства",
       "non_dynamic": "не динамический",
+      "format": "Формат",
+      "max_items": "Макс. элементов",
+      "max_length": "Максимальная длина",
+      "maximum": "Максимум",
+      "min_items": "Мин. элементов",
+      "min_length": "Мин. длина",
+      "minimum": "Минимум",
+      "unit": "Единица измерения",
+      "validation_regexp": "Регулярное выражение для валидации",
       "possible_values": "Возможные значения",
       "sub_type": "Подтип",
       "required": "Обязательный"
@@ -975,7 +1023,6 @@
     "warning detected": "Обнаружены предупреждения.",
     "informative notice": "Примечание(я)",
     "open": "Открыть",
-    "dependency task": "Задача {taskId} является зависимостью другого задачи",
     "admin": "Администратор",
     "main_configuration": "Основная конфигурация",
     "commit_id": "Идентификатор коммита",
@@ -1713,6 +1760,12 @@
     "item": "элемент",
     "items": "элементы",
     "iterations": "Итерации",
+    "loop_iterations_notice": {
+      "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",
+      "outputs": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их output не отображается здесь.",
+      "metrics": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их метрики здесь не отображаются.",
+      "view_iterations": "Просмотр итераций"
+    },
     "cron": "Крон",
     "execution_started": "Выполнение началось!",
     "execution_failed": "Выполнение не удалось!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} устаревших",
           "failed": "{n} не удалось",
           "last_run": "последний запуск {ago}",
-          "unknown": "{n} не отслеживается"
+          "unknown": "{n} не отслеживается",
+          "tests_failed": "{n} с неудачными тестами"
+        },
+        "tests": {
+          "pass": "{count} тест | {count} теста | {count} тестов",
+          "warn": "{count} тест · предупреждение | {count} теста · предупреждение | {count} тестов · предупреждение",
+          "fail": "{failed}/{total} сбоев",
+          "tooltip": {
+            "pass": "{count} тест dbt пройден | Все {count} теста dbt пройдены | Все {count} тестов dbt пройдены",
+            "warn": "{count} dbt тест пройден с предупреждениями | {count} dbt теста пройдены, некоторые с предупреждениями | {count} dbt тестов пройдены, некоторые с предупреждениями",
+            "fail": "Тест dbt не пройден | {failed} из {total} тестов dbt не пройдены | {failed} из {total} тестов dbt не пройдены"
+          }
         },
         "recent_runs": "Последние запуски",
         "group_by": "Группировать по",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "Задачи по умолчанию открываются в модальном окне. Вы можете сделать вкладки по умолчанию в {settings}."
     },
     "blocks": "Блоки",
-    "split_horizontal": "Разделить по горизонтали",
-    "split_vertical": "Разделить по вертикали",
     "move_panel_to_bottom": "Переместить панель вниз",
     "move_panel_to_side": "Переместить панель в сторону",
     "pwa": {

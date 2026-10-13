@@ -291,7 +291,46 @@
       "help": "मदद",
       "issue": "समस्या",
       "demo": "डेमो",
-      "star": "हमें स्टार दें"
+      "star": "हमें स्टार दें",
+      "notifications": "सूचनाएँ"
+    },
+    "notifications": {
+      "heading": "सूचनाएँ",
+      "ongoing": "प्रगति में",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "{count} निष्पादन समाप्त किया जा रहा है | {count} निष्पादन समाप्त किए जा रहे हैं",
+          "EXECUTION_PAUSE": "{count} निष्पादन रोका जा रहा है | {count} निष्पादन रोके जा रहे हैं",
+          "EXECUTION_RESUME": "{count} निष्पादन फिर से शुरू किया जा रहा है | {count} निष्पादन फिर से शुरू किए जा रहे हैं",
+          "EXECUTION_RESTART": "{count} निष्पादन पुनः प्रारंभ किया जा रहा है | {count} निष्पादन पुनः प्रारंभ किए जा रहे हैं",
+          "EXECUTION_REPLAY": "{count} निष्पादन पुनः चलाया जा रहा है | {count} निष्पादन पुनः चलाए जा रहे हैं",
+          "EXECUTION_FORCE_RUN": "{count} निष्पादन ज़बरदस्ती चलाया जा रहा है | {count} निष्पादन ज़बरदस्ती चलाए जा रहे हैं",
+          "EXECUTION_UNQUEUE": "{count} निष्पादन कतार से हटाया जा रहा है | {count} निष्पादन कतार से हटाए जा रहे हैं",
+          "EXECUTION_CHANGE_STATUS": "{count} निष्पादन की स्थिति बदली जा रही है | {count} निष्पादनों की स्थिति बदली जा रही है",
+          "EXECUTION_SET_LABELS": "{count} निष्पादन पर labels सेट किए जा रहे हैं | {count} निष्पादनों पर labels सेट किए जा रहे हैं",
+          "TRIGGER_UNLOCK": "{count} trigger अनलॉक किया जा रहा है | {count} trigger अनलॉक किए जा रहे हैं",
+          "TRIGGER_DELETE": "{count} trigger हटाया जा रहा है | {count} trigger हटाए जा रहे हैं",
+          "TRIGGER_DISABLE": "{count} trigger अक्षम किया जा रहा है | {count} trigger अक्षम किए जा रहे हैं",
+          "TRIGGER_ENABLE": "{count} trigger सक्षम किया जा रहा है | {count} trigger सक्षम किए जा रहे हैं",
+          "BACKFILL_PAUSE": "{count} backfill रोका जा रहा है | {count} backfill रोके जा रहे हैं",
+          "BACKFILL_RESUME": "{count} backfill फिर से शुरू किया जा रहा है | {count} backfill फिर से शुरू किए जा रहे हैं",
+          "BACKFILL_DELETE": "{count} backfill हटाया जा रहा है | {count} backfill हटाए जा रहे हैं"
+        },
+        "processed": "{count} संसाधित",
+        "rejected": "{count} अस्वीकृत",
+        "elapsed": "{duration} से चल रहा है"
+      },
+      "markAllRead": "सभी को पढ़ा हुआ चिह्नित करें",
+      "markUnread": "अपठित के रूप में चिह्नित करें",
+      "markRead": "पढ़ा गया के रूप में चिह्नित करें",
+      "empty": "अभी कोई सूचना नहीं है",
+      "emptyUnread": "कोई अपठित सूचना नहीं",
+      "tabs": {
+        "all": "सभी",
+        "unread": "अपठित"
+      },
+      "bellAriaLabel": "सूचनाएं",
+      "bellAriaLabelRunning": "सूचनाएं, संचालन प्रगति पर हैं"
     },
     "source": "स्रोत",
     "home": "होम",
@@ -628,6 +667,15 @@
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
+      "format": "फ़ॉर्मेट",
+      "max_items": "अधिकतम आइटम",
+      "max_length": "अधिकतम लंबाई",
+      "maximum": "अधिकतम",
+      "min_items": "न्यूनतम आइटम",
+      "min_length": "न्यूनतम लंबाई",
+      "minimum": "न्यूनतम",
+      "unit": "यूनिट",
+      "validation_regexp": "वैलिडेशन रेगएक्स",
       "possible_values": "संभावित मान",
       "sub_type": "उपप्रकार",
       "required": "आवश्यक"
@@ -975,7 +1023,6 @@
     "warning detected": "चेतावनी(याँ) मिलीं।",
     "informative notice": "नोट(s)",
     "open": "खोलें",
-    "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
     "admin": "प्रशासनिक",
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
     "commit_id": "कमिट id",
@@ -1713,6 +1760,12 @@
     "item": "आइटम",
     "items": "आइटम्स",
     "iterations": "पुनरावृत्तियाँ",
+    "loop_iterations_notice": {
+      "logs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके logs यहाँ प्रदर्शित नहीं होते हैं।",
+      "outputs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके आउटपुट यहाँ प्रदर्शित नहीं होते हैं।",
+      "metrics": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके मेट्रिक्स यहाँ प्रदर्शित नहीं होते हैं।",
+      "view_iterations": "पुनरावृत्तियों को देखें"
+    },
     "cron": "क्रॉन",
     "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_failed": "निष्पादन FAILED!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} बासी",
           "failed": "{n} विफल",
           "last_run": "अंतिम रन {ago}",
-          "unknown": "{n} ट्रैक नहीं किया गया"
+          "unknown": "{n} ट्रैक नहीं किया गया",
+          "tests_failed": "{n} विफल परीक्षणों के साथ"
+        },
+        "tests": {
+          "pass": "{count} परीक्षण | {count} परीक्षण",
+          "warn": "{count} टेस्ट · चेतावनी | {count} टेस्ट · चेतावनी",
+          "fail": "{failed}/{total} विफल",
+          "tooltip": {
+            "pass": "{count} dbt टेस्ट पास हुआ | सभी {count} dbt टेस्ट पास हुए",
+            "warn": "{count} dbt test चेतावनी के साथ पास हुआ | {count} dbt tests पास हुए, कुछ चेतावनी के साथ",
+            "fail": "dbt टेस्ट विफल रहा | {total} dbt टेस्ट में से {failed} विफल रहे"
+          }
         },
         "recent_runs": "हाल की रन",
         "group_by": "द्वारा समूहबद्ध करें",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
-    "split_horizontal": "क्षैतिज रूप से विभाजित करें",
-    "split_vertical": "लंबवत विभाजित करें",
     "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",
     "move_panel_to_side": "पैनल को एक तरफ ले जाएँ",
     "pwa": {

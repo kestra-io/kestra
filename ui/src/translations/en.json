@@ -291,7 +291,46 @@
       "help": "Help",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Star us"
+      "star": "Star us",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "In progress",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
+          "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
+          "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
+          "EXECUTION_RESTART": "Restarting {count} execution | Restarting {count} executions",
+          "EXECUTION_REPLAY": "Replaying {count} execution | Replaying {count} executions",
+          "EXECUTION_FORCE_RUN": "Force running {count} execution | Force running {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueuing {count} execution | Unqueuing {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Changing the status of {count} execution | Changing the status of {count} executions",
+          "EXECUTION_SET_LABELS": "Setting labels on {count} execution | Setting labels on {count} executions",
+          "TRIGGER_UNLOCK": "Unlocking {count} trigger | Unlocking {count} triggers",
+          "TRIGGER_DELETE": "Deleting {count} trigger | Deleting {count} triggers",
+          "TRIGGER_DISABLE": "Disabling {count} trigger | Disabling {count} triggers",
+          "TRIGGER_ENABLE": "Enabling {count} trigger | Enabling {count} triggers",
+          "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
+          "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
+          "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "processed": "{count} processed",
+        "rejected": "{count} rejected",
+        "elapsed": "running for {duration}"
+      },
+      "markAllRead": "Mark all as read",
+      "markUnread": "Mark as unread",
+      "markRead": "Mark as read",
+      "empty": "No notifications yet",
+      "emptyUnread": "No unread notifications",
+      "tabs": {
+        "all": "All",
+        "unread": "Unread"
+      },
+      "bellAriaLabel": "Notifications",
+      "bellAriaLabelRunning": "Notifications, operations in progress"
     },
     "source": "Source",
     "home": "Home",
@@ -628,6 +667,15 @@
       "nav_overview": "Overview",
       "nav_properties": "Properties",
       "non_dynamic": "non-dynamic",
+      "format": "Format",
+      "max_items": "Max items",
+      "max_length": "Max length",
+      "maximum": "Maximum",
+      "min_items": "Min items",
+      "min_length": "Min length",
+      "minimum": "Minimum",
+      "unit": "Unit",
+      "validation_regexp": "Validation RegExp",
       "possible_values": "Possible Values",
       "sub_type": "SubType",
       "required": "Required"
@@ -975,7 +1023,6 @@
     "warning detected": "Warning(s) detected.",
     "informative notice": "Note(s)",
     "open": "Open",
-    "dependency task": "Task {taskId} is a dependency of another task",
     "admin": "Admin",
     "main_configuration": "Main Configuration",
     "commit_id": "Commit id",
@@ -1713,6 +1760,12 @@
     "item": "item",
     "items": "items",
     "iterations": "Iterations",
+    "loop_iterations_notice": {
+        "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
+        "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
+        "metrics": "Loop iterations run as separate sub-executions, so their metrics are not displayed here.",
+        "view_iterations": "View iterations"
+    },
     "cron": "Cron",
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} stale",
           "failed": "{n} failed",
           "last_run": "last run {ago}",
-          "unknown": "{n} not tracked"
+          "unknown": "{n} not tracked",
+          "tests_failed": "{n} with failing tests"
+        },
+        "tests": {
+          "pass": "{count} test | {count} tests",
+          "warn": "{count} test · warn | {count} tests · warn",
+          "fail": "{failed}/{total} failed",
+          "tooltip": {
+            "pass": "The {count} dbt test passed | All {count} dbt tests passed",
+            "warn": "{count} dbt test passed with warnings | {count} dbt tests passed, some with warnings",
+            "fail": "The dbt test failed | {failed} of {total} dbt tests failed"
+          }
         },
         "recent_runs": "Recent runs",
         "group_by": "Group by",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
-    "split_horizontal": "Split horizontally",
-    "split_vertical": "Split vertically",
     "move_panel_to_bottom": "Move panel to bottom",
     "move_panel_to_side": "Move panel to side",
     "pwa": {

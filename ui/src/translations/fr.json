@@ -291,7 +291,46 @@
       "help": "Aide",
       "issue": "Problème",
       "demo": "Démo",
-      "star": "Ajoutez-nous aux favoris"
+      "star": "Ajoutez-nous aux favoris",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "En cours",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Arrêt de {count} exécution | Arrêt de {count} exécutions",
+          "EXECUTION_PAUSE": "Mise en pause de {count} exécution | Mise en pause de {count} exécutions",
+          "EXECUTION_RESUME": "Reprise de {count} exécution | Reprise de {count} exécutions",
+          "EXECUTION_RESTART": "Relance de {count} exécution | Relance de {count} exécutions",
+          "EXECUTION_REPLAY": "Rejeu de {count} exécution | Rejeu de {count} exécutions",
+          "EXECUTION_FORCE_RUN": "Démarrage forcé de {count} exécution | Démarrage forcé de {count} exécutions",
+          "EXECUTION_UNQUEUE": "Retrait de {count} exécution de la file d'attente | Retrait de {count} exécutions de la file d'attente",
+          "EXECUTION_CHANGE_STATUS": "Changement du statut de {count} exécution | Changement du statut de {count} exécutions",
+          "EXECUTION_SET_LABELS": "Ajout de labels à {count} exécution | Ajout de labels à {count} exécutions",
+          "TRIGGER_UNLOCK": "Déverrouillage de {count} trigger | Déverrouillage de {count} triggers",
+          "TRIGGER_DELETE": "Suppression de {count} trigger | Suppression de {count} triggers",
+          "TRIGGER_DISABLE": "Désactivation de {count} trigger | Désactivation de {count} triggers",
+          "TRIGGER_ENABLE": "Activation de {count} trigger | Activation de {count} triggers",
+          "BACKFILL_PAUSE": "Mise en pause de {count} backfill | Mise en pause de {count} backfills",
+          "BACKFILL_RESUME": "Reprise de {count} backfill | Reprise de {count} backfills",
+          "BACKFILL_DELETE": "Suppression de {count} backfill | Suppression de {count} backfills"
+        },
+        "processed": "{count} traitées",
+        "rejected": "{count} rejetées",
+        "elapsed": "en cours depuis {duration}"
+      },
+      "markAllRead": "Tout marquer comme lu",
+      "markUnread": "Marquer comme non lu",
+      "markRead": "Marquer comme lu",
+      "empty": "Aucune notification pour l'instant",
+      "emptyUnread": "Aucune notification non lue",
+      "tabs": {
+        "all": "Tout",
+        "unread": "Non lu"
+      },
+      "bellAriaLabel": "Notifications",
+      "bellAriaLabelRunning": "Notifications, opérations en cours"
     },
     "source": "Source",
     "home": "Accueil",
@@ -628,6 +667,15 @@
       "nav_overview": "Vue d'ensemble",
       "nav_properties": "Propriétés",
       "non_dynamic": "non dynamique",
+      "format": "Format",
+      "max_items": "Nombre max. d'éléments",
+      "max_length": "Longueur max",
+      "maximum": "Maximum",
+      "min_items": "Min. d'éléments",
+      "min_length": "Longueur min",
+      "minimum": "Minimum",
+      "unit": "Unité",
+      "validation_regexp": "RegExp de validation",
       "possible_values": "Valeurs possibles",
       "sub_type": "Sous-type",
       "required": "Obligatoire"
@@ -975,7 +1023,6 @@
     "warning detected": "Avertissement(s) détecté(s).",
     "informative notice": "Note(s)",
     "open": "Afficher",
-    "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
     "admin": "Administrateur",
     "main_configuration": "Configuration Principale",
     "commit_id": "ID de commit",
@@ -1713,6 +1760,12 @@
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
+    "loop_iterations_notice": {
+      "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
+      "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",
+      "metrics": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs métriques ne sont donc pas affichées ici.",
+      "view_iterations": "Afficher les itérations"
+    },
     "cron": "Cron",
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",
@@ -2265,7 +2318,18 @@
           "issues": "{n} obsolète | {n} obsolètes",
           "failed": "{n} échec | {n} échecs",
           "last_run": "dernière exécution {ago}",
-          "unknown": "{n} non suivi"
+          "unknown": "{n} non suivi",
+          "tests_failed": "{n} avec des tests échoués"
+        },
+        "tests": {
+          "pass": "{count} test | {count} tests",
+          "warn": "{count} test · avertissement | {count} tests · avertissement",
+          "fail": "{failed}/{total} échecs",
+          "tooltip": {
+            "pass": "Le {count} test dbt a réussi | Tous les {count} tests dbt ont réussi",
+            "warn": "{count} test dbt réussi avec avertissements | {count} tests dbt réussis, certains avec avertissements",
+            "fail": "Le test dbt a échoué | {failed} des {total} tests dbt ont échoué"
+          }
         },
         "recent_runs": "Exécutions récentes",
         "group_by": "Grouper par",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
     },
     "blocks": "Blocs",
-    "split_horizontal": "Diviser horizontalement",
-    "split_vertical": "Diviser verticalement",
     "move_panel_to_bottom": "Déplacer le panneau vers le bas",
     "move_panel_to_side": "Déplacer le panneau sur le côté",
     "pwa": {

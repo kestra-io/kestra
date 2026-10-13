@@ -291,7 +291,46 @@
       "help": "Ajuda",
       "issue": "Problema",
       "demo": "Demonstração",
-      "star": "Nos avalie com uma estrela"
+      "star": "Nos avalie com uma estrela",
+      "notifications": "Notificações"
+    },
+    "notifications": {
+      "heading": "Notificações",
+      "ongoing": "Em andamento",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Encerrando {count} execução | Encerrando {count} execuções",
+          "EXECUTION_PAUSE": "Pausando {count} execução | Pausando {count} execuções",
+          "EXECUTION_RESUME": "Retomando {count} execução | Retomando {count} execuções",
+          "EXECUTION_RESTART": "Reiniciando {count} execução | Reiniciando {count} execuções",
+          "EXECUTION_REPLAY": "Repetindo {count} execução | Repetindo {count} execuções",
+          "EXECUTION_FORCE_RUN": "Forçando {count} execução | Forçando {count} execuções",
+          "EXECUTION_UNQUEUE": "Desenfileirando {count} execução | Desenfileirando {count} execuções",
+          "EXECUTION_CHANGE_STATUS": "Alterando o status de {count} execução | Alterando o status de {count} execuções",
+          "EXECUTION_SET_LABELS": "Definindo labels em {count} execução | Definindo labels em {count} execuções",
+          "TRIGGER_UNLOCK": "Desbloqueando {count} trigger | Desbloqueando {count} triggers",
+          "TRIGGER_DELETE": "Excluindo {count} trigger | Excluindo {count} triggers",
+          "TRIGGER_DISABLE": "Desativando {count} trigger | Desativando {count} triggers",
+          "TRIGGER_ENABLE": "Ativando {count} trigger | Ativando {count} triggers",
+          "BACKFILL_PAUSE": "Pausando {count} backfill | Pausando {count} backfills",
+          "BACKFILL_RESUME": "Retomando {count} backfill | Retomando {count} backfills",
+          "BACKFILL_DELETE": "Excluindo {count} backfill | Excluindo {count} backfills"
+        },
+        "processed": "{count} processadas",
+        "rejected": "{count} rejeitadas",
+        "elapsed": "em andamento há {duration}"
+      },
+      "markAllRead": "Marcar tudo como lido",
+      "markUnread": "Marcar como não lida",
+      "markRead": "Marcar como lido",
+      "empty": "Nenhuma notificação ainda",
+      "emptyUnread": "Nenhuma notificação não lida",
+      "tabs": {
+        "all": "Todos",
+        "unread": "Não lido"
+      },
+      "bellAriaLabel": "Notificações",
+      "bellAriaLabelRunning": "Notificações, operações em andamento"
     },
     "source": "Fonte",
     "home": "Início",
@@ -628,6 +667,15 @@
       "nav_overview": "Visão geral",
       "nav_properties": "Propriedades",
       "non_dynamic": "não dinâmico",
+      "format": "Formato",
+      "max_items": "Máximo de itens",
+      "max_length": "Comprimento máximo",
+      "maximum": "Máximo",
+      "min_items": "Mín. de itens",
+      "min_length": "Comprimento mín.",
+      "minimum": "Mínimo",
+      "unit": "Unidade",
+      "validation_regexp": "RegExp de Validação",
       "possible_values": "Valores possíveis",
       "sub_type": "Subtipo",
       "required": "Obrigatório"
@@ -975,7 +1023,6 @@
     "warning detected": "Aviso(s) detectado(s).",
     "informative notice": "Nota(s)",
     "open": "Abrir",
-    "dependency task": "Task {taskId} é uma dependência de outra task",
     "admin": "Administração",
     "main_configuration": "Configuração Principal",
     "commit_id": "ID do commit",
@@ -1713,6 +1760,12 @@
     "item": "item",
     "items": "itens",
     "iterations": "Iterações",
+    "loop_iterations_notice": {
+      "logs": "As iterações de Loop são executadas como sub-execuções separadas, então seus logs não são exibidos aqui.",
+      "outputs": "As iterações de Loop são executadas como sub-execuções separadas, então seus outputs não são exibidos aqui.",
+      "metrics": "As iterações de Loop são executadas como sub-execuções separadas, portanto, suas métricas não são exibidas aqui.",
+      "view_iterations": "Ver iterações"
+    },
     "cron": "Cron",
     "execution_started": "A execução foi iniciada!",
     "execution_failed": "Execução falhou!",
@@ -2265,7 +2318,18 @@
           "issues": "{n} obsoleto",
           "failed": "{n} falhou",
           "last_run": "última execução {ago}",
-          "unknown": "{n} não rastreado"
+          "unknown": "{n} não rastreado",
+          "tests_failed": "{n} com testes falhando"
+        },
+        "tests": {
+          "pass": "{count} teste | {count} testes",
+          "warn": "{count} teste · aviso | {count} testes · aviso",
+          "fail": "{failed}/{total} falhou",
+          "tooltip": {
+            "pass": "O {count} teste dbt foi aprovado | Todos os {count} testes dbt foram aprovados",
+            "warn": "{count} teste dbt aprovado com avisos | {count} testes dbt aprovados, alguns com avisos",
+            "fail": "O teste dbt falhou | {failed} de {total} testes dbt falharam"
+          }
         },
         "recent_runs": "Execuções recentes",
         "group_by": "Agrupar por",
@@ -2713,8 +2777,6 @@
       "open_mode_hint": "As Tasks abrem em um modal por padrão. Você pode tornar as abas o padrão em {settings}."
     },
     "blocks": "Blocos",
-    "split_horizontal": "Dividir horizontalmente",
-    "split_vertical": "Dividir verticalmente",
     "move_panel_to_bottom": "Mover painel para baixo",
     "move_panel_to_side": "Mover painel para o lado",
     "pwa": {

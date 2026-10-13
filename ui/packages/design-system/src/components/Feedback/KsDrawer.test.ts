@@ -1,0 +1,69 @@
+import {describe, test, expect, vi} from "vitest"
+import {mount, flushPromises} from "@vue/test-utils"
+import {ElDrawer, ElMessageBox} from "element-plus"
+import KestraDesignSystem from "../../index"
+import KsDrawer from "./KsDrawer.vue"
+
+const globalConfig = {plugins: [KestraDesignSystem]}
+
+describe("KsDrawer", () => {
+    test("dirty asks for confirmation before an accidental close", () => {
+        const confirm = vi.spyOn(ElMessageBox, "confirm").mockReturnValue(new Promise(() => {}))
+        const wrapper = mount(KsDrawer, {props: {modelValue: true, dirty: true}, global: globalConfig})
+        const done = vi.fn()
+
+        wrapper.findComponent(ElDrawer).props("beforeClose")(done)
+
+        expect(confirm).toHaveBeenCalledTimes(1)
+        expect(done).not.toHaveBeenCalled()
+        confirm.mockRestore()
+    })
+
+    test("renders when visible", () => {
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true},
+            slots: {default: "<p>Drawer content</p>"},
+            global: globalConfig,
+        })
+        expect(wrapper).toBeTruthy()
+    })
+
+    test("emits update:modelValue event", async () => {
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true},
+            global: globalConfig,
+        })
+        wrapper.vm.$emit("update:modelValue", false)
+        expect(wrapper.emitted("update:modelValue")).toBeTruthy()
+    })
+
+    test("forwards beforeClose to the underlying drawer", () => {
+        const beforeClose = vi.fn()
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true, beforeClose},
+            global: globalConfig,
+        })
+        const done = vi.fn()
+        wrapper.findComponent(ElDrawer).props("beforeClose")(done)
+        expect(beforeClose).toHaveBeenCalledWith(done)
+    })
+
+    test("reflects full-screen state in the toggle icon when resizable", async () => {
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true, resizable: true, title: "Diff"},
+            attachTo: document.body,
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        const expandIcon = document.querySelector(".kel-drawer__header .arrow-expand-icon")
+        expect(expandIcon).toBeTruthy()
+
+        const toggle = expandIcon!.closest("button") as HTMLElement
+        toggle.click()
+        await flushPromises()
+
+        expect(document.querySelector(".kel-drawer__header .arrow-collapse-icon")).toBeTruthy()
+        wrapper.unmount()
+    })
+})

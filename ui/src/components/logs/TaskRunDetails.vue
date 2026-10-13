@@ -1,6 +1,6 @@
 <template>
     <DynamicScroller
-        v-if="followedExecution && currentTaskRuns.length > 0"
+        v-if="followedExecution && (currentTaskRuns.length > 0 || executionLogs.length > 0)"
         ref="taskRunScroller"
         :items="currentTaskRuns"
         :minItemSize="50"
@@ -14,6 +14,28 @@
         @update="emit('scroller-update')"
         @resize="emit('scroller-update')"
     >
+        <template #before>
+            <KsCard
+                v-if="executionLogs.length > 0"
+                class="attempt-wrapper"
+                shadow="never"
+                data-test="execution-logs"
+            >
+                <LogLine
+                    v-for="item in executionLogs"
+                    :key="item.index"
+                    class="line"
+                    :cursor="logCursor === `${EXECUTION_LOGS_INDEX}/${item.index}`"
+                    :class="{
+                        ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level,
+                        'opacity-40': levelToHighlight && levelToHighlight !== item.level,
+                    }"
+                    :level="level"
+                    :log="item"
+                    :excludeMetas="excludeMetas"
+                />
+            </KsCard>
+        </template>
         <template
             #default="{
                 item: currentTaskRun,
@@ -271,6 +293,7 @@
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
                         :executionId="followedExecution.id"
                         :taskId="asTaskRun(currentTaskRun).taskId"
+                        :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
                 </div>
             </DynamicScrollerItem>
@@ -290,7 +313,7 @@
     import LogLine from "./LogLine.vue"
     import {State, levelToRequestParams, type LevelFilterValue, type Scheduled, groupBy, throttle, dayjs} from "@kestra-io/design-system"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import {logDisplayTypes} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys} from "../../utils/constants"
     import {DynamicScroller, DynamicScrollerItem, type DynamicScrollerExposed} from "vue-virtual-scroller"
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
@@ -298,19 +321,19 @@
     import TaskRunLine from "../executions/TaskRunLine.vue"
     import * as FlowUtils from "../../utils/flowUtils"
     import FilePreview from "../executions/FilePreviewDrawer.vue"
-    import {apiUrl} from "override/utils/route"
+    import {executionFileUrl} from "../../utils/executionUtils"
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import * as ExecutionsSDK from "@kestra-io/kestra-sdk/executions"
+    import {handledIf} from "../../utils/kestraHttp"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
 
     const {t} = useI18n()
-
-    const $http = useClient()
 
     type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
 
@@ -345,7 +368,7 @@
         return typeof el === "object" && el !== null && "expandAll" in el && "scrollToLog" in el
     }
 
-    type LoopOutputs = {iterationCount: number; terminatedIterations?: Record<string, number>}
+    type LoopOutputs = {iterationCount: number; terminatedIterations?: Record<string, number>; runningIterations?: number}
 
     function isLoopOutputs(outputs: Record<string, unknown> | null): outputs is LoopOutputs {
         return outputs !== null && typeof outputs.iterationCount === "number"
@@ -409,6 +432,7 @@
 
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
+    let disposed = false
     const rawLogs = ref<LogEntry[]>([])
     const timer = ref<ReturnType<typeof dayjs> | undefined>(undefined)
     const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -418,6 +442,7 @@
     // Execution `rawLogs` and any open logs SSE belong to, so both can be dropped on a change.
     const logsExecutionId = ref<string | undefined>(undefined)
     const logsCloseTimeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
+    const retryTimers = new Set<ReturnType<typeof setTimeout>>()
     const flow = ref<FlowForExecution | undefined>(undefined)
     const logsBuffer = ref<LogEntry[]>([])
     const shownSubflowsIds = ref<{subflowExecutionId: string; taskRunIndex: number}[]>([])
@@ -430,7 +455,7 @@
     const loopOutputsByTaskRunId = ref<Record<string, LoopOutputs>>({})
 
     // Template ref
-    const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller>("taskRunScroller")
+    const taskRunScroller = useTemplateRef<ComponentPublicInstance & LogsScroller & Pick<DynamicScrollerExposed, "scrollToPosition">>("taskRunScroller")
     const taskRunViewportHeight = ref(0)
     // Seed the cap before Teleport so virtual rows stay bounded until ResizeObserver measures the dialog.
     watch(() => props.fullHeight, (fullHeight) => {
@@ -581,7 +606,7 @@
 
     const autoExpandTaskRunStates = computed<string[]>(() => {
         switch (
-            localStorage.getItem("logDisplay") ||
+            localStorage.getItem(storageKeys.LOG_DISPLAY) ||
             logDisplayTypes.DEFAULT
         ) {
         case logDisplayTypes.ERROR:
@@ -593,6 +618,17 @@
         default:
             return State.arrayAllStates().map((s) => s.name)
         }
+    })
+
+    // Logs written by the executor itself (e.g. a concurrency-limit failure) carry no task run.
+    const EXECUTION_LOGS_INDEX = -1
+
+    const executionLogs = computed<LogLineItem[]>(() => {
+        if (props.taskRunId) return []
+        const search = props.filter.toLowerCase()
+        return filteredLogs.value
+            .filter((log) => !log.taskRunId && (search === "" || (log.message ?? "").toLowerCase().includes(search)))
+            .map((log, index) => ({...log, index}))
     })
 
     const currentTaskRunsLogIndicesByLevel = computed(() =>
@@ -616,7 +652,12 @@
                 }
                 return indicesByLevel
             },
-            {},
+            executionLogs.value.reduce((indicesByLevel: Record<string, string[]>, log) => {
+                if (log.level) {
+                    (indicesByLevel[log.level] ??= []).push(`${EXECUTION_LOGS_INDEX}/${log.index}`)
+                }
+                return indicesByLevel
+            }, {}),
         ),
     )
 
@@ -740,6 +781,8 @@
                 )
             }
 
+            if (disposed) return
+
             for (const taskRun of currentTaskRuns.value) {
                 if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
                     updateLoopStatus(taskRun.id)
@@ -801,8 +844,21 @@
     })
 
     onBeforeUnmount(() => {
+        disposed = true
+        throttledExecutionUpdate.value?.cancel()
         closeLogsSSE()
+        closeTargetExecutionSSE()
+        clearTimeout(timeout.value)
+        retryTimers.forEach((handle) => clearTimeout(handle))
     })
+
+    function retryShortly(callback: () => void) {
+        const handle = setTimeout(() => {
+            retryTimers.delete(handle)
+            callback()
+        }, 50)
+        retryTimers.add(handle)
+    }
 
     // Methods
     async function updateLoopStatus(taskRunId: string) {
@@ -822,7 +878,7 @@
     }
 
     function fileUrl(path: string): string {
-        return `${apiUrl()}/executions/${followedExecution.value?.id}/file?path=${path}`
+        return executionFileUrl(followedExecution.value?.id, path)
     }
 
     async function fetchAndStoreLogFileSize(path: string) {
@@ -830,16 +886,15 @@
             return
         }
 
-        const axiosResponse = await $http.get(
-            `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
-            {
-                validateStatus: (status: number) =>
-                    status === 200 || status === 404 || status === 422,
-            },
-        )
-        logFileSizeByPath.value[path] = Utils.humanFileSize(
-            axiosResponse.data.size,
-        )
+        const fileMetadatas = await ExecutionsSDK.fileMetadatasFromExecution({executionId: followedExecution.value?.id ?? "", path}).catch((e) => {
+            if (!handledIf(e, [404, 422])) throw e
+            return undefined
+        })
+        if(fileMetadatas){
+            logFileSizeByPath.value[path] = Utils.humanFileSize(
+                fileMetadatas.size,
+            )
+        }
     }
 
     function cancelLogsSSEClose() {
@@ -866,12 +921,13 @@
     }
 
     function autoExpandBasedOnSettings() {
+        if (disposed) return
         if (autoExpandTaskRunStates.value.length === 0) {
             return
         }
 
         if (followedExecution.value === undefined) {
-            setTimeout(() => autoExpandBasedOnSettings(), 50)
+            retryShortly(autoExpandBasedOnSettings)
             return
         }
         currentTaskRuns.value.forEach((taskRun) => {
@@ -934,6 +990,10 @@
         cancelLogsSSEClose()
         logsExecutionId.value = executionId
         executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse) => {
+            if (disposed) {
+                sse.close()
+                return
+            }
             logsSSE.value = sse
 
             logsSSE.value.onmessage = (event: MessageEvent<string>) => {
@@ -994,7 +1054,7 @@
 
     function expandAll() {
         if (!followedExecution.value) {
-            setTimeout(() => expandAll(), 50)
+            retryShortly(expandAll)
             return
         }
 
@@ -1019,7 +1079,7 @@
                 subflowTaskRunDetailsRefs.value,
             )
             if (subflowLogsElements.length === 0) {
-                setTimeout(() => expandSubflows(), 50)
+                retryShortly(expandSubflows)
             }
 
             subflowLogsElements.forEach((subflowLogs) =>
@@ -1182,6 +1242,10 @@
         const split = logId.split("/")
         const taskRunIndex = Number(split[0])
         const globalIndex = Number(split[1])
+        if (taskRunIndex === EXECUTION_LOGS_INDEX) {
+            taskRunScroller.value?.scrollToPosition(0)
+            return
+        }
         taskRunScroller.value?.scrollToItem(taskRunIndex)
 
         const taskRun = currentTaskRuns.value[taskRunIndex]

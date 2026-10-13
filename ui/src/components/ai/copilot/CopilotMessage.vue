@@ -26,7 +26,7 @@
 
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
         <div class="copilot-bubble copilot-bubble-assistant" data-test="copilot-assistant-text">
-            <KsMarkdown v-if="message.content" :content="message.content" />
+            <KsMarkdown v-if="message.content" :content="message.content" data-test="copilot-assistant-markdown" />
         </div>
     </div>
 

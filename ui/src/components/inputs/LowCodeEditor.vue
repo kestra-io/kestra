@@ -664,7 +664,6 @@
             flowGraph: FlowGraph;
             flowId?: string;
             namespace?: string;
-            execution?: Partial<Execution>;
             isReadOnly?: boolean;
             source?: string;
             isAllowedEdit?: boolean;
@@ -675,7 +674,6 @@
         {
             flowId: undefined,
             namespace: undefined,
-            execution: undefined,
             isReadOnly: false,
             source: "",
             isAllowedEdit: false,

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {filterHiddenLabels} from "../../../src/utils/labels"
+import {filterHiddenLabels} from "./labels"
 
 const labels = [
     {key: "internal.owner", value: "alice"},

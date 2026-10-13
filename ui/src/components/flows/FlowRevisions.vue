@@ -25,6 +25,7 @@
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
+    import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
     import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     const route = useRoute()
     const router = useRouter()
@@ -101,6 +102,7 @@
         try {
             const saved = await flowStore.saveFlow({flow: revisionSource})
             await flowStore.initYamlSource().catch(onRestoreError)
+            useUnsavedChangesStore().unsavedChange = false
             toast.saved(saved.id)
 
             const loaded = await flowStore.loadRevisions({namespace, id, store: false})

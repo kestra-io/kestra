@@ -1,7 +1,17 @@
 import {test, expect, describe} from "vitest"
 import * as VueFlowUtils from "./vueFlowUtils.ts"
-import {edgeTurnPosition, fanOutSplitPosition, type Cluster} from "./vueFlowUtils.ts"
-import {DAGRE_RANK_SEP, NODE_SIZES} from "./constants.ts"
+import {
+    edgeTurnPosition,
+    fanOutSplitPosition,
+    nodeColor,
+    computeClusterColor,
+    getEdgeColorToken,
+    getEdgeColor,
+    BranchType,
+    type Cluster,
+    type MinimalNode,
+} from "./vueFlowUtils.ts"
+import {CLUSTER_PREFIX, DAGRE_RANK_SEP, NODE_SIZES} from "./constants.ts"
 
 const graph = {
     nodes: [
@@ -1146,5 +1156,142 @@ describe("generateGraph collapsed cluster nested in an expanded one", () => {
         ))
 
         expect(elements.find((e) => e.id === "cluster_root.approval")!.data!.collaspsible).toBe(false)
+    })
+})
+
+describe("nodeColor", () => {
+    test("returns success for triggers root node and trigger nodes", () => {
+        expect(nodeColor({uid: "root.Triggers", type: "task"}, new Set())).toBe("success")
+        expect(nodeColor({uid: "root.cron", type: "io.kestra.core.models.hierarchies.GraphTrigger"}, new Set())).toBe("success")
+    })
+
+    test("returns flowable-task for a collapsed cluster and primary for a subflow task", () => {
+        expect(nodeColor({uid: "root.cluster", type: "collapsedcluster"}, new Set())).toBe("flowable-task")
+        expect(nodeColor({uid: "root.subflow", type: "io.kestra.core.models.hierarchies.SubflowGraphTask"}, new Set())).toBe("primary")
+    })
+
+    test("returns danger for error branch, warning for finally branch, and blue for collapsed", () => {
+        expect(nodeColor({uid: "root.err", type: "task", branchType: BranchType.ERROR}, new Set())).toBe("danger")
+        expect(nodeColor({uid: "root.fin", type: "task", branchType: BranchType.FINALLY}, new Set())).toBe("warning")
+        expect(nodeColor({uid: "root.col", type: "task"}, new Set(["root.col"]))).toBe("blue")
+        expect(nodeColor({uid: "root.normal", type: "task"}, new Set())).toBe("default")
+    })
+
+    test("pins branch order: earlier branch wins when a node matches multiple conditions", () => {
+        expect(nodeColor({uid: "root.Triggers", type: "task", branchType: BranchType.ERROR}, new Set())).toBe("success")
+        expect(nodeColor({uid: "root.cron", type: "io.kestra.core.models.hierarchies.GraphTrigger", branchType: BranchType.ERROR}, new Set())).toBe("success")
+        expect(nodeColor({uid: "root.col", type: "collapsedcluster"}, new Set(["root.col"]))).toBe("flowable-task")
+        expect(nodeColor({uid: "root.sub", type: "io.kestra.core.models.hierarchies.SubflowGraphTask", branchType: BranchType.ERROR}, new Set())).toBe("primary")
+        expect(nodeColor({uid: "root.err", type: "task", branchType: BranchType.ERROR}, new Set(["root.err"]))).toBe("danger")
+        expect(nodeColor({uid: "root.fin", type: "task", branchType: BranchType.FINALLY}, new Set(["root.fin"]))).toBe("warning")
+    })
+})
+
+describe("computeClusterColor", () => {
+    test("returns triggers for the triggers cluster", () => {
+        expect(computeClusterColor({
+            uid: CLUSTER_PREFIX + "root.Triggers",
+            type: "io.kestra.core.models.hierarchies.GraphCluster",
+            taskNode: null,
+        })).toBe("triggers")
+    })
+
+    test("returns subflow for a subflow cluster", () => {
+        expect(computeClusterColor({
+            uid: "cluster_root.subflow",
+            type: "io.kestra.core.models.hierarchies.SubflowGraphCluster",
+            taskNode: null,
+        })).toBe("subflow")
+    })
+
+    test("returns errors for an error branch cluster", () => {
+        expect(computeClusterColor({
+            uid: "cluster_root.errors",
+            type: "io.kestra.core.models.hierarchies.GraphCluster",
+            taskNode: null,
+            branchType: BranchType.ERROR,
+        })).toBe("errors")
+    })
+
+    test("returns flowable-task for standard clusters", () => {
+        expect(computeClusterColor({
+            uid: "cluster_root.parallel",
+            type: "io.kestra.core.models.hierarchies.GraphCluster",
+            taskNode: null,
+        })).toBe("flowable-task")
+    })
+
+    test("pins branch order: earlier branch wins when a cluster matches multiple conditions", () => {
+        expect(computeClusterColor({
+            uid: CLUSTER_PREFIX + "root.Triggers",
+            type: "io.kestra.core.models.hierarchies.SubflowGraphCluster",
+            taskNode: null,
+            branchType: BranchType.ERROR,
+        })).toBe("triggers")
+
+        expect(computeClusterColor({
+            uid: "cluster_root.subflow",
+            type: "io.kestra.core.models.hierarchies.SubflowGraphCluster",
+            taskNode: null,
+            branchType: BranchType.ERROR,
+        })).toBe("subflow")
+    })
+})
+
+describe("getEdgeColorToken", () => {
+    test("maps danger and warning to their css variables", () => {
+        expect(getEdgeColorToken("danger")).toBe("var(--ks-border-error)")
+        expect(getEdgeColorToken("warning")).toBe("var(--ks-status-warning)")
+    })
+
+    test("returns fallback token for null and unrecognized colors", () => {
+        expect(getEdgeColorToken(null)).toBe("var(--ks-topology-dash)")
+        expect(getEdgeColorToken("unrecognized")).toBe("var(--ks-topology-dash)")
+    })
+})
+
+describe("getEdgeColor", () => {
+    test("picks danger when source or target is an error branch", () => {
+        const edge = {source: "root.a", target: "root.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.a": {uid: "root.a", type: "task"},
+            "root.b": {uid: "root.b", type: "task", branchType: BranchType.ERROR},
+        }
+        expect(getEdgeColor(edge, nodes, {})).toBe("danger")
+    })
+
+    test("picks warning when source or target is a finally branch", () => {
+        const edge = {source: "root.a", target: "root.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.a": {uid: "root.a", type: "task", branchType: BranchType.FINALLY},
+            "root.b": {uid: "root.b", type: "task"},
+        }
+        expect(getEdgeColor(edge, nodes, {})).toBe("warning")
+    })
+
+    test("returns null for standard edges", () => {
+        const edge = {source: "root.a", target: "root.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.a": {uid: "root.a", type: "task"},
+            "root.b": {uid: "root.b", type: "task"},
+        }
+        expect(getEdgeColor(edge, nodes, {})).toBeNull()
+    })
+
+    test("inherits branch color from parent cluster", () => {
+        const edge = {source: "root.parent.a", target: "root.parent.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.parent.a": {uid: "root.parent.a", type: "task"},
+            "root.parent.b": {uid: "root.parent.b", type: "task"},
+        }
+        const clusters: Record<string, Cluster> = {
+            "root.parent": {
+                uid: "cluster_root.parent",
+                type: "io.kestra.core.models.hierarchies.GraphCluster",
+                taskNode: null,
+                branchType: BranchType.ERROR,
+            },
+        }
+        expect(getEdgeColor(edge, nodes, clusters)).toBe("danger")
     })
 })

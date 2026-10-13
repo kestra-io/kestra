@@ -76,8 +76,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final List<QueueSubscriber<?>> queueSubscribers = new CopyOnWriteArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
-    private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
-    private final java.util.concurrent.ExecutorService executionExecutorService;
+    private final java.util.concurrent.ExecutorService messageExecutorService;
     private final int numberOfThreads;
 
     private Timer slaMonitorLoopTimer;
@@ -124,13 +123,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.multipleConditionStateStore = multipleConditionStateStore;
         this.metricRegistry = metricRegistry;
 
-        // By default, we start available processors count threads with a minimum of 4 by executor service
-        // for the worker task result queue and the execution queue.
+        // By default, we start available processors count threads with a minimum of 8.
+        // This executor is shared for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
         int threadCount = executorConfiguration.threadCount() != null ? executorConfiguration.threadCount() : 0;
-        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, kestraContext.getAllocatedCpuCores());
-        this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
-        this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(8, kestraContext.getAllocatedCpuCores() * 2);
+        this.messageExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-message-executor");
 
         setState(ServiceState.CREATED);
     }
@@ -194,7 +192,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         .map(eithers -> CompletableFuture.runAsync(() ->
                         {
                             eithers.forEach(this::executionEventQueue);
-                        }, executionExecutorService))
+                        }, messageExecutorService))
                         .toList();
 
                     // directly process deserialization issues as most of the time there will be none
@@ -219,7 +217,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 .map(eithers -> CompletableFuture.runAsync(() ->
                 {
                     eithers.forEach(this::workerTaskResultQueue);
-                }, workerTaskResultExecutorService))
+                }, messageExecutorService))
                 .toList();
 
             // directly process deserialization issues as most of the time there will be none

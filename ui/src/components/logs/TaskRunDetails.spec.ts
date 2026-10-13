@@ -81,6 +81,68 @@ describe("TaskRunDetails log loading across executions", () => {
         })
     })
 
+    it("shouldCloseChildExecutionSubscriptionWhenItsLogViewerIsUnmounted", async () => {
+        const wrapper = mountDetails({targetExecutionId: "child-a"})
+        await flushPromises()
+        expect(store.executions.subscribeToExecution).toHaveBeenCalledWith("child-a", expect.any(Object))
+        const subscription = store.executions.subscribeToExecution.mock.results[0].value
+
+        wrapper.unmount()
+
+        expect(subscription.close).toHaveBeenCalledOnce()
+        vi.runOnlyPendingTimers()
+        expect(vi.getTimerCount()).toBe(0)
+    })
+
+    it("shouldNotFollowChildLogsWhenItsFlowLoadsAfterTheViewerIsUnmounted", async () => {
+        let resolveFlow!: (flow: {id: string}) => void
+        store.executions.loadFlowForExecution.mockReturnValue(new Promise(resolve => {resolveFlow = resolve}))
+        const wrapper = mountDetails({targetExecutionId: "child-a"})
+        await wrapper.setProps({targetFlow: undefined})
+        store.executions.subscribeToExecution.mock.calls[0][1].onExecution(execution("child-a", "RUNNING"))
+        await flushPromises()
+
+        wrapper.unmount()
+        resolveFlow({id: "simple-dag"})
+        await flushPromises()
+
+        expect(store.executions.followLogs).not.toHaveBeenCalled()
+    })
+
+    it("shouldCloseALogStreamThatOpensAfterTheViewerIsUnmounted", async () => {
+        const stream = {close: vi.fn(), onmessage: null, onerror: null}
+        let resolveStream!: (value: typeof stream) => void
+        store.executions.followLogs.mockReturnValue(new Promise(resolve => {resolveStream = resolve}))
+        store.executions.execution = execution("child-a", "RUNNING")
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        wrapper.unmount()
+        resolveStream(stream)
+        await flushPromises()
+
+        expect(stream.close).toHaveBeenCalledOnce()
+    })
+
+    it("shouldLoadChildLogsWithoutParentTaskFiltersWhenFollowingASubflowExecution", async () => {
+        store.executions.execution = execution("parent", "SUCCESS")
+        const wrapper = mountDetails({targetExecutionId: "child-a"})
+        await wrapper.setProps({targetFlow: undefined})
+        const callbacks = store.executions.subscribeToExecution.mock.calls[0][1]
+
+        callbacks.onExecution(execution("child-a", "SUCCESS"))
+        await flushPromises()
+
+        expect(store.executions.loadFlowForExecution).toHaveBeenCalledWith(expect.objectContaining({store: false, flowId: "simple-dag"}))
+        expect(store.executions.loadLogs).toHaveBeenCalledWith({
+            executionId: "child-a",
+            params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO", "filters[kind][IN]": "PLAYGROUND"},
+        })
+        const vm = wrapper.vm as unknown as {filteredLogs: unknown[]}
+        expect(vm.filteredLogs).toEqual(logsFor("child-a"))
+        wrapper.unmount()
+    })
+
     /**
      * Regression test for kestra-io/kestra#14018: a playground re-run lands while the previous
      * execution's log stream is still inside its two-second grace period. The `!logsSSE` guards

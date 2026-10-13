@@ -8,8 +8,10 @@ description: |
 
   The webhook key is its only authentication, so the pull request, its author and its linked issues are read from GitHub by number instead of being taken from the payload.
 
+  Limits: the message is sent again if GitHub delivers the same event twice, which it only does when someone redelivers it by hand.
+
   ### Setup
-  1. Create the secrets `GITHUB_TOKEN`, `GITHUB_PR_WEBHOOK_KEY` and `MAINTAINERS_SLACK_WEBHOOK_URL` (a Slack incoming webhook). The token needs read on Pull requests and Issues in every repository of the organization, and its owner needs push access to them: GitHub requires that to read a user's permission.
+  1. Install the plugin `io.kestra.plugin:plugin-notifications`, which provides the Slack task, and create the secrets `GITHUB_TOKEN`, `GITHUB_PR_WEBHOOK_KEY` and `MAINTAINERS_SLACK_WEBHOOK_URL` (a Slack incoming webhook). The token needs read on Pull requests and Issues in every repository of the organization, and its owner needs push access to them: GitHub requires that to read a user's permission.
   2. Add an organization webhook (Organization settings, Webhooks) to `https://<kestra-host>/api/v1/<tenant>/executions/webhook/community.github/notify-unassigned-pull-request/<GITHUB_PR_WEBHOOK_KEY>` with the content type `application/json`, subscribed to the `Pull requests` event only. It delivers the pull requests of every repository, and `repositoryPattern` decides which ones are handled.
 
 variables:
@@ -65,7 +67,6 @@ tasks:
       name: "{{ trigger.body.repository.full_name | substringAfter('/') }}"
       number: "{{ trigger.body.pull_request.number }}"
 
-  # The token is set per request, never as a default, so that the Slack call cannot carry it.
   - id: get_pull_request
     type: io.kestra.plugin.core.http.Request
     method: POST
@@ -104,14 +105,15 @@ tasks:
       # Bots and deleted accounts are not contributors to follow up on.
       isUser: >-
         {{ (outputs.get_pull_request.body | jq('.data.repository.pullRequest.author.__typename') | first) == 'User' }}
+      # GitHub returns null for a linked issue that the token cannot see: it still counts as a link, but cannot be checked.
       linkedCount: >-
         {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.closingIssuesReferences.nodes | length') | first }}
       # The linked issues the author is not assigned to, as Slack links with who is.
       notAssigned: >-
-        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest | .author.login as $author | [.closingIssuesReferences.nodes[] | select(([.assignees.nodes[].login] | index($author)) == null) | "<" + .url + "|#" + (.number | tostring) + ">" + (if (.assignees.nodes | length) == 0 then " (nobody is assigned)" else " (assigned to " + ([.assignees.nodes[].login] | join(", ")) + ")" end)] | join(", ")') | first }}
-      # The title is the author's: Slack reads "<" and ">" as links and mentions such as <!channel>.
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest | .author.login as $author | [.closingIssuesReferences.nodes[] | select(. != null) | select(([.assignees.nodes[].login] | index($author)) == null) | "<" + .url + "|#" + (.number | tostring) + ">" + (if (.assignees.nodes | length) == 0 then " (nobody is assigned)" else " (assigned to " + ([.assignees.nodes[].login] | join(", ")) + ")" end)] | join(", ")') | first }}
+      # The title is the author's: Slack reads "<" and ">" as links and mentions such as <!channel>. It is shortened first so that no escape is cut in half.
       title: >-
-        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.title') | first | replace({'<': '&lt;', '>': '&gt;'}) | abbreviate(120) }}
+        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.title') | first | abbreviate(120) | regexReplace('&', '&amp;') | regexReplace('<', '&lt;') | regexReplace('>', '&gt;') }}
       url: >-
         {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.url') | first }}
 
@@ -133,18 +135,15 @@ tasks:
           {{ not (vars.maintainerPermissions contains (outputs.get_author_permission.body | jq('.permission') | first))
              and (outputs.facts.values.linkedCount | number == 0 or outputs.facts.values.notAssigned != '') }}
         then:
+          # Not an HTTP request: the output of one would echo the webhook URL, which is a secret, into the stored execution.
           - id: notify_maintainers
-            type: io.kestra.plugin.core.http.Request
-            method: POST
-            uri: "{{ secret('MAINTAINERS_SLACK_WEBHOOK_URL') }}"
-            contentType: application/json
+            type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+            url: "{{ secret('MAINTAINERS_SLACK_WEBHOOK_URL') }}"
             timeout: PT30S
             retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
-            body: >-
-              {{ {'text':
-                ':eyes: <' ~ outputs.facts.values.url ~ '|' ~ outputs.event.values.repository ~ '#' ~ outputs.event.values.number ~ ' ' ~ outputs.facts.values.title ~ '> by `' ~ outputs.facts.values.author ~ '` (' ~ outputs.facts.values.association ~ ') is not backed by an assignment. '
-                ~ (outputs.facts.values.linkedCount | number == 0 ? 'It does not link any issue.' : 'Not assigned to the author: ' ~ outputs.facts.values.notAssigned ~ '.')
-              } }}
+            messageText: >-
+              {{ ':eyes: <' ~ outputs.facts.values.url ~ '|' ~ outputs.event.values.repository ~ '#' ~ outputs.event.values.number ~ ' ' ~ outputs.facts.values.title ~ '> by `' ~ outputs.facts.values.author ~ '` (' ~ outputs.facts.values.association ~ ') is not backed by an assignment. '
+                ~ (outputs.facts.values.linkedCount | number == 0 ? 'It does not link any issue.' : 'Not assigned to the author: ' ~ outputs.facts.values.notAssigned ~ '.') }}
         else:
           - id: no_attention_needed
             type: io.kestra.plugin.core.log.Log

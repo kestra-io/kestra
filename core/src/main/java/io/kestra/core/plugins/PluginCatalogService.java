@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Version;
 
@@ -81,6 +82,7 @@ public class PluginCatalogService {
      *
      * @param artifacts The list of artifacts to resolve.
      * @return The list of results.
+     * @throws KestraRuntimeException if the compatible versions cannot be retrieved from the Kestra API.
      */
     public List<PluginResolutionResult> resolveVersions(List<PluginArtifact> artifacts) {
         if (ListUtils.isEmpty(artifacts)) {
@@ -227,7 +229,7 @@ public class PluginCatalogService {
             "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion
         );
         if (oss) {
-            request.getParameters().add("license", "OPENSOURCE");
+            request.getParameters().add("license", "OPEN_SOURCE");
         }
         try {
             return httpClient
@@ -235,8 +237,11 @@ public class PluginCatalogService {
                 .exchange(request, Argument.listOf(ApiPluginArtifact.class))
                 .body();
         } catch (Exception e) {
-            log.debug("Failed to retrieve available plugins from Kestra API. Cause: ", e);
-            return List.of();
+            // Failing open would let callers fall back to Maven's latest version, which may target another Kestra major.
+            throw new KestraRuntimeException(
+                "Failed to retrieve the plugin versions compatible with Kestra %s from the Kestra API. Cause: %s".formatted(currentStableVersion, e.getMessage()),
+                e
+            );
         }
     }
 

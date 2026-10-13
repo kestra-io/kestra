@@ -7,16 +7,22 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.exceptions.KestraRuntimeException;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.exceptions.HttpClientException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -110,5 +116,40 @@ class PluginCatalogServiceTest {
 
         // Then: only one HTTP call was made, the second get() served the (empty) cache without hammering the API
         verify(blockingClient, times(1)).exchange(any(), any(Argument.class));
+    }
+
+    @Test
+    void shouldThrowWhenCompatibleVersionsCannotBeRetrieved() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenThrow(new HttpClientException("Connection refused"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false);
+        PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "LATEST", null);
+
+        // When / Then
+        assertThatThrownBy(() -> service.resolveVersions(List.of(artifact)))
+            .isInstanceOf(KestraRuntimeException.class)
+            .hasMessageContaining("Kestra 1.0.0");
+    }
+
+    @Test
+    void shouldFilterCompatibleVersionsOnOpenSourceLicenseWhenCommunityOnly() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class))).thenReturn(HttpResponse.ok(List.of()));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, true);
+        PluginArtifact artifact = new PluginArtifact("io.kestra.plugin", "plugin-serdes", "jar", null, "LATEST", null);
+
+        // When
+        service.resolveVersions(List.of(artifact));
+
+        // Then
+        ArgumentCaptor<HttpRequest<?>> request = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(blockingClient, atLeastOnce()).exchange(request.capture(), any(Argument.class));
+        assertThat(request.getAllValues())
+            .filteredOn(it -> it.getPath().contains("core-compatibility"))
+            .singleElement()
+            .satisfies(it -> assertThat(it.getParameters().get("license")).isEqualTo("OPEN_SOURCE"));
     }
 }

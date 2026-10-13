@@ -33,7 +33,7 @@
     "play": "vite",
     "prepublishOnly": "npm run build",
     "storybook": "storybook dev -p 6007 --no-open",
-    "test": "npm run test:lint & npm run check:types & npm run test:unit & npm run test:storybook & wait",
+    "test": "npm run test:lint && npm run check:types && npm run test:unit && npm run test:storybook",
     "build:watch": "vite build --watch",
     "build-storybook": "storybook build",
     "check:types": "vue-tsc --noEmit",

@@ -291,7 +291,46 @@
       "help": "Ayuda",
       "issue": "Problema",
       "demo": "Demo",
-      "star": "Danos una estrella"
+      "star": "Danos una estrella",
+      "notifications": "Notificaciones"
+    },
+    "notifications": {
+      "heading": "Notificaciones",
+      "ongoing": "En curso",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Terminando {count} ejecución | Terminando {count} ejecuciones",
+          "EXECUTION_PAUSE": "Pausando {count} ejecución | Pausando {count} ejecuciones",
+          "EXECUTION_RESUME": "Reanudando {count} ejecución | Reanudando {count} ejecuciones",
+          "EXECUTION_RESTART": "Reiniciando {count} ejecución | Reiniciando {count} ejecuciones",
+          "EXECUTION_REPLAY": "Repitiendo {count} ejecución | Repitiendo {count} ejecuciones",
+          "EXECUTION_FORCE_RUN": "Forzando {count} ejecución | Forzando {count} ejecuciones",
+          "EXECUTION_UNQUEUE": "Desencolando {count} ejecución | Desencolando {count} ejecuciones",
+          "EXECUTION_CHANGE_STATUS": "Cambiando el estado de {count} ejecución | Cambiando el estado de {count} ejecuciones",
+          "EXECUTION_SET_LABELS": "Aplicando labels a {count} ejecución | Aplicando labels a {count} ejecuciones",
+          "TRIGGER_UNLOCK": "Desbloqueando {count} trigger | Desbloqueando {count} triggers",
+          "TRIGGER_DELETE": "Eliminando {count} trigger | Eliminando {count} triggers",
+          "TRIGGER_DISABLE": "Deshabilitando {count} trigger | Deshabilitando {count} triggers",
+          "TRIGGER_ENABLE": "Habilitando {count} trigger | Habilitando {count} triggers",
+          "BACKFILL_PAUSE": "Pausando {count} backfill | Pausando {count} backfills",
+          "BACKFILL_RESUME": "Reanudando {count} backfill | Reanudando {count} backfills",
+          "BACKFILL_DELETE": "Eliminando {count} backfill | Eliminando {count} backfills"
+        },
+        "processed": "{count} procesadas",
+        "rejected": "{count} rechazadas",
+        "elapsed": "en curso desde hace {duration}"
+      },
+      "markAllRead": "Marcar todo como leído",
+      "markUnread": "Marcar como no leído",
+      "markRead": "Marcar como leído",
+      "empty": "No hay notificaciones aún",
+      "emptyUnread": "No hay notificaciones sin leer",
+      "tabs": {
+        "all": "Todo",
+        "unread": "No leído"
+      },
+      "bellAriaLabel": "Notificaciones",
+      "bellAriaLabelRunning": "Notificaciones, operaciones en curso"
     },
     "source": "Fuente",
     "home": "Inicio",

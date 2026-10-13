@@ -291,7 +291,46 @@
       "help": "Pomoc",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Daj nam gwiazdkę"
+      "star": "Daj nam gwiazdkę",
+      "notifications": "Powiadomienia"
+    },
+    "notifications": {
+      "heading": "Powiadomienia",
+      "ongoing": "W toku",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Zabijanie wykonań: {count}",
+          "EXECUTION_PAUSE": "Wstrzymywanie wykonań: {count}",
+          "EXECUTION_RESUME": "Wznawianie wykonań: {count}",
+          "EXECUTION_RESTART": "Ponowne uruchamianie wykonań: {count}",
+          "EXECUTION_REPLAY": "Powtarzanie wykonań: {count}",
+          "EXECUTION_FORCE_RUN": "Wymuszanie uruchomienia wykonań: {count}",
+          "EXECUTION_UNQUEUE": "Usuwanie wykonań z kolejki: {count}",
+          "EXECUTION_CHANGE_STATUS": "Zmiana statusu wykonań: {count}",
+          "EXECUTION_SET_LABELS": "Ustawianie labels dla wykonań: {count}",
+          "TRIGGER_UNLOCK": "Odblokowywanie Triggerów: {count}",
+          "TRIGGER_DELETE": "Usuwanie Triggerów: {count}",
+          "TRIGGER_DISABLE": "Wyłączanie Triggerów: {count}",
+          "TRIGGER_ENABLE": "Włączanie Triggerów: {count}",
+          "BACKFILL_PAUSE": "Wstrzymywanie Backfilli: {count}",
+          "BACKFILL_RESUME": "Wznawianie Backfilli: {count}",
+          "BACKFILL_DELETE": "Usuwanie Backfilli: {count}"
+        },
+        "processed": "Przetworzone: {count}",
+        "rejected": "Odrzucone: {count}",
+        "elapsed": "trwa od {duration}"
+      },
+      "markAllRead": "Oznacz wszystkie jako przeczytane",
+      "markUnread": "Oznacz jako nieprzeczytane",
+      "markRead": "Oznacz jako przeczytane",
+      "empty": "Brak powiadomień",
+      "emptyUnread": "Brak nieprzeczytanych powiadomień",
+      "tabs": {
+        "all": "Wszystkie",
+        "unread": "Nieprzeczytane"
+      },
+      "bellAriaLabel": "Powiadomienia",
+      "bellAriaLabelRunning": "Powiadomienia, operacje w toku"
     },
     "source": "Źródło",
     "home": "Strona główna",

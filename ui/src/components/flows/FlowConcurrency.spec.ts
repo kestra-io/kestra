@@ -67,7 +67,6 @@ describe("FlowConcurrency", () => {
         // instance-owner-only /search, which 403s for any other user on a QUEUED execution.
         expect(getMock).toHaveBeenCalledWith(
             "/api/v1/main/concurrency-limit/io.kestra.tests/flow",
-            {ignoreNotFound: true, showMessageOnError: false},
         )
     })
 

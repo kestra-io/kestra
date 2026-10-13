@@ -28,6 +28,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
@@ -69,6 +70,7 @@ import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.worker.models.WorkerTriggerResult;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.worker.WorkerAgent;
 import io.kestra.worker.WorkerConfig;
@@ -322,6 +324,55 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         // Then
         assertThat(resubmitted).doesNotContain(workerTask.uid());
+    }
+
+    @Test
+    void shouldResubmitWorkingDirectoryWithTheTaskRunsOfItsSubtasks() throws Exception {
+        // Given: the worker running a WorkingDirectory died while its subtask was running
+        Log subtask = Log.builder().id("log").type(Log.class.getName()).message("test").build();
+        WorkingDirectory task = WorkingDirectory.builder().id("working-directory").type(WorkingDirectory.class.getName()).tasks(List.of(subtask)).build();
+        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of()).toBuilder().tenantId(TenantService.MAIN_TENANT).build();
+        TaskRun taskRun = TaskRun.of(execution, ResolvedTask.of(task)).withState(State.Type.RUNNING);
+        TaskRun subtaskRun = TaskRun.of(execution, ResolvedTask.of(subtask)).toBuilder()
+            .parentTaskRunId(taskRun.getId())
+            .attempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()))
+            .build()
+            .withState(State.Type.RUNNING);
+        executionRepository.save(execution.toBuilder().taskRunList(List.of(taskRun, subtaskRun)).build().withState(State.Type.RUNNING));
+
+        ServiceInstance deadWorker = saveWorkerInstance(Service.ServiceState.DISCONNECTED);
+        WorkerTask workerTask = WorkerTask.builder()
+            .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of("key", "value"))))
+            .task(task)
+            .taskRun(taskRun)
+            .build();
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTaskRunning.of(workerTask, new WorkerInstance(deadWorker.uid(), null)));
+
+        AtomicReference<WorkerTask> resubmitted = new AtomicReference<>();
+        workerJobEventQueue.addListener(event ->
+        {
+            if (event.job() instanceof WorkerTask job && job.uid().equals(workerTask.uid())) {
+                resubmitted.set(job);
+            }
+        });
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllWorkersForUncleanShutdown(Instant.now().plus(Duration.ofMinutes(1)));
+                return resubmitted.get() != null;
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then: the subtask keeps its task run, and the attempt of the lost run is marked as resubmitted
+        assertThat(resubmitted.get().getSubtaskRuns()).singleElement().satisfies(resumed ->
+        {
+            assertThat(resumed.getId()).isEqualTo(subtaskRun.getId());
+            assertThat(resumed.getAttempts()).extracting(attempt -> attempt.getState().getCurrent()).containsExactly(State.Type.RESUBMITTED);
+        });
     }
 
     @Test

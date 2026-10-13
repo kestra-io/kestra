@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.kestra.core.models.executions.ExecutionKind;
@@ -34,6 +36,14 @@ public class WorkerTask extends WorkerJob {
 
     @Nullable
     private ExecutionKind executionKind;
+
+    /**
+     * The task runs that the subtasks of a WorkingDirectory got in its previous runs, so that running them again
+     * adds an attempt to them instead of creating other task runs.
+     */
+    @Nullable
+    @With
+    private List<TaskRun> subtaskRuns;
 
     /**
      * {@inheritDoc}

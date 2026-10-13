@@ -29,6 +29,7 @@ import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.Logs;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Context;
@@ -510,6 +511,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
                     .task(workerTaskRunning.getTask())
                     .data(workerTaskRunning.getData())
+                    .subtaskRuns(subtaskRunsToResume(workerTaskRunning))
                     .build();
                 workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
                 // The lease is released only once the job is back on the queue: left in place it is
@@ -529,6 +531,19 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 );
             }
         }
+    }
+
+    /**
+     * The task runs of the subtasks of a resubmitted WorkingDirectory, read from its execution as the running entry
+     * only holds the WorkingDirectory itself.
+     */
+    private List<TaskRun> subtaskRunsToResume(WorkerTaskRunning workerTaskRunning) {
+        if (!(workerTaskRunning.getTask() instanceof WorkingDirectory)) {
+            return null;
+        }
+
+        Execution execution = executionStateStore.findByIdWithoutAcl(workerTaskRunning.getTaskRun().getExecutionId());
+        return execution == null ? null : WorkingDirectory.subtaskRunsToResume(execution, workerTaskRunning.getTaskRun());
     }
 
     /**

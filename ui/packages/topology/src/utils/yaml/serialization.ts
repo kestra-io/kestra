@@ -1,9 +1,5 @@
 // Plain JavaScript objects to and from YAML text, via js-yaml.
 
-import {
-    YAMLMap,
-    isPair,
-} from "yaml"
 import {dump, load} from "js-yaml"
 
 export function parse<T = unknown>(item?: string, throwIfError = true): T | undefined {
@@ -89,18 +85,6 @@ export function sortPredicate(a: string, b: string) {
 function sort(value: Record<string, unknown>) {
     return Object.keys(value)
         .sort(sortPredicate)
-}
-
-export function pairsToMap(pairs?: unknown) {
-    const map = new YAMLMap()
-    if (!Array.isArray(pairs) || !isPair(pairs[0])) {
-        return map
-    }
-
-    for (const pair of pairs) {
-        if (isPair(pair)) map.add(pair)
-    };
-    return map
 }
 
 function transform(value: unknown): unknown {

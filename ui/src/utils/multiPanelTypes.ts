@@ -3,6 +3,7 @@ export interface Tab {
     button: {
         icon: any
         label: string
+        labelKey?: string
         disabled?: boolean
         disabledTooltip?: string
     },

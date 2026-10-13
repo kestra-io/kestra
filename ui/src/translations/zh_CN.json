@@ -2026,7 +2026,10 @@
       "close_all_panels": "关闭所有面板",
       "exit_fullscreen": "退出全屏",
       "fullscreen": "全屏",
-      "split_panel": "拆分面板"
+      "split_panel": "拆分面板",
+      "flow_code": "Flow 代码",
+      "no_code": "无代码",
+      "files": "文件"
     },
     "search_docs": "搜索",
     "no_results_found": "未找到结果",

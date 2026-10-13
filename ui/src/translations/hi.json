@@ -2026,7 +2026,10 @@
       "close_all_panels": "सभी पैनल बंद करें",
       "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
       "fullscreen": "पूर्णस्क्रीन",
-      "split_panel": "पैनल विभाजित करें"
+      "split_panel": "पैनल विभाजित करें",
+      "flow_code": "फ़्लो कोड",
+      "no_code": "नो कोड",
+      "files": "फ़ाइलें"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",

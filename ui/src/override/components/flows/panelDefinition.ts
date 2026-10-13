@@ -23,6 +23,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         button: {
             icon: markRaw(CodeTagsIcon),
             label: "Flow Code",
+            labelKey: "multi_panel_editor.flow_code",
         },
         uid: "code",
         component: () => h(FlowFileEditorTab, {
@@ -37,6 +38,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         button: {
             icon: markRaw(MouseRightClickIcon),
             label: "No Code",
+            labelKey: "multi_panel_editor.no_code",
         },
         uid: "nocode",
         component: markRaw(NoCode),
@@ -45,6 +47,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         button: {
             icon: markRaw(FileTreeOutlineIcon),
             label: "Topology",
+            labelKey: "topology",
         },
         uid: "topology",
         component: markRaw(LowCodeEditorWrapper),
@@ -53,6 +56,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         button: {
             icon: markRaw(FileDocumentIcon),
             label: "Docs",
+            labelKey: "docs",
         },
         uid: "doc",
         component: markRaw(PluginListWrapper),
@@ -61,6 +65,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         button: {
             icon: markRaw(FolderOpenOutline),
             label: "Files",
+            labelKey: "multi_panel_editor.files",
         },
         uid: "files",
         prepend: true,
@@ -71,6 +76,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         button: {
             icon: markRaw(ShapePlusOutline),
             label: "Blueprints",
+            labelKey: "blueprints.title",
         },
         uid: "blueprints",
         component: markRaw(BlueprintsWrapper),

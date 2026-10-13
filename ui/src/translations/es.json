@@ -2026,7 +2026,10 @@
       "close_all_panels": "Cerrar todos los paneles",
       "exit_fullscreen": "Salir de pantalla completa",
       "fullscreen": "Pantalla completa",
-      "split_panel": "Dividir panel"
+      "split_panel": "Dividir panel",
+      "flow_code": "Código del flow",
+      "no_code": "Sin código",
+      "files": "Archivos"
     },
     "search_docs": "Buscar",
     "no_results_found": "No se encontraron resultados",

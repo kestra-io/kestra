@@ -34,7 +34,7 @@
                         @click="toggleMaximize(panelIndex)"
                     >
                         <component :is="leftNeighbor.activeTab.button.icon" class="maximized-sliver-icon" />
-                        <span class="maximized-sliver-label">{{ leftNeighbor.activeTab.button.label }}</span>
+                        <span class="maximized-sliver-label">{{ getTabLabel(leftNeighbor.activeTab.button) }}</span>
                     </button>
                     <button
                         v-if="rightNeighbor?.activeTab"
@@ -46,7 +46,7 @@
                         @click="toggleMaximize(panelIndex)"
                     >
                         <component :is="rightNeighbor.activeTab.button.icon" class="maximized-sliver-icon" />
-                        <span class="maximized-sliver-label">{{ rightNeighbor.activeTab.button.label }}</span>
+                        <span class="maximized-sliver-label">{{ getTabLabel(rightNeighbor.activeTab.button) }}</span>
                     </button>
                 </template>
                 <div class="editor-tabs-container">
@@ -89,7 +89,7 @@
                                 @mouseup="middleMouseClose($event, panelIndex, tab)"
                             >
                                 <component :is="tab.button.icon" class="tab-icon" />
-                                <span class="tab-title">{{ tab.button.label }}</span>
+                                <span class="tab-title">{{ getTabLabel(tab.button) }}</span>
                                 <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
                                 <CloseIcon
                                     @click.stop="destroyTab(panelIndex, tab)"
@@ -245,7 +245,12 @@
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
 
     import {useTabTracking} from "../composables/useTabTracking"
+    import {useI18n} from "vue-i18n"
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
+
+    const {t} = useI18n()
+
+    const getTabLabel = (button: Tab["button"]) => button.labelKey ? t(button.labelKey) : button.label
 
     const {showKeyShortcuts} = useKeyShortcuts()
     const {trackTabOpen, trackTabClose} = useTabTracking()

@@ -76,4 +76,34 @@ describe("MultiPanelTabs maximize", () => {
         expect(wrapper.findAll(".content-panel").length).toBe(2)
         expect(wrapper.find("[data-test='panel-maximize'][aria-pressed='true']").exists()).toBe(false)
     })
+
+    test("renders translated tab title when labelKey is provided", () => {
+        const tabWithKey = {
+            uid: "topology",
+            button: {label: "Topology", labelKey: "topology", icon: IconStub},
+            component: PaneStub,
+        }
+        const tabWithoutKey = {
+            uid: "file",
+            button: {label: "main.py", icon: IconStub},
+            component: PaneStub,
+        }
+        const wrapper = i18nMount(MultiPanelTabs, {
+            global: globalConfig,
+            props: {
+                modelValue: [
+                    {tabs: [tabWithKey, tabWithoutKey], activeTab: tabWithKey, size: 100},
+                ],
+            },
+            locales: {
+                en: {
+                    topology: "Topology Translated",
+                },
+            },
+        })
+
+        const titles = wrapper.findAll(".tab-title").map((t) => t.text())
+        expect(titles).toContain("Topology Translated")
+        expect(titles).toContain("main.py")
+    })
 })

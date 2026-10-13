@@ -4,7 +4,7 @@
             <KsTooltip
                 v-for="element of tabs"
                 :key="element.uid"
-                :content="element.button.disabled ? (element.button.disabledTooltip ?? element.button.label) : element.button.label"
+                :content="element.button.disabled ? (element.button.disabledTooltip ?? getTabLabel(element.button)) : getTabLabel(element.button)"
                 placement="bottom"
                 :showAfter="500"
             >
@@ -14,7 +14,7 @@
                     @click="setTabValue(element.uid)"
                 >
                     <component class="tabs-icon" :is="element.button.icon" />
-                    <span class="tab-label">{{ element.button.label }}</span>
+                    <span class="tab-label">{{ getTabLabel(element.button) }}</span>
                 </button>
             </KsTooltip>
         </div>
@@ -38,7 +38,7 @@
                         @click="setTabValue(element.uid)"
                     >
                         <component class="tabs-icon" :is="element.button.icon" />
-                        <span class="tab-label">{{ element.button.label }}</span>
+                        <span class="tab-label">{{ getTabLabel(element.button) }}</span>
                         <Check v-if="openTabs.includes(element.uid)" class="check-icon" />
                     </KsDropdownItem>
                 </KsDropdownMenu>
@@ -50,10 +50,15 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
     import {Tab} from "../utils/multiPanelTypes"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import {EDITOR_HEADER_BREAKPOINTS, provideEditorHeaderWidth} from "../composables/useEditorHeaderWidth"
+
+    const {t} = useI18n()
+
+    const getTabLabel = (button: Tab["button"]) => button.labelKey ? t(button.labelKey) : button.label
 
     defineProps<{
         tabs: Tab[],

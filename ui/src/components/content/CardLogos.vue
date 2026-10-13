@@ -1,6 +1,6 @@
 <template>
-    <div class="row card-group mb-4 pb-2">
-        <div class="logo-item col-12 col-sm-4">
+    <div class="card-group">
+        <div class="logo-item">
             <img
                 class="zoom"
                 width="222.67px"
@@ -17,7 +17,7 @@
             </p>
         </div>
 
-        <div class="logo-item col-12 col-sm-4">
+        <div class="logo-item">
             <img
                 class="zoom"
                 width="222.67px"
@@ -34,7 +34,7 @@
             </p>
         </div>
 
-        <div class="logo-item col-12 col-sm-4">
+        <div class="logo-item">
             <img
                 class="zoom"
                 width="222.67px"
@@ -61,6 +61,11 @@
 
 <style scoped lang="scss">
 
+    .card-group {
+        margin-bottom: var(--ks-spacing-5);
+        padding-bottom: var(--ks-spacing-2);
+    }
+
     .logo-item {
         display: flex;
         flex-direction: column;
@@ -84,6 +89,5 @@
             text-align: left;
         }
     }
-
 
 </style>

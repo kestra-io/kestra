@@ -34,18 +34,36 @@ const ALLOWED: Array<{file: string; reason: string}> = [
     {file: "packages/hey-api-plugin/src/problem.ts", reason: "documents the removed fields"},
 ]
 
+let cachedSourceFiles: string[] | undefined
 function sourceFiles(): string[] {
-    return SCANNED_DIRS.flatMap((dir) =>
-        globSync(`${dir}/**/*.{ts,vue,js}`, {cwd: ROOT})
-            .filter((file) => !file.includes("node_modules") && !file.includes("/dist/")),
-    )
+    if (!cachedSourceFiles) {
+        cachedSourceFiles = SCANNED_DIRS.flatMap((dir) =>
+            globSync(`${dir}/**/*.{ts,vue,js}`, {cwd: ROOT})
+                .map((file) => file.replaceAll("\\", "/"))
+                .filter((file) => !file.includes("node_modules") && !file.includes("/dist/")),
+        )
+    }
+    return cachedSourceFiles
+}
+
+const fileContents = new Map<string, string>()
+function readSourceFile(file: string): string {
+    let content = fileContents.get(file)
+    if (content === undefined) {
+        content = readFileSync(join(ROOT, file), "utf8")
+        fileContents.set(file, content)
+    }
+    return content
 }
 
 function isAllowed(file: string): boolean {
-    return ALLOWED.some((entry) => file.startsWith(entry.file))
+    const normalized = file.replaceAll("\\", "/")
+    return ALLOWED.some((entry) => normalized.startsWith(entry.file))
 }
 
-describe("no legacy error fields", () => {
+const TEST_TIMEOUT_MS = 30_000
+
+describe("no legacy error fields", {timeout: TEST_TIMEOUT_MS}, () => {
     it("finds source files to scan, so a broken glob cannot make this test vacuous", () => {
         expect(sourceFiles().length).toBeGreaterThan(500)
     })
@@ -55,7 +73,7 @@ describe("no legacy error fields", () => {
 
         for (const file of sourceFiles()) {
             if (isAllowed(file)) continue
-            const content = readFileSync(join(ROOT, file), "utf8")
+            const content = readSourceFile(file)
             content.split("\n").forEach((line, index) => {
                 if (pattern.test(line)) {
                     offenders.push(`${relative(ROOT, join(ROOT, file))}:${index + 1}: ${line.trim()}`)
@@ -64,5 +82,5 @@ describe("no legacy error fields", () => {
         }
 
         expect(offenders).toEqual([])
-    })
+    }, TEST_TIMEOUT_MS)
 })

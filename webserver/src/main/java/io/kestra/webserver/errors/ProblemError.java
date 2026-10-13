@@ -78,7 +78,7 @@ public record ProblemError(
         return List.of(ofInputError(exception));
     }
 
-    public static ProblemError ofInputError(final InputOutputValidationException exception) {
+    private static ProblemError ofInputError(final InputOutputValidationException exception) {
         if (exception.getInputId() != null && !exception.getInputId().isEmpty()) {
             return of(
                 exception.getMessage(),

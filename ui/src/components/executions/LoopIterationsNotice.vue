@@ -27,10 +27,11 @@
 
     const executionsStore = useExecutionsStore()
 
-    const hasLoopIterations = computed(() => {
-        const ids = loopTaskIds(executionsStore.flow)
-        return (executionsStore.execution?.taskRunList ?? []).some((taskRun) => ids.has(taskRun.taskId))
-    })
+    const loopIds = computed(() => loopTaskIds(executionsStore.flow))
+
+    const hasLoopIterations = computed(() =>
+        (executionsStore.execution?.taskRunList ?? []).some((taskRun) => loopIds.value.has(taskRun.taskId)),
+    )
 
     const iterationsRoute = computed(() => loopIterationsRoute(executionsStore.execution?.id, props.taskId))
 </script>

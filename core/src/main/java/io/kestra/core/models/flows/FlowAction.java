@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.kestra.core.models.FieldCondition;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
@@ -29,8 +31,8 @@ public record FlowAction(
     @Schema(
         title = "The conditions under which this action is offered.",
         description = "All conditions must hold, and an action without conditions is always offered. A field the resource "
-            + "does not have reads as null, so `NOT_EQUALS`, `NOT_IN` and `NOT_CONTAINS` hold on it."
-    ) List<@Valid FlowActionCondition> when) {
+            + "does not have reads as null, so `NOT_EQUAL_TO`, `NOT_IN` and `NOT_CONTAINS` hold on it. A field is read as `status`, `namespace` or `metadata.<key>` on an asset."
+    ) List<@Valid FieldCondition> when) {
     public FlowAction(String namespace, String flowId, String label) {
         this(namespace, flowId, label, null);
     }

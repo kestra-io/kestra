@@ -1051,17 +1051,15 @@ export type FlowAction = {
      *
      * All conditions must hold, and an action without conditions is always offered. A field the resource does not have reads as null, so `NOT_EQUAL_TO`, `NOT_IN` and `NOT_CONTAINS` hold on it. A field is read as `status`, `namespace` or `metadata.<key>` on an asset.
      */
-    when?: Array<FlowActionCondition> | null;
+    when?: Array<FieldCondition> | null;
 };
 
 /**
  * A condition the resource an action is attached to must satisfy for the action to be offered.
  */
-export type FlowActionCondition = {
+export type FieldCondition = {
     /**
-     * The field of the resource this condition reads.
-     *
-     * A field such as `status` or `namespace`, or `metadata.<key>` on an asset.
+     * The field this condition reads.
      */
     field: string;
     /**

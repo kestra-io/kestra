@@ -43,7 +43,7 @@ vi.mock("../executionTabs", () => ({
 }))
 
 import {useFlowStore} from "../../../stores/flow"
-import {useExecutionRoot} from "./useExecutionRoot"
+import {useExecutionRoot, buildLoopBreadcrumbs} from "./useExecutionRoot"
 import {useExecutionsStore} from "../../../stores/executions"
 
 function mountExecutionRoot() {
@@ -141,6 +141,7 @@ describe("useExecutionRoot breadcrumbs", () => {
     })
 
     it("builds the root fallback breadcrumb for a single-level loop", () => {
+        route.params.id = "exec-1"
         executionsStore.execution = mockExecution({
             id: "exec-1",
             loopRun: {
@@ -201,6 +202,7 @@ describe("useExecutionRoot breadcrumbs", () => {
     })
 
     it("falls back to parentId when rootExecutionId is absent", () => {
+        route.params.id = "exec-historical"
         executionsStore.execution = mockExecution({
             id: "exec-historical",
             parentId: "exec-parent",
@@ -226,6 +228,7 @@ describe("useExecutionRoot breadcrumbs", () => {
     })
 
     it("does not fall back to parentId for legacy nested loop when rootExecutionId is absent", () => {
+        route.params.id = "exec-historical-nested"
         executionsStore.execution = mockExecution({
             id: "exec-historical-nested",
             parentId: "exec-level1",
@@ -249,6 +252,7 @@ describe("useExecutionRoot breadcrumbs", () => {
     })
 
     it("resolves root by walking loopRun.parent for legacy nested loop", () => {
+        route.params.id = "exec-historical-nested"
         executionsStore.execution = mockExecution({
             id: "exec-historical-nested",
             parentId: "exec-level1",
@@ -285,6 +289,7 @@ describe("useExecutionRoot breadcrumbs", () => {
     })
 
     it("truncates long loop values in breadcrumbs", () => {
+        route.params.id = "exec-1"
         executionsStore.execution = mockExecution({
             id: "exec-1",
             loopRun: {
@@ -300,5 +305,49 @@ describe("useExecutionRoot breadcrumbs", () => {
 
         const currentCrumb = breadcrumb[5]
         expect(currentCrumb.label).toBe("process ({\"key\": \"very-long-j…)")
+    })
+
+    it("omits loop breadcrumbs when execution in store does not match active route id", () => {
+        route.params.id = "exec-route-id"
+        executionsStore.execution = mockExecution({
+            id: "exec-store-id",
+            loopRun: {
+                rootExecutionId: "exec-root",
+                taskId: "regions",
+                value: "EMEA",
+                parents: [],
+            },
+        })
+
+        const root = useExecutionRoot()
+        const breadcrumb = "breadcrumb" in root.routeInfo.value ? root.routeInfo.value.breadcrumb! : []
+
+        expect(breadcrumb.length).toBe(4)
+        expect(breadcrumb.some(b => b.label === "root_execution")).toBe(false)
+    })
+})
+
+describe("buildLoopBreadcrumbs", () => {
+    const t = (k: string) => k
+
+    it("returns empty array when execution has no loopRun", () => {
+        const execution = mockExecution({id: "exec-standard"})
+        expect(buildLoopBreadcrumbs(execution, "ns", "flow", t)).toEqual([])
+    })
+
+    it("builds loop breadcrumbs directly", () => {
+        const execution = mockExecution({
+            id: "exec-1",
+            loopRun: {
+                rootExecutionId: "exec-root",
+                taskId: "regions",
+                value: "EMEA",
+                parents: [],
+            },
+        })
+        const crumbs = buildLoopBreadcrumbs(execution, "ns", "flow", t)
+        expect(crumbs.length).toBe(2)
+        expect(crumbs[0].label).toBe("root_execution")
+        expect(crumbs[1].label).toBe("regions (EMEA)")
     })
 })

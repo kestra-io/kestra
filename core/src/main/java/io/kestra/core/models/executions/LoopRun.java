@@ -9,6 +9,6 @@ public record LoopRun(Execution parent, String taskId, String taskRunId, int ind
         this(parent, taskId, taskRunId, index, key, value, parents, null);
     }
 
-    public record Parent(String executionId, String taskId, int index, @Nullable String key, String value) {
+    public record Parent(@Nullable String executionId, @Nullable String taskId, int index, @Nullable String key, String value) {
     }
 }

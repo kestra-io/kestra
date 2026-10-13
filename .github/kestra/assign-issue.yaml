@@ -4,9 +4,11 @@ namespace: community.github
 description: |
   Assigns an issue to the contributor who comments `/assign` on it, in any repository of the organization, and keeps the number of open issues per contributor in check.
 
-  The command must be alone on its line. The issue is assigned unless it is closed, already assigned to someone else (first come, first served: an assignee is never replaced), or the contributor already has `maxOpenIssues` open issues assigned across the whole organization. Maintainers, meaning anyone whose permission on that repository is in `maintainerPermissions`, are exempt from the limit. Every refusal and every assignment is answered with a comment, and a `/assign` from someone who is already the assignee is ignored.
+  The command must be alone on its line, outside a code block. The issue is assigned unless it is closed, already assigned to someone else (first come, first served: an assignee is never replaced), or the contributor already has `maxOpenIssues` open issues assigned across the public repositories of the organization. Maintainers, meaning anyone whose permission on that repository is in `maintainerPermissions`, are exempt from the limit. Every refusal and every assignment is answered with a comment, and a `/assign` from someone who is already the assignee is ignored.
 
   Executions run one at a time, and everything that decides the outcome is read from GitHub inside that section rather than taken from the webhook payload, so a request that waited in the queue is decided on the state left by the one before it. The webhook key is its only authentication, so the commenter and the comment text are also re-read from GitHub by comment id.
+
+  Limits: requests for different repositories made within moments of each other can briefly exceed the limit, because the other repositories are counted with a search. A refusal is posted again if GitHub delivers the same comment twice (an assignment is not), and a comment whose response is lost is retried and may be posted twice.
 
   ### Setup
   1. Create the secrets `GITHUB_TOKEN` and `GITHUB_ASSIGN_WEBHOOK_KEY`. The token needs read and write on Issues in every repository of the organization, and its owner needs push access to them: GitHub requires that both to assign an issue and to read a user's permission.
@@ -23,8 +25,10 @@ variables:
   maintainerPermissions: [admin, write]
   # Repository names end up in request URLs: ".github" is a valid one, "." and ".." are not.
   repositoryPattern: '^kestra-io/(?!\.{1,2}$)[A-Za-z0-9._-]+$'
-  # The command alone on its line; the bot's own messages quote it inline, so they never match and cannot loop.
-  assignCommand: '(?im)^[ \t]*/assign[ \t]*$'
+  # An example in a how-to comment must not assign its author, so fenced code is removed before looking for the command.
+  fencedCode: '(?ms)^ {0,3}(`{3,}|~{3,})[^\n]*\n.*?(?:^ {0,3}\1[`~]*[ \t]*$|\z)'
+  # The command alone on its line and indented by at most 3 spaces (4 is a code block); the bot's own messages quote it inline, so they never match and cannot loop.
+  assignCommand: '(?im)^ {0,3}/assign[ \t]*$'
 
 triggers:
   - id: github_issue_comment
@@ -35,8 +39,9 @@ triggers:
     when: >-
       {{ ((trigger.body.action ?? '') == 'created')
          and ((trigger.body.repository.full_name ?? '') | regexMatch(vars.repositoryPattern))
+         and ((trigger.body.issue.pull_request ?? null) == null)
          and ((trigger.body.comment.user.type ?? '') == 'User')
-         and ((trigger.body.comment.body ?? '') | regexMatch(vars.assignCommand)) }}
+         and ((trigger.body.comment.body ?? '') | regexReplace(vars.fencedCode, '') | regexMatch(vars.assignCommand)) }}
 
 tasks:
   # The only things taken from the payload, which cannot be trusted: everything else is read from GitHub.
@@ -63,7 +68,7 @@ tasks:
       # Still a command by a person (it may have been edited), on the issue and in the repository the payload names.
       isCommand: >-
         {{ ((outputs.get_comment.body | jq('.user.type') | first) == 'User')
-           and (outputs.get_comment.body | jq('.body') | first | regexMatch(vars.assignCommand))
+           and (outputs.get_comment.body | jq('.body') | first | regexReplace(vars.fencedCode, '') | regexMatch(vars.assignCommand))
            and (outputs.get_comment.body | jq('.issue_url') | first | endsWith('/repos/' ~ outputs.event.values.repository ~ '/issues/' ~ outputs.event.values.issueNumber)) }}
 
   - id: process
@@ -77,8 +82,8 @@ tasks:
         timeout: PT30S
         retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
 
-      # This repository's list is read from GitHub's database, so an assignment made seconds ago is always counted;
-      # Search lags behind and is only used for the other repositories.
+      # This repository's issue list is not a search index, so an assignment made moments ago is counted;
+      # Search may not show it yet, so it only covers the other repositories.
       - id: get_open_issues_here
         type: io.kestra.plugin.core.http.Request
         uri: "https://api.github.com/repos/{{ outputs.event.values.repository }}/issues?assignee={{ outputs.commenter.values.login }}&state=open&per_page=100"
@@ -86,10 +91,10 @@ tasks:
         timeout: PT30S
         retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
 
-      # Archived repositories are left out because nobody can close their issues.
+      # Archived repositories are left out because nobody can close their issues, and private ones because their issue numbers must not appear in a public comment.
       - id: get_open_issues_elsewhere
         type: io.kestra.plugin.core.http.Request
-        uri: "https://api.github.com/search/issues?q=org:{{ outputs.event.values.organization }}+is:issue+is:open+archived:false+assignee:{{ outputs.commenter.values.login }}+-repo:{{ outputs.event.values.repository }}&per_page=100"
+        uri: "https://api.github.com/search/issues?q=org:{{ outputs.event.values.organization }}+is:issue+is:open+is:public+archived:false+assignee:{{ outputs.commenter.values.login }}+-repo:{{ outputs.event.values.repository }}&per_page=100"
         headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
         timeout: PT30S
         retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}

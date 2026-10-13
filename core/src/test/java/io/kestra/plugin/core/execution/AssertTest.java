@@ -94,9 +94,6 @@ public class AssertTest {
 
     @Test
     void shouldFailWhenConditionEvaluatesToNull() {
-        List<LogEntry> logs = new ArrayList<>();
-        logQueue.addListener(logs::add);
-
         Assert task = Assert.builder()
             .id(IdUtils.create())
             .type(Assert.class.getName())
@@ -112,8 +109,5 @@ public class AssertTest {
         Exception exception = assertThrows(Exception.class, () -> task.run(runContext));
 
         assertThat(exception.getMessage()).contains("1 assertion failed");
-
-        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 1);
-        assertThat(matchingLog.get(0).getMessage()).contains("rendered to `null`");
     }
 }

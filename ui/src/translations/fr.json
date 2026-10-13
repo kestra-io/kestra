@@ -984,7 +984,6 @@
     "warning detected": "Avertissement(s) détecté(s).",
     "informative notice": "Note(s)",
     "open": "Afficher",
-    "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
     "admin": "Administrateur",
     "main_configuration": "Configuration Principale",
     "commit_id": "ID de commit",

@@ -984,7 +984,6 @@
     "warning detected": "检测到警告。",
     "informative notice": "注意事项",
     "open": "打开",
-    "dependency task": "任务 {taskId} 是另一个任务的依赖",
     "admin": "管理员",
     "main_configuration": "主配置",
     "commit_id": "提交 id",

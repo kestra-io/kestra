@@ -984,7 +984,6 @@
     "warning detected": "경고가 감지되었습니다.",
     "informative notice": "노트(s)",
     "open": "열기",
-    "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
     "admin": "관리자",
     "main_configuration": "주요 설정",
     "commit_id": "커밋 id",

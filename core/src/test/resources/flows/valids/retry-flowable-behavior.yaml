@@ -1,0 +1,18 @@
+id: retry-flowable-behavior
+namespace: io.kestra.tests
+
+tasks:
+  - id: seq1
+    type: io.kestra.plugin.core.flow.Sequential
+    retry:
+      type: constant
+      behavior: RETRY_FLOWABLE
+      maxAttempts: 3
+      interval: PT1S
+    tasks:
+      - id: get_token
+        type: io.kestra.plugin.core.debug.Return
+        format: "token-{{ now() }}"
+      - id: call_api
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: "Calling API with {{ outputs.get_token.value }}"

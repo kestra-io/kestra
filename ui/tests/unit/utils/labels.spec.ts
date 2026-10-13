@@ -37,4 +37,26 @@ describe("filterHiddenLabels", () => {
             ),
         ).toEqual(labels)
     })
+
+    it("keeps a hidden label filtered with IN", () => {
+        expect(
+            filterHiddenLabels(
+                labels,
+                ["internal."],
+                {"filters[labels][IN][internal.owner]": ["alice", "bob"]},
+            ),
+        ).toEqual(labels)
+    })
+
+    it("keeps a hidden label hidden when it is only excluded by a filter", () => {
+        for (const operation of ["NOT_EQUALS", "NOT_IN"]) {
+            expect(
+                filterHiddenLabels(
+                    labels,
+                    ["internal."],
+                    {[`filters[labels][${operation}][internal.owner]`]: "alice"},
+                ),
+            ).toEqual([{key: "team", value: "data"}])
+        }
+    })
 })

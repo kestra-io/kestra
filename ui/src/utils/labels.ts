@@ -1,6 +1,9 @@
 import type {LocationQuery} from "vue-router"
 import {parseFilterKey} from "@kestra-io/design-system"
 
+// Negative operations (NOT_EQUALS, NOT_IN, ...) exclude a label, so they must not reveal it.
+const POSITIVE_OPERATIONS = new Set(["EQUALS", "IN"])
+
 const hasQueryValue = (value: LocationQuery[string]): boolean => {
     if (Array.isArray(value)) {
         return value.some(item => item !== null && item !== "")
@@ -23,7 +26,7 @@ export const filterHiddenLabels = <T extends {key: string; value: string}>(
 
         const parsed = parseFilterKey(key)
 
-        if (parsed?.field === "labels" && parsed.subKey) {
+        if (parsed?.field === "labels" && parsed.subKey && POSITIVE_OPERATIONS.has(parsed.operation)) {
             allowedLabels.add(parsed.subKey)
         }
     }

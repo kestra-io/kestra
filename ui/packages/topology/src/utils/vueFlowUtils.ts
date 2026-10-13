@@ -841,6 +841,7 @@ export function generateGraph(
                 ? cluster.parents[cluster.parents.length - 1]
                 : undefined
             const clusterColor = computeClusterColor(cluster.cluster)
+            const childTaskIds = getClusterChildTaskIds(cluster, nodeByUid)
 
             const clusterPosition = getNodePosition(
                 dagreNode,
@@ -868,7 +869,7 @@ export function generateGraph(
                     padding: "0.5rem",
                 },
                 data: {
-                    collaspsible: getClusterChildTaskIds(cluster, nodeByUid).length > 0,
+                    collaspsible: childTaskIds.length > 0,
                     color: clusterColor,
                     // The triggers box is the only place a trigger can be added from the canvas:
                     // triggers are not tasks, so no edge `+` ever targets them.
@@ -884,7 +885,7 @@ export function generateGraph(
                     // Parallel/Sequential/If/… lane; `Triggers` and a subflow call keep their own
                     // node and menu.
                     isFlowableLane: isTrueFlowableCluster(cluster.cluster),
-                    childTaskIds: getClusterChildTaskIds(cluster, nodeByUid),
+                    childTaskIds,
                     executionId: cluster.cluster.taskNode
                         ? nodeByUid[cluster.cluster.taskNode.uid]?.executionId
                         : undefined,

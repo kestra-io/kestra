@@ -37,6 +37,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
@@ -86,6 +87,7 @@ public class ExecutionService {
     private final FlowParsingService flowParsingService;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
+    private final CheckpointRepositoryInterface checkpointRepository;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
@@ -106,6 +108,7 @@ public class ExecutionService {
         FlowParsingService flowParsingService,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
+        CheckpointRepositoryInterface checkpointRepository,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
@@ -123,6 +126,7 @@ public class ExecutionService {
         this.flowParsingService = Objects.requireNonNull(flowParsingService);
         this.taskOutputService = Objects.requireNonNull(taskOutputService);
         this.executionOutputService = Objects.requireNonNull(executionOutputService);
+        this.checkpointRepository = Objects.requireNonNull(checkpointRepository);
         this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
         this.killQueue = Objects.requireNonNull(killQueue);
         this.loopExecutionEventQueue = Objects.requireNonNull(loopExecutionEventQueue);
@@ -818,6 +822,7 @@ public class ExecutionService {
                     builder.executionsCount(this.executionRepository.purge(executions));
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
                     builder.executionOutputsCount(this.executionOutputService.purge(executions));
+                    builder.checkpointsCount(this.checkpointRepository.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -847,6 +852,7 @@ public class ExecutionService {
                     .metricsCount(a.getMetricsCount() + b.getMetricsCount())
                     .executionOutputsCount(a.getExecutionOutputsCount() + b.getExecutionOutputsCount())
                     .taskOutputsCount(a.getTaskOutputsCount() + b.getTaskOutputsCount())
+                    .checkpointsCount(a.getCheckpointsCount() + b.getCheckpointsCount())
                     .build()
             )
             .block();
@@ -1335,6 +1341,9 @@ public class ExecutionService {
 
         @Builder.Default
         private int executionOutputsCount = 0;
+
+        @Builder.Default
+        private int checkpointsCount = 0;
 
         @Builder.Default
         private int logsCount = 0;

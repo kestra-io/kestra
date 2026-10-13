@@ -17,7 +17,13 @@
                 size="small"
                 :data-state="segment.key"
                 :class="{'muted-pill': !segment.filterStates}"
-                :to="segment.filterStates ? loopIterationsRoute(execution, taskId, {'filters[state][IN]': segment.filterStates.join(',')}) : undefined"
+                :to="segment.filterStates 
+                    ? loopIterationsRoute(
+                        execution, 
+                        taskId, 
+                        {'filters[state][IN]': segment.filterStates.join(',')}
+                    )
+                    : undefined"
             >
                 <span :style="{backgroundColor: segment.color}" class="colored-dot" />
                 {{ segment.count }} {{ segment.label }}

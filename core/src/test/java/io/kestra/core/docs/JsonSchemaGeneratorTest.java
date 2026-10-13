@@ -3,6 +3,7 @@ package io.kestra.core.docs;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +24,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Custom;
 import io.kestra.core.models.assets.External;
 import io.kestra.core.models.dashboards.Dashboard;
@@ -869,4 +871,71 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class TaskWithTicketingFields extends Task implements RunnableTask<TaskWithTicketingFields.Output> {
+        @TicketingField(role = TicketingField.Role.CASE_TITLE)
+        private Property<String> subject;
+
+        @TicketingField(defaultValue = "incident")
+        private String table;
+
+        @TicketingField(defaultValue = "3")
+        private Property<Integer> priority;
+
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "urgent"), @TicketingField.Mapping(from = "HIGH", to = "high")})
+        private Property<String> urgency;
+
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "1"), @TicketingField.Mapping(from = "HIGH", to = "2")})
+        private Property<Integer> level;
+
+        private String untouched;
+
+        @Override
+        public Output run(RunContext runContext) throws Exception {
+            return null;
+        }
+
+        @Builder
+        @Getter
+        public static class Output implements io.kestra.core.models.tasks.Output {
+            @TicketingField(role = TicketingField.Role.TICKET_KEY)
+            private final Integer number;
+
+            @TicketingField(role = TicketingField.Role.TICKET_URL)
+            private final URL link;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeTicketingHintsWhenPropertyIsAnnotated() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithTicketingFields.class);
+        Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+        assertThat(props.get("subject").get("$ticketingRole"), is("CASE_TITLE"));
+        assertThat(props.get("subject").containsKey("$ticketingDefault"), is(false));
+        assertThat(props.get("table").get("$ticketingDefault"), is("incident"));
+        assertThat(props.get("table").containsKey("$ticketingRole"), is(false));
+        assertThat(props.get("untouched").keySet().stream().filter(k -> k.startsWith("$ticketing")).toList(), is(List.of()));
+        assertThat(props.get("priority").get("$ticketingDefault"), is("3"));
+        assertThat(props.get("urgency").get("$ticketingRole"), is("CASE_SEVERITY"));
+        assertThat(props.get("urgency").get("$ticketingValueMap"), is(Map.of("CRITICAL", "urgent", "HIGH", "high")));
+        assertThat(props.get("level").get("$ticketingRole"), is("CASE_SEVERITY"));
+        assertThat(props.get("level").get("$ticketingValueMap"), is(Map.of("CRITICAL", "1", "HIGH", "2")));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldExposeTicketingRoleWhenOutputIsAnnotated() {
+        Map<String, Object> generate = jsonSchemaGenerator.outputs(Task.class, TaskWithTicketingFields.class);
+        Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+        assertThat(props.get("number").get("$ticketingRole"), is("TICKET_KEY"));
+        assertThat(props.get("link").get("$ticketingRole"), is("TICKET_URL"));
+    }
 }

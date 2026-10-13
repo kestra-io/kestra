@@ -1,5 +1,5 @@
 <template>
-    <div class="card-group mb-4 pb-2">
+    <div class="card-group">
         <div class="logo-item">
             <img
                 class="zoom"
@@ -62,13 +62,8 @@
 <style scoped lang="scss">
 
     .card-group {
-        display: grid;
-        grid-template-columns: repeat(1, 1fr);
-        gap: 1rem;
-
-        @media (min-width: 576px) {
-            grid-template-columns: repeat(3, 1fr);
-        }
+        margin-bottom: var(--ks-spacing-5);
+        padding-bottom: var(--ks-spacing-2);
     }
 
     .logo-item {

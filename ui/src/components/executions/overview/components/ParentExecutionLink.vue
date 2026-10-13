@@ -1,5 +1,18 @@
 <template>
     <router-link
+        v-if="originalLink"
+        class="meta-item"
+        data-test="execution-original-link"
+        :to="originalLink"
+    >
+        <History />
+        <span>
+            {{ $t("original execution") }}:
+            <span class="meta-item__link">{{ execution.originalId }}</span>
+        </span>
+    </router-link>
+
+    <router-link
         v-if="parentLink"
         class="meta-item"
         data-test="execution-parent-link"
@@ -26,7 +39,7 @@
         typeof value === "string" && value.length ? value : undefined
 
     /**
-     * Two lineages end up here and they do not live in the same flow.
+     * Both lineage rows render from here and they do not always live in the same flow.
      *
      * `trigger.variables` carries the upstream execution for children started by a subflow
      * task, a ForEachItem or a flow trigger, which is the lineage #19606 is about. The
@@ -62,12 +75,19 @@
             : undefined
     })
 
+    const originalLink = computed(() => {
+        const {originalId, id} = props.execution
+        return originalId && originalId !== id
+            ? createLink("executions", props.execution, originalId)
+            : undefined
+    })
+
     const parentLink = computed(() => {
         const target = parent.value
         const {id: currentId, originalId, tenantId} = props.execution
 
-        // the banner already renders an `original execution` row, and after a first restart
-        // `originalId === parentId`, so skip the duplicate rather than showing the same id twice
+        // after a first restart `originalId === parentId` and the original execution row
+        // already shows that id, so the parent row skips the duplicate
         if (!target || target.id === currentId || target.id === originalId) return undefined
 
         return {
@@ -88,10 +108,33 @@
 
 <style scoped>
     /*
-     * `Banner.vue`'s scoped `.meta-item .material-design-icon` rule only reaches this
-     * component's root element, so the icon is muted here to match the sibling meta rows.
+     * Both lineage rows render from this component, so their styles live here and no
+     * parent scoped rule has to reach across the component boundary.
      */
+    .meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        border-radius: var(--ks-radius-xs);
+        color: var(--ks-text-secondary);
+    }
+
     .meta-item .material-design-icon {
         color: var(--ks-text-muted);
+        display: inline-flex;
+    }
+
+    .meta-item .meta-item__link {
+        color: var(--ks-text-link);
+    }
+
+    .meta-item:hover {
+        background: var(--ks-bg-hover);
+        color: var(--ks-text-primary);
+    }
+
+    a.meta-item:hover span {
+        color: var(--ks-text-link);
     }
 </style>

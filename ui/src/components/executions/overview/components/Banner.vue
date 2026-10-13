@@ -85,14 +85,6 @@
                     <span>{{ username }}</span>
                 </span>
 
-                <router-link v-if="originalLink" class="meta-item" :to="originalLink">
-                    <History />
-                    <span>
-                        {{ $t("original execution") }}:
-                        <span class="meta-item__link">{{ execution.originalId }}</span>
-                    </span>
-                </router-link>
-
                 <ParentExecutionLink :execution />
 
                 <component
@@ -228,13 +220,6 @@
             ? undefined
             : props.execution.labels?.find((label) => label.key === "system.username")?.value,
     )
-
-    const originalLink = computed(() => {
-        const {originalId, id} = props.execution
-        return originalId && originalId !== id
-            ? createLink("executions", props.execution, originalId)
-            : undefined
-    })
 
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>

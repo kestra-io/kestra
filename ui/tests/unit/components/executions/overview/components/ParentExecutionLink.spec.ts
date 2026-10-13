@@ -1,12 +1,12 @@
 import {describe, expect, it} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import {RouterLink, createMemoryHistory, createRouter} from "vue-router"
 
-import ParentExecutionLink from "./ParentExecutionLink.vue"
-import type {Execution} from "../../../../stores/executions"
+import ParentExecutionLink from "../../../../../../src/components/executions/overview/components/ParentExecutionLink.vue"
+import type {Execution} from "../../../../../../src/stores/executions"
+import {i18nMount} from "../../../../i18nMount"
 
 const LINK = "[data-test=\"execution-parent-link\"]"
+const ORIGINAL = "[data-test=\"execution-original-link\"]"
 
 const execution = (overrides: Record<string, unknown> = {}) =>
     ({
@@ -40,22 +40,25 @@ async function mountLink(value: Execution) {
     await router.push({name: "current"})
     await router.isReady()
 
-    return mount(ParentExecutionLink, {
+    return i18nMount(ParentExecutionLink, {
         props: {execution: value},
-        global: {
-            plugins: [
-                router,
-                createI18n({
-                    legacy: false,
-                    locale: "en",
-                    messages: {en: {"parent execution": "Parent execution"}},
-                }),
-            ],
+        global: {plugins: [router]},
+        messages: {
+            "original execution": "Original execution",
+            "parent execution": "Parent execution",
         },
     })
 }
 
 describe("ParentExecutionLink", () => {
+    it("shouldRenderTheOriginalExecutionRowItOwns", async () => {
+        const wrapper = await mountLink(execution({originalId: "first-execution"}))
+        const original = wrapper.find(ORIGINAL)
+
+        expect(original.exists()).toBe(true)
+        expect(original.text()).toContain("Original execution: first-execution")
+    })
+
     it("shouldLinkToTheUpstreamExecutionInItsOwnFlowForASubflowChild", async () => {
         const wrapper = await mountLink(
             startedBy("io.kestra.plugin.core.flow.Subflow", lineage("parent-execution")),

@@ -11,11 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PostgresExecutionDelayStateStoreTest {
 
-    /**
-     * Exposes the inherited cutoff conversion. processExpired binds getNow(now), so the assertion has to
-     * read it from the store: a predicate built from a hand-supplied Instant would stay green if the store
-     * ever started converting its cutoff to a naive LocalDateTime.
-     */
+    // The assertion has to read the cutoff from getNow(now), the value processExpired binds.
     private static class ProbeStore extends PostgresExecutionDelayStateStore {
         ProbeStore() {
             super(null);
@@ -41,7 +37,6 @@ class PostgresExecutionDelayStateStoreTest {
 
     @Test
     void shouldNotConvertTheDelayCutoffToANaiveLocalDateTime() {
-        // The contrast case: a naive cutoff renders without a zone, so the guard above cannot pass on one.
         var context = DSL.using(SQLDialect.POSTGRES);
         var naive = DSL.field(DSL.quotedName("date"))
             .lessOrEqual(java.time.LocalDateTime.of(2031, 1, 15, 10, 0));

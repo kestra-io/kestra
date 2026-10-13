@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {computeDurationBreakdown, computeLongestTaskRunDuration} from "./durationBreakdown"
+import {computeDurationBreakdown, computeLongestTaskRunDuration, dropBreakpointWait} from "./durationBreakdown"
 
 describe("computeDurationBreakdown", () => {
     it("should return zeroed breakdown when there is no history", () => {
@@ -175,5 +175,56 @@ describe("computeLongestTaskRunDuration", () => {
         )
 
         expect(result).toBe(2_500)
+    })
+})
+
+describe("dropBreakpointWait", () => {
+    it("should start a task run resumed from a breakpoint at its last CREATED", () => {
+        const histories = [
+            {date: 0, state: "CREATED"},
+            {date: 0, state: "BREAKPOINT"},
+            {date: 10_000, state: "CREATED"},
+            {date: 10_000, state: "BREAKPOINT"},
+            {date: 30_000, state: "CREATED"},
+            {date: 30_000, state: "RUNNING"},
+            {date: 30_200, state: "SUCCESS"},
+        ]
+
+        expect(dropBreakpointWait(histories)[0]).toEqual({date: 30_000, state: "CREATED"})
+    })
+
+    it("should keep the history of a task run still at its breakpoint", () => {
+        const histories = [
+            {date: 0, state: "CREATED"},
+            {date: 0, state: "BREAKPOINT"},
+        ]
+
+        expect(dropBreakpointWait(histories)).toBe(histories)
+    })
+
+    it("should keep the history of an execution suspended at a breakpoint after it started", () => {
+        const histories = [
+            {date: 0, state: "CREATED"},
+            {date: 100, state: "RUNNING"},
+            {date: 200, state: "BREAKPOINT"},
+            {date: 20_000, state: "RUNNING"},
+            {date: 20_500, state: "SUCCESS"},
+        ]
+
+        expect(dropBreakpointWait(histories)).toBe(histories)
+    })
+})
+
+describe("computeDurationBreakdown with a breakpoint", () => {
+    it("should not count the time a task run waited at a breakpoint before it ran", () => {
+        const result = computeDurationBreakdown([
+            {date: 0, state: "CREATED"},
+            {date: 0, state: "BREAKPOINT"},
+            {date: 20_000, state: "CREATED"},
+            {date: 20_050, state: "RUNNING"},
+            {date: 20_300, state: "SUCCESS"},
+        ])
+
+        expect(result).toEqual({total: 300, queued: 50, running: 250, paused: 0, isRunning: false})
     })
 })

@@ -134,7 +134,20 @@ public class State {
             return null;
         }
 
-        return this.histories.getFirst().getDate();
+        // a task run that waited at a breakpoint before it ever ran starts when it was resumed
+        Instant startDate = this.histories.getFirst().getDate();
+        boolean afterBreakpoint = false;
+        for (History history : this.histories) {
+            if (history.getState() == Type.BREAKPOINT) {
+                afterBreakpoint = true;
+            } else if (history.getState() != Type.CREATED) {
+                break;
+            } else if (afterBreakpoint) {
+                startDate = history.getDate();
+            }
+        }
+
+        return startDate;
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

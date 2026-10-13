@@ -196,7 +196,7 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Warning from "vue-material-design-icons/Alert.vue"
 
-    import {Duration} from "@kestra-io/topology"
+    import {Duration, dropBreakpointWait} from "@kestra-io/topology"
     import {
         State,
         Comparators,
@@ -464,7 +464,7 @@
             return {
                 id: task.id,
                 parentTaskRunId: task.parentTaskRunId,
-                startTs: ts(task.state.histories[0].date),
+                startTs: ts(dropBreakpointWait(task.state.histories)[0].date),
                 stopTs,
             }
         })
@@ -481,7 +481,7 @@
                 const lastIndex = task.state.histories.length - 1
                 stopTs = ts(task.state.histories[lastIndex].date)
             }
-            const startTs = ts(task.state.histories[0].date)
+            const startTs = ts(dropBreakpointWait(task.state.histories)[0].date)
 
             const runningState = task.state.histories.filter(r => r.state === State.RUNNING)
             const left = runningState.length > 0

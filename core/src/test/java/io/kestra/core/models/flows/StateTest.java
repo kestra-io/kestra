@@ -41,6 +41,69 @@ class StateTest {
     }
 
     @Test
+    void shouldStartTaskRunWhenResumedFromBreakpoint() {
+        Instant resumed = START.plusSeconds(20);
+        State state = new State(
+            State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.BREAKPOINT, START),
+                new State.History(State.Type.CREATED, resumed),
+                new State.History(State.Type.RUNNING, resumed),
+                new State.History(State.Type.SUCCESS, END)
+            )
+        );
+
+        assertThat(state.getStartDate()).isEqualTo(resumed);
+        assertThat(state.getDuration()).contains(Duration.between(resumed, END));
+    }
+
+    @Test
+    void shouldStartTaskRunAtLastResumeWhenStoppedAtSeveralBreakpoints() {
+        Instant firstResume = START.plusSeconds(10);
+        Instant secondResume = START.plusSeconds(30);
+        State state = new State(
+            State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.BREAKPOINT, START),
+                new State.History(State.Type.CREATED, firstResume),
+                new State.History(State.Type.BREAKPOINT, firstResume),
+                new State.History(State.Type.CREATED, secondResume),
+                new State.History(State.Type.RUNNING, secondResume),
+                new State.History(State.Type.SUCCESS, END)
+            )
+        );
+
+        assertThat(state.getStartDate()).isEqualTo(secondResume);
+    }
+
+    @Test
+    void shouldKeepStartDateOfTaskRunStillAtBreakpoint() {
+        State state = new State(
+            State.Type.BREAKPOINT, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.BREAKPOINT, START.plusSeconds(1))
+            )
+        );
+
+        assertThat(state.getStartDate()).isEqualTo(START);
+    }
+
+    @Test
+    void shouldKeepStartDateOfExecutionSuspendedAtBreakpointAfterItStarted() {
+        State state = new State(
+            State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.RUNNING, START.plusSeconds(1)),
+                new State.History(State.Type.BREAKPOINT, START.plusSeconds(2)),
+                new State.History(State.Type.RUNNING, START.plusSeconds(20)),
+                new State.History(State.Type.SUCCESS, END)
+            )
+        );
+
+        assertThat(state.getStartDate()).isEqualTo(START);
+    }
+
+    @Test
     void shouldGetEndDateFromLastHistoryEntryWhenTerminated() {
         // Given / When / Then
         assertThat(terminatedState().getEndDate()).contains(END);

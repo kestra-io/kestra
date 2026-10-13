@@ -36,6 +36,26 @@ function toMillis(date: Dayjs | string | number): number {
 }
 
 /**
+ * Drops the time a task run waited at a breakpoint before it ever ran, so it starts at the
+ * CREATED it got when resumed. Histories that ran before a breakpoint, like an execution's, are unchanged.
+ */
+export function dropBreakpointWait<T extends {state: string}>(histories: T[]): T[] {
+    let startIndex = 0
+    let afterBreakpoint = false
+    for (let i = 0; i < histories.length; i++) {
+        const state = histories[i].state
+        if (state === State.BREAKPOINT) {
+            afterBreakpoint = true
+        } else if (state !== State.CREATED) {
+            break
+        } else if (afterBreakpoint) {
+            startIndex = i
+        }
+    }
+    return startIndex === 0 ? histories : histories.slice(startIndex)
+}
+
+/**
  * Splits a task run's flat state-history transitions into queued, running and paused time.
  * Each transition opens a span that lasts until the next one and is attributed by the state that
  * opened it, so `queued + running + paused` is always exactly `total`.
@@ -44,10 +64,10 @@ export function computeDurationBreakdown(
     histories: DurationHistoryEntry[],
     now: number = Date.now(),
 ): DurationBreakdown {
-    const entries = histories
+    const entries = dropBreakpointWait(histories
         .map((history) => ({date: toMillis(history.date), state: history.state}))
         .filter((history) => Number.isFinite(history.date) && Boolean(history.state))
-        .sort((a, b) => a.date - b.date)
+        .sort((a, b) => a.date - b.date))
 
     if (entries.length === 0) {
         return {total: 0, queued: 0, running: 0, paused: 0, isRunning: false}

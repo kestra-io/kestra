@@ -31,7 +31,7 @@ export function getTypeAtPosition(
     const lineCounter = new LineCounter()
     parseDocument(source, {lineCounter})
     const cursorIndex =
-        lineCounter.lineStarts[position.lineNumber - 1] + position.column
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column - 1
 
     for (const type of [...types].reverse()) {
         if (cursorIndex >= type.range[0] && cursorIndex <= type.range[1]) {
@@ -49,7 +49,7 @@ export function getVersionAtPosition(
     const lineCounter = new LineCounter()
     parseDocument(source, {lineCounter})
     const cursorIndex =
-        lineCounter.lineStarts[position.lineNumber - 1] + position.column
+        lineCounter.lineStarts[position.lineNumber - 1] + position.column - 1
 
     for (const version of [...versions].reverse()) {
         if (cursorIndex >= version.range[0] && cursorIndex <= version.range[1]) {

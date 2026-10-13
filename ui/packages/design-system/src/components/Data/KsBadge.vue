@@ -1,7 +1,7 @@
 <template>
     <ElBadge
         v-bind="({...filteredProps(), ...$attrs} as BadgeProps)"
-        :class="{'kel-badge--inline': inline}"
+        :class="{'kel-badge--inline': inline, 'kel-badge--small': size === 'small'}"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -24,9 +24,10 @@
         hidden?: boolean
         showZero?: boolean
         inline?: boolean
+        size?: "small" | "default"
     }>()
 
-    const filteredProps = useFilteredProps(props, ["inline"])
+    const filteredProps = useFilteredProps(props, ["inline", "size"])
 
     defineSlots<{
         default?(): unknown
@@ -52,5 +53,11 @@
         transform: none;
         border: none;
         margin: 0;
+    }
+
+    .kel-badge--small {
+        --kel-badge-size: calc(var(--ks-font-size-2xs) + var(--ks-spacing-1));
+        --kel-badge-font-size: var(--ks-font-size-2xs);
+        --kel-badge-padding: var(--ks-spacing-1);
     }
 </style>

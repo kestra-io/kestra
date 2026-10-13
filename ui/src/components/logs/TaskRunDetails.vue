@@ -321,20 +321,19 @@
     import TaskRunLine from "../executions/TaskRunLine.vue"
     import * as FlowUtils from "../../utils/flowUtils"
     import FilePreview from "../executions/FilePreviewDrawer.vue"
-    import {apiUrl} from "override/utils/route"
     import {executionFileUrl} from "../../utils/executionUtils"
     import * as Utils from "../../utils/utils"
     import * as LogUtils from "../../utils/logs"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import {useClient, type FlowForExecution, type LogEntry, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import * as ExecutionsSDK from "@kestra-io/kestra-sdk/executions"
+    import {handledIf} from "../../utils/kestraHttp"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
 
     const {t} = useI18n()
-
-    const $http = useClient()
 
     type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
 
@@ -433,6 +432,7 @@
 
     // Reactive state
     const shownAttemptsUid = ref<string[]>([])
+    let disposed = false
     const rawLogs = ref<LogEntry[]>([])
     const timer = ref<ReturnType<typeof dayjs> | undefined>(undefined)
     const timeout = ref<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -781,6 +781,8 @@
                 )
             }
 
+            if (disposed) return
+
             for (const taskRun of currentTaskRuns.value) {
                 if (taskType(taskRun) === "io.kestra.plugin.core.flow.Loop") {
                     updateLoopStatus(taskRun.id)
@@ -842,6 +844,8 @@
     })
 
     onBeforeUnmount(() => {
+        disposed = true
+        throttledExecutionUpdate.value?.cancel()
         closeLogsSSE()
         closeTargetExecutionSSE()
         clearTimeout(timeout.value)
@@ -882,16 +886,15 @@
             return
         }
 
-        const axiosResponse = await $http.get(
-            `${apiUrl()}/executions/${followedExecution.value?.id}/file/metas?path=${path}`,
-            {
-                validateStatus: (status: number) =>
-                    status === 200 || status === 404 || status === 422,
-            },
-        )
-        logFileSizeByPath.value[path] = Utils.humanFileSize(
-            axiosResponse.data.size,
-        )
+        const fileMetadatas = await ExecutionsSDK.fileMetadatasFromExecution({executionId: followedExecution.value?.id ?? "", path}).catch((e) => {
+            if (!handledIf(e, [404, 422])) throw e
+            return undefined
+        })
+        if(fileMetadatas){
+            logFileSizeByPath.value[path] = Utils.humanFileSize(
+                fileMetadatas.size,
+            )
+        }
     }
 
     function cancelLogsSSEClose() {
@@ -918,6 +921,7 @@
     }
 
     function autoExpandBasedOnSettings() {
+        if (disposed) return
         if (autoExpandTaskRunStates.value.length === 0) {
             return
         }
@@ -986,6 +990,10 @@
         cancelLogsSSEClose()
         logsExecutionId.value = executionId
         executionsStore.followLogs({id: executionId, params: buildLogParams()}).then((sse) => {
+            if (disposed) {
+                sse.close()
+                return
+            }
             logsSSE.value = sse
 
             logsSSE.value.onmessage = (event: MessageEvent<string>) => {

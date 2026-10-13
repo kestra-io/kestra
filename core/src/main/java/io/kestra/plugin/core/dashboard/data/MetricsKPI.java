@@ -21,37 +21,30 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @Schema(
-    title = "Metrics are data exposed by tasks after execution.",
-    description = "A chart using Metrics could display the number of rows loaded in a bigQuery task or an output count from a SQL Query; anything exposed by an execution."
+    title = "Display a chart with Metrics KPI.",
+    description = "Metrics data can be aggregated in a KPI chart to track performance indicators."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Display a chart with rows inserted by Namespace.",
+            title = "Display a chart with total rows inserted.",
             full = true,
-            code = { """
+            code = """
                 charts:
-                  - id: table_metrics
-                    type: io.kestra.plugin.core.dashboard.chart.Table
+                  - id: metrics_kpi
+                    type: io.kestra.plugin.core.dashboard.chart.KPI
                     chartOptions:
-                      displayName: Rows Inserted by Namespace
+                      displayName: Total Rows Inserted
                     data:
-                      type: io.kestra.plugin.core.dashboard.data.Metrics
+                      type: io.kestra.plugin.core.dashboard.data.MetricsKPI
                       columns:
-                        namespace:
-                          field: NAMESPACE
-                        inserted_rows:
-                          field: VALUE
-                          agg: SUM
+                        field: VALUE
+                        agg: SUM
                       where:
                         - field: NAME
                           type: EQUAL_TO
                           value: rows
-                      orderBy:
-                        - column: inserted_rows
-                          order: DESC
                 """
-            }
         )
     }
 )

@@ -23,39 +23,30 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @Schema(
-    title = "Display Log data in a dashboard chart.",
-    description = "Log data can be displayed in a chart with certain parameters such as Exectution date or Log level."
+    title = "Display a chart with Logs KPI.",
+    description = "Log data can be aggregated in a KPI chart to display metrics such as log count."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Display a chart with a count of Logs per date grouped by level.",
+            title = "Display a chart with a count of error logs.",
             full = true,
-            code = { """
+            code = """
                 charts:
-                  - id: logs_timeseries
-                    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                  - id: logs_kpi
+                    type: io.kestra.plugin.core.dashboard.chart.KPI
                     chartOptions:
-                      displayName: Logs
-                      description: Logs count per date grouped by level
-                      legend:
-                        enabled: true
-                      column: date
-                      colorByColumn: level
+                      displayName: Error Logs
                     data:
-                      type: io.kestra.plugin.core.dashboard.data.Logs
+                      type: io.kestra.plugin.core.dashboard.data.LogsKPI
                       columns:
-                        date:
-                          field: DATE
-                          displayName: Execution Date
-                        level:
-                          field: LEVEL
-                        total:
-                          displayName: Total Executions
-                          agg: COUNT
-                          graphStyle: BARS
+                        field: LEVEL
+                        agg: COUNT
+                      where:
+                        - field: LEVEL
+                          type: EQUAL_TO
+                          value: ERROR
                 """
-            }
         )
     }
 )

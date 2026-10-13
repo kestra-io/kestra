@@ -47,4 +47,56 @@ class DataChartKPIValidationTest {
         assertThat(valid).isPresent();
         assertThat(valid.get().getMessage()).contains("Label filters must have a `key`.");
     }
+
+    @Test
+    void shouldValidateWhenLogsKPIChart() {
+        Chart<?> chart = YamlParser.parse(
+            """
+                id: logs_kpi
+                type: io.kestra.plugin.core.dashboard.chart.KPI
+                chartOptions:
+                  displayName: Error Logs
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.LogsKPI
+                  columns:
+                    field: LEVEL
+                    agg: COUNT
+                  where:
+                    - field: LEVEL
+                      type: EQUAL_TO
+                      value: ERROR
+                """,
+            Chart.class
+        );
+
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(chart);
+
+        assertThat(valid).isEmpty();
+    }
+
+    @Test
+    void shouldValidateWhenMetricsKPIChart() {
+        Chart<?> chart = YamlParser.parse(
+            """
+                id: metrics_kpi
+                type: io.kestra.plugin.core.dashboard.chart.KPI
+                chartOptions:
+                  displayName: Total Rows Inserted
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.MetricsKPI
+                  columns:
+                    field: VALUE
+                    agg: SUM
+                  where:
+                    - field: NAME
+                      type: EQUAL_TO
+                      value: rows
+                """,
+            Chart.class
+        );
+
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(chart);
+
+        assertThat(valid).isEmpty();
+    }
 }

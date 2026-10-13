@@ -34,7 +34,9 @@ final class SchedulableExecutionFactory {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
 
-        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), variables);
+        Map<String, Object> triggerVariables = variables == null ? Map.<String, Object>of() : Map.of("trigger", variables);
+
+        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), triggerVariables);
 
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(labels));
         executionLabels.add(new Label(Label.FROM, Label.FromLabel.TRIGGER.value));
@@ -54,7 +56,7 @@ final class SchedulableExecutionFactory {
             .scheduleDate(Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null))
             .build();
 
-        Map<String, Object> allInputs = getInputs(trigger, runContext, triggerContext.getBackfill());
+        Map<String, Object> allInputs = getInputs(trigger, runContext, triggerContext.getBackfill(), triggerVariables);
 
         Execution executionForRendering = execution.withLabels(
             LabelService.forExecution(conditionContext.getFlow(), executionLabels, execution.getId())
@@ -74,15 +76,16 @@ final class SchedulableExecutionFactory {
         );
     }
 
-    private static Map<String, Object> getInputs(Schedulable trigger, RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException {
+    private static Map<String, Object> getInputs(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> triggerVariables)
+        throws IllegalVariableEvaluationException {
         Map<String, Object> inputs = new HashMap<>();
 
         if (trigger.getInputs() != null) {
-            inputs.putAll(runContext.render(trigger.getInputs()));
+            inputs.putAll(runContext.render(trigger.getInputs(), triggerVariables));
         }
 
         if (backfill != null && backfill.getInputs() != null) {
-            inputs.putAll(runContext.render(backfill.getInputs()));
+            inputs.putAll(runContext.render(backfill.getInputs(), triggerVariables));
         }
 
         return inputs;
@@ -92,9 +95,9 @@ final class SchedulableExecutionFactory {
      * Builds the labels the trigger and its backfill contribute, without the flow's own labels: the execution
      * takes those from the flow processed for runtime when it is created.
      */
-    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> variables)
+    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> triggerVariables)
         throws IllegalVariableEvaluationException {
-        List<Label> labels = LabelService.fromTrigger(runContext, (AbstractTrigger) trigger, Map.of("trigger", variables));
+        List<Label> labels = LabelService.fromTrigger(runContext, (AbstractTrigger) trigger, triggerVariables);
 
         if (backfill != null) {
             // It is better to remove system labels before rendering

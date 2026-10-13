@@ -135,6 +135,16 @@ class AssetValidationTest {
     }
 
     @Test
+    void shouldRejectAListValueForAnOperatorThatComparesASingleValue() {
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.EQUALS, List.of("active", "expiring")))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.NOT_EQUALS, List.of("destroyed")))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+    }
+
+    @Test
     void shouldRejectARegexConditionProneToCatastrophicBacktracking() {
         assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("id", Op.REGEX, "(a+)+$"))))
             .get()

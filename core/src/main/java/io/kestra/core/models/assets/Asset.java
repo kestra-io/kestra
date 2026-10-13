@@ -47,11 +47,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
 
-    /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final Set<String> CONDITION_FIELDS = Set.of("namespace", "id", "type", "displayName", "description", "status", "ttl", "owner");
 
-    public static final String CONDITION_METADATA_PREFIX = "metadata.";
+    public static final String METADATA_PREFIX = "metadata.";
 
+    /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
 
     @Hidden
@@ -271,14 +271,14 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         return this;
     }
 
-    @AssertTrue(message = "a condition field must be namespace, id, type, displayName, description, status, ttl, owner or metadata.<key>")
+    @AssertTrue(message = "a condition field must be an asset field or metadata.<key>")
     @JsonIgnore
     public boolean isEveryConditionFieldReadable() {
         return ListUtils.emptyOnNull(assetActions).stream()
             .flatMap(action -> ListUtils.emptyOnNull(action.when()).stream())
             .map(FlowActionCondition::field)
             .allMatch(field -> field == null || CONDITION_FIELDS.contains(field)
-                || (field.startsWith(CONDITION_METADATA_PREFIX) && field.length() > CONDITION_METADATA_PREFIX.length()));
+                || (field.startsWith(METADATA_PREFIX) && field.length() > METADATA_PREFIX.length()));
     }
 
     public Asset withAssetActions(List<FlowAction> assetActions) {

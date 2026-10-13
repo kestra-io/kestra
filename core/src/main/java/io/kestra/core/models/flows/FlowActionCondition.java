@@ -38,11 +38,13 @@ public record FlowActionCondition(
             || (value != null && !"".equals(value));
     }
 
-    @AssertTrue(message = "value must be a non-empty list when op is IN or NOT_IN")
+    @AssertTrue(message = "value must be a non-empty list for IN and NOT_IN, and a single value for the other operators")
     @JsonIgnore
-    public boolean isListGivenWhenMatchingAny() {
-        return (QueryFilter.Op.IN != op && QueryFilter.Op.NOT_IN != op)
-            || (value instanceof List<?> values && !values.isEmpty());
+    public boolean isValueShapedForOp() {
+        if (QueryFilter.Op.IN == op || QueryFilter.Op.NOT_IN == op) {
+            return value instanceof List<?> values && !values.isEmpty();
+        }
+        return !(value instanceof List<?>);
     }
 
     @AssertTrue(message = "value must be a valid regex pattern, short and free of nested quantifiers, when op is REGEX")

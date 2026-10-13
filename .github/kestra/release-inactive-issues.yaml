@@ -1,0 +1,210 @@
+id: release-inactive-issues
+namespace: community.github
+
+description: |
+  Reminds the assignee of an issue that has seen no activity for `inactiveDays` days and, if there is still none `inactiveDays` days after the reminder, unassigns them so that someone else can pick the issue up. It covers every repository of the organization.
+
+  **It is disabled by default.** The maintainers decide when to turn it on, by enabling the `daily` trigger, and can run the flow by hand at any time.
+
+  Each run takes the `batchSize` least recently updated open issues that have an assignee and have been idle for `inactiveDays` days. For each of them it:
+  - does nothing when an assignee is a maintainer (anyone with push access to the repository), when an open pull request is going to close the issue, or when the issue has one of the `exemptLabels` (the label to use for a contributor who is blocked or waiting for a maintainer);
+  - posts a reminder when the last comment is not a reminder;
+  - unassigns the assignees, adds `releasedLabel` if one is set, and says so, when the last comment is a reminder: it was left unanswered for `inactiveDays` days.
+
+  Any activity on the issue, such as a comment, a label or a linked pull request, restarts the count. The reminder is recognised by a hidden marker, so nothing is stored outside GitHub, and an assignee is never unassigned without having been reminded first.
+
+  ### Setup
+  1. Create the secret `GITHUB_TOKEN`. It needs read and write on Issues and read on Pull requests in every repository of the organization, and its owner needs push access to them: GitHub requires that to list the collaborators of a repository.
+  2. Enable the `daily` trigger when the maintainers are ready.
+
+# Two runs must not overlap, or the same issues would be reminded twice.
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+variables:
+  organization: kestra-io
+  inactiveDays: 7
+  # One page of search results, the most GitHub returns. Issues that are skipped (maintainers, open pull requests)
+  # keep their place at the front, so a small batch could be filled by them for good.
+  batchSize: 100
+  exemptLabels: [blocked]
+  # Label added to a released issue so that it is easy to find; none when empty.
+  releasedLabel: ''
+  # The first line of every reminder, hidden in the rendered comment: it is how a later run knows the reminder was sent.
+  reminderMarker: '<!-- release-inactive-issues:reminder -->'
+  issueQuery: |
+    query($owner: String!, $name: String!, $number: Int!) {
+      repository(owner: $owner, name: $name) {
+        issue(number: $number) {
+          comments(last: 1) {
+            nodes {
+              body
+            }
+          }
+          closedByPullRequestsReferences(first: 1, includeClosedPrs: false) {
+            totalCount
+          }
+        }
+      }
+    }
+
+triggers:
+  - id: daily
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * *"
+    disabled: true
+
+tasks:
+  - id: window
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      cutoff: >-
+        {{ now(timeZone='UTC') | dateAdd(-vars.inactiveDays, 'DAYS', format="yyyy-MM-dd'T'HH:mm:ss'Z'") }}
+
+  # "assignee:*" matches any assignee; "-no:assignee" looks equivalent but also returns unassigned issues.
+  # Archived repositories are left out because nobody can act on their issues.
+  - id: search
+    type: io.kestra.plugin.core.http.Request
+    uri: "https://api.github.com/search/issues?q=org:{{ vars.organization }}+is:issue+is:open+archived:false+assignee:*{% for label in vars.exemptLabels %}+-label:%22{{ label | urlencode }}%22{% endfor %}+updated:%3C{{ outputs.window.values.cutoff }}&sort=updated&order=asc&per_page={{ vars.batchSize }}"
+    headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+    timeout: PT30S
+    retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+  - id: each
+    type: io.kestra.plugin.core.flow.Loop
+    values: "{{ outputs.search.body | jq('.items') | first }}"
+    concurrencyLimit: 1
+    tasks:
+      # A failure on one issue must not stop the others: the oldest issue is always first, so it would block every run.
+      - id: isolate
+        type: io.kestra.plugin.core.flow.AllowFailure
+        tasks:
+          - id: issue
+            type: io.kestra.plugin.core.output.OutputValues
+            values:
+              repository: >-
+                {{ item.value | jq('.repository_url | split("/") | .[-2:] | join("/")') | first }}
+              owner: >-
+                {{ item.value | jq('.repository_url | split("/") | .[-2]') | first }}
+              name: >-
+                {{ item.value | jq('.repository_url | split("/") | .[-1]') | first }}
+              number: "{{ item.value | jq('.number') | first }}"
+              mentions: >-
+                {{ item.value | jq('[.assignees[].login | "@" + .] | join(", ")') | first }}
+
+          - id: get_issue
+            type: io.kestra.plugin.core.http.Request
+            method: POST
+            uri: https://api.github.com/graphql
+            contentType: application/json
+            headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+            timeout: PT30S
+            retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+            body: >-
+              {{ {
+                'query': vars.issueQuery,
+                'variables': {
+                  'owner': outputs.issue.values.owner,
+                  'name': outputs.issue.values.name,
+                  'number': item.value | jq('.number') | first
+                }
+              } }}
+
+          - id: get_maintainers
+            type: io.kestra.plugin.core.http.Request
+            uri: "https://api.github.com/repos/{{ outputs.issue.values.repository }}/collaborators?permission=push&per_page=100"
+            headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+            timeout: PT30S
+            retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+          - id: facts
+            type: io.kestra.plugin.core.output.OutputValues
+            values:
+              # The issue was deleted or transferred since the search.
+              exists: >-
+                {{ outputs.get_issue.body | jq('.data.repository.issue != null') | first }}
+              # Both lists go through one JSON object so that jq can intersect them.
+              hasMaintainer: >-
+                {{ {'assignees': (item.value | jq('[.assignees[].login]') | first), 'maintainers': (outputs.get_maintainers.body | jq('[.[].login]') | first)} | toJson | jq('(.assignees - (.assignees - .maintainers)) | length > 0') | first }}
+              hasOpenPullRequest: >-
+                {{ outputs.get_issue.body | jq('(.data.repository.issue.closedByPullRequestsReferences.totalCount // 0) > 0') | first }}
+              wasReminded: >-
+                {{ outputs.get_issue.body | jq('.data.repository.issue.comments.nodes[0].body // ""') | first | startsWith(vars.reminderMarker) }}
+
+          # The first matching rule wins. A reminder is the last comment only if nobody has written since,
+          # and the search only returns issues idle for `inactiveDays`, so a reminded issue here went unanswered.
+          - id: decide
+            type: io.kestra.plugin.core.output.OutputValues
+            values:
+              outcome: >-
+                {%- if outputs.facts.values.exists != 'true' -%}GONE
+                {%- elseif outputs.facts.values.hasMaintainer == 'true' -%}MAINTAINER
+                {%- elseif outputs.facts.values.hasOpenPullRequest == 'true' -%}OPEN_PULL_REQUEST
+                {%- elseif outputs.facts.values.wasReminded == 'true' -%}RELEASE
+                {%- else -%}REMIND
+                {%- endif -%}
+
+          - id: audit
+            type: io.kestra.plugin.core.log.Log
+            message: "{{ outputs.issue.values.repository }}#{{ outputs.issue.values.number }}: {{ outputs.decide.values.outcome }}"
+
+          - id: remind
+            type: io.kestra.plugin.core.flow.If
+            condition: "{{ outputs.decide.values.outcome == 'REMIND' }}"
+            then:
+              - id: reminder
+                type: io.kestra.plugin.core.output.OutputValues
+                values:
+                  message: |-
+                    {{ vars.reminderMarker }}
+                    {{ outputs.issue.values.mentions }} this issue has seen no activity for {{ vars.inactiveDays }} days. Are you still working on it? Reply here, or open a pull request that links it, to keep it. Without any activity in the next {{ vars.inactiveDays }} days it will be unassigned so that someone else can pick it up. If you are waiting for a maintainer, say so here.
+
+              - id: reminder_comment
+                type: io.kestra.plugin.core.http.Request
+                method: POST
+                uri: "https://api.github.com/repos/{{ outputs.issue.values.repository }}/issues/{{ outputs.issue.values.number }}/comments"
+                headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+                contentType: application/json
+                body: "{{ {'body': outputs.reminder.values.message} }}"
+                timeout: PT30S
+                retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+          - id: release
+            type: io.kestra.plugin.core.flow.If
+            condition: "{{ outputs.decide.values.outcome == 'RELEASE' }}"
+            then:
+              - id: unassign
+                type: io.kestra.plugin.core.http.Request
+                method: DELETE
+                uri: "https://api.github.com/repos/{{ outputs.issue.values.repository }}/issues/{{ outputs.issue.values.number }}/assignees"
+                headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+                contentType: application/json
+                body: "{{ {'assignees': item.value | jq('[.assignees[].login]') | first} }}"
+                timeout: PT30S
+                retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+              - id: label
+                type: io.kestra.plugin.core.flow.If
+                condition: "{{ vars.releasedLabel != '' }}"
+                then:
+                  - id: add_label
+                    type: io.kestra.plugin.core.http.Request
+                    method: POST
+                    uri: "https://api.github.com/repos/{{ outputs.issue.values.repository }}/issues/{{ outputs.issue.values.number }}/labels"
+                    headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+                    contentType: application/json
+                    body: "{{ {'labels': [vars.releasedLabel]} }}"
+                    timeout: PT30S
+                    retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}
+
+              # Posted last, so that a failure in between cannot announce something that did not happen.
+              - id: release_comment
+                type: io.kestra.plugin.core.http.Request
+                method: POST
+                uri: "https://api.github.com/repos/{{ outputs.issue.values.repository }}/issues/{{ outputs.issue.values.number }}/comments"
+                headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+                contentType: application/json
+                body: "{{ {'body': outputs.issue.values.mentions ~ ' there has been no activity on this issue for ' ~ (vars.inactiveDays * 2) ~ ' days, so it is now unassigned to let someone else pick it up. You are welcome to take it again with `/assign` if you are still interested.'} }}"
+                timeout: PT30S
+                retry: {type: exponential, interval: PT2S, maxInterval: PT30S, maxAttempts: 4}

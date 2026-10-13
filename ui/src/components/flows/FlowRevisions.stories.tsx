@@ -9,6 +9,7 @@ import {KsNotification} from "@kestra-io/design-system"
 import {apiFetch, mockStoryApiRoutes} from "../../../.storybook/apiMock"
 import FlowRevisions from "./FlowRevisions.vue"
 import {useFlowStore, type FlowRevision} from "../../stores/flow"
+import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
 
 const NAMESPACE = "company.team"
 const FLOW_ID = "restore-revisions"
@@ -140,6 +141,7 @@ function restoreStory(side: "left" | "right"): Story {
             const flowStore = useFlowStore()
             await expect(flowStore.haveChange).toBe(false)
             await expect(flowStore.flowYamlOrigin).toBe(flowStore.flow?.source)
+            await waitFor(() => expect(useUnsavedChangesStore().unsavedChange).toBe(false))
         },
     }
 }
@@ -210,6 +212,7 @@ export const ValidationFailure: Story = {
             await expect(storyRouter.currentRoute.value.query).toEqual({revisionLeft: "4", revisionRight: "9", keep: "filter"})
             await expect(useFlowStore().haveChange).toBe(false)
             await expect(useFlowStore().flowYamlOrigin).toBe(useFlowStore().flow?.source)
+            await waitFor(() => expect(useUnsavedChangesStore().unsavedChange).toBe(false))
         } finally {
             finishValidation()
         }

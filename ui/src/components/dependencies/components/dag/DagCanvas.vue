@@ -4,7 +4,7 @@
         class="canvas"
         :style="{
             '--ks-dag-card-width': `${DAG_CARD.width}px`,
-            '--ks-dag-card-height': `${DAG_CARD.height}px`,
+            '--ks-dag-card-height': `${cardHeight}px`,
         }"
     >
         <VueFlow
@@ -52,9 +52,10 @@
     import AssetNode from "./AssetNode.vue"
     import {computeDagLayout} from "../../utils/dagLayout"
     import {computeTrace, traceEdgeKey} from "../../utils/dagTrace"
-    import {DAG_CARD, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
+    import {DAG_CARD, DAG_CARD_WITH_TESTS_HEIGHT, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
+    import {hasDbtTests} from "../../utils/dbtTests"
     import {ASSET, nodesOf, edgesOf} from "../../utils/types"
-    import type {Element} from "../../utils/types"
+    import type {Element, DbtTestFields} from "../../utils/types"
 
     const props = defineProps<{
         elements: Element[];
@@ -83,6 +84,11 @@
 
     const nodes = computed(() => nodesOf(props.elements))
 
+    // One height for the whole graph: only graphs with a dbt test footer pay for the extra row.
+    const cardHeight = computed(() => (nodes.value.some((node) => node.metadata.subtype === ASSET && hasDbtTests(node.metadata))
+        ? DAG_CARD_WITH_TESTS_HEIGHT
+        : DAG_CARD.height))
+
     const edges = computed(() => {
         const known = new Set(nodes.value.map((node) => node.id))
         return edgesOf(props.elements).filter((edge) => known.has(edge.source) && known.has(edge.target))
@@ -100,7 +106,7 @@
             edges.value.map(({source, target}) => ({source, target})),
             {
                 columnGap: DAG_CARD.width + 120,
-                rowGap: DAG_CARD.height + 32,
+                rowGap: cardHeight.value + 32,
                 priority: props.priorityOf,
                 ownColumn: (id) => flowNodeIDs.value.has(id) && produced.has(id),
             },
@@ -113,7 +119,7 @@
             return []
         }
 
-        const metadata = node.metadata as {
+        const metadata = node.metadata as DbtTestFields & {
             assetType?: string;
             producer?: string;
             status?: string;
@@ -127,7 +133,7 @@
             type: "asset",
             position: {
                 x: position.x - DAG_CARD.width / 2,
-                y: position.y - DAG_CARD.height / 2,
+                y: position.y - cardHeight.value / 2,
             },
             sourcePosition: Position.Right,
             targetPosition: Position.Left,
@@ -138,6 +144,9 @@
                 assetType: isAsset ? metadata.assetType : undefined,
                 status: isAsset ? (metadata.status ?? "unknown") : "unknown",
                 updated: metadata.updated,
+                dbtTestStatus: isAsset ? metadata.dbtTestStatus : undefined,
+                dbtTestsTotal: isAsset ? metadata.dbtTestsTotal : undefined,
+                dbtTestsFailed: isAsset ? metadata.dbtTestsFailed : undefined,
             },
         }]
     }))
@@ -201,7 +210,7 @@
             x,
             y,
             width: Math.max(...xs) - x + DAG_CARD.width,
-            height: Math.max(...ys) - y + DAG_CARD.height,
+            height: Math.max(...ys) - y + cardHeight.value,
         }
     })
 

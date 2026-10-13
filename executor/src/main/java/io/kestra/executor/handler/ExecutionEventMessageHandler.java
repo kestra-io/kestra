@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Gatherers;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
@@ -373,11 +374,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         // subflow execution results
                         if (!executor.getSubflowExecutionResults().isEmpty()) {
-                            executor.getSubflowExecutionResults()
-                                .forEach(throwConsumer(subflowExecutionResult ->
-                                {
-                                    subflowExecutionResultQueue.emit(subflowExecutionResult);
-                                }));
+                            subflowExecutionResultQueue.emit(executor.getSubflowExecutionResults());
                         }
 
                         // schedulerDelay
@@ -423,7 +420,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         // trigger new loop executions
                         if (!executor.getLoopExecutions().isEmpty()) {
-                            executor.getLoopExecutions().forEach(throwConsumer(loopExecution -> executionQueue.emit(loopExecution)));
+                            // batch emission in 100 as for unbounded loops there can be a huge number of executions
+                            executor.getLoopExecutions().stream()
+                                .gather(Gatherers.windowFixed(100))
+                                .forEach(throwConsumer(it -> executionQueue.emit(it)));
                         }
 
                         if (executor.getExecution().getState().getCurrent().isTerminatedInError()) {

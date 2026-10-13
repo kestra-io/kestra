@@ -11,8 +11,8 @@ import {isExecutionTabEnabled} from "override/components/executions/executionTab
 
 const MAX_CRUMB_VALUE_LENGTH = 20
 
-function formatLoopCrumbLabel(taskId: string | undefined, value: string | undefined, index: number | undefined): string {
-    const raw = value ?? (index !== undefined ? String(index) : "")
+function formatLoopCrumbLabel(taskId?: string | null, value?: string | null, index?: number | null): string {
+    const raw = value ?? (index !== undefined && index !== null ? String(index) : "")
     const displayValue = raw.length > MAX_CRUMB_VALUE_LENGTH ? `${raw.slice(0, MAX_CRUMB_VALUE_LENGTH)}…` : raw
     return taskId ? `${taskId} (${displayValue})` : displayValue
 }

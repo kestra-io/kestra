@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.models.QueryFilter.Op;
+import io.kestra.core.models.dashboards.filters.AbstractFilter.FilterType;
 import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.models.flows.FlowActionCondition;
 import io.kestra.core.models.validations.ModelValidator;
@@ -118,50 +118,60 @@ class AssetValidationTest {
 
     @Test
     void shouldRejectAConditionThatComparesToNoValue() {
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.EQUALS, null))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", FilterType.EQUAL_TO, null))))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.IS_NULL, null))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", FilterType.IS_NULL, null))))
             .isEmpty();
     }
 
     @Test
     void shouldRejectAnInConditionWhoseValueIsNotAList() {
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.IN, "active,expiring"))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", FilterType.IN, "active,expiring"))))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.IN, List.of("active", "expiring")))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", FilterType.IN, List.of("active", "expiring")))))
             .isEmpty();
     }
 
     @Test
     void shouldRejectAListValueForAnOperatorThatComparesASingleValue() {
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.EQUALS, List.of("active", "expiring")))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", FilterType.EQUAL_TO, List.of("active", "expiring")))))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", Op.NOT_EQUALS, List.of("destroyed")))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", FilterType.NOT_EQUAL_TO, List.of("destroyed")))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+    }
+
+    @Test
+    void shouldRejectAnOperatorThatDoesNotCompareAFieldToAValue() {
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("status", FilterType.OR, "active"))))
+            .get()
+            .isInstanceOf(ConstraintViolationException.class);
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.enabled", FilterType.IS_TRUE, "true"))))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
     }
 
     @Test
     void shouldRejectARegexConditionProneToCatastrophicBacktracking() {
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("id", Op.REGEX, "(a+)+$"))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("id", FilterType.REGEX, "(a+)+$"))))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
     }
 
     @Test
     void shouldRejectAConditionOnAFieldTheAssetDoesNotHave() {
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("region", Op.EQUALS, "eu"))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("region", FilterType.EQUAL_TO, "eu"))))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.", Op.EQUALS, "x"))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.", FilterType.EQUAL_TO, "x"))))
             .get()
             .isInstanceOf(ConstraintViolationException.class);
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.region", Op.EQUALS, "eu"))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("metadata.region", FilterType.EQUAL_TO, "eu"))))
             .isEmpty();
-        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("owner", Op.IS_NULL, null))))
+        assertThat(modelValidator.isValid(assetWithCondition(new FlowActionCondition("owner", FilterType.IS_NULL, null))))
             .isEmpty();
     }
 

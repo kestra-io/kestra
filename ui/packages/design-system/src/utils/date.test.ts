@@ -1,5 +1,13 @@
-import {describe, test, expect} from "vitest"
-import {parseIso, timezonesWithOffset, toIsoKeepOffset} from "./date"
+import {describe, test, expect, beforeEach, afterEach} from "vitest"
+import {
+    parseIso,
+    timezonesWithOffset,
+    toIsoKeepOffset,
+    currentLocale,
+    setLocale,
+    currentTimezone,
+    TIMEZONE_STORAGE_KEY,
+} from "./date"
 import dayjs from "../date/dayjs"
 
 describe("parseIso", () => {
@@ -45,6 +53,71 @@ describe("timezonesWithOffset", () => {
     test("should not duplicate a stored zone that is already canonical", () => {
         const zones = timezonesWithOffset("Asia/Tokyo")
         expect(zones.filter((z) => z.zone === "Asia/Tokyo")).toHaveLength(1)
+    })
+})
+
+describe("currentLocale and setLocale", () => {
+    beforeEach(async () => {
+        await setLocale("en")
+    })
+
+    afterEach(async () => {
+        await setLocale("en")
+    })
+
+    test("should return 'en' by default when none is stored or set", () => {
+        expect(currentLocale()).toBe("en")
+    })
+
+    test("should change what currentLocale returns when setLocale is called", async () => {
+        await setLocale("fr")
+        expect(currentLocale()).toBe("fr")
+
+        await setLocale("de")
+        expect(currentLocale()).toBe("de")
+    })
+
+    test("should normalize case and underscore in locale keys, e.g. pt_BR to pt-br", async () => {
+        await setLocale("pt_BR")
+        expect(currentLocale()).toBe("pt-br")
+    })
+
+    test("should affect subsequent date formatting, not just the getter", async () => {
+        await setLocale("fr")
+        expect(dayjs("2026-07-24").format("MMMM")).toBe("juillet")
+
+        await setLocale("en")
+        expect(dayjs("2026-07-24").format("MMMM")).toBe("July")
+    })
+
+    test("should fallback to 'en' rather than throwing on an unknown or malformed locale", async () => {
+        await setLocale("unsupported_xyz_locale")
+        expect(currentLocale()).toBe("en")
+    })
+})
+
+describe("currentTimezone", () => {
+    beforeEach(() => {
+        localStorage.clear()
+    })
+
+    afterEach(() => {
+        localStorage.clear()
+    })
+
+    test("should return the stored timezone when set in localStorage", () => {
+        localStorage.setItem(TIMEZONE_STORAGE_KEY, "America/New_York")
+        expect(currentTimezone()).toBe("America/New_York")
+    })
+
+    test("should fall back to the browser's guessed timezone when none is stored", () => {
+        localStorage.removeItem(TIMEZONE_STORAGE_KEY)
+        expect(currentTimezone()).toBe(dayjs.tz.guess())
+    })
+
+    test("should fall back to guessed timezone when stored value is empty", () => {
+        localStorage.setItem(TIMEZONE_STORAGE_KEY, "")
+        expect(currentTimezone()).toBe(dayjs.tz.guess())
     })
 })
 

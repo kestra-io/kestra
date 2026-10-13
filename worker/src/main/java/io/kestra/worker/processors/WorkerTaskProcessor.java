@@ -118,18 +118,23 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
             } catch (Exception e) {
                 runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
+                for (TaskRun unreached : workingDirectory.unreachedSubtaskRuns(workerTask, Set.of())) {
+                    workerTaskResultQueue.put(new WorkerTaskResult(unreached));
+                }
                 workerTask = workerTask.withTaskRun(workerTask.fail());
                 workerTaskResultQueue.put(new WorkerTaskResult(workerTask.getTaskRun()));
                 return;
             }
 
             // execute all tasks
+            Set<String> reachedTaskIds = new HashSet<>();
             for (Task currentTask : workingDirectory.getTasks()) {
                 if (Boolean.TRUE.equals(currentTask.getDisabled())) {
                     continue;
                 }
+                reachedTaskIds.add(currentTask.getId());
                 WorkerTask currentWorkerTask = workingDirectory.workerTask(
-                    workerTask.getTaskRun(),
+                    workerTask,
                     currentTask,
                     runContext.cloneForPlugin(currentTask)
                 );
@@ -162,6 +167,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
                 // create the next RunContext populated with the previous WorkerTaskResult
                 runContext = runContextInitializer.forWorker(runContext.clone(), workerTaskResult, workerTask.getTaskRun());
+            }
+
+            for (TaskRun unreached : workingDirectory.unreachedSubtaskRuns(workerTask, reachedTaskIds)) {
+                workerTaskResultQueue.put(new WorkerTaskResult(unreached));
             }
 
             // postExecuteTasks

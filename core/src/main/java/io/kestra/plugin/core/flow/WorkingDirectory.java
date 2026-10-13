@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -256,21 +257,49 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         return hasInFlightSubtask ? Optional.empty() : super.resolveState(runContext, execution, parentTaskRun);
     }
 
-    public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {
+    /**
+     * The task runs of the subtasks of a WorkingDirectory that runs again, to send along with it: subtasks run inside
+     * the Worker, which can only add an attempt to the task run of a subtask it is given. The attempt of a subtask
+     * left running by a lost run is marked as resubmitted.
+     */
+    public static List<TaskRun> subtaskRunsToResume(Execution execution, TaskRun parent) {
+        return ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .filter(taskRun -> parent.getId().equals(taskRun.getParentTaskRunId()))
+            .map(taskRun -> taskRun.getState().isTerminated() ? taskRun : taskRun.onRunningResend())
+            .toList();
+    }
+
+    /**
+     * The subtasks left running by a lost run that this run did not reach, ended as resubmitted so that they do not
+     * keep the WorkingDirectory running.
+     */
+    public List<TaskRun> unreachedSubtaskRuns(WorkerTask workingDirectory, Set<String> reachedTaskIds) {
+        return ListUtils.emptyOnNull(workingDirectory.getSubtaskRuns()).stream()
+            .filter(taskRun -> !reachedTaskIds.contains(taskRun.getTaskId()) && !taskRun.getState().isTerminated())
+            .map(taskRun -> taskRun.withState(State.Type.RESUBMITTED))
+            .toList();
+    }
+
+    public WorkerTask workerTask(WorkerTask workingDirectory, Task task, RunContext runContext) {
+        TaskRun parent = workingDirectory.getTaskRun();
+        TaskRun taskRun = ListUtils.emptyOnNull(workingDirectory.getSubtaskRuns()).stream()
+            .filter(subtaskRun -> task.getId().equals(subtaskRun.getTaskId()))
+            .findFirst()
+            .orElseGet(() -> TaskRun.builder()
+                .id(IdUtils.create())
+                .tenantId(parent.getTenantId())
+                .executionId(parent.getExecutionId())
+                .namespace(parent.getNamespace())
+                .flowId(parent.getFlowId())
+                .taskId(task.getId())
+                .parentTaskRunId(parent.getId())
+                .state(new State())
+                .build()
+            );
+
         return WorkerTask.builder()
             .task(task)
-            .taskRun(
-                TaskRun.builder()
-                    .id(IdUtils.create())
-                    .tenantId(parent.getTenantId())
-                    .executionId(parent.getExecutionId())
-                    .namespace(parent.getNamespace())
-                    .flowId(parent.getFlowId())
-                    .taskId(task.getId())
-                    .parentTaskRunId(parent.getId())
-                    .state(new State())
-                    .build()
-            )
+            .taskRun(taskRun)
             .data(WorkerTaskData.from(runContext))
             .build();
     }

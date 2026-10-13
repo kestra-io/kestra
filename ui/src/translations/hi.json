@@ -984,7 +984,6 @@
     "warning detected": "चेतावनी(याँ) मिलीं।",
     "informative notice": "नोट(s)",
     "open": "खोलें",
-    "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
     "admin": "प्रशासनिक",
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
     "commit_id": "कमिट id",

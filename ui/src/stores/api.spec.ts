@@ -53,7 +53,6 @@ describe("api store events", () => {
         capturePosthogEvent.mockClear()
         disablePosthog.mockClear()
         setActivePinia(createPinia())
-        localStorage.clear()
     })
 
     it("buffers events until configs are available and flushes", async () => {

@@ -546,6 +546,31 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldKeepNextEvaluationDateWhenReEnablingScheduleOnDatesWithRecoverTrueAndConfiguredLastAndNoPastDate() {
+        // GIVEN
+        ZonedDateTime futureDate = SchedulerClock.now().plusDays(4);
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, SchedulerClock.now().minusDays(2))
+                .updateForNextEvaluationDate(CLOCK, futureDate)
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.flowWithScheduleOnDate(
+            "UTC", List.of(futureDate), builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.LAST).build()
+        )));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(futureDate.toInstant());
+    }
+
+    @Test
     void shouldIgnoreRecoverMissedSchedulesWhenDisablingTrigger() {
         // GIVEN
         ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().plusMinutes(5);
@@ -754,6 +779,7 @@ class TriggerEventHandlerTest {
         // GIVEN — a realtime trigger running on a worker (locked) whose definition changed
         TriggerState realtimeState = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
+            .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true);
         triggerStateStore.save(realtimeState);
         FlowWithSource flow = Fixtures.flowWithTrigger(
@@ -773,6 +799,8 @@ class TriggerEventHandlerTest {
         Mockito.verify(executionKilledQueue).emit(killed.capture());
         assertThat(killed.getValue()).isInstanceOf(ExecutionKilledTrigger.class);
         assertThat(((ExecutionKilledTrigger) killed.getValue()).getTriggerId()).isEqualTo(triggerId.getTriggerId());
+        // fenced to the running dispatch, so a worker that has not registered it yet can still apply it
+        assertThat(((ExecutionKilledTrigger) killed.getValue()).getDispatchEpoch()).isEqualTo(realtimeState.getDispatchEpoch());
         // EXECUTED is the only state forwarded to the workers
         assertThat(killed.getValue().getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
     }
@@ -945,17 +973,18 @@ class TriggerEventHandlerTest {
 
     @Test
     void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
-        // GIVEN — a realtime trigger on its second dispatch (epoch 2), running on worker-2
-        TriggerState realtimeState = TriggerState
+        // GIVEN — a realtime trigger on its second dispatch, running on worker-2
+        TriggerState firstDispatch = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
-            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK);
+        TriggerState realtimeState = firstDispatch
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-2");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        // a FAILED termination left over from the first dispatch (epoch 1)
-        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, 1L);
+        // a FAILED termination left over from the first dispatch
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, firstDispatch.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -969,17 +998,18 @@ class TriggerEventHandlerTest {
 
     @Test
     void shouldIgnoreStaleWorkerLostWhenDispatchEpochSuperseded() {
-        // GIVEN — a realtime trigger re-dispatched to the same worker (epoch 2)
-        TriggerState realtimeState = TriggerState
+        // GIVEN — a realtime trigger re-dispatched to the same worker
+        TriggerState firstDispatch = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
-            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK);
+        TriggerState realtimeState = firstDispatch
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        // a worker-loss notice from the first dispatch (epoch 1) on the same worker
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", 1L);
+        // a worker-loss notice from the first dispatch on the same worker
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", firstDispatch.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);

@@ -79,6 +79,7 @@ public class AssertTest {
 
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value1'")).count()).isEqualTo(1L);
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value2'")).count()).isEqualTo(1L);
+        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("rendered to `false`")).count()).isEqualTo(2L);
 
         assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("success")).findFirst().orElseThrow().getValue()).isEqualTo(3d);
         assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("failed")).findFirst().orElseThrow().getValue()).isEqualTo(2d);
@@ -93,6 +94,9 @@ public class AssertTest {
 
     @Test
     void shouldFailWhenConditionEvaluatesToNull() {
+        List<LogEntry> logs = new ArrayList<>();
+        logQueue.addListener(logs::add);
+
         Assert task = Assert.builder()
             .id(IdUtils.create())
             .type(Assert.class.getName())
@@ -108,5 +112,8 @@ public class AssertTest {
         Exception exception = assertThrows(Exception.class, () -> task.run(runContext));
 
         assertThat(exception.getMessage()).contains("1 assertion failed");
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 1);
+        assertThat(matchingLog.get(0).getMessage()).contains("rendered to `null`");
     }
 }

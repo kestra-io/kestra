@@ -53,7 +53,22 @@ describe("KsThemePicker", () => {
         expect(preview.find(".theme-window").exists()).toBe(false)
     })
 
-    test("emits the chosen value", async () => {
+    test("rings only a slot preview, since the built-in miniature shows its selection on its own frame", () => {
+        const builtIn = mount(KsThemePicker, {
+            props: {modelValue: "light", options: OPTIONS},
+            global: globalConfig,
+        })
+        expect(builtIn.find(".theme-picker__preview--custom").exists()).toBe(false)
+
+        const custom = mount(KsThemePicker, {
+            props: {modelValue: "ocean", options: [{value: "ocean", label: "Ocean"}]},
+            slots: {preview: "<span />"},
+            global: globalConfig,
+        })
+        expect(custom.find(".theme-picker__option--selected .theme-picker__preview--custom").exists()).toBe(true)
+    })
+
+        test("emits the chosen value", async () => {
         const wrapper = mount(KsThemePicker, {
             props: {modelValue: "light", options: OPTIONS},
             global: globalConfig,

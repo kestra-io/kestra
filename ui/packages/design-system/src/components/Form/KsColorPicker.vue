@@ -1,7 +1,7 @@
 <template>
     <ElColorPicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs, ...(alphaOnSurface && {popperClass: ALPHA_ON_SURFACE})} as ColorPickerProps)"
+        v-bind="({...filteredProps(), ...$attrs, ...(alphaOnSurface && {popperClass: [$attrs.popperClass ?? $attrs['popper-class'], ALPHA_ON_SURFACE]})} as ColorPickerProps)"
         :class="{[ALPHA_ON_SURFACE]: alphaOnSurface}"
         @change="emit('change', $event)"
         @active-change="emit('activeChange', $event as string)"
@@ -61,12 +61,12 @@
     }
 
     .kel-color-picker.ks-color-picker--alpha-on-surface,
-    .kel-color-picker__panel.ks-color-picker--alpha-on-surface {
+    .kel-color-picker__panel.ks-color-picker--alpha-on-surface .kel-color-picker-panel {
         --kel-color-picker-alpha-bg-a: var(--ks-bg-base);
         --kel-color-picker-alpha-bg-b: var(--ks-bg-base);
+    }
 
-        .kel-color-predefine__color-selector.is-alpha {
-            background: var(--ks-bg-base);
-        }
+    .kel-color-picker__panel.ks-color-picker--alpha-on-surface .kel-color-predefine__color-selector.is-alpha {
+        background: var(--ks-bg-base);
     }
 </style>

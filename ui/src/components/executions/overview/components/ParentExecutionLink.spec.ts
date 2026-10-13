@@ -1,9 +1,9 @@
 import {describe, expect, it} from "vitest"
 import {RouterLink, createMemoryHistory, createRouter} from "vue-router"
 
-import ParentExecutionLink from "../../../../../../src/components/executions/overview/components/ParentExecutionLink.vue"
-import type {Execution} from "../../../../../../src/stores/executions"
-import {i18nMount} from "../../../../i18nMount"
+import ParentExecutionLink from "./ParentExecutionLink.vue"
+import type {Execution} from "../../../../stores/executions"
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const LINK = "[data-test=\"execution-parent-link\"]"
 const ORIGINAL = "[data-test=\"execution-original-link\"]"

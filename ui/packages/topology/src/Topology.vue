@@ -223,14 +223,7 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {
-        cssVar as cssVariable,
-        State,
-        KsTooltip,
-        useTaskIcon,
-        type PluginIconData,
-        type PluginIconMap,
-    } from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"

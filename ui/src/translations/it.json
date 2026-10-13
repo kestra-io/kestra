@@ -1825,7 +1825,18 @@
       "compact": "Vista predefinita",
       "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task",
       "fullscreen": "Logs a schermo intero",
-      "exit_fullscreen": "Esci dalla modalità a schermo intero"
+      "exit_fullscreen": "Esci dalla modalità a schermo intero",
+      "loop": {
+        "this-execution": "Questa esecuzione",
+        "with-iterations": "Con le iterazioni del loop",
+        "batch-range": "Iterazioni fallite {from}–{to} di {total}",
+        "empty-title": "Nessun log corrispondente",
+        "empty-description": "Nessun log corrisponde al livello selezionato in questa esecuzione o nelle sue iterazioni del loop fallite. Abbassa il livello per vederne di più.",
+        "scope-to": "Limita il grafo e i log a {scope}",
+        "show-in-overview": "Mostra nella panoramica",
+        "show-in-overview-for": "Mostra {scope} nella panoramica",
+        "mode-label": "Origine dei log"
+      }
     },
     "execution_deletion": {
       "logs": "Elimina logs",

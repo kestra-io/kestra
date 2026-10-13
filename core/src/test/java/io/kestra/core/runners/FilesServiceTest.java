@@ -20,7 +20,6 @@ import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageInterface;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
@@ -39,8 +38,6 @@ class FilesServiceTest {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Inject
-    private StorageInterface storageInterface;
 
     @Inject
     private NamespaceFactory namespaceFactory;
@@ -163,7 +160,7 @@ class FilesServiceTest {
     private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "namespace";
         String filePath = "file.txt";
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }

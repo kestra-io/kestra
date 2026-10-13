@@ -109,6 +109,7 @@
     const emit = defineEmits<{
         (e: "save", value?: string): void
         (e: "execute", value?: string): void
+        (e: "focus"): void
         (e: "focusout", value?: string): void
         (e: "update:modelValue", value: string): void
         (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void
@@ -145,6 +146,7 @@
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        insertTextAtCursor,
         getEditor,
     } = useKsEditor(props, emit, {editorRef, container, datePickerWrapper, datePicker})
 
@@ -155,6 +157,7 @@
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        insertTextAtCursor,
         monaco,
         getEditor,
     })

@@ -226,7 +226,7 @@
         </div>
 
         <div v-else-if="showLoadingState" class="source-search__states">
-            <div class="source-search__skeleton-rows">
+            <div data-test="source-search-loading" class="source-search__skeleton-rows">
                 <KsSkeleton v-for="n in 4" :key="n" animated :rows="1" class="source-search__skeleton-row" />
             </div>
         </div>
@@ -354,7 +354,7 @@
     const toast = useToast()
     const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
-
+    const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
     const selection = ref<CrossSearchSelection | null>(null)
@@ -479,9 +479,6 @@
             }
         })
     }
-
-    const suggestedQuery = ref<string | null>(null)
-
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
@@ -664,6 +661,7 @@
             toast.warning(t("source_search.replace_apply_skipped", {count: response.skipped.length, reasons}))
         }
         previewResponse.value = null
+        startSearch()
         return fetchResults()
     }
 
@@ -707,17 +705,27 @@
         return applyReplace(flowsToApply)
     }
 
+    let searchPendingToken = 0
+
+    function startSearch() {
+        searchPendingToken++
+        searchPending.value = Boolean(query.value)
+    }
+
     async function fetchResults() {
         if (!loadInit.value) return
+
+        const currentSearchPendingToken = searchPendingToken
+
         if (!query.value) {
             searchPending.value = false
             crossResourceSearchStore.reset()
             return
         }
+
         const currentQuery = query.value
 
         previewResponse.value = null
-        suggestedQuery.value = null
 
         try {
             const gen = await crossResourceSearchStore.search({
@@ -732,18 +740,16 @@
                 !anyCountingSelected.value &&
                 summaryMatchCount.value === 0
             ) {
-                const suggestion = await crossResourceSearchStore.searchFlowSuggestion({
+                await crossResourceSearchStore.searchFlowSuggestion({
                     query: currentQuery,
                     namespace: namespaceFilter.value,
                     ...searchFilters.value,
                 }, gen)
-
-                if (suggestion !== undefined) {
-                    suggestedQuery.value = suggestion
-                }
             }
         } finally {
-            searchPending.value = false
+            if (currentSearchPendingToken === searchPendingToken) {
+                searchPending.value = false
+            }
         }
     }
 
@@ -753,7 +759,7 @@
         () => [query.value, namespaceFilter.value, JSON.stringify(searchFilters.value)].join("|"),
         () => {
             // Synchronous, so the debounce window is already covered by the loading state.
-            searchPending.value = Boolean(query.value)
+            startSearch()
             debouncedFetch()
         },
     )
@@ -776,7 +782,8 @@
             selection.value = list.length > 0 ? {...list[0]} : null
         }
     })
-
+    
+    startSearch()
     fetchResults()
 </script>
 

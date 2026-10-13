@@ -56,9 +56,7 @@ public class ValidateFlowTool implements AiPlatformTool {
         List<String> deprecatedPaths = new ArrayList<>();
         List<String> infos = new ArrayList<>();
         for (ValidateConstraintViolation violation : violations) {
-            if (violation.getConstraints() != null && !violation.getConstraints().isBlank()) {
-                errors.add(violation.getConstraints());
-            }
+            violation.getErrors().forEach(error -> errors.add(error.toLine()));
             if (!ListUtils.isEmpty(violation.getWarnings())) {
                 warnings.addAll(violation.getWarnings());
             }

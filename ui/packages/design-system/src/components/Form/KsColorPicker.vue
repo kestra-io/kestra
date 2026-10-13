@@ -1,14 +1,14 @@
 <template>
     <ElColorPicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as ColorPickerProps)"
         @change="emit('change', $event)"
         @active-change="emit('activeChange', $event as string)"
     />
 </template>
 
 <script setup lang="ts">
-    import {ElColorPicker} from "element-plus"
+    import {ElColorPicker, type ColorPickerProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 

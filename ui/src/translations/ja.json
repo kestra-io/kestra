@@ -628,6 +628,15 @@
       "nav_overview": "概要",
       "nav_properties": "プロパティ",
       "non_dynamic": "非動的",
+      "format": "フォーマット",
+      "max_items": "最大項目数",
+      "max_length": "最大長",
+      "maximum": "最大",
+      "min_items": "最小項目数",
+      "min_length": "最小の長さ",
+      "minimum": "最小",
+      "unit": "単位",
+      "validation_regexp": "検証正規表現",
       "possible_values": "指定可能な値",
       "sub_type": "サブタイプ",
       "required": "必須"
@@ -2713,8 +2722,8 @@
       "open_mode_hint": "タスクはデフォルトでモーダルで開きます。{settings}でタブをデフォルトに設定できます。"
     },
     "blocks": "ブロック",
-    "split_horizontal": "水平分割",
-    "split_vertical": "垂直分割",
+    "move_panel_to_bottom": "パネルを下に移動",
+    "move_panel_to_side": "パネルを横に移動",
     "pwa": {
       "install_title": "Kestra をインストール",
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
@@ -2723,6 +2732,7 @@
     },
     "iteration": "反復",
     "iteration_number": "反復 {number}",
-    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？"
+    "delete_log_iteration": "{iteration} のログを削除してもよろしいですか？",
+    "not started": "未開始"
   }
 }

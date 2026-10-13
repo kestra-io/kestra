@@ -37,7 +37,8 @@ const ALLOWED: Array<{ file: string; reason: string }> = [
 let cachedSourceFiles: string[] | undefined
 function sourceFiles(): string[] {
     return SCANNED_DIRS.flatMap((dir) =>
-        globSync(`${dir}/**/*.{ts,vue,js}`, { cwd: ROOT })
+        globSync(`${dir}/**/*.{ts,vue,js}`, {cwd: ROOT})
+            .map((file) => file.replaceAll("\\", "/"))
             .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
     )
 }
@@ -62,7 +63,7 @@ describe("no legacy error fields", { timeout: TEST_TIMEOUT_MS }, () => {
             const content = readSourceFile(file)
             content.split("\n").forEach((line, index) => {
                 if (pattern.test(line)) {
-                    offenders.push(`${relative(ROOT, join(ROOT, file))}:${index + 1}: ${line.trim()}`)
+                    offenders.push(`${relative(ROOT, join(ROOT, file)).replaceAll("\\", "/")}:${index + 1}: ${line.trim()}`)
                 }
             })
         }

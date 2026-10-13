@@ -64,21 +64,23 @@
                 </slot>
             </template>
             <template #taskActions="taskProps">
-                <TaskRunActions
-                    v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
-                    class="node-action-button"
-                    :taskRun="taskProps.taskRun"
-                    :taskType="taskProps.task?.type"
-                    :taskRuns="taskProps.taskRuns"
-                    :execution="taskProps.execution"
-                    :flow="flowStore.flow"
-                    :nodeActions="taskProps.actions
-                        .filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))
-                        .map((a, i) => i === 0 ? {...a, divided: true} : a)
-                    "
-                    @follow="$emit('follow', $event)"
-                />
-                <NodeMenu v-else :actions="taskProps.actions" />
+                <template v-for="context in [taskActionsContext(taskProps.execution?.id, taskProps.taskRun?.id, taskProps.taskRuns.map(run => run.id))]" :key="taskProps.taskRun?.id">
+                    <TaskRunActions
+                        v-if="isReadOnly && context"
+                        class="node-action-button"
+                        :taskRun="context.taskRun"
+                        :taskType="taskProps.task?.type"
+                        :taskRuns="context.taskRuns"
+                        :execution="context.execution"
+                        :flow="flowStore.flow"
+                        :nodeActions="taskProps.actions
+                            .filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))
+                            .map((a, i) => i === 0 ? {...a, divided: true} : a)
+                        "
+                        @follow="$emit('follow', $event)"
+                    />
+                    <NodeMenu v-else :actions="taskProps.actions" />
+                </template>
             </template>
         </Topology>
 
@@ -375,6 +377,18 @@
     const executionsStore = useExecutionsStore()
     const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
+
+    function taskActionsContext(executionId: string | undefined, taskRunId: string | undefined, taskRunIds: string[]) {
+        const execution = executionId === executionsStore.execution?.id
+            ? executionsStore.execution
+            : Object.values(executionsStore.subflowsExecutions).find(execution => execution.id === executionId)
+        const taskRuns = taskRunIds.flatMap(id => {
+            const run = execution?.taskRunList?.find(run => run.id === id)
+            return run ? [run] : []
+        })
+        const taskRun = execution?.taskRunList?.find(run => run.id === taskRunId)
+        return execution && taskRun ? {execution, taskRun, taskRuns} : undefined
+    }
 
     const exec = computed(() => executionsStore.execution as any as Execution)
 

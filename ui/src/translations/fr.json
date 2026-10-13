@@ -628,6 +628,15 @@
       "nav_overview": "Vue d'ensemble",
       "nav_properties": "Propriétés",
       "non_dynamic": "non dynamique",
+      "format": "Format",
+      "max_items": "Nombre max. d'éléments",
+      "max_length": "Longueur max",
+      "maximum": "Maximum",
+      "min_items": "Min. d'éléments",
+      "min_length": "Longueur min",
+      "minimum": "Minimum",
+      "unit": "Unité",
+      "validation_regexp": "RegExp de validation",
       "possible_values": "Valeurs possibles",
       "sub_type": "Sous-type",
       "required": "Obligatoire"
@@ -2713,8 +2722,8 @@
       "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
     },
     "blocks": "Blocs",
-    "split_horizontal": "Diviser horizontalement",
-    "split_vertical": "Diviser verticalement",
+    "move_panel_to_bottom": "Déplacer le panneau vers le bas",
+    "move_panel_to_side": "Déplacer le panneau sur le côté",
     "pwa": {
       "install_title": "Installer Kestra",
       "install_description": "Installez Kestra comme application pour un accès plus rapide et une expérience plein écran.",
@@ -2723,6 +2732,7 @@
     },
     "iteration": "Itération",
     "iteration_number": "Itération {number}",
-    "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?"
+    "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?",
+    "not started": "Non démarré"
   }
 }

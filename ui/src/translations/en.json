@@ -628,6 +628,15 @@
       "nav_overview": "Overview",
       "nav_properties": "Properties",
       "non_dynamic": "non-dynamic",
+      "format": "Format",
+      "max_items": "Max items",
+      "max_length": "Max length",
+      "maximum": "Maximum",
+      "min_items": "Min items",
+      "min_length": "Min length",
+      "minimum": "Minimum",
+      "unit": "Unit",
+      "validation_regexp": "Validation RegExp",
       "possible_values": "Possible Values",
       "sub_type": "SubType",
       "required": "Required"
@@ -2713,8 +2722,8 @@
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
-    "split_horizontal": "Split horizontally",
-    "split_vertical": "Split vertically",
+    "move_panel_to_bottom": "Move panel to bottom",
+    "move_panel_to_side": "Move panel to side",
     "pwa": {
       "install_title": "Install Kestra",
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
@@ -2723,6 +2732,7 @@
     },
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
-    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
+    "not started": "Not started"
   }
 }

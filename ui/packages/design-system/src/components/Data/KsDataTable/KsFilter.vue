@@ -54,6 +54,7 @@
     import {useSavedFilters} from "./filter/composables/useSavedFilters"
     import {newGroupId} from "./filter/composables/useFilterGroups"
     import {useDataOptions} from "./filter/composables/useDataOptions"
+    import {usePeriodicRefresh} from "./filter/composables/usePeriodicRefresh"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts"
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, type SavedFilterAction} from "./filter/utils/filterAnalytics"
     import MainFilter from "./filter/MainFilter.vue"
@@ -207,6 +208,10 @@
         tableRefreshData()
         emits("refresh")
     }
+
+    // the auto-refresh interval is owned here, not in the settings popover, so it keeps
+    // running after the popover closes and starts on page load when the flag was left on
+    usePeriodicRefresh(refreshData)
 
     provide(FILTER_CONTEXT_INJECTION_KEY, {
         configuration: computed(() => props.configuration),

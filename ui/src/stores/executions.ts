@@ -27,7 +27,6 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
-import type {KestraRequestOptions} from "../utils/kestraHttp"
 import {useCoreStore} from "./core"
 import {useApiStore} from "./api"
 
@@ -301,9 +300,9 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     /** A superseded load is dropped, as in `stores/logs.ts`, and cancels the pending throttled update so a
      *  trailing event from the previous execution's stream cannot land on top of this one. */
-    const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
+    const loadExecution = (options: { id: string }) => {
         const load = ++latestExecutionLoad
-        return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
+        return ExecutionsAPI.execution({executionId: options.id}).then(data => {
             if (load !== latestExecutionLoad) return data
 
             throttledExecutionUpdate.cancel()
@@ -557,11 +556,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; showMessageOnError?: boolean }) => {
-        const requestOptions: KestraRequestOptions | undefined = options.showMessageOnError === false ? {showMessageOnError: false} : undefined
+    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean }) => {
         return LogsAPI.listLogsFromExecution(
             {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
-            requestOptions,
         ).then(data => {
             if (options.store === false) {
                 return data

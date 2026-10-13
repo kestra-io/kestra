@@ -24,7 +24,9 @@
             v-if="triggersWithType.length"
             ref="dataTable"
             v-bind="$attrs"
-            :data="triggersWithType"
+            v-model:currentPage="currentPage"
+            v-model:pageSize="pageSize"
+            :data="pagedTriggers"
             :total="triggersWithType.length"
             :defaultSort="{prop: 'triggerId', order: 'ascending'}"
             :rowKey="(row: TriggerRow) => row.id"
@@ -376,6 +378,7 @@
 
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useTriggerFilter} from "../filter/configurations/triggerFilter"
+    import {useClientPagination} from "../../composables/useClientPagination"
     import {FLOW_PARENT_ROUTE} from "./flowTabs"
 
     const triggerFilter = useTriggerFilter()
@@ -535,6 +538,8 @@
         const search = query.value
         return search ? rows.filter(row => row.id.includes(search)) : rows
     })
+
+    const {currentPage, pageSize, paged: pagedTriggers} = useClientPagination(triggersWithType)
 
     type BackfillRequest = TriggerControllerApiCreateBackfillRequest["backfill"]
 

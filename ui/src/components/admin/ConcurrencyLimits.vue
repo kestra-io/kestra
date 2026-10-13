@@ -3,10 +3,10 @@
 
     <Empty v-if="data?.results === undefined || data?.results.length === 0" type="concurrency_limits" />
     <section v-else class="full-container">
-        <KsDataTable :total="data?.total ?? 0" fitHeight>
+        <KsDataTable v-model:currentPage="currentPage" v-model:pageSize="pageSize" :total="data?.total ?? 0" fitHeight>
             <template #table>
                 <KsTable
-                    :data="data?.results"
+                    :data="pagedResults"
                     stripe
                 >
                     <KsTableColumn
@@ -56,6 +56,7 @@
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
     import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
+    import {useClientPagination} from "../../composables/useClientPagination"
 
     const {t} = useI18n()
     const route = useRoute()
@@ -82,6 +83,8 @@
         total: number;
         results: ConcurrencyLimit[]
     }>()
+
+    const {currentPage, pageSize, paged: pagedResults} = useClientPagination(computed(() => data.value?.results ?? []))
 
     async function loadData(){
         const response = await axios.get(`${baseUrl.value}/concurrency-limit/search`)

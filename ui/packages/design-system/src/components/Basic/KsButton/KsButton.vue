@@ -6,7 +6,7 @@
     >
         <ElButton
             :aria-label="tooltip"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="({...filteredProps(), ...$attrs})"
             :class="{'is-square': square}"
             @click="emit('click', $event)"
             plain
@@ -24,7 +24,7 @@
     </KsTooltip>
     <ElButton
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs})"
         :class="{'is-square': square}"
         @click="emit('click', $event)"
         plain

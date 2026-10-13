@@ -18,11 +18,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -45,13 +48,12 @@ import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -198,14 +200,14 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/webhook-disabled.yaml"})
+    @LoadFlows(value = { "flows/valids/webhook-disabled.yaml" })
     void webhookDisabled() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .POST(
-                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS +"/webhook-disabled/webhook-disabled-key",
+                        "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-disabled/webhook-disabled-key",
                         null
                     ),
                 Execution.class
@@ -411,7 +413,7 @@ class ExecutionControllerTest {
         );
         Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
         assertThat(Problems.detail(exception)).isEqualTo(
-            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
+            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID, LOOP_RUN_VALUE, OPERATION_ID, OPERATION_OUTCOME"
         );
 
         exception = assertThrows(
@@ -474,13 +476,14 @@ class ExecutionControllerTest {
         Assertions.assertTrue(response.inputs().stream().allMatch(ExecutionController.ApiValidateExecutionInputsResponse.ApiInputAndValue::enabled));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "system.label:system", "system:value" })
     @LoadFlows(value = { "flows/valids/minimal.yaml" })
-    void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
+    void shouldRefuseSystemLabelsWhenCreatingAnExecution(String label) {
         var error = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest
-                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=system.label:system", null)
+                    .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=" + label, null)
                     .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                 Execution.class
             )
@@ -554,8 +557,9 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
-    @Test
-    void shouldNotPartiallyApplyLabelsWhenSetLabelsOnTerminatedByIdsRejectsASystemLabel() {
+    @ParameterizedTest
+    @ValueSource(strings = { Label.CORRELATION_ID, "system" })
+    void shouldNotPartiallyApplyLabelsWhenSetLabelsOnTerminatedByIdsRejectsASystemLabel(String key) {
         Execution execution1 = terminatedExecution();
         Execution execution2 = terminatedExecution();
 
@@ -566,7 +570,7 @@ class ExecutionControllerTest {
                     "/api/v1/main/executions/labels/by-ids",
                     new ExecutionController.SetLabelsByIdsRequest(
                         List.of(execution1.getId(), execution2.getId()),
-                        List.of(new Label(Label.CORRELATION_ID, "spoofed"))
+                        List.of(new Label(key, "spoofed"))
                     )
                 )
             )
@@ -576,7 +580,7 @@ class ExecutionControllerTest {
         // the batch is all-or-nothing: neither execution gained the spoofed label
         for (Execution execution : List.of(execution1, execution2)) {
             Execution reloaded = client.toBlocking().retrieve(GET("/api/v1/main/executions/" + execution.getId()), Execution.class);
-            assertThat(reloaded.getLabels()).doesNotContain(new Label(Label.CORRELATION_ID, "spoofed"));
+            assertThat(reloaded.getLabels()).doesNotContain(new Label(key, "spoofed"));
         }
     }
 
@@ -838,15 +842,19 @@ class ExecutionControllerTest {
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
             .state(new State().withState(state))
-            .taskRunList(List.of(TaskRun.builder()
-                .id(IdUtils.create())
-                .tenantId(MAIN_TENANT)
-                .executionId("unused")
-                .namespace(flow.getNamespace())
-                .flowId(flow.getId())
-                .taskId(replayedTaskId)
-                .state(new State().withState(State.Type.SUCCESS))
-                .build()))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id(IdUtils.create())
+                        .tenantId(MAIN_TENANT)
+                        .executionId("unused")
+                        .namespace(flow.getNamespace())
+                        .flowId(flow.getId())
+                        .taskId(replayedTaskId)
+                        .state(new State().withState(State.Type.SUCCESS))
+                        .build()
+                )
+            )
             .build();
         executionRepository.save(execution);
         return execution;
@@ -954,6 +962,21 @@ class ExecutionControllerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityWhenChangingTaskRunStateWithoutState() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST(
+                    "/api/v1/main/executions/" + IdUtils.create() + "/actions/state",
+                    Map.of("taskRunId", "taskrun_id_not_found")
+                )
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     /**

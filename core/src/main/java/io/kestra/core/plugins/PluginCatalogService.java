@@ -1,6 +1,7 @@
 package io.kestra.core.plugins;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Version;
 import io.micronaut.core.type.Argument;
@@ -201,7 +202,7 @@ public class PluginCatalogService {
             "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion
         );
         if (oss) {
-            request.getParameters().add("license", "OPENSOURCE");
+            request.getParameters().add("license", "OPEN_SOURCE");
         }
         try {
             return httpClient
@@ -209,8 +210,11 @@ public class PluginCatalogService {
                 .exchange(request, Argument.listOf(ApiPluginArtifact.class))
                 .body();
         } catch (Exception e) {
-            log.debug("Failed to retrieve available plugins from Kestra API. Cause: ", e);
-            return List.of();
+            // Failing open would let callers fall back to Maven's latest version, which may target another Kestra major.
+            throw new KestraRuntimeException(
+                "Failed to retrieve the plugin versions compatible with Kestra %s from the Kestra API. Cause: %s".formatted(currentStableVersion, e.getMessage()),
+                e
+            );
         }
     }
     

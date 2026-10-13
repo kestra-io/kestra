@@ -349,6 +349,10 @@
     "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
     "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
+    "interrupt": "Przerwij",
+    "interrupt confirm": "Czy na pewno chcesz przerwać Task Run dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Spowoduje to zakończenie uruchomionego Taska w Workerze i ustawienie jego stanu.",
+    "interrupt done": "Uruchomienie Taska zostało przerwane",
+    "interrupt target state": "Stan docelowy",
     "change state current state": "Aktualny status:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +454,11 @@
     "show task source": "Pokaż źródło Taska",
     "stream": "Strumień",
     "execution statistics": "Statystyki egzekucji",
+    "execution_banner": {
+      "revision": "Wersja {revision}",
+      "attempts": "{count} próba | {count} próby | {count} prób",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+    },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
     "usage": "Użycie",
@@ -475,6 +484,7 @@
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",
+      "expression": "Wyrażenie",
       "tree": "Drzewo",
       "raw_json": "Surowy JSON",
       "select_prompt": "Wybierz zmienną, aby sprawdzić jej Value.",
@@ -560,6 +570,7 @@
       "blueprints": "blueprint | blueprinty"
     },
     "plugins": {
+      "ui_load_error": "Nie udało się załadować komponentu pluginu.",
       "autoInstall": {
         "failed": "Instalacja pluginu nie powiodła się",
         "failedHint": "Flow nie został zapisany. Napraw problem lub usuń plugin z flow, a następnie zapisz ponownie.",
@@ -617,6 +628,15 @@
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
+      "format": "Format",
+      "max_items": "Maksymalna liczba elementów",
+      "max_length": "Maksymalna długość",
+      "maximum": "Maksimum",
+      "min_items": "Min elementów",
+      "min_length": "Min długość",
+      "minimum": "Min",
+      "unit": "Jednostka",
+      "validation_regexp": "RegExp walidacji",
       "possible_values": "Możliwe wartości",
       "sub_type": "Podtyp",
       "required": "Wymagane"
@@ -1101,7 +1121,6 @@
     "pause backfills": "Wstrzymaj Backfille",
     "backfill executions": "Egzekucje Backfillu",
     "execute backfill": "Wykonaj Backfill",
-    "relative": "Względny",
     "relative start date": "Względna data rozpoczęcia",
     "absolute": "Absolutny",
     "backfill": "Backfill",
@@ -1713,6 +1732,7 @@
     "custom value": "Wartość niestandardowa",
     "chart": "Wykres",
     "no_code": {
+      "task_details": "Szczegóły Task",
       "toggle_pebble": "Przełącz edytor Pebble",
       "version_oss_placeholder": "Odblokuj wersjonowanie pluginów z Enterprise Edition",
       "adding": "+ Dodaj {what}",
@@ -1768,7 +1788,8 @@
         "inputs": "Wybierz typ pola Input",
         "charts": "Wybierz typ wykresu",
         "where": "Wybierz typ filtra",
-        "numerator": "Wybierz licznik"
+        "numerator": "Wybierz licznik",
+        "namespace_first": "Najpierw wybierz namespace"
       },
       "creation": {
         "default": "Dodaj",
@@ -2414,6 +2435,7 @@
         "label": "{count} Błąd(y)"
       }
     },
+    "invalid_source_code": "Nieprawidłowy kod źródłowy",
     "source_search": {
       "cannot_select_read_only": "Nie można wybrać — brak uprawnień do edycji dla {namespace} / {id}",
       "collapse_all": "Zwiń wszystko",
@@ -2700,8 +2722,8 @@
       "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
     },
     "blocks": "Bloki",
-    "split_horizontal": "Podziel w poziomie",
-    "split_vertical": "Podziel pionowo",
+    "move_panel_to_bottom": "Przenieś panel na dół",
+    "move_panel_to_side": "Przenieś panel na bok",
     "pwa": {
       "install_title": "Zainstaluj Kestrę",
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
@@ -2710,6 +2732,7 @@
     },
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
-    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
+    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
+    "not started": "Nierozpoczęte"
   }
 }

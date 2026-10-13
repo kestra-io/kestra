@@ -18,6 +18,7 @@
                             <KsDropdownItem
                                 v-for="(run, index) in filteredTaskRuns"
                                 :key="run.id"
+                                data-test="task-run-iteration"
                                 @click.stop="selectedTaskRunId = run.id"
                             >
                                 <span :class="['row', {active: run.id === selectedTaskRunId}]">
@@ -49,10 +50,10 @@
                     </span>
                 </KsDropdownItem>
                 <SubFlowLink
-                    v-if="isSubflow"
+                    v-if="subflowExecutionId"
                     component="KsDropdownItem"
                     tabExecution="logs"
-                    :executionId="currentTaskRun.outputs?.executionId"
+                    :executionId="subflowExecutionId"
                 />
                 <KsDropdownItem
                     v-if="isLoop"
@@ -106,18 +107,21 @@
                 />
                 <KsDropdownItem
                     :icon="Download"
+                    data-test="task-run-download-logs"
                     @click="downloadContent(currentTaskRun.id)"
                 >
                     {{ $t("download logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Copy"
+                    data-test="task-run-copy-logs"
                     @click="copyContent(currentTaskRun.id)"
                 >
                     {{ $t("copy logs") }}
                 </KsDropdownItem>
                 <KsDropdownItem
                     :icon="Delete"
+                    data-test="task-run-delete-logs"
                     @click="deleteLogs(currentTaskRun)"
                 >
                     {{ $t("delete logs") }}
@@ -126,6 +130,15 @@
                     component="KsDropdownItem"
                     v-if="hasWorkerId"
                     :taskRun="currentTaskRun"
+                    @follow="emit('follow', $event)"
+                />
+
+                <Interrupt
+                    component="KsDropdownItem"
+                    :key="`interrupt-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :execution="execution"
+                    :taskRun="currentTaskRun"
+                    :attemptIndex="currentAttemptIndex"
                     @follow="emit('follow', $event)"
                 />
 
@@ -151,10 +164,15 @@
     import Check from "vue-material-design-icons/Check.vue"
 
     import {State} from "@kestra-io/design-system"
+    import type {LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {Execution} from "../../stores/executions"
+    import type {ExecutionTaskRun} from "./executionTaskRun"
+    import type {Flow} from "../../stores/flow"
 
     import * as Utils from "../../utils/utils"
     import {findTaskById} from "../../utils/flowUtils"
     import {useToast} from "../../utils/toast"
+    import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useCoreStore} from "../../stores/core"
@@ -165,6 +183,7 @@
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
+    import Interrupt from "./Interrupt.vue"
     import Outputs from "./Outputs.vue"
     import WorkerInfo from "./WorkerInfo.vue"
     import TaskEdit from "../flows/TaskEdit.vue"
@@ -173,14 +192,14 @@
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
 
     const props = withDefaults(defineProps<{
-        taskRun: any
-        taskRuns?: any[]
-        execution: any
-        flow?: any
+        taskRun: ExecutionTaskRun
+        taskRuns?: ExecutionTaskRun[]
+        execution: Execution
+        flow?: Pick<Flow, "tasks"> & Partial<Pick<Flow, "source">>
         taskType?: string
         attemptIndex?: number
         forcedAttemptNumber?: number
-        attemptLogs?: any[]
+        attemptLogs?: LogEntry[]
         nodeActions?: NodeAction[]
     }>(), {
         flow: undefined,
@@ -227,7 +246,7 @@
         return currentTaskRuns.value.find((r) => r.id === selectedTaskRunId.value) || props.taskRun
     })
 
-    function attempts(taskRun: any): any[] {
+    function attempts(taskRun: ExecutionTaskRun): TaskRunAttempt[] {
         if (props.execution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
             return taskRun.attempts ?? [{state: taskRun.state}]
         }
@@ -241,7 +260,10 @@
 
     const selectedAttempt = computed(() => attempts(currentTaskRun.value)[currentAttemptIndex.value])
 
-    const isSubflow = computed<boolean>(() => !!currentTaskRun.value?.outputs?.executionId)
+    const subflowExecutionId = computed(() => {
+        const executionId = currentTaskRun.value.outputs?.executionId
+        return typeof executionId === "string" ? executionId : undefined
+    })
     const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === "io.kestra.plugin.core.flow.Loop")
 
     const hasWorkerId = computed<boolean>(() =>
@@ -323,16 +345,18 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
-                showMessageOnError: false,
-            }).catch(() => [])
+            }).catch((e: unknown) => {
+                handledIf(e, [403, 404])
+                return []
+            })
         }
         const errorLines = (() => {
             const errors = taskRunLogs
-                .filter((l: any) => (l.level || "")
+                .filter((l) => (l.level || "")
                     .toString()
                     .toUpperCase() === "ERROR" && (l.message ?? "").length > 0)
-            if (errors.length > 0) return errors.map((l: any) => l.message).join("\n")
-            const last = [...taskRunLogs].reverse().find((l: any) => (l.message ?? "").length > 0)
+            if (errors.length > 0) return errors.map((l) => l.message).join("\n")
+            const last = [...taskRunLogs].reverse().find((l) => (l.message ?? "").length > 0)
             return last?.message ?? ""
         })()
         const prompt = `Fix the task ${currentTaskRun.value.taskId} as it generated the following error:\n${errorLines}`

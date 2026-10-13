@@ -2,6 +2,7 @@ import {ref} from "vue"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import * as MiscAPI from "@kestra-io/kestra-sdk/misc"
 import * as BasicAuth from "../utils/basicAuth"
+import {handled} from "../utils/kestraHttp"
 import {initPosthogIfEnabled} from "../utils/posthog"
 import {sendPosthogEvent} from "../utils/analytics/posthogEvents"
 import {ensureUid} from "../utils/uid"
@@ -92,7 +93,10 @@ export const useBaseMiscStore = () => {
             username: options.username,
             password: options.password,
             currentPassword: options.currentPassword,
-        }, {showMessageOnError: false} as Parameters<typeof MiscAPI.createBasicAuth>[1])
+        }).catch((e: unknown) => {
+            handled(e)
+            throw e
+        })
     }
 
     return {

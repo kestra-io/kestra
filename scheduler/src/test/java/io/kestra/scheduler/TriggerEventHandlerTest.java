@@ -779,6 +779,7 @@ class TriggerEventHandlerTest {
         // GIVEN — a realtime trigger running on a worker (locked) whose definition changed
         TriggerState realtimeState = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
+            .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true);
         triggerStateStore.save(realtimeState);
         FlowWithSource flow = Fixtures.flowWithTrigger(
@@ -798,6 +799,8 @@ class TriggerEventHandlerTest {
         Mockito.verify(executionKilledQueue).emit(killed.capture());
         assertThat(killed.getValue()).isInstanceOf(ExecutionKilledTrigger.class);
         assertThat(((ExecutionKilledTrigger) killed.getValue()).getTriggerId()).isEqualTo(triggerId.getTriggerId());
+        // fenced to the running dispatch, so a worker that has not registered it yet can still apply it
+        assertThat(((ExecutionKilledTrigger) killed.getValue()).getDispatchEpoch()).isEqualTo(realtimeState.getDispatchEpoch());
         // EXECUTED is the only state forwarded to the workers
         assertThat(killed.getValue().getState()).isEqualTo(ExecutionKilled.State.EXECUTED);
     }
@@ -970,17 +973,18 @@ class TriggerEventHandlerTest {
 
     @Test
     void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
-        // GIVEN — a realtime trigger on its second dispatch (epoch 2), running on worker-2
-        TriggerState realtimeState = TriggerState
+        // GIVEN — a realtime trigger on its second dispatch, running on worker-2
+        TriggerState firstDispatch = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
-            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK);
+        TriggerState realtimeState = firstDispatch
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-2");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        // a FAILED termination left over from the first dispatch (epoch 1)
-        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, 1L);
+        // a FAILED termination left over from the first dispatch
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, firstDispatch.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -994,17 +998,18 @@ class TriggerEventHandlerTest {
 
     @Test
     void shouldIgnoreStaleWorkerLostWhenDispatchEpochSuperseded() {
-        // GIVEN — a realtime trigger re-dispatched to the same worker (epoch 2)
-        TriggerState realtimeState = TriggerState
+        // GIVEN — a realtime trigger re-dispatched to the same worker
+        TriggerState firstDispatch = TriggerState
             .of(triggerId, TriggerType.REALTIME, null, 0)
-            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK);
+        TriggerState realtimeState = firstDispatch
             .nextDispatchEpoch(CLOCK)
             .locked(CLOCK, true)
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        // a worker-loss notice from the first dispatch (epoch 1) on the same worker
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", 1L);
+        // a worker-loss notice from the first dispatch on the same worker
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", firstDispatch.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -1310,10 +1315,11 @@ class TriggerEventHandlerTest {
             .paused(false)
             .build();
         // the backfill has progressed, so the next evaluation date now points inside the backfill window
-        triggerStateStore.save(triggerState
-            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
-            .backfill(CLOCK, backfill)
-            .updateForNextEvaluationDate(CLOCK, backfill.getStart().plusHours(8))
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+                .backfill(CLOCK, backfill)
+                .updateForNextEvaluationDate(CLOCK, backfill.getStart().plusHours(8))
         );
         handler = newTriggerEventHandler(List.of());
 
@@ -1339,10 +1345,11 @@ class TriggerEventHandlerTest {
             .paused(false)
             .build();
         // the running backfill has progressed, so the next evaluation date now points inside its window
-        triggerStateStore.save(triggerState
-            .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
-            .backfill(CLOCK, running)
-            .updateForNextEvaluationDate(CLOCK, running.getStart().plusHours(8))
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(CLOCK, liveNextEvaluationDate)
+                .backfill(CLOCK, running)
+                .updateForNextEvaluationDate(CLOCK, running.getStart().plusHours(8))
         );
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         CreateBackfillTrigger event = new CreateBackfillTrigger(

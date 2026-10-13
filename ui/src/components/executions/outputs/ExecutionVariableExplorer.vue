@@ -147,7 +147,8 @@
     import Download from "vue-material-design-icons/Download.vue"
 
     import {useExecutionsStore, type Execution} from "../../../stores/executions"
-    import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
+    import {loadExecutionOutputs, loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
+    import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
@@ -253,10 +254,9 @@
 
             flowOutputs.value = await loadExecutionOutputs(id)
 
-            const data = await OutputsAPI.taskOutputsInformation({
-                executionId: id,
-            }, {
-                validateStatus: (s: number) => s === 200 || s === 404,
+            const data = await OutputsAPI.taskOutputsInformation({executionId: id}).catch((e: unknown) => {
+                if (handledIf(e, [404])) return []
+                throw e
             })
 
             const metaByRunId: Record<string, TaskOutputMeta> = {}
@@ -289,14 +289,7 @@
             return cached
         }
 
-        const data = await OutputsAPI.taskRunOutputs({
-            taskRunId,
-            executionId: id,
-        }, {
-            validateStatus: (s: number) => s === 200 || s === 404,
-        })
-
-        const outputs = data || {}
+        const outputs = await loadTaskRunOutputs(id, taskRunId)
         taskOutputs.value = {...taskOutputs.value, [taskRunId]: outputs}
         return outputs
     }
@@ -330,14 +323,14 @@
         void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
-    function isOutputTaskAFile(item: any): item is { uri: string } {
+    function isOutputTaskAFile(item: unknown): item is { uri: string } {
         if(!item || typeof item !== "object") {
             return false
         }
-        if(!Utils.isFile(item.uri)) {
-            return false
-        }
-        return true
+
+        const uri = (item as { uri?: unknown }).uri
+
+        return typeof uri === "string" && Utils.isFile(uri)
     }
 
     const taskItems = computed<ExplorerItem[]>(() => {

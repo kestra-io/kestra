@@ -325,6 +325,42 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     @Test
+    void shouldDiscardInsteadOfResubmittingTaskRunOfExecutionThatAlreadyEnded() throws Exception {
+        // Given an execution killed by an SLA while its task run was still held by a worker that then
+        // died: the kill only reaches live workers, so the task run is still RUNNING in the execution
+        // and only the execution itself carries a terminal state (kestra-io/kestra#19722).
+        Log task = Log.builder().id("log").type(Log.class.getName()).message("test").build();
+        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of()).toBuilder().tenantId(TenantService.MAIN_TENANT).build();
+        TaskRun taskRun = TaskRun.of(execution, ResolvedTask.of(task));
+        executionRepository.save(execution.toBuilder().taskRunList(List.of(taskRun.withState(State.Type.RUNNING))).build().withState(State.Type.KILLED));
+
+        ServiceInstance deadWorker = saveWorkerInstance(Service.ServiceState.DISCONNECTED);
+        WorkerTask workerTask = WorkerTask.builder()
+            .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of("key", "value"))))
+            .task(task)
+            .taskRun(taskRun)
+            .build();
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTaskRunning.of(workerTask, new WorkerInstance(deadWorker.uid(), null)));
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllWorkersForUncleanShutdown(afterTerminationGracePeriod());
+                return !leasesHeldBy(deadWorker.uid()).contains(workerTask.uid());
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then
+        assertThat(resubmitted).doesNotContain(workerTask.uid());
+    }
+
+    @Test
     void shouldResubmitOrphanedWorkerJobOnceWhenWorkerInstanceIsInactive() throws Exception {
         // Given a job left in the running state store by a worker the liveness state machine is done
         // with — the controller dispatched it but the worker never ran it — alongside one held by a

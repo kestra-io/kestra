@@ -97,6 +97,7 @@
                                             </div>
                                             <div
                                                 class="task-label"
+                                                data-test="gantt-task-label"
                                                 :style="{'--depth': item.depth || 0}"
                                             >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
@@ -152,12 +153,12 @@
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
                                                 <div class="task-details__inner p-2">
-                                                    <TaskRunDetails
-                                                        :taskRunId="item.id"
-                                                        :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                                    <GanttTaskLogs
+                                                        :taskRun="item.task"
+                                                        :taskType="taskTypeByTaskRunId[item.id]"
+                                                        :execution="execution"
+                                                        :flow="executionsStore.flow"
                                                         :levelFilter="effectiveSelectedLogLevel"
-                                                        hideTaskHeader
-                                                        :targetFlow="executionsStore.flow"
                                                         class="mh-100 mx-3"
                                                     />
                                                 </div>
@@ -217,7 +218,7 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {usePluginsStore} from "../../stores/plugins"
     import {useGanttExecutionFilter} from "../filter/configurations/ganttExecutionFilter"
-    import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import GanttTaskLogs from "./GanttTaskLogs.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import ExecutionProgress from "./ExecutionProgress.vue"
@@ -248,7 +249,6 @@
         task: TaskRun;
         flowId?: string;
         namespace?: string;
-        executionId?: string;
         attempts: number;
         depth: number | undefined;
         parentEndPercent?: number;
@@ -505,7 +505,6 @@
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,
-                executionId: task.outputs?.executionId as string | undefined,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
                 parentEndPercent: barPercents.parentEndPercent,
@@ -607,7 +606,7 @@
     )
 
     /** `autoExpandGantt` route query: `true` (all), `failed`, or a comma-separated task id list. */
-    function applyAutoExpandFromRoute(currentExecution: any) {
+    function applyAutoExpandFromRoute(currentExecution: Execution | undefined) {
         const autoExpand = route.query.autoExpandGantt
         if (typeof autoExpand !== "string" || !autoExpand) {
             return
@@ -621,13 +620,13 @@
             : autoExpand.split(",").map((id) => id.trim()).filter(Boolean)
 
         const taskRuns = autoExpand === "failed"
-            ? currentExecution.taskRunList.filter((taskRun: any) => taskRun.state?.current === "FAILED")
+            ? currentExecution.taskRunList.filter((taskRun: TaskRun) => taskRun.state?.current === "FAILED")
             : taskIds
-                ? currentExecution.taskRunList.filter((taskRun: any) => taskIds.includes(taskRun.taskId))
+                ? currentExecution.taskRunList.filter((taskRun: TaskRun) => taskIds.includes(taskRun.taskId))
                 : currentExecution.taskRunList
 
         if (taskRuns.length) {
-            selectedTaskRuns.value = taskRuns.map((taskRun: any) => taskRun.id)
+            selectedTaskRuns.value = taskRuns.map((taskRun: TaskRun) => taskRun.id)
             expandedFromRoute.value = true
         }
     }

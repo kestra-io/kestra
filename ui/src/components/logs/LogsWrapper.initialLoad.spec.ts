@@ -5,35 +5,36 @@ import {i18nMount} from "../../../tests/unit/i18nMount"
 import {createPinia} from "pinia"
 import {createMemoryHistory, createRouter, type Router} from "vue-router"
 import KestraDesignSystem from "@kestra-io/design-system"
+import type {LogEntry} from "@kestra-io/kestra-sdk"
+import type {searchLogs as SdkSearchLogs} from "@kestra-io/kestra-sdk/logs"
 
-const searchLogs = vi.fn()
+const searchLogs = vi.fn<typeof SdkSearchLogs>()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({
-    searchLogs: (...args: any[]) => searchLogs(...args),
+    searchLogs: (...args: Parameters<typeof SdkSearchLogs>) => searchLogs(...args),
     deleteLogsFromFlow: vi.fn(),
 }))
 
 import LogsWrapper from "./LogsWrapper.vue"
 
-const LOG = {
+const LOG: LogEntry = {
     level: "INFO",
     namespace: "ns",
     flowId: "flow",
     executionId: "execution",
     thread: "thread",
-    index: 0,
     attemptNumber: 0,
-    executionKind: "flow",
+    executionKind: "NORMAL",
     timestamp: "2026-06-02T08:00:00Z",
     message: "a log line",
 }
 
 const listSearches = () => searchLogs.mock.calls
     .map(([params]) => params)
-    .filter((params) => params.size !== 1)
+    .filter((params) => params?.size !== 1)
 
-const levelOf = (params: any) => params.filters
-    ?.find((filter: any) => filter.field === "level")?.value
+const levelOf = (params: Parameters<typeof SdkSearchLogs>[0]) => params?.filters
+    ?.find((filter) => filter.field === "level")?.value
 
 function mountLogsWrapper(router: Router) {
     return i18nMount(LogsWrapper, {
@@ -55,7 +56,7 @@ describe("LogsWrapper initial load", () => {
         window.sessionStorage.clear()
         window.localStorage.clear()
         searchLogs.mockReset()
-        searchLogs.mockResolvedValue({results: [LOG], total: 1})
+        searchLogs.mockResolvedValue({results: [LOG], total: 1, type: "OFFSET"})
     })
 
     afterEach(() => {
@@ -90,7 +91,7 @@ describe("LogsWrapper initial load", () => {
         const wrapper = mountLogsWrapper(router)
         await settle()
 
-        await (wrapper.vm as any).selectLevel("WARN")
+        await (wrapper.vm as unknown as {selectLevel: (level: string) => void}).selectLevel("WARN")
         await settle()
 
         expect(listSearches().map(levelOf)).toEqual(["INFO", "WARN"])

@@ -2,6 +2,7 @@ package io.kestra.core.executor.command;
 
 import java.time.Instant;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -16,7 +17,8 @@ public record ChangeTaskRunState(String tenantId,
     EventId eventId,
     String taskRunId,
     State.Type state,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @Nullable Actor actor) implements ExecutionCommand {
     public static ChangeTaskRunState from(Execution execution, String taskRunId, State.Type state) {
         return new ChangeTaskRunState(
             execution.getTenantId(),
@@ -27,11 +29,16 @@ public record ChangeTaskRunState(String tenantId,
             EventId.create(),
             taskRunId,
             state,
+            null,
             null
         );
     }
 
     public ChangeTaskRunState withOperationId(String operationId) {
-        return new ChangeTaskRunState(tenantId, namespace, flowId, executionId, timestamp, eventId, taskRunId, state, operationId);
+        return new ChangeTaskRunState(tenantId, namespace, flowId, executionId, timestamp, eventId, taskRunId, state, operationId, actor);
+    }
+
+    public ChangeTaskRunState withActor(Actor actor) {
+        return new ChangeTaskRunState(tenantId, namespace, flowId, executionId, timestamp, eventId, taskRunId, state, operationId, actor);
     }
 }

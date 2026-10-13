@@ -241,7 +241,7 @@
     async function loadMoreFailed() {
         const parentId = props.hostExecutionId
         if (!parentId) return
-        const search = ++latestSearch
+        const search = latestSearch
         try {
             const next = await searchLoopIterations({
                 parentId,

@@ -96,6 +96,24 @@ describe("LoopIterationPicker", () => {
         expect(document.body.querySelector("[data-test='loop-picker-more-failed']")).toBeNull()
     })
 
+    it("shouldKeepTheOtherIterationsWhenLoadingMoreFailedBeforeTheyArrive", async () => {
+        let resolveOthers!: (value: unknown) => void
+        const first = Array.from({length: 50}, (_, index) => iteration(index + 1, `V${index}`, "FAILED"))
+        mocks.search
+            .mockResolvedValueOnce(page(first, 51))
+            .mockReturnValueOnce(new Promise((resolve) => (resolveOthers = resolve)))
+            .mockResolvedValueOnce(page([iteration(60, "LAST", "FAILED")], 51))
+
+        await openPicker(lane({iterationCount: 52, terminatedIterations: {FAILED: 51, SUCCESS: 1}}))
+        ;(document.body.querySelector("[data-test='loop-picker-more-failed']") as HTMLElement).click()
+        await flushPromises()
+        resolveOthers(page([iteration(61, "OK")]))
+        await flushPromises()
+
+        expect(body("[data-test^='loop-picker-group-']")).toEqual(["Failed · 51", "Other iterations"])
+        expect(document.body.querySelector("[data-test='loop-picker-loading']")).toBeNull()
+    })
+
     it("shouldShowTheEmptyStateWhenNothingMatches", async () => {
         mocks.search.mockResolvedValue(page([]))
 

@@ -61,7 +61,7 @@
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         background: var(--ks-bg-surface);
-        box-shadow: 0 2px 4px var(--ks-shadow-surface);
+        box-shadow: var(--ks-shadow-sm);
     }
 
     .loop-scope-title {

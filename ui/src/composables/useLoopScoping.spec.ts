@@ -177,6 +177,20 @@ describe("useLoopScoping", () => {
         expect(route.query.loopScope).toBe("per_region:1")
     })
 
+    it("shouldStepFromTheRequestedIterationWhileItIsStillLoading", async () => {
+        const {scoping, route} = setup()
+        route.query = {loopScope: "per_region:1"}
+        await flushPromises()
+        mocks.loadIterationExecution.mockReturnValue(new Promise(() => {}))
+
+        scoping.stepLane("per_region", 1)
+        await flushPromises()
+        scoping.stepLane("per_region", 1)
+        await flushPromises()
+
+        expect(route.query.loopScope).toBe("per_region:3")
+    })
+
     it("shouldNotOverwriteANewerScopeWhenAFailureLookupResolvesLate", async () => {
         let resolveFailure!: (value: unknown) => void
         mocks.findFirstFailedIteration.mockReturnValue(new Promise((resolve) => (resolveFailure = resolve)))

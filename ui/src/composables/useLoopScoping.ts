@@ -298,7 +298,8 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         if (!lane || data?.status !== "ready" || !data.parentScoped) return
         const started = Math.min(data.iterationCount ?? 0, (data.runningIterations ?? 0) + Object.values(data.terminatedIterations ?? {}).reduce((a, b) => a + b, 0))
         if (started < 1) return
-        const current = data.scopedNumber ?? (delta > 0 ? 0 : started + 1)
+        const requested = entries.value[loopDepth(lane)]
+        const current = (requested?.taskId === lane.taskId ? requested.number : undefined) ?? (delta > 0 ? 0 : started + 1)
         scopeLane(laneUid, Math.min(started, Math.max(1, current + delta)))
     }
 

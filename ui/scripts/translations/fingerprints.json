@@ -585,7 +585,6 @@
   "density_normal": "a7248eeb45eb",
   "dependencies": "2e41b118eb20",
   "dependencies delete flow": "0be41461fe01",
-  "dependency task": "93be5d1214ad",
   "dependency|controls|clear_selection": "cea4d2e010b8",
   "dependency|controls|fit_view": "32bb0d298ca1",
   "dependency|controls|zoom_in": "0e47f09a748f",

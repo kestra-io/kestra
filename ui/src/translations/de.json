@@ -984,7 +984,6 @@
     "warning detected": "Warnung(en) erkannt.",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
-    "dependency task": "Task {taskId} ist eine Abhängigkeit eines anderen Tasks",
     "admin": "Admin",
     "main_configuration": "Hauptkonfiguration",
     "commit_id": "Commit-ID",

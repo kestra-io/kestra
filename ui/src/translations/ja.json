@@ -984,7 +984,6 @@
     "warning detected": "警告が検出されました。",
     "informative notice": "注記",
     "open": "開く",
-    "dependency task": "Task {taskId}は他のtaskの依存関係です",
     "admin": "管理者",
     "main_configuration": "メイン設定",
     "commit_id": "コミット id",

@@ -984,7 +984,6 @@
     "warning detected": "Wykryto ostrzeżenie(-a).",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
-    "dependency task": "Task {taskId} jest zależnością innego Taska",
     "admin": "Administrator",
     "main_configuration": "Główna konfiguracja",
     "commit_id": "Id commit",

@@ -42,6 +42,17 @@ describe("KsThemePicker", () => {
         expect(previews[3].findAll(".theme-window")).toHaveLength(2)
     })
 
+    test("draws the preview slot instead of the built-in miniature", () => {
+        const wrapper = mount(KsThemePicker, {
+            props: {options: [{value: "ocean", label: "Ocean"}]},
+            slots: {preview: "<span class=\"custom-preview\">{{ params.option.value }}</span>"},
+            global: globalConfig,
+        })
+        const preview = wrapper.find(".theme-picker__preview")
+        expect(preview.find(".custom-preview").text()).toBe("ocean")
+        expect(preview.find(".theme-window").exists()).toBe(false)
+    })
+
     test("emits the chosen value", async () => {
         const wrapper = mount(KsThemePicker, {
             props: {modelValue: "light", options: OPTIONS},

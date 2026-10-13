@@ -446,7 +446,64 @@
       "load_error": "无法加载拓扑图。请重试。",
       "add-task": "添加 task",
       "add-trigger": "添加 trigger",
-      "child-count": "{count} 个 task | {count} 个 task"
+      "child-count": "{count} 个 task | {count} 个 task",
+      "loop": {
+        "not-run": "未运行",
+        "pick-first": "请先选择 {loop}",
+        "picker-label": "{loop} 的迭代",
+        "search-placeholder": "按 #编号搜索",
+        "all-iterations": "所有迭代",
+        "iteration-label": "#{number} {value}",
+        "iteration-fallback": "迭代 {number}",
+        "step-of": "{current} / {total}",
+        "previous-iteration": "上一个迭代",
+        "next-iteration": "下一个迭代",
+        "previous-page": "上一页",
+        "next-page": "下一页",
+        "failed-group": "失败 · {count}",
+        "other-group": "其他迭代",
+        "matching": "匹配",
+        "failure-forbidden": "您无权访问此迭代。",
+        "failure-not-found": "此迭代已不存在。",
+        "failure-unknown": "无法加载迭代。",
+        "scope": "范围",
+        "whole-execution": "整个执行",
+        "clear-scopes": "清除范围",
+        "jump-to-first-failure": "跳转到第一个失败",
+        "loops-with-failures": "存在失败的循环",
+        "task-runs": "{runs} 次运行 | {runs} 次运行",
+        "task-runs-failed": "{runs} 次运行 · {failed} 次失败 | {runs} 次运行 · {failed} 次失败",
+        "retry": "重试",
+        "load-more": "加载更多",
+        "retry-loading": "重试加载迭代"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} 个中 {failed} 个失败",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} 个失败 · {total} 个中 {notStarted} 个未开始",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} 个中 {done} 个已完成",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} 个中 {done} 个已完成 · {failed} 个失败",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} 个迭代 | {total} 个迭代",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",

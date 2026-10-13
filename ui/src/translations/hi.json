@@ -446,7 +446,64 @@
       "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।",
       "add-task": "Task जोड़ें",
       "add-trigger": "Trigger जोड़ें",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "चलाया नहीं गया",
+        "pick-first": "पहले {loop} चुनें",
+        "picker-label": "{loop} का इटरेशन",
+        "search-placeholder": "#संख्या से खोजें",
+        "all-iterations": "सभी इटरेशन",
+        "iteration-label": "#{number} {value}",
+        "iteration-fallback": "इटरेशन {number}",
+        "step-of": "{current} / {total}",
+        "previous-iteration": "पिछला इटरेशन",
+        "next-iteration": "अगला इटरेशन",
+        "previous-page": "पिछला पृष्ठ",
+        "next-page": "अगला पृष्ठ",
+        "failed-group": "विफल · {count}",
+        "other-group": "अन्य इटरेशन",
+        "matching": "मिलान",
+        "failure-forbidden": "आपके पास इस इटरेशन की पहुँच नहीं है।",
+        "failure-not-found": "यह इटरेशन अब मौजूद नहीं है।",
+        "failure-unknown": "इटरेशन लोड नहीं हो सके।",
+        "scope": "दायरा",
+        "whole-execution": "पूरा निष्पादन",
+        "clear-scopes": "दायरे हटाएँ",
+        "jump-to-first-failure": "पहली विफलता पर जाएँ",
+        "loops-with-failures": "विफलताओं वाले लूप",
+        "task-runs": "{runs} रन | {runs} रन",
+        "task-runs-failed": "{runs} रन · {failed} विफल | {runs} रन · {failed} विफल",
+        "retry": "पुनः प्रयास करें",
+        "load-more": "और लोड करें",
+        "retry-loading": "इटरेशन लोड करना पुनः प्रयास करें"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} में से {failed} विफल",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} विफल · {total} में से {notStarted} शुरू नहीं हुए",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} में से {done} पूर्ण",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} में से {done} पूर्ण · {failed} विफल",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} इटरेशन | {total} इटरेशन",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task Logs दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",

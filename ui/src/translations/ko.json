@@ -446,7 +446,64 @@
       "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요.",
       "add-task": "Task 추가",
       "add-trigger": "Trigger 추가",
-      "child-count": "task {count}개 | task {count}개"
+      "child-count": "task {count}개 | task {count}개",
+      "loop": {
+        "not-run": "실행 안 됨",
+        "pick-first": "먼저 {loop}을(를) 선택하세요",
+        "picker-label": "{loop}의 반복",
+        "search-placeholder": "#번호로 검색",
+        "all-iterations": "모든 반복",
+        "iteration-label": "#{number} {value}",
+        "iteration-fallback": "반복 {number}",
+        "step-of": "{current} / {total}",
+        "previous-iteration": "이전 반복",
+        "next-iteration": "다음 반복",
+        "previous-page": "이전 페이지",
+        "next-page": "다음 페이지",
+        "failed-group": "실패 · {count}",
+        "other-group": "기타 반복",
+        "matching": "일치",
+        "failure-forbidden": "이 반복에 대한 액세스 권한이 없습니다.",
+        "failure-not-found": "이 반복은 더 이상 존재하지 않습니다.",
+        "failure-unknown": "반복을 불러오지 못했습니다.",
+        "scope": "범위",
+        "whole-execution": "전체 실행",
+        "clear-scopes": "범위 지우기",
+        "jump-to-first-failure": "첫 번째 실패로 이동",
+        "loops-with-failures": "실패가 있는 루프",
+        "task-runs": "{runs}회 실행 | {runs}회 실행",
+        "task-runs-failed": "{runs}회 실행 · {failed}회 실패 | {runs}회 실행 · {failed}회 실패",
+        "retry": "다시 시도",
+        "load-more": "더 보기",
+        "retry-loading": "반복 불러오기 다시 시도"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total}개 중 {failed}개 실패",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed}개 실패 · {total}개 중 {notStarted}개 시작 안 됨",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total}개 중 {done}개 완료",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total}개 중 {done}개 완료 · {failed}개 실패",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "반복 {total}개 | 반복 {total}개",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task Logs 보기",
     "show task condition": "작업 상태 표시",

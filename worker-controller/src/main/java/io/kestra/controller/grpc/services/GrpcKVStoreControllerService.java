@@ -1,16 +1,8 @@
 package io.kestra.controller.grpc.services;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.regex.Pattern;
-
-import com.google.protobuf.ByteString;
 
 import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.grpc.BooleanResponse;
@@ -24,6 +16,7 @@ import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.grpc.RequestOrResponseHeader;
 import io.kestra.controller.grpc.StreamChunk;
 import io.kestra.controller.grpc.WorkerControllerService;
+import io.kestra.controller.grpc.streaming.ChunkSpool;
 import io.kestra.controller.grpc.streaming.ChunkedStreamWriter;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.exceptions.ResourceExpiredException;
@@ -31,7 +24,6 @@ import io.kestra.core.storages.kv.KVBackend;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreException;
-import io.kestra.core.validations.validator.TenantIdValidator;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -54,8 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiresControllerServer
 public class GrpcKVStoreControllerService extends KVStoreServiceGrpc.KVStoreServiceImplBase implements WorkerControllerService {
 
-    private static final Pattern NAMESPACE_PATTERN = Pattern.compile("^[a-z0-9][a-z0-9._-]*");
-
     private final KVBackend backend;
 
     @Inject
@@ -67,11 +57,9 @@ public class GrpcKVStoreControllerService extends KVStoreServiceGrpc.KVStoreServ
     @Override
     public StreamObserver<KVPutRequest> put(StreamObserver<KVPutResponse> responseObserver) {
         return new StreamObserver<>() {
+            private final ChunkSpool spool = new ChunkSpool("kestra-kv-");
             private KVPutRequest entryRequest;
             private KVPutEntry entry;
-            private ByteString firstChunk;
-            private Path spool;
-            private OutputStream spoolOutput;
             private boolean failed;
 
             @Override
@@ -94,7 +82,7 @@ public class GrpcKVStoreControllerService extends KVStoreServiceGrpc.KVStoreServ
                             if (entry == null) {
                                 throw new IllegalArgumentException("A KV put must start with its entry, but a value chunk was received first.");
                             }
-                            append(request.getChunk().getContent());
+                            spool.append(request.getChunk().getContent());
                         }
                         default -> throw new IllegalArgumentException("A KV put message carries neither an entry nor a value chunk.");
                     }
@@ -106,7 +94,7 @@ public class GrpcKVStoreControllerService extends KVStoreServiceGrpc.KVStoreServ
             @Override
             public void onError(Throwable t) {
                 log.debug("A worker aborted a KV put", t);
-                discardSpool();
+                spool.close();
             }
 
             @Override
@@ -119,57 +107,21 @@ public class GrpcKVStoreControllerService extends KVStoreServiceGrpc.KVStoreServ
                     if (entry == null) {
                         throw new IllegalArgumentException("A KV put must carry an entry, but none was received.");
                     }
-                    backend.put(entryRequest.getTenantId(), entry.getNamespace(), entry.getKey(), metadata(entry), value(), entry.getOverwrite());
+                    backend.put(entryRequest.getTenantId(), entry.getNamespace(), entry.getKey(), metadata(entry), spool.content(), entry.getOverwrite());
 
                     responseObserver.onNext(KVPutResponse.newBuilder().setHeader(entryRequest.getHeader()).build());
                     responseObserver.onCompleted();
                 } catch (Exception e) {
                     fail(e);
                 } finally {
-                    discardSpool();
+                    spool.close();
                 }
-            }
-
-            // Most values fit in a single chunk, so the spool is only created once a second chunk arrives.
-            private void append(ByteString chunk) throws IOException {
-                if (spoolOutput == null && firstChunk == null) {
-                    firstChunk = chunk;
-                    return;
-                }
-                if (spoolOutput == null) {
-                    spool = Files.createTempFile("kestra-kv-", ".part");
-                    spoolOutput = new BufferedOutputStream(Files.newOutputStream(spool));
-                    firstChunk.writeTo(spoolOutput);
-                    firstChunk = null;
-                }
-                chunk.writeTo(spoolOutput);
-            }
-
-            private InputStream value() throws IOException {
-                if (spoolOutput == null) {
-                    return (firstChunk == null ? ByteString.EMPTY : firstChunk).newInput();
-                }
-                spoolOutput.close();
-                return Files.newInputStream(spool);
             }
 
             private void fail(Exception e) {
                 failed = true;
-                discardSpool();
+                spool.close();
                 responseObserver.onError(toStatus(e));
-            }
-
-            private void discardSpool() {
-                try {
-                    if (spoolOutput != null) {
-                        spoolOutput.close();
-                    }
-                    if (spool != null) {
-                        Files.deleteIfExists(spool);
-                    }
-                } catch (IOException e) {
-                    log.warn("Failed to delete the spooled KV value '{}'", spool, e);
-                }
             }
         };
     }
@@ -213,7 +165,7 @@ public class GrpcKVStoreControllerService extends KVStoreServiceGrpc.KVStoreServ
     @Override
     public void list(NamespaceRequest request, StreamObserver<OpaqueData> responseObserver) {
         try {
-            validateStorageLocation(request.getTenantId(), request.getNamespace());
+            StorageLocations.validate(request.getTenantId(), request.getNamespace());
             respond(request.getHeader(), responseObserver, backend.list(request.getTenantId(), request.getNamespace()));
         } catch (Exception e) {
             responseObserver.onError(toStatus(e));
@@ -241,17 +193,8 @@ public class GrpcKVStoreControllerService extends KVStoreServiceGrpc.KVStoreServ
     private static void validate(String tenantId, String namespace, String key) {
         log.trace("Received KV request: tenantId={}, namespace={}, key={}", tenantId, namespace, key);
 
-        validateStorageLocation(tenantId, namespace);
+        StorageLocations.validate(tenantId, namespace);
         KVStore.validateKey(key);
-    }
-
-    private static void validateStorageLocation(String tenantId, String namespace) {
-        if (!TenantIdValidator.isValid(tenantId)) {
-            throw new IllegalArgumentException("'%s' is not a valid tenant.".formatted(tenantId));
-        }
-        if (!NAMESPACE_PATTERN.matcher(namespace).matches()) {
-            throw new IllegalArgumentException("'%s' is not a valid namespace.".formatted(namespace));
-        }
     }
 
     private static void respond(RequestOrResponseHeader header, StreamObserver<OpaqueData> responseObserver, Object payload) {

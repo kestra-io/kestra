@@ -291,7 +291,46 @@
       "help": "मदद",
       "issue": "समस्या",
       "demo": "डेमो",
-      "star": "हमें स्टार दें"
+      "star": "हमें स्टार दें",
+      "notifications": "सूचनाएँ"
+    },
+    "notifications": {
+      "heading": "सूचनाएँ",
+      "ongoing": "प्रगति में",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "{count} निष्पादन समाप्त किया जा रहा है | {count} निष्पादन समाप्त किए जा रहे हैं",
+          "EXECUTION_PAUSE": "{count} निष्पादन रोका जा रहा है | {count} निष्पादन रोके जा रहे हैं",
+          "EXECUTION_RESUME": "{count} निष्पादन फिर से शुरू किया जा रहा है | {count} निष्पादन फिर से शुरू किए जा रहे हैं",
+          "EXECUTION_RESTART": "{count} निष्पादन पुनः प्रारंभ किया जा रहा है | {count} निष्पादन पुनः प्रारंभ किए जा रहे हैं",
+          "EXECUTION_REPLAY": "{count} निष्पादन पुनः चलाया जा रहा है | {count} निष्पादन पुनः चलाए जा रहे हैं",
+          "EXECUTION_FORCE_RUN": "{count} निष्पादन ज़बरदस्ती चलाया जा रहा है | {count} निष्पादन ज़बरदस्ती चलाए जा रहे हैं",
+          "EXECUTION_UNQUEUE": "{count} निष्पादन कतार से हटाया जा रहा है | {count} निष्पादन कतार से हटाए जा रहे हैं",
+          "EXECUTION_CHANGE_STATUS": "{count} निष्पादन की स्थिति बदली जा रही है | {count} निष्पादनों की स्थिति बदली जा रही है",
+          "EXECUTION_SET_LABELS": "{count} निष्पादन पर labels सेट किए जा रहे हैं | {count} निष्पादनों पर labels सेट किए जा रहे हैं",
+          "TRIGGER_UNLOCK": "{count} trigger अनलॉक किया जा रहा है | {count} trigger अनलॉक किए जा रहे हैं",
+          "TRIGGER_DELETE": "{count} trigger हटाया जा रहा है | {count} trigger हटाए जा रहे हैं",
+          "TRIGGER_DISABLE": "{count} trigger अक्षम किया जा रहा है | {count} trigger अक्षम किए जा रहे हैं",
+          "TRIGGER_ENABLE": "{count} trigger सक्षम किया जा रहा है | {count} trigger सक्षम किए जा रहे हैं",
+          "BACKFILL_PAUSE": "{count} backfill रोका जा रहा है | {count} backfill रोके जा रहे हैं",
+          "BACKFILL_RESUME": "{count} backfill फिर से शुरू किया जा रहा है | {count} backfill फिर से शुरू किए जा रहे हैं",
+          "BACKFILL_DELETE": "{count} backfill हटाया जा रहा है | {count} backfill हटाए जा रहे हैं"
+        },
+        "processed": "{count} संसाधित",
+        "rejected": "{count} अस्वीकृत",
+        "elapsed": "{duration} से चल रहा है"
+      },
+      "markAllRead": "सभी को पढ़ा हुआ चिह्नित करें",
+      "markUnread": "अपठित के रूप में चिह्नित करें",
+      "markRead": "पढ़ा गया के रूप में चिह्नित करें",
+      "empty": "अभी कोई सूचना नहीं है",
+      "emptyUnread": "कोई अपठित सूचना नहीं",
+      "tabs": {
+        "all": "सभी",
+        "unread": "अपठित"
+      },
+      "bellAriaLabel": "सूचनाएं",
+      "bellAriaLabelRunning": "सूचनाएं, संचालन प्रगति पर हैं"
     },
     "source": "स्रोत",
     "home": "होम",
@@ -331,6 +370,8 @@
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
     "restarted": "Execution पुनः आरंभ हो गया है",
     "restart confirm": "क्या आप वाकई execution <code>{id}</code> को पुनरारंभ करना चाहते हैं?",
+    "restart subflow warning": "यह execution एक पैरेंट execution द्वारा बनाई गई थी और इसे वहीं से पुनरारंभ किया जाना चाहिए। इसे अकेले पुनरारंभ करने से पैरेंट execution FAILED हो जाती है और इसके अगले Task नहीं चलेंगे। इसे पुनरारंभ करने के लिए {parent} पर जाएं।",
+    "restart subflow warning link": "पैरेंट execution",
     "replay": "पुनः चलाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
@@ -347,6 +388,10 @@
     "no": "नहीं",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
     "change state confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run state बदलना चाहते हैं?<br/>यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
+    "interrupt": "बाधित करें",
+    "interrupt confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run को बाधित करना चाहते हैं?<br/>यह worker के अंदर चल रहे task को समाप्त कर देगा और उसकी स्थिति निर्धारित करेगा।",
+    "interrupt done": "Task रन बाधित हो गया है",
+    "interrupt target state": "लक्ष्य स्थिति",
     "change state current state": "वर्तमान स्थिति है:",
     "change state hint": {
       "WARNING": [
@@ -448,6 +493,11 @@
     "show task source": "Task स्रोत दिखाएं",
     "stream": "स्ट्रीम",
     "execution statistics": "निष्पादन सांख्यिकी",
+    "execution_banner": {
+      "revision": "संशोधन {revision}",
+      "attempts": "{count} प्रयास | {count} प्रयास",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "समानांतरता सीमाएँ",
     "system overview": "सिस्टम अवलोकन",
     "usage": "उपयोग",
@@ -473,6 +523,7 @@
       "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "एक्सप्रेशन",
       "tree": "ट्री",
       "raw_json": "रॉ JSON",
       "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
@@ -558,6 +609,7 @@
       "blueprints": "ब्लूप्रिंट | ब्लूप्रिंट"
     },
     "plugins": {
+      "ui_load_error": "एक प्लगइन घटक लोड नहीं हो सका।",
       "autoInstall": {
         "failed": "plugin इंस्टॉलेशन विफल रहा",
         "failedHint": "flow सेव नहीं हुआ। समस्या ठीक करें या flow से plugin हटाएं, फिर दोबारा सेव करें।",
@@ -615,6 +667,15 @@
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
+      "format": "फ़ॉर्मेट",
+      "max_items": "अधिकतम आइटम",
+      "max_length": "अधिकतम लंबाई",
+      "maximum": "अधिकतम",
+      "min_items": "न्यूनतम आइटम",
+      "min_length": "न्यूनतम लंबाई",
+      "minimum": "न्यूनतम",
+      "unit": "यूनिट",
+      "validation_regexp": "वैलिडेशन रेगएक्स",
       "possible_values": "संभावित मान",
       "sub_type": "उपप्रकार",
       "required": "आवश्यक"
@@ -687,6 +748,17 @@
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "unsaved changed ?": "आपके पास असहेजे गए परिवर्तन हैं, क्या आप इस पृष्ठ को छोड़ना चाहते हैं?",
+    "session expired": "आपका सत्र समाप्त हो गया है",
+    "session expired description": "जारी रखने के लिए फिर से साइन इन करें।",
+    "go to login": "लॉगिन पेज पर जाएं",
+    "use another sign-in method": "किसी अन्य साइन-इन विधि का उपयोग करें",
+    "sign in in a new tab": "एक नए टैब में साइन इन करें",
+    "sign in in a new tab hint": "जो टैब अभी खुला है, उसमें साइन इन करें, फिर यहां वापस आएं और जारी रखें।",
+    "continue after sign in": "जारी रखें",
+    "sign in failed": "साइन इन नहीं कर सके। अपना कनेक्शन जांचें और पुनः प्रयास करें।",
+    "sign in not confirmed": "हम पुष्टि नहीं कर सके कि आप साइन इन हैं। दूसरे टैब में साइन इन करें, फिर जारी रखें।",
+    "server unreachable": "Kestra सर्वर तक नहीं पहुंचा जा सकता है",
+    "server unreachable description": "इस पृष्ठ को रीफ़्रेश करने से पहले किसी भी बिना सहेजे गए काम (उदाहरण के लिए Flow YAML) को कहीं सुरक्षित जगह पर कॉपी कर लें। सर्वर के फिर से प्रतिक्रिया देने पर यह बैनर गायब हो जाएगा।",
     "unsaved changes": "असहेजित परिवर्तन",
     "unsaved changes warning": "आपके पास बिना सहेजे गए परिवर्तन हैं। यदि आप इस पृष्ठ को छोड़ते हैं, तो आपके परिवर्तन खो जाएंगे।",
     "leave page": "पृष्ठ छोड़ें",
@@ -951,7 +1023,6 @@
     "warning detected": "चेतावनी(याँ) मिलीं।",
     "informative notice": "नोट(s)",
     "open": "खोलें",
-    "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
     "admin": "प्रशासनिक",
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
     "commit_id": "कमिट id",
@@ -1034,6 +1105,8 @@
         "folder": "फ़ोल्डर हटाएं",
         "files": "{count} चयनित फ़ाइलें हटाएं",
         "bulk_success": "चयनित फ़ाइलें सफलतापूर्वक हटा दी गईं।",
+        "bulk_partial_error": "चयनित {totalCount} फ़ाइल(फ़ाइलों) में से {failedCount} को हटाने में विफल रहा।",
+        "all_failed_error": "चयनित फ़ाइलों को हटाने में विफल।",
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
       "move": {
@@ -1086,7 +1159,6 @@
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
-    "relative": "सापेक्ष",
     "relative start date": "सापेक्ष प्रारंभ तिथि",
     "absolute": "पूर्ण",
     "backfill": "Backfill",
@@ -1688,6 +1760,12 @@
     "item": "आइटम",
     "items": "आइटम्स",
     "iterations": "पुनरावृत्तियाँ",
+    "loop_iterations_notice": {
+      "logs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके logs यहाँ प्रदर्शित नहीं होते हैं।",
+      "outputs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके आउटपुट यहाँ प्रदर्शित नहीं होते हैं।",
+      "metrics": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके मेट्रिक्स यहाँ प्रदर्शित नहीं होते हैं।",
+      "view_iterations": "पुनरावृत्तियों को देखें"
+    },
     "cron": "क्रॉन",
     "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_failed": "निष्पादन FAILED!",
@@ -1698,6 +1776,7 @@
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "no_code": {
+      "task_details": "Task विवरण",
       "toggle_pebble": "Pebble संपादक टॉगल करें",
       "version_oss_placeholder": "एंटरप्राइज एडिशन के साथ प्लगइन वर्शनिंग अनलॉक करें",
       "adding": "+ एक {what} जोड़ें",
@@ -1753,7 +1832,8 @@
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
         "charts": "चार्ट प्रकार चुनें",
         "where": "एक फ़िल्टर प्रकार चुनें",
-        "numerator": "एक अंश चुनें"
+        "numerator": "एक अंश चुनें",
+        "namespace_first": "पहले एक namespace चुनें"
       },
       "creation": {
         "default": "जोड़ें",
@@ -2206,7 +2286,6 @@
       "run_all_tasks": "सभी Tasks चलाएं",
       "history": "पिछले 10 रन",
       "clear_history": "इतिहास साफ़ करें",
-      "confirm_create": "आप एक flow बनाते समय playground नहीं चला सकते। एक playground रन शुरू करने से flow बन जाएगा।",
       "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
     },
     "submit": "प्रस्तुत करें",
@@ -2239,7 +2318,18 @@
           "issues": "{n} बासी",
           "failed": "{n} विफल",
           "last_run": "अंतिम रन {ago}",
-          "unknown": "{n} ट्रैक नहीं किया गया"
+          "unknown": "{n} ट्रैक नहीं किया गया",
+          "tests_failed": "{n} विफल परीक्षणों के साथ"
+        },
+        "tests": {
+          "pass": "{count} परीक्षण | {count} परीक्षण",
+          "warn": "{count} टेस्ट · चेतावनी | {count} टेस्ट · चेतावनी",
+          "fail": "{failed}/{total} विफल",
+          "tooltip": {
+            "pass": "{count} dbt टेस्ट पास हुआ | सभी {count} dbt टेस्ट पास हुए",
+            "warn": "{count} dbt test चेतावनी के साथ पास हुआ | {count} dbt tests पास हुए, कुछ चेतावनी के साथ",
+            "fail": "dbt टेस्ट विफल रहा | {total} dbt टेस्ट में से {failed} विफल रहे"
+          }
         },
         "recent_runs": "हाल की रन",
         "group_by": "द्वारा समूहबद्ध करें",
@@ -2400,6 +2490,7 @@
         "label": "{count} त्रुटि(याँ)"
       }
     },
+    "invalid_source_code": "अमान्य स्रोत कोड",
     "source_search": {
       "cannot_select_read_only": "चयन नहीं किया जा सकता — आपके पास {namespace} / {id} पर संपादन की अनुमति नहीं है",
       "collapse_all": "सभी को संक्षिप्त करें",
@@ -2686,8 +2777,8 @@
       "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
-    "split_horizontal": "क्षैतिज रूप से विभाजित करें",
-    "split_vertical": "लंबवत विभाजित करें",
+    "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",
+    "move_panel_to_side": "पैनल को एक तरफ ले जाएँ",
     "pwa": {
       "install_title": "Kestra इंस्टॉल करें",
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
@@ -2696,6 +2787,7 @@
     },
     "iteration": "पुनरावृत्ति",
     "iteration_number": "पुनरावृत्ति {number}",
-    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?"
+    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?",
+    "not started": "शुरू नहीं हुआ"
   }
 }

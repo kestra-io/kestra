@@ -351,6 +351,7 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble?u
 | `{{ execution.endDate }}`           | The end date of the current execution, can be formatted with `{{ execution.endDate \| date('yyyy-MM-dd HH:mm:ss.SSSSSS') }}`.                                            |
 | `{{ execution.originalId }}`        | The original execution ID, this id will never change even in case of replay and keep the first execution ID.                                                             |
 | `{{ execution.outputs }}`           | The outputs of the execution as defined in the flow outputs, only populated when the execution is terminated (`finally` or `afterExecution` block).                      |
+| `{{ execution.attemptNumber }}`     | The execution attempt number, starting at `1` and incremented each time the execution is retried.                                                                        |
 | `{{ execution.state }}`             | The current execution state (e.g. `RUNNING`, `SUCCESS`, `FAILED`, `KILLED`).                                                                                             |
 | `{{ task.id }}`                     | The current task ID.                                                                                                                                                     |
 | `{{ task.type }}`                   | The current task Type (Java fully qualified class name).                                                                                                                 |

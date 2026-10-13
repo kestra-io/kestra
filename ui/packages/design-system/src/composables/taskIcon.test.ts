@@ -1,12 +1,12 @@
 import {defineComponent, h} from "vue"
-import {describe, expect, test} from "vitest"
+import {describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 
 import {
     TASK_ICON_INJECTION_KEY,
     taskIconProps,
     useTaskIcon,
-} from "../../../src/composables/taskIcon"
+} from "./taskIcon"
 
 describe("useTaskIcon", () => {
     test("returns the component provided under TASK_ICON_INJECTION_KEY", () => {
@@ -51,11 +51,15 @@ describe("useTaskIcon", () => {
     })
 
     test("fallback accepts every task-icon prop without warning", () => {
-        const warnings: unknown[][] = []
-        const originalWarn = console.warn
-
-        console.warn = (...args) => {
-            warnings.push(args)
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+        const loadIcon = async () => undefined
+        const passedProps = {
+            cls: "test",
+            customIcon: {icon: "test", monochrome: true},
+            icons: {test: {flowable: false, monochrome: false, hasIcon: true}},
+            onlyIcon: true,
+            variable: "test",
+            loadIcon,
         }
 
         try {
@@ -64,27 +68,20 @@ describe("useTaskIcon", () => {
                     return {taskIcon: useTaskIcon()}
                 },
                 render() {
-                    return h(this.taskIcon, {
-                        cls: "test",
-                        customIcon: {
-                            icon: "test",
-                            monochrome: true,
-                        },
-                        icons: {
-                            test: "icon",
-                        },
-                        onlyIcon: true,
-                        variable: "test",
-                        loadIcon: async () => "icon",
-                    })
+                    return h(this.taskIcon, passedProps)
                 },
             })
 
-            mount(Consumer)
+            const icon = mount(Consumer).findComponent({name: "FallbackTaskIcon"})
 
-            expect(warnings).toEqual([])
+            expect(warn).not.toHaveBeenCalled()
+            expect(Object.keys(icon.props()).sort()).toEqual(Object.keys(taskIconProps).sort())
+            expect(icon.props("cls")).toBe("test")
+            expect(icon.props("onlyIcon")).toBe(true)
+            expect(icon.props("variable")).toBe("test")
+            expect(icon.props("loadIcon")).toBe(loadIcon)
         } finally {
-            console.warn = originalWarn
+            warn.mockRestore()
         }
     })
 

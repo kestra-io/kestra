@@ -15,6 +15,7 @@ import org.reactivestreams.Publisher;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
@@ -38,6 +39,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.storages.StorageContext;
@@ -128,7 +130,7 @@ public class ExecutionService {
         Execution execution = getExecution(tenant, executionId, withACL);
 
         if (!execution.getState().isPaused()) {
-            throw new IllegalStateException("Execution '" + executionId + "' is not paused, can't resume it");
+            throw new ConflictException("Cannot resume execution '%s': it is not paused.".formatted(executionId));
         }
 
         return execution;
@@ -1037,7 +1039,7 @@ public class ExecutionService {
     }
 
     /**
-     * Lookup for all executions triggered by given execution id, and returns all the relevant
+     * Lookup for all subflow executions triggered by given execution id, and returns all the relevant
      * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.
      *
      * @param tenantId of the parent execution.
@@ -1055,6 +1057,8 @@ public class ExecutionService {
         // subsequent kill events (that will be re-handled by the Executor).
 
         return executions
+            // a Flow trigger execution also references the execution that triggered it, but it is not its subflow
+            .filter(ExecutableUtils::isSubflow)
             .filter(childExecution ->
             {
                 State state = childExecution.getState();

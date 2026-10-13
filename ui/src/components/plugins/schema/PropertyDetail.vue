@@ -15,9 +15,9 @@
             </KsTag>
         </div>
 
-        <template v-for="row in VALUE_ROWS" :key="row.label">
+        <template v-for="row in VALUE_ROWS" :key="row.key">
             <div v-if="isVisible(row)">
-                <span>{{ row.label }}</span>
+                <span>{{ $t(row.labelKey) }}</span>
                 <code class="value-pill">
                     {{ formatValue(row) }}
                 </code>
@@ -67,24 +67,24 @@
 
     type ValueRow = {
         key: keyof JSONProperty;
-        label: string;
+        labelKey: string;
         format?: (value: JSONProperty[keyof JSONProperty]) => string;
         show?: (value: JSONProperty[keyof JSONProperty]) => boolean;
     };
 
     const VALUE_ROWS: readonly ValueRow[] = [
-        {key: "default", label: "Default"},
-        {key: "pattern", label: "Validation RegExp"},
-        {key: "unit", label: "Unit", show: (value) => typeof value === "string" && value.trim().length > 0},
-        {key: "minLength", label: "Min length"},
-        {key: "maxLength", label: "Max length"},
-        {key: "minItems", label: "Min items"},
-        {key: "maxItems", label: "Max items"},
-        {key: "minimum", label: "Minimum", format: (value) => `>= ${value}`},
-        {key: "exclusiveMinimum", label: "Minimum", format: (value) => `> ${value}`},
-        {key: "maximum", label: "Maximum", format: (value) => `<= ${value}`},
-        {key: "exclusiveMaximum", label: "Maximum", format: (value) => `< ${value}`},
-        {key: "format", label: "Format"},
+        {key: "default", labelKey: "default"},
+        {key: "pattern", labelKey: "plugins.validation_regexp"},
+        {key: "unit", labelKey: "plugins.unit", show: (value) => typeof value === "string" && value.trim().length > 0},
+        {key: "minLength", labelKey: "plugins.min_length"},
+        {key: "maxLength", labelKey: "plugins.max_length"},
+        {key: "minItems", labelKey: "plugins.min_items"},
+        {key: "maxItems", labelKey: "plugins.max_items"},
+        {key: "minimum", labelKey: "plugins.minimum", format: (value) => `>= ${value}`},
+        {key: "exclusiveMinimum", labelKey: "plugins.minimum", format: (value) => `> ${value}`},
+        {key: "maximum", labelKey: "plugins.maximum", format: (value) => `<= ${value}`},
+        {key: "exclusiveMaximum", labelKey: "plugins.maximum", format: (value) => `< ${value}`},
+        {key: "format", labelKey: "plugins.format"},
     ]
 
     const props = defineProps<{property: JSONProperty}>()

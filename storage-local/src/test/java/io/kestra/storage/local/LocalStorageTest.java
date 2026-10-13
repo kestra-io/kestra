@@ -1,6 +1,7 @@
 package io.kestra.storage.local;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -88,8 +89,8 @@ class LocalStorageTest extends StorageTestSuite {
 
         // When: putting an object whose parent path traverses that regular file
         // Then: the failure names the conflicting path instead of a misleading "not found"
-        FileAlreadyExistsException exception = assertThrows(
-            FileAlreadyExistsException.class,
+        FileNotFoundException exception = assertThrows(
+            FileNotFoundException.class,
             () -> storageInterface.put(
                 tenantId,
                 null,

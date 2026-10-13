@@ -101,8 +101,9 @@
 
         try {
             const saved = await flowStore.saveFlow({flow: revisionSource})
-            await flowStore.initYamlSource().catch(onRestoreError)
+            const yamlSourcePromise = flowStore.initYamlSource().catch(onRestoreError)
             useUnsavedChangesStore().unsavedChange = false
+            await yamlSourcePromise
             toast.saved(saved.id)
 
             const loaded = await flowStore.loadRevisions({namespace, id, store: false})

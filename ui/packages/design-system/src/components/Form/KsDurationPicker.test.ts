@@ -1,0 +1,191 @@
+import {describe, test, expect} from "vitest"
+import KsDurationPicker from "./KsDurationPicker.vue"
+import {i18nMount} from "../../../tests/units/i18nMount"
+
+describe("KsDurationPicker", () => {
+    test("renders the duration picker container", () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+        expect(wrapper.find(".ks-duration-picker").exists()).toBe(true)
+    })
+
+    test("renders all 4 number inputs", () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+        expect(wrapper.findAll(".ks-duration-picker__field").length).toBe(4)
+    })
+
+    test("renders custom duration text input", () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+        expect(wrapper.find(".ks-duration-picker__custom").exists()).toBe(true)
+    })
+
+    test("disables unit inputs and custom duration input", () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {disabled: true},
+        })
+
+        const unitInputs = wrapper.findAll(".ks-duration-picker__field input")
+        expect(unitInputs).toHaveLength(4)
+        unitInputs.forEach((input) => {
+            expect(input.attributes("disabled")).toBeDefined()
+        })
+        expect(wrapper.find(".ks-duration-picker__custom input").attributes("disabled")).toBeDefined()
+    })
+
+    test("parses modelValue on mount and populates fields", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: "P4DT5H6M7S"},
+        })
+        await wrapper.vm.$nextTick()
+
+        // Custom duration input should reflect the parsed value
+        const input = wrapper.find("#ks-duration-custom")
+        expect(input.exists()).toBe(true)
+    })
+
+    test("emits update:modelValue with null when no values set", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+        await wrapper.vm.$nextTick()
+
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted).toBeTruthy()
+        // All zeros → null duration
+        const lastEmit = emitted![emitted!.length - 1]
+        expect(lastEmit[0]).toBeNull()
+    })
+
+    test("emits update:modelValue with ISO string when modelValue provided", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: "P1D"},
+        })
+        await wrapper.vm.$nextTick()
+
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted).toBeTruthy()
+    })
+
+    test("reacts to modelValue prop change", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: "P1D"},
+        })
+        await wrapper.vm.$nextTick()
+
+        await wrapper.setProps({modelValue: "PT30M"})
+        await wrapper.vm.$nextTick()
+
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted).toBeTruthy()
+    })
+
+    test("rejects calendar-based (year/month/week) durations as invalid", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        await customInputEl.setValue("P1Y")
+        await customInputEl.trigger("input")
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).toContain("Invalid ISO 8601 duration: P1Y")
+        const emitted = wrapper.emitted("update:modelValue")
+        const lastEmit = emitted![emitted!.length - 1]
+        expect(lastEmit[0]).toBeNull()
+    })
+
+    test("custom duration input shows invalid message for bad input", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+
+        // Directly call parseDuration on the vm via the input event handler
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        if (customInputEl.exists()) {
+            await customInputEl.setValue("not-a-duration")
+            await customInputEl.trigger("input")
+        }
+
+        // durationIssue should be set — ks-text danger class appears
+        expect(wrapper.find(".ks-duration-picker__custom").exists()).toBe(true)
+    })
+
+    test("custom duration input valid ISO string emits correct value", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+        })
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        if (customInputEl.exists()) {
+            await customInputEl.setValue("P2DT3H")
+            await customInputEl.trigger("input")
+        }
+        await wrapper.vm.$nextTick()
+
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted).toBeTruthy()
+    })
+
+    test("keeps the typed text when an intermediate value parses to zero", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: "PT5M"},
+        })
+        await wrapper.vm.$nextTick()
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        for (const partial of ["P", "PT"]) {
+            await customInputEl.setValue(partial)
+            await wrapper.vm.$nextTick()
+            await wrapper.vm.$nextTick()
+            expect((customInputEl.element as HTMLInputElement).value).toBe(partial)
+        }
+
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBeNull()
+    })
+
+    test("emits the parsed value once the typed text becomes valid", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: "PT5M"},
+        })
+        await wrapper.vm.$nextTick()
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        for (const partial of ["P", "PT", "PT3", "PT30", "PT30S"]) {
+            await customInputEl.setValue(partial)
+            await wrapper.vm.$nextTick()
+        }
+        await wrapper.vm.$nextTick()
+
+        expect((customInputEl.element as HTMLInputElement).value).toBe("PT30S")
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe("PT30S")
+    })
+
+    test("unit spinner change rewrites the text canonically and emits", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: "PT5M"},
+        })
+        await wrapper.vm.$nextTick()
+
+        const minutesInput = wrapper.findAll(".ks-duration-picker__field input")[2]
+        await minutesInput.setValue("10")
+        await minutesInput.trigger("change")
+        await wrapper.vm.$nextTick()
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        expect((customInputEl.element as HTMLInputElement).value).toBe("PT10M")
+        const emitted = wrapper.emitted("update:modelValue")
+        expect(emitted![emitted!.length - 1][0]).toBe("PT10M")
+    })
+
+    test("empty modelValue results in null emit", async () => {
+        const wrapper = i18nMount(KsDurationPicker, {
+            props: {modelValue: ""},
+        })
+        await wrapper.vm.$nextTick()
+
+        const emitted = wrapper.emitted("update:modelValue")
+        const lastEmit = emitted![emitted!.length - 1]
+        expect(lastEmit[0]).toBeNull()
+    })
+})

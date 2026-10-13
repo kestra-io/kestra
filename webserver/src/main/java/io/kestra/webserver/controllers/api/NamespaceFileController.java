@@ -55,8 +55,6 @@ public class NamespaceFileController {
     private static final int MAX_FILE_NAME_LENGTH = 255;
 
     @Inject
-    private StorageInterface storageInterface;
-    @Inject
     private TenantService tenantService;
     @Inject
     private FlowService flowService;
@@ -77,7 +75,7 @@ public class NamespaceFileController {
     public List<String> searchNamespaceFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The string the file path should contain") @QueryValue String q) throws IOException {
-        return namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface).all(q).stream().map(namespaceFile -> namespaceFile.filePath().toString()).toList();
+        return namespaceFactory.of(tenantService.resolveTenant(), namespace).all(q).stream().map(namespaceFile -> namespaceFile.filePath().toString()).toList();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -94,7 +92,7 @@ public class NamespaceFileController {
         forbiddenPathsGuard(encodedPath);
 
         Path filePath = Optional.ofNullable(encodedPath).map(URI::getPath).map(Path::of).orElseThrow();
-        InputStream fileContent = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface)
+        InputStream fileContent = namespaceFactory.of(tenantService.resolveTenant(), namespace)
             .getFileContent(filePath, revision);
         return HttpResponse.ok(new StreamedFile(fileContent, MediaType.APPLICATION_OCTET_STREAM_TYPE)).header(HttpHeaders.CACHE_CONTROL, "no-cache");
     }
@@ -112,7 +110,7 @@ public class NamespaceFileController {
         forbiddenPathsGuard(encodedPath);
 
         // if stats is performed upon namespace root, and it doesn't exist yet, we create it
-        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace);
         Path rootPath = Path.of("/");
         if (path == null || path.isEmpty()) {
             if (!namespaceStorage.exists(rootPath)) {
@@ -169,7 +167,7 @@ public class NamespaceFileController {
         }
         forbiddenPathsGuard(encodedPath);
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace);
         Path dirPath = Path.of(Optional.ofNullable(encodedPath).map(URI::getPath).orElse("/"));
 
         if (dirPath.toString().equals("/") && !namespaceStorage.exists(dirPath)) {
@@ -195,7 +193,7 @@ public class NamespaceFileController {
         }
         forbiddenPathsGuard(encodedPath);
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantService.resolveTenant(), namespace);
         namespaceStorage.createDirectory(Optional.ofNullable(encodedPath).map(URI::getPath).map(Path::of).orElse(Path.of("/")));
     }
 
@@ -264,7 +262,7 @@ public class NamespaceFileController {
             }
         }
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
         return namespaceStorage.putFile(Path.of(path.getPath()), inputStream);
     }
 
@@ -284,7 +282,7 @@ public class NamespaceFileController {
 
             String tenantId = tenantService.resolveTenant();
 
-            Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+            Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
             List<NamespaceFileMetadata> allNsFiles = namespaceStorage.children("/", true);
             allNsFiles.stream()
                 .filter(Predicate.not(NamespaceFileMetadata::isDirectory))
@@ -323,7 +321,7 @@ public class NamespaceFileController {
 
         String tenantId = tenantService.resolveTenant();
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
         return namespaceStorage.move(Path.of(from.getPath()), Path.of(to.getPath()));
     }
 
@@ -361,7 +359,7 @@ public class NamespaceFileController {
             parentPathToCheck = NamespaceFileMetadata.parentPath(parentPathToCheck);
         }
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
         return namespaceStorage.delete(Path.of(zombieAwarePathToDelete));
     }
 

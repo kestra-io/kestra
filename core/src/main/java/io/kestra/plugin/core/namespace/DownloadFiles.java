@@ -122,7 +122,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
             .stream()
             .map(Rethrow.throwFunction(file ->
             {
-                try (InputStream is = runContext.storage().getFile(file.uri())) {
+                try (InputStream is = namespace.getFileContent(file)) {
                     URI uri = runContext.storage().putFile(is, renderedDestination + file.path());
                     logger.debug(String.format("Downloaded %s", uri));
                     return new AbstractMap.SimpleEntry<>(toLogicalPath(file.filePath()), uri);

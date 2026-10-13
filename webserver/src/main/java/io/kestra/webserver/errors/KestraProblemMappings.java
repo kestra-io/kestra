@@ -29,6 +29,7 @@ import io.kestra.core.exceptions.KilledException;
 import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.exceptions.QueryTimeoutException;
 import io.kestra.core.exceptions.ResourceAccessDeniedException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.exceptions.TimeoutExceededException;
@@ -112,6 +113,7 @@ public class KestraProblemMappings extends ExceptionTypeProblemMapper {
         to.accept(WebhookInputRenderException.class, ProblemTypes.INVALID_REQUEST_BODY);
         to.accept(InvalidSourceSearchQueryException.class, ProblemTypes.BAD_REQUEST);
         to.accept(RegexUtils.RegexTimeoutException.class, ProblemTypes.BAD_REQUEST);
+        to.accept(QueryTimeoutException.class, ProblemTypes.BAD_REQUEST);
 
         // Authorization denials. 403 rather than a server error, so they are not recorded as incidents and
         // clients do not retry them.

@@ -62,7 +62,7 @@
                 @mouse-leave="() => highlightHoveredTask(-1)"
             >
                 <template #absolute>
-                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
+                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -107,6 +107,7 @@
     import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
     import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
+    import {useViolationMarkers} from "../../composables/useViolationMarkers"
 
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
@@ -295,6 +296,11 @@
         && !flowStore.isReadOnly
         && previewSource.value === undefined)
 
+    useViolationMarkers({
+        editor: monacoEditor,
+        errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
+    })
+
     useReadOnlyYamlKeys({
         editor: monacoEditor,
         expected: computed(() => props.flow
@@ -384,7 +390,7 @@
     function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
         const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes)
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position)
-        pluginsStore.updateDocumentation({cls, version, hash: hash.value})
+        pluginsStore.updateDocumentation(cls ? {cls, version: version ?? undefined, hash: hash.value} : undefined)
     }
 
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
@@ -396,15 +402,26 @@
         await save()
     }
 
+    // The tab stays dirty until the request returns, so without this a click during a slow save sends the file again.
+    const sendingContent = ref<string>()
+
     const saveFileContent = async () => {
         clearTimeout(timeout.value)
-        if(!namespace.value || !props.path || props.flow) return
-        await namespacesStore.saveOrCreateFile({
-            namespace: namespace.value,
-            path: props.path,
-            content: editorContent.value || "",
-        })
-        savedSourceNS.value = source.value
+        const content = source.value
+        if(!namespace.value || !props.path || props.flow || content === sendingContent.value) return
+        sendingContent.value = content
+        try {
+            await namespacesStore.saveOrCreateFile({
+                namespace: namespace.value,
+                path: props.path,
+                content: content || "",
+            })
+            savedSourceNS.value = content
+        } finally {
+            if (sendingContent.value === content) {
+                sendingContent.value = undefined
+            }
+        }
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {

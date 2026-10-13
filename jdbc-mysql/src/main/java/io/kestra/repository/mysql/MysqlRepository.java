@@ -106,14 +106,10 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         ).otherwise(DSL.field("WEEK({0}, 3)", Integer.class, timestampField));
     }
 
-    // We need to create H2 repositories for the queue as it uses an H2Repository named 'queue',
-    // we may find a way to only create this one at some point as here we create unnecessary beans.
     static class MysqlCondition implements io.micronaut.context.condition.Condition {
         @Override
         public boolean matches(ConditionContext context) {
-            boolean isRepository = ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "mysql".equals(it)).orElse(false);
-            boolean isQueue = ((Optional<String>) context.get("kestra.queue.type", String.class)).map(it -> "mysql".equals(it)).orElse(false);
-            return isRepository || isQueue;
+            return ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "mysql".equals(it)).orElse(false);
         }
     }
 }

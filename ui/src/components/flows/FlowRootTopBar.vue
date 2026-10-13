@@ -1,5 +1,5 @@
 <template>
-    <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title">
+    <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title" :bookmarkLabel="routeInfo.bookmarkLabel">
         <template #title>
             <template v-if="isDeleted">
                 <Alert class="text-warning me-2" />{{ $t('deleted_label') }}
@@ -34,6 +34,7 @@
         routeInfo: {
             title: string;
             breadcrumb: KsBreadcrumbItem[];
+            bookmarkLabel?: string;
             beta?: boolean;
         };
     }>()

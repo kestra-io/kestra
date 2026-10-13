@@ -1,9 +1,10 @@
 import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured, type Component} from "vue"
+import {useI18n} from "vue-i18n"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {KnownSlotsPropNames, ManifestsRegistry, type KnownSlotProps} from "@kestra-io/slot-contracts"
-import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
+import {PluginUiModuleWithGroup, type Task} from "@kestra-io/kestra-sdk"
 import {getCsrfToken} from "../utils/csrf"
 
 
@@ -12,6 +13,7 @@ function wrapWithErrorBoundary(inner: Component) {
         name: "FederatedModuleBoundary",
         inheritAttrs: false,
         setup(_, {attrs, slots}) {
+            const {t} = useI18n()
             const error = ref<Error | null>(null)
 
             onErrorCaptured((err: Error) => {
@@ -22,7 +24,7 @@ function wrapWithErrorBoundary(inner: Component) {
 
             return () => {
                 if (error.value) {
-                    return h("div", {class: "federated-module-error"}, "A plugin component failed to load.")
+                    return h("div", {class: "federated-module-error"}, t("plugins.ui_load_error"))
                 }
                 return h(inner, attrs, slots)
             }
@@ -158,12 +160,19 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         return !!RemoteComponents[taskType]
     }
 
+    // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
+    function componentTypeFor(task?: Pick<Task, "type"> & {taskRunner?: Pick<Task, "type">}): string {
+        const runnerType = task?.taskRunner?.type
+        return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
+    }
+
     return {
         RemoteComponent,
         taskAdditionalInfoRemote,
         manifestReady,
         resolveRemoteComponent,
         hasResolvedComponent,
+        componentTypeFor,
     }
 }
 

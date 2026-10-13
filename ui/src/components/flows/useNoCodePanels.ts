@@ -7,7 +7,7 @@ import {useFlowStore} from "../../stores/flow"
 import {NoCodeProps} from "./noCodeTypes"
 import {displayTaskOf} from "../../utils/flowableBlockOps"
 
-import {trackTabOpen, trackTabClose} from "../../utils/tabTracking"
+import {useTabTracking} from "../../composables/useTabTracking"
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes"
 import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize"
 
@@ -110,7 +110,7 @@ function getTabFromNoCodeTab(Comp: Component, tab: NoCodeTabWithAction, t: (key:
         return {
             uid: NOCODE_PREFIX,
             button: {
-                label: "No-code",
+                label: "No Code",
                 icon: markRaw(MouseRightClickIcon),
             },
         } satisfies Omit<Tab, "component">
@@ -234,6 +234,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
 export function useNoCodePanels(component: Component, panels: Ref<Panel[]>, openTabs: Ref<string[]>, focusTab: (tab: string) => void) {
     const {t, te} = useI18n()
     const flowStore = useFlowStore()
+    const {trackTabOpen, trackTabClose} = useTabTracking()
 
     const defaultSize = usePanelDefaultSize(panels)
 

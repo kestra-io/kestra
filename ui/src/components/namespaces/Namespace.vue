@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb">
+    <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb" :titleSiblings="details.titleSiblings">
         <template #actions>
             <Actions />
         </template>
@@ -18,7 +18,10 @@
     import TopNavBar from "../layout/TopNavBar.vue"
     import Actions from "override/components/namespaces/Actions.vue"
     import {useMiscStore} from "override/stores/misc"
+    import {provideNamespacePageState} from "override/composables/namespacePageState"
     import Tabs from "../Tabs.vue"
+
+    provideNamespacePageState()
     const {tabs} = useTabs()
     const {details} = useHelpers()
 

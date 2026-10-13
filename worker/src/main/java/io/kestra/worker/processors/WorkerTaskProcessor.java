@@ -344,9 +344,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             TaskRun taskRun = taskRunWithOutput.taskRun().withState(state);
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun, dynamicTaskRuns, taskRunWithOutput.outputs());
-            workerTaskResultQueue.put(workerTaskResult);
-
-            // upload the cache file, hash may not be present if we didn't succeed in computing it
+            // upload the cache file before emitting the result so that an execution started right after this one sees the entry
+            // hash may not be present if we didn't succeed in computing it
             if (
                 workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled() && hash.isPresent() &&
                     (state == State.Type.SUCCESS || state == State.Type.WARNING)
@@ -371,6 +370,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     runContext.logger().error("Unexpected exception while uploading the cache entry for task '{}', the task not be cached.", workerTask.getTask().getId(), e);
                 }
             }
+
+            workerTaskResultQueue.put(workerTaskResult);
 
             this.logTerminated(workerTask, taskRun);
             return workerTaskResult;
@@ -494,7 +495,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
                     bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
                 }
-                runContext.assets().emitted().forEach(emit -> bundles.add(new AssetsInOut(emit.inputs(), emit.outputs())));
+                for (AssetEmit emit : runContext.assets().emitted()) {
+                    try {
+                        emit.outputs().forEach(runContext::validate);
+                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
+                    } catch (ConstraintViolationException e) {
+                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
+                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
+                    }
+                }
 
                 if (!bundles.isEmpty()) {
                     taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));

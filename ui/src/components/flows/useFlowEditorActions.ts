@@ -16,6 +16,7 @@ import {asProblem} from "@kestra-io/kestra-sdk"
 import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
+import {storageKeys} from "../../utils/constants"
 export function useFlowEditorActions() {
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
@@ -140,7 +141,7 @@ export function useFlowEditorActions() {
             notificationHandle = KsNotification({
                 title: t("plugins.autoInstall.title", count),
                 message: h(PluginInstallToast, {
-                    jobId: job.id,
+                    jobId: job.id ?? "",
                     onSuccess: () => {
                         pluginsStore.list()
                         setTimeout(() => notificationHandle?.close(), 3000)
@@ -298,7 +299,7 @@ export function useFlowEditorActions() {
         const flowId = flowStore.flowYamlMetadata?.id
         return flowStore.deleteFlowAndDependencies()
             .then(() => {
-                toast.deleted(flowId)
+                toast.deleted(flowId ?? "")
                 return router.push({
                     name: "flows/list",
                     params: {tenant: tenant.value},
@@ -315,7 +316,7 @@ export function useFlowEditorActions() {
 
     const isPlaygroundEnabled = computed(() => playgroundStore.enabled)
     const isPlaygroundAllowed = computed(
-        () => localStorage.getItem("editorPlayground") !== "false"
+        () => localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false"
             && !tourStore.isGuidedActive,
     )
 

@@ -1,0 +1,12 @@
+id: flow-trigger-depends-on-outputs-flow-a
+namespace: io.kestra.tests.trigger.depends.on.outputs
+
+tasks:
+  - id: ret
+    type: io.kestra.plugin.core.debug.Return
+    format: "from_a"
+
+outputs:
+  - id: value
+    type: STRING
+    value: "{{ outputs.ret.value }}"

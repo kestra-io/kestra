@@ -502,7 +502,7 @@ public class WorkingDirectoryTest {
         }
 
         private void put(String path, String content, String namespace) throws IOException, URISyntaxException {
-            namespaceFactory.of(MAIN_TENANT, namespace, storageInterface).putFile(Path.of(path), new ByteArrayInputStream(content.getBytes()));
+            namespaceFactory.of(MAIN_TENANT, namespace).putFile(Path.of(path), new ByteArrayInputStream(content.getBytes()));
         }
     }
 

@@ -116,7 +116,7 @@ export default defineConfig({
             }),
         ],
         coverage: {
-            reporter: ["text", "html"],
+            reporter: ["text", "html", "lcov"],
             include: [
                 "src/**/*.{ts,vue}",
             ],

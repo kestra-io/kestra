@@ -87,12 +87,12 @@ test.describe("Block editor — mutations & split view", () => {
         expect(taskIdsInOrder(source)).toEqual(["seq_group", "last_task", "middle_task"])
     })
 
-    test("opening blocks by default lands them as same-place tabs in the shared No-code pane", async ({page}) => {
-        // The merge's default: a clicked block opens as a tab in the No-code
+    test("opening blocks by default lands them as same-place tabs in the shared No Code pane", async ({page}) => {
+        // The merge's default: a clicked block opens as a tab in the No Code
         // pane itself (hiding the canvas), not a split. To open a second block
         // the user returns to the canvas tab first — proving both live in one
         // shared pane, not a Blocks-specific dock.
-        const canvasTab = page.locator(".editor-tab").filter({hasText: "No-code"}).first()
+        const canvasTab = page.locator(".editor-tab").filter({hasText: "No Code"}).first()
 
         await page.locator("[data-block-id='middle_task']").click()
         await expect(page.getByRole("tab", {name: /middle_task/})).toBeVisible()

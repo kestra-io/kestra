@@ -57,6 +57,16 @@
 
         <div class="p-3 pt-0">
             <p class="mb-0" v-html="$t('restart confirm', {id: escapeHtml(execution.id)})" />
+            <KsAlert
+                v-if="parentLink"
+                type="warning"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="restart-subflow-warning"
+            >
+                {{ parentWarning[0] }}<router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>{{ parentWarning[1] }}
+            </KsAlert>
         </div>
 
         <template #footer>
@@ -197,6 +207,7 @@
     import {KsId} from "@kestra-io/design-system"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {asItemKey} from "../../../../layout/navBarActionsContext"
+    import {splitTranslation} from "../../../../../utils/splitTranslation"
 
     defineOptions({inheritAttrs: false})
 
@@ -220,6 +231,8 @@
     const authStore = useAuthStore()
     const executionsStore = useExecutionsStore()
 
+    const SUBFLOW_TRIGGER_TYPE = "io.kestra.plugin.core.flow.Subflow"
+
     const isOpen = ref(false)
     const isReplayWithInputsOpen = ref(false)
     const revisionsSelected = ref<number | undefined>(undefined)
@@ -230,6 +243,22 @@
     const icon = computed(() => !props.isReplay ? RestartIcon : PlayBoxMultiple)
     const componentClass = computed(() => !props.isReplay ? "restart me-1" : "")
     const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart")
+
+    const parentLink = computed(() => {
+        const trigger = props.execution.trigger
+        const variables = trigger?.variables
+        if (trigger?.type !== SUBFLOW_TRIGGER_TYPE || !variables?.executionId) return undefined
+
+        return {
+            name: EXECUTION_PARENT_ROUTE,
+            params: {
+                namespace: variables.namespace,
+                flowId: variables.flowId,
+                id: variables.executionId,
+            },
+        }
+    })
+    const parentWarning = computed(() => splitTranslation(t, "restart subflow warning", "parent"))
 
     const currentFlow = ref<any | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
@@ -285,8 +314,9 @@
             return false
         }
 
-        const isRunning = State.isRunning(props.execution.state.current)
-        return props.isReplay ? !isRunning : props.execution.state.current === State.FAILED
+        return props.isReplay
+            ? State.isTerminated(props.execution.state.current)
+            : props.execution.state.current === State.FAILED
     })
 
     const tooltip = computed(() =>
@@ -369,7 +399,7 @@
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
             taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: revisionsSelected.value,
+            revision: props.isReplay ? revisionsSelected.value : undefined,
         })
 
         const newExecution = response

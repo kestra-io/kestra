@@ -67,6 +67,7 @@ public abstract class AbstractRetry {
 
     public enum Behavior {
         RETRY_FAILED_TASK,
+        RETRY_FLOWABLE,
         CREATE_NEW_EXECUTION
     }
 }

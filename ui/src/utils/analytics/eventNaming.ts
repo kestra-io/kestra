@@ -12,6 +12,10 @@ const FLAT_EVENT_NAMES: Record<string, string> = {
     "setup_flow:marketing_survey_skipped": "app.marketing-survey.skipped",
     "setup_flow:completed": "app.setup-flow.completed",
     error: "app.error.occurred",
+    context_section_expanded: "app.task-editor-context-section.expanded",
+    chip_inserted: "app.task-editor-chip.inserted",
+    chip_copied: "app.task-editor-chip.copied",
+    required_field_jump: "app.task-editor-required-field.jumped",
 }
 
 const EDITOR_TAB_ACTION_NAMES: Record<string, string> = {

@@ -39,7 +39,9 @@ import {
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
 import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
+import {registerIndentedBlockScalarTokenizer} from "./yamlBlockScalarTokenizer"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
+import {storageKeys} from "../../../utils/constants"
 import IModel = monaco.editor.IModel;
 import ProviderResult = monaco.languages.ProviderResult;
 import CompletionList = monaco.languages.CompletionList;
@@ -66,11 +68,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         // Base YAML language setup shared across all YAML editors.
         const monacoYaml = configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
-            hover: localStorage.getItem("hoverTextEditor") === "true",
+            hover: localStorage.getItem(storageKeys.HOVER_TEXT_EDITOR) === "true",
             completion: true,
             validate: validateYAML.value ?? true,
             schemas: yamlSchemas(),
         })
+
+        // Keep multi-line string content highlighted as plain text, whatever its indentation.
+        void registerIndentedBlockScalarTokenizer("yaml")
 
         // Keep Monaco YAML validation in sync with the blueprint store setting. The single instance must be
         // updated in place: calling configureMonacoYaml again would stack a second undisposed instance whose
@@ -174,14 +179,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 .map((s) => {
                     const r = {...s}
 
-                    if (typeof r.insertText === "string") {
-                        r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
-                    } else if (typeof r.insertText === "object" && r.insertText !== null) {
-                        const textObj = r.insertText as any
-                        if (typeof textObj.value === "string") {
-                            textObj.value = textObj.value.replaceAll("\\\\\"", "\"")
-                        }
-                    }
+                    r.insertText = r.insertText.replaceAll("\\\\\"", "\"")
 
                     if (typeof r.filterText === "string") {
                         r.filterText = r.filterText.replaceAll("\\\\\"", "\"")
@@ -404,7 +402,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                 async provideCompletionItems(model, position) {
                     const source = model.getValue()
                     const cursorPosition = model.getOffsetAt(position)
-                    const parsed = YAML_UTILS.parse(source, false)
+                    const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
 
                     const currentWord = model.findPreviousMatch(
                         RegexProvider.beforeSeparator(),
@@ -492,7 +490,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
 
         autoCompletionProviders.push(
             monaco.languages.registerInlineCompletionsProvider("yaml", {
-                provideInlineCompletions: async (model: any, position: any) => {
+                provideInlineCompletions: async (model: IModel, position: IPosition) => {
                     // Only suggest inline required properties in flow/testsuite editors.
                     const isFlowModel =
                         model.uri.path.includes("flow-") ||
@@ -569,10 +567,6 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         items: [
                             {
                                 insertText: snippet,
-                                insertTextRules:
-                                monaco.languages
-                                    .CompletionItemInsertTextRule
-                                    .InsertAsSnippet,
                                 range: new monaco.Range(
                                     position.lineNumber,
                                     position.column,
@@ -581,6 +575,7 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                                 ),
                                 command: {
                                     id: "moveCursor",
+                                    title: "",
                                     arguments: [
                                         {
                                             lineNumber: position.lineNumber,
@@ -593,13 +588,10 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                         enableForwardStability: true,
                     }
                 },
-                handleItemDidShow() {
+                disposeInlineCompletions() {
+                    // No resources to release: the completions are plain objects with no external references.
                 },
-                handlePartialAccept() {
-                },
-                freeInlineCompletions() {
-                },
-            } as any),
+            }),
         )
 
         registerPebbleAutocompletion(

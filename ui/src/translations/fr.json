@@ -2722,8 +2722,6 @@
       "open_mode_hint": "Les tasks s'ouvrent dans une modale par défaut. Vous pouvez définir les onglets par défaut dans les {settings}."
     },
     "blocks": "Blocs",
-    "split_horizontal": "Diviser horizontalement",
-    "split_vertical": "Diviser verticalement",
     "move_panel_to_bottom": "Déplacer le panneau vers le bas",
     "move_panel_to_side": "Déplacer le panneau sur le côté",
     "pwa": {

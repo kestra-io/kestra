@@ -769,7 +769,8 @@ public class ExecutionService {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
         Execution updatedExecution = execution.withTaskRun(taskRun.withState(newState));
 
-        if (markParents && taskRun.getParentTaskRunId() != null) {
+        // A loop sub-execution's top-level task runs have a parent (the Loop) that lives in the parent execution.
+        if (markParents && taskRun.getParentTaskRunId() != null && execution.findTaskRunByTaskRunIdIfPresent(taskRun.getParentTaskRunId()).isPresent()) {
             return this.markWithTaskRunAs(updatedExecution, taskRun.getParentTaskRunId(), newState, true);
         }
 

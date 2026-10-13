@@ -2722,8 +2722,6 @@
       "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
-    "split_horizontal": "क्षैतिज रूप से विभाजित करें",
-    "split_vertical": "लंबवत विभाजित करें",
     "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",
     "move_panel_to_side": "पैनल को एक तरफ ले जाएँ",
     "pwa": {

@@ -75,6 +75,8 @@
         }
 
         &__option.kel-button {
+            --ks-button-content-width: 100%;
+
             flex: 1 1 0;
             min-width: 0;
             margin: 0;
@@ -92,10 +94,6 @@
                 border: none;
                 box-shadow: none;
                 outline: none;
-            }
-
-            > :deep(span) {
-                width: 100%;
             }
         }
 

@@ -23,7 +23,7 @@
         <template #details>
             <slot name="details" />
         </template>
-        <template #footer>
+        <template v-if="execution" #footer>
             <Duration compact :histories="histories" :denominator="longestTaskRunDuration" />
         </template>
         <template #content>

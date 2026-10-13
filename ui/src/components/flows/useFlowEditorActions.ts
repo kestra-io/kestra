@@ -16,6 +16,7 @@ import {asProblem} from "@kestra-io/kestra-sdk"
 import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
+import {storageKeys} from "../../utils/constants"
 export function useFlowEditorActions() {
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
@@ -315,7 +316,7 @@ export function useFlowEditorActions() {
 
     const isPlaygroundEnabled = computed(() => playgroundStore.enabled)
     const isPlaygroundAllowed = computed(
-        () => localStorage.getItem("editorPlayground") !== "false"
+        () => localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false"
             && !tourStore.isGuidedActive,
     )
 

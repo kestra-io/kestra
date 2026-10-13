@@ -484,6 +484,7 @@
       "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder Value suchen…",
       "tasks_outputs": "Task-Outputs",
+      "expression": "Expression",
       "tree": "Baum",
       "raw_json": "Rohes JSON",
       "select_prompt": "Wähle eine Variable aus, um ihren Wert anzuzeigen.",

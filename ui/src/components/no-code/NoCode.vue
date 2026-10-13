@@ -51,7 +51,6 @@
         FIELDNAME_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
-        PANEL_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
@@ -153,13 +152,11 @@
         },
     )
 
-    const panel = ref()
     const pluginsStore = usePluginsStore()
 
     provide(FULL_SOURCE_INJECTION_KEY, computed(() => lastValidFlowYaml.value))
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "")
     provide(REF_PATH_INJECTION_KEY, props.refPath)
-    provide(PANEL_INJECTION_KEY, panel)
     provide(POSITION_INJECTION_KEY, props.position ?? "after")
     provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false)
     provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? "company.team"))

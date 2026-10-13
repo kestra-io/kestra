@@ -2238,6 +2238,22 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldReturnConflictWhenKillExecutionCalledOnTerminatedExecution() throws Exception {
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.DELETE("/api/v1/main/executions/" + execution.getId() + "/actions/kill")
+            )
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/sleep-long.yml" })
     void shouldKillRunningExecutionWhenKillExecutionCalled() throws InterruptedException, QueueException {
         // listen to the execution queue

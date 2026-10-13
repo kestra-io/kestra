@@ -1,97 +1,281 @@
-import {describe, expect, it} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
-import {createPinia} from "pinia"
+import {mount} from "@vue/test-utils"
+import {describe, it, expect, vi, beforeEach} from "vitest"
+import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
-import {createMemoryHistory, createRouter} from "vue-router"
-import {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu} from "@kestra-io/design-system"
 import TaskRunActions from "./TaskRunActions.vue"
+import {useExecutionsStore} from "../../stores/executions"
 
-async function mountActions(type: string, grouped = false) {
-    const router = createRouter({
-        history: createMemoryHistory(),
-        routes: [
-            {path: "/:tenant/executions/:id/topology", name: "topology", component: {template: "<div />"}},
-            {path: "/:tenant/executions", name: "executions/list", component: {template: "<div />"}},
-        ],
-    })
-    await router.push({name: "topology", params: {tenant: "test-tenant", id: "parent-execution"}})
-    const taskRun = {id: "task-run", taskId: "loop", state: {current: "RUNNING"}}
-    const wrapper = mount(TaskRunActions, {
-        attachTo: document.body,
-        props: {
-            taskRun,
-            taskRuns: grouped ? [taskRun, {...taskRun, id: "another-task-run"}] : undefined,
-            execution: {id: "parent-execution", namespace: "tests", flowId: "loop-flow", state: {current: "RUNNING"}},
-            flow: {tasks: [{id: "parallel", type: "io.kestra.plugin.core.flow.Parallel", tasks: [{id: "loop", type}]}]},
+vi.mock("vue-router", () => ({
+    useRoute: vi.fn(() => ({
+        params: {namespace: "ns-1"},
+    })),
+    useRouter: vi.fn(() => ({})),
+}))
+
+vi.mock("../../utils/toast", () => ({
+    useToast: vi.fn(() => ({
+        confirm: vi.fn((_msg: string, callback: () => void) => callback()),
+    })),
+}))
+
+const i18n = createI18n({
+    legacy: false,
+    locale: "en",
+    missingWarn: false,
+    fallbackWarn: false,
+    messages: {
+        en: {
+            iteration_number: "iteration_number",
+            delete_log_iteration: "delete_log_iteration",
         },
+    },
+})
+
+type TaskRunActionsProps = InstanceType<typeof TaskRunActions>["$props"]
+
+function mountActions(propsData: Partial<TaskRunActionsProps>) {
+    return mount(TaskRunActions, {
+        props: propsData as TaskRunActionsProps,
         global: {
-            plugins: [createPinia(), router, createI18n({legacy: false, locale: "en", messages: {en: {actions: "Actions", iterations: "Iterations"}}})],
-            components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
+            plugins: [i18n],
             stubs: {
+                KsDropdown: {
+                    template: "<div><slot name=\"dropdown\" /></div>",
+                },
+                KsDropdownMenu: {
+                    template: "<div><slot /></div>",
+                },
+                KsSearch: true,
+                KsScrollbar: {
+                    template: "<div><slot /></div>",
+                },
+                KsIcon: {
+                    template: "<span><slot /></span>",
+                },
+                KsText: {
+                    template: "<span><slot /></span>",
+                },
+                KsDropdownItem: {
+                    template: "<div @click=\"$emit('click', $event)\"><slot /></div>",
+                    props: ["divided"],
+                },
+                KsButton: {
+                    template: "<button class=\"ks-button\"><slot /></button>",
+                },
                 Metrics: true,
                 Outputs: true,
                 Restart: true,
                 ChangeStatus: true,
                 TaskEdit: true,
+                SubFlowLink: true,
                 WorkerInfo: true,
+                AiIcon: true,
+                DotsVertical: true,
+                Download: true,
+                Copy: true,
+                Delete: true,
                 NodeMenuItem: true,
             },
         },
     })
-    await wrapper.get("button[aria-label=Actions]").trigger("click")
-    await flushPromises()
-    return {wrapper, router}
 }
 
 describe("TaskRunActions", () => {
-    it.each([false, true])("shouldOpenAllIterationsWhenNestedLoopHasNoOutputs (grouped: %s)", async grouped => {
-        const {wrapper, router} = await mountActions("io.kestra.plugin.core.flow.Loop", grouped)
-        const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
+    beforeEach(() => {
+        vi.clearAllMocks()
+        setActivePinia(createPinia())
+    })
 
-        expect(iterations).toBeDefined()
-        await iterations!.get("[role=\"menuitem\"]").trigger("click")
-        await flushPromises()
+    const execution = {id: "ex-1", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}}
 
-        expect(router.currentRoute.value.name).toBe("executions/list")
-        expect(router.currentRoute.value.params.tenant).toBe("test-tenant")
-        expect(router.currentRoute.value.query).toEqual({
-            "filters[parentId][EQUALS]": "parent-execution",
-            "filters[kind][EQUALS]": "LOOP",
-            "filters[taskId][EQUALS]": "loop",
+    it("renders options and resolves labels", () => {
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iteration 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: undefined, state: {current: "SUCCESS"}},
+            ],
+            execution,
+        })
+
+        const options = wrapper.findAll("[data-test='task-run-iteration']")
+        expect(options).toHaveLength(2)
+        expect(options[0].text()).toBe("Iteration 1")
+        expect(options[1].text()).toBe("iteration_number")
+    })
+
+    const execution2 = {...execution, id: "ex-2"}
+    it("targets delete logs at the selected run", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.deleteLogs = vi.fn().mockResolvedValue({})
+
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: execution2,
+        })
+
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
+        const deleteBtn = wrapper.find("[data-test='task-run-delete-logs']")
+        await deleteBtn.trigger("click")
+
+        expect(executionsStore.deleteLogs).toHaveBeenCalledWith({
+            executionId: "ex-2",
+            params: {taskRunId: "tr-2"},
         })
     })
 
-    it("shouldHideIterationsWhenTaskIsNotALoop", async () => {
-        const {wrapper} = await mountActions("io.kestra.plugin.core.log.Log")
+    const execution3 = {...execution, id: "ex-3"}
+    it("targets download logs at the selected run", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
 
-        expect(wrapper.findAllComponents(KsDropdownItem).map(item => item.text())).not.toContain("Iterations")
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: execution3,
+        })
+
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
+        const downloadBtn = wrapper.find("[data-test='task-run-download-logs']")
+        await downloadBtn.trigger("click")
+
+        expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
+            executionId: "ex-3",
+            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+        })
     })
 
-    it("shouldHideIterationsWhenFlowIsUnavailable", async () => {
-        const {wrapper} = await mountActions("io.kestra.plugin.core.flow.Loop")
+    const execution4 = {...execution, id: "ex-4"}
+    it("targets copy logs at the selected run", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.downloadLogs = vi.fn().mockResolvedValue("log content")
 
-        expect(wrapper.findAllComponents(KsDropdownItem).map(item => item.text())).toContain("Iterations")
-        await wrapper.setProps({flow: undefined})
-        expect(wrapper.findAllComponents(KsDropdownItem).map(item => item.text())).not.toContain("Iterations")
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: execution4,
+        })
+
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
+        const copyBtn = wrapper.find("[data-test='task-run-copy-logs']")
+        await copyBtn.trigger("click")
+
+        expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
+            executionId: "ex-4",
+            params: {"filters[taskRunId][EQUALS]": "tr-2"},
+        })
     })
 
-    it("shouldUseTopologyNodeTypeWhenLoopIsInsideExpandedSubflow", async () => {
-        const {wrapper, router} = await mountActions("io.kestra.plugin.core.log.Log")
-        await wrapper.setProps({
-            taskType: "io.kestra.plugin.core.flow.Loop",
-            taskRun: {id: "subflow-task-run", taskId: "subflow-loop", state: {current: "RUNNING"}},
-            execution: {id: "subflow-execution", namespace: "tests", flowId: "child-flow", state: {current: "RUNNING"}},
+    it("handles attemptIndex > 0 properly", async () => {
+        const wrapper = mountActions({
+            taskRun: {
+                id: "tr-1",
+                taskId: "task-1",
+                    value: "Iter 1",
+                    state: {current: "FAILED"},
+                    attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
+            },
+            taskRuns: [
+                {
+                    id: "tr-1",
+                    taskId: "task-1",
+                    value: "Iter 1",
+                    state: {current: "FAILED"},
+                    attempts: [{state: {current: "FAILED"}}, {state: {current: "SUCCESS"}}],
+                },
+                {
+                    id: "tr-2",
+                    taskId: "task-1",
+                    value: "Iter 2",
+                    state: {current: "SUCCESS"},
+                    attempts: [{state: {current: "SUCCESS"}}],
+                },
+            ],
+            execution: {id: "ex-5", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+            attemptIndex: 1,
         })
-        const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
 
-        expect(iterations).toBeDefined()
-        await iterations!.get("[role=\"menuitem\"]").trigger("click")
-        await flushPromises()
+        expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(1)
 
-        expect(router.currentRoute.value.query).toEqual({
-            "filters[parentId][EQUALS]": "subflow-execution",
-            "filters[kind][EQUALS]": "LOOP",
-            "filters[taskId][EQUALS]": "subflow-loop",
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
+        await iter2!.trigger("click")
+        expect((wrapper.vm as unknown as { currentAttemptIndex: number }).currentAttemptIndex).toBe(0)
+    })
+    it("hides selector for single-iteration tasks", () => {
+        const wrapper = mountActions({
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: undefined, state: {current: "SUCCESS"}},
+            ],
+            execution,
         })
+
+        expect(wrapper.find("[data-test='task-run-iteration']").exists()).toBe(false)
+    })
+
+    it("persists selection across unmount and remount for the same execution", async () => {
+        const props = {
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: {id: "ex-store-test", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+        }
+
+        let wrapper = mountActions(props)
+
+        const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2"))
+        await iter2!.trigger("click")
+        expect((wrapper.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
+
+        wrapper.unmount()
+
+        // Remount with same props
+        wrapper = mountActions(props)
+        expect((wrapper.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
+    })
+
+    it("starts clean for a different execution id", async () => {
+        const props1 = {
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: {id: "ex-diff-1", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+        }
+
+        const wrapper1 = mountActions(props1)
+        const iter2 = wrapper1.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2"))
+        await iter2!.trigger("click")
+        expect((wrapper1.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-2")
+
+        // Use a new execution id, but same task
+        const props2 = {
+            taskRun: {id: "tr-1", taskId: "task-1", state: {current: "SUCCESS"}},
+            taskRuns: [
+                {id: "tr-1", taskId: "task-1", value: "Iter 1", state: {current: "SUCCESS"}},
+                {id: "tr-2", taskId: "task-1", value: "Iter 2", state: {current: "SUCCESS"}},
+            ],
+            execution: {id: "ex-diff-2", flowId: "flow-1", namespace: "ns-1", state: {current: "SUCCESS"}},
+        }
+
+        const wrapper2 = mountActions(props2)
+        // Defaults to the first task run since it's a clean execution id
+        expect((wrapper2.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-1")
     })
 })

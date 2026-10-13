@@ -10,12 +10,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.kestra.core.models.FieldCondition;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.flows.FlowAction;
-import io.kestra.core.models.flows.FlowActionCondition;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -276,7 +276,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     public boolean isEveryConditionFieldReadable() {
         return ListUtils.emptyOnNull(assetActions).stream()
             .flatMap(action -> ListUtils.emptyOnNull(action.when()).stream())
-            .map(FlowActionCondition::field)
+            .map(FieldCondition::field)
             .allMatch(field -> field == null || CONDITION_FIELDS.contains(field)
                 || (field.startsWith(METADATA_PREFIX) && field.length() > METADATA_PREFIX.length()));
     }

@@ -357,3 +357,20 @@ export const Block: Story = {
         await expect(canvasElement.querySelector(".kel-button.is-block")).toBeTruthy()
     },
 }
+
+/** Link primary – a link button of type primary reads as a link in the primary text colour, not as white text */
+export const LinkPrimary: Story = {
+    render: () => ({
+        components: {KsButton},
+        template: `
+            <div style="display: flex; gap: 16px; padding: 16px;">
+                <ks-button link type="primary">Jump to first failure</ks-button>
+                <ks-button link>Plain link</ks-button>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const primary = canvasElement.querySelector(".kel-button.is-link.kel-button--primary") as HTMLElement
+        await expect(getComputedStyle(primary).color).not.toBe("rgb(255, 255, 255)")
+    },
+}

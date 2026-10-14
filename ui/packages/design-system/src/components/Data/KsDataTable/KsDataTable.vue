@@ -196,12 +196,17 @@
         return Array.from(new Set([...userKeys, ...forced]))
     })
 
+    type CellStyleArg = {column: {property?: string; columnKey?: string}}
+    type CellStyle = Record<string, string | number> | undefined
+
     const composedCellStyle = computed(() => {
+        const userStyle = (attrs.cellStyle ?? attrs["cell-style"]) as ((arg: CellStyleArg) => CellStyle) | CellStyle
         const columns = props.mobileColumns
-        if (!columns) return attrs.cellStyle as ((arg: {column: {property?: string; columnKey?: string}}) => Record<string, string | number> | undefined) | undefined
-        return ({column}: {column: {property?: string; columnKey?: string}}) => {
-            const order = mobileColumnOrder(columns, column.property ?? column.columnKey)
-            return order === undefined ? undefined : {"--ks-mobile-order": order}
+        if (!columns) return userStyle
+        return (arg: CellStyleArg) => {
+            const order = mobileColumnOrder(columns, arg.column.property ?? arg.column.columnKey)
+            const own = typeof userStyle === "function" ? userStyle(arg) : userStyle
+            return order === undefined ? own : {...own, "--ks-mobile-order": order}
         }
     })
 

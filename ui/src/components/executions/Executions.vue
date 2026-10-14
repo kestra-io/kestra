@@ -242,7 +242,7 @@
                             size="small"
                             :dot="isMobile"
                             :clickable="!isMobile"
-                            :aria-label="isMobile ? undefined : $t('filter by status', {status: scope.row?.state?.current})"
+                            v-bind="isMobile ? {} : {'aria-label': $t('filter by status', {status: scope.row?.state?.current})}"
                             @click.stop="!isMobile && onStateClick(scope.row?.state?.current)"
                         />
                     </template>

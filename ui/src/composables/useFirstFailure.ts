@@ -62,7 +62,7 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
     }
 
     watch(
-        () => [toValue(enabled), toValue(execution)?.id, failedTaskRun.value?.id] as const,
+        [() => toValue(enabled), () => toValue(execution)?.id, () => failedTaskRun.value?.id],
         ([isEnabled]) => {
             const current = toValue(execution)
             const taskRunId = failedTaskRun.value?.id

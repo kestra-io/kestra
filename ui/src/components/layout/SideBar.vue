@@ -183,14 +183,23 @@
         if (isOverlay.value && !props.collapsed) onCollapse(true)
     })
 
-    const BEHIND_DRAWER = "#app-body > :not(#side-menu):not(.sidebar-scrim)"
+    const BEHIND_DRAWER = "#app-body > :not(#side-menu):not(.sidebar-scrim), #bottom-actions-slot"
 
     const setBehindDrawerInert = (inert: boolean) => {
         document.querySelectorAll(BEHIND_DRAWER).forEach((element) => element.toggleAttribute("inert", inert))
     }
 
+    let breakpointCrossing = false
+
+    watch(isOverlay, (overlay) => {
+        breakpointCrossing = true
+        if (overlay && !props.collapsed) onCollapse(true)
+        setTimeout(() => { breakpointCrossing = false })
+    })
+
     watch(() => isOverlay.value && !props.collapsed, async (open) => {
         setBehindDrawerInert(open)
+        if (breakpointCrossing) return
         await nextTick()
         const target = open ? "#side-menu a[href]" : "[data-testid=topnav-sidebar-toggle]"
         document.querySelector<HTMLElement>(target)?.focus()

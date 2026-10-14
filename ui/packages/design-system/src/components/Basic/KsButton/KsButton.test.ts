@@ -167,4 +167,15 @@ describe("KsButton", () => {
         expect(wrapper.find(".kel-button").classes()).toContain("is-block")
         expect(wrapper.find(".kel-button").attributes("block")).toBeUndefined()
     })
+
+    test("renders a primary link button with the link classes", () => {
+        const wrapper = mount(KsButton, {
+            props: {link: true, type: "primary"},
+            slots: {default: "Jump"},
+            global: globalConfig,
+        })
+        const classes = wrapper.find(".kel-button").classes()
+        expect(classes).toContain("is-link")
+        expect(classes).toContain("kel-button--primary")
+    })
 })

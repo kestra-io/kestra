@@ -127,6 +127,24 @@ describe("KsExecutionStatus", () => {
         expect(wrapper.find(".ks-execution-status__icon").exists()).toBe(false)
     })
 
+    test("keeps the state label on a dot when a caller passes an undefined aria-label", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "FAILED", dot: true},
+            attrs: {"aria-label": undefined},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--dot").attributes("aria-label")).toBe("Failed")
+    })
+
+    test("lets a caller name a dot explicitly", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "FAILED", dot: true},
+            attrs: {"aria-label": "Last run failed"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--dot").attributes("aria-label")).toBe("Last run failed")
+    })
+
     test("renders all status variants", () => {
         const statuses = [
             "CREATED", "SUBMITTED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",

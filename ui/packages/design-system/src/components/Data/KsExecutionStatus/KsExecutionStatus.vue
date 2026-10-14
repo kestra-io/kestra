@@ -5,7 +5,7 @@
         :class="classes"
         :disabled="dot ? undefined : disabled"
         :role="dot ? 'img' : undefined"
-        :aria-label="dot ? displayText : undefined"
+        v-bind="forwardedAttrs"
     >
         <component
             v-if="icon && !dot"
@@ -24,8 +24,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, useAttrs} from "vue"
     import {EXECUTION_STATUSES, type ExecutionStatus} from "./types"
+
+    defineOptions({inheritAttrs: false})
+
+    const attrs = useAttrs()
 
     const props = withDefaults(defineProps<{
         status: ExecutionStatus;
@@ -57,6 +61,11 @@
     const displayText = computed(() => {
         return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase())
     })
+
+    const forwardedAttrs = computed(() => ({
+        ...(props.dot ? {"aria-label": displayText.value} : {}),
+        ...Object.fromEntries(Object.entries(attrs).filter(([, value]) => value !== undefined)),
+    }))
 
     const classes = computed(() => [
         "ks-execution-status",

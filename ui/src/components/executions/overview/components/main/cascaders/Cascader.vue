@@ -196,12 +196,13 @@
 
         const lowercase = filter.value.toLowerCase();
         return formatted.value.filter((node) => {
-            const matchesNode = node.label.toLowerCase().includes(lowercase);
+            // Leaf labels are raw values (0, false, null, …) — never call toLowerCase on them.
+            const matchesNode = String(node.label ?? "").toLowerCase().includes(lowercase);
 
             if (!node.children) return matchesNode;
 
             const matchesChildren = node.children.some((c) =>
-                c.label.toLowerCase().includes(lowercase),
+                String(c.label ?? "").toLowerCase().includes(lowercase),
             );
 
             return matchesNode || matchesChildren;

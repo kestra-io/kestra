@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
@@ -253,6 +254,25 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
         assertThat(variables.get("labels")).isEqualTo(Map.of("some", "label"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldExposeAttemptNumberOfTheExecution() {
+        Execution execution = Execution.builder()
+            .id("exec-id")
+            .namespace("ns")
+            .flowId("flow")
+            .state(new State())
+            .build()
+            .withMetadata(ExecutionMetadata.builder().attemptNumber(2).build());
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat((Map<String, Object>) variables.get("execution"))
+            .containsEntry("attemptNumber", 2);
     }
 
     @Test

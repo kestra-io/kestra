@@ -24,7 +24,7 @@ public class FileExistsFunction extends AbstractFileFunction {
             case StorageContext.KESTRA_SCHEME -> storageInterface.get().exists(tenantId, namespace, path);
             case LocalPath.FILE_SCHEME -> localPathFactory.get().createLocalPath().exists(path);
             case Namespace.NAMESPACE_FILE_SCHEME -> {
-                Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
+                Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace);
                 yield namespaceStorage.exists(NamespaceFile.normalize(Path.of(path.getPath())));
             }
             default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));

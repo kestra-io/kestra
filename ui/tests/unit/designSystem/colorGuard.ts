@@ -25,11 +25,14 @@ const DISABLE_NEXT_LINE = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-next-li
 const DISABLE_START = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-start/
 const DISABLE_END = /(?:\/\/|\/\*|<!--)[^\n]*design-system-disable-end/
 
+// Specs and stories sit next to their sources; their fixtures are not themed UI.
+const TEST_FILE = /\.(spec|test|stories)\.[jt]sx?$/
+
 const sources = (dir: string): string[] =>
     readdirSync(dir, {withFileTypes: true}).flatMap((entry) => {
         const path = join(dir, entry.name)
         if (entry.isDirectory()) return sources(path)
-        return /\.(vue|s?css|[jt]s)$/.test(entry.name) ? [path] : []
+        return /\.(vue|s?css|[jt]s)$/.test(entry.name) && !TEST_FILE.test(entry.name) ? [path] : []
     })
 
 /** Comments blanked in place, keeping every newline so reported line numbers stay real. */

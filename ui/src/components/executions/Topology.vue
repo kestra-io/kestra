@@ -27,7 +27,7 @@
     import {ref, computed, watch, onMounted, onUnmounted} from "vue"
     import {stringUtils, State, levelToRequestParams, throttle} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
 
     withDefaults(defineProps<{
@@ -43,16 +43,14 @@
     const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
 
-    // FIXME: any - execution and flowGraph are untyped domain objects from the store
-    const execution = computed(() => executionsStore.execution as any) // FIXME: any
+    const execution = computed(() => executionsStore.execution)
     const flowGraph = computed(() => executionsStore.flowGraph)
 
     const loading = ref(true)
     const previousExecutionId = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const previousExpandedSubflows = ref<string[]>([])
-    // FIXME: any - SSE objects don't have a consistent type in this codebase
-    const sseBySubflow = ref<Record<string, any>>({}) // FIXME: any
+    const sseBySubflow = ref<Record<string, {close: () => void}>>({})
 
     // Live lifecycle-step progress (see RunContext#emitProgress) rides the existing follow-logs
     // SSE as a typed field, so plugin topology-details slots can track per-step progress in real
@@ -62,6 +60,7 @@
     // EventSource would land in a ref no one closes again. Guard against it explicitly instead
     // of relying on onUnmounted alone.
     let unmounted = false
+    const sseRetries = new Map<string, ReturnType<typeof setTimeout>>()
 
     function closeProgressSSE() {
         progressSSE?.close()
@@ -111,7 +110,12 @@
         {immediate: true},
     )
 
-    const throttledExecutionUpdate = throttle(function(subflow: string, subflowExecution: any) { // FIXME: any
+    // `outputs` (e.g. a subflow's executionId) is added by the backend at runtime but is missing from the generated SDK `TaskRun` type.
+    type TaskRunWithOutputs = NonNullable<Execution["taskRunList"]>[number] & {
+        outputs?: {executionId?: string; [key: string]: unknown}
+    }
+
+    const throttledExecutionUpdate = throttle(function(subflow: string, subflowExecution: Execution) {
         const previousExecution = executionsStore.subflowsExecutions[subflow]
         executionsStore.addSubflowExecution({
             subflow,
@@ -134,6 +138,7 @@
 
     onUnmounted(() => {
         unmounted = true
+        sseRetries.forEach((retry) => clearTimeout(retry))
         Object.keys(sseBySubflow.value).forEach(closeSSE)
         closeProgressSSE()
     })
@@ -201,11 +206,19 @@
         if (generateGraphBeforeDelay) {
             loadGraph(true)
         }
-        setTimeout(() => addSSE(subflow), 500)
+        clearTimeout(sseRetries.get(subflow))
+        sseRetries.set(subflow, setTimeout(() => {
+            sseRetries.delete(subflow)
+            addSSE(subflow)
+        }, 500))
     }
 
     function addSSE(subflow: string, generateGraphOnWaiting?: boolean) {
-        let parentExecution = execution.value
+        if (unmounted) {
+            return
+        }
+
+        let parentExecution: Execution | undefined = execution.value
 
         const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
             .sort((s1, s2) => s2.length - s1.length)
@@ -219,8 +232,7 @@
             return
         }
 
-        const taskIdMatchingTaskrun = parentExecution.taskRunList
-            .filter((taskRun: {taskId: string}) => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
+        const taskIdMatchingTaskrun = (parentExecution.taskRunList ?? []).filter((taskRun): taskRun is TaskRunWithOutputs => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
         const executionId = taskIdMatchingTaskrun?.outputs?.executionId
 
         if (!executionId) {
@@ -231,10 +243,6 @@
             }
 
             delaySSE(!!generateGraphOnWaiting, subflow)
-            return
-        }
-
-        if (unmounted) {
             return
         }
 

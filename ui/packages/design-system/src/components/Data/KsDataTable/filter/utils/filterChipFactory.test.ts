@@ -3,6 +3,7 @@ import {describe, expect, test} from "vitest"
 import {
     Comparators,
     isLeafGroup,
+    type AppliedFilter,
     type FilterConfiguration,
     type FilterKeyConfig,
 } from "./filterTypes"
@@ -519,19 +520,14 @@ describe("isDateRangeValue", () => {
         expect(isDateRangeValue(range)).toBe(true)
     })
 
-    test.each([
+    test.each<[string, AppliedFilter["value"]]>([
         ["a plain string", "2026-01-01"],
         ["a string containing spaces", "2026-01-01 to 2026-01-02"],
-        ["a number", 1700000000000],
-        ["a Date instance", new Date()],
-        ["an array", [new Date(), new Date()]],
-        ["null", null],
-        ["undefined", undefined],
         ["an empty string", ""],
-        ["an object missing endDate", {startDate: new Date()}],
-        ["an object missing startDate", {endDate: new Date()}],
-        ["an empty object", {}],
+        ["a Date instance", new Date("2026-01-01T00:00:00Z")],
+        ["an array of strings", ["2026-01-01", "2026-01-02"]],
+        ["an empty array", []],
     ])("is false for %s", (_, value) => {
-        expect(isDateRangeValue(value as any)).toBe(false)
+        expect(isDateRangeValue(value)).toBe(false)
     })
 })

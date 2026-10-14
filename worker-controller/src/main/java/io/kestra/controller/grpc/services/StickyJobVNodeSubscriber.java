@@ -7,11 +7,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.RestartWorkingDirectory;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerJobEvent.StickyRouting;
+import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.utils.Disposable;
@@ -38,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 public class StickyJobVNodeSubscriber implements WorkerLifecycleListener {
 
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final StickyWorkerRouting routing;
     private final Duration maxWorkerUnknownDuration;
     private final DefaultVNodesAssigner vNodesAssigner;
@@ -49,10 +54,12 @@ public class StickyJobVNodeSubscriber implements WorkerLifecycleListener {
 
     @Inject
     public StickyJobVNodeSubscriber(KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         StickyWorkerRouting routing,
         ControllerVNodesAssignmentChannel channel,
         ServerConfig serverConfig) {
         this.workerJobEventQueue = workerJobEventQueue;
+        this.executionCommandQueue = executionCommandQueue;
         this.routing = routing;
         // by then the liveness coordinator has declared a worker lost, so a running worker no controller holds reveals a routing bug
         this.maxWorkerUnknownDuration = serverConfig.liveness().timeout().plus(serverConfig.liveness().interval()).multipliedBy(2);
@@ -178,16 +185,21 @@ public class StickyJobVNodeSubscriber implements WorkerLifecycleListener {
                 case WorkerLocation.Held held when held.routingKey().equals(stickyRouting.vNodeRoutingKey()) -> retryOrFail(event);
                 case WorkerLocation.Held held -> emit(event.withStickyRouting(stickyRouting.workerFound(held.routingKey())));
                 case WorkerLocation.Unknown unknown -> retryOrFail(event);
-                case WorkerLocation.Lost lost -> log.warn(
-                    "Dropping the job {}: its worker '{}' is no longer running, so the liveness coordinator recovers it.",
-                    event.job().uid(), stickyRouting.workerId()
-                );
+                case WorkerLocation.Lost lost -> restartWorkingDirectory(event);
             }
         } catch (QueueException e) {
             log.error("Failed to forward the sticky job {}: {}", event.job().uid(), e.getMessage(), e);
             // the job was consumed and no lease holds it, so failing it is the only way it does not hang
             dispatcher.failSticky(event);
         }
+    }
+
+    private void restartWorkingDirectory(WorkerJobEvent event) throws QueueException {
+        if (!(event.job() instanceof WorkerTask workerTask) || workerTask.getWorkingDirectoryId() == null) {
+            return;
+        }
+        log.warn("The worker '{}' of the job {} is no longer running, its WorkingDirectory runs again.", event.stickyRouting().workerId(), event.job().uid());
+        executionCommandQueue.emit(RestartWorkingDirectory.from(workerTask.getTaskRun(), workerTask.getWorkingDirectoryId()));
     }
 
     private void retryOrFail(WorkerJobEvent event) throws QueueException {

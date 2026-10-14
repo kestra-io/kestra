@@ -10,11 +10,8 @@ const readDirectory = vi.fn()
 vi.mock("override/stores/namespaces", () => ({
     useNamespacesStore: () => ({createDirectory, saveOrCreateFile, importFileDirectory, readDirectory}),
 }))
-vi.mock("vue-i18n", () => ({
-    useI18n: () => ({t: (key: string) => key}),
-}))
 vi.mock("../utils/toast", () => ({
-    useToast: () => ({success: vi.fn(), error: vi.fn()}),
+    makeToast: () => ({success: vi.fn(), error: vi.fn()}),
 }))
 
 describe("fileExplorer store", () => {

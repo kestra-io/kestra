@@ -212,6 +212,10 @@ export const useExecutionsStore = defineStore("executions", () => {
         }) as unknown as Promise<Execution>
     }
 
+    const validateReplay = (options: { executionId: string; taskRunId?: string; revision?: number }) => {
+        return ExecutionsAPI.validateReplayExecution(options)
+    }
+
     /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post<Execution>(
@@ -824,6 +828,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryReplayExecution,
         queryChangeExecutionStatus,
         replayExecution,
+        validateReplay,
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,

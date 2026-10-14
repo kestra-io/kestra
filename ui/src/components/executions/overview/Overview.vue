@@ -8,6 +8,10 @@
                 v-if="execution.state.current === State.FAILED"
                 :execution
             />
+            <PausedAlert
+                v-if="execution.state.current === State.PAUSED"
+                :execution
+            />
         </div>
         <Topology
             class="topology"
@@ -38,6 +42,7 @@
 
     import Banner from "./components/Banner.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"
+    import PausedAlert from "./components/main/PausedAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
 

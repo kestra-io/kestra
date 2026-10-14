@@ -31,7 +31,7 @@ public interface Schedulable extends WorkerTriggerInterface {
     @Schema(
         title = "Action to take in the case of missed schedules",
         description = "`ALL` will recover all missed schedules, `LAST`  will only recovered the last missing one, `NONE` will not recover any missing schedule.\n" +
-            "The default is `ALL` unless a different value is configured using the global plugin configuration."
+            "The default is `ALL` unless a different value is configured using the [global plugin configuration](https://go.kestra.io/adjust-configuration)."
     )
     @PluginProperty
     RecoverMissedSchedules getRecoverMissedSchedules();

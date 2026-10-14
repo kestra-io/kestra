@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -22,18 +23,16 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.InputFilesInterface;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.models.tasks.NamespaceFilesInterface;
 import io.kestra.core.models.tasks.OutputFilesInterface;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
@@ -53,7 +52,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Reuse a single working directory across tasks.",
     description = """
-        Runs child runnable tasks sequentially on the same worker filesystem so files persist between steps without wiring outputs. Flowable tasks (e.g., Parallel) are not supported inside.
+        Runs child tasks sequentially on the same worker filesystem so files persist between steps without wiring outputs. Flowable tasks (e.g., Parallel) are supported inside, and all the runnable tasks they hold run on that worker.
 
         Supports input/output files and optional caching of directory patterns to speed repeated runs."""
 )
@@ -226,9 +225,6 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     private NamespaceFiles namespaceFiles;
 
-    @Getter(AccessLevel.PRIVATE)
-    @Builder.Default
-    private transient long cacheDownloadedTime = 0L;
 
     private Object inputFiles;
 
@@ -236,43 +232,41 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
-
-        if (execution.hasFailed(childTasks, parentTaskRun)) {
-            return super.resolveNexts(runContext, execution, parentTaskRun);
+        if (!isOpen(parentTaskRun)) {
+            return Collections.emptyList();
         }
-
-        // resolve to no next tasks as the worker will execute all tasks
-        return Collections.emptyList();
+        return super.resolveNexts(runContext, execution, parentTaskRun);
     }
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        // subtasks run inside the Worker and each reports through its own queue message, so a failed
-        // subtask must not terminate the WorkingDirectory while a sibling's terminal result is still in flight
-        boolean hasInFlightSubtask = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-            .anyMatch(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && !taskRun.getState().isTerminated());
-
-        return hasInFlightSubtask ? Optional.empty() : super.resolveState(runContext, execution, parentTaskRun);
+        if (!isOpen(parentTaskRun)) {
+            return Optional.empty();
+        }
+        return super.resolveState(runContext, execution, parentTaskRun);
     }
 
-    public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {
-        return WorkerTask.builder()
-            .task(task)
-            .taskRun(
-                TaskRun.builder()
-                    .id(IdUtils.create())
-                    .tenantId(parent.getTenantId())
-                    .executionId(parent.getExecutionId())
-                    .namespace(parent.getNamespace())
-                    .flowId(parent.getFlowId())
-                    .taskId(task.getId())
-                    .parentTaskRunId(parent.getId())
-                    .state(new State())
-                    .build()
-            )
-            .data(WorkerTaskData.from(runContext))
-            .build();
+    /**
+     * The worker that opened the folder of this WorkingDirectory, so the one all its tasks must run on.
+     */
+    public static Optional<String> boundWorkerId(TaskRun taskRun) {
+        return ListUtils.emptyOnNull(taskRun.getAttempts()).reversed().stream()
+            .map(TaskRunAttempt::getWorkerId)
+            .filter(Objects::nonNull)
+            .findFirst();
+    }
+
+    /**
+     * A WorkingDirectory is closing once its children have ended: its last attempt holds their final state while the
+     * worker saves the output files and deletes the folder.
+     */
+    public static boolean isClosing(TaskRun taskRun) {
+        TaskRunAttempt lastAttempt = taskRun.lastAttempt();
+        return taskRun.getState().isRunning() && lastAttempt != null && lastAttempt.getState().isTerminated();
+    }
+
+    private static boolean isOpen(TaskRun taskRun) {
+        return boundWorkerId(taskRun).isPresent() && !isClosing(taskRun);
     }
 
     public void preExecuteTasks(RunContext runContext, TaskRun taskRun) throws Exception {
@@ -298,8 +292,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                     }
                 }
 
-                // Set the cacheDownloadedTime so that we can check if files has been updated later
-                cacheDownloadedTime = System.currentTimeMillis();
+                // Record when the cache was downloaded so that the close job can check if files have been updated since
+                Files.writeString(cacheDownloadedMarker(runContext), String.valueOf(System.currentTimeMillis()));
             }
         }
 
@@ -333,6 +327,9 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             return;
         }
         try {
+            Path marker = cacheDownloadedMarker(runContext);
+            long cacheDownloadedTime = Files.exists(marker) ? Long.parseLong(Files.readString(marker).trim()) : 0L;
+
             // This is monolithic, maybe a cache entry by pattern would be better.
             List<Path> matchesList = runContext.workingDir().findAllFilesMatching(runContext.render(cache.getPatterns()).asList(String.class));
 
@@ -381,6 +378,23 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         } catch (IOException e) {
             runContext.logger().error("Unable to execute WorkingDirectory post actions", e);
         }
+    }
+
+    /**
+     * Deletes the folder of this WorkingDirectory on the worker, with what this task keeps next to it.
+     */
+    public void cleanup(RunContext runContext) throws IOException {
+        Files.deleteIfExists(cacheDownloadedMarker(runContext));
+        runContext.workingDir().cleanup();
+    }
+
+    /**
+     * The open and close jobs of a WorkingDirectory run on distinct task instances, so the time the cache was
+     * downloaded is kept in a file next to the folder, where neither the cache patterns nor the output files match it.
+     */
+    private static Path cacheDownloadedMarker(RunContext runContext) {
+        Path folder = runContext.workingDir().path();
+        return folder.resolveSibling(folder.getFileName() + ".cache-downloaded-at");
     }
 
     @Override

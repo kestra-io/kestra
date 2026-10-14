@@ -30,6 +30,7 @@ import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.vnodes.VNodeController;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Context;
@@ -495,6 +496,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         if (isTaskRunOver(workerTaskRunning.getTaskRun())) {
             log.warn(
                 "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because the task run has already ended, its execution was killed, or its execution no longer exists.",
+                workerTaskRunning.getTaskRun().getId(),
+                workerTaskRunning.getTaskRun().getExecutionId()
+            );
+            workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerTaskRunning.getWorkerInstance().uid());
+        } else if (workerTaskRunning.getWorkingDirectoryId() != null && !(workerTaskRunning.getTask() instanceof WorkingDirectory)) {
+            // the WorkingDirectory of a lost worker runs all its tasks again once its own lease is resubmitted
+            log.warn(
+                "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because its WorkingDirectory runs it again.",
                 workerTaskRunning.getTaskRun().getId(),
                 workerTaskRunning.getTaskRun().getExecutionId()
             );

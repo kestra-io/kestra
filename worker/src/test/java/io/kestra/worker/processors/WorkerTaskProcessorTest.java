@@ -33,6 +33,7 @@ import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkingDirFactory;
 import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.server.ServerConfig;
@@ -61,6 +62,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @KestraTest
 class WorkerTaskProcessorTest {
+
+    @Inject
+    private WorkingDirFactory workingDirFactory;
 
     @Inject
     private ServerConfig serverConfig;
@@ -435,7 +439,8 @@ class WorkerTaskProcessorTest {
             runContextLoggerFactory,
             resultQueue,
             new InMemoryWorkerQueue<>(100),
-            executionKilledManager
+            executionKilledManager,
+            workingDirFactory
         );
     }
 

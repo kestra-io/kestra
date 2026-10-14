@@ -205,7 +205,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "charts/preview")
     @Operation(tags = { "Dashboards" }, summary = "Preview a chart data")
-    public PagedResults<Map<String, Object>> previewChart(
+    public ChartData previewChart(
         @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest) throws IOException {
         var fetchChartDataQuery = buildChartPreviewDataQuery(previewRequest);
         return fetchChartData(fetchChartDataQuery);
@@ -249,7 +249,7 @@ public class DashboardController {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected PagedResults<Map<String, Object>> fetchChartData(FetchChartDataQuery fetchChartDataQuery) throws IOException {
+    protected ChartData fetchChartData(FetchChartDataQuery fetchChartDataQuery) throws IOException {
         var chart = fetchChartDataQuery.chart();
         var filters = fetchChartDataQuery.filters();
         var startDate = fetchChartDataQuery.startDate();
@@ -264,13 +264,13 @@ public class DashboardController {
 
             // StartDate & EndDate are only set in the globalFilter for JDBC
             // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
-            return PagedResults.of(this.chartDataService.generate(tenantId, dataChart, startDate, endDate, pageable));
+            return ChartData.of(this.chartDataService.generate(tenantId, dataChart, startDate, endDate, pageable), dataChartDatas.ignoredGlobalFilterFields(filters));
         } else if (chart instanceof DataChartKPI dataChartKPI) {
             DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
             dataChartDatas.setQueryTimeout(fetchChartDataQuery.queryTimeout());
 
-            return PagedResults.of(new ArrayListTotal<>(this.chartDataService.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1));
+            return ChartData.of(new ArrayListTotal<>(this.chartDataService.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1), dataChartDatas.ignoredGlobalFilterFields(filters));
         } else if (chart instanceof Markdown markdownChart) {
             if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
                 Optional<Flow> optionalFlow = flowRepository.findById(tenantId, flowDescription.getNamespace(), flowDescription.getFlowId());
@@ -280,7 +280,7 @@ public class DashboardController {
                         "description", flow.getDescription() != null ? flow.getDescription() : ""
                     );
 
-                    return PagedResults.of(new ArrayListTotal<>(List.of(descriptionMap), 1));
+                    return ChartData.of(new ArrayListTotal<>(List.of(descriptionMap), 1), List.of());
                 } else {
                     throw new IllegalArgumentException("Flow not found");
                 }
@@ -305,7 +305,7 @@ public class DashboardController {
         assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        return export(fetchChartDataQuery.chart(), fetchedData.getResults(), "%s_%s_export".formatted(id, chartId), format);
+        return export(fetchChartDataQuery.chart(), fetchedData.results(), "%s_%s_export".formatted(id, chartId), format);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -318,7 +318,7 @@ public class DashboardController {
         assertExportable(fetchChartDataQuery.chart());
         var fetchedData = fetchChartData(fetchChartDataQuery);
 
-        return export(fetchChartDataQuery.chart(), fetchedData.getResults(), "%s_%s_export".formatted("default-dashboard", fetchChartDataQuery.chart().getId()), format);
+        return export(fetchChartDataQuery.chart(), fetchedData.results(), "%s_%s_export".formatted("default-dashboard", fetchChartDataQuery.chart().getId()), format);
     }
 
     private void assertExportable(Chart<?> chart) {
@@ -351,6 +351,17 @@ public class DashboardController {
     public record PreviewRequest(
         @Parameter(description = "The chart") @NotBlank String chart,
         @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Nullable ChartFiltersOverrides globalFilter) {
+    }
+
+    /**
+     * A page of chart rows.
+     *
+     * @param ignoredFilters the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     */
+    public record ChartData(@NotNull List<Map<String, Object>> results, @NotNull Long total, List<QueryFilter.Field> ignoredFilters) {
+        static ChartData of(ArrayListTotal<Map<String, Object>> rows, List<QueryFilter.Field> ignoredFilters) {
+            return new ChartData(rows, rows.getTotal(), ignoredFilters);
+        }
     }
 
     @Getter

@@ -134,7 +134,7 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.patch.outputs.changed == 'true'
         with:
           name: translations-generated-pr-${{ inputs.pr_number }}
@@ -242,7 +242,7 @@ jobs:
         if: steps.push.outcome == 'failure'
         run: git format-patch -1 HEAD --output-directory translations-patch
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: steps.push.outcome == 'failure'
         with:
           name: translations-patch-pr-${{ inputs.pr_number }}

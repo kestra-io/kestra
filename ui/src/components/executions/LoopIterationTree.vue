@@ -160,8 +160,8 @@
         }
     }
 
-    function onFailedOnlyChange(value: boolean) {
-        setFailedOnly(value)
+    function onFailedOnlyChange(value: boolean | undefined) {
+        setFailedOnly(value === true)
     }
 
     const allExecutionsRoute = {

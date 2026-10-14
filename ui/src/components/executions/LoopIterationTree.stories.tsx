@@ -44,7 +44,7 @@ vi.mock("@kestra-io/kestra-sdk/executions", () => ({
 }))
 
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
-import LoopIterationTree from "../../../../src/components/executions/LoopIterationTree.vue";
+import LoopIterationTree from "./LoopIterationTree.vue";
 
 const meta: Meta<typeof LoopIterationTree> = {
     title: "Components/Executions/LoopIterationTree",

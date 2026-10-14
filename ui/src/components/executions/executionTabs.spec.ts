@@ -54,3 +54,13 @@ describe("EXECUTION_ROUTE redirect", () => {
         expect(resolved.query).toEqual({page: "2"})
     })
 })
+
+describe("EXECUTION_TAB_ROUTES banner", () => {
+    it("should only enable the summary banner on the gantt and logs tabs", () => {
+        const tabsWithBanner = EXECUTION_TAB_ROUTES
+            .filter((route) => (route.props as {showBanner?: boolean} | undefined)?.showBanner === true)
+            .map((route) => route.meta?.tab)
+
+        expect(tabsWithBanner).toEqual(["gantt", "logs"])
+    })
+})

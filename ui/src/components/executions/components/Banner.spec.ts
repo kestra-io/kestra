@@ -4,8 +4,8 @@ import {createPinia, setActivePinia} from "pinia"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 import Banner from "./Banner.vue"
-import type {Execution} from "../../../../stores/executions"
-import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import type {Execution} from "../../../stores/executions"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 const triggerScope = reactive({visible: false, enabled: false})
 

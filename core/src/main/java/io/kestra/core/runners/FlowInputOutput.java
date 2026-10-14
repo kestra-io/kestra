@@ -759,17 +759,17 @@ public class FlowInputOutput {
      * ({@code disks[1].size_gb}), which is where the value sits inside the input.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> raw, String prefix, String path, Set<ConstraintViolation<?>> violations) {
+    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> row, String prefix, String path, Set<ConstraintViolation<?>> violations) {
         Map<String, Object> record = new LinkedHashMap<>();
         Set<String> declared = fields.stream().map(Input::getId).collect(Collectors.toSet());
-        raw.keySet().stream()
+        row.keySet().stream()
             .map(String::valueOf)
             .filter(key -> !declared.contains(key))
-            .forEach(key -> violations.add(violation(prefix + "`" + key + "`: it is not declared", fields.getFirst(), path + "." + key, raw.get(key))));
+            .forEach(key -> violations.add(violation(prefix + "`" + key + "`: it is not declared", fields.getFirst(), path + "." + key, row.get(key))));
         for (Input<?> field : fields) {
             String label = prefix + "`" + field.getId() + "`";
             String propertyPath = path + "." + field.getId();
-            Object value = raw.get(field.getId());
+            Object value = row.get(field.getId());
             if (value instanceof String s && s.isEmpty() && !isTextType(field.getType())) {
                 value = null;
             }

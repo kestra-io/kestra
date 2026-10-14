@@ -306,6 +306,7 @@
       "ongoing": "In progress",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Deleting {count} execution | Deleting {count} executions",
           "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
           "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
           "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
@@ -322,6 +323,25 @@
           "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
           "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
           "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Deletion requested for {count} execution | Deletion requested for {count} executions",
+          "EXECUTION_KILL": "Kill requested for {count} execution | Kill requested for {count} executions",
+          "EXECUTION_PAUSE": "Pause requested for {count} execution | Pause requested for {count} executions",
+          "EXECUTION_RESUME": "Resume requested for {count} execution | Resume requested for {count} executions",
+          "EXECUTION_RESTART": "Restart requested for {count} execution | Restart requested for {count} executions",
+          "EXECUTION_REPLAY": "Replay requested for {count} execution | Replay requested for {count} executions",
+          "EXECUTION_FORCE_RUN": "Force run requested for {count} execution | Force run requested for {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueue requested for {count} execution | Unqueue requested for {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Status change requested for {count} execution | Status change requested for {count} executions",
+          "EXECUTION_SET_LABELS": "Label update requested for {count} execution | Label update requested for {count} executions",
+          "TRIGGER_UNLOCK": "Unlock requested for {count} trigger | Unlock requested for {count} triggers",
+          "TRIGGER_DELETE": "Deletion requested for {count} trigger | Deletion requested for {count} triggers",
+          "TRIGGER_DISABLE": "Disable requested for {count} trigger | Disable requested for {count} triggers",
+          "TRIGGER_ENABLE": "Enable requested for {count} trigger | Enable requested for {count} triggers",
+          "BACKFILL_PAUSE": "Pause requested for {count} backfill | Pause requested for {count} backfills",
+          "BACKFILL_RESUME": "Resume requested for {count} backfill | Resume requested for {count} backfills",
+          "BACKFILL_DELETE": "Deletion requested for {count} backfill | Deletion requested for {count} backfills"
         },
         "processed": "{count} processed",
         "rejected": "{count} rejected",

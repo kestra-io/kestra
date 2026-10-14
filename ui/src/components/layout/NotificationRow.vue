@@ -22,7 +22,7 @@
                     inverted
                     :showTooltip="false"
                 />
-                <p class="title">{{ notification.title }}</p>
+                <p class="title">{{ title }}</p>
                 <span
                     v-if="notification.referenceId"
                     class="reference"
@@ -68,16 +68,34 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import BellOutline from "vue-material-design-icons/BellOutline.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import EmailMarkAsUnread from "vue-material-design-icons/EmailMarkAsUnread.vue"
+    import {humanizeNumber} from "../../utils/filters"
     import type {Notification} from "../../stores/notifications"
     import {NOTIFICATION_ICONS} from "../../utils/notificationIcons"
     import {progressColor, progressPercentage} from "../../utils/notificationProgress"
     import {isNotificationLinkable} from "../../utils/notificationRoute"
 
-    defineProps<{notification: Notification}>()
+    const props = defineProps<{notification: Notification}>()
     defineEmits<{click: []; "mark-read": []; "mark-unread": []}>()
+
+    const {t, te} = useI18n()
+
+    const title = computed(() => {
+        const {asyncOperationType, totalItems} = props.notification
+        if (!asyncOperationType) {
+            return props.notification.title
+        }
+
+        const count = totalItems ?? 0
+        const key = `notifications.operation.requested.${asyncOperationType}`
+        return te(key)
+            ? t(key, {count: humanizeNumber(String(count))}, count)
+            : props.notification.title
+    })
 </script>
 
 <style scoped>

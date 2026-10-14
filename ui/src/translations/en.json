@@ -501,6 +501,8 @@
     },
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
+    "workspace": "Workspace",
+    "resources": "Resources",
     "usage": "Usage",
     "namespaces": "Namespaces",
     "tasks": "Tasks",

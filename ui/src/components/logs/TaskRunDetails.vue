@@ -313,7 +313,7 @@
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
-    import {loopIterationsRoute} from "../executions/loopIterationsRoute"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const {t} = useI18n()
 

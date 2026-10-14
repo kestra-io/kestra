@@ -37,7 +37,7 @@
     import {State} from "@kestra-io/design-system"
     import {RouterLink} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {loopIterationsRoute, type LoopParentExecution} from "../executions/loopIterationsRoute"
+    import {loopIterationsRoute, type LoopParentExecution} from "../../utils/executionUtils"
 
     const {t} = useI18n({useScope: "global"})
     const loopStateColors = State.color()

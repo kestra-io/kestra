@@ -8,7 +8,6 @@
                 :namespace="execution.namespace"
                 :flowGraph="flowGraph"
                 :source="flowStore.flow?.source"
-                :execution="execution"
                 :expandedSubflows="expandedSubflows"
                 :horizontalDefault="horizontalDefault"
                 isReadOnly

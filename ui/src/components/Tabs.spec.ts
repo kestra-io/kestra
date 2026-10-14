@@ -58,4 +58,21 @@ describe("Tabs", () => {
 
         expect(wrapper.get("section [data-test=\"tab-body\"]").text()).toBe("body")
     })
+
+    test("emits the embedded tab picked by a click outside its label", async () => {
+        await router.push("/")
+        await router.isReady()
+
+        const wrapper = mount(Tabs, {
+            props: {
+                tabs: [{name: "edit", title: "Edit"}, {name: "revisions", title: "Revisions"}],
+                embedActiveTab: "edit",
+            },
+            global: {plugins: [router, createPinia(), KestraDesignSystem], stubs: {EnterpriseBadge: true}},
+        })
+
+        await wrapper.get("#tab-revisions").trigger("click")
+
+        expect(wrapper.emitted("changed")).toEqual([[expect.objectContaining({name: "revisions"})]])
+    })
 })

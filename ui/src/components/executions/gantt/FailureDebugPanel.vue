@@ -229,6 +229,7 @@
     import * as Utils from "../../../utils/utils"
     import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
     import {useToast} from "../../../utils/toast"
+    import {handled} from "../../../utils/kestraHttp"
     import {useExecutionsStore, type Execution} from "../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
@@ -479,9 +480,11 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {taskRunId, minLevel: "ERROR"},
-                showMessageOnError: false,
             })
-            .catch(() => [])
+            .catch((e: unknown) => {
+                handled(e)
+                return []
+            })
 
         const results = ((response as {results?: unknown[]})?.results ?? response ?? []) as Array<{level?: string; message?: string}>
         const errors = results.filter((log) => (log.level ?? "").toString().toUpperCase() === "ERROR" && (log.message ?? "").length > 0)

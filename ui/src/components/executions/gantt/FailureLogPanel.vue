@@ -23,6 +23,7 @@
     import {KsAlert, KsEmpty} from "@kestra-io/design-system"
     import LogLine from "../../logs/LogLine.vue"
     import {useExecutionsStore} from "../../../stores/executions"
+    import {handled} from "../../../utils/kestraHttp"
     import type {Log} from "../../../stores/logs"
     import type {TimeRange} from "../../../composables/useTimeRangeSelection"
 
@@ -54,10 +55,10 @@
                 store: false,
                 executionId: props.executionId,
                 params,
-                showMessageOnError: false,
             })
             logs.value = ((response as {results?: Log[]})?.results ?? response ?? []) as Log[]
-        } catch {
+        } catch (e) {
+            handled(e)
             error.value = true
         } finally {
             loading.value = false

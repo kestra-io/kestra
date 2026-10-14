@@ -91,6 +91,7 @@
 </template>
 
 <script setup lang="ts">
+    import {handledIf} from "../../utils/kestraHttp"
     import {computed, ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -239,12 +240,15 @@
             humanSize.value = ""
             fileStatus.value = "loading"
 
-            const data = await ExecutionsAPI.fileMetadatasFromExecution({
-                executionId: props.execution.id, 
-                path: props.value.toString(),
-            }, {
-                validateStatus: (status: number) => status === 200 || status === 404 || status === 422,
-            })
+            let data
+            try {
+                data = await ExecutionsAPI.fileMetadatasFromExecution({
+                    executionId: props.execution.id, 
+                    path: props.value.toString(),
+                })
+            } catch (e: unknown) {
+                if (!handledIf(e, [404, 422])) throw e
+            }
             if(!data){
                 fileStatus.value = "missing"
                 return

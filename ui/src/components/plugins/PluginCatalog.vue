@@ -49,7 +49,6 @@
 
         <KsNoData
             v-if="pluginsList.length === 0"
-            class="my-6"
             :description="$t('pluginPage.noResults')"
         />
 
@@ -67,7 +66,7 @@
                         >
                             <p
                                 v-if="elements.length > 0"
-                                class="mb-0"
+                                class="task-type"
                             >
                                 {{ $t(elementType) }}
                             </p>
@@ -378,6 +377,10 @@
         max-height: 20rem;
         overflow-y: auto;
         overflow-x: hidden;
+    }
+
+    .task-type {
+        margin-bottom: 0;
     }
 
     @media (max-width: 650px) {

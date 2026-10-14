@@ -306,7 +306,7 @@ tasks:
             flowWithOutputsAutocompleteInTaskParsed,
             "outputs",
             cursorIndex,
-        )).toEqual(["download", "upload"])
+        )).toEqual(["download"])
 
         expect(await provider.nestedFieldAutoCompletion(
             flowWithOutputsAutocompleteInTask,
@@ -355,11 +355,58 @@ tasks:
             "  - id: schedule",
             "    type: io.kestra.plugin.core.trigger.Schedule",
         ].join("\n")
-        const cursorIndex = flow.indexOf("outputs. ") + "outputs.".length
 
-        expect(await provider.nestedFieldAutoCompletion(flow, YAML_UTILS.parse(flow), "outputs", cursorIndex))
-            .toEqual(["file_system", "clone", "branch", "kv", "approval", "onError", "cleanup"])
+        expect(await provider.nestedFieldAutoCompletion(flow, YAML_UTILS.parse(flow), "outputs"))
+            .toEqual(["file_system", "clone", "assert", "branch", "kv", "approval", "onError", "cleanup"])
         expect(await provider.nestedFieldAutoCompletion(flow, YAML_UTILS.parse(flow), "outputs.kv")).toEqual(["value"])
+    })
+
+    it("outputs autocomplete only lists tasks that have run when the current task renders", async () => {
+        const flow = [
+            "id: my-flow",
+            "namespace: my.namespace",
+            "tasks:",
+            "  - id: first",
+            "    type: io.kestra.plugin.core.log.Log",
+            "    message: \"{{ outputs. }}\"",
+            "  - id: file_system",
+            "    type: io.kestra.plugin.core.flow.WorkingDirectory",
+            "    tasks:",
+            "      - id: clone",
+            "        type: io.kestra.plugin.git.Clone",
+            "      - id: assert",
+            "        type: io.kestra.plugin.core.execution.Assert",
+            "        conditions:",
+            "          - \"{{ outputs. }}\"",
+            "  - id: third",
+            "    type: io.kestra.plugin.core.kv.Get",
+            "    key: myKey",
+            "errors:",
+            "  - id: onError",
+            "    type: io.kestra.plugin.core.log.Log",
+            "    message: \"{{ outputs. }}\"",
+            "finally:",
+            "  - id: cleanup",
+            "    type: io.kestra.plugin.core.log.Log",
+            "    message: \"{{ outputs. }}\"",
+            "afterExecution:",
+            "  - id: after",
+            "    type: io.kestra.plugin.core.log.Log",
+            "    message: \"{{ outputs. }}\"",
+        ].join("\n")
+        const parsedFlow = YAML_UTILS.parse<ProviderParsedFlow>(flow)
+        const suggestionsIn = (taskId: string) => provider.nestedFieldAutoCompletion(
+            flow,
+            parsedFlow,
+            "outputs",
+            flow.indexOf("outputs.", flow.indexOf(`id: ${taskId}`)) + "outputs.".length,
+        )
+
+        expect(await suggestionsIn("first")).toEqual([])
+        expect(await suggestionsIn("assert")).toEqual(["first", "clone"])
+        expect(await suggestionsIn("onError")).toEqual(["first", "file_system", "clone", "assert", "third"])
+        expect(await suggestionsIn("cleanup")).toEqual(["first", "file_system", "clone", "assert", "third", "onError"])
+        expect(await suggestionsIn("after")).toEqual(["first", "file_system", "clone", "assert", "third", "onError", "cleanup"])
     })
 
     it("value autocompletions", async () => {

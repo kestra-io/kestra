@@ -15,10 +15,13 @@
                     :key="section.key"
                     class="group"
                     :class="{'is-open': activeNames.includes(section.key)}"
+                    data-collapsible-group
+                    :data-group-open="activeNames.includes(section.key)"
                 >
                     <button
                         type="button"
                         class="group-head"
+                        data-group-toggle
                         :aria-expanded="activeNames.includes(section.key)"
                         @click="toggleGroup(section.key)"
                     >
@@ -39,10 +42,13 @@
                     v-if="deprecatedProperties?.length"
                     class="group group-deprecated"
                     :class="{'is-open': activeNames.includes('deprecated')}"
+                    data-collapsible-group
+                    :data-group-open="activeNames.includes('deprecated')"
                 >
                     <button
                         type="button"
                         class="group-head"
+                        data-group-toggle
                         :aria-expanded="activeNames.includes('deprecated')"
                         @click="toggleGroup('deprecated')"
                     >
@@ -322,7 +328,8 @@
         }
     }
 
-    .kel-popper.singleton-tooltip {
+    .kel-popper.ks-tooltip.singleton-tooltip.is-light,
+    .kel-popper.ks-tooltip.singleton-tooltip.is-dark {
         max-width: 300px !important;
         background: var(--ks-bg-overlay);
     }

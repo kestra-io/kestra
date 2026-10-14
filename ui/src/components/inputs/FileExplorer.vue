@@ -378,6 +378,7 @@
     import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {safePath} from "../../composables/useBaseNamespaces"
+    import {handled} from "../../utils/kestraHttp"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -829,6 +830,7 @@
                 new: newPath,
             })
         } catch (error) {
+            handled(error)
             // The tree is left untouched on purpose: it used to be renamed before the response
             // arrived, so a refused rename (an existing name answers 500) still looked applied.
             console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
@@ -1010,7 +1012,7 @@
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return
-        await Promise.all(confirmation.value.nodes.map(async (node) => {
+        const results = await Promise.allSettled(confirmation.value.nodes.map(async (node) => {
             const path = filesStore.getPath(node.id) ?? ""
             try {
                 await namespacesStore.deleteFileDirectory({
@@ -1023,11 +1025,20 @@
                 })
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error)
-                toast.error(t("namespace files.delete.file_error", {name: node.fileName}))
+                throw error
             }
         }))
         confirmation.value = {visible: false, nodes: []}
-        toast.success(t("namespace files.delete.bulk_success"))
+
+        const failedCount = results.filter(r => r.status === "rejected").length
+
+        if (failedCount === 0) {
+            toast.success(t("namespace files.delete.bulk_success"))
+        } else if (failedCount < results.length) {
+            toast.error(t("namespace files.delete.bulk_partial_error", {totalCount: results.length, failedCount}))
+        } else {
+            toast.error(t("namespace files.delete.all_failed_error"))
+        }
     }
 
     async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {

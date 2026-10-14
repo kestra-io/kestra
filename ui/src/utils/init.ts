@@ -1,6 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router"
 import type {App} from "vue"
-import type {RouteRecordRaw} from "vue-router"
+import type {NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormalizedLoaded, RouteRecordRaw, Router} from "vue-router"
 import {configure} from "vue-gtag"
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
 import VueVirtualScroller from "vue-virtual-scroller"
@@ -20,7 +20,7 @@ import {entityNotFoundGuard} from "./routeEntityGuard"
 import RouterMd from "../components/utils/RouterMd.vue"
 import * as Utils from "./utils"
 
-type GuardFn = (...args: unknown[]) => unknown
+type RouterGuard = (router: Router, to: RouteLocationNormalized, from: RouteLocationNormalizedLoaded) => NavigationGuardReturn | Promise<NavigationGuardReturn>
 
 export default async (
     app: App,
@@ -28,7 +28,11 @@ export default async (
     _stores: unknown,
     translations: Record<string, unknown>,
     additionalTranslations: Record<string, unknown> = {},
-    guards: Record<string, GuardFn | undefined> = {},
+    guards: {
+        beforeEach?: RouterGuard,
+        beforeResolve?: RouterGuard,
+        afterEach?: (router: Router, to: RouteLocationNormalizedLoaded, from: RouteLocationNormalizedLoaded) => unknown,
+    } = {},
 ) => {
     // router
     const router = createRouter({
@@ -43,11 +47,11 @@ export default async (
     router.beforeEach(documentationGuard)
 
     if(guards.beforeEach){
-        router.beforeEach(guards.beforeEach.bind(null, router) as Parameters<typeof router.beforeEach>[0])
+        router.beforeEach(guards.beforeEach.bind(null, router))
     }
 
     if(guards.beforeResolve){
-        router.beforeResolve(guards.beforeResolve.bind(null, router) as Parameters<typeof router.beforeResolve>[0])
+        router.beforeResolve(guards.beforeResolve.bind(null, router))
     }
 
     // After the edition's own guards, so an auth or tenant redirect wins over probing an entity
@@ -55,7 +59,7 @@ export default async (
     router.beforeResolve(entityNotFoundGuard)
 
     if(guards.afterEach){
-        router.afterEach(guards.afterEach.bind(null, router) as Parameters<typeof router.afterEach>[0])
+        router.afterEach(guards.afterEach.bind(null, router))
     }
 
     router.afterEach((to) => {

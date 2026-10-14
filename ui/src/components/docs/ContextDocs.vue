@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
     import {ref, watch, computed, onUnmounted, onMounted} from "vue"
-    import {useDocStore} from "../../stores/doc"
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import DocsLayout from "./DocsLayout.vue"
@@ -138,7 +138,7 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value]
     }
 
-    async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
+    async function setDocPageFromResponse(response: {metadata?: DocMetadata, content: string}) {
         docStore.pageMetadata = response.metadata
         let content = response.content
         if (!("canShare" in navigator)) {
@@ -174,7 +174,7 @@
     }
 
     async function refreshPage(val?: string) {
-        let response: {metadata?: any, content:string} | undefined = undefined
+        let response: {metadata?: DocMetadata, content: string} | undefined = undefined
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
         if(response === undefined){
@@ -206,8 +206,8 @@
         refreshPage(val)
     }, {immediate: true})
 
-    const scrollableElement = computed(() => contextInfoRef.value?.contentRef ?? null)
-    useScrollMemory(ref("context-panel-docs"), scrollableElement as any)
+    const scrollableElement = computed<HTMLElement | null>(() => contextInfoRef.value?.contentRef ?? null)
+    useScrollMemory(ref("context-panel-docs"), scrollableElement)
 </script>
 
 <style scoped lang="scss">

@@ -62,6 +62,7 @@
         flex-direction: column;
         height: 100%;
         gap: var(--ks-spacing-4);
+        min-width: 0;
     }
 
     .banner {
@@ -75,6 +76,10 @@
             height: 100%;
             padding: 0;
         }
+    }
+
+    #alerts {
+        min-width: 0;
     }
 
     #alerts:empty {

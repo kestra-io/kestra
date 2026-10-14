@@ -75,7 +75,7 @@
 
     const props = withDefaults(defineProps<{
         iconCls?: string
-        icons?: Record<string, any>
+        icons?: Record<string, TaskIconData>
         loadIcon?: (cls: string) => Promise<TaskIconData | undefined>
         title: string
         description?: string | null

@@ -1,5 +1,5 @@
 <template>
-    <ElResult v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElResult v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 
@@ -25,7 +26,7 @@ public class InMemoryFlowMetaStore implements FlowMetaStoreInterface {
     @Override
     public boolean isNamespaceExists(String tenant, String namespace) {
         return flows.values().stream()
-            .anyMatch(flow -> flow.getTenantId().equals(tenant) && flow.getNamespace().startsWith(namespace));
+            .anyMatch(flow -> flow.getTenantId().equals(tenant) && NamespaceInterface.isDescendantOrSelf(namespace, flow.getNamespace()));
     }
 
     @Override

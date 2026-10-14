@@ -2,6 +2,7 @@ package io.kestra.controller.grpc.streaming;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,9 +17,10 @@ import com.google.protobuf.ByteString;
 import io.kestra.controller.grpc.StreamChunk;
 
 import io.grpc.Context;
+import io.grpc.StatusRuntimeException;
 
 /**
- * Reassembles a {@link StreamChunk} stream into a local file.
+ * Reassembles a {@link StreamChunk} stream, into a local file or as it is read.
  */
 public final class ChunkedStreamReader {
 
@@ -46,6 +48,28 @@ public final class ChunkedStreamReader {
         } finally {
             // A no-op once the call has completed on its own.
             context.detachAndCancel(previous, null);
+        }
+    }
+
+    /**
+     * Makes the server-streaming call and returns its payload as a stream, holding one chunk at a time. Closing the
+     * stream before its end cancels the call, rather than leaking it.
+     *
+     * @throws StatusRuntimeException if the call fails before its first chunk, which is how a server reports a
+     *     missing payload.
+     */
+    public static InputStream open(Supplier<Iterator<StreamChunk>> call) {
+        Context.CancellableContext context = Context.current().withCancellation();
+        Context previous = context.attach();
+        try {
+            Iterator<StreamChunk> chunks = call.get();
+            chunks.hasNext();
+            return new ChunkInputStream(chunks, context);
+        } catch (RuntimeException e) {
+            context.cancel(null);
+            throw e;
+        } finally {
+            context.detach(previous);
         }
     }
 
@@ -81,6 +105,54 @@ public final class ChunkedStreamReader {
             Files.move(partial, absoluteTarget, StandardCopyOption.REPLACE_EXISTING);
         } finally {
             Files.deleteIfExists(partial);
+        }
+    }
+
+    private static final class ChunkInputStream extends InputStream {
+        private final Iterator<StreamChunk> chunks;
+        private final Context.CancellableContext context;
+        private InputStream current = InputStream.nullInputStream();
+
+        private ChunkInputStream(Iterator<StreamChunk> chunks, Context.CancellableContext context) {
+            this.chunks = chunks;
+            this.context = context;
+        }
+
+        @Override
+        public int read() throws IOException {
+            byte[] single = new byte[1];
+            return read(single, 0, 1) == -1 ? -1 : single[0] & 0xFF;
+        }
+
+        @Override
+        public int read(byte[] buffer, int offset, int length) throws IOException {
+            if (length == 0) {
+                return 0;
+            }
+            int read;
+            while ((read = current.read(buffer, offset, length)) == -1) {
+                if (!nextChunk()) {
+                    return -1;
+                }
+            }
+            return read;
+        }
+
+        @Override
+        public void close() {
+            context.cancel(null);
+        }
+
+        private boolean nextChunk() throws IOException {
+            try {
+                if (!chunks.hasNext()) {
+                    return false;
+                }
+                current = chunks.next().getContent().newInput();
+                return true;
+            } catch (StatusRuntimeException e) {
+                throw new IOException("Cannot read a payload streamed by the controller.", e);
+            }
         }
     }
 }

@@ -22,8 +22,7 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
     })
 
     const message = computed(() => {
-        const taskLog = errorLogs.value.find((log) => log.taskRunId === failedTaskRun.value?.id)
-        const text = (taskLog ?? errorLogs.value.at(-1))?.message
+        const text = errorLogs.value.find((log) => log.taskRunId === failedTaskRun.value?.id)?.message
         return text ? stripBackticks(text) : undefined
     })
 
@@ -44,17 +43,19 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
         }
     })
 
-    async function loadErrorLogs(current: Execution) {
+    async function loadErrorLogs(current: Execution, taskRunId: string) {
+        errorLogs.value = []
         try {
             const response = await store.loadLogs({
                 store: false,
                 executionId: current.id,
                 params: {
                     "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
+                    "filters[taskRunId][EQUALS]": taskRunId,
                     "filters[kind][IN]": current.kind,
                 },
             })
-            errorLogs.value = response
+            if (toValue(execution)?.id === current.id && failedTaskRun.value?.id === taskRunId) errorLogs.value = response
         } catch (e: unknown) {
             handledIf(e, [403, 404])
         }
@@ -64,7 +65,8 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
         () => [toValue(enabled), toValue(execution)?.id, failedTaskRun.value?.id] as const,
         ([isEnabled]) => {
             const current = toValue(execution)
-            if (isEnabled && current && failedTaskRun.value) loadErrorLogs(current)
+            const taskRunId = failedTaskRun.value?.id
+            if (isEnabled && current && taskRunId) loadErrorLogs(current, taskRunId)
         },
         {immediate: true},
     )

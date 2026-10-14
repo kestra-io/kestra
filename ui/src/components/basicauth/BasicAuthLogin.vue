@@ -6,7 +6,7 @@
         <div v-if="hint" class="oss-login__hint" data-test="login-after-sign-in">
             <span class="oss-login__hint-label">{{ $t("login_redirect_hint.after_sign_in") }}</span>
             <strong class="oss-login__hint-target">{{ hint.namespace }} / {{ hint.flowId }}</strong>
-            <span class="oss-login__hint-detail">{{ hintDetail }}</span>
+            <span v-if="hintDetail" class="oss-login__hint-detail">{{ hintDetail }}</span>
         </div>
 
         <KsForm ref="form" :model="credentials" :rules="rules" class="oss-login__form" @submit.prevent="handleSubmit">
@@ -85,7 +85,7 @@
 
     const router = useRouter()
     const route = useRoute()
-    const {t, te} = useI18n()
+    const {t} = useI18n()
     const coreStore = useCoreStore()
     const apiStore = useApiStore()
     const miscStore = useMiscStore()
@@ -108,11 +108,11 @@
     const hintDetail = computed(() => {
         const current = hint.value
         if (!current) return ""
-        const tab = current.tab ?? "overview"
-        const tabLabel = te(tab) ? t(tab) : tab
-        return current.executionId
-            ? t("login_redirect_hint.execution_tab", {id: current.executionId.slice(0, SHORT_ID_LENGTH), tab: tabLabel})
-            : t("login_redirect_hint.tab", {tab: tabLabel})
+        const id = current.executionId?.slice(0, SHORT_ID_LENGTH)
+        const tab = current.tabLabelKey ? t(current.tabLabelKey) : undefined
+        if (id && tab) return t("login_redirect_hint.execution_tab", {id, tab})
+        if (id) return t("login_redirect_hint.execution", {id})
+        return tab ? t("login_redirect_hint.tab", {tab}) : ""
     })
 
     const validateEmail = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
@@ -192,10 +192,10 @@
 
             if (shouldShowHelloDialog()) localStorage.setItem(storageKeys.SHOW_SURVEY_DIALOG_AFTER_LOGIN, "true")
 
-            if (await shouldShowWelcome()) {
-                router.push({name: "ai"})
-            } else if (redirectPath.value) {
+            if (redirectPath.value) {
                 router.push(redirectPath.value)
+            } else if (await shouldShowWelcome()) {
+                router.push({name: "ai"})
             } else {
                 router.push({name: "home", params: {tenant: route.params.tenant}})
             }
@@ -244,8 +244,8 @@
         gap: var(--ks-spacing-1);
         width: 100%;
         padding: var(--ks-spacing-3);
-        background: color-mix(in srgb, var(--ks-border-focus) 10%, transparent);
-        border: 1px solid var(--ks-border-focus);
+        background: var(--ks-bg-info);
+        border: 1px solid var(--ks-border-info);
         border-radius: var(--ks-radius-base);
         overflow-wrap: anywhere;
     }

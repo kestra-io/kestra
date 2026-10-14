@@ -186,6 +186,7 @@
                             }
                         }"
                         class="execution-id"
+                        :aria-label="isMobile ? `${scope.row?.flowId} ${scope.row?.id}` : undefined"
                     >
                         <KsId :value="scope.row?.id" :shrink="true" placement="right" />
                     </RouterLink>
@@ -241,8 +242,8 @@
                             size="small"
                             :dot="isMobile"
                             :clickable="!isMobile"
-                            :aria-label="$t('filter by status', {status: scope.row?.state?.current})"
-                            @click.stop="onStateClick(scope.row?.state?.current)"
+                            :aria-label="isMobile ? undefined : $t('filter by status', {status: scope.row?.state?.current})"
+                            @click.stop="!isMobile && onStateClick(scope.row?.state?.current)"
                         />
                     </template>
                     <template v-else-if="col.prop === 'flowRevision'">
@@ -433,6 +434,7 @@
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
+    import {isPlainRowActivation} from "../../utils/rowNavigation"
     import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -687,13 +689,22 @@
 
     const isMobile = useIsMobile()
 
-    const mobileColumns = computed(() => routeFamily(route.name) === "flows/update"
-        ? {leading: "state.current", title: "id", titleAside: "state.startDate", metaAside: "state.duration"}
-        : {leading: "state.current", title: "flowId", titleAside: "state.startDate", meta: ["namespace", "id"], metaAside: "state.duration"},
-    )
+    const mobileColumns = computed(() => {
+        const shown = new Set(["id", ...visibleColumns.value.map((column) => column.prop)])
+        const inFlow = routeFamily(route.name) === "flows/update"
+        const pick = (prop: string) => shown.has(prop) && !(inFlow && (prop === "flowId" || prop === "namespace")) ? prop : undefined
+        const title = pick("flowId") ?? "id"
+        return {
+            leading: pick("state.current"),
+            title,
+            titleAside: pick("state.startDate"),
+            meta: ["namespace", "id"].filter((prop) => prop !== title && pick(prop)),
+            metaAside: pick("state.duration"),
+        }
+    })
 
-    const onRowClick = (row: Execution) => {
-        if (isMobile.value) router.push({name: dblClickRouteName.value, params: executionParams(row)})
+    const onRowClick = (row: Execution, column: {type?: string} | undefined, event: Event) => {
+        if (isMobile.value && isPlainRowActivation(column, event)) router.push({name: dblClickRouteName.value, params: executionParams(row)})
     }
 
     const isColumnSortable = (prop: string) => {

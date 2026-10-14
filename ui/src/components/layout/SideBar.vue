@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed, 'is-overlay': isOverlay}" @contextmenu="onContextMenu">
+    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed, 'is-overlay': isOverlay}" :inert="isOverlay && collapsed ? true : undefined" @contextmenu="onContextMenu">
         <template #header>
             <KsIconButton
                 class="header-toggle"
@@ -182,6 +182,21 @@
     watch(() => $route.fullPath, () => {
         if (isOverlay.value && !props.collapsed) onCollapse(true)
     })
+
+    const BEHIND_DRAWER = "#app-body > :not(#side-menu):not(.sidebar-scrim)"
+
+    const setBehindDrawerInert = (inert: boolean) => {
+        document.querySelectorAll(BEHIND_DRAWER).forEach((element) => element.toggleAttribute("inert", inert))
+    }
+
+    watch(() => isOverlay.value && !props.collapsed, async (open) => {
+        setBehindDrawerInert(open)
+        await nextTick()
+        const target = open ? "#side-menu a[href]" : "[data-testid=topnav-sidebar-toggle]"
+        document.querySelector<HTMLElement>(target)?.focus()
+    }, {flush: "post"})
+
+    onUnmounted(() => setBehindDrawerInert(false))
 
     const DRAG_CLOSE_THRESHOLD = 60
     const dragHandle = ref<HTMLElement>()

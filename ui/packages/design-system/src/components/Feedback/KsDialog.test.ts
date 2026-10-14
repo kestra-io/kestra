@@ -72,6 +72,22 @@ describe("KsDialog", () => {
         expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(60%, 92vw)")
     })
 
+    test("reads a unitless string width as pixels", () => {
+        const wrapper = mount(KsDialog, {
+            props: {modelValue: true, width: "650"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(650px, 92vw)")
+    })
+
+    test("leaves an intrinsic width keyword alone", () => {
+        const wrapper = mount(KsDialog, {
+            props: {modelValue: true, width: "auto"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("auto")
+    })
+
     test("caps a numeric width to the viewport", () => {
         const wrapper = mount(KsDialog, {
             props: {modelValue: true, width: 650},

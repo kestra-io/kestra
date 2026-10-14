@@ -511,6 +511,7 @@
     "login_redirect_hint": {
       "after_sign_in": "After sign-in",
       "execution_tab": "Execution {id} · {tab} tab",
+      "execution": "Execution {id}",
       "tab": "{tab} tab"
     },
     "concurrency limits": "Concurrency Limits",

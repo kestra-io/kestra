@@ -58,7 +58,7 @@
     const mobileColumns = inject(MOBILE_COLUMNS_KEY, undefined)
 
     const resolvedClassName = computed(() => {
-        const mobileClass = mobileColumns?.value ? mobileColumnClass(mobileColumns.value, props.prop) : undefined
+        const mobileClass = mobileColumns?.value ? mobileColumnClass(mobileColumns.value, props.prop ?? props.columnKey) : undefined
         return [props.className, mobileClass].filter(Boolean).join(" ") || undefined
     })
 </script>

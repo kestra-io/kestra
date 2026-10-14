@@ -202,7 +202,7 @@
 
     import type {ExecutionTaskRun} from "./executionTaskRun"
     import {date as dateFilter} from "../../utils/filters"
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -283,7 +283,7 @@
     const toast = useToast()
     const executionsStore = useExecutionsStore()
     const pluginsStore = usePluginsStore()
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
+    const verticalLayout = useIsMobile()
     const ganttExecutionFilter = useGanttExecutionFilter()
 
     const TASKRUN_THRESHOLD = 50
@@ -913,7 +913,7 @@
         border: none !important;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         #gantt .gantt-row {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto auto;
@@ -1003,9 +1003,12 @@
         color: var(--ks-text-error);
         font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-xs);
+        white-space: normal;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     .gantt-empty-status {

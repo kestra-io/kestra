@@ -19,6 +19,7 @@ const messages = {
     login_redirect_hint: {
         after_sign_in: "After sign-in",
         execution_tab: "Execution {id} · {tab} tab",
+        execution: "Execution {id}",
         tab: "{tab} tab",
     },
 }
@@ -72,6 +73,26 @@ describe("BasicAuthLogin after sign-in hint", () => {
     it.each([undefined, "/dashboard"])("is hidden when from is %s", (from) => {
         // Given
         route.query = from ? {from} : {}
+
+        // When / Then
+        expect(mountLogin().find("[data-test=\"login-after-sign-in\"]").exists()).toBe(false)
+    })
+
+    it("shows no tab line for a tab it does not know", () => {
+        // Given
+        route.query = {from: "/executions/company.finance/monthly_close/2qncB78egtgMA8D0HVACE2/constructor"}
+
+        // When
+        const hint = mountLogin().find("[data-test=\"login-after-sign-in\"]")
+
+        // Then
+        expect(hint.text()).toContain("Execution 2qncB78e")
+        expect(hint.text()).not.toContain("constructor")
+    })
+
+    it("is hidden for a hostile from value", () => {
+        // Given
+        route.query = {from: "/executions/ns/<img src=x onerror=alert(1)>/abc/gantt"}
 
         // When / Then
         expect(mountLogin().find("[data-test=\"login-after-sign-in\"]").exists()).toBe(false)

@@ -71,9 +71,13 @@
 
     const VIEWPORT_WIDTH_CAP = "92vw"
 
+    const INTRINSIC_WIDTHS = ["auto", "fit-content", "max-content", "min-content"]
+
+    const toCssLength = (width: string | number) => (typeof width === "number" || /^\d+(\.\d+)?$/.test(width) ? `${width}px` : width)
+
     const resolvedWidth = computed(() => {
-        const width = props.width ?? (props.large ? "750px" : "500px")
-        return `min(${typeof width === "number" ? `${width}px` : width}, ${VIEWPORT_WIDTH_CAP})`
+        const width = toCssLength(props.width ?? (props.large ? "750px" : "500px"))
+        return INTRINSIC_WIDTHS.includes(width) ? width : `min(${width}, ${VIEWPORT_WIDTH_CAP})`
     })
 
     const emit = defineEmits<{

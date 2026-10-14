@@ -1,8 +1,11 @@
 <template>
-    <button
-        type="button"
+    <component
+        :is="dot ? 'span' : 'button'"
+        :type="dot ? undefined : 'button'"
         :class="classes"
-        :disabled="disabled"
+        :disabled="dot ? undefined : disabled"
+        :role="dot ? 'img' : undefined"
+        :aria-label="dot ? displayText : undefined"
     >
         <component
             v-if="icon && !dot"
@@ -17,7 +20,7 @@
                 {{ displayText }}
             </template>
         </span>
-    </button>
+    </component>
 </template>
 
 <script setup lang="ts">
@@ -32,7 +35,6 @@
         glow?: boolean;
         clickable?: boolean;
         disabled?: boolean;
-        /** Collapses the badge to a coloured dot for dense layouts; the label stays available to assistive technology. */
         dot?: boolean;
     }>(), {
         icon: true,
@@ -132,12 +134,7 @@ $statusList: created, submitted, restarted, success, running, killing, killed, w
         pointer-events: none;
 
         .ks-execution-status__text {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            clip-path: inset(50%);
-            white-space: nowrap;
+            display: none;
         }
     }
 

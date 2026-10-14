@@ -113,7 +113,9 @@ test.describe("Alert to failed execution on a phone", () => {
             await page.goto(`/ui/${tenant}/executions?filters[flowId][EQUALS]=${failed.flowId}`)
 
             await expect(page.getByRole("row").filter({hasText: failed.flowId})).toBeVisible({timeout: 30000})
-            await expect(page.getByRole("columnheader").first()).toBeHidden()
+            const header = page.locator("thead th").first()
+            await expect(header).toBeAttached()
+            await expect(header).toBeHidden()
         } finally {
             await failed.cleanup()
         }

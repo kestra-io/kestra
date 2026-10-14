@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
+    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter, 'ks-data-table-wrapper--cards': mobileColumns}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar">
             <slot name="navbar" />
         </nav>
@@ -17,7 +17,7 @@
                 <slot name="table" />
             </div>
 
-            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter, 'ks-data-table-content--cards': mobileColumns}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter, 'ks-data-table-content--cards': mobileColumns, 'ks-data-table-content--leading': mobileColumns?.leading}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
                 <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
                     <KsBulkSelect
                         :selectAll="queryBulkAction"
@@ -42,6 +42,7 @@
                     :rowKey
                     :expandRowKeys="composedExpandRowKeys"
                     :rowClassName="composedRowClassName"
+                    :cellStyle="composedCellStyle"
                     :emptyText="noDataText"
                     @selection-change="selectionChanged"
                     @select="onSelect"
@@ -88,7 +89,7 @@
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
-    import {MOBILE_COLUMNS_KEY, type KsDataTableMobileColumns} from "./mobileColumns"
+    import {MOBILE_COLUMNS_KEY, mobileColumnOrder, type KsDataTableMobileColumns} from "./mobileColumns"
     import KsNoData from "../KsNoData.vue"
     import KsButton from "../../Basic/KsButton/KsButton.vue"
     import AlertCircleOutlineIcon from "vue-material-design-icons/AlertCircleOutline.vue"
@@ -121,7 +122,6 @@
         noFirstColumnGutter?: boolean
         tableLayout?: "fixed" | "auto"
         fitHeight?: boolean
-        /** Opts in to a card per row below 768px; each entry names the `prop` of the column rendered in that spot of the card, and unlisted columns are hidden. */
         mobileColumns?: KsDataTableMobileColumns
     }>(), {
         data: () => [],
@@ -194,6 +194,15 @@
         const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
         if (!forced.length && !userKeys.length) return undefined
         return Array.from(new Set([...userKeys, ...forced]))
+    })
+
+    const composedCellStyle = computed(() => {
+        const columns = props.mobileColumns
+        if (!columns) return attrs.cellStyle as ((arg: {column: {property?: string; columnKey?: string}}) => Record<string, string | number> | undefined) | undefined
+        return ({column}: {column: {property?: string; columnKey?: string}}) => {
+            const order = mobileColumnOrder(columns, column.property ?? column.columnKey)
+            return order === undefined ? undefined : {"--ks-mobile-order": order}
+        }
     })
 
     const composedRowClassName = computed(() => {
@@ -659,11 +668,17 @@
     }
 
     @media (max-width: 767px) {
-        .ks-data-table-wrapper {
+        .ks-data-table-wrapper--cards {
             --ks-data-table-gutter: var(--ks-spacing-4);
         }
 
+        .ks-data-table-content--leading {
+            --ks-data-table-leading-offset: calc(var(--ks-data-table-leading-width) + var(--ks-spacing-2));
+        }
+
         .ks-data-table-content--cards {
+            --ks-data-table-leading-width: 0.625rem;
+
             .kel-table {
                 --kel-table-bg-color: transparent;
                 --kel-table-tr-bg-color: transparent;
@@ -724,6 +739,8 @@
 
             .ks-mobile-leading {
                 order: 1;
+                flex: none;
+                width: var(--ks-data-table-leading-width);
             }
 
             .ks-mobile-title {
@@ -735,6 +752,10 @@
                 .ks-entity-link {
                     font-weight: var(--ks-font-weight-bold);
                 }
+            }
+
+            .ks-mobile-actions {
+                order: 3;
             }
 
             .ks-mobile-title-aside {
@@ -750,13 +771,15 @@
                 font-size: var(--ks-font-size-sm);
             }
 
-            @for $index from 0 through 5 {
-                .ks-mobile-meta-#{$index} {
-                    order: 10 + $index;
-                }
+            .ks-mobile-meta {
+                order: calc(10 + var(--ks-mobile-order, 0));
             }
 
-            .ks-mobile-meta:not(.ks-mobile-meta-0) > .cell::before {
+            .ks-mobile-meta-first {
+                margin-inline-start: var(--ks-data-table-leading-offset, 0);
+            }
+
+            .ks-mobile-meta:not(.ks-mobile-meta-first) > .cell::before {
                 content: "·";
                 margin-inline-end: var(--ks-spacing-2);
             }

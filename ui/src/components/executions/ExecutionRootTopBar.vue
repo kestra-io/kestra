@@ -12,17 +12,10 @@
             <template v-if="execution && isMobile">
                 <NavBarActionsDropdown>
                     <component
-                        :is="ACTIONS[key].component"
-                        v-for="key in mobileOverflowKeys"
-                        :key="key"
-                        v-bind="ACTIONS[key].props ?? {}"
-                        :execution="execution"
-                    />
-
-                    <component
-                        :is="extra"
-                        v-for="(extra, index) in overflowActionComponents"
-                        :key="`extra-${index}`"
+                        :is="item.component"
+                        v-for="item in overflowItems"
+                        :key="item.key"
+                        v-bind="item.props"
                         :execution="execution"
                     />
 
@@ -57,17 +50,10 @@
             </template>
             <NavBarActions v-else-if="execution">
                 <component
-                    :is="ACTIONS[key].component"
-                    v-for="key in overflowKeys"
-                    :key="key"
-                    v-bind="ACTIONS[key].props ?? {}"
-                    :execution="execution"
-                />
-
-                <component
-                    :is="extra"
-                    v-for="(extra, index) in overflowActionComponents"
-                    :key="`extra-${index}`"
+                    :is="item.component"
+                    v-for="item in overflowItems"
+                    :key="item.key"
+                    v-bind="item.props"
                     :execution="execution"
                 />
 
@@ -231,11 +217,14 @@
         return keys.filter((key) => key !== secondaryKey.value)
     })
 
-    const showReplayInBottomBar = computed(() => secondaryKey.value === "restart")
+    const showReplayInBottomBar = computed(() => isMobile.value && secondaryKey.value === "restart")
 
-    const mobileOverflowKeys = computed<ActionKey[]>(() =>
-        overflowKeys.value.filter((key) => !(key === "replay" && showReplayInBottomBar.value)),
-    )
+    const overflowItems = computed(() => [
+        ...overflowKeys.value
+            .filter((key) => !(key === "replay" && showReplayInBottomBar.value))
+            .map((key) => ({key, component: ACTIONS[key].component, props: ACTIONS[key].props ?? {}})),
+        ...overflowActionComponents.map((component, index) => ({key: `extra-${index}`, component, props: {}})),
+    ])
 
     const isATestExecution = computed(() =>
         execution.value?.labels?.some(

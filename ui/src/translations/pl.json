@@ -511,7 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "Po zalogowaniu",
       "execution_tab": "Wykonanie {id} · karta {tab}",
-      "tab": "Karta {tab}"
+      "tab": "Karta {tab}",
+      "execution": "Wykonanie {id}"
     },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",

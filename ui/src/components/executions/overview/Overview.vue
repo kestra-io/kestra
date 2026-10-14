@@ -22,15 +22,15 @@
         </template>
         <div v-if="isMobile && failedTaskRun" class="topology-heading">
             <span>{{ $t("topology") }}</span>
-            <KsLink type="primary" underline="never" data-test="jump-to-first-failure" @click="jumpToFirstFailure">
+            <KsButton link type="primary" data-test="jump-to-first-failure" @click="jumpToFirstFailure">
                 {{ $t("execution_mobile.jump_to_first_failure") }}
                 <ArrowRight />
-            </KsLink>
+            </KsButton>
         </div>
         <Topology
             ref="topologyRef"
             class="topology"
-            :horizontalDefault="!verticalLayout"
+            :horizontalDefault="!isMobile"
         />
         <PrevNext :execution />
     </div>
@@ -47,8 +47,6 @@
     import {useRoute} from "vue-router"
     const route = useRoute()
 
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
     const isMobile = useIsMobile()
 
     import {useExecutionsStore} from "../../../stores/executions"

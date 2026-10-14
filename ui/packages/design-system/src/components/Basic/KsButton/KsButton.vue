@@ -69,7 +69,6 @@
         round?: boolean
         circle?: boolean
         square?: boolean
-        /** Stretches the button to the width of its container. */
         block?: boolean
         color?: string
         tag?: string | Component
@@ -213,6 +212,12 @@
             --kel-button-text-color: var(--ks-text-secondary);
             --kel-button-hover-link-text-color: var(--ks-text-primary);
             --kel-button-active-color: var(--ks-text-primary);
+
+            &.kel-button--primary.is-plain:not(.is-text) {
+                --kel-button-text-color: var(--ks-text-link);
+                --kel-button-hover-link-text-color: var(--ks-text-link);
+                --kel-button-active-color: var(--ks-text-link);
+            }
         }
 
         &.is-text {

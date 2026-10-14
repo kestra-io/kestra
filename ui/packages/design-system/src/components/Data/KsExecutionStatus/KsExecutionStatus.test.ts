@@ -114,14 +114,17 @@ describe("KsExecutionStatus", () => {
         expect(wrapper.find("button").attributes("disabled")).toBeDefined()
     })
 
-    test("collapses to a dot that keeps its label for assistive technology", () => {
+    test("collapses to a non-interactive dot named for assistive technology", () => {
         const wrapper = mount(KsExecutionStatus, {
-            props: {status: "FAILED", dot: true},
+            props: {status: "FAILED", dot: true, clickable: true},
             global: globalConfig,
         })
-        expect(wrapper.find(".ks-execution-status--dot").exists()).toBe(true)
+        const dot = wrapper.find(".ks-execution-status--dot")
+        expect(dot.element.tagName).toBe("SPAN")
+        expect(dot.attributes("role")).toBe("img")
+        expect(dot.attributes("aria-label")).toBe("Failed")
+        expect(wrapper.find("button").exists()).toBe(false)
         expect(wrapper.find(".ks-execution-status__icon").exists()).toBe(false)
-        expect(wrapper.find(".ks-execution-status__text").text()).toBe("Failed")
     })
 
     test("renders all status variants", () => {

@@ -126,7 +126,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useDebounceFn, useMediaQuery} from "@vueuse/core"
+    import {useDebounceFn} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
@@ -150,6 +150,7 @@
     import {loadExecutionOutputs, loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
     import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import {useIsMobile} from "../../../composables/useIsMobile"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
@@ -545,7 +546,7 @@
 
     const leftWidth = ref("25%")
     const rightWidth = ref("30%")
-    const isMobile = useMediaQuery("(max-width: 768px)")
+    const isMobile = useIsMobile()
 </script>
 
 <style scoped lang="scss">
@@ -649,7 +650,7 @@
     overflow-y: auto;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     :deep(.kel-splitter-bar) {
         height: 4px !important;
         width: auto !important;

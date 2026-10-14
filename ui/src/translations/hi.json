@@ -511,7 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "साइन-इन के बाद",
       "execution_tab": "निष्पादन {id} · {tab} टैब",
-      "tab": "{tab} टैब"
+      "tab": "{tab} टैब",
+      "execution": "निष्पादन {id}"
     },
     "concurrency limits": "समानांतरता सीमाएँ",
     "system overview": "सिस्टम अवलोकन",

@@ -157,6 +157,16 @@ export const Disabled: Story = {
 
 /** Dot – collapses the badge to a coloured dot for dense layouts such as mobile cards; the label stays available to screen readers */
 export const Dot: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
     render: () => ({
         components: {KsExecutionStatus},
         setup: () => ({statuses}),

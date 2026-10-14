@@ -511,7 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "После входа",
       "execution_tab": "Выполнение {id} · вкладка {tab}",
-      "tab": "Вкладка {tab}"
+      "tab": "Вкладка {tab}",
+      "execution": "Выполнение {id}"
     },
     "concurrency limits": "Ограничения на параллелизм",
     "system overview": "Обзор системы",

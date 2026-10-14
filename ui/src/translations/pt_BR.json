@@ -511,7 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "Depois de entrar",
       "execution_tab": "Execução {id} · aba {tab}",
-      "tab": "Aba {tab}"
+      "tab": "Aba {tab}",
+      "execution": "Execução {id}"
     },
     "concurrency limits": "Limites de Concurrency",
     "system overview": "Visão Geral do Sistema",

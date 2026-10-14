@@ -21,10 +21,9 @@
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <template v-if="log.timestamp">
-                    <time class="log-time log-time-full" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
-                    <time class="log-time log-time-short" :datetime="String(log.timestamp)" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, SHORT_TIME_FORMAT) }}</time>
-                </template>
+                <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
+                    <span class="log-date">{{ timestamp.date }} </span>{{ timestamp.clock }}
+                </time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>
@@ -81,8 +80,6 @@
         filter: [{field: string, value: string, negate: boolean}],
         "filter-level": [level: string]
     }>()
-
-    const SHORT_TIME_FORMAT = "HH:mm:ss.SSS"
 
     const isFilterable = isFilterableLogField
 
@@ -152,6 +149,12 @@
             }
         }
         return result
+    })
+
+    const timestamp = computed(() => {
+        const full = props.log.timestamp ? Filters.date(props.log.timestamp, "iso") : ""
+        const [date, ...clock] = full.split(" ")
+        return {full, date, clock: clock.join(" ")}
     })
 
     const levelLabel = computed(() => {
@@ -373,10 +376,6 @@ div.line {
             pointer-events: auto;
         }
     }
-
-    .log-time-short {
-        display: none;
-    }
 }
 
 @media (max-width: 767px) {
@@ -416,12 +415,8 @@ div.line {
             grid-area: message;
         }
 
-        .log-time-full {
+        .log-date {
             display: none;
-        }
-
-        .log-time-short {
-            display: inline;
         }
 
         &.density-compact .log-message {

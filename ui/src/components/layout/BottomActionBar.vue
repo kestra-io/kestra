@@ -1,6 +1,6 @@
 <template>
     <Teleport v-if="isMobile" defer to="#bottom-actions-slot">
-        <div class="bottom-action-bar" data-test="bottom-action-bar">
+        <div class="bottom-action-bar" role="toolbar" :aria-label="$t('actions')" data-test="bottom-action-bar">
             <div class="bottom-action-bar-main">
                 <slot />
             </div>

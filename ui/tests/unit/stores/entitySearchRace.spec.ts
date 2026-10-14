@@ -13,13 +13,13 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 const {flowSearch, executionSearch} = vi.hoisted(() => ({flowSearch: vi.fn(), executionSearch: vi.fn()}))
 
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
-    searchFlows: (...args: any[]) => flowSearch(...args),
+    searchFlows: (params?: unknown) => flowSearch(params),
     flow: vi.fn(),
     validateFlows: vi.fn(() => Promise.resolve([{}])),
 }))
 
 vi.mock("@kestra-io/kestra-sdk/executions", () => ({
-    searchExecutions: (...args: any[]) => executionSearch(...args),
+    searchExecutions: (params?: unknown) => executionSearch(params),
     execution: vi.fn(),
 }))
 

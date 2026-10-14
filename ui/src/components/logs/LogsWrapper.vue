@@ -292,7 +292,7 @@
             )
             router.push({query})
         } else {
-            const query: Record<string, any> = {...route.query}
+            const query = {...route.query}
             delete query.startDate
             delete query.endDate
             router.push({query})

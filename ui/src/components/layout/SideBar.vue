@@ -194,6 +194,7 @@
     watch(isOverlay, (overlay) => {
         breakpointCrossing = true
         if (overlay && !props.collapsed) onCollapse(true)
+        if (!overlay) emit("menu-collapse", layoutStore.restoreSideMenuCollapsed())
         setTimeout(() => { breakpointCrossing = false })
     })
 

@@ -176,4 +176,40 @@ describe("SideBar overlay", () => {
         expect(document.activeElement).toBe(behind)
         wrapper.unmount()
     })
+
+    it("expands again when an expanded desktop menu went to a phone and came back", async () => {
+        // Given
+        localStorage.setItem("menuCollapsed", "false")
+        const wrapper = mountHarness()
+        await flushPromises()
+        setMobile(true)
+        await flushPromises()
+        expect(wrapper.vm.collapsed).toBe(true)
+
+        // When
+        setMobile(false)
+        await flushPromises()
+
+        // Then
+        expect(wrapper.vm.collapsed).toBe(false)
+        expect(localStorage.getItem("menuCollapsed")).toBe("false")
+        wrapper.unmount()
+    })
+
+    it("keeps a menu the user collapsed on desktop collapsed after a round trip", async () => {
+        // Given
+        localStorage.setItem("menuCollapsed", "true")
+        const wrapper = mountHarness()
+        await flushPromises()
+        setMobile(true)
+        await flushPromises()
+
+        // When
+        setMobile(false)
+        await flushPromises()
+
+        // Then
+        expect(wrapper.vm.collapsed).toBe(true)
+        wrapper.unmount()
+    })
 })

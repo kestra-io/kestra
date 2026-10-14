@@ -53,15 +53,24 @@ export const useLayoutStore = defineStore("layout", () => {
         envColor.value = value
     }
 
-    function setSideMenuCollapsed(value: boolean) {
+    function applySideMenuCollapsed(value: boolean) {
         sideMenuCollapsed.value = value
-        if (!window.matchMedia?.(MOBILE_QUERY).matches) {
-            localStorage.setItem(storageKeys.MENU_COLLAPSED, value ? "true" : "false")
-        }
 
         const htmlElement = document.documentElement
         htmlElement.classList.toggle("menu-collapsed", value)
         htmlElement.classList.toggle("menu-not-collapsed", !value)
+    }
+
+    function setSideMenuCollapsed(value: boolean) {
+        if (!window.matchMedia?.(MOBILE_QUERY).matches) {
+            localStorage.setItem(storageKeys.MENU_COLLAPSED, value ? "true" : "false")
+        }
+        applySideMenuCollapsed(value)
+    }
+
+    function restoreSideMenuCollapsed() {
+        applySideMenuCollapsed(localStorage.getItem(storageKeys.MENU_COLLAPSED) === "true")
+        return sideMenuCollapsed.value
     }
 
     function setMenuSectionCollapsed(id: string, collapsed: boolean) {
@@ -98,6 +107,7 @@ export const useLayoutStore = defineStore("layout", () => {
         setEnvName,
         setEnvColor,
         setSideMenuCollapsed,
+        restoreSideMenuCollapsed,
         setMenuSectionCollapsed,
         setMenuItemVisibility,
         setMenuItemOrder,

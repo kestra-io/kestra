@@ -222,13 +222,6 @@
             : props.execution.labels?.find((label) => label.key === "system.username")?.value,
     )
 
-    const originalLink = computed(() => {
-        const {originalId, id} = props.execution
-        return originalId && originalId !== id
-            ? createLink("executions", props.execution, originalId)
-            : undefined
-    })
-
     const replaysLink = computed(() => ({
         name: "executions/list",
         query: {

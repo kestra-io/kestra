@@ -1,6 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +33,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.types.files.StreamedFile;
@@ -44,6 +48,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogDataStoreInterface.class)
@@ -115,26 +121,37 @@ public class LogController {
     @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
     public HttpResponse<StreamedFile> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
-        List<LogEntry> logs = logRepository
-            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
-            .collectList()
-            .block();
-        InputStream inputStream = new java.io.ByteArrayInputStream(
-            (logs == null ? List.<LogEntry> of() : logs).stream()
-                .map(LogEntry::toPrettyString)
-                .collect(java.util.stream.Collectors.joining("\n"))
-                .getBytes()
-        );
-
-        MutableHttpResponse<StreamedFile> response = HttpResponse.ok(new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log"));
-        if (!executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()) {
-            return response.header(HttpHeaders.CACHE_CONTROL, "no-cache");
-        }
-
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) throws IOException {
         // `private`, not `public`: these logs are tenant-scoped, so a shared cache must not replay
         // them to a different requester, even though a terminated execution's logs never change.
-        return response.header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
+        String cacheControl = executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()
+            ? "private, max-age=86400"
+            : "no-cache";
+
+        // spooled to disk rather than streamed from the cursor: a slow client would otherwise hold a connection of the pool shared with the executor
+        Path file = Files.createTempFile("execution-logs-", ".log");
+        try {
+            try (Writer writer = Files.newBufferedWriter(file)) {
+                logRepository
+                    .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
+                    .index()
+                    .doOnNext(throwConsumer(log ->
+                    {
+                        if (log.getT1() > 0) {
+                            writer.write('\n');
+                        }
+                        writer.write(LogEntry.toPrettyString(log.getT2()));
+                    }))
+                    .blockLast();
+            }
+
+            InputStream inputStream = Files.newInputStream(file, StandardOpenOption.DELETE_ON_CLOSE);
+            return HttpResponse.ok(new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log"))
+                .header(HttpHeaders.CACHE_CONTROL, cacheControl);
+        } catch (IOException | RuntimeException e) {
+            Files.deleteIfExists(file);
+            throw e;
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

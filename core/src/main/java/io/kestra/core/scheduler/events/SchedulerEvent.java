@@ -13,6 +13,7 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.vnodes.VNodesAssignmentEventType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
@@ -42,8 +43,8 @@ public interface SchedulerEvent extends BroadcastEvent, HasUID {
      * @return the event type.
      */
     @JsonProperty
-    default SchedulerEventType type() {
-        return Enums.fromClassName(this, SchedulerEventType.class);
+    default VNodesAssignmentEventType type() {
+        return Enums.fromClassName(this, VNodesAssignmentEventType.class);
     }
 
     @Override

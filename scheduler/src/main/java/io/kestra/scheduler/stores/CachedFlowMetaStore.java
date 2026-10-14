@@ -20,7 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 
 import jakarta.inject.Inject;
 

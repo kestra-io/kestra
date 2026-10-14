@@ -8,11 +8,12 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRejected;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.scheduler.events.SchedulerEvent;
+import io.kestra.core.scheduler.vnodes.SchedulerVNodesAssignmentChannel;
+import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
 import io.kestra.scheduler.utils.TestVNodeAssignmentListener;
 
@@ -30,7 +31,7 @@ class DefaultVNodesAssignerTest {
     @BeforeEach
     void setUp() {
         queue = new InMemorySchedulerEventQueue();
-        assigner = new DefaultVNodesAssigner(queue);
+        assigner = new DefaultVNodesAssigner(new SchedulerVNodesAssignmentChannel(queue));
     }
 
     @Test

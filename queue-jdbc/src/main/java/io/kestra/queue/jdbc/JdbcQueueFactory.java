@@ -23,6 +23,7 @@ import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.server.ClusterEvent;
+import io.kestra.core.vnodes.VNodesAssignmentEvent;
 import io.kestra.queue.QueueBean;
 import io.kestra.queue.QueueFactoryInterface;
 
@@ -108,6 +109,15 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             SchedulerEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
+            dependencies.ignoreExecutionService()
+        );
+    }
+
+    @QueueBean
+    @Override
+    public BroadcastQueueInterface<VNodesAssignmentEvent> vNodesAssignmentEventQueue(JdbcDependencies dependencies) {
+        return new JdbcBroadcastQueue<>(
+            VNodesAssignmentEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
             dependencies.ignoreExecutionService()
         );
     }

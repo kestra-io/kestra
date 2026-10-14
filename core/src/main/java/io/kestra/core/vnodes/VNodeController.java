@@ -1,4 +1,4 @@
-package io.kestra.core.scheduler.vnodes;
+package io.kestra.core.vnodes;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -16,25 +16,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.kestra.core.lock.LockService;
-import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.events.SchedulerEvent;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
-import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.Disposable;
 
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Singleton;
-
 /**
- * Controls scheduler coordination and manages virtual node (VNode) assignments.
+ * Controls the coordination of a group of services and manages their virtual node (VNode) assignments.
  * <p>
- * This service periodically checks active scheduler instances, performs leader election
- * via a distributed lock, and rebalances VNode assignments across available schedulers
- * when the active set changes.
+ * This service periodically checks the active instances of the group, performs leader election
+ * via a distributed lock, and rebalances VNode assignments across them when the active set changes.
  * </p>
  *
  * <p>
@@ -44,74 +36,75 @@ import jakarta.inject.Singleton;
  * <p>
  * This class is not thread-safe.
  */
-@Singleton
 public class VNodeController implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(VNodeController.class);
 
     private final LockService lockService;
     private final ServiceLivenessStore serviceLivenessStore;
-    private final SchedulerEventQueue schedulerEventQueue;
-    private final SchedulerConfiguration schedulerConfiguration;
+    private final VNodesAssignmentChannel channel;
+    private final int vNodeCount;
+    private final Duration rebalanceTimeout;
 
-    private Set<String> localSchedulerServices = Set.of();
+    private Set<String> localServices = Set.of();
 
     private volatile Disposable controllerLockDisposable;
     private Instant controllerEpoch;
 
     public VNodeController(LockService lockService,
         ServiceLivenessStore serviceLivenessStore,
-        SchedulerEventQueue schedulerEventQueue,
-        SchedulerConfiguration schedulerConfiguration) {
-        this.serviceLivenessStore = serviceLivenessStore;
-        this.schedulerConfiguration = schedulerConfiguration;
-        this.schedulerEventQueue = schedulerEventQueue;
+        VNodesAssignmentChannel channel,
+        int vNodeCount,
+        Duration rebalanceTimeout) {
         this.lockService = lockService;
+        this.serviceLivenessStore = serviceLivenessStore;
+        this.channel = channel;
+        this.vNodeCount = vNodeCount;
+        this.rebalanceTimeout = rebalanceTimeout;
     }
 
     /**
-     * Checks the current active scheduler instances and performs virtual node (VNode) rebalancing.
+     * Checks the current active instances of the group and performs virtual node (VNode) rebalancing.
      * <p>
      * This method should be periodically invoked.
      */
     public void checkServicesAndRebalanceVNodes() {
-        // Try to lock (used to elect a single SchedulerController as leader)
+        // Try to lock (used to elect a single controller as leader)
         if (controllerLockDisposable == null) {
-            controllerLockDisposable = lockService.tryLock("vnodes", "controller").orElse(null);
+            controllerLockDisposable = lockService.tryLock("vnodes", channel.controllerLockId()).orElse(null);
             if (controllerLockDisposable != null) {
                 controllerEpoch = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-                log.info("Server is elected as {} leader", VNodeController.class.getSimpleName());
+                log.info("Server is elected as {} leader for {} services", VNodeController.class.getSimpleName(), channel.serviceType());
             }
         }
 
         // If Controller Leader
         if (controllerLockDisposable != null && !controllerLockDisposable.isDisposed()) {
-            List<ServiceInstance> currentActiveSchedulers = fetchActiveSchedulerServices();
+            List<ServiceInstance> currentActiveServices = fetchActiveServices();
 
-            // Fetch the current active scheduler services
-            Set<String> activeSchedulerServices = currentActiveSchedulers.stream()
+            Set<String> activeServices = currentActiveServices.stream()
                 .map(ServiceInstance::uid)
                 .collect(Collectors.toSet());
 
-            // Check if the active scheduler list is different from our local view
-            if (!localSchedulerServices.equals(activeSchedulerServices)) {
-                log.info("Starting VNodes rebalancing for schedulers: {}", activeSchedulerServices);
+            // Check if the active service list is different from our local view
+            if (!localServices.equals(activeServices)) {
+                log.info("Starting VNodes rebalancing for {} services: {}", channel.serviceType(), activeServices);
                 Disposable disposable = null;
                 try {
-                    final CountDownLatch countDownLatch = new CountDownLatch(activeSchedulerServices.size());
+                    final CountDownLatch countDownLatch = new CountDownLatch(activeServices.size());
                     final AtomicBoolean isControllerRejected = new AtomicBoolean(false);
-                    final Set<String> replySchedulers = new HashSet<>();
-                    disposable = schedulerEventQueue.subscribe(event ->
+                    final Set<String> replyServices = new HashSet<>();
+                    disposable = channel.subscribe(event ->
                     {
-                        if (event instanceof SchedulerEvent.VNodesAssignmentReply reply) {
+                        if (event instanceof VNodesAssignmentEvent.VNodesAssignmentReply reply) {
                             Instant eventControllerEpoch = reply.controllerEpoch().truncatedTo(ChronoUnit.MILLIS);
                             if (reply.controllerId().equals(ServerInstance.INSTANCE_ID) && eventControllerEpoch.equals(controllerEpoch)) {
-                                replySchedulers.add(reply.schedulerId());
+                                replyServices.add(reply.serviceId());
                                 countDownLatch.countDown();
                             }
                         }
 
-                        if (event instanceof SchedulerEvent.VNodesAssignmentRejected rejected) {
+                        if (event instanceof VNodesAssignmentEvent.VNodesAssignmentRejected rejected) {
                             Instant eventControllerEpoch = rejected.controllerEpoch().truncatedTo(ChronoUnit.MILLIS);
                             if (rejected.controllerId().equals(ServerInstance.INSTANCE_ID) && eventControllerEpoch.equals(controllerEpoch)) {
                                 isControllerRejected.set(true);
@@ -122,54 +115,55 @@ public class VNodeController implements AutoCloseable {
                             }
                         }
                     });
-                    // [1] Broadcast an initial 'SchedulerListRequest' event to all supposed active schedulers
-                    schedulerEventQueue.send(
-                        new SchedulerEvent.VNodesAssignmentRequest(
+                    // [1] Broadcast an initial 'Request' event to all supposed active services
+                    channel.send(
+                        new VNodesAssignmentEvent.VNodesAssignmentRequest(
                             Instant.now(),
+                            channel.serviceType(),
                             ServerInstance.INSTANCE_ID,
                             controllerEpoch,
-                            activeSchedulerServices
+                            activeServices
                         )
                     );
 
                     try {
-                        // [2] Wait for 'SchedulerListReply' from schedulers
-                        Duration rebalanceTimeout = schedulerConfiguration.vnodesRebalanceTimeout();
+                        // [2] Wait for 'Reply' from services
                         boolean timeout = !countDownLatch.await(rebalanceTimeout.toMillis(), TimeUnit.MILLISECONDS);
 
                         // Check if the controller has been rejected
                         if (isControllerRejected.get()) {
-                            log.error("VNode rebalancing was rejected by scheduler(s). This may happen if another server was elected as {} leader.", VNodeController.class.getSimpleName());
+                            log.error("VNode rebalancing was rejected by {} service(s). This may happen if another server was elected as {} leader.", channel.serviceType(), VNodeController.class.getSimpleName());
                             releaseLock();
                             return; // return immediately
                         }
 
                         if (timeout) {
-                            Set<String> timeoutSchedulers = new HashSet<>(activeSchedulerServices);
-                            timeoutSchedulers.removeAll(replySchedulers);
+                            Set<String> timeoutServices = new HashSet<>(activeServices);
+                            timeoutServices.removeAll(replyServices);
                             log.warn(
-                                "VNode rebalancing in progress: {} scheduler(s) did not respond within the timeout period of {}. Affected schedulers: {}", timeoutSchedulers.size(),
-                                rebalanceTimeout, timeoutSchedulers
+                                "VNode rebalancing in progress: {} {} service(s) did not respond within the timeout period of {}. Affected services: {}", timeoutServices.size(),
+                                channel.serviceType(), rebalanceTimeout, timeoutServices
                             );
                         }
 
                         // [3] Compute the VNodes assignments
-                        Map<String, Set<Integer>> assignments = VNodeConsistentHashRing.of(schedulerConfiguration.vnodes())
-                            .addNodes(replySchedulers)
+                        Map<String, Set<Integer>> assignments = VNodeConsistentHashRing.of(vNodeCount)
+                            .addNodes(replyServices)
                             .assignVNodes();
 
-                        // [4] Broadcast a 'SchedulerListRelease' event with all VNodes assignments to all effective active schedulers
-                        schedulerEventQueue.send(
-                            new SchedulerEvent.VNodesAssignmentRelease(
+                        // [4] Broadcast a 'Release' event with all VNodes assignments to all effective active services
+                        channel.send(
+                            new VNodesAssignmentEvent.VNodesAssignmentRelease(
                                 Instant.now(),
+                                channel.serviceType(),
                                 ServerInstance.INSTANCE_ID,
                                 controllerEpoch,
                                 assignments
                             )
                         );
 
-                        localSchedulerServices = replySchedulers;
-                        log.info("Completed VNodes rebalancing for schedulers: {}", localSchedulerServices);
+                        localServices = replyServices;
+                        log.info("Completed VNodes rebalancing for {} services: {}", channel.serviceType(), localServices);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -182,15 +176,14 @@ public class VNodeController implements AutoCloseable {
         }
     }
 
-    private List<ServiceInstance> fetchActiveSchedulerServices() {
+    private List<ServiceInstance> fetchActiveServices() {
         return serviceLivenessStore.findAllInstancesInStates(Set.of(Service.ServiceState.RUNNING, Service.ServiceState.MAINTENANCE))
             .stream()
-            .filter(service -> service.is(ServiceType.SCHEDULER))
+            .filter(service -> service.is(channel.serviceType()))
             .toList();
     }
 
     @Override
-    @PreDestroy
     public void close() {
         releaseLock();
     }

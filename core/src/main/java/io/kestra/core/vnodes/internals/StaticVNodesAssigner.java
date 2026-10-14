@@ -1,4 +1,4 @@
-package io.kestra.core.scheduler.vnodes.internals;
+package io.kestra.core.vnodes.internals;
 
 import java.util.Map;
 import java.util.Set;
@@ -7,35 +7,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.vnodes.VNodeConsistentHashRing;
-import io.kestra.core.scheduler.vnodes.VNodesAssigner;
 import io.kestra.core.utils.Disposable;
-
-import io.micronaut.context.annotation.Requires;
-import jakarta.inject.Singleton;
+import io.kestra.core.vnodes.VNodeConsistentHashRing;
+import io.kestra.core.vnodes.VNodesAssigner;
 
 /**
  * Simple {@link VNodesAssigner} which immediately rebalance VNodes on subscribe.
  * <p>
  * Only for testing-purpose.
  */
-@Singleton
-@Requires(missingBeans = VNodesAssigner.class)
 public class StaticVNodesAssigner implements VNodesAssigner {
     private static final Logger LOG = LoggerFactory.getLogger(StaticVNodesAssigner.class);
 
-    private final SchedulerConfiguration schedulerConfiguration;
+    private final int vNodeCount;
 
     private final Map<String, VNodeAssignmentListener> listeners = new ConcurrentHashMap<>();
 
-    /**
-     * Creates a new {@link StaticVNodesAssigner} instance.
-     * 
-     * @param schedulerConfiguration The {@link SchedulerConfiguration}.
-     */
-    public StaticVNodesAssigner(final SchedulerConfiguration schedulerConfiguration) {
-        this.schedulerConfiguration = schedulerConfiguration;
+    public StaticVNodesAssigner(final int vNodeCount) {
+        this.vNodeCount = vNodeCount;
     }
 
     /** {@inheritDoc} **/
@@ -45,7 +34,7 @@ public class StaticVNodesAssigner implements VNodesAssigner {
         listeners.put(service, new LoggerTriggerAssignmentListener(listener, LOG, service));
 
         // Re-compute all VNodes assignments
-        Map<String, Set<Integer>> assignments = VNodeConsistentHashRing.of(schedulerConfiguration.vnodes())
+        Map<String, Set<Integer>> assignments = VNodeConsistentHashRing.of(vNodeCount)
             .addNodes(listeners.keySet())
             .assignVNodes();
 

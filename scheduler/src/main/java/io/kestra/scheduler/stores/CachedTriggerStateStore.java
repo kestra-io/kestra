@@ -16,7 +16,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.vnodes.VNodes;
 
 /**
  * A decorator class adding caching capabilities on top of {@link TriggerStateStore}.

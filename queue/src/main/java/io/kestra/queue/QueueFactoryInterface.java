@@ -19,6 +19,7 @@ import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.server.ClusterEvent;
+import io.kestra.core.vnodes.VNodesAssignmentEvent;
 
 public interface QueueFactoryInterface<D> {
     DispatchQueueInterface<Execution> executionQueue(D dependencies);
@@ -38,6 +39,8 @@ public interface QueueFactoryInterface<D> {
     BroadcastQueueInterface<FlowInterface> flowQueue(D dependencies);
 
     BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue(D dependencies);
+
+    BroadcastQueueInterface<VNodesAssignmentEvent> vNodesAssignmentEventQueue(D dependencies);
 
     VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue(D dependencies);
 

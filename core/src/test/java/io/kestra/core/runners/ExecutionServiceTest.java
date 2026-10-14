@@ -575,6 +575,21 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldNotRestartKilledExecution() throws Exception {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withState(State.Type.KILLED);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> executionService.restart(execution, flow, null)
+        );
+
+        assertThat(exception.getMessage()).contains("current state is 'KILLED'");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/failed-first.yaml")
     void shouldRestartAfterChangeTaskState(Execution execution) throws Exception {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

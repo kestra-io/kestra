@@ -7,7 +7,11 @@ import Restart from "./Restart.vue"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({query: {}, params: {}, name: "executions/update"}),
-    useRouter: () => ({push: vi.fn(), resolve: vi.fn(() => ({href: ""})), currentRoute: {value: {params: {}}}}),
+    useRouter: () => ({
+        push: vi.fn(),
+        resolve: vi.fn(() => ({href: ""})),
+        currentRoute: {value: {params: {}}},
+    }),
 }))
 
 const mounted: VueWrapper[] = []
@@ -22,7 +26,16 @@ function mountRestart(state: string) {
             execution: {id: "exec1", namespace: "tests", flowId: "flow1", state: {current: state}},
         },
         global: {
-            plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}}), KestraDesignSystem],
+            plugins: [
+                createI18n({
+                    legacy: false,
+                    locale: "en",
+                    missingWarn: false,
+                    fallbackWarn: false,
+                    messages: {en: {}},
+                }),
+                KestraDesignSystem,
+            ],
         },
     })
     mounted.push(wrapper)
@@ -90,5 +103,48 @@ describe("Restart (subflow child)", () => {
         await openDialog(wrapper)
 
         expect(wrapper.find("[data-test='restart-subflow-warning']").exists()).toBe(false)
+    })
+})
+
+describe("Restart (restart)", () => {
+    function mountRestartAction(state: string) {
+        setActivePinia(createPinia())
+        const wrapper = mount(Restart, {
+            props: {
+                isReplay: false,
+                execution: {id: "exec1", namespace: "tests", flowId: "flow1", state: {current: state}},
+            },
+            global: {
+                plugins: [
+                    createI18n({
+                        legacy: false,
+                        locale: "en",
+                        missingWarn: false,
+                        fallbackWarn: false,
+                        messages: {en: {}},
+                    }),
+                    KestraDesignSystem,
+                ],
+            },
+        })
+        mounted.push(wrapper)
+        return wrapper
+    }
+
+    it("renders restart button when execution state is FAILED", () => {
+        const wrapper = mountRestartAction("FAILED")
+        expect(wrapper.find("button").exists()).toBe(true)
+        expect(wrapper.find("button").attributes("disabled")).toBeUndefined()
+    })
+
+    it.each([
+        "KILLED",
+        "RUNNING",
+        "SUCCESS",
+        "PAUSED",
+        "QUEUED",
+    ])("does not render restart button when execution state is %s", (state) => {
+        const wrapper = mountRestartAction(state)
+        expect(wrapper.find("button").exists()).toBe(false)
     })
 })

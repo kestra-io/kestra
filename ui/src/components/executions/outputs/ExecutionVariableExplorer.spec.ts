@@ -4,7 +4,9 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import ExecutionVariableExplorer from "./ExecutionVariableExplorer.vue"
-import {useExecutionsStore} from "../../../stores/executions"
+import {useExecutionsStore, type Execution} from "../../../stores/executions"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
+import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
@@ -45,6 +47,10 @@ const messages = {
         tasks_outputs: "Task outputs",
         tree: "Tree",
     },
+    loop_iterations_notice: {
+        outputs: "Loop iterations outputs live in their sub-executions",
+        view_iterations: "View iterations",
+    },
 }
 
 const globalConfig = {
@@ -64,7 +70,11 @@ const globalConfig = {
     },
 }
 
-function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string; type: string; variables?: Record<string, unknown>}) {
+function mountExplorer(
+    variables: Record<string, unknown>,
+    trigger?: {id: string; type: string; variables?: Record<string, unknown>},
+    taskRunList: Execution["taskRunList"] = [],
+) {
     const executionsStore = useExecutionsStore()
     executionsStore.execution = {
         id: "execution-id",
@@ -79,7 +89,7 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
         variables,
         trigger,
         inputs: {},
-        taskRunList: [],
+        taskRunList,
         state: {
             current: "SUCCESS",
             histories: [],
@@ -100,6 +110,31 @@ async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: s
 
     await sidebar.vm.$emit("select", item)
     await flushPromises()
+}
+
+async function mountLoopExplorer(outputsByTaskRunId: Record<string, Record<string, unknown>>) {
+    vi.mocked(OutputsAPI.taskOutputsInformation).mockResolvedValueOnce([
+        {taskRunId: "loop-run", taskId: "loop"},
+        {taskRunId: "log-run", taskId: "log"},
+    ])
+    vi.mocked(OutputsAPI.taskRunOutputs).mockImplementation(async ({taskRunId}) => outputsByTaskRunId[taskRunId] ?? {})
+
+    useExecutionsStore().flow = {
+        id: "flow",
+        namespace: "io.kestra.tests",
+        tasks: [
+            {id: "loop", type: "io.kestra.plugin.core.flow.Loop", tasks: [{id: "hello", type: "io.kestra.plugin.core.log.Log"}]},
+            {id: "log", type: "io.kestra.plugin.core.log.Log"},
+        ],
+    } as FlowForExecution
+
+    const wrapper = mountExplorer({}, undefined, [
+        {id: "loop-run", taskId: "loop", state: {current: "SUCCESS", histories: []}},
+        {id: "log-run", taskId: "log", state: {current: "SUCCESS", histories: []}},
+    ])
+    await flushPromises()
+
+    return wrapper
 }
 
 describe("ExecutionVariableExplorer", () => {
@@ -265,5 +300,32 @@ describe("ExecutionVariableExplorer", () => {
         await selectVariable(wrapper, "_context", "triggers")
         expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
             .toBe("{{ trigger._context }}")
+    })
+
+    describe("loop iterations notice", () => {
+        test("shows the notice, narrowed to the Loop task, once a Loop output reports iterations", async () => {
+            const wrapper = await mountLoopExplorer({"loop-run": {iterationCount: 3}})
+
+            await selectVariable(wrapper, "loop", "tasksOutputs")
+
+            expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(true)
+            expect(wrapper.findComponent({name: "RouterLink"}).props("to").query["filters[taskId][EQUALS]"]).toBe("loop")
+        })
+
+        test("hides the notice for a Loop that ran no iteration", async () => {
+            const wrapper = await mountLoopExplorer({"loop-run": {iterationCount: 0}})
+
+            await selectVariable(wrapper, "loop", "tasksOutputs")
+
+            expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(false)
+        })
+
+        test("hides the notice for the output of a task that is not a Loop", async () => {
+            const wrapper = await mountLoopExplorer({"log-run": {iterationCount: 3}})
+
+            await selectVariable(wrapper, "log", "tasksOutputs")
+
+            expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(false)
+        })
     })
 })

@@ -1068,3 +1068,83 @@ describe("generateGraph horizontal lane headers", () => {
         expect(rowTops[0]).toBeGreaterThan(loop.bottom)
     })
 })
+
+describe("generateGraph collapsed cluster nested in an expanded one", () => {
+    const task = (uid: string, type: string) => ({uid, type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: uid.split(".").pop(), type}})
+    const dot = (uid: string, kind: "Root" | "End") => ({uid, type: `io.kestra.core.models.hierarchies.GraphCluster${kind}`})
+    const cluster = (uid: string, taskNode: ReturnType<typeof task>, nodes: string[], parents: string[]) => ({
+        cluster: {uid, type: "io.kestra.core.models.hierarchies.GraphCluster", taskNode},
+        nodes,
+        parents,
+        start: nodes.find((n) => n.includes(".root-")),
+        end: nodes.find((n) => n.includes(".end-")),
+    })
+
+    const loop = task("root.loop", "io.kestra.plugin.core.flow.Loop")
+    const inner = task("root.loop.inner", "io.kestra.plugin.core.flow.Sequential")
+    const log = task("root.loop.inner.log", "io.kestra.plugin.core.log.Log")
+
+    const flowGraph = {
+        nodes: [
+            dot("root.root-a", "Root"), dot("root.end-a", "End"),
+            dot("root.loop.root-b", "Root"), dot("root.loop.end-b", "End"), loop,
+            dot("root.loop.inner.root-c", "Root"), dot("root.loop.inner.end-c", "End"), inner, log,
+        ],
+        edges: [
+            {source: "root.root-a", target: "root.loop.root-b"},
+            {source: "root.loop.root-b", target: "root.loop"},
+            {source: "root.loop", target: "root.loop.inner.root-c"},
+            {source: "root.loop.inner.root-c", target: "root.loop.inner"},
+            {source: "root.loop.inner", target: "root.loop.inner.log"},
+            {source: "root.loop.inner.log", target: "root.loop.inner.end-c"},
+            {source: "root.loop.inner.end-c", target: "root.loop.end-b"},
+            {source: "root.loop.end-b", target: "root.end-a"},
+        ],
+        clusters: [
+            cluster("cluster_root.loop", loop, [
+                "root.loop.root-b", "root.loop.end-b", "root.loop", "cluster_root.loop.inner",
+                "root.loop.inner.root-c", "root.loop.inner.end-c",
+            ], []),
+            cluster("cluster_root.loop.inner", inner, [
+                "root.loop.inner.root-c", "root.loop.inner.end-c", "root.loop.inner", "root.loop.inner.log",
+            ], ["cluster_root.loop"]),
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("keeps the collapsed placeholder inside its parent cluster", () => {
+        // State left by collapsing `inner` from the canvas.
+        const innerCluster = flowGraph.clusters![1]
+        const hiddenNodes = [...innerCluster.nodes, innerCluster.cluster.uid]
+        const edgeReplacer = {
+            "root.loop.inner": "root.loop.inner",
+            "cluster_root.loop.inner": "root.loop.inner",
+            "root.loop.inner.root-c": "root.loop.inner",
+            "root.loop.inner.end-c": "root.loop.inner",
+            "root.loop.inner.log": "root.loop.inner",
+        }
+
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowGraph, undefined, hiddenNodes, false, edgeReplacer, new Set(["root.loop.inner"]), [], false, true, false,
+        ))
+
+        const dagreGraph = VueFlowUtils.generateDagreGraph(
+            flowGraph, hiddenNodes, false, edgeReplacer, new Set(["root.loop.inner"]), [],
+        )
+
+        expect(elements.find((e) => e.id === "root.loop.inner" && e.type === "collapsedcluster")!.parentNode).toBe("cluster_root.loop")
+        expect(dagreGraph.parent("root.loop.inner")).toBe("cluster_root.loop")
+    })
+
+    test("does not offer to collapse a cluster with no task of its own", () => {
+        const empty = task("root.approval", "io.kestra.plugin.core.flow.Approval")
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", {
+                nodes: [dot("root.approval.root-d", "Root"), dot("root.approval.end-d", "End"), empty],
+                edges: [{source: "root.approval.root-d", target: "root.approval"}],
+                clusters: [cluster("cluster_root.approval", empty, ["root.approval.root-d", "root.approval.end-d", "root.approval"], [])],
+            } as unknown as VueFlowUtils.FlowGraph, undefined, [], false, {}, new Set(), [], false, true, false,
+        ))
+
+        expect(elements.find((e) => e.id === "cluster_root.approval")!.data!.collaspsible).toBe(false)
+    })
+})

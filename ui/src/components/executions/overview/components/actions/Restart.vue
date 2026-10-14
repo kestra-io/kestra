@@ -254,6 +254,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import {asProblem} from "@kestra-io/kestra-sdk"
+    import {handled} from "../../../../../utils/kestraHttp"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
@@ -519,9 +520,12 @@
         } catch (error) {
             if (sequence === replayCheckSequence) {
                 const problem = asProblem(error)
-                replayCheck.value = problem?.status === 409
-                    ? {status: "refused", detail: problem.detail}
-                    : {status: "error"}
+                if (problem?.status === 409) {
+                    handled(error)
+                    replayCheck.value = {status: "refused", detail: problem.detail}
+                } else {
+                    replayCheck.value = {status: "error"}
+                }
             }
         }
     })

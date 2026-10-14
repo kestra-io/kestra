@@ -32,14 +32,14 @@
             <KsTooltip>
                 <template #content>
                     {{ $t("from") }} :
-                    {{ dateFilter(selectedAttempt(currentTaskRun).state.startDate) }}
+                    {{ formatAttemptDate(selectedAttempt(currentTaskRun).state.startDate) }}
                     <br>
                     {{ $t("to") }} :
-                    {{ dateFilter(selectedAttempt(currentTaskRun).state.endDate) }}
+                    {{ formatAttemptDate(selectedAttempt(currentTaskRun).state.endDate) }}
                     <br>
                     <Clock />
                     <strong>{{ $t("duration") }}:</strong>
-                    {{ humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
+                    {{ formatAttemptDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
                 <span>
                     <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
@@ -125,19 +125,25 @@
     import {Duration} from "@kestra-io/topology"
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
+    import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {Execution} from "../../stores/executions"
 
     const pluginsStore = usePluginsStore()
     const {navigateToStateFilter} = useStateFilter()
 
+    type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+    type TaskRunWithOutputs = ExecutionTaskRun & {outputs?: {executionId?: string; [key: string]: unknown}}
+
     interface Props {
-        currentTaskRun: any
-        followedExecution: any
-        flow?: any
+        currentTaskRun: TaskRunWithOutputs
+        followedExecution: Execution
+        flow?: FlowForExecution
         forcedAttemptNumber?: number
         taskRunId?: string
         selectedAttemptNumberByTaskRunId?: Record<string, number>
         shownAttemptsUid?: string[]
-        logs?: any[]
+        logs?: LogEntry[]
         filter?: string
         hideHeader?: boolean
         depth?: number
@@ -164,57 +170,66 @@
 
     // computed
     const currentTaskRuns = computed(() =>
-        props.followedExecution?.taskRunList?.filter((tr: any) => props.taskRunId ? tr.id === props.taskRunId : true) ?? [],
+        props.followedExecution?.taskRunList?.filter((tr) => props.taskRunId ? tr.id === props.taskRunId : true) ?? [],
     )
 
     const taskRunById = computed(() =>
-        Object.fromEntries(currentTaskRuns.value.map((taskRun: any) => [taskRun.id, taskRun])),
+        Object.fromEntries(currentTaskRuns.value.map((taskRun) => [taskRun.id, taskRun])),
     )
 
     const logsWithIndexByAttemptUid = computed(() => {
         let indexedLogs = props.logs
-            .filter((logLine: any) =>
-                (logLine?.message ?? "").toLowerCase().includes(props.filter) || isSubflow(taskRunById.value[logLine.taskRunId]),
+            .filter((logLine) =>
+                (logLine?.message ?? "").toLowerCase().includes(props.filter) || isSubflow(logLine.taskRunId ? taskRunById.value[logLine.taskRunId] : undefined),
             )
-            .map((logLine: any, index: number) => ({...logLine, index}))
+            .map((logLine, index) => ({...logLine, index}))
 
         // Remove duplicate logs based on taskRunId and attemptNumber, keeping the one with the highest index (most recent)
         indexedLogs = Array.from(new Set(indexedLogs))
 
-        return groupBy(indexedLogs, (indexedLog: any) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
+        return groupBy(indexedLogs, (indexedLog) => attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber))
     })
 
     // methods
-    function attempts(taskRun: any): any[] {
+    function attempts(taskRun: TaskRunWithOutputs): TaskRunAttempt[] {
         if (props.followedExecution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
             return taskRun.attempts ?? [{state: taskRun.state}]
         }
         return taskRun.attempts ? [taskRun.attempts[props.forcedAttemptNumber]] : []
     }
 
-    function isSubflow(taskRun: any): boolean {
-        return taskRun?.outputs?.executionId
+    function isSubflow(taskRun: TaskRunWithOutputs | undefined): boolean {
+        return !!taskRun?.outputs?.executionId
     }
 
-    function selectedAttempt(taskRun: any): any {
+    function selectedAttempt(taskRun: TaskRunWithOutputs): TaskRunAttempt {
         return attempts(taskRun)[props.selectedAttemptNumberByTaskRunId[taskRun.id] ?? 0]
     }
 
-    function taskType(taskRun: any): string | undefined {
+    function taskType(taskRun: TaskRunWithOutputs | undefined): string | undefined {
         if (!taskRun) return undefined
         const task = FlowUtils.findTaskById(props.flow, taskRun.taskId)
         const parentTaskRunId = taskRun.parentTaskRunId
         if (task === undefined && parentTaskRunId) {
             return taskType(taskRunById.value[parentTaskRunId])
         }
-        return task ? (task as any).type : undefined
+        return task?.type
     }
 
-    function attemptUid(taskRunId: string, attemptNumber: number): string {
+    function attemptUid(taskRunId: LogEntry["taskRunId"], attemptNumber: LogEntry["attemptNumber"]): string {
         return `${taskRunId}-${attemptNumber}`
     }
 
-    function shouldDisplayChevron(taskRun: any): boolean {
+    // An attempt that is still running has no end date or final duration yet.
+    function formatAttemptDate(value?: string | null): string {
+        return value ? dateFilter(value) : ""
+    }
+
+    function formatAttemptDuration(value?: string | null): string {
+        return value ? humanizeDuration(value) : ""
+    }
+
+    function shouldDisplayChevron(taskRun: TaskRunWithOutputs): boolean {
         return shouldDisplayLogs(taskRun.id)
     }
 

@@ -342,6 +342,11 @@ public class TriggerEventHandler {
             return;
         }
 
+        if (maybeState.get().getExecutionId() != null) {
+            onLockingExecutionTerminated(clock, event, maybeState.get());
+            return;
+        }
+
         findTriggerState(event).ifPresent(
             state -> triggerStateStore.save(
                 state
@@ -349,6 +354,31 @@ public class TriggerEventHandler {
                     .locked(clock, false)
                     .updateOnExecutionTerminated(clock, event.executionState())
             )
+        );
+    }
+
+    /**
+     * Fenced by the locking execution id, as event-id ordering is unreliable across independent producers.
+     */
+    private void onLockingExecutionTerminated(Clock clock, TriggerExecutionTerminated event, TriggerState state) {
+        if (!state.getExecutionId().equals(event.executionId())) {
+            Logs.logTrigger(
+                event.id(),
+                Level.DEBUG,
+                "Ignoring event '{}' for execution '{}'. Cause: the trigger is locked on execution '{}'.",
+                event.type(),
+                event.executionId(),
+                state.getExecutionId()
+            );
+            return;
+        }
+        if (state.getLastEventId() == null || event.eventId().isNewerThan(state.getLastEventId())) {
+            state = state.lastEventId(clock, event.eventId());
+        }
+        triggerStateStore.save(
+            state
+                .locked(clock, false)
+                .updateOnExecutionTerminated(clock, event.executionState())
         );
     }
 

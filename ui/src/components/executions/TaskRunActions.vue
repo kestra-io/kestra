@@ -190,7 +190,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
-    import {loopIterationsRoute} from "./loopIterationsRoute"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const props = withDefaults(defineProps<{
         taskRun: ExecutionTaskRun

@@ -1770,6 +1770,8 @@
     "execution_started": "¡La ejecución ha comenzado!",
     "execution_failed": "¡Ejecución fallida!",
     "last error was": "Último error fue",
+    "execution_paused": "Ejecución en pausa",
+    "execution_paused_description": "Esta ejecución está esperando ser validada y reanudada.",
     "active": "Activo",
     "flows imported": "Flujos importados",
     "flows not imported": "Flows no importados",
@@ -2067,6 +2069,7 @@
         "csv": "Exportar a CSV",
         "ion": "Exportar a ION"
       },
+      "ignoredFilters": "El filtro {filters} no se aplica a este gráfico. | Los filtros {filters} no se aplican a este gráfico.",
       "show_all_statuses": "Mostrar todos los estados",
       "quick_filters": {
         "all": "Todos",

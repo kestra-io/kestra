@@ -4997,6 +4997,10 @@ export type DeleteExecutionsByIdsData = {
          * Whether to delete execution files in the internal storage
          */
         deleteStorage?: boolean;
+        /**
+         * Whether to delete in the background, tracked by a notification
+         */
+        async?: boolean;
     };
     url: '/api/v1/{tenant}/executions/by-ids';
 };
@@ -5027,6 +5031,10 @@ export type DeleteExecutionsByIdsResponses = {
      * On success
      */
     200: BulkResponse;
+    /**
+     * Accepted, when async is true
+     */
+    202: ApiAsyncOperationResponse;
 };
 
 export type DeleteExecutionsByIdsResponse = DeleteExecutionsByIdsResponses[keyof DeleteExecutionsByIdsResponses];
@@ -5057,6 +5065,10 @@ export type DeleteExecutionsByQueryData = {
          * Whether to delete execution files in the internal storage
          */
         deleteStorage?: boolean;
+        /**
+         * Whether to delete in the background, tracked by a notification
+         */
+        async?: boolean;
     };
     url: '/api/v1/{tenant}/executions/by-query';
 };
@@ -5087,6 +5099,10 @@ export type DeleteExecutionsByQueryResponses = {
      * On success
      */
     200: BulkResponse;
+    /**
+     * Accepted, when async is true
+     */
+    202: ApiAsyncOperationResponse;
 };
 
 export type DeleteExecutionsByQueryResponse = DeleteExecutionsByQueryResponses[keyof DeleteExecutionsByQueryResponses];

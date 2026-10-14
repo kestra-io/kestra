@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -267,7 +268,30 @@ class YamlParserTest {
         FlowWithSource parse = YamlParser.parse(mapFlow, FlowWithSource.class, false);
 
         assertThat(parse.getLabels().size()).isEqualTo(1);
-        ;
+    }
+
+    @Test
+    void splitDocuments() {
+        assertThat(YamlParser.splitDocuments(null)).isEmpty();
+        assertThat(YamlParser.splitDocuments("")).isEmpty();
+        assertThat(YamlParser.splitDocuments("   \n\t  ")).isEmpty();
+
+        String single = "id: test\nnamespace: io.kestra";
+        assertThat(YamlParser.splitDocuments(single)).containsExactly(single);
+
+        String multipleWithLeadingAndComments = """
+            --- # first
+            id: flow1
+            description: a --- b
+            --- # second
+            id: flow2
+            ---
+            """;
+        List<String> docs = YamlParser.splitDocuments(multipleWithLeadingAndComments);
+        assertThat(docs).containsExactly(
+            "id: flow1\ndescription: a --- b",
+            "id: flow2"
+        );
     }
 
     private Flow parse(String path) {

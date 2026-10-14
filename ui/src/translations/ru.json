@@ -628,6 +628,15 @@
       "nav_overview": "Обзор",
       "nav_properties": "Свойства",
       "non_dynamic": "не динамический",
+      "format": "Формат",
+      "max_items": "Макс. элементов",
+      "max_length": "Максимальная длина",
+      "maximum": "Максимум",
+      "min_items": "Мин. элементов",
+      "min_length": "Мин. длина",
+      "minimum": "Минимум",
+      "unit": "Единица измерения",
+      "validation_regexp": "Регулярное выражение для валидации",
       "possible_values": "Возможные значения",
       "sub_type": "Подтип",
       "required": "Обязательный"
@@ -2713,8 +2722,8 @@
       "open_mode_hint": "Задачи по умолчанию открываются в модальном окне. Вы можете сделать вкладки по умолчанию в {settings}."
     },
     "blocks": "Блоки",
-    "split_horizontal": "Разделить по горизонтали",
-    "split_vertical": "Разделить по вертикали",
+    "move_panel_to_bottom": "Переместить панель вниз",
+    "move_panel_to_side": "Переместить панель в сторону",
     "pwa": {
       "install_title": "Установить Kestra",
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",
@@ -2723,6 +2732,7 @@
     },
     "iteration": "Итерация",
     "iteration_number": "Итерация {number}",
-    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?",
+    "not started": "Не начато"
   }
 }

@@ -628,6 +628,15 @@
       "nav_overview": "अवलोकन",
       "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
+      "format": "फ़ॉर्मेट",
+      "max_items": "अधिकतम आइटम",
+      "max_length": "अधिकतम लंबाई",
+      "maximum": "अधिकतम",
+      "min_items": "न्यूनतम आइटम",
+      "min_length": "न्यूनतम लंबाई",
+      "minimum": "न्यूनतम",
+      "unit": "यूनिट",
+      "validation_regexp": "वैलिडेशन रेगएक्स",
       "possible_values": "संभावित मान",
       "sub_type": "उपप्रकार",
       "required": "आवश्यक"
@@ -2713,8 +2722,8 @@
       "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक modal में खुलते हैं। आप {settings} में tabs को डिफ़ॉल्ट बना सकते हैं।"
     },
     "blocks": "ब्लॉक",
-    "split_horizontal": "क्षैतिज रूप से विभाजित करें",
-    "split_vertical": "लंबवत विभाजित करें",
+    "move_panel_to_bottom": "पैनल को नीचे ले जाएँ",
+    "move_panel_to_side": "पैनल को एक तरफ ले जाएँ",
     "pwa": {
       "install_title": "Kestra इंस्टॉल करें",
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
@@ -2723,6 +2732,7 @@
     },
     "iteration": "पुनरावृत्ति",
     "iteration_number": "पुनरावृत्ति {number}",
-    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?"
+    "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?",
+    "not started": "शुरू नहीं हुआ"
   }
 }

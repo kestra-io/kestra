@@ -664,6 +664,22 @@ export type DailyExecutionStatisticsDuration = {
     count: number;
 };
 
+/**
+ * A page of chart rows.
+ */
+export type DashboardControllerChartData = {
+    results: Array<{
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    }>;
+    total: number;
+    /**
+     * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     */
+    ignoredFilters?: Array<QueryFilterField>;
+};
+
 export type DashboardControllerDashboardResponse = {
     tenantId?: string;
     id: string;
@@ -1698,18 +1714,6 @@ export type PagedResultsFlow = {
  */
 export type PagedResultsKvEntry = {
     results: Array<KvEntry>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
-export type PagedResultsMapStringObject = {
-    results: Array<{
-        [key: string]: {
-            [key: string]: unknown;
-        };
-    }>;
     total: number;
 };
 
@@ -4784,7 +4788,7 @@ export type PreviewChartResponses = {
     /**
      * previewChart 200 response
      */
-    200: PagedResultsMapStringObject;
+    200: DashboardControllerChartData;
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];

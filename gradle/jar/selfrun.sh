@@ -27,13 +27,6 @@ JAVA_ADD_OPENS="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base
 # com.google.protobuf.UnsafeUtil (pulled in by gRPC), see https://github.com/kestra-io/kestra/issues/16513
 JAVA_UNSAFE_MEMORY_ACCESS="--sun-misc-unsafe-memory-access=allow"
 
-# Fix required to use new DucksDB versions along side RocksDB
-# https://github.com/kestra-io/plugin-jdbc/issues/165
-LIBSTDC="/lib/x86_64-linux-gnu/libstdc++.so.6"
-if [ "${LD_PRELOAD_ENABLED:-true}" = "true" ] && [ -z "$LD_PRELOAD" ] && [ -f "$LIBSTDC" ]; then
-  export LD_PRELOAD="$LIBSTDC"
-fi
-
 # Java options that Kestra engineers think are best for Kestra, they should be added before JAVA_OPTS so they are overridable:
 # -XX:MaxRAMPercentage=50.0: configure max heap to 50% of available RAM (default 25%)
 KESTRA_JAVA_OPTS="-XX:MaxRAMPercentage=50.0"

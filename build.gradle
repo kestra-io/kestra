@@ -1,5 +1,4 @@
 import net.e175.klaus.zip.ZipPrefixer
-import org.owasp.dependencycheck.gradle.extension.AnalyzerExtension
 
 buildscript {
     repositories {
@@ -20,20 +19,17 @@ plugins {
     id "application"
 
     // test
-    id "org.sonarqube" version "7.5.0.8588"
     id 'jacoco-report-aggregation'
 
     // release
-    id 'net.researchgate.release' version '3.1.0'
+    id 'net.researchgate.release' version '3.2.0'
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.37.0"
 
-    // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.2.2" apply false
-
-    // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.2.10"
+    // Kestra gradle plugin
+    id "io.kestra.gradle.spotless-conventions" version '1.2.11'
+    id 'io.kestra.gradle.repository-conventions' version '1.2.11'
 }
 
 idea {
@@ -518,48 +514,6 @@ subprojects {
             outputs.dir(allureResultsDir)
         }
     }
-}
-
-/**********************************************************************************************************************\
- * Sonar
- **********************************************************************************************************************/
-subprojects {
-    sonar {
-        properties {
-            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml,$projectDir.parentFile.path/build/reports/jacoco/test/testCodeCoverageReport.xml"
-        }
-    }
-}
-
-sonar {
-    properties {
-        property "sonar.projectKey", "kestra-io_kestra"
-        property "sonar.organization", "kestra-io"
-        property "sonar.host.url", "https://sonarcloud.io"
-    }
-}
-
-/**********************************************************************************************************************\
- * OWASP Dependency check
- **********************************************************************************************************************/
-apply plugin: 'org.owasp.dependencycheck'
-
-dependencyCheck {
-    // fail only on HIGH and CRITICAL vulnerabilities, we may want to lower to 5 (mid-medium) later
-    failBuildOnCVSS = 7
-
-    // disable the .NET assembly analyzer as otherwise it wants to analyze EXE file
-    analyzers(new Action<AnalyzerExtension>() {
-        @Override
-        void execute(AnalyzerExtension analyzerExtension) {
-            analyzerExtension.assemblyEnabled = false
-        }
-    })
-
-    // configure a suppression file
-    suppressionFile = "$projectDir/owasp-dependency-suppressions.xml"
-
-    nvd.apiKey = System.getenv("NVD_API_KEY")
 }
 
 /**********************************************************************************************************************\

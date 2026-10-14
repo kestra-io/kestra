@@ -19,6 +19,7 @@ import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
@@ -116,7 +117,8 @@ class FlowValidationTest {
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, invalidYaml)));
 
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("YAML parsing error").contains("at line");
+        assertThat(results.getFirst().getErrors()).singleElement()
+            .extracting(ValidationError::detail).asString().contains("YAML parsing error").contains("at line");
     }
 
     @Test
@@ -133,7 +135,7 @@ class FlowValidationTest {
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, yamlWithUndefinedVar)));
 
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("Validation error");
+        assertThat(results.getFirst().getErrors()).isNotEmpty();
     }
 
     @Test
@@ -153,6 +155,7 @@ class FlowValidationTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system.label=system_key");
         assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system.id=id");
+        assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system=value");
     }
 
     @Test

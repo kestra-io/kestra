@@ -6,9 +6,6 @@
         popperClass="doc-toc-search-popper"
         :placeholder="$t('search')"
     >
-        <template #prefix>
-            <Magnify />
-        </template>
         <template #default="{item}">
             <RouterLink
                 :to="{path: '/' + item.parsedUrl}"
@@ -31,11 +28,10 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useDocStore} from "../../stores/doc"
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
     import RecursiveToc from "./RecursiveToc.vue"
     import {buildDocsSections, buildDocsToc} from "./docsUtils"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
-    import Magnify from "vue-material-design-icons/Magnify.vue"
 
     interface SearchResult {
         parsedUrl: string;
@@ -44,7 +40,7 @@
 
     const docStore = useDocStore()
 
-    const rawStructure = ref<Record<string, any> | undefined>(undefined)
+    const rawStructure = ref<Record<string, DocMetadata> | undefined>(undefined)
     const query = ref<string>("")
 
     const sectionsWithChildren = computed(() => buildDocsSections(buildDocsToc(rawStructure.value)))

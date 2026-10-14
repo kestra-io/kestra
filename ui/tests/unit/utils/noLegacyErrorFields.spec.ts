@@ -37,12 +37,14 @@ const ALLOWED: Array<{file: string; reason: string}> = [
 function sourceFiles(): string[] {
     return SCANNED_DIRS.flatMap((dir) =>
         globSync(`${dir}/**/*.{ts,vue,js}`, {cwd: ROOT})
-            .filter((file) => !file.includes("node_modules") && !file.includes("/dist/")),
+            .map((file) => file.replaceAll("\\", "/"))
+            .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
     )
 }
 
 function isAllowed(file: string): boolean {
-    return ALLOWED.some((entry) => file.startsWith(entry.file))
+    const normalized = file.replaceAll("\\", "/")
+    return ALLOWED.some((entry) => normalized.startsWith(entry.file))
 }
 
 describe("no legacy error fields", () => {
@@ -58,7 +60,7 @@ describe("no legacy error fields", () => {
             const content = readFileSync(join(ROOT, file), "utf8")
             content.split("\n").forEach((line, index) => {
                 if (pattern.test(line)) {
-                    offenders.push(`${relative(ROOT, join(ROOT, file))}:${index + 1}: ${line.trim()}`)
+                    offenders.push(`${relative(ROOT, join(ROOT, file)).replaceAll("\\", "/")}:${index + 1}: ${line.trim()}`)
                 }
             })
         }

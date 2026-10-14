@@ -66,8 +66,8 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
                     onlyIcon: true,
                     loadIcon: ctx.loadTaskIcon.value,
                 }))
-            } else if ((STATES as any)[completionValue] !== undefined) {
-                replaceRowIcon(vsCodeIcon, h((STATES as any)[completionValue].icon))
+            } else if (STATES[completionValue] !== undefined) {
+                replaceRowIcon(vsCodeIcon, h(STATES[completionValue].icon))
             } else {
                 vsCodeIcon.style.display = ""
             }

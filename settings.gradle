@@ -1,9 +1,9 @@
 plugins {
-    id("io.kestra.gradle.develocity-conventions") version "1.2.10"
+    id("io.kestra.gradle.develocity-conventions") version '1.2.11'
     id("com.gradle.common-custom-user-data-gradle-plugin") version "2.8.0"
-    id("io.github.ben-manes.versions.settings") version "0.62.0"
-    id 'io.kestra.gradle.test-scheduling' version '1.2.10'
-    id 'io.kestra.gradle.logger' version '1.2.10'
+    id("io.github.ben-manes.versions.settings") version "0.64.0"
+    id 'io.kestra.gradle.test-scheduling' version '1.2.11'
+    id 'io.kestra.gradle.logger' version '1.2.11'
 }
 
 // Longest test modules first, measured with dev-tools/analyze-test-heap.sh. Gradle's scheduler has

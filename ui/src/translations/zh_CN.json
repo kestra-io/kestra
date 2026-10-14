@@ -291,7 +291,46 @@
       "help": "帮助",
       "issue": "问题",
       "demo": "演示",
-      "star": "点赞我们"
+      "star": "点赞我们",
+      "notifications": "通知"
+    },
+    "notifications": {
+      "heading": "通知",
+      "ongoing": "进行中",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "正在终止 {count} 个执行",
+          "EXECUTION_PAUSE": "正在暂停 {count} 个执行",
+          "EXECUTION_RESUME": "正在恢复 {count} 个执行",
+          "EXECUTION_RESTART": "正在重新开始 {count} 个执行",
+          "EXECUTION_REPLAY": "正在重放 {count} 个执行",
+          "EXECUTION_FORCE_RUN": "正在强制运行 {count} 个执行",
+          "EXECUTION_UNQUEUE": "正在将 {count} 个执行移出队列",
+          "EXECUTION_CHANGE_STATUS": "正在更改 {count} 个执行的状态",
+          "EXECUTION_SET_LABELS": "正在为 {count} 个执行设置 label",
+          "TRIGGER_UNLOCK": "正在解锁 {count} 个 trigger",
+          "TRIGGER_DELETE": "正在删除 {count} 个 trigger",
+          "TRIGGER_DISABLE": "正在禁用 {count} 个 trigger",
+          "TRIGGER_ENABLE": "正在启用 {count} 个 trigger",
+          "BACKFILL_PAUSE": "正在暂停 {count} 个 backfill",
+          "BACKFILL_RESUME": "正在恢复 {count} 个 backfill",
+          "BACKFILL_DELETE": "正在删除 {count} 个 backfill"
+        },
+        "processed": "已处理 {count} 个",
+        "rejected": "已拒绝 {count} 个",
+        "elapsed": "已运行 {duration}"
+      },
+      "markAllRead": "全部标记为已读",
+      "markUnread": "标记为未读",
+      "markRead": "标记为已读",
+      "empty": "暂无通知",
+      "emptyUnread": "没有未读通知",
+      "tabs": {
+        "all": "全部",
+        "unread": "未读"
+      },
+      "bellAriaLabel": "通知",
+      "bellAriaLabelRunning": "通知，有操作正在进行"
     },
     "source": "来源",
     "home": "首页",
@@ -328,10 +367,11 @@
     "start date": "开始日期",
     "end date": "结束日期",
     "restart": "重新开始",
-    "restart latest revision": "重新开始最新修订版",
     "restart tooltip": "从 <code>{state}</code> 任务重新开始执行",
     "restarted": "执行已重启",
     "restart confirm": "您确定要重启执行 <code>{id}</code> 吗？",
+    "restart subflow warning": "此执行由父执行创建，应从父执行处重新启动。单独重新启动此执行将使父执行处于 FAILED 状态，并且其后续任务将不会运行。请前往 {parent} 重新启动。",
+    "restart subflow warning link": "父级 Execution",
     "replay": "重放",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
     "replay from beginning tooltip": "从头开始创建相似的执行",
@@ -347,7 +387,12 @@
     "yes": "是",
     "no": "否",
     "change state done": "任务状态已更新",
-    "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
+    "change state confirm": "您确定要更改执行 {id} 中 {task} task 的运行状态吗？",
+    "change state confirm restart": "它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
+    "interrupt": "中断",
+    "interrupt confirm": "您确定要中断执行 <code>{id}</code> 中 <code>{task}</code> Task 的 Task Run 吗？<br/>它将终止 Worker 中正在运行的 Task 并设置其状态。",
+    "interrupt done": "Task 运行已被中断",
+    "interrupt target state": "目标状态",
     "change state current state": "当前状态是：",
     "change state hint": {
       "WARNING": [
@@ -383,7 +428,7 @@
     "replay inputs new required": "此修订版有inputs。系统将提示您填写它们。",
     "replay select taskrun": "选择要重放的task运行：",
     "change execution state done": "执行状态已更新",
-    "mark as": "标记为 <code>{status}</code>",
+    "mark as": "标记为 {status}",
     "unqueue as": "取消排队为<code>{status}</code>",
     "kill": "终止",
     "kill parents and subflow": "终止当前和subflows",
@@ -449,6 +494,11 @@
     "show task source": "显示任务源代码",
     "stream": "流",
     "execution statistics": "执行统计",
+    "execution_banner": {
+      "revision": "修订版 {revision}",
+      "attempts": "{count} 次尝试 | {count} 次尝试",
+      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+    },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
     "usage": "使用情况",
@@ -459,6 +509,12 @@
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
+    "change_password": {
+      "title": "更改密码",
+      "current_password": "当前密码",
+      "new_password": "新密码",
+      "success": "您的凭据已更新。"
+    },
     "invalid flow": "无效流程",
     "invalid yaml": "无效的 YAML",
     "inputs": "输入",
@@ -468,6 +524,7 @@
       "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "表达式",
       "tree": "树",
       "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",
@@ -553,6 +610,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "插件组件加载失败。",
       "autoInstall": {
         "failed": "插件安装失败",
         "failedHint": "flow 未保存。请修复问题或从 flow 中移除该插件，然后重新保存。",
@@ -610,6 +668,15 @@
       "nav_overview": "概览",
       "nav_properties": "属性",
       "non_dynamic": "非动态",
+      "format": "格式",
+      "max_items": "最大项目数",
+      "max_length": "最大长度",
+      "maximum": "最大值",
+      "min_items": "最小项数",
+      "min_length": "最小长度",
+      "minimum": "最小",
+      "unit": "单位",
+      "validation_regexp": "验证正则表达式",
       "possible_values": "可选值",
       "sub_type": "子类型",
       "required": "必填"
@@ -682,6 +749,17 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
+    "session expired": "您的会话已过期",
+    "session expired description": "请再次登录以继续。",
+    "go to login": "前往登录页面",
+    "use another sign-in method": "使用其他登录方式",
+    "sign in in a new tab": "在新标签页中登录",
+    "sign in in a new tab hint": "在刚打开的标签页中登录，然后回到这里继续。",
+    "continue after sign in": "继续",
+    "sign in failed": "无法登录。请检查您的网络连接并重试。",
+    "sign in not confirmed": "我们无法确认您已登录。请在另一个标签页中登录，然后继续。",
+    "server unreachable": "无法连接到 Kestra 服务器",
+    "server unreachable description": "在刷新此页面之前，请将所有未保存的工作（例如 Flow YAML）复制到安全位置。此横幅将在服务器响应后消失。",
     "unsaved changes": "未保存的更改",
     "unsaved changes warning": "您有未保存的更改。如果您离开此页面，您的更改将会丢失。",
     "leave page": "离开页面",
@@ -946,7 +1024,6 @@
     "warning detected": "检测到警告。",
     "informative notice": "注意事项",
     "open": "打开",
-    "dependency task": "任务 {taskId} 是另一个任务的依赖",
     "admin": "管理员",
     "main_configuration": "主配置",
     "commit_id": "提交 id",
@@ -1029,6 +1106,8 @@
         "folder": "删除文件夹",
         "files": "删除 {count} 个已选择的文件",
         "bulk_success": "所选文件已成功删除。",
+        "bulk_partial_error": "未能删除所选 {totalCount} 个文件中的 {failedCount} 个。",
+        "all_failed_error": "删除所选文件失败。",
         "folders": "删除 {count} 个已选文件夹"
       },
       "move": {
@@ -1081,7 +1160,6 @@
     "pause backfills": "暂停回填",
     "backfill executions": "回填执行",
     "execute backfill": "执行回填",
-    "relative": "相对",
     "relative start date": "相对开始日期",
     "absolute": "绝对",
     "backfill": "回填",
@@ -1683,16 +1761,25 @@
     "item": "项目",
     "items": "项目",
     "iterations": "迭代次数",
+    "loop_iterations_notice": {
+      "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",
+      "outputs": "循环迭代作为单独的子 Execution 运行，因此它们的 output 不在此处显示。",
+      "metrics": "循环迭代作为单独的子 Execution 运行，因此它们的指标不在此处显示。",
+      "view_iterations": "查看迭代"
+    },
     "cron": "定时任务",
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",
     "last error was": "上次错误是",
+    "execution_paused": "执行已暂停",
+    "execution_paused_description": "此执行正在等待验证和恢复。",
     "active": "活动",
     "flows imported": "Flow已导入",
     "flows not imported": "未导入的Flows",
     "custom value": "自定义值",
     "chart": "图表",
     "no_code": {
+      "task_details": "task 详情",
       "toggle_pebble": "切换Pebble编辑器",
       "version_oss_placeholder": "解锁企业版插件版本控制",
       "adding": "+ 添加{what}",
@@ -1748,7 +1835,8 @@
         "inputs": "选择一个input字段类型",
         "charts": "选择图表类型",
         "where": "选择筛选器类型",
-        "numerator": "选择一个分子"
+        "numerator": "选择一个分子",
+        "namespace_first": "请先选择 namespace"
       },
       "creation": {
         "default": "添加",
@@ -1982,6 +2070,7 @@
         "csv": "导出为 CSV",
         "ion": "导出到 ION"
       },
+      "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
@@ -2201,7 +2290,6 @@
       "run_all_tasks": "运行所有Tasks",
       "history": "最近10次运行",
       "clear_history": "清除历史记录",
-      "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
       "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
     "submit": "提交",
@@ -2234,7 +2322,18 @@
           "issues": "{n} 过时",
           "failed": "{n} 失败",
           "last_run": "上次运行 {ago}",
-          "unknown": "{n} 未追踪"
+          "unknown": "{n} 未追踪",
+          "tests_failed": "{n} 个测试失败"
+        },
+        "tests": {
+          "pass": "{count} 个测试",
+          "warn": "{count} 测试 · 警告",
+          "fail": "{failed}/{total} 失败",
+          "tooltip": {
+            "pass": "{count} 个 dbt 测试通过 | 所有 {count} 个 dbt 测试通过",
+            "warn": "{count} 个 dbt 测试通过，部分带有警告",
+            "fail": "dbt 测试失败 | {total} 个 dbt 测试中有 {failed} 个失败"
+          }
         },
         "recent_runs": "最近运行",
         "group_by": "分组依据",
@@ -2270,8 +2369,10 @@
     "bulk delete triggers": "您确定要删除 {count} 个 triggers 吗？",
     "bulk success delete triggers": "{count} 个 trigger 已成功删除",
     "delete trigger confirmation": "您确定要删除trigger {id}吗？WARNING: 如果trigger仍在flow中激活，删除trigger可能会导致重复执行。",
+    "delete trigger still declared": "此 trigger 仍在 flow 中声明。请从 flow 中移除它或使用 Restart。",
     "delete trigger success": "触发器 {id} 已成功删除",
     "delete trigger error": "删除触发器 {id} 时出错",
+    "delete triggers orphans only": "只会删除不再在 flow 中声明的 trigger 状态。仍在 flow 中声明的 trigger 会被保留。",
     "revision deleted": "修订版 {revision} 已成功删除",
     "delete revision confirm": "您确定要删除修订版 {revision} 吗？",
     "delete revision error": "删除修订版 {revision} 时出错，错误信息 {error}",
@@ -2393,6 +2494,7 @@
         "label": "{count} 错误"
       }
     },
+    "invalid_source_code": "源代码无效",
     "source_search": {
       "cannot_select_read_only": "无法选择 — 您没有 {namespace} / {id} 的编辑权限",
       "collapse_all": "全部收起",
@@ -2532,6 +2634,8 @@
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "context: {name}",
+        "copy": "复制 {name}",
+        "cut": "剪切 {name}",
         "delete": "删除 {name}",
         "duplicate": "复制 {name}",
         "goto": "前往 {section}",
@@ -2547,6 +2651,7 @@
         "insert_kind": "插入 {kind}",
         "no_match": "无匹配项",
         "open": "打开 {name}",
+        "paste": "粘贴",
         "save": "保存 flow",
         "search_placeholder": "输入命令或搜索 task…",
         "title": "命令菜单"
@@ -2605,6 +2710,26 @@
       "picker_more_results": "还有 {count} 个，请优化您的搜索",
       "plugin_default": "默认值: {value}",
       "plugin_default_tooltip": "来自 flow 的 pluginDefaults 的默认 value",
+      "plugin_implementation": {
+        "change": "更改",
+        "choose_title": "选择{label}",
+        "count_available": "{count} 个可用",
+        "exactly_one": "1 种实现",
+        "items_set": "已设置 {count} 个",
+        "no_results_description": "此实例上安装了 {count} 种实现。未安装的插件提供的实现不会显示在此处。",
+        "no_results_title": "没有与“{query}”匹配的实现",
+        "picker_count": "{total} 项中的 {shown} 项",
+        "remove": "移除 {label}",
+        "remove_from": "从 {field} 中移除 {name}",
+        "replace": "替换…",
+        "search_placeholder": "搜索…",
+        "secret_summary": "来自 Secret 的 {label}",
+        "stored_value": "已保存的值",
+        "summary_overflow": "+{count}",
+        "unresolved_message": "{type} 不是此实例已知的 {label} 的 {count} 种实现之一。该插件可能未安装，或在升级过程中已被移除。",
+        "unresolved_name": "未知实现",
+        "unresolved_untouched": "您的 YAML 未被修改。在您替换该实现之前，不会向 flow 写入任何内容。"
+      },
       "required_missing": "必填字段未设置",
       "required_unset_jump": "跳转到第一个",
       "required_unset_plural": "还有 {count} 个必填字段未设置",
@@ -2622,6 +2747,8 @@
         "clear": "关闭/清除选择",
         "collapse_expand": "折叠/展开",
         "command_palette": "命令菜单（上下文）",
+        "copy": "复制",
+        "cut": "剪切",
         "group_edit": "编辑",
         "group_global": "全局",
         "group_insert": "插入",
@@ -2630,6 +2757,8 @@
         "open": "打开选定的块",
         "open_split": "在分屏视图中打开选定的块",
         "or": "或",
+        "paste": "粘贴",
+        "redo": "重做",
         "reorder": "上移 / 下移",
         "save": "保存 flow",
         "step_into": "展开/进入组",
@@ -2652,8 +2781,8 @@
       "open_mode_hint": "任务默认在模态框中打开。您可以在{settings}中将选项卡设为默认。"
     },
     "blocks": "区块",
-    "split_horizontal": "水平拆分",
-    "split_vertical": "垂直拆分",
+    "move_panel_to_bottom": "将面板移到底部",
+    "move_panel_to_side": "将面板移至侧面",
     "pwa": {
       "install_title": "安装 Kestra",
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
@@ -2662,6 +2791,7 @@
     },
     "iteration": "迭代",
     "iteration_number": "迭代 {number}",
-    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？"
+    "delete_log_iteration": "确定要删除 {iteration} 的日志吗？",
+    "not started": "未开始"
   }
 }

@@ -26,7 +26,7 @@ jobs:
 
       # Dependabot PRs are not forks, but GitHub still withholds repo secrets from
       # workflow runs it triggers, so create-github-app-token would fail with an
-      # empty app-id. Guard on the secret itself rather than the triggering actor,
+      # empty client-id. Guard on the secret itself rather than the triggering actor,
       # since that's the actual precondition and it covers any other case where
       # these secrets aren't available to the run.
     - name: Generate GitHub App token for kestra-ee dispatch
@@ -34,7 +34,7 @@ jobs:
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       with:
-        app-id: ${{ secrets.GH_BOT_APP_ID }}
+        client-id: ${{ secrets.GH_BOT_APP_ID }}
         private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
         owner: kestra-io
         repositories: kestra-ee
@@ -244,7 +244,7 @@ jobs:
         if: github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != ''
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           owner: kestra-io
           repositories: kestra-ee
@@ -321,7 +321,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   design-system-frontend:
     name: Frontend - Design System tests
@@ -364,8 +363,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:

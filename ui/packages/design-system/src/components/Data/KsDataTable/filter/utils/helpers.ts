@@ -1,4 +1,4 @@
-import type {LocationQuery} from "vue-router"
+import type {LocationQuery, LocationQueryRaw} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
 import {DATE_FILTER_KEY, MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
@@ -117,7 +117,7 @@ const buildParam = (
     }
 }
 
-type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
+type Filter = Pick<AppliedFilter, "key" | "comparator" | "value" | "meta">;
 
 type ComparatorKeyResolver = (comparator: Comparators) => string;
 type FilterQuery = Record<string, string | string[]>;
@@ -172,7 +172,7 @@ const writeFilter = (
             } else {
                 query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? ""
             }
-            const dateFilter = (filter as any).meta?.dateFilter
+            const dateFilter = filter.meta?.dateFilter
             if (dateFilter) {
                 query["dateFilter"] = dateFilter
             }
@@ -252,7 +252,7 @@ export const validStructureSignature = (groups: FilterGroup[]): string => {
     return JSON.stringify(units)
 }
 
-export const getUniqueFilters = <T extends { key: string; comparator?: any }>(filters: T[]): T[] =>
+export const getUniqueFilters = <T extends {key: string; comparator?: Comparators}>(filters: T[]): T[] =>
     filters.filter((filter, index, self) =>
         index === self.findLastIndex(f =>
             f.key === filter.key && f.comparator === filter.comparator,
@@ -262,7 +262,7 @@ export const getUniqueFilters = <T extends { key: string; comparator?: any }>(fi
 export const isFilterQueryKey = (key: string): boolean =>
     key.startsWith("filters[") || key === DATE_FILTER_KEY
 
-export const clearFilterQueryParams = (query: Record<string, any>): void => {
+export const clearFilterQueryParams = (query: LocationQueryRaw): void => {
     for (const key of Object.keys(query)) {
         if (isFilterQueryKey(key)) delete query[key]
     }

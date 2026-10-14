@@ -38,13 +38,14 @@
     import ContextInfoContent from "../ContextInfoContent.vue"
 
     import {useApiStore} from "../../stores/api"
+    import {storageKeys} from "../../utils/constants"
 
     const apiStore = useApiStore()
 
     const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null)
     const feeds = computed(() => apiStore.feeds)
 
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    const lastNewsReadDate = useStorage<string | null>(storageKeys.LAST_NEWS_READ_DATE, null)
     onMounted(() => {
         lastNewsReadDate.value = feeds.value[0].publicationDate
     })

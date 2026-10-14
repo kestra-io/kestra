@@ -150,4 +150,38 @@ class JdbcJsonbUtilsTest {
         // Then
         assertThat(result.data()).isEqualTo(json);
     }
+
+    @Test
+    void shouldKeepTheTextOfAnEscapedNullWhenItsBackslashIsEscaped() throws JsonProcessingException {
+        // Given - the literal text backslash-u-0000 (for example a code sample in a log line). Its JSON form starts
+        // with an escaped backslash, which PostgreSQL accepts, so nothing must be removed.
+        String json = MAPPER.writeValueAsString(Map.of("key", "a\\u0000b"));
+
+        // When
+        JSONB result = JdbcJsonbUtils.valueOf(json);
+
+        // Then
+        assertThat(result.data()).isEqualTo(json);
+    }
+
+    @Test
+    void shouldFixNullBytesAndLoneSurrogatesInTheSamePayload() throws JsonProcessingException {
+        // Given
+        String json = MAPPER.writeValueAsString(Map.of("key", "a" + NULL_CHAR + "b\uD835c"));
+
+        // When
+        JSONB result = JdbcJsonbUtils.valueOf(json);
+
+        // Then
+        assertThat(result.data()).isEqualTo("{\"key\":\"ab\uFFFDc\"}");
+    }
+
+    @Test
+    void shouldReturnTheSameStringWhenNothingNeedsFixing() {
+        // Given
+        String cleanJson = "{\"key\":\"caf\u00e9 \\uD835\\uDC59\"}";
+
+        // When / Then - a clean payload is not copied
+        assertThat(JdbcJsonbUtils.sanitize(cleanJson)).isSameAs(cleanJson);
+    }
 }

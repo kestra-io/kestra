@@ -88,12 +88,7 @@ jobs:
 
   security-scan:
     name: Security scan
-    uses: kestra-io/actions/.github/workflows/security-scan.yml@main
-    with:
-      components: |
-        frontend=ui/**
-        backend=**
-      npm-lockfile: ui/package-lock.json
+    uses: kestra-io/actions/.github/workflows/kestra-security-scan.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}

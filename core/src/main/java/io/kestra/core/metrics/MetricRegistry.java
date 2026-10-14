@@ -109,6 +109,8 @@ public class MetricRegistry {
 
     public static final String METRIC_EXECUTOR_THREAD_COUNT = "executor.thread.count";
     public static final String METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION = "The number of executor threads";
+    public static final String METRIC_EXECUTOR_EXECUTION_PENDING = "executor.execution.pending";
+    public static final String METRIC_EXECUTOR_EXECUTION_PENDING_DESCRIPTION = "The number of persisted executions currently waiting in CREATED or QUEUED state";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT = "executor.taskrun.created.count";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION = "The total number of tasks created by the Executor";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";
@@ -234,6 +236,8 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_CONSUME_BATCH_DURATION_DESCRIPTION = "Queue message consumer duration for a batch of messages";
     public static final String METRIC_QUEUE_MESSAGE_LAG = "queue.message.lag";
     public static final String METRIC_QUEUE_MESSAGE_LAG_DESCRIPTION = "Number of messages in the queue that are not yet consumed";
+    public static final String METRIC_QUEUE_MESSAGE_PENDING = "queue.message.pending";
+    public static final String METRIC_QUEUE_MESSAGE_PENDING_DESCRIPTION = "The number of unconsumed JDBC dispatch messages across all routing keys";
     public static final String METRIC_QUEUE_SUBSCRIBERS_ACTIVE = "queue.subscribers.active";
     public static final String METRIC_QUEUE_SUBSCRIBERS_ACTIVE_DESCRIPTION = "Number of active queue subscribers";
     public static final String METRIC_QUEUE_SUBSCRIBERS_PAUSED_TOTAL = "queue.subscribers.paused.total";

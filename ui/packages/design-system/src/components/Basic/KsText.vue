@@ -1,5 +1,5 @@
 <template>
-    <ElText v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElText v-bind="({...filteredProps(), ...$attrs} as TextProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElText} from "element-plus"
+    import {ElText, type TextProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

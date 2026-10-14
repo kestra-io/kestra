@@ -128,7 +128,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
                 boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated();
                 if (loopAlreadyEnded) {
-                    computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                    computeOutputs(parentTaskRun, outputs, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
                     if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
                         logLoopIterationFailure(parentTaskRun, loop, executor, message);
                     }

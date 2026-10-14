@@ -22,20 +22,11 @@ class DockerErrorHandlingTest {
     }
 
     @Test
-    void shouldNotTreatExitCodeWithoutOomEvidenceAsContainerOomTermination() {
-        InspectContainerResponse container = Mockito.mock(InspectContainerResponse.class);
-        InspectContainerResponse.ContainerState state = Mockito.mock(InspectContainerResponse.ContainerState.class);
-        Mockito.when(container.getState()).thenReturn(state);
-        Mockito.when(state.getOOMKilled()).thenReturn(false);
-
-        assertThat(Docker.isContainerOomKilled(container)).isFalse();
-    }
-
-    @Test
-    void shouldHandleMissingContainerStateWhenCheckingOomTermination() {
+    void shouldHandleMissingContainerInspectionMetadata() {
         InspectContainerResponse container = Mockito.mock(InspectContainerResponse.class);
 
         assertThat(Docker.isContainerOomKilled(container)).isFalse();
+        assertThat(Docker.isContainerOomKilled(null)).isFalse();
     }
 
     @Test

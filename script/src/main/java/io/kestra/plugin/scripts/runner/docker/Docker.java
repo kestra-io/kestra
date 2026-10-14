@@ -624,7 +624,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     TaskException failure = new TaskException(exitCode, defaultLogConsumer);
                     if (isContainerOomKilled(dockerClient, runContainerId, logger)) {
                         failure = new TaskException(
-                            "Container '%s' was killed by the Docker OOM killer (exit code %d). Increase the task runner memory limit or reduce the task's memory usage."
+                            "A process in container '%s' was killed by the out-of-memory killer (exit code %d). Increase the Docker task runner memory.memory limit (or the host's available memory), or reduce the task's memory usage."
                                 .formatted(runContainerId, exitCode),
                             exitCode,
                             defaultLogConsumer
@@ -663,15 +663,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
     }
 
-    /**
-     * Kills the running container (via the registered {@code onKill} runnable) and, if {@code renderedDelete}
-     * is true, removes the container and its files volume. Clears the thread's interrupted flag beforehand so
-     * these cleanup HTTP calls are not themselves rejected by a lingering interrupt, then restores it afterward.
-     * <p>
-     * Called both when the run is interrupted before reaching the attach/wait phase (setup-phase catch) and
-     * during normal completion cleanup (attach/wait phase finally), so a container is never leaked regardless
-     * of where in {@link #run} the interruption or failure occurs.
-     */
     static boolean isContainerOomKilled(InspectContainerResponse container) {
         return container != null
             && container.getState() != null
@@ -687,6 +678,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
     }
 
+    /**
+     * Kills the running container (via the registered {@code onKill} runnable) and, if {@code renderedDelete}
+     * is true, removes the container and its files volume. Clears the thread's interrupted flag beforehand so
+     * these cleanup HTTP calls are not themselves rejected by a lingering interrupt, then restores it afterward.
+     * <p>
+     * Called both when the run is interrupted before reaching the attach/wait phase (setup-phase catch) and
+     * during normal completion cleanup (attach/wait phase finally), so a container is never leaked regardless
+     * of where in {@link #run} the interruption or failure occurs.
+     */
     private void cleanupContainer(DockerClient dockerClient, String containerId, boolean needVolume, FileHandlingStrategy strategy, String filesVolumeName, Boolean renderedDelete,
         Logger logger) {
         // Clear the interrupted flag so Docker HTTP cleanup calls are not rejected.

@@ -14,6 +14,7 @@ import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 
 import com.github.dockerjava.api.model.Container;
@@ -133,6 +134,50 @@ class DockerTest extends AbstractTaskRunnerTest {
         assertThatThrownBy(() -> docker.run(runContext, taskCommands, Collections.emptyList()))
             .isInstanceOf(TaskException.class)
             .hasMessage("Command failed with exit code 137");
+    }
+
+    @Test
+    @Timeout(value = 2, unit = java.util.concurrent.TimeUnit.MINUTES)
+    void shouldReportOomWhenDockerConfirmsOomKill() throws Exception {
+        var runContext = runContext(this.runContextFactory);
+
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .memory(
+                Memory.builder()
+                    .memory(Property.ofValue("16MB"))
+                    .memorySwap(Property.ofValue("16MB"))
+                    .build()
+            )
+            .build();
+
+        var taskCommands = new CommandsWrapper(runContext)
+            .withCommands(
+                Property.ofValue(
+                    List.of(
+                        "/bin/sh",
+                        "-c",
+                        "tail /dev/zero"
+                    )
+                )
+            );
+
+        assertThatThrownBy(
+            () -> docker.run(
+                runContext,
+                taskCommands,
+                Collections.emptyList()
+            )
+        )
+            .isInstanceOf(TaskException.class)
+            .hasMessageContaining("out-of-memory")
+            .extracting(e -> ((TaskException) e).getExitCode())
+            .isEqualTo(137);
+
+        try (var client = DockerService.client(runContext, null, null, null, "rockylinux:9.3-minimal")) {
+            Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
+            Assertions.assertThat(client.listContainersCmd().withShowAll(true).withLabelFilter(labels).exec()).isEmpty();
+        }
     }
 
     public static void callOnKill(TaskRunner<?> taskRunner, Runnable runnable) throws Exception {

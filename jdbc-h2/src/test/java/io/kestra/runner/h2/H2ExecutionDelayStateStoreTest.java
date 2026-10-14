@@ -26,6 +26,6 @@ class H2ExecutionDelayStateStoreTest extends AbstractH2ExecutionDelayStateStoreT
 
     @Test
     void shouldConsumeOnlyDueDelaysWhenPooledSessionIsAsiaKolkata() {
-        assertOnlyDueDelaysAreConsumed("2031-01-15 14:30:00", "2031-01-15 16:30:00");
+        assertOnlyDueDelaysAreConsumed("2031-01-15 09:00:00", "2031-01-15 11:00:00");
     }
 }

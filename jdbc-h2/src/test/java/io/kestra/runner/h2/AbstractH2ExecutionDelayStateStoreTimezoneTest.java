@@ -33,18 +33,10 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
         this.dslContextWrapper = Objects.requireNonNull(dslContextWrapper);
     }
 
-    private TimeZone originalTimeZone;
-
     // The JVM zone must equal this class' TIME ZONE=, since jOOQ binds the cutoff via Timestamp.valueOf, which reads it.
     @Override
-    protected void prepare() {
-        originalTimeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone(sessionZone()));
-    }
-
-    @Override
-    protected void cleanup() {
-        TimeZone.setDefault(originalTimeZone);
+    protected TimeZone testTimeZone() {
+        return TimeZone.getTimeZone(sessionZone());
     }
 
     protected abstract String sessionZone();

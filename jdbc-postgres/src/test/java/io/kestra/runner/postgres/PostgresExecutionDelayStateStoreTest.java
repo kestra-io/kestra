@@ -27,6 +27,7 @@ class PostgresExecutionDelayStateStoreTest {
         Instant now = Instant.parse("2031-01-15T10:00:00Z");
 
         var cutoff = new ProbeStore().cutoff(now);
+        assertThat(cutoff).isInstanceOf(Instant.class);
         assertThat(cutoff).isEqualTo(now);
 
         var context = DSL.using(SQLDialect.POSTGRES);

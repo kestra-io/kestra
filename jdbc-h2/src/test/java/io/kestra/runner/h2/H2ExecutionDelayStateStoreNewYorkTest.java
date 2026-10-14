@@ -26,6 +26,6 @@ class H2ExecutionDelayStateStoreNewYorkTest extends AbstractH2ExecutionDelayStat
 
     @Test
     void shouldConsumeOnlyDueDelaysWhenPooledSessionIsNewYork() {
-        assertOnlyDueDelaysAreConsumed("2031-01-15 04:00:00", "2031-01-15 06:00:00");
+        assertOnlyDueDelaysAreConsumed("2031-01-15 09:00:00", "2031-01-15 11:00:00");
     }
 }

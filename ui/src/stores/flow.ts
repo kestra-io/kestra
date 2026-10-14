@@ -31,6 +31,7 @@ import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
+import {confirmOutdatedSave} from "../utils/confirmOutdatedSave"
 
 const textYamlHeader = {
     headers: {
@@ -187,7 +188,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (!flow.value) return "blocked"
         const source = flowYaml.value
         const validation = await onEdit({source})
-        if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+        if (validation?.outdated && !isCreating.value && !(await confirmFlowOutdatedSave())) {
             return "no_op"
         }
         const outcome = await saveWithoutRevisionGuard(isDraft)
@@ -197,19 +198,9 @@ export const useFlowStore = defineStore("flow", () => {
         return outcome
     }
 
-    function confirmOutdatedSave(): Promise<boolean> {
+    function confirmFlowOutdatedSave(): Promise<boolean> {
         const key = "outdated revision save confirmation.update"
-        return KsMessageBox({
-            title: t(`${key}.title`),
-            message: () => h("div", null, [
-                h("p", null, `${t(`${key}.description`)} ${t(`${key}.details`)}`),
-            ]),
-            showCancelButton: true,
-            confirmButtonText: t("ok"),
-            cancelButtonText: t("cancel"),
-            center: false,
-            showClose: false,
-        }).then(() => true).catch(() => false)
+        return confirmOutdatedSave(t, `${t(`${key}.description`)} ${t(`${key}.details`)}`)
     }
 
     async function saveAsDraft(): Promise<FlowSaveOutcome> {
@@ -227,7 +218,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (source) {
             const validation = await onEdit({source})
-            if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+            if (validation?.outdated && !isCreating.value && !(await confirmFlowOutdatedSave())) {
                 return "no_op"
             }
             const outcome = await saveWithoutRevisionGuard(draft)

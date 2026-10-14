@@ -1,7 +1,7 @@
 <template>
     <ElFormItem
         :class="{'is-inline-row': inline}"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as FormItemProps)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElFormItem, type FormItemRule} from "element-plus"
+    import {ElFormItem, type FormItemProps, type FormItemRule} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

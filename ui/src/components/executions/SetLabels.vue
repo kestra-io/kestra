@@ -158,18 +158,19 @@
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-1);
-        background: var(--ks-bg-tag);
-        padding: 0.125rem 0.375rem;
+        background: var(--ks-btn-secondary-bg-default);
+        padding: var(--ks-spacing-1) var(--ks-spacing-3);
         border-radius: var(--ks-radius-sm);
-        color: var(--ks-text-primary);
+        color: var(--ks-text-link);
         font-size: var(--ks-font-size-sm);
-        border: 1px solid transparent;
+        border: 1px solid var(--ks-btn-secondary-border-default);
         cursor: pointer;
         white-space: nowrap;
         font-family: inherit;
+        flex-shrink: 0;
 
         &:hover:not(:disabled) {
-            background: var(--ks-bg-hover);
+            background: var(--ks-btn-secondary-bg-hover);
         }
 
         &.is-active {

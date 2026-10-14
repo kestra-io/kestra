@@ -6,6 +6,7 @@
                 {{ $t(`ai.copilot.draft.title.${draft.kind.toLowerCase()}`) }}
             </KsText>
             <KsCodeStatus
+                data-test="copilot-draft-status"
                 :status="draft.valid ? 'valid' : 'error'"
                 :label="draft.valid ? $t('ai.copilot.draft.valid') : $t('ai.copilot.draft.invalid')"
             />
@@ -16,6 +17,7 @@
             type="warning"
             :closable="false"
             class="copilot-draft-constraints"
+            data-test="copilot-draft-constraints"
         >
             {{ draft.constraints }}
         </KsAlert>

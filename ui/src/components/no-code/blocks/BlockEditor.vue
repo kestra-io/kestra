@@ -242,8 +242,6 @@
         groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
     )
 
-    const inlineEditPanel = ref()
-
     // Only a lane of tasks can be filled from the task picker; every other list needs its own
     // schema-driven form, which opens exactly where editing a task would — modal or tab.
     function onCreateBlockInList(parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) {
@@ -265,7 +263,6 @@
         props,
         flowYaml,
         validationIssuesByTask,
-        inlineEditPanel,
         createTask: onCreateBlockInList,
         editTask: (parentPath, blockSchemaPath, refPath, split) => emit("editTask", parentPath, blockSchemaPath, refPath, split),
         closeTask: () => emit("closeTask"),

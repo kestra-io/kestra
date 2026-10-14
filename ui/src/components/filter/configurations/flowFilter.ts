@@ -1,14 +1,11 @@
 import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
-import resource from "../../../models/resource"
-import action from "../../../models/action"
-import {useNamespacesStore} from "override/stores/namespaces"
-import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
 import {labelComparatorLabels} from "./labelComparatorLabels"
 import {routeFamily} from "../../../utils/routeFamily"
+import {namespaceValueProvider} from "./namespaceValueProvider"
 
 export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -31,24 +28,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
                             Comparators.PREFIX,
                         ],
                         valueType: "multi-select" as const,
-                        valueProvider: async () => {
-                            const user = useAuthStore().user
-                            if (user && user.hasAnyActionOnAnyNamespace(resource.NAMESPACE, action.LIST)) {
-                                const namespacesStore = useNamespacesStore()
-                                const namespaces = (await namespacesStore.loadAutocomplete()) as string[]
-                                return [...new Set(namespaces
-                                    .flatMap(namespace => {
-                                        return namespace.split(".").reduce((current: string[], part: string) => {
-                                            const previousCombination = current?.[current.length - 1]
-                                            return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`]
-                                        }, [])
-                                    }))].map(namespace => ({
-                                        label: namespace,
-                                        value: namespace,
-                                    }))
-                            }
-                            return []
-                        },
+                        valueProvider: namespaceValueProvider(),
                         searchable: true,
                     },
                 ] : []) as FilterConfiguration["keys"],

@@ -72,6 +72,7 @@
     const job = ref<PluginInstallJob | null>(null)
     let pollTimer: ReturnType<typeof setInterval> | null = null
     let consecutivePollFailures = 0
+    let unmounted = false
 
     const artifactCount = computed(() => job.value?.artifacts?.length ?? 0)
 
@@ -127,12 +128,14 @@
             pluginsStore.list()
         }
         await poll()
+        if (unmounted) return
         if (!isTerminal(job.value) && pollTimer === null && consecutivePollFailures < MAX_CONSECUTIVE_POLL_FAILURES) {
             pollTimer = setInterval(poll, POLL_INTERVAL_MS)
         }
     })
 
     onUnmounted(() => {
+        unmounted = true
         stopPolling()
     })
 </script>

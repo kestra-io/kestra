@@ -45,7 +45,7 @@
     import {useNoCodePanelsFull} from "./useNoCodePanels"
     import {useFlowStore} from "../../stores/flow"
     import {usePluginsStore} from "../../stores/plugins"
-    import {trackTabOpen} from "../../utils/tabTracking"
+    import {useTabTracking} from "../../composables/useTabTracking"
     import {Panel, Tab} from "../../utils/multiPanelTypes"
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue"
 
@@ -58,6 +58,7 @@
 
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
+    const {trackTabOpen} = useTabTracking()
 
     const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`)
     const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value)

@@ -20,7 +20,7 @@
             v-if="error"
             type="error"
             :closable="false"
-            class="error overflow-auto"
+            class="error"
         >
             <p>
                 <strong>{{ error }}</strong>

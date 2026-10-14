@@ -67,7 +67,11 @@
 </template>
 <script setup lang="ts">
     import {computed} from "vue"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {EVENTS, CLUSTER_TAG_STATUS, NODE_SIZES} from "../utils/constants"
@@ -92,8 +96,8 @@
         id?: string;
         data: ClusterData;
         replayEnabled?: boolean;
-        icons?: Record<string, unknown>;
-        loadIcon?: (cls: string) => Promise<unknown>;
+        icons?: PluginIconMap;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
     }>()
 
     const emit = defineEmits([

@@ -352,13 +352,17 @@ public final class TriggerState implements TriggerId {
 
     /**
      * Bumps the dispatch generation, marking a new dispatch to a worker.
+     * <p>
+     * The epoch is the dispatch time in milliseconds, kept strictly increasing, rather than a counter: a deleted
+     * then re-created trigger starts from a new state, and a counter would reissue epochs its previous instance
+     * already used.
      *
      * @param clock the scheduler clock.
      * @return a new {@link TriggerState}
      */
     public TriggerState nextDispatchEpoch(final Clock clock) {
         return update(clock)
-            .dispatchEpoch(dispatchEpoch + 1)
+            .dispatchEpoch(Math.max(clock.millis(), dispatchEpoch + 1))
             .build();
     }
 

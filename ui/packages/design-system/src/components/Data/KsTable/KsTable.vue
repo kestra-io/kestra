@@ -82,6 +82,7 @@
         setCurrentRow: (row: T) => tableRef.value?.setCurrentRow(row as TableRow),
         clearSort: () => tableRef.value?.clearSort(),
         sort: (prop: string, order: string) => tableRef.value?.sort(prop, order),
+        setScrollTop: (top: number) => tableRef.value?.setScrollTop(top),
     })
 </script>
 

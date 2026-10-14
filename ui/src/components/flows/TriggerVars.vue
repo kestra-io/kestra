@@ -61,7 +61,7 @@
 
 <style scoped lang="scss">
     .copy-button {
-        margin-left: var(--ks-spacing-2);
+        margin-inline-start: var(--ks-spacing-2);
     }
 
     :deep(.markdown) {

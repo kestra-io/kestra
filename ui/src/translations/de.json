@@ -2788,6 +2788,7 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
-    "not started": "Nicht gestartet"
+    "not started": "Nicht gestartet",
+    "zz_vertex_check": "Vertex AI translation check"
   }
 }

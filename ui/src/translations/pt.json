@@ -2788,6 +2788,7 @@
     "iteration": "Iteração",
     "iteration_number": "Iteração {number}",
     "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?",
-    "not started": "Não iniciado"
+    "not started": "Não iniciado",
+    "zz_vertex_check": "Vertex AI translation check"
   }
 }

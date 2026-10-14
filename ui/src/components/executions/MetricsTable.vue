@@ -35,7 +35,19 @@
                     <template v-else>
                         <KsIcon><Counter /></KsIcon>
                     </template>
-                    &nbsp;<code>{{ scope.row.name }}</code>
+
+                    <template v-if="metricDescriptions[`${scope.row.taskId}:${scope.row.name}`]">
+                        &nbsp;
+                        <KsTooltip>
+                            <template #content>
+                                {{ metricDescriptions[`${scope.row.taskId}:${scope.row.name}`] }}
+                            </template>
+                            <code>{{ scope.row.name }}</code>
+                        </KsTooltip>
+                    </template>
+                    <template v-else>
+                        &nbsp;<code>{{ scope.row.name }}</code>
+                    </template>
                 </template>
             </KsTableColumn>
 
@@ -93,16 +105,26 @@
     import Counter from "vue-material-design-icons/Numeric.vue"
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
 
+    import {KsTooltip, useTableColumns} from "@kestra-io/design-system"
     import type {KsChartSeriesItem} from "@kestra-io/design-system"
+    import type {MetricEntry} from "@kestra-io/kestra-sdk"
 
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 
     import type {Execution} from "../../stores/executions"
+    import {useFlowStore} from "../../stores/flow"
+    import {usePluginsStore} from "../../stores/plugins"
     import {date, humanizeDuration, humanizeNumber} from "../../utils/filters"
 
-    import {useTableColumns} from "@kestra-io/design-system"
+    import {
+        collectTaskTypes,
+        findMetricDescription,
+        getSchemaMetrics,
+    } from "./metricDescriptions"
 
     const {t} = useI18n()
+    const flowStore = useFlowStore()
+    const pluginsStore = usePluginsStore()
 
     const props = withDefaults(defineProps<{
         embed?: boolean;
@@ -132,12 +154,97 @@
 
     const hasVisibleColumns = computed(() => displayColumns.value.length > 0)
 
-    const metrics = ref<any[] | undefined>(undefined)
+    const metrics = ref<MetricEntry[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)
     const currentPage = ref(1)
     const pageSize = ref(25)
 
+    const taskTypesById = ref<Map<string, string>>(new Map())
+    const metricDescriptions = ref<Record<string, string>>({})
+
     const dataTable = useTemplateRef("dataTable")
+
+    const loadMetricDescriptions = async (entries: MetricEntry[]) => {
+        const pluginTypes = [...new Set(
+            entries
+                .map(entry => entry.taskId
+                    ? taskTypesById.value.get(entry.taskId)
+                    : undefined)
+                .filter((type): type is string => type !== undefined),
+        )]
+
+        const schemaMetricsByType = new Map<string, ReturnType<typeof getSchemaMetrics>>()
+
+        await Promise.all(pluginTypes.map(async type => {
+            try {
+                const schema = await pluginsStore.lazyLoadSchemaType({type})
+                schemaMetricsByType.set(type, getSchemaMetrics(schema, type))
+            } catch {
+                // Missing schemas must not prevent metrics from loading.
+                schemaMetricsByType.set(type, undefined)
+            }
+        }))
+
+        const descriptions: Record<string, string> = {}
+
+        for (const entry of entries) {
+            if (!entry.taskId) {
+                continue
+            }
+
+            const pluginType = taskTypesById.value.get(entry.taskId)
+            if (!pluginType) {
+                continue
+            }
+
+            const description = findMetricDescription(
+                schemaMetricsByType.get(pluginType),
+                entry.name,
+            )
+
+            if (description) {
+                descriptions[`${entry.taskId}:${entry.name}`] = description
+            }
+        }
+
+        metricDescriptions.value = {
+            ...metricDescriptions.value,
+            ...descriptions,
+        }
+    }
+
+    watch(
+        () => [props.execution?.namespace, props.execution?.flowId] as const,
+        async ([namespace, flowId]) => {
+            taskTypesById.value = new Map()
+            metricDescriptions.value = {}
+
+            if (!namespace || !flowId) {
+                return
+            }
+
+            try {
+                const flow = await flowStore.loadFlow({
+                    namespace,
+                    id: flowId,
+                    store: false,
+                })
+
+                taskTypesById.value = collectTaskTypes([
+                    ...(flow.tasks ?? []),
+                    ...(flow.errors ?? []),
+                ])
+
+                if (metrics.value?.length) {
+                    void loadMetricDescriptions(metrics.value)
+                }
+            } catch {
+                // Metrics remain usable when the flow cannot be loaded.
+                taskTypesById.value = new Map()
+            }
+        },
+        {immediate: true},
+    )
 
     const loadData = async ({page, size, sort}: {page?: number; size?: number; sort?: string} = {}) => {
         const response = await MetricsAPI.searchByExecution({
@@ -147,8 +254,11 @@
             size,
             sort: [sort ?? "name:asc"],
         })
+
         metrics.value = response.results
         metricsTotal.value = response.total
+
+        void loadMetricDescriptions(response.results ?? [])
     }
 
     watch(() => props.taskRunId, () => {
@@ -176,12 +286,14 @@
                 size: 1000,
                 sort: ["timestamp:asc"],
             })
+
             const entries = (response.results ?? []).filter(
-                (entry: any) => entry.name === row.name && entry.taskId === row.taskId,
+                (entry) => entry.name === row.name && entry.taskId === row.taskId,
             )
 
             const labelOccurrences = new Map<string, number>()
-            chartCategories.value = entries.map((entry: any) => {
+
+            chartCategories.value = entries.map(entry => {
                 const label = date(entry.timestamp, "HH:mm:ss.SSS")
                 const occurrence = (labelOccurrences.get(label) ?? 0) + 1
                 labelOccurrences.set(label, occurrence)
@@ -190,7 +302,7 @@
 
             chartSeries.value = [{
                 name: row.name,
-                data: entries.map((entry: any) => entry.type === "timer" ? entry.value / 1000 : entry.value),
+                data: entries.map(entry => entry.type === "timer" ? entry.value / 1000 : entry.value),
             }]
         } finally {
             chartLoading.value = false

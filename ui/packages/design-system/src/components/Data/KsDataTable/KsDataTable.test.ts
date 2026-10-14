@@ -1,4 +1,5 @@
 import {describe, test, expect, vi, afterEach} from "vitest"
+import {flushPromises} from "@vue/test-utils"
 import KsDataTable from "./KsDataTable.vue"
 import KsBulkSelect from "./KsBulkSelect.vue"
 import KsTableColumn from "../KsTable/KsTableColumn.vue"
@@ -605,5 +606,56 @@ describe("KsDataTable", () => {
         table.vm.$emit("select", [], {id: "missing"})
 
         expect(toggle).not.toHaveBeenCalled()
+    })
+
+    test("tags each cell with its card role when mobileColumns is set", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table
+                    :data="data"
+                    :total="3"
+                    :mobileColumns="{leading: 'status', title: 'id', titleAside: 'duration', meta: ['namespace'], metaAside: 'size'}"
+                >
+                    <ks-table-column prop="id" label="ID" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                    <ks-table-column prop="status" label="Status" />
+                    <ks-table-column prop="duration" label="Duration" />
+                    <ks-table-column prop="size" label="Size" />
+                    <ks-table-column prop="revision" label="Revision" />
+                </ks-data-table>
+            `,
+            setup: () => ({data: SAMPLE_DATA}),
+        })
+
+        await flushPromises()
+        const cells = wrapper.findAll("tbody tr:first-child td").map((cell) => cell.classes())
+
+        expect(wrapper.find(".ks-data-table-content--cards").exists()).toBe(true)
+        expect(cells[0]).toContain("ks-mobile-title")
+        expect(cells[1]).toContain("ks-mobile-meta")
+        expect(cells[2]).toContain("ks-mobile-leading")
+        expect(cells[3]).toContain("ks-mobile-title-aside")
+        expect(cells[4]).toContain("ks-mobile-meta-aside")
+        expect(cells[5]).toContain("ks-mobile-hidden")
+    })
+
+    test("leaves the table untouched without mobileColumns", async () => {
+        const wrapper = i18nMount({
+            components: {KsDataTable, KsTableColumn},
+            template: `
+                <ks-data-table :data="data" :total="3">
+                    <ks-table-column prop="id" label="ID" className="custom" />
+                </ks-data-table>
+            `,
+            setup: () => ({data: SAMPLE_DATA}),
+        })
+
+        await flushPromises()
+        const cell = wrapper.find("tbody tr:first-child td")
+
+        expect(wrapper.find(".ks-data-table-content--cards").exists()).toBe(false)
+        expect(cell.classes()).toContain("custom")
+        expect(cell.classes().some((name) => name.startsWith("ks-mobile-"))).toBe(false)
     })
 })

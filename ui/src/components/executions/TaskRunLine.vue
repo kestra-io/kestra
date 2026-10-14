@@ -288,6 +288,14 @@
         }
     }
 
+    @media (max-width: 767px) {
+        .taskrun-header .task-id {
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
+        }
+    }
+
     .attempt-header.attempt-header--flush {
         border-bottom: none;
         padding: 0;

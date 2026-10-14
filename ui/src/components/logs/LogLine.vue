@@ -21,7 +21,10 @@
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <time v-if="log.timestamp" class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
+                <template v-if="log.timestamp">
+                    <time class="log-time log-time-full" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
+                    <time class="log-time log-time-short" :datetime="String(log.timestamp)" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, SHORT_TIME_FORMAT) }}</time>
+                </template>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>
@@ -78,6 +81,8 @@
         filter: [{field: string, value: string, negate: boolean}],
         "filter-level": [level: string]
     }>()
+
+    const SHORT_TIME_FORMAT = "HH:mm:ss.SSS"
 
     const isFilterable = isFilterableLogField
 
@@ -360,6 +365,70 @@ div.line {
     &:hover :deep(.clipboard) {
         opacity: 1;
         pointer-events: auto;
+    }
+
+    @media (hover: none) {
+        .log-copy {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+
+    .log-time-short {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    div.line {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "level header copy"
+            "message message message";
+        align-items: center;
+        gap: var(--ks-spacing-1) var(--ks-spacing-2);
+
+        .log-content {
+            display: contents;
+        }
+
+        .log-level {
+            grid-area: level;
+            width: auto;
+            padding: 0 var(--ks-spacing-1);
+            border: 1px solid currentColor;
+            border-radius: var(--ks-radius-xs);
+            font-size: var(--ks-font-size-2xs);
+            line-height: 1.4;
+        }
+
+        .log-header {
+            grid-area: header;
+        }
+
+        .log-copy {
+            grid-area: copy;
+        }
+
+        .log-message,
+        .log-json {
+            grid-area: message;
+        }
+
+        .log-time-full {
+            display: none;
+        }
+
+        .log-time-short {
+            display: inline;
+        }
+
+        &.density-compact .log-message {
+            white-space: pre-wrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
     }
 }
 </style>

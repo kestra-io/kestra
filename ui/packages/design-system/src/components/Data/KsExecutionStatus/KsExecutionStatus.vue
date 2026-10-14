@@ -5,7 +5,7 @@
         :disabled="disabled"
     >
         <component
-            v-if="icon"
+            v-if="icon && !dot"
             :is="statusIcon"
             class="ks-execution-status__icon"
         />
@@ -32,6 +32,8 @@
         glow?: boolean;
         clickable?: boolean;
         disabled?: boolean;
+        /** Collapses the badge to a coloured dot for dense layouts; the label stays available to assistive technology. */
+        dot?: boolean;
     }>(), {
         icon: true,
         size: "default",
@@ -39,6 +41,7 @@
         glow: false,
         clickable: false,
         disabled: false,
+        dot: false,
     })
 
     defineSlots<{
@@ -57,6 +60,7 @@
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
         props.size !== "default" && `ks-execution-status--${props.size}`,
+        props.dot && "ks-execution-status--dot",
         props.glow && "ks-execution-status--glow",
         props.clickable && !props.disabled && "ks-execution-status--clickable",
     ].filter(Boolean))
@@ -116,6 +120,25 @@ $statusList: created, submitted, restarted, success, running, killing, killed, w
         padding: 0 var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         gap: 0.25rem;
+    }
+
+    &.ks-execution-status--dot {
+        position: relative;
+        width: 0.625rem;
+        height: 0.625rem;
+        padding: 0;
+        border-radius: 50%;
+        background-color: currentColor;
+        pointer-events: none;
+
+        .ks-execution-status__text {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
     }
 
     /* Bootstrap's reboot puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties

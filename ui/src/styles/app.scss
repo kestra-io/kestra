@@ -214,6 +214,7 @@ body{
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 #app-shell {
@@ -228,6 +229,14 @@ body{
     flex: 1;
     min-height: 0;
     overflow: hidden;
+
+    @media (max-width: 767px) {
+        position: relative;
+        flex-direction: column;
+    }
+}
+#bottom-actions-slot:empty {
+    display: none;
 }
 #app main {
     flex: 1;

@@ -25,6 +25,7 @@ const meta: Meta<typeof KsButton> = {
         round: {control: "boolean"},
         circle: {control: "boolean"},
         square: {control: "boolean"},
+        block: {control: "boolean"},
         text: {control: "boolean"},
         link: {control: "boolean"},
         bg: {control: "boolean"},
@@ -338,5 +339,21 @@ export const ClickEvent: Story = {
         await userEvent.click(btn)
         await userEvent.click(btn)
         await expect(canvas.getByText(/Clicks: 2/)).toBeTruthy()
+    },
+}
+
+/** Block – `block` stretches the button to the width of its container, for bottom action bars on mobile */
+export const Block: Story = {
+    render: () => ({
+        components: {KsButton},
+        template: `
+            <div style="width: 320px; display: flex; flex-direction: column; gap: 8px; padding: 16px;">
+                <ks-button block type="primary">Execute</ks-button>
+                <ks-button block>Restart</ks-button>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        await expect(canvasElement.querySelector(".kel-button.is-block")).toBeTruthy()
     },
 }

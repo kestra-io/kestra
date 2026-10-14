@@ -155,3 +155,29 @@ export const ConfirmBeforeClose: Story = {
         `,
     }),
 }
+
+/** Mobile – the drawer is capped at 92vw and drops its desktop minimum width */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsButton, KsDrawer},
+        setup() { return {visible: ref(true)} },
+        template: `
+            <div style="padding:16px">
+                <ks-button @click="visible = true">Open</ks-button>
+                <ks-drawer v-model="visible" title="Drawer">
+                    <p style="padding:16px">Content stays inside the viewport.</p>
+                </ks-drawer>
+            </div>
+        `,
+    }),
+}

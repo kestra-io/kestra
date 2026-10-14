@@ -32,6 +32,7 @@
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
             @row-click="onRowClick"
+            :mobileColumns="MOBILE_COLUMNS"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
             :selectable="canCheck"
@@ -203,7 +204,7 @@
                                     }
                                 }"
                             >
-                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" />
+                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" :dot="isMobile" />
                             </router-link>
                         </div>
                     </template>
@@ -308,6 +309,7 @@
 
 <script setup lang="ts">
     import {ref, computed, useTemplateRef, watch} from "vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
@@ -397,6 +399,9 @@
     const toast = useToast()
 
     const flowFilter = useFlowFilter()
+
+    const MOBILE_COLUMNS = {leading: "state.current", title: "id", meta: ["namespace"], metaAside: "state.startDate"}
+    const isMobile = useIsMobile()
 
     const lastExecutionByFlowReady = ref(false)
     const latestExecutions = ref<ExecutionControllerLastExecutionResponse[]>([])

@@ -7,7 +7,7 @@
         <ElButton
             :aria-label="tooltip"
             v-bind="({...filteredProps(), ...$attrs})"
-            :class="{'is-square': square}"
+            :class="{'is-square': square, 'is-block': block}"
             @click="emit('click', $event)"
             plain
         >
@@ -25,7 +25,7 @@
     <ElButton
         v-else
         v-bind="({...filteredProps(), ...$attrs})"
-        :class="{'is-square': square}"
+        :class="{'is-square': square, 'is-block': block}"
         @click="emit('click', $event)"
         plain
     >
@@ -69,6 +69,8 @@
         round?: boolean
         circle?: boolean
         square?: boolean
+        /** Stretches the button to the width of its container. */
+        block?: boolean
         color?: string
         tag?: string | Component
         tooltip?: string
@@ -85,7 +87,7 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square"])
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square", "block"])
 </script>
 
 <style lang="scss">
@@ -136,6 +138,11 @@
 
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);
+        }
+
+        &.is-block {
+            display: flex;
+            width: 100%;
         }
 
         &.is-square {

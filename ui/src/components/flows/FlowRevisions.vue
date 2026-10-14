@@ -157,5 +157,6 @@
 <style scoped lang="scss">
     .flow-revisions {
         min-height: calc(100vh - 190px);
+        min-height: calc(100dvh - 190px);
     }
 </style>

@@ -9,7 +9,7 @@
                         </NavBarActionsDropdown>
                     </li>
                     <li>
-                        <template v-if="hasAnyExecute">
+                        <template v-if="hasAnyExecute && !isMobile">
                             <TriggerFlow />
                         </template>
                     </li>
@@ -34,6 +34,15 @@
             </ul>
         </template>
     </TopNavBar>
+    <BottomActionBar v-if="displayButtons && $route.name === 'executions/list' && hasAnyExecute">
+        <TriggerFlow>
+            <template #button="{execute, disabled}">
+                <KsButton type="primary" size="large" block :icon="PlayOutline" :disabled="disabled" @click="execute">
+                    {{ $t("execute") }}
+                </KsButton>
+            </template>
+        </TriggerFlow>
+    </BottomActionBar>
     <section :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
@@ -45,6 +54,8 @@
             @page-changed="onPageChanged"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: Execution) => router.push({name: dblClickRouteName, params: executionParams(row)})"
+            @row-click="onRowClick"
+            :mobileColumns="mobileColumns"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
             :defaultSort="{prop: 'state.startDate', order: 'descending'}"
@@ -193,7 +204,7 @@
             >
                 <template #default="scope">
                     <template v-if="col.prop === 'state.startDate'">
-                        <KsDateAgo :inverted="true" :date="scope.row?.state?.startDate" />
+                        <KsDateAgo :inverted="!isMobile" :date="scope.row?.state?.startDate" />
                     </template>
                     <template v-else-if="col.prop === 'state.endDate'">
                         <KsDateAgo :inverted="true" :date="scope.row?.state?.endDate" />
@@ -228,7 +239,8 @@
                         <KsExecutionStatus
                             :status="scope.row?.state?.current"
                             size="small"
-                            clickable
+                            :dot="isMobile"
+                            :clickable="!isMobile"
                             :aria-label="$t('filter by status', {status: scope.row?.state?.current})"
                             @click.stop="onStateClick(scope.row?.state?.current)"
                         />
@@ -420,6 +432,9 @@
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, useTemplateRef} from "vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
+    import BottomActionBar from "../layout/BottomActionBar.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
     import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
@@ -669,6 +684,17 @@
                 return Boolean(c && (!condition || condition()))
             }),
     )
+
+    const isMobile = useIsMobile()
+
+    const mobileColumns = computed(() => routeFamily(route.name) === "flows/update"
+        ? {leading: "state.current", title: "id", titleAside: "state.startDate", metaAside: "state.duration"}
+        : {leading: "state.current", title: "flowId", titleAside: "state.startDate", meta: ["namespace", "id"], metaAside: "state.duration"},
+    )
+
+    const onRowClick = (row: Execution) => {
+        if (isMobile.value) router.push({name: dblClickRouteName.value, params: executionParams(row)})
+    }
 
     const isColumnSortable = (prop: string) => {
         if (prop in cellComponents) return false

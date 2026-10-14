@@ -78,7 +78,15 @@ const config: PlaywrightTestConfig = {
         },
         {
             name: "chromium",
+            testIgnore: /\/mobile-[^/]*\.spec\.ts$/,
             use: {...devices["Desktop Chrome"], storageState: STORAGE_STATE},
+            dependencies: ["setup"],
+        },
+        /* The phone path: an alert links to a failed execution. Runs the iPhone viewport, touch and user agent on Chromium so no second browser is needed. */
+        {
+            name: "mobile-iphone",
+            testMatch: /\/mobile-[^/]*\.spec\.ts$/,
+            use: {...devices["iPhone 13"], defaultBrowserType: "chromium", storageState: STORAGE_STATE},
             dependencies: ["setup"],
         },
     ],

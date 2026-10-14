@@ -3,6 +3,12 @@
         <img src="../../assets/monogram.svg" alt="Kestra" class="oss-login__icon" />
         <h1 class="oss-login__title">{{ $t("setup.login_title") }}</h1>
 
+        <div v-if="hint" class="oss-login__hint" data-test="login-after-sign-in">
+            <span class="oss-login__hint-label">{{ $t("login_redirect_hint.after_sign_in") }}</span>
+            <strong class="oss-login__hint-target">{{ hint.namespace }} / {{ hint.flowId }}</strong>
+            <span class="oss-login__hint-detail">{{ hintDetail }}</span>
+        </div>
+
         <KsForm ref="form" :model="credentials" :rules="rules" class="oss-login__form" @submit.prevent="handleSubmit">
             <input type="hidden" name="from" :value="redirectPath">
 
@@ -70,6 +76,7 @@
     import {shouldShowWelcome} from "../../utils/welcomeGuard"
     import {identifyPosthogUser} from "../../utils/posthog"
     import {storageKeys} from "../../utils/constants"
+    import {loginRedirectHint} from "../../utils/loginRedirectHint"
 
     interface Credentials {
         username: string
@@ -78,7 +85,7 @@
 
     const router = useRouter()
     const route = useRoute()
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const coreStore = useCoreStore()
     const apiStore = useApiStore()
     const miscStore = useMiscStore()
@@ -88,11 +95,24 @@
     const isLoading = ref(false)
     const credentials = ref<Credentials>({username: "", password: ""})
 
+    const SHORT_ID_LENGTH = 8
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     const redirectPath = computed(() => {
         const raw = route.query.from as string | undefined
         return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined
+    })
+
+    const hint = computed(() => loginRedirectHint(redirectPath.value))
+
+    const hintDetail = computed(() => {
+        const current = hint.value
+        if (!current) return ""
+        const tab = current.tab ?? "overview"
+        const tabLabel = te(tab) ? t(tab) : tab
+        return current.executionId
+            ? t("login_redirect_hint.execution_tab", {id: current.executionId.slice(0, SHORT_ID_LENGTH), tab: tabLabel})
+            : t("login_redirect_hint.tab", {tab: tabLabel})
     })
 
     const validateEmail = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
@@ -215,7 +235,35 @@
         flex-direction: column;
         align-items: center;
         gap: var(--ks-spacing-6);
-        width: 320px;
+        width: min(20rem, 100%);
+    }
+
+    .oss-login__hint {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+        width: 100%;
+        padding: var(--ks-spacing-3);
+        background: color-mix(in srgb, var(--ks-border-focus) 10%, transparent);
+        border: 1px solid var(--ks-border-focus);
+        border-radius: var(--ks-radius-base);
+        overflow-wrap: anywhere;
+    }
+
+    .oss-login__hint-label {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-xs);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .oss-login__hint-target {
+        color: var(--ks-text-primary);
+    }
+
+    .oss-login__hint-detail {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
     }
 
     .oss-login__icon {

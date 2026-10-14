@@ -18,9 +18,14 @@ import {
 
 describe.each([
     ["pebble root variable", "{{ inputs",  10, registerPebbleAutocompletion,             {rootFieldAutoCompletion:   () => Promise.resolve(["inputs"]), functionsWithDefaults: () => Promise.resolve([])}],
+    ["statement root variable", "{% inputs", 10, registerPebbleAutocompletion,           {rootFieldAutoCompletion:   () => Promise.resolve(["inputs"]), functionsWithDefaults: () => Promise.resolve([])}],
+    ["empty statement block", "{% ", 4, registerPebbleAutocompletion,                    {rootFieldAutoCompletion:   () => Promise.resolve(["inputs"]), functionsWithDefaults: () => Promise.resolve([])}],
     ["function parameters",  "{{ secret(", 11, registerFunctionParametersAutoCompletion, {functionAutoCompletion:    () => Promise.resolve(["'value'"])}],
     ["nested value",         "{{ flow.",    9, registerNestedValueAutoCompletion,        {nestedFieldAutoCompletion: () => Promise.resolve(["id"])}],
+    ["statement nested value", "{% inputs.", 11, registerNestedValueAutoCompletion,      {nestedFieldAutoCompletion: () => Promise.resolve(["cond"])}],
+    ["statement if nested value", "{% if inputs.", 14, registerNestedValueAutoCompletion, {nestedFieldAutoCompletion: () => Promise.resolve(["cond"])}],
     ["filter",               "{{ x | up",  10, registerFilterAutoCompletion,             {filterAutoCompletion:      () => Promise.resolve(["upper"])}],
+    ["statement filter",     "{% x | up",  10, registerFilterAutoCompletion,             {filterAutoCompletion:      () => Promise.resolve(["upper"])}],
 ])("%s autocompletion", (_label, text, column, register, ac) => {
     it("returns incomplete:true so Monaco re-invokes provider on every keystroke", async () => {
         const spy = vi.spyOn(monaco.languages, "registerCompletionItemProvider")

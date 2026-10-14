@@ -1,4 +1,4 @@
-import {describe, test, expect, vi} from "vitest"
+import {describe, test, expect, vi, afterEach} from "vitest"
 import KsDataTable from "./KsDataTable.vue"
 import KsBulkSelect from "./KsBulkSelect.vue"
 import KsTableColumn from "../KsTable/KsTableColumn.vue"
@@ -173,6 +173,86 @@ describe("KsDataTable", () => {
         pagination.vm.$emit("currentChange", 3)
 
         expect(wrapper.emitted("page-changed")?.[0]).toEqual([{page: 3, size: 10}])
+    })
+
+    describe("scroll position on pagination", () => {
+        const scrollIntoView = vi.fn()
+
+        afterEach(() => {
+            scrollIntoView.mockReset()
+            document.body.innerHTML = ""
+        })
+
+        const mountScrolledPastTheTop = () => {
+            const scroller = document.createElement("div")
+            scroller.style.overflowY = "auto"
+            document.body.appendChild(scroller)
+
+            const wrapper = i18nMount(KsDataTable, {
+                props: {data: SAMPLE_DATA, total: 100, pageSize: 10, currentPage: 1},
+                attachTo: scroller,
+            })
+
+            const list = wrapper.find(".ks-data-table-wrapper").element as HTMLElement
+            list.scrollIntoView = scrollIntoView
+            list.getBoundingClientRect = () => ({top: -400} as DOMRect)
+            scroller.getBoundingClientRect = () => ({top: 60} as DOMRect)
+
+            const rows = wrapper.find(".kel-scrollbar__wrap").element as HTMLElement
+            rows.scrollTop = 300
+
+            return {wrapper, rows}
+        }
+
+        test("brings the top of the list back into view when the user changes page", () => {
+            const {wrapper, rows} = mountScrolledPastTheTop()
+
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 2)
+
+            expect(rows.scrollTop).toBe(0)
+            expect(scrollIntoView).toHaveBeenCalledWith({block: "start"})
+        })
+
+        test("brings the top of the list back into view when the user changes page size", () => {
+            const {wrapper, rows} = mountScrolledPastTheTop()
+
+            wrapper.findComponent(KsPagination).vm.$emit("sizeChange", 25)
+
+            expect(rows.scrollTop).toBe(0)
+            expect(scrollIntoView).toHaveBeenCalledWith({block: "start"})
+        })
+
+        test("leaves the page where it is when the top of the list is already visible", () => {
+            const {wrapper} = mountScrolledPastTheTop()
+            const list = wrapper.find(".ks-data-table-wrapper").element as HTMLElement
+            list.getBoundingClientRect = () => ({top: 200} as DOMRect)
+
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 2)
+
+            expect(scrollIntoView).not.toHaveBeenCalled()
+        })
+
+        test("looks for the scrolling ancestor once, not on every page change", () => {
+            const {wrapper} = mountScrolledPastTheTop()
+            const scroller = wrapper.element.parentElement as HTMLElement
+            const getComputedStyle = vi.spyOn(window, "getComputedStyle")
+
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 2)
+            wrapper.findComponent(KsPagination).vm.$emit("currentChange", 3)
+
+            expect(getComputedStyle.mock.calls.filter(([element]) => element === scroller)).toHaveLength(1)
+            expect(scrollIntoView).toHaveBeenCalledTimes(2)
+            getComputedStyle.mockRestore()
+        })
+
+        test("keeps the scroll position when the page changes from outside, as on back navigation", async () => {
+            const {wrapper, rows} = mountScrolledPastTheTop()
+
+            await wrapper.setProps({currentPage: 2})
+
+            expect(rows.scrollTop).toBe(300)
+            expect(scrollIntoView).not.toHaveBeenCalled()
+        })
     })
 
     test("renders without error when selectable is true", () => {

@@ -170,8 +170,10 @@
     import type {Flow} from "../../stores/flow"
 
     import * as Utils from "../../utils/utils"
-    import {findTaskById} from "../../utils/flowUtils"
+    import {findTaskById, LOOP_TASK_TYPE} from "../../utils/flowUtils"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
     import {useToast} from "../../utils/toast"
+    import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {useCoreStore} from "../../stores/core"
@@ -263,7 +265,7 @@
         const executionId = currentTaskRun.value.outputs?.executionId
         return typeof executionId === "string" ? executionId : undefined
     })
-    const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === "io.kestra.plugin.core.flow.Loop")
+    const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === LOOP_TASK_TYPE)
 
     const hasWorkerId = computed<boolean>(() =>
         currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId != null) !== undefined,
@@ -274,14 +276,7 @@
     )
 
     function openIterations() {
-        router.push({
-            name: "executions/list",
-            query: {
-                "filters[parentId][EQUALS]": props.execution.id,
-                "filters[kind][EQUALS]": "LOOP",
-                "filters[taskId][EQUALS]": props.taskRun.taskId,
-            },
-        })
+        router.push(loopIterationsRoute(props.execution.id, props.taskRun.taskId))
     }
 
     function downloadNameFor(currentTaskRunId: string): string {
@@ -344,8 +339,10 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
-                showMessageOnError: false,
-            }).catch(() => [])
+            }).catch((e: unknown) => {
+                handledIf(e, [403, 404])
+                return []
+            })
         }
         const errorLines = (() => {
             const errors = taskRunLogs

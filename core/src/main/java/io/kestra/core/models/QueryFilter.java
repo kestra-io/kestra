@@ -389,6 +389,20 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("operationId")
+        OPERATION_ID("operationId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        @JsonProperty("operationOutcome")
+        OPERATION_OUTCOME("operationOutcome") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
         @JsonProperty("taskRunId")
         TASK_RUN_ID("taskRunId") {
             @Override
@@ -599,7 +613,8 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
-                    Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID, Field.LOOP_RUN_VALUE
+                    Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID, Field.LOOP_RUN_VALUE,
+                    Field.OPERATION_ID, Field.OPERATION_OUTCOME
                 );
             }
         },
@@ -634,7 +649,8 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
                     Field.TRIGGER_ID, Field.TRIGGER_STATE,
-                    Field.SOURCE, Field.LOCKED, Field.LAST_TRIGGERED_DATE, Field.NEXT_EXECUTION_DATE
+                    Field.SOURCE, Field.LOCKED, Field.LAST_TRIGGERED_DATE, Field.NEXT_EXECUTION_DATE,
+                    Field.OPERATION_ID, Field.OPERATION_OUTCOME
                 );
             }
         },
@@ -916,6 +932,9 @@ public record QueryFilter(
         }
         List<String> errors = new ArrayList<>();
         filters.forEach(filter -> collectValidationErrors(filter, resource, errors));
+        if (hasField(filters, Field.OPERATION_OUTCOME) && !hasField(filters, Field.OPERATION_ID)) {
+            errors.add("Field OPERATION_OUTCOME requires field OPERATION_ID to also be present in the filters.");
+        }
         if (!errors.isEmpty()) {
             throw new InvalidQueryFiltersException(errors);
         }
@@ -948,9 +967,11 @@ public record QueryFilter(
                     "REGEX pattern for field %s is too long or prone to catastrophic backtracking".formatted(filter.field().name())
                 );
             } else {
-                RegexUtils.syntaxError(pattern).ifPresent(error -> errors.add(
-                    "REGEX pattern '%s' for field %s is not a valid regular expression: %s".formatted(pattern, filter.field().name(), error)
-                ));
+                RegexUtils.syntaxError(pattern).ifPresent(
+                    error -> errors.add(
+                        "REGEX pattern '%s' for field %s is not a valid regular expression: %s".formatted(pattern, filter.field().name(), error)
+                    )
+                );
             }
         }
     }

@@ -1,7 +1,6 @@
-import {computed} from "vue"
 import {copyToClipboard, dateUtils, dayjs, fileUtils, type Dayjs} from "@kestra-io/design-system"
-import {useMiscStore} from "override/stores/misc"
 
+import {storageKeys} from "./constants"
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 export function uid() {
@@ -32,7 +31,7 @@ export function flatten(object: Record<string, any>) {
     // Accumulate into one object: the previous `concat(...keys.map())` and
     // `Object.assign({}, ...leaves)` spread one argument per key, which threw RangeError
     // above ~100k leaves and left the outputs table unrenderable (kestra-io/kestra#19316).
-    function _flatten(child: Record<string, any> | null, path: string[]): void {
+    function collectLeaves(child: Record<string, any> | null, path: string[]): void {
         if (child === null) {
             result[path.join(".")] = null
             return
@@ -49,14 +48,14 @@ export function flatten(object: Record<string, any>) {
 
         for (const key of keys) {
             if (typeof child[key] === "object") {
-                _flatten(child[key], path.concat([key]))
+                collectLeaves(child[key], path.concat([key]))
             } else {
                 result[path.concat([key]).join(".")] = child[key]
             }
         }
     }
 
-    _flatten(object, [])
+    collectLeaves(object, [])
     return result
 }
 
@@ -330,8 +329,8 @@ export function extractFileNameFromContentDisposition(header: string | null | un
 export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedTheme) {
     // default theme
     if (theme === undefined) {
-        if (localStorage.getItem("theme")) {
-            theme = localStorage.getItem("theme") as SelectedTheme
+        if (localStorage.getItem(storageKeys.THEME)) {
+            theme = localStorage.getItem(storageKeys.THEME) as SelectedTheme
         } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
             theme = "dark"
         } else {
@@ -365,7 +364,7 @@ export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedT
 
     miscStore.theme = theme
 
-    localStorage.setItem("theme", theme)
+    localStorage.setItem(storageKeys.THEME, theme)
 
     void document.body.offsetHeight
     requestAnimationFrame(() => disableTransitions.remove())
@@ -374,7 +373,7 @@ export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedT
 export type SelectedTheme = "syncWithSystem" | "dark" | "dark-2" | "light"
 
 export function getSelectedTheme(): SelectedTheme {
-    return (localStorage.getItem("theme") as SelectedTheme | null) ?? "syncWithSystem"
+    return (localStorage.getItem(storageKeys.THEME) as SelectedTheme | null) ?? "syncWithSystem"
 }
 
 export function getTheme(): "light" | "dark" {
@@ -388,7 +387,7 @@ export function getTheme(): "light" | "dark" {
 }
 
 export function getLang() {
-    return localStorage.getItem("lang") || "en"
+    return localStorage.getItem(storageKeys.LANG) || "en"
 }
 
 /**
@@ -464,14 +463,6 @@ export function getParentNamespaces(namespace: string): string[] {
     }
 
     return parents
-}
-
-export const useTheme = () => {
-    const miscStore = useMiscStore()
-    return computed<"light" | "dark">(() => {
-        void miscStore.theme
-        return getTheme()
-    })
 }
 
 export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {

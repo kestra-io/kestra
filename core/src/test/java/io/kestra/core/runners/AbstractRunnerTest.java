@@ -595,6 +595,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-empty-values-from-uri.yaml")
+    protected void loopEmptyValuesFromUri(Execution execution) throws Exception {
+        loopCaseTest.loopEmptyValuesFromUri(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-expression-context.yaml")
     protected void loopExecutionContext(Execution execution) throws Exception {
         loopCaseTest.loopExpressionContext(execution);
@@ -668,6 +674,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-break.yaml")
+    public void loopBreak(Execution execution) throws InternalException {
+        loopCaseTest.loopBreak(execution);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = TENANT_1)
     void shouldScheduleOnDate() throws Exception {
         scheduleDateCaseTest.shouldScheduleOnDate(TENANT_1);
@@ -707,6 +719,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml" })
     void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-flow-trigger-source.yaml", "flows/valids/sla-flow-trigger-listener.yaml" })
+    void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws Exception {
+        slaTestCase.shouldNotKillFlowTriggeredExecutionWhenSLAFails();
     }
 
     @Test

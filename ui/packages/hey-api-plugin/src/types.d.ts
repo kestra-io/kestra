@@ -1,4 +1,4 @@
-import type {DefinePlugin} from "@hey-api/openapi-ts"
+import type {DefinePlugin, IR} from "@hey-api/openapi-ts"
 
 export type UserConfig = {
   /**
@@ -15,7 +15,7 @@ export type UserConfig = {
    * Function to build method names from operations.
    * Receives the operation object and must return a string or undefined to skip the operation.
    */
-  methodNameBuilder?: (operation: any) => string;
+  methodNameBuilder?: (operation: IR.OperationObject) => string;
   /**
    * Absolute path to the raw OpenAPI spec file the SDK is generated from. When set, the plugin
    * stamps `export const OPENAPI_SPEC_HASH = sha256(specFile)[:16]` into the generated SDK, so the

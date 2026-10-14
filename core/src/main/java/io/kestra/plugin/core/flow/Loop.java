@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.models.property.Property;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -192,6 +193,36 @@ import lombok.experimental.SuperBuilder;
                                   Further up (table types): {{item.parents[1].value}}
                 """
         ),
+        @Example(
+            full = true,
+            title = """
+                Collect outputs across iterations. By default, outputs produced inside a loop are not visible to tasks \
+                that run after it. Declare an `outputs:` block on the Loop task to surface values explicitly. \
+                After the loop, `outputs.loop.outputs` is a list of per-iteration results. Use `loopOutputs()` to extract \
+                one field across all iterations as a flat list.""",
+            code = """
+                id: loop_outputs
+                namespace: company.team
+
+                tasks:
+                  - id: loop
+                    type: io.kestra.plugin.core.flow.Loop
+                    values: ["alpha", "beta", "gamma"]
+                    fetchType: AUTO
+                    outputs:
+                      - id: label
+                        type: STRING
+                        value: "{{ outputs.process.value }}"
+                    tasks:
+                      - id: process
+                        type: io.kestra.plugin.core.debug.Return
+                        format: "processed {{ item.value }}"
+
+                  - id: read_outputs
+                    type: io.kestra.plugin.core.log.Log
+                    message: "All results: {{ loopOutputs(outputs.loop.outputs, 'label') }}"
+                """
+        ),
     }
 )
 public class Loop extends AbstractBranch<Loop.Output> {
@@ -232,7 +263,7 @@ public class Loop extends AbstractBranch<Loop.Output> {
             """
     )
     @PluginProperty
-    private Integer concurrencyLimit = 1;
+    private Integer concurrencyLimit = 0;
 
     @Builder.Default
     @Schema(
@@ -261,6 +292,18 @@ public class Loop extends AbstractBranch<Loop.Output> {
     @NotNull
     @PluginProperty
     private Loop.FetchType fetchType = FetchType.AUTO;
+
+    @Schema(
+        title = "A condition that determines whether the Loop should break its processing.",
+        description = """
+    A Pebble expression evaluated after each loop iteration. The loop will break and stop processing new iteration only when the expression evaluates to a truthy value (`true`, a non-empty string, a non-zero number).
+    Special variables are available:
+    - item: the current iteration item variables
+    - iteration.executionId: the current iteration execution id
+    - iteration.state: the current iteration execution state
+    - iteration.outputs: the current iteration execution outputs"""
+    )
+    private Property<String> breakWhen;
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {

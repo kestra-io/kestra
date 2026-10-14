@@ -65,7 +65,7 @@ class NamespaceFileControllerTest {
     @Test
     void searchNamespaceFiles() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
 
         namespaceStorage.putFile(Path.of("/file.txt"), new ByteArrayInputStream(new byte[0]));
         namespaceStorage.putFile(Path.of("/another_file.json"), new ByteArrayInputStream(new byte[0]));
@@ -89,7 +89,7 @@ class NamespaceFileControllerTest {
     @Test
     void getFileContent() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         String hw = "Hello World";
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream(hw.getBytes()));
         String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt"));
@@ -99,7 +99,7 @@ class NamespaceFileControllerTest {
     @Test
     void getFileContentWithRevision() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         String content1 = "Hello World";
         String content2 = "Hello World 2";
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream(content1.getBytes()));
@@ -118,7 +118,7 @@ class NamespaceFileControllerTest {
     @Test
     void shouldListOnlyTheRevisionsWrittenAfterADeletion() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 2".getBytes()));
 
@@ -134,7 +134,7 @@ class NamespaceFileControllerTest {
     @Test
     void shouldNotReturnContentOfADeletedFileGivenARevision() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World 2".getBytes()));
 
@@ -153,7 +153,7 @@ class NamespaceFileControllerTest {
     @Test
     void getFileMetadatas() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         String hw = "Hello World";
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream(hw.getBytes()));
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/test.txt"), TestFileAttributes.class);
@@ -164,7 +164,7 @@ class NamespaceFileControllerTest {
     @Test
     void getRevisions() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
 
         List<NamespaceFileRevision> res = client.toBlocking()
@@ -182,7 +182,7 @@ class NamespaceFileControllerTest {
         // The UI's file explorer builds paths without a leading slash (e.g. "test.txt" for a root-level file),
         // while namespace file metadata is always stored with a normalized leading slash ("/test.txt").
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
 
         List<NamespaceFileRevision> res = client.toBlocking()
@@ -201,7 +201,7 @@ class NamespaceFileControllerTest {
     @Test
     void listNamespaceDirectoryFiles() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         String hw = "Hello World";
         namespaceStorage.putFile(Path.of("/test/test.txt"), new ByteArrayInputStream(hw.getBytes()));
         namespaceStorage.putFile(Path.of("/test/test2.txt"), new ByteArrayInputStream(hw.getBytes()));
@@ -330,7 +330,7 @@ class NamespaceFileControllerTest {
     @Test
     void getFileContentOnDirectoryReturnsCleanNotFound() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
 
         HttpClientResponseException e = assertThrows(
@@ -347,7 +347,7 @@ class NamespaceFileControllerTest {
     @Test
     void createFileUnderAnExistingFileReturnsCleanConflict() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/t.txt"), new ByteArrayInputStream("Hello".getBytes()));
 
         MultipartBody body = MultipartBody.builder()
@@ -452,7 +452,7 @@ class NamespaceFileControllerTest {
     void createGetFileContent_ExtractZip() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         String namespaceToExport = "io.kestra.tests";
-        Namespace exportedStorage = namespaceFactory.of(TENANT_ID, namespaceToExport, storageInterface);
+        Namespace exportedStorage = namespaceFactory.of(TENANT_ID, namespaceToExport);
 
         exportedStorage.putFile(Path.of("/file.txt"), new ByteArrayInputStream("file".getBytes()));
         exportedStorage.putFile(Path.of("/another_file.txt"), new ByteArrayInputStream("another_file".getBytes()));
@@ -514,7 +514,7 @@ class NamespaceFileControllerTest {
     @Test
     void moveFileDirectory() throws IOException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.createDirectory(Path.of("/test"));
         client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/test&to=/foo", null));
         FileAttributes res = namespaceStorage.getFileMetadata(Path.of("/foo"));
@@ -525,7 +525,7 @@ class NamespaceFileControllerTest {
     @Test
     void deleteFileDirectory() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("Hello".getBytes()));
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/folder/file.txt", null));
         assertThat(namespaceStorage.exists(Path.of("/folder/file.txt"))).isFalse();
@@ -608,7 +608,7 @@ class NamespaceFileControllerTest {
     @Test
     void pathTraversalShouldBeRejected() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello".getBytes()));
 
         // Path traversal via ".." should be rejected on all mutating / read endpoints
@@ -637,7 +637,7 @@ class NamespaceFileControllerTest {
         // never matched on a Windows JVM, allowing arbitrary file write and delete.
         // Verify that POST (write) and DELETE are both rejected with the fixed guard.
         String namespace = TestsUtils.randomNamespace();
-        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
         namespaceStorage.putFile(Path.of("/safe.txt"), new ByteArrayInputStream("safe".getBytes()));
 
         MultipartBody body = MultipartBody.builder()

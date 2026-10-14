@@ -4,7 +4,7 @@ import {defineConfig, globalIgnores} from "eslint/config"
 import kestraTokens from "./scripts/tokens/eslintPlugin.mjs"
 
 export default defineConfig([
-    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "packages/kestra-sdk/src/openapi/*"]),
+    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "**/storybook-static/*", "packages/kestra-sdk/src/openapi/*"]),
     ...pluginVue.configs["flat/base"],
     // Tooling (plugins/, scripts/, lint-rules/, *.config.js) stays JS on purpose; the app, test and storybook trees do not.
     {

@@ -244,10 +244,11 @@
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
 
-    import {trackTabOpen, trackTabClose} from "../utils/tabTracking"
+    import {useTabTracking} from "../composables/useTabTracking"
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
 
     const {showKeyShortcuts} = useKeyShortcuts()
+    const {trackTabOpen, trackTabClose} = useTabTracking()
 
     const ComponentCache = new Map<string, Component>()
 

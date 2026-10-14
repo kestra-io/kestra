@@ -100,7 +100,7 @@
         } else if (onboardingPresetFlow) {
             flowYaml = onboardingPresetFlow
             sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
-        } else if (blueprintId && blueprintSourceYaml) {
+        } else if (blueprintSourceYaml) {
             flowYaml = blueprintSourceYaml
         } else if(blueprintId && blueprintSource === "community"){
             flowYaml = await blueprintsStore.getBlueprintSource({

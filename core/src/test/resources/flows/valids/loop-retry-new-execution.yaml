@@ -1,0 +1,17 @@
+id: loop-retry-new-execution
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 1
+    values: ["value 1", "value 2"]
+    tasks:
+      - id: fail_first_attempt
+        type: io.kestra.plugin.core.execution.Fail
+        runIf: '{{ (labels.system.replay ?? "false") != "true" }}'
+        retry:
+          behavior: CREATE_NEW_EXECUTION
+          type: constant
+          interval: PT1S
+          maxAttempts: 2

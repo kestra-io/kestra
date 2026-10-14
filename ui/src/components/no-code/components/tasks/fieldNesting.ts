@@ -70,6 +70,14 @@ export function shouldDrillItem(
     })
 }
 
+export function describeArrayItem(element: unknown, index: number): string {
+    if (element && typeof element === "object" && !Array.isArray(element)) {
+        const record = element as Record<string, unknown>
+        return String(record.id ?? record.name ?? record.type ?? `#${index + 1}`)
+    }
+    return `#${index + 1}`
+}
+
 export type ValueSummary =
     | {kind: "empty"}
     | {kind: "count"; count: number}

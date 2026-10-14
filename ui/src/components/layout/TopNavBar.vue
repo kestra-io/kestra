@@ -13,7 +13,7 @@
 <script setup lang="ts">
     import {nextTick, onMounted, onUnmounted, useSlots, watchEffect} from "vue"
     import {useTopNavStore} from "../../stores/topNav"
-    import type {KsBreadcrumbItem} from "@kestra-io/design-system"
+    import type {KsBreadcrumbItem, KsBreadcrumbLoader} from "@kestra-io/design-system"
 
     defineOptions({inheritAttrs: false})
 
@@ -21,6 +21,7 @@
         title: string;
         description?: string;
         breadcrumb?: KsBreadcrumbItem[];
+        titleSiblings?: KsBreadcrumbLoader;
         bookmarkLabel?: string;
         beta?: boolean;
         hideMainIcon?: boolean;
@@ -33,6 +34,7 @@
     watchEffect(() => {
         store.title = props.title
         store.breadcrumb = props.breadcrumb ?? []
+        store.titleSiblings = props.titleSiblings
         store.bookmarkLabel = props.bookmarkLabel
         store.description = props.description
         store.beta = !!props.beta

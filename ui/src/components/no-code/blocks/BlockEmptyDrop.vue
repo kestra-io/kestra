@@ -1,7 +1,7 @@
 <template>
     <button
         class="block-empty-drop"
-        :class="[`block-empty-drop--${variant}`, dropState !== 'idle' ? `block-empty-drop--drop-${dropState}` : '']"
+        :class="[`block-empty-drop--${variant}`, dropState !== 'idle' ? `block-empty-drop--drop-${dropState}` : '', {'block-empty-drop--required': required}]"
         type="button"
         :data-test="dataTest"
         @click="emit('add', $event)"
@@ -28,9 +28,12 @@
         hint?: string
         dataTest?: string
         dropState?: "idle" | "allowed" | "forbidden"
+        /** Marks the empty state with the same border/background as an unset required field. */
+        required?: boolean
     }>(), {
         variant: "inline",
         dropState: "idle",
+        required: false,
     })
 
     const emit = defineEmits<{
@@ -77,6 +80,10 @@
         color: var(--ks-text-error);
         border-color: var(--ks-border-error);
         cursor: not-allowed;
+    }
+
+    .block-empty-drop--required {
+        border-color: var(--ks-border-error);
     }
 
     .block-kbd-focused {

@@ -1,3 +1,5 @@
+import type {Task} from "@kestra-io/kestra-sdk"
+
 // FIXME: any - recursive generic, complex object traversal
 export function loopOver(item: any, predicate: (item: any) => boolean, result?: any[]): any[] { // FIXME: any
     if (result === undefined) {
@@ -33,6 +35,12 @@ export function findTaskById(flow: unknown, taskId: string): {type?: string; id?
     return result.length > 0 ? result[0] : undefined
 }
 
+// Task objects at any depth under `tasks` (flowable children, then/else, errors, cases...), parents included.
+export function getAllTasks(tasks: unknown): Task[] {
+    if (!tasks) return []
+    return loopOver(tasks, (value) => value instanceof Object && value.type !== undefined && value.id !== undefined)
+}
+
 export function getAllTaskIds(flow: any): string[] {
     if (!flow) return []
     const result: any[] = []
@@ -45,3 +53,9 @@ export function getAllTaskIds(flow: any): string[] {
     return [...new Set(result.map(t => t.id))]
 }
 
+export const LOOP_TASK_TYPE = "io.kestra.plugin.core.flow.Loop"
+
+export function loopTaskIds(flow: unknown): Set<string> {
+    const result = loopOver(flow, (value) => value instanceof Object && value.type === LOOP_TASK_TYPE)
+    return new Set(result.map(task => task.id))
+}

@@ -50,6 +50,8 @@
                                 class="block-command-menu-item"
                                 :class="{'block-command-menu-item--active': activeIndex === index}"
                                 :aria-selected="activeIndex === index"
+                                :aria-disabled="item.disabled"
+                                :disabled="item.disabled"
                                 data-test="block-command-menu-item"
                                 @click="run(item)"
                                 @mouseenter="activeIndex = index"
@@ -86,6 +88,8 @@
         keywords?: string
         /** Kept out of the idle list so the hundreds of task types only surface once the user types. */
         searchOnly?: boolean
+        /** Shown, not hidden, so the user learns why it can't be used right now rather than wondering where it went. */
+        disabled?: boolean
         run: () => void
     }
 
@@ -122,6 +126,7 @@
     })
 
     function run(item: BlockCommandMenuItem) {
+        if (item.disabled) return
         item.run()
     }
 
@@ -228,6 +233,16 @@
         &:hover,
         &--active {
             background: var(--ks-bg-hover);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+
+            &:hover,
+            &.block-command-menu-item--active {
+                background: transparent;
+            }
         }
     }
 

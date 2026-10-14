@@ -1,7 +1,7 @@
 <template>
     <ElTable
         ref="tableRef"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as TableProps<TableRow>)"
         @selection-change="(selection) => emit('selectionChange', selection)"
         @select="(selection, row) => emit('select', selection, row)"
         @sort-change="(e) => emit('sortChange', e)"
@@ -19,27 +19,29 @@
     </ElTable>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
     import {ref} from "vue"
     import {ElTable} from "element-plus"
-    import type {TableInstance} from "element-plus"
+    import type {TableColumnCtx, TableInstance, TableProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
     import KsNoData from "../KsNoData.vue"
 
     defineOptions({inheritAttrs: false})
 
+    type TableRow = NonNullable<TableProps["data"]>[number]
+
     const props = withDefaults(defineProps<{
-        data?: any[]
+        data?: T[]
         tableLayout?: "fixed" | "auto"
         size?: "large" | "default" | "small"
-        rowKey?: string | ((row: any) => string)
+        rowKey?: string | ((row: T) => string)
         emptyText?: string
         defaultSort?: {prop: string; order: "ascending" | "descending" | null}
         showHeader?: boolean
         maxHeight?: string | number
         fit?: boolean
-        cellClassName?: string | ((data: any) => string)
-        rowClassName?: string | ((data: any) => string)
+        cellClassName?: string | ((data: {row: T; rowIndex: number; column: TableColumnCtx<TableRow>; columnIndex: number}) => string)
+        rowClassName?: string | ((data: {row: T; rowIndex: number}) => string)
     }>(), {
         data: undefined,
         tableLayout: undefined,
@@ -55,11 +57,11 @@
     })
 
     const emit = defineEmits<{
-        selectionChange: [selection: any[]]
-        select: [selection: any[], row: any]
-        sortChange: [sort: {column: any; prop: string | null; order: string | null}]
-        rowClick: [row: any, column: any, event: Event]
-        rowDblclick: [row: any, column: any, event: Event]
+        selectionChange: [selection: T[]]
+        select: [selection: T[], row: T]
+        sortChange: [sort: {column: TableColumnCtx<TableRow>; prop: string | null; order: string | null}]
+        rowClick: [row: T, column: TableColumnCtx<TableRow> | null, event: Event]
+        rowDblclick: [row: T, column: TableColumnCtx<TableRow> | null, event: Event]
     }>()
 
     defineSlots<{
@@ -73,11 +75,11 @@
 
     defineExpose({
         clearSelection: () => tableRef.value?.clearSelection(),
-        toggleRowSelection: (row: any, selected?: boolean) => tableRef.value?.toggleRowSelection(row, selected),
+        toggleRowSelection: (row: T, selected?: boolean) => tableRef.value?.toggleRowSelection(row as TableRow, selected),
         toggleAllSelection: () => tableRef.value?.toggleAllSelection(),
-        getSelectionRows: () => tableRef.value?.getSelectionRows() ?? [],
-        toggleRowExpansion: (row: any, expanded?: boolean) => tableRef.value?.toggleRowExpansion(row, expanded),
-        setCurrentRow: (row: any) => tableRef.value?.setCurrentRow(row),
+        getSelectionRows: () => (tableRef.value?.getSelectionRows() ?? []) as T[],
+        toggleRowExpansion: (row: T, expanded?: boolean) => tableRef.value?.toggleRowExpansion(row as TableRow, expanded),
+        setCurrentRow: (row: T) => tableRef.value?.setCurrentRow(row as TableRow),
         clearSort: () => tableRef.value?.clearSort(),
         sort: (prop: string, order: string) => tableRef.value?.sort(prop, order),
     })

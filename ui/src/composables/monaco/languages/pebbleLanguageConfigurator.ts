@@ -3,6 +3,7 @@ import {languages} from "monaco-editor/editor/editor.api"
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
+import {withIndentedBlockScalarContent} from "./yamlBlockScalarTokenizer"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 import {useI18n} from "vue-i18n"
@@ -216,6 +217,11 @@ export function registerFilterAutoCompletion(
 
 const registeredLanguages = new Set<string>()
 
+/** Monaco's public type omits the internal `loader` that lazy-loads built-in tokenizers. */
+interface ILanguageExtensionPointWithLoader extends languages.ILanguageExtensionPoint {
+    loader?: () => Promise<{ language: monaco.languages.IMonarchLanguage }>;
+}
+
 function registerPebbleLanguage(language: string) {
     if(registeredLanguages.has(language)) return
     registeredLanguages.add(language)
@@ -236,10 +242,10 @@ function registerPebbleLanguage(language: string) {
     }
 
     // Get the tokenizer from the root language
-    const rootLanguageDefinition: any = monaco.languages.getLanguages().find(l => l.id === rootLanguage)
+    const rootLanguageDefinition = monaco.languages.getLanguages().find(l => l.id === rootLanguage) as ILanguageExtensionPointWithLoader | undefined
     // Load the parent language to ensure its tokenizer is available
     if (rootLanguageDefinition?.loader) {
-        rootLanguageDefinition.loader().then((loaded: {language: monaco.languages.IMonarchLanguage}) => {
+        rootLanguageDefinition.loader().then((loaded) => {
             const {language: rootLanguageDefsLoaded} = loaded
             if(rootLanguageDefsLoaded === undefined) return
             for (const key in rootLanguageDefsLoaded) {
@@ -263,7 +269,7 @@ function registerPebbleLanguage(language: string) {
                 }
             }
 
-            monaco.languages.setMonarchTokensProvider(language, rootLanguageDefsLoaded)
+            monaco.languages.setMonarchTokensProvider(language, withIndentedBlockScalarContent(rootLanguageDefsLoaded))
         })
     }
 }

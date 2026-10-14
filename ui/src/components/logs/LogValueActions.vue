@@ -37,6 +37,7 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
+    import type {RouteLocationRaw} from "vue-router"
     import MagnifyPlusOutline from "vue-material-design-icons/MagnifyPlusOutline.vue"
     import MagnifyMinusOutline from "vue-material-design-icons/MagnifyMinusOutline.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -47,7 +48,7 @@
         field: string
         value: string
         filterable?: boolean
-        to?: any
+        to?: RouteLocationRaw
     }>()
 
     const emit = defineEmits<{

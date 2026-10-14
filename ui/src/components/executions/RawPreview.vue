@@ -1,12 +1,12 @@
 <template>
-    <ListPreview v-if="type === 'LIST'" :value="content" />
+    <ListPreview v-if="type === 'LIST'" :value="listContent" />
     <img v-else-if="type === 'IMAGE'" :src="imageContent" :alt="$t('file_preview.image_alt')">
-    <PdfPreview v-else-if="type === 'PDF'" :source="content" />
-    <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="content" />
+    <PdfPreview v-else-if="type === 'PDF'" :source="textContent" />
+    <KsMarkdown v-else-if="type === 'MARKDOWN'" :content="textContent" />
     <KsEditor
         v-else
         v-bind="editorBindings"
-        :modelValue="!forceEditor ? content : JSON.stringify(content, null, 2)"
+        :modelValue="editorContent"
         :lang="!forceEditor ? extensionToMonacoLang : 'json'"
         readOnly
         inline
@@ -45,16 +45,15 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import {KsMarkdown, KsEditor, KsButton, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import ListPreview from "../ListPreview.vue"
+    import ListPreview, {type PreviewCell} from "../ListPreview.vue"
+    import type {FilePreview} from "../../stores/executions"
 
     // Async so pdfjs-dist (~417 kB) is fetched only when an output actually is a PDF.
     const PdfPreview = defineAsyncComponent(() => import("../PdfPreview.vue"))
 
-    export interface Preview {
-        truncated?: boolean;
-        type?: "TEXT" | "LIST" | "IMAGE" | "PDF" | "MARKDOWN" | "RAW";
-        content?: any;
-        extension?: string;
+    export interface Preview extends Omit<FilePreview, "type"> {
+        /** "RAW" is UI-only: FilePreview.vue forces it to show non-text content in the editor. */
+        type?: FilePreview["type"] | "RAW";
     }
 
     const props = defineProps<Preview>()
@@ -67,7 +66,11 @@
         return props.type === "RAW" && typeof props.content === "object"
     })
 
-    const copyContent = () => copyToClipboard(!forceEditor.value ? props.content : JSON.stringify(props.content, null, 2))
+    const listContent = computed<PreviewCell[]>(() => Array.isArray(props.content) ? props.content : [])
+    const textContent = computed(() => typeof props.content === "string" ? props.content : "")
+    const editorContent = computed(() => forceEditor.value ? JSON.stringify(props.content, null, 2) : textContent.value)
+
+    const copyContent = () => copyToClipboard(editorContent.value)
 
     const extensionToMonacoLang = computed(() => {
         switch (props.extension) {

@@ -1,5 +1,5 @@
 <template>
-    <ElCard v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElCard v-bind="({...filteredProps(), ...$attrs} as CardProps)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCard} from "element-plus"
+    import {ElCard, type CardProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 

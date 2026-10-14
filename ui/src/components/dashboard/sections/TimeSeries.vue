@@ -89,7 +89,7 @@
     import {computed, ref, watch, onMounted, onUnmounted, nextTick} from "vue"
     import {useRoute} from "vue-router"
 
-    import {use, graphic} from "echarts/core"
+    import {use, graphic, type ElementEvent} from "echarts/core"
     import {BarChart, LineChart} from "echarts/charts"
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     import {KsEchart, KsSkeleton, TooltipType, cssVar, dateUtils, dayjs, durationUtils} from "@kestra-io/design-system"
@@ -737,8 +737,8 @@
         commitBrush()
     }
 
-    let zrMousedownHandler: ((e: any) => void) | null = null
-    let zrDblclickHandler: ((e: any) => void) | null = null
+    let zrMousedownHandler: ((e: ElementEvent) => void) | null = null
+    let zrDblclickHandler: (() => void) | null = null
 
     function bindZrEvents() {
         const chart = ksEchartRef.value?.getEchartsInstance()
@@ -746,12 +746,12 @@
 
         const zr = chart.getZr()
 
-        zrMousedownHandler = (e: any) => {
+        zrMousedownHandler = (e: ElementEvent) => {
             if (!isSelectable.value) return
             computeBucketPixels()
             const rect = chartWrapper.value?.getBoundingClientRect()
             if (!rect) return
-            const localX = e.event.clientX - rect.left
+            const localX = (e.event as MouseEvent).clientX - rect.left
             startCreateDrag(localX)
         }
 

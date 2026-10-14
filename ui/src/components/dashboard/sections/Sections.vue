@@ -81,7 +81,7 @@
                             :filters
                             :showDefault="props.showDefault"
                             v-bind="chartProps(chart)"
-                            @select="(payload: any) => emit('chart-select', {chartId: chart.id, payload})"
+                            @select="(payload: {startDate: string; endDate: string} | null) => emit('chart-select', {chartId: chart.id, payload})"
                         />
                         <KsSkeleton
                             v-else

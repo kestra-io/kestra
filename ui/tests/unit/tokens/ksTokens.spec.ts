@@ -1,14 +1,14 @@
 // The fixtures below are CSS written as strings, so the rule under test would report itself.
 /* eslint-disable kestra-tokens/no-undeclared-ks-token */
-import {spawnSync} from "node:child_process"
-import {describe, expect, it} from "vitest"
-import {RuleTester} from "eslint"
+import { spawnSync } from "node:child_process"
+import { describe, expect, it } from "vitest"
+import { RuleTester } from "eslint"
 // @ts-expect-error - plain .mjs modules, so that both linters and this test load the same code
-import {declarationsIn, knownTokens, suggest, usagesIn} from "../../../scripts/tokens/knownTokens.mjs"
+import { declarationsIn, knownTokens, suggest, usagesIn } from "../../../scripts/tokens/knownTokens.mjs"
 // @ts-expect-error - see above
 import eslintPlugin from "../../../scripts/tokens/eslintPlugin.mjs"
 
-interface Warning {rule: string; severity: string; text: string}
+interface Warning { rule: string; severity: string; text: string }
 
 /**
  * Stylelint runs in its own process: it loads the real config, plugin and palette, which is the path
@@ -22,19 +22,18 @@ const report = (output: string): Warning[] => output.includes("[")
 const lintTolerant = (code: string, file = "probe.scss"): Warning[] => {
     // Both streams: stylelint writes its report to stderr, and exits non-zero for a file carrying an
     // error, so reading stdout alone would silently return an empty report for every case.
-    const {stdout, stderr} = spawnSync(
+    const { stdout, stderr } = spawnSync(
         process.execPath,
         ["node_modules/stylelint/bin/stylelint.mjs", "--stdin", `--stdin-filename=${file}`, "--formatter", "json"],
-        {input: code, encoding: "utf-8", cwd: process.cwd()},
+        { input: code, encoding: "utf-8", cwd: process.cwd() },
     )
     return report(`${stdout ?? ""}${stderr ?? ""}`)
 }
 
 const warningsFor = (code: string, file = "probe.scss") => lintTolerant(code, file).map(warning => warning.text)
 
-const TEST_TIMEOUT_MS = 30_000
 
-describe("the known-token set", {timeout: TEST_TIMEOUT_MS}, () => {
+describe("the known-token set", () => {
     it("reads the names the Figma palette generator writes", () => {
         expect(knownTokens().has("--ks-text-link")).toBe(true)
     })
@@ -59,7 +58,7 @@ describe("the known-token set", {timeout: TEST_TIMEOUT_MS}, () => {
     })
 })
 
-describe("the stylelint rule, ks/no-undeclared-custom-property", {timeout: TEST_TIMEOUT_MS}, () => {
+describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
     it("reports a token that nothing declares", () => {
         expect(warningsFor(".x { color: var(--ks-nowhere); }"))
             .toEqual([expect.stringContaining("\"--ks-nowhere\" is not declared")])
@@ -91,24 +90,24 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", {timeout: TEST_
     })
 })
 
-describe("the eslint rule", {timeout: TEST_TIMEOUT_MS}, () => {
+describe("the eslint rule", () => {
     it("covers the tokens stylelint cannot see", () => {
-        const tester = new RuleTester({languageOptions: {ecmaVersion: 2022, sourceType: "module"}})
+        const tester = new RuleTester({ languageOptions: { ecmaVersion: 2022, sourceType: "module" } })
 
         expect(() => tester.run("no-undeclared-ks-token", eslintPlugin.rules["no-undeclared-ks-token"], {
             valid: [
-                {code: "cssVar(\"--ks-text-link\")"},
-                {code: "const css = \"color: var(--ks-text-link)\""},
+                { code: "cssVar(\"--ks-text-link\")" },
+                { code: "const css = \"color: var(--ks-text-link)\"" },
                 // A name nothing else declares, used in the same file: the case fails if
                 // declarationsIn stops registering rather than passing for want of a usage.
-                {code: "el.style.setProperty(\"--ks-probe-hook\", v); const css = \"color: var(--ks-probe-hook)\""},
-                {code: "el.style.setProperty(\"--ks-Probe-Hook\", v); const css = \"color: var(--ks-Probe-Hook)\""},
+                { code: "el.style.setProperty(\"--ks-probe-hook\", v); const css = \"color: var(--ks-probe-hook)\"" },
+                { code: "el.style.setProperty(\"--ks-Probe-Hook\", v); const css = \"color: var(--ks-Probe-Hook)\"" },
             ],
             invalid: [
-                {code: "cssVar(\"--ks-nowhere\")", errors: [{messageId: "undeclared"}]},
-                {code: "const css = \"color: var(--ks-nowhere)\"", errors: [{messageId: "undeclared"}]},
-                {code: "const css = `border: 1px solid var(--ks-nowhere)`", errors: [{messageId: "undeclared"}]},
-                {code: "const css = \"color: var(--ks-Nowhere)\"", errors: [{messageId: "undeclared"}]},
+                { code: "cssVar(\"--ks-nowhere\")", errors: [{ messageId: "undeclared" }] },
+                { code: "const css = \"color: var(--ks-nowhere)\"", errors: [{ messageId: "undeclared" }] },
+                { code: "const css = `border: 1px solid var(--ks-nowhere)`", errors: [{ messageId: "undeclared" }] },
+                { code: "const css = \"color: var(--ks-Nowhere)\"", errors: [{ messageId: "undeclared" }] },
             ],
         })).not.toThrow()
     })

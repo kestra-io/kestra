@@ -36,10 +36,23 @@ const ALLOWED: Array<{ file: string; reason: string }> = [
 
 let cachedSourceFiles: string[] | undefined
 function sourceFiles(): string[] {
-    return SCANNED_DIRS.flatMap((dir) =>
-        globSync(`${dir}/**/*.{ts,vue,js}`, { cwd: ROOT })
-            .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
-    )
+    if (!cachedSourceFiles) {
+        cachedSourceFiles = SCANNED_DIRS.flatMap((dir) =>
+            globSync(`${dir}/**/*.{ts,vue,js}`, { cwd: ROOT })
+                .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
+        )
+    }
+    return cachedSourceFiles
+}
+
+const fileContents = new Map<string, string>()
+function readSourceFile(file: string): string {
+    let content = fileContents.get(file)
+    if (content === undefined) {
+        content = readFileSync(join(ROOT, file), "utf8")
+        fileContents.set(file, content)
+    }
+    return content
 }
 
 function isAllowed(file: string): boolean {

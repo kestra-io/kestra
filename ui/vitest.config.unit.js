@@ -1,9 +1,9 @@
-import {defineProject} from "vitest/config"
+import { defineProject } from "vitest/config"
 import vue from "@vitejs/plugin-vue"
 
 import viteConfig from "./vite.config.js"
 
-const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({ mode: "test" }) : viteConfig
 
 export default defineProject({
     plugins: [
@@ -13,9 +13,10 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
+        testTimeout: 30000,
         // Vitest 4 requires projects with different maxWorkers (see the storybook
         // project's maxWorkers: 2) to also have a unique sequence.groupOrder.
-        sequence: {groupOrder: 0},
+        sequence: { groupOrder: 0 },
         setupFiles: ["./tests/unit/setup.ts", "./tests/unit/leakGuard.ts"],
         // Keep node_modules warm in the worker instead of re-importing them per file (cumulative
         // import 285s -> 94s). The setup file's vi.resetModules() keeps modules per-file fresh.

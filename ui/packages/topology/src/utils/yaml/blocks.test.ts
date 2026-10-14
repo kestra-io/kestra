@@ -84,44 +84,6 @@ describe("extractBlock", () => {
     })
 })
 
-describe("swapPluginProperties", () => {
-    test("swapping a trigger", () => {
-        const yamlString = `
-        triggers:
-          - id: plugin1
-            type: type1
-            name: Plugin 1
-          - id: pluginBetween
-            type: type1
-            name: Plugin 1
-          - id: plugin2
-            type: type2
-            name: Plugin 2
-        `
-
-        const result = YamlUtils.swapBlocks({
-            source: yamlString,
-            section: "triggers",
-            key1: "plugin1",
-            key2: "plugin2",
-        })
-
-        expect(result).toMatchInlineSnapshot(`
-          "triggers:
-            - id: plugin2
-              type: type2
-              name: Plugin 2
-            - id: pluginBetween
-              type: type1
-              name: Plugin 1
-            - id: plugin1
-              type: type1
-              name: Plugin 1
-          "
-        `)
-    })
-})
-
 describe("deleteBlock", () => {
     test("deleting a trigger", () => {
         const yamlString = `

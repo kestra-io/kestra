@@ -8,6 +8,7 @@ import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.worker.models.WorkerInfo;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.GrpcWorkerIOSender;
 import io.kestra.worker.services.WorkerConnectionService;
@@ -39,8 +40,10 @@ public class WorkerAgent extends AbstractWorker implements Worker {
         MaintenanceService maintenanceService,
         MetricRegistry metricRegistry,
         ServerConfig serverConfig,
-        WorkerConfig workerConfig) {
+        WorkerConfig workerConfig,
+        WorkerInfo workerInfo) {
         super(
+            workerInfo.claimWorkerId(),
             ServiceType.WORKER,
             eventPublisher,
             workerJobExecutor,

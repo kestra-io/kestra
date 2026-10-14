@@ -82,3 +82,25 @@ export const LongLabels: Story = {
         `,
     }),
 }
+
+export const CustomPreview: Story = {
+    render: () => ({
+        components: {KsThemePicker},
+        setup() {
+            const value = ref("running")
+            const accents = ["failed", "running", "success", "warning", "link", "secondary"]
+            const options = accents.map((accent) => ({value: accent, label: accent}))
+            const tokenOf = (accent: string) => ["link", "secondary"].includes(accent) ? `var(--ks-text-${accent})` : `var(--ks-status-${accent})`
+            return {value, options, tokenOf}
+        },
+        template: `
+            <div style="padding:24px;max-width:460px">
+                <ks-theme-picker v-model="value" :options="options" :columns="3" ariaLabel="Accent">
+                    <template #preview="{option}">
+                        <span :style="{display:'block',height:'40px',borderRadius:'4px',background:tokenOf(option.value)}" />
+                    </template>
+                </ks-theme-picker>
+            </div>
+        `,
+    }),
+}

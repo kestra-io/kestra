@@ -70,7 +70,8 @@ export function devBootStatus(target) {
     let entry = ""
     return {
         name: "dev-boot-status",
-        apply: "serve",
+        // Storybook serves its iframe through transformIndexHtml too, and the injected checklist breaks Monaco stories there.
+        apply: (_config, {command}) => command === "serve" && !process.env.STORYBOOK,
         configResolved(config) {
             const src = fs.readFileSync(path.resolve(config.root, "index.html"), "utf-8").match(/<script type="module" src="\/?([^"]+)"/)?.[1]
             entry = src ? withoutExtension(path.resolve(config.root, src)) : ""

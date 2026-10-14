@@ -353,7 +353,8 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             ServiceInstance updated = before
                 .state(newState, Instant.now(), reason)
                 .server(instance.server())
-                .metrics(instance.metrics());
+                .metrics(instance.metrics())
+                .props(instance.props());
             // Synchronize
             save(updated);
             return new ImmutablePair<>(before, updated);

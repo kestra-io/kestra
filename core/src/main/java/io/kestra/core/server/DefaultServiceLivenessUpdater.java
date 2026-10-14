@@ -78,7 +78,8 @@ public class DefaultServiceLivenessUpdater implements ServiceLivenessUpdater {
             ServiceInstance updated = before
                 .state(newState, Instant.now(), reason)
                 .server(instance.server())
-                .metrics(instance.metrics());
+                .metrics(instance.metrics())
+                .props(instance.props());
             // Synchronize
             update(updated);
             return new ImmutablePair<>(before, updated);

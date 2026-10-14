@@ -73,7 +73,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final ExecutionStateStore executionStateStore;
     private final TriggerEventQueue triggerEventQueue;
     private final MetricRegistry metricRegistry;
-    private final VNodeController vNodeController;
+    private final List<VNodeController> vNodeControllers;
     private final List<ServiceResourceReleaser> serviceResourceReleasers;
 
     private Counter workerJobResubmitCounter;
@@ -104,7 +104,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final TriggerEventQueue triggerEventQueue,
         final ServerConfig serverConfig,
         final MetricRegistry metricRegistry,
-        final VNodeController vNodeController,
+        final List<VNodeController> vNodeControllers,
         final List<ServiceResourceReleaser> serviceResourceReleasers) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
@@ -120,7 +120,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.purgeRetention = serverConfig.service() != null && serverConfig.service().purge() != null
             ? serverConfig.service().purge().retention()
             : null;
-        this.vNodeController = vNodeController;
+        this.vNodeControllers = vNodeControllers;
         this.serviceResourceReleasers = serviceResourceReleasers;
     }
 
@@ -174,8 +174,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
         runStep("maybeDetectAndLogNewConnectedServices", this::maybeDetectAndLogNewConnectedServices);
 
-        // May reassign scheduler VNodes
-        runStep("checkServicesAndRebalanceVNodes", vNodeController::checkServicesAndRebalanceVNodes);
+        // May reassign the vNodes of each group (schedulers, worker controllers)
+        vNodeControllers.forEach(vNodeController -> runStep("checkServicesAndRebalanceVNodes", vNodeController::checkServicesAndRebalanceVNodes));
     }
 
     /**

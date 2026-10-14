@@ -263,6 +263,48 @@ class WorkerJobDispatcherTest {
             .orElse(null);
     }
 
+    @Test
+    void shouldDispatchStickyJobToItsWorkerEvenWhenAnotherIsLessLoaded() {
+        WorkerStreamContext<WorkerJobResponse> busy = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        WorkerStreamContext<WorkerJobResponse> idle = createWorkerContext("worker-2", WORKER_GROUP_A, 10);
+        busy.addPermits(5);
+        idle.addPermits(5);
+        dispatcher.registerWorker(busy);
+        dispatcher.registerWorker(idle);
+        busy.trackInFlight("other-job", createWorkerTask("other-job"), null);
+
+        WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A)
+            .withStickyRouting(new WorkerJobEvent.StickyRouting("worker-1", "__vnode-3"));
+
+        assertThat(dispatcher.dispatchSticky(event)).isEqualTo(WorkerJobDispatcher.StickyDispatchResult.HANDLED);
+        assertThat(busy.getInFlightCount()).isEqualTo(2);
+        assertThat(idle.getInFlightCount()).isZero();
+    }
+
+    @Test
+    void shouldRequeueStickyJobOnItsVNodeWhenItsWorkerHasNoPermit() throws QueueException {
+        WorkerStreamContext<WorkerJobResponse> worker = createWorkerContext("worker-1", WORKER_GROUP_A, 10);
+        dispatcher.registerWorker(worker);
+
+        WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A)
+            .withStickyRouting(new WorkerJobEvent.StickyRouting("worker-1", "__vnode-3"));
+
+        assertThat(dispatcher.dispatchSticky(event)).isEqualTo(WorkerJobDispatcher.StickyDispatchResult.WORKER_BUSY);
+        verify(mockQueue).emit("__vnode-3", event);
+        assertThat(dispatcher.isWorkerBusy("worker-1", WORKER_GROUP_A)).isTrue();
+
+        worker.addPermits(1);
+        assertThat(dispatcher.isWorkerBusy("worker-1", WORKER_GROUP_A)).isFalse();
+    }
+
+    @Test
+    void shouldNotDispatchStickyJobWhenItsWorkerIsNotConnectedHere() {
+        WorkerJobEvent event = createJobEvent("job-1", WORKER_GROUP_A)
+            .withStickyRouting(new WorkerJobEvent.StickyRouting("worker-unknown", "__vnode-3"));
+
+        assertThat(dispatcher.dispatchSticky(event)).isEqualTo(WorkerJobDispatcher.StickyDispatchResult.WORKER_NOT_CONNECTED);
+    }
+
     @Nested
     @DisplayName("Worker Registration")
     class WorkerRegistrationTests {

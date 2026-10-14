@@ -667,6 +667,7 @@ public class WorkerJobDispatcher {
 
         log.trace("Permits received: worker {}, permits={}", context.getWorkerId(), newPermits);
         reEvaluateSubscriptions(context);
+        fireWorkerCapacityChanged(context);
     }
 
     /**
@@ -689,6 +690,7 @@ public class WorkerJobDispatcher {
             return;
         }
         reEvaluateSubscriptions(context);
+        fireWorkerCapacityChanged(context);
     }
 
     /**
@@ -732,26 +734,8 @@ public class WorkerJobDispatcher {
         WorkerJobEvent event = either.getLeft();
         WorkerJob job = event.job();
 
-        // Pre-dispatch killed check: if the execution is already killed, produce a KILLED result directly
-        if (job instanceof WorkerTask workerTask) {
-            String executionId = workerTask.getTaskRun().getExecutionId();
-            if (
-                !Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution())
-                    && killedExecutionIds.getIfPresent(executionId) != null
-            ) {
-                log.info("Skipping dispatch of task '{}' for killed execution '{}'", job.uid(), executionId);
-                metricRegistry.counter(
-                    MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_TOTAL,
-                    MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_TOTAL_DESCRIPTION,
-                    metricRegistry.workerQueueTags(workerQueueId)
-                ).increment();
-                try {
-                    workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.KILLED)));
-                } catch (QueueException e) {
-                    log.error("Failed to emit KILLED result for task '{}': {}", job.uid(), e.getMessage(), e);
-                }
-                return;
-            }
+        if (skipIfKilled(job, workerQueueId)) {
+            return;
         }
 
         WorkerQueueState state = workerQueueStates.get(workerQueueId);
@@ -788,6 +772,92 @@ public class WorkerJobDispatcher {
         } finally {
             state.lock.unlock();
         }
+    }
+
+    /**
+     * Dispatches a sticky job to its worker, bypassing the Worker Queue's load balancing.
+     * <p>
+     * A job for a connected worker with no free permit is re-queued once on the same vNode, and the caller must stop
+     * consuming that vNode until {@link #isWorkerBusy} turns false.
+     */
+    public StickyDispatchResult dispatchSticky(WorkerJobEvent event) {
+        String workerQueueId = event.workerQueueId() == null ? "" : event.workerQueueId();
+        WorkerJob job = event.job();
+        if (skipIfKilled(job, workerQueueId)) {
+            return StickyDispatchResult.HANDLED;
+        }
+
+        WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(event.stickyRouting().workerId());
+        if (context == null) {
+            return StickyDispatchResult.WORKER_NOT_CONNECTED;
+        }
+
+        // the job reached the controller holding its worker, so the time spent waiting for a permit is not counted as unknown
+        WorkerJobEvent reached = event.withStickyRouting(event.stickyRouting().workerFound(event.stickyRouting().vNodeRoutingKey()));
+        if (!context.tryConsumePermit()) {
+            requeue(reached);
+            return StickyDispatchResult.WORKER_BUSY;
+        }
+        String bucket = context.tryReserveBucket(workerQueueId);
+        if (bucket == null) {
+            context.addPermits(1);
+            requeue(reached);
+            return StickyDispatchResult.WORKER_BUSY;
+        }
+        dispatchJobToWorker(context, job, event, workerQueueId, bucket);
+        return StickyDispatchResult.HANDLED;
+    }
+
+    /**
+     * Fails a sticky job that could not reach its worker, so the task's retry and the flow's error handling apply.
+     */
+    public void failSticky(WorkerJobEvent event) {
+        if (!(event.job() instanceof WorkerTask workerTask)) {
+            return;
+        }
+        try {
+            workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
+        } catch (QueueException e) {
+            log.error("Failed to emit the FAILED result of the sticky job '{}': {}", event.job().uid(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @return {@code true} when the worker is connected to this controller but cannot take a job of the given Worker Queue.
+     */
+    public boolean isWorkerBusy(String workerId, @Nullable String workerQueueId) {
+        WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(workerId);
+        return context != null
+            && (context.getAvailablePermits() <= 0 || !context.hasCapacityForQueue(workerQueueId == null ? "" : workerQueueId));
+    }
+
+    /**
+     * Pre-dispatch killed check: if the execution is already killed, produce a KILLED result directly.
+     */
+    private boolean skipIfKilled(WorkerJob job, String workerQueueId) {
+        if (!(job instanceof WorkerTask workerTask)) {
+            return false;
+        }
+        String executionId = workerTask.getTaskRun().getExecutionId();
+        if (
+            Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution())
+                || killedExecutionIds.getIfPresent(executionId) == null
+        ) {
+            return false;
+        }
+
+        log.info("Skipping dispatch of task '{}' for killed execution '{}'", job.uid(), executionId);
+        metricRegistry.counter(
+            MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_KILLED_TOTAL_DESCRIPTION,
+            metricRegistry.workerQueueTags(workerQueueId)
+        ).increment();
+        try {
+            workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.KILLED)));
+        } catch (QueueException e) {
+            log.error("Failed to emit KILLED result for task '{}': {}", job.uid(), e.getMessage(), e);
+        }
+        return true;
     }
 
     private void handleDeserializationError(DeserializationException deserializationException) {
@@ -1379,6 +1449,12 @@ public class WorkerJobDispatcher {
         }
     }
 
+    private void fireWorkerCapacityChanged(WorkerStreamContext<WorkerJobResponse> context) {
+        for (WorkerLifecycleListener l : lifecycleListeners) {
+            safelyInvoke(() -> l.onWorkerCapacityChanged(context), "onWorkerCapacityChanged");
+        }
+    }
+
     private void fireWorkerSubscriptionsChanged(
         WorkerStreamContext<WorkerJobResponse> context,
         Set<String> added,
@@ -1402,6 +1478,12 @@ public class WorkerJobDispatcher {
     /**
      * Holds the state for a Worker Queue: the queue subscription and the synchronization lock.
      */
+    public enum StickyDispatchResult {
+        HANDLED,
+        WORKER_BUSY,
+        WORKER_NOT_CONNECTED
+    }
+
     private record WorkerQueueState(
         QueueSubscriber<WorkerJobEvent> subscriber,
         AtomicBoolean isPaused,

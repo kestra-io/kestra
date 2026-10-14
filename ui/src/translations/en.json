@@ -2789,5 +2789,6 @@
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
     "not started": "Not started"
-  }
+  },
+  "zz_vertex_check": "Vertex AI translation check"
 }

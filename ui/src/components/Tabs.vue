@@ -9,7 +9,7 @@
     </section>
 
     <template v-else>
-        <KsTabs class="ks-tabs-bar" :class="{top}" v-model="activeName" type="box">
+        <KsTabs class="ks-tabs-bar" :class="{top}" v-model="activeName" type="box" @tab-change="handleTabChange">
             <KsTabPane
                 v-for="tab in visibleTabs"
                 :key="tab.name ?? 'default'"
@@ -21,7 +21,6 @@
                     <component
                         :is="isEmbedded || tab.disabled ? 'a' : 'router-link'"
                         :to="isEmbedded ? undefined : toRoute(tab)"
-                        @click="handleTabClick(tab)"
                     >
                         <KsTooltip
                             v-if="tab.disabled && (tab as Tab).props?.showTooltip"
@@ -185,8 +184,9 @@
         activeName.value = activeTab.value?.name ?? "default"
     }
 
-    const handleTabClick = (tab: Tab) => {
-        if (isEmbedded.value) {
+    const handleTabChange = (name: string | number) => {
+        const tab = visibleTabs.value.find(t => (t.name ?? "default") === name)
+        if (isEmbedded.value && tab) {
             emit("changed", tab)
         }
     }

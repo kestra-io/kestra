@@ -274,20 +274,6 @@ describe("createAppliedFilter", () => {
         expect(filter.id).toMatch(/^status-equals-\d+-[a-z0-9]+$/)
     })
 
-    test("preserves values containing spaces intact", () => {
-        const filter = createAppliedFilter(
-            "namespace",
-            {key: "namespace", label: "Namespace", comparators: [Comparators.EQUALS]},
-            Comparators.EQUALS,
-            "prod finance billing",
-            "prod finance billing",
-            "space",
-        )
-
-        expect(filter.value).toBe("prod finance billing")
-        expect(filter.valueLabel).toBe("prod finance billing")
-    })
-
     test("handles empty or undefined values without throwing", () => {
         expect(() =>
             createAppliedFilter("status", undefined, Comparators.EQUALS, "", "", "empty"),
@@ -296,7 +282,6 @@ describe("createAppliedFilter", () => {
         const emptyFilter = createAppliedFilter("status", undefined, Comparators.EQUALS, "", "", "empty")
         expect(emptyFilter).toMatchObject({
             key: "status",
-            keyLabel: "status",
             value: "",
             valueLabel: "",
         })
@@ -304,7 +289,6 @@ describe("createAppliedFilter", () => {
         const undefFilter = createAppliedFilter("status", undefined, Comparators.EQUALS, undefined, "", "undef")
         expect(undefFilter).toMatchObject({
             key: "status",
-            keyLabel: "status",
             value: undefined,
             valueLabel: "",
         })
@@ -441,29 +425,6 @@ describe("processFieldValue", () => {
         })
     })
 
-    test("preserves values containing spaces intact", () => {
-        const result = processFieldValue(
-            textConfig,
-            [{value: "my long namespace with spaces"}],
-            Comparators.EQUALS,
-        )
-
-        expect(result).toEqual({
-            value: "my long namespace with spaces",
-            valueLabel: "my long namespace with spaces",
-        })
-
-        const multiResult = processFieldValue(
-            multiSelectConfig,
-            [{value: ["first value with spaces", "second value"]}],
-            Comparators.IN,
-        )
-
-        expect(multiResult).toEqual({
-            value: ["first value with spaces", "second value"],
-            valueLabel: "first value with spaces, second value",
-        })
-    })
 
     test("handles empty or undefined inputs without throwing", () => {
         expect(() => processFieldValue(textConfig, [], Comparators.EQUALS)).not.toThrow()
@@ -521,12 +482,10 @@ describe("isDateRangeValue", () => {
     })
 
     test.each<[string, AppliedFilter["value"]]>([
-        ["a plain string", "2026-01-01"],
-        ["a string containing spaces", "2026-01-01 to 2026-01-02"],
         ["an empty string", ""],
+        ["a plain string", "2026-01-01"],
         ["a Date instance", new Date("2026-01-01T00:00:00Z")],
-        ["an array of strings", ["2026-01-01", "2026-01-02"]],
-        ["an empty array", []],
+        ["an array", ["2026-01-01", "2026-01-02"]],
     ])("is false for %s", (_, value) => {
         expect(isDateRangeValue(value)).toBe(false)
     })

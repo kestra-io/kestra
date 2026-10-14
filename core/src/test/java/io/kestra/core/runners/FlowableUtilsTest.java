@@ -247,7 +247,7 @@ class FlowableUtilsTest {
     }
 
     @Test
-    void resolveValues_withStringJsonArrayContainingDuplicates_shouldDeduplicate() throws Exception {
+    void resolveValues_withStringJsonArrayContainingDuplicates_shouldKeepThem() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
 
@@ -256,7 +256,7 @@ class FlowableUtilsTest {
 
         // Then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).containsExactly("a", "b");
+        assertThat(result.getLeft()).containsExactly("a", "b", "a");
     }
 
     @Test
@@ -269,6 +269,18 @@ class FlowableUtilsTest {
 
         // Then
         assertThat(result.getLeft()).containsExactly("1", "3000000000", "2.5", "true", "a", "{\"k\":1}");
+    }
+
+    @Test
+    void resolveValues_withObjectElementContainingNull_shouldOmitTheNullFields() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        // When
+        Either<List<String>, List<Pair<String, String>>> result = FlowableUtils.resolveValues(runContext, "[{\"a\": 1, \"b\": null, \"c\": {\"d\": null}}]");
+
+        // Then
+        assertThat(result.getLeft()).containsExactly("{\"a\":1,\"c\":{}}");
     }
 
     @Test
@@ -312,7 +324,7 @@ class FlowableUtilsTest {
     }
 
     @Test
-    void resolveValues_withListContainingDuplicates_shouldDeduplicate() throws Exception {
+    void resolveValues_withListContainingDuplicates_shouldKeepThem() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();
 
@@ -321,7 +333,7 @@ class FlowableUtilsTest {
 
         // Then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).containsExactly("x", "y");
+        assertThat(result.getLeft()).containsExactly("x", "y", "x");
     }
 
     @Test

@@ -2788,6 +2788,7 @@
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
     "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
-    "not started": "Nierozpoczęte"
+    "not started": "Nierozpoczęte",
+    "zz_vertex_check": "Vertex AI translation check"
   }
 }

@@ -2,26 +2,30 @@ package io.kestra.scheduler.vnodes;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.lock.LockService;
-import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.events.SchedulerEvent;
-import io.kestra.core.scheduler.vnodes.VNodeController;
-import io.kestra.core.scheduler.vnodes.VNodesAssigner;
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.scheduler.vnodes.SchedulerVNodesAssignmentChannel;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.Disposable;
+import io.kestra.core.vnodes.VNodeController;
+import io.kestra.core.vnodes.VNodesAssigner;
+import io.kestra.core.vnodes.VNodesAssignmentChannel;
+import io.kestra.core.vnodes.VNodesAssignmentEvent;
+import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -58,6 +62,49 @@ class VNodeControllerTest {
     }
 
     @Test
+    void shouldRebalanceOnlyTheServicesOfItsChannelWithItsOwnLock() {
+        // GIVEN
+        List<VNodesAssignmentEvent> sent = new ArrayList<>();
+        VNodesAssignmentChannel controllers = new VNodesAssignmentChannel() {
+            @Override
+            public ServiceType serviceType() {
+                return ServiceType.CONTROLLER;
+            }
+
+            @Override
+            public String controllerLockId() {
+                return "worker-controller";
+            }
+
+            @Override
+            public void send(VNodesAssignmentEvent event) {
+                sent.add(event);
+            }
+
+            @Override
+            public Disposable subscribe(Consumer<VNodesAssignmentEvent> consumer) {
+                return Disposable.of(() -> {});
+            }
+        };
+        VNodeController controller = new VNodeController(lockService, serviceLivenessStore, controllers, 16, Duration.ZERO);
+        when(lockService.tryLock(anyString(), anyString())).thenReturn(Optional.of(mock(Disposable.class)));
+        ServiceInstance scheduler = new ServiceInstance("scheduler-1", ServiceType.SCHEDULER, Service.ServiceState.RUNNING, null, Instant.now(), Instant.now(), null, null, null, null);
+        ServiceInstance workerController = new ServiceInstance("controller-1", ServiceType.CONTROLLER, Service.ServiceState.RUNNING, null, Instant.now(), Instant.now(), null, null, null, null);
+        when(serviceLivenessStore.findAllInstancesInStates(anySet())).thenReturn(List.of(scheduler, workerController));
+
+        // WHEN
+        controller.checkServicesAndRebalanceVNodes();
+
+        // THEN
+        verify(lockService).tryLock("vnodes", "worker-controller");
+        assertThat(sent.getFirst()).isInstanceOfSatisfying(
+            VNodesAssignmentEvent.VNodesAssignmentRequest.class,
+            request -> assertThat(request.services()).containsExactly("controller-1")
+        );
+        assertThat(eventQueue.sentEvents()).isEmpty();
+    }
+
+    @Test
     void shouldNotRebalanceWhenNoLockGivenNotLeader() {
         // GIVEN
         VNodeController controller = createVNodeController();
@@ -81,7 +128,7 @@ class VNodeControllerTest {
         ServiceInstance s2 = new ServiceInstance("scheduler-2", ServiceType.SCHEDULER, Service.ServiceState.RUNNING, null, Instant.now(), Instant.now(), null, null, null, null);
         when(serviceLivenessStore.findAllInstancesInStates(anySet())).thenReturn(List.of(s1, s2));
 
-        DefaultVNodesAssigner assigner = new DefaultVNodesAssigner(eventQueue);
+        DefaultVNodesAssigner assigner = new DefaultVNodesAssigner(new SchedulerVNodesAssignmentChannel(eventQueue));
         try {
             assigner.start();
             assigner.subscribe("scheduler-1", VNodesAssigner.VNodeAssignmentListener.NOOP);
@@ -150,8 +197,9 @@ class VNodeControllerTest {
         return new VNodeController(
             lockService,
             serviceLivenessStore,
-            eventQueue,
-            new SchedulerConfiguration(16, Duration.ofSeconds(1), 0)
+            new SchedulerVNodesAssignmentChannel(eventQueue),
+            16,
+            Duration.ofSeconds(1)
         );
     }
 }

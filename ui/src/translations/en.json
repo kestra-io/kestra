@@ -341,19 +341,19 @@
     "steps": "Steps",
     "state": "State",
     "state_history": {
-        "title": "State history",
-        "open": "State history",
-        "aria_open": "Show the state history",
-        "aria_open_for": "Show the state history for {subject}",
-        "started_at": "Started {time}",
-        "failed_at": "Failed at {time}",
-        "skipped_at": "Skipped at {time}",
-        "created_at": "Created {time}",
-        "did_not_run": "This task did not run",
-        "waiting_to_start": "Waiting to start",
-        "attempt_n": "Attempt {index}",
-        "attempt_count": "{count} attempts",
-        "copy": "Copy state history"
+      "title": "State history",
+      "open": "State history",
+      "aria_open": "Show the state history",
+      "aria_open_for": "Show the state history for {subject}",
+      "started_at": "Started {time}",
+      "failed_at": "Failed at {time}",
+      "skipped_at": "Skipped at {time}",
+      "created_at": "Created {time}",
+      "did_not_run": "This task did not run",
+      "waiting_to_start": "Waiting to start",
+      "attempt_n": "Attempt {index}",
+      "attempt_count": "{count} attempts",
+      "copy": "Copy state history"
     },
     "search": "Search",
     "source search": "Source search",
@@ -1761,10 +1761,10 @@
     "items": "items",
     "iterations": "Iterations",
     "loop_iterations_notice": {
-        "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
-        "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
-        "metrics": "Loop iterations run as separate sub-executions, so their metrics are not displayed here.",
-        "view_iterations": "View iterations"
+      "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
+      "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
+      "metrics": "Loop iterations run as separate sub-executions, so their metrics are not displayed here.",
+      "view_iterations": "View iterations"
     },
     "cron": "Cron",
     "execution_started": "Execution has started!",
@@ -2788,7 +2788,7 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
-    "not started": "Not started"
-  },
-  "zz_vertex_check": "Vertex AI translation check"
+    "not started": "Not started",
+    "zz_vertex_check": "Vertex AI translation check"
+  }
 }

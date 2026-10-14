@@ -291,7 +291,46 @@
       "help": "Help",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Star us"
+      "star": "Star us",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "In progress",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
+          "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
+          "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
+          "EXECUTION_RESTART": "Restarting {count} execution | Restarting {count} executions",
+          "EXECUTION_REPLAY": "Replaying {count} execution | Replaying {count} executions",
+          "EXECUTION_FORCE_RUN": "Force running {count} execution | Force running {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueuing {count} execution | Unqueuing {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Changing the status of {count} execution | Changing the status of {count} executions",
+          "EXECUTION_SET_LABELS": "Setting labels on {count} execution | Setting labels on {count} executions",
+          "TRIGGER_UNLOCK": "Unlocking {count} trigger | Unlocking {count} triggers",
+          "TRIGGER_DELETE": "Deleting {count} trigger | Deleting {count} triggers",
+          "TRIGGER_DISABLE": "Disabling {count} trigger | Disabling {count} triggers",
+          "TRIGGER_ENABLE": "Enabling {count} trigger | Enabling {count} triggers",
+          "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
+          "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
+          "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "processed": "{count} processed",
+        "rejected": "{count} rejected",
+        "elapsed": "running for {duration}"
+      },
+      "markAllRead": "Mark all as read",
+      "markUnread": "Mark as unread",
+      "markRead": "Mark as read",
+      "empty": "No notifications yet",
+      "emptyUnread": "No unread notifications",
+      "tabs": {
+        "all": "All",
+        "unread": "Unread"
+      },
+      "bellAriaLabel": "Notifications",
+      "bellAriaLabelRunning": "Notifications, operations in progress"
     },
     "source": "Source",
     "home": "Home",
@@ -349,6 +388,10 @@
     "no": "No",
     "change state done": "Task state has been updated",
     "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
+    "interrupt": "Interrupt",
+    "interrupt confirm": "Are you sure you want to interrupt the task run for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will terminate the running task inside the worker and set its state.",
+    "interrupt done": "Task run has been interrupted",
+    "interrupt target state": "Target state",
     "change state current state": "Current status is:",
     "change state hint": {
       "WARNING": [
@@ -450,6 +493,11 @@
     "show task source": "Show task source",
     "stream": "Stream",
     "execution statistics": "Execution statistics",
+    "execution_banner": {
+      "revision": "Revision {revision}",
+      "attempts": "{count} attempt | {count} attempts",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
     "usage": "Usage",
@@ -475,6 +523,7 @@
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Expression",
       "tree": "Tree",
       "raw_json": "Raw JSON",
       "select_prompt": "Select a variable to inspect its value.",
@@ -560,6 +609,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "A plugin component failed to load.",
       "autoInstall": {
         "failed": "Plugin installation failed",
         "failedHint": "The flow was not saved. Fix the issue or remove the plugin from the flow, then save again.",
@@ -617,6 +667,15 @@
       "nav_overview": "Overview",
       "nav_properties": "Properties",
       "non_dynamic": "non-dynamic",
+      "format": "Format",
+      "max_items": "Max items",
+      "max_length": "Max length",
+      "maximum": "Maximum",
+      "min_items": "Min items",
+      "min_length": "Min length",
+      "minimum": "Minimum",
+      "unit": "Unit",
+      "validation_regexp": "Validation RegExp",
       "possible_values": "Possible Values",
       "sub_type": "SubType",
       "required": "Required"
@@ -964,7 +1023,6 @@
     "warning detected": "Warning(s) detected.",
     "informative notice": "Note(s)",
     "open": "Open",
-    "dependency task": "Task {taskId} is a dependency of another task",
     "admin": "Admin",
     "main_configuration": "Main Configuration",
     "commit_id": "Commit id",
@@ -1101,7 +1159,6 @@
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
-    "relative": "Relative",
     "relative start date": "Relative start date",
     "absolute": "Absolute",
     "backfill": "Backfill",
@@ -1703,6 +1760,12 @@
     "item": "item",
     "items": "items",
     "iterations": "Iterations",
+    "loop_iterations_notice": {
+        "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
+        "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
+        "metrics": "Loop iterations run as separate sub-executions, so their metrics are not displayed here.",
+        "view_iterations": "View iterations"
+    },
     "cron": "Cron",
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",
@@ -1713,6 +1776,7 @@
     "custom value": "Custom value",
     "chart": "Chart",
     "no_code": {
+      "task_details": "Task details",
       "toggle_pebble": "Toggle Pebble editor",
       "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "adding": "+ Add a {what}",
@@ -1768,7 +1832,8 @@
         "inputs": "Select an input field type",
         "charts": "Select a chart type",
         "where": "Select a filter type",
-        "numerator": "Select a numerator"
+        "numerator": "Select a numerator",
+        "namespace_first": "Select a namespace first"
       },
       "creation": {
         "default": "Add",
@@ -2253,7 +2318,18 @@
           "issues": "{n} stale",
           "failed": "{n} failed",
           "last_run": "last run {ago}",
-          "unknown": "{n} not tracked"
+          "unknown": "{n} not tracked",
+          "tests_failed": "{n} with failing tests"
+        },
+        "tests": {
+          "pass": "{count} test | {count} tests",
+          "warn": "{count} test · warn | {count} tests · warn",
+          "fail": "{failed}/{total} failed",
+          "tooltip": {
+            "pass": "The {count} dbt test passed | All {count} dbt tests passed",
+            "warn": "{count} dbt test passed with warnings | {count} dbt tests passed, some with warnings",
+            "fail": "The dbt test failed | {failed} of {total} dbt tests failed"
+          }
         },
         "recent_runs": "Recent runs",
         "group_by": "Group by",
@@ -2414,6 +2490,7 @@
         "label": "{count} Error(s)"
       }
     },
+    "invalid_source_code": "Invalid source code",
     "source_search": {
       "cannot_select_read_only": "Cannot select — you lack edit permission on {namespace} / {id}",
       "collapse_all": "Collapse all",
@@ -2700,8 +2777,8 @@
       "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
     },
     "blocks": "Blocks",
-    "split_horizontal": "Split horizontally",
-    "split_vertical": "Split vertically",
+    "move_panel_to_bottom": "Move panel to bottom",
+    "move_panel_to_side": "Move panel to side",
     "pwa": {
       "install_title": "Install Kestra",
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
@@ -2710,6 +2787,7 @@
     },
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
-    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?"
+    "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
+    "not started": "Not started"
   }
 }

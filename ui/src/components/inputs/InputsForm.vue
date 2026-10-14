@@ -332,7 +332,7 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMessage, KsEditor, debounce} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor, State, debounce, escapeHtml} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
@@ -744,6 +744,9 @@
 
                 metadataCallback(data)
             } else if (props.execution !== undefined) {
+                if (!State.isPaused(props.execution.state.current)) {
+                    return
+                }
                 const options = {id: props.execution.id}
                 const data = await executionsStore.validateResume({...options, formData})
 
@@ -886,10 +889,10 @@
 
     function getFilePlaceholder(value: unknown): string {
         if (typeof value === "string" && value.startsWith("nsfile://")) {
-            return t("defaultsToNamespaceFile", {name: value.substring(10)})
+            return t("defaultsToNamespaceFile", {name: escapeHtml(value.substring(10))})
         }
         if (value && typeof value === "object" && "name" in value && typeof (value as {name: unknown}).name === "string") {
-            return (value as {name: string}).name
+            return escapeHtml((value as {name: string}).name)
         }
         return t("no_file_choosen")
     }
@@ -940,8 +943,12 @@
     })
     updateDefaults()
 
+    let stopInputsWatch: (() => void) | undefined
+    let unmounted = false
+
     validateInputs().then(() => {
-        watch(
+        if (unmounted) return
+        stopInputsWatch = watch(
             () => ({...inputsValues}),
             (val) => {
                 if (JSON.stringify(val) !== JSON.stringify(previousInputsValues.value)) {
@@ -980,6 +987,9 @@
     })
 
     onBeforeUnmount(() => {
+        unmounted = true
+        stopInputsWatch?.()
+        debouncedValidation.cancel()
         if (keyListener) {
             document.removeEventListener("keydown", keyListener)
         }
@@ -997,7 +1007,7 @@
         validateInputs()
     })
 
-    watch(() => props.execution, () => {
+    watch(() => props.execution?.id, () => {
         invalidateValidationCache()
         validateInputs()
     })

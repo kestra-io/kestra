@@ -7,11 +7,10 @@
 import {onMounted, onUnmounted} from "vue"
 import {switchTheme} from "../utils/utils"
 import type {SelectedTheme} from "../utils/utils"
-import type {useMiscStore} from "override/stores/misc"
 
 const THEMES: SelectedTheme[] = ["dark-2", "dark", "light"]
 
-export function useThemeCycle(miscStore: ReturnType<typeof useMiscStore>) {
+export function useThemeCycle(miscStore: {theme: SelectedTheme}) {
     function cycleTheme(e: KeyboardEvent) {
         if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "l") {
             const current = miscStore.theme ?? "light"

@@ -367,7 +367,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`) |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
@@ -402,9 +402,9 @@ If your `<style>` block needs to exist:
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
-| `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model` |
+| `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model`. A `#preview="{option}"` slot replaces the built-in miniature, `columns` lays the options out as a grid, `ariaLabel` names the radiogroup |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
-| `KsColorPicker` | Color picker |
+| `KsColorPicker` | Color picker; `alphaOnSurface` shows translucent colours over the page surface instead of a checkerboard |
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
 | `KsUpload` | File upload |

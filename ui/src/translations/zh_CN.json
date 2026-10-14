@@ -1770,6 +1770,8 @@
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",
     "last error was": "上次错误是",
+    "execution_paused": "执行已暂停",
+    "execution_paused_description": "此执行正在等待验证和恢复。",
     "active": "活动",
     "flows imported": "Flow已导入",
     "flows not imported": "未导入的Flows",
@@ -2067,6 +2069,7 @@
         "csv": "导出为 CSV",
         "ion": "导出到 ION"
       },
+      "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",

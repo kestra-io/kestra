@@ -1770,6 +1770,8 @@
     "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_failed": "निष्पादन FAILED!",
     "last error was": "अंतिम त्रुटि थी",
+    "execution_paused": "निष्पादन रुका हुआ",
+    "execution_paused_description": "यह निष्पादन सत्यापन और पुनरारंभ की प्रतीक्षा कर रहा है।",
     "active": "सक्रिय",
     "flows imported": "फ़्लोज़ आयात किए गए",
     "flows not imported": "Flows आयात नहीं किए गए",
@@ -2067,6 +2069,7 @@
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"
       },
+      "ignoredFilters": "{filters} फ़िल्टर इस चार्ट पर लागू नहीं होता। | {filters} फ़िल्टर इस चार्ट पर लागू नहीं होते।",
       "show_all_statuses": "सभी स्थितियाँ दिखाएँ",
       "quick_filters": {
         "all": "सभी",

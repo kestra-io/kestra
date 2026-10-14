@@ -511,8 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "로그인 후",
       "execution_tab": "실행 {id} · {tab} 탭",
-      "tab": "{tab} 탭",
-      "execution": "실행 {id}"
+      "execution": "실행 {id}",
+      "tab": "{tab} 탭"
     },
     "concurrency limits": "동시성 제한",
     "system overview": "시스템 개요",

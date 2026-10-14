@@ -511,8 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "サインイン後",
       "execution_tab": "実行 {id} · {tab} タブ",
-      "tab": "{tab} タブ",
-      "execution": "実行 {id}"
+      "execution": "実行 {id}",
+      "tab": "{tab} タブ"
     },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",

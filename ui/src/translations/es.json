@@ -511,8 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "Tras iniciar sesión",
       "execution_tab": "Ejecución {id} · pestaña {tab}",
-      "tab": "Pestaña {tab}",
-      "execution": "Ejecución {id}"
+      "execution": "Ejecución {id}",
+      "tab": "Pestaña {tab}"
     },
     "concurrency limits": "Límites de Concurrencia",
     "system overview": "Visión General del Sistema",

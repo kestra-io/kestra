@@ -511,8 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "Après la connexion",
       "execution_tab": "Exécution {id} · onglet {tab}",
-      "tab": "Onglet {tab}",
-      "execution": "Exécution {id}"
+      "execution": "Exécution {id}",
+      "tab": "Onglet {tab}"
     },
     "concurrency limits": "Limites de Concurrence",
     "system overview": "Vue d'ensemble du système",

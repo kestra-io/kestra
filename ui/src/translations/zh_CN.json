@@ -511,8 +511,8 @@
     "login_redirect_hint": {
       "after_sign_in": "登录后",
       "execution_tab": "执行 {id} · {tab} 标签页",
-      "tab": "{tab} 标签页",
-      "execution": "执行 {id}"
+      "execution": "执行 {id}",
+      "tab": "{tab} 标签页"
     },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",

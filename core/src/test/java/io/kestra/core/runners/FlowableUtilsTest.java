@@ -529,6 +529,21 @@ class FlowableUtilsTest {
         assertThat(result.getLeft()).containsExactly("x", "y");
     }
 
+    @Test
+    void readLoopValuesFromUri_shouldNotParseRecordsAfterTheRequestedOnes() throws Exception {
+        // Given: valid records followed by a malformed one that must not be reached
+        RunContext runContext = runContextFactory.of();
+        Path path = runContext.workingDir().createTempFile(".ion");
+        Files.writeString(path, "\"a\"\n\"b\"\n\"c\"\n{broken\n");
+        URI uri = runContext.storage().putFile(path.toFile());
+
+        // When
+        Pair<List<String>, Long> result = FlowableUtils.readLoopValuesFromUri(runContext, uri.toString(), 0, 2);
+
+        // Then
+        assertThat(result.getLeft()).containsExactly("a", "b");
+    }
+
     /** Creates a text ION file from a list of strings, stores it, and returns its kestra:// URI. */
     private URI createIonFile(RunContext runContext, List<String> values) throws IOException {
         Path path = runContext.workingDir().createTempFile(".ion");

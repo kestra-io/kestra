@@ -287,23 +287,18 @@ class NamespaceFileControllerTest {
     }
 
     @Test
-    void moveFileDirectoryWithOpaqueUriFromReturns422() {
+    void shouldMoveFileWhenFromLooksLikeOpaqueUri() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class,
-            () -> client
-                .toBlocking()
-                .exchange(
-                    HttpRequest.PUT(
-                        "/api/v1/main/namespaces/" + namespace + "/files?from=a:b&to=/x.txt",
-                        null
-                    )
-                )
-        );
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/a:b"), new ByteArrayInputStream("Hello".getBytes()));
 
-        assertThat(e.getStatus().getCode())
-            .as("a non-hierarchical 'from' is a validation error, not an unhandled 500")
-            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        client.toBlocking().exchange(HttpRequest.PUT(
+            "/api/v1/main/namespaces/" + namespace + "/files?from=a:b&to=/x.txt",
+            null
+        ));
+
+        assertThat(namespaceStorage.exists(Path.of("/a:b"))).isFalse();
+        assertThat(namespaceStorage.exists(Path.of("/x.txt"))).isTrue();
     }
 
     @Test

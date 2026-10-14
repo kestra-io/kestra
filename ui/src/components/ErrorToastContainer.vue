@@ -4,14 +4,14 @@
         @click="fixWithAi"
         size="small"
     >
-        <AiIcon class="me-1" />
+        <AiIcon class="fix-with-ai-icon" />
         <span>{{ $t("fix_with_ai") }}</span>
     </KsButton>
 
     <KsMarkdown :content="detail" v-if="items.length === 0" />
 
     <ul v-else class="problem-errors">
-        <li v-for="(item, index) in items" :key="index" class="font-monospace">
+        <li v-for="(item, index) in items" :key="index" class="problem-error-item">
             <template v-if="fieldLabel(item)">
                 <!-- The JSON Pointer is kept as the tooltip: it is the machine locator, and the one a
                      jump-to-line feature would resolve against the submitted document. -->
@@ -83,13 +83,18 @@
 </script>
 
 <style scoped lang="scss">
+    .fix-with-ai-icon {
+        margin-inline-end: var(--ks-spacing-1);
+    }
+
     .problem-errors {
         margin: var(--ks-spacing-4) 0 0;
         padding: 0;
         list-style-type: none;
     }
 
-    .problem-errors li {
+    .problem-error-item {
+        font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-sm);
         margin-top: var(--ks-spacing-2);
     }

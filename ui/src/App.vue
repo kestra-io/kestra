@@ -48,6 +48,7 @@
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
     import {revealApp} from "./utils/loaderReveal"
+    import {setDocumentTitle} from "./utils/documentTitle"
     import {storageKeys} from "./utils/constants"
 
     // Dev-only, dynamically imported so the component is entirely absent from production bundles:
@@ -94,14 +95,13 @@
 
         if (config.version) {
             await docStore.initResourceUrlTemplate(config.version)
-        }
-
-        if (config.version && config.uuid) {
-            apiStore.loadFeeds({
-                version: config.version,
-                iid: config.uuid,
-                uid: uid,
-            })
+            if (config.uuid) {
+                apiStore.loadFeeds({
+                    version: config.version,
+                    iid: config.uuid,
+                    uid: uid,
+                })
+            }
         }
 
         void initPosthogIfEnabled(config)
@@ -117,7 +117,9 @@
     }
 
     watch(() => route?.meta?.anonymous, async (anonymous) => {
-        if (!anonymous && BasicAuth.isLoggedIn()) {
+        if (anonymous) {
+            setDocumentTitle()
+        } else if (BasicAuth.isLoggedIn()) {
             try {
                 await loadGeneralResources()
             } catch (error) {

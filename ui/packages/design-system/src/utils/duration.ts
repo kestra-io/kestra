@@ -51,7 +51,7 @@ export function duration(isoString: string) {
 
 export function humanDuration(
     value: number | string,
-    options?: HumanizeDurationOptions & { languages?: any },
+    options?: HumanizeDurationOptions & {languages?: typeof humanizeDurationLanguages},
 ) {
     options = options || {maxDecimalPoints: 2}
     options.spacer = ""

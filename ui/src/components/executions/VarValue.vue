@@ -91,6 +91,7 @@
 </template>
 
 <script setup lang="ts">
+    import {handledIf} from "../../utils/kestraHttp"
     import {computed, ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -98,7 +99,7 @@
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {apiUrl} from "override/utils/route"
+    import {executionFileUrl} from "../../utils/executionUtils"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
     import * as Utils from "../../utils/utils"
@@ -227,7 +228,7 @@
     )
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`
+        return executionFileUrl(props.execution?.id, value)
     }
 
     const jsonlUrl = (value: string): string => {
@@ -239,12 +240,15 @@
             humanSize.value = ""
             fileStatus.value = "loading"
 
-            const data = await ExecutionsAPI.fileMetadatasFromExecution({
-                executionId: props.execution.id, 
-                path: props.value.toString(),
-            }, {
-                validateStatus: (status: number) => status === 200 || status === 404 || status === 422,
-            })
+            let data
+            try {
+                data = await ExecutionsAPI.fileMetadatasFromExecution({
+                    executionId: props.execution.id, 
+                    path: props.value.toString(),
+                })
+            } catch (e: unknown) {
+                if (!handledIf(e, [404, 422])) throw e
+            }
             if(!data){
                 fileStatus.value = "missing"
                 return

@@ -229,7 +229,7 @@ export function generateDagreGraph(
             const nodeChild = edgeReplacer[cluster.cluster.uid]
                 ? edgeReplacer[cluster.cluster.uid]
                 : cluster.cluster.uid
-            if (!hiddenNodes.includes(nodeChild)) {
+            if (!hiddenNodes.includes(nodeChild) || collapsed.has(nodeChild)) {
                 dagreGraph.setParent(nodeChild, cluster.parents[cluster.parents.length - 1])
             }
         }
@@ -819,6 +819,12 @@ export function generateGraph(
 
     for (const cluster of clusters) {
         const clusterNodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
+        const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== clusterNodeUid
+        const parentClusterUid = cluster.parents?.[cluster.parents.length - 1]
+        if (collapsed.has(clusterNodeUid) && !absorbedByParent && parentClusterUid) {
+            const parentCluster = rawClusters.find((c) => c.uid === parentClusterUid)
+            if (parentCluster) clusterByNodeUid[clusterNodeUid] = parentCluster
+        }
         if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(clusterNodeUid)) {
             if (
                 cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
@@ -835,6 +841,7 @@ export function generateGraph(
                 ? cluster.parents[cluster.parents.length - 1]
                 : undefined
             const clusterColor = computeClusterColor(cluster.cluster)
+            const childTaskIds = getClusterChildTaskIds(cluster, nodeByUid)
 
             const clusterPosition = getNodePosition(
                 dagreNode,
@@ -862,7 +869,7 @@ export function generateGraph(
                     padding: "0.5rem",
                 },
                 data: {
-                    collaspsible: true,
+                    collaspsible: childTaskIds.length > 0,
                     color: clusterColor,
                     // The triggers box is the only place a trigger can be added from the canvas:
                     // triggers are not tasks, so no edge `+` ever targets them.
@@ -878,7 +885,7 @@ export function generateGraph(
                     // Parallel/Sequential/If/… lane; `Triggers` and a subflow call keep their own
                     // node and menu.
                     isFlowableLane: isTrueFlowableCluster(cluster.cluster),
-                    childTaskIds: getClusterChildTaskIds(cluster, nodeByUid),
+                    childTaskIds,
                     executionId: cluster.cluster.taskNode
                         ? nodeByUid[cluster.cluster.taskNode.uid]?.executionId
                         : undefined,

@@ -12,11 +12,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.RestartWorkingDirectory;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerJobEvent;
+import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.Disposable;
@@ -46,6 +52,7 @@ class StickyJobVNodeSubscriberTest {
     private final WorkerJobDispatcher dispatcher = mock(WorkerJobDispatcher.class);
     private final StickyWorkerRouting routing = mock(StickyWorkerRouting.class);
     private final KeyedDispatchQueueInterface<WorkerJobEvent> queue = mock(KeyedDispatchQueueInterface.class);
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue = mock(DispatchQueueInterface.class);
     private final QueueSubscriber<WorkerJobEvent> vNodeSubscriber = mock(QueueSubscriber.class);
     private final StickyJobVNodeSubscriber subscriber = subscriber();
 
@@ -99,11 +106,23 @@ class StickyJobVNodeSubscriberTest {
     }
 
     @Test
-    void shouldDropTheJobOfAWorkerThatIsNoLongerRunning() throws QueueException {
+    void shouldRestartTheWorkingDirectoryOfAJobWhoseWorkerIsLost() throws QueueException {
         when(routing.locate("worker-2")).thenReturn(new StickyWorkerRouting.WorkerLocation.Lost());
+        TaskRun taskRun = TaskRun.builder().id("child-run").executionId("execution").taskId("child").state(new State()).build();
+        WorkerTask workerTask = WorkerTask.builder().taskRun(taskRun).workingDirectoryId("working-directory-run").build();
 
-        vNodeConsumer.accept(Either.left(notConnectedJob(null)));
+        WorkerJobEvent job = new WorkerJobEvent(null, workerTask, new WorkerJobEvent.StickyRouting("worker-2", StickyWorkerRouting.routingKey(3)));
+        when(dispatcher.dispatchSticky(job)).thenReturn(WorkerJobDispatcher.StickyDispatchResult.WORKER_NOT_CONNECTED);
 
+        vNodeConsumer.accept(Either.left(job));
+
+        ArgumentCaptor<ExecutionCommand> command = ArgumentCaptor.captor();
+        verify(executionCommandQueue).emit(command.capture());
+        assertThat(command.getValue()).isInstanceOfSatisfying(RestartWorkingDirectory.class, restart ->
+        {
+            assertThat(restart.workingDirectoryTaskRunId()).isEqualTo("working-directory-run");
+            assertThat(restart.lostTaskRunId()).isEqualTo("child-run");
+        });
         verify(queue, never()).emit(any(), any(WorkerJobEvent.class));
         verify(dispatcher, never()).failSticky(any());
     }
@@ -186,7 +205,7 @@ class StickyJobVNodeSubscriberTest {
 
         ServerConfig serverConfig = mock(ServerConfig.class);
         when(serverConfig.liveness()).thenReturn(new ServerConfig.Liveness(true, Duration.ofSeconds(5), Duration.ofSeconds(45), Duration.ofSeconds(45), Duration.ofSeconds(3)));
-        StickyJobVNodeSubscriber stickyJobVNodeSubscriber = new StickyJobVNodeSubscriber(queue, routing, channel, serverConfig);
+        StickyJobVNodeSubscriber stickyJobVNodeSubscriber = new StickyJobVNodeSubscriber(queue, executionCommandQueue, routing, channel, serverConfig);
         stickyJobVNodeSubscriber.init(dispatcher);
         stickyJobVNodeSubscriber.start("controller-1");
 

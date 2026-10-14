@@ -66,12 +66,12 @@
     import action from "../../models/action"
     import {State} from "@kestra-io/design-system"
     import type {Execution} from "../../stores/executions"
-    import type {TaskRun} from "@kestra-io/kestra-sdk"
+    import type {ExecutionTaskRun} from "./executionTaskRun"
 
     const props = withDefaults(defineProps<{
         component?: string
         execution: Execution
-        taskRun: TaskRun
+        taskRun: ExecutionTaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",

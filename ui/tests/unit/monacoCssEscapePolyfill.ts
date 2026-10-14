@@ -34,9 +34,9 @@ function cssEscape(value: string): string {
 
 export function installMonacoCssEscapePolyfill(): void {
     if (typeof globalThis.CSS === "undefined") {
-        (globalThis as any).CSS = {}
+        Object.assign(globalThis, {CSS: {}})
     }
     if (typeof globalThis.CSS.escape !== "function") {
-        (globalThis as any).CSS.escape = cssEscape
+        Object.assign(globalThis.CSS, {escape: cssEscape})
     }
 }

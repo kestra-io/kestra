@@ -1,0 +1,17 @@
+id: sla-flow-trigger-listener
+namespace: io.kestra.tests
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT1S
+  - id: alert
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ trigger.executionId }}"
+
+triggers:
+  - id: listen
+    type: io.kestra.plugin.core.trigger.Flow
+    states:
+      - FAILED
+    when: "{{ flow.id == 'sla-flow-trigger-source' }}"

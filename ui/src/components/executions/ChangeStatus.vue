@@ -16,7 +16,7 @@
                 <p v-html="$t('change state confirm', {id: escapeHtml(execution.id), task: escapeHtml(taskRun?.taskId ?? '')})" />
 
                 <p>
-                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun?.state?.current" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun?.state?.current ?? ''" />
                 </p>
 
                 <KsSelect

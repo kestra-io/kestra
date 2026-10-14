@@ -1,5 +1,5 @@
 <template>
-    <span class="d-none" />
+    <span class="error-toast" />
 </template>
 
 <script setup lang="ts">
@@ -110,6 +110,10 @@
 </script>
 
 <style lang="scss" scoped>
+    .error-toast {
+        display: none;
+    }
+
     .error-notification {
         max-height: 90svh;
 

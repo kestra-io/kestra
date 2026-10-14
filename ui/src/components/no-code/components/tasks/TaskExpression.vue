@@ -42,7 +42,7 @@
     }
     const emit = defineEmits(["update:modelValue"])
 
-    function onInput(value: any) {
+    function onInput(value: unknown) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 

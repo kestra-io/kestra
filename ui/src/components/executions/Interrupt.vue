@@ -32,7 +32,9 @@
                     >
                         <template #default>
                             <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <span v-html="item.label" />
+                            <i18n-t keypath="mark as" tag="span">
+                                <template #status><code>{{ item.code }}</code></template>
+                            </i18n-t>
                         </template>
                     </KsOption>
                 </KsSelect>
@@ -66,12 +68,12 @@
     import action from "../../models/action"
     import {State} from "@kestra-io/design-system"
     import type {Execution} from "../../stores/executions"
-    import type {TaskRun} from "@kestra-io/kestra-sdk"
+    import type {ExecutionTaskRun} from "./executionTaskRun"
 
     const props = withDefaults(defineProps<{
         component?: string
         execution: Execution
-        taskRun: TaskRun
+        taskRun: ExecutionTaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
@@ -99,7 +101,6 @@
         ].map((value: string) => {
             return {
                 code: value,
-                label: t("mark as", {status: value}),
                 disabled: false,
             }
         })

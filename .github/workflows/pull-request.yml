@@ -169,8 +169,6 @@ jobs:
     # can be gated on it and a repository without it skips generation instead of failing.
     env:
       HAS_GCP_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT != '' }}
-      GOOGLE_CLOUD_PROJECT: kestra-prd
-      GOOGLE_CLOUD_LOCATION: global
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
@@ -199,6 +197,11 @@ jobs:
         if: env.HAS_GCP_CREDENTIALS == 'true'
         run: npm run translations:generate
         working-directory: ui
+        # Set here and not on the job: the auth step exports `GOOGLE_CLOUD_PROJECT` (the project the key
+        # belongs to), which would override a job-level value and send the calls to the wrong project.
+        env:
+          GOOGLE_CLOUD_PROJECT: kestra-prd
+          GOOGLE_CLOUD_LOCATION: global
 
       - name: Commit them onto the pull request
         if: env.HAS_GCP_CREDENTIALS == 'true'

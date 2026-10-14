@@ -68,6 +68,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.core.worker.models.WorkerInfo;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.worker.WorkerAgent;
@@ -196,7 +197,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             applicationContext.getBean(MaintenanceService.class),
             applicationContext.getBean(MetricRegistry.class),
             applicationContext.getBean(ServerConfig.class),
-            applicationContext.getBean(WorkerConfig.class)
+            applicationContext.getBean(WorkerConfig.class),
+            new WorkerInfo()
         );
     }
 

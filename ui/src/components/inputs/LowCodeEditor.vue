@@ -64,21 +64,23 @@
                 </slot>
             </template>
             <template #taskActions="taskProps">
-                <TaskRunActions
-                    v-if="isReadOnly && taskProps.execution && taskProps.taskRun"
-                    class="node-action-button"
-                    :taskRun="taskProps.taskRun"
-                    :taskType="taskProps.task?.type"
-                    :taskRuns="taskProps.taskRuns"
-                    :execution="taskProps.execution"
-                    :flow="flowStore.flow"
-                    :nodeActions="taskProps.actions
-                        .filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))
-                        .map((a, i) => i === 0 ? {...a, divided: true} : a)
-                    "
-                    @follow="$emit('follow', $event)"
-                />
-                <NodeMenu v-else :actions="taskProps.actions" />
+                <template v-for="context in [taskActionsContext(taskProps.execution?.id, taskProps.taskRun?.id, taskProps.taskRuns.map(run => run.id))]" :key="taskProps.taskRun?.id">
+                    <TaskRunActions
+                        v-if="isReadOnly && context"
+                        class="node-action-button"
+                        :taskRun="context.taskRun"
+                        :taskType="taskProps.task?.type"
+                        :taskRuns="context.taskRuns"
+                        :execution="context.execution"
+                        :flow="flowStore.flow"
+                        :nodeActions="taskProps.actions
+                            .filter(a => !EXCLUDED_NODE_ACTIONS.includes(a.key))
+                            .map((a, i) => i === 0 ? {...a, divided: true} : a)
+                        "
+                        @follow="$emit('follow', $event)"
+                    />
+                    <NodeMenu v-else :actions="taskProps.actions" />
+                </template>
             </template>
         </Topology>
 
@@ -121,7 +123,7 @@
         <KsDialog
             v-if="isTaskModalOpen && taskModalCtx"
             v-model="isTaskModalOpen"
-            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
+            :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? $t('no_code.task_details')"
             :destroyOnClose="true"
             :appendToBody="true"
             scrollable
@@ -375,6 +377,18 @@
     const executionsStore = useExecutionsStore()
     const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
+
+    function taskActionsContext(executionId: string | undefined, taskRunId: string | undefined, taskRunIds: string[]) {
+        const execution = executionId === executionsStore.execution?.id
+            ? executionsStore.execution
+            : Object.values(executionsStore.subflowsExecutions).find(execution => execution.id === executionId)
+        const taskRuns = taskRunIds.flatMap(id => {
+            const run = execution?.taskRunList?.find(run => run.id === id)
+            return run ? [run] : []
+        })
+        const taskRun = execution?.taskRunList?.find(run => run.id === taskRunId)
+        return execution && taskRun ? {execution, taskRun, taskRuns} : undefined
+    }
 
     const exec = computed(() => executionsStore.execution as any as Execution)
 
@@ -693,7 +707,7 @@
     const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
     const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
-    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem("defaultLogLevel")))
+    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL)))
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)
@@ -753,19 +767,23 @@
         },
     )
 
-    const observeWidth = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(function () {
-                clearTimeout(timer.value)
-                timer.value = setTimeout(() => {
-                    nextTick(() => {
-                        fitView()
-                    })
-                }, 50) as any
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
+    let resizeObserver: ResizeObserver | undefined
+
+    const observeResize = (onResize: () => void) => {
+        resizeObserver?.disconnect()
+        if (!vueFlow.value) return
+        resizeObserver = new ResizeObserver(onResize)
+        resizeObserver.observe(vueFlow.value)
     }
+
+    const observeWidth = () => observeResize(() => {
+        clearTimeout(timer.value)
+        timer.value = setTimeout(() => {
+            nextTick(() => {
+                fitView()
+            })
+        }, 50) as any
+    })
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
@@ -902,7 +920,7 @@
     }
 
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowErrors, flowStore.flowParsed),
+        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({
@@ -958,7 +976,10 @@
         }
     })
 
-    onBeforeUnmount(() => window.removeEventListener("keydown", onPickerEscape))
+    onBeforeUnmount(() => {
+        window.removeEventListener("keydown", onPickerEscape)
+        resizeObserver?.disconnect()
+    })
 
     const shortcutsOpen = ref(false)
     const shortcutGroups = buildShortcutGroups({supportsClipboard: false})
@@ -1198,7 +1219,6 @@
         props: {},
         flowYaml: flowSource,
         validationIssuesByTask,
-        inlineEditPanel: ref(),
         createTask: createNestedBlock,
         editTask: (parentPath, blockSchemaPath, refPath) => pushModalTarget({parentPath, blockSchemaPath, refPath}),
         closeTask: () => closeModal(),
@@ -1206,17 +1226,12 @@
         saveFlow: () => saveFlow(),
     })
 
-    const fitViewOrientation = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(() => {
-                clearTimeout(timer.value)
-                nextTick(() => {
-                    fitView()
-                })
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
-    }
+    const fitViewOrientation = () => observeResize(() => {
+        clearTimeout(timer.value)
+        nextTick(() => {
+            fitView()
+        })
+    })
 
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value

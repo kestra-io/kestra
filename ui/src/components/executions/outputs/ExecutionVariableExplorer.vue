@@ -34,6 +34,13 @@
                                 </KsIconButton>
                             </div>
 
+                            <LoopIterationsNotice
+                                v-if="selectedLoopTaskId"
+                                kind="outputs"
+                                :taskId="selectedLoopTaskId"
+                                class="viewer-notice"
+                            />
+
                             <template v-if="selectedValue === undefined">
                                 <KsNoData
                                     :title="$t('variable_explorer.select_prompt')"
@@ -140,14 +147,17 @@
     import Download from "vue-material-design-icons/Download.vue"
 
     import {useExecutionsStore, type Execution} from "../../../stores/executions"
-    import {loadExecutionOutputs} from "../../../composables/useTaskRunOutputs"
+    import {loadExecutionOutputs, loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
+    import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
+    import {loopTaskIds} from "../../../utils/flowUtils"
     import FilePreview from "../FilePreview.vue"
+    import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -204,6 +214,7 @@
             type: valueType(value),
             preview: preview(value),
             expression: `${prefix}${formatStep(label)}`,
+            isExpression: typeof value === "string" && (value.includes("{{") || value.includes("{%")),
         }))
     }
 
@@ -243,10 +254,9 @@
 
             flowOutputs.value = await loadExecutionOutputs(id)
 
-            const data = await OutputsAPI.taskOutputsInformation({
-                executionId: id,
-            }, {
-                validateStatus: (s: number) => s === 200 || s === 404,
+            const data = await OutputsAPI.taskOutputsInformation({executionId: id}).catch((e: unknown) => {
+                if (handledIf(e, [404])) return []
+                throw e
             })
 
             const metaByRunId: Record<string, TaskOutputMeta> = {}
@@ -279,14 +289,7 @@
             return cached
         }
 
-        const data = await OutputsAPI.taskRunOutputs({
-            taskRunId,
-            executionId: id,
-        }, {
-            validateStatus: (s: number) => s === 200 || s === 404,
-        })
-
-        const outputs = data || {}
+        const outputs = await loadTaskRunOutputs(id, taskRunId)
         taskOutputs.value = {...taskOutputs.value, [taskRunId]: outputs}
         return outputs
     }
@@ -320,14 +323,14 @@
         void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
-    function isOutputTaskAFile(item: any): item is { uri: string } {
+    function isOutputTaskAFile(item: unknown): item is { uri: string } {
         if(!item || typeof item !== "object") {
             return false
         }
-        if(!Utils.isFile(item.uri)) {
-            return false
-        }
-        return true
+
+        const uri = (item as { uri?: unknown }).uri
+
+        return typeof uri === "string" && Utils.isFile(uri)
     }
 
     const taskItems = computed<ExplorerItem[]>(() => {
@@ -399,6 +402,7 @@
 
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
+    const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
     const expression = ref<string>(seededExpression())
@@ -452,6 +456,8 @@
             selectedValue.value = item.value
         }
         selectedBase.value = item.expression
+        selectedTaskId.value = (execution.value?.taskRunList ?? [])
+            .find((taskRun) => taskRun.id === item.taskRunId)?.taskId
         expressionPath.value = item.expression
         previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
@@ -471,9 +477,20 @@
             previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
             expression.value = `{{ ${debugPath} }}`
         }else {
-            expression.value = `{{ ${baseExpressionPath} }}`
+            expression.value = item.isExpression
+                ? `{{ render(${baseExpressionPath}) }}`
+                : `{{ ${baseExpressionPath} }}`
         }
     }
+
+    const selectedLoopTaskId = computed(() => {
+        const taskId = selectedTaskId.value
+        if (!taskId || !loopTaskIds(executionsStore.flow).has(taskId)) {
+            return undefined
+        }
+        const iterationCount = (selectedValue.value as {iterationCount?: unknown} | undefined)?.iterationCount
+        return Number(iterationCount) > 0 ? taskId : undefined
+    })
 
     /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
     const debuggedFileUri = computed(() => {
@@ -548,7 +565,6 @@
     &__panel--main {
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-spacing-2);
-        padding-inline-end: var(--ks-spacing-2);
         overflow: hidden;
     }
 
@@ -559,6 +575,10 @@
     &__panel--debug {
         border-left: 1px solid var(--ks-border-default);
     }
+}
+
+.viewer-notice {
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) 0;
 }
 
 :deep(.kel-splitter),
@@ -574,8 +594,10 @@
 .viewer {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    min-height: 100%;
+    width: calc(100% - var(--ks-spacing-2));
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
     background-color: var(--ks-bg-surface);
 
     &__header {

@@ -150,7 +150,7 @@ jobs:
   # The scheduled `auto-translate-ui-keys.yml` still runs independently and remains the way to
   # translate `develop` or to force a full re-translation from a branch.
   #
-  # Branches in this repository only: a fork PR gets no OIDC token to reach Vertex AI and its branch
+  # Branches in this repository only: a fork PR is withheld the GCP credentials and its branch
   # cannot be pushed to with `GITHUB_TOKEN`. Those PRs still get the check below, they just have to run the
   # generator themselves.
   translations-generate:
@@ -164,45 +164,44 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
-      # Workload Identity Federation: the job trades its OIDC token for Vertex AI access.
-      id-token: write
-    # Gemini is reached through Vertex AI. The service account is a repository variable, and the steps
-    # are gated on it so a repository that has not set it up yet skips generation instead of failing.
+    # Gemini is reached through Vertex AI with the `GCP_SERVICE_ACCOUNT` key. The secret itself is never
+    # put in the job env, where `npm ci` would see it: only whether it is set is mirrored, so the steps
+    # can be gated on it and a repository without it skips generation instead of failing.
     env:
+      HAS_GCP_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT != '' }}
       GOOGLE_CLOUD_PROJECT: kestra-prd
       GOOGLE_CLOUD_LOCATION: global
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
-        if: vars.GCP_TRANSLATIONS_SERVICE_ACCOUNT != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        if: vars.GCP_TRANSLATIONS_SERVICE_ACCOUNT != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           node-version-file: 'ui/.nvmrc'
 
       - name: Install Node dependencies
-        if: vars.GCP_TRANSLATIONS_SERVICE_ACCOUNT != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         run: npm ci
         working-directory: ui
 
       - name: Authenticate to Google Cloud
-        if: vars.GCP_TRANSLATIONS_SERVICE_ACCOUNT != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          workload_identity_provider: projects/230725787862/locations/global/workloadIdentityPools/github/providers/github
-          service_account: ${{ vars.GCP_TRANSLATIONS_SERVICE_ACCOUNT }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Generate missing and stale translations
-        if: vars.GCP_TRANSLATIONS_SERVICE_ACCOUNT != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         run: npm run translations:generate
         working-directory: ui
 
       - name: Commit them onto the pull request
-        if: vars.GCP_TRANSLATIONS_SERVICE_ACCOUNT != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         # The branch name is chosen by whoever pushed it, so keep it out of the script itself:
         # interpolated directly, a `$(...)` in the name would run on the runner.
         env:

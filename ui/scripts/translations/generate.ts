@@ -10,8 +10,8 @@
  *   GOOGLE_CLOUD_PROJECT=... node --experimental-strip-types ui/scripts/translations/generate.ts [true]
  *
  * Gemini is reached through Vertex AI with Application Default Credentials, never an AI Studio API
- * key: locally run `gcloud auth application-default login` first; CI authenticates through
- * Workload Identity Federation. `GOOGLE_CLOUD_LOCATION` defaults to `global`.
+ * key: locally run `gcloud auth application-default login` first; CI authenticates with the
+ * `GCP_SERVICE_ACCOUNT` key. `GOOGLE_CLOUD_LOCATION` defaults to `global`.
  *
  * Keys whose English source has changed since they were last translated are detected from the
  * fingerprint files below and re-translated automatically. The optional positional "true" forces a

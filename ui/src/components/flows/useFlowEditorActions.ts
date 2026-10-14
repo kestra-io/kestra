@@ -234,7 +234,7 @@ export function useFlowEditorActions() {
                     labels: ["system.from:ui"],
                 })
 
-                executionsStore.execution = response
+                executionsStore.applyLocalExecutionUpdate(response)
 
                 await router.push({
                     name: "executions/update/gantt",

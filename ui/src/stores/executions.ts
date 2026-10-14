@@ -140,6 +140,29 @@ export function normalizeFilePreview(data: FilePreview): FilePreview {
     return {...data, type: "TEXT", content}
 }
 
+/** Minimum delay between two SSE snapshots applied to `execution`. */
+export const EXECUTION_UPDATE_THROTTLE_MS = 500
+
+// Newest state-history date across the execution, its task runs and their attempts. Task runs can
+// be removed (retries, restarts, loop iterations) but every such change also adds a new state
+// entry, so this only moves forward. There is no server-side version or update timestamp on an
+// execution to compare instead. Dates come from executor and worker clocks, so skew between
+// nodes can make a newer snapshot look older; the guard below only acts right after a save.
+function latestStateDate(data: Execution): number {
+    const histories = [
+        ...(data.state?.histories ?? []),
+        ...(data.taskRunList ?? []).flatMap(taskRun => [
+            ...(taskRun.state?.histories ?? []),
+            ...(taskRun.attempts ?? []).flatMap(attempt => attempt.state?.histories ?? []),
+        ]),
+    ]
+    // reduce, not Math.max(...): a large execution can hold more entries than a call takes arguments.
+    return histories.reduce((latest, history) => {
+        const date = Date.parse(history.date)
+        return date > latest ? date : latest
+    }, Number.NEGATIVE_INFINITY)
+}
+
 export const useExecutionsStore = defineStore("executions", () => {
     const executions = ref<Execution[] | undefined>(undefined)
     const execution = ref<Execution | undefined>(undefined)
@@ -250,9 +273,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const waitForStateChange = async (source: Execution) => {
-        const updated = await ExecutionUtils.waitForState(axios, source) as Execution
-        execution.value = updated
-        return updated
+        return await ExecutionUtils.waitForState(axios, source) as Execution
     }
 
     const kill = (options: { id: string; isOnKillCascade?: boolean }) => {
@@ -300,6 +321,17 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
+    // Set by applySavedExecution. An SSE snapshot of the same execution that has not moved past the
+    // save was emitted before it and would revert it, so throttledExecutionUpdate drops it. Cleared
+    // by any other write and by the first snapshot that passes: the follow stream is ordered, so
+    // nothing older can come after it.
+    let lastSave: {id: string; latestStateDate: number} | undefined
+
+    function applyExecution(data: Execution | undefined) {
+        lastSave = undefined
+        execution.value = data
+    }
+
     let latestExecutionLoad = 0
 
     /** A superseded load is dropped, as in `stores/logs.ts`, and cancels the pending throttled update so a
@@ -310,9 +342,31 @@ export const useExecutionsStore = defineStore("executions", () => {
             if (load !== latestExecutionLoad) return data
 
             throttledExecutionUpdate.cancel()
-            execution.value = data
+            applyExecution(data)
             return execution.value
         })
+    }
+
+    // For an execution the caller already has in hand: a throttled SSE update queued before it
+    // must not land on top of it.
+    const applyLocalExecutionUpdate = (data: Execution) => {
+        throttledExecutionUpdate.cancel()
+        applyExecution(data)
+    }
+
+    // For the server response to a change made on this page (e.g. SetLabels.vue's save): on top of
+    // the above, an SSE snapshot emitted before the save but delivered after it is dropped.
+    const applySavedExecution = (data: Execution) => {
+        applyLocalExecutionUpdate(data)
+        lastSave = {id: data.id, latestStateDate: latestStateDate(data)}
+    }
+
+    // Counterpart to applyLocalExecutionUpdate for the "nothing to show" case (route left,
+    // playground cleared, etc.) - same cancellation, so a pending SSE push can't repopulate
+    // execution.value right after something deliberately emptied it.
+    const clearExecution = () => {
+        throttledExecutionUpdate.cancel()
+        applyExecution(undefined)
     }
 
     function toExecutionSearchParams(options: ExecutionSearchOptions) {
@@ -409,7 +463,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             deleteMetrics: options.deleteMetrics,
             deleteStorage: options.deleteStorage,
         }).then(() => {
-            execution.value = undefined
+            clearExecution()
         })
     }
 
@@ -436,27 +490,27 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
-        const flowValue = flow.value
-        execution.value = parsedExecution
-        const currentExecution = execution.value
+        if (lastSave?.id === parsedExecution.id && latestStateDate(parsedExecution) <= lastSave.latestStateDate) {
+            return
+        }
 
-        if ((!flowValue ||
+        const flowValue = flow.value
+        const needsFlowReload = !flowValue ||
             parsedExecution.flowId !== flowValue.id ||
             parsedExecution.namespace !== flowValue.namespace ||
-            parsedExecution.flowRevision !== flowValue.revision)
-        ) {
+            parsedExecution.flowRevision !== flowValue.revision
+
+        applyExecution(parsedExecution)
+
+        if (needsFlowReload) {
             loadFlowForExecutionByExecutionId(
                 {
                     id: parsedExecution.id,
                     revision: route.query.revision?.toString(),
                 },
-            ).then(() => {
-                if (execution.value === currentExecution) {
-                    execution.value = parsedExecution
-                }
-            })
+            )
         }
-    }, 500)
+    }, EXECUTION_UPDATE_THROTTLE_MS)
 
     /** Follows an execution through the SDK stream, skipping the first id-only event. `onEnd` fires once,
      *  and `onError` too when the stream stops before its "end" event (a 404 or a lost connection). */
@@ -515,7 +569,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     /** Keeps an execution the route guard already loaded, so the page does not fall back to its loading state. */
     const followExecution = (options: { id: string }, translate: (itn: string) => string) => {
         if (execution.value?.id !== options.id) {
-            execution.value = undefined
+            clearExecution()
         }
         closeSSE()
 
@@ -844,6 +898,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkPauseExecution,
         queryPauseExecution,
         loadExecution,
+        applyLocalExecutionUpdate,
+        applySavedExecution,
+        clearExecution,
         findExecutions,
         findDistinctFieldValues,
         validateExecution,

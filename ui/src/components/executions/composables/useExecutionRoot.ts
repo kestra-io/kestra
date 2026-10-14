@@ -116,7 +116,7 @@ export function useExecutionRoot() {
         onUnmounted(() => {
             executionsStore.closeSSE()
             window.removeEventListener("popstate", follow)
-            executionsStore.execution = undefined
+            executionsStore.clearExecution()
             executionsStore.resetLogs()
             if (!flowMatchesTarget()) {
                 flowStore.flow = undefined

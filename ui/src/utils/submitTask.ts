@@ -86,7 +86,7 @@ export const executeTask = (
             formData,
         })
         .then(response => {
-            executionsStore.execution = response
+            executionsStore.applyLocalExecutionUpdate(response)
             if (options.redirect) {
                 const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem(storageKeys.EXECUTION_DEFAULT_TAB), DEFAULT_EXECUTION_TAB)
                 if (options.newTab) {

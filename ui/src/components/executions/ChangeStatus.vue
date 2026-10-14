@@ -143,9 +143,9 @@
                 state: selectedStatus.value as string,
             })
             .then(() => executionsStore.waitForStateChange(props.execution as any)) // FIXME: any
-            .then((execution: unknown) => {
-                // FIXME: any
-                ;(executionsStore as any).execution = execution // FIXME: any
+            .then(execution => {
+                executionsStore.applyLocalExecutionUpdate(execution)
+
                 // Re-subscribe to the execution SSE stream directly via the store
                 // instead of bubbling a `follow` event up to the route component.
                 executionsStore.followExecution({id: (props.execution as {id: string}).id}, t)

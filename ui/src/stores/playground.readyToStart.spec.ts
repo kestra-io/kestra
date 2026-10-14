@@ -35,6 +35,8 @@ describe("playground readyToStart", () => {
         Object.assign(executionsStore, {
             execution: undefined,
             triggerExecution: vi.fn(),
+            applyLocalExecutionUpdate: vi.fn(),
+            clearExecution: vi.fn(),
         })
     })
 

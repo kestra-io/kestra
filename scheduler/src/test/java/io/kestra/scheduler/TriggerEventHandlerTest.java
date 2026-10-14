@@ -41,6 +41,7 @@ import io.kestra.core.scheduler.events.SetPauseBackfillTrigger;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
+import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
@@ -817,6 +818,57 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isTrue();
         assertThat(updated.get().getExecutionId()).isEqualTo("exec-new");
+    }
+
+    @Test
+    void shouldUnlockTriggerWithoutEnablingItWhenLockingExecutionIsDeleted() {
+        // GIVEN
+        triggerStateStore.save(triggerState.locked(CLOCK, true).executionId(CLOCK, "exec-123").disabled(CLOCK, true));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionDeleted event = new TriggerExecutionDeleted(triggerId, "exec-123");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isFalse();
+        assertThat(updated.get().getExecutionId()).isNull();
+        assertThat(updated.get().isDisabled()).isTrue();
+    }
+
+    @Test
+    void shouldKeepTriggerLockedWhenDeletedExecutionIsNotTheLockingOne() {
+        // GIVEN
+        triggerStateStore.save(triggerState.locked(CLOCK, true).executionId(CLOCK, "exec-new"));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionDeleted event = new TriggerExecutionDeleted(triggerId, "exec-old");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getExecutionId()).isEqualTo("exec-new");
+    }
+
+    @Test
+    void shouldKeepTriggerLockedWhenDeletedExecutionAlreadyTerminated() {
+        // GIVEN
+        triggerStateStore.save(triggerState.locked(CLOCK, true));
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionDeleted event = new TriggerExecutionDeleted(triggerId, "exec-123");
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findByIdWithoutAcl(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
     }
 
     @Test

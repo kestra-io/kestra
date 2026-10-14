@@ -42,6 +42,11 @@ const messages = {
         markAllRead: "Mark all as read",
         empty: "No notifications yet",
         emptyUnread: "No unread notifications",
+        operation: {
+            requested: {
+                EXECUTION_REPLAY: "Replay requested for {count} execution | Replay requested for {count} executions",
+            },
+        },
     },
 }
 
@@ -133,6 +138,22 @@ describe("ContextNotifications", () => {
         expect(wrapper.find(".ongoing").text()).toContain("Backfill running")
         expect(wrapper.find(".ongoing").text()).not.toContain("Backfill finished")
         expect(visibleRows(wrapper).some(row => row.text().includes("Backfill running"))).toBe(false)
+    })
+
+    it("translates only a finished operation's title, keeping any other title as written", () => {
+        store.notifications = [
+            notification({id: "a", asyncOperationType: "EXECUTION_REPLAY", totalItems: 3, title: "Execution replay requested for 3 items"}),
+            notification({id: "b", asyncOperationType: "UNKNOWN_OPERATION", totalItems: 2, title: "Unknown requested for 2 items"}),
+            notification({id: "c", type: "CASE", title: "Customer escalation on billing flow"}),
+        ]
+
+        const titles = visibleRows(mount()).map(row => row.find(".title").text())
+
+        expect(titles).toEqual([
+            "Replay requested for 3 executions",
+            "Unknown requested for 2 items",
+            "Customer escalation on billing flow",
+        ])
     })
 
     it("hides the ongoing section when nothing is ongoing", () => {

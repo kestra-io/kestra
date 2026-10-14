@@ -162,7 +162,7 @@ export const FlushesPendingEditOnUnmount: Story = {
     render: (args) => ({
         components: {TaskDict},
         setup() {
-            const model = ref<Record<string, any>>(args.modelValue || {});
+            const model = ref(args.modelValue || {});
             const open = ref(true);
             provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
             return () => <>

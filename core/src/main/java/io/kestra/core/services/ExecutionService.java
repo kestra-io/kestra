@@ -17,6 +17,7 @@ import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
@@ -39,6 +40,8 @@ import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
@@ -85,6 +88,7 @@ public class ExecutionService {
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final AsyncOperationsConfiguration asyncOperationsConfiguration;
+    private final TriggerEventQueue triggerEventQueue;
     private final Optional<OpenTelemetry> openTelemetry;
 
     @Inject
@@ -104,6 +108,7 @@ public class ExecutionService {
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         AsyncOperationWaiter asyncOperationWaiter,
         AsyncOperationsConfiguration asyncOperationsConfiguration,
+        TriggerEventQueue triggerEventQueue,
         Optional<OpenTelemetry> openTelemetry) {
         this.storageInterface = Objects.requireNonNull(storageInterface);
         this.executionRepository = Objects.requireNonNull(executionRepository);
@@ -120,6 +125,7 @@ public class ExecutionService {
         this.loopExecutionEventQueue = Objects.requireNonNull(loopExecutionEventQueue);
         this.asyncOperationWaiter = Objects.requireNonNull(asyncOperationWaiter);
         this.asyncOperationsConfiguration = Objects.requireNonNull(asyncOperationsConfiguration);
+        this.triggerEventQueue = Objects.requireNonNull(triggerEventQueue);
         this.openTelemetry = Objects.requireNonNull(openTelemetry);
     }
 
@@ -818,6 +824,16 @@ public class ExecutionService {
         boolean deleteMetrics,
         boolean deleteStorage) throws IOException {
         this.executionRepository.purge(execution);
+
+        // A deleted execution never terminates, so release the trigger lock it may still hold.
+        if (!execution.getState().isTerminated()) {
+            try {
+                TriggerExecutionDeleted.of(execution).ifPresent(triggerEventQueue::send);
+            } catch (KestraRuntimeException e) {
+                // The execution row is already purged: finish the deletion and leave the lock to a manual unlock.
+                log.error("Unable to release the trigger lock of deleted execution '{}'", execution.getId(), e);
+            }
+        }
 
         if (deleteLogs) {
             this.logRepository.purge(execution);

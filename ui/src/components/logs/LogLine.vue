@@ -22,7 +22,7 @@
         <div class="log-content">
             <div class="log-header">
                 <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
-                    <span class="log-date">{{ timestamp.date }} </span>{{ timestamp.clock }}
+                    <span class="log-date">{{ `${timestamp.date} ` }}</span>{{ timestamp.clock }}
                 </time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">

@@ -88,7 +88,7 @@
                                     <div class="d-flex flex-column">
                                         <div
                                             class="gantt-row cursor-icon"
-                                            :class="{'is-expanded': selectedTaskRuns.includes(item.id)}"
+                                            :class="{'d-flex': !verticalLayout, 'is-expanded': selectedTaskRuns.includes(item.id)}"
                                             @click="onTaskSelect(item.id)"
                                         >
                                             <div v-if="!verticalLayout" class="d-inline-flex">
@@ -788,7 +788,6 @@
             }
 
             .gantt-row {
-                display: flex;
                 align-items: center;
                 position: relative;
                 padding-right: var(--ks-spacing-8);

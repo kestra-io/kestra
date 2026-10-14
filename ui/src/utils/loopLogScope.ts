@@ -1,6 +1,7 @@
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {isLoopTaskType} from "@kestra-io/topology"
+import {handled} from "./kestraHttp"
 import {routeQueryToQueryFilters} from "./queryFilters"
 import {
     findIterationByNumber,
@@ -320,8 +321,10 @@ export async function searchMergedLogs(search: MergedLogSearch) {
     if (search.q) filters.push({field: "q", operation: "EQUALS", value: search.q})
     const response = await LogsAPI.searchLogs(
         {page: search.page, size: LOG_PAGE_SIZE, sort: ["timestamp:asc"], cursor: search.cursor, filters},
-        {showMessageOnError: false},
-    )
+    ).catch((error: unknown) => {
+        handled(error)
+        throw error
+    })
     return {
         results: response.results ?? [],
         total: response.total ?? 0,

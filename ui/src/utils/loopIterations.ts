@@ -1,12 +1,10 @@
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../stores/executions"
-import type {KestraHttpError, KestraRequestOptions} from "./kestraHttp"
+import {handled, type KestraHttpError} from "./kestraHttp"
 import {iterationNumber, type LoopScopeEntry} from "./loopScope"
 
 export const ITERATIONS_PAGE_SIZE = 50
-
-const QUIET: KestraRequestOptions = {showMessageOnError: false, ignoreNotFound: true}
 
 export type LoopIterationFailure = "forbidden" | "not-found" | "unknown"
 
@@ -102,7 +100,6 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
     try {
         const response = await ExecutionsAPI.searchExecutions(
             {page: search.page ?? 1, size: search.size ?? ITERATIONS_PAGE_SIZE, sort: [search.root ? "state.startDate:asc" : "loopRunIndex:asc"], filters},
-            QUIET,
         )
         return {
             results: (response.results ?? []).map((item) => ({
@@ -119,6 +116,7 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
             total: response.total ?? 0,
         }
     } catch (error) {
+        handled(error)
         throw new LoopIterationError(failureOf(error))
     }
 }
@@ -136,8 +134,9 @@ export async function findFirstFailedIteration(parentId: string, taskId: string)
 
 export async function loadIterationExecution(executionId: string): Promise<Execution> {
     try {
-        return await ExecutionsAPI.execution({executionId}, QUIET) as unknown as Execution
+        return await ExecutionsAPI.execution({executionId}) as unknown as Execution
     } catch (error) {
+        handled(error)
         throw new LoopIterationError(failureOf(error))
     }
 }

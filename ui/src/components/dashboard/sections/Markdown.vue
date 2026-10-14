@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref, computed} from "vue"
+    import {PropType, onMounted, ref, computed} from "vue"
 
     import type {Chart} from "../composables/useDashboards"
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards"
@@ -31,10 +31,8 @@
 
     const data = ref()
 
-    import {useRoute} from "vue-router"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const route = useRoute()
     const {generate} = useChartGenerator(props.dashboardId, props, false)
 
     const isFlowDescription = computed(() => props.chart.source?.type === "FlowDescription")
@@ -53,7 +51,7 @@
         refresh,
     })
 
-    watch(() => route.params.filters, () => {
-        refresh()
-    }, {deep: true, immediate: true})
+    onMounted(() => {
+        getData()
+    })
 </script>

@@ -93,7 +93,7 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
         ) {
             return Collections.emptyList();
         }
@@ -134,7 +134,7 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
         ) {
             return Collections.emptyList();
         }
@@ -428,6 +428,8 @@ public class FlowableUtils {
                             {
                                 if (obj instanceof String s) {
                                     return s;
+                                } else if (obj instanceof Integer || obj instanceof Long || obj instanceof Boolean) {
+                                    return obj.toString();
                                 } else if (obj == null) {
                                     throw new IllegalVariableEvaluationException(
                                         "Found a null value inside the iteration values=" + serializeAsString(values)

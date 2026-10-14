@@ -12,7 +12,7 @@
             :data-test="`copilot-context-${pill.part}`"
             @close="emit('remove', pill.part)"
         >
-            <span>{{ pill.text[0] }}<KsId :value="pill.value" :shrink="false" />{{ pill.text[1] }}</span>
+            <span>{{ pill.text[0] }}<KsId :value="pill.value" :shrink="false" data-test="copilot-context-id" />{{ pill.text[1] }}</span>
         </KsTag>
     </div>
 </template>

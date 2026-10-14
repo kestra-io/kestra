@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.utils.TypeConverter;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -14,6 +15,35 @@ import io.micronaut.http.server.util.ProxyHeaderParser;
 
 public class RequestUtils {
     private static final String QUERY_STRING_SEPARATOR = ":";
+
+    /**
+     * Normalizes {@code micronaut.server.context-path} the way Micronaut does: a leading slash and no trailing slash.
+     *
+     * @return the context path, or an empty string when none is configured
+     */
+    public static String normalizeContextPath(@Nullable String contextPath) {
+        if (contextPath == null || contextPath.isBlank()) {
+            return "";
+        }
+        String collapsed = ("/" + contextPath).replaceAll("/+", "/");
+        return collapsed.endsWith("/") ? collapsed.substring(0, collapsed.length() - 1) : collapsed;
+    }
+
+    /**
+     * Removes the context path from a request path, only on a whole segment boundary
+     * so that {@code /kestraX/api/v1} is not mistaken for {@code /kestra/api/v1}.
+     *
+     * @param contextPath a value returned by {@link #normalizeContextPath(String)}
+     */
+    public static String stripContextPath(String contextPath, String path) {
+        if (contextPath.isEmpty()) {
+            return path;
+        }
+        if (path.equals(contextPath)) {
+            return "/";
+        }
+        return path.startsWith(contextPath + "/") ? path.substring(contextPath.length()) : path;
+    }
 
     /**
      * Transform colon-separated items to a {@link Map}.

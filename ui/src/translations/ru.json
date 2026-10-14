@@ -291,7 +291,46 @@
       "help": "Помощь",
       "issue": "Проблема",
       "demo": "Демо",
-      "star": "Добавьте нас в избранное"
+      "star": "Добавьте нас в избранное",
+      "notifications": "Уведомления"
+    },
+    "notifications": {
+      "heading": "Уведомления",
+      "ongoing": "В процессе",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Остановка выполнений: {count}",
+          "EXECUTION_PAUSE": "Приостановка выполнений: {count}",
+          "EXECUTION_RESUME": "Возобновление выполнений: {count}",
+          "EXECUTION_RESTART": "Перезапуск выполнений: {count}",
+          "EXECUTION_REPLAY": "Повтор выполнений: {count}",
+          "EXECUTION_FORCE_RUN": "Принудительный запуск выполнений: {count}",
+          "EXECUTION_UNQUEUE": "Удаление выполнений из очереди: {count}",
+          "EXECUTION_CHANGE_STATUS": "Изменение статуса выполнений: {count}",
+          "EXECUTION_SET_LABELS": "Установка labels для выполнений: {count}",
+          "TRIGGER_UNLOCK": "Разблокировка triggers: {count}",
+          "TRIGGER_DELETE": "Удаление triggers: {count}",
+          "TRIGGER_DISABLE": "Отключение triggers: {count}",
+          "TRIGGER_ENABLE": "Включение triggers: {count}",
+          "BACKFILL_PAUSE": "Приостановка backfills: {count}",
+          "BACKFILL_RESUME": "Возобновление backfills: {count}",
+          "BACKFILL_DELETE": "Удаление backfills: {count}"
+        },
+        "processed": "Обработано: {count}",
+        "rejected": "Отклонено: {count}",
+        "elapsed": "выполняется {duration}"
+      },
+      "markAllRead": "Отметить все как прочитанное",
+      "markUnread": "Пометить как непрочитанное",
+      "markRead": "Пометить как прочитанное",
+      "empty": "Уведомлений пока нет",
+      "emptyUnread": "Нет непрочитанных уведомлений",
+      "tabs": {
+        "all": "Все",
+        "unread": "Непрочитанные"
+      },
+      "bellAriaLabel": "Уведомления",
+      "bellAriaLabelRunning": "Уведомления, операции выполняются"
     },
     "source": "Источник",
     "home": "Домой",
@@ -328,10 +367,11 @@
     "start date": "Дата начала",
     "end date": "Дата окончания",
     "restart": "Перезапуск",
-    "restart latest revision": "Перезапустить последнюю редакцию",
     "restart tooltip": "Перезапустить выполнение с <code>{state}</code> task",
     "restarted": "Выполнение перезапущено",
     "restart confirm": "Вы уверены, что хотите перезапустить выполнение <code>{id}</code>?",
+    "restart subflow warning": "Эта egzekucja была создана родительской egzekucją и должна быть перезапущена оттуда. Перезапуск только этой egzekucji оставит родительскую egzekucję в статусе FAILED, и ее следующие Task'и не будут запущены. Перейдите к {parent}, чтобы перезапустить ее.",
+    "restart subflow warning link": "родительская egzekucja",
     "replay": "Повтор",
     "replay from task tooltip": "Создать аналогичное выполнение, начиная с задачи <code>{taskId}</code>",
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
@@ -348,6 +388,10 @@
     "no": "Нет",
     "change state done": "Состояние task было обновлено",
     "change state confirm": "Вы уверены, что хотите изменить состояние выполнения task для task <code>{task}</code> в исполнении <code>{id}</code>?<br/>После этого выполнение будет перезапущено со следующего task, а родительское выполнение, если таковое имеется, также будет перезапущено.",
+    "interrupt": "Прервать",
+    "interrupt confirm": "Вы уверены, что хотите прервать Task Run для Task'а <code>{task}</code> в Execution <code>{id}</code>?<br/>Это завершит выполняющийся Task внутри Worker'а и установит его State.",
+    "interrupt done": "Выполнение Task было прервано",
+    "interrupt target state": "Целевое состояние",
     "change state current state": "Текущий статус:",
     "change state hint": {
       "WARNING": [
@@ -449,6 +493,11 @@
     "show task source": "Показать исходный код задачи",
     "stream": "Поток",
     "execution statistics": "Статистика выполнения",
+    "execution_banner": {
+      "revision": "Редакция {revision}",
+      "attempts": "{count} попытка | {count} попытки | {count} попыток",
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+    },
     "concurrency limits": "Ограничения на параллелизм",
     "system overview": "Обзор системы",
     "usage": "Использование",
@@ -474,6 +523,7 @@
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
+      "expression": "Выражение",
       "tree": "Дерево",
       "raw_json": "Необработанный JSON",
       "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
@@ -559,6 +609,7 @@
       "blueprints": "blueprint | blueprints"
     },
     "plugins": {
+      "ui_load_error": "Не удалось загрузить компонент плагина.",
       "autoInstall": {
         "failed": "Не удалось установить плагин",
         "failedHint": "Flow не был сохранён. Исправьте проблему или удалите плагин из flow, затем сохраните снова.",
@@ -616,6 +667,15 @@
       "nav_overview": "Обзор",
       "nav_properties": "Свойства",
       "non_dynamic": "не динамический",
+      "format": "Формат",
+      "max_items": "Макс. элементов",
+      "max_length": "Максимальная длина",
+      "maximum": "Максимум",
+      "min_items": "Мин. элементов",
+      "min_length": "Мин. длина",
+      "minimum": "Минимум",
+      "unit": "Единица измерения",
+      "validation_regexp": "Регулярное выражение для валидации",
       "possible_values": "Возможные значения",
       "sub_type": "Подтип",
       "required": "Обязательный"
@@ -688,6 +748,17 @@
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "unsaved changed ?": "У вас есть несохраненные изменения, вы хотите покинуть эту страницу?",
+    "session expired": "Ваша сессия истекла",
+    "session expired description": "Войдите снова, чтобы продолжить.",
+    "go to login": "Перейти на страницу входа",
+    "use another sign-in method": "Использовать другой способ входа",
+    "sign in in a new tab": "Войти в новой вкладке",
+    "sign in in a new tab hint": "Войдите во вкладке, которая только что открылась, затем вернитесь сюда и продолжите.",
+    "continue after sign in": "Продолжить",
+    "sign in failed": "Не удалось войти. Проверьте подключение и повторите попытку.",
+    "sign in not confirmed": "Мы не смогли подтвердить, что вы вошли в систему. Войдите в систему на другой вкладке, затем продолжите.",
+    "server unreachable": "Не удается подключиться к серверу Kestra",
+    "server unreachable description": "Скопируйте все несохраненные данные (например, YAML Flow) в безопасное место, прежде чем обновлять эту страницу. Этот баннер исчезнет, как только сервер снова ответит.",
     "unsaved changes": "Несохраненные изменения",
     "unsaved changes warning": "У вас есть несохраненные изменения. Если вы покинете эту страницу, ваши изменения будут потеряны.",
     "leave page": "Покинуть страницу",
@@ -952,7 +1023,6 @@
     "warning detected": "Обнаружены предупреждения.",
     "informative notice": "Примечание(я)",
     "open": "Открыть",
-    "dependency task": "Задача {taskId} является зависимостью другого задачи",
     "admin": "Администратор",
     "main_configuration": "Основная конфигурация",
     "commit_id": "Идентификатор коммита",
@@ -1035,6 +1105,8 @@
         "folder": "Удалить папку",
         "files": "Удалить {count} выбранных файлов",
         "bulk_success": "Выбранные файлы успешно удалены.",
+        "bulk_partial_error": "Не удалось удалить {failedCount} из выбранных {totalCount} файлов.",
+        "all_failed_error": "Не удалось удалить выбранные файлы.",
         "folders": "Удалить {count} выбранных папок"
       },
       "move": {
@@ -1087,7 +1159,6 @@
     "pause backfills": "Приостановить заполнения",
     "backfill executions": "Выполнения заполнение",
     "execute backfill": "Выполнить заполнение",
-    "relative": "Относительный",
     "relative start date": "Относительная дата начала",
     "absolute": "Абсолютный",
     "backfill": "Заполнение",
@@ -1689,16 +1760,25 @@
     "item": "элемент",
     "items": "элементы",
     "iterations": "Итерации",
+    "loop_iterations_notice": {
+      "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",
+      "outputs": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их output не отображается здесь.",
+      "metrics": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их метрики здесь не отображаются.",
+      "view_iterations": "Просмотр итераций"
+    },
     "cron": "Крон",
     "execution_started": "Выполнение началось!",
     "execution_failed": "Выполнение не удалось!",
     "last error was": "Последняя ошибка была",
+    "execution_paused": "Выполнение приостановлено",
+    "execution_paused_description": "Это выполнение ожидает проверки и возобновления.",
     "active": "Активно",
     "flows imported": "Потоки импортированы",
     "flows not imported": "Flows не импортированы",
     "custom value": "Пользовательское значение",
     "chart": "График",
     "no_code": {
+      "task_details": "Детали task",
       "toggle_pebble": "Переключить редактор Pebble",
       "version_oss_placeholder": "Разблокируйте Версионирование Плагинов с Enterprise Edition",
       "adding": "+ Добавить {what}",
@@ -1754,7 +1834,8 @@
         "inputs": "Выберите тип поля input",
         "charts": "Выберите тип диаграммы",
         "where": "Выберите тип фильтра",
-        "numerator": "Выберите числитель"
+        "numerator": "Выберите числитель",
+        "namespace_first": "Сначала выберите namespace"
       },
       "creation": {
         "default": "Добавить",
@@ -2207,7 +2288,6 @@
       "run_all_tasks": "Запустить все Tasks",
       "history": "Последние 10 запусков",
       "clear_history": "Очистить историю",
-      "confirm_create": "Вы не можете запустить playground во время создания flow. Запуск playground создаст flow.",
       "tooltip_persistence": "Если вы выключите и снова включите Playground, информация останется, пока вы находитесь на странице."
     },
     "submit": "Отправить",
@@ -2240,7 +2320,18 @@
           "issues": "{n} устаревших",
           "failed": "{n} не удалось",
           "last_run": "последний запуск {ago}",
-          "unknown": "{n} не отслеживается"
+          "unknown": "{n} не отслеживается",
+          "tests_failed": "{n} с неудачными тестами"
+        },
+        "tests": {
+          "pass": "{count} тест | {count} теста | {count} тестов",
+          "warn": "{count} тест · предупреждение | {count} теста · предупреждение | {count} тестов · предупреждение",
+          "fail": "{failed}/{total} сбоев",
+          "tooltip": {
+            "pass": "{count} тест dbt пройден | Все {count} теста dbt пройдены | Все {count} тестов dbt пройдены",
+            "warn": "{count} dbt тест пройден с предупреждениями | {count} dbt теста пройдены, некоторые с предупреждениями | {count} dbt тестов пройдены, некоторые с предупреждениями",
+            "fail": "Тест dbt не пройден | {failed} из {total} тестов dbt не пройдены | {failed} из {total} тестов dbt не пройдены"
+          }
         },
         "recent_runs": "Последние запуски",
         "group_by": "Группировать по",
@@ -2276,8 +2367,10 @@
     "bulk delete triggers": "Вы уверены, что хотите удалить {count} triggers?",
     "bulk success delete triggers": "{count} триггеры были успешно удалены",
     "delete trigger confirmation": "Вы уверены, что хотите удалить trigger {id}? WARNING: удаление trigger может привести к дублированию выполнений, если trigger все еще активен в flow.",
+    "delete trigger still declared": "Этот trigger всё ещё объявлен в flow. Удалите его из flow или используйте Restart.",
     "delete trigger success": "Триггер {id} был успешно удален",
     "delete trigger error": "Ошибка при удалении trigger {id}",
+    "delete triggers orphans only": "Будет удалено только состояние trigger, которое больше не объявлено в flow. Trigger, всё ещё объявленные в flow, сохраняются.",
     "revision deleted": "Ревизия {revision} была успешно удалена",
     "delete revision confirm": "Вы уверены, что хотите удалить ревизию {revision}?",
     "delete revision error": "Ошибка при удалении ревизии {revision} с ошибкой {error}",
@@ -2399,6 +2492,7 @@
         "label": "{count} Ошибка(и)"
       }
     },
+    "invalid_source_code": "Недопустимый исходный код",
     "source_search": {
       "cannot_select_read_only": "Невозможно выбрать — у вас нет разрешения на редактирование {namespace} / {id}",
       "collapse_all": "Свернуть все",
@@ -2538,6 +2632,8 @@
       "command_menu": {
         "context_flow": "context: flow",
         "context_selected": "контекст: {name}",
+        "copy": "Копировать {name}",
+        "cut": "Вырезать {name}",
         "delete": "Удалить {name}",
         "duplicate": "Дублировать {name}",
         "goto": "Перейти к {section}",
@@ -2553,6 +2649,7 @@
         "insert_kind": "Вставить {kind}",
         "no_match": "Нет совпадений",
         "open": "Открыть {name}",
+        "paste": "Вставить",
         "save": "Сохранить flow",
         "search_placeholder": "Введите команду или найдите task…",
         "title": "Меню команд"
@@ -2611,6 +2708,26 @@
       "picker_more_results": "Еще {count}, уточните поиск",
       "plugin_default": "по умолчанию: {value}",
       "plugin_default_tooltip": "Значение по умолчанию из pluginDefaults flow",
+      "plugin_implementation": {
+        "change": "Изменить",
+        "choose_title": "Выбрать {label}",
+        "count_available": "{count} доступно",
+        "exactly_one": "1 реализация",
+        "items_set": "{count} задано",
+        "no_results_description": "На этом экземпляре установлено {count} реализаций. Реализация, предоставляемая не установленным плагином, здесь не отобразится.",
+        "no_results_title": "Ни одна реализация не соответствует «{query}»",
+        "picker_count": "{shown} из {total}",
+        "remove": "Удалить {label}",
+        "remove_from": "Удалить {name} из {field}",
+        "replace": "Заменить…",
+        "search_placeholder": "Поиск…",
+        "secret_summary": "{label} из Secret",
+        "stored_value": "Сохранённое значение",
+        "summary_overflow": "+{count}",
+        "unresolved_message": "{type} не входит в число {count} реализаций, известных этому экземпляру для {label}. Возможно, плагин не установлен или был удалён при обновлении.",
+        "unresolved_name": "Неизвестная реализация",
+        "unresolved_untouched": "Ваш YAML не изменён. Ничего не будет записано в flow, пока вы не замените реализацию."
+      },
       "required_missing": "Обязательное поле не заполнено",
       "required_unset_jump": "Перейти к первому",
       "required_unset_plural": "{count} обязательных полей ещё не заполнено",
@@ -2628,6 +2745,8 @@
         "clear": "Закрыть / очистить выбор",
         "collapse_expand": "Свернуть / развернуть",
         "command_palette": "Меню команд (контекстное)",
+        "copy": "Копировать",
+        "cut": "Вырезать",
         "group_edit": "Редактировать",
         "group_global": "Глобальный",
         "group_insert": "Вставить",
@@ -2636,6 +2755,8 @@
         "open": "Открыть выбранный блок",
         "open_split": "Открыть выбранный блок в разделенном представлении",
         "or": "или",
+        "paste": "Вставить",
+        "redo": "Повторить",
         "reorder": "Изменить порядок вверх / вниз",
         "save": "Сохранить flow",
         "step_into": "Развернуть / перейти в группу",
@@ -2658,8 +2779,8 @@
       "open_mode_hint": "Задачи по умолчанию открываются в модальном окне. Вы можете сделать вкладки по умолчанию в {settings}."
     },
     "blocks": "Блоки",
-    "split_horizontal": "Разделить по горизонтали",
-    "split_vertical": "Разделить по вертикали",
+    "move_panel_to_bottom": "Переместить панель вниз",
+    "move_panel_to_side": "Переместить панель в сторону",
     "pwa": {
       "install_title": "Установить Kestra",
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",
@@ -2668,6 +2789,7 @@
     },
     "iteration": "Итерация",
     "iteration_number": "Итерация {number}",
-    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?"
+    "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?",
+    "not started": "Не начато"
   }
 }

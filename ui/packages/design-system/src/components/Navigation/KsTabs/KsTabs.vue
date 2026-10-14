@@ -1,13 +1,13 @@
 <template>
     <ElTabs
         v-model="model"
+        v-bind="({...filteredProps(), ...$attrs} as TabsProps)"
         :type="type"
         :class="{
             'kel-tabs--box': props.type === 'box',
             'kel-tabs--segmented': props.type === 'segmented',
             'kel-tabs--pane-scroll': paneScroll,
         }"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {ElTabs} from "element-plus"
+    import {ElTabs, type TabsProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

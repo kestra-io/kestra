@@ -116,9 +116,8 @@ class PluginControllerTest {
             .map(Plugin.PluginElementMetadata::cls)
             .toList();
 
-        assertThat(assets).contains("io.kestra.core.models.assets.External");
-        // Custom is the fallback an unknown type deserializes into, not a type to offer.
-        assertThat(assets).doesNotContain("io.kestra.core.models.assets.Custom");
+        // External is inferred and Custom is the fallback an unknown type deserializes into, so neither is a type to offer.
+        assertThat(assets).doesNotContain("io.kestra.core.models.assets.External", "io.kestra.core.models.assets.Custom");
     }
 
     @Test

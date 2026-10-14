@@ -1,6 +1,6 @@
 <template>
     <ElLink
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as LinkProps)"
         @click="emit('click', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElLink} from "element-plus"
+    import {ElLink, type LinkProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -24,7 +24,7 @@
         disabled?: boolean
         href?: string
         target?: string
-        icon?: any
+        icon?: LinkProps["icon"]
     }>()
 
     const emit = defineEmits<{

@@ -25,6 +25,7 @@ import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.ServiceResourceReleaser;
 import io.kestra.core.services.BackendVersionProvider;
+import io.kestra.core.vnodes.VNodesAssignmentEvent;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
@@ -191,6 +192,11 @@ public class KestraQueueBeansFactory {
     @QueueBean
     public BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue(QueueFactoryInterface queueFactoryInterface) {
         return queueFactoryInterface.broadcastQueue(SchedulerEvent.class);
+    }
+
+    @QueueBean
+    public BroadcastQueueInterface<VNodesAssignmentEvent> vNodesAssignmentEventQueue(QueueFactoryInterface queueFactoryInterface) {
+        return queueFactoryInterface.broadcastQueue(VNodesAssignmentEvent.class);
     }
 
     @QueueBean

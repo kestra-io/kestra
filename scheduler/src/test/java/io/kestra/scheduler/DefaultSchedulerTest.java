@@ -30,17 +30,18 @@ import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.VNodeController;
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.scheduler.vnodes.SchedulerVNodesAssignmentChannel;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodeController;
+import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -124,7 +125,7 @@ class DefaultSchedulerTest {
         this.triggerEventQueue = new InMemoryTriggerEventQueue(SCHEDULER_CONFIGURATION.vnodes());
 
         // Others
-        this.vNodesAssigner = new DefaultVNodesAssigner(this.schedulerEventQueue);
+        this.vNodesAssigner = new DefaultVNodesAssigner(new SchedulerVNodesAssignmentChannel(this.schedulerEventQueue));
         this.vNodesAssigner.start();
 
         this.vNodeController = createVNodeController();
@@ -344,8 +345,9 @@ class DefaultSchedulerTest {
         return new VNodeController(
             lockService,
             serviceLivenessStore,
-            schedulerEventQueue,
-            SCHEDULER_CONFIGURATION
+            new SchedulerVNodesAssignmentChannel(schedulerEventQueue),
+            SCHEDULER_CONFIGURATION.vnodes(),
+            SCHEDULER_CONFIGURATION.vnodesRebalanceTimeout()
         );
     }
 

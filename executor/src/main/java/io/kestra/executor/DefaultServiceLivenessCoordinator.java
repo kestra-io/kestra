@@ -27,9 +27,9 @@ import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.vnodes.VNodeController;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Context;

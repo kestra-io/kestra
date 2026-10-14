@@ -988,3 +988,163 @@ describe("buildEffectiveGetNodeDimensions (footprint invariance)", () => {
         expect(new Set(results.map((r) => JSON.stringify(r))).size).toBe(1)
     })
 })
+
+describe("generateGraph horizontal lane headers", () => {
+    const hierarchy = "io.kestra.core.models.hierarchies."
+    const task = (uid: string, type = "io.kestra.plugin.core.log.Log") =>
+        ({uid, type: hierarchy + "GraphTask", task: {id: uid.split(".").pop(), type}})
+    const dot = (uid: string, kind: "Root" | "End") => ({uid, type: hierarchy + "GraphCluster" + kind})
+    const edge = (source: string, target: string) => ({source, target, relation: {}})
+    const lane = (uid: string, nodes: string[], parents: string[]) => ({
+        cluster: {uid: "cluster_" + uid, type: hierarchy + "GraphCluster", taskNode: task(uid, "io.kestra.plugin.core.flow.Loop")},
+        nodes: [uid + ".r", uid + ".e", ...nodes],
+        parents,
+        start: uid + ".r",
+        end: uid + ".e",
+    })
+
+    const generate = (flowGraph: object) => asElements(VueFlowUtils.generateGraph(
+        "vfid", "flow", "ns", flowGraph as VueFlowUtils.FlowGraph, undefined, [], true, {}, new Set(), [], true, false, false,
+    ) ?? [])
+
+    const absoluteBox = (elements: GeneratedElement[], id: string): {top: number; bottom: number} => {
+        const element = elements.find((e) => e.id === id)!
+        const parentTop = element.parentNode ? absoluteBox(elements, element.parentNode).top : 0
+        const top = parentTop + element.position!.y
+        return {top, bottom: top + parseFloat(String(element.style!.height))}
+    }
+
+    test("keeps a lane nested in another one inside its parent", () => {
+        const elements = generate({
+            nodes: [
+                dot("root.r", "Root"), dot("root.e", "End"),
+                dot("root.outer.r", "Root"), dot("root.outer.e", "End"), task("root.outer", "io.kestra.plugin.core.flow.Loop"),
+                dot("root.outer.inner.r", "Root"), dot("root.outer.inner.e", "End"), task("root.outer.inner", "io.kestra.plugin.core.flow.Loop"),
+                task("root.outer.inner.a"), task("root.outer.inner.b"),
+            ],
+            edges: [
+                edge("root.r", "root.outer.r"), edge("root.outer.r", "root.outer"), edge("root.outer", "root.outer.inner.r"),
+                edge("root.outer.inner.r", "root.outer.inner"), edge("root.outer.inner", "root.outer.inner.a"),
+                edge("root.outer.inner.a", "root.outer.inner.b"), edge("root.outer.inner.b", "root.outer.inner.e"),
+                edge("root.outer.inner.e", "root.outer.e"), edge("root.outer.e", "root.e"),
+            ],
+            clusters: [
+                lane("root.outer", ["root.outer", "cluster_root.outer.inner", "root.outer.inner.r", "root.outer.inner.e"], []),
+                lane("root.outer.inner", ["root.outer.inner", "root.outer.inner.a", "root.outer.inner.b"], ["cluster_root.outer"]),
+            ],
+        })
+
+        const outer = absoluteBox(elements, "cluster_root.outer")
+        const inner = absoluteBox(elements, "cluster_root.outer.inner")
+        expect(inner.top).toBeGreaterThanOrEqual(outer.top + NODE_SIZES.LANE_HEADER_HEIGHT)
+        expect(inner.bottom).toBeLessThanOrEqual(outer.bottom)
+    })
+
+    test("moves a branch below a lane down as one row", () => {
+        const chain = ["c1", "c2", "c3", "c4", "c5"].map((id) => "root.par." + id)
+        const elements = generate({
+            nodes: [
+                dot("root.r", "Root"), dot("root.e", "End"),
+                dot("root.par.r", "Root"), dot("root.par.e", "End"), task("root.par", "io.kestra.plugin.core.flow.Parallel"),
+                dot("root.par.loop.r", "Root"), dot("root.par.loop.e", "End"), task("root.par.loop", "io.kestra.plugin.core.flow.Loop"),
+                task("root.par.loop.x"), ...chain.map((uid) => task(uid)),
+            ],
+            edges: [
+                edge("root.r", "root.par.r"), edge("root.par.r", "root.par"),
+                edge("root.par", "root.par.loop.r"), edge("root.par.loop.r", "root.par.loop"), edge("root.par.loop", "root.par.loop.x"),
+                edge("root.par.loop.x", "root.par.loop.e"), edge("root.par.loop.e", "root.par.e"),
+                edge("root.par", chain[0]), ...chain.slice(1).map((uid, i) => edge(chain[i], uid)), edge(chain[chain.length - 1], "root.par.e"),
+                edge("root.par.e", "root.e"),
+            ],
+            clusters: [
+                {...lane("root.par", ["root.par", ...chain, "cluster_root.par.loop", "root.par.loop.r", "root.par.loop.e"], []), cluster: {uid: "cluster_root.par", type: hierarchy + "GraphCluster", taskNode: task("root.par", "io.kestra.plugin.core.flow.Parallel")}},
+                lane("root.par.loop", ["root.par.loop", "root.par.loop.x"], ["cluster_root.par"]),
+            ],
+        })
+
+        const loop = absoluteBox(elements, "cluster_root.par.loop")
+        const rowTops = chain.map((uid) => absoluteBox(elements, uid).top)
+        expect(new Set(rowTops).size).toBe(1)
+        expect(rowTops[0]).toBeGreaterThan(loop.bottom)
+    })
+})
+
+describe("generateGraph collapsed cluster nested in an expanded one", () => {
+    const task = (uid: string, type: string) => ({uid, type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: uid.split(".").pop(), type}})
+    const dot = (uid: string, kind: "Root" | "End") => ({uid, type: `io.kestra.core.models.hierarchies.GraphCluster${kind}`})
+    const cluster = (uid: string, taskNode: ReturnType<typeof task>, nodes: string[], parents: string[]) => ({
+        cluster: {uid, type: "io.kestra.core.models.hierarchies.GraphCluster", taskNode},
+        nodes,
+        parents,
+        start: nodes.find((n) => n.includes(".root-")),
+        end: nodes.find((n) => n.includes(".end-")),
+    })
+
+    const loop = task("root.loop", "io.kestra.plugin.core.flow.Loop")
+    const inner = task("root.loop.inner", "io.kestra.plugin.core.flow.Sequential")
+    const log = task("root.loop.inner.log", "io.kestra.plugin.core.log.Log")
+
+    const flowGraph = {
+        nodes: [
+            dot("root.root-a", "Root"), dot("root.end-a", "End"),
+            dot("root.loop.root-b", "Root"), dot("root.loop.end-b", "End"), loop,
+            dot("root.loop.inner.root-c", "Root"), dot("root.loop.inner.end-c", "End"), inner, log,
+        ],
+        edges: [
+            {source: "root.root-a", target: "root.loop.root-b"},
+            {source: "root.loop.root-b", target: "root.loop"},
+            {source: "root.loop", target: "root.loop.inner.root-c"},
+            {source: "root.loop.inner.root-c", target: "root.loop.inner"},
+            {source: "root.loop.inner", target: "root.loop.inner.log"},
+            {source: "root.loop.inner.log", target: "root.loop.inner.end-c"},
+            {source: "root.loop.inner.end-c", target: "root.loop.end-b"},
+            {source: "root.loop.end-b", target: "root.end-a"},
+        ],
+        clusters: [
+            cluster("cluster_root.loop", loop, [
+                "root.loop.root-b", "root.loop.end-b", "root.loop", "cluster_root.loop.inner",
+                "root.loop.inner.root-c", "root.loop.inner.end-c",
+            ], []),
+            cluster("cluster_root.loop.inner", inner, [
+                "root.loop.inner.root-c", "root.loop.inner.end-c", "root.loop.inner", "root.loop.inner.log",
+            ], ["cluster_root.loop"]),
+        ],
+    } as unknown as VueFlowUtils.FlowGraph
+
+    test("keeps the collapsed placeholder inside its parent cluster", () => {
+        // State left by collapsing `inner` from the canvas.
+        const innerCluster = flowGraph.clusters![1]
+        const hiddenNodes = [...innerCluster.nodes, innerCluster.cluster.uid]
+        const edgeReplacer = {
+            "root.loop.inner": "root.loop.inner",
+            "cluster_root.loop.inner": "root.loop.inner",
+            "root.loop.inner.root-c": "root.loop.inner",
+            "root.loop.inner.end-c": "root.loop.inner",
+            "root.loop.inner.log": "root.loop.inner",
+        }
+
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowGraph, undefined, hiddenNodes, false, edgeReplacer, new Set(["root.loop.inner"]), [], false, true, false,
+        ))
+
+        const dagreGraph = VueFlowUtils.generateDagreGraph(
+            flowGraph, hiddenNodes, false, edgeReplacer, new Set(["root.loop.inner"]), [],
+        )
+
+        expect(elements.find((e) => e.id === "root.loop.inner" && e.type === "collapsedcluster")!.parentNode).toBe("cluster_root.loop")
+        expect(dagreGraph.parent("root.loop.inner")).toBe("cluster_root.loop")
+    })
+
+    test("does not offer to collapse a cluster with no task of its own", () => {
+        const empty = task("root.approval", "io.kestra.plugin.core.flow.Approval")
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", {
+                nodes: [dot("root.approval.root-d", "Root"), dot("root.approval.end-d", "End"), empty],
+                edges: [{source: "root.approval.root-d", target: "root.approval"}],
+                clusters: [cluster("cluster_root.approval", empty, ["root.approval.root-d", "root.approval.end-d", "root.approval"], [])],
+            } as unknown as VueFlowUtils.FlowGraph, undefined, [], false, {}, new Set(), [], false, true, false,
+        ))
+
+        expect(elements.find((e) => e.id === "cluster_root.approval")!.data!.collaspsible).toBe(false)
+    })
+})

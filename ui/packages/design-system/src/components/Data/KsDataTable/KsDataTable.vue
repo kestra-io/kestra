@@ -13,7 +13,7 @@
                 <slot name="top" />
             </div>
 
-            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot">
+            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}">
                 <slot name="table" />
             </div>
 

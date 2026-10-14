@@ -1,5 +1,3 @@
-@use "color-palette" as palette;
-
 // font family
 $font-family-sans-serif: "Inter", sans-serif;
 $font-family-monospace: "JetBrains Mono", monospace;
@@ -36,15 +34,6 @@ $gray-dark-700: #918BA9;
 $gray-dark-800: #A69FC1;
 $gray-dark-900: #CAC5DA;
 $gray-dark-950: #f9f9fa;
-
-$colors: (
-    'primary': palette.$base-primary-500,
-    'success': palette.$base-green-500,
-    'warning': palette.$base-orange-500,
-    'danger': palette.$base-red-500,
-    'error': palette.$base-red-500,
-    'info': palette.$base-blue-500,
-);
 
 // border radius
 $border-radius: 0.5rem !default;

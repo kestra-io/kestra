@@ -306,6 +306,7 @@
       "ongoing": "En cours",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "Suppression de {count} exécution | Suppression de {count} exécutions",
           "EXECUTION_KILL": "Arrêt de {count} exécution | Arrêt de {count} exécutions",
           "EXECUTION_PAUSE": "Mise en pause de {count} exécution | Mise en pause de {count} exécutions",
           "EXECUTION_RESUME": "Reprise de {count} exécution | Reprise de {count} exécutions",
@@ -322,6 +323,25 @@
           "BACKFILL_PAUSE": "Mise en pause de {count} backfill | Mise en pause de {count} backfills",
           "BACKFILL_RESUME": "Reprise de {count} backfill | Reprise de {count} backfills",
           "BACKFILL_DELETE": "Suppression de {count} backfill | Suppression de {count} backfills"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "Suppression demandée pour {count} exécution | Suppression demandée pour {count} exécutions",
+          "EXECUTION_KILL": "Demande de kill pour {count} exécution | Demande de kill pour {count} exécutions",
+          "EXECUTION_PAUSE": "Pause demandée pour {count} exécution | Pause demandée pour {count} exécutions",
+          "EXECUTION_RESUME": "Reprise demandée pour {count} exécution | Reprise demandée pour {count} exécutions",
+          "EXECUTION_RESTART": "Redémarrage demandé pour {count} exécution | Redémarrage demandé pour {count} exécutions",
+          "EXECUTION_REPLAY": "Replay demandé pour {count} exécution | Replay demandé pour {count} exécutions",
+          "EXECUTION_FORCE_RUN": "Exécution forcée demandée pour {count} exécution | Exécution forcée demandée pour {count} exécutions",
+          "EXECUTION_UNQUEUE": "Demande de suppression de la file d'attente pour {count} exécution | Demande de suppression de la file d'attente pour {count} exécutions",
+          "EXECUTION_CHANGE_STATUS": "Modification de l'état demandée pour {count} exécution | Modification de l'état demandée pour {count} exécutions",
+          "EXECUTION_SET_LABELS": "Mise à jour du label demandée pour {count} exécution | Mise à jour du label demandée pour {count} exécutions",
+          "TRIGGER_UNLOCK": "Déverrouillage demandé pour {count} trigger | Déverrouillage demandé pour {count} triggers",
+          "TRIGGER_DELETE": "Suppression demandée pour {count} trigger | Suppression demandée pour {count} triggers",
+          "TRIGGER_DISABLE": "Désactivation demandée pour {count} trigger | Désactivation demandée pour {count} triggers",
+          "TRIGGER_ENABLE": "Activation demandée pour {count} trigger | Activation demandée pour {count} triggers",
+          "BACKFILL_PAUSE": "Pause demandée pour {count} backfill | Pause demandée pour {count} backfills",
+          "BACKFILL_RESUME": "Reprise demandée pour {count} backfill | Reprise demandée pour {count} backfills",
+          "BACKFILL_DELETE": "Suppression demandée pour {count} backfill | Suppression demandée pour {count} backfills"
         },
         "processed": "{count} traitées",
         "rejected": "{count} rejetées",

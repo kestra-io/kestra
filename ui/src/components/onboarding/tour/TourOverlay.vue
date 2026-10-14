@@ -152,14 +152,14 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-    import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf} from "./tourScenes"
+    import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf, workingLabelKey} from "./tourScenes"
     import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
     import {useOnboardingAnalytics, type OnboardingTourEvent} from "../../../composables/useOnboardingAnalytics"
     import {useToast} from "../../../utils/toast"
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const tourStore = useProductTourStore()
@@ -250,7 +250,9 @@
         return tickIndex <= (group?.scenes.indexOf(scene.value.id) ?? 0)
     }
     const nextLabel = computed(() =>
-        isWorking.value ? t(translationKey("actions.running")) : t(sceneKey("next")),
+        isWorking.value
+            ? t(workingLabelKey(sceneKey("working"), translationKey("actions.running"), te))
+            : t(sceneKey("next")),
     )
 
     const track = (event: OnboardingTourEvent, additional: Record<string, unknown> = {}) => {

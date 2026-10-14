@@ -1,13 +1,6 @@
 import type {NavigationGuard, RouteLocationNormalized, RouteRecordNormalized} from "vue-router"
 import {useCoreStore} from "../stores/core"
-import type {KestraRequestOptions} from "./kestraHttp"
-
-/**
- * A 404 is what this guard is looking for and it reports it as the not-found screen, so the
- * interceptor keeps quiet rather than toasting the same thing twice. Every other failure is
- * left to toast as usual.
- */
-export const ENTITY_REQUEST_OPTIONS: KestraRequestOptions = {ignoreNotFound: true}
+import {handled} from "./kestraHttp"
 
 /** Resolves the one entity a detail page is about. A 404, or a falsy resolution, means it is missing. */
 export type EntityResolver = (to: RouteLocationNormalized) => Promise<unknown>
@@ -37,6 +30,7 @@ async function probe(resolve: EntityResolver, to: RouteLocationNormalized): Prom
         // Only a missing entity is this guard's business: any other failure is left to the page,
         // which the interceptor has already reported with a toast.
         if ((thrown as {status?: number})?.status !== 404) return undefined
+        handled(thrown)
         error = thrown
     }
 

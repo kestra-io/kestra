@@ -72,20 +72,21 @@
     const job = ref<PluginInstallJob | null>(null)
     let pollTimer: ReturnType<typeof setInterval> | null = null
     let consecutivePollFailures = 0
+    let unmounted = false
 
-    const artifactCount = computed(() => job.value?.artifacts.length ?? 0)
+    const artifactCount = computed(() => job.value?.artifacts?.length ?? 0)
 
     function displayName(artifact: PluginArtifact): string {
         // The plugin list's name IS the Maven artifactId, so its human title can stand in for it.
-        return pluginsStore.findPluginByName(artifact.artifactId)?.title ?? artifact.artifactId
+        return pluginsStore.findPluginByName(artifact.artifactId)?.title ?? artifact.artifactId ?? ""
     }
 
     function artifactBytesLabel(artifact: PluginArtifact): string {
         const p = progressFor(job.value?.progress ?? {}, artifact)
         if (!p) return ""
         return t("plugins.autoInstall.progress", {
-            transferred: humanBytes(p.transferred),
-            total: p.total > 0 ? humanBytes(p.total) : "?",
+            transferred: humanBytes(p.transferred ?? 0),
+            total: p.total ? humanBytes(p.total) : "?",
         })
     }
 
@@ -127,12 +128,14 @@
             pluginsStore.list()
         }
         await poll()
+        if (unmounted) return
         if (!isTerminal(job.value) && pollTimer === null && consecutivePollFailures < MAX_CONSECUTIVE_POLL_FAILURES) {
             pollTimer = setInterval(poll, POLL_INTERVAL_MS)
         }
     })
 
     onUnmounted(() => {
+        unmounted = true
         stopPolling()
     })
 </script>

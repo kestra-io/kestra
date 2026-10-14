@@ -58,6 +58,7 @@
     import {CODE_PREFIX, getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels"
     import {useFlowStore} from "../../../stores/flow"
     import {useStoredPanels} from "../../../composables/useStoredPanels"
+    import {storageKeys} from "../../../utils/constants"
 
     const mounted = useMounted()
 
@@ -80,8 +81,8 @@
         }
     }, {immediate: true})
 
-    const sideBarSize = useStorage("namespace-files-editor-view-sidebar-size", 1)
-    const editorSize = useStorage("namespace-files-editor-view-editor-size", 4)
+    const sideBarSize = useStorage(storageKeys.NAMESPACE_FILES_SIDEBAR_SIZE, 1)
+    const editorSize = useStorage(storageKeys.NAMESPACE_FILES_EDITOR_SIZE, 4)
 
     function onResize(_index: number, sizes: number[]) {
         sideBarSize.value = sizes[0]

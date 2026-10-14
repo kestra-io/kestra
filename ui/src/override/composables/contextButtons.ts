@@ -9,9 +9,11 @@ const {isOnline} = useNetwork()
 
 import ContextNews from "../../components/layout/ContextNews.vue"
 import ContextDocs from "../../components/docs/ContextDocs.vue"
+import ContextNotifications from "../../components/layout/ContextNotifications.vue"
 import CopilotChat from "../../components/ai/copilot/CopilotChat.vue"
 import AiIcon from "../../components/ai/AiIcon.vue"
 import {useApiStore} from "../../stores/api"
+import {useNotificationsStore} from "../../stores/notifications"
 
 import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
 import FileDocument from "vue-material-design-icons/FileDocument.vue"
@@ -19,6 +21,8 @@ import Slack from "vue-material-design-icons/Slack.vue"
 import Github from "vue-material-design-icons/Github.vue"
 import Calendar from "vue-material-design-icons/Calendar.vue"
 import Star from "vue-material-design-icons/Star.vue"
+import BellOutline from "vue-material-design-icons/BellOutline.vue"
+import {storageKeys} from "../../utils/constants"
 
 export interface Button {
     title: string;
@@ -39,7 +43,7 @@ export function useContextButtons() {
     const route = useRoute()
 
     const apiStore = useApiStore()
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    const lastNewsReadDate = useStorage<string | null>(storageKeys.LAST_NEWS_READ_DATE, null)
     const newsUnread = computed<boolean>(() => {
         const feeds = apiStore.feeds
         return Boolean(
@@ -47,6 +51,9 @@ export function useContextButtons() {
             (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate))),
         )
     })
+
+    const notificationsStore = useNotificationsStore()
+    const notificationsUnread = computed<boolean>(() => notificationsStore.unreadCount > 0)
 
     const buttons: Record<string, Button> = isOnline.value
         ? {
@@ -67,6 +74,18 @@ export function useContextButtons() {
                   component: ContextNews,
                   hasUnreadMarker: true,
                   unread: newsUnread,
+              },
+              // NotificationBell.vue (in the top nav bar) is the entry point for this panel and
+              // owns the unread badge + badge polling — kept resolvable here (ContextDrawer still
+              // needs the component/title for panel content) but hidden from the visible tab strip.
+              notifications: {
+                  title: t("contextBar.notifications"),
+                  icon: BellOutline,
+                  component: ContextNotifications,
+                  hasUnreadMarker: true,
+                  unread: notificationsUnread,
+                  hidden: true,
+                  panelOnly: true,
               },
               docs: {
                   title: t("contextBar.docs"),

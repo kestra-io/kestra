@@ -11,6 +11,7 @@ import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useFileExplorerStore} from "./fileExplorer"
 import type {KestraHttpError} from "../utils/kestraHttp"
 
+import {storageKeys} from "../utils/constants"
 // Loaded on demand: this store is reachable from the top nav bar, and statically
 // its graph helpers put Vue Flow and dagre in the bundle every page loads.
 const graphUtils = () => import("@kestra-io/topology/vue-flow-utils")
@@ -35,7 +36,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         removeFalsyValues: true,
     })
 
-    const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem("editorPlayground") !== "false")
+    const enabled = ref<boolean>(params.playground === "on" && localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false")
     watch(enabled, (newValue) => {
         if (newValue) {
             params.playground = "on"

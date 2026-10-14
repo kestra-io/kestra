@@ -305,7 +305,9 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="mark as" tag="span">
+                            <template #status><code>{{ item.code }}</code></template>
+                        </i18n-t>
                     </template>
                 </KsOption>
             </KsSelect>
@@ -854,10 +856,7 @@
     const isDisplayedTop = computed(() => props.filter || props.visibleCharts)
 
     const states = computed(() => {
-        return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({
-            code: value,
-            label: t("mark as", {status: value}),
-        }))
+        return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({code: value}))
     })
 
     const unQueuestates = computed(() => {

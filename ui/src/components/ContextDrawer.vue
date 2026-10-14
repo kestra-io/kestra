@@ -4,9 +4,9 @@
             class="drawerSplitter"
             :style="{width: `${maxDrawerWidth}px`}"
         >
-            <KsSplitterPanel class="drawerSpacerPanel" :min="0" />
+            <KsSplitterPanel class="drawerSpacerPanel" :min="0" :size="spacerWidth" />
 
-            <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
+            <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH">
                 <div class="drawerContent">
                     <div v-if="showTabBar" class="tabBar">
                         <KsTabs
@@ -98,9 +98,11 @@
     const {width: windowWidth} = useWindowSize()
     const maxDrawerWidth = computed(() => windowWidth.value * 0.5)
 
+    const spacerWidth = computed(() => Math.max(maxDrawerWidth.value - drawerWidth.value, 0))
+
     watch(maxDrawerWidth, (value) => {
         drawerWidth.value = Math.min(Math.max(drawerWidth.value, MIN_DRAWER_WIDTH), value)
-    })
+    }, {immediate: true})
 
     function setActiveTab(tab: string) {
         if (tab) miscStore.lastContextTab = tab

@@ -27,6 +27,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.SwitchTaskValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -103,18 +104,15 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @PluginProperty(additionalProperties = Task[].class)
     private Map<String, List<Task>> cases;
 
-    @Valid
     @PluginProperty
-    private List<Task> defaults;
+    private List<@Valid Task> defaults;
 
-    @Valid
     @PluginProperty
-    protected List<Task> errors;
+    protected List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;
@@ -164,7 +162,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         final String value = rendererValue(runContext);
-        return cases.entrySet()
+        return MapUtils.emptyOnNull(this.cases).entrySet()
             .stream()
             .filter(throwPredicate(entry -> entry.getKey().equals(value)))
             .map(Map.Entry::getValue)
@@ -200,14 +198,10 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
 
     @Override
     public Switch.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
+        final String value = rendererValue(runContext);
         return Output.builder()
-            .value(rendererValue(runContext))
-            .defaults(
-                cases
-                    .entrySet()
-                    .stream()
-                    .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
-            )
+            .value(value)
+            .defaults(MapUtils.emptyOnNull(this.cases).keySet().stream().noneMatch(value::equals))
             .build();
     }
 

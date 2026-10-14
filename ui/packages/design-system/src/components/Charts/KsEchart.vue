@@ -13,7 +13,7 @@
             class="ks-chart__inner"
             :theme="currentTheme"
             :option="effectiveOption"
-            :initOptions="{renderer: renderer}"
+            :initOptions="initOptions"
             autoresize
             @mouseover="onMouseover"
             @mouseout="onMouseout"
@@ -49,7 +49,7 @@
     import {vKsLoading} from "../Feedback/KsLoading"
     import KsTooltip from "../Feedback/KsTooltip.vue"
     import KsTheme from "./ksTheme.ts"
-    import {deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "./ksChartUtils"
+    import {categoryLabel, deepMerge, buildDisabledFeaturesOverride, ChartFeature, TooltipType, ChartRenderer} from "../../utils/chart"
 
     defineOptions({inheritAttrs: false})
 
@@ -81,6 +81,8 @@
             /** Raw series data — if not provided as options. */
             data?: KsChartSeriesItem[] | null,
             renderer?: ChartRenderer
+            /** Upper bound for the canvas pixel ratio. Trades a little sharpness on high-DPI screens for a much smaller canvas; leave unset to render at full device resolution. */
+            maxPixelRatio?: number
         }>(),
         {
             loading: false,
@@ -89,8 +91,18 @@
             disableFeatures: () => [],
             data: null,
             renderer: ChartRenderer.CANVAS,
+            maxPixelRatio: undefined,
         },
     )
+
+    // A canvas backing store costs width × height × pixelRatio² bytes, so capping the ratio is the cheapest way to keep
+    // a page holding many charts affordable on a high-DPI screen.
+    const initOptions = computed(() => ({
+        renderer: props.renderer,
+        ...(props.maxPixelRatio === undefined
+            ? {}
+            : {devicePixelRatio: Math.min(window.devicePixelRatio || 1, props.maxPixelRatio)}),
+    }))
 
     const isDark = ref(false)
 
@@ -175,6 +187,7 @@
     interface EChartsTooltipParam {
         seriesName?: string
         seriesType?: string
+        seriesIndex?: number
         name?: string
         value?: unknown
         color?: string
@@ -183,8 +196,12 @@
         percent?: number
     }
 
-    function toCapitalCase(text: string): string {
-        return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    /** Resolves the standard ECharts per-series `tooltip.valueFormatter` option, honored by the external tooltip. */
+    function seriesValueFormatter(seriesIndex?: number): ((value: unknown) => string) | undefined {
+        if (seriesIndex === undefined) return undefined
+        const series = props.options.series
+        const tooltip = (Array.isArray(series) ? series[seriesIndex] : undefined)?.tooltip as Record<string, unknown> | undefined
+        return typeof tooltip?.valueFormatter === "function" ? tooltip.valueFormatter as (value: unknown) => string : undefined
     }
 
     function buildContentFromParams(params: unknown): string {
@@ -197,18 +214,20 @@
         const category = list[0]?.name ?? ""
 
         if (category) {
-            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? toCapitalCase(category) : category}</div>`)
+            rows.push(`<div style="margin-bottom:6px;font-weight:600;color:var(--ks-text-primary)">${isPie ? categoryLabel(category) : category}</div>`)
         }
 
         for (const p of list) {
-            const value = Array.isArray(p.value) ? p.value[1] : p.value
-            if (value === 0 || value === undefined || value === null) {
+            const rawValue = Array.isArray(p.value) ? p.value[1] : p.value
+            if (rawValue === 0 || rawValue === undefined || rawValue === null) {
                 continue
             }
+            const valueFormatter = seriesValueFormatter(p.seriesIndex)
+            const value = valueFormatter ? valueFormatter(rawValue) : rawValue
             const swatch = p.seriesType === "line"
-                ? `<span style="display:inline-block;width:14px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
+                ? `<span style="display:inline-block;width:10px;height:2px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
                 : `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${p.color ?? "currentColor"};flex-shrink:0"></span>`
-            const label = isPie ? "" : toCapitalCase(p.seriesName ?? "")
+            const label = isPie ? "" : categoryLabel(p.seriesName ?? "")
             const suffix = isPie ? ` (${p.percent}%)` : ""
             rows.push(
                 `<div style="display:flex;align-items:center;gap:6px;line-height:18px;white-space:nowrap">${swatch}<span style="flex:1">${label}</span><span style="margin-left:12px">${value}${suffix}</span></div>`,

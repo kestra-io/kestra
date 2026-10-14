@@ -3,6 +3,7 @@ package io.kestra.queue.jdbc.client;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -15,10 +16,10 @@ import org.jooq.impl.DSL;
 
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.UnsupportedMessageException;
-import io.kestra.jdbc.AbstractJdbcRepository;
 import io.kestra.jdbc.JdbcJsonbUtils;
-import io.kestra.jdbc.JdbcQueueItem;
+import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.QueueJdbcDataSourceProvider;
 import io.kestra.jdbc.runner.JdbcQueueConfiguration;
 
 import jakarta.annotation.Nullable;
@@ -46,7 +47,7 @@ public class JdbcQueueClient {
         CREATED
     );
 
-    private final AbstractJdbcRepository<JdbcQueueItem> jdbcRepository;
+    private final Table<Record> queueTable;
 
     private final JooqDSLContextWrapper dslContextWrapper;
 
@@ -54,9 +55,10 @@ public class JdbcQueueClient {
     private final JdbcQueueConfiguration configuration;
 
     @Inject
-    public JdbcQueueClient(@Named("queues") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration) {
-        this.jdbcRepository = jdbcRepository;
-        this.dslContextWrapper = dslContextWrapper;
+    public JdbcQueueClient(@Named("queues") JdbcTableConfig jdbcTableConfig,
+        final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider, JdbcQueueConfiguration configuration) {
+        this.queueTable = DSL.table(jdbcTableConfig.table());
+        this.dslContextWrapper = queueJdbcDataSourceProvider.wrapper();
         this.configuration = configuration;
     }
 
@@ -88,7 +90,7 @@ public class JdbcQueueClient {
             {
                 DSLContext context = DSL.using(configuration);
 
-                Map<Field<?>, Object> fields = HashMap.newHashMap(5);
+                Map<Field<?>, Object> fields = LinkedHashMap.newLinkedHashMap(5); // Use a linked hash map for a predictable iteration order
                 fields.put(TYPE, queue);
                 fields.put(ROUTING_KEY, (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
                 fields.put(KEY, key);
@@ -96,7 +98,7 @@ public class JdbcQueueClient {
                 fields.put(CREATED, Instant.now());
 
                 var insert = context
-                    .insertInto(jdbcRepository.getTable())
+                    .insertInto(queueTable)
                     .set(fields);
 
                 insert.execute();
@@ -125,7 +127,7 @@ public class JdbcQueueClient {
             }
 
             return ctx.selectCount()
-                .from(jdbcRepository.getTable())
+                .from(queueTable)
                 .where(condition)
                 .fetchOneInto(Integer.class);
         });
@@ -141,7 +143,7 @@ public class JdbcQueueClient {
                 DSLContext context = DSL.using(configuration);
 
                 InsertValuesStepN<Record> insert = context
-                    .insertInto(jdbcRepository.getTable())
+                    .insertInto(queueTable)
                     .columns(COLUMNS);
 
                 Instant now = Instant.now();
@@ -174,7 +176,7 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
 
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(this.queueTable)
                 .where(TYPE.eq(queue));
 
             if (routingKeys != null && !routingKeys.isEmpty()) {
@@ -201,7 +203,7 @@ public class JdbcQueueClient {
                     .toList();
 
                 if (!processedItems.isEmpty()) {
-                    DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
+                    DeleteConditionStep<Record> delete = context.delete(this.queueTable)
                         .where(OFFSET.in(processedItems));
 
                     delete.execute();
@@ -218,7 +220,7 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
 
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(this.queueTable)
                 .where(TYPE.eq(queue));
 
             if (routingKeys != null && !routingKeys.isEmpty()) {
@@ -242,7 +244,7 @@ public class JdbcQueueClient {
                     .map(record -> record.get(OFFSET))
                     .toList();
 
-                DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
+                DeleteConditionStep<Record> delete = context.delete(this.queueTable)
                     .where(OFFSET.in(processedItems));
                 delete.execute();
             }
@@ -259,7 +261,7 @@ public class JdbcQueueClient {
             // Filters identically to subscribeBroadcast/subscribeBroadcastBatch so the seeded
             // offset and the poll queries always operate over the same row set.
             return context.select(DSL.max(OFFSET))
-                .from(this.jdbcRepository.getTable())
+                .from(this.queueTable)
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull())
                 .fetchAny("max", Long.class);
@@ -278,7 +280,7 @@ public class JdbcQueueClient {
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
             // seek on offset instead of a full scan of every retained row for this type on each poll.
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(this.queueTable)
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull());
 
@@ -315,7 +317,7 @@ public class JdbcQueueClient {
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
             // seek on offset instead of a full scan of every retained row for this type on each poll.
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(this.queueTable)
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull());
 

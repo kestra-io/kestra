@@ -1,18 +1,19 @@
 <template>
     <ElDatePicker
-        v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        :modelValue="(model as DatePickerPropsPublic['modelValue'])"
+        v-bind="({...filteredProps(), ...$attrs} as DatePickerPropsPublic)"
+        @update:modelValue="(value: T) => (model = value)"
         @change="emit('change', $event)"
     />
 </template>
 
-<script setup lang="ts">
-    import {ElDatePicker} from "element-plus"
+<script setup lang="ts" generic="T">
+    import {ElDatePicker, type DatePickerPropsPublic} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<T>()
 
     const props = withDefaults(defineProps<{
         type?: string
@@ -35,7 +36,7 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: T]
     }>()
 
     const filteredProps = useFilteredProps(props)
@@ -60,6 +61,11 @@
     .kel-date-table td.disabled .kel-date-table-cell {
         background: none;
         color: var(--ks-text-inactive);
+    }
+
+    .kel-date-picker,
+    .kel-date-range-picker {
+        --kel-datepicker-hover-text-color: var(--ks-text-link);
     }
 
     .kel-date-range-picker {

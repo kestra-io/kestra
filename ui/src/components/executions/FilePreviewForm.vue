@@ -63,7 +63,7 @@
     export type EncodingOption = typeof encodingOptions[number]
 
     const configPreviewMaxRows = computed((): number => {
-        return  miscStore.configs?.preview.max || 5000
+        return  miscStore.configs?.preview?.max || 5000
     })
 
     const maxPreviewOptions = computed(() => {

@@ -1,0 +1,115 @@
+import {expect, test} from "./fixtures/auth"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubAiProviderConfigured, stubThreadCreation} from "./fixtures/copilot"
+
+/**
+ * Per-tool end-to-end coverage for the AI Copilot v2 tool catalog.
+ *
+ * The `…/chat` SSE stream is stubbed via `page.route` so each tool is exercised
+ * deterministically, without a configured LLM provider — this asserts the *frontend*
+ * renders each tool's activity (tool_call / tool_result / artefact_draft) end-to-end
+ * through the real app shell. A companion unit spec (copilotToolCatalog.spec.ts) covers
+ * the same catalog at the reducer/component level.
+ *
+ * When the backend adds a tool, add it to PLATFORM_TOOLS / AUTHORING_TOOLS below.
+ */
+
+const THREAD = {uid: "e2e-thread", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}
+
+const D = {
+    chat: CHAT,
+    input: "[data-test=\"copilot-composer-input\"]",
+    send: "[data-test=\"copilot-send\"]",
+    toolCall: "[data-test=\"copilot-tool-call\"]",
+    toolResult: "[data-test=\"copilot-tool-result\"]",
+    draft: "[data-test=\"copilot-draft\"]",
+}
+
+const PLATFORM_TOOLS = [
+    {tool: "read-execution", family: "READ"},
+    {tool: "list-executions", family: "READ"},
+    {tool: "read-execution-logs", family: "READ"},
+    {tool: "read-flow", family: "READ"},
+    {tool: "list-flows", family: "READ"},
+    {tool: "search-plugins", family: "READ"},
+    {tool: "get-plugin-schema", family: "READ"},
+    {tool: "validate-flow", family: "READ"},
+    {tool: "restart-execution", family: "ACT"},
+]
+
+const AUTHORING_TOOLS = [
+    {tool: "author-flow", kind: "FLOW", title: "Proposed flow"},
+    {tool: "author-dashboard", kind: "DASHBOARD", title: "Proposed dashboard"},
+    {tool: "author-app", kind: "APP", title: "Proposed app"},
+]
+
+test.describe("AI Copilot v2 — tool catalog", () => {
+    test.beforeEach(async ({page}) => {
+        // The turn is stubbed, so the surface has to behave as it does on a configured instance.
+        await stubAiProviderConfigured(page, true)
+        await stubThreadCreation(page, THREAD)
+        await disableProductTour(page)
+
+        // Fresh tab per test (see fixtures/auth.ts): boot the SPA from the worker's
+        // warm context — a couple of seconds, not the ~9s a cold context pays.
+        await page.goto("/ui")
+        await openCopilotDock(page)
+    })
+
+    // Stub the next chat turn's SSE stream, then send a prompt.
+    async function runTurn(page: import("@playwright/test").Page, events: [string, unknown][], prompt: string) {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({status: 200, contentType: "text/event-stream", body: sse(events)})
+        })
+        await page.locator(D.input).fill(prompt)
+        await page.locator(D.send).click()
+    }
+
+    for (const {tool, family} of PLATFORM_TOOLS) {
+        test(`renders the "${tool}" tool activity`, async ({page}) => {
+            await runTurn(page, [
+                ["tool_call", {tool, kind: "PLATFORM", family, arguments: {}}],
+                ["tool_result", {tool, outcome: "ok"}],
+                ["token", {text: "Done."}],
+                ["done", {status: "IDLE"}],
+            ], `use the ${tool} tool`)
+
+            await expect(page.locator(D.toolCall).filter({hasText: tool})).toBeVisible({timeout: 15000})
+            await expect(page.locator(D.toolResult).filter({hasText: tool})).toBeVisible({timeout: 15000})
+        })
+    }
+
+    for (const {tool, kind, title} of AUTHORING_TOOLS) {
+        test(`renders the "${tool}" authoring draft (${kind})`, async ({page}) => {
+            await runTurn(page, [
+                ["tool_call", {tool, kind: "AUTHORING", arguments: {}}],
+                ["artefact_draft", {draftId: tool, kind, yaml: `id: ${tool}`, valid: true, constraints: null}],
+                ["tool_result", {tool, outcome: "ok"}],
+                ["done", {status: "IDLE"}],
+            ], `use the ${tool} tool`)
+
+            const draft = page.locator(D.draft)
+            await expect(draft).toBeVisible({timeout: 15000})
+            await expect(draft).toContainText(title)
+            await expect(draft).toContainText(`id: ${tool}`)
+        })
+    }
+
+    test("renders every tool in a single multi-tool turn", async ({page}) => {
+        const events: [string, unknown][] = []
+        for (const {tool, family} of PLATFORM_TOOLS) {
+            events.push(["tool_call", {tool, kind: "PLATFORM", family, arguments: {}}])
+            events.push(["tool_result", {tool, outcome: "ok"}])
+        }
+        for (const {tool, kind} of AUTHORING_TOOLS) {
+            events.push(["tool_call", {tool, kind: "AUTHORING", arguments: {}}])
+            events.push(["artefact_draft", {draftId: tool, kind, yaml: `id: ${tool}`, valid: true, constraints: null}])
+            events.push(["tool_result", {tool, outcome: "ok"}])
+        }
+        events.push(["done", {status: "IDLE"}])
+
+        await runTurn(page, events, "exercise every tool")
+
+        await expect(page.locator(D.toolCall)).toHaveCount(PLATFORM_TOOLS.length + AUTHORING_TOOLS.length, {timeout: 15000})
+        await expect(page.locator(D.draft)).toHaveCount(AUTHORING_TOOLS.length)
+    })
+})

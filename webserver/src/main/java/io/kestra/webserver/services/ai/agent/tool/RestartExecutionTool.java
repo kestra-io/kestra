@@ -56,7 +56,6 @@ public class RestartExecutionTool implements AiPlatformTool {
     )
     public Result restartExecution(
         @P(name = "executionId", value = "The id of the execution to restart") String executionId,
-        @P(name = "revision", value = "Optional flow revision to restart with; omit to use the execution's own revision", required = false) Integer revision,
         final AgentCallContext.Context context) {
         String tenant = context.tenant();
 
@@ -65,7 +64,7 @@ public class RestartExecutionTool implements AiPlatformTool {
 
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException(
-                "Execution '%s' cannot be restarted: current state is '%s', expected terminated or paused."
+                "Execution '%s' cannot be restarted: current state is '%s', expected terminated."
                     .formatted(executionId, execution.getState().getCurrent())
             );
         }
@@ -77,7 +76,7 @@ public class RestartExecutionTool implements AiPlatformTool {
                 operationId ->
                 {
                     try {
-                        executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId));
+                        executionCommandQueue.emit(Restart.from(execution, null).withOperationId(operationId));
                     } catch (QueueException e) {
                         throw new RuntimeException(e);
                     }

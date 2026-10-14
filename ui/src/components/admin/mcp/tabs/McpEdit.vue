@@ -4,10 +4,10 @@
             ref="formRef"
             :model="form"
             labelPosition="top"
-            @submit.prevent="onSubmit"
+            @submit.prevent="save"
         >
             <KsFormItem
-                :label="t('mcp.server_id')"
+                :label="$t('mcp.server_id')"
                 prop="id"
                 required
                 labelPosition="left"
@@ -16,10 +16,9 @@
             >
                 <KsInput
                     v-model="form.id"
-                    :placeholder="t('mcp.id_placeholder')"
+                    :placeholder="$t('mcp.id_placeholder')"
                     :disabled="idDisabled"
                     class="mono id-input"
-                    @change="autoSubmit"
                 >
                     <template
                         v-if="idDisabled"
@@ -30,38 +29,35 @@
                 </KsInput>
             </KsFormItem>
 
-            <KsFormItem :label="t('description')">
+            <KsFormItem :label="$t('description')">
                 <KsInput
                     v-model="form.description"
                     type="textarea"
                     :rows="2"
-                    :placeholder="t('description')"
+                    :placeholder="$t('description')"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
 
-            <KsFormItem :label="t('mcp.instructions')">
+            <KsFormItem :label="$t('mcp.instructions')">
                 <KsInput
                     v-model="form.instructions"
                     type="textarea"
                     :rows="3"
-                    :placeholder="t('mcp.instructions')"
+                    :placeholder="$t('mcp.instructions')"
                     class="mono"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
 
             <KsFormItem
-                :label="t('mcp.private_server')"
+                :label="$t('mcp.private_server')"
                 labelPosition="left"
                 class="spread-row"
             >
                 <KsSwitch
                     v-model="privateServer"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
 
@@ -71,30 +67,28 @@
                 :closable="false"
                 class="type-hint"
             >
-                {{ t("mcp.public_hint") }}
+                {{ $t("mcp.public_hint") }}
             </KsAlert>
 
             <KsFormItem v-if="isPrivate">
                 <KsRadioCardGroup
                     v-model="form.authType"
                     :options="authOptions"
-                    :ariaLabel="t('mcp.auth_type')"
-                    @change="autoSubmit"
+                    :ariaLabel="$t('mcp.auth_type')"
                 />
             </KsFormItem>
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.oauth_provider')"
+                :label="$t('mcp.oauth_provider')"
                 prop="oauthProvider"
                 :rules="oauthProviderRules"
             >
                 <KsSelect
                     v-model="form.oauthProvider"
-                    :placeholder="t('mcp.oauth_provider_placeholder')"
+                    :placeholder="$t('mcp.oauth_provider_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
-                    @change="autoSubmit"
                 >
                     <KsOption
                         v-for="provider in oauthProviders"
@@ -107,7 +101,7 @@
 
             <KsFormItem
                 v-if="isOAuth"
-                :label="t('mcp.scopes_supported')"
+                :label="$t('mcp.scopes_supported')"
             >
                 <KsSelect
                     v-model="form.oauthScopesSupported"
@@ -115,27 +109,41 @@
                     filterable
                     allowCreate
                     defaultFirstOption
-                    :placeholder="t('mcp.scopes_supported_placeholder')"
+                    :placeholder="$t('mcp.scopes_supported_placeholder')"
                     :disabled="readOnly"
                     class="full-width"
-                    @change="autoSubmit"
                 />
                 <div class="field-hint">
-                    {{ t("mcp.scopes_supported_hint") }}
+                    {{ $t("mcp.scopes_supported_hint") }}
                 </div>
             </KsFormItem>
 
             <KsFormItem
-                :label="t('enabled')"
+                :label="$t('enabled')"
                 labelPosition="left"
                 class="spread-row"
             >
                 <KsSwitch
                     v-model="enabled"
                     :disabled="readOnly"
-                    @change="autoSubmit"
                 />
             </KsFormItem>
+
+            <div
+                v-if="canSave"
+                class="form-actions"
+            >
+                <KsButton @click="cancel">
+                    {{ $t("cancel") }}
+                </KsButton>
+                <KsButton
+                    type="primary"
+                    :disabled="submitting"
+                    @click="save"
+                >
+                    {{ isUpdate ? $t("save") : $t("create") }}
+                </KsButton>
+            </div>
         </KsForm>
     </div>
 </template>
@@ -146,6 +154,7 @@
     import {useRoute, useRouter} from "vue-router"
 
     import {useMcpStore, type McpServerPayload} from "../../../../stores/mcp"
+    import {useHelpers} from "../useHelpers"
     import {useMiscStore} from "override/stores/misc"
     import {useAuthStore} from "override/stores/auth"
 
@@ -165,6 +174,7 @@
     const mcpStore = useMcpStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
+    const {listRoute} = useHelpers()
 
     const DEFAULT_OAUTH_SCOPES = ["openid", "profile", "email"]
 
@@ -287,8 +297,8 @@
         }
     }
 
-    const create = async (): Promise<void> => {
-        if (!formRef.value || submitting.value) {
+    const save = async (): Promise<void> => {
+        if (readOnly.value || !formRef.value || submitting.value) {
             return
         }
 
@@ -299,57 +309,27 @@
 
             submitting.value = true
             try {
-                const created = await mcpStore.create(buildPayload())
-                toast.saved(created.id)
-                router.push({
-                    name: "admin/mcp-servers/update",
-                    params: {id: created.id, tab: "edit", tenant: route.params.tenant},
-                })
-            } catch (e) {
-                submitting.value = false
-                console.error("Failed to create MCP server", e)
-            }
-        }).catch(() => {})
-    }
-
-    const autoSubmit = (): void => {
-        if (isUpdate.value) {
-            autoSave()
-            return
-        }
-
-        if (readOnly.value || !form.value.id) {
-            return
-        }
-
-        create()
-    }
-
-    const autoSave = (): void => {
-        if (!isUpdate.value || readOnly.value || !formRef.value) {
-            return
-        }
-
-        formRef.value.validate(async (valid) => {
-            if (!valid) {
-                return
-            }
-
-            try {
-                await mcpStore.update(form.value.id, buildPayload())
-                toast.saved(form.value.id)
+                if (isUpdate.value) {
+                    await mcpStore.update(form.value.id, buildPayload())
+                    toast.saved(form.value.id)
+                } else {
+                    const created = await mcpStore.create(buildPayload())
+                    toast.saved(created.id)
+                    router.push({
+                        name: "admin/mcp-servers/update",
+                        params: {id: created.id, tab: "edit", tenant: route.params.tenant},
+                    })
+                }
             } catch (e) {
                 console.error("Failed to save MCP server", e)
+            } finally {
+                submitting.value = false
             }
         }).catch(() => {})
     }
 
-    const onSubmit = (): void => {
-        if (isUpdate.value) {
-            autoSave()
-        } else {
-            create()
-        }
+    const cancel = (): void => {
+        router.push(listRoute.value)
     }
 
     onMounted(() => {
@@ -443,6 +423,14 @@
 
     .spread-row:last-child {
         margin-bottom: 0;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-2);
+        border-top: 1px solid var(--ks-border-subtle);
+        padding-top: var(--ks-spacing-4);
     }
 
     .id-input {

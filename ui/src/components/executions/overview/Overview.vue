@@ -8,8 +8,11 @@
                 v-if="execution.state.current === State.FAILED"
                 :execution
             />
+            <PausedAlert
+                v-if="execution.state.current === State.PAUSED"
+                :execution
+            />
         </div>
-        <component :is="executionOverviewPanel" v-if="executionOverviewPanel" :execution="execution" />
         <Topology
             class="topology"
             :horizontalDefault="!verticalLayout"
@@ -39,9 +42,9 @@
 
     import Banner from "./components/Banner.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"
+    import PausedAlert from "./components/main/PausedAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
-    import {executionOverviewPanel} from "override/components/executions/overview/OverviewExtensions"
 
     const execution = computed(() => store.execution)
 
@@ -49,6 +52,9 @@
 
     onMounted(() => {
         if (!route.params.id) return
+        // The route guard loads the execution into the store before this page mounts
+        // (EXECUTION_ENTITY_META), and the SSE stream keeps it current from there.
+        if (execution.value?.id === route.params.id) return
         loadExecution(route.params.id as string)
     })
 
@@ -61,6 +67,7 @@
         flex-direction: column;
         height: 100%;
         gap: var(--ks-spacing-4);
+        min-width: 0;
     }
 
     .banner {
@@ -76,13 +83,18 @@
         }
     }
 
+    #alerts {
+        min-width: 0;
+    }
+
     #alerts:empty {
         display: none;
     }
 
     .topology {
-        flex-shrink: 0;
-        --topology-height: 650px;
+        flex: 1;
+        // Floor so a short viewport still gets a usable graph; the page scrolls from there.
+        min-height: 400px;
     }
 
     #empty {

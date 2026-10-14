@@ -1,4 +1,4 @@
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {defineComponent} from "vue"
 import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 
@@ -39,7 +39,7 @@ export default defineComponent({
         isRequired(key: string) {
             return this.schema?.required?.includes(key)
         },
-        onInput(value:any) {
+        onInput(value: unknown) {
             this.$emit("update:modelValue", collapseEmptyValues(value))
         },
     },

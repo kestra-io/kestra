@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.models.AccessScope;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -82,7 +84,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).hasSize(1);
@@ -95,7 +97,7 @@ class McpToolServiceTest {
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         ToolAnnotations annotations = tools.getFirst().tool().annotations();
@@ -117,7 +119,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(scheduleTrigger))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).isEmpty();
@@ -129,7 +131,7 @@ class McpToolServiceTest {
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE, MCP_TRIGGER_TWO))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).hasSize(2);
@@ -144,8 +146,8 @@ class McpToolServiceTest {
         flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_ONE))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> firstCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
-        List<McpServerFeatures.AsyncToolSpecification> secondCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> firstCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
+        List<McpServerFeatures.AsyncToolSpecification> secondCall = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(firstCall).hasSize(1);
@@ -160,7 +162,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow2 = flowRepository.create(GenericFlow.of(buildFlow(List.of(MCP_TRIGGER_TWO))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).hasSize(2);
@@ -175,7 +177,7 @@ class McpToolServiceTest {
         flowRepository.delete(savedFlow);
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).isEmpty();
@@ -187,7 +189,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of(DISABLED_MCP_TRIGGER))));
 
         // When
-        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+        List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
         // Then
         assertThat(tools).isEmpty();
@@ -199,7 +201,7 @@ class McpToolServiceTest {
         FlowWithSource savedFlow = flowRepository.create(GenericFlow.of(buildFlow(List.of())));
         try {
             // When
-            List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, McpServer.ServerType.PRIVATE);
+            List<McpServerFeatures.AsyncToolSpecification> tools = mcpToolService.listToolSpecsForServer(null, SERVER_ID, AccessScope.global());
 
             // Then
             assertThat(tools).isEmpty();
@@ -257,6 +259,24 @@ class McpToolServiceTest {
         assertThat(errors).anyMatch(error -> error.contains("name"));
     }
 
+    @Test
+    void shouldResolveAnInputDefaultingToAFlowLabelWhenValidating() {
+        // Given a flow labelled env=prod and an input defaulting to that label, called with an execution
+        // carrying only the labels a trigger contributes, which is what McpToolTrigger builds
+        Flow flow = buildFlowWithInputs(
+            List.of(
+                StringInput.builder().id("env").type(Type.STRING).required(true).defaults(Property.ofExpression("{{ labels.env }}")).build()
+            ),
+            List.of(new Label("env", "prod"))
+        );
+
+        // When
+        List<String> errors = mcpToolService.collectInputValidationErrors(flow, minimalExecution(flow), Map.of());
+
+        // Then the flow's label resolves, as it does when the executor creates the execution
+        assertThat(errors).isEmpty();
+    }
+
     private static Execution minimalExecution(Flow flow) {
         return Execution.builder()
             .id(IdUtils.create())
@@ -267,9 +287,14 @@ class McpToolServiceTest {
     }
 
     private Flow buildFlowWithInputs(List<io.kestra.core.models.flows.Input<?>> inputs) {
+        return buildFlowWithInputs(inputs, null);
+    }
+
+    private Flow buildFlowWithInputs(List<io.kestra.core.models.flows.Input<?>> inputs, List<Label> labels) {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("namespace")
+            .labels(labels)
             .inputs(inputs)
             .tasks(
                 List.of(

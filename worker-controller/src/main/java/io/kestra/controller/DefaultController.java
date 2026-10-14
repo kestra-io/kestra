@@ -5,6 +5,8 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,12 +18,15 @@ import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.grpc.InternalCallServerInterceptor;
 import io.kestra.controller.grpc.WorkerControllerService;
+import io.kestra.controller.grpc.auth.BasicAuthServerInterceptor;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.Metric;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 
 import io.grpc.Grpc;
@@ -34,6 +39,7 @@ import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -55,6 +61,15 @@ public class DefaultController extends AbstractService implements Controller {
 
     private Server server;
 
+    /**
+     * gRPC would otherwise hand every call to a shared, unbounded cached pool of platform threads.
+     * Controller RPCs block on storage — a streamed plugin artifact for the length of the transfer —
+     * so a fleet-wide resync would cost one platform thread per worker.
+     */
+    private final ExecutorService serverExecutor = Executors.newThreadPerTaskExecutor(
+        Thread.ofVirtual().name("grpc-controller-", 0).factory()
+    );
+
     private final List<WorkerControllerService> workerControllerServices;
 
     protected final HealthStatusManager healthStatusManager;
@@ -65,18 +80,23 @@ public class DefaultController extends AbstractService implements Controller {
 
     protected final MetricRegistry metricRegistry;
 
+    @Nullable
+    private final BasicAuthServerInterceptor basicAuthServerInterceptor;
+
     @Inject
     public DefaultController(
         List<WorkerControllerService> workerControllerServices,
         GrpcConfiguration grpcConfiguration,
         ControllerConfiguration controllerConfiguration,
         MetricRegistry metricRegistry,
-        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
+        ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
+        @Nullable BasicAuthServerInterceptor basicAuthServerInterceptor) {
         super(ServiceType.CONTROLLER, eventPublisher);
         this.grpcConfiguration = grpcConfiguration;
         this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
         this.metricRegistry = metricRegistry;
+        this.basicAuthServerInterceptor = basicAuthServerInterceptor;
         this.healthStatusManager = new HealthStatusManager();
         setState(ServiceState.CREATED);
     }
@@ -148,7 +168,14 @@ public class DefaultController extends AbstractService implements Controller {
     protected ServerBuilder<?> buildServer(int port) {
         ServerCredentials credentials = createServerCredentials();
         ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, credentials)
+            .executor(serverExecutor)
+            .intercept(new InternalCallServerInterceptor())
             .addService(healthStatusManager.getHealthService());
+
+        if (basicAuthServerInterceptor != null) {
+            serverBuilder.intercept(basicAuthServerInterceptor);
+            LOG.info("gRPC basic authentication is enabled");
+        }
 
         if (grpcConfiguration.reflectionEnabled()) {
             LOG.info("gRPC proto reflection is enabled");
@@ -203,6 +230,7 @@ public class DefaultController extends AbstractService implements Controller {
         if (server != null && !server.isTerminated()) {
             shutdownServerAndWait();
         }
+        ExecutorsUtils.closeExecutorService("grpc-controller", serverExecutor, controllerConfiguration.maxConnectionAgeGrace());
         return ServiceState.TERMINATED_GRACEFULLY;
     }
 

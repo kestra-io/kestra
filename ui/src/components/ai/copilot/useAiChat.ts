@@ -5,18 +5,19 @@
  * renderable message list. The thread `status` is the single source of truth for
  * what the UI may do next:
  *   - IDLE                  → a new turn may be sent
- *   - RUNNING               → a turn is streaming; composer disabled (a 2nd turn 409s)
+ *   - RUNNING               → a turn is streaming; composer shows stop (a 2nd turn 409s)
  *   - AWAITING_CONFIRMATION → a proposal is suspended; call `confirm(...)` to resume
  *
  * Non-streaming calls (create/get) go through the `useClient()` facade — not the generated SDK AI
  * endpoints, which differ per edition (the EE SDK doesn't expose thread `create`/`get`); the `chat`
  * and `confirm` turns are POST SSE streams read via `streamSse`.
  */
-import {ref, computed} from "vue"
+import {ref, computed, getCurrentScope, onScopeDispose} from "vue"
 import {useClient} from "@kestra-io/kestra-sdk"
 import type {AgentMessageRole, AgentMessageType, AgentThreadStatus, ApiDecision} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import {uid} from "../../../utils/utils"
+import {handledIf} from "../../../utils/kestraHttp"
 import {streamSse, SseHttpError} from "./streamSse"
 import {
     AiEvent,
@@ -50,17 +51,25 @@ export interface ContextNotice {
     id: string
 }
 
+/** A display-only transcript line noting the AI provider/model was switched mid-conversation. */
+export interface ModelChangeNotice {
+    /** The newly selected provider's display name (e.g. "GPT-5 nano"). */
+    label: string
+}
+
 /** A message as rendered in the chat transcript (a superset of the wire MessageView). */
 export interface ChatMessage {
     /** Local, stable key for v-for. */
     id: string
     role: AgentMessageRole
-    /** `"CONTEXT"` is a local, display-only transcript line noting a focus change — never a wire type. */
-    type: AgentMessageType | "CONTEXT"
+    /** `"CONTEXT"` and `"MODEL_CHANGED"` are local, display-only transcript lines — never wire types. */
+    type: AgentMessageType | "CONTEXT" | "MODEL_CHANGED"
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
     /** The focus change to render; present only on a `"CONTEXT"` line. */
     context?: ContextNotice
+    /** The model switch to render; present only on a `"MODEL_CHANGED"` line. */
+    modelChange?: ModelChangeNotice
     toolCall?: ToolCallEvent
     toolResult?: ToolResultEvent
     proposedAction?: ProposedActionEvent
@@ -86,8 +95,13 @@ export function useAiChat() {
     const notice = ref<NoticeCode | null>(null)
     /** The proposal awaiting a confirm/reject decision, if any. */
     const pendingConfirmation = ref<ProposedActionEvent | null>(null)
-    /** True when the backend reports no AI provider is configured (503) — render an "unavailable" state. */
+    /**
+     * True when the copilot has no provider to run on — either the backend said so mid-turn (503) or
+     * the caller knew from `/configs` before sending. Renders the "unavailable" state.
+     */
     const unavailable = ref(false)
+    /** Title for the next thread created by `ensureThread` (e.g. a seeded "Fix with AI" turn); consumed once. */
+    const nextThreadTitle = ref<string | null>(null)
 
     /** Reference to the assistant bubble currently being streamed into. */
     let activeAssistant: ChatMessage | null = null
@@ -103,6 +117,17 @@ export function useAiChat() {
     // The active thread uid is remembered client-side so the conversation survives a reload
     // (threads are persisted + user-scoped server-side). A stale/foreign uid just 404s → cleared.
     const THREAD_STORAGE_KEY = "kestra.copilot.activeThread"
+    const THREAD_IDLE_POLL_MS = 100
+    const THREAD_IDLE_POLL_MAX_MS = 1000
+    const THREAD_IDLE_WAIT_MS = 10_000
+    // Bumped on reset/loadThread/unmount so a Stop that is still waiting for the server to go IDLE
+    // does not overwrite a newer conversation's status or keep polling after teardown.
+    let idleWaitGeneration = 0
+    if (getCurrentScope()) {
+        onScopeDispose(() => {
+            idleWaitGeneration++
+        })
+    }
     const rememberThread = (uid: string) => {
         try {
             localStorage.setItem(THREAD_STORAGE_KEY, uid)
@@ -117,13 +142,20 @@ export function useAiChat() {
     /** Creates the thread once and reuses its uid for the rest of the session. */
     async function ensureThread(request: CreateThreadRequest = {}): Promise<ThreadSummary> {
         if (thread.value) return thread.value
-        // `showMessageOnError: false` opts out of the global "page not found" redirect: when no AI
-        // provider is configured the agentic endpoints (`AiAgentController`, `@Requires` the
-        // AiServiceManager bean) aren't registered, so this create 404s — surfaced as the copilot's
-        // own "unavailable" state by sendChat, not a full-page redirect.
-        const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false})
+        if (nextThreadTitle.value) {
+            request = {...request, title: nextThreadTitle.value}
+        }
+        // The 404 is kept out of the global error toast: when no AI provider is
+        // configured the agentic endpoints (`AiAgentController`, `@Requires` the AiServiceManager
+        // bean) aren't registered, so this create 404s — surfaced as the copilot's own
+        // "unavailable" state by sendChat instead.
+        const {data} = await client.post<ThreadSummary>(base(), request).catch(e => {
+            handledIf(e, [404])
+            throw e
+        })
         thread.value = data
         status.value = data.status
+        nextThreadTitle.value = null
         rememberThread(data.uid)
         return data
     }
@@ -148,20 +180,24 @@ export function useAiChat() {
 
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
     async function loadThread(threadId: string): Promise<void> {
-        // `showMessageOnError: false` opts out of the global "page not found" so an expected 404 —
-        // the thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
-        // is handled here: forget the remembered id and start a fresh session instead of erroring out.
+        idleWaitGeneration++
+        // An expected 404 is kept out of the global error toast — the
+        // thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
+        // handled here by forgetting the remembered id and starting a fresh session.
         const response = await client
-            .get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
-            .catch((e: {status?: number; response?: {status?: number}}) => {
-                if (e?.status === 404 || e?.response?.status === 404) return null
+            .get<ThreadDetail>(`${base()}/${threadId}`)
+            .catch((e: unknown) => {
+                if (handledIf(e, [404])) return null
                 throw e
             })
         if (!response) {
             forgetThread()
             return
         }
-        const {data} = response
+        applyThreadDetail(response.data)
+    }
+
+    function applyThreadDetail(data: ThreadDetail): void {
         thread.value = {
             uid: data.uid,
             title: data.title,
@@ -236,14 +272,6 @@ export function useAiChat() {
         await runStream(`${base()}/${active.uid}/chat`, request)
     }
 
-    /** Clears the unavailable state so the user can retry (e.g. after configuring a provider). */
-    function retry(): void {
-        unavailable.value = false
-        error.value = null
-        errorDetail.value = null
-        notice.value = null
-    }
-
     /** Re-runs the last chat/confirm turn — used by the empty-turn notice to retry without retyping. */
     async function retryLastTurn(): Promise<void> {
         if (!lastTurn || streaming.value) return
@@ -264,7 +292,7 @@ export function useAiChat() {
         await runStream(`${base()}/${active.uid}/confirm`, request)
     }
 
-    /** Cancels an in-flight stream (e.g. on unmount). */
+    /** Aborts an in-flight stream (stop button, or unmount). */
     function cancel(): void {
         abort?.abort()
     }
@@ -272,6 +300,8 @@ export function useAiChat() {
     /** Starts a fresh conversation: drops the current thread/transcript back to the empty state. */
     function reset(): void {
         cancel()
+        idleWaitGeneration++
+        abort = null
         thread.value = null
         messages.value = []
         status.value = "IDLE"
@@ -281,6 +311,7 @@ export function useAiChat() {
         notice.value = null
         pendingConfirmation.value = null
         unavailable.value = false
+        nextThreadTitle.value = null
         activeAssistant = null
         lastTurn = null
         forgetThread()
@@ -297,6 +328,7 @@ export function useAiChat() {
         abort = new AbortController()
         lastTurn = {url, body}
         const countBefore = messages.value.length
+        let waitForServerIdle = false
 
         try {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
@@ -308,16 +340,66 @@ export function useAiChat() {
                 notice.value = "emptyTurn"
             }
         } catch (e) {
-            if ((e as Error)?.name === "AbortError") return
-            // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
-            if (is503(e)) unavailable.value = true
-            else error.value = toErrorCode(e)
-            // A stream error never leaves us in RUNNING; fall back to a safe resting state.
-            status.value = "IDLE"
+            if (isAbortError(e)) {
+                // `reset()` nulls `abort` before the fetch rejects, so a New chat does not paint
+                // a cancelled marker onto the empty transcript.
+                if (abort !== null) {
+                    push({id: uid(), role: "SYSTEM", type: "CANCELLED"})
+                    waitForServerIdle = true
+                }
+            } else {
+                // 503 mid-stream (provider removed) → the unavailable state; otherwise a generic error.
+                if (is503(e)) unavailable.value = true
+                else error.value = toErrorCode(e)
+                // A stream error never leaves us in RUNNING; fall back to a safe resting state.
+                status.value = "IDLE"
+            }
         } finally {
             streaming.value = false
             activeAssistant = null
             abort = null
+        }
+        if (waitForServerIdle) {
+            const threadId = thread.value?.uid
+            if (threadId) await awaitServerIdle(threadId)
+            else status.value = "IDLE"
+        }
+    }
+
+    /** Stop aborts the SSE immediately, but abortCancelled only runs after an in-flight catalog.dispatch returns, so Send stays off until GET reports the thread is no longer RUNNING. */
+    async function awaitServerIdle(threadId: string): Promise<void> {
+        const generation = idleWaitGeneration
+        const deadline = Date.now() + THREAD_IDLE_WAIT_MS
+        let delayMs = THREAD_IDLE_POLL_MS
+        for (;;) {
+            if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
+            try {
+                const {data} = await client.get<ThreadDetail>(`${base()}/${threadId}`).catch(e => {
+                    handledIf(e, [404])
+                    throw e
+                })
+                if (generation !== idleWaitGeneration || thread.value?.uid !== threadId) return
+                if (data.status === "IDLE") {
+                    status.value = "IDLE"
+                    return
+                }
+                if (data.status === "AWAITING_CONFIRMATION") {
+                    applyThreadDetail(data)
+                    return
+                }
+            } catch (e) {
+                if (is404(e)) {
+                    if (generation === idleWaitGeneration && thread.value?.uid === threadId) status.value = "IDLE"
+                    return
+                }
+            }
+            const remaining = deadline - Date.now()
+            if (remaining <= 0) {
+                if (generation === idleWaitGeneration && thread.value?.uid === threadId) status.value = "IDLE"
+                return
+            }
+            await new Promise<void>((resolve) => setTimeout(resolve, Math.min(delayMs, remaining)))
+            delayMs = Math.min(delayMs * 2, THREAD_IDLE_POLL_MAX_MS)
         }
     }
 
@@ -390,6 +472,16 @@ export function useAiChat() {
         push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: notice})
     }
 
+    /**
+     * Appends a display-only system line noting the AI provider/model was switched — never a turn,
+     * so never sent to the backend or persisted. Suppressed until a conversation has started, same
+     * as `noteContext`.
+     */
+    function noteModelChange(label: string): void {
+        if (messages.value.length === 0) return
+        push({id: uid(), role: "SYSTEM", type: "MODEL_CHANGED", modelChange: {label}})
+    }
+
     function toErrorCode(e: unknown): ErrorCode {
         if (e instanceof SseHttpError) {
             if (e.status === 409) return "turnInProgress"
@@ -408,12 +500,16 @@ export function useAiChat() {
     /**
      * True when the failure is a 404 — the agentic AI endpoints aren't registered because no AI
      * provider is configured (`AiAgentController` is `@Requires(AiServiceManager)`). Treated like a
-     * 503 (copilot unavailable), not the global not-found page.
+     * 503 (copilot unavailable) rather than a generic request failure.
      */
     function is404(e: unknown): boolean {
         if (e instanceof SseHttpError) return e.status === 404
         const err = e as {status?: number; response?: {status?: number}}
         return err?.status === 404 || err?.response?.status === 404
+    }
+
+    function isAbortError(e: unknown): boolean {
+        return (e as {name?: string})?.name === "AbortError"
     }
 
     return {
@@ -430,6 +526,7 @@ export function useAiChat() {
         pendingConfirmation,
         unavailable,
         canSend,
+        nextThreadTitle,
         // actions
         ensureThread,
         loadThread,
@@ -438,9 +535,9 @@ export function useAiChat() {
         confirm,
         cancel,
         reset,
-        retry,
         retryLastTurn,
         noteContext,
+        noteModelChange,
     }
 }
 

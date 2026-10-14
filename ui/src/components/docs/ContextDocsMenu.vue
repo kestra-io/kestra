@@ -34,7 +34,7 @@
                     </li>
                 </template>
                 <li v-else>
-                    Loading Menu...
+                    {{ $t("loading") }}
                 </li>
             </ul>
         </div>
@@ -43,8 +43,8 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useDocStore} from "../../stores/doc"
-    import {SECTIONS} from "./docsUtils"
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
+    import {buildDocsSections, buildDocsToc} from "./docsUtils"
 
     import Menu from "vue-material-design-icons/Menu.vue"
 
@@ -55,7 +55,7 @@
 
     const menuOpen = ref(false)
 
-    const rawStructure = ref<Record<string, any> | undefined>()
+    const rawStructure = ref<Record<string, DocMetadata> | undefined>()
     const currentDocPath = computed(() => docStore.docPath)
 
     const normalizePath = (path: string) => {
@@ -86,52 +86,7 @@
         rawStructure.value = await docStore.children()
     })
 
-    const toc = computed(() => {
-        if (rawStructure.value === undefined) {
-            return undefined
-        }
-
-        const childrenWithMetadata = Object.entries(rawStructure.value)
-            .filter(([p]) => p.startsWith("docs/") && !p.endsWith(".png") && !p.endsWith(".svg"))
-            .reduce((acc: Record<string, any>, [url, metadata]) => {
-                if(!metadata || metadata.hideSidebar){
-                    return acc
-                }
-
-                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "")
-
-                acc[cleanUrl] = {
-                    ...metadata,
-                    path: cleanUrl,
-                }
-
-                return acc
-            }, {})
-
-        for(const url in childrenWithMetadata){
-            const metadata = childrenWithMetadata[url]
-            const split = url.split("/")
-            const parentUrl = split.slice(0, split.length - 1).join("/")
-            const parent = childrenWithMetadata[parentUrl]
-            if (parent !== undefined) {
-                parent.children = [...(parent.children ?? []), metadata]
-            }
-        }
-
-        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[]
-    })
-
-    const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
-        .map(([section, childrenTitles]) =>({
-
-            section,
-            children: childrenTitles
-                .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
-                    path.split("/").length === 2 && (sidebarTitle === name || title === name),
-                ))
-                .filter((item): item is NonNullable<typeof item> => !!item),
-        })),
-    )
+    const sectionsWithChildren = computed(() => buildDocsSections(buildDocsToc(rawStructure.value)))
 </script>
 
 <style scoped lang="scss">
@@ -180,7 +135,7 @@
 
         &.is-open {
             position: relative;
-            z-index: 1001;
+            z-index: calc(var(--ks-z-dropdown) + 1);
         }
     }
 
@@ -193,7 +148,7 @@
 
     .docsMenuContainer {
         position: absolute;
-        z-index: 1000;
+        z-index: var(--ks-z-dropdown);
         padding: 1rem 0.25rem 1rem 0.5rem;
         left: 28px;
         right: 28px;
@@ -201,7 +156,7 @@
         background-color: var(--ks-bg-surface);
         border-radius: 8px;
         border: 1px solid var(--ks-border-default);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 30px var(--ks-shadow-elevated);
         margin-top: 4px;
     }
 
@@ -248,7 +203,7 @@
             }
 
             &:hover {
-                color: var(--ks-primary);
+                color: var(--ks-text-link);
                 background-color: var(--ks-btn-secondary-bg-hover);
             }
 

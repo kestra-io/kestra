@@ -21,6 +21,9 @@ concurrency:
 jobs:
   e2e:
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
 
@@ -33,7 +36,7 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:
       - name: OpenTelemetry - Export trace
-        uses: kestra-io/actions/actions/otel-collect@main
+        uses: kestra-io/actions/actions/otel-export-trace@main
         if: ${{ env.OTLP_ENDPOINT != '' }}
         with:
           mode: export-all

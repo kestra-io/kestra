@@ -21,7 +21,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 public class Quota {
     @NotNull
-    @DurationMin(minutes = 1)
+    @DurationMin(minutes = 1, message = "must be longer than or equal to 1 minute")
     private Duration duration;
 
     @NotNull

@@ -1,5 +1,4 @@
 import net.e175.klaus.zip.ZipPrefixer
-import org.owasp.dependencycheck.gradle.extension.AnalyzerExtension
 
 buildscript {
     repositories {
@@ -20,24 +19,17 @@ plugins {
     id "application"
 
     // test
-    id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.3.1.8318"
     id 'jacoco-report-aggregation'
 
-    // helper
-    id "com.github.ben-manes.versions" version "0.60.0"
-
     // release
-    id 'net.researchgate.release' version '3.1.0'
+    id 'net.researchgate.release' version '3.2.0'
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.37.0"
 
-    // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.2.2" apply false
-
-    // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.2.6"
+    // Kestra gradle plugin
+    id "io.kestra.gradle.spotless-conventions" version '1.2.11'
+    id 'io.kestra.gradle.repository-conventions' version '1.2.11'
 }
 
 idea {
@@ -145,7 +137,7 @@ allprojects {
             // OTEL
             implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
-            // jackson
+            // jackson 2 - Kestra's own serialization (JacksonMapper: storage, queue, YAML flow parsing)
             implementation "com.fasterxml.jackson.core:jackson-core"
             implementation "com.fasterxml.jackson.core:jackson-databind"
             implementation "com.fasterxml.jackson.core:jackson-annotations"
@@ -153,6 +145,11 @@ allprojects {
             implementation "com.fasterxml.jackson.module:jackson-module-parameter-names"
             implementation "com.fasterxml.jackson.datatype:jackson-datatype-guava"
             implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+
+            // jackson 3 (tools.jackson) - used by Micronaut 5's HTTP/Jackson integration.
+            implementation "tools.jackson.core:jackson-core"
+            implementation "tools.jackson.core:jackson-databind"
+
             implementation "com.fasterxml.uuid:java-uuid-generator"
 
             // kestra
@@ -174,11 +171,29 @@ allprojects {
 /**********************************************************************************************************************\
  * Test
  **********************************************************************************************************************/
+
+// Per-module test heap, sized from measured peak GC heap occupancy (dev-tools/analyze-test-heap.sh,
+// run with -PprofileHeap) plus ~30% headroom. A single blanket value either wastes memory on small
+// modules or starves large ones — re-profile and bump a module's entry here if it starts failing
+// with OutOfMemoryError / GC overhead limit exceeded.
+ext.testHeapSizes = [
+    'processor'        : '256m',
+    'executor'         : '768m',
+    'scheduler'        : '768m',
+    'worker'           : '768m',
+    'jdbc-mysql'       : '768m',
+    'jdbc-postgres'    : '1024m',
+    'tests'            : '1024m',
+    'cli'              : '1280m',
+    'jdbc-h2'          : '1280m',
+    'webserver'        : '1280m',
+    'core'             : '2560m',
+]
+
 subprojects {subProj ->
 
     if (subProj.name != 'platform' && subProj.name != 'jmh-benchmarks') {
 
-        apply plugin: "com.adarshr.test-logger"
         apply plugin: 'jacoco'
 
         java {
@@ -221,7 +236,7 @@ subprojects {subProj ->
             testImplementation "org.junit.jupiter:junit-jupiter-params"
             testImplementation "org.junit-pioneer:junit-pioneer"
             testImplementation 'org.mockito:mockito-junit-jupiter'
-            mockitoAgent("org.mockito:mockito-core:5.23.0") {
+            mockitoAgent("org.mockito:mockito-core:5.24.0") {
                 transitive = false // just the core
             }
 
@@ -242,16 +257,29 @@ subprojects {subProj ->
             t.timeout = java.time.Duration.ofMinutes(
                 (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
             )
+            // Bounds a single test method so it fails by itself, rather than a hung test consuming
+            // the module's whole Gradle-level timeout above and discarding every test's JUnit XML.
+            t.systemProperty 'junit.jupiter.execution.timeout.default',
+                System.getenv('JUNIT_TEST_TIMEOUT_MIN') ? "${System.getenv('JUNIT_TEST_TIMEOUT_MIN')} m" : '5 m'
             t.finalizedBy jacocoTestReport
-            t.doFirst {
-                logger.lifecycle("[TASK START] ${t.path}")
-            }
-            t.doLast {
-                logger.lifecycle("[TASK END]   ${t.path}")
+
+
+            // -PprofileHeap: raise the ceiling so no module is heap-starved, and log real GC
+            // occupancy per module so per-module maxHeapSize can be set from measurements
+            // instead of guessed. See dev-tools/analyze-test-heap.sh.
+            if (project.hasProperty('profileHeap')) {
+                t.maxHeapSize = '8g'
+                def heapProfileDir = "${rootDir}/heap-profile"
+                mkdir(heapProfileDir)
+                t.jvmArgs += ["-Xlog:gc:file=${heapProfileDir}/${project.name}-gc.log:time,uptime,level,tags"]
+            } else {
+                t.maxHeapSize = rootProject.ext.testHeapSizes.getOrDefault(project.name, '512m')
             }
 
-            // set Xmx for test workers
-            t.maxHeapSize = '4g'
+            // By default a thread that hits OutOfMemoryError just dies silently (JVM default
+            // UncaughtExceptionHandler) while the rest of the JVM limps on in a degraded state.
+            // Exit immediately instead.
+            t.jvmArgs += ["-XX:+ExitOnOutOfMemoryError"]
 
             // configure en_US default locale for tests
             t.systemProperty 'user.language', 'en'
@@ -359,17 +387,6 @@ subprojects {subProj ->
         tasks.named('check') {
             dependsOn(tasks.named('test'))// default behaviour
             dependsOn(tasks.named('flakyTest'))
-        }
-
-        testlogger {
-            theme = 'mocha-parallel'
-            showExceptions = true
-            showFullStackTraces = true
-            showCauses = true
-            slowThreshold = 2000
-            showStandardStreams = true
-            showPassedStandardStreams = false
-            showSkippedStandardStreams = true
         }
     }
 }
@@ -479,45 +496,24 @@ tasks.named('testCodeCoverageReport') {
 }
 
 /**********************************************************************************************************************\
- * Sonar
+ * Allure Reports
  **********************************************************************************************************************/
 subprojects {
-    sonar {
-        properties {
-            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml,$projectDir.parentFile.path/build/reports/jacoco/test/testCodeCoverageReport.xml"
+    plugins.withId('java') {
+        dependencies {
+            testImplementation "io.qameta.allure:allure-junit5"
+        }
+
+        test {
+            // allure-junit5 writes results as a side effect of the test JVM, invisible to Gradle's
+            // dependency tracking. Without declaring it as a task output, a build-cache hit on :test
+            // (org.gradle.caching=true) restores build/test-results/ but skips the JVM entirely, so
+            // no allure-results are ever produced for that run.
+            def allureResultsDir = layout.buildDirectory.dir("allure-results")
+            systemProperty 'allure.results.directory', allureResultsDir.get().asFile.absolutePath
+            outputs.dir(allureResultsDir)
         }
     }
-}
-
-sonar {
-    properties {
-        property "sonar.projectKey", "kestra-io_kestra"
-        property "sonar.organization", "kestra-io"
-        property "sonar.host.url", "https://sonarcloud.io"
-    }
-}
-
-/**********************************************************************************************************************\
- * OWASP Dependency check
- **********************************************************************************************************************/
-apply plugin: 'org.owasp.dependencycheck'
-
-dependencyCheck {
-    // fail only on HIGH and CRITICAL vulnerabilities, we may want to lower to 5 (mid-medium) later
-    failBuildOnCVSS = 7
-
-    // disable the .NET assembly analyzer as otherwise it wants to analyze EXE file
-    analyzers(new Action<AnalyzerExtension>() {
-        @Override
-        void execute(AnalyzerExtension analyzerExtension) {
-            analyzerExtension.assemblyEnabled = false
-        }
-    })
-
-    // configure a suppression file
-    suppressionFile = "$projectDir/owasp-dependency-suppressions.xml"
-
-    nvd.apiKey = System.getenv("NVD_API_KEY")
 }
 
 /**********************************************************************************************************************\
@@ -636,7 +632,7 @@ tasks.register('runLocal') {
 
 tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server standalone"
+    description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     dependsOn ':cli:runStandalone'
 }
 
@@ -680,7 +676,7 @@ subprojects {subProject ->
         }
 
         //These modules should not be published
-        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver", "worker", "scheduler", "worker-controller", "executor"]
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
         if (subProject.name in unpublishedModules){
             return
         }

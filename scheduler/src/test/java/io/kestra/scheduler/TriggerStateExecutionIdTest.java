@@ -15,7 +15,7 @@ class TriggerStateExecutionIdTest {
     private static final Clock CLOCK = Clock.systemUTC();
 
     private static TriggerState newState() {
-        return TriggerState.of(Fixtures.triggerId(), TriggerType.SCHEDULE, null, false, 0);
+        return TriggerState.of(Fixtures.triggerId(), TriggerType.SCHEDULE, null, 0);
     }
 
     @Test

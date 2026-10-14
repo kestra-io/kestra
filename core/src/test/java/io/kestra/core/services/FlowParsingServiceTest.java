@@ -68,4 +68,21 @@ class FlowParsingServiceTest {
         assertThat(task.getLevel()).isEqualTo(Property.ofValue(Level.INFO));
         assertThat(parsed.getSource()).isEqualTo(source);
     }
+
+    @Test
+    void shouldParseFlowWithDigitsOnlyNamespace() throws FlowProcessingException {
+        // A digits-only namespace is read from the YAML as an Integer; it must not break parsing with a raw cast.
+        String source = """
+            id: test
+            namespace: 132312312
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """;
+
+        FlowWithSource parsed = flowParsingService.parse(null, source, false);
+
+        assertThat(parsed.getNamespace()).isEqualTo("132312312");
+    }
 }

@@ -33,21 +33,33 @@ import io.micronaut.core.annotation.Nullable;
  * <ul>
  * <li>Init scripts (fresh install only, skipped on Flyway upgrade; frozen, special case):
  * {@code "0-init"}, {@code "0-init-ee"}, {@code "0-init-queue"}, {@code "0-init-queue-ee"}</li>
- * <li>OSS versioned scripts: {@code "2.0.01-upgrade"}, {@code "2.0.04-mcp"}, …</li>
- * <li>EE versioned scripts (JDBC and Elasticsearch): {@code "2.0.02-upgrade-ee"}, …</li>
- * <li>OSS queue scripts: {@code "2.0.05-queue"}, …</li>
+ * <li>OSS versioned scripts: {@code "2.0.01-schema"}, {@code "2.0.02-queue"}, …</li>
+ * <li>EE versioned scripts (JDBC and Elasticsearch): {@code "2.0.02-ee-schema"}, …</li>
  * </ul>
  * The {@code "0-"} prefix ensures init scripts always sort before versioned scripts.
  * Within versioned scripts, the two-digit increment controls execution order.
  * Lexicographic ordering ensures scripts run in the intended sequence
- * ({@code "2.0.01-upgrade" < "2.0.02-upgrade-ee" < "2.0.05-queue"}).
+ * ({@code "2.0.01-schema" < "2.0.02-ee-schema" < "2.0.02-queue"}).
+ * The OSS and EE sequences are numbered independently (each starts its own count after the
+ * baseline) since their ids never collide, but a shared conceptual step spanning both — e.g. a
+ * pure-Java data migration with a JDBC and an Elasticsearch implementation — reuses the exact same
+ * id string across modules so the two are recognized as one migration, not two.
+ *
+ * <p>
+ * Prefer growing an existing consolidated script over adding a new incremental one: the 2.0.x
+ * scripts were themselves consolidated (see {@code AbstractV2_0_01SchemaMigration},
+ * {@code AbstractV2_0_02QueueMigration}) from ~20 per-change scripts that had accumulated during the
+ * 2.0 development cycle, each with its own SQL resource and Java class for what was, from a user's
+ * point of view, a single "upgrade to 2.0" step. Add a new script only for a genuinely new group
+ * (different {@code @Requires} condition or datasource) or once a consolidated group has shipped in a
+ * GA release and must not be edited further.
  */
 public interface MigrationScript {
 
     /**
      * Unique identifier for this script, used for lexicographic ordering and history tracking.
      *
-     * @return the script ID, e.g. {@code "2.0.01-upgrade"} or {@code "2.0.02-upgrade-ee"}
+     * @return the script ID, e.g. {@code "2.0.01-schema"} or {@code "2.0.02-ee-schema"}
      */
     String scriptId();
 
@@ -116,7 +128,7 @@ public interface MigrationScript {
      *
      * // SQL + Java migration — SQL resource tracked automatically;
      * // if the Java logic changes independently, add a version marker resource
-     * checksumOfResources("/migrations/2.0.01-upgrade-h2.sql")
+     * checksumOfResources("/migrations/2.0.01-schema-h2.sql")
      * }</pre>
      *
      * @param resourcePaths one or more classpath resource paths to hash

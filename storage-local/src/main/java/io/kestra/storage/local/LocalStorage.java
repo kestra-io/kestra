@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
 import org.apache.commons.io.FileUtils;
 
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.serializers.JacksonMapper;
@@ -89,12 +89,22 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public InputStream get(String tenantId, @Nullable String namespace, URI uri) throws IOException {
-        return new BufferedInputStream(new FileInputStream(getLocalPath(tenantId, uri).toAbsolutePath().toString()));
+        return newInputStream(getLocalPath(tenantId, uri), uri);
     }
 
     @Override
     public InputStream getInstanceResource(@Nullable String namespace, URI uri) throws IOException {
-        return new BufferedInputStream(new FileInputStream(getInstancePath(uri).toAbsolutePath().toString()));
+        return newInputStream(getInstancePath(uri), uri);
+    }
+
+    private static InputStream newInputStream(Path path, URI uri) throws IOException {
+        try {
+            return new BufferedInputStream(new FileInputStream(path.toAbsolutePath().toString()));
+        } catch (FileNotFoundException e) {
+            // The JDK message carries the absolute server path, for a missing file as much as for a
+            // directory opened as a file.
+            throw newFileNotFound(uri, e);
+        }
     }
 
     @Override
@@ -185,6 +195,18 @@ public class LocalStorage implements StorageInterface {
         return new FileNotFoundException("File not found for URI: " + uri.toString());
     }
 
+    /**
+     * To prevent information disclosure, we don't include the cause exception message in the thrown exception.
+     * We log the original cause in DEBUG for analysis.
+     */
+    private static IOException newParentDirectoryFailure(URI uri, FileSystemException cause) {
+        log.debug("Cannot create the parent directory of {}", uri, cause);
+        if (cause instanceof FileAlreadyExistsException) {
+            return new FileAlreadyExistsException(uri.getPath(), null, "a file already exists in the parent hierarchy.");
+        }
+        return new IOException("Cannot create the parent directory of the URI: " + uri.toString());
+    }
+
     @Override
     public List<FileAttributes> listInstanceResource(@Nullable String namespace, URI uri) throws IOException {
         try (Stream<Path> stream = Files.list(getInstancePath(uri))) {
@@ -224,7 +246,12 @@ public class LocalStorage implements StorageInterface {
         // FileAlreadyExistsException) when the parent hierarchy cannot be created, unlike
         // File#mkdirs whose boolean result was previously ignored and let the subsequent
         // FileOutputStream fail with a misleading FileNotFoundException.
-        Files.createDirectories(file.toPath().getParent());
+        try {
+            Files.createDirectories(file.toPath().getParent());
+        } catch (FileSystemException e) {
+            // The message of a filesystem exception carries the absolute server path.
+            throw newParentDirectoryFailure(uri, e);
+        }
 
         try (InputStream data = storageObject.inputStream(); OutputStream outStream = new FileOutputStream(file)) {
             byte[] buffer = new byte[8 * 1024];
@@ -292,12 +319,17 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException {
+        Path sourcePath = getLocalPath(tenantId, from);
+        Path destinationPath = getLocalPath(tenantId, to);
+
         try {
-            Files.move(
-                getLocalPath(tenantId, from),
-                getLocalPath(tenantId, to),
-                StandardCopyOption.ATOMIC_MOVE
-            );
+            Files.createDirectories(destinationPath.getParent());
+            Files.move(sourcePath, destinationPath, StandardCopyOption.ATOMIC_MOVE);
+
+            Path sourceMetadataPath = Path.of(sourcePath + ".metadata");
+            if (Files.exists(sourceMetadataPath)) {
+                Files.move(sourceMetadataPath, Path.of(destinationPath + ".metadata"), StandardCopyOption.ATOMIC_MOVE);
+            }
         } catch (NoSuchFileException e) {
             throw newFileNotFound(from, e);
         }
@@ -322,7 +354,11 @@ public class LocalStorage implements StorageInterface {
             return true;
         }
 
-        return Files.deleteIfExists(path);
+        boolean deleted = Files.deleteIfExists(path);
+        if (deleted) {
+            Files.deleteIfExists(Path.of(path + ".metadata"));
+        }
+        return deleted;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

@@ -18,22 +18,20 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
-import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
-import io.kestra.core.services.VariablesService;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.validations.NoSystemLabelValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -118,6 +116,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @PluginProperty(dynamic = true)
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @tools.jackson.databind.annotation.JsonSerialize(using = Jackson3ListOrMapOfLabelSerializer.class)
+    @tools.jackson.databind.annotation.JsonDeserialize(using = Jackson3ListOrMapOfLabelDeserializer.class)
     private List<@NoSystemLabelValidation Label> labels;
 
     @Builder.Default
@@ -201,7 +201,6 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             .executionId(execution.getId())
             .state(execution.getState().getCurrent());
 
-        VariablesService variablesService = ((DefaultRunContext) runContext).services().variablesService();
         if (this.wait) { // we only compute outputs if we wait for the subflow
             List<io.kestra.core.models.flows.Output> subflowOutputs = flow.getOutputs();
 
@@ -215,8 +214,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
                     }
                     builder.outputs(rOutputs);
                 } catch (Exception e) {
-                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
-                    return failSubflowDueToOutput(runContext, taskRun, execution, e, variables);
+                    return failSubflowDueToOutput(runContext, taskRun, execution, e, outputs);
                 }
             }
         }
@@ -241,15 +239,16 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     private Optional<SubflowExecutionResult> failSubflowDueToOutput(RunContext runContext, TaskRun taskRun, Execution execution, Exception e, Map<String, Object> outputs) {
         runContext.logger().error("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-        var state = State.Type.fail(this);
+        // a killed subflow has no outputs to extract, and failing it instead would let a retry revive a killed execution
+        var state = execution.getState().getCurrent().isKilled() ? State.Type.KILLED : State.Type.fail(this);
         taskRun = taskRun
             .withState(state)
-            .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()));
+            .addAttempt(TaskRunAttempt.builder().state(new State().withState(state)).build());
 
         return Optional.of(
             SubflowExecutionResult.builder()
                 .executionId(execution.getId())
-                .state(State.Type.FAILED)
+                .state(state)
                 .parentTaskRun(taskRun)
                 .outputs(outputs)
                 .build()

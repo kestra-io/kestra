@@ -31,7 +31,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.NameParser;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -513,7 +512,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                         logger.debug(
                             "Starting command with container id {} [{}]",
                             containerId,
-                            String.join(" ", renderedCommands)
+                            TaskLogLineMatcher.redactEncryptedOutputs(String.join(" ", renderedCommands))
                         );
                     }
                 } else {
@@ -980,23 +979,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .longValue();
     }
 
-    private String getImageNameWithoutTag(String fullImageName) {
-        if (fullImageName == null || fullImageName.isEmpty()) {
-            return fullImageName;
-        }
-
-        int lastColonIndex = fullImageName.lastIndexOf(':');
-        int firstSlashIndex = fullImageName.indexOf('/');
-        if (lastColonIndex > -1 && (firstSlashIndex == -1 || lastColonIndex > firstSlashIndex)) {
-            return fullImageName.substring(0, lastColonIndex);
-        } else {
-            return fullImageName; // No tag found or the colon is part of the registry host
-        }
-    }
-
     private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {
-        var imageNameWithoutTag = getImageNameWithoutTag(image);
-        var parsedTagFromImage = NameParser.parseRepositoryTag(image);
+        var reference = DockerService.parseImageReference(image);
 
         if (policy.equals(PullPolicy.IF_NOT_PRESENT)) {
             try {
@@ -1009,7 +993,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
         // and prevent errors with Podman trying to pull "image:tag:tag"
-        try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
+        try (var pull = dockerClient.pullImageCmd(reference.repos)) {
             RetryUtils.<Boolean, InternalServerErrorException> of(
                 Exponential.builder()
                     .delayFactor(2.0)
@@ -1022,15 +1006,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     throwable.getCause() instanceof ConnectionClosedException,
                 () ->
                 {
-                    var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
-                    var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
                     pull
-                        .withTag(tag)
+                        .withTag(reference.tag)
                         .exec(new PullImageResultCallback())
                         .awaitCompletion();
 
                     if (logger.isTraceEnabled()) {
-                        logger.trace("Image pulled [{}:{}]", repository, tag);
+                        logger.trace("Image pulled [{}:{}]", reference.repos, reference.tag);
                     }
 
                     return true;

@@ -54,7 +54,7 @@ public class ExpressionContextService {
         "taskrun.parentId", "taskrun.startDate", "taskrun.value",
         "parent", "parent.task", "parent.task.id", "parent.taskrun", "parent.taskrun.value",
         "parents",
-        "item.index", "item.key", "item.parent", "item.parent.index", "item.parent.key",
+        "item", "item.index", "item.key", "item.parent", "item.parent.index", "item.parent.key",
         "item.parent.value", "item.parents", "item.value"
     );
 
@@ -467,7 +467,7 @@ public class ExpressionContextService {
 
     private List<String> buildNamespaceFiles(Flow flow) {
         try {
-            List<NamespaceFile> files = namespaceFactory.of(flow.getTenantId(), flow.getNamespace(), storageInterface).all();
+            List<NamespaceFile> files = namespaceFactory.of(flow.getTenantId(), flow.getNamespace()).all();
             return files.stream()
                 .map(file -> "read('" + file.path() + "')")
                 .sorted()

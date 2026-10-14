@@ -12,7 +12,8 @@
     import {computed} from "vue"
 
     import KsTooltip from "../Feedback/KsTooltip.vue"
-    import {getMomentInstance, getDateFormatter} from "../../date"
+    import dayjs from "../../date/dayjs"
+    import {dateFilter} from "../../utils/date"
 
     const props = withDefaults(defineProps<{
         date?: Date | string
@@ -28,15 +29,7 @@
         showTooltip: true,
     })
 
-    const from = computed(() => {
-        const moment = getMomentInstance()
-        if (!moment || !props.date) return ""
-        return moment(props.date).fromNow()
-    })
+    const from = computed(() => props.date ? dayjs(props.date).fromNow() : "")
 
-    const full = computed(() => {
-        const formatter = getDateFormatter()
-        if (!formatter || !props.date) return ""
-        return formatter(props.date, props.format)
-    })
+    const full = computed(() => props.date ? dateFilter(props.date, props.format) : "")
 </script>

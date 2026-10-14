@@ -22,7 +22,6 @@ class ServicesTest {
         var services = new Services(applicationContext);
 
         assertThat(services.observationRegistry()).isPresent();
-        assertThat(services.variablesService()).isNotNull();
         assertThat(services.taskLogLineMatcher()).isNotNull();
         assertThat(services.tracerFactory()).isNotNull();
         assertThat(services.uriProvider()).isNotNull();
@@ -36,7 +35,6 @@ class ServicesTest {
         var services = new Services(applicationContext);
 
         assertThat(services.observationRegistry()).isPresent();
-        assertThat(services.variablesService()).isNotNull();
         assertThat(services.taskLogLineMatcher()).isNotNull();
         assertThat(services.tracerFactory()).isNotNull();
         assertThat(services.uriProvider()).isNotNull();

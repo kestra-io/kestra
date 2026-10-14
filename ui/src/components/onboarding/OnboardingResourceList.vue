@@ -9,6 +9,7 @@
             :to="item.to"
             :target="item.href ? '_blank' : undefined"
             :rel="item.href ? 'noreferrer' : undefined"
+            @click="onItemClick(item, $event)"
         >
             <div class="onboarding-resource-item__icon" :class="item.iconClass">
                 <component :is="item.icon" />
@@ -25,20 +26,34 @@
 </template>
 
 <script setup lang="ts">
+    import type {Component} from "vue"
+    import type {RouteLocationRaw} from "vue-router"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     export interface OnboardingResourceItem {
         titleKey: string;
         descriptionKey: string;
-        icon: any;
+        icon: Component;
         iconClass: string;
-        to?: any;
+        to?: RouteLocationRaw;
         href?: string;
     }
 
     defineProps<{
         items: OnboardingResourceItem[];
     }>()
+
+    const emit = defineEmits<{
+        /** An in-app item was followed, so whatever hosts this list is no longer the user's context. */
+        navigate: [];
+    }>()
+
+    function onItemClick(item: OnboardingResourceItem, event: MouseEvent) {
+        // Modifier set mirrors vue-router's `guardEvent`: those clicks leave the page in place.
+        if (!item.to || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+
+        emit("navigate")
+    }
 </script>
 
 <style scoped lang="scss">

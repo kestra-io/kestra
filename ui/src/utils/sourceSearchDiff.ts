@@ -1,14 +1,15 @@
 import type {SourceSearchResult as ApiSourceSearchResult, SourceMatch as ApiSourceMatch} from "@kestra-io/kestra-sdk"
+import {crossSearchResultKey} from "./crossResourceSearch"
 
 export type SourceMatch = Required<ApiSourceMatch>
 export type SourceSearchResult = Required<Omit<ApiSourceSearchResult, "matches">> & {matches: SourceMatch[]}
-
 export interface SourceSearchSelectionGroup {
-    namespace: string;
-    id: string;
-    editable: boolean;
-    matches: {line: number; column: number}[];
+    namespace: string
+    id: string
+    editable: boolean
+    matches: {line: number; column: number}[]
 }
+
 
 export interface SelectionSummary {
     selectedFlowCount: number;
@@ -23,7 +24,13 @@ export function computeSelectionSummary(results: SourceSearchSelectionGroup[], s
         if (!group.editable) {
             continue
         }
-        const checkedCount = group.matches.filter((match) => selectedMatchKeys.has(`${group.namespace}.${group.id}#${match.line}:${match.column}`)).length
+        const checkedCount = group.matches.filter((match) => selectedMatchKeys.has(crossSearchResultKey({
+            type: "flows",
+            namespace: group.namespace,
+            id: group.id,
+            line: match.line,
+            column: match.column,
+        }))).length
         if (checkedCount > 0) {
             selectedFlowCount += 1
             selectedMatchCount += checkedCount
@@ -113,4 +120,20 @@ export function buildDiffHunks(sourceLines: string[], matches: SourceSearchDiffM
     }
 
     return lines
+}
+
+export function getSeparatorVariant(query: string): string | null {
+    if (query.includes("-") && query.includes("_")) {
+        return null
+    }
+
+    if (query.includes("-")) {
+        return query.replace(/-/g, "_")
+    }
+
+    if (query.includes("_")) {
+        return query.replace(/_/g, "-")
+    }
+
+    return null
 }

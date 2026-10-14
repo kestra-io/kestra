@@ -105,6 +105,41 @@ class FileUtilsTest {
         assertThat(FileUtils.isParentTraversal((String) null)).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+            "",
+            "index.html",
+            "assets/app-abc123.js",
+            // two consecutive dots inside a segment are a legitimate file name, not a traversal
+            "assets/chart..min.css",
+        }
+    )
+    void isSafeRelativePath_true(String path) {
+        assertThat(FileUtils.isSafeRelativePath(path)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+            "..",
+            "../application.yml",
+            "assets/../../application.yml",
+            "assets/..\\..\\application.yml",
+            "/etc/passwd",
+            "assets\\app.js",
+            "assets/app\0.js",
+        }
+    )
+    void isSafeRelativePath_false(String path) {
+        assertThat(FileUtils.isSafeRelativePath(path)).isFalse();
+    }
+
+    @Test
+    void isSafeRelativePath_handlesNull() {
+        assertThat(FileUtils.isSafeRelativePath(null)).isFalse();
+    }
+
     @Test
     void shouldDeleteExistingFileWithRetry(@TempDir Path tempDir) throws Exception {
         Path file = Files.createFile(tempDir.resolve("to-delete.ion"));

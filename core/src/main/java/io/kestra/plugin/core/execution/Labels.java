@@ -29,7 +29,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
@@ -42,7 +41,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     description = """
         Accepts labels as a map, list of `{key,value}` pairs, or JSON string. Values are rendered, merged into existing labels, and overwrite by default.
 
-        System labels (`system.*`) are rejected and empty values are not allowed. Useful for tagging runs with payload metadata (customer, env, etc.)."""
+        System labels (`system` and `system.*`) are rejected and empty values are not allowed. Useful for tagging runs with payload metadata (customer, env, etc.)."""
 )
 @Plugin(
     examples = {
@@ -110,7 +109,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                     if (label instanceof Map<?, ?> labelMap) {
                         return Map.entry(
                             runContext.render((String) labelMap.get("key")),
-                            runContext.render((String) labelMap.get("value"))
+                            renderValue(runContext, labelMap.get("value"))
                         );
                     } else {
                         throw new IllegalVariableEvaluationException("Unknown value type: " + label.getClass());
@@ -120,13 +119,13 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                     Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (first, second) -> second
+                        (_, second) -> second
                     )
                 );
         } else if (labels instanceof Map<?, ?> map) {
             labelsAsMap = map.entrySet()
                 .stream()
-                .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), runContext.render((String) entry.getValue()))))
+                .map(throwFunction(entry -> Map.entry(runContext.render((String) entry.getKey()), renderValue(runContext, entry.getValue()))))
                 .collect(
                     Collectors.toMap(
                         Map.Entry::getKey,
@@ -139,7 +138,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
 
         // check for system labels: none can be passed at runtime
         Optional<Map.Entry<String, String>> systemLabel = labelsAsMap.entrySet().stream()
-            .filter(entry -> entry.getKey().startsWith(SYSTEM_PREFIX))
+            .filter(entry -> Label.isSystem(entry.getKey()))
             .findFirst();
         if (systemLabel.isPresent()) {
             throw new IllegalArgumentException(
@@ -178,5 +177,18 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                 )
                 .toList()
         );
+    }
+
+    private String renderValue(RunContext runContext, Object value) throws IllegalVariableEvaluationException {
+        return switch (value) {
+            case Map<?, ?> map -> {
+                try {
+                    yield JacksonMapper.ofJson().writeValueAsString(runContext.render((Map<String, Object>) map));
+                } catch (JsonProcessingException e) {
+                    throw new IllegalVariableEvaluationException(e);
+                }
+            }
+            default -> runContext.render(value.toString());
+        };
     }
 }

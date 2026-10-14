@@ -9,7 +9,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
  */
 public interface SDK {
     /**
-     * @return the default authentication to the API for SDK interactions.
+     * @return the default authentication to the API for SDK interactions, including the API URL to use if configured.
      *         On OSS: it returns an authentication configured inside the application configuration une the 'kestra.tasks.sdk.authentication' config properties.
      *         On EE: it tries first to locate a default authentication configured at the namespace level, then at the tenant level, then defaults to the application configuration provided one
      *         if any.
@@ -18,6 +18,7 @@ public interface SDK {
 
     @ConfigurationProperties("kestra.tasks.sdk.authentication")
     record Auth(
+        Optional<String> url,
         Optional<String> apiToken,
         Optional<String> username,
         Optional<String> password) {

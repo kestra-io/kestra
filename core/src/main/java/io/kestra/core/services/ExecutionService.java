@@ -15,12 +15,14 @@ import org.reactivestreams.Publisher;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -37,7 +39,9 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
@@ -69,53 +73,64 @@ import static io.kestra.core.utils.Rethrow.*;
 @Singleton
 @Slf4j
 public class ExecutionService {
-    @Inject
-    private StorageInterface storageInterface;
+    private final StorageInterface storageInterface;
+    private final ExecutionRepositoryInterface executionRepository;
+    private final LogDataStoreInterface logRepository;
+    private final MetricRepositoryInterface metricRepository;
+    private final FlowInputOutput flowInputOutput;
+    private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
+    private final ConcurrencyLimitService concurrencyLimitService;
+    private final FlowParsingService flowParsingService;
+    private final TaskOutputService taskOutputService;
+    private final ExecutionOutputService executionOutputService;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+    private final BroadcastQueueInterface<ExecutionKilled> killQueue;
+    private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
+    private final AsyncOperationWaiter asyncOperationWaiter;
+    private final AsyncOperationsConfiguration asyncOperationsConfiguration;
+    private final Optional<OpenTelemetry> openTelemetry;
 
     @Inject
-    private ExecutionRepositoryInterface executionRepository;
-
-    @Inject
-    private LogDataStoreInterface logRepository;
-
-    @Inject
-    private MetricRepositoryInterface metricRepository;
-
-    @Inject
-    private FlowInputOutput flowInputOutput;
-
-    @Inject
-    private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-
-    @Inject
-    private ConcurrencyLimitService concurrencyLimitService;
-
-    @Inject
-    private FlowParsingService flowParsingService;
-
-    @Inject
-    private TaskOutputService taskOutputService;
-
-    @Inject
-    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
-
-    @Inject
-    private BroadcastQueueInterface<ExecutionKilled> killQueue;
-
-    @Inject
-    private AsyncOperationWaiter asyncOperationWaiter;
-
-    @Inject
-    private AsyncOperationsConfiguration asyncOperationsConfiguration;
-
-    @Inject
-    private Optional<OpenTelemetry> openTelemetry;
+    public ExecutionService(
+        StorageInterface storageInterface,
+        ExecutionRepositoryInterface executionRepository,
+        LogDataStoreInterface logRepository,
+        MetricRepositoryInterface metricRepository,
+        FlowInputOutput flowInputOutput,
+        ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
+        ConcurrencyLimitService concurrencyLimitService,
+        FlowParsingService flowParsingService,
+        TaskOutputService taskOutputService,
+        ExecutionOutputService executionOutputService,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
+        BroadcastQueueInterface<ExecutionKilled> killQueue,
+        DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
+        AsyncOperationWaiter asyncOperationWaiter,
+        AsyncOperationsConfiguration asyncOperationsConfiguration,
+        Optional<OpenTelemetry> openTelemetry) {
+        this.storageInterface = Objects.requireNonNull(storageInterface);
+        this.executionRepository = Objects.requireNonNull(executionRepository);
+        this.logRepository = Objects.requireNonNull(logRepository);
+        this.metricRepository = Objects.requireNonNull(metricRepository);
+        this.flowInputOutput = Objects.requireNonNull(flowInputOutput);
+        this.eventPublisher = Objects.requireNonNull(eventPublisher);
+        this.concurrencyLimitService = Objects.requireNonNull(concurrencyLimitService);
+        this.flowParsingService = Objects.requireNonNull(flowParsingService);
+        this.taskOutputService = Objects.requireNonNull(taskOutputService);
+        this.executionOutputService = Objects.requireNonNull(executionOutputService);
+        this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
+        this.killQueue = Objects.requireNonNull(killQueue);
+        this.loopExecutionEventQueue = Objects.requireNonNull(loopExecutionEventQueue);
+        this.asyncOperationWaiter = Objects.requireNonNull(asyncOperationWaiter);
+        this.asyncOperationsConfiguration = Objects.requireNonNull(asyncOperationsConfiguration);
+        this.openTelemetry = Objects.requireNonNull(openTelemetry);
+    }
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
         Execution execution = getExecution(tenant, executionId, withACL);
 
         if (!execution.getState().isPaused()) {
-            throw new IllegalStateException("Execution '" + executionId + "' is not paused, can't resume it");
+            throw new ConflictException("Cannot resume execution '%s': it is not paused.".formatted(executionId));
         }
 
         return execution;
@@ -134,7 +149,12 @@ public class ExecutionService {
      **/
     public Execution retryTask(Execution execution, Flow flow, String taskRunId) throws InternalException {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId).withState(State.Type.CREATED);
-        List<TaskRun> taskRunList = execution.getTaskRunList();
+        List<TaskRun> taskRunList = new ArrayList<>(execution.getTaskRunList());
+
+        if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof WorkingDirectory) {
+            // a retried WorkingDirectory runs all its children again, under new task runs
+            taskRunList.removeIf(child -> taskRun.getId().equals(child.getParentTaskRunId()));
+        }
 
         if (taskRun.getParentTaskRunId() != null) {
             // we need to find the parent to remove any errors or finally tasks already executed
@@ -174,7 +194,7 @@ public class ExecutionService {
             return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
         }
 
-        return execution.withTaskRun(taskRun).withState(State.Type.RUNNING);
+        return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
@@ -188,6 +208,7 @@ public class ExecutionService {
 
         // Remove all descendants (not just direct children) of the iterating LoopUntil so that nested
         // LoopUntil tasks start the next iteration with a clean state and don't inherit stale outputs.
+        List<TaskRun> discarded = new ArrayList<>();
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
@@ -197,6 +218,7 @@ public class ExecutionService {
                     return taskRun.resetAttempts().incrementIteration();
                 }
                 if (isDescendantOf(taskRun, flowableTaskRunId, byId)) {
+                    discarded.add(taskRun);
                     return null;
                 }
                 return taskRun;
@@ -204,7 +226,35 @@ public class ExecutionService {
             .filter(Objects::nonNull)
             .toList();
 
-        return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+        ExecutionMetadata metadata = execution.getMetadata().withTaskRunStatisticPlus(TaskRunStatistic.of(discarded));
+
+        return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);
+    }
+
+    public Execution retryFlowable(Execution execution, String flowableTaskRunId) {
+        if (execution.getTaskRunList() == null) {
+            return execution.withState(State.Type.RUNNING);
+        }
+
+        Map<String, TaskRun> byId = execution.getTaskRunList().stream()
+            .collect(Collectors.toMap(TaskRun::getId, t -> t));
+
+        List<TaskRun> newTaskRuns = execution.getTaskRunList().stream()
+            .map(taskRun -> {
+                if (taskRun.getId().equals(flowableTaskRunId)) {
+                    return taskRun.run();
+                }
+
+                return isDescendantOf(taskRun, flowableTaskRunId, byId)
+                    ? null
+                    : taskRun;
+            })
+            .filter(Objects::nonNull)
+            .toList();
+
+        return execution
+            .withTaskRunList(newTaskRuns)
+            .withState(State.Type.RUNNING);
     }
 
     private boolean isDescendantOf(TaskRun taskRun, String ancestorId, Map<String, TaskRun> byId) {
@@ -218,22 +268,42 @@ public class ExecutionService {
         return false;
     }
 
+    /**
+     * Pause a flowable task: set both the taskrun and the execution to {@link State.Type#PAUSED}.
+     */
     public Execution pauseFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
-
-        return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
+        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.PAUSED)).withState(State.Type.PAUSED);
     }
 
-    public Execution create(Create createCommand, FlowInterface flow) {
+    /**
+     * Resume a flowable task: set both the taskrun and the execution to {@link State.Type#RUNNING}.
+     */
+    public Execution resumeFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
+        return execution.withTaskRun(updateFlowableTaskRun.withStateAndAttempt(State.Type.RUNNING)).withState(State.Type.RUNNING);
+    }
+
+    public Execution create(Create createCommand, ProcessedFlow processedFlow) {
+        // Governance outranks whoever starts the execution, so a key an overriding policy rule force-set is
+        // dropped here and taken from the flow by the merge below.
+        List<Label> supplied = ListUtils.emptyOnNull(createCommand.labels());
+        List<Label> contributed = LabelService.withoutPinned(supplied, processedFlow.pinnedLabelKeys());
+
+        Set<String> overridden = LabelService.overriddenPinnedKeys(processedFlow.flow(), supplied, processedFlow.pinnedLabelKeys());
+        if (!overridden.isEmpty()) {
+            log.warn(
+                "Execution {} was started with label(s) {} that a governance policy pins on this flow. The flow's values are used instead.",
+                createCommand.executionId(),
+                overridden
+            );
+        }
+
         // Pre-seed CORRELATION_ID so Execution.newExecution() doesn't assign the auto-generated ID to it.
         // Without this, newExecution() sets correlationId = auto-id, and then toBuilder().id() overrides
         // the execution ID while leaving correlationId pointing to the discarded auto-id.
-        List<Label> labels = new ArrayList<>(ListUtils.emptyOnNull(createCommand.labels()));
-        if (labels.stream().noneMatch(l -> Label.CORRELATION_ID.equals(l.key()))) {
-            labels.add(new Label(Label.CORRELATION_ID, createCommand.executionId()));
-        }
+        List<Label> labels = LabelService.withCorrelationId(contributed, createCommand.executionId());
 
         var newExecution = Execution.newExecution(
-            flow,
+            processedFlow.flow(),
             (x, y) -> createCommand.inputs(),
             labels,
             Optional.empty(),
@@ -262,6 +332,12 @@ public class ExecutionService {
             newExecution = newExecution.toBuilder().fixtures(createCommand.fixtures()).build();
         }
 
+        // Carries the depth a Flow trigger's evaluate() computed before the dependsOn route rebuilt this
+        // execution from the Create command; Execution.newExecution() above reset it via prebuild().
+        if (createCommand.executionDepth() != null) {
+            newExecution = newExecution.withMetadata(newExecution.getMetadata().withExecutionDepth(createCommand.executionDepth()));
+        }
+
         if (createCommand.variables() != null) {
             newExecution = newExecution.withVariables(createCommand.variables());
         }
@@ -281,8 +357,9 @@ public class ExecutionService {
     public Execution restart(final Execution execution, Flow flow, @Nullable Integer revision, boolean emitEvent) throws Exception {
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException(
-                "Execution must be terminated or paused and not killed to be restarted, " +
-                    "current state is '" + execution.getState().getCurrent() + "' !"
+                "Execution must be terminated and not killed to be restarted, " +
+                    "current state is '" + execution.getState().getCurrent() + "' ! " +
+                    "A paused execution can only be resumed or killed."
             );
         }
 
@@ -320,17 +397,26 @@ public class ExecutionService {
             .stream()
             .map(
                 throwFunction(
-                    originalTaskRun -> this.mapTaskRun(
-                        flow,
-                        originalTaskRun,
-                        mappingTaskRunId,
-                        newExecutionId,
-                        State.Type.RESTARTED,
-                        taskRunToRestart.contains(originalTaskRun.getId())
-                    )
+                    originalTaskRun ->
+                    {
+                        TaskRun newTaskRun = this.mapTaskRun(
+                            flow,
+                            originalTaskRun,
+                            mappingTaskRunId,
+                            newExecutionId,
+                            State.Type.RESTARTED,
+                            taskRunToRestart.contains(originalTaskRun.getId())
+                        );
+                        if (revision != null) {
+                            taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        }
+                        return newTaskRun;
+                    }
                 )
             )
             .collect(Collectors.toCollection(ArrayList::new));
+
+        this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, taskRunToRestart, mappingTaskRunId, newExecutionId);
 
         // Worker task, we need to remove all child in order to be restarted
         this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
@@ -372,6 +458,44 @@ public class ExecutionService {
         return newExecution;
     }
 
+    // Non-terminated task runs (e.g., running in parallel) will never complete in the source execution, so they must be
+    // restarted rather than inherited; remap from the original task runs to keep the id/parent mapping consistent.
+    private void restartNonTerminatedTaskRuns(
+        Flow flow,
+        Execution execution,
+        List<TaskRun> newTaskRuns,
+        Set<String> untouchedTaskRunIds,
+        Map<String, String> mappingTaskRunId,
+        String newExecutionId) throws InternalException {
+        List<TaskRun> tasksToRestart = execution.getTaskRunList()
+            .stream()
+            .filter(taskRun -> !untouchedTaskRunIds.contains(taskRun.getId()))
+            .filter(taskRun -> !taskRun.getState().isTerminated())
+            .toList();
+
+        Set<String> taskRunToRestartMapped = tasksToRestart
+            .stream()
+            .map(TaskRun::getId)
+            .map(mappingTaskRunId::get)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        newTaskRuns.removeIf(taskRun -> taskRunToRestartMapped.contains(taskRun.getId()));
+
+        for (TaskRun originalTaskRun : tasksToRestart) {
+            newTaskRuns.add(
+                this.mapTaskRun(
+                    flow,
+                    originalTaskRun.onRunningResend(),
+                    mappingTaskRunId,
+                    newExecutionId,
+                    State.Type.RESTARTED,
+                    true
+                )
+            );
+        }
+    }
+
     private Set<String> taskRunToRestart(Execution execution, Predicate<TaskRun> predicate) {
         // Original tasks to be restarted
         Set<String> finalTaskRunToRestart = this
@@ -409,12 +533,19 @@ public class ExecutionService {
         String newExecutionId) throws Exception {
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
-            GraphCluster graphCluster = GraphUtils.of(flow, execution);
-
             Set<String> taskRunToRestart = this.taskRunToRestart(
                 execution,
                 taskRun -> taskRun.getId().equals(taskRunId)
             );
+
+            GraphCluster graphCluster = GraphUtils.of(flow, execution);
+            if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
+                TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
+                throw new IllegalArgumentException(
+                    "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
+                        .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
+                );
+            }
 
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
@@ -456,36 +587,9 @@ public class ExecutionService {
             taskRunToRemove
                 .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
 
-            // Restart non-terminated task runs (e.g., running in parallel) from the previous execution.
-            // We must remap using the original task runs to keep id/parent mapping consistent.
-            List<TaskRun> tasksToRestart = execution.getTaskRunList()
-                .stream()
-                .filter(taskRun -> !taskRunToRestart.contains(taskRun.getId()))
-                .filter(taskRun -> !originalTaskRunToRemove.contains(taskRun.getId()))
-                .filter(taskRun -> !taskRun.getState().isTerminated())
-                .toList();
-
-            Set<String> taskRunToRestartMapped = tasksToRestart
-                .stream()
-                .map(TaskRun::getId)
-                .map(mappingTaskRunId::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-            newTaskRuns.removeIf(taskRun -> taskRunToRestartMapped.contains(taskRun.getId()));
-
-            for (TaskRun originalTaskRun : tasksToRestart) {
-                TaskRun normalizedTaskRun = originalTaskRun.onRunningResend();
-                TaskRun restartedTaskRun = this.mapTaskRun(
-                    flow,
-                    normalizedTaskRun,
-                    mappingTaskRunId,
-                    newExecutionId,
-                    State.Type.RESTARTED,
-                    true
-                );
-                newTaskRuns.add(restartedTaskRun);
-            }
+            Set<String> untouchedTaskRunIds = new HashSet<>(taskRunToRestart);
+            untouchedTaskRunIds.addAll(originalTaskRunToRemove);
+            this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
 
             // Worker task, we need to remove all child in order to be restarted
             this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
@@ -640,7 +744,7 @@ public class ExecutionService {
                 }
                 newTaskRun = originalTaskRun.withState(targetState);
 
-                if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
+                if (!ListUtils.isEmpty(originalTaskRun.getAttempts())) {
                     List<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
                     attempts.set(attempts.size() - 1, attempts.getLast().withState(targetState));
                     newTaskRun = newTaskRun.withAttempts(attempts);
@@ -665,7 +769,8 @@ public class ExecutionService {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
         Execution updatedExecution = execution.withTaskRun(taskRun.withState(newState));
 
-        if (markParents && taskRun.getParentTaskRunId() != null) {
+        // A loop sub-execution's top-level task runs have a parent (the Loop) that lives in the parent execution.
+        if (markParents && taskRun.getParentTaskRunId() != null && execution.findTaskRunByTaskRunIdIfPresent(taskRun.getParentTaskRunId()).isPresent()) {
             return this.markWithTaskRunAs(updatedExecution, taskRun.getParentTaskRunId(), newState, true);
         }
 
@@ -706,6 +811,7 @@ public class ExecutionService {
                 if (purgeExecution) {
                     builder.executionsCount(this.executionRepository.purge(executions));
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
+                    builder.executionOutputsCount(this.executionOutputService.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -733,6 +839,8 @@ public class ExecutionService {
                     .logsCount(a.getLogsCount() + b.getLogsCount())
                     .storagesCount(a.getStoragesCount() + b.getStoragesCount())
                     .metricsCount(a.getMetricsCount() + b.getMetricsCount())
+                    .executionOutputsCount(a.getExecutionOutputsCount() + b.getExecutionOutputsCount())
+                    .taskOutputsCount(a.getTaskOutputsCount() + b.getTaskOutputsCount())
                     .build()
             )
             .block();
@@ -776,7 +884,7 @@ public class ExecutionService {
      * @throws Exception if the state of the execution cannot be updated
      */
     public Execution resume(Execution execution, FlowInterface flow, State.Type newState, Pause.Resumed resumed) throws Exception {
-        return this.resume(execution, flow, newState, (Map<String, Object>) null, resumed);
+        return this.resume(execution, flow, newState, null, resumed);
     }
 
     /**
@@ -883,7 +991,19 @@ public class ExecutionService {
 
         Execution unpausedExecution;
         if (pausedTaskRun.isPresent()) {
-            unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs, resumed);
+            final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+            Task task = flowWithSource.findTaskByTaskId(pausedTaskRun.get().getTaskId());
+            if (task instanceof Loop) {
+                // find the first loop sub-execution that is paused and its corresponding taskrun
+                var subExecution = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), task.getId())
+                    .stream()
+                    .filter(e -> e.getState().isPaused())
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("No paused loop sub-execution found"));
+                return resume(subExecution, flow, newState, inputs, resumed);
+            } else {
+                unpausedExecution = this.markAs(execution, flow, pausedTaskRun.get().getId(), newState, inputs, resumed);
+            }
         } else {
             // we are in a manual execution pause, not triggered by the Pause task, so we just switch the execution to the new state.
             if (!execution.getState().isPaused()) {
@@ -893,6 +1013,10 @@ public class ExecutionService {
         }
 
         this.eventPublisher.publishEvent(CrudEvent.of(execution, unpausedExecution));
+        if (execution.getKind() == ExecutionKind.LOOP) {
+            // notify the parent execution
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(unpausedExecution.getLoopRun(), unpausedExecution.getId(), unpausedExecution.getState().getCurrent(), null, null));
+        }
         return unpausedExecution;
     }
 
@@ -916,7 +1040,7 @@ public class ExecutionService {
     }
 
     /**
-     * Lookup for all executions triggered by given execution id, and returns all the relevant
+     * Lookup for all subflow executions triggered by given execution id, and returns all the relevant
      * {@link ExecutionKilled events} that should be requested. This method is not responsible for executing the events.
      *
      * @param tenantId of the parent execution.
@@ -934,6 +1058,8 @@ public class ExecutionService {
         // subsequent kill events (that will be re-handled by the Executor).
 
         return executions
+            // a Flow trigger execution also references the execution that triggered it, but it is not its subflow
+            .filter(ExecutableUtils::isSubflow)
             .filter(childExecution ->
             {
                 State state = childExecution.getState();
@@ -948,6 +1074,26 @@ public class ExecutionService {
                     .tenantId(tenantId)
                     .build()
             );
+    }
+
+    /**
+     * Whether killing the execution would still stop something: a task not yet terminated (including
+     * afterExecution tasks), or, when cascading, a direct subflow execution that is not terminated.
+     */
+    public boolean hasWorkToKill(Flow flow, Execution execution, boolean isOnKillCascade) {
+        if (!isTerminated(flow, execution)) {
+            return true;
+        }
+
+        if (!isOnKillCascade) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(
+            executionRepository.findAllByTriggerExecutionId(execution.getTenantId(), execution.getId())
+                .any(child -> !child.getState().isTerminated())
+                .block()
+        );
     }
 
     /**
@@ -1014,6 +1160,11 @@ public class ExecutionService {
                 log.warn("Unable to resume a paused execution before killing it", e);
                 newExecution = execution.withState(killingOrAfterKillState);
             }
+        } else if (execution.getState().isBreakpoint()) {
+            // Taskruns waiting at a breakpoint are never sent to a worker, so back to CREATED they are killed as never-run taskruns by the executor.
+            newExecution = execution
+                .withTaskRunList(breakpointTaskRunsToCreated(execution))
+                .withState(killingOrAfterKillState);
         } else {
             newExecution = execution.withState(killingOrAfterKillState);
         }
@@ -1165,6 +1316,9 @@ public class ExecutionService {
 
         @Builder.Default
         private int taskOutputsCount = 0;
+
+        @Builder.Default
+        private int executionOutputsCount = 0;
 
         @Builder.Default
         private int logsCount = 0;
@@ -1364,22 +1518,18 @@ public class ExecutionService {
         }
 
         // continue the execution: SUSPENDED taskrun will go back to CREATED, so the executor will send them to the WORKER
-        List<TaskRun> newTaskRuns = execution.getTaskRunList().stream().map(
-            taskRun ->
-            {
-                if (taskRun.getState().isBreakpoint()) {
-                    return taskRun.withState(State.Type.CREATED);
-                }
-                return taskRun;
-            }
-        ).toList();
-
         Execution resumed = execution.withState(State.Type.RUNNING)
-            .withTaskRunList(newTaskRuns)
+            .withTaskRunList(breakpointTaskRunsToCreated(execution))
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
         eventPublisher.publishEvent(CrudEvent.of(execution, resumed));
         return resumed;
+    }
+
+    private static List<TaskRun> breakpointTaskRunsToCreated(Execution execution) {
+        return execution.getTaskRunList().stream()
+            .map(taskRun -> taskRun.getState().isBreakpoint() ? taskRun.withState(State.Type.CREATED) : taskRun)
+            .toList();
     }
 
     /**

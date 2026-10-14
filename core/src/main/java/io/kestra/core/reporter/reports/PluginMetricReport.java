@@ -30,7 +30,7 @@ public class PluginMetricReport extends AbstractReportable<PluginMetricReport.Pl
     @Inject
     public PluginMetricReport(PluginRegistry pluginRegistry,
         MetricRegistry metricRegistry) {
-        super(Types.PLUGIN_METRICS, Schedules.daily(), false);
+        super(Types.PLUGIN_METRICS, Schedules.hourly(), false);
         this.metricRegistry = metricRegistry;
         this.pluginRegistry = pluginRegistry;
 

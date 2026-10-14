@@ -172,6 +172,31 @@ class SelectInputTest {
     }
 
     @Test
+    void validateRejectsOutOfListValueForOptionalInput() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .values(List.of(new ValueOption("a", "a"), new ValueOption("b", "b"), new ValueOption("c", "c")))
+            .required(false)
+            .build();
+
+        assertThatThrownBy(() -> input.validate("zzz"))
+            .hasMessageContaining("[a, b, c]");
+    }
+
+    @Test
+    void validateAcceptsAnyValueWhenValuesComeFromAnUnrenderedExpression() {
+        SelectInput input = SelectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .required(false)
+            .build();
+
+        input.validate("789");
+    }
+
+    @Test
     void valueOptionDeserializesFromStringOrObject() {
         ValueOption fromString = ValueOption.from("V1");
         assertThat(fromString.label()).isEqualTo("V1");

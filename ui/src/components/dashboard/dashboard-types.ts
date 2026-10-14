@@ -1,3 +1,5 @@
+import type {Component} from "vue"
+
 import Bar from "./sections/Bar.vue"
 import KPI from "./sections/KPI.vue"
 import Markdown from "./sections/Markdown.vue"
@@ -5,7 +7,7 @@ import Pie from "./sections/Pie.vue"
 import Table from "./sections/Table.vue"
 import TimeSeries from "./sections/TimeSeries.vue"
 
-export const TYPES: Record<string, any> = {
+export const TYPES: Record<string, Component> = {
     "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
     "io.kestra.plugin.core.dashboard.chart.KPI": KPI,
     "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,

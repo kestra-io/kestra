@@ -4,8 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -138,11 +136,10 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                     String contentDisposition = response.getHeaders().firstValue("Content-Disposition").orElseThrow();
                     rFilename = filenameFromHeader(runContext, contentDisposition);
                     if (rFilename != null) {
-                        URLEncoder.encode(rFilename, StandardCharsets.UTF_8);
+                        // Spaces are encoded as '+' to keep backward compatibility with the existing file naming convention.
+                        // All other URI-special characters (e.g. '[', ']', '#', '%') are handled by InternalStorage.buildStorageUri
+                        // via the quoting URI constructor, which percent-encodes them without double-encoding.
                         rFilename = rFilename.replace(' ', '+');
-                        // brackets are IPv6 reserved characters
-                        rFilename = rFilename.replace("[", "%5B");
-                        rFilename = rFilename.replace("]", "%5D");
                     }
                 }
             }

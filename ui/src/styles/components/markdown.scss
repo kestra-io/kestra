@@ -54,7 +54,7 @@
     }
 
     blockquote {
-        border-left: 4px solid #8997bd;
+        border-left: 4px solid var(--ks-border-strong);
         font-size: var(--ks-font-size-base);
         padding-left: 1rem;
 
@@ -83,7 +83,7 @@
     .video-container {
         position: relative;
         margin-top: 2rem;
-        margin-bottom: -1rem;
+        margin-bottom: var(--ks-spacing-6);
         padding-top: 56.75%;
         overflow: hidden;
         background-color: var(--ks-bg-base);

@@ -5,6 +5,11 @@ dependencies {
 
     implementation 'io.micronaut:micronaut-context'
 
+    // The kotlp binary ships as a resource inside this artifact — a single Actually Portable
+    // Executable covering Linux/macOS/BSD on amd64 and arm64 — and is read off the classpath by
+    // KotlpUtils. Version is pinned by the platform BOM.
+    implementation 'io.kestra:kotlp'
+
     implementation ('com.github.docker-java:docker-java') {
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-netty'
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'

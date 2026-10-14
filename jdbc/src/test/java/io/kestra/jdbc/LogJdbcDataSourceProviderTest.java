@@ -16,11 +16,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LogJdbcDataSourceProviderTest {
 
     private static LogJdbcDataSourceProvider provider(Map<String, Object> logs, String repositoryType) {
+        return provider(logs, repositoryType, "");
+    }
+
+    private static LogJdbcDataSourceProvider provider(Map<String, Object> logs, String repositoryType,
+        String ephemeralDatabaseUrl) {
         return new LogJdbcDataSourceProvider(
             new LogsConfig(logs),
             new Settings(),
             null,
-            new RepositoryConfiguration(repositoryType)
+            new RepositoryConfiguration(repositoryType),
+            ephemeralDatabaseUrl
         );
     }
 
@@ -61,6 +67,28 @@ class LogJdbcDataSourceProviderTest {
             .hasMessageContaining("kestra.logs.postgres.url")
             .hasMessageContaining("kestra.logs.postgres.username")
             .hasMessageContaining("never inherited");
+    }
+
+    @Test
+    void shouldIgnoreADedicatedLogDatabaseWhenRunningOnAnEphemeralDatabase() {
+        // Given: a dedicated logs database, and a run that must not reach the configured
+        // infrastructure at all. Overriding a property cannot remove the configured url, so the
+        // provider has to ignore it rather than build a pool against it.
+        LogJdbcDataSourceProvider provider = provider(
+            Map.of(
+                "type", "postgres", "postgres", Map.of(
+                    "url", "jdbc:postgresql://postgres-logs:5432/kestra_logs",
+                    "username", "kestra"
+                )
+            ),
+            "postgres",
+            "jdbc:h2:mem:flow-test-1;DB_CLOSE_DELAY=-1"
+        );
+
+        // When-Then: the logs stay in the ephemeral database, alongside everything else
+        assertThat(provider.isDedicated()).isFalse();
+        assertThat(provider.dedicatedWrapper()).isNull();
+        assertThat(provider.table()).isEqualTo("logs");
     }
 
     @Test

@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar v-if="hasTabs && displayMode === 'sidebar'" class="route-tabs-sidebar" aria-label="Tabs">
+    <KsSideBar v-if="hasTabs && displayMode === 'sidebar'" class="route-tabs-sidebar" :aria-label="$t('tabs')">
         <div class="tabs-list">
             <template v-for="(tab, index) in visibleTabs" :key="tab.name ?? `header-${index}`">
                 <div v-if="tab.header" class="tab-header">{{ tab.title }}</div>
@@ -21,7 +21,7 @@
                             @click="navigate"
                         >
                             <template v-if="tab.count !== undefined" #suffix>
-                                <KsBadge :value="tab.count" type="primary" class="count" />
+                                <KsBadge :value="tab.count" type="primary" inline class="count" />
                             </template>
                         </KsSideBarItem>
                     </router-link>
@@ -135,10 +135,5 @@
 
     .count {
         flex-shrink: 0;
-        :deep(.kel-badge__content) {
-            position: static;
-            border: none;
-            margin-top: 0;
-        }
     }
 </style>

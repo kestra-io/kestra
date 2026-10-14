@@ -1,4 +1,4 @@
-import {YamlElement} from "@kestra-io/topology"
+import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrlWithoutTenants} from "../override/utils/route"
 import {useClient} from "@kestra-io/kestra-sdk"
 
@@ -12,6 +12,8 @@ export interface FunctionArgument {
 export interface PebbleFunctionDef {
     name: string;
     arguments: FunctionArgument[];
+    deprecated?: boolean;
+    replacement?: string | null;
 }
 
 let cachedFilters: string[] | null = null
@@ -77,11 +79,11 @@ export class PebbleAutoCompletion {
         return Promise.resolve([])
     }
 
-    nestedFieldAutoCompletion(_source: string, _parsed: any | undefined, _parentField: string, _cursorIndex?: number): Promise<string[]> {
+    nestedFieldAutoCompletion(_source: string, _parsed: Record<string, unknown> | undefined, _parentField: string, _cursorIndex?: number): Promise<string[]> {
         return Promise.resolve([])
     }
 
-    functionAutoCompletion(_parsed: any | undefined, _functionName: string, _args: Record<string, string>): Promise<string[]> {
+    functionAutoCompletion(_parsed: Record<string, unknown> | undefined, _functionName: string, _args: Record<string, string>): Promise<string[]> {
         return Promise.resolve([])
     }
 
@@ -95,7 +97,7 @@ export class PebbleAutoCompletion {
 }
 
 export class YamlAutoCompletion extends PebbleAutoCompletion {
-    valueAutoCompletion(_source: string, _parsed: any | undefined, _yamlElement: YamlElement | undefined): Promise<string[]> {
+    valueAutoCompletion(_source: string, _parsed: Record<string, unknown> | undefined, _yamlElement: YamlElement | undefined): Promise<string[]> {
         return Promise.resolve([])
     }
 }

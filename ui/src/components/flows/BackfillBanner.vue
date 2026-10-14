@@ -16,7 +16,6 @@
             <KsIconButton
                 v-if="!row.backfill.paused"
                 data-test="backfill-pause"
-                size="small"
                 :tooltip="$t('pause backfill')"
                 @click="emit('pause')"
             >
@@ -25,7 +24,6 @@
             <KsIconButton
                 v-else
                 data-test="backfill-resume"
-                size="small"
                 :tooltip="$t('continue backfill')"
                 @click="emit('resume')"
             >
@@ -33,7 +31,6 @@
             </KsIconButton>
             <KsIconButton
                 data-test="backfill-stop"
-                size="small"
                 :tooltip="$t('delete backfill')"
                 class="bf-stop"
                 @click="emit('stop')"
@@ -45,14 +42,13 @@
 </template>
 
 <script setup lang="ts">
-    import moment from "moment"
     import {computed} from "vue"
 
     import Play from "vue-material-design-icons/Play.vue"
     import Pause from "vue-material-design-icons/Pause.vue"
     import Stop from "vue-material-design-icons/Stop.vue"
 
-    import {dateUtils, KsIconButton, KsProgress} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, KsIconButton, KsProgress} from "@kestra-io/design-system"
 
 
     const props = defineProps<{
@@ -75,9 +71,9 @@
     const progress = computed(() => {
         const bf = props.row?.backfill
         if (!bf?.start || !bf?.end || !bf?.currentDate) return 0
-        const total = moment(bf.end).diff(moment(bf.start))
+        const total = dayjs(bf.end).diff(dayjs(bf.start))
         if (total <= 0) return 100
-        const elapsed = moment(bf.currentDate).diff(moment(bf.start))
+        const elapsed = dayjs(bf.currentDate).diff(dayjs(bf.start))
         return Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)))
     })
 
@@ -93,8 +89,8 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.625rem 1rem;
-    background: var(--ks-background-card);
-    border-top: 1px dashed var(--ks-border-primary);
+    background: var(--ks-bg-base);
+    border-top: 1px dashed var(--ks-border-default);
 }
 
 .bf-meta {

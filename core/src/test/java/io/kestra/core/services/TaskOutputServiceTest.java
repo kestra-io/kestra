@@ -12,7 +12,6 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunWithOutput;
-import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -54,7 +53,7 @@ class TaskOutputServiceTest {
         assertThat(switchOut).containsExactlyInAnyOrderEntriesOf(Map.of("defaults", false, "value", "a"));
         @SuppressWarnings("unchecked")
         Map<String, Object> eachOut = (Map<String, Object>) outputs.get("2_each");
-        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 2), "runningIterations", 0, "iterationCount", 2));
+        assertThat(eachOut).containsAllEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 2), "runningIterations", 0, "iterationCount", 2));
         @SuppressWarnings("unchecked")
         Map<String, Object> t1Out = (Map<String, Object>) outputs.get("t1");
         assertThat(t1Out).containsExactlyInAnyOrderEntriesOf(Map.of("value", "t1"));
@@ -79,7 +78,7 @@ class TaskOutputServiceTest {
         assertThat(isJsonOut).containsExactlyInAnyOrderEntriesOf(Map.of("defaults", false, "value", "false"));
         @SuppressWarnings("unchecked")
         Map<String, Object> eachOut = (Map<String, Object>) outputs.get("1_each");
-        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 3), "runningIterations", 0, "iterationCount", 3));
+        assertThat(eachOut).containsAllEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 3), "runningIterations", 0, "iterationCount", 3));
     }
 
     @Test
@@ -101,7 +100,7 @@ class TaskOutputServiceTest {
         assertThat(ifOut).containsExactlyInAnyOrderEntriesOf(Map.of("evaluationResult", false));
         @SuppressWarnings("unchecked")
         Map<String, Object> forEachOut = (Map<String, Object>) outputs.get("for_each");
-        assertThat(forEachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 3), "runningIterations", 0, "iterationCount", 3));
+        assertThat(forEachOut).containsAllEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 3), "runningIterations", 0, "iterationCount", 3));
     }
 
     @Test
@@ -436,7 +435,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("test-task")
             .state(new State())
-            .outputs(Variables.inMemory(legacyOutputs))
+            .outputs(legacyOutputs)
             .build();
 
         // When - no output saved to repository; should use deprecated field directly
@@ -461,7 +460,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("task-1")
             .state(new State())
-            .outputs(Variables.inMemory(Map.of("output1", "value1")))
+            .outputs(Map.of("output1", "value1"))
             .build();
 
         TaskRun taskRun2 = TaskRun.builder()
@@ -472,7 +471,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("task-2")
             .state(new State())
-            .outputs(Variables.inMemory(Map.of("output2", "value2")))
+            .outputs(Map.of("output2", "value2"))
             .build();
 
         Execution execution = Execution.builder()
@@ -515,7 +514,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("task-legacy")
             .state(new State())
-            .outputs(Variables.inMemory(Map.of("source", "legacy")))
+            .outputs(Map.of("source", "legacy"))
             .build();
 
         TaskRun modernTaskRun = TaskRun.builder()

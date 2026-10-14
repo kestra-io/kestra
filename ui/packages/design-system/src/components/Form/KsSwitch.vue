@@ -1,13 +1,14 @@
 <template>
     <ElSwitch
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as SwitchProps)"
         @change="emit('change', $event)"
     />
 </template>
 
 <script setup lang="ts">
-    import {ElSwitch} from "element-plus"
+    import type {Component} from "vue"
+    import {ElSwitch, type SwitchProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -18,8 +19,8 @@
         disabled?: boolean
         activeText?: string
         inactiveText?: string
-        activeActionIcon?: any
-        inactiveActionIcon?: any
+        activeActionIcon?: Component | string
+        inactiveActionIcon?: Component | string
         size?: "large" | "default" | "small"
         activeValue?: boolean | string | number
         inactiveValue?: boolean | string | number
@@ -65,7 +66,8 @@
                 border-radius: 7px;
                 background-color: palette.$base-gray-neutral-white;
                 box-shadow: 0 1px 4px var(--ks-shadow-element);
-                transition: left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.18s ease, background-color 0.2s ease;
+                /* left and width must share one timing, otherwise the checked knob's outer edge wobbles during the press-stretch (https://github.com/kestra-io/kestra-ee/issues/10279). */
+                transition: left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
             }
         }
 

@@ -1,0 +1,15 @@
+id: switch-defaults-only
+namespace: io.kestra.tests
+
+inputs:
+  - id: string
+    type: STRING
+
+tasks:
+  - id: parent-seq
+    type: io.kestra.plugin.core.flow.Switch
+    value: "{{inputs.string}}"
+    defaults:
+      - id: default
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{task.id}} > {{taskrun.startDate}}"

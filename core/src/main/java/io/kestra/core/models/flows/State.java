@@ -180,9 +180,13 @@ public class State {
         return this.current.isTerminated();
     }
 
+    /**
+     * A PAUSED execution cannot be restarted: it must be resumed or killed instead.
+     * Restarting it would resume the Pause task without any resume information, leading to a failed execution.
+     */
     @JsonIgnore
     public boolean canBeRestarted() {
-        return this.current.isFailed() || this.current.isPaused();
+        return this.current.isFailed();
     }
 
     @JsonIgnore
@@ -255,6 +259,19 @@ public class State {
             return false;
         }
         return this.histories.get(this.histories.size() - 2).state.isPaused();
+    }
+
+    /**
+     * Checks whether the state is resuming after being suspended at a breakpoint.
+     *
+     * @return {@code true} if resuming from a breakpoint. Otherwise {@code false}.
+     */
+    @JsonIgnore
+    public boolean isResumingFromBreakpoint() {
+        if (!this.current.isCreated() || this.histories.size() < 2) {
+            return false;
+        }
+        return this.histories.get(this.histories.size() - 2).state.isBreakpoint();
     }
 
     /**
@@ -335,6 +352,10 @@ public class State {
 
         public boolean isQueued() {
             return this == Type.QUEUED;
+        }
+
+        public boolean isCancelled() {
+            return this == Type.CANCELLED;
         }
 
         /**

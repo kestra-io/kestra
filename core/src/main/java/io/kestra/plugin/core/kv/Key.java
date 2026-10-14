@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import io.kestra.core.services.KVStoreService;
+import io.kestra.core.services.KVService;
 import io.kestra.core.storages.kv.KVEntry;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -33,7 +33,7 @@ public class Key extends KvPurgeBehavior {
     private boolean expiredOnly = true;
 
     @Override
-    protected List<KVEntry> entriesToPurge(String tenant, String namespace, KVStoreService service) throws IOException {
+    protected List<KVEntry> entriesToPurge(String tenant, String namespace, KVService service) throws IOException {
         return service.listAll(tenant, namespace).stream().filter(kv -> !expiredOnly || (kv.expirationDate() != null && kv.expirationDate().isBefore(Instant.now()))).toList();
     }
 }

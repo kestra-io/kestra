@@ -2,12 +2,13 @@ import {RouteLocation, Router} from "vue-router"
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 
 export default (app: any, router: Router) => {
-    const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?")
     const unsavedChangesStore = useUnsavedChangesStore()
 
     window.addEventListener("beforeunload", (e) => {
         if (unsavedChangesStore.unsavedChange) {
-            (e || window.event).returnValue = confirmationMessage //Gecko + IE
+            // Read at fire time, not at setup: this runs before app.use(i18n), so $t does not exist yet.
+            const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?")
+            ;(e || window.event).returnValue = confirmationMessage //Gecko + IE
             return confirmationMessage //Gecko + Webkit, Safari, Chrome etc.
         }
     })

@@ -6,6 +6,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
@@ -64,7 +65,7 @@ public abstract class MysqlFlowRepositoryService {
                 case NOT_CONTAINS -> conditions.add(labelContainsCondition(label).not());
                 case IS_NULL -> conditions.add(labelKeyCondition(label).not());
                 case IS_NOT_NULL -> conditions.add(labelKeyCondition(label));
-                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
             }
         } else if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
@@ -81,12 +82,16 @@ public abstract class MysqlFlowRepositoryService {
                     conditions.add(labelMatches.ne(value != null));
                 else if (operation.equals(NOT_EQUALS)) {
                     conditions.add(labelMatches.ne(value != null));
+                } else if (operation.equals(QueryFilter.Op.CONTAINS)) {
+                    conditions.add(labelValueContainsCondition((String) key, (String) value));
+                } else if (operation.equals(QueryFilter.Op.NOT_CONTAINS)) {
+                    conditions.add(labelValueContainsCondition((String) key, (String) value).not());
                 } else if (operation.equals(QueryFilter.Op.IS_NULL)) {
                     conditions.add(labelKeyCondition((String) key).not());
                 } else if (operation.equals(QueryFilter.Op.IS_NOT_NULL)) {
                     conditions.add(labelKeyCondition((String) key));
                 } else {
-                    throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
                 }
             });
         }
@@ -105,6 +110,24 @@ public abstract class MysqlFlowRepositoryService {
                     "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].value') IS NOT NULL", query
                 )
             );
+    }
+
+    private static Condition labelValueContainsCondition(String key, String value) {
+        return DSL.condition(
+            """
+            EXISTS (
+                SELECT 1
+                FROM JSON_TABLE(value, '$.labels[*]' COLUMNS (
+                    label_key VARCHAR(255) PATH '$.key',
+                    label_value VARCHAR(255) PATH '$.value'
+                )) AS labels
+                WHERE labels.label_key = ?
+                  AND LOWER(labels.label_value) LIKE LOWER(CONCAT('%', ?, '%'))
+            )
+            """,
+            key,
+            value
+        );
     }
 
     private static Condition labelKeyCondition(String key) {

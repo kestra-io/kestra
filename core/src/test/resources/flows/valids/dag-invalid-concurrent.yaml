@@ -1,0 +1,12 @@
+id: dag-invalid-concurrent
+namespace: io.kestra.tests
+
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    concurrent: "{{ 0 - 1 }}"
+    tasks:
+      - task:
+          id: a
+          type: io.kestra.plugin.core.log.Log
+          message: hello

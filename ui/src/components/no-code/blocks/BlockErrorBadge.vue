@@ -4,7 +4,7 @@
             <div class="block-error-tooltip">
                 <div class="block-error-tooltip-head">
                     <AlertCircle :size="14" />
-                    <span>{{ t("error detected") }}</span>
+                    <span>{{ $t("error detected") }}</span>
                 </div>
                 <ul class="block-error-tooltip-list">
                     <li v-for="issue in issues" :key="issue">{{ issue }}</li>
@@ -14,7 +14,7 @@
         <span
             class="block-error-badge"
             data-test="block-card-warning"
-            :aria-label="t('flow_editor_stats.errors.label', {count: issues.length})"
+            :aria-label="$t('flow_editor_stats.errors.label', {count: issues.length})"
         >
             <AlertCircle :size="14" />
             <span v-if="issues.length > 1" class="block-error-badge-count">{{ issues.length }}</span>
@@ -23,12 +23,10 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
 
     defineProps<{issues: string[]}>()
 
-    const {t} = useI18n()
 </script>
 
 <style scoped lang="scss">

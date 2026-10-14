@@ -1,7 +1,7 @@
 <template>
     <div
         class="block-card"
-        :class="{'block-card--selected': selected, 'block-card--drag-over': dragOver, 'block-kbd-focused': focused, 'block-card--error': issues.length > 0}"
+        :class="{'block-card--selected': selected, 'block-card--drag-over': dragOver, 'block-card--drag-forbidden': dragForbidden, 'block-kbd-focused': focused, 'block-card--error': issues.length > 0}"
         role="button"
         :tabindex="focused ? 0 : -1"
         :aria-pressed="selected"
@@ -11,14 +11,14 @@
         data-test="block-card"
         @click="emit('select')"
         @dragstart="emit('drag-start', $event)"
-        @dragover.prevent="emit('drag-over', $event)"
+        @dragover="emit('drag-over', $event)"
         @drop.prevent="emit('drop', $event)"
         @dragend="emit('drag-end')"
     >
         <DragVertical
             v-if="draggable"
             class="block-card-grip"
-            :aria-label="t('block_editor.drag_reorder')"
+            :aria-label="$t('block_editor.drag_reorder')"
             @mousedown.stop
         />
 
@@ -42,8 +42,8 @@
             <KsIconButton
                 v-if="runnable"
                 class="block-card-action block-card-action--run"
-                :aria-label="t('playground.run_task')"
-                :tooltip="t('playground.run_task')"
+                :aria-label="$t('playground.run_task')"
+                :tooltip="$t('playground.run_task')"
                 data-test="block-card-run"
                 tabindex="-1"
                 @click.stop="emit('run')"
@@ -54,8 +54,8 @@
             <KsIconButton
                 v-if="!panelMaximized"
                 class="block-card-action"
-                :aria-label="t('block_editor.open_in_split')"
-                :tooltip="t('block_editor.open_in_split')"
+                :aria-label="$t('block_editor.open_in_split')"
+                :tooltip="$t('block_editor.open_in_split')"
                 data-test="block-card-open-split"
                 tabindex="-1"
                 @click.stop="emit('open-split')"
@@ -65,8 +65,8 @@
 
             <KsIconButton
                 class="block-card-action"
-                :aria-label="t('block_editor.duplicate')"
-                :tooltip="`${t('block_editor.duplicate')} (d)`"
+                :aria-label="$t('block_editor.duplicate')"
+                :tooltip="`${$t('block_editor.duplicate')} (d)`"
                 data-test="block-card-duplicate"
                 tabindex="-1"
                 @click.stop="emit('duplicate')"
@@ -76,8 +76,8 @@
 
             <KsIconButton
                 class="block-card-action block-card-action--danger"
-                :aria-label="t('block_editor.delete')"
-                :tooltip="`${t('block_editor.delete')} (⌫)`"
+                :aria-label="$t('block_editor.delete')"
+                :tooltip="`${$t('block_editor.delete')} (⌫)`"
                 data-test="block-card-delete"
                 tabindex="-1"
                 @click.stop="emit('delete')"
@@ -114,6 +114,7 @@
         focused?: boolean
         draggable?: boolean
         dragOver?: boolean
+        dragForbidden?: boolean
         runnable?: boolean
         icons?: Record<string, PluginIconData>
     }>()
@@ -180,6 +181,12 @@
         &--drag-over {
             border-color: var(--ks-text-link);
             border-style: dashed;
+        }
+
+        &--drag-forbidden {
+            border-color: var(--ks-border-error);
+            border-style: dashed;
+            cursor: not-allowed;
         }
 
         &--error,

@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -88,27 +89,35 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Dag extends Task implements FlowableTask<VoidOutput> {
+public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailureInterface {
     @NotNull
     @Builder.Default
     @Schema(
         title = "Number of concurrent parallel tasks that can be running at any point in time",
         description = "If the value is `0`, no concurrency limit exists for the tasks in a DAG and all tasks that can run in parallel will start at the same time."
     )
-    private final Property<Integer> concurrent = Property.ofValue(0);
+    private final Property<@PositiveOrZero Integer> concurrent = Property.ofValue(0);
 
-    @Valid
+    @NotNull
+    @Builder.Default
+    @Schema(
+        title = "What to do with the other still-running tasks when one task fails.",
+        description = """
+            `CONTINUE` (default): other tasks keep running to completion, as today.
+
+            `CANCELLED` / `FAILED`: as soon as a task fails with no retry left, every other still-running task in this DAG is interrupted and lands in the given state. The DAG itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
+    )
+    private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.CONTINUE);
+
     @NotEmpty
-    private List<DagTask> tasks;
+    private List<@Valid DagTask> tasks;
 
-    @Valid
     @PluginProperty
-    protected List<Task> errors;
+    protected List<@Valid Task> errors;
 
-    @Valid
     @JsonProperty("finally")
     @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
+    protected List<@Valid Task> _finally;
 
     public List<Task> getFinally() {
         return this._finally;

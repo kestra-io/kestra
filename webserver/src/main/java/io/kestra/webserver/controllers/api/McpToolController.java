@@ -7,6 +7,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.mcp.McpServerCache;
 import io.kestra.mcp.McpServerHandlerTransport;
 import io.kestra.mcp.McpSessionFactory;
+import io.kestra.mcp.McpToolAccessControl;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -26,17 +27,20 @@ public class McpToolController {
     private final TenantService tenantService;
     private final McpSessionFactory sessionFactory;
     private final McpServerCache mcpServerCache;
+    private final McpToolAccessControl accessControl;
 
     @Inject
     public McpToolController(
         McpServerHandlerTransport handlerRegistry,
         TenantService tenantService,
         McpSessionFactory sessionFactory,
-        McpServerCache mcpServerCache) {
+        McpServerCache mcpServerCache,
+        McpToolAccessControl accessControl) {
         this.handlerRegistry = handlerRegistry;
         this.tenantService = tenantService;
         this.sessionFactory = sessionFactory;
         this.mcpServerCache = mcpServerCache;
+        this.accessControl = accessControl;
     }
 
     @Get("/{id}")
@@ -78,7 +82,7 @@ public class McpToolController {
         }
 
         var transportContext = sessionFactory.build(
-            tenantId, id, request.getHeaders().get(HttpHeaders.MCP_SESSION_ID)
+            tenantId, id, request.getHeaders().get(HttpHeaders.MCP_SESSION_ID), accessControl.callerId(request).orElse(null)
         );
 
         return handlerRegistry.getServerHandler(transportContext).handleRequest(request, transportContext);

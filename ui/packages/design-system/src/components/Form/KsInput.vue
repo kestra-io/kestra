@@ -2,7 +2,7 @@
     <ElInput
         ref="elInputRef"
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         :class="reserveClearSpace ? 'ks-input--reserve-clear' : undefined"
         @change="emit('change', $event)"
     >
@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
-    import {ElInput} from "element-plus"
+    import {type Component, computed, ref} from "vue"
+    import {ElInput, type InputProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -43,7 +43,7 @@
         placeholder?: string
         disabled?: boolean
         showPassword?: boolean
-        suffixIcon?: any
+        suffixIcon?: Component | string
         clearable?: boolean
         size?: "large" | "default" | "small"
         name?: string
@@ -82,6 +82,14 @@
 
     .kel-input__inner, .kel-textarea__inner {
         font-variant-ligatures: none;
+    }
+
+    .kel-textarea__inner {
+        // A full-width textarea has nothing to gain from horizontal resizing, and both it and a
+        // long unbroken word were producing a horizontal scrollbar under the field.
+        resize: vertical;
+        overflow-x: hidden;
+        overflow-wrap: break-word;
     }
 
     .kel-input {

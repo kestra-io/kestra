@@ -7,6 +7,7 @@ import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.core.worker.WorkerGroups;
 
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -31,7 +32,21 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
 
     @Override
     public void connect(ConnectRequest request, StreamObserver<ConnectResponse> responseObserver) {
-        String workerGroupId = resolveWorkerGroupId(request);
+        final String workerGroupId;
+        try {
+            workerGroupId = resolveWorkerGroupId(request);
+        } catch (StatusRuntimeException e) {
+            // A status escaping this method reaches the worker as UNKNOWN and is dumped as an ERROR
+            // stack trace by the gRPC executor, so the rejection is delivered on the observer instead.
+            log.warn(
+                "Worker '{}' connect request rejected with {}: {}",
+                request.getHeader().getClientId(),
+                e.getStatus().getCode(),
+                e.getStatus().getDescription()
+            );
+            responseObserver.onError(e);
+            return;
+        }
         log.info("Worker connect request received with workerGroup: {}", workerGroupId);
 
         ConnectResponse response = ConnectResponse.newBuilder()
@@ -47,7 +62,8 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
     /**
      * Resolves the Worker Group id for the connecting worker. OSS always returns
      * {@link WorkerGroups#DEFAULT_ID}; the EE override resolves it from the authenticated
-     * worker context and may reject the connection.
+     * worker context and may reject the connection by throwing a {@link StatusRuntimeException},
+     * whose status is then returned to the worker as-is.
      */
     protected String resolveWorkerGroupId(ConnectRequest request) {
         return WorkerGroups.DEFAULT_ID;

@@ -57,7 +57,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         Triggers.Fields.TRIGGER_ID, "trigger_id",
         Triggers.Fields.EXECUTION_ID, "execution_id",
         Triggers.Fields.NEXT_EXECUTION_DATE, NEXT_EVALUATION_DATE_COLUMN,
-        Triggers.Fields.WORKER_ID, WORKER_ID_FIELD.getName()
+        Triggers.Fields.WORKER_ID, WORKER_ID_FIELD.getName(),
+        Triggers.Fields.DISABLED, "disabled"
     );
 
     @Override
@@ -77,7 +78,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
-    public Optional<TriggerState> findById(TriggerId trigger) {
+    public Optional<TriggerState> findByIdWithoutAcl(TriggerId trigger) {
         return findOne(DSL.noCondition(), KEY_FIELD.eq(trigger.uid()));
     }
 
@@ -143,8 +144,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public ArrayListTotal<TriggerState> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
-        return findPage(pageable, tenantId, condition);
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, tenantId));
     }
 
     @Override
@@ -168,8 +168,44 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Flux<TriggerState> find(String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
-        return findAsync(tenantId, condition);
+        return findAsync(tenantId, this.computeFindCondition(filters, tenantId));
+    }
+
+    private Condition computeFindCondition(List<QueryFilter> filters, String tenantId) {
+        // Validated here, on the full list, because OPERATION_ID/OPERATION_OUTCOME leaves are
+        // pulled out below before `remainingFilters` ever reaches the nested `filter(...)` call
+        // that would otherwise run this same validation.
+        QueryFilter.validateQueryFilters(filters, Resource.TRIGGER);
+
+        List<QueryFilter> operationFilters = filters == null ? List.of()
+            : filters.stream()
+                .filter(f -> f.isLeaf() && (f.field() == QueryFilter.Field.OPERATION_ID || f.field() == QueryFilter.Field.OPERATION_OUTCOME))
+                .toList();
+        List<QueryFilter> remainingFilters = filters == null ? null
+            : filters.stream()
+                .filter(f -> !operationFilters.contains(f))
+                .toList();
+
+        return filter(remainingFilters, null, Resource.TRIGGER).and(combinedNotificationItemCondition(tenantId, operationFilters));
+    }
+
+    /**
+     * Same pattern as {@code AbstractJdbcExecutionRepository.combinedNotificationItemCondition}:
+     * operationId/operationOutcome must match the same notification_items row, combined into a
+     * single tenant-scoped IN subquery rather than built as two independent conditions.
+     */
+    private static Condition combinedNotificationItemCondition(String tenantId, List<QueryFilter> operationFilters) {
+        if (operationFilters.isEmpty()) {
+            return DSL.noCondition();
+        }
+        Condition combined = operationFilters.stream()
+            .map(f -> AbstractJdbcRepository.notificationItemLeafCondition(f.field(), f.value(), f.operation()))
+            .reduce(AbstractJdbcRepository.TENANT_ID_FIELD.eq(tenantId), Condition::and);
+        return AbstractJdbcRepository.KEY_FIELD.in(
+            DSL.select(AbstractJdbcRepository.notificationItemResourceIdField())
+                .from(AbstractJdbcRepository.NOTIFICATION_ITEMS_TABLE)
+                .where(combined)
+        );
     }
 
     protected Condition fullTextCondition(String query) {
@@ -183,7 +219,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
-        return buildTenantCondition(tenantId);
+        return buildTenantCondition(tenantId).and(aclCondition(Resource.TRIGGER));
     }
 
     @Override
@@ -193,12 +229,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Function<String, String> sortMapping() throws IllegalArgumentException {
-        Map<String, String> mapper = Map.of(
-            "flowId", "flow_id",
-            "triggerId", "trigger_id",
-            "executionId", "execution_id",
-            "nextExecutionDate", NEXT_EVALUATION_DATE_COLUMN
-        );
+        // nextExecutionDate needs remapping, since its real column is next_evaluation_date.
+        Map<String, String> mapper = Map.of("nextExecutionDate", NEXT_EVALUATION_DATE_COLUMN);
 
         return s -> mapper.getOrDefault(s, s);
     }
@@ -214,7 +246,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
+                DSLContext context = QueryTimeout.apply(configuration, descriptors.getQueryTimeout());
 
                 Map<String, ? extends ColumnDescriptor<Triggers.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
                     .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
@@ -264,7 +296,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
-            DSLContext context = DSL.using(configuration);
+            DSLContext context = QueryTimeout.apply(configuration, dataFilter.getQueryTimeout());
             ColumnDescriptor<ITriggers.Fields> columnDescriptor = dataFilter.getColumns();
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {

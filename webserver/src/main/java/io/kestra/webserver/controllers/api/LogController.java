@@ -132,7 +132,9 @@ public class LogController {
             return response.header(HttpHeaders.CACHE_CONTROL, "no-cache");
         }
 
-        return response;
+        // `private`, not `public`: these logs are tenant-scoped, so a shared cache must not replay
+        // them to a different requester, even though a terminated execution's logs never change.
+        return response.header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
     }
 
     @ExecuteOn(TaskExecutors.IO)

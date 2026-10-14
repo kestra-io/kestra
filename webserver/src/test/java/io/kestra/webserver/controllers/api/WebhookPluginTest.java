@@ -9,6 +9,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.WebhookService;
+import io.kestra.plugin.core.trigger.WebhookResponse;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
@@ -132,5 +133,33 @@ public class WebhookPluginTest {
         );
 
         assertThat((Object) exception.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-plugin-labels.yaml")
+    void shouldSnapshotFlowLabelsAndVariablesOnAWebhookExecution() {
+        // Given a flow declaring labels and variables, and a trigger overriding one of the labels
+
+        // When
+        var response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/%s/executions/webhook/io.kestra.tests/webhook-plugin-labels/labels-case".formatted(MAIN_TENANT),
+                "{\"test\": \"data\"}"
+            ),
+            WebhookResponse.class
+        );
+
+        // Then the response body reports the flow's labels, with the trigger's own overriding them
+        assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
+        assertThat(response.body().labels()).contains(new Label("team", "platform"), new Label("env", "from-trigger"));
+        assertThat(response.body().labels()).doesNotContain(new Label("env", "dev"));
+
+        // And the created execution snapshots both, as it is built from the flow processed for runtime
+        var execution = runnerUtils.awaitFlowExecution(
+            e -> e.getTrigger() != null && e.getTrigger().getId().equals("webhook1"),
+            MAIN_TENANT, TESTS_FLOW_NS, "webhook-plugin-labels"
+        );
+        assertThat(execution.getLabels()).contains(new Label("team", "platform"), new Label("env", "from-trigger"));
+        assertThat(execution.getVariables()).containsEntry("region", "eu-west-1");
     }
 }

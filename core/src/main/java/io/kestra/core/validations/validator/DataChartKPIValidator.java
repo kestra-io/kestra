@@ -5,6 +5,8 @@ import java.util.List;
 
 import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.models.dashboards.filters.DurationFilters;
 import io.kestra.core.validations.DataChartKPIValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
@@ -45,6 +47,11 @@ public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIVa
             violations.add("LABELS column is only supported with an ElasticSearch database.");
         }
 
+        violations.addAll(missingFieldViolations("where", dataChart.getData().getWhere()));
+        violations.addAll(missingFieldViolations("numerator", dataChart.getData().getNumerator()));
+        violations.addAll(DurationFilters.violations(dataChart.getData().getWhere(), dataChart.getData().durationFields()));
+        violations.addAll(DurationFilters.violations(dataChart.getData().getNumerator(), dataChart.getData().durationFields()));
+
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Invalid data chart: " + String.join(", ", violations))
@@ -55,4 +62,17 @@ public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIVa
         }
     }
 
+    private static List<String> missingFieldViolations(String property, @Nullable List<? extends AbstractFilter<?>> filters) {
+        if (filters == null) {
+            return List.of();
+        }
+
+        List<String> violations = new ArrayList<>();
+        for (int i = 0; i < filters.size(); i++) {
+            if (filters.get(i).getField() == null) {
+                violations.add("`data.%s[%d].field` is required.".formatted(property, i));
+            }
+        }
+        return violations;
+    }
 }

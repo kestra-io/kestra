@@ -112,6 +112,16 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
     private Property<Boolean> outputDirectory;
 
     @Schema(
+        title = "Whether to write the execution context to a `.kestra-execution-context.json` file in the working directory.",
+        description = """
+            Gives the script its execution metadata — `inputs`, `outputs`, `labels`, `vars`, `trigger`, `flow`, `execution` — as JSON data instead of Pebble expressions interpolated into its source, which keeps the script valid, lintable code in an IDE and safe for values holding quotes or newlines.
+            The Python client reads it with `from kestra import context`, then `context.outputs.previous_task.uri`.
+            Disabled by default: the file holds the same values the task could already render, secret-typed inputs included, so it is only written when asked for.""",
+        defaultValue = "false"
+    )
+    private Property<Boolean> executionContext;
+
+    @Schema(
         title = "The target operating system where the script will run."
     )
     @Builder.Default
@@ -165,7 +175,8 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
             .withEnableOutputDirectory(runContext.render(this.getOutputDirectory()).as(Boolean.class).orElse(null))
             .withTimeout(runContext.render(this.getTimeout()).as(Duration.class).orElse(null))
             .withTargetOS(runContext.render(this.getTargetOS()).as(TargetOS.class).orElseThrow())
-            .withFailFast(runContext.render(this.getFailFast()).as(Boolean.class).orElse(false));
+            .withFailFast(runContext.render(this.getFailFast()).as(Boolean.class).orElse(false))
+            .withExecutionContext(runContext.render(this.getExecutionContext()).as(Boolean.class).orElse(false));
     }
 
     /**

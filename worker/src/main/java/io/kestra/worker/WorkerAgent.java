@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class WorkerAgent extends AbstractWorker implements Worker {
 
     private final WorkerConnectionService workerConnectionService;
+    private final WorkerConfig workerConfig;
 
     @Inject
     public WorkerAgent(
@@ -37,7 +38,8 @@ public class WorkerAgent extends AbstractWorker implements Worker {
         List<GrpcWorkerIOSender<?>> workerIOSenders,
         MaintenanceService maintenanceService,
         MetricRegistry metricRegistry,
-        ServerConfig serverConfig) {
+        ServerConfig serverConfig,
+        WorkerConfig workerConfig) {
         super(
             ServiceType.WORKER,
             eventPublisher,
@@ -50,6 +52,7 @@ public class WorkerAgent extends AbstractWorker implements Worker {
             "worker-io-"
         );
         this.workerConnectionService = workerConnectionService;
+        this.workerConfig = workerConfig;
     }
 
     /**
@@ -63,5 +66,18 @@ public class WorkerAgent extends AbstractWorker implements Worker {
     protected String resolveWorkerGroupId() {
         WorkerConnectionService.ConnectionResult connectionResult = workerConnectionService.connect(getId());
         return connectionResult.workerGroupId();
+    }
+
+    @Override
+    protected int jobBufferSize(int numThreads) {
+        Integer configured = workerConfig.jobBufferSize();
+        if (configured == null) {
+            return numThreads;
+        }
+        if (configured > numThreads) {
+            log.warn("The configured job buffer size {} exceeds the {} worker threads, using {} instead.", configured, numThreads, numThreads);
+            return numThreads;
+        }
+        return configured;
     }
 }

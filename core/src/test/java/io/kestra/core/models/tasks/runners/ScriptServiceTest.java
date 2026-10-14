@@ -113,12 +113,38 @@ class ScriptServiceTest {
         ScriptService.validateStoragePath("file;name.txt");
         ScriptService.validateStoragePath("path/to/file.txt");
         ScriptService.validateStoragePath("file-name_v2.txt");
+        // '%' must be accepted so that percent-encoded kestra URIs (e.g. report%231.csv) survive INTERNAL_STORAGE_PATTERN
+        ScriptService.validateStoragePath("file%20name.txt");
     }
+
+    @Test
+    void shouldRejectOutputFileWithHash() {
+        // '#' is a URI fragment delimiter: 'report#1.csv' is silently stored as 'report',
+        // causing distinct files to collide and overwrite each other.
+        assertThatThrownBy(() -> ScriptService.validateStoragePath("report#1.csv"))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("unsupported characters");
+    }
+
+    @Test
+    void shouldMatchPercentEncodedUriWithInternalStoragePattern() {
+        // After the InternalStorage fix, '#' in a filename is percent-encoded to '%23' in the URI.
+        // INTERNAL_STORAGE_PATTERN must match such URIs so replaceInternalStorage can resolve them.
+        Pattern pattern = Pattern.compile("(kestra:\\/\\/[" + "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;" + "]*)",
+            Pattern.UNICODE_CHARACTER_CLASS);
+        String encodedUri = "kestra:///ns/exec/task/report%231.csv";
+        assertThat(pattern.matcher(encodedUri).find()).isTrue();
+    }
+
 
     @Test
     void uploadInputFiles() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
+
+        // Colon (:) is also supported by the regex but can't be tested here:
+        // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
+        // which is consistent between read/write in production but breaks test files created directly on disk.
 
         Path path = createFile(tenant, "file");
 
@@ -165,7 +191,7 @@ class ScriptServiceTest {
     void shouldReplaceInternalStorageWithSpecialChars() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
-
+        
         // Colon (:) is also supported by the regex but can't be tested here:
         // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
         // which is consistent between read/write in production but breaks test files created directly on disk.

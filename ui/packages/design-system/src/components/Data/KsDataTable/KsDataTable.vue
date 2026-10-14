@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
+    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar">
             <slot name="navbar" />
         </nav>
@@ -13,7 +13,7 @@
                 <slot name="top" />
             </div>
 
-            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot">
+            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}">
                 <slot name="table" />
             </div>
 
@@ -46,12 +46,20 @@
                     @selection-change="selectionChanged"
                     @select="onSelect"
                     @sort-change="onSortChange"
+                    @row-click="(row, column, event) => emit('row-click', row, column, event)"
                     @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
                 >
                     <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection :selectable="rowSelectable" />
                     <slot />
                     <template #empty>
-                        <KsNoData :title="noDataText" />
+                        <slot v-if="loadError" name="error" :error="loadError" :retry="reload">
+                            <div class="load-error">
+                                <AlertCircleOutlineIcon class="load-error-icon" />
+                                <strong>{{ $t("ks_data_table.load_failed") }}</strong>
+                                <KsButton size="small" @click="reload">{{ $t("ks_data_table.retry") }}</KsButton>
+                            </div>
+                        </slot>
+                        <KsNoData v-else :title="noDataText" :description="noDataDescription" />
                     </template>
                 </KsTable>
             </div>
@@ -81,6 +89,8 @@
     import KsPagination from "../KsPagination.vue"
     import KsBulkSelect from "./KsBulkSelect.vue"
     import KsNoData from "../KsNoData.vue"
+    import KsButton from "../../Basic/KsButton/KsButton.vue"
+    import AlertCircleOutlineIcon from "vue-material-design-icons/AlertCircleOutline.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -99,8 +109,10 @@
         showSelection?: boolean
         rowKey?: string | ((row: any) => string)
         noDataText?: string
+        noDataDescription?: string
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
+        sortKeyMapper?: (key: string) => string
         selectionMapper?: (element: any) => any
         forceExpandedRowKeys?: string[]
         noPaginationGutter?: boolean
@@ -119,8 +131,10 @@
         showSelection: true,
         rowKey: "id",
         noDataText: undefined,
+        noDataDescription: undefined,
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
+        sortKeyMapper: undefined,
         selectionMapper: undefined,
         forceExpandedRowKeys: () => [],
         noPaginationGutter: false,
@@ -143,9 +157,11 @@
         "update:pageSize": [size: number]
         "sort-change": [sort: SortItem]
         "selection-change": [selection: any[]]
+        "row-click": [row: any, column: any, event: Event]
         "row-dblclick": [row: any, column: any, event: Event]
         "ready": []
         "loaded": []
+        "load-error": [error: unknown]
     }>()
 
     defineSlots<{
@@ -154,6 +170,7 @@
         top?(): unknown
         table?(): unknown
         empty?(): unknown
+        error?(props: {error: unknown; retry: () => void}): unknown
         "bulk-actions"?(): unknown
         "select-actions"?(): unknown
     }>()
@@ -190,6 +207,7 @@
     })
 
     const isLoading = ref(props.loading)
+    const loadError = ref<unknown>()
     const isReady = ref(false)
 
     const normalizePage = (value: number | undefined): number => {
@@ -206,8 +224,20 @@
     const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
-    const tableRef = ref<InstanceType<typeof KsTable>>()
+    type DataRow = NonNullable<typeof props.data>[number]
+
+    interface KsTableHandle {
+        toggleRowSelection: (row: DataRow, selected?: boolean) => void
+        clearSelection: () => void
+        toggleAllSelection: () => void
+        getSelectionRows: () => DataRow[]
+        toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
+        setScrollTop: (top: number) => void
+        $el?: HTMLElement
+    }
+    const tableRef = ref<KsTableHandle>()
     const container = ref<HTMLElement | null>(null)
+    const wrapper = ref<HTMLElement | null>(null)
     const hasSelection = ref(false)
     const lastCheckedIndex = ref<number | null>(null)
     const isShiftPressed = ref(false)
@@ -252,11 +282,12 @@
                 : s[rowKey as string] === row[rowKey as string],
         )
 
-        if (isShiftPressed.value && lastCheckedIndex.value !== null) {
+        if (currentIndex >= 0 && isShiftPressed.value && lastCheckedIndex.value !== null) {
             const start = Math.min(lastCheckedIndex.value, currentIndex)
             const end = Math.max(lastCheckedIndex.value, currentIndex)
             for (let i = start; i <= end; i++) {
-                tableRef.value?.toggleRowSelection(data[i], isChecked)
+                const pageRow = data[i]
+                if (pageRow !== undefined) tableRef.value?.toggleRowSelection(pageRow, isChecked)
             }
             await nextTick()
             const finalSelection = tableRef.value?.getSelectionRows() ?? []
@@ -322,12 +353,16 @@
     const callLoad = async () => {
         if (!props.loadData) return
         isLoading.value = true
+        loadError.value = undefined
         try {
             await props.loadData({
                 page: currentPageValue.value,
                 size: currentSizeValue.value,
                 sort: internalSort.value,
             })
+        } catch (error) {
+            loadError.value = error ?? new Error("loadData failed")
+            emit("load-error", error)
         } finally {
             isLoading.value = false
             if (!isReady.value) {
@@ -339,7 +374,11 @@
         }
     }
 
-    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value)
+    /** Coalesces same-tick load triggers into one post-flush load, never with a stale page size. */
+    const loadRequest = ref(0)
+    const requestLoad = () => { loadRequest.value++ }
+
+    const showEmpty = computed(() => props.data.length === 0 && !isLoading.value && !loadError.value)
 
     const showPagination = computed(() => {
         if (!props.total || props.total <= 0) return false
@@ -354,7 +393,7 @@
             emit("update:currentPage", 1)
             emit("page-changed", {page: 1, size: currentSizeValue.value})
         } else {
-            callLoad()
+            requestLoad()
         }
     }
 
@@ -373,16 +412,20 @@
         } else {
             const currentSelection = tableRef.value?.getSelectionRows() ?? []
             const rowKey = props.rowKey
-            const validSelection = currentSelection.filter((sel: unknown) => {
+            const validSelection = currentSelection.filter((sel) => {
                 const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
+                    : r[rowKey as string] === sel[rowKey as string])
             })
             if (validSelection.length !== currentSelection.length) {
                 tableRef.value?.clearSelection()
-                hasSelection.value = false
+                for (const row of validSelection) {
+                    tableRef.value?.toggleRowSelection(row, true)
+                }
+                hasSelection.value = validSelection.length > 0
                 lastCheckedIndex.value = null
+                selectionChanged(validSelection)
             } else if (tableRef.value) {
                 selectionChanged(currentSelection)
             }
@@ -391,14 +434,31 @@
 
     watch(() => props.loading, (val) => { isLoading.value = val })
 
-    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
+    watch([currentPageValue, currentSizeValue, loadRequest], () => callLoad(), {flush: "post"})
+
+    const scrollingAncestor = computed(() => {
+        for (let ancestor = wrapper.value?.parentElement; ancestor; ancestor = ancestor.parentElement) {
+            if (/auto|scroll/.test(getComputedStyle(ancestor).overflowY)) return ancestor
+        }
+        return undefined
+    })
+
+    const scrollBackToTop = () => {
+        tableRef.value?.setScrollTop(0)
+
+        if (!wrapper.value) return
+        const visibleTop = scrollingAncestor.value?.getBoundingClientRect().top ?? 0
+        if (wrapper.value.getBoundingClientRect().top < visibleTop) wrapper.value.scrollIntoView({block: "start"})
+    }
 
     const onPageChange = (page: number) => {
+        scrollBackToTop()
         emit("update:currentPage", page)
         emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
+        scrollBackToTop()
         emit("update:currentPage", 1)
         emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
@@ -406,12 +466,13 @@
 
     const onSortChange = (sort: {column: any; prop: string | null; order: string | null}) => {
         if (sort.prop && sort.order) {
-            internalSort.value = `${sort.prop}:${sort.order === "descending" ? "desc" : "asc"}`
+            const key = props.sortKeyMapper?.(sort.prop) ?? sort.prop
+            internalSort.value = `${key}:${sort.order === "descending" ? "desc" : "asc"}`
         } else {
             internalSort.value = undefined
         }
         emit("sort-change", sort)
-        callLoad()
+        requestLoad()
     }
 
     defineExpose({
@@ -432,6 +493,35 @@
 </script>
 
 <style lang="scss">
+    // Registered rather than declared on the wrapper: a plain declaration there would shadow a value
+    // an ancestor sets, which is the opposite of the override hook this is meant to be.
+    @property --ks-data-table-navbar-padding-block-start {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 0;
+    }
+
+    .load-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.4;
+        gap: var(--ks-spacing-2);
+        text-align: center;
+
+        strong {
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-md);
+            font-weight: var(--ks-font-weight-bold);
+        }
+    }
+
+    .load-error-icon {
+        height: 24px;
+        width: 24px;
+        color: var(--ks-icon-error);
+    }
+
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 2rem;
         height: 100%;
@@ -444,7 +534,7 @@
         }
 
         > .ks-data-table-navbar {
-            padding-block-start: var(--ks-data-table-navbar-padding-block-start, 0px);
+            padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
         .kel-pagination {
@@ -489,11 +579,11 @@
 
         &--fit {
             min-height: 0;
-            overflow: hidden;
 
             .ks-data-table-content {
                 flex: 1 1 0;
                 min-height: 0;
+                overflow: hidden;
 
                 &--slot {
                     overflow: auto;

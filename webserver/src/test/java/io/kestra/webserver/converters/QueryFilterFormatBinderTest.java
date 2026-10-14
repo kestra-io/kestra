@@ -8,7 +8,9 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.http.HttpRequest;
@@ -115,15 +117,30 @@ class QueryFilterFormatBinderTest {
     }
 
     @Test
-    void testGetQueryFiltersWithInvalidFilterPattern() {
+    void shouldRejectMalformedFilterKey() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(
             "filters[invalid]", List.of("test-value")
         );
+        // WHEN / THEN
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams)
+        );
+    }
+
+    @Test
+    void shouldRejectUnknownOperator() {
+        // GIVEN
+        Map<String, List<String>> queryParams = Map.of(
+            "filters[namespace][BOGUS_OP]", List.of("test-namespace")
+        );
         // WHEN
-        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
-        // THEN
-        assertEquals(0, filters.size(), "Invalid filters should be ignored");
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams)
+        );
+        // THEN — the offending token is named, and the internal enum class name is not leaked
+        assertTrue(ex.getMessage().contains("BOGUS_OP"), "Expected the offending token, got: " + ex.getMessage());
+        assertFalse(ex.getMessage().contains("io.kestra"), "Internal class name leaked: " + ex.getMessage());
     }
 
     @Test
@@ -233,8 +250,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — parser throws on the 4th descent; no SQL is generated
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
         );
         assertTrue(
             ex.getMessage().contains("depth"),
@@ -252,8 +269,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — width check throws; the OR node would have 21 children
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
         assertTrue(
             ex.getMessage().contains("width"),
@@ -274,8 +291,8 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — root produces 21 sibling leaves, exceeding the width cap
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(
-            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        InvalidQueryFiltersException ex = assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
         assertTrue(
             ex.getMessage().contains("width"),
@@ -356,5 +373,42 @@ class QueryFilterFormatBinderTest {
         assertEquals(1, filters.size());
         assertEquals(QueryFilter.Logical.OR, filters.getFirst().logical());
         assertEquals(2, filters.getFirst().children().size());
+    }
+
+    @Test
+    void shouldRoundTripNestedFiltersSerializedByTheTestUtils() {
+        // GIVEN — the nested OR/AND tree that controller tests feed through QueryFilterTestUtils
+        QueryFilter nested = QueryFilter.builder()
+            .logical(QueryFilter.Logical.OR)
+            .children(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.test")
+                        .build(),
+                    QueryFilter.builder()
+                        .logical(QueryFilter.Logical.AND)
+                        .children(
+                            List.of(
+                                QueryFilter.builder()
+                                    .field(QueryFilter.Field.ID).operation(QueryFilter.Op.EQUALS).value("io.kestra.test")
+                                    .build(),
+                                QueryFilter.builder()
+                                    .field(QueryFilter.Field.RESOURCES).operation(QueryFilter.Op.IN).value(List.of("NAMESPACE"))
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        // WHEN
+        Map<String, List<String>> queryParams = QueryFilterTestUtils.toQueryParams(List.of(nested))
+            .entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> List.of(e.getValue())));
+        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
+
+        // THEN — the tree survives the URL round-trip unchanged
+        assertEquals(List.of(nested), filters);
     }
 }

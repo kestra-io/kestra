@@ -1,13 +1,13 @@
 <template>
-    <nav class="field-nav-breadcrumb" :aria-label="t('no_code.nav.breadcrumb_aria')">
+    <nav class="field-nav-breadcrumb" :aria-label="$t('no_code.nav.breadcrumb_aria')">
         <button
             type="button"
             class="field-nav-back"
-            :aria-label="t('no_code.nav.back')"
+            :aria-label="$t('no_code.nav.back')"
             @click="emit('back')"
         >
             <ChevronLeft :size="16" />
-            <span>{{ t("no_code.nav.back") }}</span>
+            <span>{{ $t("no_code.nav.back") }}</span>
         </button>
 
         <span class="field-nav-sep">/</span>
@@ -32,13 +32,11 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
     import type {Crumb} from "../utils/useFieldNavigation"
 
-    const {t} = useI18n()
 
     defineProps<{
         frames: Crumb[];

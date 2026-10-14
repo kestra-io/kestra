@@ -9,12 +9,14 @@ import lombok.Getter;
 @ConfigurationProperties("kestra.variables")
 public class VariableConfiguration {
     public static final int DEFAULT_MAX_RENDER_DEPTH = 16;
+    public static final long DEFAULT_MAX_OUTPUT_SIZE = 10 * 1024 * 1024L; // 10 MiB
 
     public VariableConfiguration() {
         this.cacheEnabled = true;
         this.cacheSize = 1000;
         this.recursiveRendering = false;
         this.maxRenderDepth = DEFAULT_MAX_RENDER_DEPTH;
+        this.maxOutputSize = DEFAULT_MAX_OUTPUT_SIZE;
         this.redactedEnvVars = List.of(
             "KESTRA_PLUGINS_PATH", "KESTRA_CONFIGURATION_PATH", "KESTRA_CONFIGURATION", "KESTRA_JAVA_OPTS"
         );
@@ -24,5 +26,6 @@ public class VariableConfiguration {
     Integer cacheSize;
     Boolean recursiveRendering;
     Integer maxRenderDepth;
+    Long maxOutputSize;
     List<String> redactedEnvVars;
 }

@@ -43,7 +43,7 @@
     import {ref, computed, onMounted, onUnmounted} from "vue"
     import {useDocStore} from "../../stores/doc"
     import ContextDocsLink from "./ContextDocsLink.vue"
-    import {debounce} from "lodash-es"
+    import {debounce} from "@kestra-io/design-system"
 
     const docStore = useDocStore()
 
@@ -137,7 +137,7 @@
         flex: 1;
         min-width: 0;
         margin-bottom: 0;
-        z-index: 1001;
+        z-index: calc(var(--ks-z-dropdown) + 1);
     }
 
     .search-input {
@@ -163,8 +163,8 @@
         margin-top: 4px;
         max-height: 400px;
         overflow-y: auto;
-        z-index: 1001;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: calc(var(--ks-z-dropdown) + 1);
+        box-shadow: 0 4px 12px var(--ks-shadow-elevated);
         padding: 4px 0;
     }
 
@@ -184,8 +184,8 @@
         }
 
         &.selected {
-            background: rgba(132, 5, 255, 0.1);
-            border-left: 3px solid #8405FF;
+            background: var(--ks-bg-active);
+            border-left: 3px solid var(--ks-border-focus);
         }
 
         .result-title {

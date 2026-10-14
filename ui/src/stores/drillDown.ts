@@ -1,10 +1,12 @@
 import {defineStore} from "pinia"
 import {ref} from "vue"
+import type {LocationQuery} from "vue-router"
 
 export interface DrillDownTarget {
     name: string;
-    query: Record<string, string>;
+    query: LocationQuery;
     timeFiltered: boolean;
+    timeWindow?: Record<string, string>;
 }
 
 export const useDrillDownStore = defineStore("drillDown", () => {

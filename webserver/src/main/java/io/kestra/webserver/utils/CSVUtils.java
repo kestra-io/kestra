@@ -1,62 +1,131 @@
 package io.kestra.webserver.utils;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.exceptions.KestraRuntimeException;
 
+import de.siegmar.fastcsv.writer.CsvWriter;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
-public class CSVUtils {
+/**
+ * Renders records to RFC 4180 compliant CSV.
+ *
+ * <p>
+ * Columns are either provided explicitly or derived from the first record. Every subsequent record is projected onto them, so a record
+ * holding extra or missing keys can never shift the remaining values into the wrong columns.
+ *
+ * <p>
+ * String values starting with a spreadsheet formula character ({@code =}, {@code +}, {@code -}, {@code @}, tab or carriage return) are
+ * prefixed with {@code '} so that Excel and Google Sheets read them as text. Other types are written unchanged.
+ */
+public final class CSVUtils {
+    private static final String FORMULA_PREFIXES = "=+-@\t\r";
+
+    private static final TypeReference<Map<String, Object>> ROW_TYPE = new TypeReference<>() {
+    };
+
+    private CSVUtils() {
+    }
+
+    /**
+     * Writes all records at once.
+     *
+     * @param outWriter the writer to render the CSV to
+     * @param lines the records to render, nothing is written when empty
+     */
     public static void toCSV(Writer outWriter, List<Map<String, Object>> lines) {
+        if (lines.isEmpty()) {
+            return;
+        }
+        toCSV(outWriter, lines, headers(lines.getFirst()));
+    }
 
-        try (var csvWriter = de.siegmar.fastcsv.writer.CsvWriter.builder().build(outWriter)) {
-            if (lines.isEmpty()) {
-                return;
-            }
-            csvWriter.writeRecord(lines.get(0).keySet().stream().map(Object::toString).toList());
+    /**
+     * Writes all records using the provided headers.
+     *
+     * @param outWriter the writer to render the CSV to
+     * @param lines the records to render
+     * @param headers the columns to render, including when there are no records
+     */
+    public static void toCSV(Writer outWriter, List<Map<String, Object>> lines, List<String> headers) {
+        try (var csvWriter = CsvWriter.builder().build(outWriter)) {
+            csvWriter.writeRecord(headers);
             for (Map<String, Object> record : lines) {
-                csvWriter.writeRecord(
-                    record.values().stream()
-                        .map(value -> value != null ? value.toString() : "")
-                        .map(Object::toString)
-                        .toList()
-                );
+                csvWriter.writeRecord(values(record, headers));
             }
         } catch (IOException e) {
             throw new KestraRuntimeException("could not convert to CSV", e);
         }
     }
 
+    /**
+     * Convert entities to CSV, one row per entity.
+     *
+     * @param entities The entities to export.
+     * @param mapper   The Micronaut-managed mapper, <em>not</em> {@code JacksonMapper}: it is the one carrying
+     *                 {@link io.kestra.core.serializers.TenantSerializer}, so a {@code TenantInterface} entity has
+     *                 its {@code tenantId} stripped. Since the header below is the first row's key set, using a
+     *                 mapper without it would add a {@code tenantId} column to the exported file.
+     * @return The CSV, as a stream of lines.
+     */
+    public static Flux<String> toCSVFlux(Flux<?> entities, ObjectMapper mapper) {
+        return toCSVFlux(entities.map(entity -> mapper.convertValue(entity, ROW_TYPE)));
+    }
+
+    /**
+     * Streams records as CSV, one emitted string per record, so that large exports are never held in memory.
+     *
+     * @param records the records to render
+     * @return the CSV lines, empty when there is no record
+     */
     public static Flux<String> toCSVFlux(Flux<Map<String, Object>> records) {
         return records.switchOnFirst((signal, flux) ->
         {
             if (!signal.hasValue()) {
                 return Flux.empty();
             }
-            Map<String, Object> first = signal.get();
-            // Create the header from the keys of the first record
-            String header = String.join(",", first.keySet()) + "\n";
-            Flux<String> headerFlux = Flux.just(header);
-            // Content of the CSV
-            Flux<String> rowsFlux = flux.map(
-                record -> record.values().stream()
-                    .map(v -> v != null ? v.toString() : "")
-                    .map(CSVUtils::escapeCsv)
-                    .reduce((a, b) -> a + "," + b)
-                    .orElse("") + "\n"
-            );
+            List<String> headers = headers(signal.get());
+            Flux<String> headerFlux = Flux.just(writeRecord(headers));
+            Flux<String> rowsFlux = flux.map(record -> writeRecord(values(record, headers)));
             return headerFlux.concatWith(rowsFlux);
         });
     }
 
-    private static String escapeCsv(String value) {
-        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-            value = value.replace("\"", "\"\"");
-            return "\"" + value + "\"";
+    private static List<String> headers(Map<String, Object> record) {
+        return List.copyOf(record.keySet());
+    }
+
+    private static List<String> values(Map<String, Object> record, List<String> headers) {
+        return headers.stream()
+            .map(record::get)
+            .map(CSVUtils::toCell)
+            .toList();
+    }
+
+    private static String toCell(Object value) {
+        if (value == null) {
+            return "";
         }
-        return value;
+        if (value instanceof String string && !string.isEmpty() && FORMULA_PREFIXES.indexOf(string.charAt(0)) >= 0) {
+            return "'" + string;
+        }
+        return value.toString();
+    }
+
+    private static String writeRecord(List<String> values) {
+        var stringWriter = new StringWriter();
+        // buffering is disabled as each record is flushed downstream on its own
+        try (var csvWriter = CsvWriter.builder().bufferSize(0).build(stringWriter)) {
+            csvWriter.writeRecord(values);
+        } catch (IOException e) {
+            throw new KestraRuntimeException("could not convert to CSV", e);
+        }
+        return stringWriter.toString();
     }
 }

@@ -53,6 +53,8 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
     description = """
         Fires when upstream Flow executions meet `dependsOn` (required) and optional trigger `when` condition. Lets you chain Flows owned by different teams.
 
+        The trigger `when` and each `dependsOn` `when` are evaluated against the upstream execution: `flow` is the upstream flow (use `flow.namespace` and `flow.id`), `execution` the upstream execution (`execution.state`, `execution.attemptNumber`), `labels` its labels and `outputs` its task outputs; its flow outputs are under `execution.outputs`.
+
         Upstream execution outputs are exposed under `trigger.outputs`; you can also pass `inputs` to the downstream Flow."""
 )
 @Plugin(
@@ -116,7 +118,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
         @Example(
             full = true,
             title = """
-                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM.
+                2) Trigger the `silver_layer` flow once the `bronze_layer` flow finishes successfully by 9 AM Paris time.
 
                 ```yaml
                 id: bronze_layer
@@ -141,6 +143,7 @@ import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
                     type: io.kestra.plugin.core.trigger.Flow
                     window:
                       deadline: "09:00:00"
+                      timezone: Europe/Paris
                     dependsOn:
                       - namespace: company.team
                         flowId: bronze_layer
@@ -263,13 +266,12 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Builder.Default
     private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
 
-    @Valid
     @Schema(
         title = "Dependencies on upstream flow executions",
         description = "Express dependencies on upstream flow executions, which must be met for the flow trigger to be evaluated."
     )
     @PluginProperty
-    private List<Dependency> dependsOn;
+    private List<@Valid Dependency> dependsOn;
 
     @Valid
     @Schema(
@@ -298,11 +300,27 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Positive
     private Integer minSatisfied;
 
-    public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
+    @Schema(
+        title = "Wait for all retries to complete before evaluating the trigger",
+        description = "When set to true, the trigger will wait for all upstream flow retries to complete before evaluating the trigger. This only applies to terminal states."
+    )
+    @PluginProperty
+    @Builder.Default
+    private boolean waitForAllRetries = false;
+
+    /**
+     * Evaluates this trigger against a terminated execution.
+     *
+     * @param executionOutputs the flow-level outputs of the terminated execution, they are stored outside of the
+     *        execution so they must be loaded by the caller via the
+     *        {@link io.kestra.core.services.ExecutionOutputService}.
+     */
+    public Optional<Execution> evaluate(Optional<MultipleConditionWindow> multipleConditionWindow, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current,
+        Map<String, Object> executionOutputs) {
         Logger logger = runContext.logger();
 
-        // merge outputs from all the matched executions
-        Map<String, Object> outputs = current.getOutputs();
+        // merge outputs from all the matched executions, keeping them null when there is none so 'trigger.outputs' stays undefined
+        Map<String, Object> outputs = MapUtils.isEmpty(executionOutputs) ? null : executionOutputs;
         if (multipleConditionWindow.isPresent()) {
             outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
         }
@@ -324,33 +342,29 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 .build()
         );
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, this, Map.of("trigger", executionTrigger.getVariables()));
+        List<Label> labels = LabelService.fromTrigger(runContext, this, Map.of("trigger", executionTrigger.getVariables()));
         Streams.of(current.getLabels())
             .filter(label -> label.key().equals(Label.CORRELATION_ID))
             .findFirst()
             .ifPresent(label -> labels.add(label));
 
-        Execution.ExecutionBuilder builder = Execution.builder()
-            .id(IdUtils.create())
-            .tenantId(flow.getTenantId())
-            .namespace(flow.getNamespace())
-            .flowId(flow.getId())
-            .flowRevision(flow.getRevision())
-            .labels(labels)
-            .state(new State())
-            .trigger(executionTrigger);
+        // the execution snapshots the flow labels and variables, so it is built through the same factory as
+        // every other creation path rather than field by field, which is how flow variables went missing here
+        Execution execution = Execution.newExecution(flow, labels).withTrigger(executionTrigger);
+        execution = execution.withMetadata(execution.getMetadata().withExecutionDepth(current.getMetadata().executionDepthOrZero() + 1));
 
         try {
+            Map<String, Object> renderedInputs;
             if (this.inputs != null) {
                 if (outputs != null && !outputs.isEmpty()) {
-                    builder.inputs(runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs))));
+                    renderedInputs = runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs)));
                 } else {
-                    builder.inputs(runContext.render(this.inputs));
+                    renderedInputs = runContext.render(this.inputs);
                 }
             } else {
-                builder.inputs(new HashMap<>());
+                renderedInputs = new HashMap<>();
             }
-            return Optional.of(builder.build());
+            return Optional.of(execution.withInputs(renderedInputs));
         } catch (Exception e) {
             logger.warn(
                 "Failed to trigger flow {}.{} for trigger {}, invalid inputs",
@@ -359,8 +373,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 this.getId(),
                 e
             );
-            var failedExecution = builder.build().withState(State.Type.FAILED);
-            return Optional.of(failedExecution);
+            return Optional.of(execution.withState(State.Type.FAILED));
         }
     }
 
@@ -464,11 +477,6 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Override
         public TimeWindow getTimeWindow() {
             return window == null ? TimeWindow.builder().build() : window.toTimeWindow();
-        }
-
-        @Override
-        public Boolean getResetOnSuccess() {
-            return window == null ? Boolean.TRUE : window.isFireOnce();
         }
 
         @Override

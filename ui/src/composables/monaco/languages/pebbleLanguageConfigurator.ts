@@ -3,7 +3,8 @@ import {languages} from "monaco-editor/editor/editor.api"
 import AbstractLanguageConfigurator from "./abstractLanguageConfigurator"
 import {QUOTE, PebbleAutoCompletion} from "../../../services/autoCompletionProvider"
 import RegexProvider from "../../../utils/regex"
-import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import {withIndentedBlockScalarContent} from "./yamlBlockScalarTokenizer"
+import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 
 import {useI18n} from "vue-i18n"
 import {ComputedRef} from "vue"
@@ -16,7 +17,7 @@ function propertySuggestion (value: string, position: {
             lineNumber: number,
             startColumn: number,
             endColumn: number
-}, kind?: monaco.languages.CompletionItemKind): CompletionItem {
+}, kind?: monaco.languages.CompletionItemKind, options?: {deprecated?: boolean; detail?: string}): CompletionItem {
     let label = value.split("(")[0]
     if (label.startsWith(QUOTE) && label.endsWith(QUOTE)) {
         label = label.substring(1, label.length - 1)
@@ -27,7 +28,9 @@ function propertySuggestion (value: string, position: {
         label: label,
         insertText: value,
         insertTextRules: value.includes("${1:") ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
-        sortText: value.includes("(") ? "b" + value : "a" + value,
+        sortText: (options?.deprecated ? "z" : "") + (value.includes("(") ? "b" + value : "a" + value),
+        tags: options?.deprecated ? [monaco.languages.CompletionItemTag.Deprecated] : undefined,
+        detail: options?.detail,
         range: {
             startLineNumber: position.lineNumber,
             endLineNumber: position.lineNumber,
@@ -57,7 +60,7 @@ export function registerPebbleAutocompletion(
 ) {
     // Pebble autocompletion
     autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(langIds, {
-        triggerCharacters: ["{"],
+        triggerCharacters: ["{", "%"],
         async provideCompletionItems(model, position) {
             // Not a subfield access
             const rootPebbleVariableMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarRoot + "$", position, true, false, null, true)
@@ -66,14 +69,28 @@ export function registerPebbleAutocompletion(
             }
 
             const startOfWordColumn = position.column - rootPebbleVariableMatcher.matches[1].length
+            const fnDefs = await autoCompletion.functionsWithDefaults()
+            const fnDefMap = new Map(fnDefs.map(fn => [fn.name, fn]))
+            const suggestions = await autoCompletion.rootFieldAutoCompletion({source: model.getValue(), offset: model.getOffsetAt(position)})
             return {
                 incomplete: true,
-                suggestions: (await (autoCompletion.rootFieldAutoCompletion({source: model.getValue(), offset: model.getOffsetAt(position)})))
-                    .map(s => propertySuggestion(s, {
-                        lineNumber: position.lineNumber,
-                        startColumn: startOfWordColumn,
-                        endColumn: endOfWordColumn(position, model),
-                    })),
+                suggestions: suggestions.map(s => {
+                    const fnName = s.split("(")[0]
+                    const fnDef = fnDefMap.get(fnName)
+                    return propertySuggestion(
+                        s,
+                        {
+                            lineNumber: position.lineNumber,
+                            startColumn: startOfWordColumn,
+                            endColumn: endOfWordColumn(position, model),
+                        },
+                        undefined,
+                        fnDef?.deprecated ? {
+                            deprecated: true,
+                            detail: fnDef.replacement ? `Deprecated. Use '${fnDef.replacement}' instead.` : "Deprecated",
+                        } : undefined,
+                    )
+                }),
             }
         },
     }))
@@ -88,7 +105,7 @@ export function registerFunctionParametersAutoCompletion(
         triggerCharacters: ["("],
         async provideCompletionItems(model, position) {
             const source = model.getValue()
-            const parsed = YAML_UTILS.parse(source, false)
+            const parsed = YAML_UTILS.parse<Record<string, unknown>>(source, false)
 
             const functionMatcher = model.findPreviousMatch(RegexProvider.capturePebbleFunction + "$", position, true, false, null, true)
             if (functionMatcher === null || functionMatcher.matches === null) {
@@ -139,7 +156,7 @@ export function registerNestedValueAutoCompletion(
         triggerCharacters: ["."],
         async provideCompletionItems(model, position) {
             const source = model.getValue()
-            const parsed = YAML_UTILS.parse(completionSource?.value ?? source, false)
+            const parsed = YAML_UTILS.parse<Record<string, unknown>>(completionSource?.value ?? source, false)
 
             const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true)
             if (parentFieldMatcher === null || parentFieldMatcher.matches === null) {
@@ -171,10 +188,10 @@ export function registerFilterAutoCompletion(
             const lineContent = model.getLineContent(position.lineNumber)
             const textBeforeCursor = lineContent.substring(0, position.column - 1)
 
-            const openBraces = (textBeforeCursor.match(/\{\{/g) || []).length
-            const closeBraces = (textBeforeCursor.match(/\}\}/g) || []).length
+            const openBlocks = (textBeforeCursor.match(/\{\{|\{%/g) || []).length
+            const closeBlocks = (textBeforeCursor.match(/\}\}|%\}/g) || []).length
 
-            if (openBraces <= closeBraces) {
+            if (openBlocks <= closeBlocks) {
                 return NO_SUGGESTIONS
             }
 
@@ -200,6 +217,11 @@ export function registerFilterAutoCompletion(
 
 const registeredLanguages = new Set<string>()
 
+/** Monaco's public type omits the internal `loader` that lazy-loads built-in tokenizers. */
+interface ILanguageExtensionPointWithLoader extends languages.ILanguageExtensionPoint {
+    loader?: () => Promise<{ language: monaco.languages.IMonarchLanguage }>;
+}
+
 function registerPebbleLanguage(language: string) {
     if(registeredLanguages.has(language)) return
     registeredLanguages.add(language)
@@ -212,18 +234,22 @@ function registerPebbleLanguage(language: string) {
         tokenizer: {
             root: [
                 [/\{\{/, {token: "delimiter.bracket", next: "@pebbleInDoubleCurly"}],
+                [/\{%/, {token: "delimiter.bracket", next: "@pebbleInPercent"}],
             ],
             pebbleInDoubleCurly: [
                 [/-?\}\}/, {token: "delimiter.bracket", next: "@pop"}],
+            ],
+            pebbleInPercent: [
+                [/-?%\}/, {token: "delimiter.bracket", next: "@pop"}],
             ],
         },
     }
 
     // Get the tokenizer from the root language
-    const rootLanguageDefinition: any = monaco.languages.getLanguages().find(l => l.id === rootLanguage)
+    const rootLanguageDefinition = monaco.languages.getLanguages().find(l => l.id === rootLanguage) as ILanguageExtensionPointWithLoader | undefined
     // Load the parent language to ensure its tokenizer is available
     if (rootLanguageDefinition?.loader) {
-        rootLanguageDefinition.loader().then((loaded: {language: monaco.languages.IMonarchLanguage}) => {
+        rootLanguageDefinition.loader().then((loaded) => {
             const {language: rootLanguageDefsLoaded} = loaded
             if(rootLanguageDefsLoaded === undefined) return
             for (const key in rootLanguageDefsLoaded) {
@@ -247,7 +273,7 @@ function registerPebbleLanguage(language: string) {
                 }
             }
 
-            monaco.languages.setMonarchTokensProvider(language, rootLanguageDefsLoaded)
+            monaco.languages.setMonarchTokensProvider(language, withIndentedBlockScalarContent(rootLanguageDefsLoaded))
         })
     }
 }

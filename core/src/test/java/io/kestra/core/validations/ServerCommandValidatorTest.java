@@ -109,6 +109,37 @@ class ServerCommandValidatorTest {
     }
 
     @Test
+    void shouldReportDatabasePropertiesAsIgnoredForWorker() {
+        // Given a shared configuration carrying the database settings of the other server types.
+        try (
+            ApplicationContext context = ApplicationContext.builder()
+                .deduceEnvironment(false)
+                .properties(
+                    Map.of(
+                        "kestra.server-type", "worker",
+                        "kestra.storage.type", "local",
+                        "kestra.repository.type", "h2",
+                        "datasources.h2.url", "jdbc:h2:mem:test-worker-ignored;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                        "datasources.h2.username", "sa",
+                        "datasources.h2.password", "",
+                        "datasources.h2.driverClassName", "org.h2.Driver"
+                    )
+                )
+                .start()
+        ) {
+            Environment environment = context.getEnvironment();
+
+            assertThat(ServerCommandValidator.ignoredWorkerProperties(environment, ServerType.WORKER))
+                .as("A worker uses no database, so both the datasources block and the repository type are ignored")
+                .containsExactly("datasources", "kestra.repository.type");
+
+            assertThat(ServerCommandValidator.ignoredWorkerProperties(environment, ServerType.WEBSERVER))
+                .as("Every other server type does use them")
+                .isEmpty();
+        }
+    }
+
+    @Test
     void shouldOnlyRequireStorageForWorker() {
         Environment environment = mock(Environment.class);
         when(environment.containsProperty("kestra.storage.type")).thenReturn(true);

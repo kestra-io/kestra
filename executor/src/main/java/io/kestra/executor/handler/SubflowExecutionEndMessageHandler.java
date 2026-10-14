@@ -63,7 +63,7 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
         executionStateStore.lock(message.parentExecutionId(), execution ->
         {
             try {
-                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.taskId());
                 if (!executableTask.waitForExecution()) {
                     return null;

@@ -1,9 +1,15 @@
 package io.kestra.core.events;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonSerializeAs;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedEpochGenerator;
 
@@ -13,6 +19,7 @@ import com.fasterxml.uuid.impl.TimeBasedEpochGenerator;
  * UUIDv7 values are time-ordered, which allows lexicographic and unsigned
  * 128-bit comparison to reflect chronological ordering.
  */
+@JsonSerialize(using = EventId.EventIdSerializer.class)
 public record EventId(@JsonValue UUID value) implements Comparable<EventId> {
 
     //  Generator that generates UUID using version 7 (Unix Epoch time+random based).
@@ -81,5 +88,17 @@ public record EventId(@JsonValue UUID value) implements Comparable<EventId> {
     @Override
     public String toString() {
         return value.toString();
+    }
+
+    static class EventIdSerializer extends JsonSerializer<EventId> {
+
+        @Override
+        public void serialize(EventId value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            if (value == null || value.value() == null) {
+                gen.writeNull();
+            } else {
+                gen.writeString(value.value().toString());
+            }
+        }
     }
 }

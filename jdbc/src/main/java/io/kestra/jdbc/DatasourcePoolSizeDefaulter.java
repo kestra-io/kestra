@@ -15,10 +15,14 @@ import jakarta.inject.Singleton;
  * the duration of message processing. Only applies when the user has not explicitly configured
  * {@code datasources.<name>.maximum-pool-size} themselves, and only for whichever datasource is
  * actually declared (it never creates a datasource for a dialect that isn't configured).
+ * <p>
+ * Also, default the idle size to half that value as otherwise HikariCP will use the maximum-pool-size.
+ * <p>
+ * To balance performance with resource usage, we raise the default to {@link #DEFAULT_MAXIMUM_POOL_SIZE}.
  */
 @Singleton
 public class DatasourcePoolSizeDefaulter implements BeanCreatedEventListener<DatasourceConfiguration> {
-    private static final int DEFAULT_MAXIMUM_POOL_SIZE = 25;
+    private static final int DEFAULT_MAXIMUM_POOL_SIZE = 20;
 
     private final Environment environment;
 
@@ -33,6 +37,10 @@ public class DatasourcePoolSizeDefaulter implements BeanCreatedEventListener<Dat
 
         if (!environment.containsProperty("datasources." + configuration.getName() + ".maximum-pool-size")) {
             configuration.setMaximumPoolSize(DEFAULT_MAXIMUM_POOL_SIZE);
+
+            if (!environment.containsProperty("datasources." + configuration.getName() + ".minimum-idle")) {
+                configuration.setMinimumIdle(DEFAULT_MAXIMUM_POOL_SIZE / 2);
+            }
         }
 
         return configuration;

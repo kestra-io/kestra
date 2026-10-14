@@ -1,5 +1,5 @@
 <template>
-    <ElAlert v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElAlert :class="{'is-banner': banner}" v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -34,11 +34,13 @@
         closable?: boolean
         showIcon?: boolean
         center?: boolean
+        banner?: boolean
     }>(), {
         showIcon: true,
+        banner: false,
     })
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["banner"])
 
     defineSlots<{
         default?(): unknown
@@ -57,8 +59,22 @@
         --kel-alert-description-font-size: var(--ks-font-size-xs);
         --kel-alert-title-with-description-font-size: var(--ks-font-size-sm);
 
+        /* Element Plus centres the row, which leaves the icon mid-block once the message wraps. */
+        align-items: flex-start;
+
+        /* Font size of whichever element renders line one; the title shrinks when a description is present. */
+        --ks-alert-first-line-font-size: var(--kel-alert-title-font-size);
+
+        &:has(.kel-alert__title.with-description) {
+            --ks-alert-first-line-font-size: var(--kel-alert-title-with-description-font-size);
+        }
+
+        &:not(:has(.kel-alert__title)) {
+            --ks-alert-first-line-font-size: var(--kel-alert-description-font-size);
+        }
+
          .kel-alert__title {
-            line-height: 1;
+            line-height: var(--ks-line-height-base);
         }
 
         .kel-alert__description {
@@ -66,11 +82,18 @@
         }
 
         .kel-alert__icon {
+            height: var(--kel-alert-icon-size);
+            align-self: flex-start;
+
             .material-design-icon,
             .material-design-icon > .material-design-icon__svg {
                 height: var(--kel-alert-icon-size);
                 width: var(--kel-alert-icon-size);
             }
+        }
+
+        &:has(.kel-alert__icon) .kel-alert__content {
+            padding-block: max(0px, calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2));
         }
 
         .kel-alert__close-btn {
@@ -88,6 +111,12 @@
                 border: 1px solid var(--ks-border-#{$type});
                 background-color: var(--ks-bg-#{$type});
                 #{--kel-color-#{$type}}: var(--ks-text-#{$type});
+
+                &.is-banner {
+                    border-width: 0 0 1px;
+                    border-radius: 0;
+                    #{--kel-color-#{$type}}: var(--ks-text-primary);
+                }
 
                 .kel-alert__icon {
                     color: var(--ks-icon-#{$type});

@@ -1,6 +1,7 @@
 package io.kestra.core.scheduler.service;
 
-import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
+import io.kestra.core.models.triggers.TriggerId;
 
 /**
  * Interface for publishing trigger execution events.
@@ -8,9 +9,10 @@ import io.kestra.core.models.executions.Execution;
 public interface TriggerExecutionPublisher {
 
     /**
-     * Publish a trigger execution event.
+     * Publish the execution produced by a trigger evaluation.
      *
-     * @param execution the execution to publish.
+     * @param triggerId  the trigger identifier providing the tenant, namespace and flow.
+     * @param evaluation the trigger evaluation result to publish.
      */
-    void send(final Execution execution);
+    void send(final TriggerId triggerId, final TriggerEvaluationResult evaluation);
 }

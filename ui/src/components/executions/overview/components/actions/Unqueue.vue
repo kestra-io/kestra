@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
+            <p v-html="$t('unqueue title', {id: escapeHtml(execution.id)})" />
 
             <KsSelect
                 :required="true"
@@ -42,11 +42,10 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import escape from "lodash/escape"
     import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import {useAuthStore} from "override/stores/auth"
     import {useI18n} from "vue-i18n"
@@ -74,7 +73,7 @@
     })
 
     const enabled = computed(() => {
-        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace))) {
+        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UNQUEUE, props.execution.namespace))) {
             return false
         }
 

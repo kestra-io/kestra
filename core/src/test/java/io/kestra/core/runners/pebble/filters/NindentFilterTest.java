@@ -11,6 +11,7 @@ import io.kestra.core.runners.VariableRenderer;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class NindentFilterTest {
@@ -75,6 +76,13 @@ class NindentFilterTest {
     void nindentWithTab() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"first line\nsecond line\" | nindent(2, \"\t\") }}", Map.of());
         assertThat(render).isEqualTo("\n\t\tfirst line\n\t\tsecond line");
+    }
+
+    @Test
+    void nindentRejectsExcessiveAmount() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'x' | nindent(2000000000) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("cannot exceed");
     }
 
 }

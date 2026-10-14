@@ -30,19 +30,19 @@
 
                 <span class="execution-banner__id">
                     <code>{{ execution.id }}</code>
-                    <KsIconButton :tooltip="t('copy')" placement="top" @click="copyId">
+                    <KsIconButton :tooltip="$t('copy')" placement="top" @click="copyId">
                         <ContentCopy />
                     </KsIconButton>
                 </span>
 
-                <span v-if="replayed" class="execution-banner__replay">
+                <router-link v-if="replayed" class="execution-banner__replay" :to="replaysLink">
                     <Replay />
-                    {{ t("replayed") }}
-                </span>
+                    {{ $t("replayed") }}
+                </router-link>
 
                 <span v-if="restarted" class="execution-banner__restart">
                     <Restart />
-                    {{ t("restarted") }}
+                    {{ $t("restarted") }}
                 </span>
             </div>
 
@@ -65,15 +65,15 @@
                     <template #content>
                         <div class="date-tooltip">
                             <div class="date-tooltip__row">
-                                <span class="date-tooltip__label">{{ t("created date") }}:</span>
+                                <span class="date-tooltip__label">{{ $t("created date") }}:</span>
                                 <KsDateAgo :date="createdDate" :inverted="true" :showTooltip="false" format="L LTS" />
                             </div>
                             <div v-if="scheduleDate" class="date-tooltip__row">
-                                <span class="date-tooltip__label">{{ t("scheduleDate") }}:</span>
+                                <span class="date-tooltip__label">{{ $t("scheduleDate") }}:</span>
                                 <KsDateAgo :date="scheduleDate" :inverted="true" :showTooltip="false" format="L LTS" />
                             </div>
                             <div class="date-tooltip__row">
-                                <span class="date-tooltip__label">{{ t("latest_update") }}:</span>
+                                <span class="date-tooltip__label">{{ $t("latest_update") }}:</span>
                                 <KsDateAgo :date="latestUpdate" :inverted="true" :showTooltip="false" format="L LTS" />
                             </div>
                         </div>
@@ -88,21 +88,28 @@
                 <router-link v-if="originalLink" class="meta-item" :to="originalLink">
                     <History />
                     <span>
-                        {{ t("original execution") }}:
+                        {{ $t("original execution") }}:
                         <span class="meta-item__link">{{ execution.originalId }}</span>
                     </span>
                 </router-link>
+
+                <component
+                    :is="relation"
+                    v-for="(relation, index) in executionBannerRelations"
+                    :key="index"
+                    :execution
+                />
             </div>
 
             <div class="execution-banner__actions">
                 <RunTimeline :histories="execution.state.histories ?? []" />
 
                 <KsButton :icon="ContentCopy" @click="copyLogs" link>
-                    {{ t("copy logs") }}
+                    {{ $t("copy logs") }}
                 </KsButton>
 
                 <KsButton v-if="isFailed" class="fix-with-ai" :icon="Creation" @click="fixErrorWithAi">
-                    {{ t("fix_with_ai") }}
+                    {{ $t("fix_with_ai") }}
                 </KsButton>
             </div>
         </div>
@@ -111,19 +118,19 @@
             <div class="execution-banner__labels">
                 <LabelMultiple class="icon" />
                 <div class="list">
+                    <SetLabels :execution />
                     <span
                         v-for="(label, idx) in execution.labels"
                         :key="idx"
                         class="label-tag"
                     >{{ label.key }}: {{ label.value }}</span>
-                    <SetLabels :execution />
                 </div>
             </div>
 
             <div class="execution-banner__stats">
                 <span v-if="execution.flowRevision !== undefined" class="footer-stat">
                     <History />
-                    {{ execution.flowRevision }} {{ t("revision") }}(s)
+                    {{ $t("execution_banner.revision", {revision: execution.flowRevision}) }}
                 </span>
                 <span class="footer-stat">
                     <ClockTimeFourOutline />
@@ -131,11 +138,11 @@
                 </span>
                 <span v-if="(execution.metadata?.attemptNumber ?? 0) > 0" class="footer-stat">
                     <GraphOutline />
-                    {{ execution.metadata.attemptNumber }} {{ t("attempt") }}(s)
+                    {{ $t("execution_banner.attempts", execution.metadata?.attemptNumber ?? 0) }}
                 </span>
                 <span v-if="taskCount > 0" class="footer-stat">
                     <LayersTripleOutline />
-                    {{ completedTaskCount }}/{{ taskCount }} {{ t("task") }}(s)
+                    {{ $t("execution_banner.tasks", {completed: completedTaskCount}, taskCount) }}
                 </span>
             </div>
         </div>
@@ -146,14 +153,15 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
 
-    import moment from "moment"
-    import {KsExecutionStatus, State} from "@kestra-io/design-system"
+    import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
 
     import {Execution, useExecutionsStore} from "../../../../stores/executions"
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "../../../../utils/utils"
     import {useToast} from "../../../../utils/toast"
+    import {handledIf} from "../../../../utils/kestraHttp"
     import {createLink} from "../utils/links"
+    import {executionBannerRelations} from "override/components/executions/overview/OverviewExtensions"
 
     import ChangeExecutionStatus from "../../ChangeExecutionStatus.vue"
     import SetLabels from "../../SetLabels.vue"
@@ -198,15 +206,15 @@
     const restarted = computed(() => matchesStatus("restarted"))
 
     const createdDate = computed(() =>
-        moment(props.execution.state.histories?.[0]?.date).toDate(),
+        dayjs(props.execution.state.histories?.[0]?.date).toDate(),
     )
 
     const scheduleDate = computed(() =>
-        props.execution.scheduleDate ? moment(props.execution.scheduleDate).toDate() : undefined,
+        props.execution.scheduleDate ? dayjs(props.execution.scheduleDate).toDate() : undefined,
     )
 
     const latestUpdate = computed(() =>
-        moment(
+        dayjs(
             State.isRunning(props.execution.state.current)
                 ? undefined
                 : props.execution.state.histories?.at(-1)?.date,
@@ -225,6 +233,14 @@
             ? createLink("executions", props.execution, originalId)
             : undefined
     })
+
+    const replaysLink = computed(() => ({
+        name: "executions/list",
+        query: {
+            "filters[parentId][EQUALS]": matchesStatus("replay") ? props.execution.parentId ?? props.execution.id : props.execution.id,
+            sort: "state.endDate:desc",
+        },
+    }))
 
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>
@@ -253,9 +269,11 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {minLevel: "ERROR"},
-                showMessageOnError: false,
             })
-            .catch(() => [])
+            .catch((e: unknown) => {
+                handledIf(e, [403, 404])
+                return []
+            })
 
         const errorLines = (logs ?? [])
             .map((l: {message?: string}) => l.message)
@@ -265,7 +283,7 @@
         const prompt = errorLines
             ? `Fix the flow ${props.execution.flowId} as it generated the following error:\n${errorLines}`
             : `Fix the flow ${props.execution.flowId} as its execution failed.`
-        useMiscStore().promptCopilot(prompt)
+        useMiscStore().promptCopilot(prompt, {title: t("ai.copilot.fixThread.execution", {id: props.execution.flowId}), newThread: true})
     }
 </script>
 
@@ -396,6 +414,11 @@
 
         &__replay {
             color: var(--ks-status-info);
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
         }
 
         &__restart {

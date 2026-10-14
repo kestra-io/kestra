@@ -19,6 +19,7 @@ import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.WorkerQueues;
 
@@ -37,6 +38,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_MAX_CONCURRENCY_DESCRIPTION = "Maximum number of in-flight jobs the worker can hold (threads currently executing + jobs pending in the buffer)";
     public static final String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public static final String METRIC_WORKER_RUNNING_COUNT_DESCRIPTION = "The number of tasks currently running inside the Worker";
+    public static final String METRIC_WORKER_ABANDONED_COUNT = "worker.abandoned.count";
+    public static final String METRIC_WORKER_ABANDONED_COUNT_DESCRIPTION = "The number of jobs the Worker stopped waiting for that are still holding a Worker thread";
     public static final String METRIC_WORKER_PENDING_COUNT = "worker.pending.count";
     public static final String METRIC_WORKER_PENDING_COUNT_DESCRIPTION = "The number of tasks currently pending for a runnable thread inside the Worker";
     public static final String METRIC_WORKER_QUEUED_DURATION = "worker.queued.duration";
@@ -134,6 +137,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION = "The total number of execution delays ended (resumed) by the Executor";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT = "executor.worker.job.resubmit.count";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION = "The total number of worker jobs resubmitted to the Worker by the Executor";
+    public static final String METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT = "executor.worker.job.orphan.count";
+    public static final String METRIC_EXECUTOR_WORKER_JOB_ORPHAN_COUNT_DESCRIPTION = "The total number of running worker jobs reclaimed by the Executor from a worker that left the cluster";
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT = "executor.execution.queued.count";
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
@@ -144,6 +149,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_SLA_MONITOR_LOOP_DURATION_DESCRIPTION = "SLA monitor loop duration inside the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION = "executor.loop.delay.duration";
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_LOOP_DURATION_DESCRIPTION = "Execution delay loop duration inside the Executor";
+    public static final String METRIC_EXECUTOR_MULTIPLE_CONDITION_PURGE_LOOP_DURATION = "executor.loop.multiple-condition-purge.duration";
+    public static final String METRIC_EXECUTOR_MULTIPLE_CONDITION_PURGE_LOOP_DURATION_DESCRIPTION = "Multiple condition window purge loop duration inside the Executor";
     public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT = "executor.quota.exceeded.total";
     public static final String METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION = "The total number of exceeded quotas evaluated by the Executor";
 
@@ -212,7 +219,7 @@ public class MetricRegistry {
     public static final String METRIC_MAINTENANCE_EXIT_COUNT_DESCRIPTION = "The total number of times maintenance mode was exited";
 
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
-    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries";
+    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries, including row fetch, tagged with sanitized SQL (IN-lists collapsed, identifiers and sort columns redacted). Only queries above the 'kestra.jdbc.metrics.query-duration-threshold-ms' threshold (default 10ms) are monitored";
 
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION = "jdbc.execution-statistics.compactor.duration";
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION_DESCRIPTION = "Duration of a single execution statistics compaction run";
@@ -557,13 +564,23 @@ public class MetricRegistry {
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
 
-    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId) {
+    /**
+     * Return tags for a trigger evaluation, tagged like the execution it produces.
+     *
+     * @param evaluationResult the evaluation result, carrying the trigger's own labels
+     * @param triggerId the evaluated trigger
+     * @param flowLabels the labels of the flow owning the trigger, which the evaluation result does not carry
+     * @return tags to apply to metrics
+     */
+    public String[] tags(TriggerEvaluationResult evaluationResult, TriggerId triggerId, @Nullable List<Label> flowLabels) {
         var baseTags = new String[] {
             TAG_FLOW_ID, triggerId.getFlowId(),
             TAG_NAMESPACE_ID, triggerId.getNamespace(),
             TAG_STATE, evaluationResult.stateType().name(),
         };
-        var labelTags = getLabelTags(evaluationResult.labels() != null ? evaluationResult.labels() : List.of());
+        // trigger labels first: getLabelTags keeps the first match, which is how the trigger overrides the
+        // flow on the execution these metrics describe (there, flow labels come first and dedup keeps the last)
+        var labelTags = getLabelTags(ListUtils.emptyOnNull(ListUtils.concat(evaluationResult.labels(), flowLabels)));
         var tenantTag = getTenantTag(triggerId.getTenantId());
         return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }

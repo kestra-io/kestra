@@ -1,0 +1,21 @@
+# A provider declared the way a deployment writes it: a YAML list, which reaches Micronaut as a single
+# property holding the whole list rather than as flat indexed keys.
+kestra:
+  ai:
+    providers:
+      - id: gemini-kebab-case-headers
+        type: gemini
+        configuration:
+          model-name: gemini-2.5-flash
+          api-key: fake-key
+          custom-headers:
+            X-Api-Key: qa-gateway-secret
+            X-Gateway-Route: internal-qa
+      - id: gemini-camel-case-headers
+        type: gemini
+        configuration:
+          model-name: gemini-2.5-flash
+          api-key: fake-key
+          customHeaders:
+            X-Api-Key: qa-gateway-secret
+            X-Gateway-Route: internal-qa

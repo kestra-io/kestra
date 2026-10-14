@@ -60,6 +60,7 @@
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import {usePluginsStore} from "../../../stores/plugins"
+    import {blueprintTaskTypes} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const VISIBLE_TASK_LIMIT = 4
@@ -76,7 +77,7 @@
 
     const pluginsStore = usePluginsStore()
 
-    const uniqueTasks = computed(() => [...new Set(props.blueprint.includedTasks ?? [])])
+    const uniqueTasks = computed(() => blueprintTaskTypes(props.blueprint.includedTasks))
     const visibleTasks = computed(() => uniqueTasks.value.slice(0, VISIBLE_TASK_LIMIT))
     const hiddenTaskCount = computed(() => Math.max(0, uniqueTasks.value.length - VISIBLE_TASK_LIMIT))
 

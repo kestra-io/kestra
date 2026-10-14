@@ -69,6 +69,32 @@
                 <HistoryIcon v-else />
             </button>
         </div>
+        <KsDialog
+            v-if="playgroundStore.showInputPrompt"
+            v-model="playgroundStore.showInputPrompt"
+            destroyOnClose
+            :appendToBody="true"
+            scrollable
+            large
+            :title="$t('execute')"
+        >
+            <KsForm labelPosition="top">
+                <KsFormItem :label="$t('inputs')">
+                    <div class="w-100">
+                        <FlowRun 
+                            ref="playgroundFlowRunRef" 
+                            :embed="true" 
+                            :redirect="false"
+                            :autoPrefill="true"
+                            @execution-trigger="playgroundStore.showInputPrompt = false" 
+                        />
+                    </div>
+                </KsFormItem>
+            </KsForm>
+            <template #footer>
+                <FlowRunActions :flowRun="playgroundFlowRunRef" />
+            </template>
+        </KsDialog>
     </section>
 </template>
 
@@ -86,11 +112,15 @@
     import ExecutionMetric from "../executions/ExecutionMetric.vue"
     import PlaygroundLog from "./playground/PlaygroundLog.vue"
     import {usePlaygroundStore} from "../../stores/playground"
-    import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
+    import EmptyVisualPlayground from "../../assets/empty_visuals/playground.png"
     import {useExecutionsStore} from "../../stores/executions"
     import Kill from "../executions/overview/components/actions/Kill.vue"
+    import FlowRun from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
 
     const {t} = useI18n()
+
+    const playgroundFlowRunRef = ref()
 
     const tabs = computed(() => ([
         {
@@ -154,7 +184,7 @@
         display: flex;
         flex-direction: column;
         position: relative;
-        color: var(--ks-color-text-secondary);
+        color: var(--ks-text-secondary);
         background-color: var(--ks-bg-surface);
         overflow-y: auto;
     }
@@ -168,7 +198,7 @@
         position: sticky;
         background-color: var(--ks-bg-surface);
         top: 0;
-        z-index: 100;
+        z-index: var(--ks-z-sticky);
         gap: 1rem;
     }
 
@@ -190,7 +220,9 @@
     }
 
     .current-run {
+        display: flex;
         flex: 1;
+        flex-direction: column;
     }
 
 .extra-options{
@@ -211,7 +243,7 @@
         padding: 8px;
         border-radius: 50%;
         display: flex;
-        z-index: 99;
+        z-index: calc(var(--ks-z-sticky) - 1);
         &:hover {
             background-color: var(--ks-bg-hover-elevated);
         }
@@ -273,6 +305,7 @@
     }
 
     .tab-content{
+        flex: 1;
         overflow: auto;
         padding: 1rem;
         background-color: var(--ks-bg-surface);
@@ -283,12 +316,24 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-6) var(--ks-spacing-4);
+        img {
+            width: 120px;
+            height: 120px;
+            margin-bottom: var(--ks-spacing-2);
+        }
         p {
+            margin: 0;
+            max-width: 26rem;
             text-align: center;
+            font-size: var(--ks-font-size-sm);
+            line-height: var(--ks-line-height-base);
             color: var(--ks-text-secondary);
-            img {
-                width: 200px;
-                margin-bottom: 1rem;
+            &:first-of-type {
+                font-size: var(--ks-font-size-base);
+                font-weight: var(--ks-font-weight-medium);
+                color: var(--ks-text-primary);
             }
         }
     }

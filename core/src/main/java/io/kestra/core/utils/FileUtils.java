@@ -135,6 +135,27 @@ public final class FileUtils {
     }
 
     /**
+     * Check that the provided path can be appended to a trusted prefix without escaping it, for callers
+     * resolving untrusted input against a classpath or storage root.
+     * <p>
+     * Rejects absolute paths, parent traversal (see {@link #isParentTraversal(String)}), backslashes and
+     * NUL bytes. Backslashes are rejected rather than normalized because no build output contains one,
+     * while a directory-based classpath entry would resolve it as a separator on Windows.
+     * <p>
+     * The {@code path} argument must already be percent-decoded.
+     *
+     * @param path the path to validate (must be percent-decoded)
+     * @return true when the path is relative and cannot escape its prefix
+     */
+    public static boolean isSafeRelativePath(String path) {
+        return path != null
+            && !path.startsWith("/")
+            && path.indexOf('\\') < 0
+            && path.indexOf('\0') < 0
+            && !isParentTraversal(path);
+    }
+
+    /**
      * Best-effort deletion of a file, tolerant of transient file locks.
      * <p>
      * On Windows a file that has just been closed can stay briefly locked — the OS releases the

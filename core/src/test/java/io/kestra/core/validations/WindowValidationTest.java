@@ -149,4 +149,41 @@ class WindowValidationTest {
         // Then
         assertThat(valid.isEmpty()).isTrue();
     }
+
+    @Test
+    void shouldValidateWhenTimezoneIsValid() {
+        // Given
+        var window = Window.builder().deadline(LocalTime.now()).timezone("Europe/Paris").build();
+
+        // When
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(window);
+
+        // Then
+        assertThat(valid.isEmpty()).isTrue();
+    }
+
+    @Test
+    void shouldValidateWhenTimezoneIsAnOffset() {
+        // Given
+        var window = Window.builder().deadline(LocalTime.now()).timezone("+02:00").build();
+
+        // When
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(window);
+
+        // Then
+        assertThat(valid.isEmpty()).isTrue();
+    }
+
+    @Test
+    void shouldNotValidateWhenTimezoneIsInvalid() {
+        // Given
+        var window = Window.builder().deadline(LocalTime.now()).timezone("Not/AZone").build();
+
+        // When
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(window);
+
+        // Then
+        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid.get().getMessage()).contains("is not a valid time-zone ID");
+    }
 }

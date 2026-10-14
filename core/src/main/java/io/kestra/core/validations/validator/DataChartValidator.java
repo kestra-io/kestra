@@ -11,6 +11,7 @@ import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.OrderBy;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.dashboards.filters.DurationFilters;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.DataChartValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -102,6 +103,8 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
         ) {
             violations.add("LABELS column is only supported with an ElasticSearch database.");
         }
+
+        violations.addAll(DurationFilters.violations(dataChart.getData().getWhere(), dataChart.getData().durationFields()));
 
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();

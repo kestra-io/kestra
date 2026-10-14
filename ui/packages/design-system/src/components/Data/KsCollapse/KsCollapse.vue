@@ -1,8 +1,8 @@
 <template>
     <ElCollapse
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event as string | string[])"
+        v-bind="({...filteredProps(), ...$attrs} as CollapseProps)"
+        @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -11,20 +11,20 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCollapse} from "element-plus"
+    import {ElCollapse, type CollapseModelValue, type CollapseProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<CollapseModelValue>()
 
     const props = defineProps<{
         accordion?: boolean
     }>()
 
     const emit = defineEmits<{
-        change: [value: string | string[]]
+        change: [value: CollapseModelValue]
     }>()
 
     defineSlots<{

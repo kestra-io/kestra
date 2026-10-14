@@ -1,8 +1,9 @@
 <template>
     <ElInput
+        ref="elInputRef"
         v-model="model"
         class="ks-search"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         @change="emit('change', $event)"
     >
         <template #prefix>
@@ -17,11 +18,20 @@
 </template>
 
 <script setup lang="ts">
-    import {ElInput} from "element-plus"
+    import {ref} from "vue"
+    import {ElInput, type InputProps} from "element-plus"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
+
+    const elInputRef = ref<InstanceType<typeof ElInput>>()
+
+    defineExpose({
+        focus: () => elInputRef.value?.focus(),
+        blur: () => elInputRef.value?.blur(),
+        select: () => elInputRef.value?.select(),
+    })
 
     const model = defineModel<string>()
 
@@ -79,12 +89,6 @@
 
         .kel-input__inner {
             font-size: var(--ks-font-size-sm);
-
-            &::placeholder {
-                font-size: var(--ks-font-size-xs);
-                font-weight: 400;
-                color: var(--ks-text-secondary);
-            }
         }
 
         .ks-search__icon {

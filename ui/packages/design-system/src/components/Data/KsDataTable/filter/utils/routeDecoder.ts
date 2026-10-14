@@ -114,7 +114,14 @@ const buildLeafFromSlot = (
         if (!gte || !lte) return
         filtersMap.set(
             `${field}|GREATER_THAN_OR_EQUAL_TO`,
-            createCustomRangeFilter(field, config, new Date(gte.value as string), new Date(lte.value as string)),
+            createCustomRangeFilter(
+                field,
+                config,
+                new Date(gte.value as string),
+                new Date(lte.value as string),
+                Comparators.GREATER_THAN_OR_EQUAL_TO,
+                routeDateFilter && config.dateFilterOptions ? {dateFilter: routeDateFilter} : undefined,
+            ),
         )
         consumedBuckets.add(`${field}|GREATER_THAN_OR_EQUAL_TO`)
         consumedBuckets.add(`${field}|LESS_THAN_OR_EQUAL_TO`)

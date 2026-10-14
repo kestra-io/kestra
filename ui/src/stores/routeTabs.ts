@@ -11,12 +11,14 @@ export interface RouteTab {
     count?: number;
     query?: Record<string, unknown>;
     component?: Component;
-    props?: Record<string, any>;
+    props?: Record<string, unknown>;
     locked?: boolean;
     icon?: Component;
     excludeFromScope?: boolean;
     maximized?: boolean;
     noOverflow?: boolean;
+    /** Stretches the content section to fill `main`, keeping the page gutters `maximized` strips. */
+    fullHeight?: boolean;
     /**
      * Optional override for the navigation target. When set, RouteTabsSidebar
      * uses this directly instead of building one from the current route + tab.name.

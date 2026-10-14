@@ -1,4 +1,4 @@
-import {computed, ref, watch} from "vue"
+import {computed, onScopeDispose, ref, watch} from "vue"
 import {
     type LocationQuery,
     type LocationQueryRaw,
@@ -7,7 +7,7 @@ import {
 } from "vue-router"
 import type {AppliedFilter} from "../utils/filterTypes"
 
-type QueryLike = LocationQuery | LocationQueryRaw | Record<string, any>;
+type QueryLike = LocationQuery | LocationQueryRaw;
 
 interface UseRouteFilterPolicyOptions<T> {
     enabled?: () => boolean;
@@ -16,10 +16,10 @@ interface UseRouteFilterPolicyOptions<T> {
     fallbackValue?: () => T | undefined;
     applyDefaultIfMissing?: () => boolean;
     readFromRoute: (query: QueryLike) => T | undefined;
-    writeToRoute: (query: Record<string, any>, value: T | undefined) => Record<string, any>;
+    writeToRoute: (query: LocationQueryRaw, value: T | undefined) => LocationQueryRaw;
     hasUnsupportedRouteValue?: (query: QueryLike) => boolean;
     readFromAppliedFilters?: (filters: AppliedFilter[]) => T | undefined;
-    shouldSyncFromAppliedFilters?: (filters: AppliedFilter[], routeQuery: Record<string, any>) => boolean;
+    shouldSyncFromAppliedFilters?: (filters: AppliedFilter[], routeQuery: LocationQueryRaw) => boolean;
 }
 /**
  * Compare two policy values by content, not identity. Policy values may be objects
@@ -37,6 +37,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
     const route = useRoute()
     const router = useRouter()
     const normalizedOnce = ref(false)
+    const normalizationPending = ref(false)
 
     const isEnabled = () => options.enabled?.() ?? true
     const shouldApplyDefaultIfMissing = () => options.applyDefaultIfMissing?.() ?? false
@@ -67,6 +68,30 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         return options.fallbackValue?.()
     })
 
+    /**
+     * `isRouteSettled` stays false until the normalized query lands, so a consumer can hold its
+     * first load back instead of running it against the URL the defaults are about to replace.
+     * The navigation can also never land — a route guard aborts it, or one that supersedes it
+     * drops the value again — and a consumer waiting on it would then show nothing at all, with
+     * no request in flight and nothing to retry it. Give up after a grace period: by then the
+     * single load the gate buys is lost anyway, and loading the URL's own filters beats that.
+     */
+    const SETTLE_TIMEOUT_MS = 2000
+    let settleTimer: ReturnType<typeof setTimeout> | undefined
+
+    const settleNow = () => {
+        clearTimeout(settleTimer)
+        settleTimer = undefined
+        normalizationPending.value = false
+    }
+
+    const startSettleTimeout = () => {
+        clearTimeout(settleTimer)
+        settleTimer = setTimeout(settleNow, SETTLE_TIMEOUT_MS)
+    }
+
+    onScopeDispose(() => clearTimeout(settleTimer))
+
     watch(
         [routeValue, explicitValue, hasUnsupportedRouteValue],
         ([routeValueNow, explicitValueNow, hasUnsupportedNow]) => {
@@ -85,8 +110,10 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
                 return
             }
 
+            normalizationPending.value = true
+            startSettleTimeout()
             router.replace({
-                query: options.writeToRoute(route.query as Record<string, any>, nextValue),
+                query: options.writeToRoute(route.query, nextValue),
             })
         },
         {immediate: true},
@@ -102,7 +129,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         }
 
         router.replace({
-            query: options.writeToRoute(route.query as Record<string, any>, value),
+            query: options.writeToRoute(route.query, value),
         })
     }
 
@@ -113,7 +140,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
 
         if (
             options.shouldSyncFromAppliedFilters &&
-            !options.shouldSyncFromAppliedFilters(filters, route.query as Record<string, any>)
+            !options.shouldSyncFromAppliedFilters(filters, route.query)
         ) {
             return
         }
@@ -121,9 +148,18 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         setRouteValue(options.readFromAppliedFilters(filters))
     }
 
+    watch(routeValue, (value) => {
+        if (value !== undefined) {
+            settleNow()
+        }
+    }, {flush: "sync"})
+
+    const isRouteSettled = computed(() => !normalizationPending.value)
+
     return {
         routeValue,
         effectiveValue,
+        isRouteSettled,
         hasUnsupportedRouteValue,
         syncFromAppliedFilters,
         setRouteValue,

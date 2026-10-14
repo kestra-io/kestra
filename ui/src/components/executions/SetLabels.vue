@@ -33,12 +33,12 @@
             </div>
 
             <div class="set-labels__footer">
-                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: escape(execution.id)})" />
+                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: escapeHtml(execution.id)})" />
                 <div class="set-labels__actions">
                     <KsButton @click="onCancel">
                         {{ $t("cancel") }}
                     </KsButton>
-                    <KsButton type="primary" :loading="isSaving" @click="setLabels()">
+                    <KsButton type="primary" :loading="isSaving" :disabled="hasInvalidLabels" @click="setLabels()">
                         {{ $t("save") }}
                     </KsButton>
                 </div>
@@ -50,13 +50,13 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import escape from "lodash/escape"
     import Close from "vue-material-design-icons/Close.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
 
     import LabelInput from "../labels/LabelInput.vue"
     import {filterValidLabels} from "./utils"
+    import {hasInvalidLabelKeys} from "../../utils/executionLabels"
     import action from "../../models/action"
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
@@ -92,6 +92,8 @@
     const executionLabels = ref<Label[]>([])
     const isSaving = ref(false)
 
+    const hasInvalidLabels = computed(() => hasInvalidLabelKeys(executionLabels.value))
+
     const enabled = computed(() =>
         !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace) &&
         !State.isRunning(props.execution.state.current),
@@ -107,6 +109,11 @@
 
         if (filtered.error) {
             toast.error(t("wrong labels"), t("error"))
+            return
+        }
+
+        if (hasInvalidLabelKeys(filtered.labels)) {
+            toast.error(t("invalid label key"), t("error"))
             return
         }
 
@@ -151,18 +158,19 @@
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-1);
-        background: var(--ks-bg-tag);
-        padding: 0.125rem 0.375rem;
+        background: var(--ks-btn-secondary-bg-default);
+        padding: var(--ks-spacing-1) var(--ks-spacing-3);
         border-radius: var(--ks-radius-sm);
-        color: var(--ks-text-primary);
+        color: var(--ks-text-link);
         font-size: var(--ks-font-size-sm);
-        border: 1px solid transparent;
+        border: 1px solid var(--ks-btn-secondary-border-default);
         cursor: pointer;
         white-space: nowrap;
         font-family: inherit;
+        flex-shrink: 0;
 
         &:hover:not(:disabled) {
-            background: var(--ks-bg-hover);
+            background: var(--ks-btn-secondary-bg-hover);
         }
 
         &.is-active {

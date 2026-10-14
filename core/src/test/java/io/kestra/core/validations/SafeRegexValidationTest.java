@@ -52,4 +52,21 @@ class SafeRegexValidationTest {
         assertThat(valid.isPresent()).isTrue();
         assertThat(valid.get().getMessage()).contains("catastrophic backtracking");
     }
+
+    @Test
+    void shouldNotValidateInvalidRegexSyntax() {
+        // Given
+        Regex<TestField> filter = Regex.<TestField> builder()
+            .field(TestField.NAMESPACE)
+            .value("[a-")
+            .build();
+
+        // When
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(filter);
+
+        // Then
+        assertThat(valid.isPresent()).isTrue();
+        assertThat(valid.get().getMessage()).contains("invalid regex pattern");
+        assertThat(valid.get().getMessage()).contains("[a-");
+    }
 }

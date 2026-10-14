@@ -1,8 +1,11 @@
 package io.kestra.worker.processors;
 
+import java.time.Duration;
+
 import io.kestra.core.runners.WorkerJob;
 
 import io.micronaut.core.annotation.Blocking;
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * A processor responsible for executing a specific {@link WorkerJob}.
@@ -21,6 +24,35 @@ public interface WorkerJobProcessor<T extends WorkerJob> {
      */
     @Blocking
     void process(T workerJob);
+
+    /**
+     * How long the worker waits for {@link #process(WorkerJob)} before giving up on it.
+     * <p>
+     * Returning {@code null} — the default — waits indefinitely. A non-null value bounds a job whose
+     * plugin code may never return: at the deadline the worker calls {@link #onTimeout(WorkerJob)} so the
+     * job is reported, then goes back to waiting for {@link #process(WorkerJob)}, which keeps its thread
+     * until the plugin returns. The worker therefore stops taking new work on this thread rather than
+     * freeing it, and the job slot is released only once {@link #process(WorkerJob)} actually ends.
+     *
+     * @param workerJob the job about to be processed
+     */
+    @Nullable
+    default Duration timeout(T workerJob) {
+        return null;
+    }
+
+    /**
+     * Invoked on the worker thread when {@link #timeout(WorkerJob)} elapsed before
+     * {@link #process(WorkerJob)} returned.
+     * <p>
+     * The implementation owns reporting a terminal result for the job, since the thread that would
+     * normally report one is still stuck in plugin code and may never come back. It must also make
+     * {@link #process(WorkerJob)} drop the result it eventually produces, so the job is reported once.
+     *
+     * @param workerJob the job that exceeded its deadline
+     */
+    default void onTimeout(T workerJob) {
+        /* noop */ }
 
     /**
      * Signals the currently running job to stop, if any.

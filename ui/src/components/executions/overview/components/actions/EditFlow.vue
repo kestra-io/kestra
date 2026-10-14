@@ -37,12 +37,13 @@
         )
     })
 
+    // The editor is its own child route now, so target it directly: passing `tab` to the parent
+    // still resolves through the redirect but logs a discarded-param warning on every render.
     const editRoute = computed(() => ({
-        name: "flows/update",
+        name: "flows/update/edit",
         params: {
             namespace: route.params.namespace as string,
             id: route.params.flowId as string,
-            tab: "edit",
             tenant: route.params.tenant as string,
         },
     }))

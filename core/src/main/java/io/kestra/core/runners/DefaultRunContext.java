@@ -24,8 +24,10 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.KVStoreService;
@@ -51,6 +53,13 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Default and mutable implementation of {@link RunContext}.
  */
 public class DefaultRunContext extends RunContext {
+    /** The only variables that can hold an {@link EncryptedString}, so the only ones worth walking on read. */
+    private static final Set<String> SECRET_BEARING_VARIABLES = Set.of("inputs", "outputs", "trigger");
+
+    // Prefix kept when shortening an over-long dynamic-taskrun id; leaves room for "-" + a 5-digit hash
+    // suffix so the result stays within Task.ID_MAX_LENGTH (250 + 1 + 5 = 256) while staying collision-safe.
+    private static final int TASK_ID_TRUNCATED_PREFIX_LENGTH = 250;
+
     // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
     private VariableRenderer variableRenderer;
@@ -65,13 +74,14 @@ public class DefaultRunContext extends RunContext {
     private SDK sdk;
 
     private Map<String, Object> variables;
+    private boolean decryptVariables = true;
+    private Map<String, Object> decryptedVariables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>(4); // init to 4 to save memory as tasks usually produce few metrics if any
     private RunContextLogger logger;
     private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>(0); // init to 0 to save memory: this is used by only one task
     private String triggerExecutionId;
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
-    private List<String> secretInputs;
     private List<String> secretOutputs;
     private String traceParent;
 
@@ -107,25 +117,48 @@ public class DefaultRunContext extends RunContext {
     @Override
     @JsonInclude
     public Map<String, Object> getVariables() {
+        if (!decryptVariables) {
+            return variables;
+        }
+        if (decryptedVariables == null) {
+            decryptedVariables = decryptSecretSubtrees(variables);
+        }
+        return decryptedVariables;
+    }
+
+    /**
+     * Returns the variables exactly as they were built, with secret values still encrypted. Callers serializing this
+     * run context across a process boundary must use this instead of {@link #getVariables()} so that no plaintext
+     * secret is ever written to a queue.
+     */
+    @JsonIgnore
+    Map<String, Object> rawVariables() {
         return variables;
     }
 
     /**
-     * {@inheritDoc}
+     * Decrypts the three subtrees that can hold an {@link EncryptedString}, registering every value it decrypts with
+     * the logger so the secret is masked in this run context's logs from the moment it is first read.
      */
-    @Override
-    @JsonInclude
-    public List<String> getSecretInputs() {
-        return secretInputs;
-    }
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> decryptSecretSubtrees(Map<String, Object> variables) {
+        // an absent key is not a reason to skip: Secret unwraps the value and warns, which is how a run context
+        // with no encryption configured has always exposed an EncryptedString
+        if (variables == null || secretKey == null) {
+            return variables;
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @JsonInclude
-    public List<String> getSecretOutputs() {
-        return secretOutputs;
+        Map<String, Object> decrypted = null;
+        final Secret secret = new Secret(secretKey, this::logger, this::usedSecretOutput);
+        for (String key : SECRET_BEARING_VARIABLES) {
+            if (variables.get(key) instanceof Map<?, ?> subtree) {
+                if (decrypted == null) {
+                    decrypted = new HashMap<>(variables);
+                }
+                decrypted.put(key, secret.decrypt((Map<String, Object>) subtree));
+            }
+        }
+        return decrypted == null ? variables : decrypted;
     }
 
     /**
@@ -147,6 +180,7 @@ public class DefaultRunContext extends RunContext {
                 .putAll(this.variables)
                 .put("trace", Map.of("parent", traceParent))
                 .build();
+            this.decryptedVariables = null;
         }
     }
 
@@ -183,6 +217,7 @@ public class DefaultRunContext extends RunContext {
 
     void setVariables(final Map<String, Object> variables) {
         this.variables = Collections.unmodifiableMap(variables);
+        this.decryptedVariables = null;
     }
 
     void setStorage(final Storage storage) {
@@ -191,18 +226,6 @@ public class DefaultRunContext extends RunContext {
 
     void setLogger(final RunContextLogger logger) {
         this.logger = logger;
-
-        // this is used when a run context is re-hydrated so we need to add again the secrets from the inputs
-        if (!ListUtils.isEmpty(secretInputs) && getVariables().containsKey("inputs")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
-            for (String secretInput : secretInputs) {
-                String secret = findSecret(secretInput, inputs);
-                if (secret != null) {
-                    logger.usedSecret(secret);
-                }
-            }
-        }
 
         // this is used when a run context is re-hydrated so we need to add again the decrypted SECRET flow outputs
         if (!ListUtils.isEmpty(secretOutputs)) {
@@ -219,18 +242,6 @@ public class DefaultRunContext extends RunContext {
         List<String> updated = new ArrayList<>(ListUtils.emptyOnNull(secretOutputs));
         updated.add(secret);
         secretOutputs = updated;
-    }
-
-    @SuppressWarnings("unchecked")
-    private String findSecret(String secretInput, Map<String, Object> inputs) {
-        if (secretInput.indexOf('.') > 0) {
-            String prefix = secretInput.substring(0, secretInput.indexOf('.'));
-            String suffix = secretInput.substring(secretInput.indexOf('.') + 1);
-            Map<String, Object> subInputs = (Map<String, Object>) inputs.get(prefix);
-            return findSecret(suffix, subInputs);
-        }
-
-        return (String) inputs.get(secretInput);
     }
 
     void setPluginConfiguration(final Map<String, Object> pluginConfiguration) {
@@ -261,8 +272,8 @@ public class DefaultRunContext extends RunContext {
         runContext.logger = this.logger;
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
-        runContext.secretInputs = this.secretInputs;
         runContext.secretOutputs = this.secretOutputs;
+        runContext.decryptVariables = this.decryptVariables;
         if (isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);
@@ -283,7 +294,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public String render(String inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables);
+        return variableRenderer.render(inline, getVariables());
     }
 
     /**
@@ -291,7 +302,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Object renderTyped(String inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.renderTyped(inline, this.variables);
+        return variableRenderer.renderTyped(inline, getVariables());
     }
 
     @Override
@@ -305,7 +316,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
+        return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
 
     /**
@@ -313,7 +324,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public List<String> render(List<String> inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables);
+        return variableRenderer.render(inline, getVariables());
     }
 
     /**
@@ -322,7 +333,7 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
+        return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
 
     /**
@@ -330,7 +341,7 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public Set<String> render(Set<String> inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables);
+        return variableRenderer.render(inline, getVariables());
     }
 
     /**
@@ -339,18 +350,18 @@ public class DefaultRunContext extends RunContext {
     @Override
     @SuppressWarnings("unchecked")
     public Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
+        return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
 
     @Override
     public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, this.variables);
+        return variableRenderer.render(inline, getVariables());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
+        return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
 
     @Override
@@ -365,7 +376,7 @@ public class DefaultRunContext extends RunContext {
             return null;
         }
 
-        Map<String, Object> allVariables = mergeWithNullableValues(this.variables, decryptVariables(variables));
+        Map<String, Object> allVariables = mergeWithNullableValues(getVariables(), decryptVariables(variables));
         Map<String, String> rendered = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : inline.entrySet()) {
             String renderedKey = this.render(entry.getKey(), allVariables);
@@ -432,11 +443,30 @@ public class DefaultRunContext extends RunContext {
                     logger().warn("Unable to delete the log file {}", logger.getLogFile().toPath());
                 }
                 return logFileURI;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                logger().warn("Failed to upload log file to storage", e);
+                if (isInterrupted(e)) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
         return null;
+    }
+
+    private static boolean isAbortedException(Throwable t) {
+        if (t == null) {
+            return false;
+        }
+        String className = t.getClass().getName();
+        return "software.amazon.awssdk.core.exception.AbortedException".equals(className) ||
+            "com.amazonaws.AbortedException".equals(className);
+    }
+
+    private static boolean isInterrupted(Throwable e) {
+        return e instanceof InterruptedException ||
+            e.getCause() instanceof InterruptedException ||
+            isAbortedException(e) ||
+            isAbortedException(e.getCause());
     }
 
     /**
@@ -524,7 +554,7 @@ public class DefaultRunContext extends RunContext {
 
     @Override
     public void dynamicWorkerResult(List<WorkerTaskResult> workerTaskResults) {
-        dynamicWorkerTaskResult.addAll(workerTaskResults);
+        workerTaskResults.forEach(result -> dynamicWorkerTaskResult.add(boundTaskId(result)));
     }
 
     @Override
@@ -534,11 +564,40 @@ public class DefaultRunContext extends RunContext {
 
     @Override
     public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
-        this.dynamicWorkerTaskResult.add(workerTaskResult);
+        WorkerTaskResult bounded = boundTaskId(workerTaskResult);
+        this.dynamicWorkerTaskResult.add(bounded);
 
-        if (logs != null && !logs.isEmpty() && workerTaskResult.getTaskRun() != null) {
-            this.logger.emitDynamicTaskRunLogs(workerTaskResult.getTaskRun(), logs);
+        if (logs != null && !logs.isEmpty() && bounded.getTaskRun() != null) {
+            this.logger.emitDynamicTaskRunLogs(bounded.getTaskRun(), logs);
         }
+    }
+
+    /**
+     * Bounds a dynamic taskrun's task id to {@link Task#ID_MAX_LENGTH} at the single point where plugins hand
+     * dynamic taskruns to the framework. Dynamic taskruns (only dbt produces them) carry a runtime-generated
+     * task id that can exceed the fixed-width {@code task_id} DB column; bounding it here keeps every downstream
+     * consumer — the emitted logs and the persisted taskrun alike — within the column, and logs once at debug
+     * naming the full id so the truncation is not silent (this is expected behaviour, not a problem).
+     * <p>
+     * An execution holds many task ids, so a plain front-truncation could collapse two long ids sharing a
+     * prefix into one; a stable short hash of the full id is appended to keep distinct taskruns distinct.
+     */
+    private WorkerTaskResult boundTaskId(WorkerTaskResult workerTaskResult) {
+        TaskRun taskRun = workerTaskResult.getTaskRun();
+        if (taskRun == null || taskRun.getTaskId() == null || taskRun.getTaskId().length() <= Task.ID_MAX_LENGTH) {
+            return workerTaskResult;
+        }
+
+        String fullTaskId = taskRun.getTaskId();
+        String suffix = String.format("%05d", Math.floorMod(fullTaskId.hashCode(), 100_000));
+        String boundedTaskId = fullTaskId.substring(0, TASK_ID_TRUNCATED_PREFIX_LENGTH) + "-" + suffix;
+
+        this.logger.logger().debug(
+            "Task id '{}' exceeds {} characters and was truncated to '{}' for storage.",
+            fullTaskId, Task.ID_MAX_LENGTH, boundedTaskId
+        );
+
+        return workerTaskResult.withTaskRun(taskRun.toBuilder().taskId(boundedTaskId).build());
     }
 
     /**
@@ -718,6 +777,7 @@ public class DefaultRunContext extends RunContext {
         private StorageInterface storageInterface;
         private MetricRegistry meterRegistry;
         private Map<String, Object> variables;
+        private boolean decryptVariables = true;
         private List<WorkerTaskResult> dynamicWorkerResults;
         private Map<String, Object> pluginConfiguration;
         private Optional<String> secretKey = Optional.empty();
@@ -727,8 +787,6 @@ public class DefaultRunContext extends RunContext {
         private RunContextLogger logger;
         private KVStoreService kvStoreService;
         private AssetManagerFactory assetManagerFactory;
-        private List<String> secretInputs;
-        private List<String> secretOutputs;
         private Task task;
         private AbstractTrigger trigger;
 
@@ -743,6 +801,7 @@ public class DefaultRunContext extends RunContext {
             context.variableRenderer = variableRenderer;
             context.meterRegistry = meterRegistry;
             context.variables = variables;
+            context.decryptVariables = decryptVariables;
             context.pluginConfiguration = Optional.ofNullable(pluginConfiguration).map(ImmutableMap::copyOf).orElse(ImmutableMap.of());
             context.logger = logger;
             context.secretKey = secretKey;
@@ -751,8 +810,6 @@ public class DefaultRunContext extends RunContext {
             context.triggerExecutionId = triggerExecutionId;
             context.kvStoreService = kvStoreService;
             context.assetManagerFactory = assetManagerFactory;
-            context.secretInputs = secretInputs;
-            context.secretOutputs = secretOutputs;
             context.task = task;
             context.trigger = trigger;
             return context;

@@ -7,6 +7,7 @@
         :showClose="false"
         :closeOnPressEscape="false"
         appendToBody
+        data-authoring-overlay
         @close="emit('close')"
     >
         <template #header>
@@ -15,8 +16,8 @@
                 <KsIconButton
                     class="task-edit-modal-header-action"
                     :type="docsOpen ? 'primary' : 'default'"
-                    :aria-label="t('documentation.documentation')"
-                    :tooltip="t('documentation.documentation')"
+                    :aria-label="$t('documentation.documentation')"
+                    :tooltip="$t('documentation.documentation')"
                     data-test="task-edit-modal-docs-toggle"
                     @click="toggleDocs"
                 >
@@ -24,8 +25,8 @@
                 </KsIconButton>
                 <KsIconButton
                     class="task-edit-modal-header-action"
-                    :aria-label="t('block_editor.open_in_tabs')"
-                    :tooltip="t('block_editor.open_in_tabs')"
+                    :aria-label="$t('block_editor.open_in_tabs')"
+                    :tooltip="$t('block_editor.open_in_tabs')"
                     data-test="task-edit-modal-open-in-tabs"
                     @click="emit('open-in-tabs')"
                 >
@@ -33,8 +34,8 @@
                 </KsIconButton>
                 <KsIconButton
                     class="task-edit-modal-header-action"
-                    :aria-label="t('close')"
-                    :tooltip="t('close')"
+                    :aria-label="$t('close')"
+                    :tooltip="$t('close')"
                     data-test="task-edit-modal-close"
                     @click="emit('close')"
                 >
@@ -94,16 +95,12 @@
         <template v-if="!hintDismissed" #footer>
             <div class="task-edit-modal-hint" data-test="task-edit-modal-open-mode-hint">
                 <KsText size="small">
-                    <i18n-t keypath="block_editor.open_mode_hint" scope="global">
-                        <template #settings>
-                            <router-link :to="{name: 'preferences'}">{{ t("settings.label") }}</router-link>
-                        </template>
-                    </i18n-t>
+                    {{ openModeHint[0] }}<router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>{{ openModeHint[1] }}
                 </KsText>
                 <KsIconButton
                     class="task-edit-modal-hint-dismiss"
-                    :aria-label="t('close')"
-                    :tooltip="t('close')"
+                    :aria-label="$t('close')"
+                    :tooltip="$t('close')"
                     data-test="task-edit-modal-open-mode-hint-dismiss"
                     @click="dismissHint"
                 >
@@ -129,6 +126,7 @@
     import type {BlockSection} from "../../../utils/flowableBlockOps"
     import type {Crumb} from "../utils/useFieldNavigation"
     import {storageKeys} from "../../../utils/constants"
+    import {splitTranslation} from "../../../utils/splitTranslation"
 
     const props = defineProps<{
         task?: Record<string, unknown>
@@ -154,6 +152,7 @@
     }>()
 
     const {t} = useI18n()
+    const openModeHint = computed(() => splitTranslation(t, "block_editor.open_mode_hint", "settings"))
     const pluginsStore = usePluginsStore()
 
     const hintDismissed = ref(localStorage.getItem(storageKeys.TASK_EDIT_MODE_HINT_DISMISSED) === "true")

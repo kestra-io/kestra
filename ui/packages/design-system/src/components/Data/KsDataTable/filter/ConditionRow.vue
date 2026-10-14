@@ -103,6 +103,7 @@
         </template>
         <FilterKVPairs
             :modelValue="kvModel"
+            :comparator="filter.comparator"
             @update:modelValue="onKeyValue"
         />
     </KsPopover>
@@ -222,7 +223,7 @@
         }
     }
 
-    const changeField = (key: string) => {
+    const changeField = (key: string | undefined) => {
         const config = props.allKeys.find((candidate) => candidate.key === key)
         const comparator = config?.comparators?.[0]
         if (!config || !comparator) return
@@ -232,15 +233,37 @@
         })
     }
 
-    const changeComparator = (op: Comparators) => {
+    const normalizeKeyValuePairs = (values: string[]) => {
+        const pairByKey = new Map<string, string>()
+        values.forEach(pair => {
+            const separatorIndex = pair.indexOf(":")
+            if (separatorIndex <= 0 || separatorIndex === pair.length - 1) return
+            pairByKey.set(pair.slice(0, separatorIndex), pair)
+        })
+        return [...pairByKey.values()]
+    }
+
+    const changeComparator = (op: Comparators | undefined) => {
+        if (op === undefined) return
         const wasMulti = isMulti.value
         const willBeMulti = keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op)
+        const shouldNormalizeKeyValues = keyConfig.value?.valueType === "key-value"
+            && op !== Comparators.IN
+            && op !== Comparators.NOT_IN
+            && Array.isArray(props.filter.value)
+        const normalizedKeyValues = shouldNormalizeKeyValues
+            ? normalizeKeyValuePairs(props.filter.value as string[])
+            : null
 
         emit("update", {
             ...props.filter,
             comparator: op,
             comparatorLabel: labelForComparator(op),
-            ...(wasMulti !== willBeMulti ? {value: willBeMulti ? [] : "", valueLabel: ""} : {}),
+            ...(normalizedKeyValues
+                ? {value: normalizedKeyValues, valueLabel: normalizedKeyValues[0] ?? ""}
+                : wasMulti !== willBeMulti
+                    ? {value: willBeMulti ? [] : "", valueLabel: ""}
+                    : {}),
         })
     }
 
@@ -298,8 +321,10 @@
     })
     onBeforeUnmount(() => resizeObserver?.disconnect())
 
-    const onValueChange = (value: string | string[]) =>
+    const onValueChange = (value: string | string[] | undefined) => {
+        if (value === undefined) return
         emitUpdate(value, labelFor(value))
+    }
 
     const commitMulti = () => {
         const current = Array.isArray(props.filter.value) ? props.filter.value : []
@@ -389,7 +414,7 @@
         text-overflow: ellipsis;
 
         &.placeholder {
-            color: var(--ks-text-dim);
+            color: var(--ks-placeholder-color);
         }
     }
 

@@ -4,12 +4,12 @@
         class="task-icon"
     >
         <KsTooltip v-if="!onlyIcon" :content="cls">
-            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel" loading="lazy" decoding="async">
             <div v-else class="task-icon__icon task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
         </KsTooltip>
 
         <template v-else>
-            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel">
+            <img v-if="!isMonochrome" class="task-icon__icon" :src="iconSrc" :alt="ariaLabel" loading="lazy" decoding="async">
             <div v-else class="task-icon__icon task-icon__icon--mask" role="img" :aria-label="ariaLabel" :style="maskStyle" />
         </template>
     </div>

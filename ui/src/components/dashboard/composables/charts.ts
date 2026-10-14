@@ -1,7 +1,8 @@
 import {ref} from "vue"
 
-import {cssVar} from "@kestra-io/design-system"
+import {cssVar, dateUtils, dayjs, type Dayjs} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme"
+import {DateGrouping} from "../../../utils/utils"
 
 export interface RankedStackedBars {
     categories: string[]
@@ -11,7 +12,28 @@ export interface RankedStackedBars {
     othersNames: string[]
 }
 
+/**
+ * The subset of an ECharts payload the dashboard charts read, shared by the `echarts-click` handlers
+ * and the tooltip formatters. `KsBar`/`KsPie`/`KsEchart` emit `echarts-click` as `unknown` (the design
+ * system doesn't depend on echarts' own event types), so this narrows it once for every reader.
+ */
+export interface EchartsParams {
+    name?: string;
+    seriesName?: string;
+    seriesType?: string;
+    dataIndex?: number;
+    value?: unknown;
+    /** Present only for pie/donut chart items. */
+    percent?: number;
+}
+
 export const DEFAULT_BAR_CATEGORY_LIMIT = 8
+
+/**
+ * Dashboards hold many charts at once, so their canvases render at a capped pixel ratio rather than the full device
+ * resolution. Canvas memory grows with the square of that ratio, and flat fills and thin lines lose next to nothing.
+ */
+export const DASHBOARD_CHART_MAX_PIXEL_RATIO = 1.5
 
 export function rankStackedBars(
     rows: Record<string, unknown>[],
@@ -59,6 +81,41 @@ export function rankStackedBars(
     return {categories, series, totals, othersCount: rest.length, othersNames: rest.map((r) => r.name)}
 }
 
+export const MAX_FILLED_TIME_BUCKETS = 1000
+
+/**
+ * Returns every bucket label between the earliest and latest raw date at the given granularity, so that time
+ * gaps between sparse buckets stay visible on a category axis instead of collapsing into adjacent bars.
+ * Values that are not valid ISO dates are kept as labels verbatim; the fill stops at
+ * {@link MAX_FILLED_TIME_BUCKETS} labels as a guard against absurd date ranges coming from bad data.
+ */
+export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping): string[] {
+    const labels = new Set<string>()
+    const parsed: Dayjs[] = []
+
+    for (const raw of rawDates ?? []) {
+        if (raw === null || raw === undefined) continue
+        const date = dateUtils.parseIso(raw)
+        if (date.isValid()) {
+            labels.add(date.format(grouping.format))
+            parsed.push(date)
+        } else {
+            labels.add(String(raw))
+        }
+    }
+
+    if (parsed.length) {
+        const max = dayjs.max(parsed)!
+        let cursor = dayjs.min(parsed)!.startOf(grouping.unit)
+        for (let i = 0; cursor.isSameOrBefore(max) && i < MAX_FILLED_TIME_BUCKETS; i++) {
+            labels.add(cursor.format(grouping.format))
+            cursor = cursor.add(1, grouping.unit)
+        }
+    }
+
+    return Array.from(labels).sort()
+}
+
 function hashToHexColor(value: string): string {
     let hash = 0x811c9dc5
     for (let i = 0; i < value.length; i++) {
@@ -75,7 +132,7 @@ function hashToHexColor(value: string): string {
     return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`
 }
 
-export function getConsistentHEXColor(_theme: "light" | "dark", value: string): string {
+export function getConsistentHEXColor(_theme: "light" | "dark", value: string | undefined): string {
     const status = (value?.includes(",") ? value.split(",").pop()?.trim() : value) ?? ""
 
     const tokenColor = status ? cssVar(`--ks-chart-${status.toLowerCase()}`) : ""

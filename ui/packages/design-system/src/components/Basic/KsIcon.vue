@@ -7,7 +7,7 @@
         :enterable="false"
     >
         <ElIcon
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="{...filteredProps(), ...$attrs}"
             :size="resolvedSize"
             @click="emit('click', $event)"
         >
@@ -18,7 +18,7 @@
     </KsTooltip>
     <ElIcon
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         :size="resolvedSize"
         @click="emit('click', $event)"
     >
@@ -39,7 +39,7 @@
     const SIZE_TOKENS: readonly IconSizeToken[] = ["xs", "sm", "base", "lg", "xl"] as const
 
     const props = defineProps<{
-        size?: number | string | IconSizeToken
+        size?: number | IconSizeToken
         color?: string
         tooltip?: string
         placement?: string

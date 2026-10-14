@@ -11,19 +11,19 @@
             :loadIcon="pluginsStore.loadIcon"
             @back="goBack"
         >
-            <template #actions="{hasMissingPlugins, missingPlugins}">
+            <template #actions="{hasMissingPlugins, missingTasks}">
                 <template v-if="userCanCreate">
                     <KsTooltip
                         v-if="hasMissingPlugins"
-                        :content="$t('blueprints.missingPlugins.card', {plugins: missingPlugins.join(', ')})"
+                        :content="$t('blueprints.missingPlugins.card', {tasks: missingTasks.join(', ')})"
                     >
                         <KsButton type="primary" disabled>
-                            {{ $t("blueprints.detail.openInEditor") }}
+                            {{ $t(openInEditorKey) }}
                         </KsButton>
                     </KsTooltip>
                     <router-link v-else :to="editorRoute">
                         <KsButton type="primary" @click="trackBlueprintUse('detail')">
-                            {{ $t("blueprints.detail.openInEditor") }}
+                            {{ $t(openInEditorKey) }}
                         </KsButton>
                     </router-link>
                 </template>
@@ -52,7 +52,7 @@
 
     import {useFlowStore} from "../../../../stores/flow"
     import {usePluginsStore} from "../../../../stores/plugins"
-    import {useBlueprintsStore} from "../../../../stores/blueprints"
+    import {useBlueprintsStore, type BlueprintType, type BlueprintKind} from "../../../../stores/blueprints"
     import {useApiStore} from "../../../../stores/api"
 
     import {canCreate} from "override/composables/blueprintsPermissions"
@@ -91,6 +91,11 @@
 
     const userCanCreate = computed(() => canCreate(props.kind))
 
+    const openInEditorKey = computed(() => ({
+        app: "blueprints.detail.openInAppsEditor",
+        dashboard: "blueprints.detail.openInDashboardEditor",
+    })[props.kind] ?? "blueprints.detail.openInEditor")
+
     const breadcrumb = computed(() => [
         {
             label: t("blueprints.title"),
@@ -106,7 +111,7 @@
     ])
 
     const editorRoute = computed(() => {
-        let additionalQuery: Record<string, any> = {}
+        let additionalQuery: Record<string, unknown> = {}
         if (props.kind === "flow") {
             additionalQuery.blueprintSource = props.combinedView ? props.blueprintType : route.params?.tab
         } else if (props.kind === "dashboard") {
@@ -151,18 +156,18 @@
 
     const loadTags = async () => {
         const data = await blueprintsStore.getBlueprintTags({
-            type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
-            kind: props.kind as any,
+            type: (props.combinedView ? props.blueprintType : route.params?.tab) as BlueprintType,
+            kind: props.kind as BlueprintKind,
         })
-        tags.value = Object.fromEntries(data?.map((tag: any) => [tag.id, tag]) ?? [])
+        tags.value = Object.fromEntries(data?.map(tag => [tag.id, tag]) ?? [])
     }
 
     onMounted(async () => {
         pluginsStore.fetchIcons()
 
         const blueprintData = await blueprintsStore.getBlueprint({
-            type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
-            kind: props.kind as any,
+            type: (props.combinedView ? props.blueprintType : route.params?.tab) as BlueprintType,
+            kind: props.kind as BlueprintKind,
             id: props.blueprintId,
         })
         blueprint.value = blueprintData
@@ -173,8 +178,8 @@
         if (props.kind === "flow") {
             flowGraph.value = blueprintTab === "community"
                 ? await blueprintsStore.getBlueprintGraph({
-                    type: blueprintTab as any,
-                    kind: props.kind as any,
+                    type: blueprintTab as BlueprintType,
+                    kind: props.kind as BlueprintKind,
                     id: props.blueprintId,
                 })
                 : await flowStore.getGraphFromSourceResponse({

@@ -20,29 +20,26 @@
         </KsIconButton>
         <template #dropdown>
             <KsDropdownMenu>
-                <KsDropdownItem
+                <NodeMenuItem
                     v-for="action in actions"
                     :key="action.key"
-                    :divided="action.divided"
-                    :icon="action.icon"
-                    :class="{'node-action--danger': action.danger}"
-                    @click="action.onClick()"
-                >
-                    {{ action.label }}
-                </KsDropdownItem>
+                    :action="action"
+                />
             </KsDropdownMenu>
         </template>
     </KsDropdown>
 </template>
 
 <script setup lang="ts">
-    import {KsIconButton, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
+    import {KsIconButton, KsDropdown, KsDropdownMenu} from "@kestra-io/design-system"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import NodeMenuItem from "./NodeMenuItem.vue"
+    import type {Component} from "vue"
 
     export interface NodeAction {
         key: string;
         label: string;
-        icon: unknown;
+        icon: Component;
         tooltip?: string;
         danger?: boolean;
         divided?: boolean;
@@ -54,10 +51,4 @@
     defineProps<{actions: NodeAction[]}>()
 
 </script>
-
-<style scoped lang="scss">
-.node-action--danger {
-    color: var(--ks-text-error);
-}
-</style>
 

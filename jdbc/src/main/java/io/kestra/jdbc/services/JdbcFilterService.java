@@ -11,7 +11,6 @@ import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.services.AbstractFilterService;
 import io.kestra.core.utils.Either;
-import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 
 import io.micronaut.context.annotation.Requires;
@@ -23,18 +22,19 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 import static org.jooq.impl.DSL.*;
 
 @Singleton
-@Requires(bean = AbstractJdbcDashboardRepository.class)
+@Requires(bean = AbstractJdbcExecutionRepository.class)
 public class JdbcFilterService extends AbstractFilterService<SelectConditionStep<Record>> {
     @Inject
     private Provider<AbstractJdbcExecutionRepository> executionRepositoryInterface;
 
     public AggregateFunction<?> buildAggregation(Field<?> field, AggregationType agg) {
 
+        // coerce instead of cast: a SQL cast renders as CAST(... AS DECIMAL) on MySQL, which has scale 0 and rounds every value to an integer
         return switch (agg) {
-            case AVG -> avg(field.cast(Double.class));
-            case MAX -> max(field.cast(Double.class));
-            case MIN -> min(field.cast(Double.class));
-            case SUM -> sum(field.cast(Double.class));
+            case AVG -> avg(field.coerce(Double.class));
+            case MAX -> max(field.coerce(Double.class));
+            case MIN -> min(field.coerce(Double.class));
+            case SUM -> sum(field.coerce(Double.class));
             case COUNT -> field != null ? count(field) : count();
         };
     }

@@ -6,12 +6,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 
@@ -58,8 +60,16 @@ public class ExecutionStreamingService {
         // Single queue consumer
         this.queueSubscriber = executionQueue.subscriber();
         this.queueSubscriber.pause();
-        this.queueSubscriber.subscribe(either ->
-        {
+        this.queueSubscriber.subscribe(this::dispatch);
+    }
+
+    /**
+     * Dispatch an event to all the subscribers of its execution.
+     * This method never throws: the queue subscriber is shared by all subscribers and treats any escaping
+     * exception as fatal, so a delivery failure to a single SSE stream would shut down the whole server.
+     */
+    private void dispatch(Either<FollowExecutionEvent, DeserializationException> either) {
+        try {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
                 return;
@@ -83,24 +93,49 @@ public class ExecutionStreamingService {
                     return;
                 }
 
-                executionSubscribers.values().forEach(pair ->
-                {
-                    var sink = pair.getLeft();
-                    var flow = pair.getRight();
-                    try {
-                        if (isStopFollow(flow, execution.get())) {
-                            sink.next(Event.of(execution.get()).id("end"));
-                            sink.complete();
-                        } else {
-                            sink.next(Event.of(execution.get()).id("progress"));
-                        }
-                    } catch (Exception e) {
-                        log.error("Error sending execution update", e);
-                        sink.error(e);
-                    }
-                });
+                executionSubscribers.forEach(
+                    (subscriberId, pair) -> deliver(event.executionId(), subscriberId, pair.getLeft(), pair.getRight(), execution.get())
+                );
             }
-        });
+        } catch (Exception e) {
+            log.error("Unable to dispatch the execution event to its subscribers", e);
+        }
+    }
+
+    /**
+     * Deliver an execution update to a single subscriber.
+     * This method never throws so a stale or broken SSE stream cannot prevent delivery to the other subscribers.
+     */
+    private void deliver(String executionId, String subscriberId, FluxSink<Event<Execution>> sink, Flow flow, Execution execution) {
+        if (sink.isCancelled()) {
+            // the SSE stream is already closed: drop the stale subscriber instead of writing to it
+            unregisterSubscriber(executionId, subscriberId);
+            return;
+        }
+
+        try {
+            if (isStopFollow(flow, execution)) {
+                sink.next(Event.of(execution).id("end"));
+                sink.complete();
+            } else {
+                sink.next(Event.of(execution).id("progress"));
+            }
+        } catch (Exception e) {
+            log.error("Error sending execution update to the subscriber '{}'", subscriberId, e);
+            failSilently(sink, e);
+            unregisterSubscriber(executionId, subscriberId);
+        }
+    }
+
+    /**
+     * Fail the sink, ignoring any error raised by an already terminated one.
+     */
+    private void failSilently(FluxSink<Event<Execution>> sink, Exception cause) {
+        try {
+            sink.error(cause);
+        } catch (Exception e) {
+            log.debug("Unable to fail an already terminated sink", e);
+        }
     }
 
     /**

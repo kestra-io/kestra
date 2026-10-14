@@ -6,7 +6,7 @@
     >
         <ElButton
             :aria-label="tooltip"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="({...filteredProps(), ...$attrs})"
             :class="{'is-square': square}"
             @click="emit('click', $event)"
             plain
@@ -24,7 +24,7 @@
     </KsTooltip>
     <ElButton
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs})"
         :class="{'is-square': square}"
         @click="emit('click', $event)"
         plain
@@ -41,6 +41,10 @@
     </ElButton>
 </template>
 
+<script lang="ts">
+    export type KsButtonType = "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+</script>
+
 <script setup lang="ts">
     import type {Component} from "vue"
 
@@ -52,7 +56,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
-        type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+        type?: KsButtonType
         size?: "small" | "default" | "large" | ""
         disabled?: boolean
         icon?: string | object
@@ -126,6 +130,10 @@
             margin-left: var(--ks-spacing-2);
         }
 
+        > span {
+            width: var(--ks-button-content-width, auto);
+        }
+
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);
         }
@@ -143,6 +151,8 @@
         &.is-square {
             .material-design-icon > .material-design-icon__svg {
                 bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
             }
         }
 

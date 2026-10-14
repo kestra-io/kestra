@@ -20,7 +20,7 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
 public class AssertTest {
@@ -89,5 +89,24 @@ public class AssertTest {
     void dontFailOnCondition(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldFailWhenConditionEvaluatesToNull() {
+        Assert task = Assert.builder()
+            .id(IdUtils.create())
+            .type(Assert.class.getName())
+            .conditions(
+                List.of(
+                    "{{ null }}"
+                )
+            )
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        Exception exception = assertThrows(Exception.class, () -> task.run(runContext));
+
+        assertThat(exception.getMessage()).contains("1 assertion failed");
     }
 }

@@ -24,6 +24,7 @@
                                 class="plugin-header__logo"
                                 :cls="headerIconCls"
                                 onlyIcon
+                                variable="--ks-black"
                                 :icons="icons"
                             />
 
@@ -203,7 +204,7 @@
     const canSwitchVersion = computed<boolean>(() => Boolean(routeCls.value))
 
     const installedVersions = computed<string[]>(() =>
-        versionProbeCls.value ? [...(pluginsStore.versions ?? [])].sort(sortVersionsDesc) : [],
+        versionProbeCls.value ? [...(pluginsStore.versions?.[versionProbeCls.value] ?? [])].sort(sortVersionsDesc) : [],
     )
 
     const publicVersions = computed(() => enrichmentStore.getVersions(versionProbeCls.value))
@@ -302,8 +303,9 @@
             width: 3.75rem;
             height: 3.75rem;
             padding: var(--ks-spacing-2);
-            background-color: var(--ks-bg-tag);
+            background-color: var(--ks-bg-plugin-icon);
             border: 1px solid var(--ks-border-default);
+            color: var(--ks-black);
             border-radius: var(--ks-radius-base);
         }
 
@@ -352,7 +354,7 @@
         display: flex;
         height: 100%;
         min-height: 0;
-        background-color: var(--ks-bg-body);
+        background-color: var(--ks-bg-base);
         container-type: inline-size;
         container-name: plugin-page;
 

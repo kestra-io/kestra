@@ -8,14 +8,14 @@ import "monaco-editor/basic-languages/monaco.contribution"
 import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {useStorage} from "@vueuse/core"
-import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../utils/fontScale"
+import {APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode} from "../utils/fontScale"
 import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
 import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
 // @ts-expect-error tab focus path lacks types
 import {TabFocus} from "monaco-editor/editor/browser/config/tabFocus"
 import * as monaco from "monaco-editor/editor/editor.api"
 import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
-import debounce from "lodash/debounce"
+import {debounce} from "../utils/lang"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
 import {configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
 import {useTaskIcon} from "./taskIcon"
@@ -33,6 +33,19 @@ type ICodeEditor = monacoEditorNs.ICodeEditor
 
 registerMonacoThemes()
 configureMonacoTypescript()
+
+type EditorTestElement = HTMLDivElement & {
+    __setValueInTests: (value: string) => void
+}
+
+declare global {
+    interface Window {
+        pasteToEditor: (textToPaste: string) => void
+        clearEditor: () => void
+        acceptSuggestion: () => void
+        nextSuggestion: () => void
+    }
+}
 
 export function useKsEditor(
     props: ResolvedKsEditorProps,
@@ -82,7 +95,7 @@ export function useKsEditor(
     })
     const storedAppFontSizeMode = useStorage<AppFontSizeMode>(APP_FONT_SIZE_KEY, "medium")
     const resolvedEditorFontSize = computed(
-        () => storedEditorFontSizeOverride.value ?? (BASE_PX[storedAppFontSizeMode.value] ?? BASE_PX.medium),
+        () => storedEditorFontSizeOverride.value ?? (MONO_BASE_PX[storedAppFontSizeMode.value] ?? MONO_BASE_PX.medium),
     )
 
     const isFocused = ref(false)
@@ -508,6 +521,7 @@ export function useKsEditor(
                 emit("focusout", isCodeEditor(ed) ? ed.getValue() : undefined)
                 isFocused.value = false
             })
+            ed.onDidFocusEditorText?.(() => emit("focus"))
             if (mergedOptions.value.shouldFocus) {
                 ed.onDidFocusEditorText?.(() => { isFocused.value = true })
                 ed.focus()
@@ -559,7 +573,7 @@ export function useKsEditor(
 
         const monacoEl = editorRef.value
         if (monacoEl) {
-            ;(monacoEl as any).__setValueInTests = (value: string) => {
+            ;(monacoEl as EditorTestElement).__setValueInTests = (value: string) => {
                 if (!isCodeEditor(ed)) return
                 ed?.setValue(value)
             }
@@ -584,18 +598,26 @@ export function useKsEditor(
         editorResolved.value?.focus()
     }
 
-    function onDrop(event: DragEvent) {
-        const text = event.dataTransfer?.getData("text/plain")
-        if (!text || !isCodeEditor(localEditor.value)) return
+    function insertTextAtCursor(text: string): void {
         const ed = localEditor.value
-        const target = ed.getTargetAtClientPoint(event.clientX, event.clientY)
-        const position = target?.position ?? ed.getPosition()
-        if (!position) return
-        ed.executeEdits("drop-insert", [{
-            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+        if (!text || !isCodeEditor(ed)) return
+        const selection = ed.getSelection()
+        if (!selection) return
+        ed.executeEdits("insert-text", [{
+            range: selection,
             text,
         }])
         ed.focus()
+    }
+
+    function onDrop(event: DragEvent) {
+        const text = event.dataTransfer?.getData("text/plain")
+        const ed = localEditor.value
+        if (!text || !isCodeEditor(ed)) return
+        const target = ed.getTargetAtClientPoint(event.clientX, event.clientY)
+        const position = target?.position ?? ed.getPosition()
+        if (position) ed.setPosition(position)
+        insertTextAtCursor(text)
     }
 
     function destroy() {
@@ -710,16 +732,16 @@ export function useKsEditor(
             )
         }
 
-        ;(window as any).pasteToEditor = (textToPaste: string) => {
+        window.pasteToEditor = (textToPaste: string) => {
             localEditor.value?.executeEdits("", [{
                 range: localEditor.value?.getSelection() ?? new monaco.Range(0, 0, 0, 0),
                 text: textToPaste,
             }])
         }
-        ;(window as any).clearEditor = () => localEditor.value?.getModel()?.setValue("")
-        ;(window as any).acceptSuggestion = () =>
+        window.clearEditor = () => localEditor.value?.getModel()?.setValue("")
+        window.acceptSuggestion = () =>
             localEditor.value?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {})
-        ;(window as any).nextSuggestion = () =>
+        window.nextSuggestion = () =>
             localEditor.value?.trigger("selectNextSuggestion", "selectNextSuggestion", {})
     })
 
@@ -752,6 +774,7 @@ export function useKsEditor(
         clearLinesRangeHighlights,
         addContentWidget,
         removeContentWidget,
+        insertTextAtCursor,
         getEditor,
     }
 }

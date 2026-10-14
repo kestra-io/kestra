@@ -1,6 +1,6 @@
 <template>
     <component
-        v-if="simpleType === 'list'"
+        v-if="simpleType === 'list' || simpleType === 'plugin-implementation'"
         ref="taskComponent"
         :is="type"
         v-bind="componentProps"
@@ -51,7 +51,13 @@
             />
         </div>
     </div>
-    <KsFormItem v-else-if="fieldKey" :required="isRequired" for="">
+    <KsFormItem
+        v-else-if="fieldKey"
+        :required="isRequired"
+        for=""
+        :data-test="`field-${fieldKey}`"
+        :data-required-path="isMissingRequired ? fieldPath : undefined"
+    >
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -60,11 +66,12 @@
                     </span>
 
                     <span
-                        v-if="pluginDefault !== undefined"
+                        v-if="defaultHint !== undefined"
                         class="plugin-default-hint"
-                        :title="t('block_editor.plugin_default_tooltip')"
+                        data-test="field-default-hint"
+                        :title="$t(pluginDefault !== undefined ? 'block_editor.plugin_default_tooltip' : 'block_editor.schema_default_tooltip')"
                     >
-                        {{ t("block_editor.plugin_default", {value: pluginDefault}) }}
+                        {{ $t("block_editor.plugin_default", {value: defaultHint}) }}
                     </span>
 
                     <ClearButton
@@ -106,8 +113,8 @@
                     filled
                     class="inline-code-toggle"
                     :type="pebbleState ? 'primary' : 'default'"
-                    :tooltip="t('no_code.toggle_pebble')"
-                    :aria-label="t('no_code.toggle_pebble')"
+                    :tooltip="$t('no_code.toggle_pebble')"
+                    :aria-label="$t('no_code.toggle_pebble')"
                     @click="pebbleState = !pebbleState"
                 >
                     <IconCodeTags />
@@ -133,14 +140,13 @@
             data-test="field-required-missing"
         >
             <AlertCircleOutline class="required-missing-icon" />
-            {{ t("block_editor.required_missing") }}
+            {{ $t("block_editor.required_missing") }}
         </span>
     </KsFormItem>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useBlockComponent} from "./useBlockComponent"
     import {FIELD_NAV_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
@@ -177,6 +183,10 @@
         return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)
     })
 
+    const fieldPath = computed(() =>
+        props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
+    )
+
     const hasSelectedASchema = ref(false)
 
     const pebbleState = ref(false)
@@ -195,7 +205,7 @@
                 pebbleState.value = value
             },
             task: props.task,
-            root: props.rootOverride ?? (props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey),
+            root: fieldPath.value,
             schema: props.schema,
             required: isRequired.value,
         }
@@ -244,13 +254,20 @@
         return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 
-    const {t} = useI18n()
 
     const pluginDefaults = inject(PLUGIN_DEFAULTS_INJECTION_KEY, undefined)
     const pluginDefault = computed(() => {
         const value = pluginDefaults?.value?.[props.fieldKey]
         return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
     })
+
+    const schemaDefault = computed(() => {
+        const value = props.schema?.default
+        return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
+    })
+
+    // The flow's pluginDefaults override the schema default at runtime, so they win the hint too.
+    const defaultHint = computed(() => pluginDefault.value ?? schemaDefault.value)
 
     const fieldNav = inject(FIELD_NAV_INJECTION_KEY, undefined)
 

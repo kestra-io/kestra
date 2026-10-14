@@ -1,0 +1,11 @@
+id: message-protection-input
+namespace: io.kestra.tests
+
+inputs:
+  - id: v
+    type: STRING
+
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: ok

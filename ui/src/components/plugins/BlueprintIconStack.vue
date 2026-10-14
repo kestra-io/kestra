@@ -7,6 +7,7 @@
             :cls="cls"
             :icons="icons"
             :loadIcon="loadIcon"
+            variable="--ks-black"
             onlyIcon
         />
         <span v-if="overflow > 0" class="blueprint-icon-stack__more">+{{ overflow }}</span>
@@ -15,13 +16,13 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
-    import TaskIcon from "./TaskIcon.vue"
+    import TaskIcon, {type TaskIconData} from "./TaskIcon.vue"
     import type {PluginIconMap} from "../../utils/pluginUtils"
 
     const props = defineProps<{
         clses: string[]
         icons: PluginIconMap
-        loadIcon?: (cls: string) => Promise<any>
+        loadIcon?: (cls: string) => Promise<TaskIconData | undefined>
     }>()
 
     const ICON_PX = 24
@@ -89,7 +90,9 @@
             width: var(--ks-spacing-5);
             height: var(--ks-spacing-5);
             padding: 2px;
-            background-color: var(--ks-bg-tag);
+            background-color: var(--ks-bg-plugin-icon);
+            border: 1px solid var(--ks-border-default);
+            color: var(--ks-black);
             border-radius: var(--ks-radius-base);
         }
 

@@ -23,7 +23,11 @@
                 </template>
 
                 <template #top>
-                    <div class="toolbar" :class="{plain: embed || system}">
+                    <div
+                        v-if="!showEmptyPage || (embed && !system)"
+                        class="toolbar"
+                        :class="{plain: embed || system}"
+                    >
                         <BlueprintsFilterBar
                             v-model="selectedTags"
                             :class="{search: !embed && !system}"
@@ -32,7 +36,11 @@
                             :tags
                             :inline="!embed && !system"
                             @search="handleSearch"
-                        />
+                        >
+                            <template v-if="$slots['beside-search']" #beside-search>
+                                <slot name="beside-search" />
+                            </template>
+                        </BlueprintsFilterBar>
                         <div v-if="ready && !system && !embed" class="tags">
                             <KsCheckTag
                                 v-for="tag in tagList"
@@ -48,8 +56,11 @@
                 </template>
 
                 <template #table>
+                    <slot v-if="showEmptyPage" name="empty">
+                        <KsNoData :title="$t('blueprints.empty')" />
+                    </slot>
                     <KsNoData
-                        v-if="isEmpty"
+                        v-else-if="isEmpty"
                         :title="$t('blueprints.empty')"
                     />
                     <div v-else-if="embed && !system" class="blueprint-list">
@@ -92,7 +103,7 @@
 
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, useTemplateRef, watch} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQueryValue} from "vue-router"
 
     import Errors from "../../../components/errors/Errors.vue"
     import BlueprintCard from "./BlueprintCard.vue"
@@ -110,24 +121,26 @@
     import {editorViewTypes} from "../../../utils/constants"
     import * as Utils from "../../../utils/utils"
 
-    import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {BlueprintTag, BlueprintType, FlowBlueprint} from "../../../stores/blueprints"
 
     const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]"
     const SEARCH_QUERY_KEY = "filters[q][EQUALS]"
+
+    type SearchQuery = LocationQueryValue | LocationQueryValue[]
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";
         blueprintKind?: "flow" | "dashboard" | "app";
         embed?: boolean;
         system?: boolean;
-        tagsResponseMapper?: (tagsResponse: any[]) => Record<string, any>;
+        tagsResponseMapper?: (tagsResponse: BlueprintTag[]) => Record<string, BlueprintTag>;
     }>(), {
         blueprintType: "community",
         blueprintKind: "flow",
         embed: false,
         system: false,
-        tagsResponseMapper: (tagsResponse: any[]) =>
-            Object.fromEntries(tagsResponse.map((tag: any) => [tag.id, tag])),
+        tagsResponseMapper: (tagsResponse: BlueprintTag[]) =>
+            Object.fromEntries(tagsResponse.map((tag) => [tag.id, tag])),
     })
 
     const emit = defineEmits<{
@@ -166,6 +179,11 @@
     const tagList = computed(() => Object.values(tags.value ?? {}))
     const isEmpty = computed(() => ready.value && !blueprints.value?.length)
 
+    const lastLoadFiltered = ref(false)
+    const showEmptyPage = computed(() =>
+        isEmpty.value && !lastLoadFiltered.value,
+    )
+
     const handleSearch = (query: string) => {
         searchText.value = query
     }
@@ -191,7 +209,7 @@
     }
 
     function editorRoute(blueprintId: string) {
-        const additionalQuery: Record<string, any> = {}
+        const additionalQuery: {blueprintSource?: BlueprintType} = {}
         if (props.blueprintKind === "flow") {
             additionalQuery.blueprintSource = props.blueprintType
         }
@@ -234,14 +252,14 @@
     }
 
     async function loadTags(beforeLoadBlueprintType: string) {
-        const query: Record<string, any> = {}
+        const query: {q?: SearchQuery} = {}
         if (route.query[SEARCH_QUERY_KEY] ?? searchText.value) {
             query.q = route.query[SEARCH_QUERY_KEY] ?? searchText.value
         }
         const data = await blueprintsStore.getBlueprintTags({
             type: props.blueprintType,
             kind: props.blueprintKind,
-            ...query,
+            params: query,
         })
         if (props.blueprintType === beforeLoadBlueprintType) {
             tags.value = props.tagsResponseMapper(data)
@@ -249,7 +267,7 @@
     }
 
     async function loadBlueprints(beforeLoadBlueprintType: string, page: number, size: number) {
-        const query: Record<string, any> = {}
+        const query: {page?: number; size?: number; q?: SearchQuery; tags?: string | string[]} = {}
         if (page) query.page = page
         if (size) query.size = size
         if (route.query[SEARCH_QUERY_KEY] || searchText.value) {
@@ -273,6 +291,7 @@
         if (props.blueprintType === beforeLoadBlueprintType) {
             total.value = data.total
             blueprints.value = data.results
+            lastLoadFiltered.value = !!query.q || (!props.system && !!query.tags)
         }
     }
 

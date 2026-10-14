@@ -5,29 +5,47 @@
                 <h6>{{ $t("filter.customize columns") }}</h6>
                 <small>{{ $t("filter.drag to reorder columns") }}</small>
             </div>
-            <KsButton link :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
+            <KsButton link :aria-label="$t('filter.close')" :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
+        </div>
+
+        <div v-if="showSearch" class="search">
+            <KsInput
+                v-model="search"
+                size="small"
+                clearable
+                :placeholder="$t('filter.search columns')"
+            >
+                <template #prefix>
+                    <Magnify :size="16" />
+                </template>
+            </KsInput>
         </div>
 
         <div class="list">
             <DraggableTableColumns
+                v-if="columns.length"
                 :columns="columns"
                 :visibleColumns="currentVisibleColumns"
                 :storageKey="storageKey"
+                :search="search"
+                @resolved="currentVisibleColumns = $event"
                 @update-columns="handleUpdateColumns"
             />
         </div>
 
         <div class="footer">
-            <small>{{ visibleCount }} of {{ totalCount }} columns visible</small>
+            <small data-test="visible-columns-count">{{ visibleCount }} of {{ totalCount }} columns visible</small>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
-    import {Close} from "../utils/icons"
+    import {computed, ref, watch} from "vue"
+    import {Close, Magnify} from "../utils/icons"
     import type {ColumnConfig} from "../composables/useTableColumns"
     import DraggableTableColumns from "../DraggableTableColumns.vue"
+
+    const SEARCH_THRESHOLD = 12
 
     const props = defineProps<{
         storageKey: string;
@@ -40,10 +58,21 @@
         updateColumns: [columns: string[]];
     }>()
 
+    // `useTableColumns` captures its column list at setup, so building the list before the page's
+    // columns arrive leaves it resolving against nothing; the `v-if` above defers that.
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
+    const search = ref("")
 
-    const totalCount = computed(() => props.columns.length)
-    const visibleCount = computed(() => currentVisibleColumns.value.length)
+    const showSearch = computed(() => props.columns.length > SEARCH_THRESHOLD)
+
+    watch(() => props.visibleColumns, (columns) => {
+        currentVisibleColumns.value = columns
+    })
+
+    const selectableColumns = computed(() => props.columns.filter(c => !c.condition || c.condition()))
+
+    const totalCount = computed(() => selectableColumns.value.length)
+    const visibleCount = computed(() => selectableColumns.value.filter(c => currentVisibleColumns.value.includes(c.prop)).length)
 
     const handleUpdateColumns = (newColumns: string[]) => {
         currentVisibleColumns.value = newColumns
@@ -54,6 +83,7 @@
 <style lang="scss" scoped>
 .customize-columns-panel {
     height: fit-content;
+    max-height: 500px;
     display: flex;
     flex-direction: column;
     border-radius: 0.5rem;
@@ -95,6 +125,13 @@
         }
     }
 
+    .search {
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-surface);
+        flex-shrink: 0;
+    }
+
     .list {
         flex: 1;
         overflow-y: auto;
@@ -108,6 +145,7 @@
 
     .footer {
         border-top: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-surface);
         flex-shrink: 0;
         position: sticky;
         bottom: 0;

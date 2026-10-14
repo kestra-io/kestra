@@ -8,7 +8,7 @@
                 <slot
                     name="actions"
                     :hasMissingPlugins="hasMissingPlugins"
-                    :missingPlugins="missingPlugins"
+                    :missingTasks="missingTasks"
                 />
             </div>
         </div>
@@ -59,12 +59,13 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {shortDescription?: string};
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         kind?: string;
     }>(), {
         blueprint: undefined,
@@ -78,15 +79,13 @@
 
     const editorBindings = useEditorBindings()
 
-    const {ensureInstalledPluginsLoaded, missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+    const {ensureInstalledPluginsLoaded, missingTaskTypes} = useBlueprintPlugins()
 
-    const hasMissingPlugins = computed(() =>
-        missingTaskTypes(props.blueprint?.includedTasks).length > 0,
+    const missingTasks = computed(() =>
+        missingTaskTypes(props.blueprint?.includedTasks),
     )
 
-    const missingPlugins = computed(() =>
-        missingPluginNames(props.blueprint?.includedTasks),
-    )
+    const hasMissingPlugins = computed(() => missingTasks.value.length > 0)
 
     onMounted(ensureInstalledPluginsLoaded)
 </script>

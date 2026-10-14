@@ -43,13 +43,13 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
     }
 
     @Override
-    protected void kill(final boolean markAsKilled) {
+    public void kill(final State.Type state) {
         try {
             task.kill();
         } catch (Exception e) {
             logger.warn("Error while killing task: '{}'", getType(), e);
         } finally {
-            super.kill(markAsKilled); //interrupt
+            super.kill(state); //interrupt
         }
     }
 

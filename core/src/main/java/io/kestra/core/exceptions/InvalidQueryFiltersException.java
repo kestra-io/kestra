@@ -28,4 +28,14 @@ public class InvalidQueryFiltersException extends KestraRuntimeException {
     public InvalidQueryFiltersException(final String invalid) {
         super(INVALID_QUERY_FILTER_MESSAGE.formatted(invalid));
     }
+
+    /**
+     * Creates a new {@link InvalidQueryFiltersException} instance.
+     *
+     * @param invalid the invalid filter.
+     * @param cause the underlying cause.
+     */
+    public InvalidQueryFiltersException(final String invalid, final Throwable cause) {
+        super(INVALID_QUERY_FILTER_MESSAGE.formatted(invalid), cause);
+    }
 }

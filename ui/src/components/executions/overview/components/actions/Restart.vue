@@ -1,6 +1,6 @@
 <template>
     <NavBarAction
-        v-if="trigger && asItem && (isReplay || enabled)"
+        v-if="trigger && asItem && hasPermission && (isReplay || enabled)"
         :icon="icon"
         :disabled="!enabled"
         @click="isOpen = !isOpen"
@@ -8,7 +8,7 @@
         {{ $t(replayOrRestart) }}
     </NavBarAction>
     <KsTooltip
-        v-else-if="trigger && (isReplay || enabled)"
+        v-else-if="trigger && hasPermission && (isReplay || enabled)"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -49,22 +49,32 @@
         <template #header>
             <div class="modal-header m-0">
                 <h3 class="modal-title">
-                    {{ t("restart execution title") }}
+                    {{ $t("restart execution title") }}
                 </h3>
                 <KsDivider />
             </div>
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="t('restart confirm', {id: escape(execution.id)})" />
+            <p class="mb-0" v-html="$t('restart confirm', {id: escapeHtml(execution.id)})" />
+            <KsAlert
+                v-if="parentLink"
+                type="warning"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="restart-subflow-warning"
+            >
+                {{ parentWarning[0] }}<router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>{{ parentWarning[1] }}
+            </KsAlert>
         </div>
 
         <template #footer>
             <KsButton @click="isOpen = false">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" @click="handleRestartExecute">
-                {{ t("restart") }}
+                {{ $t("restart") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -79,7 +89,7 @@
         <template #header>
             <div class="modal-header m-0">
                 <h3 class="modal-title">
-                    {{ t("replay execution title") }}
+                    {{ $t("replay execution title") }}
                 </h3>
                 <KsDivider />
             </div>
@@ -87,23 +97,23 @@
 
         <div class="p-3 pt-0">
             <p class="mb-0">
-                {{ t("replay execution description") }}
+                {{ $t("replay execution description") }}
             </p>
             <KsId :value="execution.id" :shrink="false" />
 
             <h4 class="section-title">
-                {{ t("replay using") }}:
+                {{ $t("replay using") }}:
             </h4>
 
             <KsRadioGroup v-model="replayRevisionMode" class="radio-vertical">
                 <KsRadio value="original" class="radio-item">
-                    {{ t("flow revision original") }}
+                    {{ $t("flow revision original") }}
                 </KsRadio>
                 <KsRadio value="latest" class="radio-item">
-                    {{ t("flow revision latest") }}
+                    {{ $t("flow revision latest") }}
                 </KsRadio>
                 <KsRadio value="specific" class="radio-item">
-                    {{ t("flow revision specific") }}
+                    {{ $t("flow revision specific") }}
                 </KsRadio>
             </KsRadioGroup>
 
@@ -126,30 +136,30 @@
             <template v-if="hasInputs">
                 <template v-if="!taskRun">
                     <h4 class="section-title">
-                        {{ t("replay inputs") }}:
+                        {{ $t("replay inputs") }}:
                     </h4>
 
                     <KsRadioGroup v-if="canReuseInputs" v-model="inputMode" class="radio-vertical">
                         <KsRadio value="reuse" class="radio-item">
-                            {{ t("reuse original inputs") }}
+                            {{ $t("reuse original inputs") }}
                         </KsRadio>
                         <KsRadio value="modify" class="radio-item">
-                            {{ t("modify inputs") }}
+                            {{ $t("modify inputs") }}
                         </KsRadio>
                     </KsRadioGroup>
                 </template>
                 <p v-if="!canReuseInputs" class="execution-description mt-2 mb-0">
-                    {{ t("replay inputs new required") }}
+                    {{ $t("replay inputs new required") }}
                 </p>
             </template>
         </div>
 
         <template #footer>
             <KsButton @click="isOpen = false">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </KsButton>
             <KsButton type="primary" @click="handleReplayExecute">
-                {{ t("execute") }}
+                {{ $t("execute") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -163,9 +173,9 @@
     >
         <template #header>
             <span
-                v-html="t('replay the execution', {
-                    executionId: escape(execution.id),
-                    flowId: escape(execution.flowId)
+                v-html="$t('replay the execution', {
+                    executionId: escapeHtml(execution.id),
+                    flowId: escapeHtml(execution.flowId)
                 })"
             />
         </template>
@@ -181,22 +191,23 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, inject} from "vue"
-    import escape from "lodash/escape"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State} from "@kestra-io/design-system"
+    import {State, escapeHtml} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
+    import {EXECUTION_PARENT_ROUTE} from "../../../executionTabs"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
     import {KsId} from "@kestra-io/design-system"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {asItemKey} from "../../../../layout/navBarActionsContext"
+    import {splitTranslation} from "../../../../../utils/splitTranslation"
 
     defineOptions({inheritAttrs: false})
 
@@ -220,6 +231,8 @@
     const authStore = useAuthStore()
     const executionsStore = useExecutionsStore()
 
+    const SUBFLOW_TRIGGER_TYPE = "io.kestra.plugin.core.flow.Subflow"
+
     const isOpen = ref(false)
     const isReplayWithInputsOpen = ref(false)
     const revisionsSelected = ref<number | undefined>(undefined)
@@ -230,6 +243,22 @@
     const icon = computed(() => !props.isReplay ? RestartIcon : PlayBoxMultiple)
     const componentClass = computed(() => !props.isReplay ? "restart me-1" : "")
     const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart")
+
+    const parentLink = computed(() => {
+        const trigger = props.execution.trigger
+        const variables = trigger?.variables
+        if (trigger?.type !== SUBFLOW_TRIGGER_TYPE || !variables?.executionId) return undefined
+
+        return {
+            name: EXECUTION_PARENT_ROUTE,
+            params: {
+                namespace: variables.namespace,
+                flowId: variables.flowId,
+                id: variables.executionId,
+            },
+        }
+    })
+    const parentWarning = computed(() => splitTranslation(t, "restart subflow warning", "parent"))
 
     const currentFlow = ref<any | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
@@ -261,14 +290,21 @@
             .reverse(),
     )
 
+    // Split out of `enabled` so a missing permission hides the action entirely instead of
+    // rendering it disabled: a permanently dead button in the nav bar would leave the user with
+    // no reachable action at all in that slot.
+    const hasPermission = computed(() => {
+        if (!props.execution) return false
+
+        return props.isReplay
+            ? !!authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
+            : !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
+    })
+
     const enabled = computed(() => {
         if (!props.execution?.state) return false
 
-        const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
-            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
-
-        if (!hasPermission) return false
+        if (!hasPermission.value) return false
 
         if (
             props.isReplay &&
@@ -278,8 +314,9 @@
             return false
         }
 
-        const isRunning = State.isRunning(props.execution.state.current)
-        return props.isReplay ? !isRunning : props.execution.state.current === State.FAILED
+        return props.isReplay
+            ? State.isTerminated(props.execution.state.current)
+            : props.execution.state.current === State.FAILED
     })
 
     const tooltip = computed(() =>
@@ -362,16 +399,17 @@
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
             taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: revisionsSelected.value,
+            revision: props.isReplay ? revisionsSelected.value : undefined,
         })
 
-        const newExecution = response.data
+        const newExecution = response
 
-        toast.success(t("replayed"))
+        toast.success(t(props.isReplay ? "replayed" : "restarted"))
 
         if (newExecution.id !== props.execution.id) {
+            // The parent route resolves the default tab; the full page load runs the redirect.
             window.location.href = router.resolve({
-                name: "executions/update/gantt",
+                name: EXECUTION_PARENT_ROUTE,
                 params: {
                     namespace: newExecution.namespace,
                     flowId: newExecution.flowId,
@@ -420,19 +458,19 @@
         font-size: var(--ks-font-size-base);
         font-weight: 600;
         margin: 0;
-        color: var(--ks-color-text-primary);
+        color: var(--ks-text-primary);
     }
 }
 .execution-description {
     font-size: var(--ks-font-size-xs);
-    color: var(--ks-color-text-secondary);
+    color: var(--ks-text-secondary);
 }
 
 .section-title {
     font-size: var(--ks-font-size-sm);
     font-weight: 600;
     margin: 20px 0 12px 0;
-    color: var(--ks-color-text-primary);
+    color: var(--ks-text-primary);
 }
 
 .radio-vertical {
@@ -461,7 +499,7 @@
 
     :deep(.kel-radio__label) {
         font-size: var(--ks-font-size-xs);
-        color: var(--kel-text-color-regular);
+        color: var(--ks-text-primary);
         padding-left: 8px;
     }
 
@@ -479,7 +517,7 @@
         }
 
         :deep(.kel-radio__label) {
-            color: var(--kel-text-color-regular) !important;
+            color: var(--ks-text-primary) !important;
         }
     }
 }

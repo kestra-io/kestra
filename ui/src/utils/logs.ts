@@ -78,18 +78,6 @@ export function color() {
     return Object.fromEntries(LOG_LEVELS.map(level => [level, cssVar("--log-chart-" + level.toLowerCase())]))
 }
 
-export function graphColors(state: LevelKey) {
-    const COLORS = {
-        ERROR: "#AB0009",
-        WARN: "#DD5F00",
-        INFO: "#029E73",
-        DEBUG: "#1761FD",
-        TRACE: "#8405FF",
-    }
-
-    return COLORS[state]
-}
-
 export function chartColorFromLevel(level: LevelKey, alpha = 1) {
     const hex = color()[level]
     if (!hex) {

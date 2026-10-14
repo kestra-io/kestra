@@ -20,19 +20,22 @@ export function useHelpers() {
     const serverId = computed(() => route.params?.id as string | undefined)
     const isCreate = computed(() => !serverId.value)
 
+    const listRoute = computed(() => ({
+        name: String(route.name ?? "").startsWith("admin/instance/")
+            ? "admin/instance/mcp-servers"
+            : "admin/mcp-servers",
+        params: {tenant: route.params.tenant as string},
+    }))
+
     const details: Ref<Details> = computed(() => ({
         title: isCreate.value ? t("mcp.create") : (serverId.value ?? t("mcp.servers")),
         breadcrumb: [
             {
                 label: t("mcp.servers"),
-                link: {
-                    name: String(route.name ?? "").startsWith("admin/instance/")
-                        ? "admin/instance/mcp-servers"
-                        : "admin/mcp-servers",
-                },
+                link: listRoute.value,
             },
         ],
     }))
 
-    return {details, serverId, isCreate}
+    return {details, serverId, isCreate, listRoute}
 }

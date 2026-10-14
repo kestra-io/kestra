@@ -23,8 +23,8 @@ import io.kestra.core.models.dashboards.filters.StartsWith;
 import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class QueryFilterTest {
 
@@ -52,6 +52,25 @@ public class QueryFilterTest {
             () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.FLOW)
         );
         assertThat(e.getMessage()).contains("LOCKED", "FLOW");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOperationOutcomeIsFilteredWithoutOperationId() {
+        QueryFilter filter = QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value("FAILED").build();
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("OPERATION_OUTCOME", "OPERATION_ID");
+    }
+
+    @Test
+    void shouldNotThrowWhenOperationOutcomeIsFilteredWithOperationId() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(Field.OPERATION_ID).operation(Op.EQUALS).value("op-1").build(),
+            QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value("FAILED").build()
+        );
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(filters, Resource.EXECUTION));
     }
 
     @Test
@@ -176,6 +195,19 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.TRIGGER_ID, Resource.EXECUTION,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TRIGGER_ID, Resource.LOG,
                 Set.of(
                     Op.EQUALS,
@@ -218,6 +250,17 @@ public class QueryFilterTest {
                     Op.NOT_EQUALS
                 )
             ),
+
+            buildQueryFiltersForOperations(
+                Field.OPERATION_ID, Resource.EXECUTION,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            // OPERATION_OUTCOME is intentionally not exercised here: a standalone OPERATION_OUTCOME
+            // filter always fails validation (it requires a sibling OPERATION_ID leaf), so it cannot
+            // be tested through this single-field harness — see shouldNotThrowWhenOperationOutcomeIsFilteredWithOperationId.
 
             buildQueryFiltersForOperations(
                 Field.WORKER_ID, Resource.TRIGGER,
@@ -457,7 +500,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.USER,
+                Field.INSTANCE_OWNER, Resource.USER,
                 Set.of(
                     Op.EQUALS
                 )
@@ -555,7 +598,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.INVITATION,
+                Field.INSTANCE_OWNER, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS
                 )
@@ -885,6 +928,33 @@ public class QueryFilterTest {
         assertThat(e.getMessage()).contains("catastrophic backtracking");
     }
 
+    @ParameterizedTest
+    @MethodSource("invalidSyntaxRegex")
+    void shouldThrowExceptionWhenRegexSyntaxIsInvalid(String pattern) {
+        // Given a REGEX filter that is not a syntactically valid regular expression
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value(pattern)
+            .build();
+
+        // When / Then — it must be rejected before reaching any repository backend
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("is not a valid regular expression");
+        assertThat(e.getMessage()).contains(pattern);
+        assertThat(e.getMessage()).doesNotContain("catastrophic backtracking");
+    }
+
+    static Stream<Arguments> invalidSyntaxRegex() {
+        return Stream.of(
+            Arguments.of("[a-"),
+            Arguments.of("*abc")
+        );
+    }
+
     @Test
     void shouldNotThrowExceptionWhenRegexIsSafe() {
         // Given a safe REGEX filter
@@ -1112,6 +1182,42 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.CHILD_FILTER, Resource.EXECUTION,
                 Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.OPERATION_ID, Resource.EXECUTION,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.OPERATION_OUTCOME, Resource.EXECUTION,
+                Set.of(
+                    Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,
@@ -1482,7 +1588,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.SUPER_ADMIN, Resource.INVITATION,
+                Field.INSTANCE_OWNER, Resource.INVITATION,
                 Set.of(
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,

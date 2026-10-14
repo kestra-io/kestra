@@ -17,7 +17,7 @@
                 :to="{
                     name: 'docs/view',
                     params:{
-                        path:docPath
+                        path:docsRoutePath
                     }
                 }"
                 target="_blank"
@@ -42,14 +42,14 @@
                     </template>
                 </DocsLayout>
             </template>
-            <KsMarkdown v-else :content="OFFLINE_MD" class="m-3" />
+            <KsMarkdown v-else :content="OFFLINE_MD" class="offline-markdown" />
         </div>
     </ContextInfoContent>
 </template>
 
 <script setup lang="ts">
     import {ref, watch, computed, onUnmounted, onMounted} from "vue"
-    import {useDocStore} from "../../stores/doc"
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import DocsLayout from "./DocsLayout.vue"
@@ -109,6 +109,7 @@
     const pageMetadata = computed(() => docStore.pageMetadata)
     const isHomepage = computed(() => pageMetadata.value?.isHomepage === true)
     const docPath = computed(() => docStore.docPath)
+    const docsRoutePath = computed(() => docPath.value?.replace(/^docs(\/|$)/, ""))
 
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
@@ -137,7 +138,7 @@
         docStore.docPath = docHistory.value[currentHistoryIndex.value]
     }
 
-    async function setDocPageFromResponse(response: {metadata?: any, content:string}) {
+    async function setDocPageFromResponse(response: {metadata?: DocMetadata, content: string}) {
         docStore.pageMetadata = response.metadata
         let content = response.content
         if (!("canShare" in navigator)) {
@@ -173,7 +174,7 @@
     }
 
     async function refreshPage(val?: string) {
-        let response: {metadata?: any, content:string} | undefined = undefined
+        let response: {metadata?: DocMetadata, content: string} | undefined = undefined
         // if this fails to return a value, fetch the default doc
         // if nothing, fetch the home page
         if(response === undefined){
@@ -205,8 +206,8 @@
         refreshPage(val)
     }, {immediate: true})
 
-    const scrollableElement = computed(() => contextInfoRef.value?.contentRef ?? null)
-    useScrollMemory(ref("context-panel-docs"), scrollableElement as any)
+    const scrollableElement = computed<HTMLElement | null>(() => contextInfoRef.value?.contentRef ?? null)
+    useScrollMemory(ref("context-panel-docs"), scrollableElement)
 </script>
 
 <style scoped lang="scss">
@@ -232,7 +233,7 @@
         &:focus:not(.disabled) {
             background: var(--ks-bg-hover);
             border-color: var(--ks-border-strong);
-            color: var(--ks-primary);
+            color: var(--ks-text-link);
             outline: none;
         }
 
@@ -259,6 +260,10 @@
         flex-direction: column;
         gap: 1rem;
         margin-bottom: 1rem;
+    }
+
+    .offline-markdown {
+        margin: var(--ks-spacing-4);
     }
 
     .docs-toolbar {

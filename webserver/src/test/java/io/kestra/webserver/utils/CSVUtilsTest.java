@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import reactor.core.publisher.Flux;
 
 import static io.kestra.webserver.utils.CSVUtils.toCSV;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -110,6 +114,243 @@ class CSVUtilsTest {
         toCSV(outputStreamWriter, input);
 
         assertThat(byteArrayOutputStream.toString()).isEqualTo("a-header,b-header\r\na-value-1,b-value-1\r\na-value-2,b-value-2\r\n");
+    }
+
+    @Test
+    void shouldAlignValuesWithHeaderWhenRecordsHaveDifferentKeys() {
+        // Given
+        List<Map<String, Object>> input = List.of(
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-1");
+                    put("b-header", "b-value-1");
+                }
+            },
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-2");
+                    put("extra-header", "extra-value-2");
+                    put("b-header", "b-value-2");
+                }
+            }
+        );
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // When
+        toCSV(new OutputStreamWriter(byteArrayOutputStream), input);
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("a-header,b-header\r\na-value-1,b-value-1\r\na-value-2,b-value-2\r\n");
+    }
+
+    @Test
+    void shouldWriteTheProvidedHeaderWhenThereIsNoRecord() {
+        // Given
+        List<Map<String, Object>> input = List.of();
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // When
+        toCSV(new OutputStreamWriter(byteArrayOutputStream), input, List.of("a-header", "b-header"));
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("a-header,b-header\r\n");
+    }
+
+    @Test
+    void shouldKeepTheProvidedHeaderOrderRatherThanTheRecordOne() {
+        // Given
+        List<Map<String, Object>> input = List.of(
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value");
+                    put("b-header", "b-value");
+                }
+            }
+        );
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // When
+        toCSV(new OutputStreamWriter(byteArrayOutputStream), input, List.of("b-header", "a-header"));
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("b-header,a-header\r\nb-value,a-value\r\n");
+    }
+
+    @Test
+    void shouldAlignValuesWithTheProvidedHeaderWhenRecordsHaveDifferentKeys() {
+        // Given
+        List<Map<String, Object>> input = List.of(
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-1");
+                    put("extra-header", "extra-value-1");
+                    put("b-header", "b-value-1");
+                }
+            },
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-2");
+                }
+            }
+        );
+
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+
+        // When
+        toCSV(new OutputStreamWriter(byteArrayOutputStream), input, List.of("a-header", "b-header"));
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("a-header,b-header\r\na-value-1,b-value-1\r\na-value-2,\r\n");
+    }
+
+    @Test
+    void shouldEmitNothingWhenThereIsNoRecord() {
+        // Given
+        Flux<Map<String, Object>> input = Flux.empty();
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv).isEmpty();
+    }
+
+    @Test
+    void shouldEmitOneLinePerRecordPlusHeader() {
+        // Given
+        Flux<Map<String, Object>> input = Flux.range(1, 43)
+            .map(i -> Map.of("id", (Object) ("execution-" + i)));
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv.split("\r\n")).hasSize(44);
+    }
+
+    @Test
+    void shouldQuoteValueWhenItContainsACarriageReturn() {
+        // Given
+        Flux<Map<String, Object>> input = Flux.just(
+            Map.of("id", (Object) "execution-1"),
+            Map.of("id", (Object) "execution\r-2"),
+            Map.of("id", (Object) "execution-3")
+        );
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv).isEqualTo("id\r\nexecution-1\r\n\"execution\r-2\"\r\nexecution-3\r\n");
+        assertThat(csv.split("\r\n")).hasSize(4);
+    }
+
+    @Test
+    void shouldQuoteValueWhenItContainsASeparatorAQuoteOrALineFeed() {
+        // Given
+        Flux<Map<String, Object>> input = Flux.just(
+            new LinkedHashMap<>() {
+                {
+                    put("separator", "a,b");
+                    put("quote", "a\"b");
+                    put("lineFeed", "a\nb");
+                }
+            }
+        );
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv).isEqualTo("separator,quote,lineFeed\r\n\"a,b\",\"a\"\"b\",\"a\nb\"\r\n");
+    }
+
+    @Test
+    void shouldAlignStreamedValuesWithHeaderWhenRecordsHaveDifferentKeys() {
+        // Given
+        Flux<Map<String, Object>> input = Flux.just(
+            new LinkedHashMap<>() {
+                {
+                    put("a-header", "a-value-1");
+                    put("b-header", "b-value-1");
+                }
+            },
+            new LinkedHashMap<>() {
+                {
+                    put("b-header", "b-value-2");
+                }
+            }
+        );
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv).isEqualTo("a-header,b-header\r\na-value-1,b-value-1\r\n,b-value-2\r\n");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"=", "+", "-", "@", "\t", "\r"})
+    void shouldPrefixStringWithQuoteWhenItStartsWithAFormulaCharacter(String leading) {
+        // Given
+        Flux<Map<String, Object>> input = Flux.just(Map.of("description", (Object) (leading + "value")));
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv).contains("'" + leading + "value");
+    }
+
+    @Test
+    void shouldPrefixStringWhenItStartsWithAFormulaCharacterInTheBatchWriter() {
+        // Given
+        var byteArrayOutputStream = new ByteArrayOutputStream();
+        var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream);
+
+        // When
+        toCSV(outputStreamWriter, List.of(Map.of("description", (Object) "=HYPERLINK(\"https://attacker.example/\")")));
+
+        // Then
+        assertThat(byteArrayOutputStream.toString()).isEqualTo("description\r\n\"'=HYPERLINK(\"\"https://attacker.example/\"\")\"\r\n");
+    }
+
+    @Test
+    void shouldNotPrefixNegativeNumbers() {
+        // Given
+        Flux<Map<String, Object>> input = Flux.just(
+            new LinkedHashMap<>() {
+                {
+                    put("int", -5);
+                    put("double", -1.5);
+                }
+            }
+        );
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv).isEqualTo("int,double\r\n-5,-1.5\r\n");
+    }
+
+    @Test
+    void shouldNotPrefixStringWhenFormulaCharacterIsNotLeading() {
+        // Given
+        Flux<Map<String, Object>> input = Flux.just(Map.of("description", (Object) "a=b-c@d"));
+
+        // When
+        String csv = toCSVString(input);
+
+        // Then
+        assertThat(csv).isEqualTo("description\r\na=b-c@d\r\n");
+    }
+
+    private static String toCSVString(Flux<Map<String, Object>> records) {
+        return String.join("", CSVUtils.toCSVFlux(records).collectList().block());
     }
 
     // TODO test in prod if missing data is actually a problem or not (next executions sometimes not having 'nextExec' field)

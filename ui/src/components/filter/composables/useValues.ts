@@ -134,6 +134,18 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("filter.triggerState.enabled"), value: "enabled"},
         {label: t("filter.triggerState.disabled"), value: "disabled"},
     ],
+        // Stringified booleans: the filter query serializer calls `toString()` on the value, and the
+        // backend parses it back with `Boolean.parseBoolean`.
+        TRIGGER_LOCK_STATES: [
+            {label: t("filter.triggerLocked.locked"), value: "true"},
+            {label: t("filter.triggerLocked.unlocked"), value: "false"},
+        ],
+        // Mirrors the scheduler's TriggerType enum, exposed by the trigger API as `state.kind`.
+        TRIGGER_KINDS: [
+            {label: t("filter.triggerKind.schedule"), value: "SCHEDULE"},
+            {label: t("filter.triggerKind.polling"), value: "POLLING"},
+            {label: t("filter.triggerKind.realtime"), value: "REALTIME"},
+        ],
     }
 
     return {VALUES, getRelativeDateLabel}

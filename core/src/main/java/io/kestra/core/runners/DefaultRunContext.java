@@ -306,6 +306,12 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public Object renderTyped(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.renderTyped(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
+    }
+
+    @Override
     public <T> RunContextProperty<T> render(Property<T> inline) {
         return new RunContextProperty<>(inline, this);
     }

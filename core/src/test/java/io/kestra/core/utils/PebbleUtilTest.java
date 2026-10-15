@@ -60,6 +60,18 @@ class PebbleUtilTest {
         assertThat(PebbleUtil.endsWithClosingBlockDelimiter(value)).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "{{ expr }}", "{{ {'key': 'value'} }}" })
+    void isSingleExpressionReturnsTrue(String value) {
+        assertThat(PebbleUtil.isSingleExpression(value)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "plain-text", "prefix {{ expr }}", "{{ expr }} suffix", "{{ first }} or {{ second }}", "{% if true %}{{ expr }}{% endif %}" })
+    void isSingleExpressionReturnsFalse(String value) {
+        assertThat(PebbleUtil.isSingleExpression(value)).isFalse();
+    }
+
     @Test
     void replaceInBlockTransformsPrintAndExecuteBlocks() {
         String result = PebbleUtil.replaceInBlock(

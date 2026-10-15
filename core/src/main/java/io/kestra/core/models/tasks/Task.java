@@ -180,7 +180,7 @@ abstract public class Task implements TaskInterface {
 
     // a flowable's own retry is spent on its failed children or, with RETRY_FLOWABLE, restarts it before it can stay FAILED
     @JsonIgnore
-    public boolean isRetriedOnFailure() {
+    public boolean shouldRetryOnFailure() {
         return this instanceof RunnableTask || this instanceof Subflow;
     }
 

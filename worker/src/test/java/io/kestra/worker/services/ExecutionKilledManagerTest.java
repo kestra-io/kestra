@@ -338,6 +338,45 @@ class ExecutionKilledManagerTest {
         assertThat(killed.get()).isFalse();
     }
 
+    @Test
+    void shouldApplyPendingTriggerKillOnLateRegisterForSameDispatchEpoch() {
+        // Given: the kill arrives before the worker registers the trigger it was issued for
+        manager.onKillReceived(killTrigger("ns", "flow-1", "trigger-1", 3L));
+
+        // When
+        AtomicReference<State.Type> reportedState = new AtomicReference<>();
+        manager.register("job-1", createMockWorkerTrigger("ns", "flow-1", "trigger-1", null, 3L), reportedState::set);
+
+        // Then
+        assertThat(reportedState.get()).isEqualTo(State.Type.KILLED);
+    }
+
+    @Test
+    void shouldNotApplyPendingTriggerKillToANewerDispatch() {
+        // Given: a pending kill issued for an earlier dispatch of the same trigger
+        manager.onKillReceived(killTrigger("ns", "flow-1", "trigger-1", 3L));
+
+        // When
+        AtomicBoolean killed = new AtomicBoolean(false);
+        manager.register("job-1", createMockWorkerTrigger("ns", "flow-1", "trigger-1", null, 4L), state -> killed.set(true));
+
+        // Then
+        assertThat(killed.get()).isFalse();
+    }
+
+    @Test
+    void shouldNotRetainTriggerKillWithoutDispatchEpoch() {
+        // Given
+        manager.onKillReceived(killTrigger("ns", "flow-1", "trigger-1", null));
+
+        // When
+        AtomicBoolean killed = new AtomicBoolean(false);
+        manager.register("job-1", createMockWorkerTrigger("ns", "flow-1", "trigger-1", null, 0L), state -> killed.set(true));
+
+        // Then
+        assertThat(killed.get()).isFalse();
+    }
+
     // --- Mixed scenarios ---
 
     @Test
@@ -521,7 +560,20 @@ class ExecutionKilledManagerTest {
         return workerTask;
     }
 
+    private static ExecutionKilledTrigger killTrigger(String namespace, String flowId, String triggerId, Long dispatchEpoch) {
+        return ExecutionKilledTrigger.builder()
+            .namespace(namespace)
+            .flowId(flowId)
+            .triggerId(triggerId)
+            .dispatchEpoch(dispatchEpoch)
+            .build();
+    }
+
     private static WorkerTrigger createMockWorkerTrigger(String namespace, String flowId, String triggerId, String tenantId) {
+        return createMockWorkerTrigger(namespace, flowId, triggerId, tenantId, 0L);
+    }
+
+    private static WorkerTrigger createMockWorkerTrigger(String namespace, String flowId, String triggerId, String tenantId, long dispatchEpoch) {
         AbstractTrigger trigger = mock(AbstractTrigger.class);
         when(trigger.getId()).thenReturn(triggerId);
 
@@ -534,7 +586,8 @@ class ExecutionKilledManagerTest {
         when(workerTrigger.getTrigger()).thenReturn(trigger);
         when(workerTrigger.getData()).thenReturn(data);
         when(workerTrigger.triggerId()).thenReturn(TriggerId.of(tenantId, namespace, flowId, triggerId));
-        when(workerTrigger.uid()).thenReturn("trigger-" + namespace + "-" + flowId + "-" + triggerId);
+        when(workerTrigger.uid()).thenReturn(TriggerId.of(tenantId, namespace, flowId, triggerId).uid());
+        when(workerTrigger.getDispatchEpoch()).thenReturn(dispatchEpoch);
         return workerTrigger;
     }
 }

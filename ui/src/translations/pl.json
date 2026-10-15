@@ -291,7 +291,46 @@
       "help": "Pomoc",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Daj nam gwiazdkę"
+      "star": "Daj nam gwiazdkę",
+      "notifications": "Powiadomienia"
+    },
+    "notifications": {
+      "heading": "Powiadomienia",
+      "ongoing": "W toku",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Zabijanie wykonań: {count}",
+          "EXECUTION_PAUSE": "Wstrzymywanie wykonań: {count}",
+          "EXECUTION_RESUME": "Wznawianie wykonań: {count}",
+          "EXECUTION_RESTART": "Ponowne uruchamianie wykonań: {count}",
+          "EXECUTION_REPLAY": "Powtarzanie wykonań: {count}",
+          "EXECUTION_FORCE_RUN": "Wymuszanie uruchomienia wykonań: {count}",
+          "EXECUTION_UNQUEUE": "Usuwanie wykonań z kolejki: {count}",
+          "EXECUTION_CHANGE_STATUS": "Zmiana statusu wykonań: {count}",
+          "EXECUTION_SET_LABELS": "Ustawianie labels dla wykonań: {count}",
+          "TRIGGER_UNLOCK": "Odblokowywanie Triggerów: {count}",
+          "TRIGGER_DELETE": "Usuwanie Triggerów: {count}",
+          "TRIGGER_DISABLE": "Wyłączanie Triggerów: {count}",
+          "TRIGGER_ENABLE": "Włączanie Triggerów: {count}",
+          "BACKFILL_PAUSE": "Wstrzymywanie Backfilli: {count}",
+          "BACKFILL_RESUME": "Wznawianie Backfilli: {count}",
+          "BACKFILL_DELETE": "Usuwanie Backfilli: {count}"
+        },
+        "processed": "Przetworzone: {count}",
+        "rejected": "Odrzucone: {count}",
+        "elapsed": "trwa od {duration}"
+      },
+      "markAllRead": "Oznacz wszystkie jako przeczytane",
+      "markUnread": "Oznacz jako nieprzeczytane",
+      "markRead": "Oznacz jako przeczytane",
+      "empty": "Brak powiadomień",
+      "emptyUnread": "Brak nieprzeczytanych powiadomień",
+      "tabs": {
+        "all": "Wszystkie",
+        "unread": "Nieprzeczytane"
+      },
+      "bellAriaLabel": "Powiadomienia",
+      "bellAriaLabelRunning": "Powiadomienia, operacje w toku"
     },
     "source": "Źródło",
     "home": "Strona główna",
@@ -348,7 +387,8 @@
     "yes": "Tak",
     "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
-    "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
+    "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska {task} w egzekucji {id}?",
+    "change state confirm restart": "Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
     "interrupt": "Przerwij",
     "interrupt confirm": "Czy na pewno chcesz przerwać Task Run dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Spowoduje to zakończenie uruchomionego Taska w Workerze i ustawienie jego stanu.",
     "interrupt done": "Uruchomienie Taska zostało przerwane",
@@ -387,8 +427,22 @@
     "modify inputs": "Zmień Inputy",
     "replay inputs new required": "Ta wersja ma Inputy. Zostaniesz poproszony o ich wypełnienie.",
     "replay select taskrun": "Wybierz Task Run, od którego ma zacząć się Replay:",
+    "replayCheck": {
+      "checking": "Sprawdzanie, czy wersja {revision} może zostać odtworzona z Taska {taskId}.",
+      "valid_title": "Wersja {revision} może zostać ponownie uruchomiona z Taska {taskId}.",
+      "valid_description": "Zadania poprzedzające są niezmienione, więc ich outputy są ponownie używane. Replay na innej wersji nigdy nie jest w pełni deterministyczny: sekrety, inputy plików i wyrażenia wywołujące systemy zewnętrzne mogą zwrócić coś innego niż oryginalne uruchomienie.",
+      "refused_title": "Wersja {revision} nie może zostać odtworzona z Taska {taskId}.",
+      "refused_description": "Zadanie, input lub zmienna, której wynik miałby zostać ponownie użyty, jest zdefiniowana inaczej w tej wersji.",
+      "error_title": "Nie można sprawdzić, czy wersja {revision} może zostać odtworzona z Taska {taskId}.",
+      "error_description": "Nadal możesz uruchomić Replay. Serwer stosuje te same zasady, gdy Replay się rozpoczyna i odrzuca je, jeśli wersja jest niekompatybilna.",
+      "whole_action": "Zamiast tego powtórz całą egzekucję",
+      "whole_title": "Wersja {revision} może zostać ponownie uruchomiona jako cała egzekucja.",
+      "whole_description": "Nie są ponownie używane wcześniejsze wyniki, więc każde Task uruchamia się ponownie w wersji {revision}. Oryginalna egzekucja jest zachowana i połączona.",
+      "confirm_from_task": "Replay z Taska",
+      "confirm_whole": "Odtwórz całą egzekucję"
+    },
     "change execution state done": "Status egzekucji zaktualizowany",
-    "mark as": "Oznacz jako <code>{status}</code>",
+    "mark as": "Oznacz jako {status}",
     "unqueue as": "Usuń z kolejki jako <code>{status}</code>",
     "kill": "Zabij",
     "kill parents and subflow": "Zabij bieżącą egzekucję i Subflowy",
@@ -484,6 +538,7 @@
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",
+      "expression": "Wyrażenie",
       "tree": "Drzewo",
       "raw_json": "Surowy JSON",
       "select_prompt": "Wybierz zmienną, aby sprawdzić jej Value.",
@@ -627,6 +682,15 @@
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
+      "format": "Format",
+      "max_items": "Maksymalna liczba elementów",
+      "max_length": "Maksymalna długość",
+      "maximum": "Maksimum",
+      "min_items": "Min elementów",
+      "min_length": "Min długość",
+      "minimum": "Min",
+      "unit": "Jednostka",
+      "validation_regexp": "RegExp walidacji",
       "possible_values": "Możliwe wartości",
       "sub_type": "Podtyp",
       "required": "Wymagane"
@@ -974,7 +1038,6 @@
     "warning detected": "Wykryto ostrzeżenie(-a).",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
-    "dependency task": "Task {taskId} jest zależnością innego Taska",
     "admin": "Administrator",
     "main_configuration": "Główna konfiguracja",
     "commit_id": "Id commit",
@@ -1712,10 +1775,18 @@
     "item": "element",
     "items": "elementy",
     "iterations": "Iteracje",
+    "loop_iterations_notice": {
+      "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",
+      "outputs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich outputy nie są tutaj wyświetlane.",
+      "metrics": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich metryki nie są tutaj wyświetlane.",
+      "view_iterations": "Wyświetl iteracje"
+    },
     "cron": "Cron",
     "execution_started": "Egzekucja została uruchomiona!",
     "execution_failed": "Egzekucja nie powiodła się!",
     "last error was": "Ostatni błąd to",
+    "execution_paused": "Egzekucja wstrzymana",
+    "execution_paused_description": "Ta egzekucja oczekuje na walidację i wznowienie.",
     "active": "Aktywny",
     "flows imported": "Zaimportowano Flowy",
     "flows not imported": "Flowy niezaimportowane",
@@ -2013,6 +2084,7 @@
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"
       },
+      "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
       "show_all_statuses": "Pokaż wszystkie statusy",
       "quick_filters": {
         "all": "Wszystkie",
@@ -2264,7 +2336,18 @@
           "issues": "{n} stałych",
           "failed": "{n} niepowodzenie",
           "last_run": "ostatnie uruchomienie {ago}",
-          "unknown": "{n} nieśledzonych"
+          "unknown": "{n} nieśledzonych",
+          "tests_failed": "{n} z nieudanymi testami"
+        },
+        "tests": {
+          "pass": "{count} test | {count} testy | {count} testów",
+          "warn": "{count} test · ostrzeżenie | {count} testy · ostrzeżenia | {count} testów · ostrzeżeń",
+          "fail": "{failed}/{total} niepowodzeń",
+          "tooltip": {
+            "pass": "{count} test dbt przeszedł | Wszystkie {count} testy dbt przeszły",
+            "warn": "{count} test dbt zakończony z ostrzeżeniami | {count} testy dbt zakończone z ostrzeżeniami | {count} testów dbt zakończonych z ostrzeżeniami",
+            "fail": "Test dbt nie powiódł się | {failed} z {total} testów dbt nie powiodło się | {failed} z {total} testów dbt nie powiodło się"
+          }
         },
         "recent_runs": "Ostatnie uruchomienia",
         "group_by": "Grupuj według",
@@ -2712,8 +2795,8 @@
       "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
     },
     "blocks": "Bloki",
-    "split_horizontal": "Podziel w poziomie",
-    "split_vertical": "Podziel pionowo",
+    "move_panel_to_bottom": "Przenieś panel na dół",
+    "move_panel_to_side": "Przenieś panel na bok",
     "pwa": {
       "install_title": "Zainstaluj Kestrę",
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
@@ -2722,6 +2805,7 @@
     },
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
-    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
+    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
+    "not started": "Nierozpoczęte"
   }
 }

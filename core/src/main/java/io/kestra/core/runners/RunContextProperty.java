@@ -70,7 +70,6 @@ public class RunContextProperty<T> {
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     public Optional<T> as(Class<T> clazz) throws IllegalVariableEvaluationException {
         var as = Optional.ofNullable(getProperty())
@@ -86,7 +85,6 @@ public class RunContextProperty<T> {
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     public Optional<T> as(Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         var as = Optional.ofNullable(getProperty())
@@ -103,7 +101,6 @@ public class RunContextProperty<T> {
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     @SuppressWarnings("unchecked")
     public <I> T asList(Class<I> itemClazz) throws IllegalVariableEvaluationException {
@@ -122,7 +119,6 @@ public class RunContextProperty<T> {
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     @SuppressWarnings("unchecked")
     public <I> T asList(Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -141,7 +137,6 @@ public class RunContextProperty<T> {
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     @SuppressWarnings("unchecked")
     public <K, V> T asMap(Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
@@ -160,7 +155,6 @@ public class RunContextProperty<T> {
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
      */
     @SuppressWarnings("unchecked")
     public <K, V> T asMap(Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {

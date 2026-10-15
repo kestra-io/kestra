@@ -1,11 +1,14 @@
 package io.kestra.core.scheduler.vnodes;
 
 import io.kestra.core.lock.LockService;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.server.ServiceLivenessStore;
+import io.kestra.core.server.ServiceType;
+import io.kestra.core.vnodes.BroadcastVNodesAssignmentChannel;
 import io.kestra.core.vnodes.VNodeController;
 import io.kestra.core.vnodes.VNodesAssigner;
+import io.kestra.core.vnodes.VNodesAssignmentEvent;
 import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
 import io.kestra.core.vnodes.internals.StaticVNodesAssigner;
 
@@ -24,12 +27,12 @@ public class SchedulerVNodesFactory {
     @Bean(preDestroy = "close")
     public VNodeController schedulerVNodeController(LockService lockService,
         ServiceLivenessStore serviceLivenessStore,
-        SchedulerEventQueue schedulerEventQueue,
+        BroadcastQueueInterface<VNodesAssignmentEvent> vNodesAssignmentEventQueue,
         SchedulerConfiguration schedulerConfiguration) {
         return new VNodeController(
             lockService,
             serviceLivenessStore,
-            new SchedulerVNodesAssignmentChannel(schedulerEventQueue),
+            schedulerChannel(vNodesAssignmentEventQueue),
             schedulerConfiguration.vnodes(),
             schedulerConfiguration.vnodesRebalanceTimeout()
         );
@@ -38,8 +41,8 @@ public class SchedulerVNodesFactory {
     @Singleton
     @Requires(property = "kestra.server-type")
     @Bean(preDestroy = "stop")
-    public DefaultVNodesAssigner schedulerVNodesAssigner(SchedulerEventQueue schedulerEventQueue) {
-        DefaultVNodesAssigner assigner = new DefaultVNodesAssigner(new SchedulerVNodesAssignmentChannel(schedulerEventQueue));
+    public DefaultVNodesAssigner schedulerVNodesAssigner(BroadcastQueueInterface<VNodesAssignmentEvent> vNodesAssignmentEventQueue) {
+        DefaultVNodesAssigner assigner = new DefaultVNodesAssigner(schedulerChannel(vNodesAssignmentEventQueue));
         assigner.start();
         return assigner;
     }
@@ -48,5 +51,9 @@ public class SchedulerVNodesFactory {
     @Requires(missingBeans = VNodesAssigner.class)
     public StaticVNodesAssigner staticSchedulerVNodesAssigner(SchedulerConfiguration schedulerConfiguration) {
         return new StaticVNodesAssigner(schedulerConfiguration.vnodes());
+    }
+
+    private static BroadcastVNodesAssignmentChannel schedulerChannel(BroadcastQueueInterface<VNodesAssignmentEvent> queue) {
+        return new BroadcastVNodesAssignmentChannel(queue, ServiceType.SCHEDULER, "controller");
     }
 }

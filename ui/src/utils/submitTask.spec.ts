@@ -21,7 +21,7 @@ vi.mock("../stores/executions", () => ({
 
 const routerPush = vi.fn()
 const toastSuccess = vi.fn()
-const t = vi.fn((key: string, params?: Record<string, any>) => params?.name ? `${key}: ${params.name}` : key)
+const t = vi.fn((key: string, params?: Record<string, unknown>) => params?.name ? `${key}: ${String(params.name)}` : key)
 
 const submitor: Parameters<typeof executeTask>[0] = {
     $router: {push: routerPush} as unknown as Parameters<typeof executeTask>[0]["$router"],
@@ -37,7 +37,7 @@ const baseFlow: Flow = {
     inputs: [],
 } as unknown as Flow
 
-const baseOptions = {
+const baseOptions: Parameters<typeof executeTask>[3] = {
     namespace: "test-namespace",
     id: "test-flow",
 }
@@ -79,7 +79,7 @@ describe("executeTask", () => {
             ],
         } as unknown as Flow
 
-        const values = {
+        const values: Record<string, unknown> = {
             datetimeInput: "2024-01-15T10:30:45.000Z",
             dateInput: "2024-01-15",
             timeInput: "2024-01-15T10:30:45",

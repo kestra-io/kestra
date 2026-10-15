@@ -23,7 +23,7 @@
             <KsCard>
                 <KsEditor
                     v-bind="editorBindings"
-                    class="position-relative"
+                    class="editor-container"
                     lang="yaml"
                     readOnly
                     inline
@@ -143,5 +143,9 @@
             background: var(--ks-bg-surface);
             box-shadow: 0 2px 8px 0 var(--ks-shadow-surface);
         }
+    }
+
+    .editor-container {
+        position: relative;
     }
 </style>

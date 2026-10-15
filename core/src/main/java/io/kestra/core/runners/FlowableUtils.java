@@ -572,15 +572,7 @@ public class FlowableUtils {
     public static Pair<List<String>, Long> readLoopValuesFromUri(RunContext runContext, String uri, long offset, int count) throws IOException, IllegalVariableEvaluationException {
         try (var is = new BufferedInputStream(URIFetcher.of(uri).fetch(runContext), FileSerde.BUFFER_SIZE)) {
             List<String> result = new ArrayList<>(count);
-            long[] index = { 0 };
-            int maxLines = (int) Math.min(Integer.MAX_VALUE, offset + count);
-            FileSerde.read(is, maxLines, throwConsumer(record ->
-            {
-                if (index[0] >= offset && result.size() < count) {
-                    result.add(ionValueToString(record));
-                }
-                index[0]++;
-            }));
+            FileSerde.read(is, offset, count, throwConsumer(record -> result.add(ionValueToString(record))));
             return Pair.of(result, offset + result.size());
         }
     }

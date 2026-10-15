@@ -15,6 +15,11 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
 
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.serializers.YamlParser;
+
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,5 +91,18 @@ class AllowFailureTest {
         assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("local-error").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("1-2-todo").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    void shouldParseDocumentationExamples() {
+        Plugin plugin = AllowFailure.class.getAnnotation(Plugin.class);
+        assertThat(plugin).isNotNull();
+        for (Example example : plugin.examples()) {
+            if (example.full()) {
+                Flow flow = YamlParser.parse(example.code(), Flow.class);
+                assertThat(flow).isNotNull();
+                assertThat(flow.getId()).isEqualTo("allow-failure-demo");
+            }
+        }
     }
 }

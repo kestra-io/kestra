@@ -683,6 +683,7 @@
       "nav_properties": "プロパティ",
       "non_dynamic": "非動的",
       "format": "フォーマット",
+      "internal_storage_uri_hint": "Pebble式で内部Storage URIを参照します (例: {example})。",
       "max_items": "最大項目数",
       "max_length": "最大長",
       "maximum": "最大",

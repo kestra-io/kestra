@@ -683,6 +683,7 @@
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
       "format": "Format",
+      "internal_storage_uri_hint": "Wyrażenie Pebble odwołujące się do URI pamięci masowej wewnętrznej, np. {example}.",
       "max_items": "Maksymalna liczba elementów",
       "max_length": "Maksymalna długość",
       "maximum": "Maksimum",

@@ -683,6 +683,7 @@
       "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
       "format": "फ़ॉर्मेट",
+      "internal_storage_uri_hint": "Pebble एक्सप्रेशन जो एक इंटरनल Storage URI को संदर्भित करता है, जैसे {example}।",
       "max_items": "अधिकतम आइटम",
       "max_length": "अधिकतम लंबाई",
       "maximum": "अधिकतम",

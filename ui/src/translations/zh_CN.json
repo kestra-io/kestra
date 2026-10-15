@@ -683,6 +683,7 @@
       "nav_properties": "属性",
       "non_dynamic": "非动态",
       "format": "格式",
+      "internal_storage_uri_hint": "Pebble 表达式引用内部 Storage URI，例如 {example}。",
       "max_items": "最大项目数",
       "max_length": "最大长度",
       "maximum": "最大值",

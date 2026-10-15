@@ -199,8 +199,8 @@ public class TriggerScheduler {
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);
                     }
-                } else if (trigger instanceof Schedulable schedulableTrigger) {
-                    // we recompute the Schedule nextExecutionDate if needed
+                } else if (trigger instanceof Schedulable schedulableTrigger && triggerState.getBackfill() == null) {
+                    // A running backfill is left untouched: recomputing the next evaluation date would drop its remaining range.
                     RunContext runContext = runContextFactory.of(flow, trigger);
 
                     ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);

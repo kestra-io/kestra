@@ -7,34 +7,11 @@ import {API_URL} from "./api"
 import InitialFlowSchema from "./flow-schema.json" with {type: "json"}
 import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type PluginIconMap} from "../utils/pluginUtils"
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type PluginArtifact, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
+import {handledIf} from "../utils/kestraHttp"
 
-/** Mirrors io.kestra.core.plugins.PluginInstallJob */
-export interface PluginArtifact {
-    groupId: string;
-    artifactId: string;
-    extension: string;
-    classifier: string | null;
-    version: string;
-}
-
-export interface ArtifactProgress {
-    resource: string;
-    transferred: number;
-    total: number;
-    state: "STARTED" | "PROGRESSING" | "SUCCEEDED" | "FAILED";
-}
-
-export interface PluginInstallJob {
-    id: string;
-    status: "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED";
-    artifacts: PluginArtifact[];
-    progress: Record<string, ArtifactProgress>;
-    startedAt: string | null;
-    finishedAt: string | null;
-    error: string | null;
-}
+export type {PluginArtifact, PluginInstallJob, PluginInstallJobArtifactProgress as ArtifactProgress} from "@kestra-io/kestra-sdk"
 
 export interface PluginAutoInstallDetectResult {
     enabled: boolean;
@@ -49,7 +26,7 @@ export interface PluginComponent {
     deprecated?: boolean;
     version?: string;
     description?: string;
-    properties?: Record<string, any>;
+    properties?: Record<string, unknown>;
     schema: JSONSchema;
     markdown?: string;
 }
@@ -80,11 +57,22 @@ interface LoadOptions {
     hash?: number;
 }
 
-interface JsonSchemaDef {
-    $ref?: string,
-    allOf?: JsonSchemaDef[],
-    type?: string,
-    properties?: Record<string, any>,
+export interface JsonSchemaDef {
+    [key: string]: unknown;
+    $ref?: string;
+    allOf?: JsonSchemaDef[];
+    anyOf?: JsonSchemaDef[];
+    oneOf?: JsonSchemaDef[];
+    type?: string;
+    required?: string[];
+    items?: JsonSchemaDef;
+    properties?: Record<string, JsonSchemaDef>;
+    definitions?: Record<string, JsonSchemaDef>;
+}
+
+export interface RootJsonSchema extends JsonSchemaDef {
+    $ref: string;
+    definitions: Record<string, JsonSchemaDef>;
 }
 
 export function removeRefPrefix(refStr?: string): string {
@@ -243,15 +231,15 @@ export const usePluginsStore = defineStore("plugins", () => {
     const axios = useClient()
 
     const plugin = ref<PluginComponent>()
-    const versions = ref<string[]>()
+    const versions = ref<Record<string, string[]>>({})
     const plugins = ref<Plugin[]>()
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const schemaType = ref<Record<string, any>>()
+    const schemaType = ref<Record<string, RootJsonSchema>>()
     const forceIncludeProperties = ref<string[]>()
 
-    const flowSchema = computed(() => {
+    const flowSchema = computed<RootJsonSchema>(() => {
         return schemaType.value?.flow ?? InitialFlowSchema
     })
     const flowDefinitions = computed(() => {
@@ -284,7 +272,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             return flowDefinitions.value?.[removeRefPrefix(obj.$ref)]
         }
         if (obj?.allOf) {
-            const def = obj.allOf.reduce((acc: any, item) => {
+            const def = obj.allOf.reduce<JsonSchemaDef>((acc, item) => {
                 if (item.$ref) {
                     const resolved = toRaw(flowDefinitions.value?.[removeRefPrefix(item.$ref)])
                     if (resolved?.type === "object" && resolved?.properties) {
@@ -358,7 +346,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         })
     }
 
-    async function listWithSubgroup(_options?: Record<string, any>) {
+    async function listWithSubgroup() {
         const response = await PluginsAPI.pluginBySubgroups() as Plugin[]
         plugins.value = response
         return response
@@ -368,7 +356,7 @@ export const usePluginsStore = defineStore("plugins", () => {
     async function ensurePlugins(): Promise<Plugin[]> {
         if (plugins.value) return plugins.value
         if (pluginsPending) return pluginsPending
-        pluginsPending = listWithSubgroup({includeDeprecated: false}).finally(() => {
+        pluginsPending = listWithSubgroup().finally(() => {
             pluginsPending = null
         })
         return pluginsPending
@@ -393,13 +381,15 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc
         }
 
-        // A 404 is a normal outcome here (e.g. as-you-type documentation for a not-yet-installed
-        // catalog type) — every caller handles it locally, so it must not raise the shared HTTP
-        // client's error toast.
-        const requestOptions = {ignoreNotFound: true} as Parameters<typeof PluginsAPI.pluginDocumentation>[1]
-        const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, requestOptions)) as PluginComponent
+        let data: PluginComponent
+        try {
+            data = (options.version
+                ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
+                : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
+        } catch (e: unknown) {
+            handledIf(e, [404])
+            throw e
+        }
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data
@@ -412,8 +402,9 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     async function loadVersions(options: {cls: string; commit?: boolean}): Promise<{type: string, versions: string[]}> {
         const data = await PluginsAPI.pluginVersions({cls: options.cls}) as {type: string, versions: string[]}
+        
         if (options.commit !== false) {
-            versions.value = data.versions
+            versions.value[options.cls] = data.versions
         }
 
         return data
@@ -429,9 +420,10 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     function loadSchemaType(options: {type: string}) {
         return PluginsAPI.schemasFromType({type: options.type as Parameters<typeof PluginsAPI.schemasFromType>[0]["type"]}).then(data => {
+            const schema = data as RootJsonSchema
             schemaType.value = schemaType.value || {}
-            schemaType.value[options.type] = data
-            return data
+            schemaType.value[options.type] = schema
+            return schema
         })
     }
 
@@ -484,6 +476,10 @@ export const usePluginsStore = defineStore("plugins", () => {
             // catalog-only type: no local doc until the plugin is actually installed
             editorPlugin.value = undefined
             currentlyLoading = undefined
+            return
+        }
+
+        if (currentlyLoading?.cls !== cls || currentlyLoading?.version !== version) {
             return
         }
 
@@ -553,37 +549,42 @@ export const usePluginsStore = defineStore("plugins", () => {
         return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
     }
 
-    // Auto-install requests are best-effort and handled locally by their callers: a 403 (feature
-    // disabled) or a 404 (job evicted while the install toast is still polling) must never stack the
-    // shared HTTP client's own error toast on top of it.
-    const silentRequest = {ignoreNotFound: true, showMessageOnError: false}
-
     async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {
-        const response = await axios.post<PluginAutoInstallDetectResult>(
-            `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
-            flowYaml,
-            {headers: {"Content-Type": "text/plain"}, ...silentRequest},
-        )
-        return response.data
+        try {
+            const response = await axios.post<PluginAutoInstallDetectResult>(
+                `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
+                flowYaml,
+                {headers: {"Content-Type": "text/plain"}},
+            )
+            return response.data
+        } catch (e: unknown) {
+            handledIf(e, [403, 404])
+            throw e
+        }
     }
 
     async function startInstall(artifacts: PluginArtifact[]): Promise<PluginInstallJob> {
-        const response = await axios.post<PluginInstallJob>(
-            `${apiUrlWithoutTenants()}/plugins/install`,
-            artifacts,
-            silentRequest,
-        )
-        return response.data
+        try {
+            const response = await axios.post<PluginInstallJob>(
+                `${apiUrlWithoutTenants()}/plugins/install`,
+                artifacts,
+            )
+            return response.data
+        } catch (e: unknown) {
+            handledIf(e, [403, 404])
+            throw e
+        }
     }
 
     async function getInstallJob(jobId: string): Promise<PluginInstallJob | null> {
         try {
             const response = await axios.get<PluginInstallJob>(
                 `${apiUrlWithoutTenants()}/plugins/install/${jobId}`,
-                silentRequest,
             )
             return response.data
-        } catch {
+        } catch (error: unknown) {
+            // The install toast counts a null as one failed poll and gives up after a few.
+            handledIf(error, [403, 404])
             return null
         }
     }

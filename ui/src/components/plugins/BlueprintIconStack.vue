@@ -16,13 +16,13 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
-    import TaskIcon from "./TaskIcon.vue"
+    import TaskIcon, {type TaskIconData} from "./TaskIcon.vue"
     import type {PluginIconMap} from "../../utils/pluginUtils"
 
     const props = defineProps<{
         clses: string[]
         icons: PluginIconMap
-        loadIcon?: (cls: string) => Promise<any>
+        loadIcon?: (cls: string) => Promise<TaskIconData | undefined>
     }>()
 
     const ICON_PX = 24

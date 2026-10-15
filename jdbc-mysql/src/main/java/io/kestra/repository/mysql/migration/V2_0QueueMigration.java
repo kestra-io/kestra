@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import io.kestra.jdbc.QueueJdbcDataSourceProvider;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 
 import io.micronaut.context.annotation.Requires;
@@ -23,11 +24,11 @@ public class V2_0QueueMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init-queue";
 
-    private final DataSource dataSource;
+    private final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider;
 
     @Inject
-    public V2_0QueueMigration(final DataSource dataSource) {
-        this.dataSource = dataSource;
+    public V2_0QueueMigration(final QueueJdbcDataSourceProvider queueJdbcDataSourceProvider) {
+        this.queueJdbcDataSourceProvider = queueJdbcDataSourceProvider;
     }
 
     @Override
@@ -47,6 +48,6 @@ public class V2_0QueueMigration extends AbstractSQLMigrationScript {
 
     @Override
     protected DataSource dataSource() {
-        return dataSource;
+        return queueJdbcDataSourceProvider.dataSource();
     }
 }

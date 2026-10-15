@@ -373,6 +373,27 @@ class RequestTest {
     }
 
     @Test
+    void formPreservesCharsetAndEncodesNonAsciiValues() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue(MediaType.APPLICATION_FORM_URLENCODED))
+            .uri(Property.ofValue(serverUrl() + "/post/url-encoded"))
+            .options(HttpConfiguration.builder().defaultCharset(Property.ofValue(StandardCharsets.UTF_8)).build())
+            .formData(Property.ofValue(ImmutableMap.of("hello", "café")))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        io.kestra.core.http.HttpRequest request = task.request(runContext);
+        HttpEntity entity = request.getBody().to();
+
+        assertThat(IOUtils.toString(entity.getContent(), StandardCharsets.US_ASCII)).isEqualTo("hello=caf%C3%A9");
+        assertThat(entity.getContentType()).isEqualTo("application/x-www-form-urlencoded; charset=UTF-8");
+    }
+
+    @Test
     void multipart() throws Exception {
         File file = new File(Objects.requireNonNull(RequestTest.class.getClassLoader().getResource("application-test.yml")).toURI());
 
@@ -448,16 +469,6 @@ class RequestTest {
     }
 
     @Test
-    // Confirmed live via thread dump on a hung run: the client blocks forever in Apache HttpClient 5's
-    // blocking socket write (sendRequestEntity), while the embedded server's Netty event loops sit idle -
-    // it abandoned the connection without closing or resetting it. A plain blocking Socket write has no
-    // JDK-level write timeout (SO_TIMEOUT only bounds reads), so nothing on Kestra's side can catch this.
-    //
-    // This is a regression of a Micronaut bug already fixed once in 2022 (micronaut-core#4864).
-    // Reported upstream as micronaut-core#13243; tracked on the Kestra side as kestra-io/kestra#19549, which
-    // also covers the exposure on Kestra's own webserver (any multipart upload over the configured
-    // max-request-size/max-file-size hits this same path). Re-enable once the upstream fix lands.
-    @Disabled("Hangs indefinitely instead of failing - micronaut-core#13243 (regression of #4864), kestra-io/kestra#19549")
     void multipartInlineContent_doesNotThrowContentTooLong() throws Exception {
         Path tmp = Files.createTempFile("kestra-large-", ".txt");
 

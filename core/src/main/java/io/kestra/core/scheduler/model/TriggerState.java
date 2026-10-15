@@ -40,6 +40,7 @@ public final class TriggerState implements TriggerId {
     private final Backfill backfill;
     private final List<State.Type> stopAfter;
     private final boolean disabled;
+    private final boolean sourceDisabled;
     private final int vnode;
     private final boolean locked;
     private final String workerId;
@@ -77,7 +78,16 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public static TriggerState of(FlowId flowId, AbstractTrigger trigger, Integer vnode) {
-        return of(TriggerId.of(flowId, trigger), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode);
+        return of(TriggerId.of(flowId, trigger), trigger, vnode);
+    }
+
+    /**
+     * Factory method for constructing a new {@link TriggerState} from a trigger definition.
+     *
+     * @return a new {@link TriggerState}
+     */
+    public static TriggerState of(TriggerId id, AbstractTrigger trigger, Integer vnode) {
+        return of(id, TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode);
     }
 
     /**
@@ -85,7 +95,11 @@ public final class TriggerState implements TriggerId {
      *
      * @return a new {@link TriggerState}
      */
-    public static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, Boolean disabled, Integer vnode) {
+    public static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, Integer vnode) {
+        return of(id, type, stopAfter, false, vnode);
+    }
+
+    private static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, boolean sourceDisabled, Integer vnode) {
         return new TriggerState(
             id.getTenantId(),
             id.getNamespace(),
@@ -96,7 +110,8 @@ public final class TriggerState implements TriggerId {
             null,
             null,
             stopAfter,
-            disabled,
+            false,
+            sourceDisabled,
             vnode,
             false,
             null,
@@ -117,7 +132,7 @@ public final class TriggerState implements TriggerId {
     public TriggerState update(Clock clock, AbstractTrigger trigger) {
         return update(clock)
             .stopAfter(trigger.getStopAfter())
-            .disabled(trigger.isDisabled())
+            .sourceDisabled(trigger.isDisabled())
             .type(TriggerType.from(trigger))
             .build();
     }
@@ -160,6 +175,16 @@ public final class TriggerState implements TriggerId {
      */
     public TriggerState disabled(final Clock clock, boolean disabled) {
         return update(clock).disabled(disabled).build();
+    }
+
+    /**
+     * Updates the definition mirror of this trigger state.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState sourceDisabled(final Clock clock, boolean sourceDisabled) {
+        return update(clock).sourceDisabled(sourceDisabled).build();
     }
 
     /**
@@ -327,13 +352,17 @@ public final class TriggerState implements TriggerId {
 
     /**
      * Bumps the dispatch generation, marking a new dispatch to a worker.
+     * <p>
+     * The epoch is the dispatch time in milliseconds, kept strictly increasing, rather than a counter: a deleted
+     * then re-created trigger starts from a new state, and a counter would reissue epochs its previous instance
+     * already used.
      *
      * @param clock the scheduler clock.
      * @return a new {@link TriggerState}
      */
     public TriggerState nextDispatchEpoch(final Clock clock) {
         return update(clock)
-            .dispatchEpoch(dispatchEpoch + 1)
+            .dispatchEpoch(Math.max(clock.millis(), dispatchEpoch + 1))
             .build();
     }
 
@@ -380,6 +409,7 @@ public final class TriggerState implements TriggerId {
             .workerId(workerId)
             .vnode(vnode)
             .disabled(disabled)
+            .sourceDisabled(sourceDisabled)
             .type(type)
             .lastEventId(lastEventId)
             .lastTriggeredDate(lastTriggeredDate)

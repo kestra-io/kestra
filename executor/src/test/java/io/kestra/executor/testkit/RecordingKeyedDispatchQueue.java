@@ -1,5 +1,6 @@
 package io.kestra.executor.testkit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -19,15 +20,22 @@ public class RecordingKeyedDispatchQueue<T extends KeyedDispatchEvent> implement
     }
 
     private final String name;
+    private final List<Trace.Emission> journal;
     private final List<Emitted<T>> emitted = new CopyOnWriteArrayList<>();
 
     public RecordingKeyedDispatchQueue(String name) {
+        this(name, new ArrayList<>());
+    }
+
+    public RecordingKeyedDispatchQueue(String name, List<Trace.Emission> journal) {
         this.name = name;
+        this.journal = journal;
     }
 
     @Override
     public void emit(String routingKey, T message) {
         emitted.add(new Emitted<>(routingKey, message));
+        journal.add(new Trace.Emission(journal.size(), name, message));
     }
 
     @Override

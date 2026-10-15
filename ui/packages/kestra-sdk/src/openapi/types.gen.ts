@@ -14,6 +14,11 @@ export type AbstractFlow = {
     updated?: string;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -384,6 +389,10 @@ export type ApiTriggerAndState = {
  * Excludes internal scheduler fields (`tenantId`, `vnode`, `lastEventId`). The
  * scheduler's `type` is exposed as `kind` to not clash with the trigger definition's
  * `type` (the plugin class) when both are merged by API consumers.
+ *
+ *
+ * `disabled` is the runtime disable alone; a consumer deciding whether a trigger will fire has
+ * to read `sourceDisabled` as well, which mirrors the flow definition's own flag.
  */
 export type ApiTriggerState = {
     namespace: string;
@@ -395,6 +404,7 @@ export type ApiTriggerState = {
     backfill?: Backfill;
     stopAfter?: Array<StateType>;
     disabled?: boolean;
+    sourceDisabled?: boolean;
     locked?: boolean;
     workerId?: string;
     lastTriggeredDate?: string;
@@ -440,8 +450,17 @@ export type AssetIdentifier = {
 };
 
 export type AssetsDeclaration = {
+    /**
+     * Whether to auto-register assets referenced dynamically at runtime that are not statically declared in inputs or outputs.
+     */
     enableAuto?: PropertyBoolean;
+    /**
+     * The assets consumed as inputs.
+     */
     inputs?: PropertyListAssetIdentifier;
+    /**
+     * The assets produced as outputs.
+     */
     outputs?: PropertyListAsset;
     /**
      * Asset failure behavior
@@ -455,6 +474,8 @@ export type AssetsInOut = {
     inputs?: Array<AssetIdentifier>;
     outputs?: Array<Asset>;
 };
+
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
 
 /**
  * A backfill configuration.
@@ -578,6 +599,7 @@ export type CheckStyle = 'ERROR' | 'SUCCESS' | 'WARNING' | 'INFO';
 export type Concurrency = {
     limit: number;
     behavior: ConcurrencyBehavior;
+    queueLimit?: number;
 };
 
 export type ConcurrencyBehavior = 'QUEUE' | 'CANCEL' | 'FAIL';
@@ -642,12 +664,29 @@ export type DailyExecutionStatisticsDuration = {
     count: number;
 };
 
+/**
+ * A page of chart rows.
+ */
+export type DashboardControllerChartData = {
+    results: Array<{
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    }>;
+    total: number;
+    /**
+     * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     */
+    ignoredFilters?: Array<QueryFilterField>;
+};
+
 export type DashboardControllerDashboardResponse = {
     tenantId?: string;
     id: string;
     title: string;
     description?: string;
     timeWindow?: TimeWindow;
+    queryTimeout?: string;
     charts?: Array<ChartChartOption>;
     deleted: boolean;
     created?: string;
@@ -673,37 +712,45 @@ export type DocumentationWithSchema = {
 export type EditionProviderEdition = 'OSS' | 'EE';
 
 export type EventExecutionStatusEvent = {
-    data?: ExecutionStatusEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecution = {
-    data?: Execution;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: Execution;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventFollowLogEvent = {
-    data?: FollowLogEvent;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
+};
+
+export type EventNotification = {
+    data: Notification;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventObject = {
-    data?: {
+    data: {
         [key: string]: unknown;
     };
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutableTaskSubflowId = {
@@ -810,6 +857,7 @@ export type ExecutionMetadata = {
     originalCreatedDate: string;
     concurrencyScopes?: Array<string>;
     executionDepth?: number;
+    taskRunStatistic?: TaskRunStatistic;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';
@@ -918,6 +966,12 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -953,12 +1007,6 @@ export type Flow = AbstractFlow & {
      * Limits the number of concurrent executions of the flow.
      */
     concurrency?: Concurrency;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     /**
      * Retry
      *
@@ -1011,6 +1059,11 @@ export type FlowForExecution = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
     outputs?: Array<Output>;
     /**
      * Whether the flow is disabled.
@@ -1186,6 +1239,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
+    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1210,12 +1269,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
      * Limits the number of concurrent executions of the flow.
      */
     concurrency?: Concurrency;
-    /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
     sla?: Array<Sla>;
     /**
      * Quotas evaluated before the flow is executed (EE only).
@@ -1501,8 +1554,10 @@ export type MiscControllerConfiguration = {
     isAiEnabled?: boolean;
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
+    isBasicAuthManagedByConfig?: boolean;
     pluginsHash?: number;
     isPluginAutoInstallEnabled?: boolean;
+    isPluginEndpointsEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1534,6 +1589,42 @@ export type NamespaceFileRevision = {
 export type NamespaceLight = {
     id: string;
 };
+
+export type Notification = {
+    outcome?: NotificationOutcome | null;
+    ongoing?: boolean;
+    id?: string;
+    userId?: string | null;
+    tenantId?: string | null;
+    type: string;
+    asyncOperationType?: string | null;
+    resourceType?: AsyncOperationTypeResourceType | null;
+    title: string;
+    referenceId?: string | null;
+    succeededItems?: number | null;
+    failedItems?: number | null;
+    totalItems?: number | null;
+    read?: boolean;
+    createdDate: string;
+    updatedDate: string;
+};
+
+export type NotificationControllerApiMarkAllRead = {
+    updated?: number;
+};
+
+export type NotificationControllerApiNotificationHistory = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+    nextCursor?: string | null;
+};
+
+export type NotificationControllerApiNotificationsSince = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+};
+
+export type NotificationOutcome = 'SUCCEEDED' | 'PARTIAL' | 'FAILED';
 
 export type Output = {
     id: string;
@@ -1629,18 +1720,6 @@ export type PagedResultsKvEntry = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsMapStringObject = {
-    results: Array<{
-        [key: string]: {
-            [key: string]: unknown;
-        };
-    }>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
 export type PagedResultsMetricEntry = {
     results: Array<MetricEntry>;
     total: number;
@@ -1651,6 +1730,14 @@ export type PagedResultsMetricEntry = {
  */
 export type PagedResultsNamespace = {
     results: Array<NamespaceLight>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsPluginControllerApiTicketingSystem = {
+    results: Array<PluginControllerApiTicketingSystem>;
     total: number;
 };
 
@@ -1728,6 +1815,7 @@ export type PluginPluginElementMetadata = {
     deprecated?: boolean;
     title?: string;
     description?: string;
+    aliases?: Array<string>;
 };
 
 export type PluginArtifact = {
@@ -1742,6 +1830,20 @@ export type PluginArtifact = {
 export type PluginControllerApiPluginVersions = {
     type?: string;
     versions?: Array<string>;
+};
+
+/**
+ * A ticketing system offered by an installed plugin.
+ */
+export type PluginControllerApiTicketingSystem = {
+    /**
+     * the plugin manifest's declared title (`X-Kestra-Title`), stored verbatim on a case when a user picks it
+     */
+    name?: string;
+    /**
+     * icon key resolvable via `GET /api/v1/plugins/icons` --- the class of one task in this plugin that opens a ticket
+     */
+    icon?: string;
 };
 
 /**
@@ -1977,7 +2079,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2029,11 +2131,10 @@ export type ServerInstanceType = 'SERVER' | 'STANDALONE';
 export type ServiceServiceState = 'CREATED' | 'RUNNING' | 'ERROR' | 'DISCONNECTED' | 'TERMINATING' | 'TERMINATED_GRACEFULLY' | 'TERMINATED_FORCED' | 'NOT_RUNNING' | 'INACTIVE' | 'MAINTENANCE';
 
 export type ServiceInstance = {
-    server?: ServerInstance;
-    metrics?: Array<Metric>;
-    state?: ServiceServiceState;
     id?: string;
     type?: ServiceType;
+    state?: ServiceServiceState;
+    server?: ServerInstance;
     createdAt?: string;
     updatedAt?: string;
     events?: Array<ServiceInstanceTimestampedEvent>;
@@ -2042,6 +2143,7 @@ export type ServiceInstance = {
             [key: string]: unknown;
         };
     };
+    metrics?: Array<Metric>;
     seqId?: number;
 };
 
@@ -2157,9 +2259,6 @@ export type State = {
     readonly endDate?: string | null;
     current: StateType;
     histories: Array<StateHistory>;
-    readonly getDuration: string;
-    readonly getStartDate: string;
-    readonly getEndDate: string;
 };
 
 export type StateHistory = {
@@ -2213,6 +2312,9 @@ export type Task = {
     runIf?: string;
     allowWarning?: boolean;
     taskCache?: Cache;
+    /**
+     * Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition.
+     */
     assets?: AssetsDeclaration | null;
 };
 
@@ -2277,6 +2379,13 @@ export type TaskRunAttempt = {
     state: State;
     workerId?: string | null;
     logFile?: string | null;
+};
+
+export type TaskRunStatistic = {
+    count?: number;
+    durationSumMs?: number;
+    durationMinMs?: number | null;
+    durationMaxMs?: number | null;
 };
 
 export type TaskWithVersion = {
@@ -2350,15 +2459,37 @@ export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
+    errors?: Array<ValidationError>;
+    /**
+     * @deprecated
+     */
+    constraints?: string;
     index: number;
     filename?: string;
     namespace?: string;
     flow?: string;
-    constraints?: string;
     outdated?: boolean;
     deprecationPaths?: Array<string>;
     warnings?: Array<string>;
     infos?: Array<string>;
+};
+
+/**
+ * A single validation error, located in the submitted source.
+ */
+export type ValidationError = {
+    /**
+     * What is wrong.
+     */
+    detail?: string;
+    /**
+     * RFC 6901 JSON Pointer locating the error in the submitted document.
+     */
+    pointer?: string;
+    /**
+     * Human-friendly path locating the error, naming tasks and inputs by id. Not a JSON Pointer.
+     */
+    path?: string;
 };
 
 export type VersionServiceVersionUpgrade = {
@@ -2498,19 +2629,19 @@ export type ApiTaskRunWritable = {
 };
 
 export type EventExecutionStatusEventWritable = {
-    data?: ExecutionStatusEventWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionStatusEventWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type EventExecutionWritable = {
-    data?: ExecutionWritable;
-    id?: string;
-    name?: string;
-    comment?: string;
-    retry?: string;
+    data: ExecutionWritable;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
 };
 
 export type ExecutionWritable = {
@@ -2853,6 +2984,251 @@ export type GetProvidersResponses = {
 };
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
+
+export type ListenUserNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/follow';
+};
+
+export type ListenUserNotificationsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListenUserNotificationsError = ListenUserNotificationsErrors[keyof ListenUserNotificationsErrors];
+
+export type ListenUserNotificationsResponses = {
+    /**
+     * listenUserNotifications 200 response
+     */
+    200: EventNotification;
+};
+
+export type ListenUserNotificationsResponse = ListenUserNotificationsResponses[keyof ListenUserNotificationsResponses];
+
+export type HistoryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Cursor of the previous page, as `<createdDate>,<id>`. Omit for the first page.
+         */
+        before?: string | null;
+        /**
+         * Maximum number of notifications to return
+         */
+        limit?: number;
+    };
+    url: '/api/v1/notifications/history';
+};
+
+export type HistoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HistoryError = HistoryErrors[keyof HistoryErrors];
+
+export type HistoryResponses = {
+    /**
+     * history 200 response
+     */
+    200: NotificationControllerApiNotificationHistory;
+};
+
+export type HistoryResponse = HistoryResponses[keyof HistoryResponses];
+
+export type MarkAllReadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/read-all';
+};
+
+export type MarkAllReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkAllReadError = MarkAllReadErrors[keyof MarkAllReadErrors];
+
+export type MarkAllReadResponses = {
+    /**
+     * markAllRead 200 response
+     */
+    200: NotificationControllerApiMarkAllRead;
+};
+
+export type MarkAllReadResponse = MarkAllReadResponses[keyof MarkAllReadResponses];
+
+export type PollSinceData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The server timestamp returned by a previous call to this endpoint (or to /history)
+         */
+        since: string;
+    };
+    url: '/api/v1/notifications/since';
+};
+
+export type PollSinceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PollSinceError = PollSinceErrors[keyof PollSinceErrors];
+
+export type PollSinceResponses = {
+    /**
+     * pollSince 200 response
+     */
+    200: NotificationControllerApiNotificationsSince;
+};
+
+export type PollSinceResponse = PollSinceResponses[keyof PollSinceResponses];
+
+export type UnreadCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/unread-count';
+};
+
+export type UnreadCountErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnreadCountError = UnreadCountErrors[keyof UnreadCountErrors];
+
+export type UnreadCountResponses = {
+    /**
+     * unreadCount 200 response
+     */
+    200: number;
+};
+
+export type UnreadCountResponse = UnreadCountResponses[keyof UnreadCountResponses];
+
+export type MarkReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/read';
+};
+
+export type MarkReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkReadError = MarkReadErrors[keyof MarkReadErrors];
+
+export type MarkReadResponses = {
+    /**
+     * markRead 200 response
+     */
+    200: unknown;
+};
+
+export type MarkUnreadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/unread';
+};
+
+export type MarkUnreadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkUnreadError = MarkUnreadErrors[keyof MarkUnreadErrors];
+
+export type MarkUnreadResponses = {
+    /**
+     * markUnread 200 response
+     */
+    200: unknown;
+};
 
 export type GetExpressionFiltersData = {
     body?: never;
@@ -3458,6 +3834,39 @@ export type GetSchemasFromTypeResponses = {
 };
 
 export type GetSchemasFromTypeResponse = GetSchemasFromTypeResponses[keyof GetSchemasFromTypeResponses];
+
+export type ListTicketingSystemsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plugins/ticketing-systems';
+};
+
+export type ListTicketingSystemsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListTicketingSystemsError = ListTicketingSystemsErrors[keyof ListTicketingSystemsErrors];
+
+export type ListTicketingSystemsResponses = {
+    /**
+     * listTicketingSystems 200 response
+     */
+    200: PagedResultsPluginControllerApiTicketingSystem;
+};
+
+export type ListTicketingSystemsResponse = ListTicketingSystemsResponses[keyof ListTicketingSystemsResponses];
 
 export type ListTriggerPluginsData = {
     body?: never;
@@ -4379,7 +4788,7 @@ export type PreviewChartResponses = {
     /**
      * previewChart 200 response
      */
-    200: PagedResultsMapStringObject;
+    200: DashboardControllerChartData;
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
@@ -5517,7 +5926,9 @@ export type RestartExecutionsByIdsData = {
     };
     query?: {
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -5565,7 +5976,9 @@ export type RestartExecutionsByQueryData = {
          */
         filters?: Array<QueryFilter> | null;
         /**
-         * If latest revision should be used
+         * Deprecated, will be removed in 2.2: creates new executions on the latest revision, use replay instead.
+         *
+         * @deprecated
          */
         latestRevision?: boolean | null;
     };
@@ -6415,6 +6828,54 @@ export type ForceRunExecutionResponses = {
 
 export type ForceRunExecutionResponse = ForceRunExecutionResponses[keyof ForceRunExecutionResponses];
 
+export type InterruptTaskRunData = {
+    /**
+     * the taskRun id and the state to apply to it
+     */
+    body: ExecutionControllerStateRequest;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/interrupt';
+};
+
+export type InterruptTaskRunErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution or the task run is not found
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run cannot be interrupted
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type InterruptTaskRunError = InterruptTaskRunErrors[keyof InterruptTaskRunErrors];
+
+export type InterruptTaskRunResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type KillExecutionData = {
     body?: never;
     path: {
@@ -6447,7 +6908,7 @@ export type KillExecutionErrors = {
      */
     404: ProblemDetail;
     /**
-     * if the executions is already finished
+     * if the execution is already finished and has no running task or sub-execution left to kill
      */
     409: ProblemDetail;
     /**
@@ -6679,6 +7140,56 @@ export type ReplayExecutionWithinputsResponses = {
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
 
+export type ValidateReplayExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The taskrun id
+         */
+        taskRunId?: string | null;
+        /**
+         * The flow revision to use for new execution
+         */
+        revision?: number | null;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay/validate';
+};
+
+export type ValidateReplayExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReplayExecutionError = ValidateReplayExecutionErrors[keyof ValidateReplayExecutionErrors];
+
+export type ValidateReplayExecutionResponses = {
+    /**
+     * On success
+     */
+    200: unknown;
+};
+
 export type RestartExecutionData = {
     body?: never;
     path: {
@@ -6690,7 +7201,9 @@ export type RestartExecutionData = {
     };
     query?: {
         /**
-         * The flow revision to use for new execution
+         * Deprecated, will be removed in 2.2: creates a new execution on this revision, use replay instead.
+         *
+         * @deprecated
          */
         revision?: number | null;
     };
@@ -7553,6 +8066,10 @@ export type DeleteFlowsByIdsData = {
 };
 
 export type DeleteFlowsByIdsErrors = {
+    /**
+     * Validation errors
+     */
+    400: ProblemDetail;
     /**
      * Authentication required
      */
@@ -10941,6 +11458,88 @@ export type GetTaskRunOutputsResponses = {
 
 export type GetTaskRunOutputsResponse = GetTaskRunOutputsResponses[keyof GetTaskRunOutputsResponses];
 
+export type Get1Data = {
+    body?: never;
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type Get1Errors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type Get1Error = Get1Errors[keyof Get1Errors];
+
+export type Get1Responses = {
+    /**
+     * get_1 200 response
+     */
+    200: Blob | File;
+};
+
+export type Get1Response = Get1Responses[keyof Get1Responses];
+
+export type PostData = {
+    body?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    path: {
+        cls: string;
+        name: string;
+        executionId: string;
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/plugins/{cls}/endpoints/{name}/{executionId}/{taskRunId}';
+};
+
+export type PostErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PostError = PostErrors[keyof PostErrors];
+
+export type PostResponses = {
+    /**
+     * post 200 response
+     */
+    200: Blob | File;
+};
+
+export type PostResponse = PostResponses[keyof PostResponses];
+
 export type ListSecretsData = {
     body?: never;
     path: {
@@ -11016,7 +11615,7 @@ export type CreateBackfillErrors = {
      */
     409: ProblemDetail;
     /**
-     * If the backfill end date is not after its start date
+     * If the backfill end date is not after its start date, or if the trigger is not a schedule trigger
      */
     422: ProblemDetail;
     /**
@@ -11411,7 +12010,7 @@ export type DeleteTriggersByQueryError = DeleteTriggersByQueryErrors[keyof Delet
 
 export type DeleteTriggersByQueryResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11446,7 +12045,7 @@ export type DeleteTriggersByIdsError = DeleteTriggersByIdsErrors[keyof DeleteTri
 
 export type DeleteTriggersByIdsResponses = {
     /**
-     * Accepted
+     * Accepted. Triggers the flow still declares are not deleted, and totalItems is the number of orphan deletes queued.
      */
     202: ApiAsyncOperationResponse;
 };
@@ -11837,7 +12436,7 @@ export type DeleteTriggerErrors = {
      */
     403: ProblemDetail;
     /**
-     * If the trigger cannot be deleted
+     * If the flow still declares the trigger, or the scheduler failed to delete the trigger state
      */
     409: ProblemDetail;
     /**

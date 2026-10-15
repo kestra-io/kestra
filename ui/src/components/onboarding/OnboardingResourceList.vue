@@ -26,14 +26,16 @@
 </template>
 
 <script setup lang="ts">
+    import type {Component} from "vue"
+    import type {RouteLocationRaw} from "vue-router"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     export interface OnboardingResourceItem {
         titleKey: string;
         descriptionKey: string;
-        icon: any;
+        icon: Component;
         iconClass: string;
-        to?: any;
+        to?: RouteLocationRaw;
         href?: string;
     }
 

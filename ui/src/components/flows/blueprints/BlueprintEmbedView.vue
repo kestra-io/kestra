@@ -23,7 +23,7 @@
             <KsCard>
                 <KsEditor
                     v-bind="editorBindings"
-                    class="position-relative"
+                    class="editor-container"
                     lang="yaml"
                     readOnly
                     inline
@@ -59,12 +59,13 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
+    import type {PluginIconData} from "../../../stores/plugins"
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {shortDescription?: string};
         tags?: Record<string, BlueprintTag>;
-        icons?: Record<string, any>;
-        loadIcon?: (cls: string) => Promise<any>;
+        icons?: Record<string, PluginIconData>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         kind?: string;
     }>(), {
         blueprint: undefined,
@@ -142,5 +143,9 @@
             background: var(--ks-bg-surface);
             box-shadow: 0 2px 8px 0 var(--ks-shadow-surface);
         }
+    }
+
+    .editor-container {
+        position: relative;
     }
 </style>

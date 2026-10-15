@@ -1,10 +1,10 @@
 <template>
-    <span class="d-none" />
+    <span class="error-toast" />
 </template>
 
 <script setup lang="ts">
     import {KsNotification} from "@kestra-io/design-system"
-    import {pageFromRoute} from "../utils/eventsRouter"
+    import {pageFromRoute, type PageInfo} from "../utils/eventsRouter"
     import {h, onUnmounted, watch, computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
@@ -23,7 +23,7 @@
             response?: {status?: number}
             request?: {url: string; method: string}
         }
-        page: any
+        page: PageInfo
     }
 
     const props = withDefaults(defineProps<{
@@ -36,7 +36,7 @@
     const route = useRoute()
     const {t, te} = useI18n()
     const apiStore = useApiStore()
-    const notifications = ref<any>()
+    const notifications = ref<ReturnType<typeof KsNotification>>()
 
     const close = () => {
         if (notifications.value) {
@@ -110,6 +110,10 @@
 </script>
 
 <style lang="scss" scoped>
+    .error-toast {
+        display: none;
+    }
+
     .error-notification {
         max-height: 90svh;
 

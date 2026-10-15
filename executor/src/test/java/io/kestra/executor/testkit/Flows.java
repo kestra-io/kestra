@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.log.Log;
 
 /**
  * Builders-first flow fixtures for executor unit tests.
@@ -18,6 +19,15 @@ public final class Flows {
 
     private Flows() {
         // utility class pattern
+    }
+
+    /** The cheapest real task: a Log with a fixed message. */
+    public static Log log() {
+        return log("log");
+    }
+
+    public static Log log(String id) {
+        return Log.builder().id(id).type(Log.class.getName()).message("hello").build();
     }
 
     public static FlowWithSource of(Task... tasks) {

@@ -7,6 +7,7 @@
         :showClose="false"
         :closeOnPressEscape="false"
         appendToBody
+        data-authoring-overlay
         @close="emit('close')"
     >
         <template #header>

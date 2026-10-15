@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -23,9 +24,10 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 /**
  * The default {@link Namespace} implementation.
- * This class acts as a facade to the {@link StorageInterface} for manipulating namespace files.
+ * This class keeps the metadata of the namespace files, held by the {@link NamespaceFileMetadataStateStore}, in step
+ * with their content, held by a {@link NamespaceFileBackend}.
  * <p>
- * This implementation uses {@link NamespaceFileMetadataStateStore} and is safe to call from workers.
+ * This implementation is safe to call from workers.
  *
  * @see Storage#namespace()
  * @see Storage#namespace(String)
@@ -35,7 +37,7 @@ public class InternalNamespace implements Namespace {
 
     private final String namespace;
     private final String tenant;
-    private final StorageInterface storage;
+    private final NamespaceFileBackend backend;
     private final NamespaceFileMetadataStateStore stateStore;
     private final Logger logger;
 
@@ -68,9 +70,24 @@ public class InternalNamespace implements Namespace {
         final String namespace,
         final StorageInterface storage,
         final NamespaceFileMetadataStateStore stateStore) {
+        this(logger, tenant, namespace, new StorageNamespaceFileBackend(Objects.requireNonNull(storage, "storage cannot be null")), stateStore);
+    }
+
+    public InternalNamespace(final String tenant,
+        final String namespace,
+        final NamespaceFileBackend backend,
+        final NamespaceFileMetadataStateStore stateStore) {
+        this(log, tenant, namespace, backend, stateStore);
+    }
+
+    public InternalNamespace(final Logger logger,
+        final String tenant,
+        final String namespace,
+        final NamespaceFileBackend backend,
+        final NamespaceFileMetadataStateStore stateStore) {
         this.logger = Objects.requireNonNull(logger, "logger cannot be null");
         this.namespace = Objects.requireNonNull(namespace, "namespace cannot be null");
-        this.storage = Objects.requireNonNull(storage, "storage cannot be null");
+        this.backend = Objects.requireNonNull(backend, "backend cannot be null");
         this.stateStore = Objects.requireNonNull(stateStore, "stateStore cannot be null");
         this.tenant = tenant;
     }
@@ -149,7 +166,9 @@ public class InternalNamespace implements Namespace {
         }
 
         // Get all metadata for source and its descendants, all versions
-        List<NamespaceFileMetadata> sourceMetas = stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedSource.toString(), normalizedSource + "/"));
+        List<NamespaceFileMetadata> sourceMetas = withoutRevisionsUpToDeletion(
+            stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedSource.toString(), normalizedSource + "/"))
+        );
 
         List<NamespaceFileMetadata> allMetas = new ArrayList<>(sourceMetas);
         boolean isDirectory = sourceMetas.stream().anyMatch(NamespaceFileMetadata::isDirectory);
@@ -182,7 +201,7 @@ public class InternalNamespace implements Namespace {
                 if (nsFileMetadata.isDirectory()) {
                     afterNamespaceFile = this.createDirectory(Path.of(finalNewPath));
                 } else {
-                    try (InputStream oldContent = storage.get(tenant, namespace, beforeNamespaceFile.storagePath().toUri())) {
+                    try (InputStream oldContent = backend.get(tenant, beforeNamespaceFile)) {
                         List<NamespaceFile> putResult = this.putFile(Path.of(finalNewPath), oldContent, Conflicts.OVERWRITE);
                         afterNamespaceFile = putResult.stream().filter(f -> f.path().equals(finalNewPath)).findFirst().orElse(putResult.get(putResult.size() - 1));
                     }
@@ -222,13 +241,38 @@ public class InternalNamespace implements Namespace {
         return results;
     }
 
+    /**
+     * Drops the entries whose revision is at or below the most recent deletion of their own path.
+     * <p>
+     * Copying an entry to another path makes it live again there, under a destination that carries no
+     * deletion of its own. The revisions a deletion covers must therefore not travel with a move, or
+     * renaming a path would serve and list content that was deleted at it.
+     *
+     * @param entries Entries of one or more paths, in any order.
+     * @return Those entries that postdate the most recent deletion of their path.
+     * @see NamespaceFileMetadata#deletedFloor(Collection)
+     */
+    private static List<NamespaceFileMetadata> withoutRevisionsUpToDeletion(List<NamespaceFileMetadata> entries) {
+        Map<String, Integer> deletedFloors = entries.stream()
+            .collect(
+                Collectors.groupingBy(
+                    NamespaceFileMetadata::getPath,
+                    Collectors.collectingAndThen(Collectors.toList(), NamespaceFileMetadata::deletedFloor)
+                )
+            );
+
+        return entries.stream()
+            .filter(entry -> entry.getRevision() > deletedFloors.get(entry.getPath()))
+            .toList();
+    }
+
     private void purge(NamespaceFile nsFile) throws IOException {
         // Mark the metadata entry deleted before removing the object, so an interrupted purge can never
         // leave a live index entry pointing at a missing object (which would surface as a 404 on read).
         // The two stores cannot be updated atomically, so we order them to fail safe: a crash in between
         // leaves an orphan object (harmless, reclaimable) rather than a dangling index entry.
         stateStore.save(NamespaceFileMetadata.of(tenant, nsFile).toBuilder().deleted(true).build());
-        storage.delete(tenant, namespace, nsFile.storagePath().toUri());
+        backend.delete(tenant, nsFile);
     }
 
     /**
@@ -237,8 +281,16 @@ public class InternalNamespace implements Namespace {
     @Override
     public NamespaceFile get(Path path) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
+        Optional<NamespaceFileMetadata> metadata = findByPath(normalizedPath, true);
 
-        int revision = findByPath(normalizedPath).map(NamespaceFileMetadata::getRevision).orElse(1);
+        if (metadata.map(NamespaceFileMetadata::isDeleted).orElse(false)) {
+            // A path that has never held a file still resolves, which is what callers building the URI of a
+            // file still to be written rely on. A deleted one must not: its revisions are backed by objects
+            // that are still in storage, so resolving to one hands back content the file no longer has.
+            throw fileNotFound(normalizedPath, null);
+        }
+
+        int revision = metadata.map(NamespaceFileMetadata::getRevision).orElse(1);
 
         return NamespaceFile.of(namespace, normalizedPath, revision);
     }
@@ -264,6 +316,10 @@ public class InternalNamespace implements Namespace {
     public InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
+        if (revision != null && revision <= deletedFloor(normalizedPath)) {
+            throw fileNotFound(normalizedPath, revision);
+        }
+
         // Throw if file not found OR if it's deleted
         NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
 
@@ -273,11 +329,32 @@ public class InternalNamespace implements Namespace {
             );
         }
 
-        return storage.get(tenant, namespace, resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision()));
+        return backend.get(tenant, resolveExistingRevision(normalizedPath, namespaceFileMetadata.getRevision()));
+    }
+
+    @Override
+    public InputStream getFileContent(NamespaceFile file) throws IOException {
+        if (!namespace.equals(file.namespace())) {
+            throw new IllegalArgumentException(
+                "Cannot read '%s' of namespace '%s' through namespace '%s'.".formatted(file.path(), file.namespace(), namespace)
+            );
+        }
+        return backend.get(tenant, file);
     }
 
     /**
-     * Resolves the storage URI for the given revision of a namespace file, falling back to the most
+     * Returns the highest revision of the given path that has been deleted, or {@code 0} when none has.
+     *
+     * @see NamespaceFileMetadata#deletedFloor(Collection)
+     */
+    private int deletedFloor(Path normalizedPath) {
+        return NamespaceFileMetadata.deletedFloor(
+            stateStore.findAllVersionsByPaths(tenant, namespace, List.of(normalizedPath.toString()))
+        );
+    }
+
+    /**
+     * Resolves the given revision of a namespace file to one with content, falling back to the most
      * recent lower revision whose object still exists when the metadata index and the storage have
      * drifted. This keeps reads resilient to an index entry pointing at a revision whose object was
      * removed out-of-band (e.g. an object deleted/replaced directly, or a migration that left the
@@ -285,17 +362,17 @@ public class InternalNamespace implements Namespace {
      *
      * @throws FileNotFoundException if no revision down to the first has a backing object in storage.
      */
-    private URI resolveExistingRevisionUri(Path normalizedPath, int revision) throws IOException {
+    private NamespaceFile resolveExistingRevision(Path normalizedPath, int revision) throws IOException {
         for (int candidate = revision; candidate >= 1; candidate--) {
-            URI uri = NamespaceFile.of(namespace, normalizedPath, candidate).storagePath().toUri();
-            if (storage.exists(tenant, namespace, uri)) {
+            NamespaceFile file = NamespaceFile.of(namespace, normalizedPath, candidate);
+            if (backend.exists(tenant, file)) {
                 if (candidate != revision) {
                     logger.warn(
                         "Namespace file '{}' revision {} is missing from storage in namespace '{}' (metadata/storage drift); serving the latest available revision {} instead.",
                         normalizedPath, revision, namespace, candidate
                     );
                 }
-                return uri;
+                return file;
             }
         }
         throw fileNotFound(normalizedPath, revision);
@@ -356,13 +433,10 @@ public class InternalNamespace implements Namespace {
         Optional<NamespaceFileMetadata> inRepository = discardConflictingEntry(findByPath(normalizedPath, true), false, normalizedPath);
         int currentRevision = inRepository.map(NamespaceFileMetadata::getRevision).orElse(0);
         NamespaceFile namespaceFile = NamespaceFile.of(namespace, normalizedPath, currentRevision + 1);
-        Path storagePath = namespaceFile.storagePath();
-        // Remove Windows letter
-        URI cleanUri = new URI(storagePath.toUri().toString().replaceFirst("^file:///[a-zA-Z]:", ""));
 
         List<NamespaceFile> createdFiles = new ArrayList<>();
         if (inRepository.isEmpty()) {
-            storage.put(tenant, namespace, cleanUri, content);
+            long size = backend.put(tenant, namespaceFile, content);
 
             createdFiles.addAll(mkDirs(normalizedPath.toString()));
 
@@ -371,7 +445,7 @@ public class InternalNamespace implements Namespace {
                     .tenantId(tenant)
                     .namespace(namespace)
                     .path(normalizedPath.toString())
-                    .size(storage.getAttributes(tenant, namespace, cleanUri).getSize())
+                    .size(size)
                     .build()
             );
 
@@ -385,12 +459,12 @@ public class InternalNamespace implements Namespace {
 
             createdFiles.add(namespaceFile);
         } else if (onAlreadyExist == Conflicts.OVERWRITE || inRepository.get().isDeleted()) {
-            storage.put(tenant, namespace, cleanUri, content);
+            long size = backend.put(tenant, namespaceFile, content);
 
             createdFiles.addAll(mkDirs(normalizedPath.toString()));
 
             stateStore.save(
-                inRepository.get().toBuilder().size(storage.getAttributes(tenant, namespace, cleanUri).getSize()).deleted(false).build()
+                inRepository.get().toBuilder().size(size).deleted(false).build()
             );
 
             if (inRepository.get().isDeleted()) {
@@ -539,7 +613,7 @@ public class InternalNamespace implements Namespace {
                 .size(0L)
                 .build()
         );
-        storage.createDirectory(tenant, namespace, NamespaceFile.of(namespace, normalizedPath, 1).storagePath().toUri());
+        backend.createDirectory(tenant, NamespaceFile.of(namespace, normalizedPath, 1));
 
         return NamespaceFile.fromMetadata(nsFileMetadata);
     }

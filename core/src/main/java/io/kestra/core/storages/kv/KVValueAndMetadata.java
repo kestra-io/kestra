@@ -1,11 +1,7 @@
 package io.kestra.core.storages.kv;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
-
-import io.kestra.core.storages.StorageObject;
 
 import jakarta.annotation.Nullable;
 
@@ -19,12 +15,5 @@ public record KVValueAndMetadata(@Nullable KVMetadata metadata, @Nullable Object
 
     public Map<String, String> metadataAsMap() {
         return Optional.ofNullable(metadata).map(KVMetadata::toMap).orElse(null);
-    }
-
-    static KVValueAndMetadata from(StorageObject storageObject) throws IOException {
-        try (InputStream is = storageObject.inputStream()) {
-            String ionString = new String(is.readAllBytes());
-            return new KVValueAndMetadata(new KVMetadata(storageObject.metadata()), ionString);
-        }
     }
 }

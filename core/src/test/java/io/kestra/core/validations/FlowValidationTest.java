@@ -19,6 +19,7 @@ import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
@@ -116,7 +117,8 @@ class FlowValidationTest {
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, invalidYaml)));
 
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("YAML parsing error").contains("at line");
+        assertThat(results.getFirst().getErrors()).singleElement()
+            .extracting(ValidationError::detail).asString().contains("YAML parsing error").contains("at line");
     }
 
     @Test
@@ -133,7 +135,7 @@ class FlowValidationTest {
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, yamlWithUndefinedVar)));
 
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("Validation error");
+        assertThat(results.getFirst().getErrors()).isNotEmpty();
     }
 
     @Test
@@ -153,6 +155,7 @@ class FlowValidationTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system.label=system_key");
         assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system.id=id");
+        assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system=value");
     }
 
     @Test
@@ -445,6 +448,64 @@ class FlowValidationTest {
         assertThat(validate).isPresent();
         assertThat(validate.get().getMessage()).contains("Invalid value for input 'num' supplied by Schedule Trigger 'every_minute'");
         assertThat(validate.get().getMessage()).contains("is not a valid INT value");
+    }
+
+    @Test
+    void outputLiteralNotMatchingType_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: answer
+                type: INT
+                value: abc
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Invalid value for output 'answer'");
+        assertThat(validate.get().getMessage()).contains("is not a valid INT value");
+    }
+
+    @Test
+    void outputLiteralMatchingType_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: answer
+                type: INT
+                value: 123
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void outputExpressionNotMatchingType_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: answer
+                type: INT
+                value: "{{ outputs.hello.value }}"
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
     }
 
     @Test

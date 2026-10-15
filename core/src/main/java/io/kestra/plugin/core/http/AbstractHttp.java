@@ -143,6 +143,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 request.body(
                     HttpRequest.UrlEncodedRequestBody.builder()
                         .content(renderedFormData)
+                        .charset(defaultCharset(runContext))
                         .build()
                 );
             }
@@ -151,7 +152,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 HttpRequest.StringRequestBody.builder()
                     .content(runContext.render(body).as(String.class).orElseThrow())
                     .contentType(runContext.render(this.contentType).as(String.class).orElse(null))
-                    .charset(this.options != null && this.options.getDefaultCharset() != null ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null) : null)
+                    .charset(defaultCharset(runContext))
                     .build()
             );
         } else if (this.contentType != null) {
@@ -180,5 +181,11 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
         }
 
         return request.build();
+    }
+
+    private Charset defaultCharset(RunContext runContext) throws IllegalVariableEvaluationException {
+        return this.options != null && this.options.getDefaultCharset() != null
+            ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null)
+            : null;
     }
 }

@@ -373,7 +373,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -435,7 +435,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -490,6 +490,34 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldRecoverOnlyLastMissedScheduleWhenNeverEvaluatedGivenLAST() {
+        // GIVEN
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(
+            TEST_TZ, builder -> builder
+                .recoverMissedSchedules(RecoverMissedSchedules.LAST)
+                .build()
+        );
+        TriggerState initialState = TriggerState
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(initialState);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        SchedulerClock.offset(Duration.ofMinutes(55));
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        ZonedDateTime lastMissedDate = ZonedDateTime.now(Clock.offset(initialSchedulerClock, Duration.ofMinutes(45)));
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()))
+            .get()
+            .extracting(TriggerState::getEvaluatedAt)
+            .isEqualTo(lastMissedDate.toInstant());
+    }
+
+    @Test
     void shouldRecoverMissingScheduleGivenNONE() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(
@@ -499,7 +527,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -622,7 +650,7 @@ class TriggerSchedulerTest {
         FlowWithSource deletedFlow = Fixtures.flowWithSchedulePT15M(TEST_TZ).toDeleted();
 
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
 
@@ -785,6 +813,40 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldDisableScheduleTriggerWhenCronHasNoValidCalendarDate() {
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ, builder -> builder.cron("0 0 30 2 *").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+
+        TriggerState existing = TriggerState.of(flow, flow.getTriggers().getFirst(), 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(existing);
+
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isDisabled()).isTrue();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        assertThat(triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElseThrow().isDisabled()).isTrue();
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldDisableUnsatisfiableScheduleOnStart() {
+        FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ, builder -> builder.cron("0 0 30 2 *").build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
+        assertThat(state).isNotNull();
+        assertThat(state.isDisabled()).isTrue();
+    }
+
+    @Test
     void shouldFailInitMissingScheduleTriggerGivenInvalidTimeZone() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M("Asia/Delhi");
@@ -797,6 +859,39 @@ class TriggerSchedulerTest {
         // THEN
         TriggerState state = triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNull();
+    }
+
+    @Test
+    void shouldNotFireFutureDateEarlyWhenRecoveringLastMissedScheduleOnDates() {
+        // region [GIVEN]
+        ZonedDateTime futureDate = SchedulerClock.now().plusDays(4);
+        FlowWithSource flow = Fixtures.flowWithScheduleOnDate(
+            TEST_TZ, List.of(futureDate), builder -> builder
+                .recoverMissedSchedules(RecoverMissedSchedules.LAST)
+                .build()
+        );
+        TriggerState initialState = TriggerState
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), 0)
+            .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusDays(2))
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), futureDate);
+        triggerStateStore.save(initialState);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        // endregion [GIVEN]
+
+        // WHEN
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+        SchedulerClock.setClock(Clock.fixed(Instant.now().plusSeconds(1), ZoneId.systemDefault()));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
+
+        // WHEN
+        SchedulerClock.setClock(Clock.fixed(futureDate.toInstant(), ZoneId.systemDefault()));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
     }
 
     private void completeExecution() {

@@ -15,6 +15,7 @@
                     :items="breadcrumb ?? []"
                     :title="title ?? ''"
                     :mainIcon="mainIcon"
+                    :titleSiblings="titleSiblings"
                     showLeading
                 >
                     <template #title>
@@ -79,7 +80,7 @@
     import Information from "vue-material-design-icons/InformationOutline.vue"
     import DockRight from "vue-material-design-icons/DockRight.vue"
     import KsBreadcrumb from "../KsBreadcrumb/KsBreadcrumb.vue"
-    import type {KsBreadcrumbItem} from "../KsBreadcrumb/types"
+    import type {KsBreadcrumbItem, KsBreadcrumbLoader} from "../KsBreadcrumb/types"
     import KsIconButton from "../../Basic/KsIconButton/KsIconButton.vue"
     import KsTooltip from "../../Feedback/KsTooltip.vue"
     import KsTag from "../../Data/KsTag/KsTag.vue"
@@ -96,6 +97,7 @@
         title?: string
         description?: string
         breadcrumb?: KsBreadcrumbItem[]
+        titleSiblings?: KsBreadcrumbLoader
         mainIcon?: Component
         beta?: boolean
         isBookmarked?: boolean

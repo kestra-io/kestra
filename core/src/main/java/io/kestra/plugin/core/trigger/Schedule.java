@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
@@ -14,6 +16,7 @@ import com.cronutils.parser.CronParser;
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -26,11 +29,8 @@ import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
 
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -188,7 +188,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     // Caps the when-condition tick walk below so a frequent cron (e.g. per-second) paired with a
     // rarely-matching `when` can't pin the scheduling-loop thread rendering millions of ticks
     // synchronously. 10 years of even a daily cron (~3650 ticks) stays well under this.
-    private static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
+    @VisibleForTesting
+    static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
 
     @NotNull
     @Schema(
@@ -227,11 +228,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
-    @Schema(hidden = true)
-    @Builder.Default
-    @Null
-    private final Duration interval = null;
-
     private Map<String, Object> inputs;
 
     @Schema(
@@ -251,7 +247,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     private RecoverMissedSchedules recoverMissedSchedules;
 
     @Override
-    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
+    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws InvalidTriggerConfigurationException {
         ExecutionTime executionTime = this.executionTime();
         ZonedDateTime nextDate;
         Backfill backfill = null;
@@ -282,30 +278,28 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 }
             }
 
-            // previous present but no conditions
-            nextDate = computeNextEvaluationDate(executionTime, lastDate).orElse(null);
+            nextDate = requireNextExecution(executionTime, lastDate);
 
             // if we have a current backfill but the nextDate
             // is after the end, then we calculate again the nextDate
             // based on now()
-            if (backfill != null && nextDate != null && nextDate.isAfter(backfill.getEnd())) {
-                nextDate = computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(null);
+            if (backfill != null && nextDate.isAfter(backfill.getEnd())) {
+                nextDate = requireNextExecution(executionTime, convertDateTime(SchedulerClock.now()));
             }
         }
         // no previous present & no backfill or recover missed schedules, just provide now
         else {
-            nextDate = computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(null);
+            nextDate = requireNextExecution(executionTime, convertDateTime(SchedulerClock.now()));
         }
 
         // if max delay reached, we calculate a new date except if we are doing a backfill
-        if (this.lateMaximumDelay != null && nextDate != null && backfill == null) {
+        if (this.lateMaximumDelay != null && backfill == null) {
             Output scheduleDates = this.scheduleDates(executionTime, nextDate).orElse(null);
             scheduleDates = this.handleMaxDelay(scheduleDates);
-            if (scheduleDates != null) {
-                nextDate = scheduleDates.getDate();
-            } else {
-                return null;
+            if (scheduleDates == null) {
+                throw noValidExecutionDate();
             }
+            nextDate = scheduleDates.getDate();
         }
 
         return nextDate;
@@ -316,14 +310,14 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     @Override
-    public ZonedDateTime nextEvaluationDate() {
+    public ZonedDateTime nextEvaluationDate() throws InvalidTriggerConfigurationException {
         // it didn't take into account the schedule condition, but as they are taken into account inside eval() it's OK.
         ExecutionTime executionTime = this.executionTime();
-        return computeNextEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(convertDateTime(SchedulerClock.now()));
+        return requireNextExecution(executionTime, convertDateTime(SchedulerClock.now()));
     }
 
     @Override
-    public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
+    public Optional<ZonedDateTime> previousEvaluationDate(ConditionContext conditionContext) {
         ExecutionTime executionTime = this.executionTime();
         if (hasWhenCondition()) {
             try {
@@ -334,14 +328,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 );
 
                 if (previous.isPresent()) {
-                    return previous.get().truncatedTo(ChronoUnit.SECONDS);
+                    return Optional.of(previous.get().truncatedTo(ChronoUnit.SECONDS));
                 }
             } catch (InternalException e) {
                 conditionContext.getRunContext().logger()
                     .warn("Unable to evaluate the `when` condition for the next evaluation date for trigger '{}', condition will not be evaluated", this.getId());
             }
         }
-        return computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now())).orElse(convertDateTime(SchedulerClock.now()));
+        return Optional.of(computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now()))
+            .orElseThrow(this::noValidExecutionDate));
     }
 
     @Override
@@ -354,6 +349,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
         if (backfill != null) {
             currentDateTimeExecution = convertDateTime(backfill.getCurrentDate());
+        }
+
+        if (currentDateTimeExecution == null) {
+            return Optional.empty();
         }
 
         Output scheduleDates = this.scheduleDates(executionTime, currentDateTimeExecution).orElse(null);
@@ -433,6 +432,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private Optional<Output> scheduleDates(ExecutionTime executionTime, ZonedDateTime date) {
+        if (date == null) {
+            return Optional.empty();
+        }
+
         Optional<ZonedDateTime> next = executionTime.nextExecution(date.minus(Duration.ofSeconds(1)));
 
         if (next.isEmpty()) {
@@ -466,18 +469,34 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private ZonedDateTime convertDateTime(ZonedDateTime date) {
-        if (this.timezone == null) {
+        if (date == null || this.timezone == null) {
             return date;
         }
 
         return date.withZoneSameInstant(ZoneId.of(this.timezone));
     }
 
+    private ZonedDateTime requireNextExecution(ExecutionTime executionTime, ZonedDateTime from) {
+        return computeNextEvaluationDate(executionTime, from).orElseThrow(this::noValidExecutionDate);
+    }
+
+    private InvalidTriggerConfigurationException noValidExecutionDate() {
+        return new InvalidTriggerConfigurationException(
+            "Cron expression '%s' does not match any valid calendar date.".formatted(this.cron)
+        );
+    }
+
     private Optional<ZonedDateTime> computeNextEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {
+        if (date == null) {
+            return Optional.empty();
+        }
         return executionTime.nextExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private Optional<ZonedDateTime> computePreviousEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {
+        if (date == null) {
+            return Optional.empty();
+        }
         return executionTime.lastExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
     }
 

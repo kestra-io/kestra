@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useDocStore} from "../../stores/doc"
+    import {useDocStore, type DocMetadata} from "../../stores/doc"
     import {buildDocsSections, buildDocsToc} from "./docsUtils"
 
     import Menu from "vue-material-design-icons/Menu.vue"
@@ -55,7 +55,7 @@
 
     const menuOpen = ref(false)
 
-    const rawStructure = ref<Record<string, any> | undefined>()
+    const rawStructure = ref<Record<string, DocMetadata> | undefined>()
     const currentDocPath = computed(() => docStore.docPath)
 
     const normalizePath = (path: string) => {
@@ -156,7 +156,7 @@
         background-color: var(--ks-bg-surface);
         border-radius: 8px;
         border: 1px solid var(--ks-border-default);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 30px var(--ks-shadow-elevated);
         margin-top: 4px;
     }
 

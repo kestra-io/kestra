@@ -6,9 +6,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -33,7 +35,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 import static io.kestra.core.models.Label.READ_ONLY;
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 
 @Singleton
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
@@ -119,10 +120,11 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         findMissingInputsForTriggers(value).forEach(violations::add);
 
         validateDeclaredInputValues(value, violations);
+        validateDeclaredOutputValues(value, violations);
 
         // system labels
         ListUtils.emptyOnNull(value.getLabels()).stream()
-            .filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX) && !label.key().equals(READ_ONLY))
+            .filter(label -> Label.isSystem(label.key()) && !label.key().equals(READ_ONLY))
             .forEach(label -> violations.add("System labels can only be set by Kestra itself, offending label: " + label.key() + "=" + label.value()));
 
         List<Pattern> inputsWithMinusPatterns = ListUtils.emptyOnNull(value.getInputs())
@@ -360,6 +362,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     }
 
     /**
+     * Validates literal flow output values against their declared scalar type at save time. Pebble expressions are
+     * resolved at execution time and are intentionally skipped here.
+     */
+    private void validateDeclaredOutputValues(Flow value, List<String> violations) {
+        for (Output output : ListUtils.emptyOnNull(value.getOutputs())) {
+            literalOutputValueViolation(output)
+                .ifPresent(message -> violations.add("Invalid value for output '%s': %s".formatted(output.getId(), message)));
+        }
+    }
+
+    /**
      * @return the constraint message when {@code rawValue} — a literal default or a value a trigger supplies — cannot
      * satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
      * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
@@ -393,6 +406,30 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining(", "));
             return Optional.of(message.isEmpty() ? "invalid value" : message);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * @return the constraint message when a static output literal cannot satisfy the output's declared scalar type, or
+     * empty when it is valid, dynamic, or non-scalar.
+     */
+    private static Optional<String> literalOutputValueViolation(Output output) {
+        Object rawValue = output.getValue();
+        if (rawValue == null) {
+            return Optional.empty();
+        }
+
+        String asString = rawValue.toString();
+        if (PebbleUtil.containsOpeningBlockDelimiter(asString)) {
+            return Optional.empty();
+        }
+
+        try {
+            FlowInputOutput.parseScalarInputValue(output.getType(), rawValue);
+        } catch (Exception e) {
+            return Optional.of("`%s` is not a valid %s value".formatted(asString, output.getType()));
         }
 
         return Optional.empty();

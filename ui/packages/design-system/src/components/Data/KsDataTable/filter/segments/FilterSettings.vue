@@ -12,7 +12,7 @@
             </div>
             <div class="row">
                 <KsTooltip :content="refreshTooltip" placement="top">
-                    <span class="label">{{ $t("filter.periodic refresh") }}</span>
+                    <span class="label">{{ $t("filter.auto refresh") }}</span>
                 </KsTooltip>
                 <KsSwitch v-model="periodicRefreshEnabled" />
             </div>
@@ -81,7 +81,7 @@
             color: var(--ks-text-dim);
 
             &:hover {
-                color: var(--ks-content-link, var(--ks-text-link));
+                color: var(--ks-text-link);
             }
         }
     }

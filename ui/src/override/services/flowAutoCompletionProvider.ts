@@ -1,17 +1,17 @@
 import {ComputedRef} from "vue"
+import type {Range} from "yaml"
 import type {JSONSchema} from "../../components/plugins/schema/utils/schemaUtils"
 import type {YamlElement} from "@kestra-io/topology/flow-yaml-utils"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {QUOTE, YamlAutoCompletion, functionToSnippet, type RootCompletionContext} from "../../services/autoCompletionProvider"
 import RegexProvider from "../../utils/regex"
-import {State} from "@kestra-io/design-system"
+import {isPlainObject, State} from "@kestra-io/design-system"
 import {usePluginsStore} from "../../stores/plugins"
 import {useFlowStore} from "../../stores/flow"
 import {useMcpStore} from "../../stores/mcp"
 import {useDashboardStore} from "../../stores/dashboard"
 import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
-import {isMap, type YAMLMap} from "yaml"
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []))
@@ -21,7 +21,6 @@ interface ParsedFlow {
     id?: string;
     namespace?: string;
     inputs?: {id?: string; type?: string; inputs?: {id?: string}[]}[];
-    tasks?: {id?: string}[];
     variables?: Record<string, unknown>;
     labels?: Record<string, unknown>;
     triggers?: {type: string}[];
@@ -31,11 +30,39 @@ interface ParsedFlow {
 // webserver). Suggested only in that context; the backend rejects them anywhere else.
 const INPUT_ONLY_FUNCTIONS = ["subflow"]
 
+// Root keys holding tasks, in execution order; `triggers` types are registered plugins too, so they are filtered by key.
+const TASK_ROOT_KEYS = ["tasks", "errors", "finally", "afterExecution"]
+
+interface FlowTask {
+    id: string;
+    type: string;
+    section: number;
+    range: Range;
+}
+
+// Pebble renders with strict variables, so an output that is not there yet fails the task.
+function runsBefore(candidate: FlowTask, current: FlowTask): boolean {
+    if (candidate.section !== current.section) {
+        return candidate.section < current.section
+    }
+    return candidate.range[2] <= current.range[0]
+}
+
+/**
+ * Only the namespaces-store members the completion reads. Typing the dependency this way keeps the
+ * Enterprise store, which is a superset by content, assignable: the full Pinia `Store` types are
+ * mutually incompatible through `$onAction` alone, even when every member lines up.
+ */
+export type NamespacesStoreLike = Pick<
+    ReturnType<typeof useNamespacesStore>,
+    "autocomplete" | "loadAutocomplete" | "usableSecrets" | "kvsList" | "loadInheritedSecrets" | "listSecrets"
+>
+
 export class FlowAutoCompletion extends YamlAutoCompletion {
     flowsInputsCache: Record<string, string[]> = {}
     pluginsStore: ReturnType<typeof usePluginsStore>
     flowStore: ReturnType<typeof useFlowStore>
-    namespacesStore: ReturnType<typeof useNamespacesStore>
+    namespacesStore: NamespacesStoreLike
     mcpStore: ReturnType<typeof useMcpStore>
     dashboardStore: ReturnType<typeof useDashboardStore>
     private mcpServerIdsCache: string[] | undefined
@@ -44,7 +71,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     constructor(
         flowStore: ReturnType<typeof useFlowStore>,
         pluginsStore: ReturnType<typeof usePluginsStore>,
-        namespacesStore: ReturnType<typeof useNamespacesStore>,
+        namespacesStore: NamespacesStoreLike,
         mcpStore: ReturnType<typeof useMcpStore>,
         dashboardStore: ReturnType<typeof useDashboardStore>,
         completionSource?: ComputedRef<string | undefined>,
@@ -116,15 +143,14 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
     }
 
-    private tasks(source: string): YAMLMap[] {
-        const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
-            .flatMap(allTasks => allTasks.tasks ?? [])
-        const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
-            .map(task => task.task)
-            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
-
-        return [...tasksFromTasksProp, ...tasksFromTaskProp]
-            .filter((task): task is YAMLMap => isMap(task) && Boolean(task.get("id")))
+    // Matching on the plugin registry keeps input definitions such as `Pause.onResume` out.
+    private tasks(source: string): FlowTask[] {
+        const pluginTypes = new Set(this.pluginsStore.allTypes)
+        return YAML_UTILS.extractTypedBlocks(source)
+            .flatMap(({path, type, value: {id}, range}) => {
+                const section = TASK_ROOT_KEYS.indexOf(path.split(".")[0])
+                return section !== -1 && typeof id === "string" && pluginTypes.has(type) ? [{id, type, section, range}] : []
+            })
     }
 
     private cursorProbeIndexes(source: string, cursorIndex: number): number[] {
@@ -166,7 +192,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         try {
             for (const probeIndex of probeIndexes) {
                 const localized = YAML_UTILS.localizeElementAtIndex(source, probeIndex)
-                const candidates = [...(localized?.parents ?? []), localized?.value]
+                // `value` is whatever the YAML node held, so only a map can carry a task id.
+                const value = localized?.value
+                const candidates = [...(localized?.parents ?? []), isPlainObject(value) ? value : undefined]
 
                 const taskId = this.taskIdFromCandidates(candidates)
                 if (taskId) {
@@ -181,9 +209,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     }
 
     private async outputsFor(taskId: string, source: string): Promise<string[]> {
-        const taskType = this.tasks(this.completionSource?.value ?? source).filter(task => task.get("id") === taskId)
-            .map(task => task.get("type"))
-            ?.[0] as string | undefined
+        const taskType = this.tasks(this.completionSource?.value ?? source).find(task => task.id === taskId)?.type
 
         if (!taskType) {
             return []
@@ -219,12 +245,11 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             case "inputs":
                 return Promise.resolve(parsed?.inputs?.map(input => input.id).filter((id): id is string => id !== undefined) ?? [])
             case "outputs": {
+                const tasks = this.tasks(this.completionSource?.value ?? source)
                 const currentTaskId = this.currentTaskIdAtCursor(source, cursorIndex)
-                return Promise.resolve(
-                    parsed?.tasks
-                        ?.map(task => task.id)
-                        .filter((taskId): taskId is string => !!taskId && taskId !== currentTaskId) ?? [],
-                )
+                const currentTask = tasks.find(task => task.id === currentTaskId)
+                const reachable = currentTask === undefined ? tasks : tasks.filter(task => runsBefore(task, currentTask))
+                return distinct(reachable.map(task => task.id)).filter(taskId => taskId !== currentTaskId)
             }
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}))
@@ -313,7 +338,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     : Promise.resolve(availableNamespaces)
             }
             case "flowId": {
-                if (parentTask !== undefined && parentTask.namespace !== undefined) {
+                if (typeof parentTask?.namespace === "string") {
                     let flowIds: string[] = (await this.flowStore.flowsByNamespace(parentTask.namespace))
                         .map((flow: {id: string}) => flow.id)
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
@@ -325,8 +350,9 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 break
             }
             case "inputs": {
-                if (parentTask !== undefined && parentTask.namespace !== undefined && parentTask.flowId !== undefined) {
-                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, parentTask.revision, Object.keys(yamlElement.value ?? {}))
+                if (typeof parentTask?.namespace === "string" && typeof parentTask.flowId === "string") {
+                    const revision = parentTask.revision == null ? undefined : String(parentTask.revision)
+                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, revision, Object.keys(yamlElement.value ?? {}))
                 }
                 break
             }
@@ -348,7 +374,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
             }
             case "chartId": {
                 // stays live even when dashboardId is empty: falls back to the "_default" sentinel dashboard.
-                const dashboardId = parentTask?.dashboardId ?? "_default"
+                const dashboardId = typeof parentTask?.dashboardId === "string" ? parentTask.dashboardId : "_default"
                 const charts = await this.dashboardStore.chartsById(dashboardId)
                 return charts.filter(chart => isExportableChart(chart.type)).map(chart => chart.id)
             }

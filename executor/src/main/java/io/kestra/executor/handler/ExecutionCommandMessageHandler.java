@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.events.Actor;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
@@ -27,6 +28,7 @@ import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
 import io.kestra.executor.KillSwitchActionService;
 
+import io.micronaut.core.propagation.PropagatedContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +93,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         {
             AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
             String error = null;
-            try {
+            try (PropagatedContext.Scope _ = Actor.propagate(message.actor())) {
                 var flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 var executorContext = new ExecutorContext(execution, flow);
                 var newExecution = switch (message) {
@@ -192,15 +194,18 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     .orElseThrow(() -> new FlowNotFoundException(sourceExecution));
             }
 
-            var newExecution = executionService.replay(
-                sourceExecution,
-                flow,
-                command.taskRunId(),
-                command.revision(),
-                Optional.ofNullable(command.breakpoints()),
-                true,
-                command.executionId()
-            );
+            Execution newExecution;
+            try (PropagatedContext.Scope _ = Actor.propagate(command.actor())) {
+                newExecution = executionService.replay(
+                    sourceExecution,
+                    flow,
+                    command.taskRunId(),
+                    command.revision(),
+                    Optional.ofNullable(command.breakpoints()),
+                    true,
+                    command.executionId()
+                );
+            }
 
             var persisted = persistNewExecutionWithKillSwitch(newExecution);
             if (persisted.isEmpty()) {

@@ -9,7 +9,7 @@
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:4": {}
   },
-  "postCreateCommand": "cd ui && npm install && npx playwright install",
+  "postCreateCommand": "cd ui && npm install && cd ../e2e && npm install && npx playwright install",
   "customizations": {
     "vscode": {
       "settings": {

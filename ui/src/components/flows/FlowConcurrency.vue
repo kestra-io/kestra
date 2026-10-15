@@ -21,7 +21,7 @@
                 </span>
             </div>
             <div class="progressbar mb-3">
-                <KsProgress :stroke-width="16" color="#5BB8FF" :percentage="progress" :showText="false" />
+                <KsProgress :stroke-width="16" color="var(--ks-status-info)" :percentage="progress" :showText="false" />
             </div>
         </KsCard>
         <Executions
@@ -56,6 +56,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useClient} from "@kestra-io/kestra-sdk"
     import {apiUrl} from "override/utils/route"
+    import {handled, type KestraHttpError} from "../../utils/kestraHttp"
     import Loading from "vue-material-design-icons/Loading.vue"
 
     defineOptions({inheritAttrs: false})
@@ -90,12 +91,13 @@
         try {
             const response = await axios.get(
                 `${apiUrl()}/concurrency-limit/${flowStore.flow.namespace}/${flowStore.flow.id}`,
-                {ignoreNotFound: true, showMessageOnError: false},
             )
 
             concurrencyLimit.value = response.data
-        } catch (err: any) {
-            if (err?.status === 404 || err?.response?.status === 404) {
+        } catch (err) {
+            const httpError = err as KestraHttpError | undefined
+            if (httpError?.status === 404 || httpError?.response?.status === 404) {
+                handled(err)
                 concurrencyLimit.value = undefined
             } else {
                 error.value = true

@@ -25,6 +25,7 @@ import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
@@ -693,6 +694,28 @@ public abstract class AbstractLogDataStoreTest {
         if (logDataStore.canAggregate()) {
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().get("count")).isIn(3, 3L); // alpha, beta, gamma
+        } else {
+            assertThat(results).isEmpty();
+        }
+    }
+
+    @Test
+    void fetchData_narrowsOnEveryLevelFilter() throws Exception {
+        var results = logDataStore.fetchData(
+            levelsTenant,
+            Logs.builder().type(Logs.class.getName())
+                .columns(Map.of("count", ColumnDescriptor.<Logs.Fields> builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build()))
+                .where(List.of(
+                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("WARN", "ERROR")).build(),
+                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("ERROR")).build()
+                ))
+                .build(),
+            ZonedDateTime.now().minusYears(10), ZonedDateTime.now().plusYears(10), null
+        );
+
+        if (logDataStore.canAggregate()) {
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().get("count")).isIn(1, 1L);
         } else {
             assertThat(results).isEmpty();
         }

@@ -683,6 +683,7 @@
       "nav_properties": "Properties",
       "non_dynamic": "non-dynamic",
       "format": "Format",
+      "internal_storage_uri_hint": "Pebble expression referencing an Internal Storage URI e.g. {example}.",
       "max_items": "Max items",
       "max_length": "Max length",
       "maximum": "Maximum",

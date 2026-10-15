@@ -505,7 +505,7 @@ class ExecutionServiceTest {
         assertThat(((IntInput) values.get(1).input()).getMax()).isEqualTo(5);
         assertThat(values.get(2).value()).isEqualTo("Approved by reviewer");
         assertThat(values.get(2).input().getDescription()).isEqualTo("Explain your decision");
-        assertThat(pause.getOnResume().getFirst().getDescription())
+        assertThat(pause.getInputs().getFirst().getDescription())
             .isEqualTo("{{ outputs.prepare.values.description }} {{ inputs.request }}");
 
         var submitted = Flux.<CompletedPart> just(

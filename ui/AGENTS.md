@@ -38,6 +38,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 
     Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
+13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.scss` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
 
 ## Best practices for keeping the design system healthy
 

@@ -209,8 +209,6 @@
         emits("refresh")
     }
 
-    // the auto-refresh interval is owned here, not in the settings popover, so it keeps
-    // running after the popover closes and starts on page load when the flag was left on
     usePeriodicRefresh(refreshData)
 
     provide(FILTER_CONTEXT_INJECTION_KEY, {

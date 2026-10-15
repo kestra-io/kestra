@@ -5,8 +5,6 @@ const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${ro
 
 export {getAutoRefreshEnabledKey}
 
-// The flag is shared by every instance so the page-lifetime interval owner (the filter bar)
-// and the settings panel stay in sync even while the panel is unmounted.
 const enabledRef = ref(false)
 
 export function usePeriodicRefresh(refreshCallback?: () => void) {
@@ -29,8 +27,6 @@ export function usePeriodicRefresh(refreshCallback?: () => void) {
         },
     })
 
-    // Only the caller that owns the refresh callback (the filter bar, not the settings
-    // popover) manages the interval, so closing the popover cannot stop it.
     if (refreshCallback) {
         watch(isEnabled, (enabled) => {
             if (refreshInterval.value) clearInterval(refreshInterval.value)

@@ -2,6 +2,7 @@ import path from "path"
 import {fileURLToPath} from "url"
 import {mergeConfig, type Alias} from "vite"
 import type {StorybookConfig} from "@storybook/vue3-vite"
+import {getProjectRoot} from "storybook/internal/common"
 
 const config: StorybookConfig = {
     stories: [
@@ -11,7 +12,13 @@ const config: StorybookConfig = {
     addons: ["@storybook/addon-themes", "@storybook/addon-vitest"],
     framework: {
         name: "@storybook/vue3-vite",
-        options: {},
+        options: {
+            // Storybook resolves this tsconfig from the git root, not from this file
+            docgen: {
+                plugin: "vue-component-meta",
+                tsconfig: `${path.relative(getProjectRoot(), path.resolve(import.meta.dirname))}/tsconfig.docgen.json`,
+            },
+        },
     },
     async viteFinal(viteConfig) {
         const __dirname = path.dirname(fileURLToPath(import.meta.url))

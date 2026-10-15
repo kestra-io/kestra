@@ -215,8 +215,7 @@
     .stroke-warning { stroke: var(--ks-status-warning); }
     .vue-flow__edge-path { stroke-dasharray: 1.5 3; }
     .vue-flow__edge-path.loop-return-path {
-        stroke: var(--ks-topology-border-flowable-task);
-        stroke-dasharray: none;
+        stroke: color-mix(in srgb, var(--ks-topology-border-flowable-task) 60%, transparent);
     }
 
     .edge-case-label {

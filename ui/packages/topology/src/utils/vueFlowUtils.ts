@@ -1139,7 +1139,7 @@ export function generateGraph(
             markerEnd: {
                 id: "marker-custom",
                 type: MarkerType.ArrowClosed,
-                color: "var(--ks-topology-border-flowable-task)",
+                color: "color-mix(in srgb, var(--ks-topology-border-flowable-task) 60%, transparent)",
             },
             data: {
                 loopReturn: {

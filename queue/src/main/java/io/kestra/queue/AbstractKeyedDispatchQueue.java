@@ -29,6 +29,10 @@ public abstract class AbstractKeyedDispatchQueue<T extends KeyedDispatchEvent> e
 
     @Override
     public final void emit(String routingKey, List<T> messages) throws QueueException {
+        if (messages.isEmpty()) {
+            return;
+        }
+
         this.doEmit(
             routingKey,
             messages.stream()

@@ -1881,7 +1881,7 @@ class ExecutionControllerRunnerTest {
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
         Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("pause").getFirst().toBuilder().tenantId(TENANT_ID).build()); // API didn't send back the tenant id'
-        Map<String, Object> inputs = (Map<String, Object>) outputs.get("onResume");
+        Map<String, Object> inputs = (Map<String, Object>) outputs.get("inputs");
         Map<String, String> secretInputs = (Map<String, String>) inputs.get("secret_pause");
         assertThat(inputs.get("asked")).isEqualTo("myString");
         assertThat(secretInputs.get("type")).isEqualTo(EncryptedString.TYPE);

@@ -23,7 +23,7 @@
                 </p>
 
                 <p>
-                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="status-badge" :status="taskRun.state.current" />
                 </p>
 
                 <KsSelect
@@ -37,7 +37,7 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
+                            <KsExecutionStatus size="small" :label="true" class="status-badge" :status="item.code" />
                             <i18n-t keypath="mark as" tag="span">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
@@ -45,7 +45,7 @@
                     </KsOption>
                 </KsSelect>
 
-                <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
+                <div v-if="selectedStatus" class="alert-status-change" role="alert">
                     <ul>
                         <li v-for="(text, i) in ($tm('change state hint') as Record<string, string[]>)[selectedStatus]" :key="i">
                             {{ $rt(text) }}
@@ -161,5 +161,15 @@
             margin-bottom: 0;
             padding-left: 10px;
         }
+    }
+</style>
+
+<style scoped lang="scss">
+    .status-badge {
+        margin-right: var(--ks-spacing-1);
+    }
+
+    .alert-status-change {
+        margin-top: var(--ks-spacing-2);
     }
 </style>

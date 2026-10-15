@@ -460,6 +460,10 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     return "default"
 }
 
+function isLoopTask(type?: string): boolean {
+    return Boolean(type?.endsWith(".LoopUntil") || type?.endsWith(".Loop"))
+}
+
 /** A flowable's own gate node (e.g. the `Parallel` task itself) is a real graph node — edges fan
  *  out of it or chain through it — but it must render once, as its cluster's lane header, not
  *  again as a duplicate task box inside that same cluster (kestra-io/kestra#19666). Excludes
@@ -1066,7 +1070,7 @@ export function generateGraph(
         const clusterUid = cluster.cluster.uid
         const taskNode = cluster.cluster.taskNode
         if (
-            !taskNode?.task?.type?.endsWith("LoopUntil") ||
+            !isLoopTask(taskNode?.task?.type) ||
             edgeReplacer[clusterUid] ||
             collapsed.has(clusterUid.replace(CLUSTER_PREFIX, "")) ||
             hiddenOrAliased.includes(cluster.start) ||
@@ -1081,7 +1085,7 @@ export function generateGraph(
         if (!dagreNode) continue
 
         elements.push({
-            id: `loop-until-return|${cluster.end}|${cluster.start}`,
+            id: `loop-return|${cluster.end}|${cluster.start}`,
             source: cluster.end,
             target: cluster.start,
             type: "edge",
@@ -1091,8 +1095,8 @@ export function generateGraph(
                 color: "var(--ks-topology-border-flowable-task)",
             },
             data: {
-                loopUntilReturn: true,
-                loopUntilReturnPosition: isHorizontal
+                loopReturn: true,
+                loopReturnPosition: isHorizontal
                     ? dagreNode.y + dagreNode.height / 2 - 12
                     : dagreNode.x + dagreNode.width / 2 - 12,
             },

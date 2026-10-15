@@ -76,8 +76,8 @@
         fansOut?: boolean;
         laneGap?: {leaving: number; entering: number};
         bypass?: "source" | "target";
-        loopUntilReturn?: boolean;
-        loopUntilReturnPosition?: number;
+        loopReturn?: boolean;
+        loopReturnPosition?: number;
     }
 
     const props = defineProps({
@@ -127,7 +127,7 @@
         return props.data
             ? {
                 "vue-flow__edge-path": true,
-                "loop-until-return-path": props.data.loopUntilReturn,
+                "loop-return-path": props.data.loopReturn,
                 ["stroke-" + props.data.color]: props.data.color,
                 "unused-path": props.data.unused,
             }
@@ -149,11 +149,11 @@
 
     const path = computed(() => getSmoothStepPath({
         ...props,
-        centerX: props.data?.loopUntilReturn && !flowsHorizontally.value
-            ? props.data.loopUntilReturnPosition
+        centerX: props.data?.loopReturn && !flowsHorizontally.value
+            ? props.data.loopReturnPosition
             : flowsHorizontally.value ? laneTurn.value : undefined,
-        centerY: props.data?.loopUntilReturn && flowsHorizontally.value
-            ? props.data.loopUntilReturnPosition
+        centerY: props.data?.loopReturn && flowsHorizontally.value
+            ? props.data.loopReturnPosition
             : flowsHorizontally.value ? undefined : laneTurn.value,
     }))
 
@@ -206,7 +206,7 @@
     .stroke-error { stroke: var(--ks-border-error); }
     .stroke-warning { stroke: var(--ks-status-warning); }
     .vue-flow__edge-path { stroke-dasharray: 1.5 3; }
-    .vue-flow__edge-path.loop-until-return-path {
+    .vue-flow__edge-path.loop-return-path {
         stroke: var(--ks-topology-border-flowable-task);
         stroke-dasharray: none;
     }

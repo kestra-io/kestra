@@ -491,6 +491,17 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldNotRequireSubtypedFieldWhenBuilderDefaultIsDeclaredOnAbstractParent() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, InheritedSubtypedWithDefault.class);
+
+        assertThat((List<String>) generate.get("required"), not(hasItem("taskRunner")));
+
+        Map<String, Object> inputs = new AbstractClassDocumentation<Task>(jsonSchemaGenerator, InheritedSubtypedWithDefault.class, Task.class) {}.getInputs();
+        assertThat(((Map<String, Object>) inputs.get("taskRunner")).get("$required"), is(false));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void shouldNotRequireSubtypedFieldWhenBuilderDefaultExists() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, RequiredSubtypedWithDefault.class);
 
@@ -738,6 +749,22 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @NotNull
         private Property<TaskWithEnum.TestClass> requiredWithNoDefault;
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public abstract static class AbstractSubtypedWithDefault extends Task {
+        @PluginProperty
+        @NotNull
+        @Builder.Default
+        private TaskRunner<?> taskRunner = io.kestra.plugin.core.runner.Process.instance();
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class InheritedSubtypedWithDefault extends AbstractSubtypedWithDefault {
     }
 
     @SuperBuilder

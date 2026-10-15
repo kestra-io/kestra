@@ -40,11 +40,11 @@
 
         <KsCard class="mobile-summary-info" shadow="never">
             <div class="mobile-summary-identity">
-                <router-link :to="createLink('flows', execution)">
+                <router-link class="identity-text" :to="createLink('flows', execution)">
                     {{ execution.flowId }}
                 </router-link>
                 <span>·</span>
-                <router-link :to="createLink('namespaces', execution)">
+                <router-link class="identity-text" :to="createLink('namespaces', execution)">
                     {{ execution.namespace }}
                 </router-link>
                 <span>·</span>
@@ -166,12 +166,22 @@
 
     .mobile-summary-identity {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
-        gap: var(--ks-spacing-1) var(--ks-spacing-2);
+        gap: var(--ks-spacing-2);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
-        overflow-wrap: anywhere;
+
+        > * {
+            flex: none;
+        }
+
+        .identity-text {
+            flex: 0 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
 
     .mobile-summary-labels {

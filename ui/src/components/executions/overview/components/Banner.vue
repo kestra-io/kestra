@@ -35,10 +35,10 @@
                     </KsIconButton>
                 </span>
 
-                <span v-if="replayed" class="execution-banner__replay">
+                <router-link v-if="replayed" class="execution-banner__replay" :to="replaysLink">
                     <Replay />
                     {{ $t("replayed") }}
-                </span>
+                </router-link>
 
                 <span v-if="restarted" class="execution-banner__restart">
                     <Restart />
@@ -234,6 +234,14 @@
             : undefined
     })
 
+    const replaysLink = computed(() => ({
+        name: "executions/list",
+        query: {
+            "filters[parentId][EQUALS]": matchesStatus("replay") ? props.execution.parentId ?? props.execution.id : props.execution.id,
+            sort: "state.endDate:desc",
+        },
+    }))
+
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>
         props.execution.taskRunList?.filter(
@@ -406,6 +414,11 @@
 
         &__replay {
             color: var(--ks-status-info);
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
         }
 
         &__restart {

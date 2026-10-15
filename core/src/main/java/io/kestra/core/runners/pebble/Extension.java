@@ -34,6 +34,9 @@ public class Extension extends AbstractExtension {
     private ReadFileFunction readFileFunction;
 
     @Inject
+    private DataURLFunction dataURLFunction;
+
+    @Inject
     private FileURIFunction fileURIFunction;
 
     @Inject
@@ -152,6 +155,7 @@ public class Extension extends AbstractExtension {
         functions.put(SecretFunction.NAME, secretFunction);
         functions.put(KvFunction.NAME, kvFunction);
         functions.put(ReadFileFunction.NAME, readFileFunction);
+        functions.put(DataURLFunction.NAME, dataURLFunction);
         functions.put(FileURIFunction.NAME, fileURIFunction);
         if (renderFunction != null) {
             functions.put(RenderFunction.NAME, renderFunction);

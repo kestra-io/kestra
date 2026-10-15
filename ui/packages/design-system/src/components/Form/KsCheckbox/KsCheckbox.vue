@@ -47,7 +47,7 @@
         --kel-checkbox-text-color: var(--ks-text-primary);
         --kel-checkbox-checked-text-color: var(--ks-text-primary);
         --kel-checkbox-font-size: var(--ks-font-size-base);
-        --kel-checkbox-font-weight: var(--kbs-body-font-weight);
+        --kel-checkbox-font-weight: var(--ks-font-weight-regular);
         --kel-checkbox-input-width: 1rem;
         --kel-checkbox-input-height: 1rem;
         --kel-checkbox-border-radius: var(--ks-radius-xs);

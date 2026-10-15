@@ -96,6 +96,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useMiscStore} from "override/stores/misc";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
+    import useRouteContext from "../../composables/useRouteContext";
 
 
     const pluginsStore = usePluginsStore();
@@ -123,6 +124,8 @@
                     },
                 ],
     }));
+
+    useRouteContext(routeInfo);
 
     const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
 

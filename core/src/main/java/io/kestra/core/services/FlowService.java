@@ -614,9 +614,17 @@ public class FlowService {
         if (flowRepository.isEmpty()) {
             throw noRepositoryException();
         }
+        if (revision.isPresent()) {
+            // For a specific revision, check if the flow has not been deleted: the deletion will only occur on the last revision.
+            Optional<Flow> latest = flowRepository.get().findByIdWithoutAcl(tenant, namespace, id, Optional.empty());
+            if (latest.isEmpty() || latest.get().isDeleted()) {
+                throw new NoSuchElementException("Requested Flow is not found.");
+            }
+        }
 
         Optional<Flow> optional = flowRepository.get().findByIdWithoutAcl(tenant, namespace, id, revision);
-        if (optional.isEmpty()) {
+        // findByIdWithoutAcl is deleted-inclusive, so reject a resolved flow the same way as a nonexistent one.
+        if (optional.isEmpty() || optional.get().isDeleted()) {
             throw new NoSuchElementException("Requested Flow is not found.");
         }
 

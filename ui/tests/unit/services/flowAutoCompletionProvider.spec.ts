@@ -59,6 +59,21 @@ const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
 })
 
 const pluginsStore = {
+    allTypes: [
+        "io.kestra.plugin.core.output.OutputValues",
+        "io.kestra.plugin.core.kv.Get",
+        "io.kestra.plugin.core.flow.Subflow",
+        "io.kestra.plugin.core.http.Download",
+        "io.kestra.plugin.core.storage.FilterItems",
+        "io.kestra.plugin.core.storage.Upload",
+        "io.kestra.plugin.core.flow.WorkingDirectory",
+        "io.kestra.plugin.git.Clone",
+        "io.kestra.plugin.core.execution.Assert",
+        "io.kestra.plugin.core.flow.If",
+        "io.kestra.plugin.core.flow.Pause",
+        "io.kestra.plugin.core.log.Log",
+        "io.kestra.plugin.core.trigger.Schedule",
+    ],
     load: vi.fn((payload: any) =>{
         switch (payload.cls) {
                 case "io.kestra.plugin.core.trigger.Schedule":
@@ -239,6 +254,53 @@ tasks:
             flowWithOutputsAutocompleteInTaskParsed,
             "outputs"
         )).toEqual(["download", "filter", "upload"]);
+    })
+
+    it("outputs autocomplete lists nested, errors and finally tasks but not triggers, inputs, onResume or flow outputs", async () => {
+        const flow = [
+            "id: my-flow",
+            "namespace: my.namespace",
+            "inputs:",
+            "  - id: myInput",
+            "    type: STRING",
+            "tasks:",
+            "  - id: file_system",
+            "    type: io.kestra.plugin.core.flow.WorkingDirectory",
+            "    tasks:",
+            "      - id: clone",
+            "        type: io.kestra.plugin.git.Clone",
+            "      - id: assert",
+            "        type: io.kestra.plugin.core.execution.Assert",
+            "        conditions:",
+            "          - \"{{ outputs. }}\"",
+            "  - id: branch",
+            "    type: io.kestra.plugin.core.flow.If",
+            "    then:",
+            "      - id: kv",
+            "        type: io.kestra.plugin.core.kv.Get",
+            "  - id: approval",
+            "    type: io.kestra.plugin.core.flow.Pause",
+            "    onResume:",
+            "      - id: approved",
+            "        type: BOOLEAN",
+            "errors:",
+            "  - id: onError",
+            "    type: io.kestra.plugin.core.log.Log",
+            "finally:",
+            "  - id: cleanup",
+            "    type: io.kestra.plugin.core.log.Log",
+            "outputs:",
+            "  - id: flowOutput",
+            "    type: STRING",
+            "triggers:",
+            "  - id: schedule",
+            "    type: io.kestra.plugin.core.trigger.Schedule",
+        ].join("\n")
+        const cursorIndex = flow.indexOf("outputs. ") + "outputs.".length
+
+        expect(await provider.nestedFieldAutoCompletion(flow, YAML_UTILS.parse(flow), "outputs", cursorIndex))
+            .toEqual(["file_system", "clone", "branch", "kv", "approval", "onError", "cleanup"])
+        expect(await provider.nestedFieldAutoCompletion(flow, YAML_UTILS.parse(flow), "outputs.kv")).toEqual(["value"])
     })
 
     it("value autocompletions", async () => {

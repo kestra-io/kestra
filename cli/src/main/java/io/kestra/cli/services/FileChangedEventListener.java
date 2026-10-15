@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithPath;
@@ -228,10 +230,15 @@ public class FileChangedEventListener {
         }
     }
 
-    private void flowToFile(FlowInterface flow, Path path) {
+    @VisibleForTesting
+    void flowToFile(FlowInterface flow, Path path) {
         Path defaultPath = path != null ? path : this.buildPath(flow);
 
         try {
+            // Rewriting identical content fires ENTRY_MODIFY, which saves the flow again and calls back here forever.
+            if (Files.exists(defaultPath) && flow.source().equals(Files.readString(defaultPath))) {
+                return;
+            }
             Files.writeString(defaultPath, flow.source());
             log.info("Flow {} has been written to file {}", flow.getId(), defaultPath);
         } catch (IOException e) {

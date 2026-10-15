@@ -43,6 +43,9 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
 
     private Thread currentThread;
 
+    /** Makes interrupting the job and ending it mutually exclusive, so no interrupt lands once the job has ended. */
+    private final Object interruptLock = new Object();
+
     AbstractWorkerCallable(RunContext runContext, String type, String uid, ClassLoader classLoader) {
         this.logger = runContext.logger();
         this.runContext = runContext;
@@ -72,7 +75,12 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
             // bad behavior that throws errors and not exceptions.
             return this.exceptionHandler(e);
         } finally {
-            shutdownLatch.countDown();
+            synchronized (interruptLock) {
+                shutdownLatch.countDown();
+                // A kill or shutdown interrupt is meant for the job only: clear it so it doesn't leak to the
+                // post-job steps (log file upload, outputs storage, result emission) that run on this same thread.
+                Thread.interrupted();
+            }
         }
     }
 
@@ -122,8 +130,10 @@ public abstract class AbstractWorkerCallable implements Callable<State.Type> {
     }
 
     public void interrupt() {
-        if (this.currentThread != null && this.currentThread.isAlive()) {
-            this.currentThread.interrupt();
+        synchronized (interruptLock) {
+            if (shutdownLatch.getCount() > 0 && this.currentThread != null && this.currentThread.isAlive()) {
+                this.currentThread.interrupt();
+            }
         }
     }
 }

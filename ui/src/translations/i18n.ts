@@ -3,13 +3,48 @@ import {createI18n, type I18n} from "vue-i18n"
 
 const translations = import.meta.glob(["./*.json", "!./en.json"])
 
-export const SUPPORT_LOCALES = ["de","en","es","fr","hi","it","ja","ko","pl","pt","pt_BR","ru","zh_CN"] as const
+import {SUPPORT_LOCALES} from "./languages"
+
 type Locales = (typeof SUPPORT_LOCALES)[number]
 
 export const globalI18n = ref<I18n<any, any, any, Locales, false>["global"]>()
 
+/**
+ * What happens when `t()` is asked for a key no locale defines.
+ *
+ * - `throw`: the default under Vitest, so a component that renders a raw key fails its test.
+ * - `report`: the default everywhere else, including production builds. One `console.error` per
+ *   key, which is what the e2e suite listens for; the render itself still shows the key, as before.
+ * - `silent`: for Storybook, where isolated stories legitimately lack most namespaced keys.
+ */
+export type MissingKeyPolicy = "throw" | "report" | "silent"
+
+export const MISSING_KEY_MESSAGE = "[i18n] Missing translation key"
+
+let missingKeyPolicy: MissingKeyPolicy = import.meta.env.MODE === "test" ? "throw" : "report"
+const reportedMissingKeys = new Set<string>()
+
+export function setMissingKeyPolicy(policy: MissingKeyPolicy) {
+  missingKeyPolicy = policy
+}
+
+/**
+ * vue-i18n calls this once per locale in the fallback chain, so a key present in English but
+ * missing in the active locale reaches it too. Only the English miss is a bug: English is the
+ * source every locale is generated from, so a key absent there is absent everywhere.
+ */
+function onMissingKey(locale: string, key: string): void {
+  if (missingKeyPolicy === "silent" || locale !== "en") return
+
+  const message = `${MISSING_KEY_MESSAGE} "${key}" - it renders as its raw id`
+  if (missingKeyPolicy === "throw") throw new Error(message)
+  if (reportedMissingKeys.has(key)) return
+  reportedMissingKeys.add(key)
+  console.error(message)
+}
+
 export function setupI18n(options: {locale: Locales} = {locale: "en"}) {
-  const i18n = createI18n<false>(options)
+  const i18n = createI18n<false>({...options, missing: onMissingKey, missingWarn: false})
   setI18nLanguage(i18n, options.locale)
   globalI18n.value = i18n.global
   return i18n

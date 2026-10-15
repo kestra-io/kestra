@@ -13,7 +13,7 @@ dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.17"
     def protobufVersion = "3.25.8" // Orc still uses 3 see https://github.com/apache/orc/blob/main/java/pom.xml
-    def bouncycastleVersion = "1.83"
+    def bouncycastleVersion = "1.85"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "1.5.6"
     def jsonschemaVersion = "4.38.0"
@@ -32,7 +32,7 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api enforcedPlatform("org.eclipse.jetty:jetty-bom:$jettyVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.10.11")
+    api platform("io.micronaut.platform:micronaut-platform:4.10.18")
     api platform("io.qameta.allure:allure-bom:2.33.0")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.76.0')
@@ -126,7 +126,7 @@ dependencies {
         // rather than winning by Gradle's highest-version conflict resolution. The binary's OTLP
         // envelope key has to match what TaskLogLineMatcher parses, and a mismatch emits valid
         // output that Kestra silently ingests none of — so the version ships only when bumped here.
-        api 'io.kestra:kotlp:0.1.3!!'
+        api 'io.kestra:kotlp:0.1.6!!'
         api "org.xhtmlrenderer:flying-saucer-core:$flyingSaucerVersion"
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.5'

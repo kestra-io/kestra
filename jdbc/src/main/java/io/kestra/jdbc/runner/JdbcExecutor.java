@@ -344,7 +344,7 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(
             ((JdbcQueue<SubflowExecutionEnd>) this.subflowExecutionEndQueue)
-                .receiveTransaction(null, Executor.class, (dslContext, eithers) -> eithers.forEach(this::subflowExecutionEndQueue))
+                .receiveTransaction(null, Executor.class, (dslContext, eithers) -> this.subflowExecutionEndQueue(eithers))
         );
         this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
         this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
@@ -1031,64 +1031,81 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-    private void subflowExecutionEndQueue(Either<SubflowExecutionEnd, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
-            return;
+    private void subflowExecutionEndQueue(List<Either<SubflowExecutionEnd, DeserializationException>> eithers) {
+        // Group the batch by parent execution id and process the parents in sorted id order.
+        // Acquiring the per-parent `executions` FOR UPDATE locks in a deterministic order across
+        // all executor instances prevents the cross-parent lock-ordering deadlock that occurs under
+        // heavy subflow fan-out (many child ends landing in the same batch on multiple executors).
+        // Grouping by parent also avoids re-locking and re-reading the same parent row once per child.
+        // A TreeMap keeps the parent ids sorted; the ArrayList values preserve child-end arrival order.
+        Map<String, List<SubflowExecutionEnd>> messagesByParent = new TreeMap<>();
+        for (Either<SubflowExecutionEnd, DeserializationException> either : eithers) {
+            if (either.isRight()) {
+                log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
+                continue;
+            }
+
+            SubflowExecutionEnd message = either.getLeft();
+
+            // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
+            if (killSwitchService.evaluate(message.getChildExecution()) != EvaluationType.PASS) {
+                log.warn("Ignoring subflow execution end for child execution {} as there is a kill switch in it", message.getChildExecution().getId());
+                continue;
+            }
+            // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
+            if (killSwitchService.evaluate(message.getParentExecutionId()) != EvaluationType.PASS) {
+                log.warn("Ignoring subflow execution end for parent execution {} as there is a kill switch in it", message.getParentExecutionId());
+                continue;
+            }
+
+            if (log.isDebugEnabled()) {
+                executorService.log(log, true, message);
+            }
+
+            messagesByParent.computeIfAbsent(message.getParentExecutionId(), ignored -> new ArrayList<>()).add(message);
         }
 
-        SubflowExecutionEnd message = either.getLeft();
+        messagesByParent.forEach(this::subflowExecutionEndForParent);
+    }
 
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the child execution anyway
-        if (killSwitchService.evaluate(message.getChildExecution()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution end for child execution {} as there is a kill switch in it", message.getChildExecution().getId());
-            return;
-        }
-        // we filter all messages for which there is a kill switch as the kill switch will apply to the parent execution anyway
-        if (killSwitchService.evaluate(message.getParentExecutionId()) != EvaluationType.PASS) {
-            log.warn("Ignoring subflow execution end for parent execution {} as there is a kill switch in it", message.getParentExecutionId());
-            return;
-        }
-
-        if (log.isDebugEnabled()) {
-            executorService.log(log, true, message);
-        }
-
-        executionRepository.lock(message.getParentExecutionId(), pair ->
+    private void subflowExecutionEndForParent(String parentExecutionId, List<SubflowExecutionEnd> messages) {
+        executionRepository.lock(parentExecutionId, pair ->
         {
             Execution execution = pair.getLeft();
 
             if (execution == null) {
-                throw new IllegalStateException("Execution state don't exist for " + message.getParentExecutionId() + ", receive " + message);
+                throw new IllegalStateException("Execution state don't exist for " + parentExecutionId + ", receive " + messages);
             }
 
-            try {
-                FlowWithSource flow = findFlowOrThrow(execution);
-                ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.getTaskId());
-                if (!executableTask.waitForExecution()) {
-                    return null;
-                }
-
-                TaskRun taskRun = execution.findTaskRunByTaskRunId(message.getTaskRunId()).withState(message.getState()).withOutputs(message.getOutputs());
-                FlowInterface childFlow = flowMetaStore.findByExecution(message.getChildExecution()).orElseThrow();
-                RunContext runContext = runContextFactory.of(
-                    childFlow,
-                    (Task) executableTask,
-                    message.getChildExecution(),
-                    taskRun
-                );
-
-                SubflowExecutionResult subflowExecutionResult = ExecutableUtils
-                    .subflowExecutionResultFromChildExecution(runContext, childFlow, message.getChildExecution(), executableTask, taskRun);
-                if (subflowExecutionResult != null) {
-                    try {
-                        this.subflowExecutionResultQueue.emit(subflowExecutionResult);
-                    } catch (QueueException ex) {
-                        log.error("Unable to emit the subflow execution result", ex);
+            for (SubflowExecutionEnd message : messages) {
+                try {
+                    FlowWithSource flow = findFlowOrThrow(execution);
+                    ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.getTaskId());
+                    if (!executableTask.waitForExecution()) {
+                        continue;
                     }
+
+                    TaskRun taskRun = execution.findTaskRunByTaskRunId(message.getTaskRunId()).withState(message.getState()).withOutputs(message.getOutputs());
+                    FlowInterface childFlow = flowMetaStore.findByExecution(message.getChildExecution()).orElseThrow();
+                    RunContext runContext = runContextFactory.of(
+                        childFlow,
+                        (Task) executableTask,
+                        message.getChildExecution(),
+                        taskRun
+                    );
+
+                    SubflowExecutionResult subflowExecutionResult = ExecutableUtils
+                        .subflowExecutionResultFromChildExecution(runContext, childFlow, message.getChildExecution(), executableTask, taskRun);
+                    if (subflowExecutionResult != null) {
+                        try {
+                            this.subflowExecutionResultQueue.emit(subflowExecutionResult);
+                        } catch (QueueException ex) {
+                            log.error("Unable to emit the subflow execution result", ex);
+                        }
+                    }
+                } catch (InternalException | FlowNotFoundException e) {
+                    log.error("Unable to process the subflow execution end", e);
                 }
-            } catch (InternalException | FlowNotFoundException e) {
-                log.error("Unable to process the subflow execution end", e);
             }
             return null;
         });

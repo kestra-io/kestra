@@ -15,7 +15,8 @@
         "test:storybook": "vitest run --project=storybook",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
-        "translations:check": "node ./src/translations/check.js",
+        "translations:check": "node --experimental-strip-types ./scripts/translations/check-translations.mjs --scope oss && node --experimental-strip-types ./scripts/translations/check.ts",
+        "translations:generate": "node --experimental-strip-types ./scripts/translations/generate.ts",
         "lint": "eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
@@ -23,6 +24,7 @@
         "postinstall": "patch-package"
     },
     "dependencies": {
+        "@google/genai": "^2.11.0",
         "@js-joda/core": "^5.7.0",
         "@kestra-io/ui-libs": "^0.0.303",
         "@vue-flow/background": "^1.3.2",

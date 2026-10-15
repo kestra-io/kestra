@@ -1,7 +1,13 @@
 <template>
     <div :id="containerID" />
+    <el-skeleton
+        v-if="loading && generated === undefined && !props.short"
+        animated
+        :rows="3"
+        :class="props.execution ? 'execution-chart' : 'chart'"
+    />
     <el-tooltip
-        v-if="generated?.total > 0"
+        v-else-if="generated?.total > 0"
         effect="light"
         placement="top"
         :persistent="false"
@@ -32,7 +38,7 @@
     import NoData from "../../layout/NoData.vue";
     import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
-    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown, tooltip} from "../composables/charts";
+    import {defaultConfig, dashboardPixelRatio, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown, tooltip} from "../composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
@@ -85,6 +91,7 @@
     };
     const options = computed(() => {
         return defaultConfig({
+            devicePixelRatio: dashboardPixelRatio(),
             skipNull: true,
             barThickness: props.short ? 8 : props.execution ? 24: 12,
             maxBarThickness: props.short ? 8 : props.execution ? 24: 12,
@@ -323,7 +330,7 @@
                 : yDatasetData,
         };
     });
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, loading, generate} = useChartGenerator(props);
 
     function refresh(customFilters?: FilterObject[]) {
         return generate(getDashboard(route, "id")!, undefined, customFilters);

@@ -32,7 +32,7 @@ export const inputsToFormData = (submitor, inputsList, values) => {
             } else if (input.type === "DATE" && inputValue) {
                 formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"));
             } else if (input.type === "TIME") {
-                formData.append(inputName, submitor.$moment(inputValue).format("hh:mm:ss"));
+                formData.append(inputName, submitor.$moment(inputValue).format("HH:mm:ss"));
             } else {
                 formData.append(inputName, inputValue);
             }

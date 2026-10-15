@@ -20,6 +20,7 @@ export default defineConfig([
             "vitest.config.js",
             "vitest.config.*.js",
             ".storybook/vitest.config.js",
+            "scripts/**",
         ],
         languageOptions: {globals: globals.node},
     },
@@ -114,7 +115,7 @@ export default defineConfig([
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
     {
-        files: ["src/translations/check.js", "**/tests/**"],
+        files: ["**/tests/**", "scripts/**"],
         rules: {
             "no-console": ["off"]
         }

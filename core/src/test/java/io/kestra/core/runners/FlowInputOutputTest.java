@@ -7,6 +7,8 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +57,7 @@ import reactor.core.publisher.Mono;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
 class FlowInputOutputTest {
@@ -270,6 +273,32 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldParseValueToItsScalarTypeWhenGivenAsString() {
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.INT, "42")).contains(42);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.FLOAT, "1.5")).contains(1.5F);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.BOOL, "true")).contains(true);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.BOOLEAN, "true")).contains(true);
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.DATE, "2026-09-28")).contains(LocalDate.of(2026, 9, 28));
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.DURATION, "PT5M")).contains(Duration.ofMinutes(5));
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.ENUM, "b")).contains("b");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenTypeIsNotScalar() {
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.JSON, "{\"a\": 1}")).isEmpty();
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.ARRAY, "[1]")).isEmpty();
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.FILE, "kestra:///file.txt")).isEmpty();
+        assertThat(FlowInputOutput.parseScalarInputValue(Type.SECRET, "value")).isEmpty();
+    }
+
+    @Test
+    void shouldThrowWhenValueDoesNotMatchItsScalarType() {
+        assertThatThrownBy(() -> FlowInputOutput.parseScalarInputValue(Type.INT, "not a number"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("not a valid `INT`");
+    }
+
+    @Test
     void shouldNotUploadFileInputAfterValidation() {
         // Given
         FileInput input = FileInput
@@ -320,6 +349,29 @@ class FlowInputOutputTest {
             ),
             values
         );
+    }
+
+    @Test
+    void shouldNotDuplicateValueInIntInputErrorMessage() {
+        // Given 
+        IntInput input = IntInput.builder()
+            .id("retry_count")
+            .type(Type.INT)
+            .required(true)
+            .build();
+
+        List<Input<?>> inputs = List.of(input);
+        Map<String, Object> data = Map.of("retry_count", "3.5");
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+
+        // Then 
+        String errorMessage = values.get(0).exceptions().iterator().next().getMessage();
+        Assertions.assertFalse(errorMessage.contains("For input string"));
+
+        int occurrences = errorMessage.split("3\\.5", -1).length - 1;
+        Assertions.assertTrue(occurrences <= 1, "value should not be duplicated in: " + errorMessage);
     }
 
     @Test

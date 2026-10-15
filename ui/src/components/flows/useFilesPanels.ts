@@ -1,5 +1,5 @@
-import {h, markRaw, provide, Ref} from "vue"
-import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
+import {h, markRaw, provide, ref, Ref} from "vue"
+import EditorWrapper, {EditorTabProps, FILES_REFRESH_CONTENT_INJECTION_KEY, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue";
@@ -137,6 +137,9 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         }
     })
 
+    const externalContentUpdates = ref<Record<string, {content: string}>>({});
+    provide(FILES_REFRESH_CONTENT_INJECTION_KEY, externalContentUpdates);
+
     const namespacesStore = useNamespacesStore();
 
     // on save all files, save all namespace files
@@ -168,8 +171,13 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
             // parallelize saving of files
             await Promise.all(
                 files.map(file => namespacesStore.saveOrCreateFile(file.file)
-                    // only remove the dirty flag once the file was saved
-                    .then(() => file.tab.dirty = false))
+                    // only remove the dirty flag once the file was saved, and only if nothing was typed meanwhile
+                    .then(() => {
+                        if (file.tab.content === file.file.content) {
+                            externalContentUpdates.value[file.file.path] = {content: file.file.content};
+                            file.tab.dirty = false;
+                        }
+                    }))
             );
         }
     });

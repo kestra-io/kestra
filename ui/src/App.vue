@@ -7,6 +7,7 @@
         </component>
         <OnboardingOverlay v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
         <UnsavedChangesDialog />
+        <DisabledTriggerRemovedDialog />
     </el-config-provider>
 </template>
 
@@ -26,6 +27,7 @@
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue";
+    import DisabledTriggerRemovedDialog from "./components/flows/DisabledTriggerRemovedDialog.vue";
     import "./styles/vendor.scss"
     import "@kestra-io/ui-libs/style.css";
     import "./styles/app.scss"

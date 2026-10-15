@@ -1,18 +1,26 @@
 package io.kestra.worker;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.AdditionalAnswers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
@@ -24,11 +32,15 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -36,14 +48,23 @@ import io.kestra.plugin.core.execution.Fail;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.storage.local.LocalStorage;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwSupplier;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
 @KestraTest(rebuildContext = true)
 class WorkerTest {
@@ -176,9 +197,10 @@ class WorkerTest {
         // arrive before the RUNNING transition and producing [CREATED, KILLED] instead of
         // [CREATED, RUNNING, KILLED].
         Await.until(
-            () -> workerTaskResult.stream().anyMatch(r ->
-                r.getTaskRun().getExecutionId().equals(workerTask.getTaskRun().getExecutionId())
-                && r.getTaskRun().getState().getCurrent() == State.Type.RUNNING),
+            () -> workerTaskResult.stream().anyMatch(
+                r -> r.getTaskRun().getExecutionId().equals(workerTask.getTaskRun().getExecutionId())
+                    && r.getTaskRun().getState().getCurrent() == State.Type.RUNNING
+            ),
             Duration.ofMillis(100),
             Duration.ofSeconds(30)
         );
@@ -320,6 +342,90 @@ class WorkerTest {
         receive.blockLast(Duration.ofSeconds(1));
     }
 
+    /**
+     * The local internal storage, except that, like the S3 SDK, an upload made on an interrupted thread is aborted.
+     * Behaves exactly as the local storage for every test that does not interrupt the worker thread.
+     */
+    @MockBean(StorageInterface.class)
+    StorageInterface interruptSensitiveStorage() throws IOException {
+        LocalStorage localStorage = new LocalStorage();
+        localStorage.setBasePath(Path.of("/tmp/unittest"));
+        localStorage.init();
+
+        StorageInterface storage = mock(StorageInterface.class, AdditionalAnswers.delegatesTo(localStorage));
+        doAnswer(invocation ->
+        {
+            if (Thread.currentThread().isInterrupted()) {
+                // mirrors the S3 SDK's AbortedException, caused by an SdkInterruptedException
+                throw new RuntimeException("Thread was interrupted", new InterruptedException());
+            }
+            return localStorage.put(invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2), invocation.<InputStream> getArgument(3));
+        }).when(storage).put(any(), any(), any(URI.class), any(InputStream.class));
+        return storage;
+    }
+
+    @Test
+    void shouldKeepLogFileAndNotLeakInterruptWhenKilledTaskRestoresInterruptFlag() throws Exception {
+        // Given a running logToFile task that, like the Docker task runner, restores the interrupt flag once killed
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
+        worker.run();
+
+        List<WorkerTaskResult> results = new CopyOnWriteArrayList<>();
+        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> results.add(either.getLeft()));
+
+        WorkerTask workerTask = blockUntilInterruptedWorkerTask();
+        BlockUntilInterrupted.started = new CountDownLatch(1);
+
+        AtomicReference<Throwable> uncaught = new AtomicReference<>();
+        AtomicBoolean interruptedAfterRun = new AtomicBoolean();
+        Thread workerThread = new Thread(() ->
+        {
+            try {
+                invokeRun(worker, workerTask);
+            } catch (InvocationTargetException e) {
+                uncaught.set(e.getCause());
+            } catch (Exception e) {
+                uncaught.set(e);
+            }
+            interruptedAfterRun.set(Thread.currentThread().isInterrupted());
+        }, "worker-under-test");
+        workerThread.start();
+        assertThat(BlockUntilInterrupted.started.await(30, TimeUnit.SECONDS)).isTrue();
+
+        // When the execution is killed while the task is running
+        executionKilledQueue.emit(
+            ExecutionKilledExecution.builder()
+                .tenantId(workerTask.getTaskRun().getTenantId())
+                .executionId(workerTask.getTaskRun().getExecutionId())
+                .build()
+        );
+        workerThread.join(Duration.ofSeconds(30).toMillis());
+
+        // Then no exception escapes to the worker thread (which would shut the worker down), the KILLED result is
+        // emitted with its log file, and the interrupt does not leak
+        assertThat(workerThread.isAlive()).isFalse();
+        assertThat(uncaught.get()).as("no exception may reach the worker thread's uncaught exception handler").isNull();
+        Await.until(
+            () -> results.stream().anyMatch(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(10)
+        );
+        TaskRun taskRun = results.stream()
+            .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
+            .findFirst()
+            .orElseThrow()
+            .getTaskRun();
+        assertThat(taskRun.lastAttempt().getLogFile())
+            .as("the killed task's logs only exist in its log file, which must still be uploaded")
+            .isNotNull();
+        assertThat(interruptedAfterRun.get())
+            .as("the kill interrupt is meant for the task and must not leak to the post-task steps")
+            .isFalse();
+
+        receive.blockLast(Duration.ofSeconds(1));
+        worker.shutdown();
+    }
+
     private void setWorkerFlag(DefaultWorker worker, String fieldName, boolean value) throws Exception {
         Field field = DefaultWorker.class.getDeclaredField(fieldName);
         field.setAccessible(true);
@@ -339,6 +445,31 @@ class WorkerTest {
             .build();
 
         Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unit-test")
+            .tasks(Collections.singletonList(task))
+            .build();
+
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+        ResolvedTask resolvedTask = ResolvedTask.of(task);
+
+        return WorkerTask.builder()
+            .runContext(runContextFactory.of(ImmutableMap.of("key", "value")))
+            .task(task)
+            .taskRun(TaskRun.of(execution, resolvedTask))
+            .build();
+    }
+
+    private WorkerTask blockUntilInterruptedWorkerTask() {
+        BlockUntilInterrupted task = BlockUntilInterrupted.builder()
+            .type(BlockUntilInterrupted.class.getName())
+            .id("block-until-interrupted")
+            .logToFile(true)
+            .build();
+
+        Flow flow = Flow.builder()
+            // a tenant is needed to upload the log file to the internal storage
+            .tenantId(MAIN_TENANT)
             .id(IdUtils.create())
             .namespace("io.kestra.unit-test")
             .tasks(Collections.singletonList(task))
@@ -376,5 +507,29 @@ class WorkerTest {
             .task(bash)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();
+    }
+
+    /**
+     * A task that logs then blocks until interrupted, and restores the interrupt flag on its way out as a well-behaved
+     * plugin does (e.g. the Docker task runner after its container cleanup).
+     */
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class BlockUntilInterrupted extends Task implements RunnableTask<VoidOutput> {
+        static volatile CountDownLatch started;
+
+        @Override
+        public VoidOutput run(RunContext runContext) {
+            runContext.logger().info("waiting to be killed");
+            started.countDown();
+            try {
+                Thread.sleep(Duration.ofMinutes(5));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("interrupted", e);
+            }
+            return null;
+        }
     }
 }

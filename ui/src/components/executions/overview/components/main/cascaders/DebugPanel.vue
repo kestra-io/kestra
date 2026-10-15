@@ -23,6 +23,21 @@
         <template v-if="result">
             <VarValue v-if="isFile" :value="result.value" :execution />
 
+            <template v-else-if="resultTooLarge">
+                <el-alert type="warning" :closable="false" showIcon>
+                    {{ $t('large_outputs.value_too_large', {size: resultSize}) }}
+                </el-alert>
+                <el-button
+                    type="primary"
+                    size="small"
+                    class="mt-2 align-self-start"
+                    :icon="Download"
+                    @click="downloadResult"
+                >
+                    {{ $t('large_outputs.download_json') }}
+                </el-button>
+            </template>
+
             <Editor
                 v-else
                 v-model="result.value"
@@ -60,9 +75,12 @@
     import action from "../../../../../../models/action";
 
     import Refresh from "vue-material-design-icons/Refresh.vue";
+    import Download from "vue-material-design-icons/Download.vue";
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue";
 
     import {apiUrl} from "override/utils/route";
+    import Utils from "../../../../../../utils/utils";
+    import {downloadJson, isTooLargeToRender} from "../../../../largeValues";
     import {useAxios} from "../../../../../../utils/axios";
 
     const flowStore = useFlowStore();
@@ -112,6 +130,15 @@
         error.value = undefined;
         stackTrace.value = undefined;
     };
+
+    // The rendered result went straight into a second editor, so a whole task's outputs froze
+    // the tab here exactly as they did on the Outputs tab.
+    const resultTooLarge = computed(() => isTooLargeToRender(result.value?.value));
+
+    const resultSize = computed(() => Utils.humanFileSize(result.value?.value?.length ?? 0));
+
+    const downloadResult = () =>
+        downloadJson(result.value?.value ?? "", `expression-${props.execution?.id || "result"}.json`);
 
     const isFile = computed(() => {
         if (!result.value || typeof result.value.value !== "string") return false;

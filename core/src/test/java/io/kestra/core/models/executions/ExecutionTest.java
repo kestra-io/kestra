@@ -4,11 +4,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.models.flows.Flow;
+import io.kestra.plugin.core.debug.Return;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -339,4 +342,131 @@ class ExecutionTest {
         );
         assertThat(executionNew.getLabels()).containsExactly(new Label("test", "value2"));
     }
+
+    @Test
+    void shouldGuessCancelledWhenTaskRunCancelled() {
+        // Given a flow whose single task run ended CANCELLED (e.g. workerSelector fallback: CANCEL)
+        Flow flow = flowWithTask("will-cancel");
+        Execution execution = executionWithTaskRun("will-cancel", State.Type.CANCELLED);
+
+        // When guessing the final state
+
+        // Then the execution must not be silently reported as SUCCESS
+        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldGuessFailedWhenTaskRunFailedTakesPrecedenceOverCancelled() {
+        // Given one FAILED and one CANCELLED task run
+        Return failed = Return.builder().id("failed").type(Return.class.getName()).build();
+        Return cancelled = Return.builder().id("cancelled").type(Return.class.getName()).build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.test")
+            .tasks(List.of(failed, cancelled))
+            .build();
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
+                    TaskRun.builder().id(IdUtils.create()).taskId("cancelled").state(new State(State.Type.CANCELLED, new State())).build()
+                )
+            )
+            .build();
+
+        // When guessing the final state
+
+        // Then FAILED takes precedence over CANCELLED
+        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.FAILED);
+    }
+
+    private static Flow flowWithTask(String taskId) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.test")
+            .tasks(List.of(Return.builder().id(taskId).type(Return.class.getName()).build()))
+            .build();
+    }
+
+    private static Execution executionWithTaskRun(String taskId, State.Type state) {
+        return Execution.builder()
+            .id(IdUtils.create())
+            .taskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id(IdUtils.create())
+                        .taskId(taskId)
+                        .state(new State(state, new State()))
+                        .build()
+                )
+            )
+            .build();
+    }
+
+    @Test
+    void isTerminatedShouldRequireEveryTaskNotJustATerminatedCount() {
+        // Regression for #18909: with a duplicated task run (retry race), the terminated
+        // task run COUNT can match the number of tasks while one task never ran - the old
+        // count-based check then reported terminated and the flow ended SUCCESS with its
+        // last task silently skipped.
+        ResolvedTask a = resolvedTask("a");
+        ResolvedTask b = resolvedTask("b");
+        ResolvedTask c = resolvedTask("c");
+
+        Execution.ExecutionBuilder base = Execution.builder()
+            .id("executionId")
+            .state(new State());
+
+        // two terminated runs for task b, none for task c
+        Execution withDuplicate = base
+            .taskRunList(List.of(
+                taskRun(a, State.Type.SUCCESS),
+                taskRun(b, State.Type.SUCCESS),
+                taskRun(b, State.Type.SUCCESS)
+            ))
+            .build();
+        assertThat(withDuplicate.isTerminated(List.of(a, b, c))).isFalse();
+
+        // one terminated run per task: terminated
+        Execution complete = base
+            .taskRunList(List.of(
+                taskRun(a, State.Type.SUCCESS),
+                taskRun(b, State.Type.SUCCESS),
+                taskRun(c, State.Type.SUCCESS)
+            ))
+            .build();
+        assertThat(complete.isTerminated(List.of(a, b, c))).isTrue();
+
+        // one task still running: not terminated
+        Execution inFlight = base
+            .taskRunList(List.of(
+                taskRun(a, State.Type.SUCCESS),
+                taskRun(b, State.Type.RUNNING),
+                taskRun(c, State.Type.SUCCESS)
+            ))
+            .build();
+        assertThat(inFlight.isTerminated(List.of(a, b, c))).isFalse();
+    }
+
+    private static ResolvedTask resolvedTask(String id) {
+        return ResolvedTask.of(
+            Return.builder()
+                .id(id)
+                .type(Return.class.getName())
+                .format(io.kestra.core.models.property.Property.ofValue(id))
+                .build()
+        );
+    }
+
+    private static int taskRunSeq = 0;
+
+    private static TaskRun taskRun(ResolvedTask task, State.Type state) {
+        return TaskRun.builder()
+            .id("taskrun-" + (++taskRunSeq))
+            .taskId(task.getTask().getId())
+            .state(new State().withState(state))
+            .build();
+    }
+
 }

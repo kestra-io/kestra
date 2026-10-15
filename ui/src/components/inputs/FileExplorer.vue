@@ -492,12 +492,13 @@
 
     const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string);
 
-    // Namespace files are governed by the FLOW permission on the file's namespace (see NamespaceFileController):
-    // read/export need READ, create/import need CREATE, rename/move need UPDATE, delete needs DELETE.
+    // Namespace files are read through the FLOW permission but written through the NAMESPACE permission
+    // on the file's namespace (see NamespaceFileController): read/export need FLOW READ, while
+    // create/import need NAMESPACE CREATE, rename/move need NAMESPACE UPDATE and delete needs NAMESPACE DELETE.
     const authStore = useAuthStore();
-    const canCreate = computed(() => authStore.user?.isAllowed(permission.FLOW, action.CREATE, namespaceId.value) ?? false);
-    const canUpdate = computed(() => authStore.user?.isAllowed(permission.FLOW, action.UPDATE, namespaceId.value) ?? false);
-    const canDelete = computed(() => authStore.user?.isAllowed(permission.FLOW, action.DELETE, namespaceId.value) ?? false);
+    const canCreate = computed(() => authStore.user?.isAllowed(permission.NAMESPACE, action.CREATE, namespaceId.value) ?? false);
+    const canUpdate = computed(() => authStore.user?.isAllowed(permission.NAMESPACE, action.UPDATE, namespaceId.value) ?? false);
+    const canDelete = computed(() => authStore.user?.isAllowed(permission.NAMESPACE, action.DELETE, namespaceId.value) ?? false);
 
     const multiSelected = computed(() => selectedNodes.value.length > 1);
 

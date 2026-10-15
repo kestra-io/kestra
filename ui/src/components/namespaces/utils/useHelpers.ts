@@ -104,6 +104,7 @@ export function useHelpers() {
             props: {
                 namespace: namespace.value,
                 topbar: false,
+                embed: true,
                 defaultScopeFilter: false,
             },
         },
@@ -115,7 +116,7 @@ export function useHelpers() {
                 namespace: namespace.value,
                 topbar: false,
                 visibleCharts: true,
-                embed: false,
+                embed: true,
                 defaultScopeFilter: false,
             },
         },

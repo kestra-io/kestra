@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -85,6 +86,39 @@ public abstract class AbstractLogRepositoryTest {
 
         List<LogEntry> logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(1);
+    }
+
+    @Test
+    void findAfterWithoutAcl_paginatesAcrossEqualTimestampsWithoutLossOrDuplicates() {
+        // Given: five logs sharing the exact same timestamp (timestamp alone cannot paginate them).
+        // Distinct levels give each backend a working tiebreaker: JDBC seeks on the unique (timestamp, key) row.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Instant ts = Instant.now().minus(3, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS);
+        for (Level level : List.of(Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR)) {
+            logRepository.save(logEntry(tenant, level, "exec-keyset").timestamp(ts).message("m-" + level.name()).build());
+        }
+
+        // When: pages of size 2 are read, each seeking strictly after the last row of the previous page,
+        // seeded from a timestamp before the fixture (key null), like the shipper's offset/lookback.
+        List<LogRepositoryInterface.KeyedLog> all = new ArrayList<>();
+        Instant afterTs = ts.minus(1, ChronoUnit.DAYS);
+        String afterKey = null;
+        while (true) {
+            List<LogRepositoryInterface.KeyedLog> page = logRepository.findAfterWithoutAcl(tenant, List.of(), afterTs, afterKey, 2);
+            all.addAll(page);
+            if (page.size() < 2) {
+                break;
+            }
+            LogRepositoryInterface.KeyedLog last = page.get(page.size() - 1);
+            afterTs = last.log().getTimestamp();
+            afterKey = last.key();
+        }
+
+        // Then: every row shipped exactly once, with no duplicate keys.
+        assertThat(all).hasSize(5);
+        assertThat(all.stream().map(LogRepositoryInterface.KeyedLog::key).distinct().count()).isEqualTo(5L);
+        assertThat(all.stream().map(k -> k.log().getMessage()).toList())
+            .containsExactlyInAnyOrder("m-TRACE", "m-DEBUG", "m-INFO", "m-WARN", "m-ERROR");
     }
 
     @ParameterizedTest

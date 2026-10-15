@@ -15,8 +15,18 @@ start_time=$(date +%s)
 
 echo ""
 echo "Building the image for this current repository"
-make clean
-make build-docker VERSION=$LOCAL_IMAGE_VERSION
+
+if [ "${E2E_USE_PREBUILT_EXE:-false}" = "true" ]; then
+  # CI already downloaded a prebuilt executable into build/executable
+  # (the Build Artifacts job's artifact), so only the image remains to build.
+  make build-docker-from-exec VERSION=$LOCAL_IMAGE_VERSION
+elif [ -n "$CI" ]; then
+  # CI runners start from a fresh checkout, so there is nothing to clean.
+  make build-docker VERSION=$LOCAL_IMAGE_VERSION
+else
+  make clean
+  make build-docker VERSION=$LOCAL_IMAGE_VERSION
+fi
 
 end_time=$(date +%s)
 elapsed=$(( end_time - start_time ))

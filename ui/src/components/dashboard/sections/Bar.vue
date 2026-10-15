@@ -1,7 +1,8 @@
 <template>
     <div :id="containerID" />
+    <el-skeleton v-if="loading && generated === undefined && !props.short" animated :rows="3" class="chart" />
     <Bar
-        v-if="generated !== undefined"
+        v-else-if="generated !== undefined"
         :data="parsedData"
         :options="options"
         :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
@@ -24,7 +25,7 @@
 
     import {customBarLegend} from "../composables/useLegend";
     import {useTheme} from "../../../utils/utils";
-    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
+    import {defaultConfig, dashboardPixelRatio, getConsistentHEXColor, chartSegmentDrillDown, pushChartDrillDown} from "../composables/charts";
 
 
     import {useRoute, useRouter} from "vue-router";
@@ -60,6 +61,7 @@
 
     const options = computed(() => {
         return defaultConfig({
+            devicePixelRatio: dashboardPixelRatio(),
             skipNull: true,
             barThickness: 12,
             borderSkipped: false,
@@ -79,8 +81,8 @@
                     filter: (value: TooltipItem<"bar">) => value.raw,
                     callbacks: {
                         label: (value: TooltipItem<"bar">) => {
-                            if (!(value.dataset as any).tooltipText) return "";
-                            return `${(value.dataset as any).tooltipText}`;
+                            const total = value.raw as number;
+                            return `(${value.dataset.label}): ${aggregator[0][0]} = ${isDurationAgg() ? Utils.humanDuration(total) : total}`;
                         },
                     },
                 },
@@ -164,21 +166,18 @@
         });
 
         const labels = Object.keys(grouped);
-        const xLabels = [...new Set(rawData?.map((item: Record<string, any>) => item[column] as string))];
+        const seriesKeys = [...new Set(labels.flatMap((label) => Object.keys(grouped[label])))];
 
-        const datasets = xLabels.flatMap((xLabel) => {
-            return Object.entries(grouped[xLabel as string] ?? {}).map(subSectionsEntry => ({
-                label: subSectionsEntry[0],
-                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
-                backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
-                tooltipText: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
-            }));
-        });
+        const datasets = seriesKeys.map((seriesKey) => ({
+            label: seriesKey,
+            data: labels.map((label) => grouped[label][seriesKey] ?? 0),
+            backgroundColor: getConsistentHEXColor(theme.value, seriesKey),
+        }));
 
         return {labels, datasets};
     });
 
-    const {data: generated, generate} = useChartGenerator(props);
+    const {data: generated, loading, generate} = useChartGenerator(props);
 
     function refresh() {
         return generate(getDashboard(route, "id")!);

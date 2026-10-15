@@ -8,6 +8,7 @@ import {useMiscStore} from "override/stores/misc";
 
 import {trackBlueprintSelection} from "../utils/tabTracking";
 import {Input} from "./flow.ts";
+import type {ValidationResponse} from "./executions";
 
 export type BlueprintType = "community" | "custom";
 type BlueprintKind = "flow" | "dashboard" | "app";
@@ -30,6 +31,7 @@ export type TemplateArgument = Record<string, Input>;
 export interface BlueprintTemplate {
     source: string;
     templateArguments: Record<string, Input>;
+    templateArgumentsOrder?: string[];
 }
 
 export interface FlowBlueprint {
@@ -180,6 +182,11 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return response.data;
     }
 
+    const validateFlowBlueprintTemplateArguments = async (id: string, inputs: Record<string, unknown>): Promise<ValidationResponse> => {
+        const response = await axios.post<ValidationResponse>(`${apiUrl()}/blueprints/flows/${id}/use-template/validate`, {templateArgumentsInputs: inputs});
+        return response.data;
+    };
+
     return {
         blueprint,
         blueprints,
@@ -194,6 +201,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         getBlueprintGraph,
         getBlueprintTags,
         useFlowBlueprintTemplate,
+        validateFlowBlueprintTemplateArguments,
         getFlowBlueprint,
         createFlowBlueprint,
         updateFlowBlueprint,

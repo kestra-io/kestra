@@ -20,6 +20,7 @@ import {
 } from "./pebbleLanguageConfigurator";
 import {usePluginsStore} from "../../../stores/plugins";
 import {useBlueprintsStore} from "../../../stores/blueprints";
+import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel";
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
@@ -349,10 +350,25 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
                     return suggestion;
                 });
 
+            // Done last: every step above reads `label` as the fully qualified string.
+            const labelledSuggestions = suggestions.map((suggestion) => {
+                const split = splitPluginTypeLabel(suggestion.label);
+                if (split === undefined) {
+                    return suggestion;
+                }
+
+                return {
+                    ...suggestion,
+                    label: split,
+                    // Keeps package segments searchable now that the label is only the class name.
+                    filterText: suggestion.filterText ?? suggestion.label,
+                };
+            });
+
             return {
                 ...defaultCompletion,
                 incomplete: true,
-                suggestions,
+                suggestions: labelledSuggestions,
             };
         };
     }

@@ -702,10 +702,9 @@
         return authStore.user?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
     });
 
-    const isDisplayedTop = computed(() => {
-        if (props.visibleCharts) return true;
-        else return props.embed === false && props.filter;
-    });
+    // Independent of embed: the flow Executions tab is embedded (so it doesn't
+    // overwrite the page title) but still needs its filters and charts.
+    const isDisplayedTop = computed(() => props.filter || props.visibleCharts);
 
     const states = computed(() => {
         return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({

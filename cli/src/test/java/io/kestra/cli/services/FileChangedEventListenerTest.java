@@ -3,6 +3,7 @@ package io.kestra.cli.services;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.io.TempDir;
 
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.flows.Flow;
@@ -138,5 +140,44 @@ class FileChangedEventListenerTest {
             Duration.ofMillis(100),
             Duration.ofSeconds(10)
         );
+    }
+    @Test
+    void shouldNotRewriteFileWhenItAlreadyHoldsTheFlowSource(@TempDir Path directory) throws IOException {
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "unchanged");
+        String source = """
+            id: unchanged
+            namespace: io.kestra.tests.watch
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hello
+            """;
+        Path file = Files.writeString(directory.resolve("unchanged.yml"), source);
+        FileTime writtenAt = FileTime.fromMillis(0);
+        Files.setLastModifiedTime(file, writtenAt);
+
+        fileWatcher.flowToFile(GenericFlow.fromYaml(tenant, source), file);
+
+        assertThat(Files.getLastModifiedTime(file)).isEqualTo(writtenAt);
+    }
+
+    @Test
+    void shouldRewriteFileWhenTheFlowSourceChanged(@TempDir Path directory) throws IOException {
+        var tenant = TestsUtils.randomTenant(FileChangedEventListenerTest.class.getSimpleName(), "changed");
+        Path file = Files.writeString(directory.resolve("changed.yml"), "id: changed\nnamespace: io.kestra.tests.watch\n");
+        String source = """
+            id: changed
+            namespace: io.kestra.tests.watch
+
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: Hello
+            """;
+
+        fileWatcher.flowToFile(GenericFlow.fromYaml(tenant, source), file);
+
+        assertThat(Files.readString(file)).isEqualTo(source);
     }
 }

@@ -44,7 +44,7 @@ class ClassPluginDocumentationTest {
 
             assertThat(doc.getDocExamples().size()).isEqualTo(2);
             assertThat(doc.getIcon()).isNotNull();
-            assertThat(doc.getInputs().size()).isEqualTo(6);
+            assertThat(doc.getInputs().size()).isEqualTo(7);
             assertThat(doc.getDocLicense()).isEqualTo("EE");
 
             // simple
@@ -54,7 +54,7 @@ class ClassPluginDocumentationTest {
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("description")).contains("of this input");
 
             // definitions
-            assertThat(doc.getDefs().size()).isEqualTo(5);
+            assertThat(doc.getDefs().size()).isEqualTo(9);
 
             // enum
             Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs()
@@ -107,7 +107,8 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
-            assertThat(doc.getDefs()).hasSize(23);
+            // the assets declaration of the trigger base counts the custom asset, the free-form branch of assets.outputs
+            assertThat(doc.getDefs()).hasSize(24);
             assertThat(doc.getDocLicense()).isNull();
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type")).isEqualTo("object");
@@ -148,7 +149,7 @@ class ClassPluginDocumentationTest {
             ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
             assertThat(doc.getCls()).isEqualTo("io.kestra.core.models.property.DynamicPropertyExampleTask");
-            assertThat(doc.getDefs()).hasSize(9);
+            assertThat(doc.getDefs()).hasSize(10);
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
             assertThat(properties).hasSize(23);
 

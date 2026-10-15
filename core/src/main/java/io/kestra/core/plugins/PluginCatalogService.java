@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Version;
 
@@ -34,6 +35,11 @@ public class PluginCatalogService {
 
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
 
+    /**
+     * Minimum delay before retrying the hosted catalog after a failed or empty load. Package-private so tests can shorten it.
+     */
+    static Duration retryDelay = Duration.ofSeconds(30);
+
     private final HttpClient httpClient;
 
     private CompletableFuture<List<PluginManifest>> plugins;
@@ -41,6 +47,7 @@ public class PluginCatalogService {
     private List<PluginManifest> loaded = List.of();
 
     private Instant cacheLastLoaded = Instant.now();
+    private Instant retryNotBefore = Instant.MIN;
     private final AtomicBoolean isLoaded = new AtomicBoolean(false);
 
     private final boolean icons;
@@ -75,6 +82,7 @@ public class PluginCatalogService {
      *
      * @param artifacts The list of artifacts to resolve.
      * @return The list of results.
+     * @throws KestraRuntimeException if the compatible versions cannot be retrieved from the Kestra API.
      */
     public List<PluginResolutionResult> resolveVersions(List<PluginArtifact> artifacts) {
         if (ListUtils.isEmpty(artifacts)) {
@@ -114,9 +122,20 @@ public class PluginCatalogService {
 
     public synchronized List<PluginManifest> get() {
         try {
+            if (this.plugins == null && !Instant.now().isBefore(retryNotBefore)) {
+                this.isLoaded.set(true);
+                this.plugins = CompletableFuture.supplyAsync(this::load);
+            }
+            if (this.plugins == null) {
+                // a previous load failed recently: keep serving the last good list until the retry delay elapses
+                return loaded;
+            }
             List<PluginManifest> artifacts = this.plugins.get();
             if (!artifacts.isEmpty()) {
                 loaded = artifacts;
+            } else if (loaded.isEmpty()) {
+                // nothing cached yet and the API returned nothing: don't cache the empty result, retry later
+                scheduleRetry();
             }
             if (cacheLastLoaded.plus(MAX_CACHE_DURATION).isBefore(Instant.now())) {
                 if (isLoaded.compareAndSet(false, true)) {
@@ -125,6 +144,9 @@ public class PluginCatalogService {
                 }
             }
         } catch (ExecutionException | InterruptedException e) {
+            // drop the failed future so the next call retries instead of serving the failure for MAX_CACHE_DURATION;
+            // `loaded` still holds the last good list, so a transient API outage never wipes the catalog.
+            scheduleRetry();
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
                 log.warn("Failed to retrieve available plugins from Kestra API. Cause: Interrupted");
@@ -134,6 +156,11 @@ public class PluginCatalogService {
             }
         }
         return loaded;
+    }
+
+    private void scheduleRetry() {
+        this.plugins = null;
+        this.retryNotBefore = Instant.now().plus(retryDelay);
     }
 
     private List<PluginManifest> load() {
@@ -202,7 +229,7 @@ public class PluginCatalogService {
             "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion
         );
         if (oss) {
-            request.getParameters().add("license", "OPENSOURCE");
+            request.getParameters().add("license", "OPEN_SOURCE");
         }
         try {
             return httpClient
@@ -210,8 +237,11 @@ public class PluginCatalogService {
                 .exchange(request, Argument.listOf(ApiPluginArtifact.class))
                 .body();
         } catch (Exception e) {
-            log.debug("Failed to retrieve available plugins from Kestra API. Cause: ", e);
-            return List.of();
+            // Failing open would let callers fall back to Maven's latest version, which may target another Kestra major.
+            throw new KestraRuntimeException(
+                "Failed to retrieve the plugin versions compatible with Kestra %s from the Kestra API. Cause: %s".formatted(currentStableVersion, e.getMessage()),
+                e
+            );
         }
     }
 

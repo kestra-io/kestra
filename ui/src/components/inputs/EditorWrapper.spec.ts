@@ -8,6 +8,7 @@ import Utils from "../../utils/utils";
 const fileMetadata = vi.fn();
 const readFile = vi.fn();
 const downloadFile = vi.fn();
+const saveOrCreateFile = vi.fn();
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "io.kestra.test"}, query: {}}),
@@ -17,7 +18,7 @@ vi.mock("override/utils/route", () => ({
     apiUrl: () => "/api/v1/main",
 }));
 vi.mock("override/stores/namespaces", () => ({
-    useNamespacesStore: () => ({fileMetadata, readFile, downloadFile, saveOrCreateFile: vi.fn()}),
+    useNamespacesStore: () => ({fileMetadata, readFile, downloadFile, saveOrCreateFile}),
 }));
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {isAllowed: () => true}}),
@@ -26,7 +27,7 @@ vi.mock("override/stores/misc", () => ({
     useMiscStore: () => ({configs: {pluginsHash: 0}}),
 }));
 vi.mock("../../stores/flow", () => ({
-    useFlowStore: () => ({flow: undefined, isReadOnly: false, isCreating: false, flowYaml: "", flowYamlOrigin: "", openAiCopilot: false, setOpenAiCopilot: vi.fn(), onEdit: vi.fn()}),
+    useFlowStore: () => ({flow: {namespace: "io.kestra.test"}, isReadOnly: false, isCreating: false, flowYaml: "", flowYamlOrigin: "", openAiCopilot: false, setOpenAiCopilot: vi.fn(), onEdit: vi.fn()}),
     isSuccessfulFlowSaveOutcome: () => false,
 }));
 vi.mock("../../stores/plugins", () => ({
@@ -100,6 +101,7 @@ describe("EditorWrapper", () => {
         fileMetadata.mockReset();
         readFile.mockReset();
         downloadFile.mockReset();
+        saveOrCreateFile.mockReset();
         readFile.mockResolvedValue({content: "file content"});
         downloadFile.mockResolvedValue(new Blob(["file content"]));
         window.URL.createObjectURL = vi.fn(() => "blob:kestra-test");
@@ -142,5 +144,44 @@ describe("EditorWrapper", () => {
 
         expect(readFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt"});
         expect(wrapper.find("[data-test=\"big-file-warning\"]").exists()).toBe(false);
+    });
+
+    it("should send a single save when saving again while the previous save is still pending", async () => {
+        fileMetadata.mockResolvedValue({size: 1024});
+        let finishSave: () => void = () => {};
+        saveOrCreateFile.mockReturnValue(new Promise<void>((resolve) => finishSave = resolve));
+
+        const wrapper = mountTab();
+        await flushPromises();
+        const editor = wrapper.findComponent({name: "EditorStub"});
+        editor.vm.$emit("update:model-value", "edited content");
+
+        editor.vm.$emit("save");
+        editor.vm.$emit("save");
+        editor.vm.$emit("save");
+        finishSave();
+        await flushPromises();
+
+        expect(saveOrCreateFile).toHaveBeenCalledTimes(1);
+        expect(saveOrCreateFile).toHaveBeenCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "edited content"});
+    });
+
+    it("should send the newer content when saving again after editing during a pending save", async () => {
+        fileMetadata.mockResolvedValue({size: 1024});
+        let finishSave: () => void = () => {};
+        saveOrCreateFile.mockReturnValueOnce(new Promise<void>((resolve) => finishSave = resolve)).mockResolvedValue(undefined);
+
+        const wrapper = mountTab();
+        await flushPromises();
+        const editor = wrapper.findComponent({name: "EditorStub"});
+        editor.vm.$emit("update:model-value", "edited content");
+        editor.vm.$emit("save");
+        editor.vm.$emit("update:model-value", "edited again");
+        editor.vm.$emit("save");
+        finishSave();
+        await flushPromises();
+
+        expect(saveOrCreateFile).toHaveBeenCalledTimes(2);
+        expect(saveOrCreateFile).toHaveBeenLastCalledWith({namespace: "io.kestra.test", path: "data.txt", content: "edited again"});
     });
 });

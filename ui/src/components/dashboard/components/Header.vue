@@ -70,7 +70,7 @@
 
     const isAllowedDashboardUpdate = computed(() => authStore.user?.isAllowed(permission.DASHBOARD, action.UPDATE, "*"));
 
-    const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
+    const routeInfo = computed(() => ({title: props.dashboard?.title || t("overview")}));
 
     import useRouteContext from "../../../composables/useRouteContext";
     useRouteContext(routeInfo);

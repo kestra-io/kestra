@@ -3,6 +3,7 @@ package io.kestra.core.models.tasks;
 import java.time.Duration;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -35,7 +36,14 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @Plugin
 abstract public class Task implements TaskInterface {
-    @Size(max = 256, message = "Task id must be at most 256 characters")
+    /**
+     * Maximum length of a task id. Enforced for flow-authored tasks by the {@code @Size} constraint
+     * below, and used to truncate runtime-generated task ids (e.g. dbt node ids) before they are
+     * persisted as {@code task_id} in the logs/metrics stores.
+     */
+    public static final int ID_MAX_LENGTH = 256;
+
+    @Size(max = ID_MAX_LENGTH, message = "Task id must be at most " + ID_MAX_LENGTH + " characters")
     protected String id;
 
     protected String type;
@@ -92,9 +100,12 @@ abstract public class Task implements TaskInterface {
     @Valid
     private Cache taskCache;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(group = PluginProperty.CORE_GROUP)
     @Valid
     @Nullable
+    @Schema(
+        description = "Assets this task consumes as inputs or produces as outputs, for lineage tracking and the asset graph (Enterprise Edition). A flow declaring this property on a task is rejected in the open-source edition."
+    )
     private AssetsDeclaration assets;
 
     public Optional<Task> findById(String id) {

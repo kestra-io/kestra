@@ -49,11 +49,20 @@ public class BasicAuthService {
     private static final int EMAIL_PASSWORD_MAX_LEN = 256;
 
     /**
-     * SHA-256 of the last successfully verified token, or {@code null} if not yet verified or
-     * invalidated. Because there is only one valid username/password at any time, a single field
-     * is sufficient. Cleared by {@link #save} whenever credentials change.
+     * The last successfully verified token, keyed by both its SHA-256 and a fingerprint of the
+     * credentials it was verified against, or {@code null} if not yet verified or invalidated.
+     * The fingerprint is re-derived from {@link #configuration()} — already fetched fresh on
+     * every call — on every fast-path check, so a credential change on any webserver node sharing
+     * the same settings store (not just this one) invalidates the cache on this node's very next
+     * request, without any cross-node signal. A cache keyed on the token hash alone would let a
+     * password already revoked on another node keep authenticating here indefinitely.
+     * Cleared by {@link #save} whenever credentials change so an old token stops working
+     * immediately on this node too.
      */
-    private final AtomicReference<String> lastVerifiedTokenSha256 = new AtomicReference<>();
+    private final AtomicReference<CachedToken> lastVerifiedToken = new AtomicReference<>();
+
+    private record CachedToken(String tokenSha256, String credentialsFingerprint) {
+    }
 
     @Inject
     private SettingRepositoryInterface settingRepository;
@@ -128,7 +137,7 @@ public class BasicAuthService {
                 .value(new SaltedBasicAuthCredentials(credentials.getSalt(), credentials.getUsername(), bcryptHash))
                 .build()
         );
-        lastVerifiedTokenSha256.set(null);
+        lastVerifiedToken.set(null);
     }
 
     public void save(BasicAuthCredentials basicAuthCredentials) {
@@ -186,7 +195,7 @@ public class BasicAuthService {
             );
 
             // Invalidate the token cache so an old password stops working immediately.
-            lastVerifiedTokenSha256.set(null);
+            lastVerifiedToken.set(null);
 
             ossAuthEventPublisher.publishEventAsync(
                 OssAuthEvent.builder()
@@ -230,12 +239,27 @@ public class BasicAuthService {
     }
 
     /**
+     * Returns {@code true} if {@code currentPassword} matches the currently configured password.
+     * Always re-checks against {@link #configuration()} directly, bypassing the {@link #isAuthenticated}
+     * cache, so it cannot be satisfied by a credential already revoked elsewhere. Used to require
+     * proof of the current password before {@link #save} is allowed to replace it.
+     */
+    public boolean validateCurrentPassword(String currentPassword) {
+        SaltedBasicAuthCredentials credentials = configuration().credentials();
+        if (credentials == null || currentPassword == null) {
+            return false;
+        }
+        return AuthUtils.matches(credentials.getSalt(), currentPassword, credentials.getPassword());
+    }
+
+    /**
      * Returns {@code true} if the request carries valid basic-auth credentials
      * (either via the {@value BASIC_AUTH_COOKIE_NAME} cookie or an {@code Authorization: Basic} header).
      *
-     * <p>bcrypt verification is only performed on a cache miss. Subsequent requests
-     * with the same token pay only a SHA-256 hash cost, keeping per-request latency
-     * negligible while the at-rest hash remains bcrypt-strength.
+     * <p>bcrypt verification is only performed on a cache miss. Subsequent requests with the same
+     * token, verified against unchanged credentials, hit the in-memory cache and pay only a
+     * SHA-256 hash cost, keeping per-request latency negligible while the at-rest hash remains
+     * bcrypt-strength.
      */
     public boolean isAuthenticated(HttpRequest<?> request) {
         SaltedBasicAuthCredentials credentials = configuration().credentials();
@@ -249,13 +273,17 @@ public class BasicAuthService {
         try {
             String token = encoded.get();
             String tokenSha256 = sha256Hex(token);
+            String credentialsFingerprint = credentialsFingerprint(credentials);
 
-            // Fast path: same token as last verified — skip bcrypt entirely.
+            // Fast path: same token verified against these exact credentials — skip bcrypt
+            // entirely. Re-deriving the fingerprint from the freshly-fetched `credentials` above
+            // on every call means a password change (on this node or a peer sharing the same
+            // settings store) invalidates the cache on the very next request.
             // compare via MessageDigest.isEqual to prevent timing attacks
-            String cachedTokenSha256 = lastVerifiedTokenSha256.get();
-            if (cachedTokenSha256 != null && MessageDigest.isEqual(
-                tokenSha256.getBytes(StandardCharsets.UTF_8),
-                cachedTokenSha256.getBytes(StandardCharsets.UTF_8))) {
+            CachedToken cached = lastVerifiedToken.get();
+            if (cached != null
+                && MessageDigest.isEqual(tokenSha256.getBytes(StandardCharsets.UTF_8), cached.tokenSha256().getBytes(StandardCharsets.UTF_8))
+                && MessageDigest.isEqual(credentialsFingerprint.getBytes(StandardCharsets.UTF_8), cached.credentialsFingerprint().getBytes(StandardCharsets.UTF_8))) {
                 return true;
             }
 
@@ -272,12 +300,20 @@ public class BasicAuthService {
 
             // Wrong passwords always pay the full bcrypt cost; only cache successes.
             if (valid) {
-                lastVerifiedTokenSha256.set(tokenSha256);
+                lastVerifiedToken.set(new CachedToken(tokenSha256, credentialsFingerprint));
             }
             return valid;
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * Returns a cache key identifying {@code credentials}, so a cached token can be told apart
+     * from one verified against a since-replaced username/password.
+     */
+    private static String credentialsFingerprint(SaltedBasicAuthCredentials credentials) {
+        return sha256Hex(credentials.getUsername() + ":" + credentials.getSalt() + ":" + credentials.getPassword());
     }
 
     private Optional<String> extractFromCookie(HttpRequest<?> request) {

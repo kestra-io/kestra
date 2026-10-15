@@ -18,17 +18,39 @@
                 @expand-change="onExpandChange"
             >
                 <template #default="{data}">
-                    <div class="node">
-                        <div :title="data.label">
+                    <div v-if="data.loadMore" class="load-more">
+                        <el-button text size="small" @click.stop="loadMore(data.path, $event)">
                             {{ data.label }}
-                        </div>
-                        <div v-if="data.value && data.children">
-                            <code>{{ itemsCount(data) }}</code>
-                        </div>
+                        </el-button>
                     </div>
-                    <div v-if="isFile(data.value)" class="node buttons">
-                        <VarValue :value="data.value" :execution />
+
+                    <div v-else-if="data.tooLarge" class="node too-large">
+                        <el-alert type="warning" :closable="false" showIcon>
+                            {{ $t('large_outputs.value_too_large', {size: data.size}) }}
+                        </el-alert>
+                        <el-button
+                            type="primary"
+                            size="small"
+                            :icon="Download"
+                            @click.stop="downloadValue(data)"
+                        >
+                            {{ $t('large_outputs.download_json') }}
+                        </el-button>
                     </div>
+
+                    <template v-else>
+                        <div class="node">
+                            <div :title="data.label">
+                                {{ data.label }}
+                            </div>
+                            <div v-if="data.value && data.children">
+                                <code>{{ itemsCount(data) }}</code>
+                            </div>
+                        </div>
+                        <div v-if="isFile(data.value)" class="node buttons">
+                            <VarValue :value="data.value" :execution />
+                        </div>
+                    </template>
                 </template>
             </el-cascader-panel>
         </template>
@@ -48,11 +70,24 @@
     const {t} = useI18n({useScope: "global"});
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
+    import Download from "vue-material-design-icons/Download.vue";
+
+    import Utils from "../../../../../../utils/utils";
+    import {downloadJson, isTooLargeToRender} from "../../../../largeValues";
+    import {useCascaderPaging} from "../../../../outputs/cascaderPaging";
+    import {PAGE_SIZE, limitFor} from "../../../../outputs/transformOutputs";
 
     export interface Node {
         label: string;
         value: string;
         children?: Node[];
+        path?: string;
+        /** Real number of keys under this node, which `children` may only partly contain. */
+        total?: number;
+        loadMore?: boolean;
+        disabled?: boolean;
+        tooLarge?: boolean;
+        size?: string;
     }
 
     type DebugTypes = "outputs" | "trigger";
@@ -100,24 +135,60 @@
         return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
     };
 
-    const formatted = ref<Node[]>([]);
-    const format = (obj: Record<string, any>): Node[] => {
-        return Object.entries(obj).map(([k, v]) => {
+    const {limits, loadMore} = useCascaderPaging();
+
+    // A value past the budget is offered as a download: its own text node wedges the column.
+    const leaf = (value: any, path: string): Node => {
+        const text = typeof value === "string" ? value : String(value ?? "");
+
+        if (isTooLargeToRender(text)) {
+            return {label: "", value: text, path, tooLarge: true, size: Utils.humanFileSize(text.length)};
+        }
+
+        return {label: value, value, path};
+    };
+
+    // Levels are paged: one column of thousands of nodes froze the tab on mount.
+    const format = (obj: Record<string, any>, path = ""): Node[] => {
+        const entries = Object.entries(obj);
+        const limit = limitFor(limits.value, path);
+
+        const nodes = entries.slice(0, limit).map(([k, v]) => {
             const isObject = typeof v === "object" && v !== null;
+            const currentPath = path ? `${path}.${k}` : k;
 
-            const children = isObject
-                ? Object.entries(v).map(([ck, cv]) => format({[ck]: cv})[0])
-                : [{label: v, value: v}];
+            const children = isObject ? format(v, currentPath) : [leaf(v, currentPath)];
+            // An oversized leaf carries no label, so keep it on its own merit or it drops out
+            // of the column and the value becomes unreachable.
+            const filteredChildren = children.filter((c) => c.tooLarge || (c.label ?? c.value));
 
-            const filteredChildren = children.filter((c) => c.label ?? c.value);
+            const node: Node = {label: k, value: k, path: currentPath};
 
-            const node: Node = {label: k, value: k};
-
+            if (isObject) node.total = Object.keys(v).length;
             if (filteredChildren.length) node.children = filteredChildren;
 
             return node;
         });
+
+        const remaining = entries.length - limit;
+
+        if (remaining > 0) {
+            nodes.push({
+                label: t("large_outputs.load_more", {count: Math.min(remaining, PAGE_SIZE), remaining}),
+                value: `${path}::more`,
+                path,
+                loadMore: true,
+                disabled: true,
+            });
+        }
+
+        return nodes;
     };
+
+    const formatted = computed<Node[]>(() => (props.elements ? format(props.elements) : []));
+
+    const downloadValue = (node: Node) =>
+        downloadJson(node.value, `output-${props.execution?.id || "value"}.json`);
 
     const filter = ref("");
     const filteredOptions = computed(() => {
@@ -138,7 +209,7 @@
     });
 
     const itemsCount = (item: Node) => {
-        const length = item.children?.length ?? 0;
+        const length = item.total ?? item.children?.length ?? 0;
 
         if (!length) return undefined;
 
@@ -147,8 +218,6 @@
 
     const cascaderID = `cascader-${props.title.toLowerCase().replace(/\s+/g, "-")}`;
     onMounted(async () => {
-        if (props.elements) formatted.value = format(props.elements);
-
         await nextTick(() => {
             // Open first node by default on page mount
             const selector = `#${cascaderID} .el-cascader-node`;
@@ -209,6 +278,20 @@
 
         .el-cascader-menu__wrap {
             height: 100%;
+        }
+
+        .load-more {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        .node.too-large {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: calc($spacer / 2);
+            padding: calc($spacer / 2) 0;
         }
 
         .node {

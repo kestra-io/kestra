@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.classmate.ResolvedType;
@@ -31,8 +32,10 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
+import io.kestra.core.models.assets.Custom;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -77,6 +80,9 @@ public class JsonSchemaGenerator {
 
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
+
+    // A value holding a Pebble expression, accepted next to the literal format of an output asset property.
+    private static final String PEBBLE_EXPRESSION_PATTERN = ".*\\{\\{.*\\}\\}.*";
 
     private final PluginRegistry pluginRegistry;
 
@@ -187,7 +193,10 @@ public class JsonSchemaGenerator {
                             Map.entry("default", Optional.empty()),
                             Map.entry("title", Optional.empty()),
                             Map.entry("description", Optional.empty()),
-                            Map.entry("$deprecated", Optional.empty())
+                            Map.entry("$deprecated", Optional.empty()),
+                            Map.entry("$ticketingRole", Optional.empty()),
+                            Map.entry("$ticketingDefault", Optional.empty()),
+                            Map.entry("$ticketingValueMap", Optional.empty())
                         )
                     );
                     // find nodes to pull up
@@ -301,6 +310,14 @@ public class JsonSchemaGenerator {
                         return null;
                     }
                     return super.resolveTargetTypeOverrides(member);
+                }
+
+                @Override
+                protected String resolveDefault(MemberScope<?, ?> member) {
+                    // swagger-annotations 2.2.46+ returns Schema.DEFAULT_SENTINEL rather than "" for an unset
+                    // @Schema.defaultValue, which victools' emptiness check treats as a declared default.
+                    String resolved = super.resolveDefault(member);
+                    return Schema.DEFAULT_SENTINEL.equals(resolved) ? null : resolved;
                 }
             })
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
@@ -443,6 +460,26 @@ public class JsonSchemaGenerator {
                 }
             }
 
+            TicketingField ticketingField = member.getAnnotationConsideringFieldAndGetter(TicketingField.class);
+            if (ticketingField != null) {
+                try {
+                    if (ticketingField.role() != TicketingField.Role.NONE) {
+                        memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                    }
+                } catch (EnumConstantNotPresentException ignored) {
+                    // a plugin built against a newer core may name a role this core does not know
+                }
+                if (!ticketingField.defaultValue().isEmpty()) {
+                    memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
+                }
+                if (ticketingField.valueMap().length > 0) {
+                    ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
+                    for (TicketingField.Mapping mapping : ticketingField.valueMap()) {
+                        valueMapNode.put(mapping.from(), mapping.to());
+                    }
+                }
+            }
+
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
             if (schema != null && schema.deprecated()) {
                 memberAttributes.put("$deprecated", true);
@@ -465,6 +502,24 @@ public class JsonSchemaGenerator {
             } else if (member.getDeclaredType().isInstanceOf(Data.class)) {
                 memberAttributes.put("$dynamic", false);
             }
+        });
+
+        // The output assets of a task are declared through a Property<List<Asset>>: the whole declaration is rendered
+        // at runtime, so any asset property may hold a Pebble expression, as in `namespace: "{{ flow.namespace }}"`.
+        // Keep the format of a @Pattern-constrained property for literals, but accept an expression next to it.
+        builder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) ->
+        {
+            if (!Asset.class.isAssignableFrom(member.getDeclaringType().getErasedType()) || !memberAttributes.has("pattern")) {
+                return;
+            }
+            ObjectNode literalBranch = context.getGeneratorConfig().createObjectNode();
+            literalBranch.set("pattern", memberAttributes.remove("pattern"));
+            ObjectNode expressionBranch = context.getGeneratorConfig().createObjectNode();
+            expressionBranch.put("pattern", PEBBLE_EXPRESSION_PATTERN);
+            ArrayNode anyOf = context.getGeneratorConfig().createArrayNode();
+            anyOf.add(literalBranch);
+            anyOf.add(expressionBranch);
+            memberAttributes.set("anyOf", anyOf);
         });
 
         // Add Plugin annotation special docs
@@ -650,6 +705,16 @@ public class JsonSchemaGenerator {
             if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
+                    if (pluginType == Custom.class) {
+                        // The free-form branch of the output assets: where every other plugin pins its type to a
+                        // constant, a custom asset keeps any type that no asset plugin provides.
+                        ObjectNode typeNode = properties.get("type") instanceof ObjectNode existing ? existing : properties.putObject("type");
+                        typeNode.put("type", "string");
+                        typeNode.put("title", "Custom asset type");
+                        typeNode.put("markdownDescription", "Any type that no asset plugin provides: the asset is stored with this type as is.");
+                        return;
+                    }
+
                     LinkedHashSet<String> allowedTypeValues = new LinkedHashSet<>();
                     allowedTypeValues.add(pluginType.getName());
 
@@ -862,11 +927,14 @@ public class JsonSchemaGenerator {
                     }
                 }).toList();
         } else if (declaredType.getErasedType() == Asset.class) {
-            return getRegisteredPlugins()
+            // Custom is what the asset deserializer falls back to for a type no asset plugin provides. It is hidden
+            // from the plugin registry, so it is added by hand as the free-form branch that lets such a type validate.
+            Stream<Class<? extends Asset>> registeredAssets = getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getAssets().stream())
                 .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
-                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal));
+            return Stream.concat(registeredAssets, Stream.of(Custom.class))
                 .map(typeContext::resolve)
                 .toList();
         } else if (declaredType.getErasedType() == AssetExporter.class) {

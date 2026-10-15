@@ -1,4 +1,5 @@
 import {test, expect, describe} from "vitest"
+import {useVueFlow} from "@vue-flow/core"
 import * as VueFlowUtils from "./vueFlowUtils.ts"
 import {
     edgeTurnPosition,
@@ -964,6 +965,24 @@ describe("generateGraph loop return path", () => {
         ) ?? [])
 
         expect(elements.some((element) => element.data?.loopReturn)).toBe(false)
+    })
+})
+
+describe("linkedElements", () => {
+    test("stops at a loop's return edge instead of following the cycle it closes", () => {
+        const {setNodes, setEdges} = useVueFlow("linked-loop")
+        setNodes(["start", "task", "end", "after"].map((id) => ({id, position: {x: 0, y: 0}})))
+        setEdges([
+            {id: "start|task", source: "start", target: "task"},
+            {id: "task|end", source: "task", target: "end"},
+            {id: "end|after", source: "end", target: "after"},
+            {id: "loop-return|end|start", source: "end", target: "start", data: {loopReturn: {}}},
+        ])
+
+        const linked = VueFlowUtils.linkedElements("linked-loop", "task").map((element) => element?.id)
+
+        expect(linked).toEqual(expect.arrayContaining(["start|task", "task|end", "end|after", "after"]))
+        expect(linked).not.toContain("loop-return|end|start")
     })
 })
 

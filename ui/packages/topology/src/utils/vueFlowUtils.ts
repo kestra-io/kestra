@@ -111,10 +111,14 @@ export type NodeDimensionsFn = (
     heightFn: (node: MinimalNode) => number,
 ) => {width: number; height: number}
 
+// A loop's return edge closes a cycle, so these walks follow the flow's own direction only.
+function forwardEdges(vueFlowId: string): GraphEdge[] {
+    return useVueFlow(vueFlowId).getEdges.value.filter((edge) => !edge.data?.loopReturn)
+}
+
 export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId)
     const nodes = []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.target === nodeUid) {
             nodes.push(edge)
             const recursiveEdge = predecessorsEdge(vueFlowId, edge.source)
@@ -127,9 +131,8 @@ export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[
 }
 
 export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId)
     const nodes = []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.source === nodeUid) {
             nodes.push(edge)
             const recursiveEdge = successorsEdge(vueFlowId, edge.target)
@@ -142,10 +145,10 @@ export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] 
 }
 
 export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge | GraphNode)[] {
-    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const {findNode} = useVueFlow(vueFlowId)
     const foundNode = findNode(nodeUid)
     const nodes: (GraphEdge | GraphNode)[] = foundNode ? [foundNode] : []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.target === nodeUid) {
             nodes.push(edge.sourceNode)
             const recursiveEdge = predecessorsNode(vueFlowId, edge.source)
@@ -158,9 +161,9 @@ export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge
 }
 
 export function successorsNode(vueFlowId: string, nodeUid: string) {
-    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const {findNode} = useVueFlow(vueFlowId)
     const nodes = [findNode(nodeUid)]
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.source === nodeUid) {
             nodes.push(edge.targetNode)
             const recursiveEdge = successorsNode(vueFlowId, edge.target)

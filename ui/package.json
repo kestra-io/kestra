@@ -139,7 +139,7 @@
     },
     "overrides": {
         "axios": "1.18.1",
-        "dompurify": "^3.4.13"
+        "dompurify": "^3.4.17"
     },
     "lint-staged": {
         "**/*.{scss,css}": [

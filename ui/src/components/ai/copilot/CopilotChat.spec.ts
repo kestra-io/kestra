@@ -154,7 +154,7 @@ describe("CopilotChat", () => {
 
     it("starts a fresh thread before sending the seeded prompt", async () => {
         // "Generate a unit test" must not inherit whatever the restored conversation was about.
-        state.thread.value = {uid: "t-1"}
+        state.thread.value = {uid: "t-1", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
         miscStore.copilotPrompt = "Generate a unit test for the flow hello"
         miscStore.copilotSendInitialMessage = true

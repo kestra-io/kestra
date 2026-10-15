@@ -28,8 +28,8 @@ plugins {
     id "com.vanniktech.maven.publish" version "0.37.0"
 
     // Kestra gradle plugin
-    id "io.kestra.gradle.spotless-conventions" version '1.2.11'
-    id 'io.kestra.gradle.repository-conventions' version '1.2.11'
+    id "io.kestra.gradle.spotless-conventions" version '1.2.12'
+    id 'io.kestra.gradle.repository-conventions' version '1.2.12'
 }
 
 idea {

@@ -1,5 +1,5 @@
 import {describe, test, expect} from "vitest"
-import {useFilteredProps} from "../../../src/utils/filteredProps"
+import {useFilteredProps} from "./filteredProps"
 
 describe("useFilteredProps", () => {
     test("drops keys whose value is undefined", () => {

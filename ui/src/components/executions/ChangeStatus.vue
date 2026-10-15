@@ -13,7 +13,14 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change state confirm', {id: escapeHtml(execution.id), task: escapeHtml(taskRun.taskId)})" />
+                <p>
+                    <i18n-t keypath="change state confirm" tag="span">
+                        <template #task><code>{{ taskRun.taskId }}</code></template>
+                        <template #id><code>{{ execution.id }}</code></template>
+                    </i18n-t>
+                    <br>
+                    {{ $t('change state confirm restart') }}
+                </p>
 
                 <p>
                     {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
@@ -31,7 +38,9 @@
                     >
                         <template #default>
                             <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <span v-html="item.label" />
+                            <i18n-t keypath="mark as" tag="span">
+                                <template #status><code>{{ item.code }}</code></template>
+                            </i18n-t>
                         </template>
                     </KsOption>
                 </KsSelect>
@@ -70,7 +79,7 @@
     import {useToast} from "../../utils/toast"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
 
     // FIXME: any - execution/taskRun are untyped domain objects
     const props = withDefaults(defineProps<{
@@ -105,13 +114,7 @@
             State.WARNING,
         ]
             .filter((value: string) => value !== taskRun.state.current)
-            .map((value: string) => {
-                return {
-                    code: value,
-                    label: t("mark as", {status: value}),
-                    disabled: value === taskRun.state.current,
-                }
-            })
+            .map((value: string) => ({code: value, disabled: value === taskRun.state.current}))
     })
 
     const enabled = computed(() => {

@@ -1,5 +1,5 @@
 <template>
-    <span class="text-center d-block img-block">
+    <span class="img-block">
         <img
             v-bind="$attrs"
             :alt="alt"
@@ -43,6 +43,11 @@
 </script>
 
 <style scoped lang="scss">
+    .img-block {
+        display: block;
+        text-align: center;
+    }
+
     img {
         max-width: 100%;
     }

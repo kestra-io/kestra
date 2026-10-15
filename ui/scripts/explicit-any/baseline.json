@@ -20,7 +20,6 @@
   "src/components/inputs/FileExplorer.vue": 18,
   "src/components/inputs/FlowFileEditorTab.vue": 1,
   "src/components/inputs/InputsForm.vue": 3,
-  "src/components/inputs/LowCodeEditor.vue": 38,
   "src/components/no-code/components/tasks/TaskArray.vue": 6,
   "src/components/no-code/components/tasks/TaskDict.vue": 5,
   "src/components/no-code/components/tasks/TaskObject.vue": 17,

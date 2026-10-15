@@ -22,8 +22,8 @@ export function loopOver(item: any, predicate: (item: any) => boolean, result?: 
 }
 
 // A task is any object that has both `type` and `id`.
-const isTask = (value: any): boolean =>
-    value instanceof Object && value.type !== undefined && value.id !== undefined
+const isTask = (value: unknown): boolean =>
+    value instanceof Object && (value as {type?: unknown}).type !== undefined && (value as {id?: unknown}).id !== undefined
 
 export function findTaskById(flow: unknown, taskId: string): {type?: string; id?: string; [key: string]: unknown} | undefined {
     const result = loopOver(flow, (value) => {

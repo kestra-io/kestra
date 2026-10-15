@@ -2789,6 +2789,6 @@
     "iteration_number": "迭代 {number}",
     "delete_log_iteration": "确定要删除 {iteration} 的日志吗？",
     "not started": "未开始",
-    "zz_vertex_check": "Vertex AI translation check"
+    "zz_vertex_check": "Vertex AI 翻译检查"
   }
 }

@@ -2789,6 +2789,6 @@
     "iteration_number": "Iteración {number}",
     "delete_log_iteration": "¿Estás seguro de que quieres eliminar el registro de {iteration}?",
     "not started": "No iniciado",
-    "zz_vertex_check": "Vertex AI translation check"
+    "zz_vertex_check": "Comprobación de traducción de Vertex AI"
   }
 }

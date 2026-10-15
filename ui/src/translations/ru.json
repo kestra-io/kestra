@@ -2789,6 +2789,6 @@
     "iteration_number": "Итерация {number}",
     "delete_log_iteration": "Вы уверены, что хотите удалить журнал для {iteration}?",
     "not started": "Не начато",
-    "zz_vertex_check": "Vertex AI translation check"
+    "zz_vertex_check": "Проверка перевода Vertex AI"
   }
 }

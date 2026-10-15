@@ -80,11 +80,12 @@ public class Property<T> {
      * Returns a new {@link Property} with no cached rendered value,
      * so that the next render will evaluate its original Pebble expression.
      * Only needed to render the property again with the same context and different additional variables.
+     * A property built with {@link #ofValue(Object)} has nothing to render and is returned as is.
      *
-     * @return a new {@link Property} without a pre-rendered value
+     * @return a {@link Property} without a pre-rendered value
      */
     public Property<T> skipCache() {
-        return new Property<>(expression, true);
+        return value != null ? this : new Property<>(expression, true);
     }
 
     /**
@@ -268,7 +269,6 @@ public class Property<T> {
      * Render a property with additional variables, then convert it as a map of target types.<br>
      * <p>
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
      *
      * @see RunContextProperty#asMap(Class, Class, Map)
      */

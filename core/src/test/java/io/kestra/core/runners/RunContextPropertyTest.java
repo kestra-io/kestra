@@ -127,6 +127,15 @@ class RunContextPropertyTest {
     }
 
     @Test
+    void shouldReturnValueWhenOfValuePropertySkipsCache() throws IllegalVariableEvaluationException {
+        var runContext = runContextFactory.of(Map.of("variable", "rendered"));
+
+        var runContextProperty = new RunContextProperty<>(Property.ofValue("{{ variable }}"), runContext).skipCache();
+
+        assertThat(runContextProperty.as(String.class)).contains("{{ variable }}");
+    }
+
+    @Test
     void asShouldNotReturnCachedRenderedPropertyWithOfExpression() throws IllegalVariableEvaluationException {
         var runContext = runContextFactory.of();
 

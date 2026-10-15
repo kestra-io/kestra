@@ -483,7 +483,7 @@ class FlowServiceTest {
     void shouldReturnCheckWhenConditionEvaluatesFalse() {
         // Given
         Check failingCheck = Check.builder()
-            .when("{{ false }}")
+            .passIf("{{ false }}")
             .message("fail")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -504,7 +504,7 @@ class FlowServiceTest {
     void shouldReturnEmptyListWhenConditionEvaluatesTrue() {
         // Given
         Check passingCheck = Check.builder()
-            .when("{{ true }}")
+            .passIf("{{ true }}")
             .message("pass")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -524,7 +524,7 @@ class FlowServiceTest {
     void shouldReturnCheckWithErrorMessageWhenExceptionThrown() {
         // Given
         Check check = Check.builder()
-            .when("{{ invalidFunction() }}")
+            .passIf("{{ invalidFunction() }}")
             .message("ignored")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -547,9 +547,9 @@ class FlowServiceTest {
     @Test
     void shouldHandleMultipleChecksWithMixedResults() {
         // Given
-        Check passCheck = Check.builder().when("{{ true }}").message("pass").build();
-        Check failCheck = Check.builder().when("{{ false }}").message("fail").build();
-        Check exceptionCheck = Check.builder().when("{{ invalidFunction }}").message("exception").build();
+        Check passCheck = Check.builder().passIf("{{ true }}").message("pass").build();
+        Check failCheck = Check.builder().passIf("{{ false }}").message("fail").build();
+        Check exceptionCheck = Check.builder().passIf("{{ invalidFunction }}").message("exception").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck, failCheck, exceptionCheck));
@@ -573,7 +573,7 @@ class FlowServiceTest {
     @Test
     void shouldAcceptExpressionWithFlowWhenRenderingChecks() {
         // Given
-        Check passCheck = Check.builder().when("{{ flow.id == 'test' }}").message("pass").build();
+        Check passCheck = Check.builder().passIf("{{ flow.id == 'test' }}").message("pass").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck));
@@ -591,7 +591,7 @@ class FlowServiceTest {
     void shouldResolveNestedFormInputPathWhenRenderingChecks() {
         // Given a check referencing a FORM child via its nested path, e.g. {{ inputs.environment.region }}
         Check check = Check.builder()
-            .when("{{ inputs.environment.region == 'EU' }}")
+            .passIf("{{ inputs.environment.region == 'EU' }}")
             .message("region must be EU")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();

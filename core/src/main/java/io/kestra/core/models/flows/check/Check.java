@@ -4,8 +4,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,6 +35,8 @@ public class Check {
     /**
      * The condition to evaluate.
      * <p>
+     * The check passes when the expression renders to {@code true}; when it renders to
+     * {@code false}, the configured {@code message}, {@code style} and {@code behavior} apply.
      * The expression must render to a real boolean {@code true} or {@code false}. A value that renders
      * to anything else (for example the string {@code "true"} or {@code "yes"}, or a number) is treated
      * as a <em>failed</em> check, because evaluation uses a strict {@code Boolean.TRUE.equals(...)} test.
@@ -41,7 +48,100 @@ public class Check {
      */
     @NotNull
     @NotEmpty
-    String when;
+    String passIf;
+
+    /**
+     * @deprecated renamed to {@link #passIf}; still accepted when reading a flow, never written
+     * back. Write-only so existing flows keep working while new and re-saved flows use
+     * {@code passIf}.
+     */
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    @JsonProperty(value = "when", access = JsonProperty.Access.WRITE_ONLY)
+    @Getter(AccessLevel.NONE)
+    @Builder.Default
+    String when = null;
+
+    /**
+     * @deprecated renamed to {@link #passIf}; still accepted when reading a flow, never written
+     * back. Write-only so existing flows keep working while new and re-saved flows use
+     * {@code passIf}.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonProperty(value = "condition", access = JsonProperty.Access.WRITE_ONLY)
+    @Getter(AccessLevel.NONE)
+    @Builder.Default
+    String condition = null;
+
+    /**
+     * Tracks which condition property name was used while deserializing, so a check that mixes
+     * {@code passIf}, {@code when} and {@code condition} can be rejected instead of silently
+     * keeping whichever came last. Never serialized.
+     */
+    @JsonIgnore
+    @Builder.Default
+    String conditionProperty = null;
+
+    @JsonSetter("passIf")
+    public void setPassIf(String passIf) {
+        this.passIf = conditionValue("passIf", passIf);
+    }
+
+    /**
+     * @deprecated use {@code passIf} instead.
+     */
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    @JsonSetter("when")
+    public void setWhen(String when) {
+        this.passIf = conditionValue("when", when);
+    }
+
+    /**
+     * @deprecated use {@code passIf} instead.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonSetter("condition")
+    public void setCondition(String condition) {
+        this.passIf = conditionValue("condition", condition);
+    }
+
+    /**
+     * Returns the condition expression, whichever name it was declared with: {@code passIf}
+     * or the deprecated {@code when} / {@code condition} aliases.
+     */
+    public String getPassIf() {
+        if (passIf != null) {
+            return passIf;
+        }
+        return when != null ? when : condition;
+    }
+
+    /**
+     * @deprecated renamed to {@link #getPassIf()}.
+     */
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    @JsonIgnore
+    public String getWhen() {
+        return getPassIf();
+    }
+
+    /**
+     * @deprecated renamed to {@link #getPassIf()}.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonIgnore
+    public String getCondition() {
+        return getPassIf();
+    }
+
+    private String conditionValue(String name, String value) {
+        if (this.conditionProperty != null && !this.conditionProperty.equals(name)) {
+            throw new IllegalArgumentException(
+                "A check must set only one of `passIf`, `when` and `condition`; found `%s` and `%s`.".formatted(this.conditionProperty, name)
+            );
+        }
+        this.conditionProperty = name;
+        return value;
+    }
 
     /**
      * The message associated with this check, will be displayed when the condition evaluates to {@code false}.
@@ -61,13 +161,8 @@ public class Check {
     @Builder.Default
     Behavior behavior = Behavior.BLOCK_EXECUTION;
 
-    @Deprecated(forRemoval = true, since = "2.0.0")
-    public void setCondition(String condition) {
-        this.when = condition;
-    }
-
     /**
-     * The visual style used to display the message when the check fails.
+     * The visual style used to display the check fails.
      */
     public enum Style {
         /**

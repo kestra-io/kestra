@@ -32,6 +32,7 @@ import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -121,6 +122,27 @@ class JsonSchemaGeneratorTest {
 
         generate = jsonSchemaGenerator.outputs(Task.class, cls);
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(1));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void flowCheckSchemaPrefersPassIfAndDeprecatesAliases() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+            var check = definitions.get(Check.class.getName());
+            assertThat(check, notNullValue());
+            var properties = (Map<String, Map<String, Object>>) check.get("properties");
+
+            assertThat(properties.containsKey("passIf"), is(true));
+            assertThat(properties.get("passIf").containsKey("$deprecated"), is(false));
+            assertThat(properties.get("when").get("$deprecated"), is(true));
+            assertThat(properties.get("condition").get("$deprecated"), is(true));
+            assertThat(properties.containsKey("conditionProperty"), is(false));
+        });
     }
 
     @SuppressWarnings("unchecked")

@@ -16,7 +16,6 @@ import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerJobEvent;
-import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.vnodes.VNodesAssignmentEvent;
@@ -37,8 +36,6 @@ public interface QueueFactoryInterface<D> {
     DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue(D dependencies);
 
     BroadcastQueueInterface<FlowInterface> flowQueue(D dependencies);
-
-    BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue(D dependencies);
 
     BroadcastQueueInterface<VNodesAssignmentEvent> vNodesAssignmentEventQueue(D dependencies);
 

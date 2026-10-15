@@ -20,7 +20,6 @@ import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.runners.WorkerJobEvent;
-import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.vnodes.VNodesAssignmentEvent;
@@ -100,15 +99,6 @@ public class JdbcQueueFactory implements QueueFactoryInterface<JdbcDependencies>
     public BroadcastQueueInterface<FlowInterface> flowQueue(JdbcDependencies dependencies) {
         return new JdbcBroadcastQueue<>(
             FlowInterface.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
-            dependencies.ignoreExecutionService()
-        );
-    }
-
-    @QueueBean
-    @Override
-    public BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue(JdbcDependencies dependencies) {
-        return new JdbcBroadcastQueue<>(
-            SchedulerEvent.class, dependencies.queueService(), dependencies.jdbcQueueClient(), dependencies.executorsUtils(), dependencies.metricRegistry(),
             dependencies.ignoreExecutionService()
         );
     }

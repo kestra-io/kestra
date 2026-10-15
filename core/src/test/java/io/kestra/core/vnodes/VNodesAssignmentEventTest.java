@@ -5,7 +5,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServiceType;
 
@@ -21,15 +20,5 @@ class VNodesAssignmentEventTest {
 
         assertThat(json).contains("\"type\":\"VNODES_ASSIGNMENT_REQUEST\"");
         assertThat(JacksonMapper.ofJson().readValue(json, VNodesAssignmentEvent.class)).isEqualTo(request);
-    }
-
-    @Test
-    void shouldWriteTheSameTypeForTheSchedulerEvents() throws Exception {
-        SchedulerEvent request = new SchedulerEvent.VNodesAssignmentRequest(Instant.now(), "server-1", Instant.now(), Set.of("scheduler-1"));
-
-        String json = JacksonMapper.ofJson().writeValueAsString(request);
-
-        assertThat(json).contains("\"type\":\"VNODES_ASSIGNMENT_REQUEST\"");
-        assertThat(JacksonMapper.ofJson().readValue(json, SchedulerEvent.class)).isInstanceOf(SchedulerEvent.VNodesAssignmentRequest.class);
     }
 }

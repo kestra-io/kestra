@@ -14,7 +14,7 @@ import {
     resolveDefaultVisibleValue,
 } from "./filterChipFactory"
 import {parseEncodedGroups} from "./routeDecoder"
-import {DATE_FILTER_KEY} from "./constants"
+import {DATE_FILTER_KEY, TIME_RANGE_KEY} from "./constants"
 
 const labelsConfiguration: FilterConfiguration = {
     title: "Executions",
@@ -271,6 +271,17 @@ describe("range filter creation", () => {
         })
     })
 
+    test("always keys the time range chip on the time range key", () => {
+        const config: FilterKeyConfig = {
+            key: "customKey",
+            label: "Interval",
+            valueType: "time-range",
+            comparators: [Comparators.EQUALS],
+        }
+
+        expect(createTimeRangeFilter(config, dateRange.startDate, dateRange.endDate).key).toBe(TIME_RANGE_KEY)
+    })
+
     test("creates a custom range chip with explicit bounds", () => {
         const config: FilterKeyConfig = {
             key: "createdAt",
@@ -344,6 +355,28 @@ describe("default visible filters", () => {
         ])
     })
 
+    test("skips excluded and dismissed keys", () => {
+        const filters = createDefaultVisibleFilters(configKeys, new Set(["status"]), new Set(["labels"]))
+
+        expect(filters).toEqual([])
+        expect(createDefaultVisibleFilters(configKeys, new Set(["status"]), new Set())).toMatchObject([
+            {key: "labels"},
+        ])
+        expect(createDefaultVisibleFilters(configKeys, new Set(), new Set(["labels"]))).toMatchObject([
+            {key: "status"},
+        ])
+    })
+
+    test("falls back to the equals comparator when a default key has none", () => {
+        const [filter] = createDefaultVisibleFilters(
+            [{...configKeys[0], comparators: []}],
+            new Set(),
+            new Set(),
+        )
+
+        expect(filter.comparator).toBe(Comparators.EQUALS)
+    })
+
     test("returns an empty list when no defaults are configured", () => {
         expect(createDefaultVisibleFilters(undefined, new Set(), new Set())).toEqual([])
     })
@@ -368,6 +401,7 @@ describe("default visible filters", () => {
         expect(defaultVisibleValueLabel("RUNNING")).toBe("RUNNING")
         expect(defaultVisibleValueLabel(["team:core", "env:prod"])).toBe("team:core, env:prod")
         expect(defaultVisibleValueLabel(dateRange.startDate)).toBe(dateRange.startDate.toLocaleDateString())
+        expect(defaultVisibleValueLabel(undefined as unknown as string)).toBe("")
         expect(defaultVisibleValueLabel(dateRange)).toBe(
             `${dateRange.startDate.toLocaleDateString()} - ${dateRange.endDate.toLocaleDateString()}`,
         )

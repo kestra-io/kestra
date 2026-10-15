@@ -59,6 +59,13 @@ describe("DagDependsOnEditor", () => {
             .toEqual(["extract", "transform"])
     })
 
+    test("offers every sibling task id as an option", () => {
+        const wrapper = mountEditor(["extract"])
+
+        expect(wrapper.findAllComponents({name: "KsOption"}).map(option => option.props("value")))
+            .toEqual(["extract", "transform", "load"])
+    })
+
     test("emits the updated list when a dependency is added", async () => {
         const wrapper = mountEditor(["extract"])
         const select = wrapper.findComponent({name: "KsSelect"})

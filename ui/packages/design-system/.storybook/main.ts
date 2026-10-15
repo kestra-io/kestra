@@ -1,7 +1,6 @@
 import {mergeConfig} from "vite"
-import {relative, resolve} from "path"
+import {resolve} from "path"
 import type {StorybookConfig} from "@storybook/vue3-vite"
-import {getProjectRoot} from "storybook/internal/common"
 
 const srcDir = resolve(import.meta.dirname, "../src")
 
@@ -19,7 +18,7 @@ const config: StorybookConfig = {
             // Storybook resolves this tsconfig from the git root, not from this file
             docgen: {
                 plugin: "vue-component-meta",
-                tsconfig: `${relative(getProjectRoot(), resolve(import.meta.dirname))}/tsconfig.app.json`,
+                tsconfig: "ui/packages/design-system/tsconfig.app.json",
             },
         },
     },

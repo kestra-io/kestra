@@ -426,6 +426,16 @@ export type Asset = {
     status?: string;
     ttl?: string;
     owner?: string;
+    /**
+     * At most one parent. Parent depth is limited by the service layer, not by this model.
+     */
+    partOf?: AssetRelationRef | null;
+    /**
+     * Assets related to this one.
+     *
+     * Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.
+     */
+    related?: Array<AssetRelationRef> | null;
     namespace?: string;
     id: string;
     type: string;
@@ -447,6 +457,24 @@ export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
 export type AssetIdentifier = {
     id: string;
     type?: string;
+};
+
+/**
+ * A reference to another asset of the same tenant.
+ */
+export type AssetRelationRef = {
+    /**
+     * The id of the referenced asset.
+     */
+    id: string;
+    /**
+     * The namespace of the referenced asset, informational: asset ids are unique per tenant.
+     */
+    namespace?: string | null;
+    /**
+     * The role this asset plays in the relation, for example primary or backup.
+     */
+    role?: string | null;
 };
 
 export type AssetsDeclaration = {
@@ -2079,7 +2107,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 

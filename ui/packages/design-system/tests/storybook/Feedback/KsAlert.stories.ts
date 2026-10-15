@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect} from "storybook/test"
 import KsAlert from "../../../src/components/Feedback/KsAlert.vue"
 
 const meta: Meta<typeof KsAlert> = {
@@ -72,6 +73,39 @@ export const WithNoIconAndDescription: Story = {
             </div>
         `,
     }),
+}
+
+/** A one-line alert centres in its box, and a wrapped one keeps the icon on its first line */
+export const IconAlignment: Story = {
+    render: () => ({
+        components: {KsAlert},
+        template: `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:12px;width:360px">
+                <ks-alert data-test="one-line" type="info" :closable="false">Choose an id and a display name.</ks-alert>
+                <ks-alert data-test="wrapped" type="error" :closable="false">Task fetch-data failed with exit code 1 after three retries. Check the logs of the last attempt for the stack trace.</ks-alert>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const centre = (rect: DOMRect) => (rect.top + rect.bottom) / 2
+        const measure = (name: string) => {
+            const alert = canvasElement.querySelector(`[data-test="${name}"]`)!
+            const text = document.createRange()
+            text.selectNodeContents(alert.querySelector(".kel-alert__description")!)
+            return {
+                alert: centre(alert.getBoundingClientRect()),
+                icon: centre(alert.querySelector(".kel-alert__icon svg")!.getBoundingClientRect()),
+                firstLine: centre(text.getClientRects()[0]),
+            }
+        }
+
+        const oneLine = measure("one-line")
+        await expect(Math.abs(oneLine.firstLine - oneLine.alert)).toBeLessThan(1)
+        await expect(Math.abs(oneLine.icon - oneLine.alert)).toBeLessThan(1)
+
+        const wrapped = measure("wrapped")
+        await expect(Math.abs(wrapped.icon - wrapped.firstLine)).toBeLessThan(1)
+    },
 }
 
 /** Centered text */

@@ -13,6 +13,8 @@ import com.google.common.base.Suppliers;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.EditionProvider;
+import io.kestra.core.utils.EditionProvider.Edition;
 import io.kestra.core.utils.VersionProvider;
 
 import io.micronaut.context.ApplicationContext;
@@ -84,6 +86,13 @@ public abstract class KestraContext {
     public abstract String getVersion();
 
     /**
+     * Returns the edition (OSS or EE) this Kestra server runs.
+     *
+     * @return the {@link Edition}.
+     */
+    public abstract Edition getEdition();
+
+    /**
      * Returns the Kestra Plugin Registry.
      *
      * @return the {@link PluginRegistry}.
@@ -117,6 +126,7 @@ public abstract class KestraContext {
         private final ApplicationContext applicationContext;
         private final Environment environment;
         private final Supplier<String> version;
+        private final Supplier<Edition> edition;
 
         private final AtomicBoolean isShutdown = new AtomicBoolean(false);
 
@@ -133,6 +143,11 @@ public abstract class KestraContext {
             this.version = Suppliers.memoize(() ->
             // VersionProvider is not always available, for example in unit tests, so we use Optional to avoid issues in those cases.
             Optional.ofNullable(applicationContext.getBean(VersionProvider.class)).map(VersionProvider::getVersion).orElse(null)
+            );
+            // Lazy init of the edition
+            this.edition = Suppliers.memoize(() ->
+            // EditionProvider is not always available, for example in unit tests, so we use Optional to avoid issues in those cases.
+            Optional.ofNullable(applicationContext.getBean(EditionProvider.class)).map(EditionProvider::get).orElse(Edition.OSS)
             );
             this.environment = environment;
             KestraContext.setContext(this);
@@ -189,6 +204,12 @@ public abstract class KestraContext {
         @Override
         public String getVersion() {
             return version.get();
+        }
+
+        /** {@inheritDoc} **/
+        @Override
+        public Edition getEdition() {
+            return edition.get();
         }
 
         /** {@inheritDoc} **/

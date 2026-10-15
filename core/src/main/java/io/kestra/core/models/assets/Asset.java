@@ -86,20 +86,27 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
      * Merges this asset over {@code previousAsset}, which is {@code null} on creation.
      *
      * @param previousAsset the stored asset this one is merged over, or {@code null} when creating.
-     * @param allowTypeChange whether the incoming type wins over the stored one; either falls back to the other
-     *                        when null, so creation (no previous asset) keeps the incoming type either way.
+     * @param namespaceDeclared whether the source explicitly declared the namespace field (present, even as
+     *        an explicit {@code null}) rather than omitting it — {@code true} lets this namespace (including
+     *        {@code null}, clearing it to Global) win over the stored one; {@code false} means it was omitted,
+     *        so the previous namespace is kept.
      * @return this asset, merged.
      */
-    public <T extends Asset> T toUpdated(T previousAsset, boolean allowTypeChange) {
+    public <T extends Asset> T toUpdated(T previousAsset, boolean namespaceDeclared) {
         this.created = Optional.ofNullable(previousAsset).map(Asset::getCreated).or(() -> Optional.ofNullable(this.created)).orElseGet(Instant::now);
         this.updated = Instant.now();
 
         String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);
-        this.type = allowTypeChange
-            ? ObjectUtils.firstNonNull(this.type, previousType)
+        // External is a placeholder for "referenced but never declared", never a real user-chosen type: a
+        // real declared type always wins over it, regardless of write order.
+        this.type = (this.type != null && !External.ASSET_TYPE.equals(this.type))
+            ? this.type
             : ObjectUtils.firstNonNull(previousType, this.type);
-        // The namespace of an existing asset is immutable, as AssetsController.updateAsset already enforces
-        this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
+
+        this.namespace = namespaceDeclared
+            ? this.namespace
+            : Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
+
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         this.metadata = Optional.ofNullable(previousAsset).map(Asset::getMetadata).orElse(null) == null
@@ -107,6 +114,11 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
             : MapUtils.mergeWithNullableValues(previousAsset.getMetadata(), Optional.ofNullable(this.metadata).orElse(Collections.emptyMap()));
 
         return (T) this;
+    }
+
+    /** Convenience for callers with no raw-source presence information: a non-null namespace is treated as declared. */
+    public <T extends Asset> T toUpdated(T previousAsset) {
+        return toUpdated(previousAsset, this.namespace != null);
     }
 
     @Override

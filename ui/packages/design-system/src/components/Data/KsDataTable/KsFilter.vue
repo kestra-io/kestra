@@ -316,7 +316,7 @@
             border-color: var(--ks-btn-secondary-border-active);
 
             :deep(svg) {
-                color: var(--ks-content-link, var(--ks-text-link)) !important;
+                color: var(--ks-text-link) !important;
             }
         }
     }

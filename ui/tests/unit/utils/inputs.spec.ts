@@ -51,6 +51,26 @@ describe("normalize for ION uses the structured-data editor contract", () => {
     })
 })
 
+// Guard, uncovered until now: the hydration reads `moment().startOf("day").add(value, "seconds")`,
+// which only lands on the right wall clock because moment routes a string through
+// `moment.duration()` and parses "14:30:00" as 14h30m rather than as 14 seconds. Anything that
+// swaps moment out has to keep that behaviour - `dayjs.add()` coerces with `Number()` instead and
+// yields an invalid date. `LocalTime.toString()` drops the seconds when they are zero, so "14:30"
+// is a real wire shape too. See https://github.com/kestra-io/kestra/issues/19367.
+describe("normalize for TIME hydrates the wall-clock time", () => {
+    it("keeps the hour, minute and second of a LocalTime default", () => {
+        for (const [value, hour, minute, second] of [
+            ["14:30:00", 14, 30, 0],
+            ["00:30:00", 0, 30, 0],
+            ["09:05:03", 9, 5, 3],
+            ["14:30", 14, 30, 0],
+        ] as const) {
+            const hydrated = new Date(normalize("TIME", value))
+            expect([hydrated.getHours(), hydrated.getMinutes(), hydrated.getSeconds()]).toEqual([hour, minute, second])
+        }
+    })
+})
+
 describe("flattenInputs", () => {
     it("returns [] for undefined", () => {
         expect(flattenInputs(undefined)).toEqual([])

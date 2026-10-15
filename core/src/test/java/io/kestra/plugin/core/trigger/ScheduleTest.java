@@ -13,6 +13,9 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import com.cronutils.model.time.ExecutionTime;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -34,6 +37,7 @@ import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
@@ -272,6 +276,39 @@ class ScheduleTest {
     }
 
     @Test
+    void shouldThrowWhenCronHasNoValidCalendarDate() {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 0 30 2 *")
+            .build();
+
+        assertThatThrownBy(trigger::nextEvaluationDate)
+            .isInstanceOf(InvalidTriggerConfigurationException.class)
+            .hasMessageContaining("0 0 30 2 *");
+
+        assertThatThrownBy(() -> trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty()))
+            .isInstanceOf(InvalidTriggerConfigurationException.class)
+            .hasMessageContaining("0 0 30 2 *");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenEvaluatingWithNullDate() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 0 * * *")
+            .build();
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContext(trigger),
+            TriggerContext.builder().date(null).build()
+        );
+
+        assertThat(evaluate).isEmpty();
+    }
+
+    @Test
     void noBackfillNextDate() {
         Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
@@ -342,6 +379,29 @@ class ScheduleTest {
             assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
             assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
         }
+    }
+
+    @Test
+    void isDateBetweenConditions() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 12 * * 1")
+            .timezone("Europe/Paris")
+            .when("{{ isDateBetween(trigger.date, '2021-07-27T00:00:00Z', '2021-08-03T00:00:00Z') }}")
+            .build();
+
+        ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
+
+        Optional<TriggerEvaluationResult> evaluate = trigger.eval(
+            conditionContext(trigger),
+            triggerContext(date, trigger)
+        );
+
+        assertThat(evaluate.isPresent()).isTrue();
+        var vars = evaluate.get().trigger().getVariables();
+        assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
+        assertThat(vars).doesNotContainKeys("previous", "next");
     }
 
     @Test

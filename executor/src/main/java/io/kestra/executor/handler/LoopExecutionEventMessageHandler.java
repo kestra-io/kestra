@@ -3,6 +3,7 @@ package io.kestra.executor.handler;
 import java.io.IOException;
 import java.util.*;
 
+import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -88,6 +89,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (message.state().isPaused()) {
             return handlePaused(message);
         }
+        if (message.state() == State.Type.RESTARTED) {
+            return handleRestarted(message);
+        }
         return handleTerminated(message);
     }
 
@@ -127,6 +131,27 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                     int nextIndex = runningIteration + terminatedIteration;
                     if (nextIndex < iterationCount) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), parentTaskRun);
+
+                        // decide if we should continue to iterate or not
+                        if (loop.getBreakWhen() != null) {
+                            Map<String, Object> iterationVariables = Map.of(
+                                "item", RunVariables.of(message.loopRun()),
+                                "iteration", Map.of(
+                                    "executionId", message.executionId(),
+                                    "state", message.state(),
+                                    "outputs", MapUtils.emptyOnNull(message.outputs())
+                                    )
+                            );
+                            boolean shouldBreak = runContext.render(loop.getBreakWhen()).skipCache().as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
+                            if (shouldBreak) {
+                                // update the outputs with SKIPPED iterations
+                                terminatedByState.put(State.Type.SKIPPED.name(), iterationCount - nextIndex);
+                                computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
+                                var state = loop.getTransmitFailed() && message.state().isTerminatedInError() ? message.state() : State.Type.SUCCESS;
+                                return terminateLoop(parentTaskRun, loop, executor, state);
+                            }
+                        }
+
                         if (outputs.containsKey(Loop.NEXT_OFFSET_OUTPUT)) {
                             // URI mode: seek to stored offset and read the next value
                             long nextOffset = ((Number) outputs.get(Loop.NEXT_OFFSET_OUTPUT)).longValue();
@@ -219,6 +244,28 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         });
     }
 
+    private Optional<ExecutorContext> handleRestarted(LoopExecutionEvent message) {
+        return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
+        {
+            // handleRestarted should only come from a paused loop iteration that has been restarted
+            if (!execution.getState().isPaused()) {
+                return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), new IllegalArgumentException("The execution should be paused."));
+            }
+
+            try {
+                ExecutorContext executor = new ExecutorContext(execution);
+                // throws InternalException if not found — treated as a hard failure below
+                TaskRun loopTaskRun = execution.findTaskRunByTaskRunId(message.loopRun().taskRunId());
+
+                Execution resumedExecution = executionService.resumeFlowable(execution, loopTaskRun);
+
+                return executor.withExecution(resumedExecution, "resumedLoopIteration");
+            } catch (InternalException e) {
+                return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
+            }
+        });
+    }
+
     private void logLoopIterationFailure(TaskRun parentTaskRun, Loop loop, ExecutorContext executor, LoopExecutionEvent message) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(parentTaskRun, loop, executor.getExecution().getKind());
         runContextLogger.logger().error(
@@ -263,13 +310,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
     // terminate the loop and its attempts
     private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state) throws InternalException {
         State.Type finalState = state == State.Type.FAILED ? stateFailure(task) : State.Type.SUCCESS;
-        List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-            .map(ArrayList::new)
-            .orElseGet(ArrayList::new);
-        TaskRunAttempt updated = attempts.getLast().withState(finalState);
-        attempts.set(attempts.size() - 1, updated);
-        TaskRun newTaskRun = parentTaskRun.withState(finalState)
-            .withAttempts(attempts);
+        // as loops can run concurrently, the state might already be set by another task run
+        TaskRun newTaskRun = parentTaskRun.getState().getCurrent() == finalState ? parentTaskRun : parentTaskRun.withStateAndAttempt(finalState);
+
         WorkerTaskResult workerTaskResult = new WorkerTaskResult(newTaskRun);
         executorService.addWorkerTaskResult(executor, () -> executor.getFlow(), workerTaskResult);
         return executor;

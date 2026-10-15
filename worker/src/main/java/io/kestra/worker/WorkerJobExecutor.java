@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,6 +55,7 @@ public class WorkerJobExecutor {
 
     private final AtomicInteger pendingJobCount = new AtomicInteger(0);
     private final AtomicInteger runningJobCount = new AtomicInteger(0);
+    private final AtomicInteger abandonedJobCount = new AtomicInteger(0);
 
     @Inject
     public WorkerJobExecutor(final WorkerQueueRegistry workerQueueRegistry,
@@ -101,6 +103,7 @@ public class WorkerJobExecutor {
             String[] tags = metricRegistry.workerGroupTags(context.workerGroupId());
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_PENDING_COUNT, MetricRegistry.METRIC_WORKER_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);
             this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION, runningJobCount, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_ABANDONED_COUNT, MetricRegistry.METRIC_WORKER_ABANDONED_COUNT_DESCRIPTION, abandonedJobCount, tags);
         } else {
             throw new IllegalStateException("already started");
         }
@@ -318,7 +321,7 @@ public class WorkerJobExecutor {
                         runningJobCount.decrementAndGet();
                     }
                 });
-                future.get();
+                awaitJob(processor, job, future);
             } catch (ExecutionException | RejectedExecutionException e) {
                 // Task exception is fully contained — consumer never fails from task errors
                 Throwable cause = e.getCause() != null ? e.getCause() : e;
@@ -332,6 +335,42 @@ public class WorkerJobExecutor {
                 // via the dedicated Sender — this is just the capacity-accounting
                 // signal piggy-backed on the bidi stream.
                 workerJobFetcher.onJobCompleted(job.uid());
+            }
+        }
+
+        /**
+         * Waits for the job to complete, bounded by the processor's deadline when it declares one.
+         * <p>
+         * At the deadline the processor reports the job, then this consumer goes back to waiting rather
+         * than polling: polling again would pull jobs the pool has no thread left to run and queue them
+         * inside the executor, where their own deadlines expire before they ever start.
+         */
+        private void awaitJob(WorkerJobProcessor<WorkerJob> processor, WorkerJob job, Future<?> future) throws Exception {
+            Duration timeout = processor.timeout(job);
+            if (timeout == null) {
+                future.get();
+                return;
+            }
+
+            try {
+                future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                log.warn("Job '{}' exceeded its timeout of {} and was abandoned. Its thread stays busy until the plugin returns.", job.uid(), timeout);
+
+                // Counted before reporting, because onTimeout() ends in the plugin's own kill() and a kill()
+                // that blocks is precisely the case this gauge exists to show.
+                abandonedJobCount.incrementAndGet();
+                try {
+                    try {
+                        processor.onTimeout(job);
+                    } catch (Exception reportingError) {
+                        // The job is already lost; failing to report it must not also cost us the wait below.
+                        log.error("Failed to report the timeout of job '{}'", job.uid(), reportingError);
+                    }
+                    future.get();
+                } finally {
+                    abandonedJobCount.decrementAndGet();
+                }
             }
         }
 

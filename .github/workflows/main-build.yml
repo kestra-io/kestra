@@ -87,6 +87,16 @@ jobs:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
 
+  e2e-tests:
+    name: E2E tests
+    if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+    with:
+      java-version: 25
+
   publish-develop-docker:
     name: Publish Docker
     needs: [backend-tests, frontend-tests, design-system-frontend-tests]
@@ -149,7 +159,7 @@ jobs:
 
   end:
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests, publish-develop-docker, publish-develop-maven]
+    needs: [backend-tests, frontend-tests, e2e-tests, publish-develop-docker, publish-develop-maven]
     if: "always() && github.repository == 'kestra-io/kestra'"
     steps:
       - run: echo "end CI of failed or success"
@@ -169,7 +179,7 @@ jobs:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, backend-tests, frontend-tests, design-system-frontend-tests, publish-develop-docker, publish-develop-maven, generate-configuration-schema, end ]
+    needs: [ trigger-ee, backend-tests, frontend-tests, design-system-frontend-tests, e2e-tests, publish-develop-docker, publish-develop-maven, generate-configuration-schema, end ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:

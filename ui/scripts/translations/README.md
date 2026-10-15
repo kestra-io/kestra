@@ -33,7 +33,7 @@ flowchart LR
         gen[generateTranslations.ts<br/>shared generator core]
         cmp[compareTranslations.ts<br/>full checker, vue-i18n compiler]
         gate[check-translations.mjs<br/>dependency-free PR gate]
-        rules[translationRules.mjs<br/>fingerprintRules.mjs<br/>shared rules, no imports]
+        rules[translationRules.mjs<br/>fingerprintRules.mjs<br/>usageRules.ts<br/>shared rules, no imports]
         ossentry[generate.ts / check.ts<br/>OSS entry points]
         ossfp[(fingerprints*.json)]
         ossjson[(src/translations/*.json<br/>en.json = source)]
@@ -56,7 +56,7 @@ flowchart LR
     eeentry --> eejson & eefp
 ```
 
-Why the split between `.ts` and `.mjs`: the PR gate must run straight after `actions/checkout`, **before any `npm ci`** - so every rule it applies lives in dependency-free plain JS ([`translationRules.mjs`](translationRules.mjs), [`fingerprintRules.mjs`](fingerprintRules.mjs), [`localeFiles.mjs`](localeFiles.mjs)). File IO, orchestration, and the vue-i18n compiler check stay in `.ts`.
+Why the split between `.ts` and `.mjs`: the PR gate must run straight after `actions/checkout`, **before any `npm ci`** - so every rule it applies has to be **dependency-free**, and its entry point keeps the `.mjs` name the workflows of both repos call by path. The rules themselves may be TypeScript ([`usageRules.ts`](usageRules.ts)), since the Node in `.nvmrc` strips types with no flag and no install; the three older rule modules ([`translationRules.mjs`](translationRules.mjs), [`fingerprintRules.mjs`](fingerprintRules.mjs), [`localeFiles.mjs`](localeFiles.mjs)) are plain JS only because nothing has moved them yet. File IO, orchestration and the vue-i18n compiler check stay in `.ts`.
 
 ## How generation works
 
@@ -99,7 +99,7 @@ Two checkers apply the same shared rules at different depths:
 |---|---|---|
 | Runs | Second half of `npm run translations:check`, and at the end of the auto-translate workflow | CI, on every PR touching translations or UI source (forks included), on every push to `develop` and `releases/*`, and in EE on every such OSS push as well (see below); first half of `npm run translations:check` |
 | Needs | `node_modules` (vue-i18n's real message compiler) | Nothing - Node builtins only, runs before `npm ci` |
-| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, **stale** keys (fingerprints), placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys, keys used in code but defined in no `en.json` |
+| Checks | Missing / extra / **stale** keys (fingerprints), placeholders through the actual compiler | Key parity, **stale** keys (fingerprints), placeholder well-formedness + parity with English, untranslated English copies in non-Latin-script locales, EE keys shadowing OSS keys, keys used in code but defined in no `en.json`, keys defined in `en.json` that no source can reach |
 
 A clean `translations:check` run prints `Translation check passed (scope: oss)` from the gate and then **No missing keys / No extra keys / No stale keys** for every language from the comparer - anything less blocks the merge. `translations:check` runs both on purpose: the gate carries the rules the comparer does not have (used-but-undefined keys, runtime-built namespaces, EE keys shadowing OSS keys) and the comparer carries the real message compiler the dependency-free gate cannot load, so neither alone matches CI. The gate applies the same staleness rule, so a fork PR, which gets no generated commit, cannot merge an edited English value without regenerating the other languages either; a maintainer generates them for the fork with the on-demand workflow described below.
 
@@ -108,11 +108,30 @@ The PR gate runs as two ownership-scoped passes so a failure points at the right
 - `--scope oss` - every OSS locale matches OSS's own `en.json`, and every literal key the OSS, design-system and topology sources pass to `t()`, `$t()` or `<i18n-t keypath>` exists in OSS's `en.json` or a design-system `*.locale.ts`. A failure is an OSS problem, wherever it is observed.
 - `--scope ee` - every EE locale matches EE's `en.json`, no EE key redefines a key OSS already owns, and every literal key `ui-ee/src` uses exists in EE's, OSS's or the design system's English files.
 
-The used-key rule ([`usageRules.mjs`](usageRules.mjs)) only reads literal keys. A key built at runtime - `t(e.message)`, `` t(`errors.${code}`) ``, `t("crud.type." + type)`, `:keypath="expr"` - is skipped, and a key the code tests with `te()` first is allowed to be absent. A key completed at runtime is checked as far as it can be: `t("crud.type." + type)` and `` t(`ai.copilot.error.${error}`) `` require the `crud.type` and `ai.copilot.error` namespaces to exist, which is what protects them from a cleanup that finds no literal naming them. So a failure is always a real raw-id render. The reverse is not checked: a key nothing references is not reported, because the same dynamic lookups make "unused" impossible to prove from the source.
+### Keys nothing renders
+
+The reverse direction is checked as well: a key `en.json` defines that no source can reach is reported, so the dictionary does not keep paying to translate strings into twelve languages for a feature that was removed. "Reach" is read generously, because the check is a gate and a false positive would cost a real string:
+
+- a literal `t()` call on the key or on an ancestor of it;
+- the key, or an ancestor, quoted anywhere in the source, since a key usually travels through data (`{labelKey: "setup.survey.company_1_10"}`, a route's `meta.title`, `keyPrefix = "demos.apps"`) before `t(variable)` reads it;
+- an ancestor used as a runtime namespace (`t("crud.type." + type)`, `KEY_PREFIX = "errors.problems."`);
+- a template literal that can build it, with string constants of the same file inlined first, so `` t(`${THEME}.confirmations.${field}`) `` keeps `settings.blocks.theme.confirmations.*`. A template that *opens* with an expression builds no key path and is ignored;
+- an `i18n-keys:` comment declaring it, for the keys a value chosen at runtime selects, which no literal spells:
+
+    ```ts
+    // Element group names reach $t() as a bare variable in PluginUnified.vue, PluginCatalog.vue and EE's Plugin.vue.
+    // i18n-keys: tasks, triggers, taskRunners, apps, appBlocks, charts, dataFilters, logExporters, additionalPlugins
+    ```
+
+    Write it where the value comes from, so it moves and dies with that code rather than sitting in a list nobody opens. The keys count exactly as a literal call would, in both directions: they keep the key alive, and a typo in one is reported as a key defined nowhere, on the marker's own line. Separate keys with commas, since a key may contain spaces.
+
+OSS keys are rendered by EE code too, so deciding "unused" needs both checkouts; with no EE checkout beside OSS the rule is skipped with a warning rather than guessed at. In CI the OSS pull request and push jobs check `ui-ee/src` out sparsely with the bot app token, so the rule runs there as well; only fork PRs, which get no secrets, fall back to the warning and rely on the EE run their merge dispatches. `node check-translations.mjs --scope oss --unused-candidates` prints the stricter review list instead of failing: every key with no literal `t()` call at all, grouped by namespace. Most of that list is alive through data or a template, which is exactly why it is a review list and not the gate.
+
+The used-key rule ([`usageRules.ts`](usageRules.ts)) only reads literal keys. A key built at runtime - `t(e.message)`, `` t(`errors.${code}`) ``, `t("crud.type." + type)`, `:keypath="expr"` - is skipped, and a key the code tests with `te()` first is allowed to be absent. A key completed at runtime is checked as far as it can be: `t("crud.type." + type)` and `` t(`ai.copilot.error.${error}`) `` require the `crud.type` and `ai.copilot.error` namespaces to exist, which is what protects them from a cleanup that finds no literal naming them. So a failure is always a real raw-id render.
 
 ## CI: the auto-translate bot
 
-Both repositories run `.github/workflows/auto-translate-ui-keys.yml`, once per branch in its list (`develop` and `releases/v2.0.x`; a schedule fires from the default branch, so the `develop` copy of the file drives every branch and opens each bot PR against its own branch):
+Both repositories run `.github/workflows/auto-translate-ui-keys.yml`, once per branch in its list (`develop`, `releases/v2.0.x` and `releases/v1.3.x`; a schedule fires from the default branch, so the `develop` copy of the file drives every branch and opens each bot PR against its own branch):
 
 ```mermaid
 sequenceDiagram
@@ -144,6 +163,7 @@ The gate does not stop at pull requests:
 - **Pushes.** `translations-push.yml` (OSS) and the `push` trigger of `translation-tests.yml` (EE) run the gate on every push to `develop` and `releases/*` that touches the UI, so a merge race between two green PRs, a direct push or a cherry-pick with a stale locale is reported by the branch itself instead of by the next unrelated PR against it.
 - **OSS to EE dispatch.** Most EE keys resolve against the OSS `en.json`, so an OSS push that renames or deletes a key can break EE without any EE change. Once the OSS push gate passed, its `notify-ee` job fires a `repository_dispatch` of type `oss-translations-updated` (payload: `branch`, `commit_sha`) at `kestra-io/kestra-ee`; `translation-tests.yml` there checks out the same-name EE branch and that exact OSS commit and runs both scopes. A dispatch always runs the workflow file of the EE default branch, which is why the EE checkout takes its branch from the payload.
 - **Fork PRs.** The PR workflow generates translations only for branches of this repository (a fork has no `GEMINI_API_KEY`), so a contributor cannot get the missing languages generated on their own. A maintainer runs `Translations - Generate for a pull request` from the Actions tab with the PR number: the workflow checks out the fork's head, generates, and pushes the commit onto the PR branch when it can (the PR allows maintainer edits and the `TRANSLATIONS_PUSH_TOKEN` secret holds a maintainer token); otherwise it uploads the commit as a patch artifact and comments the `git am` one-liner on the PR.
+- **Fork PRs, the comment.** The generate job never runs on a pull request from a fork, so when the gate then reports missing or stale keys, `translations-pr-comment.yml` (a `workflow_run` workflow, which is what has a writable token for a fork) posts one short sticky comment saying how to trigger the generation by hand: a maintainer runs `Translations - Generate for a pull request` with the pull request number, or the author allows maintainer edits or generates locally with a key. The comment is removed once the check passes; pull requests from this repository never get it.
 - **Runtime.** Static rules only see literal keys, so the app also reports every key it could not resolve on the console (throwing in unit and Storybook tests); the Playwright fixtures in both repositories fail the test that rendered a raw key.
 
 ## Developer workflow
@@ -155,6 +175,10 @@ The gate does not stop at pull requests:
 3. Run `npm run translations:check` - the gate must pass and every language must report no missing / extra / stale keys.
 
 Merging with only `en.json` updated also works - the bot fills the languages within a few hours - but the PR gate flags the missing keys, so generating yourself is the clean path. For a PR from a fork, a maintainer runs the on-demand workflow instead (see the CI section above).
+
+### Removing a key
+
+Delete it from `en.json`, from every locale file beside it, and from `fingerprints.json` (its entry joins the path with `|`). The gate reports a key the source can no longer reach, so removing the last call site without removing the key fails the check - which is the point, since a deleted feature otherwise keeps twelve translations alive forever. When the key is still rendered, through a value chosen at runtime, declare it with an `i18n-keys:` comment where that value comes from.
 
 ### Editing an existing English value
 

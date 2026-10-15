@@ -176,6 +176,19 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.TRIGGER_ID, Resource.EXECUTION,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TRIGGER_ID, Resource.LOG,
                 Set.of(
                     Op.EQUALS,

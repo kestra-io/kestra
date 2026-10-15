@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,12 +44,18 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
     private static final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
     /** Throttle applied after a retryable send failure, so a network partition cannot spin the loop. */
     private static final Duration RESEND_BACKOFF = Duration.ofSeconds(1);
+    /** Kept under the 30s {@code AbstractWorker} gives its I/O threads to terminate. */
+    private static final Duration DEFAULT_REPLY_TIMEOUT = Duration.ofSeconds(20);
+    private static final Duration REPLY_POLL_INTERVAL = Duration.ofMillis(50);
 
     private final WorkerQueueRegistry workerQueueRegistry;
     private final Class<T> eventType;
     private final SendStrategy sendStrategy;
     private final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod;
     private final boolean resendOnFailure;
+    private final Duration replyTimeout;
+    private final AtomicInteger callsInFlight = new AtomicInteger();
+    private final AtomicBoolean resultsDropped = new AtomicBoolean();
     private WorkerQueue<T> queue;
     private WorkerContext workerContext;
     /** {@code nanoTime} until which the loop throttles after a retryable send failure. */
@@ -89,6 +97,17 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
         @Nullable final Function<T, T> fallbackMapperOnResourceExhausted,
         final boolean resendOnFailure) {
+        this(workerQueueRegistry, name, eventType, sendStrategy, grpcSendMethod, fallbackMapperOnResourceExhausted, resendOnFailure, DEFAULT_REPLY_TIMEOUT);
+    }
+
+    GrpcWorkerIOSender(final WorkerQueueRegistry workerQueueRegistry,
+        final String name,
+        final Class<T> eventType,
+        final SendStrategy sendStrategy,
+        final BiConsumer<OpaqueData, StreamObserver<OpaqueData>> grpcSendMethod,
+        @Nullable final Function<T, T> fallbackMapperOnResourceExhausted,
+        final boolean resendOnFailure,
+        final Duration replyTimeout) {
         super(name);
         this.eventType = eventType;
         this.workerQueueRegistry = workerQueueRegistry;
@@ -96,6 +115,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         this.grpcSendMethod = Objects.requireNonNull(grpcSendMethod, "grpcSendMethod must not be null");
         this.fallbackMapperOnResourceExhausted = fallbackMapperOnResourceExhausted;
         this.resendOnFailure = resendOnFailure;
+        this.replyTimeout = Objects.requireNonNull(replyTimeout, "replyTimeout must not be null");
     }
 
     /**
@@ -145,11 +165,38 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
                 results = queue.poll(MAX_BATCH_SIZE, Duration.ZERO);
                 send(results);
             } while (!results.isEmpty());
+
+            if (resendOnFailure) {
+                awaitReplies();
+            }
         } finally {
             if (interrupted) {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    /**
+     * Waits for the controller to reply to every call still in flight, since the controller releases the lease of a
+     * job only once it has received its result: a worker reporting a graceful termination before that would let its
+     * jobs be resubmitted while their results are still on their way.
+     */
+    private void awaitReplies() throws InterruptedException {
+        long deadline = System.nanoTime() + replyTimeout.toNanos();
+        while (callsInFlight.get() > 0 && System.nanoTime() < deadline) {
+            TimeUnit.NANOSECONDS.sleep(REPLY_POLL_INTERVAL.toNanos());
+        }
+        if (callsInFlight.get() > 0) {
+            LOG.warn("The controller did not reply to {} call(s) sending {} within {}.", callsInFlight.get(), eventType.getSimpleName(), replyTimeout);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasUndeliveredResults() {
+        return resendOnFailure && (resultsDropped.get() || callsInFlight.get() > 0 || (queue != null && queue.size() > 0));
     }
 
     /**
@@ -181,7 +228,21 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
             ? new FallbackOnResourceExhaustedObserver(batchMessage)
             : new ResendOnFailureObserver(batchMessage);
         StreamObserver<OpaqueData> observer = new RetryOnUnauthenticatedObserver(batchMessage, baseObserver);
-        grpcSendMethod.accept(request, observer);
+        call(request, observer);
+    }
+
+    /**
+     * Issues a gRPC call, counted in flight until it completes. An observer that issues a retry or a fallback call does
+     * so before its own call is uncounted, so the count never drops to zero while a delivery is still going on.
+     */
+    private void call(final OpaqueData request, final StreamObserver<OpaqueData> observer) {
+        callsInFlight.incrementAndGet();
+        try {
+            grpcSendMethod.accept(request, new InFlightObserver(observer));
+        } catch (RuntimeException e) {
+            callsInFlight.decrementAndGet();
+            throw e;
+        }
     }
 
     private OpaqueData buildRequest(final BatchMessage<T> batchMessage) {
@@ -209,6 +270,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
             batchMessage.records().forEach(queue::put);
             resendBackoffUntilNanos = System.nanoTime() + RESEND_BACKOFF.toNanos();
         } else if (resendOnFailure) {
+            resultsDropped.set(true);
             LOG.error(
                 "Failed to send {} to the controller, dropping {}. The task runs or triggers they belong to stay in a non-terminal state until the executor detects this worker as lost.",
                 eventType.getSimpleName(), describeRecords(batchMessage), t
@@ -277,7 +339,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         public void onError(Throwable t) {
             if (isUnauthenticated(t)) {
                 LOG.warn("UNAUTHENTICATED error while sending {}, retrying once", eventType.getSimpleName());
-                grpcSendMethod.accept(buildRequest(originalBatch), delegate);
+                call(buildRequest(originalBatch), delegate);
             } else {
                 delegate.onError(t);
             }
@@ -322,7 +384,7 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
                     // send: if it too fails with a retryable transport error, the failed-state result is
                     // re-queued instead of dropped — otherwise the task would still be left stuck RUNNING.
                     BatchMessage<T> fallbackBatch = BatchMessage.of(fallbackItems);
-                    grpcSendMethod.accept(buildRequest(fallbackBatch), new ResendOnFailureObserver(fallbackBatch));
+                    call(buildRequest(fallbackBatch), new ResendOnFailureObserver(fallbackBatch));
                 }
             } else {
                 onSendFailed(originalBatch, t);
@@ -336,6 +398,38 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
         private static boolean isResourceExhausted(final Throwable t) {
             return t instanceof StatusRuntimeException sre
                 && sre.getStatus().getCode() == Status.Code.RESOURCE_EXHAUSTED;
+        }
+    }
+
+    private class InFlightObserver implements StreamObserver<OpaqueData> {
+
+        private final StreamObserver<OpaqueData> delegate;
+
+        InFlightObserver(final StreamObserver<OpaqueData> delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void onNext(OpaqueData value) {
+            delegate.onNext(value);
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            try {
+                delegate.onError(t);
+            } finally {
+                callsInFlight.decrementAndGet();
+            }
+        }
+
+        @Override
+        public void onCompleted() {
+            try {
+                delegate.onCompleted();
+            } finally {
+                callsInFlight.decrementAndGet();
+            }
         }
     }
 

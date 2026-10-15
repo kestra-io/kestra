@@ -110,6 +110,7 @@ if (staleOf(eeReport).length > 0) {
 
 // Tolerates reports written before `undefinedKeys` existed, like `placeholdersOf` above.
 const undefinedKeysOf = (report) => report?.undefinedKeys ?? []
+const unusedKeysOf = (report) => report?.unusedKeys ?? []
 
 function formatUndefinedKeys(findings) {
     return findings.map(({file, line, key}) => `- \`${key}\` in \`${file}:${line}\``).join("\n")
@@ -132,6 +133,20 @@ if (undefinedKeysOf(eeReport).length > 0) {
         "**What to do:** each key is passed to `t()` but exists in neither `ui-ee/src/translations/ee_translations/en.json` " +
         "nor OSS's `en.json`, so the UI renders the raw key id. Add it to the EE `en.json` (or point the call at an existing key), " +
         "then run `npm run translations:generate` in `ui-ee`.",
+    )
+}
+
+for (const [label, report, enPath] of [
+    ["OSS", ossReport, "ui/src/translations/en.json"],
+    ["EE", eeReport, "ui-ee/src/translations/ee_translations/en.json"],
+]) {
+    if (unusedKeysOf(report).length === 0) continue
+    sections.push(
+        `### ❌ ${label} translations - keys nothing renders\n\n` +
+        unusedKeysOf(report).map(key => `- \`${key}\``).join("\n") + "\n\n" +
+        "**What to do:** nothing in the source can reach these keys, so the twelve translations are generated and shipped for nothing. " +
+        `Delete each one from \`${enPath}\`, from every locale file beside it and from \`fingerprints.json\`. ` +
+        "If a value chosen at runtime selects the key, declare it where that value comes from with an `i18n-keys: <key>` comment instead.",
     )
 }
 

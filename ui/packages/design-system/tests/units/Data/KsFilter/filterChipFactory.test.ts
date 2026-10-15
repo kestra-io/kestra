@@ -133,3 +133,47 @@ describe("filterChipFactory", () => {
         },
     )
 })
+
+const relativeRangeConfiguration: FilterConfiguration = {
+    title: "Executions",
+    keys: [
+        {
+            key: "timeRange",
+            label: "Interval",
+            valueType: "time-range",
+            comparators: [Comparators.EQUALS],
+        },
+    ],
+}
+
+describe("relative date decoding", () => {
+    test.each([
+        ["P30D", "PT720H"],
+        ["P1W", "PT168H"],
+        ["P7D", "PT168H"],
+        ["PT720H", "PT720H"],
+    ])("normalizes the %s duration to %s", (value, expected) => {
+        const {groups} = parseEncodedGroups({"filters[timeRange][EQUALS]": value}, relativeRangeConfiguration)
+        const [group] = groups
+
+        if (!group || !isLeafGroup(group)) {
+            throw new Error("Expected the decoded group to be a leaf group")
+        }
+
+        expect(group.filters[0]).toMatchObject({key: "timeRange", value: expected})
+    })
+
+    test("still reads an absolute date as a date rather than a duration", () => {
+        const {groups} = parseEncodedGroups(
+            {"filters[timeRange][EQUALS]": "2026-08-01T00:00:00.000Z"},
+            relativeRangeConfiguration,
+        )
+        const [group] = groups
+
+        if (!group || !isLeafGroup(group)) {
+            throw new Error("Expected the decoded group to be a leaf group")
+        }
+
+        expect(group.filters[0]?.value).toBeInstanceOf(Date)
+    })
+})

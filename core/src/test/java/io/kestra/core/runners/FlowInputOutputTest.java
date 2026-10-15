@@ -14,18 +14,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.flows.input.EmailInput;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.FloatInput;
@@ -47,7 +48,6 @@ import io.kestra.core.secret.SecretService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.utils.IdUtils;
 
@@ -102,17 +102,15 @@ class FlowInputOutputTest {
 
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
-        return new KVStoreService() {
+        KVStoreService kvStoreService = Mockito.mock(KVStoreService.class, Mockito.CALLS_REAL_METHODS);
+        Mockito.doAnswer(invocation -> new InternalKVStore(invocation.getArgument(0), invocation.getArgument(1), storageInterface, kvMetadataStateStore) {
             @Override
-            public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataStateStore) {
-                    @Override
-                    public Optional<KVValue> getValue(String key) {
-                        return Optional.of(new KVValue(TEST_KV_VALUE));
-                    }
-                };
+            public Optional<KVValue> getValue(String key) {
+                return Optional.of(new KVValue(TEST_KV_VALUE));
             }
-        };
+        }
+        ).when(kvStoreService).get(Mockito.any(), Mockito.any(), Mockito.any());
+        return kvStoreService;
     }
 
     @Test
@@ -1306,6 +1304,78 @@ class FlowInputOutputTest {
         // Then — "" is preserved for EMAIL inputs
         assertThat(values).hasSize(1);
         assertThat(values.getFirst().value()).isEqualTo("");
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"yes", "1", "maybe", "xyz"})
+    void shouldRejectInvalidBooleanInput(String value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions())
+            .as("an invalid BOOL value must produce a validation error")
+            .isNotNull()
+            .isNotEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"true", "false", "TRUE", "False"})
+    void shouldAcceptValidBooleanStringInput(String value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldAcceptBooleanInput(boolean value) {
+        // Given
+        BoolInput input = BoolInput.builder()
+            .id("active")
+            .type(Type.BOOL)
+            .required(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("active", value)
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
         assertThat(values.getFirst().exceptions()).isNull();
     }
 

@@ -10,7 +10,8 @@ import jakarta.annotation.Nullable;
 /**
  * Event emitted by the executor to communicate a loop sub-execution state change to its parent execution.
  * The {@code state} field drives how the parent reacts: a {@link State.Type#PAUSED} state pauses the
- * parent loop task run; any terminated state ends or advances the loop iteration.
+ * parent loop task run, a {@link State.Type#RESTARTED} restart from a pause;
+ * any terminated state ends or advances the loop iteration.
  */
 public record LoopExecutionEvent(
     LoopRun loopRun,

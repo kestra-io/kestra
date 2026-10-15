@@ -38,6 +38,9 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final AtomicReference<State.Type> pendingInterruptState = new AtomicReference<>();
+    // A timeout kill carries no state, which pendingInterruptState cannot express since null means
+    // "nothing pending" there.
+    private final AtomicBoolean pendingTimeoutKill = new AtomicBoolean(false);
     private final AtomicBoolean shutdownInterrupted = new AtomicBoolean(false);
 
     public AbstractWorkerJobProcessor(String workerGroup,
@@ -80,6 +83,8 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
         State.Type pendingState = pendingInterruptState.get();
         if (pendingState != null) {
             workerJobCallable.kill(pendingState);
+        } else if (pendingTimeoutKill.get()) {
+            workerJobCallable.kill(null);
         }
         try {
             return tracer.inCurrentContext(
@@ -125,6 +130,17 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     protected void interrupt(State.Type state) {
         pendingInterruptState.set(state);
         Optional.ofNullable(currentWorkerCallable.get()).ifPresent(callable -> callable.kill(state));
+    }
+
+    /**
+     * Kills the running callable without marking a terminal state, so a job reported by
+     * {@link WorkerJobProcessor#onTimeout} still ends FAILED rather than KILLED.
+     */
+    protected void killCurrentCallable() {
+        // Recorded first: a deadline can land before callJob() published the callable, and the kill would
+        // otherwise be lost with the evaluation left running unbounded.
+        pendingTimeoutKill.set(true);
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(callable -> callable.kill(null));
     }
 
     @Override

@@ -217,7 +217,11 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" :max="3" @click.prevent.stop />
+                        <Labels
+                            :labels="filterHiddenLabels(scope.row?.labels, miscStore.configs?.hiddenLabelsPrefixes, route.query)"
+                            :max="3"
+                            @click.prevent.stop
+                        />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus
@@ -410,6 +414,7 @@
 
 <script setup lang="ts">
     import _merge from "lodash/merge"
+    import {filterHiddenLabels} from "../../utils/labels"
     import {useI18n} from "vue-i18n"
     import {asProblem} from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../utils/problem"
@@ -778,17 +783,6 @@
             {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
         ]
     })
-
-    const filteredLabels = (labels: any[]) => {
-        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
-
-        const queryLabels = route.query?.labels
-        const allowedLabels = queryLabels ? (Array.isArray(queryLabels) ? queryLabels : [queryLabels]).filter((label): label is string => label !== null).map((label: string) => label.split(":")[0]) : []
-
-        return labels?.filter(label => {
-            return !toIgnore.some((prefix: string) => label.key.startsWith(prefix)) || allowedLabels.includes(label.key)
-        })
-    }
 
     const executionParams = (row: any) => {
         return {

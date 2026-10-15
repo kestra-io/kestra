@@ -8,6 +8,7 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.EditionProvider;
 
 /**
  * A {@link KestraContext} that intercepts {@link #shutdown()} to prevent actual ApplicationContext closure
@@ -70,6 +71,11 @@ public class NoOpShutdownContext extends KestraContext {
     @Override
     public String getVersion() {
         return delegate != null ? delegate.getVersion() : "test";
+    }
+
+    @Override
+    public EditionProvider.Edition getEdition() {
+        return delegate != null ? delegate.getEdition() : EditionProvider.Edition.OSS;
     }
 
     @Override

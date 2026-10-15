@@ -258,39 +258,6 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/parallel-nested.yaml" })
-    void replayParallelRestartsRunningSibling() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "parallel-nested");
-        assertThat(execution.getTaskRunList()).hasSize(11);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        TaskRun replayTarget = execution.findTaskRunByTaskIdAndValue("1-3-2_par", List.of());
-        TaskRun runningSibling = execution.findTaskRunByTaskIdAndValue("1-3-3_end", List.of());
-
-        Execution executionWithRunningSibling = execution.withTaskRunList(
-            execution.getTaskRunList()
-                .stream()
-                .map(
-                    taskRun -> taskRun.getId().equals(runningSibling.getId())
-                        ? taskRun.withState(State.Type.RUNNING)
-                        : taskRun
-                )
-                .toList()
-        );
-
-        Flow flow = flowRepository.findByExecution(execution);
-        Execution restart = executionService.replay(executionWithRunningSibling, flow, replayTarget.getId(), null, Optional.empty());
-
-        TaskRun restartedSibling = restart.findTaskRunByTaskIdAndValue("1-3-3_end", List.of());
-        assertThat(restartedSibling.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restartedSibling.getState().getHistories().stream().anyMatch(history -> history.getState() == State.Type.RESTARTED)).isTrue();
-        assertThat(restartedSibling.getId()).isNotEqualTo(runningSibling.getId());
-        assertThat(restartedSibling.getAttempts()).hasSize(runningSibling.getAttempts().size() + 1);
-        assertThat(restartedSibling.lastAttempt().getState().getCurrent()).isEqualTo(State.Type.RESUBMITTED);
-        assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
-    }
-
-    @Test
     @ExecuteFlow(value = "flows/valids/loop-nested.yaml", tenantId = TENANT_2)
     void replayEachSeq(Execution execution) throws Exception {
         // Given: loop-nested has 3 levels of nesting; parent has only loop1 task run
@@ -544,6 +511,21 @@ class ExecutionServiceTest {
         assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(killed.getState().getHistories()).hasSize(5);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/minimal.yaml" })
+    void shouldKillExecutionSuspendedAtBreakpoint() {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withBreakpoints(List.of(Breakpoint.of("date")))
+            .withTaskRunList(List.of(TaskRun.builder().id("taskrun").state(new State(State.Type.BREAKPOINT)).build()))
+            .withState(State.Type.BREAKPOINT);
+
+        Execution killed = executionService.kill(execution, flow);
+
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
+        assertThat(killed.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.CREATED);
     }
 
     @Test

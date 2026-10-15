@@ -11,8 +11,15 @@ const SASH_DRAG_DISTANCE = 80
 const PLUGIN_FQCN = /^[a-z][\w$]*(?:\.[\w$]+)+$/
 
 // Monaco suffixes the row aria-label with ", <kind>" (and ", docs: …" once resolved), so read the rendered label.
-function suggestionLabel(row: HTMLElement): string | undefined {
+export function suggestionLabel(row: HTMLElement): string | undefined {
     const rendered = row.querySelector(".monaco-icon-name-container")?.textContent?.trim()
+    // Rejoins what the app's `splitPluginTypeLabel` split apart, so the icon resolves from the fully qualified name.
+    if (rendered && !row.classList.contains("string-label")) {
+        const packageName = row.querySelector(".details-label")?.textContent?.trim()
+        if (packageName && PLUGIN_FQCN.test(packageName)) {
+            return `${packageName}.${rendered}`
+        }
+    }
     return rendered || row.getAttribute("aria-label")?.split(",")[0].trim()
 }
 

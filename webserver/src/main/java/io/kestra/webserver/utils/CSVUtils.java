@@ -16,8 +16,13 @@ import reactor.core.publisher.Flux;
  *
  * <p>The keys of the first record define the columns: every subsequent record is projected onto them, so a record
  * holding extra or missing keys can never shift the remaining values into the wrong columns.
+ *
+ * <p>
+ * String values starting with a spreadsheet formula character ({@code =}, {@code +}, {@code -}, {@code @}, tab or carriage return) are
+ * prefixed with {@code '} so that Excel and Google Sheets read them as text. Other types are written unchanged.
  */
 public final class CSVUtils {
+    private static final String FORMULA_PREFIXES = "=+-@\t\r";
     private CSVUtils() {
     }
 
@@ -69,8 +74,18 @@ public final class CSVUtils {
     private static List<String> values(Map<String, Object> record, List<String> headers) {
         return headers.stream()
             .map(record::get)
-            .map(value -> value != null ? value.toString() : "")
+            .map(CSVUtils::toCell)
             .toList();
+    }
+
+    private static String toCell(Object value) {
+        if (value == null) {
+            return "";
+        }
+        if (value instanceof String string && !string.isEmpty() && FORMULA_PREFIXES.indexOf(string.charAt(0)) >= 0) {
+            return "'" + string;
+        }
+        return value.toString();
     }
 
     private static String writeRecord(List<String> values) {

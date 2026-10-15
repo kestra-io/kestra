@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
+            <KsButton v-if="!isFreshChat" size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="onNewChat">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -46,9 +46,11 @@
                     v-model:provider="selectedProvider"
                     :providers="providers"
                     :disabled="!canSend"
+                    :streaming="streaming"
                     :placeholder="$t('ai.copilot.emptyHelper')"
                     :rows="3"
                     @submit="onSubmit"
+                    @stop="onStop"
                 />
                 <div class="copilot-suggestions">
                     <KsButton
@@ -85,6 +87,8 @@
                         :message="message"
                         :isPending="message.id === pendingProposalMessageId"
                         :isRunning="message.id === runningToolCallId"
+                        :appliedDraftIds="appliedDraftIds"
+                        @draftApplied="markDraftApplied"
                     />
 
                     <CopilotThinking v-if="working" :phase="workPhase" />
@@ -127,7 +131,9 @@
                     v-model:provider="selectedProvider"
                     :providers="providers"
                     :disabled="!canSend"
+                    :streaming="streaming"
                     @submit="onSubmit"
+                    @stop="onStop"
                 />
             </div>
         </template>
@@ -280,14 +286,35 @@
     const noProviderConfigured = computed(() => miscStore.configs?.isAiApiKeyConfigured === false)
 
     /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
-    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=kestra_app&utm_medium=referral&utm_campaign=ai_copilot_unavailable&utm_content=learn_more#configuration"
+    const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=app&utm_medium=referral&utm_campaign=ai-copilot-unavailable#configuration"
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })
 
+    // Drafts already applied in this conversation: their card drops its actions so the same draft
+    // cannot be written twice. Local to this component's lifetime; reset per-thread below.
+    const appliedDraftIds = ref(new Set<string>())
+
+    /** Mark a drafted artefact as applied once `useApplyDraft.ts` confirms the write succeeded. */
+    function markDraftApplied(draftId: string): void {
+        appliedDraftIds.value.add(draftId)
+    }
+
+    /** Applied tracking is per-conversation — called everywhere a new/different thread starts. */
+    function resetDraftTracking(): void {
+        appliedDraftIds.value.clear()
+    }
+
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
+        resetDraftTracking()
         loadThread(threadId)
+    }
+
+    /** "New chat": drop the applied-draft tracking with the transcript it belonged to. */
+    function onNewChat(): void {
+        resetDraftTracking()
+        reset()
     }
 
     // `status` gates the composer via `canSend`; keep the lints happy that we read it.
@@ -340,6 +367,12 @@
     watch(streaming, (now, was) => {
         clearTimeout(endTimer)
         if (was && !now) {
+            const last = lastMessage.value
+            // Stop and New chat also drop `streaming`; the gather is a completion beat, not a cancel beat.
+            if (!last || last.type === "CANCELLED") {
+                ending.value = false
+                return
+            }
             ending.value = true
             // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
             endTimer = setTimeout(() => (ending.value = false), 4300)
@@ -385,12 +418,31 @@
     // user can type what to change (the next turn re-plans). Focus once the turn resolves and
     // the composer is enabled again.
     const footerComposer = ref<InstanceType<typeof CopilotComposer> | null>(null)
+    const focusAfterStop = ref(false)
+
+    function focusActiveComposer(): void {
+        (isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+    }
 
     async function onReject(): Promise<void> {
         await confirm("REJECT", undefined, selectedProvider.value)
         await nextTick()
         footerComposer.value?.focus()
     }
+
+    function onStop(): void {
+        // Stop only aborts the fetch; canSend flips later in runStream's finally. Focus then,
+        // after the textarea is re-enabled — focusing a disabled textarea is a no-op.
+        focusAfterStop.value = true
+        cancel()
+    }
+
+    watch(canSend, async (now) => {
+        if (!now || !focusAfterStop.value) return
+        focusAfterStop.value = false
+        await nextTick()
+        focusActiveComposer()
+    })
 
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
     // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
@@ -402,7 +454,10 @@
         // the Recents list) and title the thread the seeded turn will create. Never set in OSS,
         // where resetting would discard the only conversation for good.
         if (miscStore.copilotNewThread) {
-            if (thread.value || messages.value.length > 0) reset()
+            if (thread.value || messages.value.length > 0) {
+                resetDraftTracking()
+                reset()
+            }
             nextThreadTitle.value = miscStore.copilotThreadTitle
         }
         composerText.value = seeded
@@ -410,7 +465,7 @@
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
         await nextTick()
-        ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
+        focusActiveComposer()
     }
 
     onMounted(consumeSeededPrompt)
@@ -467,9 +522,17 @@
         flex: 1 1 auto;
         min-height: 0;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        overflow-y: auto;
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
+    }
+
+    /* `ui/src/styles/app.scss` themes only the WebKit scrollbar, so Firefox needs this to avoid
+       a default scrollbar on the copilot surface. Scoped to engines without `::-webkit-scrollbar`
+       because Chromium ignores those rules as soon as `scrollbar-color` is set. */
+    @supports not selector(::-webkit-scrollbar) {
+        .copilot-empty {
+            scrollbar-color: var(--ks-border-default) transparent;
+        }
     }
 
     /* AI-unavailable state (no provider configured): centered message + docs link, no composer. */
@@ -506,6 +569,10 @@
         gap: var(--ks-spacing-4);
         width: 100%;
         max-width: 30rem;
+        /* Safe centering: auto margins center the column while free space is positive and collapse
+           to 0 once the content overflows, so the top never lands above the scroller's origin the
+           way `align-items: center` did (https://github.com/kestra-io/kestra/issues/19777). */
+        margin: auto;
     }
 
     /* The full-page home gives the hero + composer + help more room than the narrow dock. */

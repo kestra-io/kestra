@@ -9,6 +9,9 @@
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
+        remote
+        remoteShowSuffix
+        :remoteMethod="onSearch"
         :fit="fit"
         :placeholder="placeholder ?? $t('namespaces')"
         :suffixIcon="suffixIcon"
@@ -90,6 +93,15 @@
                 return {id: value, label: value}
             })
     })
+
+    const onSearch = (q: string) => {
+        namespacesStore.loadAutocomplete(
+            {
+                q,
+                ids: validValues.value,
+            },
+        )
+    }
 
     onMounted(() => {
         const ids = [modelValue.value].flat().filter(Boolean) as string[]

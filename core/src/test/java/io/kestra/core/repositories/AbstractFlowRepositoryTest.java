@@ -603,6 +603,36 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByIdForExecution_shouldExcludePublishedRevisionShadowedByADeletedDraftHead() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String flowId = IdUtils.create();
+        final List<Flow> toDelete = new ArrayList<>();
+
+        try {
+            FlowWithSource published = flowRepository.create(createTestingLogFlow(tenant, flowId, "published", false));
+            toDelete.add(published);
+            FlowWithSource draft = flowRepository.update(createTestingLogFlow(tenant, flowId, "wip", true), published);
+            toDelete.add(draft);
+
+            // Before deleting: the published revision is reachable through the execution-time
+            // lookup because the draft head above it is skipped by design.
+            Optional<Flow> beforeDelete = flowRepository.findByIdForExecution(tenant, TEST_NAMESPACE, flowId);
+            assertThat(beforeDelete).isPresent();
+            assertThat(beforeDelete.get().getRevision()).isEqualTo(published.getRevision());
+
+            flowRepository.delete(draft);
+
+            // Deleting the draft head must not leave the published revision beneath it
+            // executable: the tombstone must not itself be skipped by the draft filter, or the
+            // published revision resurfaces as if nothing had been deleted.
+            assertThat(flowRepository.findByIdForExecution(tenant, TEST_NAMESPACE, flowId)).isEmpty();
+            assertThat(flowRepository.findByIdWithSourceForExecution(tenant, TEST_NAMESPACE, flowId)).isEmpty();
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
     void findAllWithSourceForExecutionForAllTenants_shouldExcludeFlowsWhoseLatestIsDraft() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String publishedId = IdUtils.create();

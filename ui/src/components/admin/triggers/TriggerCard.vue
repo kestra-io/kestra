@@ -74,7 +74,7 @@
         fontSize: "var(--ks-font-size-xs)",
         lineHeight: "var(--ks-line-height-base)",
         padding: "0.625rem var(--ks-spacing-3)",
-        color: "var(--ks-content-primary)",
+        color: "var(--ks-text-primary)",
     }
 
     const pluginsStore = usePluginsStore()
@@ -176,7 +176,7 @@
                         font-size: var(--ks-font-size-sm);
                         padding: var(--ks-spacing-px) var(--ks-spacing-1);
                         border-radius: var(--ks-radius-xs);
-                        background: var(--ks-tag-background);
+                        background: var(--ks-bg-tag);
                         color: var(--ks-text-primary);
                     }
                 }

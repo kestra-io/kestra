@@ -22,6 +22,7 @@
 import {readFileSync} from "node:fs"
 import {dirname, relative, resolve} from "node:path"
 import {writeIfChanged} from "./files.ts"
+import {parseLocaleModule} from "./localeFiles.mjs"
 import {
     type Fingerprints,
     fingerprintOf,
@@ -407,18 +408,9 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
 //   }
 //
 // These files contain only string values and nested objects (no imports, types
-// or function calls), which lets us evaluate them as plain object literals and
-// re-serialise them back to TypeScript after filling in the translations.
+// or function calls), which `parseLocaleModule` reads without evaluating them, and
+// we re-serialise them back to TypeScript after filling in the translations.
 // ---------------------------------------------------------------------------
-
-// Evaluate the body of a `*.locale.ts` default export into a plain object.
-// The files are pure data literals, so this is safe (and far simpler than parsing TS).
-function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
-    const body = source
-        .replace(/export\s+default\s*/, "")
-        .replace(/;?\s*$/, "")
-    return new Function(`return (${body})`)() as {[lang: string]: NestedDict}
-}
 
 // Serialise a value back to TypeScript source, matching the existing 4-space
 // indentation and trailing-comma style. Keys are always quoted: many of them have to be
@@ -482,7 +474,7 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
         `${fingerprintsFile ? relative(dirname(fingerprintsFile), filePath) : filePath}|${key}`
 
     await Promise.all(localeFiles.map(async (filePath) => {
-        const data = evalLocaleModule(readFileSync(filePath, "utf-8"))
+        const data = parseLocaleModule(readFileSync(filePath, "utf-8")) as {[lang: string]: NestedDict}
         if (!data.en) {
             console.log(`Skipping ${filePath}: no 'en' base translations found.`)
             return

@@ -235,15 +235,16 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     private Optional<SubflowExecutionResult> failSubflowDueToOutput(RunContext runContext, TaskRun taskRun, Execution execution, Exception e, Map<String, Object> outputs) {
         runContext.logger().error("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-        var state = State.Type.fail(this);
+        // a killed subflow has no outputs to extract, and failing it instead would let a retry revive a killed execution
+        var state = execution.getState().getCurrent().isKilled() ? State.Type.KILLED : State.Type.fail(this);
         taskRun = taskRun
             .withState(state)
-            .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()));
+            .addAttempt(TaskRunAttempt.builder().state(new State().withState(state)).build());
 
         return Optional.of(
             SubflowExecutionResult.builder()
                 .executionId(execution.getId())
-                .state(State.Type.FAILED)
+                .state(state)
                 .parentTaskRun(taskRun)
                 .outputs(outputs)
                 .build()

@@ -1,5 +1,6 @@
 import {afterEach, vi} from "vitest"
 import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
+import {designSystemI18nReady} from "@kestra-io/design-system"
 import {installMonacoCssEscapePolyfill} from "./monacoCssEscapePolyfill"
 
 // Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
@@ -15,6 +16,10 @@ vi.resetModules()
 // module is shared across files here, so reset it before re-arming per file.
 disableAutoUnmount()
 enableAutoUnmount(afterEach)
+
+// Installing the design system starts a locale-module glob it does not await, so a spec that
+// finishes first is torn down mid-import and the run reports unhandled EnvironmentTeardownErrors.
+afterEach(() => designSystemI18nReady())
 
 // Most unit tests mount a component in isolation, without installing vue-router,
 // so a literal <router-link> in its template can never resolve and spams

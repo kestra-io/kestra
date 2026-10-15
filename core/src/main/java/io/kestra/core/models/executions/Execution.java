@@ -722,13 +722,18 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     }
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        long terminatedCount = this
+        // Per-task coverage: every resolved task must have at least one terminated task run.
+        // A bare count of terminated task runs can be inflated by a duplicated task run
+        // (e.g. a retry race appending a second run for the same task id), letting the
+        // execution report terminated while a task never ran.
+        Set<String> terminatedTaskUids = this
             .findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .filter(taskRun -> taskRun.getState().isTerminated())
-            .count();
+            .map(taskRun -> IdUtils.fromParts(taskRun.getTaskId(), taskRun.getValue()))
+            .collect(Collectors.toSet());
 
-        return terminatedCount == resolvedTasks.size();
+        return resolvedTasks.stream().allMatch(resolvedTask -> terminatedTaskUids.contains(resolvedTask.uid()));
     }
 
     public boolean hasFailed() {

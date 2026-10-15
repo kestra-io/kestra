@@ -16,6 +16,9 @@ const openEditor = async (page: Page) => {
     await expect(page.getByTestId("monaco-editor")).toBeVisible()
 }
 
+const taskRow = (page: Page, taskId: string) =>
+    page.locator(".task-name").getByText(taskId, {exact: true})
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -58,7 +61,7 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click()
 
-            await page.getByText("hello", {exact: true}).click()// default task log
+            await taskRow(page, "hello").click()// default task log
             await expect(page.getByText("Hello World!")).toBeVisible({timeout: 10000})
         })
     })
@@ -105,7 +108,7 @@ test.describe("Flow Page", () => {
             await expect(page.getByRole("dialog").getByRole("button", {name: "Execute"})).toBeEnabled()
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click()
 
-            await page.getByText("log_hello_task").click()
+            await taskRow(page, "log_hello_task").click()
             await expect(page.getByText(inputValue)
                 .first(),// TODO this is probably a hack, but at least it's fixing the test
             ).toBeVisible()

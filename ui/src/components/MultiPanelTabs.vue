@@ -809,7 +809,7 @@
         background: var(--ks-bg-surface);
         border-left: 1px solid var(--ks-border-default);
         border-right: 1px solid var(--ks-border-default);
-        box-shadow: var(--ks-shadow-md);
+        box-shadow: var(--ks-shadow-base);
     }
 
     .panel-maximized .editor-tabs-container {

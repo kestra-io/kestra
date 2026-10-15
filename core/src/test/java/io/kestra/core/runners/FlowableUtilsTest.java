@@ -558,6 +558,79 @@ class FlowableUtilsTest {
         assertThat(result.getRight()).isEqualTo(4L);
     }
 
+
+    @Test
+    void resolveSequentialNexts_shouldNotDuplicateTaskRunWhenTaskIsRetrying() {
+        // Regression for #18909: a task run in RETRYING (task-level retry pending its
+        // ExecutionDelay) is neither created/submitted/running nor terminated, so it used to
+        // slip through the in-flight guard. With a terminated predecessor present, the nexts
+        // engine then resolved "the task after the last terminated one" - the retried task
+        // itself - and appended a SECOND task run for the same task id.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask setup = resolvedTask("setup");
+        ResolvedTask waiting = resolvedTask("waiting");
+        ResolvedTask last = resolvedTask("last");
+
+        TaskRun setupRun = TaskRun.of(base, setup).withState(State.Type.SUCCESS);
+        TaskRun waitingRun = TaskRun.of(base, waiting).withState(State.Type.RETRYING);
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(setupRun, waitingRun))
+            .build();
+
+        // When
+        List<NextTaskRun> next = FlowableUtils.resolveSequentialNexts(
+            execution,
+            List.of(setup, waiting, last)
+        );
+
+        // Then: the retried task is in-flight, so nothing may be dispatched - no duplicate
+        // task run for "waiting" and no premature dispatch of "last".
+        assertThat(next).isEmpty();
+    }
+
+    @Test
+    void resolveWaitForNext_shouldNotDuplicateTaskRunWhenTaskIsRetrying() {
+        // Same RETRYING in-flight leak as above, on the resolveWaitForNext path used by
+        // LoopUntil children.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask setup = resolvedTask("setup");
+        ResolvedTask waiting = resolvedTask("waiting");
+        ResolvedTask last = resolvedTask("last");
+
+        TaskRun parentRun = TaskRun.builder().id("parent").taskId("loop").build();
+        TaskRun setupRun = TaskRun.of(base, setup).withState(State.Type.SUCCESS).toBuilder().parentTaskRunId("parent").build();
+        TaskRun waitingRun = TaskRun.of(base, waiting).withState(State.Type.RETRYING).toBuilder().parentTaskRunId("parent").build();
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(setupRun, waitingRun))
+            .build();
+
+        List<NextTaskRun> next = FlowableUtils.resolveWaitForNext(
+            execution,
+            List.of(setup, waiting, last),
+            List.of(),
+            List.of(),
+            parentRun
+        );
+
+        assertThat(next).isEmpty();
+    }
+
     private static ResolvedTask resolvedTask(String id) {
         return ResolvedTask.of(
             Return.builder()

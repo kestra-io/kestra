@@ -66,6 +66,12 @@ class DefaultSchedulerTest {
 
     private static final SchedulerConfiguration SCHEDULER_CONFIGURATION = new SchedulerConfiguration(16, Duration.ofSeconds(5), 100);
 
+    // The injected publisher would run ServiceLivenessManager on this thread, where its state write
+    // contends with the heartbeat for the whole 30s H2 lock timeout; no assertion reads those events.
+    private static final ApplicationEventPublisher<ServiceStateChangeEvent> NOOP_EVENT_PUBLISHER = event ->
+    {
+    };
+
     @Inject
     MetricRegistry metricRegistry;
 
@@ -86,9 +92,6 @@ class DefaultSchedulerTest {
 
     @Inject
     ExecutorsUtils executorsUtils;
-
-    @Inject
-    ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
     @Inject
     private LockService lockService;
@@ -258,18 +261,23 @@ class DefaultSchedulerTest {
             // WHEN
             maintenanceService.setMaintenanceMode(true);
             org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
-                assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning))
-            );
+            {
+                assertThat(scheduler.schedulingLoops()).hasSize(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
+            });
             maintenanceService.setMaintenanceMode(false);
             org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
-                assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning)
-            );
+            {
+                assertThat(scheduler.schedulingLoops()).hasSize(2);
+                assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
+            });
 
             // THEN
             Set<Integer> loopAssignments = scheduler.schedulingLoops()
                 .stream()
                 .flatMap(loop -> loop.assignments().stream())
                 .collect(Collectors.toSet());
+            assertThat(loopAssignments).isNotEmpty();
             assertThat(loopAssignments).isEqualTo(scheduler.currentVNodesAssignment());
         }
     }
@@ -323,7 +331,7 @@ class DefaultSchedulerTest {
             triggerSchedulingLoopFactory,
             vNodesAssigner,
             executorsUtils,
-            eventPublisher,
+            NOOP_EVENT_PUBLISHER,
             triggerEventQueue,
             triggerStateStore,
             metricRegistry,

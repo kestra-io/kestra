@@ -1,10 +1,13 @@
 package io.kestra.executor;
 
+import io.kestra.core.debug.Breakpoint;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -260,5 +263,46 @@ class ExecutorServiceTest {
         executorService.addWorkerTaskResult(executor, executor::getFlow, workerTaskResult);
 
         return executor;
+    }
+
+    @Test
+    void shouldNotReSuspendTaskJustResumedFromBreakpoint() throws Exception {
+        var hello = Log.builder().id("hello").type(Log.class.getName()).message("hello").build();
+        var flow = Flow.builder().tenantId("tenant").namespace("io.kestra.unit-test").id(IdUtils.create()).tasks(List.of(hello)).build();
+
+        State resumedState = new State(
+            State.Type.CREATED, List.of(
+                new State.History(State.Type.CREATED, Instant.now().minusSeconds(2)),
+                new State.History(State.Type.BREAKPOINT, Instant.now().minusSeconds(1)),
+                new State.History(State.Type.CREATED, Instant.now())
+            )
+        );
+
+        var taskRun = TaskRun.builder()
+            .tenantId("tenant")
+            .id(IdUtils.create())
+            .executionId(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .taskId(hello.getId())
+            .state(resumedState)
+            .build();
+
+        var execution = Execution.builder()
+            .tenantId("tenant")
+            .id(taskRun.getExecutionId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(1)
+            .state(new State(State.Type.RUNNING, List.of(new State.History(State.Type.RUNNING, Instant.now()))))
+            .taskRunList(List.of(taskRun))
+            .breakpoints(List.of(new Breakpoint("hello", null)))
+            .build();
+
+        var executor = new ExecutorContext(execution, FlowWithSource.of(flow, "flow-source"));
+
+        ExecutorContext result = executorService.process(executor);
+
+        AssertionsForClassTypes.assertThat(result.getExecution().getState().getCurrent()).isNotEqualTo(State.Type.BREAKPOINT);
     }
 }

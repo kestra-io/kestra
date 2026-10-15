@@ -531,6 +531,19 @@ public abstract class AbstractTriggerRepositoryTest {
         .triggerId("filter-locked-false").namespace("io.kestra.filter").flowId("filter-locked")
         .workerId("worker").locked(false).build();
 
+    // TRIGGER_STATE fixtures
+    private static final TriggerState triggerRuntimeDisabled = TriggerState.builder()
+        .triggerId("filter-state-runtime-disabled").namespace("io.kestra.filter").flowId("filter-state")
+        .workerId("worker").disabled(true).build();
+
+    private static final TriggerState triggerSourceDisabled = TriggerState.builder()
+        .triggerId("filter-state-source-disabled").namespace("io.kestra.filter").flowId("filter-state")
+        .workerId("worker").sourceDisabled(true).build();
+
+    private static final TriggerState triggerStateEnabled = TriggerState.builder()
+        .triggerId("filter-state-enabled").namespace("io.kestra.filter").flowId("filter-state")
+        .workerId("worker").build();
+
     public final static List<Named<FiltersTestCase>> filtersTestCases = Stream.of(
 
         // --- QUERY ---
@@ -1030,6 +1043,39 @@ public abstract class AbstractTriggerRepositoryTest {
                 QueryFilter.builder()
                     .field(Field.LOCKED).value(false)
                     .operation(Op.EQUALS).build()
+            )
+            .build(),
+
+        // --- TRIGGER_STATE ---
+        // A trigger disabled in its flow definition is off for the user just like one disabled at
+        // runtime, so it has to be reported under `disabled` even though `TriggerState.disabled` is false.
+        FiltersTestCase.builder()
+            .triggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled, triggerStateEnabled))
+            .expectedTriggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_STATE).value("disabled")
+                    .operation(Op.EQUALS).build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .triggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled, triggerStateEnabled))
+            .expectedTriggers(List.of(triggerStateEnabled))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_STATE).value("enabled")
+                    .operation(Op.EQUALS).build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .triggers(List.of(triggerRuntimeDisabled, triggerSourceDisabled, triggerStateEnabled))
+            .expectedTriggers(List.of(triggerStateEnabled))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TRIGGER_STATE).value("disabled")
+                    .operation(Op.NOT_EQUALS).build()
             )
             .build()
     ).map(tc -> Named.of(tc.queryFilter().toString(), tc)).toList();

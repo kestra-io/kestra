@@ -34,8 +34,10 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
+import io.kestra.core.models.assets.Custom;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -90,6 +92,8 @@ public class JsonSchemaGenerator {
     // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
     // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
     private static final String TIMEZONE_OFFSET_PATTERN = "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
+    // A value holding a Pebble expression, accepted next to the literal format of an output asset property.
+    private static final String PEBBLE_EXPRESSION_PATTERN = ".*\\{\\{.*\\}\\}.*";
 
     private final PluginRegistry pluginRegistry;
 
@@ -162,15 +166,24 @@ public class JsonSchemaGenerator {
      * such as {@code REUSABLE_INPUTS}) from the generated flow schema. The {@code Type} enum is carried in two places:
      * the {@code enum} arrays (the {@code type} discriminator and {@code ArrayInput.itemType}) AND the polymorphic
      * {@code anyOf}/{@code oneOf}/{@code allOf} discriminator branches ({@code {properties:{type:{const:...}}}}); both
-     * must be pruned. Open-source removes the {@code @EeOnly} types; the Enterprise override of
-     * {@code includeInputSubtype} keeps them all, so the excluded set is empty here (no-op).
+     * must be pruned, along with the subtype's own definitions — a branch reaching one by {@code $ref} keeps
+     * validating the excluded input, only without the {@code type} that identifies it. Open-source removes the
+     * {@code @EeOnly} types; the Enterprise override of {@code includeInputSubtype} keeps them all, so the excluded
+     * set is empty here (no-op).
      */
-    private void stripEditionRestrictedInputTypes(Object node, Class<?> cls) {
+    private void stripEditionRestrictedInputTypes(Map<String, Object> schema, Class<?> cls) {
         Set<String> excluded = this.excludedInputTypes(cls);
 
-        if (!excluded.isEmpty()) {
-            stripEditionRestrictedInputTypes(node, excluded);
+        if (excluded.isEmpty()) {
+            return;
         }
+
+        // the subtype definitions have to be spotted first: the strip below removes the discriminator branch that
+        // tells them apart from an ordinary input definition
+        Set<String> excludedDefinitions = excludedSubtypeDefinitions(schema, excluded);
+
+        stripEditionRestrictedInputTypes(schema, excluded, excludedDefinitions);
+        removeExcludedDefinitions(schema, excludedDefinitions);
     }
 
     /**
@@ -186,7 +199,7 @@ public class JsonSchemaGenerator {
     }
 
     @SuppressWarnings("unchecked")
-    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded) {
+    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded, Set<String> excludedDefinitions) {
         if (node instanceof Map<?, ?> rawMap) {
             Map<String, Object> map = (Map<String, Object>) rawMap;
 
@@ -195,13 +208,104 @@ public class JsonSchemaGenerator {
             }
             for (String key : List.of("anyOf", "oneOf", "allOf")) {
                 if (map.get(key) instanceof List<?> branches) {
-                    branches.removeIf(branch -> isExcludedDiscriminatorBranch(branch, excluded));
+                    branches.removeIf(
+                        branch -> isExcludedDiscriminatorBranch(branch, excluded)
+                            || referencesExcludedDefinition(branch, excludedDefinitions)
+                    );
                 }
             }
-            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded, excludedDefinitions));
         } else if (node instanceof List<?> list) {
-            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded, excludedDefinitions));
         }
+    }
+
+    /** The definitions of the excluded subtypes: the discriminator branch itself, or the wrapper carrying it. */
+    @SuppressWarnings("unchecked")
+    private static Set<String> excludedSubtypeDefinitions(Map<String, Object> schema, Set<String> excluded) {
+        if (!(schema.get("definitions") instanceof Map<?, ?> definitions)) {
+            return Set.of();
+        }
+
+        return ((Map<String, Object>) definitions).entrySet().stream()
+            .filter(entry -> isExcludedSubtypeDefinition(entry.getValue(), excluded))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isExcludedSubtypeDefinition(Object definition, Set<String> excluded) {
+        if (isExcludedDiscriminatorBranch(definition, excluded)) {
+            return true;
+        }
+        if (!(definition instanceof Map<?, ?> map)) {
+            return false;
+        }
+
+        for (String key : List.of("anyOf", "oneOf", "allOf")) {
+            if (
+                ((Map<String, Object>) map).get(key) instanceof List<?> branches
+                    && branches.stream().anyMatch(branch -> isExcludedDiscriminatorBranch(branch, excluded))
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Drops the excluded subtype definitions, then whatever only they referenced: a discriminator wrapper points at a
+     * plain body definition no other subtype uses, while shared ones (e.g. {@code DependsOn}) stay referenced.
+     */
+    @SuppressWarnings("unchecked")
+    private static void removeExcludedDefinitions(Map<String, Object> schema, Set<String> excludedDefinitions) {
+        if (excludedDefinitions.isEmpty() || !(schema.get("definitions") instanceof Map<?, ?> rawDefinitions)) {
+            return;
+        }
+
+        Map<String, Object> definitions = (Map<String, Object>) rawDefinitions;
+        Set<String> orphanCandidates = new HashSet<>();
+        excludedDefinitions.forEach(name -> collectRefs(definitions.remove(name), orphanCandidates));
+
+        boolean removedAny = true;
+        while (removedAny) {
+            removedAny = false;
+            Set<String> referenced = new HashSet<>();
+            collectRefs(schema, referenced);
+
+            for (String candidate : Set.copyOf(orphanCandidates)) {
+                if (!referenced.contains(candidate) && definitions.containsKey(candidate)) {
+                    orphanCandidates.remove(candidate);
+                    collectRefs(definitions.remove(candidate), orphanCandidates);
+                    removedAny = true;
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean referencesExcludedDefinition(Object node, Set<String> definitions) {
+        return node instanceof Map<?, ?> map
+            && ((Map<String, Object>) map).get("$ref") instanceof String ref
+            && definitions.contains(definitionName(ref));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void collectRefs(Object node, Set<String> refs) {
+        if (node instanceof Map<?, ?> rawMap) {
+            Map<String, Object> map = (Map<String, Object>) rawMap;
+
+            if (map.get("$ref") instanceof String ref) {
+                refs.add(definitionName(ref));
+            }
+            map.values().forEach(value -> collectRefs(value, refs));
+        } else if (node instanceof List<?> list) {
+            list.forEach(value -> collectRefs(value, refs));
+        }
+    }
+
+    private static String definitionName(String ref) {
+        return ref.substring(ref.lastIndexOf('/') + 1);
     }
 
     @SuppressWarnings("unchecked")
@@ -363,6 +467,9 @@ public class JsonSchemaGenerator {
                             Map.entry("description", Optional.empty()),
                             Map.entry("$deprecated", Optional.empty()),
                             Map.entry("$group", Optional.empty()),
+                            Map.entry("$ticketingRole", Optional.empty()),
+                            Map.entry("$ticketingDefault", Optional.empty()),
+                            Map.entry("$ticketingValueMap", Optional.empty()),
                             Map.entry("$index", Optional.empty())
                         )
                     );
@@ -479,6 +586,14 @@ public class JsonSchemaGenerator {
                         return null;
                     }
                     return super.resolveTargetTypeOverrides(member);
+                }
+
+                @Override
+                protected String resolveDefault(MemberScope<?, ?> member) {
+                    // swagger-annotations 2.2.46+ returns Schema.DEFAULT_SENTINEL rather than "" for an unset
+                    // @Schema.defaultValue, which victools' emptiness check treats as a declared default.
+                    String resolved = super.resolveDefault(member);
+                    return Schema.DEFAULT_SENTINEL.equals(resolved) ? null : resolved;
                 }
             })
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
@@ -624,6 +739,26 @@ public class JsonSchemaGenerator {
                 }
             }
 
+            TicketingField ticketingField = member.getAnnotationConsideringFieldAndGetter(TicketingField.class);
+            if (ticketingField != null) {
+                try {
+                    if (ticketingField.role() != TicketingField.Role.NONE) {
+                        memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                    }
+                } catch (EnumConstantNotPresentException ignored) {
+                    // a plugin built against a newer core may name a role this core does not know
+                }
+                if (!ticketingField.defaultValue().isEmpty()) {
+                    memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
+                }
+                if (ticketingField.valueMap().length > 0) {
+                    ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
+                    for (TicketingField.Mapping mapping : ticketingField.valueMap()) {
+                        valueMapNode.put(mapping.from(), mapping.to());
+                    }
+                }
+            }
+
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
             if (schema != null && schema.deprecated()) {
                 memberAttributes.put("$deprecated", true);
@@ -664,6 +799,24 @@ public class JsonSchemaGenerator {
             ArrayNode anyOf = context.getGeneratorConfig().createArrayNode();
             anyOf.add(enumBranch);
             anyOf.add(patternBranch);
+            memberAttributes.set("anyOf", anyOf);
+        });
+
+        // The output assets of a task are declared through a Property<List<Asset>>: the whole declaration is rendered
+        // at runtime, so any asset property may hold a Pebble expression, as in `namespace: "{{ flow.namespace }}"`.
+        // Keep the format of a @Pattern-constrained property for literals, but accept an expression next to it.
+        builder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) ->
+        {
+            if (!Asset.class.isAssignableFrom(member.getDeclaringType().getErasedType()) || !memberAttributes.has("pattern")) {
+                return;
+            }
+            ObjectNode literalBranch = context.getGeneratorConfig().createObjectNode();
+            literalBranch.set("pattern", memberAttributes.remove("pattern"));
+            ObjectNode expressionBranch = context.getGeneratorConfig().createObjectNode();
+            expressionBranch.put("pattern", PEBBLE_EXPRESSION_PATTERN);
+            ArrayNode anyOf = context.getGeneratorConfig().createArrayNode();
+            anyOf.add(literalBranch);
+            anyOf.add(expressionBranch);
             memberAttributes.set("anyOf", anyOf);
         });
 
@@ -850,6 +1003,16 @@ public class JsonSchemaGenerator {
             if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
+                    if (pluginType == Custom.class) {
+                        // The free-form branch of the output assets: where every other plugin pins its type to a
+                        // constant, a custom asset keeps any type that no asset plugin provides.
+                        ObjectNode typeNode = properties.get("type") instanceof ObjectNode existing ? existing : properties.putObject("type");
+                        typeNode.put("type", "string");
+                        typeNode.put("title", "Custom asset type");
+                        typeNode.put("markdownDescription", "Any type that no asset plugin provides: the asset is stored with this type as is.");
+                        return;
+                    }
+
                     LinkedHashSet<String> allowedTypeValues = new LinkedHashSet<>();
                     allowedTypeValues.add(pluginType.getName());
 
@@ -1053,11 +1216,14 @@ public class JsonSchemaGenerator {
                     }
                 }).toList();
         } else if (declaredType.getErasedType() == Asset.class) {
-            return getRegisteredPlugins()
+            // Custom is what the asset deserializer falls back to for a type no asset plugin provides. It is hidden
+            // from the plugin registry, so it is added by hand as the free-form branch that lets such a type validate.
+            Stream<Class<? extends Asset>> registeredAssets = getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getAssets().stream())
                 .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
-                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal));
+            return Stream.concat(registeredAssets, Stream.of(Custom.class))
                 .map(typeContext::resolve)
                 .toList();
         } else if (declaredType.getErasedType() == AssetExporter.class) {

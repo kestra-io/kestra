@@ -287,6 +287,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filter by task identifier",
             },
+            "operationId": {
+                "label": "Operation ID",
+                "description": "Filter by async operation identifier",
+            },
             "taskRunId": {
                 "label": "Task Run ID",
                 "description": "Filter by task run identifier",
@@ -688,6 +692,10 @@ export default {
             "taskId": {
                 "label": "Task-ID",
                 "description": "Nach Task-ID filtern",
+            },
+            "operationId": {
+                "label": "Operations-ID",
+                "description": "Nach ID des asynchronen Vorgangs filtern",
             },
             "taskRunId": {
                 "label": "Task-Run-ID",
@@ -1091,6 +1099,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtrar por identificador de task",
             },
+            "operationId": {
+                "label": "ID de operación",
+                "description": "Filtrar por identificador de operación asíncrona",
+            },
             "taskRunId": {
                 "label": "ID de Ejecución de Task",
                 "description": "Filtrar por identificador de ejecución de task",
@@ -1492,6 +1504,10 @@ export default {
             "taskId": {
                 "label": "Task ID",
                 "description": "Filtrer par identifiant de task",
+            },
+            "operationId": {
+                "label": "ID d'opération",
+                "description": "Filtrer par identifiant d'opération asynchrone",
             },
             "taskRunId": {
                 "label": "ID d'exécution de Task",
@@ -1895,6 +1911,10 @@ export default {
                 "label": "Task ID",
                 "description": "task identifier द्वारा फ़िल्टर करें",
             },
+            "operationId": {
+                "label": "ऑपरेशन ID",
+                "description": "एसिंक ऑपरेशन ID द्वारा फ़िल्टर करें",
+            },
             "taskRunId": {
                 "label": "Task रन ID",
                 "description": "task run पहचानकर्ता द्वारा फ़िल्टर करें",
@@ -2296,6 +2316,10 @@ export default {
             "taskId": {
                 "label": "Task ID",
                 "description": "Filtra per identificatore task",
+            },
+            "operationId": {
+                "label": "ID operazione",
+                "description": "Filtra per identificatore di operazione asincrona",
             },
             "taskRunId": {
                 "label": "ID Esecuzione Task",
@@ -2699,6 +2723,10 @@ export default {
                 "label": "Task ID",
                 "description": "task 識別子でフィルター",
             },
+            "operationId": {
+                "label": "オペレーション ID",
+                "description": "非同期操作IDでフィルタリング",
+            },
             "taskRunId": {
                 "label": "Task 実行 ID",
                 "description": "task実行IDで絞り込む",
@@ -3100,6 +3128,10 @@ export default {
             "taskId": {
                 "label": "Task ID",
                 "description": "task 식별자로 필터링",
+            },
+            "operationId": {
+                "label": "작업 ID",
+                "description": "비동기 작업 ID로 필터링",
             },
             "taskRunId": {
                 "label": "Task 실행 ID",
@@ -3503,6 +3535,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtruj według ID Taska",
             },
+            "operationId": {
+                "label": "ID operacji",
+                "description": "Filtruj według ID operacji asynchronicznej",
+            },
             "taskRunId": {
                 "label": "ID Task Runa",
                 "description": "Filtruj według ID Task Runa",
@@ -3904,6 +3940,10 @@ export default {
             "taskId": {
                 "label": "ID da Task",
                 "description": "Filtrar por identificador de task",
+            },
+            "operationId": {
+                "label": "ID da Operação",
+                "description": "Filtrar por identificador de operação assíncrona",
             },
             "taskRunId": {
                 "label": "ID da Execução da Task",
@@ -4307,6 +4347,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtrar por identificador da task",
             },
+            "operationId": {
+                "label": "ID da Operação",
+                "description": "Filtrar por identificador de operação assíncrona",
+            },
             "taskRunId": {
                 "label": "ID da Execução da Task",
                 "description": "Filtrar por identificador de execução de task",
@@ -4709,6 +4753,10 @@ export default {
                 "label": "Task ID",
                 "description": "Фильтровать по task идентификатору",
             },
+            "operationId": {
+                "label": "ID операции",
+                "description": "Фильтровать по ID асинхронной операции",
+            },
             "taskRunId": {
                 "label": "ID запуска Task",
                 "description": "Фильтровать по идентификатору запуска task",
@@ -5110,6 +5158,10 @@ export default {
             "taskId": {
                 "label": "Task ID",
                 "description": "按 task 标识符筛选",
+            },
+            "operationId": {
+                "label": "操作 ID",
+                "description": "按异步操作 ID 筛选",
             },
             "taskRunId": {
                 "label": "Task 运行 ID",

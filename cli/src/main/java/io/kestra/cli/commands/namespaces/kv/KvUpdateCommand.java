@@ -27,6 +27,7 @@ import picocli.CommandLine.Option;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Deprecated(since = "2.1.0", forRemoval = true)
 public class KvUpdateCommand extends AbstractApiCommand {
 
     @CommandLine.Parameters(index = "0", description = "The namespace to update")
@@ -57,6 +58,7 @@ public class KvUpdateCommand extends AbstractApiCommand {
 
     @Override
     public Integer call() throws Exception {
+        emitReplacedByKestractl();
         super.call();
 
         if (fileValue != null) {

@@ -291,7 +291,46 @@
       "help": "Help",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Star us"
+      "star": "Star us",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "In progress",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Killing {count} execution | Killing {count} executions",
+          "EXECUTION_PAUSE": "Pausing {count} execution | Pausing {count} executions",
+          "EXECUTION_RESUME": "Resuming {count} execution | Resuming {count} executions",
+          "EXECUTION_RESTART": "Restarting {count} execution | Restarting {count} executions",
+          "EXECUTION_REPLAY": "Replaying {count} execution | Replaying {count} executions",
+          "EXECUTION_FORCE_RUN": "Force running {count} execution | Force running {count} executions",
+          "EXECUTION_UNQUEUE": "Unqueuing {count} execution | Unqueuing {count} executions",
+          "EXECUTION_CHANGE_STATUS": "Changing the status of {count} execution | Changing the status of {count} executions",
+          "EXECUTION_SET_LABELS": "Setting labels on {count} execution | Setting labels on {count} executions",
+          "TRIGGER_UNLOCK": "Unlocking {count} trigger | Unlocking {count} triggers",
+          "TRIGGER_DELETE": "Deleting {count} trigger | Deleting {count} triggers",
+          "TRIGGER_DISABLE": "Disabling {count} trigger | Disabling {count} triggers",
+          "TRIGGER_ENABLE": "Enabling {count} trigger | Enabling {count} triggers",
+          "BACKFILL_PAUSE": "Pausing {count} backfill | Pausing {count} backfills",
+          "BACKFILL_RESUME": "Resuming {count} backfill | Resuming {count} backfills",
+          "BACKFILL_DELETE": "Deleting {count} backfill | Deleting {count} backfills"
+        },
+        "processed": "{count} processed",
+        "rejected": "{count} rejected",
+        "elapsed": "running for {duration}"
+      },
+      "markAllRead": "Mark all as read",
+      "markUnread": "Mark as unread",
+      "markRead": "Mark as read",
+      "empty": "No notifications yet",
+      "emptyUnread": "No unread notifications",
+      "tabs": {
+        "all": "All",
+        "unread": "Unread"
+      },
+      "bellAriaLabel": "Notifications",
+      "bellAriaLabelRunning": "Notifications, operations in progress"
     },
     "source": "Source",
     "home": "Home",
@@ -348,7 +387,8 @@
     "yes": "Yes",
     "no": "No",
     "change state done": "Task state has been updated",
-    "change state confirm": "Are you sure you want to change the task run state for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will then restart the execution from the next task and restart the parent execution if any.",
+    "change state confirm": "Are you sure you want to change the task run state for the {task} task in execution {id}?",
+    "change state confirm restart": "It will then restart the execution from the next task and restart the parent execution if any.",
     "interrupt": "Interrupt",
     "interrupt confirm": "Are you sure you want to interrupt the task run for the <code>{task}</code> task in execution <code>{id}</code>?<br/>It will terminate the running task inside the worker and set its state.",
     "interrupt done": "Task run has been interrupted",
@@ -387,8 +427,22 @@
     "modify inputs": "Modify inputs",
     "replay inputs new required": "This revision has inputs. You will be prompted to fill them in.",
     "replay select taskrun": "Select the task run to replay from:",
+    "replayCheck": {
+        "checking": "Checking whether revision {revision} can be replayed from task {taskId}.",
+        "valid_title": "Revision {revision} can be replayed from task {taskId}.",
+        "valid_description": "The tasks before it are unchanged, so their outputs are reused. Replaying on another revision is never fully deterministic: secrets, file inputs and expressions calling external systems can return something different from the original run.",
+        "refused_title": "Revision {revision} cannot be replayed from task {taskId}.",
+        "refused_description": "A task, input or variable whose result would be reused is defined differently in this revision.",
+        "error_title": "Could not check whether revision {revision} can be replayed from task {taskId}.",
+        "error_description": "You can still replay. The server applies the same rules when the replay starts and refuses it if the revision is incompatible.",
+        "whole_action": "Replay the whole execution instead",
+        "whole_title": "Revision {revision} can be replayed as a whole execution.",
+        "whole_description": "No earlier results are reused, so every task runs again on revision {revision}. The original execution is kept and linked.",
+        "confirm_from_task": "Replay from task",
+        "confirm_whole": "Replay whole execution"
+    },
     "change execution state done": "Execution state updated",
-    "mark as": "Mark as <code>{status}</code>",
+    "mark as": "Mark as {status}",
     "unqueue as": "Unqueue as <code>{status}</code>",
     "kill": "Kill",
     "kill parents and subflow": "Kill current and subflows",
@@ -984,7 +1038,6 @@
     "warning detected": "Warning(s) detected.",
     "informative notice": "Note(s)",
     "open": "Open",
-    "dependency task": "Task {taskId} is a dependency of another task",
     "admin": "Admin",
     "main_configuration": "Main Configuration",
     "commit_id": "Commit id",
@@ -1722,10 +1775,18 @@
     "item": "item",
     "items": "items",
     "iterations": "Iterations",
+    "loop_iterations_notice": {
+        "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
+        "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
+        "metrics": "Loop iterations run as separate sub-executions, so their metrics are not displayed here.",
+        "view_iterations": "View iterations"
+    },
     "cron": "Cron",
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",
     "last error was": "Last error was",
+    "execution_paused": "Execution paused",
+    "execution_paused_description": "This execution is waiting to be validated and resumed.",
     "active": "Active",
     "flows imported": "Flows imported",
     "flows not imported": "Flows not imported",
@@ -2023,6 +2084,7 @@
         "csv": "Export to CSV",
         "ion": "Export to ION"
       },
+      "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
       "show_all_statuses": "Show all statuses",
       "quick_filters": {
         "all": "All",
@@ -2274,7 +2336,18 @@
           "issues": "{n} stale",
           "failed": "{n} failed",
           "last_run": "last run {ago}",
-          "unknown": "{n} not tracked"
+          "unknown": "{n} not tracked",
+          "tests_failed": "{n} with failing tests"
+        },
+        "tests": {
+          "pass": "{count} test | {count} tests",
+          "warn": "{count} test · warn | {count} tests · warn",
+          "fail": "{failed}/{total} failed",
+          "tooltip": {
+            "pass": "The {count} dbt test passed | All {count} dbt tests passed",
+            "warn": "{count} dbt test passed with warnings | {count} dbt tests passed, some with warnings",
+            "fail": "The dbt test failed | {failed} of {total} dbt tests failed"
+          }
         },
         "recent_runs": "Recent runs",
         "group_by": "Group by",

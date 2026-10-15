@@ -291,7 +291,46 @@
       "help": "Aide",
       "issue": "Problème",
       "demo": "Démo",
-      "star": "Ajoutez-nous aux favoris"
+      "star": "Ajoutez-nous aux favoris",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "ongoing": "En cours",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Arrêt de {count} exécution | Arrêt de {count} exécutions",
+          "EXECUTION_PAUSE": "Mise en pause de {count} exécution | Mise en pause de {count} exécutions",
+          "EXECUTION_RESUME": "Reprise de {count} exécution | Reprise de {count} exécutions",
+          "EXECUTION_RESTART": "Relance de {count} exécution | Relance de {count} exécutions",
+          "EXECUTION_REPLAY": "Rejeu de {count} exécution | Rejeu de {count} exécutions",
+          "EXECUTION_FORCE_RUN": "Démarrage forcé de {count} exécution | Démarrage forcé de {count} exécutions",
+          "EXECUTION_UNQUEUE": "Retrait de {count} exécution de la file d'attente | Retrait de {count} exécutions de la file d'attente",
+          "EXECUTION_CHANGE_STATUS": "Changement du statut de {count} exécution | Changement du statut de {count} exécutions",
+          "EXECUTION_SET_LABELS": "Ajout de labels à {count} exécution | Ajout de labels à {count} exécutions",
+          "TRIGGER_UNLOCK": "Déverrouillage de {count} trigger | Déverrouillage de {count} triggers",
+          "TRIGGER_DELETE": "Suppression de {count} trigger | Suppression de {count} triggers",
+          "TRIGGER_DISABLE": "Désactivation de {count} trigger | Désactivation de {count} triggers",
+          "TRIGGER_ENABLE": "Activation de {count} trigger | Activation de {count} triggers",
+          "BACKFILL_PAUSE": "Mise en pause de {count} backfill | Mise en pause de {count} backfills",
+          "BACKFILL_RESUME": "Reprise de {count} backfill | Reprise de {count} backfills",
+          "BACKFILL_DELETE": "Suppression de {count} backfill | Suppression de {count} backfills"
+        },
+        "processed": "{count} traitées",
+        "rejected": "{count} rejetées",
+        "elapsed": "en cours depuis {duration}"
+      },
+      "markAllRead": "Tout marquer comme lu",
+      "markUnread": "Marquer comme non lu",
+      "markRead": "Marquer comme lu",
+      "empty": "Aucune notification pour l'instant",
+      "emptyUnread": "Aucune notification non lue",
+      "tabs": {
+        "all": "Tout",
+        "unread": "Non lu"
+      },
+      "bellAriaLabel": "Notifications",
+      "bellAriaLabelRunning": "Notifications, opérations en cours"
     },
     "source": "Source",
     "home": "Accueil",
@@ -348,7 +387,8 @@
     "yes": "Oui",
     "no": "Non",
     "change state done": "L'état de la task a été mis à jour",
-    "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?<br/>Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
+    "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche {task} dans l'exécution {id} ?",
+    "change state confirm restart": "Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
     "interrupt": "Interrompre",
     "interrupt confirm": "Voulez-vous vraiment interrompre l'exécution du Task Run pour le Task <code>{task}</code> dans l'Execution <code>{id}</code> ?<br/>Cela mettra fin au Task en cours d'exécution dans le Worker et définira son état.",
     "interrupt done": "L'exécution de la Task a été interrompue",
@@ -387,8 +427,22 @@
     "modify inputs": "Modifier les inputs",
     "replay inputs new required": "Cette révision a des inputs. Vous serez invité à les remplir.",
     "replay select taskrun": "Sélectionnez le task run à rejouer à partir de :",
+    "replayCheck": {
+      "checking": "Vérification si la révision {revision} peut être rejouée à partir du Task {taskId}.",
+      "valid_title": "La version {revision} peut être rejouée à partir de la Task {taskId}.",
+      "valid_description": "Les tâches précédentes sont inchangées, leurs outputs sont donc réutilisés. Rejouer sur une autre révision n'est jamais entièrement déterministe : les secrets, les inputs de fichiers et les expressions appelant des systèmes externes peuvent renvoyer quelque chose de différent de l'exécution originale.",
+      "refused_title": "La révision {revision} ne peut pas être rejouée à partir de la tâche {taskId}.",
+      "refused_description": "Une tâche, une entrée ou une variable dont le résultat serait réutilisé est définie différemment dans cette révision.",
+      "error_title": "Impossible de vérifier si la révision {revision} peut être rejouée à partir de la Task {taskId}.",
+      "error_description": "Vous pouvez toujours rejouer. Le serveur applique les mêmes règles au démarrage du Replay et le refuse si la révision est incompatible.",
+      "whole_action": "Rejouer toute l'exécution à la place",
+      "whole_title": "La version {revision} peut être rejouée comme une exécution complète.",
+      "whole_description": "Aucun résultat antérieur n'est réutilisé, donc chaque Task s'exécute à nouveau sur la révision {revision}. L'exécution originale est conservée et liée.",
+      "confirm_from_task": "Replay à partir de la tâche",
+      "confirm_whole": "Rejouer l'exécution entière"
+    },
     "change execution state done": "État d'exécution mis à jour",
-    "mark as": "Marqué comme <code>{status}</code>",
+    "mark as": "Marquer comme {status}",
     "unqueue as": "Se désenfile en tant que <code>{status}</code>",
     "kill": "Arrêter",
     "kill parents and subflow": "Tuer le flow actuel et les subflows",
@@ -984,7 +1038,6 @@
     "warning detected": "Avertissement(s) détecté(s).",
     "informative notice": "Note(s)",
     "open": "Afficher",
-    "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
     "admin": "Administrateur",
     "main_configuration": "Configuration Principale",
     "commit_id": "ID de commit",
@@ -1722,10 +1775,18 @@
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
+    "loop_iterations_notice": {
+      "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
+      "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",
+      "metrics": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs métriques ne sont donc pas affichées ici.",
+      "view_iterations": "Afficher les itérations"
+    },
     "cron": "Cron",
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",
     "last error was": "La dernière erreur était",
+    "execution_paused": "Exécution mise en pause",
+    "execution_paused_description": "Cette exécution est en attente de validation et de reprise.",
     "active": "Actif",
     "flows imported": "Flux importés",
     "flows not imported": "Flows non importés",
@@ -2023,6 +2084,7 @@
         "csv": "Exporter vers CSV",
         "ion": "Exporter vers ION"
       },
+      "ignoredFilters": "Le filtre {filters} ne s'applique pas à ce graphique. | Les filtres {filters} ne s'appliquent pas à ce graphique.",
       "show_all_statuses": "Afficher tous les états",
       "quick_filters": {
         "all": "Tout",
@@ -2274,7 +2336,18 @@
           "issues": "{n} obsolète | {n} obsolètes",
           "failed": "{n} échec | {n} échecs",
           "last_run": "dernière exécution {ago}",
-          "unknown": "{n} non suivi"
+          "unknown": "{n} non suivi",
+          "tests_failed": "{n} avec des tests échoués"
+        },
+        "tests": {
+          "pass": "{count} test | {count} tests",
+          "warn": "{count} test · avertissement | {count} tests · avertissement",
+          "fail": "{failed}/{total} échecs",
+          "tooltip": {
+            "pass": "Le {count} test dbt a réussi | Tous les {count} tests dbt ont réussi",
+            "warn": "{count} test dbt réussi avec avertissements | {count} tests dbt réussis, certains avec avertissements",
+            "fail": "Le test dbt a échoué | {failed} des {total} tests dbt ont échoué"
+          }
         },
         "recent_runs": "Exécutions récentes",
         "group_by": "Grouper par",

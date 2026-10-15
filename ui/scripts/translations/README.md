@@ -62,6 +62,8 @@ Why the split between `.ts` and `.mjs`: the PR gate must run straight after `act
 
 `npm run translations:generate`, run from `ui/` (or `ui-ee/` in EE). Needs `GOOGLE_CLOUD_PROJECT` and Application Default Credentials: Gemini is reached through Vertex AI, so run `gcloud auth application-default login` once. `GOOGLE_CLOUD_LOCATION` defaults to `global`.
 
+A key whose translation fails (a rejected call, a missing permission) keeps its old value and is retried on the next run, but the run exits non-zero so it cannot pass for green in CI. Whatever did translate is still written first.
+
 ```mermaid
 flowchart TD
     start([npm run translations:generate]) --> load[Load en.json + fingerprints.json]

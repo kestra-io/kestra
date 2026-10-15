@@ -302,6 +302,23 @@ export interface GenerateTranslationsOptions {
 }
 
 /**
+ * Marks the run as failed when some keys could not be translated.
+ *
+ * A failed key keeps its old value and is retried on the next run, so the files that were written
+ * are still valid. But the generator used to exit 0 regardless, which made a run where every call
+ * was rejected (a missing permission, an exhausted quota) look green in CI. The exit code is set
+ * rather than thrown so the remaining files and the second call of the EE entry point still run.
+ */
+function reportFailedKeys(failedKeys: ReadonlySet<string>): void {
+    if (!failedKeys.size) {
+        return
+    }
+
+    console.error(`${failedKeys.size} key(s) could not be translated in at least one language and keep their old value: ${[...failedKeys].join(", ")}. They are retried on the next run.`)
+    process.exitCode = 1
+}
+
+/**
  * Fills the per-language JSON files in `translationsDir` from its `en.json`.
  *
  * Each language file is rewritten in `en.json` key order, so regeneration never reorders existing
@@ -393,6 +410,7 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
         nextFingerprints[key] = fingerprintOf(enFlat[key])
     }
     writeFingerprints(fingerprintsFile, nextFingerprints)
+    reportFailedKeys(failedKeys)
 }
 
 // ---------------------------------------------------------------------------
@@ -470,6 +488,8 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
 
     const fingerprints = readFingerprints(fingerprintsFile)
     const nextFingerprints: Fingerprints = {}
+    // Every file's failed keys, qualified by file, so the run can be marked as failed once at the end.
+    const allFailedKeys = new Set<string>()
     const fingerprintKeyFor = (filePath: string, key: string): string =>
         `${fingerprintsFile ? relative(dirname(fingerprintsFile), filePath) : filePath}|${key}`
 
@@ -539,6 +559,9 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
             }
             nextFingerprints[fingerprintKey] = fingerprintOf(enFlat[key])
         }
+        for (const key of failedKeys) {
+            allFailedKeys.add(fingerprintKeyFor(filePath, key))
+        }
 
         // Assembled after the fact in a fixed order — `en` first, then `codes` — rather than as each
         // language finishes. The serialised output preserves key order, so letting completion order
@@ -552,4 +575,5 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
     }))
 
     writeFingerprints(fingerprintsFile, nextFingerprints)
+    reportFailedKeys(allFailedKeys)
 }

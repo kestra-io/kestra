@@ -24,7 +24,7 @@
             }"
         />
 
-        <KsCol v-if="namespaces.length === 0" class="p-3 namespaces">
+        <KsCol v-if="namespaces.length === 0" class="namespaces empty-state">
             <span>{{ $t("no_namespaces") }}</span>
         </KsCol>
 
@@ -37,7 +37,7 @@
             <KsTree
                 :data="[namespace]"
                 defaultExpandAll
-                class="h-auto p-2 rounded-full"
+                class="rounded-full namespace-tree"
             >
                 <template #default="{data}">
                     <router-link
@@ -49,9 +49,9 @@
                         }"
                         class="node"
                     >
-                        <div class="d-flex">
-                            <FolderOpenOutline class="me-2 icon" />
-                            <span class="pe-3">
+                        <div class="namespace-row">
+                            <FolderOpenOutline class="icon" />
+                            <span class="namespace-label">
                                 {{ namespaceLabel(data.label) }}
                             </span>
                             <slot name="description" :namespace="data" />
@@ -204,6 +204,22 @@
 }
 
 .namespaces {
+    &.empty-state {
+        padding: var(--ks-spacing-4);
+    }
+
+    .namespace-tree {
+        height: auto;
+        padding: var(--ks-spacing-2);
+    }
+
+    .namespace-row {
+        display: flex;
+    }
+
+    .namespace-label {
+        padding-inline-end: var(--ks-spacing-4);
+    }
     margin: 0.25rem 0;
     border-radius: var(--kel-border-radius-round);
     border: 1px solid var(--ks-border-default);
@@ -235,6 +251,7 @@
         }
 
         .icon {
+            margin-inline-end: var(--ks-spacing-2);
             color: var(--ks-text-link);
         }
     }

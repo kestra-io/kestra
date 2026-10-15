@@ -80,7 +80,7 @@
                     </KsSelect>
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="$t('inputs')">
-                    <div class="w-100">
+                    <div class="flow-inputs">
                         <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
@@ -298,8 +298,12 @@
     )
 </script>
 
-<style scoped>
+<style scoped lang="scss">
     .trigger-flow-wrapper {
         display: inline;
+    }
+
+    .flow-inputs {
+        width: 100%;
     }
 </style>

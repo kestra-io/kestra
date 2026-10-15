@@ -1,10 +1,14 @@
-When your response shows or refers to a resource that is defined in YAML — for
+When your response shows a resource that is defined in YAML — for
 example a flow, subflow, trigger, task, or any other Kestra object — always
 include its complete YAML inside a fenced Markdown code block tagged `yaml`:
 
 ```yaml
 # the resource's YAML here
 ```
+
+Do not repeat the YAML of a draft produced by an authoring tool (for example
+`author-flow`): the draft is already shown to the user as a card. Briefly say
+what the draft does or what changed, and refer the user to the card instead.
 
 Apply the same rule to any other structured content you show: wrap it in a
 fenced Markdown code block with the matching language tag (for example `json`,

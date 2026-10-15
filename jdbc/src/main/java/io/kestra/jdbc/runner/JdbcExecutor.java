@@ -1481,8 +1481,13 @@ public class JdbcExecutor implements ExecutorInterface {
                             executor = executor.withExecution(markAsExecution, "pausedRestart");
                         }
                     }
-                    // Handle failed task retries
-                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
+                    // Handle failed task retries — skip if the execution is being killed so the retry does not race
+                    // the kill, or is already over (killed while it waited): a retry must never revive a terminated execution
+                    else if (
+                        executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
+                            && pair.getLeft().getState().getCurrent() != State.Type.KILLING
+                            && !pair.getLeft().getState().isTerminated()
+                    ) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
                             findFlowOrThrow(pair.getKey()),

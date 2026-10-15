@@ -7,7 +7,7 @@ function mountLoopReturnEdge(isHorizontal = false) {
     return i18nMount(EdgeNode, {
         props: {
             id: "loop-return",
-            data: {loopReturn: true, loopReturnPosition: isHorizontal ? 420 : 300},
+            data: {loopReturn: {top: 53, left: 12, right: 300, bottom: 420}},
             sourceX: 100,
             sourceY: 200,
             targetX: 100,

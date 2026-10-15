@@ -893,28 +893,25 @@ describe("generateGraph loop return path", () => {
             {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
             {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
             {
-                uid: "root.loop_until",
+                uid: "root.loop",
                 type: "io.kestra.core.models.hierarchies.GraphTask",
-                task: {id: "loop_until", type},
+                task: {id: "loop", type},
             },
             {
-                uid: "root.loop_until.child",
+                uid: "root.loop.child",
                 type: "io.kestra.core.models.hierarchies.GraphTask",
                 task: {id: "child", type: "io.kestra.plugin.core.log.Log"},
             },
         ],
-        edges: [{source: "root.loop_until", target: "root.loop_until.child"}],
+        edges: [{source: "root.loop", target: "root.loop.child"}],
         clusters: [
             {
                 cluster: {
-                    uid: "cluster_root.loop_until",
+                    uid: "cluster_root.loop",
                     type: "io.kestra.core.models.hierarchies.GraphCluster",
-                    taskNode: {
-                        uid: "root.loop_until",
-                        task: {id: "loop_until", type},
-                    },
+                    taskNode: {uid: "root.loop", task: {id: "loop", type}},
                 },
-                nodes: ["root.root-1", "root.end-1", "root.loop_until", "root.loop_until.child"],
+                nodes: ["root.root-1", "root.end-1", "root.loop", "root.loop.child"],
                 parents: [],
                 start: "root.root-1",
                 end: "root.end-1",
@@ -922,69 +919,69 @@ describe("generateGraph loop return path", () => {
         ],
     }) as unknown as VueFlowUtils.FlowGraph
 
-    const generate = (isHorizontal = false, type = "io.kestra.plugin.core.flow.LoopUntil") =>
+    const generate = (type: string, isHorizontal = false) =>
         asElements(VueFlowUtils.generateGraph(
             "vfid", "flow", "ns", loopFlowGraph(type), undefined, [], isHorizontal, {}, new Set(), [], true, false, false,
         ) ?? [])
 
-    test("draws a directed return path from the LoopUntil end marker to its start marker", () => {
-        const elements = generate()
+    test.each([
+        ["io.kestra.plugin.core.flow.LoopUntil", false],
+        ["io.kestra.plugin.core.flow.Loop", true],
+    ])("runs the %s return path 12px inside its lane border (horizontal: %s)", (type, isHorizontal) => {
+        const elements = generate(type, isHorizontal)
         const returnPath = elements.find((element) => element.data?.loopReturn)
-        const cluster = elements.find((element) => element.id === "cluster_root.loop_until")
-        const track = Number(returnPath?.data?.loopReturnPosition)
-        const rightEdge = (cluster?.position?.x ?? 0) + Number.parseFloat(cluster?.style?.width ?? "0")
+        const cluster = elements.find((element) => element.id === "cluster_root.loop")
+        const {x = 0, y = 0} = cluster?.position ?? {}
+        const width = Number.parseFloat(cluster?.style?.width ?? "0")
+        const height = Number.parseFloat(cluster?.style?.height ?? "0")
 
-        expect(returnPath).toMatchObject({
-            type: "edge",
-            source: "root.end-1",
-            target: "root.root-1",
-            data: {loopReturn: true},
-        })
+        expect(returnPath).toMatchObject({type: "edge", source: "root.end-1", target: "root.root-1"})
         expect(returnPath?.markerEnd).toBeDefined()
-        expect(track).toBeGreaterThan(rightEdge - 32)
-        expect(track).toBeLessThan(rightEdge)
-    })
-
-    test("places the return path along the lower lane edge for a horizontal graph", () => {
-        const elements = generate(true)
-        const loop = elements.find((element) => element.data?.loopReturn)
-        const cluster = elements.find((element) => element.id === "cluster_root.loop_until")
-        const track = Number(loop?.data?.loopReturnPosition)
-        const lowerEdge = (cluster?.position?.y ?? 0) + Number.parseFloat(cluster?.style?.height ?? "0")
-
-        expect(track).toBeGreaterThan(lowerEdge - 32)
-        expect(track).toBeLessThan(lowerEdge)
-        expect(loop?.source).toBe("root.end-1")
-        expect(loop?.target).toBe("root.root-1")
-    })
-
-    test("draws the same return path for a Loop", () => {
-        const returnPath = generate(false, "io.kestra.plugin.core.flow.Loop").find((element) => element.data?.loopReturn)
-
-        expect(returnPath).toMatchObject({source: "root.end-1", target: "root.root-1"})
+        expect(returnPath?.data?.loopReturn).toEqual({
+            top: y + 9 + 32 + 12,
+            left: x + 12,
+            right: x + width - 12,
+            bottom: y + height - 12,
+        })
     })
 
     test("draws no return path for a flowable that does not loop", () => {
-        const elements = generate(false, "io.kestra.plugin.core.flow.Sequential")
+        const elements = generate("io.kestra.plugin.core.flow.Sequential")
 
         expect(elements.some((element) => element.data?.loopReturn)).toBe(false)
     })
 
     test("omits the return path when the loop lane is collapsed", () => {
-        const hiddenNodes = [
-            "root.root-1", "root.end-1", "root.loop_until", "root.loop_until.child", "cluster_root.loop_until",
-        ]
+        const hiddenNodes = ["root.root-1", "root.end-1", "root.loop", "root.loop.child", "cluster_root.loop"]
         const edgeReplacer = {
-            "cluster_root.loop_until": "root.loop_until",
-            "root.root-1": "root.loop_until",
-            "root.end-1": "root.loop_until",
+            "cluster_root.loop": "root.loop",
+            "root.root-1": "root.loop",
+            "root.end-1": "root.loop",
         }
         const elements = asElements(VueFlowUtils.generateGraph(
-            "vfid", "flow", "ns", loopFlowGraph("io.kestra.plugin.core.flow.LoopUntil"), undefined, hiddenNodes, false, edgeReplacer,
-            new Set(["root.loop_until"]), [], true, false, false,
+            "vfid", "flow", "ns", loopFlowGraph("io.kestra.plugin.core.flow.LoopUntil"), undefined, hiddenNodes, false,
+            edgeReplacer, new Set(["root.loop"]), [], true, false, false,
         ) ?? [])
 
         expect(elements.some((element) => element.data?.loopReturn)).toBe(false)
+    })
+})
+
+describe("loopReturnPath", () => {
+    const bounds = {top: 53, left: 12, right: 488, bottom: 288}
+
+    test("hugs the right, bottom and left borders of a horizontal lane", () => {
+        const d = VueFlowUtils.loopReturnPath({x: 440, y: 150}, {x: 60, y: 150}, bounds, true)
+
+        expect(d).toMatch(/^M440,150 L483,150 Q488,150 488,155 L488,283 Q488,288 483,288 L17,288 Q12,288 12,283/)
+        expect(d).toMatch(/Q12,150 17,150 L60,150$/)
+    })
+
+    test("hugs the bottom and right borders of a vertical lane and re-enters below its header", () => {
+        const d = VueFlowUtils.loopReturnPath({x: 250, y: 240}, {x: 250, y: 80}, bounds, false)
+
+        expect(d).toContain("L250,283 Q250,288 255,288 L483,288 Q488,288 488,283 L488,58 Q488,53 483,53 L255,53 Q250,53 250,58")
+        expect(d).toMatch(/L250,80$/)
     })
 })
 

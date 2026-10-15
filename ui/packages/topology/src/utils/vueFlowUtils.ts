@@ -2,7 +2,16 @@ import {MarkerType, Position, useVueFlow} from "@vue-flow/core"
 import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
-import {CLUSTER_PREFIX, DAGRE_NODE_SEP, DAGRE_RANK_SEP, NODE_SIZES, SMOOTH_STEP_OFFSET} from "./constants"
+import {
+    CLUSTER_PREFIX,
+    DAGRE_NODE_SEP,
+    DAGRE_RANK_SEP,
+    LANE_HEADER_OFFSET,
+    LOOP_RETURN_INSET,
+    NODE_SIZES,
+    SMOOTH_STEP_OFFSET,
+    SMOOTH_STEP_RADIUS,
+} from "./constants"
 import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
@@ -703,6 +712,44 @@ export function fanOutSplitPosition(from: number, to: number, turn?: number): nu
     return (from + (turn ?? (from + to) / 2)) / 2
 }
 
+interface Point {
+    x: number;
+    y: number;
+}
+
+export interface LoopReturnBounds {
+    top: number;
+    left: number;
+    right: number;
+    bottom: number;
+}
+
+/** A loop lane's return run: out of its end marker, along the lane's borders, and back into its
+ *  start marker. Vertically it re-enters from above, under the lane header. */
+export function loopReturnPath(source: Point, target: Point, {top, left, right, bottom}: LoopReturnBounds, isHorizontal: boolean): string {
+    const points = isHorizontal
+        ? [source, {x: right, y: source.y}, {x: right, y: bottom}, {x: left, y: bottom}, {x: left, y: target.y}, target]
+        : [source, {x: source.x, y: bottom}, {x: right, y: bottom}, {x: right, y: top}, {x: target.x, y: top}, target]
+    return roundedPolyline(points, SMOOTH_STEP_RADIUS)
+}
+
+function roundedPolyline(points: Point[], radius: number): string {
+    const length = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+    let d = `M${points[0].x},${points[0].y}`
+    for (let i = 1; i < points.length - 1; i++) {
+        const [before, corner, after] = [points[i - 1], points[i], points[i + 1]]
+        const r = Math.min(radius, length(before, corner) / 2, length(corner, after) / 2)
+        const towards = (p: Point) => ({
+            x: corner.x + Math.sign(p.x - corner.x) * r,
+            y: corner.y + Math.sign(p.y - corner.y) * r,
+        })
+        const [start, end] = [towards(before), towards(after)]
+        d += ` L${start.x},${start.y} Q${corner.x},${corner.y} ${end.x},${end.y}`
+    }
+    const last = points[points.length - 1]
+    return `${d} L${last.x},${last.y}`
+}
+
 export function getEdgeColorToken(edgeColor: string | null): string {
     switch (edgeColor) {
         case "danger":
@@ -1095,10 +1142,12 @@ export function generateGraph(
                 color: "var(--ks-topology-border-flowable-task)",
             },
             data: {
-                loopReturn: true,
-                loopReturnPosition: isHorizontal
-                    ? dagreNode.y + dagreNode.height / 2 - 12
-                    : dagreNode.x + dagreNode.width / 2 - 12,
+                loopReturn: {
+                    top: dagreNode.y - dagreNode.height / 2 + LANE_HEADER_OFFSET + NODE_SIZES.LANE_HEADER_HEIGHT + LOOP_RETURN_INSET,
+                    left: dagreNode.x - dagreNode.width / 2 + LOOP_RETURN_INSET,
+                    right: dagreNode.x + dagreNode.width / 2 - LOOP_RETURN_INSET,
+                    bottom: dagreNode.y + dagreNode.height / 2 - LOOP_RETURN_INSET,
+                },
             },
             style: {zIndex: 10},
             animated: false,

@@ -547,6 +547,19 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void deleteFileDirectoryWithDotSegment() throws IOException, URISyntaxException {
+        // Regression coverage for #13099: the terraform provider sends the filename as "./folder/hello.sh",
+        // which reaches the DELETE endpoint as path=/./folder/hello.sh (leading "." segment).
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/folder/hello.sh"), new ByteArrayInputStream("echo hi".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/./folder/hello.sh", null));
+
+        assertThat(namespaceStorage.exists(Path.of("/folder/hello.sh"))).isFalse();
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void shouldNotCollideSpaceAndPlusInFileName() throws IOException {
         // Given: two distinct filenames — one with a space, one with a literal '+'

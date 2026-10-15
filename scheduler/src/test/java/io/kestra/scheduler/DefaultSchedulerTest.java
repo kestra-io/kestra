@@ -27,10 +27,8 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.scheduler.vnodes.SchedulerVNodesAssignmentChannel;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
@@ -50,7 +48,7 @@ import io.kestra.scheduler.stores.CachedTriggerStateStore;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
-import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
+import io.kestra.scheduler.utils.InMemoryVNodesAssignmentChannel;
 import io.kestra.scheduler.utils.InMemoryTriggerEventQueue;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 
@@ -103,10 +101,10 @@ class DefaultSchedulerTest {
     private FlowMetaStore flowMetaStore;
 
     // Queues
-    private SchedulerEventQueue schedulerEventQueue;
     private TriggerEventQueue triggerEventQueue;
 
     // Others
+    private InMemoryVNodesAssignmentChannel vNodesAssignmentChannel;
     private DefaultVNodesAssigner vNodesAssigner;
     private VNodeController vNodeController;
     private TriggerSchedulingLoopFactory triggerSchedulingLoopFactory;
@@ -121,11 +119,11 @@ class DefaultSchedulerTest {
         this.serviceLivenessStore = new InMemoryServiceLivenessStore();
 
         // Queues
-        this.schedulerEventQueue = new InMemorySchedulerEventQueue();
         this.triggerEventQueue = new InMemoryTriggerEventQueue(SCHEDULER_CONFIGURATION.vnodes());
 
         // Others
-        this.vNodesAssigner = new DefaultVNodesAssigner(new SchedulerVNodesAssignmentChannel(this.schedulerEventQueue));
+        this.vNodesAssignmentChannel = new InMemoryVNodesAssignmentChannel();
+        this.vNodesAssigner = new DefaultVNodesAssigner(this.vNodesAssignmentChannel);
         this.vNodesAssigner.start();
 
         this.vNodeController = createVNodeController();
@@ -137,7 +135,6 @@ class DefaultSchedulerTest {
     @AfterEach
     void afterEach() throws IOException {
         this.vNodeController.close();
-        this.schedulerEventQueue.close();
         this.triggerEventQueue.close();
         this.vNodesAssigner.stop();
     }
@@ -345,7 +342,7 @@ class DefaultSchedulerTest {
         return new VNodeController(
             lockService,
             serviceLivenessStore,
-            new SchedulerVNodesAssignmentChannel(schedulerEventQueue),
+            vNodesAssignmentChannel,
             SCHEDULER_CONFIGURATION.vnodes(),
             SCHEDULER_CONFIGURATION.vnodesRebalanceTimeout()
         );

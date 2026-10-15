@@ -596,7 +596,7 @@ public class ExecutorService {
             if (
                 !executor.getExecution().getState().isRetrying() &&
                     taskRun.getState().isFailed() &&
-                    (task instanceof RunnableTask<?> || task instanceof Subflow)
+                    task != null && task.shouldRetryOnFailure()
             ) {
                 Instant nextRetryDate = null;
                 AbstractRetry.Behavior behavior = null;

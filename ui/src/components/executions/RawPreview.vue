@@ -15,7 +15,7 @@
             fullHeight: false,
             customHeight: 14,
         }"
-        class="position-relative"
+        class="raw-editor"
     >
         <template #nav>
             <div class="preview-actions">
@@ -97,6 +97,10 @@
 </script>
 
 <style scoped lang="scss">
+    .raw-editor {
+        position: relative;
+    }
+
     .preview-actions {
         display: flex;
         justify-content: flex-end;

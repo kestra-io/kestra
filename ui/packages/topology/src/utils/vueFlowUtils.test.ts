@@ -54,6 +54,183 @@ const graph = {
     clusters: [],
 }
 
+describe("graph node type predicates", () => {
+    test("isTaskNode matches GraphTask and SubflowGraphTask$1 suffixes only", () => {
+        expect(VueFlowUtils.isTaskNode({uid: "1", type: "io.kestra.GraphTask"})).toBe(true)
+        expect(VueFlowUtils.isTaskNode({uid: "2", type: "io.kestra.SubflowGraphTask$1"})).toBe(true)
+        expect(VueFlowUtils.isTaskNode({uid: "6", type: "GraphTask"})).toBe(true)
+        expect(VueFlowUtils.isTaskNode({uid: "7", type: "SubflowGraphTask$1"})).toBe(true)
+        expect(VueFlowUtils.isTaskNode({uid: "3", type: "io.kestra.GraphTaskExtra"})).toBe(false)
+        expect(VueFlowUtils.isTaskNode({uid: "4", type: "GraphTask.io.kestra"})).toBe(false)
+        expect(VueFlowUtils.isTaskNode({uid: "5", type: "io.kestra.Other"})).toBe(false)
+        expect(VueFlowUtils.isTaskNode({uid: "8", type: "io.kestra.graphtask"})).toBe(false)
+    })
+
+    test("isTriggerNode matches only the GraphTrigger suffix", () => {
+        expect(VueFlowUtils.isTriggerNode({uid: "1", type: "io.kestra.GraphTrigger"})).toBe(true)
+        expect(VueFlowUtils.isTriggerNode({uid: "4", type: "GraphTrigger"})).toBe(true)
+        expect(VueFlowUtils.isTriggerNode({uid: "2", type: "GraphTriggerExtra"})).toBe(false)
+        expect(VueFlowUtils.isTriggerNode({uid: "3", type: "GraphTrigger.io.kestra"})).toBe(false)
+        expect(VueFlowUtils.isTriggerNode({uid: "5", type: "io.kestra.graphtrigger"})).toBe(false)
+    })
+
+    test("isCustomNode matches only the CustomGraphNode suffix", () => {
+        expect(VueFlowUtils.isCustomNode({uid: "1", type: "io.kestra.CustomGraphNode"})).toBe(true)
+        expect(VueFlowUtils.isCustomNode({uid: "4", type: "CustomGraphNode"})).toBe(true)
+        expect(VueFlowUtils.isCustomNode({uid: "2", type: "CustomGraphNodeExtra"})).toBe(false)
+        expect(VueFlowUtils.isCustomNode({uid: "3", type: "CustomGraphNode.io.kestra"})).toBe(false)
+        expect(VueFlowUtils.isCustomNode({uid: "5", type: "io.kestra.customgraphnode"})).toBe(false)
+    })
+
+    test("isCollapsedCluster identifies collapsed clusters", () => {
+        expect(VueFlowUtils.isCollapsedCluster({uid: "1", type: "collapsedcluster"})).toBe(true)
+        expect(VueFlowUtils.isCollapsedCluster({uid: "2", type: "GraphCluster"})).toBe(false)
+    })
+
+    test("isCollapsedLane requires a collapsed cluster and a flowable lane", () => {
+        expect(VueFlowUtils.isCollapsedLane({
+            uid: "1",
+            type: "collapsedcluster",
+            isFlowableLane: true,
+        })).toBe(true)
+
+        expect(VueFlowUtils.isCollapsedLane({
+            uid: "2",
+            type: "collapsedcluster",
+            isFlowableLane: false,
+        })).toBe(false)
+
+        expect(VueFlowUtils.isCollapsedLane({
+            uid: "3",
+            type: "GraphCluster",
+            isFlowableLane: true,
+        })).toBe(false)
+
+        expect(VueFlowUtils.isCollapsedLane({
+            uid: "4",
+            type: "collapsedcluster",
+        })).toBe(false)
+    })
+
+    test("isExpandableTask identifies a flowable task and rejects a leaf task", () => {
+        const flowableTask = {
+            uid: "root.parallel",
+            type: "io.kestra.GraphTask",
+            task: {type: "io.kestra.plugin.core.flow.Parallel"},
+        }
+        const edgeReplacer = {"cluster_root.parallel": "root.parallel"}
+
+        expect(VueFlowUtils.isExpandableTask(flowableTask, {}, edgeReplacer)).toBe(true)
+        expect(VueFlowUtils.isExpandableTask({
+            uid: "root.log",
+            type: "io.kestra.GraphTask",
+            task: {type: "io.kestra.plugin.core.log.Log"},
+        }, {}, {})).toBe(false)
+    })
+
+    test("isExpandableTask enables nested subflow interaction when configured", () => {
+        const node = {uid: "root.subflow", type: "io.kestra.SubflowGraphTask"}
+        const clusterByNodeUid: Record<string, Cluster> = {
+            "root.subflow": {
+                uid: "cluster_root.parent",
+                type: "io.kestra.GraphCluster",
+                taskNode: null,
+            },
+        }
+
+        expect(VueFlowUtils.isExpandableTask(node, clusterByNodeUid, {}, true)).toBe(true)
+        expect(VueFlowUtils.isExpandableTask(node, clusterByNodeUid, {}, false)).toBe(false)
+        expect(VueFlowUtils.isExpandableTask(
+            {...node, type: "SubflowGraphTask"},
+            clusterByNodeUid,
+            {},
+            true,
+        )).toBe(true)
+        expect(VueFlowUtils.isExpandableTask(
+            {...node, type: "io.kestra.SubflowGraphTaskExtra"},
+            clusterByNodeUid,
+            {},
+            true,
+        )).toBe(false)
+        expect(VueFlowUtils.isExpandableTask(
+            {uid: "root.lowercase", type: "io.kestra.subflowgraphtask"},
+            clusterByNodeUid,
+            {},
+            true,
+        )).toBe(false)
+    })
+
+    test("isClusterRootOrEnd identifies synthetic cluster boundary nodes", () => {
+        for (const suffix of [
+            "GraphClusterRoot",
+            "GraphClusterFinally",
+            "GraphClusterAfterExecution",
+            "GraphClusterEnd",
+        ]) {
+            expect(VueFlowUtils.isClusterRootOrEnd({
+                uid: suffix,
+                type: `io.kestra.${suffix}`,
+            })).toBe(true)
+            expect(VueFlowUtils.isClusterRootOrEnd({
+                uid: suffix,
+                type: suffix,
+            })).toBe(true)
+        }
+
+        expect(VueFlowUtils.isClusterRootOrEnd({
+            uid: "other",
+            type: "io.kestra.GraphClusterRootExtra",
+        })).toBe(false)
+
+        expect(VueFlowUtils.isClusterRootOrEnd({
+            uid: "other",
+            type: "GraphClusterEnd.io.kestra",
+        })).toBe(false)
+        expect(VueFlowUtils.isClusterRootOrEnd({
+            uid: "other",
+            type: "io.kestra.graphclusterroot",
+        })).toBe(false)
+    })
+
+    test("isTrueFlowableCluster requires a task node and excludes subflow and triggers clusters", () => {
+        const flowableCluster: Cluster = {
+            uid: "cluster_root.parallel",
+            type: "io.kestra.plugin.core.flow.Parallel",
+            taskNode: {
+                uid: "root.parallel",
+                task: {type: "io.kestra.plugin.core.flow.Parallel"},
+            },
+        }
+
+        expect(VueFlowUtils.isTrueFlowableCluster(flowableCluster)).toBe(true)
+
+        expect(VueFlowUtils.isTrueFlowableCluster({
+            ...flowableCluster,
+            taskNode: null,
+        })).toBe(false)
+
+        expect(VueFlowUtils.isTrueFlowableCluster({
+            ...flowableCluster,
+            type: "io.kestra.plugin.core.flow.SubflowGraphCluster",
+        })).toBe(false)
+
+        expect(VueFlowUtils.isTrueFlowableCluster({
+            ...flowableCluster,
+            type: "SubflowGraphCluster",
+        })).toBe(false)
+
+        expect(VueFlowUtils.isTrueFlowableCluster({
+            ...flowableCluster,
+            type: "io.kestra.plugin.core.flow.SubflowGraphClusterExtra",
+        })).toBe(true)
+
+        expect(VueFlowUtils.isTrueFlowableCluster({
+            ...flowableCluster,
+            uid: "cluster_root.Triggers",
+        })).toBe(false)
+    })
+})
+
 describe("VueFlowUtils", () => {
     test("getRootNodes should return nodes with no incoming edges", () => {
         const rootNodes = VueFlowUtils.getRootNodes(graph)

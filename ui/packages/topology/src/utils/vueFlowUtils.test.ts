@@ -931,6 +931,7 @@ describe("generateGraph loop return path", () => {
         const elements = generate(type, isHorizontal)
         const returnPath = elements.find((element) => element.data?.loopReturn)
         const cluster = elements.find((element) => element.id === "cluster_root.loop")
+        const startDot = elements.find((element) => element.id === "root.root-1")
         const {x = 0, y = 0} = cluster?.position ?? {}
         const width = Number.parseFloat(cluster?.style?.width ?? "0")
         const height = Number.parseFloat(cluster?.style?.height ?? "0")
@@ -938,10 +939,9 @@ describe("generateGraph loop return path", () => {
         expect(returnPath).toMatchObject({type: "edge", source: "root.end-1", target: "root.root-1"})
         expect(returnPath?.markerEnd).toBeDefined()
         expect(returnPath?.data?.loopReturn).toEqual({
-            top: y + 9 + 32 + 12,
-            left: x + 12,
             right: x + width - 12,
             bottom: y + height - 12,
+            entry: {x: x + (startDot?.position?.x ?? 0) + 2.5, y: y + (startDot?.position?.y ?? 0) + 2.5},
         })
     })
 
@@ -968,20 +968,20 @@ describe("generateGraph loop return path", () => {
 })
 
 describe("loopReturnPath", () => {
-    const bounds = {top: 53, left: 12, right: 488, bottom: 288}
+    const bounds = {right: 488, bottom: 288}
 
-    test("hugs the right, bottom and left borders of a horizontal lane", () => {
-        const d = VueFlowUtils.loopReturnPath({x: 440, y: 150}, {x: 60, y: 150}, bounds, true)
+    test("hugs the right and bottom borders of a horizontal lane and enters the start marker from below", () => {
+        const d = VueFlowUtils.loopReturnPath({x: 440, y: 150}, {...bounds, entry: {x: 60, y: 150}}, true)
 
-        expect(d).toMatch(/^M440,150 L483,150 Q488,150 488,155 L488,283 Q488,288 483,288 L17,288 Q12,288 12,283/)
-        expect(d).toMatch(/Q12,150 17,150 L60,150$/)
+        expect(d).toBe(
+            "M440,150 L483,150 Q488,150 488,155 L488,283 Q488,288 483,288 L65,288 Q60,288 60,283 L60,162",
+        )
     })
 
-    test("hugs the bottom and right borders of a vertical lane and re-enters below its header", () => {
-        const d = VueFlowUtils.loopReturnPath({x: 250, y: 240}, {x: 250, y: 80}, bounds, false)
+    test("enters the start marker of a vertical lane from the side, clear of the header above it", () => {
+        const d = VueFlowUtils.loopReturnPath({x: 250, y: 240}, {...bounds, entry: {x: 250, y: 80}}, false)
 
-        expect(d).toContain("L250,283 Q250,288 255,288 L483,288 Q488,288 488,283 L488,58 Q488,53 483,53 L255,53 Q250,53 250,58")
-        expect(d).toMatch(/L250,80$/)
+        expect(d).toBe("M250,240 L250,283 Q250,288 255,288 L483,288 Q488,288 488,283 L488,85 Q488,80 483,80 L262,80")
     })
 })
 

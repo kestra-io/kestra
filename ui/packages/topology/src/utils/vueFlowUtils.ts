@@ -6,7 +6,7 @@ import {
     CLUSTER_PREFIX,
     DAGRE_NODE_SEP,
     DAGRE_RANK_SEP,
-    LANE_HEADER_OFFSET,
+    LOOP_RETURN_HEAD_GAP,
     LOOP_RETURN_INSET,
     NODE_SIZES,
     SMOOTH_STEP_OFFSET,
@@ -718,18 +718,17 @@ interface Point {
 }
 
 export interface LoopReturnBounds {
-    top: number;
-    left: number;
     right: number;
     bottom: number;
+    entry: Point;
 }
 
-/** A loop lane's return run: out of its end marker, along the lane's borders, and back into its
- *  start marker. Vertically it re-enters from above, under the lane header. */
-export function loopReturnPath(source: Point, target: Point, {top, left, right, bottom}: LoopReturnBounds, isHorizontal: boolean): string {
+/** A loop lane's return run: out of its end marker, along the lane's borders, and back to its
+ *  start marker, `entry`, across the flow so its head clears the edge coming into that marker. */
+export function loopReturnPath(source: Point, {right, bottom, entry}: LoopReturnBounds, isHorizontal: boolean): string {
     const points = isHorizontal
-        ? [source, {x: right, y: source.y}, {x: right, y: bottom}, {x: left, y: bottom}, {x: left, y: target.y}, target]
-        : [source, {x: source.x, y: bottom}, {x: right, y: bottom}, {x: right, y: top}, {x: target.x, y: top}, target]
+        ? [source, {x: right, y: source.y}, {x: right, y: bottom}, {x: entry.x, y: bottom}, {x: entry.x, y: entry.y + LOOP_RETURN_HEAD_GAP}]
+        : [source, {x: source.x, y: bottom}, {x: right, y: bottom}, {x: right, y: entry.y}, {x: entry.x + LOOP_RETURN_HEAD_GAP, y: entry.y}]
     return roundedPolyline(points, SMOOTH_STEP_RADIUS)
 }
 
@@ -1129,7 +1128,8 @@ export function generateGraph(
         }
 
         const dagreNode = dagreGraph.node(clusterUid)
-        if (!dagreNode) continue
+        const startNode = dagreGraph.node(cluster.start)
+        if (!dagreNode || !startNode) continue
 
         elements.push({
             id: `loop-return|${cluster.end}|${cluster.start}`,
@@ -1139,14 +1139,17 @@ export function generateGraph(
             markerEnd: {
                 id: "marker-custom",
                 type: MarkerType.ArrowClosed,
-                color: "color-mix(in srgb, var(--ks-topology-border-flowable-task) 60%, transparent)",
+                color: getEdgeColorToken(null),
             },
             data: {
                 loopReturn: {
-                    top: dagreNode.y - dagreNode.height / 2 + LANE_HEADER_OFFSET + NODE_SIZES.LANE_HEADER_HEIGHT + LOOP_RETURN_INSET,
-                    left: dagreNode.x - dagreNode.width / 2 + LOOP_RETURN_INSET,
                     right: dagreNode.x + dagreNode.width / 2 - LOOP_RETURN_INSET,
                     bottom: dagreNode.y + dagreNode.height / 2 - LOOP_RETURN_INSET,
+                    // A vertical lane start sits at the bottom of a dagre box one header taller than it.
+                    entry: {
+                        x: startNode.x,
+                        y: startNode.y + (!isHorizontal && laneStartUids.has(cluster.start) ? NODE_SIZES.LANE_HEADER_HEIGHT / 2 : 0),
+                    },
                 },
             },
             style: {zIndex: 10},

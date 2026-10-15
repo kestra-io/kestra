@@ -7,7 +7,7 @@ function mountLoopReturnEdge(isHorizontal = false) {
     return i18nMount(EdgeNode, {
         props: {
             id: "loop-return",
-            data: {loopReturn: {top: 53, left: 12, right: 300, bottom: 420}},
+            data: {loopReturn: {right: 300, bottom: 420, entry: {x: 100, y: 100}}},
             sourceX: 100,
             sourceY: 200,
             targetX: 100,
@@ -24,7 +24,6 @@ describe("EdgeNode loop return path", () => {
         const wrapper = mountLoopReturnEdge()
         const path = wrapper.get("path")
 
-        expect(path.classes()).toContain("loop-return-path")
         expect(path.attributes("d")).toContain("300")
         expect(path.attributes("marker-end")).toBe("marker-custom")
     })
@@ -33,7 +32,6 @@ describe("EdgeNode loop return path", () => {
         const wrapper = mountLoopReturnEdge(true)
         const path = wrapper.get("path")
 
-        expect(path.classes()).toContain("loop-return-path")
         expect(path.attributes("d")).toContain("420")
     })
 })

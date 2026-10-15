@@ -132,7 +132,6 @@
         return props.data
             ? {
                 "vue-flow__edge-path": true,
-                "loop-return-path": Boolean(props.data.loopReturn),
                 ["stroke-" + props.data.color]: props.data.color,
                 "unused-path": props.data.unused,
             }
@@ -155,7 +154,6 @@
     const path = computed(() => props.data?.loopReturn
         ? [loopReturnPath(
             {x: props.sourceX, y: props.sourceY},
-            {x: props.targetX, y: props.targetY},
             props.data.loopReturn,
             flowsHorizontally.value,
         )] as const
@@ -214,9 +212,6 @@
     .stroke-error { stroke: var(--ks-border-error); }
     .stroke-warning { stroke: var(--ks-status-warning); }
     .vue-flow__edge-path { stroke-dasharray: 1.5 3; }
-    .vue-flow__edge-path.loop-return-path {
-        stroke: color-mix(in srgb, var(--ks-topology-border-flowable-task) 60%, transparent);
-    }
 
     .edge-case-label {
         position: absolute;

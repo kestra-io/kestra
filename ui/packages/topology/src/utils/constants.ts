@@ -89,8 +89,8 @@ export const SMOOTH_STEP_RADIUS = 5
 // How far inside its lane border a loop's return path runs, parallel to it.
 export const LOOP_RETURN_INSET = 12
 
-// A lane's 1px border plus its 0.5rem padding, above its header.
-export const LANE_HEADER_OFFSET = 9
+// How far from its start marker's centre a loop's return arrowhead stops, so it does not cover the marker.
+export const LOOP_RETURN_HEAD_GAP = 12
 
 // Below PILL, only a minimal glanceable pill renders; above EXPANDED, the node also renders the
 // `details` slot as an overlay. Neither ever changes `NODE_SIZES`, so crossing either threshold

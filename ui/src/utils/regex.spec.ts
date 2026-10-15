@@ -22,6 +22,16 @@ describe("Regex", () => {
         expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{:a")).toBeNull()
         expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{a~b")?.[1]).eq("b")
         expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{~a")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{")?.[1]).eq("")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{{ ")?.[1]).eq("")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{%")?.[1]).eq("")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{% ")?.[1]).eq("")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{%a")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{% if ")?.[1]).eq("")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{% if a")?.[1]).eq("a")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{% for item in ")?.[1]).eq("")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("{% set x = ")?.[1]).eq("")
+        expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec("message: condition {% if inputs. %}, expression  {{ ")?.[1]).eq("")
     })
 
     it("capture pebble var parent", () => {
@@ -35,6 +45,30 @@ describe("Regex", () => {
         nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{{a ~ b.c")
         expect(nestedFieldMatcher?.[1]).eq("b")
         expect(nestedFieldMatcher?.[2]).eq("c")
+
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{% inputs.")
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("")
+
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{% inputs.cond")
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("cond")
+
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{% if inputs.")
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("")
+
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("{% if inputs.cond")
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("cond")
+
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("message: condition {% if inputs.")
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("")
+
+        nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec("message: condition {% if inputs. %}, expression  {{ inputs.cond")
+        expect(nestedFieldMatcher?.[1]).eq("inputs")
+        expect(nestedFieldMatcher?.[2]).eq("cond")
     })
 
     it("capture pebble function", () => {

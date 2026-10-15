@@ -156,7 +156,7 @@
     watch(
         () => props.fetchedUsages,
         async (next) => {
-            usages.value = next ?? await miscStore.loadAllUsages()
+            usages.value = next ?? await miscStore.loadAllUsages() as UsageData
             emit("loaded")
         },
         {immediate: true},

@@ -152,7 +152,7 @@
         metricsTotal.value = response.total
     }
 
-    watch(() => props.taskRunId, () => {
+    watch([() => props.execution?.id, () => props.execution?.state?.current, () => props.taskRunId], () => {
         dataTable.value?.resetAndReload()
     })
 

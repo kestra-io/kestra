@@ -45,7 +45,7 @@ describe("appendKeyToPath", () => {
 
 describe("hasQuotedSegment", () => {
     test("returns true for a path with a quoted segment", () => {
-        expect(YamlUtils.hasQuotedSegment('tasks["eu.prod"]')).toBe(true)
+        expect(YamlUtils.hasQuotedSegment("tasks[\"eu.prod\"]")).toBe(true)
     })
 
     test("returns false for a plain path", () => {
@@ -53,7 +53,7 @@ describe("hasQuotedSegment", () => {
     })
 
     test("does not treat a quote inside a segment as a quoted segment", () => {
-        expect(YamlUtils.hasQuotedSegment('tasks.foo"bar')).toBe(false)
+        expect(YamlUtils.hasQuotedSegment("tasks.foo\"bar")).toBe(false)
     })
 })
 
@@ -63,7 +63,7 @@ describe("lastSegmentKey", () => {
     })
 
     test("unwraps a quoted final segment containing a dot", () => {
-        expect(YamlUtils.lastSegmentKey('tasks[0]["eu.prod"]')).toBe("eu.prod")
+        expect(YamlUtils.lastSegmentKey("tasks[0][\"eu.prod\"]")).toBe("eu.prod")
     })
 
     test("handles an empty path without throwing", () => {

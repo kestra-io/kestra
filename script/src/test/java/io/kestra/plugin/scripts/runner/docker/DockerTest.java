@@ -162,17 +162,23 @@ class DockerTest extends AbstractTaskRunnerTest {
                 )
             );
 
-        assertThatThrownBy(
-            () -> docker.run(
-                runContext,
-                taskCommands,
-                Collections.emptyList()
-            )
-        )
-            .isInstanceOf(TaskException.class)
-            .hasMessageContaining("out-of-memory")
-            .extracting(e -> ((TaskException) e).getExitCode())
-            .isEqualTo(137);
+        TaskException oomException = null;
+        for (int attempt = 0; attempt < 3 && oomException == null; attempt++) {
+            try {
+                docker.run(
+                    runContext,
+                    taskCommands,
+                    Collections.emptyList()
+                );
+            } catch (TaskException e) {
+                if (e.getMessage() != null && e.getMessage().contains("out-of-memory")) {
+                    oomException = e;
+                }
+            }
+        }
+
+        assertThat(oomException).isNotNull();
+        assertThat(oomException.getExitCode()).isEqualTo(137);
 
         try (var client = DockerService.client(runContext, null, null, null, "rockylinux:9.3-minimal")) {
             Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");

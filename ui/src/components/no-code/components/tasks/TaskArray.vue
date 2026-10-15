@@ -99,13 +99,13 @@
         </template>
 
         <template v-else>
-        <KsRow
-            v-for="(element, index) in items"
-            :key="'array-' + index"
-            :gutter="10"
-            align="top"
-            class="custom-row"
-        >
+            <KsRow
+                v-for="(element, index) in items"
+                :key="'array-' + index"
+                :gutter="10"
+                align="top"
+                class="custom-row"
+            >
                 <KsCol :span="2" class="custom-col reorder" v-if="items.length > 1">
                     <KsIconButton
                         :disabled="index === 0"

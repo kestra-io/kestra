@@ -32,7 +32,9 @@
                     >
                         <template #default>
                             <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <span v-html="item.label" />
+                            <i18n-t keypath="mark as" tag="span">
+                                <template #status><code>{{ item.code }}</code></template>
+                            </i18n-t>
                         </template>
                     </KsOption>
                 </KsSelect>
@@ -99,7 +101,6 @@
         ].map((value: string) => {
             return {
                 code: value,
-                label: t("mark as", {status: value}),
                 disabled: false,
             }
         })

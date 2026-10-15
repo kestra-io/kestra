@@ -321,3 +321,5 @@ Give our repository a star to stay informed about the latest features and update
 ---
 
 Thank you for considering Kestra for your workflow orchestration needs. We can't wait to see what you'll build!
+
+<!-- CI test, do not merge: EE check through backend_tests_ee_no_wd -->

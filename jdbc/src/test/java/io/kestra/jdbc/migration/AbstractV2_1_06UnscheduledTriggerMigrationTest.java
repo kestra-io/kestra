@@ -26,12 +26,12 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Abstract integration tests for {@link V2_1_04UnscheduledTriggerMigration}.
+ * Abstract integration tests for {@link V2_1_06UnscheduledTriggerMigration}.
  * Subclassed per JDBC backend (H2, Postgres, MySQL).
  */
 @MicronautTest(transactional = false)
 @Execution(ExecutionMode.SAME_THREAD)
-public abstract class AbstractV2_1_04UnscheduledTriggerMigrationTest {
+public abstract class AbstractV2_1_06UnscheduledTriggerMigrationTest {
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final String TENANT_ID = "main";
@@ -44,7 +44,7 @@ public abstract class AbstractV2_1_04UnscheduledTriggerMigrationTest {
     JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
-    V2_1_04UnscheduledTriggerMigration migration;
+    V2_1_06UnscheduledTriggerMigration migration;
 
     @BeforeEach
     void cleanup() {
@@ -189,7 +189,7 @@ public abstract class AbstractV2_1_04UnscheduledTriggerMigrationTest {
 
     @Test
     void shouldReturnCorrectMetadata() {
-        assertThat(migration.scriptId()).isEqualTo("2.1.04-unscheduled-triggers");
+        assertThat(migration.scriptId()).isEqualTo("2.1.06-unscheduled-triggers");
         assertThat(migration.description()).isNotBlank();
         assertThat(migration.checksum()).isNull();
     }

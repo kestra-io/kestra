@@ -411,7 +411,6 @@ public final class ExecutorTestHarness {
             executionService,
             executorService,
             metricRegistry,
-            taskOutputService,
             loopExecutionEventQueue
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(

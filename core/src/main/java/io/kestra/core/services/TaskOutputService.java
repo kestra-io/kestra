@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -242,7 +243,7 @@ public class TaskOutputService extends AbstractOutputService {
 
         for (TaskRun taskRun : taskRuns) {
             try {
-                java.net.URI taskStorageUri = java.net.URI.create(
+                URI taskStorageUri = URI.create(
                     StorageContext.KESTRA_PROTOCOL + StorageContext.forTask(taskRun).getContextStorageURI().getPath()
                 );
                 storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), taskStorageUri);

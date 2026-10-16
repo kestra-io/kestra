@@ -119,23 +119,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                if (newExecution != null) {
-                    if (execution.getId().equals(newExecution.getId())) {
-                        java.util.List<String> originalIds = execution.getTaskRunList() != null ? execution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
-                        java.util.List<String> newIds = newExecution.getTaskRunList() != null ? newExecution.getTaskRunList().stream().map(TaskRun::getId).toList() : java.util.List.of();
-
-                        if (originalIds.size() != newIds.size() || !newIds.containsAll(originalIds)) {
-                            java.util.List<TaskRun> pruned = execution.getTaskRunList().stream()
-                                .filter(tr -> !newIds.contains(tr.getId()))
-                                .toList();
-                            if (!pruned.isEmpty()) {
-                                taskOutputService.deleteByTaskRun(newExecution, pruned);
-                            }
-                        }
-                    }
-                    return executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler");
-                }
-                return null;
+                return newExecution != null ? executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
             } catch (Exception e) {
                 log.error("Unable to process event for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
                 outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
@@ -285,7 +269,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
      * {@code outputs} fields), persist them into the output repositories so the rest of the executor can work
      * uniformly with the modern storage.
      */
-    @SuppressWarnings({ "deprecation", "removal" })
+    @SuppressWarnings("deprecation")
     private Execution migrateOutputs(Execution execution) throws InternalException {
         if (execution.getOutputs() != null) {
             executionOutputService.saveOutputs(execution, execution.getOutputs());

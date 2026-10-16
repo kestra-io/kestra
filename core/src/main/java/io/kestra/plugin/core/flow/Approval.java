@@ -323,7 +323,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     @Override
-    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Pause.Resumed resumed, @Nullable Decision decision) {
+    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed, @Nullable Decision decision) {
         Output build = Output.builder()
             .decision(decision != null ? decision.type() : null)
             .auto(false)
@@ -359,14 +359,6 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
         @Schema(title = "A link to the execution page.")
         private String url;
-    }
-
-    public record Decision(Type type, @Nullable String comment) {
-        public enum Type {
-            APPROVED,
-            DENIED,
-            EXPIRED
-        }
     }
 
     public enum CommentRequired {

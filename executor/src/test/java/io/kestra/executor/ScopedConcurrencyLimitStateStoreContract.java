@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -104,10 +103,10 @@ public abstract class ScopedConcurrencyLimitStateStoreContract {
         Execution waitingB = enqueue(flowB, Instant.now());
 
         // When: A terminates
-        Optional<Execution> popped = store().releaseThenPop(flowA, limitsA, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+        List<Execution> popped = store().releaseThenPop(flowA, limitsA, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
 
         // Then: B — an execution of a different flow — takes over the namespace slot
-        assertThat(popped).map(Execution::getId).contains(waitingB.getId());
+        assertThat(popped).map(Execution::getId).containsExactly(waitingB.getId());
         assertThat(counts(flowA, limitsA)).containsExactly(1);
     }
 
@@ -129,17 +128,17 @@ public abstract class ScopedConcurrencyLimitStateStoreContract {
         Execution waitingB = enqueue(flowB, Instant.now());
 
         // When: C terminates, freeing one namespace slot
-        Optional<Execution> popped = store().releaseThenPop(flowC, limitsC, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+        List<Execution> popped = store().releaseThenPop(flowC, limitsC, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
 
         // Then: A2 — the oldest candidate — is still blocked by its own flow limit (A1 runs),
         // so it is skipped and B pops instead of starving behind it
-        assertThat(popped).map(Execution::getId).contains(waitingB.getId());
+        assertThat(popped).map(Execution::getId).containsExactly(waitingB.getId());
 
         // When: A1 terminates, freeing the flow A slot and a namespace slot
-        Optional<Execution> reconsidered = store().releaseThenPop(flowA, limitsA, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+        List<Execution> reconsidered = store().releaseThenPop(flowA, limitsA, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
 
         // Then: the skipped A2 is reconsidered and finally pops
-        assertThat(reconsidered).map(Execution::getId).contains(waitingA2.getId());
+        assertThat(reconsidered).map(Execution::getId).containsExactly(waitingA2.getId());
         assertThat(counts(flowA, limitsA)).containsExactly(1, 2);
     }
 
@@ -161,10 +160,10 @@ public abstract class ScopedConcurrencyLimitStateStoreContract {
         Execution waitingA2 = enqueue(flowA, Instant.now());
 
         // When: A terminates, freeing only the first namespace's slot
-        Optional<Execution> popped = store().releaseThenPop(flowA, limitsA, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+        List<Execution> popped = store().releaseThenPop(flowA, limitsA, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
 
         // Then: A2 pops even though B2 queued earlier — B2 shares no scope with the freed slot
-        assertThat(popped).map(Execution::getId).contains(waitingA2.getId());
+        assertThat(popped).map(Execution::getId).containsExactly(waitingA2.getId());
         assertThat(counts(flowB, limitsB)).containsExactly(1);
         assertThat(waitingStillQueued(waitingB2)).isTrue();
     }
@@ -184,7 +183,7 @@ public abstract class ScopedConcurrencyLimitStateStoreContract {
         Execution waitingA2 = enqueue(flowA, Instant.now());
 
         // When: C terminates — A2 stays blocked by its own flow limit
-        Optional<Execution> popped = store().releaseThenPop(flowC, limitsC, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+        List<Execution> popped = store().releaseThenPop(flowC, limitsC, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
 
         // Then: nothing pops and the candidate survives for later releases
         assertThat(popped).isEmpty();
@@ -218,12 +217,82 @@ public abstract class ScopedConcurrencyLimitStateStoreContract {
         // moved the execution to its terminal state
         ExecutorContext executor = new ExecutorContext(running, io.kestra.core.models.flows.FlowWithSource.of(flow, ""))
             .withExecution(running.withState(State.Type.SUCCESS), "test");
-        Optional<Execution> popped = processor.release(executor, true);
+        List<Execution> popped = processor.release(executor, true);
 
         // Then: the slot it was admitted under is released — the counter must not leak and
         // block the tenant until a manual reset
         assertThat(popped).isEmpty();
         assertThat(counts(flow, List.of(tenantScope))).containsExactly(0);
+    }
+
+    @Test
+    void shouldPopEveryQueuedCandidateWhenTheReleasedScopeLimitWasRemoved() {
+        // Given: an execution admitted under a tenant limit that has since been removed, with
+        // three executions queued behind it (a dedicated tenant: the scan is tenant-wide)
+        String tenant = IdUtils.create().toLowerCase();
+        String namespace = "io.kestra." + IdUtils.create().toLowerCase();
+        ScopedConcurrencyLimit tenantScope = ScopedConcurrencyLimit.ofTenant(tenant, queue(1));
+        Flow flow = flow(tenant, namespace, null);
+        register(flow);
+        store().countThenProcess(flow, List.of(tenantScope), (txContext, counts) -> Pair.of(null, true));
+        Execution first = enqueue(flow, Instant.now().minusSeconds(120));
+        Execution second = enqueue(flow, Instant.now().minusSeconds(60));
+        Execution third = enqueue(flow, Instant.now());
+
+        // When: the admitted execution terminates and releases the removed tenant scope
+        List<ScopedConcurrencyLimit> released = List.of(ScopedConcurrencyLimit.fromUid(tenantScope.uid(), null));
+        List<Execution> popped = store().releaseThenPop(flow, released, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+
+        // Then: no limit is left to keep them queued, so all of them are released, oldest first
+        assertThat(popped).map(Execution::getId).containsExactly(first.getId(), second.getId(), third.getId());
+        assertThat(waitingStillQueued(third)).isFalse();
+        assertThat(counts(flow, List.of(tenantScope))).containsExactly(0);
+    }
+
+    @Test
+    void shouldPopUpToTheNewCapacityWhenTheReleasedScopeLimitWasRaised() {
+        // Given: a tenant limit raised from 1 to 3 while one execution held the only slot
+        // and four were queued behind it
+        String tenant = IdUtils.create().toLowerCase();
+        String namespace = "io.kestra." + IdUtils.create().toLowerCase();
+        ScopedConcurrencyLimit raised = ScopedConcurrencyLimit.ofTenant(tenant, queue(3));
+        Flow flow = flow(tenant, namespace, null);
+        List<ScopedConcurrencyLimit> limits = register(flow, raised);
+        store().countThenProcess(flow, limits, (txContext, counts) -> Pair.of(null, true));
+        List<Execution> waiting = List.of(
+            enqueue(flow, Instant.now().minusSeconds(180)),
+            enqueue(flow, Instant.now().minusSeconds(120)),
+            enqueue(flow, Instant.now().minusSeconds(60)),
+            enqueue(flow, Instant.now())
+        );
+
+        // When: the running execution terminates
+        List<Execution> popped = store().releaseThenPop(flow, limits, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+
+        // Then: the three free slots are filled and the fourth stays queued
+        assertThat(popped).map(Execution::getId).containsExactly(waiting.get(0).getId(), waiting.get(1).getId(), waiting.get(2).getId());
+        assertThat(waitingStillQueued(waiting.get(3))).isTrue();
+        assertThat(counts(flow, limits)).containsExactly(3);
+    }
+
+    @Test
+    void shouldPopASingleCandidateWhenTheReleasedScopeIsFullAgain() {
+        // Given: a tenant limited to 1 with one running and two queued
+        String tenant = IdUtils.create().toLowerCase();
+        String namespace = "io.kestra." + IdUtils.create().toLowerCase();
+        ScopedConcurrencyLimit tenantScope = ScopedConcurrencyLimit.ofTenant(tenant, queue(1));
+        Flow flow = flow(tenant, namespace, null);
+        List<ScopedConcurrencyLimit> limits = register(flow, tenantScope);
+        store().countThenProcess(flow, limits, (txContext, counts) -> Pair.of(null, true));
+        Execution first = enqueue(flow, Instant.now().minusSeconds(60));
+        Execution second = enqueue(flow, Instant.now());
+
+        // When: the running execution terminates
+        List<Execution> popped = store().releaseThenPop(flow, limits, queuedStore(), this::candidateLimits, (txContext, queued) -> queued);
+
+        // Then: only the oldest takes the freed slot, the other keeps waiting for the next release
+        assertThat(popped).map(Execution::getId).containsExactly(first.getId());
+        assertThat(waitingStillQueued(second)).isTrue();
     }
 
     // --- fixtures

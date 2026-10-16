@@ -26,10 +26,7 @@
                     :key="item.index"
                     class="line"
                     :cursor="logCursor === `${EXECUTION_LOGS_INDEX}/${item.index}`"
-                    :class="{
-                        ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level,
-                        'opacity-40': levelToHighlight && levelToHighlight !== item.level,
-                    }"
+                    :dimmed="!!levelToHighlight && levelToHighlight !== item.level"
                     :level="level"
                     :log="item"
                     :excludeMetas="excludeMetas"
@@ -124,10 +121,7 @@
                                         :key="member.index"
                                         class="line"
                                         :cursor="logCursor === `${currentTaskRunIndex}/${member.index}`"
-                                        :class="{
-                                            ['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === member.level,
-                                            'opacity-40': levelToHighlight && levelToHighlight !== member.level,
-                                        }"
+                                        :dimmed="!!levelToHighlight && levelToHighlight !== member.level"
                                         :level="level"
                                         :log="member"
                                         :excludeMetas="excludeMetas"
@@ -184,14 +178,7 @@
                                             logCursor ===
                                                 `${currentTaskRunIndex}/${item.index}`
                                         "
-                                        :class="{
-                                            ['log-bg-' +
-                                                levelToHighlight?.toLowerCase()]:
-                                                    levelToHighlight === item.level,
-                                            'opacity-40':
-                                                levelToHighlight &&
-                                                levelToHighlight !== item.level,
-                                        }"
+                                        :dimmed="!!levelToHighlight && levelToHighlight !== item.level"
                                         :key="item.index"
                                         :level="level"
                                         :log="item"

@@ -29,11 +29,11 @@ public class LocalCommand extends StandAloneCommand {
         data.toFile().mkdirs();
 
         return ImmutableMap.<String, Object> builder()
-            .put("kestra.server-type", ServerType.STANDALONE)
+            .put("kestra.serverType", ServerType.STANDALONE)
             .put("kestra.repository.type", "h2")
             .put("kestra.queue.type", "h2")
             .put("kestra.storage.type", "local")
-            .put("kestra.storage.local.base-path", data.toString())
+            .put("kestra.storage.local.basePath", data.toString())
             // Plugin auto-install is deliberately NOT forced here: these properties outrank both
             // the config file and system properties, so setting it would make the feature
             // impossible to turn off on this persona. The computed default (OSS + local storage,

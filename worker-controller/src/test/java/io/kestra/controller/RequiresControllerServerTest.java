@@ -79,7 +79,7 @@ class RequiresControllerServerTest {
         return ApplicationContext.run(
             PropertySource.of(
                 "test", Map.of(
-                    "kestra.server-type", serverType.name(),
+                    "kestra.serverType", serverType.name(),
                     "kestra.controller.advertise.enabled", "true"
                 )
             )

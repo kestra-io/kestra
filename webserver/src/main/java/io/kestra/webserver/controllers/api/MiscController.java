@@ -82,7 +82,7 @@ public class MiscController {
     @Inject
     CookiesConfiguration cookiesConfiguration;
 
-    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
+    @io.micronaut.context.annotation.Value("${kestra.ui.charts.defaultDuration:PT24H}")
     private String chartDefaultDuration;
 
     @io.micronaut.context.annotation.Value("${kestra.flowTemplate:}")
@@ -91,7 +91,7 @@ public class MiscController {
     @Inject
     private UsageReportConfig usageReportConfig;
 
-    @io.micronaut.context.annotation.Value("${kestra.ui-anonymous-usage-report.enabled:false}")
+    @io.micronaut.context.annotation.Value("${kestra.uiAnonymousUsageReport.enabled:false}")
     protected Boolean isUiAnonymousUsageEnabled;
 
     @io.micronaut.context.annotation.Value("${kestra.environment.name}")
@@ -106,13 +106,13 @@ public class MiscController {
     @Nullable
     protected String kestraUrl;
 
-    @io.micronaut.context.annotation.Value("${kestra.server.preview.initial-rows:100}")
+    @io.micronaut.context.annotation.Value("${kestra.server.preview.initialRows:100}")
     private Integer initialPreviewRows;
 
-    @io.micronaut.context.annotation.Value("${kestra.server.preview.max-rows:5000}")
+    @io.micronaut.context.annotation.Value("${kestra.server.preview.maxRows:5000}")
     private Integer maxPreviewRows;
 
-    @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
+    @io.micronaut.context.annotation.Value("${kestra.hiddenLabels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
 
     @io.micronaut.context.annotation.Value("${kestra.queue.type}")

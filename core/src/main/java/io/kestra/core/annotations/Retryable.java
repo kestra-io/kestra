@@ -51,7 +51,7 @@ public @interface Retryable {
     /**
      * @return The maximum overall delay
      */
-    String maxDelay() default "${kestra.retries.max-delay:}";
+    String maxDelay() default "${kestra.retries.maxDelay:}";
 
     /**
      * @return The multiplier to use to calculate the delay

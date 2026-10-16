@@ -11,6 +11,6 @@ import io.micronaut.context.annotation.Requires;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.PACKAGE, ElementType.TYPE })
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)", defaultValue = "STANDALONE")
+@Requires(property = "kestra.serverType", pattern = "(WEBSERVER|STANDALONE)", defaultValue = "STANDALONE")
 public @interface WebServerEnabled {
 }

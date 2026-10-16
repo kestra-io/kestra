@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * exercised end-to-end (no mocks).
  */
 @KestraTest(environments = "h2")
-@Property(name = "kestra.server-type", value = "WEBSERVER")
+@Property(name = "kestra.serverType", value = "WEBSERVER")
 class McpServerCacheTest {
 
     private static final String TENANT = null;

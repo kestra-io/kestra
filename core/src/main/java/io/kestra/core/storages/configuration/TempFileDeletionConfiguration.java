@@ -11,12 +11,12 @@ import io.micronaut.core.bind.annotation.Bindable;
  * On Windows a file that has just been closed can stay briefly locked (asynchronous handle release,
  * antivirus or indexing), making the deletion fail. Retrying after a short delay clears this in
  * virtually all cases. These properties tune that retry behaviour and are bound from
- * {@code kestra.storage.temp-file-deletion.*}.
+ * {@code kestra.storage.tempFileDeletion.*}.
  *
  * @param maxAttempts the number of deletion attempts before giving up and logging a warning.
  * @param retryDelay the delay between two deletion attempts.
  */
-@ConfigurationProperties("kestra.storage.temp-file-deletion")
+@ConfigurationProperties("kestra.storage.tempFileDeletion")
 public record TempFileDeletionConfiguration(
     @Bindable(defaultValue = "5") Integer maxAttempts,
     @Bindable(defaultValue = "50ms") Duration retryDelay) {

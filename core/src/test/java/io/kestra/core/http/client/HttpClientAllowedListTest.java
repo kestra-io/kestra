@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-@Property(name = "kestra.tasks.http.allowed-list", value = "http://localhost")
+@Property(name = "kestra.tasks.http.allowedList", value = "http://localhost")
 class HttpClientAllowedListTest {
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -33,7 +33,7 @@ class HttpClientAllowedListTest {
                 HttpRequest.of(URI.create("http://localhost@169.254.169.254/")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://localhost@169.254.169.254/ is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://localhost@169.254.169.254/ is not in the configured allowed list (kestra.tasks.http.allowedList).");
         }
     }
 
@@ -44,7 +44,7 @@ class HttpClientAllowedListTest {
                 HttpRequest.of(URI.create("http://localhost.attacker.example/")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://localhost.attacker.example/ is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://localhost.attacker.example/ is not in the configured allowed list (kestra.tasks.http.allowedList).");
         }
     }
 
@@ -67,7 +67,7 @@ class HttpClientAllowedListTest {
                 HttpRequest.of(URI.create("http://sub.localhost/")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http://sub.localhost/ is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http://sub.localhost/ is not in the configured allowed list (kestra.tasks.http.allowedList).");
         }
     }
 
@@ -78,7 +78,7 @@ class HttpClientAllowedListTest {
                 HttpRequest.of(URI.create("http:///path")),
                 String.class
             ));
-            assertThat(exception.getMessage()).isEqualTo("The URI http:///path has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).");
+            assertThat(exception.getMessage()).isEqualTo("The URI http:///path has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowedList / kestra.tasks.http.deniedList).");
         }
     }
 }

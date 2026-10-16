@@ -6,7 +6,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
 
-@ConfigurationProperties("kestra.local-files")
+@ConfigurationProperties("kestra.localFiles")
 public record LocalFilesConfiguration(
     @Nullable List<String> allowedPaths,
     @Bindable(defaultValue = "true") Boolean enableFileFunctions,

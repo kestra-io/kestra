@@ -27,6 +27,6 @@ class LocalCommandTest {
         Map<String, Object> overrides = LocalCommand.propertiesOverrides();
 
         // Then
-        assertThat(overrides).doesNotContainKey("kestra.plugins.auto-install.enabled");
+        assertThat(overrides).doesNotContainKey("kestra.plugins.autoInstall.enabled");
     }
 }

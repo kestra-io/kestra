@@ -11,7 +11,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
+@Requires(property = "kestra.variables.recursiveRendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
 public class RenderOnceFunction extends RenderFunction {
     public static final String NAME = "renderOnce";
 

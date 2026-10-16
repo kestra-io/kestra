@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-@Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
+@Property(name = "kestra.systemFlows.namespace", value = "some.system.ns")
 @Property(name = "kestra.flowTemplate", value = "tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured")
 class MiscControllerTest {
     private static final String UI_USERNAME = "setup.admin@kestra.io";
@@ -347,7 +347,7 @@ class MiscControllerTest {
                 .doesNotThrowAnyException();
 
             // The test verifies the auth property: webhooks must be reachable without credentials even
-            // when basic-auth is globally enabled.  A 401/403 would mean the webhook is incorrectly
+            // when basicAuth is globally enabled.  A 401/403 would mean the webhook is incorrectly
             // protected; any other status (200, 409, 500 …) is acceptable here.
             // Capture the HTTP status whether the call succeeds or throws HttpClientResponseException.
             int webhookStatus;

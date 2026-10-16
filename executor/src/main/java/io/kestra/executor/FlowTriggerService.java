@@ -270,7 +270,7 @@ public class FlowTriggerService {
             // conditional Flow trigger loop): drop the trigger instead of creating another execution,
             // and surface it where the user is already looking rather than failing silently.
             runContext.logger().warn(
-                "Flow trigger on '{}.{}' was not evaluated: the execution chain exceeded the maximum depth of {}. You can increase the maximum depth by setting the 'kestra.execution.depth.max-depth' property.",
+                "Flow trigger on '{}.{}' was not evaluated: the execution chain exceeded the maximum depth of {}. You can increase the maximum depth by setting the 'kestra.execution.depth.maxDepth' property.",
                 flow.getNamespace(),
                 flow.getId(),
                 executionDepthConfiguration.maxDepth()

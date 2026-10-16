@@ -21,7 +21,7 @@ import io.micronaut.core.bind.annotation.Bindable;
  *        {@code Content-Security-Policy-Report-Only} instead of enforcing it — a safe intermediate step.
  * @param strictTransportSecurity value for {@code Strict-Transport-Security}; opt-in, and only emitted on HTTPS requests.
  */
-@ConfigurationProperties("kestra.webserver.security-headers")
+@ConfigurationProperties("kestra.webserver.securityHeaders")
 public record SecurityHeadersConfiguration(
     @Bindable(defaultValue = "true") boolean enabled,
     @Bindable(defaultValue = "SAMEORIGIN") String frameOptions,

@@ -14,7 +14,7 @@ public class RunContextSDKFactory {
     static class SDKImpl implements SDK {
         private static final String AUTH_PROP = "kestra.tasks.sdk.authentication";
         private static final String URL_PROP = AUTH_PROP + ".url";
-        private static final String API_TOKEN_PROP = AUTH_PROP + ".api-token";
+        private static final String API_TOKEN_PROP = AUTH_PROP + ".apiToken";
         private static final String USERNAME_PROP = AUTH_PROP + ".username";
         private static final String PASSWORD_PROP = AUTH_PROP + ".password";
 

@@ -29,9 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * configured ZIP-bomb protection limits with an HTTP 422, instead of decompressing it.
  */
 @MicronautTest
-@Property(name = "kestra.security.zip-bomb-protection.enabled", value = "true")
-@Property(name = "kestra.security.zip-bomb-protection.max-number-of-entries", value = "1000")
-@Property(name = "kestra.security.zip-bomb-protection.max-entry-size", value = "10")
+@Property(name = "kestra.security.zipBombProtection.enabled", value = "true")
+@Property(name = "kestra.security.zipBombProtection.maxNumberOfEntries", value = "1000")
+@Property(name = "kestra.security.zipBombProtection.maxEntrySize", value = "10")
 class NamespaceFileControllerZipBombTest {
 
     @Inject
@@ -70,7 +70,7 @@ class NamespaceFileControllerZipBombTest {
         // Then the upload is rejected with a 422, naming the violated ZIP-bomb protection limit
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getResponse().getBody(String.class).orElse(""))
-            .contains("kestra.security.zip-bomb-protection.max-entry-size");
+            .contains("kestra.security.zipBombProtection.maxEntrySize");
 
         zip.delete();
     }

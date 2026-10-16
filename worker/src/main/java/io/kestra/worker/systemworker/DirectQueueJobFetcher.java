@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  * the {@code SystemWorker} are wired with their own fetcher class explicitly.
  */
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(EXECUTOR|STANDALONE)")
 @Slf4j
 public class DirectQueueJobFetcher extends WorkerLoop implements JobFetcher {
 

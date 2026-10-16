@@ -45,7 +45,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
-@Property(name = "kestra.execution.depth.max-depth", value = "3")
+@Property(name = "kestra.execution.depth.maxDepth", value = "3")
 class SubflowRunnerTest {
 
     @Inject

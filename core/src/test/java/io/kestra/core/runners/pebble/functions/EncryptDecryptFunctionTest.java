@@ -20,7 +20,7 @@ class EncryptDecryptFunctionTest {
     @Inject
     private VariableRenderer variableRenderer;
 
-    @Value("${kestra.encryption.secret-key}")
+    @Value("${kestra.encryption.secretKey}")
     private String secretKey;
 
     @Test

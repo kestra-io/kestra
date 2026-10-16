@@ -94,14 +94,14 @@ public class ProtectedZipInputStream extends ZipInputStream {
 
         private static ZipBombDetectedException tooManyEntries(int maxEntries) {
             return new ZipBombDetectedException(
-                "Cannot decompress the archive because it contains more than %d entries. This limit is enforced by ZIP-bomb protection (kestra.security.zip-bomb-protection.max-number-of-entries)."
+                "Cannot decompress the archive because it contains more than %d entries. This limit is enforced by ZIP-bomb protection (kestra.security.zipBombProtection.maxNumberOfEntries)."
                     .formatted(maxEntries)
             );
         }
 
         private static ZipBombDetectedException entryTooLarge(long maxEntrySize) {
             return new ZipBombDetectedException(
-                "Cannot decompress this archive entry because its uncompressed size exceeds %d bytes. This limit is enforced by ZIP-bomb protection (kestra.security.zip-bomb-protection.max-entry-size)."
+                "Cannot decompress this archive entry because its uncompressed size exceeds %d bytes. This limit is enforced by ZIP-bomb protection (kestra.security.zipBombProtection.maxEntrySize)."
                     .formatted(maxEntrySize)
             );
         }

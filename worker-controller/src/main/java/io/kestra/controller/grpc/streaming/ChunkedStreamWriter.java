@@ -25,7 +25,7 @@ import io.grpc.stub.StreamObserver;
 public final class ChunkedStreamWriter {
 
     /**
-     * Small enough to stay well below the default {@code kestra.grpc.max-inbound-message-size} of
+     * Small enough to stay well below the default {@code kestra.grpc.maxInboundMessageSize} of
      * 10 MB on both ends, rather than being negotiated per call.
      */
     public static final int DEFAULT_CHUNK_SIZE = 1024 * 1024;

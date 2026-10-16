@@ -13,7 +13,7 @@ import io.micronaut.core.bind.annotation.Bindable;
  * @param maxKeysPerRun maximum number of distinct {@code (tenant, namespace, flow, state)} keys
  *        compacted per run, bounding the work of a single tick.
  */
-@ConfigurationProperties("kestra.jdbc.execution-statistics.compactor")
+@ConfigurationProperties("kestra.jdbc.executionStatistics.compactor")
 public record ExecutionStatisticCompactorConfig(
     @Bindable(defaultValue = "1m") Duration initialDelay, // kept here for documentation, used inside the {@link ExecutionStatisticsCompactor}'s @Scheduled annotation
     @Bindable(defaultValue = "1m") Duration fixedDelay, // kept here for documentation, used inside the {@link ExecutionStatisticsCompactor}'s @Scheduled annotation

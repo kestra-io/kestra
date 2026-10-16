@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(environments = "h2")
-@io.micronaut.context.annotation.Property(name = "kestra.server-type", value = "WEBSERVER")
+@io.micronaut.context.annotation.Property(name = "kestra.serverType", value = "WEBSERVER")
 class McpServerHandlerTransportTest {
 
     @Inject

@@ -127,7 +127,7 @@ class ParallelTest {
             this::allTaskRunsTerminated
         );
 
-        // fail-fast cancellation must not turn into an execution-level KILL: errors/finally still run
+        // failFast cancellation must not turn into an execution-level KILL: errors/finally still run
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("sleep").getFirst().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
         assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

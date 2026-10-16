@@ -29,7 +29,7 @@ public class SchedulerCommand extends AbstractServerCommand {
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return ImmutableMap.of(
-            "kestra.server-type", ServerType.SCHEDULER
+            "kestra.serverType", ServerType.SCHEDULER
         );
     }
 

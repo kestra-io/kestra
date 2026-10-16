@@ -55,7 +55,7 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @Builder.Default
     private TimeWindow timeWindow = TimeWindow.builder().build();
 
-    /** Overrides {@code kestra.dashboards.query-timeout} for this dashboard's charts, up to the configured maximum. */
+    /** Overrides {@code kestra.dashboards.queryTimeout} for this dashboard's charts, up to the configured maximum. */
     @DashboardQueryTimeoutValidation
     private Duration queryTimeout;
 

@@ -57,7 +57,7 @@ import static org.assertj.core.api.Assertions.tuple;
  * </ul>
  */
 @KestraTest(startRunner = true)
-@io.micronaut.context.annotation.Property(name = "kestra.mcp.tool-execution-timeout", value = "PT5S")
+@io.micronaut.context.annotation.Property(name = "kestra.mcp.toolExecutionTimeout", value = "PT5S")
 class McpToolControllerRunnerTest {
 
     private static final String MCP_TOOL_PATH = "/api/v1/main/mcp";

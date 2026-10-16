@@ -21,7 +21,7 @@ import io.micronaut.web.router.RouteMatch;
 import io.micronaut.web.router.RouteMatchUtils;
 
 @Filter("/**")
-@Requires(property = "endpoints.all.basic-auth")
+@Requires(property = "endpoints.all.basicAuth")
 public class BasicAuthEndpointsFilter implements HttpServerFilter {
     private static final String BASIC_PREFIX = HttpHeaderValues.AUTHORIZATION_PREFIX_BASIC + " ";
 

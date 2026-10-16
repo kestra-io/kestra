@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(WEBSERVER|STANDALONE)")
 public class McpServerCache {
 
     private final McpServerRepositoryInterface mcpServerRepository;

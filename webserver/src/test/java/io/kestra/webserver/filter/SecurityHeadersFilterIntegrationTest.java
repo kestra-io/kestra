@@ -22,7 +22,7 @@ import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * End-to-end wiring checks for {@link SecurityHeadersFilter}: confirms the {@code kestra.webserver.security-headers.*}
+ * End-to-end wiring checks for {@link SecurityHeadersFilter}: confirms the {@code kestra.webserver.securityHeaders.*}
  * configuration actually binds and the filter is applied to a real HTTP response. Header-value logic itself is
  * covered by the plain unit tests in {@link SecurityHeadersFilterTest}.
  */
@@ -54,7 +54,7 @@ class SecurityHeadersFilterIntegrationTest {
     }
 
     @Test
-    @Property(name = "kestra.webserver.security-headers.enabled", value = "false")
+    @Property(name = "kestra.webserver.securityHeaders.enabled", value = "false")
     void shouldSetNoHeadersWhenFilterIsDisabled() {
         // Given
         assertThat(applicationContext.containsBean(SecurityHeadersFilter.class)).isFalse();

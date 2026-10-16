@@ -91,7 +91,7 @@ class WorkingDirectoryLeaseTest {
     void shouldReleaseWorkingDirectoryLeaseWhenAFailFastParentEndsIt() {
         // Given
         FlowWithSource flow = Flows.yaml("""
-            id: fail-fast
+            id: failFast
             namespace: io.kestra.tests
             tasks:
               - id: parallel

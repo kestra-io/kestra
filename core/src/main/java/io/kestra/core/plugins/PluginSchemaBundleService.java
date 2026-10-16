@@ -43,9 +43,9 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>
  * The bundle source is resolved once at construction, in priority order (see
- * {@link #resolveBundleSource}): an explicit local file ({@code kestra.plugins.schema-bundle-path}),
+ * {@link #resolveBundleSource}): an explicit local file ({@code kestra.plugins.schemaBundlePath}),
  * the {@code /plugins-schema.json} classpath resource embedded by release CI, then a self-hosted
- * URL template ({@code kestra.plugins.schema-bundle-url-template}). When none resolves the service
+ * URL template ({@code kestra.plugins.schemaBundleUrlTemplate}). When none resolves the service
  * is a no-op — the expected state on a plain {@code ./gradlew build} or a {@code develop} build.
  * The bundle is immutable per release, so it is loaded once on first use and cached forever; a
  * failed remote fetch is retried with a backoff.
@@ -83,8 +83,8 @@ public class PluginSchemaBundleService {
      * applies (the service is then a no-op). Package-private and side-effect-free so the
      * resolution order can be unit-tested.
      *
-     * @param bundlePath value of {@code kestra.plugins.schema-bundle-path}, may be {@code null}/blank
-     * @param bundleUrlTemplate value of {@code kestra.plugins.schema-bundle-url-template}, may be {@code null}/blank
+     * @param bundlePath value of {@code kestra.plugins.schemaBundlePath}, may be {@code null}/blank
+     * @param bundleUrlTemplate value of {@code kestra.plugins.schemaBundleUrlTemplate}, may be {@code null}/blank
      * @param classpathBundle the {@link #CLASSPATH_BUNDLE} resource URL, or {@code null} when not bundled
      * @param versionSupplier supplies the running Kestra version, read only for the URL-template branch
      * @return the resolved source as a URL string, or {@code ""} when the service should be a no-op

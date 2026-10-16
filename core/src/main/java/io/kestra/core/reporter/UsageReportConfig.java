@@ -9,7 +9,7 @@ import io.micronaut.core.bind.annotation.Bindable;
 /**
  * Configuration for anonymous usage reporting.
  * <p>
- * Bound from {@code kestra.anonymous-usage-report.*} properties.
+ * Bound from {@code kestra.anonymousUsageReport.*} properties.
  * Also used for gRPC propagation between controller and worker.
  */
 @ConfigurationProperties("kestra." + UsageReportConfig.ANONYMOUS_USAGE_REPORT)
@@ -19,7 +19,7 @@ public record UsageReportConfig(
     @Bindable(defaultValue = "5m") Duration initialDelay,
     @Bindable(defaultValue = "5m") Duration fixedDelay) {
 
-    public static final String ANONYMOUS_USAGE_REPORT = "anonymous-usage-report";
+    public static final String ANONYMOUS_USAGE_REPORT = "anonymousUsageReport";
 
     public static final String DEFAULT_URI = "https://api.kestra.io/v1/reports/server-events";
 

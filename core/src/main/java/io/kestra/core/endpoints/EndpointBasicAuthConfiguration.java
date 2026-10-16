@@ -4,7 +4,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import lombok.Getter;
 
 @Getter
-@ConfigurationProperties("endpoints.all.basic-auth")
+@ConfigurationProperties("endpoints.all.basicAuth")
 public class EndpointBasicAuthConfiguration {
     String username;
     String password;

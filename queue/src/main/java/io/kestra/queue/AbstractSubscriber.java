@@ -81,7 +81,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             try {
                 consumer.accept(event);
             } catch (Exception e) {
-                String redeliver = queueService.failFast() ? "Message will be redelivered" : "Message will be lost as fail-fast is disabled (kestra.queue.fail-fast=false)!";
+                String redeliver = queueService.failFast() ? "Message will be redelivered" : "Message will be lost as fail-fast is disabled (kestra.queue.failFast=false)!";
                 if (event.isLeft()) {
                     log.error(
                         "{} failed to process message with key '{}'. {}. You can ignore this message by starting Kestra with `--ignore-queue-records {}`.",

@@ -100,7 +100,7 @@ public class KestraBeansFactory {
         return new LogDataStoreInterfaceFactory(pluginRegistry, validator, applicationContext);
     }
 
-    @Requires(property = "kestra.server-type", notEquals = "WORKER")
+    @Requires(property = "kestra.serverType", notEquals = "WORKER")
     @Singleton
     public LogDataStoreInterface logDataStore(final LogDataStoreInterfaceFactory logDataStoreInterfaceFactory) {
         ensureLogDataStoreAllowed();

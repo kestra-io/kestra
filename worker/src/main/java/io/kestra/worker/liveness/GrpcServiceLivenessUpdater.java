@@ -34,7 +34,7 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Primary
-@Requires(property = "kestra.server-type", pattern = "(WORKER)")
+@Requires(property = "kestra.serverType", pattern = "(WORKER)")
 public class GrpcServiceLivenessUpdater implements ServiceLivenessUpdater {
 
     private final LivenessControllerServiceBlockingStub client;

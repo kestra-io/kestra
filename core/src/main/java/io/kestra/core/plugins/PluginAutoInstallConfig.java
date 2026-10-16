@@ -7,7 +7,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.bind.annotation.Bindable;
 
 /**
- * Configuration of the plugin auto-install feature ({@code kestra.plugins.auto-install}).
+ * Configuration of the plugin auto-install feature ({@code kestra.plugins.autoInstall}).
  *
  * @param enabled whether missing plugins are auto-installed on flow save. Unset means the
  *        computed default: on for OSS with local-filesystem storage, off everywhere else.
@@ -24,5 +24,5 @@ public record PluginAutoInstallConfig(
     @Bindable(defaultValue = "PT30S") Duration saveTimeout,
     @Bindable(defaultValue = "0") int concurrency) {
 
-    public static final String PREFIX = "kestra.plugins.auto-install";
+    public static final String PREFIX = "kestra.plugins.autoInstall";
 }

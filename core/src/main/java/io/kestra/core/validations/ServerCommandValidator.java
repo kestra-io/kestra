@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Context
-@Requires(property = "kestra.server-type")
+@Requires(property = "kestra.serverType")
 public class ServerCommandValidator {
     private static final Map<String, String> ALL_REQUIRED_PROPERTIES = Map.of(
         "kestra.queue.type", "https://kestra.io/docs/configuration-guide/setup#queue-configuration",
@@ -44,7 +44,7 @@ public class ServerCommandValidator {
     @Inject
     public ServerCommandValidator(final Environment environment) {
         this.environment = environment;
-        this.serverType = Enums.getForNameIgnoreCase(environment.getRequiredProperty("kestra.server-type", String.class), ServerType.class);
+        this.serverType = Enums.getForNameIgnoreCase(environment.getRequiredProperty("kestra.serverType", String.class), ServerType.class);
     }
 
     @PostConstruct

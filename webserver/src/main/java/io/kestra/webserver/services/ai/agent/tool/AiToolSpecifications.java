@@ -38,7 +38,7 @@ import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 public final class AiToolSpecifications {
 
     /**
-     * Appended to a tool's description when it has query-filter parameters, so the model knows how to
+     * Appended to a tool's description when it has queryFilter parameters, so the model knows how to
      * shape values — in particular the date formats. Mirrors the flow-as-MCP-tool convention
      * ({@code format: date-time} / {@code duration}, i.e. ISO-8601).
      */

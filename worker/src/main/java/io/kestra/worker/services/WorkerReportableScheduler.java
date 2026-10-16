@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * {@link ReportableScheduler} for workers.
  * <p>
  * Unlike the standard {@link ReportableScheduler} which requires
- * {@code kestra.anonymous-usage-report.enabled=true}, this scheduler is always instantiated
+ * {@code kestra.anonymousUsageReport.enabled=true}, this scheduler is always instantiated
  * on workers. Reporting is gated by {@link #init(UsageReportConfig)}, which is
  * called during the initial worker-to-controller connection based on the controller's configuration.
  * <p>
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Singleton
 @Replaces(ReportableScheduler.class)
-@Requires(property = "kestra.server-type", value = "WORKER")
+@Requires(property = "kestra.serverType", value = "WORKER")
 @Slf4j
 public class WorkerReportableScheduler extends ReportableScheduler {
 

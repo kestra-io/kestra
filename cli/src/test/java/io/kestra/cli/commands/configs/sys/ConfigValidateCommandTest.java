@@ -38,7 +38,7 @@ class ConfigValidateCommandTest {
         System.setOut(new PrintStream(out));
 
         // The CLI test environment defines the queue/repository/storage types, so a webserver
-        // server-type validation must pass.
+        // serverType validation must pass.
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             Integer result = PicocliRunner.call(ConfigValidateCommand.class, ctx, "--server-type", "webserver");
 

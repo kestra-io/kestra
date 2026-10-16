@@ -21,7 +21,7 @@ public record GrpcBasicAuthConfiguration(
     @Nullable String username,
     @Nullable String password) {
 
-    public static final String PREFIX = "kestra.grpc.basic-auth";
+    public static final String PREFIX = "kestra.grpc.basicAuth";
 
     public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
 

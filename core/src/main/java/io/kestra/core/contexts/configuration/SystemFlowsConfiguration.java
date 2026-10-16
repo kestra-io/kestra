@@ -3,7 +3,7 @@ package io.kestra.core.contexts.configuration;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.bind.annotation.Bindable;
 
-@ConfigurationProperties("kestra.system-flows")
+@ConfigurationProperties("kestra.systemFlows")
 public record SystemFlowsConfiguration(
     @Bindable(defaultValue = DEFAULT_NAMESPACE) String namespace) {
 

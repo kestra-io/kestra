@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
-@Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
+@Property(name = "kestra.tasks.tmpDir.path", value = "/tmp/sub/dir/tmp/")
 class WorkingDirFactoryTest {
 
     @Inject

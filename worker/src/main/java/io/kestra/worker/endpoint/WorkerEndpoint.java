@@ -18,7 +18,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Endpoint(id = "worker")
-@Requires(property = "kestra.server-type", pattern = "(WORKER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(WORKER|STANDALONE)")
 public class WorkerEndpoint {
     @Inject
     Worker worker;

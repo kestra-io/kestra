@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @Context
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Requires(property = "kestra.repository.type")
-@Requires(property = "kestra.server-type", notEquals = "WORKER")
+@Requires(property = "kestra.serverType", notEquals = "WORKER")
 public class MigrationStartupRunner {
 
     private final MigrationRunnerInterface migrationRunner;

@@ -24,13 +24,13 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
-@Property(name = "kestra.server-type", value = "STANDALONE")
+@Property(name = "kestra.serverType", value = "STANDALONE")
 // The compactor is a live @Scheduled singleton here; without disabling the schedule a background
 // tick can call compact() concurrently with the test's manual compact(), and both hit the shared
 // singleton jOOQ Configuration from two threads -> ConcurrentModificationException. Push the
 // schedule far past any test run so only the manual calls exercise compact().
-@Property(name = "kestra.jdbc.execution-statistics.compactor.initial-delay", value = "999d")
-@Property(name = "kestra.jdbc.execution-statistics.compactor.fixed-delay", value = "999d")
+@Property(name = "kestra.jdbc.executionStatistics.compactor.initialDelay", value = "999d")
+@Property(name = "kestra.jdbc.executionStatistics.compactor.fixedDelay", value = "999d")
 public abstract class AbstractExecutionStatisticsCompactorTest {
     @Inject
     protected ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
@@ -144,7 +144,7 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
     }
 
     @Test
-    @Property(name = "kestra.jdbc.execution-statistics.compactor.max-keys-per-run", value = "2")
+    @Property(name = "kestra.jdbc.executionStatistics.compactor.maxKeysPerRun", value = "2")
     void shouldDrainMoreKeysThanTheBatchLimitWithinASingleTick() {
         // Given: 5 distinct (namespace, flow, state) keys, more than the batch limit of 2 configured
         // for this test — a single compact() call must not stop after the first batch, or a burst of

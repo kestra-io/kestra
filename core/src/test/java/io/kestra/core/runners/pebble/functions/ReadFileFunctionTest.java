@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(rebuildContext = true)
-@Property(name = "kestra.server-type", value = "STANDALONE")
+@Property(name = "kestra.serverType", value = "STANDALONE")
 @Execution(ExecutionMode.SAME_THREAD)
 class ReadFileFunctionTest {
     @Inject
@@ -239,7 +239,7 @@ class ReadFileFunctionTest {
     }
 
     @Test
-    @Property(name = "kestra.server-type", value = "EXECUTOR")
+    @Property(name = "kestra.serverType", value = "EXECUTOR")
     @Disabled("Moved on the next release")
     void readFailOnNonWorkerNodes() {
         IllegalVariableEvaluationException exception = assertThrows(

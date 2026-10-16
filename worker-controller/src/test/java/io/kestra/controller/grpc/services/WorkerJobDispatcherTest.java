@@ -551,7 +551,7 @@ class WorkerJobDispatcherTest {
             assertThat(logEntry.getAttemptNumber()).isZero();
             assertThat(logEntry.getMessage())
                 .contains("64 bytes")
-                .contains("kestra.grpc.max-inbound-message-size");
+                .contains("kestra.grpc.maxInboundMessageSize");
 
             verify(mockResultQueue).emit(any(WorkerTaskResult.class));
             verify(context.getResponseObserver(), never()).onNext(any(WorkerJobResponse.class));
@@ -578,7 +578,7 @@ class WorkerJobDispatcherTest {
             LogEntry logEntry = captor.getValue();
             assertThat(logEntry.getLevel()).isEqualTo(Level.ERROR);
             assertThat(logEntry.getTriggerId()).isEqualTo("trigger-1");
-            assertThat(logEntry.getMessage()).contains("kestra.grpc.max-inbound-message-size");
+            assertThat(logEntry.getMessage()).contains("kestra.grpc.maxInboundMessageSize");
 
             verify(mockTriggerEventQueue).send(any(TriggerEvaluated.class));
         }

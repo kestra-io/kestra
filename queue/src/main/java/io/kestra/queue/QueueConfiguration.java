@@ -21,7 +21,7 @@ public class QueueConfiguration {
     Boolean failFast = true;
 
     @Getter
-    @ConfigurationProperties("message-protection")
+    @ConfigurationProperties("messageProtection")
     public static class MessageProtection {
         Boolean enabled = false;
         Integer limit;

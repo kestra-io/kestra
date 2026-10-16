@@ -78,7 +78,7 @@ public class FlowTestCommand extends AbstractApiCommand {
         return ImmutableMap.<String, Object> builder()
             // The runner starts the services a standalone server does, and they are only registered
             // for a declared server type.
-            .put("kestra.server-type", ServerType.STANDALONE)
+            .put("kestra.serverType", ServerType.STANDALONE)
             // The flow is read from a file rather than from the instance, so the run gets a database
             // and a storage directory of its own. EphemeralDatabase.URL_PROPERTY repoints every
             // datasource; the log store follows the repository type, and its own pool is skipped on
@@ -88,7 +88,7 @@ public class FlowTestCommand extends AbstractApiCommand {
             .put("kestra.queue.type", "h2")
             .put(EphemeralDatabase.URL_PROPERTY, EPHEMERAL_DATABASE_URL)
             .put("kestra.storage.type", "local")
-            .put("kestra.storage.local.base-path", TEMP_STORAGE.toAbsolutePath().toString())
+            .put("kestra.storage.local.basePath", TEMP_STORAGE.toAbsolutePath().toString())
             // The worker started here must reach the controller started here. Left on the
             // instance's discovery, a distributed configuration would send it to the real
             // controller, where it would pick up and run production work.
@@ -97,7 +97,7 @@ public class FlowTestCommand extends AbstractApiCommand {
             .put("kestra.worker.controllers.static.endpoints[0].port", CONTROLLER_PORT)
             .put("kestra.controller.port", CONTROLLER_PORT)
             // Testing a flow is not the instance doing work, so it reports no usage.
-            .put("kestra.anonymous-usage-report.enabled", false)
+            .put("kestra.anonymousUsageReport.enabled", false)
             .build();
     }
 

@@ -1,4 +1,4 @@
 kestra:
-  server-type: WEBSERVER
+  serverType: WEBSERVER
   queue:
     type: h2

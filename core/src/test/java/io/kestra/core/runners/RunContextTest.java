@@ -66,7 +66,7 @@ import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
-@Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
+@Property(name = "kestra.tasks.tmpDir.path", value = "/tmp/sub/dir/tmp/")
 class RunContextTest {
     @Inject
     DispatchQueueInterface<LogEntry> logQueue;
@@ -83,7 +83,7 @@ class RunContextTest {
     @Inject
     MetricRegistry metricRegistry;
 
-    @Value("${kestra.encryption.secret-key}")
+    @Value("${kestra.encryption.secretKey}")
     private String secretKey;
 
     @Inject

@@ -7,7 +7,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class PebbleUtils {
-    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
+    @Value("${kestra.serverType:}") // default to empty as tests didn't set this property
     private String serverType;
 
     public boolean calledOnWorker() {

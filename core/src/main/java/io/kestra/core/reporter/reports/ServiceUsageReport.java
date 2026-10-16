@@ -15,7 +15,7 @@ import jakarta.inject.Singleton;
 import lombok.Builder;
 
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "STANDALONE|EXECUTOR|WEBSERVER")
+@Requires(property = "kestra.serverType", pattern = "STANDALONE|EXECUTOR|WEBSERVER")
 public class ServiceUsageReport extends AbstractReportable<ServiceUsageReport.ServiceUsageEvent> {
 
     private final ServiceInstanceRepositoryInterface serviceInstanceRepository;

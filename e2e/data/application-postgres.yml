@@ -1,6 +1,6 @@
 kestra:
   server:
-    basic-auth:
+    basicAuth:
       username: user@kestra.io
       password: DemoDemo1
   repository:
@@ -8,15 +8,15 @@ kestra:
   storage:
     type: local
     local:
-      base-path: "/app/storage"
+      basePath: "/app/storage"
   queue:
     type: postgres
   tasks:
-    tmp-dir:
+    tmpDir:
       path: /tmp/kestra-wd/tmp
   encryption:
-    secret-key: not_really_a_secret_only_for_unit_test
-  anonymous-usage-report:
+    secretKey: not_really_a_secret_only_for_unit_test
+  anonymousUsageReport:
     enabled: false
 datasources:
   postgres:

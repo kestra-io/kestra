@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
  * a save into a hard error beyond the pre-existing validation failure.
  * <p>
  * On by default only for OSS + local-filesystem storage (the {@code server local} persona); an
- * explicit {@code kestra.plugins.auto-install.enabled} always wins over that computed default,
+ * explicit {@code kestra.plugins.autoInstall.enabled} always wins over that computed default,
  * except outside OSS, where the feature is unconditionally forced off — EE manages plugins through
  * Plugin Versioning instead, and this feature must not run there regardless of how the shared
  * property is set.
@@ -89,7 +89,7 @@ public class PluginAutoInstallService {
         if (editionProvider.get() != EditionProvider.Edition.OSS) {
             if (config.enabled().orElse(false)) {
                 log.warn(
-                    "kestra.plugins.auto-install.enabled is set but plugin auto-install is not supported " +
+                    "kestra.plugins.autoInstall.enabled is set but plugin auto-install is not supported " +
                         "outside OSS; forcing it off. Manage plugins through Plugin Versioning instead."
                 );
             }
@@ -121,7 +121,7 @@ public class PluginAutoInstallService {
      * Returns whether the auto-install feature is enabled.
      *
      * @return {@code true} when auto-install is on — either via an explicit
-     *         {@code kestra.plugins.auto-install.enabled}, or by default on OSS with local storage.
+     *         {@code kestra.plugins.autoInstall.enabled}, or by default on OSS with local storage.
      */
     public boolean isEnabled() {
         return enabled;

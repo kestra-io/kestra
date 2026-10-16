@@ -44,15 +44,15 @@ kestra:
           - host: localhost
             port: ${kestra.controller.port}
   executor:
-    execution-delay-loop-periodicity-ms: 250
-    monitor-sla-loop-periodicity-ms: 250
-    multiple-condition-purge-loop-periodicity-ms: 1000
+    executionDelayLoopPeriodicityMs: 250
+    monitorSlaLoopPeriodicityMs: 250
+    multipleConditionPurgeLoopPeriodicityMs: 1000
   ai:
     type: gemini
     gemini:
-      base-url: https://localhost:28183
-      api-key: "fakeApiKey"
-      ca-pem: |-
+      baseUrl: https://localhost:28183
+      apiKey: "fakeApiKey"
+      caPem: |-
         -----BEGIN CERTIFICATE-----
         MIIFCTCCAvGgAwIBAgIUQY9OI1ErtFFu3iujvLu5NzPqBrowDQYJKoZIhvcNAQEL
         BQAwFDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTI1MTAwNjE1NTc0OFoXDTM1MTAw
@@ -82,7 +82,7 @@ kestra:
         AMVo3oupFL0WR6acXV87fCukNTVLEEn5UHKFSOgoPD+vy1dHXov1Ej2VwGP94Dec
         mRdgSSfyRhyPGwlxjaiPcTLIkaJBEdR3H5Xzws87QT+SlKiCOrFjksPvYWXs
         -----END CERTIFICATE-----
-      client-pem: |-
+      clientPem: |-
         -----BEGIN CERTIFICATE-----
         MIIE+DCCAuCgAwIBAgIUbbuIICr5CKGTNxe2P9a0D2xuwx4wDQYJKoZIhvcNAQEL
         BQAwFDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTI1MTAwNjE1NTgwNFoXDTMwMDQx
@@ -166,34 +166,34 @@ kestra:
         -----END PRIVATE KEY-----
   url: http://localhost:8081
   encryption:
-    secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
-  server-type: STANDALONE
+    secretKey: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK
+  serverType: STANDALONE
   storage:
     type: local
     local:
-      base-path: /tmp/unittest
-  anonymous-usage-report:
+      basePath: /tmp/unittest
+  anonymousUsageReport:
     enabled: true
     uri: https://api.kestra.io/v1/reports/usages
-    initial-delay: 5m
-    fixed-delay: 1h
+    initialDelay: 5m
+    fixedDelay: 1h
   server:
-    access-log:
+    accessLog:
       enabled: false
-    basic-auth:
+    basicAuth:
       username: admin@kestra.io
       password: Kestra123
-      open-urls:
+      openUrls:
         - "/ping"
         - "/api/v1/executions/webhook/"
         - "/api/v1/main/executions/webhook/"
     liveness:
       enabled: false
-    termination-grace-period: 5s
+    terminationGracePeriod: 5s
     service:
       purge:
-        initial-delay: 1h
-        fixed-delay: 1d
+        initialDelay: 1h
+        fixedDelay: 1d
         retention: 30d
   queue:
     type: h2

@@ -28,7 +28,7 @@ import jakarta.inject.Singleton;
  * Default implementation of {@link VNodesAssigner} that assigns virtual nodes (vNodes) to active scheduler services.
  */
 @Singleton
-@Requires(property = "kestra.server-type")
+@Requires(property = "kestra.serverType")
 public class DefaultVNodesAssigner implements VNodesAssigner {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultVNodesAssigner.class);

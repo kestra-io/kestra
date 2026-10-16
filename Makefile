@@ -146,13 +146,13 @@ datasources:
     password: k3str4
 kestra:
   encryption:
-    secret-key: 3ywuDa/Ec61VHkOX3RlI9gYq7CaD0mv0Pf3DHtAXA6U=
+    secretKey: 3ywuDa/Ec61VHkOX3RlI9gYq7CaD0mv0Pf3DHtAXA6U=
   repository:
     type: postgres
   storage:
     type: local
     local:
-      base-path: "/tmp/kestra/storage"
+      basePath: "/tmp/kestra/storage"
   queue:
     type: postgres
 endef

@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Singleton
 @Slf4j
-@Requires(property = "kestra.server-type", value = "WORKER")
+@Requires(property = "kestra.serverType", value = "WORKER")
 @Replaces(DefaultNamespaceFileMetadataStateStore.class)
 public class GrpcWorkerNamespaceFileMetadataStateStore implements NamespaceFileMetadataStateStore {
 

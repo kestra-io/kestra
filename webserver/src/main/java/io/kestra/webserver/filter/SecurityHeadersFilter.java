@@ -29,7 +29,7 @@ import io.micronaut.http.filter.ServerFilterPhase;
  * potentially harmful — over plain HTTP; {@link RequestUtils#isSecure} also recognizes a TLS-terminating reverse
  * proxy that forwards the request as plain HTTP, via its {@code Forwarded}/{@code X-Forwarded-Proto} header.
  */
-@Requires(property = "kestra.webserver.security-headers.enabled", notEquals = "false", defaultValue = "true")
+@Requires(property = "kestra.webserver.securityHeaders.enabled", notEquals = "false", defaultValue = "true")
 @ServerFilter("/**")
 public class SecurityHeadersFilter implements Ordered {
     private static final String X_FRAME_OPTIONS = "X-Frame-Options";

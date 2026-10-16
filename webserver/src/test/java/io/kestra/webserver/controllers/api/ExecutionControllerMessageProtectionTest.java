@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 // Enable the queue message-size guard at its production 1MB limit; raise the HTTP limits so an oversized payload
 // reaches the guard rather than being rejected by the server first.
 @KestraTest
-@Property(name = "kestra.queue.message-protection.enabled", value = "true")
-@Property(name = "kestra.queue.message-protection.limit", value = "1048576")
+@Property(name = "kestra.queue.messageProtection.enabled", value = "true")
+@Property(name = "kestra.queue.messageProtection.limit", value = "1048576")
 @Property(name = "micronaut.server.max-request-size", value = "10485760")
 @Property(name = "micronaut.server.multipart.max-file-size", value = "10485760")
 class ExecutionControllerMessageProtectionTest {

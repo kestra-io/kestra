@@ -45,7 +45,7 @@ class KestraTest {
         final String[] args = new String[] { "server", serverType, "--help" };
 
         try (ApplicationContext ctx = Kestra.applicationContext(Kestra.class, new String[] { Environment.CLI }, args)) {
-            assertTrue(ctx.getProperty("kestra.server-type", ServerType.class).isEmpty());
+            assertTrue(ctx.getProperty("kestra.serverType", ServerType.class).isEmpty());
         }
 
         assertThat(Kestra.runCli(args)).isZero();

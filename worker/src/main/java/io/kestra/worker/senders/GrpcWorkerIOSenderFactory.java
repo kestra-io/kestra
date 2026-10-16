@@ -31,7 +31,7 @@ public class GrpcWorkerIOSenderFactory {
 
     private static final String RESULT_TOO_LARGE_MESSAGE =
         "Failed to send the task result to the worker controller: its serialized size exceeds the maximum inbound gRPC message size configured on the controller. "
-            + "The task run is failed and its outputs are dropped. Reduce the size of the task outputs, or increase 'kestra.grpc.max-inbound-message-size' on the worker controller.";
+            + "The task run is failed and its outputs are dropped. Reduce the size of the task outputs, or increase 'kestra.grpc.maxInboundMessageSize' on the worker controller.";
 
     /**
      * Creates a sender for {@link WorkerTaskResult} events (sent per-item).

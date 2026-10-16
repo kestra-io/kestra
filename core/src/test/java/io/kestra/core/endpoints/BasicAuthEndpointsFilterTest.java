@@ -27,8 +27,8 @@ class BasicAuthEndpointsFilterTest {
             password ? Map.of(
                 "endpoints.all.enabled", true,
                 "endpoints.all.sensitive", false,
-                "endpoints.all.basic-auth.username", "foo",
-                "endpoints.all.basic-auth.password", "bar"
+                "endpoints.all.basicAuth.username", "foo",
+                "endpoints.all.basicAuth.password", "bar"
             )
                 : Map.of(
                     "endpoints.all.enabled", true,

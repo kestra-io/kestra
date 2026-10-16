@@ -49,7 +49,7 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     private io.kestra.core.utils.VersionProvider versionProvider;
 
     // Resolved lazily: an Optional here builds the whole webserver bean graph for every command,
-    // and a configuration declaring kestra.server-type makes that graph reach the database.
+    // and a configuration declaring kestra.serverType makes that graph reach the database.
     @Inject
     protected BeanProvider<EmbeddedServer> embeddedServer;
 

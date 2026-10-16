@@ -19,7 +19,7 @@ public class GlobalTagsConfigurer implements MeterRegistryConfigurer<SimpleMeter
     MetricConfig metricConfig;
 
     @Nullable
-    @Value("${kestra.server-type}")
+    @Value("${kestra.serverType}")
     ServerType serverType;
 
     @Override

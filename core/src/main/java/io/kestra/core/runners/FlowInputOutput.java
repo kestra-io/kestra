@@ -643,7 +643,7 @@ public class FlowInputOutput {
                         yield uri;
                     } else {
                         File requestedFile = new File(current.toString());
-                        // Read through LocalPath so allowed-paths is enforced and the stream is opened on the
+                        // Read through LocalPath so allowedPaths is enforced and the stream is opened on the
                         // path it validated, not on the one we were given, which a symlink swap could re-point.
                         try (InputStream authorized = localPathFactory.createLocalPath().get(requestedFile.toURI())) {
                             yield storageInterface.put(

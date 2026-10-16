@@ -6,16 +6,16 @@ kestra:
       - id: gemini-kebab-case-headers
         type: gemini
         configuration:
-          model-name: gemini-2.5-flash
-          api-key: fake-key
-          custom-headers:
+          modelName: gemini-2.5-flash
+          apiKey: fake-key
+          customHeaders:
             X-Api-Key: qa-gateway-secret
             X-Gateway-Route: internal-qa
       - id: gemini-camel-case-headers
         type: gemini
         configuration:
-          model-name: gemini-2.5-flash
-          api-key: fake-key
+          modelName: gemini-2.5-flash
+          apiKey: fake-key
           customHeaders:
             X-Api-Key: qa-gateway-secret
             X-Gateway-Route: internal-qa

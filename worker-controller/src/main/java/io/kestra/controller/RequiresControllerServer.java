@@ -12,7 +12,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * Restricts a bean to the server types that can host a {@link io.kestra.core.worker.Controller}.
  * Convenient annotation for
- * {@code @Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE|WEBSERVER)")}.
+ * {@code @Requires(property = "kestra.serverType", pattern = "(CONTROLLER|STANDALONE|WEBSERVER)")}.
  * <p>
  * A {@code WEBSERVER} and a {@code STANDALONE} server both start an embedded controller unless
  * {@code --no-controller} is passed, so any bean the controller needs must also be available there.
@@ -24,7 +24,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * gRPC server, and workers only discover it as an {@code UNIMPLEMENTED} error at task runtime.
  */
 @Documented
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE|WEBSERVER)")
+@Requires(property = "kestra.serverType", pattern = "(CONTROLLER|STANDALONE|WEBSERVER)")
 @Retention(RUNTIME)
 @Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD })
 public @interface RequiresControllerServer {

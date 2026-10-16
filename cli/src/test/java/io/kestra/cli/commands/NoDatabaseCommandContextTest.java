@@ -39,7 +39,7 @@ class NoDatabaseCommandContextTest {
                 username: kestra
                 password: k3str4
             kestra:
-              server-type: STANDALONE
+              serverType: STANDALONE
               repository:
                 type: postgres
               queue:
@@ -72,7 +72,7 @@ class NoDatabaseCommandContextTest {
             assertThat(ctx.containsBean(MigrationStartupRunner.class)).isFalse();
 
             // And no repository either: @RepositoryBean carries a @Requires(property =
-            // "kestra.server-type", ...) stereotype, which requiresServerType() also drops. Any
+            // "kestra.serverType", ...) stereotype, which requiresServerType() also drops. Any
             // bean that depends on a repository being present must be dropped here too, rather than
             // fail on a repository this context never built.
             assertThat(ctx.containsBean(FlowRepositoryInterface.class)).isFalse();

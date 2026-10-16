@@ -219,9 +219,9 @@ public class MetricRegistry {
     public static final String METRIC_MAINTENANCE_EXIT_COUNT_DESCRIPTION = "The total number of times maintenance mode was exited";
 
     public static final String METRIC_JDBC_QUERY_DURATION = "jdbc.query.duration";
-    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries, including row fetch, tagged with sanitized SQL (IN-lists collapsed, identifiers and sort columns redacted). Only queries above the 'kestra.jdbc.metrics.query-duration-threshold-ms' threshold (default 10ms) are monitored";
+    public static final String METRIC_JDBC_QUERY_DURATION_DESCRIPTION = "Duration of database queries, including row fetch, tagged with sanitized SQL (IN-lists collapsed, identifiers and sort columns redacted). Only queries above the 'kestra.jdbc.metrics.queryDurationThresholdMs' threshold (default 10ms) are monitored";
 
-    public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION = "jdbc.execution-statistics.compactor.duration";
+    public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION = "jdbc.executionStatistics.compactor.duration";
     public static final String METRIC_JDBC_EXECUTION_STATISTICS_COMPACTOR_DURATION_DESCRIPTION = "Duration of a single execution statistics compaction run";
 
     public static final String METRIC_QUEUE_MESSAGE_BIG_TOTAL = "queue.message.big.total";

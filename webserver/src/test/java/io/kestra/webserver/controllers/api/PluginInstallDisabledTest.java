@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-@Property(name = "kestra.plugins.auto-install.enabled", value = "false")
+@Property(name = "kestra.plugins.autoInstall.enabled", value = "false")
 class PluginInstallDisabledTest {
 
     public static final String PATH = "/api/v1/plugins";
@@ -30,7 +30,7 @@ class PluginInstallDisabledTest {
 
     @Test
     void shouldRejectInstallWhenAutoInstallDisabled() {
-        // Given - kestra.plugins.auto-install.enabled=false is set via @Property
+        // Given - kestra.plugins.autoInstall.enabled=false is set via @Property
         List<PluginArtifact> artifacts = List.of(
             PluginArtifact.builder().groupId("io.kestra.plugin").artifactId("plugin-notifications").version("LATEST").build()
         );
@@ -47,7 +47,7 @@ class PluginInstallDisabledTest {
 
     @Test
     void shouldReturnForbiddenDetectionWhenAutoInstallDisabled() {
-        // Given - kestra.plugins.auto-install.enabled=false is set via @Property
+        // Given - kestra.plugins.autoInstall.enabled=false is set via @Property
         String flowYaml = "id: test\nnamespace: test\ntasks:\n  - id: t\n    type: io.kestra.plugin.unknown.Task\n";
 
         // When

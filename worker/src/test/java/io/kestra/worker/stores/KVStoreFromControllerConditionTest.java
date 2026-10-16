@@ -44,7 +44,7 @@ class KVStoreFromControllerConditionTest {
     @SuppressWarnings("unchecked")
     private static ConditionContext<?> context(String serverType, String workerAccess) {
         ConditionContext<?> context = mock(ConditionContext.class);
-        when(context.get("kestra.server-type", String.class)).thenReturn(Optional.ofNullable(serverType));
+        when(context.get("kestra.serverType", String.class)).thenReturn(Optional.ofNullable(serverType));
         when(context.get(KVStoreFromControllerCondition.CONFIG_KEY, String.class)).thenReturn(Optional.ofNullable(workerAccess));
         return context;
     }

@@ -664,12 +664,12 @@ public class HttpClient implements Closeable {
 
     @SuppressWarnings("unchecked")
     private List<String> deniedList() {
-        return (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
+        return (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.deniedList", List.class).orElse(Collections.emptyList());
     }
 
     @SuppressWarnings("unchecked")
     private void validateUri(URI uri) {
-        List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
+        List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowedList", List.class).orElse(Collections.emptyList());
         List<String> deniedList = deniedList();
 
         if (allowedList.isEmpty() && deniedList.isEmpty()) {
@@ -679,19 +679,19 @@ public class HttpClient implements Closeable {
         if (resolveAuthority(uri) == null) {
             // A list is configured but the URI carries no authority at all, so there is no host to check it
             // against: fail closed on both directions instead of silently letting an unmatchable URI through.
-            throw new IllegalArgumentException("The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(uri));
+            throw new IllegalArgumentException("The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowedList / kestra.tasks.http.deniedList).".formatted(uri));
         }
 
         // first check that if there is an allow list, it matches one
         if (!allowedList.isEmpty()) {
             if (allowedList.stream().noneMatch(entry -> isListEntryMatch(entry, uri))) {
-                throw new IllegalArgumentException("The URI %s is not in the configured allowed list (kestra.tasks.http.allowed-list).".formatted(uri));
+                throw new IllegalArgumentException("The URI %s is not in the configured allowed list (kestra.tasks.http.allowedList).".formatted(uri));
             }
         }
 
         // then check that there are no exclusion for it
         if (deniedList.stream().anyMatch(entry -> isListEntryMatch(entry, uri))) {
-            throw new IllegalArgumentException("The URI %s is in the configured denied list (kestra.tasks.http.denied-list).".formatted(uri));
+            throw new IllegalArgumentException("The URI %s is in the configured denied list (kestra.tasks.http.deniedList).".formatted(uri));
         }
 
         if (this.hasProxy && !deniedList.isEmpty()) {
@@ -838,7 +838,7 @@ public class HttpClient implements Closeable {
     }
 
     /**
-     * Matches a {@code kestra.tasks.http.allowed-list} / {@code denied-list} entry against the URI Kestra is
+     * Matches a {@code kestra.tasks.http.allowedList} / {@code deniedList} entry against the URI Kestra is
      * actually about to connect to. Matching is done on the resolved authority (host, and scheme/port when the
      * entry specifies them) rather than on the raw URI string, so that URL-encoded userinfo
      * (e.g. {@code https://api.trusted.com@169.254.169.254/}, whose host is {@code 169.254.169.254}) or a
@@ -926,7 +926,7 @@ public class HttpClient implements Closeable {
     private static void rejectDeniedAddresses(String host, InetAddress[] addresses, List<String> deniedList) {
         for (InetAddress address : addresses) {
             if (deniedList.stream().anyMatch(entry -> isDeniedAddress(entry, address))) {
-                throw new IllegalArgumentException("The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(host, address.getHostAddress()));
+                throw new IllegalArgumentException("The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.deniedList).".formatted(host, address.getHostAddress()));
             }
         }
     }

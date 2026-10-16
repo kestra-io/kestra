@@ -21,7 +21,7 @@ import jakarta.inject.Singleton;
  * Implementation of {@link LogEntryEmitter} that emits log entries to intra worker queue {@link WorkerQueue}.
  */
 @Singleton
-@Requires(property = "kestra.server-type", value = "WORKER")
+@Requires(property = "kestra.serverType", value = "WORKER")
 @Replaces(DefaultLogEntryEmitter.class)
 public class WorkerLogEntryEmitter implements LogEntryEmitter {
 

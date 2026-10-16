@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(WEBSERVER|STANDALONE)")
+@Requires(property = "kestra.serverType", pattern = "(WEBSERVER|STANDALONE)")
 @Requires(property = "kestra.metric.queue.lag.enabled", value = "true")
 public class QueueLagPoller {
     private final MetricRegistry metricRegistry;

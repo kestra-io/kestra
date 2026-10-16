@@ -1314,7 +1314,7 @@ public abstract class AbstractFlowRepositoryTest {
         // Given — two flows in the same tenant but different namespaces.
         // Flow IDs use "alpha" / "beta" as distinct tokens that do not appear in each
         // other's YAML (the common task type io.kestra.plugin.core.debug.Return
-        // contains neither word), enabling unambiguous query-filter assertions.
+        // contains neither word), enabling unambiguous queryFilter assertions.
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String namespaceA = "io.kestra.findsource.a";
         String namespaceB = "io.kestra.findsource.b";

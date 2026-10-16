@@ -26,7 +26,7 @@ public class WorkerCommand extends AbstractServerCommand {
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
-        return Map.of("kestra.server-type", ServerType.WORKER);
+        return Map.of("kestra.serverType", ServerType.WORKER);
     }
 
     @Override

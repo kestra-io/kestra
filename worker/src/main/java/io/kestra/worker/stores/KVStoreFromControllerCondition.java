@@ -5,7 +5,7 @@ package io.kestra.worker.stores;
  */
 public class KVStoreFromControllerCondition extends WorkerAccessFromControllerCondition {
 
-    public static final String CONFIG_KEY = "kestra.kv.worker-access";
+    public static final String CONFIG_KEY = "kestra.kv.workerAccess";
 
     @Override
     protected String configKey() {

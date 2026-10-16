@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
  * queued, and once the in-flight turn finishes the permit is recovered so a later turn succeeds.
  */
 @KestraTest
-@Property(name = "kestra.ai.agent.max-concurrent-turns", value = "1")
+@Property(name = "kestra.ai.agent.maxConcurrentTurns", value = "1")
 class AiAgentControllerConcurrencyTest {
     private static final String BASE = "/api/v1/" + TenantService.MAIN_TENANT + "/ai/threads";
 

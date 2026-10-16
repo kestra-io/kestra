@@ -30,7 +30,7 @@ public class VersionEndpoint {
         return "-oss";
     }
 
-    @Value("${kestra.server-type}")
+    @Value("${kestra.serverType}")
     private String serverType;
 
     @Inject

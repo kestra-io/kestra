@@ -16,7 +16,7 @@ public class PluginEndpointBodySizeFilter {
     private final long maxBodySize;
 
     public PluginEndpointBodySizeFilter(
-        @Value("${kestra.plugins.endpoint.max-body-size:10485760}") long maxBodySize
+        @Value("${kestra.plugins.endpoint.maxBodySize:10485760}") long maxBodySize
     ) {
         this.maxBodySize = maxBodySize;
     }

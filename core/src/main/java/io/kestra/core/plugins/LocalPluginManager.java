@@ -61,10 +61,10 @@ public class LocalPluginManager implements PluginManager {
     public LocalPluginManager(final Provider<PluginRegistry> pluginRegistryProvider,
         final MavenPluginDownloader mavenPluginDownloader,
         @Nullable @Value("${kestra.plugins.management.localRepositoryPath}") final String localRepositoryPath,
-        @Nullable @Value("${kestra.storage.local.base-path}") final String localStorageBasePath) {
+        @Nullable @Value("${kestra.storage.local.basePath}") final String localStorageBasePath) {
         this.pluginRegistryProvider = pluginRegistryProvider;
         this.mavenPluginDownloader = mavenPluginDownloader;
-        // Precedence: explicit repository path, then <storage.local.base-path>/plugins — so a local
+        // Precedence: explicit repository path, then <storage.local.basePath>/plugins — so a local
         // instance keeps a single folder to manage/persist — then the temp-dir fallback.
         this.localRepositoryPath = localRepositoryPath == null && localStorageBasePath != null
             ? PluginManager.createLocalRepositoryIfNotExist(Path.of(localStorageBasePath).resolve("plugins"))

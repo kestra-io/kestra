@@ -25,16 +25,16 @@ class SubflowFunctionServerTypeTest {
 
     @Test
     void shouldRegisterSubflowFunctionOnStandalone() {
-        // Given the default test server-type (STANDALONE)
+        // Given the default test serverType (STANDALONE)
         // When / Then the bean is present and registered as a Pebble function
         assertThat(applicationContext.containsBean(SubflowFunction.class)).isTrue();
         assertThat(applicationContext.getBean(Extension.class).getFunctions()).containsKey(SubflowFunction.NAME);
     }
 
     @Test
-    @Property(name = "kestra.server-type", value = "WORKER")
+    @Property(name = "kestra.serverType", value = "WORKER")
     void shouldNotRegisterSubflowFunctionOnWorker() {
-        // Given a WORKER server-type
+        // Given a WORKER serverType
         // When / Then the bean is absent and Extension still builds its functions without it
         assertThat(applicationContext.containsBean(SubflowFunction.class)).isFalse();
         assertThatCode(() -> assertThat(applicationContext.getBean(Extension.class).getFunctions()).doesNotContainKey(SubflowFunction.NAME))

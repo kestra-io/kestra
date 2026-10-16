@@ -16,7 +16,7 @@ import io.micronaut.core.bind.annotation.Bindable;
  * @param maxDepth maximum nesting depth of {@code subflow()} calls on the same rendering thread,
  *        guarding against runaway recursion (a subflow whose own inputs call {@code subflow()}).
  */
-@ConfigurationProperties("kestra.pebble.subflow-function")
+@ConfigurationProperties("kestra.pebble.subflowFunction")
 public record SubflowFunctionConfiguration(
     @Bindable(defaultValue = "PT1M") Duration defaultTimeout,
     @Bindable(defaultValue = "PT5M") Duration maxTimeout,

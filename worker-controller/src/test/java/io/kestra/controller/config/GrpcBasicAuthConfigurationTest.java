@@ -24,24 +24,24 @@ class GrpcBasicAuthConfigurationTest {
         assertThatThrownBy(
             () -> load(
                 Map.of(
-                    "kestra.grpc.basic-auth.enabled", "true",
-                    "kestra.grpc.basic-auth.password", "Passw0rd"
+                    "kestra.grpc.basicAuth.enabled", "true",
+                    "kestra.grpc.basicAuth.password", "Passw0rd"
                 )
             )
         )
             .rootCause()
-            .hasMessageContaining("kestra.grpc.basic-auth.username is required");
+            .hasMessageContaining("kestra.grpc.basicAuth.username is required");
 
         assertThatThrownBy(
             () -> load(
                 Map.of(
-                    "kestra.grpc.basic-auth.enabled", "true",
-                    "kestra.grpc.basic-auth.username", "worker"
+                    "kestra.grpc.basicAuth.enabled", "true",
+                    "kestra.grpc.basicAuth.username", "worker"
                 )
             )
         )
             .rootCause()
-            .hasMessageContaining("kestra.grpc.basic-auth.password is required");
+            .hasMessageContaining("kestra.grpc.basicAuth.password is required");
     }
 
     @Test
@@ -50,9 +50,9 @@ class GrpcBasicAuthConfigurationTest {
             ApplicationContext context = ApplicationContext.run(
                 PropertySource.of(
                     "test", Map.of(
-                        "kestra.grpc.basic-auth.enabled", "true",
-                        "kestra.grpc.basic-auth.username", "worker",
-                        "kestra.grpc.basic-auth.password", "Passw0rd"
+                        "kestra.grpc.basicAuth.enabled", "true",
+                        "kestra.grpc.basicAuth.username", "worker",
+                        "kestra.grpc.basicAuth.password", "Passw0rd"
                     )
                 )
             )

@@ -85,7 +85,7 @@ class FlowInputOutputTest {
     @Inject
     KVMetadataStateStore kvMetadataStateStore;
 
-    @Value("${kestra.encryption.secret-key}")
+    @Value("${kestra.encryption.secretKey}")
     String secretKey;
 
     @MockBean(SecretService.class)

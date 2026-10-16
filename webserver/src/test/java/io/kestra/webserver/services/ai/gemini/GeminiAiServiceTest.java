@@ -35,11 +35,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @WireMockTest(httpPort = GeminiAiServiceTest.MODEL_API_PORT)
 @Property(name = "kestra.ai.providers[0].id", value = GeminiAiServiceTest.PROVIDER_ID)
 @Property(name = "kestra.ai.providers[0].type", value = "gemini")
-@Property(name = "kestra.ai.providers[0].configuration.base-url", value = "http://localhost:" + GeminiAiServiceTest.MODEL_API_PORT)
-@Property(name = "kestra.ai.providers[0].configuration.model-name", value = "gemini-2.5-flash")
-@Property(name = "kestra.ai.providers[0].configuration.api-key", value = "fake-key")
-@Property(name = "kestra.ai.providers[0].configuration.custom-headers.X-Api-Key", value = "secret")
-@Property(name = "kestra.ai.providers[0].configuration.custom-headers.X-Gateway-Route", value = "internal")
+@Property(name = "kestra.ai.providers[0].configuration.baseUrl", value = "http://localhost:" + GeminiAiServiceTest.MODEL_API_PORT)
+@Property(name = "kestra.ai.providers[0].configuration.modelName", value = "gemini-2.5-flash")
+@Property(name = "kestra.ai.providers[0].configuration.apiKey", value = "fake-key")
+@Property(name = "kestra.ai.providers[0].configuration.customHeaders.X-Api-Key", value = "secret")
+@Property(name = "kestra.ai.providers[0].configuration.customHeaders.X-Gateway-Route", value = "internal")
 class GeminiAiServiceTest {
     static final int MODEL_API_PORT = 28184;
     static final String PROVIDER_ID = "gemini-custom-headers";

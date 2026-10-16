@@ -7,10 +7,10 @@ datasources:
     dialect: POSTGRES
 
 kestra:
-  server-type: STANDALONE
+  serverType: STANDALONE
   queue:
     type: postgres
-    message-protection:
+    messageProtection:
       enabled: true
       limit: 1048576
   repository:
@@ -18,27 +18,27 @@ kestra:
   storage:
     type: local
     local:
-      base-path: /tmp/unittest
+      basePath: /tmp/unittest
   jdbc:
     queues:
-      min-poll-interval: 10ms
-      max-poll-interval: 100ms
-      poll-switch-interval: 5s
+      minPollInterval: 10ms
+      maxPollInterval: 100ms
+      pollSwitchInterval: 5s
   executor:
-    execution-delay-loop-periodicity-ms: 250
-    monitor-sla-loop-periodicity-ms: 250
-    multiple-condition-purge-loop-periodicity-ms: 1000
+    executionDelayLoopPeriodicityMs: 250
+    monitorSlaLoopPeriodicityMs: 250
+    multipleConditionPurgeLoopPeriodicityMs: 1000
   tasks:
     subflow:
-      allow-parameter-outputs: true
+      allowParameterOutputs: true
   server:
     liveness:
       enabled: false
-    termination-grace-period: 5s
+    terminationGracePeriod: 5s
     service:
       purge:
-        initial-delay: 1h
-        fixed-delay: 1d
+        initialDelay: 1h
+        fixedDelay: 1d
         retention: 30d
   grpc:
     maxRetryAttempts: 1

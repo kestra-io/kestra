@@ -5,7 +5,7 @@ package io.kestra.worker.stores;
  */
 public class NamespaceFilesFromControllerCondition extends WorkerAccessFromControllerCondition {
 
-    public static final String CONFIG_KEY = "kestra.namespace-files.worker-access";
+    public static final String CONFIG_KEY = "kestra.namespaceFiles.workerAccess";
 
     @Override
     protected String configKey() {

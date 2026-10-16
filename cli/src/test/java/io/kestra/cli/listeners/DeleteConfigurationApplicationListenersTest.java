@@ -20,11 +20,11 @@ class DeleteConfigurationApplicationListenersTest {
     void run() throws IOException {
         File tempFile = File.createTempFile("test", ".yml");
 
-        Files.write(tempFile.toPath(), "kestra.configurations.delete-files-on-start: true".getBytes());
+        Files.write(tempFile.toPath(), "kestra.configurations.deleteFilesOnStart: true".getBytes());
 
         MapPropertySource mapPropertySource = new MapPropertySource(
             tempFile.getAbsolutePath(),
-            Map.of("kestra.configurations.delete-files-on-start", true)
+            Map.of("kestra.configurations.deleteFilesOnStart", true)
         );
 
         try (ApplicationContext ctx = ApplicationContext.run(mapPropertySource, Environment.CLI, Environment.TEST)) {

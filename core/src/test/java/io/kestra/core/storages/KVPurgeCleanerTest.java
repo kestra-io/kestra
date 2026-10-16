@@ -47,7 +47,7 @@ public class KVPurgeCleanerTest {
     }
 
     @Test
-    @Property(name = "kestra.kv.purge-expired.batch-size", value = "2")
+    @Property(name = "kestra.kv.purgeExpired.batchSize", value = "2")
     void should_purge_expired_kv_entries() throws IOException, ResourceExpiredException {
         String namespace1 = "io.kestra." + IdUtils.create();
         InternalKVStore kvStore1 = new InternalKVStore(MAIN_TENANT, namespace1, storageInterface, kvMetadataStateStore);

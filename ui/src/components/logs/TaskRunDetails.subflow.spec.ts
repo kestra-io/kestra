@@ -33,7 +33,6 @@ const flow = (taskType: string) => ({
     tasks: [{id: "call_child", type: taskType}],
 })
 
-// A 2.0 payload: the Subflow task run carries no `outputs`.
 const execution = (state: string) => ({
     id: "parent-execution",
     namespace: "company.team",
@@ -94,7 +93,6 @@ describe("TaskRunDetails subflow logs", () => {
 
     it("shouldKeepTheChildViewerWithoutRefetchingWhenTheParentExecutionUpdates", async () => {
         outputs.load.mockResolvedValue({executionId: "child-a"})
-        // A replay loads its logs over REST in RESTARTED and switches to the stream once RUNNING.
         store.executions.execution = execution("RESTARTED")
         const wrapper = mountDetails()
         await flushPromises()

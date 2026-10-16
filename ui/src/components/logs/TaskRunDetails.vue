@@ -441,7 +441,6 @@
     const throttledExecutionUpdate = ref<Scheduled<[Execution]> | undefined>(undefined)
     const targetExecution = ref<Execution | undefined>(undefined)
     const loopOutputsByTaskRunId = ref<Record<string, LoopOutputs>>({})
-    // Since 2.0 the execution payload carries no `taskRun.outputs`, so child execution ids come from the outputs endpoint.
     const subflowExecutionIdByTaskRunId = ref<Record<string, string>>({})
     const requestedSubflowOutputs = new Set<string>()
 
@@ -740,7 +739,6 @@
             if (!executionId) return
             for (const taskRun of taskRuns) {
                 if (subflowExecutionId(taskRun) !== undefined || !isSubflowTaskType(taskType(taskRun))) continue
-                // Re-queried on each state change until the child execution exists, never once its id is known.
                 const requestKey = `${taskRun.id}-${taskRun.state.current}`
                 if (requestedSubflowOutputs.has(requestKey)) continue
                 requestedSubflowOutputs.add(requestKey)

@@ -5,10 +5,13 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -22,6 +25,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.InputFilesInterface;
@@ -248,12 +252,35 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        Execution latestRun = execution.withTaskRunList(latestRunTaskRuns(execution, parentTaskRun));
+
         // subtasks run inside the Worker and each reports through its own queue message, so a failed
         // subtask must not terminate the WorkingDirectory while a sibling's terminal result is still in flight
-        boolean hasInFlightSubtask = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+        boolean hasInFlightSubtask = latestRun.getTaskRunList().stream()
             .anyMatch(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) && !taskRun.getState().isTerminated());
 
-        return hasInFlightSubtask ? Optional.empty() : super.resolveState(runContext, execution, parentTaskRun);
+        return hasInFlightSubtask ? Optional.empty() : super.resolveState(runContext, latestRun, parentTaskRun);
+    }
+
+    // a subtask the latest run did not reach has fewer attempts than the others, and was left behind by a previous run
+    private static List<TaskRun> latestRunTaskRuns(Execution execution, TaskRun parentTaskRun) {
+        List<TaskRun> taskRuns = ListUtils.emptyOnNull(execution.getTaskRunList());
+        int latestRun = taskRuns.stream()
+            .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()))
+            .mapToInt(TaskRun::attemptNumber)
+            .max()
+            .orElse(0);
+
+        return taskRuns.stream()
+            .filter(taskRun -> !parentTaskRun.getId().equals(taskRun.getParentTaskRunId()) || taskRun.attemptNumber() == latestRun)
+            .toList();
+    }
+
+    // the WorkingDirectory is dispatched before the attempt of its current run is added, so its attempts are those of its previous runs
+    private static List<TaskRunAttempt> previousRunAttempts(TaskRun parent) {
+        return IntStream.range(0, ListUtils.emptyOnNull(parent.getAttempts()).size())
+            .mapToObj(i -> TaskRunAttempt.builder().state(new State().withState(State.Type.RESUBMITTED)).build())
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public WorkerTask workerTask(TaskRun parent, Task task, RunContext runContext) {
@@ -261,13 +288,15 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             .task(task)
             .taskRun(
                 TaskRun.builder()
-                    .id(IdUtils.create())
+                    // a run of the WorkingDirectory adds an attempt to the task run of each subtask instead of creating another one
+                    .id(IdUtils.from(IdUtils.fromParts(parent.getId(), task.getId())))
                     .tenantId(parent.getTenantId())
                     .executionId(parent.getExecutionId())
                     .namespace(parent.getNamespace())
                     .flowId(parent.getFlowId())
                     .taskId(task.getId())
                     .parentTaskRunId(parent.getId())
+                    .attempts(previousRunAttempts(parent))
                     .state(new State())
                     .build()
             )

@@ -1,10 +1,17 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,6 +33,7 @@ import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -40,6 +48,7 @@ import lombok.Builder;
 
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -244,6 +253,81 @@ class LogControllerTest {
         );
         assertThat(logs).contains("john doe");
         assertThat(logs).contains("another message");
+    }
+
+    @Test
+    void shouldDownloadEveryLineInOrderWhenLogsSpanSeveralFetches() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        seedExecution(tenant, executionId);
+        // more lines than one database fetch
+        Instant start = Instant.now().truncatedTo(ChronoUnit.MILLIS).minus(1, ChronoUnit.HOURS);
+        List<LogEntry> logs = IntStream.range(0, 250)
+            .mapToObj(
+                i -> logEntry(tenant, Level.INFO, start.plusMillis(i)).toBuilder()
+                    .executionId(executionId)
+                    .message("line " + i)
+                    .build()
+            )
+            .toList();
+        logs.forEach(logRepository::save);
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"),
+            String.class
+        );
+
+        assertThat(response.getBody()).contains(
+            logs.stream().map(LogEntry::toPrettyString).collect(Collectors.joining("\n"))
+        );
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("private, max-age=86400");
+    }
+
+    @Test
+    void shouldDownloadAnEmptyUncachedFileWhileTheExecutionIsRunningWithoutLogs() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        executionRepository.save(
+            Execution.builder()
+                .id(executionId)
+                .namespace("io.kestra.unittest")
+                .tenantId(tenant)
+                .flowId("full")
+                .flowRevision(1)
+                .state(new State().withState(State.Type.RUNNING))
+                .build()
+        );
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getBody().orElse("")).isEmpty();
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
+    }
+
+    @Test
+    void shouldDeleteTheSpooledFileOnceTheDownloadIsSent() throws IOException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        seedExecution(tenant, executionId);
+        logRepository.save(logEntry(tenant, Level.INFO).toBuilder().executionId(executionId).build());
+        Set<Path> existing = spooledFiles();
+
+        client.toBlocking().retrieve(GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"), String.class);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> existing.containsAll(spooledFiles()));
+    }
+
+    private static Set<Path> spooledFiles() throws IOException {
+        try (Stream<Path> files = Files.list(Path.of(System.getProperty("java.io.tmpdir")))) {
+            return files.filter(file -> file.getFileName().toString().startsWith("execution-logs-")).collect(Collectors.toSet());
+        }
     }
 
     @SuppressWarnings("unchecked")

@@ -35,6 +35,7 @@ import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.flows.input.URIInput;
 import io.kestra.core.models.flows.input.YamlInput;
 import io.kestra.core.models.property.Property;

@@ -1,6 +1,7 @@
 package io.kestra.core.models.executions;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -59,4 +60,17 @@ class TaskRunTest {
         assertThat(taskRun.getAttempts().get(1).getState().getCurrent()).isEqualTo(State.Type.RESUBMITTED);
     }
 
+    @Test
+    void shouldLeaveTheTaskRunHistoryUntouchedWhenResentWithoutAttempts() {
+        TaskRun running = TaskRun.builder()
+            .tenantId("main").id("tr1").executionId("ex1").namespace("ns").flowId("f").taskId("t")
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+        List<State.History> before = List.copyOf(running.getState().getHistories());
+
+        TaskRun resent = running.onRunningResend();
+
+        assertThat(running.getState().getHistories()).containsExactlyElementsOf(before);
+        assertThat(resent.lastAttempt().getState().getHistories()).isNotSameAs(running.getState().getHistories());
+    }
 }

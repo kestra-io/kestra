@@ -1,0 +1,18 @@
+id: approval-flow-finally-deny
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    onDeny:
+      - id: denied
+        type: io.kestra.plugin.core.log.Log
+        message: "Denied"
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "after"
+
+finally:
+  - id: cleanup
+    type: io.kestra.plugin.core.log.Log
+    message: "cleanup"

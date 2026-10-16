@@ -22,6 +22,7 @@ import jakarta.annotation.Nullable;
     {
         @JsonSubTypes.Type(value = Create.class, name = "CREATE"),
         @JsonSubTypes.Type(value = Replay.class, name = "REPLAY"),
+        @JsonSubTypes.Type(value = CancelApproval.class, name = "CANCEL_APPROVAL"),
         @JsonSubTypes.Type(value = ChangeTaskRunState.class, name = "CHANGE_TASK_RUN_STATE"),
         @JsonSubTypes.Type(value = ForceRun.class, name = "FORCE_RUN"),
         @JsonSubTypes.Type(value = Pause.class, name = "PAUSE"),

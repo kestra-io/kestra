@@ -1,6 +1,6 @@
-import {describe, expect, it} from "vitest"
-import {globSync, readFileSync} from "node:fs"
-import {join, relative, resolve} from "node:path"
+import { describe, expect, it } from "vitest"
+import { globSync, readFileSync } from "node:fs"
+import { join, relative, resolve } from "node:path"
 
 /**
  * `message`, `_links`, `_embedded.errors[]` and `invalids[]` are not part of the API's error format. Reading
@@ -17,26 +17,44 @@ const ROOT = resolve(__dirname, "../../..")
 const SCANNED_DIRS = ["src", "packages"]
 
 const FORBIDDEN = [
-    {pattern: /\b_embedded\b/, what: "_embedded.errors[] — use problem.errors[]"},
-    {pattern: /\b_links\b/, what: "_links — removed, no client ever read it"},
-    {pattern: /\.invalids\b/, what: "invalids[] — use problem.errors[]"},
-    {pattern: /\bresponse\s*\??\.\s*data\s*\??\.\s*message\b/, what: "response.data.message — use asProblem(err)?.detail"},
-    {pattern: /\bdata\s*\?\.\s*message\b/, what: "data?.message — use asProblem(err)?.detail"},
-    {pattern: /content\s*\?\.\s*message\b/, what: "content?.message — the toast takes a problem document"},
+    { pattern: /\b_embedded\b/, what: "_embedded.errors[] — use problem.errors[]" },
+    { pattern: /\b_links\b/, what: "_links — removed, no client ever read it" },
+    { pattern: /\.invalids\b/, what: "invalids[] — use problem.errors[]" },
+    { pattern: /\bresponse\s*\??\.\s*data\s*\??\.\s*message\b/, what: "response.data.message — use asProblem(err)?.detail" },
+    { pattern: /\bdata\s*\?\.\s*message\b/, what: "data?.message — use asProblem(err)?.detail" },
+    { pattern: /content\s*\?\.\s*message\b/, what: "content?.message — the toast takes a problem document" },
 ]
 
 /** Paths where a match is expected and harmless. */
-const ALLOWED: Array<{file: string; reason: string}> = [
+const ALLOWED: Array<{ file: string; reason: string }> = [
     // Generated SDK surface: mirrors the OpenAPI spec, not hand-written error handling.
-    {file: "packages/kestra-sdk/src/openapi", reason: "generated from the OpenAPI spec"},
+    { file: "packages/kestra-sdk/src/openapi", reason: "generated from the OpenAPI spec" },
     // The comments that explain this very rule.
-    {file: "src/utils/kestraHttp.ts", reason: "documents the removed fields"},
-    {file: "packages/hey-api-plugin/src/problem.ts", reason: "documents the removed fields"},
+    { file: "src/utils/kestraHttp.ts", reason: "documents the removed fields" },
+    { file: "packages/hey-api-plugin/src/problem.ts", reason: "documents the removed fields" },
 ]
 
+let cachedSourceFiles: string[] | undefined
 function sourceFiles(): string[] {
+    if (!cachedSourceFiles) {
+        cachedSourceFiles = SCANNED_DIRS.flatMap((dir) =>
+            globSync(`${dir}/**/*.{ts,vue,js}`, { cwd: ROOT })
+                .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
+        )
+    }
+    return cachedSourceFiles
+}
+
+const fileContents = new Map<string, string>()
+function readSourceFile(file: string): string {
+    let content = fileContents.get(file)
+    if (content === undefined) {
+        content = readFileSync(join(ROOT, file), "utf8")
+        fileContents.set(file, content)
+    }
+    return content
     return SCANNED_DIRS.flatMap((dir) =>
-        globSync(`${dir}/**/*.{ts,vue,js}`, {cwd: ROOT})
+        globSync(`${dir}/**/*.{ts,vue,js}`, { cwd: ROOT })
             .map((file) => file.replaceAll("\\", "/"))
             .filter((file) => !file.includes("node_modules") && !file.includes("/dist/") && !/\.(spec|test)\.ts$/.test(file)),
     )
@@ -47,17 +65,18 @@ function isAllowed(file: string): boolean {
     return ALLOWED.some((entry) => normalized.startsWith(entry.file))
 }
 
+
 describe("no legacy error fields", () => {
     it("finds source files to scan, so a broken glob cannot make this test vacuous", () => {
         expect(sourceFiles().length).toBeGreaterThan(500)
     })
 
-    it.each(FORBIDDEN)("does not read $what", ({pattern}) => {
+    it.each(FORBIDDEN)("does not read $what", ({ pattern }) => {
         const offenders: string[] = []
 
         for (const file of sourceFiles()) {
             if (isAllowed(file)) continue
-            const content = readFileSync(join(ROOT, file), "utf8")
+            const content = readSourceFile(file)
             content.split("\n").forEach((line, index) => {
                 if (pattern.test(line)) {
                     offenders.push(`${relative(ROOT, join(ROOT, file)).replaceAll("\\", "/")}:${index + 1}: ${line.trim()}`)

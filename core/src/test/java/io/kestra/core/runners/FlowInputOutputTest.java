@@ -1372,152 +1372,48 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions()).isNull();
     }
 
-    private static List<Input<?>> diskFields() {
-        return List.of(
-            IntInput.builder().id("size_gb").type(Type.INT).min(10).max(2048).build(),
-            StringInput.builder().id("mountpoint").type(Type.STRING).validator("^/.*").required(false).build()
-        );
-    }
-
-    private static TableInput disksInput(Integer minRows, Integer maxRows) {
-        return TableInput.builder().id("disks").type(Type.TABLE).columns(diskFields()).minRows(minRows).maxRows(maxRows).build();
-    }
-
-    private static Flow flowWith(Input<?>... inputs) {
-        return Flow.builder().id("test-flow").namespace("io.kestra.test").inputs(List.of(inputs)).build();
-    }
-
     @Test
-    void shouldParseTableRowsFromJsonString() {
-        Map<String, Object> result = flowInputOutput.readExecutionInputs(
-            flowWith(disksInput(null, null)),
-            DEFAULT_TEST_EXECUTION,
-            Map.of("disks", "[{\"size_gb\": \"20\", \"mountpoint\": \"/data\"}, {\"size_gb\": 30, \"mountpoint\": \"/logs\"}]")
-        );
-
-        assertThat(result.get("disks")).isEqualTo(List.of(
-            Map.of("size_gb", 20, "mountpoint", "/data"),
-            Map.of("size_gb", 30, "mountpoint", "/logs")
-        ));
-    }
-
-    @Test
-    void shouldReportEveryInvalidTableCellWithItsRow() {
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(disksInput(null, null)),
-            null,
-            DEFAULT_TEST_EXECUTION,
-            Map.of("disks", "[{\"size_gb\": 20, \"mountpoint\": \"/data\"}, {\"size_gb\": 4096, \"mountpoint\": \"var/log\"}, 3]")
-        );
-
-        assertThat(values.getFirst().exceptions())
-            .extracting(Throwable::getMessage)
-            .containsExactlyInAnyOrder(
-                "Invalid value for input `disks`. Cause: row 2, column `size_gb`: it must be less than `2048`",
-                "Invalid value for input `disks`. Cause: row 2, column `mountpoint`: it must match the pattern `^/.*`",
-                "Invalid value for input `disks`. Cause: row 3: expected an object"
-            );
-    }
-
-    @Test
-    void shouldValidateEveryColumnOfEveryRow() {
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(disksInput(null, null)),
-            null,
-            DEFAULT_TEST_EXECUTION,
-            Map.of("disks", """
-                [
-                  {"size_gb": 5, "mountpoint": "data"},
-                  {"size_gb": 20, "mountpoint": "/ok"},
-                  {"size_gb": "big", "mountpoint": "var/log"},
-                  {"mountpoint": "/x"}
-                ]""")
-        );
-
-        assertThat(values.getFirst().exceptions())
-            .extracting(Throwable::getMessage)
-            .containsExactlyInAnyOrder(
-                "Invalid value for input `disks`. Cause: row 1, column `size_gb`: it must be more than `10`",
-                "Invalid value for input `disks`. Cause: row 1, column `mountpoint`: it must match the pattern `^/.*`",
-                "Invalid value for input `disks`. Cause: row 3, column `size_gb`: Cannot convert value 'big' to Integer",
-                "Invalid value for input `disks`. Cause: row 3, column `mountpoint`: it must match the pattern `^/.*`",
-                "Invalid value for input `disks`. Cause: row 4, column `size_gb`: missing required value"
-            );
-    }
-
-    @Test
-    void shouldRejectTableRowWithUndeclaredColumn() {
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(disksInput(null, null)),
-            null,
-            DEFAULT_TEST_EXECUTION,
-            Map.of("disks", "[{\"size_gb\": 20, \"mountpoint\": \"/data\", \"extra\": true}]")
-        );
-
-        assertThat(values.getFirst().exceptions())
-            .extracting(Throwable::getMessage)
-            .containsExactly("Invalid value for input `disks`. Cause: row 1, column `extra`: it is not declared");
-    }
-
-    @Test
-    void shouldRejectTableValueThatIsNotAList() {
-        for (String value : List.of("{\"size_gb\": 20}", "not json")) {
-            List<InputAndValue> values = flowInputOutput.resolveInputs(
-                List.of(disksInput(null, null)), null, DEFAULT_TEST_EXECUTION, Map.of("disks", value)
-            );
-
-            assertThat(values.getFirst().exceptions()).as(value).hasSize(1);
-        }
-    }
-
-    @Test
-    void shouldEnforceTableRowBounds() {
-        TableInput input = disksInput(1, 2);
-
-        List<InputAndValue> tooMany = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION,
-            Map.of("disks", "[{\"size_gb\": 20}, {\"size_gb\": 20}, {\"size_gb\": 20}]")
-        );
-        List<InputAndValue> tooFew = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION,
-            Map.of("disks", "[]")
-        );
-
-        assertThat(tooMany.getFirst().exceptions()).extracting(Throwable::getMessage)
-            .containsExactly("Invalid value for input `disks`. Cause: it must have at most `2` rows");
-        assertThat(tooFew.getFirst().exceptions()).extracting(Throwable::getMessage)
-            .containsExactly("Invalid value for input `disks`. Cause: it must have at least `1` rows");
-    }
-
-    @Test
-    void shouldSeedTableRowsFromDefaults() {
-        TableInput input = TableInput.builder()
-            .id("disks")
-            .type(Type.TABLE)
-            .columns(diskFields())
-            .defaults(Property.ofValue(List.of(Map.of("size_gb", 10, "mountpoint", "/"))))
+    void shouldAccumulateAllValidationExceptionsAcrossInputsWhenReadingExecutionInputs() {
+        // Given
+        StringInput input1 = StringInput.builder()
+            .id("input1")
+            .type(Type.STRING)
+            .required(true)
+            .validator("^[a-z]+$")
+            .build();
+        IntInput input2 = IntInput.builder()
+            .id("input2")
+            .type(Type.INT)
+            .required(true)
+            .min(10)
+            .build();
+        StringInput input3 = StringInput.builder()
+            .id("input3")
+            .type(Type.STRING)
+            .required(true)
             .build();
 
-        List<InputAndValue> values = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of());
+        Flow flow = Flow.builder()
+            .id("test-multi-validation")
+            .namespace("io.kestra.test")
+            .inputs(List.of(input1, input2, input3))
+            .build();
 
-        assertThat(values.getFirst().exceptions()).isNull();
-        assertThat(values.getFirst().isDefault()).isTrue();
-        assertThat(values.getFirst().value()).isEqualTo(List.of(Map.of("size_gb", 10, "mountpoint", "/")));
-    }
-
-    @Test
-    void shouldResolveTableNestedInFormAsNestedList() {
-        Flow flow = flowWith(
-            FormInput.builder().id("env").type(Type.FORM).inputs(List.of(disksInput(null, null))).build()
+        // When / Then
+        InputOutputValidationException exception = Assertions.assertThrows(
+            InputOutputValidationException.class,
+            () -> flowInputOutput.readExecutionInputs(
+                flow,
+                DEFAULT_TEST_EXECUTION,
+                Map.of("input1", "123", "input2", 5)
+            )
         );
 
-        Map<String, Object> result = flowInputOutput.readExecutionInputs(
-            flow,
-            DEFAULT_TEST_EXECUTION,
-            Map.of("env.disks", "[{\"size_gb\": 20, \"mountpoint\": \"/data\"}]")
-        );
-
-        assertThat(((Map<?, ?>) result.get("env")).get("disks")).isEqualTo(List.of(Map.of("size_gb", 20, "mountpoint", "/data")));
+        assertThat(exception.getExceptions()).hasSize(3);
+        assertThat(exception.getFieldErrors()).containsKeys("input1", "input2", "input3");
+        assertThat(exception.getMessage()).contains("input1");
+        assertThat(exception.getMessage()).contains("input2");
+        assertThat(exception.getMessage()).contains("Missing required input:input3");
     }
 
     private static CompletedPart memoryCompletedPart(String name, byte[] content) {

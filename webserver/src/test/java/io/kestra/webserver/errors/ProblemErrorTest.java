@@ -40,4 +40,24 @@ class ProblemErrorTest {
         assertThat(ProblemError.ofViolations(Set.of(first, second)).stream().map(ProblemError::pointer))
             .containsExactly("/alpha", "/beta");
     }
+
+    @Test
+    void shouldConvertInputValidationExceptionsToProblemErrors() {
+        // Given multiple input validation exceptions
+        io.kestra.core.exceptions.InputOutputValidationException ex1 = io.kestra.core.exceptions.InputOutputValidationException.of("Invalid value for input `inputA`. Cause: error1", "inputA");
+        io.kestra.core.exceptions.InputOutputValidationException ex2 = io.kestra.core.exceptions.InputOutputValidationException.of("Missing required input:inputB", "inputB");
+        io.kestra.core.exceptions.InputOutputValidationException composite = io.kestra.core.exceptions.InputOutputValidationException.merge(java.util.List.of(ex1, ex2));
+
+        // When converted
+        var errors = ProblemError.ofInputErrors(composite);
+
+        // Then each error carries the pointer, path, and detail
+        assertThat(errors).hasSize(2);
+        assertThat(errors.get(0).detail()).isEqualTo("Invalid value for input `inputA`. Cause: error1");
+        assertThat(errors.get(0).pointer()).isEqualTo("/inputs/inputA");
+        assertThat(errors.get(0).path()).isEqualTo("inputs[inputA]");
+        assertThat(errors.get(1).detail()).isEqualTo("Missing required input:inputB");
+        assertThat(errors.get(1).pointer()).isEqualTo("/inputs/inputB");
+        assertThat(errors.get(1).path()).isEqualTo("inputs[inputB]");
+    }
 }

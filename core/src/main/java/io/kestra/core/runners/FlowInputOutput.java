@@ -283,17 +283,21 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data) {
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true)
-            .stream()
+        List<InputAndValue> resolvedInputs = this.resolveInputs(inputs, flow, execution, data, true);
+
+        List<InputOutputValidationException> allExceptions = resolvedInputs.stream()
             .filter(InputAndValue::enabled)
-            .map(it ->
-            {
-                //TODO check to return all exception at-once.
-                if (it.exceptions() != null && !it.exceptions().isEmpty()) {
-                    throw InputOutputValidationException.merge(it.exceptions());
-                }
-                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
-            })
+            .filter(it -> it.exceptions() != null && !it.exceptions().isEmpty())
+            .flatMap(it -> it.exceptions().stream())
+            .toList();
+
+        if (!allExceptions.isEmpty()) {
+            throw InputOutputValidationException.merge(allExceptions);
+        }
+
+        Map<String, Object> resolved = resolvedInputs.stream()
+            .filter(InputAndValue::enabled)
+            .map(it -> new AbstractMap.SimpleEntry<>(it.input().getId(), it.value()))
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
         if (resolved.size() < data.size()) {
             RunContext runContext = runContextFactory.get().of(flow, execution);
@@ -381,7 +385,7 @@ public class FlowInputOutput {
                     isInputEnabled = Boolean.TRUE.equals(runContext.renderTyped(dependsOnCondition.get()));
                 } catch (IllegalVariableEvaluationException e) {
                     resolvable.resolveWithError(
-                        InputOutputValidationException.of("Invalid condition: " + e.getMessage())
+                        InputOutputValidationException.of("Invalid condition: " + e.getMessage(), input.getId())
                     );
                     isInputEnabled = false;
                 }
@@ -442,7 +446,7 @@ public class FlowInputOutput {
             // validate and parse input value
             if (value == null) {
                 if (input.getRequired()) {
-                    resolvable.resolveWithError(InputOutputValidationException.of("Missing required input:" + input.getId()));
+                    resolvable.resolveWithError(InputOutputValidationException.of("Missing required input:" + input.getId(), input.getId()));
                 } else {
                     resolvable.resolveWithValue(null);
                 }
@@ -462,7 +466,7 @@ public class FlowInputOutput {
         } catch (IllegalArgumentException | ConstraintViolationException e) {
             resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage(), input));
         } catch (Exception e) {
-            resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage()));
+            resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage(), input.getId()));
         }
 
         return resolvable.get();

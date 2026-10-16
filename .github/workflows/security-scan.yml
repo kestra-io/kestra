@@ -1,0 +1,32 @@
+name: Security scan
+
+on:
+  push:
+    branches:
+      - releases/*
+      - develop
+
+  pull_request:
+
+  workflow_dispatch:
+    inputs:
+      metadata:
+        description: 'Extra key=value pairs added to every finding, one per line'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+  packages: read
+
+jobs:
+  scan:
+    if: ${{ github.event.pull_request.draft != true }}
+    uses: kestra-io/actions/.github/workflows/kestra-security-scan.yml@main
+    with:
+      metadata: ${{ github.event.inputs.metadata }}
+    secrets: inherit

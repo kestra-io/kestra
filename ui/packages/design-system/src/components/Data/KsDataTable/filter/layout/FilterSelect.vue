@@ -62,7 +62,7 @@
                     class="date-filter-option"
                     :class="{active: local.dateFilterMode === opt.value}"
                     type="button"
-                    @click="local.dateFilterMode = opt.value"
+                    @click.stop="local.dateFilterMode = opt.value"
                 >
                     {{ opt.label }}
                 </button>

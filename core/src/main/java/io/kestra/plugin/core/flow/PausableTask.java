@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
@@ -53,6 +54,21 @@ public interface PausableTask {
      */
     default boolean isPausing(RunContext runContext, TaskRun taskRun) {
         return false;
+    }
+
+    /** Outputs to merge onto the task run once {@link #pauseDelay} scheduled {@code delay}, written from its date so they cannot drift from it. */
+    default Map<String, Object> pauseDelayOutputs(ExecutionDelay delay) {
+        return Map.of();
+    }
+
+    /** The decision recorded when the pause delay fires, or empty to resume the task run to the delay's state instead. */
+    default Optional<Decision> expiredDecision() {
+        return Optional.empty();
+    }
+
+    /** The state the whole execution should end in now that this task run terminated, or empty to let the execution carry on. */
+    default Optional<State.Type> executionLevelOutcome(RunContext runContext, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
+        return Optional.empty();
     }
 
     record Resumed(@Nullable String by, LocalDateTime on, State.Type to) {

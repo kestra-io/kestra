@@ -142,10 +142,10 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             subGraph.addEdge(subGraph.getTaskNode(), subGraph.getFinally(), new Relation());
         }
 
-        GraphUtils.switchCase(
+        GraphUtils.sequentialThenSwitchCase(
             subGraph,
+            ListUtils.emptyOnNull(this.onWait),
             Map.of(
-                "wait", ListUtils.emptyOnNull(this.onWait),
                 "approve", ListUtils.emptyOnNull(this.onApprove),
                 "deny", ListUtils.emptyOnNull(this.onDeny)
             ),

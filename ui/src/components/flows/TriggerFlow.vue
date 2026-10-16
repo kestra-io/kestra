@@ -7,9 +7,13 @@
                     :icon="PlayOutlineIcon"
                     :type="type"
                     :disabled="actionDisabled"
+                    :square="iconOnly"
+                    :aria-label="iconOnly ? actionLabel : undefined"
                     @click="runAction()"
                 >
-                    {{ actionLabel }}
+                    <template v-if="!iconOnly">
+                        {{ actionLabel }}
+                    </template>
                 </KsButton>
             </slot>
         </span>
@@ -101,6 +105,7 @@
     import {useFlowStore} from "../../stores/flow"
     import FlowRun, {type ReplaySubmitOptions} from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
     import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
     import type {FlowForExecution} from "@kestra-io/kestra-sdk"
@@ -114,6 +119,7 @@
         submit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
         lazy?: boolean
         renderLabels?: string[]
+        compact?: boolean
     }>(), {
         disabled: false,
         type: "primary",
@@ -121,9 +127,12 @@
         submit: null,
         lazy: false,
         renderLabels: undefined,
+        compact: false,
     })
 
     const {t} = useI18n({useScope: "global"})
+    const isMobile = useIsMobile()
+    const iconOnly = computed(() => props.compact && isMobile.value)
     const toast = useToast()
     const apiStore = useApiStore()
     const executionsStore = useExecutionsStore()

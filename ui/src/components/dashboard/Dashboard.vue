@@ -1,6 +1,10 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
+    <section v-if="isMobile && isFlow && canSelectDashboard" class="dashboard-selector" data-test="mobile-dashboard-selector">
+        <Dashboards @dashboard="selectDashboard" />
+    </section>
+
     <section v-if="isRouteSettled" id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
@@ -34,6 +38,9 @@
     import {processFlowYaml} from "./composables/useDashboards"
 
     import Header from "./components/Header.vue"
+    import Dashboards from "override/components/dashboard/Selector.vue"
+    import {useDashboardSelection} from "./composables/useDashboardSelection"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import Sections from "./sections/Sections.vue"
 
@@ -45,6 +52,10 @@
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
     useRestoreUrl()
+
+    const isMobile = useIsMobile()
+    const canSelectDashboard = computed(() => ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)))
+    const {selectDashboard} = useDashboardSelection()
 
     const dashboardFilter = useDashboardFilter()
     const flowDashboardFilter = useFlowDashboardFilter()
@@ -212,6 +223,11 @@
 .filterPadding {
     margin-top: 2rem;
     padding: 0 2rem;
+}
+
+.dashboard-selector {
+    display: flex;
+    padding: var(--ks-spacing-4) var(--ks-spacing-6) var(--ks-spacing-3);
 }
 
 .noMarginTop {

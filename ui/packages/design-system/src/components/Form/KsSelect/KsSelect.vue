@@ -281,6 +281,18 @@
         }
     }
 
+    @media (pointer: coarse) {
+        .kel-select .kel-select__wrapper {
+            min-height: 2.75rem;
+            font-size: 1rem;
+        }
+
+        .kel-select .kel-select__placeholder.is-transparent,
+        .kel-select .kel-select__input {
+            font-size: 1rem;
+        }
+    }
+
     .kel-select__popper {
         --kel-popper-border-radius: var(--ks-radius-base);
 

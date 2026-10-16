@@ -1,6 +1,6 @@
 <template>
     <ElTableColumn
-        v-bind="({...filteredProps(), ...$attrs} as ColumnProps)"
+        v-bind="({...filteredProps(), ...$attrs, className: resolvedClassName} as ColumnProps)"
     >
         <template v-if="$slots.default" #default="scope">
             <slot v-if="scope.$index !== -1" v-bind="scope" />
@@ -12,8 +12,10 @@
 </template>
 
 <script setup lang="ts">
+    import {computed, inject} from "vue"
     import {ElTableColumn, type TableColumnCtx, type TableColumnInstance, type TableProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import {MOBILE_COLUMNS_KEY, mobileColumnClass} from "../KsDataTable/mobileColumns"
 
     defineOptions({inheritAttrs: false})
 
@@ -52,6 +54,13 @@
     }>()
 
     const filteredProps = useFilteredProps(props)
+
+    const mobileColumns = inject(MOBILE_COLUMNS_KEY, undefined)
+
+    const resolvedClassName = computed(() => {
+        const mobileClass = mobileColumns?.value ? mobileColumnClass(mobileColumns.value, props.prop ?? props.columnKey) : undefined
+        return [props.className, mobileClass].filter(Boolean).join(" ") || undefined
+    })
 </script>
 
 <style lang="scss">

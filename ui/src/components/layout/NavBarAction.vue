@@ -33,14 +33,17 @@
         v-bind="{...$attrs, ...linkAttrs}"
         :tag="tag"
         :to="props.to"
+        :square="iconOnly"
+        :aria-label="iconOnly ? label : undefined"
         @click="onClick"
     >
-        <slot>{{ label }}</slot>
+        <slot v-if="!iconOnly">{{ label }}</slot>
     </KsButton>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, type Component} from "vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {useRouter, type RouteLocationRaw, RouterLink} from "vue-router"
     import {asItemKey, closeDropdownKey} from "./navBarActionsContext"
 
@@ -61,6 +64,9 @@
     const closeDropdown = inject(closeDropdownKey, undefined)
 
     const router = useRouter()
+    const isMobile = useIsMobile()
+
+    const iconOnly = computed(() => isMobile.value && !!props.icon && !!props.label)
 
     const tag = computed(() => props.to ? RouterLink : props.href ? "a" : "button")
 

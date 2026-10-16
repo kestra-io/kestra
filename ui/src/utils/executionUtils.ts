@@ -1,4 +1,5 @@
 import type {useClient} from "@kestra-io/kestra-sdk"
+import {State} from "@kestra-io/design-system"
 import {apiUrl} from "override/utils/route"
 import type {Execution} from "../stores/executions"
 
@@ -56,4 +57,21 @@ export function loopIterationsRoute(executionId: string | undefined, taskId?: st
             ...(taskId ? {"filters[taskId][EQUALS]": taskId} : {}),
         },
     }
+}
+
+type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+export function findFirstFailedTaskRun(execution: Execution): ExecutionTaskRun | undefined {
+    const failed = (execution.taskRunList ?? []).filter((taskRun) => State.isFailed(taskRun.state?.current))
+    const parentIds = new Set(failed.map((taskRun) => taskRun.parentTaskRunId))
+    return failed.find((taskRun) => !parentIds.has(taskRun.id))
+}
+
+export function taskRunPath(execution: Execution, taskRun: ExecutionTaskRun): string[] {
+    const byId = new Map((execution.taskRunList ?? []).map((candidate) => [candidate.id, candidate]))
+    const path: string[] = []
+    for (let current: ExecutionTaskRun | undefined = taskRun; current; current = current.parentTaskRunId ? byId.get(current.parentTaskRunId) : undefined) {
+        path.unshift(current.value ? `${current.taskId} ${current.value}` : current.taskId)
+    }
+    return path
 }

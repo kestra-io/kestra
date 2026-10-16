@@ -18,6 +18,7 @@ const meta: Meta<typeof KsExecutionStatus> = {
         title: {control: "text"},
         clickable: {control: "boolean"},
         disabled: {control: "boolean"},
+        dot: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsExecutionStatus displays an execution status badge with optional icon, color-coded by status."}},
@@ -149,6 +150,29 @@ export const Disabled: Story = {
         template: `
             <div style="padding:24px;display:flex;flex-wrap:wrap;gap:8px">
                 <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon glow clickable disabled />
+            </div>
+        `,
+    }),
+}
+
+/** Dot – collapses the badge to a coloured dot for dense layouts such as mobile cards; the label stays available to screen readers */
+export const Dot: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup: () => ({statuses}),
+        template: `
+            <div style="display: flex; gap: 12px; padding: 16px; align-items: center; flex-wrap: wrap;">
+                <KsExecutionStatus v-for="status in statuses" :key="status" :status="status" dot />
             </div>
         `,
     }),

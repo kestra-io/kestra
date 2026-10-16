@@ -78,7 +78,14 @@ const config: PlaywrightTestConfig = {
         },
         {
             name: "chromium",
+            testIgnore: /\/mobile-[^/]*\.spec\.ts$/,
             use: {...devices["Desktop Chrome"], storageState: STORAGE_STATE},
+            dependencies: ["setup"],
+        },
+        {
+            name: "mobile-iphone",
+            testMatch: /\/mobile-[^/]*\.spec\.ts$/,
+            use: {...devices["iPhone 13"], defaultBrowserType: "chromium", storageState: STORAGE_STATE},
             dependencies: ["setup"],
         },
     ],

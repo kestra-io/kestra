@@ -7,6 +7,12 @@ export type LevelKey = typeof LOG_LEVELS[number];
 export const STRUCTURED_PARSE_LIMIT = 100_000
 export const COLLAPSE_THRESHOLD = 3
 
+const BACKTICKS_REGEX = /`([^`]*)`/g
+
+export function stripBackticks(message: string): string {
+    return message.replace(BACKTICKS_REGEX, "$1")
+}
+
 export function detectStructured(message: string | undefined | null): boolean {
     if (!message) {
         return false

@@ -36,6 +36,7 @@
 <style scoped lang="scss">
 .empty-template {
     min-height: calc(100vh - 174px);
+    min-height: calc(100dvh - 174px);
     display: flex;
     flex-direction: column;
     align-items: center;

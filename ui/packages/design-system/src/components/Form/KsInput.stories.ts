@@ -131,3 +131,28 @@ export const Disabled: Story = {
         template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" disabled /></div>",
     }),
 }
+
+/** Mobile – on touch screens (`pointer: coarse`) the field is 44px high with 16px text, which stops iOS from zooming on focus */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsInput},
+        setup() { return {email: ref(""), password: ref("")} },
+        template: `
+            <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+                <ks-input v-model="email" placeholder="Email" />
+                <ks-input v-model="password" placeholder="Password" show-password />
+                <ks-input v-model="email" type="textarea" placeholder="Notes" />
+            </div>
+        `,
+    }),
+}

@@ -1413,9 +1413,12 @@ export type LoopRun = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    rootExecutionId?: string | null;
 };
 
 export type LoopRunParent = {
+    executionId?: string | null;
+    taskId?: string | null;
     index?: number;
     key?: string | null;
     value?: string;
@@ -2686,6 +2689,7 @@ export type LoopRunWritable = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    rootExecutionId?: string | null;
 };
 
 /**

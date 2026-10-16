@@ -831,13 +831,13 @@ public class ExecutorService {
 
         this.addWorkerTaskResults(executor, list);
 
-        executor = this.handleApprovalBehavior(executor, list);
+        executor = this.handleExecutionLevelOutcome(executor, list);
 
         boolean pausedThisPass = list.stream().anyMatch(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED);
         return this.handlePauseState(executor, pausedThisPass);
     }
 
-    private ExecutorContext handleApprovalBehavior(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws QueueException, IllegalVariableEvaluationException, InternalException {
+    private ExecutorContext handleExecutionLevelOutcome(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws QueueException, IllegalVariableEvaluationException, InternalException {
         for (WorkerTaskResult workerTaskResult : workerTaskResults) {
             if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
                 break;
@@ -849,19 +849,19 @@ public class ExecutorService {
             }
 
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
-            if (!(task instanceof Approval approval)) {
+            if (!(task instanceof PausableTask pausableTask)) {
                 continue;
             }
 
             RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-            Optional<State.Type> outcome = approval.executionLevelOutcome(runContext, executor.getExecution(), taskRun);
+            Optional<State.Type> outcome = pausableTask.executionLevelOutcome(runContext, executor.getExecution(), taskRun);
             if (outcome.isEmpty()) {
                 continue;
             }
 
             if (outcome.get() == State.Type.KILLED) {
                 Execution killing = executionService.kill(executor.getExecution(), executor.getFlow(), Optional.empty());
-                executor.withExecution(killing, "handleApprovalBehavior");
+                executor.withExecution(killing, "handleExecutionLevelOutcome");
                 killQueue.emit(
                     ExecutionKilledExecution.builder()
                         .state(ExecutionKilled.State.REQUESTED)
@@ -873,7 +873,7 @@ public class ExecutorService {
             } else {
                 TaskRun current = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
                 Execution terminated = ExecutionTerminator.terminate(executor.getExecution(), current, outcome.get());
-                executor.withExecution(terminated, "handleApprovalBehavior");
+                executor.withExecution(terminated, "handleExecutionLevelOutcome");
             }
         }
 
@@ -1192,12 +1192,10 @@ public class ExecutorService {
                     RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                     Optional<ExecutionDelay> delay = pausableTask.pauseDelay(workerTaskResult.getTaskRun(), runContext);
 
-                    // Approval's `due` output is written from this same date, not re-rendered later,
-                    // so it can't drift from the delay actually scheduled.
-                    if (delay.isPresent() && task instanceof Approval) {
+                    Map<String, Object> delayOutputs = delay.map(pausableTask::pauseDelayOutputs).orElse(Map.of());
+                    if (!delayOutputs.isEmpty()) {
                         Map<String, Object> current = taskOutputService.getOutputs(workerTaskResult.getTaskRun());
-                        Map<String, Object> merged = MapUtils.merge(current, Map.of("due", delay.get().getDate().toString()));
-                        taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), merged);
+                        taskOutputService.saveOutputs(workerTaskResult.getTaskRun(), MapUtils.merge(current, delayOutputs));
                     }
 
                     return delay.orElse(null);

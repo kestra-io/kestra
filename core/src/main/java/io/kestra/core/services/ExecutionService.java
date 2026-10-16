@@ -749,6 +749,9 @@ public class ExecutionService {
         Map<String, Object> merged = MapUtils.merge(priorOutputs, taskOutputService.getOutputs(decidedTaskRun));
         taskOutputService.saveOutputs(decidedTaskRun, merged);
 
+        if (decidedExecution.getKind() == ExecutionKind.LOOP) {
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(decidedExecution.getLoopRun(), decidedExecution.getId(), decidedExecution.getState().getCurrent(), null, null));
+        }
         return decidedExecution;
     }
 

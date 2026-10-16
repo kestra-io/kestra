@@ -291,7 +291,8 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         };
     }
 
-    /** The execution-level target state for a terminal decided task run (SUCCEED/CANCEL/KILL only), recomputing the branch's own pre-{@link #applyBehavior} state so a genuine failure is never mistaken for one. */
+    /** SUCCEED/CANCEL/KILL only, recomputing the branch's own pre-{@link #applyBehavior} state so a genuine failure is never mistaken for one. */
+    @Override
     public Optional<State.Type> executionLevelOutcome(RunContext runContext, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
         Decision.Type decision = this.decisionType(runContext);
         if (decision == null) {
@@ -409,7 +410,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             return Optional.empty();
         }
 
-        // state is unused for Approval: ExecutionDelayProcessor calls decide(EXPIRED) instead of markAs.
+        // state is unused for Approval: the delay records expiredDecision() instead of resuming the task run.
         return Optional.of(ExecutionDelay.builder()
             .taskRunId(taskRun.getId())
             .executionId(taskRun.getExecutionId())
@@ -417,6 +418,16 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .state(State.Type.FAILED)
             .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
             .build());
+    }
+
+    @Override
+    public Map<String, Object> pauseDelayOutputs(ExecutionDelay delay) {
+        return Map.of("due", delay.getDate().toString());
+    }
+
+    @Override
+    public Optional<Decision> expiredDecision() {
+        return Optional.of(new Decision(Decision.Type.EXPIRED, null));
     }
 
     @Builder

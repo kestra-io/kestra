@@ -19,7 +19,6 @@ import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
-import io.kestra.plugin.core.flow.Approval;
 import io.kestra.plugin.core.flow.PausableTask;
 
 import io.kestra.executor.handler.LoopExecutionEventMessageHandler;
@@ -135,12 +134,13 @@ public class ExecutionDelayProcessor {
                         FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                         Task task = flow.findTaskByTaskId(pausedTaskRun.get().taskRun().getTaskId());
 
-                        Execution markAsExecution = task instanceof Approval
+                        Optional<PausableTask.Decision> expiredDecision = task instanceof PausableTask pausableTask ? pausableTask.expiredDecision() : Optional.empty();
+                        Execution markAsExecution = expiredDecision.isPresent()
                             ? executionService.decide(
                                 pausedTaskRun.get().execution(),
                                 flow,
                                 executionDelay.getTaskRunId(),
-                                new PausableTask.Decision(PausableTask.Decision.Type.EXPIRED, null),
+                                expiredDecision.get(),
                                 null,
                                 null
                             )
@@ -151,7 +151,7 @@ public class ExecutionDelayProcessor {
                                 executionDelay.getState()
                             );
 
-                        if (!(task instanceof Approval) && markAsExecution.getKind() == ExecutionKind.LOOP) {
+                        if (expiredDecision.isEmpty() && markAsExecution.getKind() == ExecutionKind.LOOP) {
                             // notify the parent execution
                             loopExecutionEventQueue.emit(new LoopExecutionEvent(markAsExecution.getLoopRun(), markAsExecution.getId(), markAsExecution.getState().getCurrent(), null, null));
                         }

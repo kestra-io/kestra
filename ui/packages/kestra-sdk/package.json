@@ -43,8 +43,9 @@
     "@hey-api/openapi-ts": "^0.99.0",
     "@kestra-io/hey-api-plugin": "*",
     "@types/node": "^26.6.5",
+    "stylelint": "^17.16.0",
     "tsdown": "^0.23.1",
-    "typescript": "6",
+    "typescript": "^6",
     "unrun": "^0.3.1"
   }
 }

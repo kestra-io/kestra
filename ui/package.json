@@ -101,6 +101,7 @@
         "@vue/compiler-sfc": "^3.5.44",
         "@vue/test-utils": "^2.5.1",
         "eslint": "^10.12.0",
+        "eslint-plugin-storybook": "10.6.2",
         "eslint-plugin-vue": "^10.11.1",
         "jsdom": "^30.1.3",
         "lint-staged": "^17.6.0",
@@ -114,12 +115,11 @@
         "storybook": "^10.6.2",
         "storybook-vue3-router": "^7.0.0",
         "stylelint": "^17.16.0",
-        "typescript": "6",
+        "typescript": "^6",
         "vite": "^8.3.4",
         "vite-plugin-pwa": "^2.0.0",
         "vitest": "^5.0.5",
-        "vue-tsc": "^3.3.13",
-        "eslint-plugin-storybook": "10.6.2"
+        "vue-tsc": "^3.3.13"
     },
     "optionalDependencies": {
         "@esbuild/darwin-arm64": "^0.28.2",
@@ -157,20 +157,20 @@
         ]
     },
     "allowScripts": {
-        "@google/genai@2.11.0": true,
-        "@parcel/watcher@2.5.6": true,
+        "@google/genai@2.30.0": true,
+        "@parcel/watcher@2.6.0": true,
         "@scarf/scarf@1.4.0": true,
         "@tree-sitter-grammars/tree-sitter-yaml@0.7.1": true,
         "tree-sitter@0.22.4": true,
         "tree-sitter@0.21.1": true,
         "vue-demi@0.14.10": true,
-        "core-js@3.49.0": true,
+        "core-js@3.50.0": true,
         "core-js-pure@3.49.0": true,
         "es5-ext@0.10.64": true,
-        "esbuild@0.28.1": true,
+        "esbuild@0.28.2": true,
         "fsevents@2.3.2": true,
         "fsevents@2.3.3": true,
-        "protobufjs@7.6.5": true,
+        "protobufjs@7.6.6": true,
         "tree-sitter-json@0.24.8": true
     }
 }

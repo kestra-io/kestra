@@ -1500,8 +1500,12 @@ public class JdbcExecutor implements ExecutorInterface {
                         Execution newExecution = executionService.replay(executor.getExecution(), findFlowOrThrow(executor.getExecution()), null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
-                    // Handle WaitFor
-                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
+                    // Handle WaitFor — same guard as retries: the next loop iteration must never revive a killing or terminated execution
+                    else if (
+                        executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)
+                            && pair.getLeft().getState().getCurrent() != State.Type.KILLING
+                            && !pair.getLeft().getState().isTerminated()
+                    ) {
                         Execution execution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");
                     }

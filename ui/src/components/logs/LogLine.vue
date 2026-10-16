@@ -2,7 +2,7 @@
     <div
         v-if="filtered"
         class="line"
-        :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor}]"
+        :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor, dimmed}]"
         :style="rowStyle"
     >
         <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
@@ -66,6 +66,7 @@
     // Props
     const props = defineProps<{
         cursor?: boolean,
+        dimmed?: boolean,
         log: Partial<Log>,
         filter?: string,
         level?: LevelKey,
@@ -229,6 +230,10 @@ div.line {
 
     &.selected {
         background: var(--ks-bg-tag-hover);
+    }
+
+    &.dimmed {
+        opacity: 0.4;
     }
 
     &[class*="-0"] {

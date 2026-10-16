@@ -46,4 +46,12 @@ public class MysqlLogDataStore extends AbstractJdbcLogDataStore implements Appli
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
         return MysqlRepositoryUtils.formatDateField(dateField, groupType);
     }
+
+    // The `key` column defaults to the case-insensitive utf8mb4_0900_ai_ci collation, which orders FriendlyId keys
+    // differently from LogPosition's case-sensitive String.compareTo; a binary collation keeps the keyset seek in
+    // step with the offset the shipper persists.
+    @Override
+    protected Field<String> keySeekField() {
+        return KEY_FIELD.collate("utf8mb4_bin");
+    }
 }

@@ -260,6 +260,9 @@ kestra:
       WEBSERVER:
         - kestra.queue.message.lag.count
     prefix: kestra
+    query:
+      enabled: false
+      interval: 1m
 
   traces:
     root: DISABLED

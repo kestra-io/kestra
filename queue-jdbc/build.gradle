@@ -6,4 +6,5 @@ dependencies {
     testAnnotationProcessor project(":processor")
     implementation project(':jdbc')
     implementation("io.micronaut.sql:micronaut-jooq")
+    implementation("io.micronaut.micrometer:micronaut-micrometer-core")
 }

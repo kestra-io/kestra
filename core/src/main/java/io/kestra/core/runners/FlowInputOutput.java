@@ -19,7 +19,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.encryption.EncryptionConfig;
@@ -724,17 +723,7 @@ public class FlowInputOutput {
     }
 
     private List<Map<String, Object>> parseTable(Execution execution, TableInput table, Object current) throws Exception {
-        Object decoded = current;
-        if (current instanceof String json) {
-            try {
-                decoded = JacksonMapper.toObject(json);
-            } catch (JsonProcessingException e) {
-                decoded = null;
-            }
-        }
-        if (!(decoded instanceof List<?> rows)) {
-            throw new IllegalArgumentException("expected a list of objects");
-        }
+        List<?> rows = current instanceof List<?> list ? list : JacksonMapper.toList(current.toString());
 
         Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
         List<Map<String, Object>> parsed = new ArrayList<>();

@@ -1466,10 +1466,7 @@ class FlowInputOutputTest {
                 List.of(disksInput(null, null)), null, DEFAULT_TEST_EXECUTION, Map.of("disks", value)
             );
 
-            assertThat(values.getFirst().exceptions())
-                .as(value)
-                .extracting(Throwable::getMessage)
-                .containsExactly("Invalid value for input `disks`. Cause: expected a list of objects");
+            assertThat(values.getFirst().exceptions()).as(value).hasSize(1);
         }
     }
 

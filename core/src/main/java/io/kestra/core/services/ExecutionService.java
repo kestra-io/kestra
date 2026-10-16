@@ -44,10 +44,10 @@ import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
-import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
-import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
@@ -754,9 +754,7 @@ public class ExecutionService {
 
     private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, Approval.Decision decision) throws IllegalVariableEvaluationException {
         RunContext runContext = runContextFactory.of(flow, approval, execution, taskRun);
-        // the executor reuses this task instance across every execution of the flow, so the property's
-        // render cache must be skipped or a later execution would reuse the first execution's value.
-        Approval.CommentRequired commentRequired = runContext.render(approval.getCommentRequired().skipCache())
+        Approval.CommentRequired commentRequired = runContext.render(approval.getCommentRequired())
             .as(Approval.CommentRequired.class)
             .orElse(Approval.CommentRequired.NEVER);
 

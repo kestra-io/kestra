@@ -289,9 +289,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         Decision.Type decision = this.decisionType(runContext);
 
         if (decision == null) {
-            // the executor reuses this task instance across every execution of the flow, so the property's
-            // render cache must be skipped or a later execution would reuse the first execution's value.
-            boolean autoApprove = runContext.render(this.autoApprove.skipCache()).as(Boolean.class).orElse(false);
+            boolean autoApprove = runContext.render(this.autoApprove).as(Boolean.class).orElse(false);
             if (autoApprove) {
                 return Output.builder().url(url).decision(Decision.Type.APPROVED).auto(true).build();
             }

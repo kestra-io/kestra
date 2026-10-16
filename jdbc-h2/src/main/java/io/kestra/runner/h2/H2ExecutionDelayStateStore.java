@@ -3,7 +3,12 @@ package io.kestra.runner.h2;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.Temporal;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
+import org.jooq.Condition;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.jdbc.runner.AbstractJdbcExecutionDelayStateStore;
@@ -16,13 +21,21 @@ import jakarta.inject.Singleton;
 @Singleton
 @H2RepositoryEnabled
 public class H2ExecutionDelayStateStore extends AbstractJdbcExecutionDelayStateStore {
+    // Matches KestraDateTimeModule's INSTANT_WRITER, whose digits the generated "date" column stores.
+    private static final DateTimeFormatter UTC_WALL_CLOCK = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss.SSSSSS", Locale.ROOT);
+
     public H2ExecutionDelayStateStore(@Named("executordelayed") H2Repository<ExecutionDelay> repository) {
         super(repository);
     }
 
     @Override
-    protected Temporal getNow(Instant now) {
-        // assumes the DDL stores UTC wall-clock digits after the offset-strip fix
-        return LocalDateTime.ofInstant(now, ZoneOffset.UTC);
+    protected Condition expiredCondition(Instant now) {
+        // Bind the cutoff as literal UTC digits and let H2 cast them in SQL: jOOQ would otherwise
+        // turn a LocalDateTime into a Timestamp via Timestamp.valueOf, which reads the JVM default
+        // zone, and H2 would re-render that instant in the session zone — whenever the two zones
+        // differ the cutoff shifts and delays misfire. The stored column holds zone-free digits,
+        // so comparing digits to digits is correct in every zone combination.
+        String cutoff = UTC_WALL_CLOCK.format(LocalDateTime.ofInstant(now, ZoneOffset.UTC));
+        return DATE_FIELD.lessOrEqual(DSL.cast(DSL.val(cutoff), SQLDataType.LOCALDATETIME));
     }
 }

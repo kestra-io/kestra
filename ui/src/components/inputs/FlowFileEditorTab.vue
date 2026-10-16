@@ -38,7 +38,6 @@
                 v-bind="editorBindings"
                 id="flowFileEditorTab"
                 ref="editorRefElement"
-                class="editor"
                 :modelValue="previewSource ?? source"
                 :original="previewSource ? source : undefined"
                 :schemaType="flow ? 'flow': undefined"
@@ -453,10 +452,6 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-    }
-
-    .editor {
-        flex: 1;
     }
 
     .image-preview {

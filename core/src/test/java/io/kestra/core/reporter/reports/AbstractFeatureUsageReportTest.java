@@ -108,7 +108,7 @@ public abstract class AbstractFeatureUsageReportTest {
             )
             .checks(
                 List.of(
-                    Check.builder().when("{{ true }}").message("ok").behavior(Check.Behavior.FAIL_EXECUTION).build()
+                    Check.builder().passIf("{{ true }}").message("ok").behavior(Check.Behavior.FAIL_EXECUTION).build()
                 )
             )
             .quotas(

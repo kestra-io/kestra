@@ -1,16 +1,20 @@
-import path from "path"
+// This file has been automatically migrated to valid ESM format by Storybook.
+import path, { dirname } from "path";
 import {fileURLToPath} from "url"
 import {mergeConfig, type Alias} from "vite"
 import type {StorybookConfig} from "@storybook/vue3-vite"
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const config: StorybookConfig = {
     stories: [
         "../src/**/*.stories.@(ts|tsx)",
         "../tests/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     ],
-    addons: ["@storybook/addon-themes", "@storybook/addon-vitest"],
+    addons: [getAbsolutePath("@storybook/addon-themes"), getAbsolutePath("@storybook/addon-vitest")],
     framework: {
-        name: "@storybook/vue3-vite",
+        name: getAbsolutePath("@storybook/vue3-vite"),
         options: {
             // Storybook resolves this tsconfig from the git root, not from this file
             docgen: {
@@ -53,3 +57,7 @@ const config: StorybookConfig = {
     },
 }
 export default config
+
+function getAbsolutePath(value: string): any {
+    return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
+}

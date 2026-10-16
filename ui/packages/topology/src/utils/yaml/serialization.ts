@@ -1,12 +1,16 @@
 // Plain JavaScript objects to and from YAML text, via js-yaml.
 
-import {dump, load} from "js-yaml"
+import {CORE_SCHEMA, dump, load, mergeTag, timestampTag} from "js-yaml"
+
+// js-yaml 4 defaults: merge keys on load, YAML 1.1 words (yes/on) left unquoted on dump
+const LOAD_SCHEMA = CORE_SCHEMA.withTags(mergeTag)
+const DUMP_SCHEMA = CORE_SCHEMA.withTags(timestampTag)
 
 export function parse<T = unknown>(item?: string, throwIfError = true): T | undefined {
     if (item === undefined) return undefined
 
     try {
-        return load(item) as T
+        return load(item, {schema: LOAD_SCHEMA}) as T
     } catch (e) {
         if (throwIfError) throw e
         return undefined
@@ -51,8 +55,8 @@ export function stringify(item: unknown) {
 
     const yamlContent = dump(transform(value), {
         lineWidth: -1,
-        noCompatMode: true,
-        quotingType: "\"",
+        schema: DUMP_SCHEMA,
+        quoteStyle: "double",
     })
 
     return preserveCronQuotes(yamlContent)
@@ -102,7 +106,7 @@ function transform(value: unknown): unknown {
             }
 
             return accumulator
-        }, Object.create({}))
+        }, {})
     }
 
     return value

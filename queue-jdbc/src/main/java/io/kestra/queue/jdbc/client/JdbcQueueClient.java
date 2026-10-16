@@ -86,7 +86,7 @@ public class JdbcQueueClient {
 
     public void publish(String queue, @Nullable String routingKey, String key, String value) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration ->
+            dslContextWrapper.joinTransactionIfPresent(configuration ->
             {
                 DSLContext context = DSL.using(configuration);
 
@@ -138,11 +138,9 @@ public class JdbcQueueClient {
 
     public void publish(List<PublishedMessage> messages) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration ->
+            dslContextWrapper.joinTransactionIfPresent(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
-
-                InsertValuesStepN<Record> insert = context
+                InsertValuesStepN<Record> insert = DSL.using(configuration)
                     .insertInto(queueTable)
                     .columns(COLUMNS);
 

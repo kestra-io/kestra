@@ -483,7 +483,7 @@ class FlowServiceTest {
     void shouldReturnCheckWhenConditionEvaluatesFalse() {
         // Given
         Check failingCheck = Check.builder()
-            .when("{{ false }}")
+            .passIf("{{ false }}")
             .message("fail")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -504,7 +504,7 @@ class FlowServiceTest {
     void shouldReturnEmptyListWhenConditionEvaluatesTrue() {
         // Given
         Check passingCheck = Check.builder()
-            .when("{{ true }}")
+            .passIf("{{ true }}")
             .message("pass")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -524,7 +524,7 @@ class FlowServiceTest {
     void shouldReturnCheckWithErrorMessageWhenExceptionThrown() {
         // Given
         Check check = Check.builder()
-            .when("{{ invalidFunction() }}")
+            .passIf("{{ invalidFunction() }}")
             .message("ignored")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -547,9 +547,9 @@ class FlowServiceTest {
     @Test
     void shouldHandleMultipleChecksWithMixedResults() {
         // Given
-        Check passCheck = Check.builder().when("{{ true }}").message("pass").build();
-        Check failCheck = Check.builder().when("{{ false }}").message("fail").build();
-        Check exceptionCheck = Check.builder().when("{{ invalidFunction }}").message("exception").build();
+        Check passCheck = Check.builder().passIf("{{ true }}").message("pass").build();
+        Check failCheck = Check.builder().passIf("{{ false }}").message("fail").build();
+        Check exceptionCheck = Check.builder().passIf("{{ invalidFunction }}").message("exception").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck, failCheck, exceptionCheck));
@@ -573,7 +573,7 @@ class FlowServiceTest {
     @Test
     void shouldAcceptExpressionWithFlowWhenRenderingChecks() {
         // Given
-        Check passCheck = Check.builder().when("{{ flow.id == 'test' }}").message("pass").build();
+        Check passCheck = Check.builder().passIf("{{ flow.id == 'test' }}").message("pass").build();
 
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck));
@@ -591,7 +591,7 @@ class FlowServiceTest {
     void shouldResolveNestedFormInputPathWhenRenderingChecks() {
         // Given a check referencing a FORM child via its nested path, e.g. {{ inputs.environment.region }}
         Check check = Check.builder()
-            .when("{{ inputs.environment.region == 'EU' }}")
+            .passIf("{{ inputs.environment.region == 'EU' }}")
             .message("region must be EU")
             .behavior(Check.Behavior.FAIL_EXECUTION)
             .build();
@@ -612,6 +612,101 @@ class FlowServiceTest {
         // And a flat-dotted map (the un-nested form) cannot resolve the path — proving the nesting is required.
         List<Check> flatDotted = flowService.getFailedChecks(flow, Map.of("environment.region", "EU"));
         assertThat(flatDotted).isNotEmpty();
+    }
+
+    @Test
+    void shouldRejectCheckWithMultipleConditionNames() {
+        // Given a check that sets the canonical property and a deprecated alias
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            checks:
+              - passIf: "{{ true }}"
+                when: "{{ false }}"
+                message: conflicting
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        // Then
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::toLine)
+            .anyMatch(line -> line.contains("A check must set only one of 'passIf', 'when' and 'condition'"));
+    }
+
+    @Test
+    void shouldRejectCheckWithoutCondition() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            checks:
+              - message: missing
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::toLine)
+            .anyMatch(line -> line.contains("must not be null"));
+    }
+
+    @Test
+    void shouldRejectCheckWithEmptyCondition() {
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            checks:
+              - passIf: ""
+                message: empty
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        assertThat(results.getFirst().getErrors())
+            .extracting(ValidationError::toLine)
+            .anyMatch(line -> line.contains("must not be empty"));
+    }
+
+    @Test
+    void shouldKeepDeprecatedCheckPropertyInSavedSource() throws FlowProcessingException, QueueException {
+        // Given a flow whose source still uses the deprecated 'when' property
+        String source = """
+            id: check-source
+            namespace: io.kestra.unittest
+            tasks:
+              - id: test
+                type: io.kestra.plugin.core.debug.Return
+                format: test
+            checks:
+              - when: "{{ true }}"
+                message: ok
+            """;
+
+        // When
+        flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        // Then the stored source is left untouched, and reading the flow back resolves the alias
+        FlowWithSource stored = flowRepository
+            .findByIdWithSource(TenantService.MAIN_TENANT, TEST_NAMESPACE, "check-source", Optional.empty())
+            .orElseThrow();
+        assertThat(stored.getSource()).contains("when: \"{{ true }}\"");
+        assertThat(stored.getSource()).doesNotContain("passIf");
+        assertThat(stored.getChecks())
+            .singleElement()
+            .satisfies(check -> assertThat(check.getPassIf()).isEqualTo("{{ true }}"));
     }
 
     @Test

@@ -98,6 +98,7 @@
             :parentPath="modalTarget.parentPath"
             :refPath="modalTarget.refPath"
             :blockSchemaPath="modalTarget.blockSchemaPath"
+            :editedPath="modalPath"
             :crumbs="modalCrumbs"
             :creating="modalTarget.creating"
             @update:task="onModalTaskEdited"
@@ -279,6 +280,7 @@
 
 <script setup lang="ts">
     import {nextTick, onBeforeUnmount, onMounted, ref, inject, provide, watch, computed} from "vue"
+    import {useShownValidationErrors} from "../no-code/utils/useFieldValidationErrors"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
@@ -965,8 +967,10 @@
         pushModalTarget({parentPath, blockSchemaPath, refPath})
     }
 
+    const shownValidationErrors = useShownValidationErrors()
+
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+        groupValidationIssuesByTask(shownValidationErrors.value, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({

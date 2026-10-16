@@ -1,12 +1,12 @@
 <template>
-    <div class="d-flex docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
+    <div class="docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
         <div
             v-if="mobileMenuOpen && $slots.menu"
             class="mobile-backdrop"
             @click="mobileMenuOpen = false"
         />
 
-        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar d-flex flex-column gap-3">
+        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar">
             <KsButton
                 v-if="isPluginsRoute"
                 :class="['mobile-close-toggle']"
@@ -73,11 +73,18 @@
 <style scoped lang="scss">
     @use '../../styles/responsive' as *;
 
+    .docs-layout-container {
+        display: flex;
+    }
+
     .docs-layout-container.full-height {
         min-height: 0;
     }
 
     .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
         background: var(--ks-bg-surface);
         padding: 2rem;
         height: 100%;

@@ -26,6 +26,10 @@ public class Constant extends AbstractRetry {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Schema(
+        title = "The retry type.",
+        description = "Fixed to `constant`, selecting a retry policy with a fixed delay between attempts."
+    )
     protected String type = "constant";
 
     @NotNull

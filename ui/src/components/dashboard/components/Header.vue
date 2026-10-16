@@ -16,7 +16,7 @@
                     <KsIcon size="sm" class="leading">
                         <ChartLineVariant />
                     </KsIcon>
-                    <span class="text-truncate">{{ routeInfo.title }}</span>
+                    <KsText truncated>{{ routeInfo.title }}</KsText>
                     <KsIcon size="sm" class="chevron">
                         <ChevronDown />
                     </KsIcon>

@@ -72,7 +72,7 @@ public class PauseTest {
         Pause pause = (Pause) flow.getTasks().getFirst();
 
         assertThat(pause.resumeInputs()).extracting(Input::getId).containsExactly("reason");
-        assertThat(pause.resumeOutputs(Map.of("reason", "ok"), Pause.Resumed.now(), null))
+        assertThat(pause.resumeOutputs(Map.of("reason", "ok"), PausableTask.Resumed.now(), null))
             .containsEntry("inputs", Map.of("reason", "ok"))
             .containsEntry("onResume", Map.of("reason", "ok"));
     }
@@ -253,7 +253,7 @@ public class PauseTest {
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
             assertThat(execution.getTaskRunList()).hasSize(1);
 
-            Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, Map.of("reason", "approved"), Pause.Resumed.now());
+            Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, Map.of("reason", "approved"), PausableTask.Resumed.now());
 
             // the 'sleep' task outlives the PT1S pauseDuration, so the leftover delay expires while running
             execution = runnerUtils.emitAndAwaitExecution(
@@ -372,7 +372,7 @@ public class PauseTest {
                 flow,
                 Flux.just(part1, part2, part3)
             ).block();
-            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, resumeOutputs, Pause.Resumed.now());
+            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, resumeOutputs, PausableTask.Resumed.now());
 
             execution = runnerUtils.emitAndAwaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
@@ -410,7 +410,7 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, Pause.Resumed.now());
+            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, PausableTask.Resumed.now());
 
             execution = runnerUtils.emitAndAwaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,

@@ -722,12 +722,12 @@ public class ExecutionService {
     /**
      * Resumes an Approval task run with a decision; unlike {@link #resume}, the caller targets a specific task run since an execution can have several Approvals paused at once.
      */
-    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, Approval.Decision decision, @Nullable Map<String, Object> inputs) throws Exception {
+    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs) throws Exception {
         return this.decide(execution, flow, taskRunId, decision, inputs, null);
     }
 
     /** {@code resumed} supplies the reviewer identity; its target state is ignored since a decided Approval always resumes RUNNING. */
-    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, Approval.Decision decision, @Nullable Map<String, Object> inputs, @Nullable Pause.Resumed resumed) throws Exception {
+    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed) throws Exception {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
         if (!(flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval)) {
@@ -741,7 +741,7 @@ public class ExecutionService {
 
         this.validateDecisionComment(flowWithSource, approval, execution, taskRun, decision);
 
-        Pause.Resumed _resumed = resumed != null ? resumed : Pause.Resumed.now(State.Type.RUNNING);
+        PausableTask.Resumed _resumed = resumed != null ? resumed : PausableTask.Resumed.now(State.Type.RUNNING);
         Execution decidedExecution = this.markAs(execution, flowWithSource, taskRunId, State.Type.RUNNING, inputs, _resumed, decision);
 
         // markAs replaces the outputs wholesale; restore creation-time fields (e.g. 'url') that resumeOutputs() doesn't know about.
@@ -752,16 +752,16 @@ public class ExecutionService {
         return decidedExecution;
     }
 
-    private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, Approval.Decision decision) throws IllegalVariableEvaluationException {
+    private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, PausableTask.Decision decision) throws IllegalVariableEvaluationException {
         RunContext runContext = runContextFactory.of(flow, approval, execution, taskRun);
         Approval.CommentRequired commentRequired = runContext.render(approval.getCommentRequired())
             .as(Approval.CommentRequired.class)
             .orElse(Approval.CommentRequired.NEVER);
 
         boolean required = switch (commentRequired) {
-            case ALWAYS -> decision.type() != Approval.Decision.Type.EXPIRED;
-            case ON_APPROVE -> decision.type() == Approval.Decision.Type.APPROVED;
-            case ON_DENY -> decision.type() == Approval.Decision.Type.DENIED;
+            case ALWAYS -> decision.type() != PausableTask.Decision.Type.EXPIRED;
+            case ON_APPROVE -> decision.type() == PausableTask.Decision.Type.APPROVED;
+            case ON_DENY -> decision.type() == PausableTask.Decision.Type.DENIED;
             case NEVER -> false;
         };
 
@@ -771,12 +771,12 @@ public class ExecutionService {
     }
 
     private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs,
-        @Nullable Pause.Resumed resumed) throws Exception {
+        @Nullable PausableTask.Resumed resumed) throws Exception {
         return this.markAs(execution, flow, taskRunId, newState, onResumeInputs, resumed, null);
     }
 
     private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs,
-        @Nullable Pause.Resumed resumed, @Nullable Approval.Decision decision) throws Exception {
+        @Nullable PausableTask.Resumed resumed, @Nullable PausableTask.Decision decision) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -797,7 +797,7 @@ public class ExecutionService {
                 State.Type targetState = newState;
                 if (task instanceof PausableTask pausableTask) {
                     State.Type terminalState = newState == State.Type.RUNNING ? State.Type.SUCCESS : newState;
-                    Pause.Resumed _resumed = resumed != null ? resumed : Pause.Resumed.now(terminalState);
+                    PausableTask.Resumed _resumed = resumed != null ? resumed : PausableTask.Resumed.now(terminalState);
                     Map<String, Object> outputs = pausableTask.resumeOutputs(onResumeInputs, _resumed, decision);
                     taskOutputService.saveOutputs(originalTaskRun, outputs);
 
@@ -954,7 +954,7 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(Execution execution, FlowInterface flow, State.Type newState, Pause.Resumed resumed) throws Exception {
+    public Execution resume(Execution execution, FlowInterface flow, State.Type newState, PausableTask.Resumed resumed) throws Exception {
         return this.resume(execution, flow, newState, null, resumed);
     }
 
@@ -1056,7 +1056,7 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable Pause.Resumed resumed) throws Exception {
+    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed) throws Exception {
         var pausedTaskRun = execution
             .findFirstByState(State.Type.PAUSED);
 

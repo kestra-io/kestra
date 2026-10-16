@@ -68,7 +68,7 @@ public class ApprovalTest {
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
         assertThatThrownBy(() -> executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, null), Map.of()
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, null), Map.of()
         )).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -81,7 +81,7 @@ public class ApprovalTest {
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
         Execution decided = executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, null), Map.of()
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, null), Map.of()
         );
 
         execution = runnerUtils.emitAndAwaitExecution(
@@ -100,7 +100,7 @@ public class ApprovalTest {
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
         assertThatThrownBy(() -> executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.DENIED, null), Map.of()
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.DENIED, null), Map.of()
         )).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -114,7 +114,7 @@ public class ApprovalTest {
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
         Execution decided = executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of("reason", "urgent fix")
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of("reason", "urgent fix")
         );
 
         execution = runnerUtils.emitAndAwaitExecution(
@@ -149,10 +149,10 @@ public class ApprovalTest {
         String taskRunIdB = execution.findTaskRunsByTaskId("approvalB").getFirst().getId();
 
         Execution decidedA = executionService.decide(
-            execution, flow, taskRunIdA, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of()
+            execution, flow, taskRunIdA, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of()
         );
         Execution decidedB = executionService.decide(
-            decidedA, flow, taskRunIdB, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of()
+            decidedA, flow, taskRunIdB, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of()
         );
 
         execution = runnerUtils.emitAndAwaitExecution(
@@ -174,7 +174,7 @@ public class ApprovalTest {
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
         Execution decided = executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of()
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of()
         );
 
         execution = runnerUtils.emitAndAwaitExecution(
@@ -195,8 +195,8 @@ public class ApprovalTest {
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
         Execution decided = executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of(),
-            Pause.Resumed.now("alice", State.Type.RUNNING)
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of(),
+            PausableTask.Resumed.now("alice", State.Type.RUNNING)
         );
 
         execution = runnerUtils.emitAndAwaitExecution(
@@ -216,11 +216,11 @@ public class ApprovalTest {
         String taskRunId = execution.findTaskRunsByTaskId("approval").getFirst().getId();
 
         Execution decided = executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of()
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of()
         );
 
         assertThatThrownBy(() -> executionService.decide(
-            decided, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.DENIED, "changed my mind"), Map.of()
+            decided, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.DENIED, "changed my mind"), Map.of()
         )).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("is not paused");
     }
 
@@ -277,7 +277,7 @@ public class ApprovalTest {
         assertThat(execution.findTaskRunsByTaskId("cleanup")).isEmpty();
 
         Execution decided = executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of()
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of()
         );
 
         execution = runnerUtils.emitAndAwaitExecution(
@@ -301,7 +301,7 @@ public class ApprovalTest {
         assertThat(execution.findTaskRunsByTaskId("cleanup")).isEmpty();
 
         Execution decided = executionService.decide(
-            execution, flow, taskRunId, new Approval.Decision(Approval.Decision.Type.APPROVED, "ok"), Map.of()
+            execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of()
         );
 
         execution = runnerUtils.emitAndAwaitExecution(
@@ -326,7 +326,7 @@ public class ApprovalTest {
         TaskOutputService taskOutputService;
 
         public Map<String, Object> approve(TestRunnerUtils runnerUtils) throws Exception {
-            Map<String, Object> outputs = decide(runnerUtils, Approval.Decision.Type.APPROVED, "looks good");
+            Map<String, Object> outputs = decide(runnerUtils, PausableTask.Decision.Type.APPROVED, "looks good");
 
             assertThat(outputs.get("decision")).isEqualTo("APPROVED");
             assertThat(outputs.get("comment")).isEqualTo("looks good");
@@ -335,7 +335,7 @@ public class ApprovalTest {
         }
 
         public Map<String, Object> deny(TestRunnerUtils runnerUtils) throws Exception {
-            Map<String, Object> outputs = decide(runnerUtils, Approval.Decision.Type.DENIED, "needs changes");
+            Map<String, Object> outputs = decide(runnerUtils, PausableTask.Decision.Type.DENIED, "needs changes");
 
             assertThat(outputs.get("decision")).isEqualTo("DENIED");
             assertThat(outputs.get("comment")).isEqualTo("needs changes");
@@ -344,7 +344,7 @@ public class ApprovalTest {
         }
 
         @SuppressWarnings("unchecked")
-        private Map<String, Object> decide(TestRunnerUtils runnerUtils, Approval.Decision.Type decisionType, String comment) throws Exception {
+        private Map<String, Object> decide(TestRunnerUtils runnerUtils, PausableTask.Decision.Type decisionType, String comment) throws Exception {
             // Given — the execution runs the Approval's onWait tasks before pausing
             Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-basic", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
@@ -363,7 +363,7 @@ public class ApprovalTest {
                 execution,
                 flow,
                 approvalTaskRunId,
-                new Approval.Decision(decisionType, comment),
+                new PausableTask.Decision(decisionType, comment),
                 Map.of()
             );
 
@@ -374,7 +374,7 @@ public class ApprovalTest {
 
             // Then — only the decided branch ran, and the decision outputs are stored
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-            if (decisionType == Approval.Decision.Type.APPROVED) {
+            if (decisionType == PausableTask.Decision.Type.APPROVED) {
                 assertThat(execution.findTaskRunsByTaskId("approved")).hasSize(1);
                 assertThat(execution.findTaskRunsByTaskId("denied")).isEmpty();
             } else {

@@ -20,6 +20,71 @@ const histories = [
     {state: "SUCCESS", date: "2026-10-08T00:00:01Z"},
 ]
 
+async function mountGantt(taskRunList: Array<Record<string, unknown>>, current = "SUCCESS") {
+    const pinia = createPinia()
+    const store = useExecutionsStore(pinia)
+    store.flow = {
+        id: "flow",
+        namespace: "company.team",
+        tasks: [{id: "first", type: "io.kestra.plugin.core.log.Log"}],
+    } as FlowForExecution
+    store.execution = {
+        id: "execution",
+        namespace: "company.team",
+        flowId: "flow",
+        state: {current, histories},
+        taskRunList,
+    } as Execution
+    const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [{path: "/", component: {template: "<div />"}}],
+    })
+    await router.push("/")
+    const wrapper = i18nMount(Gantt, {
+        global: {
+            plugins: [pinia, router],
+            stubs: {
+                KSFilter: true,
+                TaskRunActions: true,
+                TaskIcon: true,
+                Duration: true,
+                DynamicScroller: {
+                    props: ["items"],
+                    template: "<div><slot v-for='(item, index) in items' :item='item' :index='index' :active='true' /></div>",
+                },
+                DynamicScrollerItem: {template: "<div><slot /></div>"},
+            },
+        },
+    })
+    await flushPromises()
+    return wrapper
+}
+
+describe("Gantt layout", () => {
+    it("shouldShowOffsetStateAndScaleForEachTaskRun", async () => {
+        const wrapper = await mountGantt([
+            {
+                id: "tr-1",
+                taskId: "first",
+                state: {
+                    current: "SKIPPED",
+                    histories: [
+                        {state: "CREATED", date: "2026-10-08T00:00:00.500Z"},
+                        {state: "SKIPPED", date: "2026-10-08T00:00:00.800Z"},
+                    ],
+                },
+            },
+        ])
+        try {
+            expect(wrapper.get("[data-test='gantt-task-offset']").text()).toBe("+0.50s")
+            expect(wrapper.get("[data-test='gantt-task-state']").text()).toContain("Skipped")
+            expect(wrapper.get("[data-test='gantt-scale']").text()).toBe("0s0.80s")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+})
+
 describe("Gantt subflow logs", () => {
     afterAll(() => localStorage.clear())
 

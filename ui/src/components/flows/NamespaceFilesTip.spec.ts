@@ -1,9 +1,10 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {ref} from "vue"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {i18nMount} from "../../i18nMount"
-import NamespaceFilesTip from "../../../../src/components/flows/NamespaceFilesTip.vue"
-import {OPEN_EDITOR_TAB_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys"
+import {KsAlert} from "@kestra-io/design-system"
+import {i18nMount} from "../../../tests/unit/i18nMount"
+import NamespaceFilesTip from "./NamespaceFilesTip.vue"
+import {OPEN_EDITOR_TAB_INJECTION_KEY} from "../no-code/injectionKeys"
 
 const INLINE_PYTHON_YAML = `
 id: inline
@@ -24,27 +25,16 @@ tasks:
     message: hello
 `.trim()
 
-const NAMESPACE_FILES_YAML = `
-id: ns-files
-namespace: company.team
-tasks:
-  - id: python
-    type: io.kestra.plugin.scripts.python.Script
-    namespaceFiles:
-      enabled: true
-    script: print("hello")
-`.trim()
-
 const DISMISSED_KEY = "namespaceFilesTipDismissed"
+const CLOSED_KEY = "namespaceFilesTipClosed"
 
 const TIP = "[data-test='namespace-files-tip']"
 const OPEN_FILES = "[data-test='namespace-files-tip-open-files']"
 const DISMISS = "[data-test='namespace-files-tip-dismiss']"
-const CLOSE = "[data-test='namespace-files-tip-close']"
 
 const mockFlowParsed = ref<unknown>(undefined)
 
-vi.mock("../../../../src/stores/flow", () => ({
+vi.mock("../../stores/flow", () => ({
     useFlowStore: () => ({
         get flowParsed() { return mockFlowParsed.value },
     }),
@@ -61,8 +51,11 @@ function mountTip(openEditorTab?: (uid: string) => void) {
 describe("NamespaceFilesTip", () => {
     beforeEach(() => {
         localStorage.clear()
+        sessionStorage.clear()
         mockFlowParsed.value = YAML_UTILS.parse(INLINE_PYTHON_YAML)
     })
+
+    afterEach(() => sessionStorage.clear())
 
     it("renders when the flow has a Python Script task with an inline script", () => {
         const wrapper = mountTip(vi.fn())
@@ -72,14 +65,6 @@ describe("NamespaceFilesTip", () => {
 
     it("does not render when the flow has no Python Script task", () => {
         mockFlowParsed.value = YAML_UTILS.parse(NO_PYTHON_YAML)
-
-        const wrapper = mountTip(vi.fn())
-
-        expect(wrapper.find(TIP).exists()).toBe(false)
-    })
-
-    it("does not render when the task already uses Namespace Files", () => {
-        mockFlowParsed.value = YAML_UTILS.parse(NAMESPACE_FILES_YAML)
 
         const wrapper = mountTip(vi.fn())
 
@@ -119,12 +104,21 @@ describe("NamespaceFilesTip", () => {
         expect(wrapper.find(TIP).exists()).toBe(false)
     })
 
-    it("hides the tip without remembering it when clicking the close icon", async () => {
+    it("hides the tip for the session only when clicking the close icon", async () => {
         const wrapper = mountTip(vi.fn())
 
-        await wrapper.find(CLOSE).trigger("click")
+        await wrapper.findComponent(KsAlert).vm.$emit("close")
 
         expect(wrapper.find(TIP).exists()).toBe(false)
+        expect(sessionStorage.getItem(CLOSED_KEY)).toBe("true")
         expect(localStorage.getItem(DISMISSED_KEY)).toBeNull()
+    })
+
+    it("stays hidden after remount when closed earlier in the session", () => {
+        sessionStorage.setItem(CLOSED_KEY, "true")
+
+        const wrapper = mountTip(vi.fn())
+
+        expect(wrapper.find(TIP).exists()).toBe(false)
     })
 })

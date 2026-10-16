@@ -4,7 +4,7 @@ namespace: io.kestra.tests
 tasks:
   - id: pause
     type: io.kestra.plugin.core.flow.Pause
-    onResume:
+    inputs:
       - id: asked
         type: STRING
       - id: data
@@ -17,6 +17,6 @@ tasks:
   - id: last
     type: io.kestra.plugin.core.output.OutputValues
     values:
-      asked: "{{outputs.pause.onResume.asked}}"
-      data: "{{outputs.pause.onResume.data}}"
-      secret_pause: "{{outputs.pause.onResume.secret_pause}}"
+      asked: "{{outputs.pause.inputs.asked}}"
+      data: "{{outputs.pause.inputs.data}}"
+      secret_pause: "{{outputs.pause.inputs.secret_pause}}"

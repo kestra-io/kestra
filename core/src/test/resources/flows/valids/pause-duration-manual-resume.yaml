@@ -5,7 +5,7 @@ tasks:
   - id: pause
     type: io.kestra.plugin.core.flow.Pause
     pauseDuration: PT5S
-    onResume:
+    inputs:
       - id: reason
         type: STRING
   - id: sleep
@@ -14,4 +14,4 @@ tasks:
   - id: last
     type: io.kestra.plugin.core.output.OutputValues
     values:
-      reason: "{{ outputs.pause.onResume.reason }}"
+      reason: "{{ outputs.pause.inputs.reason }}"

@@ -1,6 +1,5 @@
 {
   "packages/design-system/src/components/Data/KsDataTable/KsDataTable.vue": 31,
-  "packages/design-system/src/components/Data/KsTable/KsTable.test.ts": 4,
   "packages/kestra-sdk/src/client-facade.ts": 28,
   "src/components/executions/ChangeStatus.vue": 8,
   "src/components/executions/ExecutionRoot.vue": 1,
@@ -49,6 +48,5 @@
   "src/utils/toast.ts": 6,
   "src/utils/triggers.ts": 3,
   "src/utils/unsavedChange.ts": 1,
-  "src/utils/utils.ts": 14,
-  "tests/unit/setup.ts": 6
+  "src/utils/utils.ts": 14
 }

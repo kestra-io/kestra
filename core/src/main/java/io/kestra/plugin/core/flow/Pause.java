@@ -303,6 +303,10 @@ public class Pause extends Task implements FlowableTask<Pause.Output>, PausableT
 
     @Override
     public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed, @Nullable Decision decision) {
+        if (decision != null) {
+            throw new IllegalArgumentException("Task '%s' is a Pause and cannot be resumed with a decision.".formatted(this.getId()));
+        }
+
         Output build = Output.builder()
             .inputs(inputs)
             .onResume(inputs)

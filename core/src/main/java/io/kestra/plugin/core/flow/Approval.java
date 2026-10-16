@@ -83,13 +83,9 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     @Valid
     @Schema(
         title = "Names of the two decisions in the dialog and in the app.",
-        description = "for instance Continue and Stop for a question asked by an agent."
+        description = "for instance Continue and Stop for a question asked by an agent. A decision left unset shows the translated Approve or Deny label."
     )
-    @Builder.Default
-    private Decisions decisions = Decisions.builder()
-        .approve(Property.ofValue("Approve"))
-        .deny(Property.ofValue("Deny"))
-        .build();
+    private Decisions decisions;
 
     @Schema(
         title = "Whether the reviewer has to comment."
@@ -371,10 +367,8 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     @Builder
     @Getter
     public static class Decisions {
-        @Builder.Default
-        private Property<String> approve = Property.ofValue("Approve");
+        private Property<String> approve;
 
-        @Builder.Default
-        private Property<String> deny = Property.ofValue("Deny");
+        private Property<String> deny;
     }
 }

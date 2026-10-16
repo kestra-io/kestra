@@ -80,7 +80,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
             for(const manifest of pluginTaskManifests[taskTypeKey]){
                 if(manifest.uiModule === slotName){
                     if(manifest.staticInfo){
-                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo
+                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo as ManifestsRegistry[T]
                     }
                 }
             }

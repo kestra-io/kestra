@@ -47,7 +47,7 @@
 
             <div class="newsletter-section">
                 <KsCheckbox v-model="subscribeNewsletter">
-                    <span v-html="$t('setup.survey.newsletter')" />
+                    <span>{{ $t("setup.survey.newsletter") }}</span>
                 </KsCheckbox>
             </div>
         </div>

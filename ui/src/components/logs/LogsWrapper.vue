@@ -22,7 +22,7 @@
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="mb-4" />
+                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="logs-chart" />
                 </template>
 
                 <template #table>
@@ -523,6 +523,10 @@
     })
 </script>
 <style scoped lang="scss">
+
+    .logs-chart {
+        margin-bottom: var(--ks-spacing-5);
+    }
 
     .download-hint {
         margin: 0 0 var(--ks-spacing-3);

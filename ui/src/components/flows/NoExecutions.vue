@@ -4,8 +4,7 @@
             <img
                 :src="executeimg"
                 alt="Kestra"
-                class="img-fluid"
-            >
+                >
             <h2 class="title">
                 {{ $t("no-executions-view.title") }}
             </h2>

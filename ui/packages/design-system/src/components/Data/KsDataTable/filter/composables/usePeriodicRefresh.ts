@@ -14,7 +14,7 @@ export function usePeriodicRefresh(refreshCallback?: () => void) {
     const refreshInterval = ref<number | null>(null)
 
     const enabledKey = computed(() => getAutoRefreshEnabledKey(String(route.name)))
-    const tooltip = computed(() => t("auto_refresh_tooltip", {seconds: intervalSeconds.value}))
+    const tooltip = computed(() => t("filter.auto_refresh_tooltip", {seconds: intervalSeconds.value}))
     const intervalSeconds = computed(() => parseInt(localStorage.getItem("autoRefreshInterval") ?? "10"))
 
     watch(enabledKey, () => {

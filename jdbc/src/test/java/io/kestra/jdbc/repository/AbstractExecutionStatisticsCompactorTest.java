@@ -12,8 +12,8 @@ import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.utils.Await;
-import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.context.annotation.Property;
@@ -45,9 +45,9 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 1000),
-                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 2000),
-                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 3000)
+                raw(tenant, bucket, State.Type.SUCCESS, IdUtils.create(), 1000),
+                raw(tenant, bucket, State.Type.SUCCESS, IdUtils.create(), 2000),
+                raw(tenant, bucket, State.Type.SUCCESS, IdUtils.create(), 3000)
             )
         );
 
@@ -74,7 +74,7 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
         // can't straddle a rollover.
         Await.until(() -> Instant.now().toEpochMilli() % 60_000 < 55_000);
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-        String executionId = Base62Encoder.createId();
+        String executionId = IdUtils.create();
         executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, executionId, 1000));
 
         // When
@@ -95,13 +95,13 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 1000),
-                raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 2000)
+                raw(tenant, bucket, State.Type.SUCCESS, IdUtils.create(), 1000),
+                raw(tenant, bucket, State.Type.SUCCESS, IdUtils.create(), 2000)
             )
         );
         executionStatisticsCompactor.compact();
 
-        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 9000));
+        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, IdUtils.create(), 9000));
 
         // When: compacting again must merge the late row into the existing aggregate, not overwrite it
         executionStatisticsCompactor.compact();
@@ -123,11 +123,11 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant bucket = Instant.now().minus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
 
-        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 500));
+        executionStatisticsRepository.save(raw(tenant, bucket, State.Type.SUCCESS, IdUtils.create(), 500));
         executionStatisticsCompactor.compact();
 
         ExecutionStatistic lateWithoutTaskRuns = new ExecutionStatistic(
-            tenant, "namespace", "flow", bucket, State.Type.FAILED, 1, 200, 200, 200, 0, 0, null, null, Base62Encoder.createId()
+            tenant, "namespace", "flow", bucket, State.Type.FAILED, 1, 200, 200, 200, 0, 0, null, null, IdUtils.create()
         );
         executionStatisticsRepository.save(lateWithoutTaskRuns);
 
@@ -153,7 +153,7 @@ public abstract class AbstractExecutionStatisticsCompactorTest {
 
         executionStatisticsRepository.saveBatch(
             IntStream.range(0, 5)
-                .mapToObj(i -> raw(tenant, "flow-" + i, bucket, State.Type.SUCCESS, Base62Encoder.createId(), 1000))
+                .mapToObj(i -> raw(tenant, "flow-" + i, bucket, State.Type.SUCCESS, IdUtils.create(), 1000))
                 .toList()
         );
 

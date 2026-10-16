@@ -17,7 +17,7 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
-import io.kestra.core.utils.Base62Encoder;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -133,7 +133,7 @@ public class NamespaceControllerTest {
 
     protected Flow flow(String namespace) {
         Flow flow = Flow.builder()
-            .id("flow-" + Base62Encoder.createId())
+            .id("flow-" + IdUtils.create())
             .namespace(namespace)
             .tenantId("main")
             .tasks(

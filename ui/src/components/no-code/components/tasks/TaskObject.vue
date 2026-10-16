@@ -320,7 +320,7 @@
 </script>
 
 <!-- eslint-disable-next-line vue/enforce-style-attribute -->
-<style lang="scss">
+<style>
     .kel-form-item__content {
         display: block !important;
         .kel-form-item {
@@ -335,9 +335,8 @@
     }
 </style>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .task-object-form {
     width: 100%;
 }
@@ -345,7 +344,7 @@
 .kel-form-item {
     width: 100%;
     margin-bottom: 0;
-    > :deep(.kel-form-item__label) {
+    & > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;

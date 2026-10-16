@@ -71,6 +71,17 @@ class RandomIntFunctionTest {
     }
 
     @Test
+    void shouldGenerateNumberWithinRangeWhenBoundsExceedIntRange() throws IllegalVariableEvaluationException {
+        for (int i = 0; i < 100; i++) {
+            String rendered = variableRenderer.render(
+                "{{ randomInt(lower, upper) }}", Map.of("lower", 3000000000L, "upper", 3000000010L)
+            );
+            assertThat(Long.parseLong(rendered) >= 3000000000L && Long.parseLong(rendered) < 3000000010L)
+                .as(rendered).isTrue();
+        }
+    }
+
+    @Test
     void testGenerateNumberSame() throws IllegalVariableEvaluationException {
         String rendered = variableRenderer.render(
             "{{ randomInt(lower, upper) }}", Map.of("lower", 10L, "upper", 10L)

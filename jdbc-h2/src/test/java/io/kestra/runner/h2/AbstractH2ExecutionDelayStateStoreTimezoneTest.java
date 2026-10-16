@@ -9,7 +9,6 @@ import java.util.TimeZone;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.executor.AbstractExecutionDelayStateStoreTest;
 import io.kestra.executor.ExecutionDelayStateStore;
@@ -33,7 +32,6 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
         this.dslContextWrapper = Objects.requireNonNull(dslContextWrapper);
     }
 
-    // The JVM zone must equal this class' TIME ZONE=, since jOOQ binds the cutoff via Timestamp.valueOf, which reads it.
     @Override
     protected TimeZone testTimeZone() {
         return TimeZone.getTimeZone(sessionZone());
@@ -58,19 +56,9 @@ abstract class AbstractH2ExecutionDelayStateStoreTimezoneTest extends AbstractEx
                 .fetch(STORED_DATE);
             assertThat(storedDates).containsExactly(expectedOverdueDate, expectedFutureDate);
 
-            store().processExpired(now, consumed::add);
+            consumed.addAll(drainOwnedDelays(now));
         });
 
         assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("overdue");
-    }
-
-    private static ExecutionDelay delay(String taskRunId, Instant date) {
-        return ExecutionDelay.builder()
-            .taskRunId(taskRunId)
-            .executionId("execution-" + taskRunId)
-            .date(date)
-            .state(State.Type.RUNNING)
-            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-            .build();
     }
 }

@@ -1,7 +1,7 @@
 import {readFileSync, readdirSync} from "node:fs"
 import {join, relative} from "node:path"
 
-type Messages = {[key: string]: string | Messages}
+export type Messages = {[key: string]: string | Messages}
 
 /** Column-picker description keys, e.g. `t("filter.table_column.flows.last modified")`. */
 const KEY_PATTERN = /["'`](filter\.table_column\.[^"'`]+)["'`]/g

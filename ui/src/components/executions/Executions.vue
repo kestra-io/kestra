@@ -218,7 +218,11 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
-                        <Labels :labels="filteredLabels(scope.row?.labels)" :max="3" @click.prevent.stop />
+                        <Labels
+                            :labels="filterHiddenLabels(scope.row?.labels, miscStore.configs?.hiddenLabelsPrefixes, route.query)"
+                            :max="3"
+                            @click.prevent.stop
+                        />
                     </template>
                     <template v-else-if="col.prop === 'state.current'">
                         <KsExecutionStatus
@@ -288,7 +292,9 @@
         </template>
 
         <template #default>
-            <p v-html="changeStatusToast()" />
+            <i18n-t keypath="bulk change state" tag="p">
+                <template #executionCount><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
 
             <KsSelect
                 :required="true"
@@ -301,7 +307,9 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <i18n-t keypath="mark as" tag="span">
+                            <template #status><code>{{ item.code }}</code></template>
+                        </i18n-t>
                     </template>
                 </KsOption>
             </KsSelect>
@@ -326,20 +334,25 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? executionsStore.total : selection.length})" />
+            <i18n-t keypath="unqueue title multiple" tag="p">
+                <template #count><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
+            <p>{{ $t("unqueue multiple note") }}</p>
 
             <KsSelect
                 :required="true"
                 v-model="selectedStatus"
             >
                 <KsOption
-                    v-for="item in unQueuestates"
-                    :key="item.code"
-                    :value="item.code"
+                    v-for="state in unqueueStates"
+                    :key="state"
+                    :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
+                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="state" />
+                        <i18n-t keypath="unqueue as" tag="span">
+                            <template #status><code>{{ state }}</code></template>
+                        </i18n-t>
                     </template>
                 </KsOption>
             </KsSelect>
@@ -364,7 +377,9 @@
         </template>
 
         <template #default>
-            <p v-html="changeReplayToast()" />
+            <i18n-t keypath="bulk replay" tag="p">
+                <template #executionCount><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
         </template>
 
         <template #footer>
@@ -389,19 +404,18 @@
         </template>
 
         <template #default>
-            <p v-html="changeRestartToast()" />
+            <i18n-t keypath="bulk restart" tag="p">
+                <template #executionCount><code>{{ bulkActionCount }}</code></template>
+            </i18n-t>
         </template>
 
         <template #footer>
             <KsButton @click="isOpenRestartModal = false">
                 {{ $t('cancel') }}
             </KsButton>
-            <KsButton @click="restartExecutions(true)">
-                {{ $t('restart latest revision') }}
-            </KsButton>
             <KsButton
                 type="primary"
-                @click="restartExecutions(false)"
+                @click="restartExecutions"
             >
                 {{ $t('ok') }}
             </KsButton>
@@ -410,14 +424,16 @@
 </template>
 
 <script setup lang="ts">
+    import {filterHiddenLabels} from "../../utils/labels"
     import {useI18n} from "vue-i18n"
     import {asProblem} from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
-    import {ref, computed, watch, h, useTemplateRef} from "vue"
+    import {ref, computed, watch, useTemplateRef} from "vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
+    import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
@@ -851,18 +867,12 @@
     const isDisplayedTop = computed(() => props.filter || props.visibleCharts)
 
     const states = computed(() => {
-        return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({
-            code: value,
-            label: t("mark as", {status: value}),
-        }))
+        return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({code: value}))
     })
 
-    const unQueuestates = computed(() => {
-        return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
-            code: value,
-            label: t("unqueue as", {status: value}),
-        }))
-    })
+    const unqueueStates = [State.RUNNING, State.CANCELLED, State.FAILED]
+
+    const bulkActionCount = computed(() => queryBulkAction.value ? executionsStore.total : selection.value.length)
 
     const charts = computed(() => {
         const chart = YAML_UTILS.parse<Chart>(YAML_CHART)
@@ -872,17 +882,6 @@
     const lockedFilters = computed<QueryFilter[]>(() =>
         props.labels ? [{field: "labels", operation: "EQUALS", value: props.labels}] : [],
     )
-
-    const filteredLabels = (labels?: Label[]) => {
-        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
-
-        const queryLabels = route.query?.labels
-        const allowedLabels = queryLabels ? (Array.isArray(queryLabels) ? queryLabels : [queryLabels]).filter((label): label is string => label !== null).map((label: string) => label.split(":")[0]) : []
-
-        return labels?.filter(label => {
-            return !toIgnore.some((prefix: string) => label.key.startsWith(prefix)) || allowedLabels.includes(label.key)
-        })
-    }
 
     const executionParams = (row: Execution) => {
         return {
@@ -952,7 +951,7 @@
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {
         toast.confirm(
-            t(message, {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
+            t(message, {"executionCount": bulkActionCount.value}),
             () => genericConfirmCallback(queryAction, byIdAction, success),
             "warning",
             showCancelButton,
@@ -1074,14 +1073,13 @@
         )
     }
 
-    const restartExecutions = (latestRevision: boolean) => {
+    const restartExecutions = () => {
         isOpenRestartModal.value = false
 
         genericConfirmCallback(
             "queryRestartExecution",
             "bulkRestartExecution",
             "executions restarted",
-            {latestRevision: latestRevision},
         )
     }
 
@@ -1096,14 +1094,6 @@
         )
     }
 
-    const changeReplayToast = () => {
-        return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
-    }
-
-    const changeRestartToast = () => {
-        return t("bulk restart", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
-    }
-
     const changeStatus = async () => {
         changeStatusDialogVisible.value = false
         actionOptions.value.newStatus = selectedStatus.value
@@ -1116,66 +1106,20 @@
         window.setTimeout(() => dataTable.value?.reload(), 100)
     }
 
-    const changeStatusToast = () => {
-        return t("bulk change state", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
-    }
 
-    const deleteExecutions = () => {
-        const includeNonTerminated = ref(false)
-        const deleteLogs = ref(true)
-        const deleteMetrics = ref(true)
-        const deleteStorage = ref(true)
+    const {confirmExecutionDeletion} = useExecutionDeletionDialog()
 
-        const message = () => h("div", null, [
-            h(
-                "p",
-                {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})},
-            ),
-            h(KsFormItem, {
-                class: "mt-3",
-                label: t("execution-include-non-terminated"),
-            }, [
-                h(KsSwitch, {
-                    modelValue: includeNonTerminated.value,
-                    "onUpdate:modelValue": (val: unknown) => {
-                        includeNonTerminated.value = Boolean(val)
-                    },
-                }),
-            ]),
-            includeNonTerminated.value ? h(KsAlert, {
-                title: t("execution-warn-title"),
-                description: t("execution-warn-deleting-still-running"),
-                type: "warning",
-                closable: false,
-            }) : null,
-            h(KsCheckbox, {
-                modelValue: deleteLogs.value,
-                label: t("execution_deletion.logs"),
-                "onUpdate:modelValue": (val: unknown) => (deleteLogs.value = Boolean(val)),
-            }),
-            h(KsCheckbox, {
-                modelValue: deleteMetrics.value,
-                label: t("execution_deletion.metrics"),
-                "onUpdate:modelValue": (val: unknown) => (deleteMetrics.value = Boolean(val)),
-            }),
-            h(KsCheckbox, {
-                modelValue: deleteStorage.value,
-                label: t("execution_deletion.storage"),
-                "onUpdate:modelValue": (val: unknown) => (deleteStorage.value = Boolean(val)),
-            }),
-        ])
-        KsMessageBox.confirm(message, t("confirmation")).then(() => {
-            actionOptions.value.includeNonTerminated = includeNonTerminated.value
-            actionOptions.value.deleteLogs = deleteLogs.value
-            actionOptions.value.deleteMetrics = deleteMetrics.value
-            actionOptions.value.deleteStorage = deleteStorage.value
+    const deleteExecutions = async () => {
+        const count = bulkActionCount.value
+        const options = await confirmExecutionDeletion(t("bulk delete", {"executionCount": count}), {offerNonTerminated: true})
+        if (!options) return
 
-            genericConfirmCallback(
-                "queryDeleteExecution",
-                "bulkDeleteExecution",
-                "executions deleted",
-            )
-        })
+        Object.assign(actionOptions.value, options)
+        genericConfirmCallback(
+            "queryDeleteExecution",
+            "bulkDeleteExecution",
+            "executions deleted",
+        )
     }
 
     const killExecutions = () => {
@@ -1209,7 +1153,7 @@
         }
 
         KsMessageBox.confirm(
-            t("bulk set labels", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length}),
+            t("bulk set labels", {"executionCount": bulkActionCount.value}),
             t("confirmation"),
             {dangerouslyUseHTMLString: true},
         ).then(() => {

@@ -240,7 +240,7 @@ class ServiceTest {
 - Flaky tests: Use `@Tag("flaky")` for unreliable tests
 
 ### Frontend Tests
-- Unit tests with Vitest and `@vue/test-utils`
+- Unit tests with Vitest and `@vue/test-utils`, next to the file they cover (`Foo.vue` beside `Foo.spec.ts` and `Foo.stories.ts`), see [ui/AGENTS.md](ui/AGENTS.md)
 - E2E tests with Playwright
 - Storybook component tests
 - Use JSdom environment for DOM testing
@@ -479,7 +479,7 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 
 ## UI Translations
 
-**MANDATORY — never hardcode user-facing strings.** Every label, button, tooltip, placeholder, dialog/section title, table-column header, and toast/confirm message rendered to the user MUST go through vue-i18n: `t("key")` (or `:label`/`:tooltip` bindings) in components. When the string embeds a component (`router-link`, `KsId`), take the text on each side of the placeholder with `splitTranslation(t, key, slot)`; when it embeds static markup (e.g. a `<code>` fragment), pass the markup as a named argument and render it with `v-html`. `<i18n-t>` is not used, and `ui/tests/unit/i18n/i18nGuard.spec.ts` fails on it. Never write a literal user-facing string in a template, a `:tooltip`/`:label` attribute, or a `toast.*` call. Reuse existing generic keys (`cancel`, `delete`, `edit`, `save`, `add`, `id`, `description`, `namespace`, `revision`, …) instead of duplicating them; put feature-specific strings under one namespaced object (e.g. `"reusableInputs": { … }`). After adding keys to `en.json`, propagate them to every language (translation generation script) so the missing-keys check stays clean — a key present only in `en.json` fails the check.
+**MANDATORY — never hardcode user-facing strings.** Every label, button, tooltip, placeholder, dialog/section title, table-column header, and toast/confirm message rendered to the user MUST go through vue-i18n: `t("key")` (or `:label`/`:tooltip` bindings) in components. When the string embeds markup or a component (`<code>`, `router-link`, `KsId`), render it with `<i18n-t>` (vue-i18n's component interpolation) and one named slot per placeholder, keeping the markup out of the translation instead of rendering it with `v-html`. Never write a literal user-facing string in a template, a `:tooltip`/`:label` attribute, or a `toast.*` call. Reuse existing generic keys (`cancel`, `delete`, `edit`, `save`, `add`, `id`, `description`, `namespace`, `revision`, …) instead of duplicating them; put feature-specific strings under one namespaced object (e.g. `"reusableInputs": { … }`). After adding keys to `en.json`, propagate them to every language (translation generation script) so the missing-keys check stays clean — a key present only in `en.json` fails the check.
 
 Translation files live in `ui/src/translations/`. There is one JSON file per language code (e.g. `de.json`, `fr.json`) plus the source `en.json`.
 
@@ -503,7 +503,7 @@ This is deliberate: before it existed, edited values were never propagated, and 
 
 ### Adding or regenerating translations
 
-Prefer `npm run translations:generate` (needs `GEMINI_API_KEY`); it fills missing keys and re-translates stale ones on its own, with no flag to remember. Pass `true` to force a full re-translation of everything.
+Prefer `npm run translations:generate` (needs `GOOGLE_CLOUD_PROJECT` and Application Default Credentials, since Gemini is reached through Vertex AI: run `gcloud auth application-default login` once); it fills missing keys and re-translates stale ones on its own, with no flag to remember. Pass `true` to force a full re-translation of everything.
 
 If you must write a translation by hand:
 

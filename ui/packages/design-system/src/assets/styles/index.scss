@@ -1,5 +1,7 @@
+@use "reboot";
+@use "utilities";
+
 // vendor
-@use "bootstrap.scss";
 @use "element-plus.scss";
 @use "vue-material-design-icons/styles.css";
 @use "color-palette" as palette;

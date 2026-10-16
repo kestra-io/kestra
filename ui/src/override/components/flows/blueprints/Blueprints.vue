@@ -18,7 +18,7 @@
                 @back="selectedBlueprintId = undefined"
             />
             <BlueprintsBrowser
-                :class="{'d-none': !!selectedBlueprintId}"
+                :class="{'is-hidden': !!selectedBlueprintId}"
                 :embed
                 :blueprintKind="kind"
                 blueprintType="community"
@@ -120,5 +120,9 @@
         &:not(.blueprints-margin):not(.detail-view) {
             padding: 0 !important;
         }
+    }
+
+    .is-hidden {
+        display: none;
     }
 </style>

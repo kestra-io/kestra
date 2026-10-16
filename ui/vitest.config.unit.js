@@ -13,7 +13,7 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
-        testTimeout: 30000,
+        testTimeout: 20000,
         // Vitest 4 requires projects with different maxWorkers (see the storybook
         // project's maxWorkers: 2) to also have a unique sequence.groupOrder.
         sequence: { groupOrder: 0 },

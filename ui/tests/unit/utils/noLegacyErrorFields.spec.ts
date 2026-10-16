@@ -65,9 +65,8 @@ function isAllowed(file: string): boolean {
     return ALLOWED.some((entry) => normalized.startsWith(entry.file))
 }
 
-const TEST_TIMEOUT_MS = 30_000
 
-describe("no legacy error fields", { timeout: TEST_TIMEOUT_MS }, () => {
+describe("no legacy error fields", () => {
     it("finds source files to scan, so a broken glob cannot make this test vacuous", () => {
         expect(sourceFiles().length).toBeGreaterThan(500)
     })
@@ -86,5 +85,5 @@ describe("no legacy error fields", { timeout: TEST_TIMEOUT_MS }, () => {
         }
 
         expect(offenders).toEqual([])
-    }, TEST_TIMEOUT_MS)
+    })
 })

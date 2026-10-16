@@ -125,7 +125,7 @@
             })
 
             if (response) {
-                executionsStore.execution = response as any
+                executionsStore.applySavedExecution(response as any)
             }
 
             toast.success(t("Set labels done"))

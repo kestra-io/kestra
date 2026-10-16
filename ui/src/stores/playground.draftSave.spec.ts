@@ -19,7 +19,7 @@ vi.mock("./flow", () => ({
 }))
 
 vi.mock("./executions", () => ({
-    useExecutionsStore: () => ({triggerExecution}),
+    useExecutionsStore: () => ({triggerExecution, applyLocalExecutionUpdate: vi.fn(), clearExecution: vi.fn()}),
 }))
 
 vi.mock("./fileExplorer", () => ({

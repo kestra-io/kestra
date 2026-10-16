@@ -21,6 +21,12 @@ const executionsStore = reactive({
     flow: undefined,
     triggerExecution: vi.fn(),
     replayExecution: vi.fn(),
+    applyLocalExecutionUpdate(data: Record<string, unknown>) {
+        executionsStore.execution = data
+    },
+    clearExecution() {
+        executionsStore.execution = undefined
+    },
 })
 
 vi.mock("vue-router", () => ({

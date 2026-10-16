@@ -72,11 +72,12 @@ public class DefaultRunContext extends RunContext {
     private Validator validator;
     private LocalPath localPath;
     private SDK sdk;
+    private Checkpoints checkpoints;
 
     private Map<String, Object> variables;
     private boolean decryptVariables = true;
     private Map<String, Object> decryptedVariables;
-    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>(4); // init to 4 to save memory as tasks usually produce few metrics if any
+    private final List<AbstractMetricEntry<?>> metrics = new ArrayList<>(4); // init to 4 to save memory as tasks usually produce few metrics if any
     private RunContextLogger logger;
     private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>(0); // init to 0 to save memory: this is used by only one task
     private String triggerExecutionId;
@@ -144,7 +145,7 @@ public class DefaultRunContext extends RunContext {
     private Map<String, Object> decryptSecretSubtrees(Map<String, Object> variables) {
         // an absent key is not a reason to skip: Secret unwraps the value and warns, which is how a run context
         // with no encryption configured has always exposed an EncryptedString
-        if (variables == null || secretKey == null) {
+        if (variables == null || secretKey.isEmpty()) {
             return variables;
         }
 
@@ -212,6 +213,7 @@ public class DefaultRunContext extends RunContext {
             this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
             this.assetManagerFactory = applicationContext.getBean(AssetManagerFactory.class);
             this.sdk = applicationContext.getBean(RunContextSDKFactory.class).create(applicationContext, this);
+            this.checkpoints = applicationContext.getBean(RunContextCheckpointsFactory.class).create(this);
         }
     }
 
@@ -314,7 +316,6 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -331,7 +332,6 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -348,7 +348,6 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public Set<String> render(Set<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -359,7 +358,6 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(getVariables(), decryptVariables(variables)));
     }
@@ -370,7 +368,6 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
@@ -722,6 +719,11 @@ public class DefaultRunContext extends RunContext {
     @Override
     public SDK sdk() {
         return this.sdk;
+    }
+
+    @Override
+    public Checkpoints checkpoints() {
+        return this.checkpoints;
     }
 
     @SuppressWarnings("unchecked")

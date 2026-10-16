@@ -213,5 +213,10 @@ public class TaskRunnerTest {
         public Duration getTimeout() {
             return null;
         }
+
+        @Override
+        public boolean isDurable() {
+            return false;
+        }
     }
 }

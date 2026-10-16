@@ -5,6 +5,7 @@ import java.time.Duration;
 import io.kestra.controller.GrpcChannelManager;
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.grpc.*;
+import io.kestra.controller.grpc.CheckpointServiceGrpc.CheckpointServiceBlockingStub;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc.ConnectControllerServiceBlockingStub;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc.KVMetadataServiceBlockingStub;
 import io.kestra.controller.grpc.LivenessControllerServiceGrpc.LivenessControllerServiceBlockingStub;
@@ -66,6 +67,12 @@ public class GrpcStubFactory {
     @Singleton
     public KVMetadataServiceBlockingStub kvMetadataServiceBlockingStub(GrpcChannelManager manager) {
         return KVMetadataServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public CheckpointServiceBlockingStub checkpointServiceBlockingStub(GrpcChannelManager manager) {
+        return CheckpointServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }
 
     @Bean

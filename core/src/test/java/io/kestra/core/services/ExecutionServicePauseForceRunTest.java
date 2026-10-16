@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
@@ -55,6 +56,7 @@ class ExecutionServicePauseForceRunTest {
             mock(FlowParsingService.class),
             mock(TaskOutputService.class),
             mock(ExecutionOutputService.class),
+            mock(CheckpointRepositoryInterface.class),
             mock(DispatchQueueInterface.class),
             mock(BroadcastQueueInterface.class),
             mock(DispatchQueueInterface.class),

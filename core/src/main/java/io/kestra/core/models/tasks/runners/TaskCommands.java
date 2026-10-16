@@ -70,4 +70,6 @@ public interface TaskCommands {
                 .toList();
         }
     }
+
+    boolean isDurable();
 }

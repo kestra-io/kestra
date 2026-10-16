@@ -114,9 +114,10 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
     @Schema(
         title = "Whether to write the execution context to a `.kestra-execution-context.json` file in the working directory.",
         description = """
-            Gives the script its execution metadata — `inputs`, `outputs`, `labels`, `vars`, `trigger`, `flow`, `execution` — as JSON data instead of Pebble expressions interpolated into its source, which keeps the script valid, lintable code in an IDE and safe for values holding quotes or newlines.
+            Gives the script its execution metadata — `inputs`, `outputs`, `labels`, `vars`, `trigger`, `flow`, `execution`, `checkpoints` — as JSON data instead of Pebble expressions interpolated into its source, which keeps the script valid, lintable code in an IDE and safe for values holding quotes or newlines.
             The Python client reads it with `from kestra import context`, then `context.outputs.previous_task.uri`.
-            Disabled by default: the file holds the same values the task could already render, secret-typed inputs included, so it is only written when asked for.""",
+            Disabled by default: the file holds the same values the task could already render, secret-typed inputs included, so it is only written when asked for.
+            Checkpoints are only added if durable is enabled.""",
         defaultValue = "false"
     )
     private Property<Boolean> executionContext;
@@ -127,6 +128,14 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
     @Builder.Default
     @NotNull
     protected Property<TargetOS> targetOS = Property.ofValue(TargetOS.AUTO);
+
+    @Builder.Default
+    @Schema(
+        title = "Enable durable features.",
+        description = "If set to `true` you will be able to use checkpointing for in-task recovery points. Checkpoints are exposed to the script as `CHECKPOINTS_<KEY>` environment variables, with the key upper-cased and every character that is not a letter, a digit or `_` replaced by `_`."
+    )
+    @PluginProperty(beta = true)
+    protected Property<Boolean> durable = Property.ofValue(false);
 
     @Schema(
         title = "The task runner container image, only used if the task runner is container-based."
@@ -176,7 +185,8 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
             .withTimeout(runContext.render(this.getTimeout()).as(Duration.class).orElse(null))
             .withTargetOS(runContext.render(this.getTargetOS()).as(TargetOS.class).orElseThrow())
             .withFailFast(runContext.render(this.getFailFast()).as(Boolean.class).orElse(false))
-            .withExecutionContext(runContext.render(this.getExecutionContext()).as(Boolean.class).orElse(false));
+            .withExecutionContext(runContext.render(this.getExecutionContext()).as(Boolean.class).orElse(false))
+            .withDurable(runContext.render(this.getDurable()).as(Boolean.class).orElse(false));
     }
 
     /**
@@ -204,7 +214,7 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
 
     /**
      * Gets the list of additional commands to be used for defining interpreter errors handling.
-     * 
+     *
      * @return list of commands;
      */
     protected List<String> getExitOnErrorCommands(RunContext runContext) throws IllegalVariableEvaluationException {

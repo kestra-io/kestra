@@ -1,0 +1,57 @@
+syntax = "proto3";
+import "request.proto";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+// Service for task run checkpoint operations - provides checkpoint read/write to workers.
+// Only exposes worker-safe operations. Purge is server-only and requires direct repository access.
+service CheckpointService {
+  // List all the checkpoints of a task run
+  rpc list(CheckpointListRequest) returns (OpaqueData);
+
+  // Get a checkpoint of a task run by its key
+  rpc get(CheckpointGetRequest) returns (OpaqueData);
+
+  // Set a checkpoint of a task run, replacing the value of an existing key
+  rpc set(CheckpointSetRequest) returns (OpaqueData);
+}
+
+// Request to list the checkpoints of a task run
+message CheckpointListRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The execution ID
+  string execution_id = 3;
+  // The task run ID
+  string task_run_id = 4;
+}
+
+// Request to get a checkpoint of a task run
+message CheckpointGetRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The execution ID
+  string execution_id = 3;
+  // The task run ID
+  string task_run_id = 4;
+  // The checkpoint key
+  string key = 5;
+}
+
+// Request to set a checkpoint of a task run
+message CheckpointSetRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The execution ID
+  string execution_id = 3;
+  // The task run ID
+  string task_run_id = 4;
+  // The checkpoint key
+  string key = 5;
+  // The checkpoint value
+  string value = 6;
+}

@@ -2,6 +2,7 @@ package io.kestra.jdbc;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
+import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;
@@ -152,6 +153,12 @@ public class JdbcTableConfigsFactory {
     @Named("taskoutputs")
     public InstantiableJdbcTableConfig outputs() {
         return new InstantiableJdbcTableConfig("taskoutputs", TaskOutput.class, "task_outputs");
+    }
+
+    @Bean
+    @Named("checkpoints")
+    public InstantiableJdbcTableConfig checkpoints() {
+        return new InstantiableJdbcTableConfig("checkpoints", Checkpoint.class, "checkpoints");
     }
 
     @Bean

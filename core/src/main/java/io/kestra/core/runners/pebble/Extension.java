@@ -191,6 +191,7 @@ public class Extension extends AbstractExtension {
         functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());
         functions.put(IsDateBetweenFunction.NAME, new IsDateBetweenFunction());
         functions.put(IsLastWorkingDayFunction.NAME, new IsLastWorkingDayFunction());
+        functions.put(IsLastDayOfMonthFunction.NAME, new IsLastDayOfMonthFunction());
         functions.put(DayOfWeekFunction.NAME, new DayOfWeekFunction());
         functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
         functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());

@@ -217,7 +217,7 @@
     }, {immediate: true})
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .flow-editor-shell {
         position: relative;
         height: 100%;

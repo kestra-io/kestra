@@ -402,7 +402,7 @@
     load()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .revision {
         display: flex;
@@ -438,10 +438,10 @@
         align-items: center;
         flex-shrink: 0;
 
-        > div {
+        & > div {
             &:first-child {
                 min-width: 150px;
-                width: 100%
+                width: 100%;
             }
         }
     }

@@ -184,7 +184,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .loading {
         display: flex;
         justify-content: center;

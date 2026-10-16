@@ -18,8 +18,12 @@ public abstract class ExecutionDelayStateStoreContract {
     // Far from the wall clock so a fixed clock can drive the store; the contract starts no Executor.
     protected static final Instant ANCHOR = Instant.parse("2031-01-15T10:00:00Z");
 
-    // processExpired takes a cutoff rather than a key set, so this also deletes rows left by earlier classes.
     private static final Instant DRAIN = ANCHOR.plusSeconds(3601);
+
+    // Tags every row this contract creates. Drains can only select by date, so they consume
+    // everything due and give back whatever this prefix does not match; keeping it deterministic
+    // (no per-run id) means leftovers from a crashed run are still recognized as ours and cleared.
+    private static final String OWNED_EXECUTION_ID_PREFIX = "delay-contract-";
 
     protected abstract ExecutionDelayStateStore store();
 
@@ -33,31 +37,44 @@ public abstract class ExecutionDelayStateStoreContract {
     @BeforeEach
     void clearLeftoversFromEarlierClasses() {
         prepare();
-        try {
-            store().processExpired(DRAIN, delay -> { });
-        } catch (RuntimeException e) {
-            cleanup();
-            throw e;
-        }
+        // No cleanup() on failure: JUnit runs @AfterEach even when @BeforeEach throws, and its
+        // finally is the single place that gives the zone and the lock back. Cleaning up here too
+        // would unlock twice, and the IllegalMonitorStateException would mask the database error.
+        drainOwnedDelays(DRAIN);
     }
 
     @AfterEach
     void drainRemainingDelays() {
         try {
-            store().processExpired(DRAIN, delay -> { });
+            drainOwnedDelays(DRAIN);
         } finally {
             cleanup();
         }
+    }
+
+    /**
+     * Consumes the delays due at or before {@code cutoff} and returns this contract's own rows.
+     * The store can only select by date, not by key, so rows another suite owns are consumed too;
+     * they are saved back untouched. That re-insert is only safe because the test task runs a
+     * single fork: nothing else is consuming from these databases while a test method runs.
+     */
+    protected List<ExecutionDelay> drainOwnedDelays(Instant cutoff) {
+        List<ExecutionDelay> owned = new ArrayList<>();
+        List<ExecutionDelay> foreign = new ArrayList<>();
+        store().processExpired(cutoff, delay -> (isOwnedByThisContract(delay) ? owned : foreign).add(delay));
+        foreign.forEach(store()::save);
+        return owned;
+    }
+
+    private static boolean isOwnedByThisContract(ExecutionDelay delay) {
+        return delay.getExecutionId() != null && delay.getExecutionId().startsWith(OWNED_EXECUTION_ID_PREFIX);
     }
 
     @Test
     void shouldConsumeNothingWhenEveryDelayIsInTheFuture() {
         store().save(delay("future", ANCHOR.plusSeconds(3600)));
 
-        List<ExecutionDelay> consumed = new ArrayList<>();
-        store().processExpired(ANCHOR, consumed::add);
-
-        assertThat(consumed).isEmpty();
+        assertThat(drainOwnedDelays(ANCHOR)).isEmpty();
     }
 
     @Test
@@ -65,8 +82,7 @@ public abstract class ExecutionDelayStateStoreContract {
         store().save(delay("overdue", ANCHOR.minusSeconds(3600)));
         store().save(delay("not-yet-due", ANCHOR.plusSeconds(3600)));
 
-        List<ExecutionDelay> consumed = new ArrayList<>();
-        store().processExpired(ANCHOR, consumed::add);
+        List<ExecutionDelay> consumed = drainOwnedDelays(ANCHOR);
 
         assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("overdue");
     }
@@ -75,8 +91,7 @@ public abstract class ExecutionDelayStateStoreContract {
     void shouldConsumeADelayDueExactlyAtTheGivenInstant() {
         store().save(delay("due-now", ANCHOR));
 
-        List<ExecutionDelay> consumed = new ArrayList<>();
-        store().processExpired(ANCHOR, consumed::add);
+        List<ExecutionDelay> consumed = drainOwnedDelays(ANCHOR);
 
         assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("due-now");
     }
@@ -85,10 +100,9 @@ public abstract class ExecutionDelayStateStoreContract {
     void shouldConsumeTheRemainingDelaysOnALaterInstant() {
         store().save(delay("overdue", ANCHOR.minusSeconds(3600)));
         store().save(delay("not-yet-due", ANCHOR.plusSeconds(3600)));
-        store().processExpired(ANCHOR, delay -> { });
+        drainOwnedDelays(ANCHOR);
 
-        List<ExecutionDelay> consumed = new ArrayList<>();
-        store().processExpired(ANCHOR.plusSeconds(7200), consumed::add);
+        List<ExecutionDelay> consumed = drainOwnedDelays(ANCHOR.plusSeconds(7200));
 
         assertThat(consumed).extracting(ExecutionDelay::getTaskRunId).containsOnly("not-yet-due");
     }
@@ -96,18 +110,36 @@ public abstract class ExecutionDelayStateStoreContract {
     @Test
     void shouldNotConsumeADelayTwiceWhenItHasAlreadyBeenProcessed() {
         store().save(delay("overdue", ANCHOR.minusSeconds(3600)));
-        store().processExpired(ANCHOR, delay -> { });
+        drainOwnedDelays(ANCHOR);
 
-        List<ExecutionDelay> consumed = new ArrayList<>();
-        store().processExpired(ANCHOR, consumed::add);
-
-        assertThat(consumed).isEmpty();
+        assertThat(drainOwnedDelays(ANCHOR)).isEmpty();
     }
 
-    private static ExecutionDelay delay(String taskRunId, Instant date) {
+    @Test
+    void shouldLeaveDelaysAnotherSuiteOwnsInTheDatabase() {
+        store().save(otherSuiteDelay("other-suite", ANCHOR.minusSeconds(7200)));
+
+        drainOwnedDelays(DRAIN);
+
+        List<ExecutionDelay> remaining = new ArrayList<>();
+        store().processExpired(DRAIN, remaining::add);
+        assertThat(remaining).extracting(ExecutionDelay::getTaskRunId).containsExactly("other-suite");
+    }
+
+    protected static ExecutionDelay delay(String taskRunId, Instant date) {
         return ExecutionDelay.builder()
             .taskRunId(taskRunId)
-            .executionId("execution-" + taskRunId)
+            .executionId(OWNED_EXECUTION_ID_PREFIX + taskRunId)
+            .date(date)
+            .state(State.Type.RUNNING)
+            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+            .build();
+    }
+
+    private static ExecutionDelay otherSuiteDelay(String taskRunId, Instant date) {
+        return ExecutionDelay.builder()
+            .taskRunId(taskRunId)
+            .executionId("another-suite-" + taskRunId)
             .date(date)
             .state(State.Type.RUNNING)
             .delayType(ExecutionDelay.DelayType.RESUME_FLOW)

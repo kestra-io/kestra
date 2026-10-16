@@ -16,6 +16,7 @@ public abstract class AbstractExecutionDelayStateStoreTest extends ExecutionDela
     private final ExecutionDelayStateStore executionDelayStateStore;
 
     private TimeZone originalTimeZone;
+    private boolean zoneTaken;
 
     @Inject
     public AbstractExecutionDelayStateStoreTest(ExecutionDelayStateStore executionDelayStateStore) {
@@ -35,12 +36,19 @@ public abstract class AbstractExecutionDelayStateStoreTest extends ExecutionDela
     @Override
     protected void prepare() {
         ZONE_LOCK.lock();
+        zoneTaken = true;
         originalTimeZone = TimeZone.getDefault();
         TimeZone.setDefault(testTimeZone());
     }
 
     @Override
     protected void cleanup() {
+        // Idempotent: a second call must not unlock the ReentrantLock again, or the
+        // IllegalMonitorStateException would mask the failure that triggered the cleanup.
+        if (!zoneTaken) {
+            return;
+        }
+        zoneTaken = false;
         try {
             TimeZone.setDefault(originalTimeZone);
         } finally {

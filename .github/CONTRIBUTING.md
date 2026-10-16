@@ -38,11 +38,11 @@ The following dependencies are required to build Kestra locally:
 - Node 24+ and npm 11+
 - Python 3, pip and python venv
 - Docker & Docker Compose
-- an IDE (Intellij IDEA, Eclipse or VS Code)
+- an IDE (IntelliJ IDEA, Eclipse or VS Code)
 
 Thanks to the Kestra community, if using VSCode, you can also start development on either the frontend or backend with a bootstrapped docker container without the need to manually set up the environment.
 
-Check out the [README](../develop/README.md) for set-up instructions and the associated [Dockerfile](../develop/Dockerfile) in the respository to get started.
+Check out the [README](../develop/README.md) for set-up instructions and the associated [Dockerfile](../develop/Dockerfile) in the repository to get started.
 
 To start contributing:
 - [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the repository
@@ -56,7 +56,7 @@ cd kestra
 #### Develop on the backend
 The backend is made with [Micronaut](https://micronaut.io).
 
-Open the cloned repository in your favorite IDE. In most of decent IDEs, Gradle build will be detected and all dependencies will be downloaded.
+Open the cloned repository in your favorite IDE. In most decent IDEs, Gradle build will be detected and all dependencies will be downloaded.
 You can also build it from a terminal using `./gradlew build`, the Gradle wrapper will download the right Gradle version to use.
 
 - You may need to enable java annotation processors since we are using them.
@@ -66,9 +66,9 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
   - Configure the following environment variables:
     - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
     - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
-  - See the screenshot below for an example: ![Intellij IDEA Configuration ](./.github/assets/run-app.png)
+  - See the screenshot below for an example: ![IntelliJ IDEA Configuration ](./.github/assets/run-app.png)
   - If you encounter **JavaScript memory heap out** error during startup, configure `NODE_OPTIONS` environment variable with some large value.
-      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](./.github/assets/node_option_env_var.png)
+      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![IntelliJ IDEA Configuration ](./.github/assets/node_option_env_var.png)
 - The server starts by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:
@@ -84,7 +84,7 @@ The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` 
 
 - `npm install`
 - `npm run dev` will start the development server with hot reload.
-- The server start by default on port 5173 and is reachable on `http://localhost:5173`
+- The server starts by default on port 5173 and is reachable on `http://localhost:5173`
 - You can run `npm run build` in order to build the front-end that will be delivered from the backend (without running the `npm run dev`) above.
 
 Now, you need to start a backend server, you could:

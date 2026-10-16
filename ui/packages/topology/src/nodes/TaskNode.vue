@@ -353,7 +353,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .playground-button {
     position: absolute;
     bottom: 0;

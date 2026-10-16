@@ -192,7 +192,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-properties-edit {
     display: flex;
     flex-direction: column;

@@ -342,7 +342,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .schema-root {
         display: flex;
         flex-direction: column;
@@ -379,7 +379,7 @@
     .example-block {
         display: flex;
         flex-direction: column;
-        gap: 1rem
+        gap: 1rem;
     }
 
     .example-block-tight {
@@ -409,7 +409,7 @@
             margin: 0;
         }
 
-        > ol, > ul, > dl {
+        & > ol, & > ul, & > dl {
             margin-top: 0;
             margin-bottom: 0;
         }
@@ -425,7 +425,7 @@
             font-weight: 400;
         }
 
-        > .collapse-button {
+        & > .collapse-button {
             margin-bottom: var(--ks-spacing-2);
         }
     }

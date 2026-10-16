@@ -603,7 +603,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .gantt-progress {
         margin-bottom: var(--ks-spacing-4);
     }
@@ -620,7 +620,7 @@
             --gantt-duration-width: 0rem;
         }
 
-        :deep(.kel-card__header) {
+        & :deep(.kel-card__header) {
             padding: 0;
             font-size: var(--ks-font-size-sm);
 
@@ -696,7 +696,7 @@
             }
         }
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             padding: 0;
 
             .vue-recycle-scroller {
@@ -727,12 +727,12 @@
                     background: var(--ks-dropdown-bg-active);
                 }
 
-                * {
+                & * {
                     transition: none !important;
                     animation: none !important;
                 }
 
-                > * {
+                & > * {
                     padding: 1rem .25rem;
                 }
 
@@ -891,7 +891,7 @@
             margin-bottom: 0;
         }
 
-        > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
+        & > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
             border-radius: var(--kel-border-radius-round);
         }
     }

@@ -487,7 +487,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .type-div {
         display: flex;
         text-transform: lowercase;

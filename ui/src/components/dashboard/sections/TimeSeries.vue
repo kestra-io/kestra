@@ -452,7 +452,7 @@
     watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .chart {
         display: flex;
         flex-direction: column;

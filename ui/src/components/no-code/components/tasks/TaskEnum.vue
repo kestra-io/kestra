@@ -49,7 +49,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 :deep(.kel-select__suffix) {
     display: flex !important;
 }

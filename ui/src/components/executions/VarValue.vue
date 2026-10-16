@@ -279,7 +279,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .complex-value-editor {
     margin-top: 0.5rem;
     border: 1px solid var(--ks-border-default);

@@ -241,7 +241,7 @@
     )
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .node-wrapper {
         position: relative;
         margin: 0;
@@ -342,10 +342,10 @@
             box-sizing: border-box;
             border: 1px solid var(--ks-border-default);
             background-color: var(--ks-topology-icon-bg);
+        }
 
-            &--dimmed {
-                opacity: 0.2;
-            }
+        .icon--dimmed {
+            opacity: 0.2;
         }
     }
 
@@ -378,7 +378,7 @@
         flex: 1;
         min-width: 0;
 
-        > .node-title {
+        & > .node-title {
             display: flex;
             align-items: center;
             min-width: 0;

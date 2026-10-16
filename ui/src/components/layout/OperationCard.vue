@@ -72,7 +72,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .operation {
         cursor: pointer;
         transition: border-color 0.15s ease;

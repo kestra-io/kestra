@@ -103,7 +103,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .route-tabs-sidebar {
         width: 200px;
         flex-shrink: 0;

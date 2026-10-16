@@ -1,0 +1,177 @@
+name: Update SchemaStore
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Stable release tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+      dry-run:
+        description: Validate and upload the patch without opening a PR
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-schemastore-${{ inputs.tag || github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: >-
+      (github.event_name == 'workflow_dispatch' &&
+      (inputs.dry-run || github.repository == 'kestra-io/kestra')) ||
+      (github.repository == 'kestra-io/kestra' && github.event_name == 'release' &&
+      !github.event.release.prerelease && !github.event.release.draft)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      SCHEMASTORE_DIR: ${{ github.workspace }}/schemastore
+    steps:
+      - name: Checkout automation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.x'
+
+      - name: Validate release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module -e '
+            import {releaseVersion} from "./.github/scripts/schemastore/update.mjs";
+            console.log(releaseVersion(process.env.RELEASE_TAG));
+          '
+          gh release view "$RELEASE_TAG" --repo kestra-io/kestra --json isDraft,isPrerelease \
+            --jq 'if .isDraft or .isPrerelease then error("A published stable release is required") else . end'
+          echo "RELEASE_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+
+      - name: Download released schema bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/kestra-release"
+          for attempt in 1 2 3 4 5; do
+            if gh release download "$RELEASE_TAG" --repo kestra-io/kestra \
+              --pattern "kestra-$RELEASE_VERSION" --pattern checksums_sha256.txt \
+              --dir "$RUNNER_TEMP/kestra-release" --clobber; then
+              break
+            fi
+            if [ "$attempt" = 5 ]; then exit 1; fi
+            sleep 15
+          done
+          cd "$RUNNER_TEMP/kestra-release"
+          sha256sum --check checksums_sha256.txt
+          python3 - <<'PY'
+          import os
+          import zipfile
+          from pathlib import Path
+
+          with zipfile.ZipFile(f"kestra-{os.environ['RELEASE_VERSION']}") as release:
+              Path("plugins-schema.json").write_bytes(release.read("plugins-schema.json"))
+          PY
+
+      - name: Checkout SchemaStore
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: SchemaStore/schemastore
+          path: schemastore
+          persist-credentials: false
+
+      - name: Install SchemaStore validation tools
+        working-directory: schemastore
+        run: npm ci --ignore-scripts
+
+      - name: Test update script
+        run: node --test .github/scripts/schemastore/update.test.mjs
+
+      - name: Prepare schema and catalog updates
+        run: >-
+          node .github/scripts/schemastore/update.mjs "$SCHEMASTORE_DIR"
+          "$RUNNER_TEMP/kestra-release/plugins-schema.json" "$RELEASE_TAG"
+
+      - name: Format and validate SchemaStore changes
+        working-directory: schemastore
+        run: |
+          npx --no-install prettier --write \
+            "src/schemas/json/kestra-$RELEASE_VERSION.json" \
+            "src/test/kestra-$RELEASE_VERSION/hello-world.yaml" \
+            src/api/json/catalog.json src/schema-validation.jsonc
+          node cli.js check --schema-name="kestra-$RELEASE_VERSION.json"
+
+      - name: Prepare review patch
+        id: patch
+        working-directory: schemastore
+        run: |
+          git add "src/schemas/json/kestra-$RELEASE_VERSION.json" \
+            "src/test/kestra-$RELEASE_VERSION/hello-world.yaml" \
+            src/api/json/catalog.json src/schema-validation.jsonc
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --binary > "$RUNNER_TEMP/schemastore.patch"
+            git diff --cached --stat >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload review patch
+        if: steps.patch.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: schemastore-${{ env.RELEASE_VERSION }}
+          path: ${{ runner.temp }}/schemastore.patch
+          if-no-files-found: error
+
+      - name: Create or update SchemaStore PR
+        if: github.repository == 'kestra-io/kestra' && steps.patch.outputs.changed == 'true' && !inputs.dry-run
+        working-directory: schemastore
+        env:
+          GH_TOKEN: ${{ secrets.SCHEMASTORE_TOKEN }}
+          SCHEMASTORE_FORK: ${{ vars.SCHEMASTORE_FORK }}
+        run: |
+          if [ -z "$GH_TOKEN" ] || [[ ! "$SCHEMASTORE_FORK" =~ ^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$ ]]; then
+            echo "::error::Configure SCHEMASTORE_TOKEN and SCHEMASTORE_FORK before publishing. The validated patch is available as an artifact."
+            exit 1
+          fi
+          gh api "repos/$SCHEMASTORE_FORK" \
+            --jq 'if .fork and (.parent.full_name | ascii_downcase) == "schemastore/schemastore" then .full_name else error("SCHEMASTORE_FORK must be a fork of SchemaStore/schemastore") end'
+          gh auth setup-git
+          git config user.name "kestra-io"
+          git config user.email "hello@kestra.io"
+          branch="chore/kestra-$RELEASE_VERSION"
+          owner="${SCHEMASTORE_FORK%%/*}"
+          base=$(gh api repos/SchemaStore/schemastore --jq .default_branch)
+          git remote add fork "https://github.com/$SCHEMASTORE_FORK.git"
+          previous=$(git ls-remote fork "refs/heads/$branch" | cut -f1)
+          git switch -c "$branch"
+          git commit -m "Update Kestra flow schema for $RELEASE_TAG"
+          git push --force-with-lease="refs/heads/$branch:$previous" fork "HEAD:refs/heads/$branch"
+          existing=$(gh pr list --repo SchemaStore/schemastore --head "$owner:$branch" \
+            --base "$base" --state open --json url --jq '.[0].url // empty')
+          if [ -n "$existing" ]; then
+            echo "Updated $existing" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          cat > "$RUNNER_TEMP/schemastore-pr.md" <<EOF
+          Update the Kestra flow schema for [$RELEASE_TAG](https://github.com/kestra-io/kestra/releases/tag/$RELEASE_TAG).
+
+          The schema is extracted from the plugin bundle embedded in the published executable. Existing schema versions are preserved, and maintenance releases do not replace a newer catalog default.
+
+          Validated with SchemaStore's formatter and schema checks, including the example flow.
+
+          Generated by https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID.
+          EOF
+          gh api repos/SchemaStore/schemastore/pulls --method POST \
+            -f "head=$owner:$branch" -f "base=$base" \
+            -f "title=Update Kestra flow schema for $RELEASE_TAG" \
+            -F "body=@$RUNNER_TEMP/schemastore-pr.md" --jq .html_url >> "$GITHUB_STEP_SUMMARY"

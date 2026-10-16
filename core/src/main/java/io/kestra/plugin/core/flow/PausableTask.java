@@ -25,6 +25,9 @@ public interface PausableTask {
 
     /**
      * The state this task run itself should take once the execution resumes to {@code newState}.
+     * Defaults to RUNNING, letting the flowable resolve its own state from its children.
      */
-    State.Type resumedTaskRunState(State.Type newState);
+    default State.Type resumedTaskRunState(State.Type newState) {
+        return State.Type.RUNNING;
+    }
 }

@@ -36,6 +36,19 @@ describe("fetchContextSections", () => {
         consoleError.mockRestore()
     })
 
+    it("keeps a rejected provider's failure out of the global error toast, since it is logged here instead", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {})
+        const failure = Object.assign(new Error("no kv store"), {status: 404})
+        const failing: ContextSectionProvider = async () => {
+            throw failure
+        }
+
+        await fetchContextSections([failing], {namespace: "team.a"}, t)
+
+        expect(failure).toHaveProperty("__kestra_handled", true)
+        vi.mocked(console.error).mockRestore()
+    })
+
     it("retries a failed provider on the next call instead of permanently caching the gap it left", async () => {
         const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
         let attempt = 0

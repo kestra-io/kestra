@@ -62,6 +62,8 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
@@ -73,6 +75,7 @@ import io.kestra.core.services.configuration.ExecutionOutputConfiguration;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.NamespaceFileBackend;
+import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -167,6 +170,7 @@ public final class ExecutorTestHarness {
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
     private final KitRunContextFactory runContextFactory;
+    private final Storage storage;
     private final MutableClock clock;
 
     public static ExecutorTestHarness create() {
@@ -262,7 +266,8 @@ public final class ExecutorTestHarness {
             }
             return Mockito.RETURNS_DEFAULTS.answer(invocation);
         });
-        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator);
+        this.storage = Mockito.mock(Storage.class);
+        this.runContextFactory = new KitRunContextFactory(renderer, runContextLoggerFactory, metricRegistry, taskOutputService, runContextBeanLocator, storage);
         runContextFactoryRef[0] = runContextFactory;
         WorkerQueueService workerQueueService = new WorkerQueueService.Default();
 
@@ -284,6 +289,7 @@ public final class ExecutorTestHarness {
                 loopExecutionEventQueue,
                 Mockito.mock(AsyncOperationWaiter.class),
                 Mockito.mock(AsyncOperationsConfiguration.class),
+                Mockito.mock(TriggerEventQueue.class),
                 Optional.empty()
             )
         );
@@ -299,8 +305,20 @@ public final class ExecutorTestHarness {
         this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
         this.asyncOperationService = Mockito.mock(AsyncOperationService.class);
-        this.flowTriggerService = Mockito.mock(FlowTriggerService.class);
-        this.multipleConditionStateStore = Mockito.mock(MultipleConditionStateStore.class);
+        // a real FlowTriggerService so a full executor cycle actually evaluates flow-trigger `when` conditions
+        // and emits the executions they produce; the only dependency the harness cannot provide for real is
+        // FlowService, and the trigger paths only use removeUnwanted() (recursion guard) — stub it to allow processing
+        FlowService flowService = Mockito.mock(FlowService.class);
+        Mockito.when(flowService.removeUnwanted(Mockito.any(), Mockito.any())).thenReturn(true);
+        this.flowTriggerService = new FlowTriggerService(
+            new ConditionService(),
+            runContextFactory,
+            flowService,
+            flowMetaStore,
+            executionOutputService,
+            new ExecutionDepthConfiguration(100)
+        );
+        this.multipleConditionStateStore = new InMemoryMultipleConditionStateStore();
 
         this.executorService = new ExecutorService(
             runContextFactory,
@@ -846,5 +864,9 @@ public final class ExecutorTestHarness {
 
     public KitRunContextFactory runContextFactory() {
         return runContextFactory;
+    }
+
+    public Storage storage() {
+        return storage;
     }
 }

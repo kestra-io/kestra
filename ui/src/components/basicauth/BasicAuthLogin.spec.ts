@@ -1,0 +1,51 @@
+import {describe, it, expect, vi, beforeEach} from "vitest"
+import {createPinia, setActivePinia} from "pinia"
+import BasicAuthLogin from "./BasicAuthLogin.vue"
+import {i18nMount} from "../../../tests/unit/i18nMount"
+
+const {route} = vi.hoisted(() => ({
+    route: {query: {} as Record<string, string>, params: {} as Record<string, string>},
+}))
+vi.mock("vue-router", () => ({
+    useRoute: () => route,
+    useRouter: () => ({push: vi.fn()}),
+}))
+
+const messages = {
+    email: "Email",
+    password: "Password",
+    setup: {login_title: "Login", login: "Login", troubleshooting: "Troubleshooting"},
+}
+
+function mountLogin() {
+    setActivePinia(createPinia())
+    return i18nMount(BasicAuthLogin, {messages})
+}
+
+beforeEach(() => {
+    route.query = {}
+    route.params = {}
+})
+
+describe("BasicAuthLogin redirect ('from' param) open-redirect protection", () => {
+    it.each([
+        ["////evil.com", "backend-bypass payload (4+ leading slashes)"],
+        ["//evil.com", "protocol-relative URL"],
+        ["https://evil.com/path", "absolute URL"],
+    ])("rejects %s (%s)", (payload) => {
+        route.query = {from: payload}
+        const wrapper = mountLogin()
+
+        const hiddenInput = wrapper.find<HTMLInputElement>("input[name=\"from\"]")
+        expect(hiddenInput.exists()).toBe(true)
+        expect(hiddenInput.element.value).toBe("")
+    })
+
+    it("keeps a legitimate same-origin relative path", () => {
+        route.query = {from: "/flows/edit/1"}
+        const wrapper = mountLogin()
+
+        const hiddenInput = wrapper.find<HTMLInputElement>("input[name=\"from\"]")
+        expect(hiddenInput.element.value).toBe("/flows/edit/1")
+    })
+})

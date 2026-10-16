@@ -50,7 +50,6 @@
         "@vueuse/core": "^14.3.0",
         "ansi-to-html": "^0.7.2",
         "axios": "1.18.1",
-        "bootstrap": "^5.3.8",
         "change-case": "5.4.4",
         "cronstrue": "^3.24.0",
         "dagre": "^0.8.5",
@@ -140,7 +139,6 @@
     },
     "overrides": {
         "axios": "1.18.1",
-        "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "dompurify": "^3.4.13"
     },
     "lint-staged": {

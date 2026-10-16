@@ -1,14 +1,15 @@
 <template>
     <ElColorPicker
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs, ...(alphaOnSurface && {popperClass: [$attrs.popperClass ?? $attrs['popper-class'], ALPHA_ON_SURFACE]})} as ColorPickerProps)"
+        :class="{[ALPHA_ON_SURFACE]: alphaOnSurface}"
         @change="emit('change', $event)"
         @active-change="emit('activeChange', $event as string)"
     />
 </template>
 
 <script setup lang="ts">
-    import {ElColorPicker} from "element-plus"
+    import {ElColorPicker, type ColorPickerProps} from "element-plus"
 
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -21,6 +22,7 @@
         disabled?: boolean
         size?: "large" | "default" | "small"
         predefine?: string[]
+        alphaOnSurface?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -28,7 +30,9 @@
         activeChange: [value: string]
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["alphaOnSurface"])
+
+    const ALPHA_ON_SURFACE = "ks-color-picker--alpha-on-surface"
 </script>
 
 <style lang="scss">
@@ -54,5 +58,15 @@
 
     .kel-color-predefine__color-selector {
         border: 1px solid var(--ks-border-strong);
+    }
+
+    .kel-color-picker.ks-color-picker--alpha-on-surface,
+    .kel-color-picker__panel.ks-color-picker--alpha-on-surface .kel-color-picker-panel {
+        --kel-color-picker-alpha-bg-a: var(--ks-bg-base);
+        --kel-color-picker-alpha-bg-b: var(--ks-bg-base);
+    }
+
+    .kel-color-picker__panel.ks-color-picker--alpha-on-surface .kel-color-predefine__color-selector.is-alpha {
+        background: var(--ks-bg-base);
     }
 </style>

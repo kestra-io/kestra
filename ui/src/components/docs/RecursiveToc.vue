@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed, ref, type VNode} from "vue"
     import {DISABLED_PAGES} from "./docsUtils"
 
     defineOptions({
@@ -48,7 +48,7 @@
     })
 
     defineSlots<{
-        default: (child: TocChild & {class?: string}) => any
+        default: (child: TocChild & {class?: string}) => VNode[]
     }>()
 
 

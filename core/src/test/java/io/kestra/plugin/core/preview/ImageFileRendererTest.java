@@ -4,9 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -73,6 +76,18 @@ class ImageFileRendererTest {
     @ValueSource(strings = { "PNG", "JPG", "JPEG", "SVG", "GIF", "BMP", "WEBP" })
     void shouldSupportUppercaseExtensions(String extension) {
         assertThat(renderer.supports(extension)).isTrue();
+    }
+
+    @Test
+    @ResourceLock(Resources.LOCALE)
+    void shouldSupportUppercaseExtensionsUnderTurkishLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertThat(renderer.supports("GIF")).isTrue();
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 
     @Test

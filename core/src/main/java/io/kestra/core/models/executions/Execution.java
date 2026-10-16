@@ -766,6 +766,9 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             );
             return false;
         }
+        if (!resolvedTask.getTask().shouldRetryOnFailure()) {
+            return true;
+        }
         return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry());
     }
 

@@ -212,8 +212,8 @@ public class ExecutorService {
             // process flowable tasks
             executor = this.handleFlowableTasks(executor);
 
-            // Approval's onWait genuinely gates the pause (unlike Pause's fire-and-forget onPause); PAUSING surfaces that window.
-            executor = this.handleApprovalPausing(executor);
+            // a pausing task genuinely gates the pause (unlike Pause's fire-and-forget onPause); PAUSING surfaces that window.
+            executor = this.handlePausing(executor);
 
             // send worker task to the Worker
             // this is important to do it after handleFlowableTasks so tasks created by flowable tasks are processed immediately.
@@ -1186,14 +1186,14 @@ public class ExecutorService {
                     }
                 }));
 
-            // A sibling Approval still gating the pause (its own taskRun isn't PAUSED yet, even in this
+            // A sibling pausable task still gating the pause (its own taskRun isn't PAUSED yet, even in this
             // pass's own results) keeps the execution out of PAUSED, so it can keep running its onWait.
             Set<String> pausedThisPass = workerTaskResults.stream()
                 .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
                 .map(workerTaskResult -> workerTaskResult.getTaskRun().getId())
                 .collect(Collectors.toSet());
 
-            if (!hasWaitingApproval(executor, pausedThisPass)) {
+            if (!hasPausingTask(executor, pausedThisPass)) {
                 return this.pauseExecution(executor, "handlePausedDelay")
                     .withWorkerTaskDelays(list, "handlePausedDelay");
             }
@@ -1218,32 +1218,33 @@ public class ExecutorService {
     }
 
     /** {@code excludedTaskRunIds} covers task runs whose merged state still reads RUNNING for the rest of the pass that just resolved them to PAUSED. */
-    private boolean hasWaitingApproval(ExecutorContext executor, Set<String> excludedTaskRunIds) {
+    private boolean hasPausingTask(ExecutorContext executor, Set<String> excludedTaskRunIds) {
         return ListUtils.emptyOnNull(executor.getExecution().getTaskRunList())
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
             .filter(taskRun -> !excludedTaskRunIds.contains(taskRun.getId()))
             .anyMatch(taskRun -> {
                 Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
-                if (!(task instanceof Approval approval) || !approval.isWaiting(taskRun)) {
+                // checked before building the RunContext: a task run can only be pausing until it first pauses
+                if (!(task instanceof PausableTask pausableTask) || taskRun.getState().getHistories().stream().anyMatch(history -> history.getState() == State.Type.PAUSED)) {
                     return false;
                 }
                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                return approval.isWaiting(runContext, taskRun);
+                return pausableTask.isPausing(runContext, taskRun);
             });
     }
 
-    /** RUNNING &lt;-&gt; PAUSING while any Approval is still in onWait, resolving to PAUSED instead of RUNNING when a sibling Approval already paused. */
-    private ExecutorContext handleApprovalPausing(ExecutorContext executor) throws QueueException {
+    /** RUNNING &lt;-&gt; PAUSING while any pausable task is still pausing, resolving to PAUSED instead of RUNNING when a sibling already paused. */
+    private ExecutorContext handlePausing(ExecutorContext executor) throws QueueException {
         State.Type current = executor.getExecution().getState().getCurrent();
         if (current != State.Type.RUNNING && current != State.Type.PAUSING) {
             return executor;
         }
 
-        boolean waiting = hasWaitingApproval(executor, Collections.emptySet());
+        boolean waiting = hasPausingTask(executor, Collections.emptySet());
 
         if (waiting && current == State.Type.RUNNING) {
-            return executor.withExecution(executor.getExecution().withState(State.Type.PAUSING), "handleApprovalPausing");
+            return executor.withExecution(executor.getExecution().withState(State.Type.PAUSING), "handlePausing");
         }
 
         if (!waiting && current == State.Type.PAUSING) {
@@ -1252,10 +1253,10 @@ public class ExecutorService {
                 .anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.PAUSED);
 
             if (hasPausedTaskRun) {
-                return this.pauseExecution(executor, "handleApprovalPausing");
+                return this.pauseExecution(executor, "handlePausing");
             }
 
-            return executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handleApprovalPausing");
+            return executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handlePausing");
         }
 
         return executor;

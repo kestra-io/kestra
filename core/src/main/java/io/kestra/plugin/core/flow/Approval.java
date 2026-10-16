@@ -268,7 +268,8 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     /** Excludes an autoApprove task run: {@link #isWaiting(TaskRun)} alone can't see that a decision was already recorded at creation. */
-    public boolean isWaiting(RunContext runContext, TaskRun taskRun) {
+    @Override
+    public boolean isPausing(RunContext runContext, TaskRun taskRun) {
         return this.isWaiting(taskRun) && this.decisionType(runContext) == null;
     }
 

@@ -487,6 +487,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/waitfor-max-iterations-from-input.yaml" }, tenantId = "waitformaxiterationsfrominput")
+    void waitforMaxIterationsFromInput() throws Exception {
+        loopUntilTestCaseTest.waitforMaxIterationsFromInput("waitformaxiterationsfrominput");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/waitfor-max-duration.yaml" }, tenantId = "waitformaxduration")
     void waitforMaxDuration() throws Exception {
         loopUntilTestCaseTest.waitforMaxDuration("waitformaxduration");

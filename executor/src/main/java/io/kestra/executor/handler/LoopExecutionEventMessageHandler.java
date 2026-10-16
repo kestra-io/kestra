@@ -148,7 +148,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                     "outputs", MapUtils.emptyOnNull(message.outputs())
                                     )
                             );
-                            boolean shouldBreak = runContext.render(loop.getBreakWhen()).skipCache().as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
+                            boolean shouldBreak = runContext.render(loop.getBreakWhen()).as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
                             if (shouldBreak) {
                                 // update the outputs with SKIPPED iterations
                                 terminatedByState.put(State.Type.SKIPPED.name(), iterationCount - nextIndex);

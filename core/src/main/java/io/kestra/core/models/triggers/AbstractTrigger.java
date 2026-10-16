@@ -109,5 +109,6 @@ abstract public class AbstractTrigger implements TriggerInterface {
     private boolean allowConcurrent = false;
 
     @PluginProperty(hidden = true, group = "advanced")
+    @Valid
     private AssetsDeclaration assets;
 }

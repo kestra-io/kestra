@@ -6,7 +6,9 @@ const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${ro
 
 export {getAutoRefreshEnabledKey}
 
-export function usePeriodicRefresh() {
+const enabledRef = ref(false)
+
+export function usePeriodicRefresh(refreshCallback?: () => void) {
     const route = useRoute()
     const {t} = useI18n()
     const enabledRef = ref(false)
@@ -28,16 +30,17 @@ export function usePeriodicRefresh() {
         },
     })
 
-    const toggleRefresh = (enabled: boolean, callback: () => void) => {
-        if (refreshInterval.value) clearInterval(refreshInterval.value)
-        refreshInterval.value = enabled ? window.setInterval(callback, intervalSeconds.value * 1000) : null
-    }
+    if (refreshCallback) {
+        watch(isEnabled, (enabled) => {
+            if (refreshInterval.value) clearInterval(refreshInterval.value)
+            refreshInterval.value = enabled ? window.setInterval(refreshCallback, intervalSeconds.value * 1000) : null
+        }, {immediate: true})
 
-    onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value))
+        onUnmounted(() => refreshInterval.value && clearInterval(refreshInterval.value))
+    }
 
     return {
         isEnabled,
         tooltip,
-        toggleRefresh,
     }
 }

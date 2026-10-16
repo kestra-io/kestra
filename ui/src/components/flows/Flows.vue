@@ -133,7 +133,11 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="scope.row.labels" :max="3" @click.prevent.stop />
+                        <Labels
+                            :labels="filterHiddenLabels(scope.row.labels, miscStore.configs?.hiddenLabelsPrefixes, route.query)"
+                            :max="3"
+                            @click.prevent.stop
+                        />
                     </template>
                 </KsTableColumn>
 
@@ -286,7 +290,9 @@
             large
         >
             <template #header>
-                <span v-if="selectedFlow?.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                    <template #id><code>{{ selectedFlow.id }}</code></template>
+                </i18n-t>
             </template>
             <FlowRun
                 v-if="executionsStore.flow"
@@ -307,6 +313,7 @@
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
+    import {filterHiddenLabels} from "../../utils/labels"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useFlowFilter} from "../filter/configurations/flowFilter"
     import useRestoreUrl from "../../composables/useRestoreUrl"

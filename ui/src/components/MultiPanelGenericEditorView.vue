@@ -5,7 +5,7 @@
                 <KsButton
                     v-if="bottomVisible && slots['bottom-panel']"
                     :icon="splitOrientation === 'vertical' ? ViewSplitVertical : ViewSplitHorizontal"
-                    :tooltip="splitOrientation === 'vertical' ? $t('split_horizontal') : $t('split_vertical')"
+                    :tooltip="splitOrientation === 'vertical' ? $t('move_panel_to_side') : $t('move_panel_to_bottom')"
                     class="orientation-toggle"
                     @click="toggleOrientation"
                 />

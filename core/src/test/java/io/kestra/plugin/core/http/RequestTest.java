@@ -38,7 +38,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
@@ -400,7 +399,7 @@ class RequestTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + Base62Encoder.createId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
 
@@ -428,7 +427,7 @@ class RequestTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + Base62Encoder.createId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
 
@@ -483,7 +482,7 @@ class RequestTest {
                 bigStorage = storageInterface.put(
                     MAIN_TENANT,
                     null,
-                    new URI("/" + Base62Encoder.createId()),
+                    new URI("/" + IdUtils.create()),
                     in
                 );
             }

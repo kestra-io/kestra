@@ -7,13 +7,12 @@ import java.time.temporal.ChronoUnit;
 
 import org.junit.jupiter.api.Test;
 
-import com.devskiller.friendly_id.FriendlyId;
-
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.data.model.Pageable;
 import io.micronaut.validation.validator.Validator;
@@ -41,31 +40,35 @@ class PurgeMetricsTest {
         Instant t1 = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant t2 = Instant.now().minus(1, ChronoUnit.DAYS);
 
-        metricRepository.save(MetricEntry.builder()
-            .tenantId(MAIN_TENANT)
-            .namespace(namespace)
-            .flowId(flowId)
-            .executionId("exec-1")
-            .taskId("task-1")
-            .taskRunId(FriendlyId.createFriendlyId())
-            .type("counter")
-            .name("m1")
-            .value(1.0)
-            .timestamp(t1)
-            .build());
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId(flowId)
+                .executionId("exec-1")
+                .taskId("task-1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m1")
+                .value(1.0)
+                .timestamp(t1)
+                .build()
+        );
 
-        metricRepository.save(MetricEntry.builder()
-            .tenantId(MAIN_TENANT)
-            .namespace(namespace)
-            .flowId(flowId)
-            .executionId("exec-2")
-            .taskId("task-1")
-            .taskRunId(FriendlyId.createFriendlyId())
-            .type("counter")
-            .name("m2")
-            .value(2.0)
-            .timestamp(t2)
-            .build());
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId(flowId)
+                .executionId("exec-2")
+                .taskId("task-1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m2")
+                .value(2.0)
+                .timestamp(t2)
+                .build()
+        );
 
         var purge = PurgeMetrics.builder()
             .namespace(Property.ofValue(namespace))
@@ -86,18 +89,20 @@ class PurgeMetricsTest {
         String flowId = "flow-all";
         Instant t1 = Instant.now().minus(10, ChronoUnit.DAYS);
 
-        metricRepository.save(MetricEntry.builder()
-            .tenantId(MAIN_TENANT)
-            .namespace(namespace)
-            .flowId(flowId)
-            .executionId("exec-all-1")
-            .taskId("task-1")
-            .taskRunId(FriendlyId.createFriendlyId())
-            .type("counter")
-            .name("m1")
-            .value(1.0)
-            .timestamp(t1)
-            .build());
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId(flowId)
+                .executionId("exec-all-1")
+                .taskId("task-1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m1")
+                .value(1.0)
+                .timestamp(t1)
+                .build()
+        );
 
         var purge = PurgeMetrics.builder()
             .endDate(Property.ofValue(ZonedDateTime.now().minusDays(5).format(DateTimeFormatter.ISO_ZONED_DATE_TIME)))
@@ -142,31 +147,35 @@ class PurgeMetricsTest {
         String flowId = "purge-metric-flow-exec";
         Instant t1 = Instant.now().minus(10, ChronoUnit.DAYS);
 
-        metricRepository.save(MetricEntry.builder()
-            .tenantId(MAIN_TENANT)
-            .namespace(namespace)
-            .flowId(flowId)
-            .executionId("exec-target")
-            .taskId("task-1")
-            .taskRunId(FriendlyId.createFriendlyId())
-            .type("counter")
-            .name("m1")
-            .value(1.0)
-            .timestamp(t1)
-            .build());
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId(flowId)
+                .executionId("exec-target")
+                .taskId("task-1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m1")
+                .value(1.0)
+                .timestamp(t1)
+                .build()
+        );
 
-        metricRepository.save(MetricEntry.builder()
-            .tenantId(MAIN_TENANT)
-            .namespace(namespace)
-            .flowId(flowId)
-            .executionId("exec-other")
-            .taskId("task-1")
-            .taskRunId(FriendlyId.createFriendlyId())
-            .type("counter")
-            .name("m2")
-            .value(2.0)
-            .timestamp(t1)
-            .build());
+        metricRepository.save(
+            MetricEntry.builder()
+                .tenantId(MAIN_TENANT)
+                .namespace(namespace)
+                .flowId(flowId)
+                .executionId("exec-other")
+                .taskId("task-1")
+                .taskRunId(IdUtils.create())
+                .type("counter")
+                .name("m2")
+                .value(2.0)
+                .timestamp(t1)
+                .build()
+        );
 
         var purge = PurgeMetrics.builder()
             .executionId(Property.ofValue("exec-target"))
@@ -188,18 +197,20 @@ class PurgeMetricsTest {
         Instant t1 = Instant.now().minus(10, ChronoUnit.DAYS);
 
         for (int i = 0; i < 5; i++) {
-            metricRepository.save(MetricEntry.builder()
-                .tenantId(MAIN_TENANT)
-                .namespace(namespace)
-                .flowId(flowId)
-                .executionId("exec-batch")
-                .taskId("task-" + i)
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("m" + i)
-                .value((double) i)
-                .timestamp(t1)
-                .build());
+            metricRepository.save(
+                MetricEntry.builder()
+                    .tenantId(MAIN_TENANT)
+                    .namespace(namespace)
+                    .flowId(flowId)
+                    .executionId("exec-batch")
+                    .taskId("task-" + i)
+                    .taskRunId(IdUtils.create())
+                    .type("counter")
+                    .name("m" + i)
+                    .value((double) i)
+                    .timestamp(t1)
+                    .build()
+            );
         }
 
         var purge = PurgeMetrics.builder()

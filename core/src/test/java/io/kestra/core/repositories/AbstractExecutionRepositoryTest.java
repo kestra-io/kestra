@@ -45,7 +45,6 @@ import io.kestra.core.notification.model.NotificationItem;
 import io.kestra.core.notification.model.NotificationItemOutcome;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
-import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -89,7 +88,7 @@ public abstract class AbstractExecutionRepositoryTest {
         State finalState = randomDuration(state);
 
         Execution.ExecutionBuilder execution = Execution.builder()
-            .id(Base62Encoder.createId())
+            .id(IdUtils.create())
             .namespace(namespace)
             .tenantId(tenantId)
             .flowId(flowId == null ? FLOW : flowId)
@@ -1315,8 +1314,10 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<Execution> failed = executionRepository.find(
             Pageable.UNPAGED, tenant,
-            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
-                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build())
+            List.of(
+                parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
+                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build()
+            )
         );
         assertThat(failed).isEmpty();
 
@@ -1537,7 +1538,7 @@ public abstract class AbstractExecutionRepositoryTest {
             var ten = 10;
 
             var createdExecution = Execution.builder()
-                .id("createdExecution__" + Base62Encoder.createId())
+                .id("createdExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1553,7 +1554,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(createdExecution);
 
             var successExecution = Execution.builder()
-                .id("successExecution__" + Base62Encoder.createId())
+                .id("successExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1574,7 +1575,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(successExecution);
 
             var runningExecution = Execution.builder()
-                .id("runningExecution__" + Base62Encoder.createId())
+                .id("runningExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1592,7 +1593,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(runningExecution);
 
             var failedExecution = Execution.builder()
-                .id("failedExecution__" + Base62Encoder.createId())
+                .id("failedExecution__" + IdUtils.create())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1680,7 +1681,7 @@ public abstract class AbstractExecutionRepositoryTest {
         final Instant clock = Instant.now();
 
         var longExecution = Execution.builder()
-            .id("longExecution__" + FriendlyId.createFriendlyId())
+            .id("longExecution__" + IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)
@@ -1697,7 +1698,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(longExecution);
 
         var shortExecution = Execution.builder()
-            .id("shortExecution__" + FriendlyId.createFriendlyId())
+            .id("shortExecution__" + IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)
@@ -2118,7 +2119,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         var execA = Execution.builder()
-            .id(Base62Encoder.createId())
+            .id(IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)
@@ -2136,7 +2137,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         var execB = Execution.builder()
-            .id(Base62Encoder.createId())
+            .id(IdUtils.create())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)

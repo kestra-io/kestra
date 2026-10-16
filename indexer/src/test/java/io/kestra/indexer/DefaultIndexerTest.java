@@ -18,8 +18,8 @@ import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.*;
-import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.data.model.Pageable;
@@ -59,7 +59,7 @@ class DefaultIndexerTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
         ExecutionStatistic statistic = new ExecutionStatistic(
-            tenant, "namespace", "flow", bucket, State.Type.SUCCESS, 1, 1000, 1000, 1000, 1, 1000, 1000L, 1000L, Base62Encoder.createId()
+            tenant, "namespace", "flow", bucket, State.Type.SUCCESS, 1, 1000, 1000, 1000, 1, 1000, 1000L, 1000L, IdUtils.create()
         );
 
         // When
@@ -82,14 +82,14 @@ class DefaultIndexerTest {
         indexer.startQueues();
 
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = Base62Encoder.createId();
+        String executionId = IdUtils.create();
         LogEntry logEntry = LogEntry.builder()
             .tenantId(tenant)
             .namespace("namespace")
             .flowId("flow")
             .taskId("task")
             .executionId(executionId)
-            .taskRunId(Base62Encoder.createId())
+            .taskRunId(IdUtils.create())
             .attemptNumber(0)
             .timestamp(Instant.now())
             .level(Level.INFO)
@@ -115,14 +115,14 @@ class DefaultIndexerTest {
         indexer.startQueues();
 
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        String executionId = Base62Encoder.createId();
+        String executionId = IdUtils.create();
         TaskRun taskRun = TaskRun.builder()
             .tenantId(tenant)
             .namespace("namespace")
             .flowId("flow")
             .executionId(executionId)
             .taskId("task")
-            .id(Base62Encoder.createId())
+            .id(IdUtils.create())
             .build();
         MetricEntry metricEntry = MetricEntry.of(taskRun, Counter.of("counter", 1), null);
 

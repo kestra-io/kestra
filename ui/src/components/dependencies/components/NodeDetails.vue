@@ -28,6 +28,21 @@
 
         <Link :node :subtype="node.metadata.subtype" />
 
+        <section v-if="hasUnloadedRelations" class="hub">
+            <KsAlert type="warning" :closable="false">
+                {{ $t("dependency.dag.hub.notice", {count: totalDegree}) }}
+            </KsAlert>
+            <KsButton
+                v-if="canExpand"
+                size="small"
+                :loading="loading"
+                data-test="expand-hub"
+                @click="emit('expand')"
+            >
+                {{ $t("dependency.dag.hub.expand") }}
+            </KsButton>
+        </section>
+
         <dl class="grid">
             <template v-for="row in rows" :key="row.label">
                 <dt class="label">
@@ -81,14 +96,15 @@
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
     import Link from "./Link.vue"
     import {normalizeStatus, statusIconOf, statusColorOf} from "../utils/assetStatus"
-    import {ASSET} from "../utils/types"
+    import {ASSET, FLOW} from "../utils/types"
     import type {Types, Node, AssetRun} from "../utils/types"
 
     const props = defineProps<{
         node: Node;
+        loading?: boolean;
     }>()
 
-    const emit = defineEmits<{close: []}>()
+    const emit = defineEmits<{close: []; expand: []}>()
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -101,9 +117,19 @@
         updated?: string;
         status?: string;
         runs?: AssetRun[];
+        collapsed?: boolean;
+        totalDegree?: number;
+        expandable?: boolean;
+        exhausted?: boolean;
     })
 
     const shortName = computed(() => stringUtils.afterLastDot(props.node.flow) || props.node.flow)
+
+    const isCollapsed = computed(() => Boolean(metadata.value.collapsed))
+    const hasUnloadedRelations = computed(() => isCollapsed.value && !metadata.value.exhausted)
+    const totalDegree = computed(() => metadata.value.totalDegree ?? 0)
+    // `expandable`, not `node.id`: the id falls back to the graph uid once anonymized.
+    const canExpand = computed(() => (metadata.value.subtype === ASSET || metadata.value.subtype === FLOW) && Boolean(metadata.value.expandable))
 
     const status = computed(() =>
         (metadata.value.subtype === ASSET ? normalizeStatus(metadata.value.status) : undefined),
@@ -240,6 +266,14 @@
                 font-family: var(--ks-font-family-mono);
                 font-size: var(--ks-font-size-xs);
             }
+        }
+
+        .hub {
+            display: flex;
+            flex-direction: column;
+            gap: var(--ks-spacing-2);
+            padding-top: var(--ks-spacing-3);
+            border-top: 1px solid var(--ks-border-subtle);
         }
 
         .runs {

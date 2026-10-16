@@ -4,10 +4,11 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import ExecutionVariableExplorer from "./ExecutionVariableExplorer.vue"
-import type {ExplorerSection} from "./SidebarList.vue"
+import type {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
 import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+import * as Utils from "../../../utils/utils"
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
     useRoute: () => ({query: {}}),
@@ -101,9 +102,13 @@ function mountExplorer(
     return i18nMount(ExecutionVariableExplorer, {messages, global: globalConfig})
 }
 
+function sidebarSections(wrapper: ReturnType<typeof i18nMount>): ExplorerSection[] {
+    return wrapper.findComponent({name: "SidebarList"}).props("sections") as ExplorerSection[]
+}
+
 async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
-    const item = (sidebar.props("sections") as ExplorerSection[])
+    const item = sidebarSections(wrapper)
         .find((section) => section.key === sectionKey)
         ?.items
         .find((candidate) => candidate.label === itemName)
@@ -281,8 +286,7 @@ describe("ExecutionVariableExplorer", () => {
         })
         await flushPromises()
 
-        const sidebar = wrapper.findComponent({name: "SidebarList"})
-        const triggerItems = (sidebar.props("sections") as ExplorerSection[])
+        const triggerItems = sidebarSections(wrapper)
             .find((section) => section.key === "triggers")
             ?.items ?? []
 
@@ -327,5 +331,24 @@ describe("ExecutionVariableExplorer", () => {
 
             expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(false)
         })
+    })
+
+    test("keeps an empty-string variable visible in the sidebar and scalar viewer", async () => {
+        const wrapper = mountExplorer({
+            empty: "",
+        })
+        await flushPromises()
+
+        const items = sidebarSections(wrapper)
+            .find((section) => section.key === "variables")
+            ?.items ?? []
+
+        const byLabel = Object.fromEntries(
+            items.map((item): [string, ExplorerItem] => [item.label, item]),
+        )
+        expect(byLabel.empty.preview).toBe(Utils.EMPTY_STRING_DISPLAY)
+
+        await selectVariable(wrapper, "empty")
+        expect(wrapper.find(".viewer__scalar").text()).toBe(Utils.EMPTY_STRING_DISPLAY)
     })
 })

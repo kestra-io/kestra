@@ -29,6 +29,10 @@ public abstract class AbstractDispatchQueue<T extends DispatchEvent> extends Abs
 
     @Override
     public final void emit(List<T> messages) throws QueueException {
+        if (messages.isEmpty()) {
+            return;
+        }
+
         this.doEmit(
             messages.stream()
                 .map(throwFunction(message -> new QueueRecord(message.key(), this.queueService.serialize(this.cls, message))))

@@ -16,12 +16,18 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 15;
 
     @Inject
     private KeyedDispatchQueueInterface<TestKeyedDispatch> keyDispatchQueue;
+
+    @Test
+    void shouldNotThrowWhenEmittingEmptyBatch() {
+        assertThatCode(() -> keyDispatchQueue.emit("group", List.of())).doesNotThrowAnyException();
+    }
 
     @Test
     void singleConsumer() throws QueueException, InterruptedException {

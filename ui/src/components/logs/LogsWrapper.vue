@@ -118,7 +118,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
+    import {ref, computed, nextTick, watch, useTemplateRef, onBeforeUnmount} from "vue"
+    import {getActivePinia} from "pinia"
     import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
@@ -152,7 +153,7 @@
     import type {LevelFilterValue} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
-    import {useLogsStore} from "../../stores/logs"
+    import {useLogsStore, useScopedLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
@@ -172,6 +173,7 @@
         namespace?: string | null;
         restoreurl?: boolean;
         withCharts?: boolean;
+        logsStoreScope?: string;
     }>(), {
         embed: false,
         showFilters: false,
@@ -181,6 +183,7 @@
         namespace: undefined,
         restoreurl: undefined,
         withCharts: true,
+        logsStoreScope: undefined,
     })
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"])
 
@@ -188,7 +191,14 @@
     const router = useRouter()
     const {t} = useI18n()
     const toast = useToast()
-    const logsStore = useLogsStore()
+    const logsStore = props.logsStoreScope ? useScopedLogsStore(props.logsStoreScope) : useLogsStore()
+    if (props.logsStoreScope) {
+        const pinia = getActivePinia()
+        onBeforeUnmount(() => {
+            logsStore.$dispose()
+            if (pinia) delete pinia.state.value[logsStore.$id]
+        })
+    }
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
     const quickIntervals = computed(() => [

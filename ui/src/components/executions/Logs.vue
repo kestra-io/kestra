@@ -124,7 +124,7 @@
                             <LogLine
                                 @click="logCursor = asLog(item).index.toString()"
                                 class="line"
-                                :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === asLog(item).level, 'opacity-40': cursorLogLevel && cursorLogLevel !== asLog(item).level}"
+                                :dimmed="!!cursorLogLevel && cursorLogLevel !== asLog(item).level"
                                 :cursor="asLog(item).index.toString() === logCursor"
                                 :excludeMetas="(['namespace', 'flowId', 'executionId'] as any)"
                                 :level="effectiveLevelValue?.value as any"

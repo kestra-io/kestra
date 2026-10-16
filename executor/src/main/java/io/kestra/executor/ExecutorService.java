@@ -193,7 +193,8 @@ public class ExecutorService {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
             // if killing: kill the task runs no worker will ever answer for — created (not yet started)
-            // and retrying (waiting on the executor's own retry delay, which a kill must not fire)
+            // retrying (waiting on the executor's own retry delay, which a kill must not fire)
+            // and LoopUntil waiting for its next iteration (same, with its CONTINUE_FLOWABLE delay)
             executor = this.handleNeverRunnedKilling(executor);
             //then set the execution to killed
             executor = this.handleKilling(executor);
@@ -691,9 +692,13 @@ public class ExecutorService {
 
             // handle flowable tasks Executor custom logic
             if (task instanceof FlowableTask<?>) {
+                State.Type executionState = executor.getExecution().getState().getCurrent();
                 try {
                     switch (task) {
-                        case LoopUntil waitFor when taskRun.getState().isRunning() -> {
+                        // only a RUNNING loop goes on: isRunning() also matches KILLING, and re-pausing a killed loop undoes the kill
+                        case LoopUntil waitFor when taskRun.getState().getCurrent() == State.Type.RUNNING
+                            && executionState != State.Type.KILLING
+                            && !executionState.isTerminated() -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                                 Map<String, Object> previousOutput = taskOutputService.getOutputs(taskRun);
                                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(taskRun), taskRun);
@@ -1210,7 +1215,9 @@ public class ExecutorService {
         List<WorkerTaskResult> workerTaskResults = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() || taskRun.getState().getCurrent() == State.Type.RETRYING)
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated()
+                || taskRun.getState().getCurrent() == State.Type.RETRYING
+                || isLoopUntilWaitingForNextIteration(executor, taskRun))
             .map(
                 t -> childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),
@@ -1223,6 +1230,21 @@ public class ExecutorService {
 
         this.addWorkerTaskResults(executor, workerTaskResults);
         return executor;
+    }
+
+    /**
+     * A LoopUntil killed between two iterations (execution PAUSED, waiting on its CONTINUE_FLOWABLE delay) is moved to KILLING
+     * by the kill, but no child is running: no worker will ever answer for it, so the executor must kill it itself.
+     */
+    private boolean isLoopUntilWaitingForNextIteration(ExecutorContext executor, TaskRun taskRun) {
+        if (taskRun.getState().getCurrent() != State.Type.KILLING
+            || !(executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId()) instanceof LoopUntil)) {
+            return false;
+        }
+
+        return executor.getExecution().getTaskRunList().stream()
+            .filter(t -> taskRun.getId().equals(t.getParentTaskRunId()))
+            .allMatch(t -> t.getState().isTerminated());
     }
 
     private ExecutorContext handleAfterExecution(ExecutorContext executor) {

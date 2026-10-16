@@ -2,6 +2,7 @@ package io.kestra.queue;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
 import io.kestra.core.exceptions.DeserializationException;
@@ -56,42 +57,53 @@ public abstract class AbstractPollingSubscriber<T extends Event> extends Abstrac
     protected abstract Integer pollBatch(Consumer<List<byte[]>> messageConsumer);
 
     private QueueSubscriber<T> internalSubscribe(QueuePoller queuePoller) {
-        this.queueService.execute(() ->
-        {
-            List<QueuePollerConfiguration.Step> steps = configuration.computeSteps();
-            ZonedDateTime lastPoll = ZonedDateTime.now();
+        try {
+            this.queueService.execute(() ->
+            {
+                List<QueuePollerConfiguration.Step> steps = configuration.computeSteps();
+                ZonedDateTime lastPoll = ZonedDateTime.now();
 
-            try {
-                while (this.isActive()) {
-                    try {
-                        this.waitIfPaused();
+                try {
+                    while (this.isActive()) {
+                        try {
+                            this.waitIfPaused();
 
-                        // Check if the loop was stopped while being paused
-                        if (!this.isActive()) {
-                            return;
-                        }
+                            // Check if the loop was stopped while being paused
+                            if (!this.isActive()) {
+                                return;
+                            }
 
-                        lastPoll = queuePoller.pollOnce(lastPoll, steps);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        log.error("Interrupted while waiting. Stopping.", e);
-                        this.markEnd();
-                    } catch (Exception e) {
-                        if (
-                            "io.micronaut.transaction.exceptions.CannotCreateTransactionException".equals(e.getClass().getName())
-                                || "io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException".equals(e.getClass().getName())
-                        ) {
-                            // we ignore transaction/connection errors as they occur when the datasource is closed during shutdown
-                            log.debug("Can't poll on receive", e);
-                        } else {
-                            this.markEnd(e);
+                            lastPoll = queuePoller.pollOnce(lastPoll, steps);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            log.error("Interrupted while waiting. Stopping.", e);
+                            this.markEnd();
+                        } catch (Exception e) {
+                            if (
+                                "io.micronaut.transaction.exceptions.CannotCreateTransactionException".equals(e.getClass().getName())
+                                    || "io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException".equals(e.getClass().getName())
+                            ) {
+                                // we ignore transaction/connection errors as they occur when the datasource is closed during shutdown
+                                log.debug("Can't poll on receive", e);
+                            } else {
+                                this.markEnd(e);
+                            }
                         }
                     }
+                } finally {
+                    this.markEnd();
                 }
-            } finally {
-                this.markEnd();
-            }
-        });
+            });
+        } catch (RejectedExecutionException e) {
+            // The queue executor is no longer accepting tasks (typically because @PreDestroy
+            // shut it down while the executor bean was still walking through its subscribe()
+            // chain). Treat this as a benign shutdown-time race: leaking the exception would
+            // reach ThreadUncaughtExceptionHandler and trigger Runtime.exit(1), pre-empting
+            // the rest of the graceful shutdown.
+            log.warn("Cannot subscribe, queue executor is shutting down");
+            this.markEnd();
+            return this;
+        }
 
         return this;
     }

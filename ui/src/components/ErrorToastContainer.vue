@@ -1,6 +1,6 @@
 <template>
     <KsButton
-        v-if="isFlowContext"
+        v-if="aiEnabled && isFlowContext"
         @click="fixWithAi"
         size="small"
     >
@@ -33,6 +33,7 @@
     import {useI18n} from "vue-i18n"
     import AiIcon from "vue-material-design-icons/Creation.vue"
     import {useMiscStore} from "override/stores/misc"
+    import {useAiEnabled} from "../composables/useAiEnabled"
     import type {ProblemFieldError} from "@kestra-io/kestra-sdk"
     import {problemFieldLabel, problemFieldMessage} from "../utils/problem"
 
@@ -54,6 +55,8 @@
     const route = useRoute()
     const {t, te} = useI18n()
     const miscStore = useMiscStore()
+
+    const aiEnabled = useAiEnabled()
 
     const isFlowContext = computed(() => {
         const routeName = String(route?.name ?? "")

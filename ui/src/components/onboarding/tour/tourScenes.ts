@@ -79,6 +79,9 @@ export const sceneIndexOf = (scenes: readonly SceneShape[], id: string | null) =
     return index >= 0 ? index : 0
 }
 
+export const workingLabelKey = (sceneKey: string, genericKey: string, exists: (key: string) => boolean) =>
+    exists(sceneKey) ? sceneKey : genericKey
+
 export interface TourRoute {
     name?: string | symbol | null;
     params: Record<string, unknown>;

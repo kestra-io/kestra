@@ -1,0 +1,19 @@
+id: retry-flowable-behavior-nested-leaf
+namespace: io.kestra.tests
+
+tasks:
+  - id: seq1
+    type: io.kestra.plugin.core.flow.Sequential
+    retry:
+      type: constant
+      behavior: RETRY_FLOWABLE
+      maxAttempts: 2
+      interval: PT1S
+    tasks:
+      - id: leaf
+        type: io.kestra.plugin.core.execution.Fail
+        retry:
+          type: constant
+          behavior: RETRY_FAILED_TASK
+          maxAttempts: 2
+          interval: PT1S

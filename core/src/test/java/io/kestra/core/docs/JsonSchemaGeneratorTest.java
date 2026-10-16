@@ -32,6 +32,7 @@ import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -164,6 +165,59 @@ class JsonSchemaGeneratorTest {
             assertThat(requiredWithDefault, is(notNullValue()));
             assertThat((List<String>) requiredWithDefault.get("required"), not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void flowChecks() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+            var check = definitions.get(Check.class.getName());
+            var checkProperties = (Map<String, Map<String, Object>>) check.get("properties");
+
+            var passIf = checkProperties.get("passIf");
+            assertThat(passIf.get("type"), is("string"));
+            assertThat(passIf.containsKey("$deprecated"), is(false));
+            assertThat(passIf.containsKey("writeOnly"), is(false));
+
+            var when = checkProperties.get("when");
+            assertThat(when.get("$deprecated"), is(true));
+            assertThat(when.get("writeOnly"), is(true));
+
+            var condition = checkProperties.get("condition");
+            assertThat(condition.get("$deprecated"), is(true));
+            assertThat(condition.get("writeOnly"), is(true));
+
+            assertThat(checkProperties, not(hasKey("singleConditionName")));
+            // passIf cannot be listed as required: when and condition are valid aliases, so the
+            // exactly-one rule is enforced at runtime by Check.isSingleConditionName() instead.
+            assertThat((List<String>) check.get("required"), hasItem("message"));
+            assertThat((List<String>) check.get("required"), not(hasItem("passIf")));
+
+            com.networknt.schema.Schema schema = SchemaRegistry.withDialect(Dialects.getDraft7()).getSchema(toolsJson(generate));
+            assertThat(validate(schema, flowWithCheck("passIf")), is(empty()));
+            // definitions using only a deprecated alias must stay valid for schema consumers
+            assertThat(validate(schema, flowWithCheck("when")), is(empty()));
+            assertThat(validate(schema, flowWithCheck("condition")), is(empty()));
+        });
+    }
+
+    private static String flowWithCheck(String conditionProperty) {
+        return """
+            id: checks
+            namespace: company.team
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            checks:
+              - %s: "{{ true }}"
+                message: sensible
+            """.formatted(conditionProperty);
     }
 
     @SuppressWarnings("unchecked")

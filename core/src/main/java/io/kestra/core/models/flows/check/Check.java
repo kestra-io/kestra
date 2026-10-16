@@ -4,8 +4,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +31,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class Check {
 
+    private static final String SINGLE_CONDITION_NAME_MESSAGE = "A check must set only one of 'passIf', 'when' and 'condition'.";
+
     /**
      * The condition to evaluate.
      * <p>
@@ -39,9 +45,21 @@ public class Check {
      * {@link Style#ERROR}, overriding the declared {@code behavior} and {@code style} — a broken gate must
      * never let a run through.
      */
-    @NotNull
-    @NotEmpty
+    String passIf;
+
+    /**
+     * @deprecated Use {@link #getPassIf()} instead.
+     */
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     String when;
+
+    /**
+     * @deprecated Use {@link #getPassIf()} instead.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    String condition;
 
     /**
      * The message associated with this check, will be displayed when the condition evaluates to {@code false}.
@@ -61,9 +79,93 @@ public class Check {
     @Builder.Default
     Behavior behavior = Behavior.BLOCK_EXECUTION;
 
+    /**
+     * The condition to evaluate, resolved from {@code passIf} or, for backward compatibility, from the
+     * deprecated {@code when} and {@code condition} aliases.
+     */
+    public String getPassIf() {
+        return passIf != null ? passIf : (when != null ? when : condition);
+    }
+
+    /**
+     * @deprecated Use {@link #getPassIf()} instead.
+     */
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    @JsonIgnore
+    public String getWhen() {
+        return getPassIf();
+    }
+
+    /**
+     * @deprecated Use {@link #getPassIf()} instead.
+     */
     @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonIgnore
+    public String getCondition() {
+        return getPassIf();
+    }
+
+    @JsonIgnore
+    @AssertTrue(message = SINGLE_CONDITION_NAME_MESSAGE)
+    public boolean isSingleConditionName() {
+        int names = (passIf == null ? 0 : 1) + (when == null ? 0 : 1) + (condition == null ? 0 : 1);
+        return names <= 1;
+    }
+
+    @JsonIgnore
+    @AssertTrue(message = "must not be null")
+    public boolean hasCondition() {
+        return passIf != null || when != null || condition != null;
+    }
+
+    @JsonIgnore
+    @AssertTrue(message = "must not be empty")
+    public boolean isConditionNotEmpty() {
+        String cond = getPassIf();
+        return cond == null || !cond.isEmpty();
+    }
+
+    @JsonSetter("passIf")
+    public void setPassIf(String passIf) {
+        if (passIf != null) {
+            ensureSingleConditionName("passIf", "when", when);
+            ensureSingleConditionName("passIf", "condition", condition);
+        }
+        this.passIf = passIf;
+    }
+
+    /**
+     * @deprecated Use {@link #setPassIf(String)} instead.
+     */
+    @Deprecated(forRemoval = true, since = "2.1.0")
+    @JsonSetter("when")
+    public void setWhen(String when) {
+        if (when != null) {
+            ensureSingleConditionName("when", "passIf", passIf);
+            ensureSingleConditionName("when", "condition", condition);
+        }
+        this.when = when;
+    }
+
+    /**
+     * @deprecated Use {@link #setPassIf(String)} instead.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonSetter("condition")
     public void setCondition(String condition) {
-        this.when = condition;
+        if (condition != null) {
+            ensureSingleConditionName("condition", "passIf", passIf);
+            ensureSingleConditionName("condition", "when", when);
+        }
+        this.condition = condition;
+    }
+
+    private static void ensureSingleConditionName(String name, String otherName, String other) {
+        if (other != null) {
+            throw new IllegalArgumentException(
+                SINGLE_CONDITION_NAME_MESSAGE + " It sets both '%s' and '%s'.".formatted(otherName, name)
+            );
+        }
     }
 
     /**

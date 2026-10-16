@@ -284,6 +284,14 @@
     "last execution status": "Last execution status",
     "jump to": "Jump to",
     "jump to...": "Jump to...",
+    "global_search": {
+        "open_flow": "Open flow",
+        "flow_executions": "Flow executions",
+        "move": "Move",
+        "menu": "Menu",
+        "sources": "Menu + flows + namespaces",
+        "search_failed": "Couldn't load flows or namespaces"
+    },
     "contextBar": {
       "ai": "AI",
       "news": "News",

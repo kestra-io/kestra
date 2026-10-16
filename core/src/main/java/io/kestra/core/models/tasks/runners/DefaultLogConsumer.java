@@ -12,10 +12,17 @@ public class DefaultLogConsumer extends AbstractLogConsumer {
     private static final String LOG_INFO_MARKER = "##kestra:log:info##";
 
     private final RunContext runContext;
+    private final boolean forwardTraces;
     private volatile boolean debugMode = false;
 
     public DefaultLogConsumer(RunContext runContext) {
         this.runContext = runContext;
+        this.forwardTraces = false;
+    }
+
+    public DefaultLogConsumer(RunContext runContext, boolean forwardTraces) {
+        this.runContext = runContext;
+        this.forwardTraces = forwardTraces;
     }
 
     @Override
@@ -32,7 +39,7 @@ public class DefaultLogConsumer extends AbstractLogConsumer {
             debugMode = false;
             return;
         }
-        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, instant, debugMode));
+        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, instant, debugMode, forwardTraces));
 
         if (isStdErr) {
             this.stdErrCount.incrementAndGet();

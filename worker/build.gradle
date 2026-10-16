@@ -7,7 +7,7 @@ dependencies {
     // Kestra
     annotationProcessor project(':processor')
     implementation project(":core")
-    implementation project(":worker-controller")
+    api project(":worker-controller")
 
     implementation "dev.failsafe:failsafe"
     implementation "com.github.ben-manes.caffeine:caffeine"
@@ -26,6 +26,6 @@ dependencies {
     testImplementation("io.micronaut.sql:micronaut-jooq")
 
     // gRPC
-    implementation("io.micronaut.grpc:micronaut-grpc-server-runtime")
-    implementation("io.micronaut.grpc:micronaut-grpc-client-runtime")
+    api("io.micronaut.grpc:micronaut-grpc-server-runtime")
+    api("io.micronaut.grpc:micronaut-grpc-client-runtime")
 }

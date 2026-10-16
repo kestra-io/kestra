@@ -15,7 +15,7 @@ import FileWordOutline from "vue-material-design-icons/FileWordOutline.vue"
 import FolderZipOutline from "vue-material-design-icons/FolderZipOutline.vue"
 import LanguageMarkdownOutline from "vue-material-design-icons/LanguageMarkdownOutline.vue"
 
-const FILE_URI_PREFIXES = ["kestra:///", "file://", "nsfile://"]
+const FILE_URI_PREFIXES = ["kestra://", "file://", "nsfile://"]
 
 const ICONS_BY_GROUP: [Component, string[]][] = [
     [FileImageOutline, ["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "avif", "ico", "tif", "tiff"]],

@@ -167,8 +167,8 @@ export function useKsEditor(
     }))
 
     const flowYamlEditor = useFlowYamlEditor({
-        isFlowYaml: computed(() => props.lang === "yaml" && props.schemaType === "flow"),
-        duplicateTaskIdMarkers: computed(() => mergedOptions.value.duplicateTaskIdMarkers),
+        isFlowYaml: () => props.lang === "yaml" && props.schemaType === "flow",
+        duplicateTaskIdMarkers: () => mergedOptions.value.duplicateTaskIdMarkers,
         value: () => props.modelValue,
         codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
     })

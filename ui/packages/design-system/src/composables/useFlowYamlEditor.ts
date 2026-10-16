@@ -1,4 +1,4 @@
-import {computed, watch, type Ref} from "vue"
+import {computed, toValue, watch, type MaybeRefOrGetter} from "vue"
 import * as monaco from "monaco-editor/editor/editor.api"
 import {findDuplicateTaskIds} from "../utils/yamlValidation"
 import type {EditorOptions} from "../utils/editorTypes"
@@ -6,10 +6,10 @@ import type {EditorOptions} from "../utils/editorTypes"
 type CodeEditor = monaco.editor.IStandaloneCodeEditor
 
 export interface FlowYamlEditorContext {
-    isFlowYaml: Ref<boolean>
-    duplicateTaskIdMarkers: Ref<boolean | undefined>
-    value: () => string
-    codeEditor: () => CodeEditor | undefined
+    isFlowYaml: MaybeRefOrGetter<boolean>
+    duplicateTaskIdMarkers: MaybeRefOrGetter<boolean | undefined>
+    value: MaybeRefOrGetter<string>
+    codeEditor: MaybeRefOrGetter<CodeEditor | undefined>
 }
 
 function hasVisibleInlineGhostText(editor: CodeEditor): boolean {
@@ -21,20 +21,20 @@ function isTypeLine(lineContent: string): boolean {
 }
 
 export function useFlowYamlEditor(ctx: FlowYamlEditorContext) {
-    const constructionOptions = computed<EditorOptions>(() => ctx.isFlowYaml.value ? {inlineSuggest: {enabled: true}} : {})
+    const constructionOptions = computed<EditorOptions>(() => toValue(ctx.isFlowYaml) ? {inlineSuggest: {enabled: true}} : {})
 
-    const duplicateTaskIdsEnabled = computed(() => ctx.duplicateTaskIdMarkers.value ?? ctx.isFlowYaml.value)
+    const duplicateTaskIdsEnabled = computed(() => toValue(ctx.duplicateTaskIdMarkers) ?? toValue(ctx.isFlowYaml))
 
     function attach(editor: CodeEditor, isSuggestWidgetActive: () => boolean) {
         editor.onKeyDown((e) => {
-            if (!ctx.isFlowYaml.value) return
+            if (!toValue(ctx.isFlowYaml)) return
 
             if (isSuggestWidgetActive() && (e.keyCode === monaco.KeyCode.Enter || e.keyCode === monaco.KeyCode.Tab)) {
-                const current = ctx.codeEditor()
+                const current = toValue(ctx.codeEditor)
                 const currentLine = current?.getModel()?.getLineContent(current.getPosition()?.lineNumber ?? 0) ?? ""
                 if (isTypeLine(currentLine)) {
                     setTimeout(() => {
-                        const ed = ctx.codeEditor()
+                        const ed = toValue(ctx.codeEditor)
                         if (!ed) return
                         const position = ed.getPosition()
                         if (!position) return
@@ -49,24 +49,24 @@ export function useFlowYamlEditor(ctx: FlowYamlEditorContext) {
             if (hasVisibleInlineGhostText(editor)) {
                 if (e.keyCode === monaco.KeyCode.Tab) {
                     e.preventDefault(); e.stopPropagation()
-                    ctx.codeEditor()?.trigger("inlineSuggestCommit", "editor.action.inlineSuggest.commit", {})
+                    toValue(ctx.codeEditor)?.trigger("inlineSuggestCommit", "editor.action.inlineSuggest.commit", {})
                     return
                 }
                 if (e.keyCode === monaco.KeyCode.Enter) {
-                    ctx.codeEditor()?.trigger("inlineSuggestHide", "editor.action.inlineSuggest.hide", {})
+                    toValue(ctx.codeEditor)?.trigger("inlineSuggestHide", "editor.action.inlineSuggest.hide", {})
                     return
                 }
             }
 
             if (e.keyCode === monaco.KeyCode.Enter) {
-                setTimeout(() => ctx.codeEditor()?.trigger("inlineSuggestTrigger", "editor.action.inlineSuggest.trigger", {}), 0)
+                setTimeout(() => toValue(ctx.codeEditor)?.trigger("inlineSuggestTrigger", "editor.action.inlineSuggest.trigger", {}), 0)
             }
         })
     }
 
-    watch(ctx.value, (newValue) => {
+    watch(() => toValue(ctx.value), (newValue) => {
         if (!duplicateTaskIdsEnabled.value) return
-        const model = ctx.codeEditor()?.getModel()
+        const model = toValue(ctx.codeEditor)?.getModel()
         if (!model) return
 
         monaco.editor.setModelMarkers(

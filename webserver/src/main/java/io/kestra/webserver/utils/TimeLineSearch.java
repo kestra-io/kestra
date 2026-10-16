@@ -28,6 +28,10 @@ public class TimeLineSearch {
     }
 
     public static TimeLineSearch extractFrom(List<QueryFilter> filters) {
+        return extractFrom(filters, true);
+    }
+
+    public static TimeLineSearch extractFrom(List<QueryFilter> filters, boolean withDefault) {
         ZonedDateTime startDate = null;
         ZonedDateTime endDate = null;
         Duration timeRange = null;
@@ -51,7 +55,7 @@ public class TimeLineSearch {
             startDate = ZonedDateTime.now().minus(timeRange);
         }
 
-        if (startDate == null) {
+        if (withDefault && startDate == null) {
             // this default startDate filter is there to avoid flooding the database in case of failure on our side
             startDate = ZonedDateTime.now().minusDays(8);
         }

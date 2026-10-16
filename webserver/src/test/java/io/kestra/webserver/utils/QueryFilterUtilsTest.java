@@ -137,6 +137,48 @@ public class QueryFilterUtilsTest {
         assertThat(appended.operation()).isEqualTo(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO);
     }
 
+    @Test
+    void replaceTimeRange_withoutDefault_whenNoDateFilter_remainsUnbounded() {
+        var labelsLeaf = QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("foo:bar")
+            .build();
+        var filters = List.of(labelsLeaf);
+
+        var result = QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, DateFilter.START_DATE, false);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).field()).isEqualTo(QueryFilter.Field.LABELS);
+    }
+
+    @Test
+    void replaceTimeRange_withDefault_whenNoDateFilter_appendsDefaultStartDate() {
+        var labelsLeaf = QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("foo:bar")
+            .build();
+        var filters = List.of(labelsLeaf);
+
+        var result = QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, DateFilter.START_DATE, true);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).field()).isEqualTo(QueryFilter.Field.LABELS);
+        assertThat(result.get(1).field()).isEqualTo(QueryFilter.Field.START_DATE);
+    }
+
+    @Test
+    void replaceTimeRange_withoutDefault_whenTimeRangePresent_producesStartDateFilter() {
+        var filters = timeRangeFilter();
+
+        var result = QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, DateFilter.START_DATE, false);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).field()).isEqualTo(QueryFilter.Field.START_DATE);
+        assertThat(result.get(0).operation()).isEqualTo(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO);
+    }
+
     private static List<QueryFilter> timeRangeFilter() {
         return List.of(
             QueryFilter.builder()

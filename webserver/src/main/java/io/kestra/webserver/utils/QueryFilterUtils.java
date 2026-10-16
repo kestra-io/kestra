@@ -146,10 +146,14 @@ public class QueryFilterUtils {
      * </ul>
      */
     public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter) {
+        return replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true);
+    }
+
+    public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter, boolean withDefault) {
         if (dateFilter == null) {
             dateFilter = DateFilter.START_DATE;
         }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters, withDefault);
         DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
         ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
 

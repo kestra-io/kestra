@@ -41,6 +41,23 @@
         />
 
         <KsText
+            v-if="legendKinds.length"
+            size="small"
+            class="legend"
+        >
+            <span
+                v-for="kind in legendKinds"
+                :key="kind"
+                class="legend-item"
+            >
+                <span
+                    class="swatch"
+                    :style="{backgroundColor: `var(${edgeKindToken(kind)})`}"
+                />{{ $t(kindLabelKey(kind)) }}
+            </span>
+        </KsText>
+
+        <KsText
             v-if="summaryTokens.length"
             size="small"
             class="summary"
@@ -64,6 +81,7 @@
     import type {GroupField, GroupChip} from "../../composables/useDagGrouping"
     import {normalizeStatus, compactAge} from "../../utils/assetStatus"
     import {normalizeDbtTests} from "../../utils/dbtTests"
+    import {edgeKindToken, RELATION_KINDS} from "../../utils/relationKind"
     import {ASSET} from "../../utils/types"
     import type {Node, DbtTestFields} from "../../utils/types"
 
@@ -72,6 +90,8 @@
         groupFields: GroupField[];
         groupChips: GroupChip[];
         activeGroup?: string;
+        /** Relation kinds present in the current graph's edges; drives which legend swatches show. */
+        relationKinds?: Set<string>;
     }>()
 
     const emit = defineEmits<{
@@ -87,6 +107,10 @@
     const assets = computed(() => props.nodes
         .filter((node) => node.metadata.subtype === ASSET)
         .map((node) => node.metadata as DbtTestFields & {status?: string; updated?: string}))
+
+    const legendKinds = computed(() => RELATION_KINDS.filter((kind) => props.relationKinds?.has(kind)))
+
+    const kindLabelKey = (kind: string): string => `dependency.dag.kind.${kind.toLowerCase()}`
 
     const summaryParts = computed<[key: string, value: string | number][]>(() => {
         if (!assets.value.length) {
@@ -161,6 +185,27 @@
         .group-select {
             flex: 0 1 11rem;
             min-width: 0;
+        }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            flex: 0 0 auto;
+            gap: var(--ks-spacing-3);
+            color: var(--ks-text-secondary);
+
+            .legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: var(--ks-spacing-1);
+            }
+
+            .swatch {
+                width: 0.625rem;
+                height: 0.625rem;
+                border-radius: var(--ks-radius-xs);
+                flex-shrink: 0;
+            }
         }
 
         .summary {

@@ -19,6 +19,7 @@ export default {
             "edit filter": "Edit filter",
             "options": "Data Options",
             "auto refresh": "Auto refresh",
+            "auto_refresh_tooltip": "Auto refresh every {seconds} seconds",
             "refresh": "Refresh data",
             "save filter": "Save filter",
             "save filter tooltip": "Save applied filters",

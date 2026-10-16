@@ -55,7 +55,7 @@
 <style scoped lang="scss">
     #side-menu {
         .kel-select {
-            transition: all 0.2s ease;
+            transition: background-color var(--ks-duration-base) ease;
             background-color: transparent;
         }
     }

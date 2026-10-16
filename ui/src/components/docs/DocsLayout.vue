@@ -250,14 +250,14 @@
 
         .sidebar {
             position: fixed;
-            left: -100%;
+            left: 0;
             top: 0;
             height: 100vh;
             width: calc(100vw - 44px);
             max-width: 100vw;
             z-index: calc(var(--ks-z-overlay) + 1);
-            transition: left 0.3s ease-in-out;
-            box-shadow: 2px 0 8px var(--ks-shadow-elevated);
+            transform: translateX(-100%);
+            transition: transform var(--ks-duration-slow) var(--ks-ease-out);
             padding: 1rem;
             padding-top: 3.5rem;
             padding-right: 0.5rem;
@@ -266,7 +266,8 @@
             overflow: hidden;
 
             &.mobile-open {
-                left: 0;
+                transform: translateX(0);
+                box-shadow: 2px 0 8px var(--ks-shadow-elevated);
             }
 
             > div {

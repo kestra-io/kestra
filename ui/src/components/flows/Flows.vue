@@ -290,7 +290,9 @@
             large
         >
             <template #header>
-                <span v-if="selectedFlow?.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                    <template #id><code>{{ selectedFlow.id }}</code></template>
+                </i18n-t>
             </template>
             <FlowRun
                 v-if="executionsStore.flow"

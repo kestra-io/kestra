@@ -1,7 +1,18 @@
 import {test, expect, describe} from "vitest"
+import {useVueFlow} from "@vue-flow/core"
 import * as VueFlowUtils from "./vueFlowUtils.ts"
-import {edgeTurnPosition, fanOutSplitPosition, type Cluster} from "./vueFlowUtils.ts"
-import {DAGRE_RANK_SEP, NODE_SIZES} from "./constants.ts"
+import {
+    edgeTurnPosition,
+    fanOutSplitPosition,
+    nodeColor,
+    computeClusterColor,
+    getEdgeColorToken,
+    getEdgeColor,
+    BranchType,
+    type Cluster,
+    type MinimalNode,
+} from "./vueFlowUtils.ts"
+import {CLUSTER_PREFIX, DAGRE_RANK_SEP, NODE_SIZES} from "./constants.ts"
 
 const graph = {
     nodes: [
@@ -527,6 +538,8 @@ interface GeneratedElement {
     target?: string
     parentNode?: string
     position?: {x: number; y: number}
+    style?: Record<string, string>
+    markerEnd?: unknown
     data?: Record<string, unknown>
 }
 
@@ -872,6 +885,122 @@ describe("generateGraph flowable lane header", () => {
             taskNode: {uid: "root.parallel_task"},
             childTaskIds: ["branch_a", "branch_b"],
         })
+    })
+})
+
+describe("generateGraph loop return path", () => {
+    const loopFlowGraph = (type: string) => ({
+        nodes: [
+            {uid: "root.root-1", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+            {uid: "root.end-1", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            {
+                uid: "root.loop",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "loop", type},
+            },
+            {
+                uid: "root.loop.child",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "child", type: "io.kestra.plugin.core.log.Log"},
+            },
+        ],
+        edges: [{source: "root.loop", target: "root.loop.child"}],
+        clusters: [
+            {
+                cluster: {
+                    uid: "cluster_root.loop",
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: {uid: "root.loop", task: {id: "loop", type}},
+                },
+                nodes: ["root.root-1", "root.end-1", "root.loop", "root.loop.child"],
+                parents: [],
+                start: "root.root-1",
+                end: "root.end-1",
+            },
+        ],
+    }) as unknown as VueFlowUtils.FlowGraph
+
+    const generate = (type: string, isHorizontal = false) =>
+        asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", loopFlowGraph(type), undefined, [], isHorizontal, {}, new Set(), [], true, false, false,
+        ) ?? [])
+
+    test.each([
+        ["io.kestra.plugin.core.flow.LoopUntil", false],
+        ["io.kestra.plugin.core.flow.Loop", true],
+    ])("runs the %s return path 12px inside its lane border (horizontal: %s)", (type, isHorizontal) => {
+        const elements = generate(type, isHorizontal)
+        const returnPath = elements.find((element) => element.data?.loopReturn)
+        const cluster = elements.find((element) => element.id === "cluster_root.loop")
+        const startDot = elements.find((element) => element.id === "root.root-1")
+        const {x = 0, y = 0} = cluster?.position ?? {}
+        const width = Number.parseFloat(cluster?.style?.width ?? "0")
+        const height = Number.parseFloat(cluster?.style?.height ?? "0")
+
+        expect(returnPath).toMatchObject({type: "edge", source: "root.end-1", target: "root.root-1"})
+        expect(returnPath?.markerEnd).toBeDefined()
+        expect(returnPath?.data?.loopReturn).toEqual({
+            right: x + width - 12,
+            bottom: y + height - 12,
+            entry: {x: x + (startDot?.position?.x ?? 0) + 2.5, y: y + (startDot?.position?.y ?? 0) + 2.5},
+        })
+    })
+
+    test("draws no return path for a flowable that does not loop", () => {
+        const elements = generate("io.kestra.plugin.core.flow.Sequential")
+
+        expect(elements.some((element) => element.data?.loopReturn)).toBe(false)
+    })
+
+    test("omits the return path when the loop lane is collapsed", () => {
+        const hiddenNodes = ["root.root-1", "root.end-1", "root.loop", "root.loop.child", "cluster_root.loop"]
+        const edgeReplacer = {
+            "cluster_root.loop": "root.loop",
+            "root.root-1": "root.loop",
+            "root.end-1": "root.loop",
+        }
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", loopFlowGraph("io.kestra.plugin.core.flow.LoopUntil"), undefined, hiddenNodes, false,
+            edgeReplacer, new Set(["root.loop"]), [], true, false, false,
+        ) ?? [])
+
+        expect(elements.some((element) => element.data?.loopReturn)).toBe(false)
+    })
+})
+
+describe("linkedElements", () => {
+    test("stops at a loop's return edge instead of following the cycle it closes", () => {
+        const {setNodes, setEdges} = useVueFlow("linked-loop")
+        setNodes(["start", "task", "end", "after"].map((id) => ({id, position: {x: 0, y: 0}})))
+        setEdges([
+            {id: "start|task", source: "start", target: "task"},
+            {id: "task|end", source: "task", target: "end"},
+            {id: "end|after", source: "end", target: "after"},
+            {id: "loop-return|end|start", source: "end", target: "start", data: {loopReturn: {}}},
+        ])
+
+        const linked = VueFlowUtils.linkedElements("linked-loop", "task").map((element) => element?.id)
+
+        expect(linked).toEqual(expect.arrayContaining(["start|task", "task|end", "end|after", "after"]))
+        expect(linked).not.toContain("loop-return|end|start")
+    })
+})
+
+describe("loopReturnPath", () => {
+    const bounds = {right: 488, bottom: 288}
+
+    test("hugs the right and bottom borders of a horizontal lane and enters the start marker from below", () => {
+        const d = VueFlowUtils.loopReturnPath({x: 440, y: 150}, {...bounds, entry: {x: 60, y: 150}}, true)
+
+        expect(d).toBe(
+            "M440,150 L483,150 Q488,150 488,155 L488,283 Q488,288 483,288 L65,288 Q60,288 60,283 L60,162",
+        )
+    })
+
+    test("enters the start marker of a vertical lane from the side, clear of the header above it", () => {
+        const d = VueFlowUtils.loopReturnPath({x: 250, y: 240}, {...bounds, entry: {x: 250, y: 80}}, false)
+
+        expect(d).toBe("M250,240 L250,283 Q250,288 255,288 L483,288 Q488,288 488,283 L488,85 Q488,80 483,80 L262,80")
     })
 })
 
@@ -1323,5 +1452,142 @@ describe("generateGraph collapsed cluster nested in an expanded one", () => {
         ))
 
         expect(elements.find((e) => e.id === "cluster_root.approval")!.data!.collaspsible).toBe(false)
+    })
+})
+
+describe("nodeColor", () => {
+    test("returns success for triggers root node and trigger nodes", () => {
+        expect(nodeColor({uid: "root.Triggers", type: "task"}, new Set())).toBe("success")
+        expect(nodeColor({uid: "root.cron", type: "io.kestra.core.models.hierarchies.GraphTrigger"}, new Set())).toBe("success")
+    })
+
+    test("returns flowable-task for a collapsed cluster and primary for a subflow task", () => {
+        expect(nodeColor({uid: "root.cluster", type: "collapsedcluster"}, new Set())).toBe("flowable-task")
+        expect(nodeColor({uid: "root.subflow", type: "io.kestra.core.models.hierarchies.SubflowGraphTask"}, new Set())).toBe("primary")
+    })
+
+    test("returns danger for error branch, warning for finally branch, and blue for collapsed", () => {
+        expect(nodeColor({uid: "root.err", type: "task", branchType: BranchType.ERROR}, new Set())).toBe("danger")
+        expect(nodeColor({uid: "root.fin", type: "task", branchType: BranchType.FINALLY}, new Set())).toBe("warning")
+        expect(nodeColor({uid: "root.col", type: "task"}, new Set(["root.col"]))).toBe("blue")
+        expect(nodeColor({uid: "root.normal", type: "task"}, new Set())).toBe("default")
+    })
+
+    test("pins branch order: earlier branch wins when a node matches multiple conditions", () => {
+        expect(nodeColor({uid: "root.Triggers", type: "task", branchType: BranchType.ERROR}, new Set())).toBe("success")
+        expect(nodeColor({uid: "root.cron", type: "io.kestra.core.models.hierarchies.GraphTrigger", branchType: BranchType.ERROR}, new Set())).toBe("success")
+        expect(nodeColor({uid: "root.col", type: "collapsedcluster"}, new Set(["root.col"]))).toBe("flowable-task")
+        expect(nodeColor({uid: "root.sub", type: "io.kestra.core.models.hierarchies.SubflowGraphTask", branchType: BranchType.ERROR}, new Set())).toBe("primary")
+        expect(nodeColor({uid: "root.err", type: "task", branchType: BranchType.ERROR}, new Set(["root.err"]))).toBe("danger")
+        expect(nodeColor({uid: "root.fin", type: "task", branchType: BranchType.FINALLY}, new Set(["root.fin"]))).toBe("warning")
+    })
+})
+
+describe("computeClusterColor", () => {
+    test("returns triggers for the triggers cluster", () => {
+        expect(computeClusterColor({
+            uid: CLUSTER_PREFIX + "root.Triggers",
+            type: "io.kestra.core.models.hierarchies.GraphCluster",
+            taskNode: null,
+        })).toBe("triggers")
+    })
+
+    test("returns subflow for a subflow cluster", () => {
+        expect(computeClusterColor({
+            uid: "cluster_root.subflow",
+            type: "io.kestra.core.models.hierarchies.SubflowGraphCluster",
+            taskNode: null,
+        })).toBe("subflow")
+    })
+
+    test("returns errors for an error branch cluster", () => {
+        expect(computeClusterColor({
+            uid: "cluster_root.errors",
+            type: "io.kestra.core.models.hierarchies.GraphCluster",
+            taskNode: null,
+            branchType: BranchType.ERROR,
+        })).toBe("errors")
+    })
+
+    test("returns flowable-task for standard clusters", () => {
+        expect(computeClusterColor({
+            uid: "cluster_root.parallel",
+            type: "io.kestra.core.models.hierarchies.GraphCluster",
+            taskNode: null,
+        })).toBe("flowable-task")
+    })
+
+    test("pins branch order: earlier branch wins when a cluster matches multiple conditions", () => {
+        expect(computeClusterColor({
+            uid: CLUSTER_PREFIX + "root.Triggers",
+            type: "io.kestra.core.models.hierarchies.SubflowGraphCluster",
+            taskNode: null,
+            branchType: BranchType.ERROR,
+        })).toBe("triggers")
+
+        expect(computeClusterColor({
+            uid: "cluster_root.subflow",
+            type: "io.kestra.core.models.hierarchies.SubflowGraphCluster",
+            taskNode: null,
+            branchType: BranchType.ERROR,
+        })).toBe("subflow")
+    })
+})
+
+describe("getEdgeColorToken", () => {
+    test("maps danger and warning to their css variables", () => {
+        expect(getEdgeColorToken("danger")).toBe("var(--ks-border-error)")
+        expect(getEdgeColorToken("warning")).toBe("var(--ks-status-warning)")
+    })
+
+    test("returns fallback token for null and unrecognized colors", () => {
+        expect(getEdgeColorToken(null)).toBe("var(--ks-topology-dash)")
+        expect(getEdgeColorToken("unrecognized")).toBe("var(--ks-topology-dash)")
+    })
+})
+
+describe("getEdgeColor", () => {
+    test("picks danger when source or target is an error branch", () => {
+        const edge = {source: "root.a", target: "root.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.a": {uid: "root.a", type: "task"},
+            "root.b": {uid: "root.b", type: "task", branchType: BranchType.ERROR},
+        }
+        expect(getEdgeColor(edge, nodes, {})).toBe("danger")
+    })
+
+    test("picks warning when source or target is a finally branch", () => {
+        const edge = {source: "root.a", target: "root.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.a": {uid: "root.a", type: "task", branchType: BranchType.FINALLY},
+            "root.b": {uid: "root.b", type: "task"},
+        }
+        expect(getEdgeColor(edge, nodes, {})).toBe("warning")
+    })
+
+    test("returns null for standard edges", () => {
+        const edge = {source: "root.a", target: "root.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.a": {uid: "root.a", type: "task"},
+            "root.b": {uid: "root.b", type: "task"},
+        }
+        expect(getEdgeColor(edge, nodes, {})).toBeNull()
+    })
+
+    test("inherits branch color from parent cluster", () => {
+        const edge = {source: "root.parent.a", target: "root.parent.b"}
+        const nodes: Record<string, MinimalNode> = {
+            "root.parent.a": {uid: "root.parent.a", type: "task"},
+            "root.parent.b": {uid: "root.parent.b", type: "task"},
+        }
+        const clusters: Record<string, Cluster> = {
+            "root.parent": {
+                uid: "cluster_root.parent",
+                type: "io.kestra.core.models.hierarchies.GraphCluster",
+                taskNode: null,
+                branchType: BranchType.ERROR,
+            },
+        }
+        expect(getEdgeColor(edge, nodes, clusters)).toBe("danger")
     })
 })

@@ -87,6 +87,42 @@ class FileSerdeTest {
     }
 
     @Test
+    void shouldReadValuesAfterSkippedOnesWhenSkipIsGiven() throws IOException {
+        File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".ion");
+        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            FileSerde.write(outputStream, Map.of("a", List.of(Map.of("x", 1), Map.of("y", 2))));
+            FileSerde.write(outputStream, "scalar");
+            FileSerde.write(outputStream, Map.of("key3", "value3"));
+            FileSerde.write(outputStream, Map.of("key4", "value4"));
+        }
+
+        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(tempFile), FileSerde.BUFFER_SIZE)) {
+            List<Object> list = new ArrayList<>();
+            boolean hasMore = FileSerde.read(inputStream, 2, 1, list::add);
+
+            assertThat(list).containsExactly(Map.of("key3", "value3"));
+            assertThat(hasMore).isTrue();
+        }
+    }
+
+    @Test
+    void shouldReadNothingWhenSkipExceedsTheNumberOfValues() throws IOException {
+        File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".ion");
+        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            FileSerde.write(outputStream, Map.of("key1", "value1"));
+            FileSerde.write(outputStream, Map.of("key2", "value2"));
+        }
+
+        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(tempFile), FileSerde.BUFFER_SIZE)) {
+            List<Object> list = new ArrayList<>();
+            boolean hasMore = FileSerde.read(inputStream, 5, 2, list::add);
+
+            assertThat(list).isEmpty();
+            assertThat(hasMore).isFalse();
+        }
+    }
+
+    @Test
     void readAll_fromEmptySource() throws IOException {
         final Path inputTempFilePath = createTempFile();
 

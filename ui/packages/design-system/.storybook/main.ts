@@ -5,7 +5,7 @@ import type {StorybookConfig} from "@storybook/vue3-vite"
 const srcDir = resolve(import.meta.dirname, "../src")
 
 const config: StorybookConfig = {
-    stories: ["../tests/storybook/**/*.stories.@(ts|tsx)"],
+    stories: ["../src/**/*.stories.@(ts|tsx)", "../tests/storybook/**/*.stories.@(ts|tsx)"],
     addons: [
         "@storybook/addon-themes",
         "@storybook/addon-vitest",
@@ -14,7 +14,13 @@ const config: StorybookConfig = {
     ],
     framework: {
         name: "@storybook/vue3-vite",
-        options: {},
+        options: {
+            // Storybook resolves this tsconfig from the git root, not from this file
+            docgen: {
+                plugin: "vue-component-meta",
+                tsconfig: "ui/packages/design-system/tsconfig.app.json",
+            },
+        },
     },
     async viteFinal(viteConfig) {
         viteConfig.plugins = [

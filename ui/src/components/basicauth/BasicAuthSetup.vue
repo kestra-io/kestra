@@ -168,6 +168,7 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
+    import {storageKeys} from "../../utils/constants"
 
     interface UserFormData {
         username: string
@@ -215,8 +216,8 @@
             const loginConfig = await miscStore.loadLoginConfig()
 
             if (loginConfig?.isBasicAuthInitialized) {
-                localStorage.removeItem("basicAuthSetupInProgress")
-                localStorage.removeItem("setupStartTime")
+                localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
+                localStorage.removeItem(storageKeys.SETUP_START_TIME)
                 router.push({name: "login"})
                 return
             }
@@ -225,8 +226,8 @@
             // authentication and is not available until the account below has been created;
             // trackSetupEvent/initPosthogIfEnabled no-op gracefully without it.
 
-            localStorage.setItem("basicAuthSetupInProgress", "true")
-            localStorage.setItem("setupStartTime", Date.now().toString())
+            localStorage.setItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS, "true")
+            localStorage.setItem(storageKeys.SETUP_START_TIME, Date.now().toString())
         } catch {
             /* Silently handle config loading errors */
         }
@@ -235,8 +236,8 @@
     initializeSetup()
 
     onUnmounted(() => {
-        if (localStorage.getItem("basicAuthSetupCompleted") !== "true") {
-            localStorage.removeItem("basicAuthSetupInProgress")
+        if (localStorage.getItem(storageKeys.BASIC_AUTH_SETUP_COMPLETED) !== "true") {
+            localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
         }
     })
 
@@ -328,7 +329,7 @@
             }, userFormData.value)
 
 
-            localStorage.setItem("basicAuthUserCreated", "true")
+            localStorage.setItem(storageKeys.BASIC_AUTH_USER_CREATED, "true")
 
             activeStep.value = 1
         } catch (error: unknown) {
@@ -340,7 +341,7 @@
     }
 
     const handleSurveyContinue = () => {
-        localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
+        localStorage.setItem(storageKeys.BASIC_AUTH_SURVEY_DATA, JSON.stringify(surveyData.value))
 
         const surveySelections: Record<string, unknown> = {
             main_goal: surveyData.value.mainGoal,
@@ -388,7 +389,7 @@
     }
 
     const completeSetup = () => {
-        const savedSurveyData = localStorage.getItem("basicAuthSurveyData")
+        const savedSurveyData = localStorage.getItem(storageKeys.BASIC_AUTH_SURVEY_DATA)
         const surveySelections = savedSurveyData ? JSON.parse(savedSurveyData) : {}
         const normalizedEmail = userFormData.value.username.trim()
 
@@ -400,12 +401,12 @@
 
         trackSetupEvent("setup_flow:completed", completeEventPayload, userFormData.value)
 
-        localStorage.setItem("basicAuthSetupCompleted", "true")
-        localStorage.removeItem("basicAuthSetupInProgress")
-        localStorage.removeItem("setupStartTime")
-        localStorage.removeItem("basicAuthSurveyData")
-        localStorage.removeItem("basicAuthUserCreated")
-        localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
+        localStorage.setItem(storageKeys.BASIC_AUTH_SETUP_COMPLETED, "true")
+        localStorage.removeItem(storageKeys.BASIC_AUTH_SETUP_IN_PROGRESS)
+        localStorage.removeItem(storageKeys.SETUP_START_TIME)
+        localStorage.removeItem(storageKeys.BASIC_AUTH_SURVEY_DATA)
+        localStorage.removeItem(storageKeys.BASIC_AUTH_USER_CREATED)
+        localStorage.setItem(storageKeys.BASIC_AUTH_SETUP_COMPLETED_AT, new Date().toISOString())
 
         router.push({name: "ai"})
     }

@@ -50,7 +50,6 @@
         "@vueuse/core": "^14.3.0",
         "ansi-to-html": "^0.7.2",
         "axios": "1.18.1",
-        "bootstrap": "^5.3.8",
         "change-case": "5.4.4",
         "cronstrue": "^3.24.0",
         "dagre": "^0.8.5",
@@ -82,7 +81,6 @@
         "yaml": "^2.9.0"
     },
     "devDependencies": {
-        "@codecov/vite-plugin": "^2.0.1",
         "@google/genai": "^2.11.0",
         "@hey-api/openapi-ts": "0.97.3",
         "@module-federation/vite": "^1.16.14",
@@ -141,10 +139,6 @@
     },
     "overrides": {
         "axios": "1.18.1",
-        "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
-        "@codecov/vite-plugin": {
-            "vite": "$vite"
-        },
         "dompurify": "^3.4.13"
     },
     "lint-staged": {

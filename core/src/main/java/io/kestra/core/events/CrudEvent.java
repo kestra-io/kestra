@@ -3,6 +3,7 @@ package io.kestra.core.events;
 import java.util.Objects;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.context.ServerRequestContext;
 import lombok.Getter;
@@ -14,6 +15,8 @@ public class CrudEvent<T> {
     private final T previousModel;
     private final CrudEventType type;
     private final HttpRequest<?> request;
+    @Nullable
+    private final Actor actor;
 
     /**
      * Static helper method for creating a new {@link CrudEventType#UPDATE} CrudEvent.
@@ -86,5 +89,6 @@ public class CrudEvent<T> {
         this.previousModel = previousModel;
         this.type = type;
         this.request = request;
+        this.actor = PropagatedContext.getOrEmpty().find(Actor.class).orElse(null);
     }
 }

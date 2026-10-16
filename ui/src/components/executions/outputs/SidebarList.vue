@@ -31,6 +31,9 @@
                         >
                             <span class="key">{{ item.label }}</span>
                             <KsTag class="card-tag" size="small">{{ item.type }}</KsTag>
+                            <KsTag v-if="item.isExpression" class="card-tag" size="small">
+                                {{ $t("variable_explorer.expression") }}
+                            </KsTag>
                             
                             <code class="preview">{{ item.preview }}</code>
                         </div>
@@ -62,6 +65,7 @@
         type: string;
         preview: string;
         expression: string;
+        isExpression?: boolean;
         taskRunId?: string;
         searchText?: string;
     }

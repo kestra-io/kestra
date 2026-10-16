@@ -14,10 +14,6 @@
     overflow: hidden !important;
 }
 
-.d-block {
-    display: block !important;
-}
-
 .d-flex {
     display: flex !important;
 }
@@ -335,19 +331,11 @@
         display: flex !important;
     }
 
-    .mb-sm-4 {
-        margin-bottom: 1.5rem !important;
-    }
-
 }
 
 @media (min-width: 768px) {
     .d-md-inline-block {
         display: inline-block !important;
-    }
-
-    .mb-md-0 {
-        margin-bottom: 0 !important;
     }
 
 }

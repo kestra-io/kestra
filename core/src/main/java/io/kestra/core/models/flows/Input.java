@@ -49,6 +49,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
         @JsonSubTypes.Type(value = FormInput.class, name = "FORM"),
         @JsonSubTypes.Type(value = ReusableInputsInput.class, name = "REUSABLE_INPUTS"),
+        @JsonSubTypes.Type(value = TableInput.class, name = "TABLE"),
     }
 )
 @InputValidation

@@ -344,6 +344,12 @@ public class TriggerEventHandler {
             return;
         }
 
+        // An unscheduled trigger takes no lock to release, and its disabled flag comes from the flow source:
+        // applying stopAfter here would only make its state disagree with the trigger that keeps firing.
+        if (TriggerType.UNSCHEDULED.equals(maybeState.get().getType())) {
+            return;
+        }
+
         if (maybeState.get().getExecutionId() != null) {
             onLockingExecutionTerminated(clock, event, maybeState.get());
             return;
@@ -569,8 +575,10 @@ public class TriggerEventHandler {
                 maySendExecutionKilled(state);
                 state = state
                     .lastEventId(clock, event.eventId())
-                    .update(clock, data.getRight())
-                    .updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
+                    .update(clock, data.getRight());
+                if (TriggerType.isEvaluatedByScheduler(state.getType())) {
+                    state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, data.getLeft(), data.getRight(), state.context()));
+                }
                 triggerStateStore.save(state);
             }
         });
@@ -649,7 +657,10 @@ public class TriggerEventHandler {
             TriggerState state = TriggerState
                 .of(event.id(), trigger, vNode)
                 .lastEventId(clock, event.eventId());
-            state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
+            // A trigger the scheduler does not evaluate has no next evaluation date to show.
+            if (TriggerType.isEvaluatedByScheduler(state.getType())) {
+                state = state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
+            }
             triggerStateStore.save(state);
         }
     }

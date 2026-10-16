@@ -204,6 +204,11 @@
 }
 
 .namespaces {
+    margin: 0.25rem 0;
+    border-radius: var(--kel-border-radius-round);
+    border: 1px solid var(--ks-border-default);
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
+
     &.empty-state {
         padding: var(--ks-spacing-4);
     }
@@ -220,10 +225,6 @@
     .namespace-label {
         padding-inline-end: var(--ks-spacing-4);
     }
-    margin: 0.25rem 0;
-    border-radius: var(--kel-border-radius-round);
-    border: 1px solid var(--ks-border-default);
-    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
 
     &.system {
         border-color: var(--ks-border-focus);

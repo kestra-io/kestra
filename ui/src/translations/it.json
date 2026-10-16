@@ -2290,7 +2290,8 @@
           "title": {
             "flow": "flow Proposto",
             "dashboard": "Dashboard Proposta",
-            "app": "App proposta"
+            "app": "App proposta",
+            "test_suite": "Unit test proposto"
           },
           "valid": "Valido",
           "invalid": "Richiede modifiche"

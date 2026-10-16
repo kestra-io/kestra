@@ -73,6 +73,9 @@ spec:
       labels:
         {{- include "kestra.selectorLabels" $ | nindent 8 }}
         app.kubernetes.io/component: {{ $type }}
+        {{- if eq $type "worker" }}
+        kestra.io/worker-group: {{ if eq $name "worker" }}default{{ else }}{{ $name }}{{ end }}
+        {{- end }}
         {{- with $common.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

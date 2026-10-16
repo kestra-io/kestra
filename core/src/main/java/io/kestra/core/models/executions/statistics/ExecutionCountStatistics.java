@@ -26,6 +26,7 @@ public record ExecutionCountStatistics(
         Map.entry(State.Type.WARNING, 0L),
         Map.entry(State.Type.FAILED, 0L),
         Map.entry(State.Type.KILLED, 0L),
+        Map.entry(State.Type.PAUSING, 0L),
         Map.entry(State.Type.PAUSED, 0L),
         Map.entry(State.Type.QUEUED, 0L),
         Map.entry(State.Type.CANCELLED, 0L)

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -59,6 +60,32 @@ public class WebhookTest {
             .build();
 
         assertThat(modelValidator.isValid(nullContentType).isPresent()).isFalse();
+    }
+
+    @Test
+    void shouldRejectResponseBodyWhenWaitIsFalse() {
+        var webhook = Webhook.builder()
+            .id("webhook")
+            .type(Webhook.class.getName())
+            .key("webhook")
+            .responseBody(Property.ofValue("ok"))
+            .build();
+
+        assertThat(modelValidator.isValid(webhook)).hasValueSatisfying(e -> assertThat(e.getMessage()).contains("invalid webhook: responseBody requires wait to be true"));
+    }
+
+    @Test
+    void shouldRejectResponseBodyWhenReturnOutputsIsSet() {
+        var webhook = Webhook.builder()
+            .id("webhook")
+            .type(Webhook.class.getName())
+            .key("webhook")
+            .wait(true)
+            .returnOutputs(true)
+            .responseBody(Property.ofValue("ok"))
+            .build();
+
+        assertThat(modelValidator.isValid(webhook)).hasValueSatisfying(e -> assertThat(e.getMessage()).contains("invalid webhook: responseBody cannot be combined with returnOutputs"));
     }
 
     @Test

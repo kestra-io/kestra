@@ -146,6 +146,18 @@ class FlowGraphTest {
     }
 
     @Test
+    void shouldChainOnWaitBeforeTheDecisionBranchesForAnApproval() throws IllegalVariableEvaluationException, IOException {
+        FlowWithSource flow = this.parse("flows/valids/approval-basic.yaml");
+        FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
+
+        assertThat(edge(flowGraph, ".*approval", ".*approval\\.notify").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+        assertThat(edge(flowGraph, ".*approval\\.notify", ".*approval\\.approved").getRelation().getRelationType()).isEqualTo(RelationType.CHOICE);
+        assertThat(edge(flowGraph, ".*approval\\.notify", ".*approval\\.approved").getRelation().getValue()).isEqualTo("approve");
+        assertThat(edge(flowGraph, ".*approval\\.notify", ".*approval\\.denied").getRelation().getValue()).isEqualTo("deny");
+        assertThat(edges(flowGraph, ".*approval")).noneMatch(target -> target.matches(".*approval\\.(approved|denied)"));
+    }
+
+    @Test
     void loop() throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/loop-nested.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);

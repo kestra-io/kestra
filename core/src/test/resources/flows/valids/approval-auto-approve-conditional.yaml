@@ -1,0 +1,20 @@
+id: approval-auto-approve-conditional
+namespace: io.kestra.tests
+
+inputs:
+  - id: autoApprove
+    type: BOOL
+    defaults: true
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    autoApprove: "{{ inputs.autoApprove }}"
+    onWait:
+      - id: notify
+        type: io.kestra.plugin.core.log.Log
+        message: "waiting"
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.log.Log
+        message: "Approved"

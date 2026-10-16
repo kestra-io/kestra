@@ -1,0 +1,19 @@
+id: approval-auto-approve
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    autoApprove: true
+    onWait:
+      - id: notify
+        type: io.kestra.plugin.core.log.Log
+        message: "should never run"
+    onApprove:
+      - id: approved
+        type: io.kestra.plugin.core.log.Log
+        message: "Approved"
+    onDeny:
+      - id: denied
+        type: io.kestra.plugin.core.log.Log
+        message: "Denied"

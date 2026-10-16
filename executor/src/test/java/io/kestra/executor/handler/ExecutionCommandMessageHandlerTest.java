@@ -570,7 +570,7 @@ class ExecutionCommandMessageHandlerTest {
         var updated = lockedExecution("exec-1", State.Type.RUNNING);
         var flow = mock(FlowWithSource.class);
         stubLock(existing, flow);
-        var resumed = io.kestra.plugin.core.flow.Pause.Resumed.now();
+        var resumed = io.kestra.plugin.core.flow.PausableTask.Resumed.now();
         Map<String, Object> inputs = Map.of("approved", true);
         var command = Resume.from(existing, resumed, inputs).withOperationId("op");
         when(executionService.resume(existing, flow, State.Type.RUNNING, inputs, resumed)).thenReturn(updated);

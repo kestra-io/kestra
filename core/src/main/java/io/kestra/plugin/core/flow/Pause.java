@@ -3,7 +3,6 @@ package io.kestra.plugin.core.flow;
 import java.time.Duration;
 
 import org.hibernate.validator.constraints.time.DurationMin;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -303,7 +302,11 @@ public class Pause extends Task implements FlowableTask<Pause.Output>, PausableT
     }
 
     @Override
-    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed) {
+    public Map<String, Object> resumeOutputs(Map<String, Object> inputs, Resumed resumed, @Nullable Decision decision) {
+        if (decision != null) {
+            throw new IllegalArgumentException("Task '%s' is a Pause and cannot be resumed with a decision.".formatted(this.getId()));
+        }
+
         Output build = Output.builder()
             .inputs(inputs)
             .onResume(inputs)
@@ -339,24 +342,6 @@ public class Pause extends Task implements FlowableTask<Pause.Output>, PausableT
 
         @Schema(title = "Resumed information: when and by who the execution was resumed")
         private Resumed resumed;
-    }
-
-    public record Resumed(@Nullable String by, LocalDateTime on, State.Type to) {
-        public static Resumed now() {
-            return new Resumed(null, LocalDateTime.now(), State.Type.SUCCESS);
-        }
-
-        public static Resumed now(State.Type to) {
-            return new Resumed(null, LocalDateTime.now(), to);
-        }
-
-        public static Resumed now(String by) {
-            return new Resumed(by, LocalDateTime.now(), State.Type.SUCCESS);
-        }
-
-        public static Resumed now(String by, State.Type to) {
-            return new Resumed(by, LocalDateTime.now(), to);
-        }
     }
 
     public enum Behavior {

@@ -17,6 +17,7 @@ import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.executor.command.Create;
@@ -43,6 +44,8 @@ import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.ExecutableUtils;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.storages.StorageContext;
@@ -51,6 +54,8 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
+import io.kestra.plugin.core.flow.Approval;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
@@ -86,6 +91,7 @@ public class ExecutionService {
     private final ConcurrencyLimitService concurrencyLimitService;
     private final FlowParsingService flowParsingService;
     private final TaskOutputService taskOutputService;
+    private final RunContextFactory runContextFactory;
     private final ExecutionOutputService executionOutputService;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -106,6 +112,7 @@ public class ExecutionService {
         ConcurrencyLimitService concurrencyLimitService,
         FlowParsingService flowParsingService,
         TaskOutputService taskOutputService,
+        RunContextFactory runContextFactory,
         ExecutionOutputService executionOutputService,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
@@ -123,6 +130,7 @@ public class ExecutionService {
         this.concurrencyLimitService = Objects.requireNonNull(concurrencyLimitService);
         this.flowParsingService = Objects.requireNonNull(flowParsingService);
         this.taskOutputService = Objects.requireNonNull(taskOutputService);
+        this.runContextFactory = Objects.requireNonNull(runContextFactory);
         this.executionOutputService = Objects.requireNonNull(executionOutputService);
         this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
         this.killQueue = Objects.requireNonNull(killQueue);
@@ -711,8 +719,64 @@ public class ExecutionService {
     public record ExecutionWithTaskRun(Execution execution, TaskRun taskRun) {
     }
 
+    /**
+     * Resumes an Approval task run with a decision; unlike {@link #resume}, the caller targets a specific task run since an execution can have several Approvals paused at once.
+     */
+    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs) throws Exception {
+        return this.decide(execution, flow, taskRunId, decision, inputs, null);
+    }
+
+    /** {@code resumed} supplies the reviewer identity; its target state is ignored since a decided Approval always resumes RUNNING. */
+    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed) throws Exception {
+        TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
+        if (!(flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval)) {
+            throw new IllegalArgumentException("Task run '%s' is not an Approval task.".formatted(taskRunId));
+        }
+        if (taskRun.getState().getCurrent() != State.Type.PAUSED) {
+            throw new IllegalArgumentException("Task run '%s' is not paused.".formatted(taskRunId));
+        }
+
+        Map<String, Object> priorOutputs = taskOutputService.getOutputs(taskRun);
+
+        this.validateDecisionComment(flowWithSource, approval, execution, taskRun, decision);
+
+        PausableTask.Resumed _resumed = resumed != null ? resumed : PausableTask.Resumed.now(State.Type.RUNNING);
+        Execution decidedExecution = this.markAs(execution, flowWithSource, taskRunId, State.Type.RUNNING, inputs, _resumed, decision);
+
+        // markAs replaces the outputs wholesale; restore creation-time fields (e.g. 'url') that resumeOutputs() doesn't know about.
+        TaskRun decidedTaskRun = decidedExecution.findTaskRunByTaskRunId(taskRunId);
+        Map<String, Object> merged = MapUtils.merge(priorOutputs, taskOutputService.getOutputs(decidedTaskRun));
+        taskOutputService.saveOutputs(decidedTaskRun, merged);
+
+        return decidedExecution;
+    }
+
+    private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, PausableTask.Decision decision) throws IllegalVariableEvaluationException {
+        RunContext runContext = runContextFactory.of(flow, approval, execution, taskRun);
+        Approval.CommentRequired commentRequired = runContext.render(approval.getCommentRequired())
+            .as(Approval.CommentRequired.class)
+            .orElse(Approval.CommentRequired.NEVER);
+
+        boolean required = switch (commentRequired) {
+            case ALWAYS -> decision.type() != PausableTask.Decision.Type.EXPIRED;
+            case ON_APPROVE -> decision.type() == PausableTask.Decision.Type.APPROVED;
+            case ON_DENY -> decision.type() == PausableTask.Decision.Type.DENIED;
+            case NEVER -> false;
+        };
+
+        if (required && (decision.comment() == null || decision.comment().isBlank())) {
+            throw new IllegalArgumentException("Task run '%s' requires a comment for a %s decision.".formatted(taskRun.getId(), decision.type()));
+        }
+    }
+
     private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs,
-        @Nullable Pause.Resumed resumed) throws Exception {
+        @Nullable PausableTask.Resumed resumed) throws Exception {
+        return this.markAs(execution, flow, taskRunId, newState, onResumeInputs, resumed, null);
+    }
+
+    private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs,
+        @Nullable PausableTask.Resumed resumed, @Nullable PausableTask.Decision decision) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -733,8 +797,8 @@ public class ExecutionService {
                 State.Type targetState = newState;
                 if (task instanceof PausableTask pausableTask) {
                     State.Type terminalState = newState == State.Type.RUNNING ? State.Type.SUCCESS : newState;
-                    Pause.Resumed _resumed = resumed != null ? resumed : Pause.Resumed.now(terminalState);
-                    Map<String, Object> outputs = pausableTask.resumeOutputs(onResumeInputs, _resumed);
+                    PausableTask.Resumed _resumed = resumed != null ? resumed : PausableTask.Resumed.now(terminalState);
+                    Map<String, Object> outputs = pausableTask.resumeOutputs(onResumeInputs, _resumed, decision);
                     taskOutputService.saveOutputs(originalTaskRun, outputs);
 
                     targetState = pausableTask.resumedTaskRunState(newState);
@@ -890,7 +954,7 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(Execution execution, FlowInterface flow, State.Type newState, Pause.Resumed resumed) throws Exception {
+    public Execution resume(Execution execution, FlowInterface flow, State.Type newState, PausableTask.Resumed resumed) throws Exception {
         return this.resume(execution, flow, newState, null, resumed);
     }
 
@@ -992,7 +1056,7 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable Pause.Resumed resumed) throws Exception {
+    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed) throws Exception {
         var pausedTaskRun = execution
             .findFirstByState(State.Type.PAUSED);
 

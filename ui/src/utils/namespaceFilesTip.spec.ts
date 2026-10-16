@@ -1,6 +1,6 @@
 import {describe, it, expect} from "vitest"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {hasInlinePythonScript} from "../../../src/utils/namespaceFilesTip"
+import {hasInlinePythonScript} from "./namespaceFilesTip"
 
 const parse = (yaml: string) => YAML_UTILS.parse(yaml)
 

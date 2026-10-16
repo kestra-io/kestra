@@ -1,18 +1,7 @@
 <template>
     <div v-if="visible" class="namespace-files-tip" data-test="namespace-files-tip">
-        <KsAlert type="info" :closable="false">
+        <KsAlert type="info" :title="$t('namespace_files_tip.title')" closable @close="close">
             <div class="namespace-files-tip-body">
-                <div class="namespace-files-tip-header">
-                    <strong>{{ $t("namespace_files_tip.title") }}</strong>
-                    <KsIconButton
-                        :aria-label="$t('close')"
-                        :tooltip="$t('close')"
-                        data-test="namespace-files-tip-close"
-                        @click="closed = true"
-                    >
-                        <Close />
-                    </KsIconButton>
-                </div>
                 <span>{{ $t("namespace_files_tip.description") }}</span>
                 <pre class="namespace-files-tip-example"><code>{{ EXAMPLE }}</code></pre>
                 <div class="namespace-files-tip-actions">
@@ -40,8 +29,7 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue"
-    import {KsAlert, KsButton, KsIconButton} from "@kestra-io/design-system"
-    import Close from "vue-material-design-icons/Close.vue"
+    import {KsAlert, KsButton} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
     import {storageKeys} from "../../utils/constants"
     import {hasInlinePythonScript} from "../../utils/namespaceFilesTip"
@@ -59,7 +47,7 @@
     const openEditorTab = inject(OPEN_EDITOR_TAB_INJECTION_KEY, undefined)
 
     const dismissed = ref(localStorage.getItem(storageKeys.NAMESPACE_FILES_TIP_DISMISSED) === "true")
-    const closed = ref(false)
+    const closed = ref(sessionStorage.getItem(storageKeys.NAMESPACE_FILES_TIP_CLOSED) === "true")
 
     const visible = computed(() =>
         !dismissed.value && !closed.value && hasInlinePythonScript(flowStore.flowParsed),
@@ -68,6 +56,11 @@
     function dismiss() {
         dismissed.value = true
         localStorage.setItem(storageKeys.NAMESPACE_FILES_TIP_DISMISSED, "true")
+    }
+
+    function close() {
+        closed.value = true
+        sessionStorage.setItem(storageKeys.NAMESPACE_FILES_TIP_CLOSED, "true")
     }
 </script>
 
@@ -81,13 +74,6 @@
         flex-direction: column;
         gap: var(--ks-spacing-2);
         width: 100%;
-    }
-
-    .namespace-files-tip-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ks-spacing-2);
     }
 
     .namespace-files-tip-example {

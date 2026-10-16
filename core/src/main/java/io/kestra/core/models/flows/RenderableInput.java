@@ -2,6 +2,8 @@ package io.kestra.core.models.flows;
 
 import java.util.function.Function;
 
+import io.kestra.core.utils.PebbleUtil;
+
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -28,7 +30,12 @@ public interface RenderableInput {
     static Input<?> mayRenderInput(
         @NotNull final Input<?> input,
         @NotNull final Function<String, Object> renderer) {
-        return input instanceof RenderableInput renderableInput ? renderableInput.render(renderer) : input;
+        Input<?> rendered = input instanceof RenderableInput renderableInput ? renderableInput.render(renderer) : input;
+        if (rendered.getDescription() != null && PebbleUtil.containsOpeningBlockDelimiter(rendered.getDescription())) {
+            Object description = renderer.apply(rendered.getDescription());
+            return rendered.withDescription(description == null ? "" : description.toString());
+        }
+        return rendered;
     }
 
 }

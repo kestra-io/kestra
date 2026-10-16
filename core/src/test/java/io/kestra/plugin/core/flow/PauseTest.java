@@ -41,6 +41,7 @@ import reactor.core.publisher.Mono;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -75,6 +76,16 @@ public class PauseTest {
         assertThat(pause.resumeOutputs(Map.of("reason", "ok"), PausableTask.Resumed.now(), null))
             .containsEntry("inputs", Map.of("reason", "ok"))
             .containsEntry("onResume", Map.of("reason", "ok"));
+    }
+
+    @Test
+    void shouldRefuseADecisionWhenResumed() {
+        Pause pause = Pause.builder().id("pause").type(Pause.class.getName()).build();
+        PausableTask.Decision decision = new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, null);
+
+        assertThatThrownBy(() -> pause.resumeOutputs(Map.of(), PausableTask.Resumed.now(), decision))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("cannot be resumed with a decision");
     }
 
     @Test

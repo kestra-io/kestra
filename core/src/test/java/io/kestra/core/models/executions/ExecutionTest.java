@@ -317,6 +317,37 @@ class ExecutionTest {
     }
 
     @Test
+    void loopExecutionRootExecutionId() {
+        Execution rootExecution = Execution.builder()
+            .id(IdUtils.create())
+            .state(new State())
+            .build();
+        TaskRun level1TaskRun = TaskRun.builder().id("taskrun-1").taskId("task-1").state(new State()).build();
+        TaskRun level2TaskRun = TaskRun.builder().id("taskrun-2").taskId("task-2").state(new State()).build();
+
+        // Level 1 loop execution has rootExecutionId pointing to the root execution
+        Execution level1Execution = rootExecution.loopExecution(level1TaskRun, 0, null, "a");
+        assertThat(level1Execution.getLoopRun()).isNotNull();
+        assertThat(level1Execution.getLoopRun().rootExecutionId()).isEqualTo(rootExecution.getId());
+
+        // Nested Level 2 loop execution preserves rootExecutionId pointing to root execution
+        Execution level2Execution = level1Execution.loopExecution(level2TaskRun, 1, "k1", "b");
+        assertThat(level2Execution.getLoopRun()).isNotNull();
+        assertThat(level2Execution.getLoopRun().rootExecutionId()).isEqualTo(rootExecution.getId());
+
+        // Legacy loop execution without rootExecutionId resolves to root execution
+        Execution legacyLevel1 = Execution.builder()
+            .id("legacy-level1")
+            .parentId(rootExecution.getId())
+            .loopRun(new LoopRun(rootExecution, "task-1", "taskrun-1", 0, null, "a", null, null))
+            .state(new State())
+            .build();
+        Execution nestedFromLegacy = legacyLevel1.loopExecution(level2TaskRun, 0, null, "c");
+        assertThat(nestedFromLegacy.getLoopRun()).isNotNull();
+        assertThat(nestedFromLegacy.getLoopRun().rootExecutionId()).isEqualTo(rootExecution.getId());
+    }
+
+    @Test
     void labels() {
         final Execution execution = Execution.builder()
             .labels(List.of(new Label("test", "test-value")))

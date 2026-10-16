@@ -38,6 +38,11 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
+    protected Field<Object> loopRunRootExecutionIdField() {
+        return DSL.field("value ->> '$.loopRun.rootExecutionId'");
+    }
+
+    @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
         return MysqlExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }

@@ -175,6 +175,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
      */
     protected abstract Field<Object> loopRunValueField();
 
+    /**
+     * The root execution id of a loop execution, read from its JSON document: deliberately not a generated column
+     * as it is only filtered when scoping loop sub-executions to a root execution.
+     */
+    protected abstract Field<Object> loopRunRootExecutionIdField();
+
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
             .in(state.stream().map(Enum::name).toList());
@@ -306,6 +312,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     protected Field<Object> getColumn(QueryFilter.Field field) {
         if (field == QueryFilter.Field.LOOP_RUN_VALUE) {
             return loopRunValueField();
+        }
+        if (field == QueryFilter.Field.LOOP_RUN_ROOT_EXECUTION_ID) {
+            return loopRunRootExecutionIdField();
         }
         return super.getColumn(field);
     }

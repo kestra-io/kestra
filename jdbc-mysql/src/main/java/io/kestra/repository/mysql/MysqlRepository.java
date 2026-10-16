@@ -4,9 +4,12 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jooq.Condition;
+import org.jooq.Context;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
@@ -14,7 +17,11 @@ import org.jooq.RecordMapper;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
+import org.jooq.VisitContext;
+import org.jooq.VisitListener;
+import org.jooq.impl.CustomCondition;
 import org.jooq.impl.DSL;
+import org.jooq.impl.QOM;
 
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.AbstractJdbcRepository;
@@ -61,22 +68,22 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
             likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).like(pattern, '\\'));
         }
 
-        String booleanQuery = Arrays.stream(query.split("\\p{IsPunct}|\\s+"))
+        // Split like the InnoDB parser, which keeps '_' inside words, so an id like 'my_flow' is matched as one word.
+        String booleanQuery = Arrays.stream(query.split("[^\\p{L}\\p{N}_]+"))
             .filter(s -> s.length() >= 3)
             .map(s -> "+" + s + "*")
             .collect(Collectors.joining(" "));
 
-        Condition fulltextCondition;
         if (booleanQuery.isEmpty()) {
-            fulltextCondition = DSL.falseCondition();
-        } else {
-            fulltextCondition = DSL.condition(
-                "MATCH (" + String.join(", ", fields) + ") AGAINST (? IN BOOLEAN MODE)",
-                booleanQuery
-            );
+            return likeCondition;
         }
 
-        return fulltextCondition.or(likeCondition);
+        Condition fulltextCondition = DSL.condition(
+            "MATCH (" + String.join(", ", fields) + ") AGAINST (? IN BOOLEAN MODE)",
+            booleanQuery
+        );
+
+        return new FullTextCondition(fulltextCondition, likeCondition);
     }
 
     private static String escapeForLike(String s) {
@@ -88,9 +95,32 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 
     @Override
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
-        int rows = context.fetchCount(select);
-        Result<R> records = this.pageable(select, pageable).fetch();
+        // The LIKE scan can't use an index, so it only runs when the FULLTEXT match finds nothing.
+        AtomicBoolean hasFullTextCondition = new AtomicBoolean();
+        DSLContext pageContext = renderFullTextConditionAs(context, condition -> condition.fulltext, hasFullTextCondition);
+        int rows = pageContext.fetchCount(select);
+        if (rows == 0 && hasFullTextCondition.get()) {
+            pageContext = renderFullTextConditionAs(context, condition -> condition.like, hasFullTextCondition);
+            rows = pageContext.fetchCount(select);
+        }
+
+        Result<R> records = pageContext.fetch(this.pageable(select, pageable));
         return new ArrayListTotal<>(records.map(mapper), rows);
+    }
+
+    private static DSLContext renderFullTextConditionAs(DSLContext context, Function<FullTextCondition, Condition> part, AtomicBoolean rendered) {
+        return DSL.using(context.configuration().deriveAppending(VisitListener.onVisitStart(visit ->
+        {
+            if (visit.queryPart() instanceof FullTextCondition condition && isRequiredForEveryRow(visit)) {
+                visit.queryPart(part.apply(condition));
+                rendered.set(true);
+            }
+        })));
+    }
+
+    // Under NOT or OR, the row count no longer tells whether the FULLTEXT match found anything, so both parts are kept.
+    private static boolean isRequiredForEveryRow(VisitContext visit) {
+        return Arrays.stream(visit.queryParts()).noneMatch(part -> part instanceof QOM.Not || part instanceof QOM.Or || part instanceof QOM.Xor);
     }
 
     @Override
@@ -110,6 +140,24 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         @Override
         public boolean matches(ConditionContext context) {
             return ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "mysql".equals(it)).orElse(false);
+        }
+    }
+
+    /**
+     * Renders as the FULLTEXT match OR the LIKE scan, unless {@link #fetchPage} renders one part alone.
+     */
+    private static final class FullTextCondition extends CustomCondition {
+        private final Condition fulltext;
+        private final Condition like;
+
+        private FullTextCondition(Condition fulltext, Condition like) {
+            this.fulltext = fulltext;
+            this.like = like;
+        }
+
+        @Override
+        public void accept(Context<?> ctx) {
+            ctx.visit(fulltext.or(like));
         }
     }
 }

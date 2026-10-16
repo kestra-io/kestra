@@ -73,7 +73,6 @@ public class ExecutorService {
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
     private final PausedTaskNotifier pausedTaskNotifier;
-    private final ApprovalRequestHandler approvalRequestHandler;
 
     @Inject
     public ExecutorService(
@@ -91,8 +90,7 @@ public class ExecutorService {
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
-        PausedTaskNotifier pausedTaskNotifier,
-        ApprovalRequestHandler approvalRequestHandler) {
+        PausedTaskNotifier pausedTaskNotifier) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.flowExecutorInterface = flowExecutorInterface;
@@ -108,7 +106,6 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
         this.pausedTaskNotifier = pausedTaskNotifier;
-        this.approvalRequestHandler = approvalRequestHandler;
     }
 
     public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
@@ -699,6 +696,10 @@ public class ExecutorService {
             // handle flowable tasks Executor custom logic
             if (task instanceof FlowableTask<?>) {
                 try {
+                    if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
+                        this.handlePausableCreated(executor, pausableTask, taskRun);
+                    }
+
                     switch (task) {
                         case LoopUntil waitFor when taskRun.getState().isRunning() -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
@@ -728,7 +729,6 @@ public class ExecutorService {
                             // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks will dispatch it.
                             onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
                         }
-                        case Approval approval when taskRun.getState().getCurrent() == State.Type.CREATED -> this.handleApprovalCreated(executor, approval, taskRun);
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
                                 if (taskRun.getState().getCurrent() == State.Type.CREATED) {
@@ -905,26 +905,11 @@ public class ExecutorService {
             .toList();
     }
 
-    private void handleApprovalCreated(ExecutorContext executor, Approval approval, TaskRun taskRun) throws Exception {
-        approvalRequestHandler.validate(approval);
-
-        Map<String, Object> outputs = taskOutputService.getOutputs(taskRun);
-        if (outputs.get("decision") != null) {
-            return;
-        }
-
-        RunContext runContext = runContextFactory.of(executor.getFlow(), approval, executor.getExecution(), taskRun);
-        ApprovalRequestHandler.OpenedRequest opened = approvalRequestHandler.open(executor.getFlow(), executor.getExecution(), taskRun, approval, runContext);
-
-        Map<String, Object> updates = new HashMap<>();
-        if (opened.url() != null) {
-            updates.put("url", opened.url());
-        }
-        if (opened.caseId() != null) {
-            updates.put("caseId", opened.caseId());
-        }
-        if (!updates.isEmpty()) {
-            taskOutputService.saveOutputs(taskRun, MapUtils.merge(taskOutputService.getOutputs(taskRun), updates));
+    private void handlePausableCreated(ExecutorContext executor, PausableTask pausableTask, TaskRun taskRun) throws Exception {
+        RunContext runContext = runContextFactory.of(executor.getFlow(), (Task) pausableTask, executor.getExecution(), taskRun);
+        Map<String, Object> outputs = pausableTask.created(executor.getFlow(), executor.getExecution(), taskRun, runContext);
+        if (!outputs.isEmpty()) {
+            taskOutputService.saveOutputs(taskRun, MapUtils.merge(taskOutputService.getOutputs(taskRun), outputs));
         }
     }
 
@@ -972,14 +957,16 @@ public class ExecutorService {
     private void handleFlowableChildCreated(ExecutorContext executor, TaskRun taskRun, List<TaskRun> onPauseTaskRuns) throws InternalException {
         Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
         try {
+            if (task instanceof PausableTask pausableTask && taskRun.getState().getCurrent() == State.Type.CREATED) {
+                this.handlePausableCreated(executor, pausableTask, taskRun);
+            }
+
             if (task instanceof Loop loop && !loop.isMySubExecution(executor.getExecution(), taskRun) && taskRun.getState().getCurrent() == State.Type.CREATED) {
                 this.handleLoopCreated(executor, loop, taskRun);
             } else if (task instanceof Pause pause && pause.getOnPause() != null) {
                 // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks
                 // dispatches it like any other CREATED task run, immediately since it runs right after.
                 onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
-            } else if (task instanceof Approval approval) {
-                this.handleApprovalCreated(executor, approval, taskRun);
             }
         } catch (Exception e) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);

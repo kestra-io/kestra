@@ -10,6 +10,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.Services;
+import io.kestra.plugin.core.flow.PausableTask;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
@@ -26,9 +27,11 @@ public class SystemTaskArchitectureTest {
     public static final ArchRule tasks_reaching_for_internal_services_are_system_tasks = noClasses()
         .that().areAssignableTo(Task.class)
         .and().areNotAssignableTo(SystemTask.class)
+        .and().areNotAssignableTo(PausableTask.class)
         .should().callCodeUnitWhere(ADDITIONAL_SERVICE_IS_CALLED)
         .because(
             "Services.additionalService() throws on a dedicated Worker; only a " + SystemTask.class.getName()
-                + " is routed to the SystemWorker, which is the only Worker with access to internal services"
+                + " is routed to the SystemWorker, which is the only Worker with access to internal services, and a "
+                + PausableTask.class.getName() + " is only ever run by the Executor"
         );
 }

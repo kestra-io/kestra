@@ -1,5 +1,7 @@
 package io.kestra.worker.processors;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,8 @@ import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.worker.WorkerGroups;
+import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.plugin.core.flow.WorkingDirectoryTest;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.queues.InMemoryWorkerQueue;
 import io.kestra.worker.queues.WorkerQueue;
@@ -51,6 +55,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -423,6 +428,49 @@ class WorkerTaskProcessorTest {
         assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
     }
 
+    @Test
+    void shouldExposeWorkingDirectoryOutputFilesWhenItsLastSubtaskResultIsEmitted() throws Exception {
+        WorkingDirectory workingDirectory = WorkingDirectory.builder()
+            .type(WorkingDirectory.class.getName())
+            .id("working-directory")
+            .outputFiles(Property.ofValue(List.of("output.txt")))
+            .tasks(
+                List.of(
+                    WorkingDirectoryTest.LocalFiles.builder()
+                        .type(WorkingDirectoryTest.LocalFiles.class.getName())
+                        .id("write-output")
+                        .inputs(Map.of("output.txt", "Hello World"))
+                        .build()
+                )
+            )
+            .build();
+        WorkerTask workerTask = workerTaskFor(workingDirectory, MAIN_TENANT);
+        RunContext workingDirectoryRunContext = runContextInitializer.forWorker(workerTask);
+
+        // the executor reads the WorkingDirectory outputs as soon as its last subtask result is joined
+        List<WorkingDirectory.Outputs> outputsWhenSubtaskEnded = new ArrayList<>();
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100) {
+            @Override
+            public void put(WorkerTaskResult result) {
+                if (result.getTaskRun().getState().isTerminated()) {
+                    try {
+                        outputsWhenSubtaskEnded.add(workingDirectory.outputs(workingDirectoryRunContext));
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+                super.put(result);
+            }
+        };
+
+        newProcessor(resultQueue).process(workerTask);
+
+        assertThat(outputsWhenSubtaskEnded)
+            .singleElement()
+            .isNotNull()
+            .satisfies(outputs -> assertThat(outputs.getOutputFiles()).containsKey("output.txt"));
+    }
+
     private WorkerTaskProcessor newProcessor(WorkerQueue<WorkerTaskResult> resultQueue) {
         return new WorkerTaskProcessor(
             "test-worker",
@@ -635,7 +683,12 @@ class WorkerTaskProcessorTest {
     }
 
     private WorkerTask workerTaskFor(Task task) {
+        return workerTaskFor(task, null);
+    }
+
+    private WorkerTask workerTaskFor(Task task, String tenantId) {
         Flow flow = Flow.builder()
+            .tenantId(tenantId)
             .id(IdUtils.create())
             .namespace("io.kestra.unit-test")
             .tasks(List.of(task))

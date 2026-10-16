@@ -146,8 +146,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     const RemoteComponent = defineComponent({
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
         inheritAttrs: false,
-        setup(props: { taskType: string } & KnownSlotProps[T], {attrs}) {
-            const {taskType, ...restProps} = props
+        setup(rawProps, {attrs}) {
+            // The declared props are the slot's own propNames, so the generic slot type can't be inferred from them.
+            const {taskType, ...restProps} = rawProps as unknown as {taskType: string} & KnownSlotProps[T]
             // ponytail: read inside render so shallowReactive tracks it — loadRemote completes after manifestReady
             return () => {
                 const Comp = RemoteComponents[taskType]

@@ -5,6 +5,7 @@ import {useI18n} from "vue-i18n"
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
+import {handledIf} from "../../../utils/kestraHttp"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
 import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
 
@@ -97,7 +98,10 @@ export function useExecutionRoot() {
             follow()
             window.addEventListener("popstate", follow)
 
-            dependenciesCount.value = (await flowStore.loadDependencies({namespace: route.params.namespace as string, id: route.params.flowId as string, subtype: "FLOW"}, true)).count
+            dependenciesCount.value = (await flowStore.loadDependencies({namespace: route.params.namespace as string, id: route.params.flowId as string, subtype: "FLOW"}, true).catch((e: unknown) => {
+                if (!handledIf(e, [403])) throw e
+                return {count: 0}
+            })).count
             previousExecutionId.value = route.params.id as string
         })
 

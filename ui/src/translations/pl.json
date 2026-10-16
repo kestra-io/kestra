@@ -2331,6 +2331,13 @@
           "failed": "Niepowodzenie",
           "unknown": "Nieśledzone"
         },
+        "kind": {
+          "produces": "Produkuje",
+          "consumed_by": "Zużyte przez",
+          "upstream_of": "Upstream od",
+          "part_of": "Część",
+          "related": "Powiązane"
+        },
         "summary": {
           "fresh": "Wszystkie {n} Assety są aktualne",
           "issues": "{n} stałych",
@@ -2351,10 +2358,19 @@
         },
         "recent_runs": "Ostatnie uruchomienia",
         "group_by": "Grupuj według",
-        "groups": "Grupy ({n})",
+        "groups": "Grupy",
         "group_none": "Bez grupowania",
         "group_dataset": "Zbiór danych",
-        "ungrouped": "Bez grupy"
+        "group_consumer": "Konsument",
+        "no_consumer": "Brak konsumenta",
+        "hidden_consumer": "Ukryty Flow",
+        "ungrouped": "Bez grupy",
+        "hub": {
+          "notice": "Ten węzeł ma {count} relacji — pokazano tylko najnowsze, aby wykres był czytelny.",
+          "expand": "Załaduj więcej relacji",
+          "expand_failed": "Nie można załadować więcej relacji. Spróbuj ponownie."
+        },
+        "truncated": "Ten wykres był zbyt duży, aby wyświetlić go w całości; niektóre relacje zostały pominięte."
       },
       "search": {
         "placeholders": {

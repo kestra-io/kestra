@@ -2331,6 +2331,13 @@
           "failed": "失败",
           "unknown": "未跟踪"
         },
+        "kind": {
+          "produces": "生成",
+          "consumed_by": "被消耗",
+          "upstream_of": "上游",
+          "part_of": "部分",
+          "related": "相关"
+        },
         "summary": {
           "fresh": "所有 {n} 个 Asset 都是最新的",
           "issues": "{n} 过时",
@@ -2351,10 +2358,19 @@
         },
         "recent_runs": "最近运行",
         "group_by": "分组依据",
-        "groups": "分组（{n}）",
+        "groups": "组",
         "group_none": "无分组",
         "group_dataset": "数据集",
-        "ungrouped": "未分组"
+        "group_consumer": "消费者",
+        "no_consumer": "无消费者",
+        "hidden_consumer": "隐藏 Flow",
+        "ungrouped": "未分组",
+        "hub": {
+          "notice": "此节点有 {count} 个关联 — 仅显示最新的关联以保持图表可读。",
+          "expand": "加载更多关联",
+          "expand_failed": "无法加载更多关联。请重试。"
+        },
+        "truncated": "此图过大，无法完整显示；部分关系已省略。"
       },
       "search": {
         "placeholders": {

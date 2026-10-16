@@ -2331,6 +2331,13 @@
           "failed": "Failed",
           "unknown": "Not tracked"
         },
+        "kind": {
+          "produces": "Produces",
+          "consumed_by": "Consumed by",
+          "upstream_of": "Upstream of",
+          "part_of": "Part of",
+          "related": "Related"
+        },
         "summary": {
           "fresh": "All {n} assets fresh",
           "issues": "{n} stale",
@@ -2351,10 +2358,19 @@
         },
         "recent_runs": "Recent runs",
         "group_by": "Group by",
-        "groups": "Groups ({n})",
+        "groups": "Groups",
         "group_none": "No grouping",
         "group_dataset": "Dataset",
-        "ungrouped": "Ungrouped"
+        "group_consumer": "Consumer",
+        "no_consumer": "No consumer",
+        "hidden_consumer": "Hidden flow",
+        "ungrouped": "Ungrouped",
+        "hub": {
+          "notice": "This node has {count} relations — only the most recent ones are shown to keep the graph readable.",
+          "expand": "Load more relations",
+          "expand_failed": "Could not load more relations. Please try again."
+        },
+        "truncated": "This graph was too large to show in full; some relations were left out."
       },
       "search": {
         "placeholders": {

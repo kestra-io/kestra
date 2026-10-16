@@ -2331,6 +2331,13 @@
           "failed": "Fallito",
           "unknown": "Non tracciato"
         },
+        "kind": {
+          "produces": "Produce",
+          "consumed_by": "Consumato da",
+          "upstream_of": "A monte di",
+          "part_of": "Parte di",
+          "related": "Correlato"
+        },
         "summary": {
           "fresh": "Tutti i {n} Asset freschi",
           "issues": "{n} obsoleto",
@@ -2351,10 +2358,19 @@
         },
         "recent_runs": "Esecuzioni recenti",
         "group_by": "Raggruppa per",
-        "groups": "Gruppi ({n})",
+        "groups": "Gruppi",
         "group_none": "Nessun raggruppamento",
         "group_dataset": "Dataset",
-        "ungrouped": "Non raggruppato"
+        "group_consumer": "Consumer",
+        "no_consumer": "Nessun consumer",
+        "hidden_consumer": "Flow nascosto",
+        "ungrouped": "Non raggruppato",
+        "hub": {
+          "notice": "Questo nodo ha {count} relazioni — vengono mostrate solo le più recenti per mantenere il grafico leggibile.",
+          "expand": "Carica altre relazioni",
+          "expand_failed": "Impossibile caricare altre relazioni. Riprova."
+        },
+        "truncated": "Questo grafico era troppo grande per essere mostrato per intero; alcune relazioni sono state omesse."
       },
       "search": {
         "placeholders": {

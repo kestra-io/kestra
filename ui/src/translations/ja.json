@@ -2331,6 +2331,13 @@
           "failed": "失敗",
           "unknown": "追跡されていません"
         },
+        "kind": {
+          "produces": "生成",
+          "consumed_by": "消費元",
+          "upstream_of": "アップストリームの",
+          "part_of": "一部",
+          "related": "関連"
+        },
         "summary": {
           "fresh": "すべての {n} Asset は最新です",
           "issues": "{n} ステーブル",
@@ -2351,10 +2358,19 @@
         },
         "recent_runs": "最近の実行",
         "group_by": "グループ化",
-        "groups": "グループ（{n}）",
+        "groups": "グループ",
         "group_none": "グループ化なし",
         "group_dataset": "データセット",
-        "ungrouped": "グループ化されていません"
+        "group_consumer": "コンシューマー",
+        "no_consumer": "コンシューマーなし",
+        "hidden_consumer": "非表示のFlow",
+        "ungrouped": "グループ化されていません",
+        "hub": {
+          "notice": "このノードには {count} 個のリレーションがあります。グラフを読みやすくするため、最新のもののみが表示されています。",
+          "expand": "その他の関連を読み込む",
+          "expand_failed": "関係をさらに読み込めませんでした。もう一度お試しください。"
+        },
+        "truncated": "このグラフは大きすぎて全体を表示できませんでした。一部の関連は省略されています。"
       },
       "search": {
         "placeholders": {

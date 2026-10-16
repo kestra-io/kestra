@@ -707,6 +707,390 @@ describe("generateGraph node draggability", () => {
     })
 })
 
+describe("generateGraph triggers lane join dot", () => {
+    const TRIGGER_UID = "root.Triggers.on_infra_failure"
+    const SECOND_TRIGGER_UID = "root.Triggers.nightly"
+    const TRIGGERS_START = "root.Triggers.root-1"
+    const TRIGGERS_END = "root.Triggers.end-1"
+    const TRIGGERS_CLUSTER = CLUSTER_PREFIX + "root.Triggers"
+    const FLOW_ROOT = "root.root-1"
+    const FLOW_FINALLY = "root.finally-1"
+    const FLOW_END = "root.end-1"
+
+    // What the backend emits for a flow with one trigger and one task: the triggers lane closes on
+    // its own end dot, which is wired straight into the flow's root dot (GraphUtils#of).
+    const triggeredFlowGraph = (extra: {nodes?: unknown[]; edges?: unknown[]} = {}) => ({
+        nodes: [
+            {uid: FLOW_ROOT, type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+            {uid: FLOW_END, type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            {uid: TRIGGERS_START, type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+            {uid: TRIGGER_UID, type: "io.kestra.core.models.hierarchies.GraphTrigger"},
+            {uid: TRIGGERS_END, type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            {
+                uid: "root.notify_team",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "notify_team", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+            },
+            ...(extra.nodes ?? []),
+        ],
+        edges: [
+            {source: TRIGGERS_START, target: TRIGGER_UID},
+            {source: TRIGGER_UID, target: TRIGGERS_END},
+            {source: TRIGGERS_END, target: FLOW_ROOT},
+            {source: FLOW_ROOT, target: "root.notify_team"},
+            {source: "root.notify_team", target: FLOW_END},
+            ...(extra.edges ?? []),
+        ],
+        clusters: [
+            {
+                cluster: {
+                    uid: TRIGGERS_CLUSTER,
+                    type: "io.kestra.core.models.hierarchies.GraphCluster",
+                    taskNode: null,
+                },
+                nodes: [TRIGGERS_START, TRIGGER_UID, TRIGGERS_END],
+                parents: [],
+                start: TRIGGERS_START,
+                end: TRIGGERS_END,
+            },
+        ],
+    }) as unknown as VueFlowUtils.FlowGraph
+
+    // A second trigger makes the lane end the junction both triggers converge on, exactly as the
+    // backend wires it: one edge from the lane root per trigger, one from each trigger to the end.
+    const withSecondTrigger = () => {
+        const flowGraph = triggeredFlowGraph()
+        flowGraph.nodes.splice(4, 0, {
+            uid: SECOND_TRIGGER_UID,
+            type: "io.kestra.core.models.hierarchies.GraphTrigger",
+        })
+        flowGraph.edges.splice(2, 0,
+            {source: TRIGGERS_START, target: SECOND_TRIGGER_UID},
+            {source: SECOND_TRIGGER_UID, target: TRIGGERS_END},
+        )
+        flowGraph.clusters[0].nodes.splice(2, 0, SECOND_TRIGGER_UID)
+        return flowGraph
+    }
+
+    // `errors:` hangs its first task off the flow root, `finally:` hangs its own off the finally
+    // marker, and both the main chain and the error chain run into that marker (GraphUtils#fillGraph).
+    // The flow root therefore branches, which is what keeps it rendered.
+    const withErrorAndFinally = () => {
+        const flowGraph = triggeredFlowGraph({
+            nodes: [
+                {uid: FLOW_FINALLY, type: "io.kestra.core.models.hierarchies.GraphClusterFinally"},
+                {
+                    uid: "root.handle_error",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    branchType: BranchType.ERROR,
+                    task: {id: "handle_error", type: "io.kestra.plugin.core.log.Log"},
+                },
+                {
+                    uid: "root.cleanup",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    branchType: BranchType.FINALLY,
+                    task: {id: "cleanup", type: "io.kestra.plugin.core.log.Log"},
+                },
+            ],
+            edges: [
+                {source: FLOW_ROOT, target: "root.handle_error"},
+                {source: "root.handle_error", target: FLOW_FINALLY},
+                {source: FLOW_FINALLY, target: "root.cleanup"},
+                {source: "root.cleanup", target: FLOW_END},
+            ],
+        })
+        // With a `finally:` section the main chain runs into the marker, not straight to the end.
+        flowGraph.edges[4] = {source: "root.notify_team", target: FLOW_FINALLY}
+        return flowGraph
+    }
+
+    const generateTriggered = (flowGraph: VueFlowUtils.FlowGraph) =>
+        asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowGraph, undefined, [], false, {}, new Set(), [], false, true, false,
+        ) ?? [])
+
+    const edgePairs = (elements: GeneratedElement[]) =>
+        elements.filter((element) => element.type === "edge").map((edge) => `${edge.source}|${edge.target}`)
+
+    const laneMembers = (elements: GeneratedElement[]) =>
+        elements.filter((element) => element.parentNode === TRIGGERS_CLUSTER).map((element) => element.id).sort()
+
+    test("drops the flow root dot so one joint sits between the trigger and the first task", () => {
+        const elements = generateTriggered(triggeredFlowGraph())
+
+        expect(elements.map((element) => element.id)).not.toContain(FLOW_ROOT)
+        expect(edgePairs(elements)).toEqual([
+            `${TRIGGERS_START}|${TRIGGER_UID}`,
+            `${TRIGGER_UID}|${TRIGGERS_END}`,
+            `${TRIGGERS_END}|root.notify_team`,
+            `root.notify_team|${FLOW_END}`,
+        ])
+    })
+
+    test("keeps the lane's own end dot, so the box keeps the member that sizes it", () => {
+        const elements = generateTriggered(triggeredFlowGraph())
+
+        const laneEnd = elements.find((element) => element.id === TRIGGERS_END)
+        expect(laneEnd?.type).toBe("dot")
+        expect(laneEnd?.parentNode).toBe(TRIGGERS_CLUSTER)
+        expect(laneMembers(elements)).toEqual([TRIGGERS_START, TRIGGER_UID, TRIGGERS_END].sort())
+    })
+
+    test("leaves the triggers lane the same size whether or not the flow root is folded", () => {
+        // `withErrorAndFinally` branches at the flow root, so no fold happens there — it is the
+        // untouched baseline the folded graph's lane has to match.
+        const folded = generateTriggered(triggeredFlowGraph())
+        const baseline = generateTriggered(withErrorAndFinally())
+
+        const lane = (elements: GeneratedElement[]) => elements.find((element) => element.id === TRIGGERS_CLUSTER)
+        expect(lane(folded)?.style?.height).toBe(lane(baseline)?.style?.height)
+        expect(lane(folded)?.style?.width).toBe(lane(baseline)?.style?.width)
+        expect(laneMembers(folded)).toEqual(laneMembers(baseline))
+    })
+
+    test("drops the folded edge instead of emitting a self-edge on the lane end", () => {
+        for (const flowGraph of [triggeredFlowGraph(), withSecondTrigger()]) {
+            const elements = generateTriggered(flowGraph)
+
+            expect(elements.filter((element) => element.type === "edge")
+                .some((edge) => edge.source === edge.target)).toBe(false)
+            expect(elements.map((element) => element.id)).not.toContain(`${TRIGGERS_END}|${TRIGGERS_END}`)
+        }
+    })
+
+    test("keeps the shared fan-in and every branch edge inside the triggers lane", () => {
+        const elements = generateTriggered(withSecondTrigger())
+
+        // Both triggers and the dot they meet at stay members of the lane, so the fan-in is drawn
+        // inside the green box rather than below it.
+        expect(laneMembers(elements))
+            .toEqual([TRIGGERS_START, TRIGGER_UID, SECOND_TRIGGER_UID, TRIGGERS_END].sort())
+        expect(elements.find((element) => element.id === TRIGGERS_END)?.parentNode).toBe(TRIGGERS_CLUSTER)
+
+        const insideLane = [
+            `${TRIGGERS_START}|${TRIGGER_UID}`,
+            `${TRIGGERS_START}|${SECOND_TRIGGER_UID}`,
+            `${TRIGGER_UID}|${TRIGGERS_END}`,
+            `${SECOND_TRIGGER_UID}|${TRIGGERS_END}`,
+        ]
+        expect(edgePairs(elements)).toEqual(expect.arrayContaining(insideLane))
+        // One run leaves the lane, straight to the first task.
+        expect(edgePairs(elements).filter((pair) => pair.startsWith(`${TRIGGERS_END}|`)))
+            .toEqual([`${TRIGGERS_END}|root.notify_team`])
+    })
+
+    test("leaves no dot between the triggers box and the first task", () => {
+        for (const flowGraph of [triggeredFlowGraph(), withSecondTrigger()]) {
+            const elements = generateTriggered(flowGraph)
+            const outside = elements
+                .filter((element) => element.type === "dot" && element.parentNode === undefined)
+                .map((element) => element.id)
+
+            // Only the flow's own end marker below the task; nothing orphaned in the gap above it.
+            expect(outside).toEqual([FLOW_END])
+        }
+    })
+
+    test("keeps the add button on the edge into the first task", () => {
+        for (const flowGraph of [triggeredFlowGraph(), withSecondTrigger()]) {
+            const edges = generateTriggered(flowGraph).filter((element) => element.type === "edge")
+
+            expect(edges.find((edge) => edge.target === "root.notify_team")?.data?.haveAdd)
+                .toEqual({refId: "notify_team", position: "before"})
+            // A trigger is not a task, so the lane's own wiring still offers nothing to insert.
+            expect(edges.find((edge) => edge.target === TRIGGERS_END)?.data?.haveAdd).toBeFalsy()
+            expect(edges.find((edge) => edge.target === TRIGGER_UID)?.data?.haveAdd).toBeFalsy()
+        }
+    })
+
+    test("keeps the flow root and its branches when errors and finally fan out of it", () => {
+        const elements = generateTriggered(withErrorAndFinally())
+
+        // The root is a junction here, so it is not folded and nothing moves into the lane.
+        expect(elements.map((element) => element.id)).toContain(FLOW_ROOT)
+        expect(elements.find((element) => element.id === FLOW_ROOT)?.parentNode).toBeUndefined()
+        expect(edgePairs(elements)).toEqual(expect.arrayContaining([
+            `${TRIGGERS_END}|${FLOW_ROOT}`,
+            `${FLOW_ROOT}|root.notify_team`,
+            `${FLOW_ROOT}|root.handle_error`,
+        ]))
+    })
+
+    // The exact uids the backend produced for system/branches_check, read off the rendered DOM
+    // (kestra-io/kestra#21047), so the selector is exercised against real ids and not tidy fixtures.
+    test("keeps the flow root unfolded for the real branches_check uids", () => {
+        const REAL_TRIGGERS_END = "root.Triggers.end-5mRuovhdoehYXHm7tVktgo"
+        const REAL_FLOW_ROOT = "root.root-YpQDXkcWb90U6n5iAEU6J"
+        const realGraph = {
+            nodes: [
+                {uid: REAL_FLOW_ROOT, type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+                {uid: "root.finally-Zk1", type: "io.kestra.core.models.hierarchies.GraphClusterFinally"},
+                {uid: "root.end-Qm2", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+                {uid: "root.Triggers.root-Ab3", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+                {uid: "root.Triggers.on_infra_failure", type: "io.kestra.core.models.hierarchies.GraphTrigger"},
+                {uid: REAL_TRIGGERS_END, type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+                {uid: "root.notify_team", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "notify_team", type: "io.kestra.plugin.core.log.Log"}},
+                {uid: "root.handle_error", type: "io.kestra.core.models.hierarchies.GraphTask", branchType: BranchType.ERROR, task: {id: "handle_error", type: "io.kestra.plugin.core.log.Log"}},
+                {uid: "root.cleanup", type: "io.kestra.core.models.hierarchies.GraphTask", branchType: BranchType.FINALLY, task: {id: "cleanup", type: "io.kestra.plugin.core.log.Log"}},
+            ],
+            edges: [
+                {source: "root.Triggers.root-Ab3", target: "root.Triggers.on_infra_failure"},
+                {source: "root.Triggers.on_infra_failure", target: REAL_TRIGGERS_END},
+                {source: REAL_TRIGGERS_END, target: REAL_FLOW_ROOT},
+                {source: REAL_FLOW_ROOT, target: "root.notify_team"},
+                {source: REAL_FLOW_ROOT, target: "root.handle_error"},
+                {source: "root.notify_team", target: "root.finally-Zk1"},
+                {source: "root.handle_error", target: "root.finally-Zk1"},
+                {source: "root.finally-Zk1", target: "root.cleanup"},
+                {source: "root.cleanup", target: "root.end-Qm2"},
+            ],
+            clusters: [{
+                cluster: {uid: TRIGGERS_CLUSTER, type: "io.kestra.core.models.hierarchies.GraphCluster", taskNode: null},
+                nodes: ["root.Triggers.root-Ab3", "root.Triggers.on_infra_failure", REAL_TRIGGERS_END],
+                parents: [], start: "root.Triggers.root-Ab3", end: REAL_TRIGGERS_END,
+            }],
+        } as unknown as VueFlowUtils.FlowGraph
+
+        const elements = generateTriggered(realGraph)
+
+        // The structural node and all three of its edges survive.
+        const flowRoot = elements.find((element) => element.id === REAL_FLOW_ROOT)
+        expect(flowRoot?.type).toBe("dot")
+        expect(edgePairs(elements)).toEqual(expect.arrayContaining([
+            `${REAL_TRIGGERS_END}|${REAL_FLOW_ROOT}`,
+            `${REAL_FLOW_ROOT}|root.notify_team`,
+            `${REAL_FLOW_ROOT}|root.handle_error`,
+        ]))
+        // The lane keeps its own end marker, so the box is unchanged.
+        expect(elements.find((element) => element.id === REAL_TRIGGERS_END)?.parentNode).toBe(TRIGGERS_CLUSTER)
+    })
+
+    // The red Errors lane is synthesized by withSyntheticErrorsLane for flow-level `errors:` tasks
+    // and predates this change (kestra-io/kestra#19666); the fold must leave it exactly as it was.
+    test("leaves the synthetic Errors lane and its membership untouched", () => {
+        const elements = generateTriggered(withErrorAndFinally())
+        const errorsLane = CLUSTER_PREFIX + "root.Errors"
+
+        expect(elements.find((element) => element.id === errorsLane)?.type).toBe("cluster")
+        expect(elements.find((element) => element.id === "root.handle_error")?.parentNode).toBe(errorsLane)
+    })
+
+    test("leaves the finally marker and the chains running into it untouched", () => {
+        const elements = generateTriggered(withErrorAndFinally())
+
+        expect(elements.find((element) => element.id === FLOW_FINALLY)?.type).toBe("dot")
+        expect(edgePairs(elements)).toEqual(expect.arrayContaining([
+            `root.notify_team|${FLOW_FINALLY}`,
+            `root.handle_error|${FLOW_FINALLY}`,
+            `${FLOW_FINALLY}|root.cleanup`,
+        ]))
+    })
+
+    test("folds the flow root onto the lane end for one trigger and for several", () => {
+        for (const flowGraph of [triggeredFlowGraph(), withSecondTrigger()]) {
+            expect(VueFlowUtils.getTriggersJoinAlias(flowGraph.clusters, flowGraph.nodes, flowGraph.edges))
+                .toEqual({[FLOW_ROOT]: TRIGGERS_END})
+        }
+    })
+
+    test("aliases nothing when the flow root branches", () => {
+        const flowGraph = withErrorAndFinally()
+
+        expect(VueFlowUtils.getTriggersJoinAlias(flowGraph.clusters, flowGraph.nodes, flowGraph.edges))
+            .toEqual({})
+    })
+
+    test("aliases nothing when the triggers lane is collapsed", () => {
+        const flowGraph = triggeredFlowGraph()
+
+        expect(VueFlowUtils.getTriggersJoinAlias(
+            flowGraph.clusters, flowGraph.nodes, flowGraph.edges, new Set(["root.Triggers"]),
+        )).toEqual({})
+    })
+
+    test("aliases nothing when the triggers lane is absorbed by a collapsed parent", () => {
+        const flowGraph = triggeredFlowGraph()
+
+        expect(VueFlowUtils.getTriggersJoinAlias(
+            flowGraph.clusters, flowGraph.nodes, flowGraph.edges, new Set(), {[TRIGGERS_CLUSTER]: "root.outer"},
+        )).toEqual({})
+    })
+
+    test("aliases nothing when the lane end is already replaced by a placeholder", () => {
+        const flowGraph = triggeredFlowGraph()
+
+        expect(VueFlowUtils.getTriggersJoinAlias(
+            flowGraph.clusters, flowGraph.nodes, flowGraph.edges, new Set(), {[TRIGGERS_END]: "root.Triggers"},
+        )).toEqual({})
+    })
+
+    test("still collapses the triggers lane into its placeholder", () => {
+        const flowGraph = triggeredFlowGraph()
+        // The state Topology.vue#collapseCluster builds for the triggers box.
+        const edgeReplacer = {
+            [TRIGGERS_CLUSTER]: "root.Triggers",
+            [TRIGGERS_START]: "root.Triggers",
+            [TRIGGERS_END]: "root.Triggers",
+            [TRIGGER_UID]: "root.Triggers",
+        }
+        const elements = asElements(VueFlowUtils.generateGraph(
+            "vfid", "flow", "ns", flowGraph, undefined, [TRIGGERS_START, TRIGGER_UID, TRIGGERS_END, TRIGGERS_CLUSTER],
+            false, edgeReplacer, new Set(["root.Triggers"]), [], false, true, false,
+        ) ?? [])
+
+        // The lane is gone, so nothing is folded and the flow root still carries the chain.
+        expect(elements.find((element) => element.id === "root.Triggers")?.type).toBe("collapsedcluster")
+        expect(edgePairs(elements)).toContain(`root.Triggers|${FLOW_ROOT}`)
+        expect(edgePairs(elements)).toContain(`${FLOW_ROOT}|root.notify_team`)
+    })
+
+    test("folds the flow root and a flowable's gate node in the same graph", () => {
+        const withFlowable = triggeredFlowGraph({
+            nodes: [
+                {
+                    uid: "root.seq",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "seq", type: "io.kestra.plugin.core.flow.Sequential", namespace: "ns", flowId: "flow"},
+                },
+                {uid: "root.seq.root-2", type: "io.kestra.core.models.hierarchies.GraphClusterRoot"},
+                {
+                    uid: "root.seq.child",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "child", type: "io.kestra.plugin.core.log.Log", namespace: "ns", flowId: "flow"},
+                },
+                {uid: "root.seq.end-2", type: "io.kestra.core.models.hierarchies.GraphClusterEnd"},
+            ],
+            edges: [
+                {source: "root.notify_team", target: "root.seq"},
+                {source: "root.seq", target: "root.seq.root-2"},
+                {source: "root.seq.root-2", target: "root.seq.child"},
+                {source: "root.seq.child", target: "root.seq.end-2"},
+            ],
+        })
+        withFlowable.clusters.push({
+            cluster: {
+                uid: CLUSTER_PREFIX + "root.seq",
+                type: "io.kestra.core.models.hierarchies.GraphCluster",
+                taskNode: {uid: "root.seq", task: {id: "seq", type: "io.kestra.plugin.core.flow.Sequential"}},
+            },
+            nodes: ["root.seq", "root.seq.root-2", "root.seq.child", "root.seq.end-2"],
+            parents: [],
+            start: "root.seq.root-2",
+            end: "root.seq.end-2",
+        } as unknown as VueFlowUtils.FlowGraph["clusters"][number])
+
+        const elements = generateTriggered(withFlowable)
+        const ids = elements.map((element) => element.id)
+
+        // Neither alias map clobbers the other: both redundant nodes are gone, the lane keeps its own.
+        expect(ids).not.toContain(FLOW_ROOT)
+        expect(ids).not.toContain("root.seq")
+        expect(ids).toContain(TRIGGERS_END)
+        expect(elements.find((element) => element.id === "root.seq.child")?.parentNode)
+            .toBe(CLUSTER_PREFIX + "root.seq")
+    })
+})
+
 describe("generateGraph collapsed nested clusters", () => {
     const nestedClustersGraph = {
         nodes: [

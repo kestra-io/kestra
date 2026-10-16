@@ -66,6 +66,12 @@ public class DockerOptions {
     protected List<String> extraHosts;
 
     @Schema(
+        title = "DNS servers to use for the container."
+    )
+    @PluginProperty(dynamic = true)
+    protected List<String> dns;
+
+    @Schema(
         title = "Docker network mode to use e.g. `host`, `none`, etc."
     )
     @PluginProperty(dynamic = true)

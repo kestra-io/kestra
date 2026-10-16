@@ -430,7 +430,6 @@
         overflow: auto;
     }
 
-    /* The details slot is always forwarded, so a task with no details module still mounts an empty box. */
     .node-details-overlay:empty {
         display: none;
     }

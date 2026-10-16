@@ -151,7 +151,7 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
             stdErr.join();
 
             if (exitCode != 0) {
-                throw new TaskException(exitCode, defaultLogConsumer);
+                throw failureForExitCode(exitCode, defaultLogConsumer);
             } else {
                 logger.debug("Command succeed with exit code {}", exitCode);
             }
@@ -166,6 +166,18 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
             stdOut.join();
             stdErr.join();
         }
+    }
+
+    static TaskException failureForExitCode(int exitCode, AbstractLogConsumer logConsumer) {
+        if (exitCode == 137) {
+            return new TaskException(
+                "Command terminated with exit code 137 (SIGKILL). This may indicate an out-of-memory kill, but the cause cannot be confirmed by the Process task runner. Check the worker's memory limits and system logs.",
+                exitCode,
+                logConsumer
+            );
+        }
+
+        return new TaskException(exitCode, logConsumer);
     }
 
     @Override

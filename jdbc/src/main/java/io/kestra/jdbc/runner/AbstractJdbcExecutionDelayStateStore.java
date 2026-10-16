@@ -5,6 +5,7 @@ import java.time.temporal.Temporal;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
@@ -15,7 +16,7 @@ import io.kestra.jdbc.repository.AbstractJdbcRepository;
 public abstract class AbstractJdbcExecutionDelayStateStore extends AbstractJdbcRepository implements ExecutionDelayStateStore {
     protected io.kestra.jdbc.AbstractJdbcRepository<ExecutionDelay> jdbcRepository;
 
-    private static final Field<Object> DATE_FIELD = DSL.field(DSL.quotedName("date"));
+    protected static final Field<Object> DATE_FIELD = DSL.field(DSL.quotedName("date"));
 
     public AbstractJdbcExecutionDelayStateStore(io.kestra.jdbc.AbstractJdbcRepository<ExecutionDelay> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
@@ -31,7 +32,7 @@ public abstract class AbstractJdbcExecutionDelayStateStore extends AbstractJdbcR
                     .using(configuration)
                     .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
-                    .where(DATE_FIELD.lessOrEqual(getNow(now)))
+                    .where(expiredCondition(now))
                     .forUpdate()
                     .skipLocked();
 
@@ -46,6 +47,15 @@ public abstract class AbstractJdbcExecutionDelayStateStore extends AbstractJdbcR
 
     protected Temporal getNow(Instant now) {
         return now;
+    }
+
+    /**
+     * The predicate matching delays due at or before {@code now}. Dialects whose cutoff would
+     * otherwise pass through a JVM-zone-sensitive bind override this to keep the comparison in
+     * the same digit space the stored {@code date} column uses.
+     */
+    protected Condition expiredCondition(Instant now) {
+        return DATE_FIELD.lessOrEqual(getNow(now));
     }
 
     @Override

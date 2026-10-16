@@ -3,6 +3,7 @@ package io.kestra.plugin.core.flow;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
@@ -26,11 +28,14 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.ApprovalRequestHandler;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.Services;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
@@ -465,6 +470,27 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .state(State.Type.FAILED)
             .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
             .build());
+    }
+
+    @Override
+    public Map<String, Object> created(FlowInterface flow, Execution execution, TaskRun taskRun, RunContext runContext) throws Exception {
+        Services services = ((DefaultRunContext) runContext).services();
+        ApprovalRequestHandler approvalRequestHandler = services.additionalService(ApprovalRequestHandler.class);
+        approvalRequestHandler.validate(this);
+
+        if (services.additionalService(TaskOutputService.class).getOutputs(taskRun).get("decision") != null) {
+            return Map.of();
+        }
+
+        ApprovalRequestHandler.OpenedRequest opened = approvalRequestHandler.open(flow, execution, taskRun, this, runContext);
+        Map<String, Object> outputs = new HashMap<>();
+        if (opened.url() != null) {
+            outputs.put("url", opened.url());
+        }
+        if (opened.caseId() != null) {
+            outputs.put("caseId", opened.caseId());
+        }
+        return outputs;
     }
 
     @Override

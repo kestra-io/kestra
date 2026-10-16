@@ -1400,7 +1400,8 @@ public class ExecutionService {
     }
 
     private boolean isAwaitingDecision(TaskRun taskRun) throws InternalException {
-        boolean waiting = taskRun.getState().getCurrent() == State.Type.PAUSED || taskRun.getState().getCurrent() == State.Type.PAUSING;
+        State.Type current = taskRun.getState().getCurrent();
+        boolean waiting = current == State.Type.RUNNING || current == State.Type.PAUSING || current == State.Type.PAUSED;
         return waiting && taskOutputService.getOutputs(taskRun).get("decision") == null;
     }
 

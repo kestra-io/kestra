@@ -337,8 +337,7 @@ public final class ExecutorTestHarness {
             Mockito.mock(RunContextInitializer.class),
             taskOutputService,
             executionOutputService,
-            new PausedTaskNotifier.NoopPausedTaskNotifier(),
-            new ApprovalRequestHandler.NoopApprovalRequestHandler()
+            new PausedTaskNotifier.NoopPausedTaskNotifier()
         );
 
         this.executionEventMessageHandler = new ExecutionEventMessageHandler(

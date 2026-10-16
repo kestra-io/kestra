@@ -6,8 +6,6 @@ const getAutoRefreshEnabledKey = (routeName: string) => `autoRefreshEnabled_${ro
 
 export {getAutoRefreshEnabledKey}
 
-const enabledRef = ref(false)
-
 export function usePeriodicRefresh(refreshCallback?: () => void) {
     const route = useRoute()
     const {t} = useI18n()

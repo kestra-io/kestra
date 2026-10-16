@@ -1,6 +1,7 @@
 package io.kestra.core.queues.factory;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -58,14 +59,15 @@ public class QueuePluginInterfaceFactory extends AbstractPluginInterfaceFactory<
     }
 
     /**
-     * Resolves the plugin id for a configured {@code kestra.queue.type}, the database types being served by the
-     * bundled JDBC plugin.
+     * Resolves the plugin id for a configured {@code kestra.queue.type}, ignoring case, the database types being
+     * served by the bundled JDBC plugin.
      */
     public static String pluginId(String type) {
         if (null != PluginIdentifier.parseIdentifier(type).getRight()) {
             throw new KestraRuntimeException("The queue type '%s' must not carry a version, set '%s' to the queue type alone.".formatted(type, KESTRA_QUEUE_TYPE_CONFIG));
         }
-        return JDBC_TYPES.contains(type) ? JDBC_PLUGIN_ID : type;
+        String id = type.toLowerCase(Locale.ROOT);
+        return JDBC_TYPES.contains(id) ? JDBC_PLUGIN_ID : id;
     }
 
     // the JDBC plugin is selected through the database types, which are the values a user can set

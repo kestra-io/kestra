@@ -1,4 +1,4 @@
-package io.kestra.core.scheduler.vnodes;
+package io.kestra.core.vnodes;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;

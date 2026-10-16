@@ -27,9 +27,10 @@ import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.vnodes.VNodeController;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Context;
@@ -73,7 +74,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final ExecutionStateStore executionStateStore;
     private final TriggerEventQueue triggerEventQueue;
     private final MetricRegistry metricRegistry;
-    private final VNodeController vNodeController;
+    private final List<VNodeController> vNodeControllers;
     private final List<ServiceResourceReleaser> serviceResourceReleasers;
 
     private Counter workerJobResubmitCounter;
@@ -104,7 +105,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final TriggerEventQueue triggerEventQueue,
         final ServerConfig serverConfig,
         final MetricRegistry metricRegistry,
-        final VNodeController vNodeController,
+        final List<VNodeController> vNodeControllers,
         final List<ServiceResourceReleaser> serviceResourceReleasers) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
@@ -120,7 +121,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.purgeRetention = serverConfig.service() != null && serverConfig.service().purge() != null
             ? serverConfig.service().purge().retention()
             : null;
-        this.vNodeController = vNodeController;
+        this.vNodeControllers = vNodeControllers;
         this.serviceResourceReleasers = serviceResourceReleasers;
     }
 
@@ -174,8 +175,8 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
         runStep("maybeDetectAndLogNewConnectedServices", this::maybeDetectAndLogNewConnectedServices);
 
-        // May reassign scheduler VNodes
-        runStep("checkServicesAndRebalanceVNodes", vNodeController::checkServicesAndRebalanceVNodes);
+        // May reassign the vNodes of each group (schedulers, worker controllers)
+        vNodeControllers.forEach(vNodeController -> runStep("checkServicesAndRebalanceVNodes", vNodeController::checkServicesAndRebalanceVNodes));
     }
 
     /**
@@ -495,6 +496,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         if (isTaskRunOver(workerTaskRunning.getTaskRun())) {
             log.warn(
                 "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because the task run has already ended, its execution was killed, or its execution no longer exists.",
+                workerTaskRunning.getTaskRun().getId(),
+                workerTaskRunning.getTaskRun().getExecutionId()
+            );
+            workerJobRunningStateStore.deleteByKeyAndWorker(txContext, workerTaskRunning.uid(), workerTaskRunning.getWorkerInstance().uid());
+        } else if (workerTaskRunning.getWorkingDirectoryId() != null && !(workerTaskRunning.getTask() instanceof WorkingDirectory)) {
+            // the WorkingDirectory of a lost worker runs all its tasks again once its own lease is resubmitted
+            log.warn(
+                "Discarding the running entry of task run '{}' of execution '{}' instead of resubmitting it, because its WorkingDirectory runs it again.",
                 workerTaskRunning.getTaskRun().getId(),
                 workerTaskRunning.getTaskRun().getExecutionId()
             );

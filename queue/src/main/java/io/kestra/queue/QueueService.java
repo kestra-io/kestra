@@ -15,10 +15,10 @@ import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.vnodes.VNodes;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;

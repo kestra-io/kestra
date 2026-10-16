@@ -42,7 +42,6 @@ import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Logs;
-import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.worker.WorkerSecurityService;
 import io.kestra.worker.processors.internals.WorkerTaskCallable;
@@ -64,6 +63,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private final ServerConfig serverConfig;
     private final RunContextInitializer runContextInitializer;
     private final RunContextLoggerFactory runContextLoggerFactory;
+    private final WorkingDirFactory workingDirFactory;
 
     // METRICS
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
@@ -82,8 +82,10 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         final RunContextLoggerFactory runContextLoggerFactory,
         final WorkerQueue<WorkerTaskResult> workerTaskResultQueue,
         final WorkerQueue<MetricEntry> workerMetricQueue,
-        final ExecutionKilledManager executionKilledManager) {
+        final ExecutionKilledManager executionKilledManager,
+        final WorkingDirFactory workingDirFactory) {
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
+        this.workingDirFactory = workingDirFactory;
         this.runContextInitializer = runContextInitializer;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.workerId = workerId;
@@ -100,81 +102,75 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     protected void doProcess(final WorkerTask workerTask) {
         Task task = workerTask.getTask();
         if (task instanceof RunnableTask) {
-            runTask(workerTask, true);
+            if (workerTask.getWorkingDirectoryId() == null) {
+                runTask(workerTask, true);
+            } else {
+                WorkingDir workingDir = workingDirFactory.createWorkingDirectory(workerTask.getTaskRun().getExecutionId(), workerTask.getWorkingDirectoryId());
+                runTask(workerTask, false, runContextInitializer.forWorkingDirectorySubtask(workerTask, workingDir));
+            }
         } else if (task instanceof WorkingDirectory workingDirectory) {
-            runWorkingDirectory(workerTask, workingDirectory);
+            WorkingDir workingDir = workingDirFactory.createWorkingDirectory(workerTask.getTaskRun().getExecutionId(), workerTask.getTaskRun().getId());
+            // a close job reaching a worker without the folder comes from a lost worker: the whole WorkingDirectory runs again
+            if (workerTask.getTaskRun().getState().isTerminated() && Files.exists(workingDir.path(false))) {
+                closeWorkingDirectory(workerTask, workingDirectory, workingDir);
+            } else {
+                openWorkingDirectory(workerTask, workingDirectory, workingDir);
+            }
         } else {
             throw new IllegalArgumentException("Unable to process the task '" + task.getId() + "' as it's not a runnable task");
         }
     }
 
-    private void runWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory) {
-        DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(workerTask);
-        final RunContext workingDirectoryRunContext = runContext.clone();
+    private void openWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory, WorkingDir workingDir) {
+        DefaultRunContext runContext = runContextInitializer.forWorkingDirectorySubtask(workerTask, workingDir);
+        TaskRunAttempt attempt = TaskRunAttempt.builder()
+            .workerId(workerId)
+            .state(new State().withState(RUNNING))
+            .build();
+        TaskRun taskRun = workerTask.getTaskRun()
+            .withAttempts(this.addAttempt(workerTask, attempt))
+            .withState(RUNNING);
 
         try {
-            // preExecuteTasks
-            try {
-                workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
-            } catch (Exception e) {
-                runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTask = workerTask.withTaskRun(workerTask.fail());
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.getTaskRun()));
-                return;
-            }
-
-            // execute all tasks
-            for (Task currentTask : workingDirectory.getTasks()) {
-                if (Boolean.TRUE.equals(currentTask.getDisabled())) {
-                    continue;
-                }
-                WorkerTask currentWorkerTask = workingDirectory.workerTask(
-                    workerTask.getTaskRun(),
-                    currentTask,
-                    runContext.cloneForPlugin(currentTask)
-                );
-
-                // all tasks will be handled immediately by the worker
-                WorkerTaskResult workerTaskResult = null;
-                try {
-                    if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
-                        workerTaskResult = new WorkerTaskResult(
-                            currentWorkerTask.getTaskRun()
-                                .withState(SKIPPED)
-                                .addAttempt(TaskRunAttempt.builder().workerId(workerId).state(new State().withState(SKIPPED)).build())
-                        );
-                        workerTaskResultQueue.put(workerTaskResult);
-                    } else {
-                        workerTaskResult = this.runTask(
-                            currentWorkerTask, false,
-                            runContextInitializer.forWorkingDirectorySubtask(currentWorkerTask, runContext.workingDir())
-                        );
-                    }
-                } catch (IllegalVariableEvaluationException e) {
-                    RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
-                    contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
-                    workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
-                }
-
-                if (workerTaskResult == null || workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
-                    break;
-                }
-
-                // create the next RunContext populated with the previous WorkerTaskResult
-                runContext = runContextInitializer.forWorker(runContext.clone(), workerTaskResult, workerTask.getTaskRun());
-            }
-
-            // postExecuteTasks
-            try {
-                workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
-            } catch (Exception e) {
-                workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
-            }
-            this.logTerminated(workerTask, workerTask.getTaskRun());
-        } finally {
-            runContext.cleanup();
+            workingDirectory.cleanup(runContext);
+            workingDir.path(true);
+            workingDirectory.preExecuteTasks(runContext, taskRun);
+        } catch (Exception e) {
+            runContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
+            cleanup(workingDirectory, runContext);
+            workerTaskResultQueue.put(new WorkerTaskResult(taskRun.withStateAndAttempt(State.Type.fail(workingDirectory))));
+            return;
         }
+        workerTaskResultQueue.put(new WorkerTaskResult(taskRun));
+    }
+
+    private void closeWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory, WorkingDir workingDir) {
+        DefaultRunContext runContext = runContextInitializer.forWorkingDirectorySubtask(workerTask, workingDir);
+        TaskRun taskRun = workerTask.getTaskRun();
+        Map<String, Object> outputs = Map.of();
+        try {
+            workingDirectory.postExecuteTasks(runContext, taskRun);
+            WorkingDirectory.Outputs workingDirectoryOutputs = workingDirectory.outputs(runContext);
+            if (workingDirectoryOutputs != null) {
+                outputs = workingDirectoryOutputs.toMap();
+            }
+        } catch (Exception e) {
+            runContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
+            taskRun = taskRun.withStateAndAttempt(State.Type.fail(workingDirectory));
+        } finally {
+            cleanup(workingDirectory, runContext);
+        }
+        this.logTerminated(workerTask, taskRun);
+        workerTaskResultQueue.put(new WorkerTaskResult(taskRun, outputs));
+    }
+
+    private static void cleanup(WorkingDirectory workingDirectory, DefaultRunContext runContext) {
+        try {
+            workingDirectory.cleanup(runContext);
+        } catch (IOException e) {
+            runContext.logger().warn("Unable to delete the folder of the WorkingDirectory", e);
+        }
+        runContext.cleanup();
     }
 
     private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp) {

@@ -83,22 +83,6 @@ public class RunContextInitializer {
     }
 
     /**
-     * Builds a {@link RunContext} for the given {@link WorkerTask} for a WorkingDirectory task.
-     * <p>
-     * Preserves the current taskrun as {@code workerTaskrun} before overwriting with the subtask's taskrun.
-     *
-     * @param workerTask The {@link WorkerTask}.
-     * @return a fully initialized RunContext
-     */
-    public DefaultRunContext forWorkingDirectory(final WorkerTask workerTask) {
-        return forWorker(workerTask, variables ->
-        {
-            variables.put("workerTaskrun", variables.get("taskrun"));
-            return variables;
-        }, null);
-    }
-
-    /**
      * Builds a {@link RunContext} for a subtask within a WorkingDirectory, reusing the parent's
      * {@link WorkingDir} so that namespace files and prior subtask outputs remain accessible.
      *

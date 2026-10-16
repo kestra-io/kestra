@@ -1,5 +1,6 @@
 package io.kestra.worker.services;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -18,6 +19,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.WorkingDirFactory;
 import io.kestra.core.utils.Logs;
 
 import io.micrometer.core.instrument.Counter;
@@ -67,8 +69,11 @@ public class ExecutionKilledManager {
 
     private final Counter workerKilledCounter;
 
+    private final WorkingDirFactory workingDirFactory;
+
     @Inject
-    public ExecutionKilledManager(MetricRegistry metricRegistry) {
+    public ExecutionKilledManager(MetricRegistry metricRegistry, WorkingDirFactory workingDirFactory) {
+        this.workingDirFactory = workingDirFactory;
         this.killedExecutions = Caffeine.newBuilder()
             .expireAfterWrite(KILLED_CACHE_TTL)
             .build();
@@ -104,6 +109,13 @@ public class ExecutionKilledManager {
                     killableJob.interruptAction().accept(State.Type.KILLED);
                 }
             });
+
+            // a killed execution never runs the close job that deletes the folder of its WorkingDirectories
+            try {
+                workingDirFactory.deleteWorkingDirectories(killedExecution.getExecutionId());
+            } catch (IOException e) {
+                log.warn("[execution: {}] Unable to delete the WorkingDirectory folders of the killed execution", killedExecution.getExecutionId(), e);
+            }
         } else if (killed instanceof ExecutionKilledTrigger killedTrigger) {
             log.info(
                 "[tenant: {}] [namespace: {}] [flow: {}] [trigger: {}] Received kill command",

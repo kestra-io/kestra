@@ -30,17 +30,18 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
-import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.worker.StickyWorkerRouting;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.executor.*;
 import io.kestra.executor.KillSwitchActionService;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 
+import io.micronaut.context.BeanProvider;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import jakarta.inject.Inject;
@@ -60,7 +61,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
     private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final ExecutorService executorService;
-    private final WorkerQueueService workerGroupService;
     private final QuotaService quotaService;
     private final FlowMetaStoreInterface flowMetaStore;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
@@ -71,6 +71,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final KillSwitchActionService killSwitchActionService;
     private final MetricRegistry metricRegistry;
     private final Tracer tracer;
+    private final BeanProvider<StickyWorkerRouting> stickyWorkerRouting;
 
     @Inject
     public ExecutionEventMessageHandler(
@@ -81,7 +82,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         ConcurrencyLimitStateStore concurrencyLimitStateStore,
         ConcurrencyLimitResolver concurrencyLimitResolver,
         ExecutorService executorService,
-        WorkerQueueService workerGroupService,
         QuotaService quotaService,
         FlowMetaStoreInterface flowMetaStore,
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
@@ -92,8 +92,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         KillSwitchActionService killSwitchActionService,
         MetricRegistry metricRegistry,
         TracerFactory tracerFactory,
-        Clock clock) {
+        Clock clock,
+        BeanProvider<StickyWorkerRouting> stickyWorkerRouting) {
         this.clock = clock;
+        this.stickyWorkerRouting = stickyWorkerRouting;
         this.executionStateStore = executionStateStore;
         this.executionQueuedStateStore = executionQueuedStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
@@ -101,7 +103,6 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         this.concurrencyLimitStateStore = concurrencyLimitStateStore;
         this.concurrencyLimitResolver = concurrencyLimitResolver;
         this.executorService = executorService;
-        this.workerGroupService = workerGroupService;
         this.quotaService = quotaService;
         this.flowMetaStore = flowMetaStore;
         this.workerJobEventQueue = workerJobEventQueue;
@@ -306,6 +307,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         // worker task
                         if (!executor.getWorkerTasks().isEmpty()) {
                             List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+                            Execution processedExecution = executor.getExecution();
                             executor
                                 .getWorkerTasks()
                                 .forEach(throwConsumer(executorTask ->
@@ -321,16 +323,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             );
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                Optional<WorkerQueueRouting> routing = workerGroupService.resolveWorkerQueueForJob(flow, workerTask);
+                                                Optional<WorkerQueueRouting> routing = executorService.resolveWorkerQueue(flow, processedExecution, workerTask);
                                                 // Internal dispatch convention: null = default queue. SystemTask routing
                                                 // is enforced upstream in WorkerQueueService.
                                                 String workerQueueId = routing
                                                     .map(WorkerQueueRouting::workerQueueId)
                                                     .map(WorkerQueues::toDispatchKey)
                                                     .orElse(null);
-                                                if (workerTask.getTask() instanceof WorkingDirectory) {
-                                                    // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                    workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask, workerQueueId));
+                                                if (workerTask.getWorkingDirectoryId() != null) {
+                                                    emitToWorkingDirectoryWorker(processedExecution, workerTask, workerQueueId, workerTaskResults);
                                                 } else {
                                                     TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
                                                     workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerQueueId));
@@ -340,7 +341,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                                             // flowable attempt state transition to running
                                             // Skip if the task was already terminated by handleChildWorkerTaskResult (e.g., empty Loop)
-                                            if (workerTask.getTask().isFlowable() && !workerTask.getTaskRun().getState().isTerminated()) {
+                                            // A WorkingDirectory is moved to RUNNING by the worker that opens its folder.
+                                            if (workerTask.getTask().isFlowable() && !(workerTask.getTask() instanceof WorkingDirectory) && !workerTask.getTaskRun().getState().isTerminated()) {
                                                 List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
                                                     .map(ArrayList::new)
                                                     .orElseGet(ArrayList::new);
@@ -449,6 +451,23 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                 }
             )
         );
+    }
+
+    /**
+     * Sends a task of a WorkingDirectory, or its close job, to the worker holding its folder.
+     */
+    private void emitToWorkingDirectoryWorker(Execution execution, WorkerTask workerTask, String workerQueueId, List<WorkerTaskResult> workerTaskResults) throws QueueException {
+        String workerId = execution.findTaskRunByTaskRunIdIfPresent(workerTask.getWorkingDirectoryId())
+            .flatMap(WorkingDirectory::boundWorkerId)
+            .orElseThrow(() -> new IllegalStateException("The WorkingDirectory task run '%s' has not been opened by any worker.".formatted(workerTask.getWorkingDirectoryId())));
+
+        boolean isClose = workerTask.getTask() instanceof WorkingDirectory;
+        WorkerTask submitted = isClose ? workerTask : workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.SUBMITTED));
+        WorkerJobEvent event = stickyWorkerRouting.get().route(submitted, workerQueueId, workerId);
+        workerJobEventQueue.emit(event.key(), event);
+        if (!isClose) {
+            workerTaskResults.add(new WorkerTaskResult(submitted.getTaskRun()));
+        }
     }
 
     private Execution fail(Execution message, Exception e) {

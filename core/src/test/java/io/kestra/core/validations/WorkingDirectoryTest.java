@@ -1,6 +1,5 @@
 package io.kestra.core.validations;
 
-import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -9,7 +8,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.plugin.core.log.Log;
 
@@ -52,24 +51,6 @@ public class WorkingDirectoryTest {
         assertThat(modelValidator.isValid(workingDirectory).isPresent()).isTrue();
         assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("The 'tasks' property cannot be empty");
 
-        // flowable task
-        workingDirectory = WorkingDirectory.builder()
-            .id("workingDir")
-            .type(WorkingDirectory.class.getName())
-            .tasks(
-                List.of(
-                    Pause.builder()
-                        .id("pause")
-                        .type(Pause.class.getName())
-                        .pauseDuration(Property.ofValue(Duration.ofSeconds(1L)))
-                        .build()
-                )
-            )
-            .build();
-
-        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isTrue();
-        assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("Only runnable tasks are allowed as children of a WorkingDirectory task");
-
         // worker group at the subtasks level
         workingDirectory = WorkingDirectory.builder()
             .id("workingDir")
@@ -90,5 +71,35 @@ public class WorkingDirectoryTest {
         assertThat(modelValidator.isValid(workingDirectory).get().getMessage())
             .contains("Cannot set routing requirements (workerSelector) on WorkingDirectory sub-tasks");
 
+    }
+
+    @Test
+    void shouldRejectAWorkerSelectorOnATaskNestedInAWorkingDirectory() {
+        var workingDirectory = WorkingDirectory.builder()
+            .id("workingDir")
+            .type(WorkingDirectory.class.getName())
+            .tasks(
+                List.of(
+                    Sequential.builder()
+                        .id("seq")
+                        .type(Sequential.class.getName())
+                        .tasks(
+                            List.of(
+                                Log.builder()
+                                    .id("log")
+                                    .type(Log.class.getName())
+                                    .message("Hello World")
+                                    .workerSelector(new WorkerSelector(List.of("toto"), null))
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        assertThat(modelValidator.isValid(workingDirectory)).hasValueSatisfying(
+            violation -> assertThat(violation.getMessage()).contains("Cannot set routing requirements (workerSelector) on WorkingDirectory sub-tasks")
+        );
     }
 }

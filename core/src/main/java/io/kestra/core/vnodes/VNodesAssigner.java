@@ -1,4 +1,4 @@
-package io.kestra.core.scheduler.vnodes;
+package io.kestra.core.vnodes;
 
 import java.util.Set;
 

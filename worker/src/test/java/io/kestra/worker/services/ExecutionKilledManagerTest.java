@@ -1,5 +1,6 @@
 package io.kestra.worker.services;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,6 +20,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
+import io.kestra.core.runners.WorkingDirFactory;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -35,11 +37,30 @@ class ExecutionKilledManagerTest {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Inject
+    private WorkingDirFactory workingDirFactory;
+
     private ExecutionKilledManager manager;
 
     @BeforeEach
     void setUp() {
-        manager = new ExecutionKilledManager(metricRegistry);
+        manager = new ExecutionKilledManager(metricRegistry, workingDirFactory);
+    }
+
+    @Test
+    void shouldDeleteTheWorkingDirectoryFoldersOfAKilledExecution() {
+        // Given the folders of two WorkingDirectories of the killed execution, and one of another execution
+        Path first = workingDirFactory.createWorkingDirectory("killed-exec", "wd-1").path(true);
+        Path second = workingDirFactory.createWorkingDirectory("killed-exec", "wd-2").path(true);
+        Path other = workingDirFactory.createWorkingDirectory("other-exec", "wd-3").path(true);
+
+        // When
+        manager.onKillReceived(ExecutionKilledExecution.builder().executionId("killed-exec").build());
+
+        // Then
+        assertThat(first).doesNotExist();
+        assertThat(second).doesNotExist();
+        assertThat(other).exists();
     }
 
     // --- isExecutionKilled ---

@@ -35,7 +35,8 @@ public final class ServiceStateTransition {
             ServiceInstance updated = from
                 .state(newState, Instant.now(), reason)
                 .server(to.server())
-                .metrics(to.metrics());
+                .metrics(to.metrics())
+                .props(to.props());
             return logTransitionAndGetResponse(to, newState, new ImmutablePair<>(from, updated));
         }
 

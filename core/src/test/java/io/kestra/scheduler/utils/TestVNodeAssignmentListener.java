@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.vnodes.internals.DefaultVNodesAssigner;
 
 /**
  * Simple listener implementation for testing.

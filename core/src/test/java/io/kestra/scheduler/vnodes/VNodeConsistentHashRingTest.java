@@ -6,7 +6,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.scheduler.vnodes.VNodeConsistentHashRing;
+import io.kestra.core.vnodes.VNodeConsistentHashRing;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 

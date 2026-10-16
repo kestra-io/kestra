@@ -70,6 +70,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.worker.models.WorkerInfo;
 import io.kestra.core.worker.models.WorkerTriggerResult;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.worker.WorkerAgent;
 import io.kestra.worker.WorkerConfig;
@@ -396,6 +397,41 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         // still-running worker is left for that worker to finish.
         assertThat(resubmitted.stream().filter(orphaned.uid()::equals)).hasSize(1);
         assertThat(resubmitted).doesNotContain(stillOwned.uid());
+    }
+
+    @Test
+    void shouldResubmitOnlyTheWorkingDirectoryOfAnInactiveWorker() throws Exception {
+        // Given the lease of a WorkingDirectory and of a task running in its folder, left by an inactive worker
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning child = workerTaskRunning(inactive.uid());
+        WorkerTaskRunning workingDirectory = WorkerTaskRunning.builder()
+            .workerInstance(child.getWorkerInstance())
+            .taskRun(child.getTaskRun().toBuilder().id(IdUtils.create()).taskId("working-directory").build())
+            .task(WorkingDirectory.builder().id("working-directory").type(WorkingDirectory.class.getName()).tasks(List.of(child.getTask())).build())
+            .data(child.getData())
+            .build();
+        workingDirectory.setWorkingDirectoryId(workingDirectory.getTaskRun().getId());
+        child.setWorkingDirectoryId(workingDirectory.getTaskRun().getId());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workingDirectory);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, child);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return resubmitted.contains(workingDirectory.uid());
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then the task is left to the WorkingDirectory, which runs all its tasks again
+        assertThat(resubmitted).doesNotContain(child.uid());
+        assertThat(workerJobRunningStateStore.existsByKeyAndWorker(child.uid(), inactive.uid())).isFalse();
     }
 
     @Test

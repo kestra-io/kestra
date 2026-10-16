@@ -25,6 +25,7 @@ import io.kestra.controller.config.WorkerControllersConfiguration.StaticConfig;
 import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.controller.grpc.auth.BasicAuthClientInterceptor;
 import io.kestra.controller.grpc.auth.BasicAuthServerInterceptor;
+import io.kestra.controller.grpc.services.WorkerJobDispatcher;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.metrics.MetricRegistry;
 
@@ -115,7 +116,9 @@ class GrpcBasicAuthWireTest {
             new ControllerConfiguration(0, Duration.ZERO, Duration.ZERO),
             Mockito.mock(MetricRegistry.class),
             Mockito.mock(ApplicationEventPublisher.class),
-            interceptor
+            interceptor,
+            Mockito.mock(WorkerJobDispatcher.class),
+            null
         );
     }
 

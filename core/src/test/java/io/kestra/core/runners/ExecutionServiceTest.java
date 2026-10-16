@@ -177,7 +177,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
 
         assertThat(restart.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().getFirst().getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList().getFirst().getState().getHistories()).hasSize(5);
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
     }
 

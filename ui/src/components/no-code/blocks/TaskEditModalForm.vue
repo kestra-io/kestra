@@ -7,6 +7,7 @@
             :flowId="flowId"
             :namespace="namespace"
             :editorKey="editorKey"
+            :taskPath="taskPath"
             presentation="panel"
             :isHidden="true"
             :hideTabstrip="true"
@@ -27,6 +28,7 @@
         PARENT_PATH_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
     } from "../injectionKeys"
+    import {modalItemPathOf} from "./useTaskEditModalStack"
 
     const props = defineProps<{
         task?: Record<string, unknown>
@@ -45,6 +47,8 @@
         (e: "close"): void
         (e: "select-nested", parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean): void
     }>()
+
+    const taskPath = computed(() => modalItemPathOf(props))
 
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath)
     provide(REF_PATH_INJECTION_KEY, props.refPath)

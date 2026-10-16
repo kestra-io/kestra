@@ -29,7 +29,12 @@
             </div>
         </div>
 
-        <p class="tour-lead" v-html="namespaceNote" />
+        <i18n-t keypath="onboarding.tour.finale.namespace_note" tag="p" class="tour-lead">
+            <template #namespace>{{ TOUR_NAMESPACE }}</template>
+            <template #secrets>
+                <a :href="docsUrl('secret')" target="_blank" rel="noopener">{{ $t("onboarding.tour.finale.docs.secret") }}</a>
+            </template>
+        </i18n-t>
 
         <p class="resources-title">
             {{ $t("onboarding.tour.finale.keep_going") }}
@@ -49,8 +54,6 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {useOnboardingResources} from "../useOnboardingResources"
     import OnboardingResourceList from "../OnboardingResourceList.vue"
@@ -62,7 +65,6 @@
 
     const isOpen = defineModel<boolean>()
 
-    const {t} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const {onboardingResources: resources} = useOnboardingResources()
@@ -87,12 +89,6 @@
         const [base, fragment] = DOCS[name].split("#")
         return `${base}${DOCS_UTM}${fragment ? `#${fragment}` : ""}`
     }
-
-    const namespaceNote = computed(() =>
-        t("onboarding.tour.finale.namespace_note", {
-            namespace: TOUR_NAMESPACE,
-            secrets: `<a href="${docsUrl("secret")}" target="_blank" rel="noopener">${t("onboarding.tour.finale.docs.secret")}</a>`,
-        }))
 
     const TAKEAWAYS = [
         {key: "copilot", docs: ["copilot", "agentSkills", "autocompletion"]},

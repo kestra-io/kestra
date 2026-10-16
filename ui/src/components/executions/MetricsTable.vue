@@ -21,7 +21,7 @@
         <template v-for="col in displayColumns" :key="col">
             <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">
-                    <p class="m-0">
+                    <p class="task-id">
                         {{ scope.row.taskId }}
                     </p>
                 </template>
@@ -207,6 +207,10 @@
 </script>
 
 <style lang="scss" scoped>
+    .task-id {
+        margin: 0;
+    }
+
     .tag {
         display: inline-flex;
         align-items: center;

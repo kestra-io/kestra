@@ -171,8 +171,7 @@
                                                 shouldDisplaySubflow(
                                                     item.index,
                                                     currentTaskRun,
-                                                ) &&
-                                                asTaskRun(currentTaskRun).outputs?.executionId
+                                                )
                                         "
                                         :ref="
                                             (el) =>
@@ -216,7 +215,7 @@
                                         :filter="filter"
                                         :allowAutoExpandSubflows="false"
                                         :targetExecutionId="
-                                            asTaskRun(currentTaskRun).outputs?.executionId
+                                            subflowExecutionId(currentTaskRun)
                                         "
                                         :class="
                                             $el.classList.contains('even')
@@ -288,6 +287,8 @@
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import throttle from "lodash/throttle"
     import {useClient, type TaskRun, type TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {isSubflowTaskType} from "../../services/subflowReferences"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -373,6 +374,8 @@
     const throttledExecutionUpdate = ref<ReturnType<typeof throttle> | undefined>(undefined)
     const targetExecution = ref<any>(undefined) // FIXME: any
     const loopOutputsByTaskRunId = ref<Record<string, any>>({}) // FIXME: any
+    const subflowExecutionIdByTaskRunId = ref<Record<string, string>>({})
+    const requestedSubflowOutputs = new Set<string>()
 
     // Template ref
     const taskRunScroller = useTemplateRef<any>("taskRunScroller") // FIXME: any
@@ -630,6 +633,22 @@
     )
 
     watch(
+        [currentTaskRuns, flow],
+        ([taskRuns]) => {
+            const executionId = followedExecution.value?.id
+            if (!executionId) return
+            for (const taskRun of taskRuns) {
+                if (subflowExecutionId(taskRun) !== undefined || !isSubflowTaskType(taskType(taskRun))) continue
+                const requestKey = `${taskRun.id}-${taskRun.state.current}`
+                if (requestedSubflowOutputs.has(requestKey)) continue
+                requestedSubflowOutputs.add(requestKey)
+                resolveSubflowExecutionId(executionId, taskRun.id)
+            }
+        },
+        {immediate: true},
+    )
+
+    watch(
         followedExecution,
         async (newExecution, oldExecution) => {
             if (!newExecution) {
@@ -749,6 +768,17 @@
         }
     }
 
+    async function resolveSubflowExecutionId(executionId: string, taskRunId: string) {
+        try {
+            const outputs = await loadTaskRunOutputs(executionId, taskRunId)
+            if (typeof outputs.executionId === "string") {
+                subflowExecutionIdByTaskRunId.value[taskRunId] = outputs.executionId
+            }
+        } catch {
+            // ignore fetch errors
+        }
+    }
+
     function fileUrl(path: string): string {
         return `${apiUrl()}/executions/${followedExecution.value.id}/file?path=${path}`
     }
@@ -803,7 +833,7 @@
             return
         }
         currentTaskRuns.value.forEach((taskRun) => {
-            if (isSubflow(taskRun) && !props.allowAutoExpandSubflows) {
+            if (!props.allowAutoExpandSubflows && (isSubflow(taskRun) || isSubflowTaskType(taskType(taskRun)))) {
                 return
             }
 
@@ -896,18 +926,26 @@
         })
     }
 
-    function isSubflow(taskRun: TaskRunWithDepth): boolean {
-        return taskRun?.outputs?.executionId
+    function subflowExecutionId(taskRun: TaskRunWithDepth | undefined): string | undefined {
+        if (!taskRun) return undefined
+        return taskRun.outputs?.executionId || subflowExecutionIdByTaskRunId.value[taskRun.id]
+    }
+
+    function isSubflow(taskRun: TaskRunWithDepth | undefined): boolean {
+        return subflowExecutionId(taskRun) !== undefined
     }
 
     function shouldDisplaySubflow(taskRunIndex: number, taskRun: TaskRunWithDepth): boolean {
-        const subflowExecutionId = taskRun.outputs?.executionId
+        const childExecutionId = subflowExecutionId(taskRun)
+        if (!childExecutionId) {
+            return false
+        }
         const index = shownSubflowsIds.value.findIndex(
-            (item) => item.subflowExecutionId === subflowExecutionId,
+            (item) => item.subflowExecutionId === childExecutionId,
         )
         if (index === -1) {
             shownSubflowsIds.value.push({
-                subflowExecutionId: subflowExecutionId,
+                subflowExecutionId: childExecutionId,
                 taskRunIndex: taskRunIndex,
             })
             return true

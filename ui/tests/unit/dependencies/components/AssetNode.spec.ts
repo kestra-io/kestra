@@ -1,77 +1,45 @@
 import {describe, expect, it, beforeEach} from "vitest"
+import {defineComponent, h} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 
 import AssetNode from "../../../../src/components/dependencies/components/dag/AssetNode.vue"
+import {DAG_CARD_FOOTER} from "../../../../src/components/dependencies/utils/dagConstants"
 import en from "../../../../src/translations/en.json"
 import {i18nMount} from "../../i18nMount"
 
-type Tests = {
-    dbtTestStatus?: string;
-    dbtTestsTotal?: number;
-    dbtTestsFailed?: number;
-};
+const Footer = defineComponent({
+    props: ["taskType", "assetId", "assetType", "metadata"],
+    setup: (props) => () => h("div", {class: "plugin-footer"}, `${props.taskType}|${props.assetId}|${JSON.stringify(props.metadata)}`),
+})
 
-function mountCard(tests: Tests = {}) {
+function mountCard(data: Record<string, unknown> = {}, footer?: unknown) {
     return i18nMount(AssetNode, {
         props: {
             id: "warehouse.dim_customers",
-            data: {
-                name: "dim_customers",
-                status: "fresh",
-                updated: "2026-09-24T08:00:00Z",
-                ...tests,
-            },
+            data: {name: "dim_customers", status: "fresh", updated: "2026-09-24T08:00:00Z", ...data},
         },
         locales: en,
-        global: {stubs: {Handle: true}},
+        global: {
+            stubs: {Handle: true},
+            provide: footer ? {[DAG_CARD_FOOTER as symbol]: footer} : {},
+        },
     })
 }
 
-describe("AssetNode dbt test footer", () => {
+describe("AssetNode plugin footer", () => {
     beforeEach(() => setActivePinia(createPinia()))
 
-    it("renders no footer when the asset carries no dbt test keys", () => {
-        expect(mountCard().find(".tests").exists()).toBe(false)
+    it("renders nothing when no footer artifact is provided", () => {
+        expect(mountCard({producer: "io.kestra.plugin.dbt.cli.DbtCLI"}).find(".plugin-footer").exists()).toBe(false)
     })
 
-    it("puts the failed count first and colours the row on fail", () => {
-        const footer = mountCard({dbtTestStatus: "fail", dbtTestsTotal: 22, dbtTestsFailed: 2}).find(".tests")
-
-        expect(footer.text()).toBe("2/22 failed")
-        expect(footer.classes()).toContain("fail")
+    it("renders nothing for an asset without a producer", () => {
+        expect(mountCard({}, Footer).find(".plugin-footer").exists()).toBe(false)
     })
 
-    it("stays uncoloured on pass", () => {
-        const footer = mountCard({dbtTestStatus: "pass", dbtTestsTotal: 22, dbtTestsFailed: 0}).find(".tests")
+    it("hands the producer, asset id and metadata to the footer", () => {
+        const footer = mountCard({producer: "io.kestra.plugin.dbt.cli.DbtCLI", metadata: {rows: 3}}, Footer).find(".plugin-footer")
 
-        expect(footer.text()).toBe("22 tests")
-    })
-
-    it("marks warn, which the counts alone cannot distinguish from a pass", () => {
-        const footer = mountCard({dbtTestStatus: "warn", dbtTestsTotal: 22, dbtTestsFailed: 0}).find(".tests")
-
-        expect(footer.text()).toBe("22 tests · warn")
-        expect(footer.classes()).toContain("warn")
-    })
-
-    it("renders no footer for a status it does not recognise, rather than a pass it cannot vouch for", () => {
-        const wrapper = mountCard({dbtTestStatus: "skipped", dbtTestsTotal: 22, dbtTestsFailed: 0})
-
-        expect(wrapper.find(".tests").exists()).toBe(false)
-    })
-
-    it("explains the footer in a design-system tooltip, pluralised on the total", () => {
-        const tooltipOf = (tests: Tests) => mountCard(tests)
-            .findAllComponents({name: "KsTooltip"})
-            .find((tooltip) => tooltip.find(".tests").exists())
-            ?.props("content")
-
-        expect(tooltipOf({dbtTestStatus: "fail", dbtTestsTotal: 22, dbtTestsFailed: 2})).toBe("2 of 22 dbt tests failed")
-        expect(tooltipOf({dbtTestStatus: "fail", dbtTestsTotal: 1, dbtTestsFailed: 1})).toBe("The dbt test failed")
-    })
-
-    it("pluralises a single test", () => {
-        expect(mountCard({dbtTestStatus: "pass", dbtTestsTotal: 1, dbtTestsFailed: 0}).find(".tests").text())
-            .toBe("1 test")
+        expect(footer.text()).toBe("io.kestra.plugin.dbt.cli.DbtCLI|warehouse.dim_customers|{\"rows\":3}")
     })
 })

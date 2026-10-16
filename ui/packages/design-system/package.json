@@ -46,7 +46,6 @@
   },
   "peerDependencies": {
     "@vueuse/core": ">=11.0.0",
-    "bootstrap": "^5.3.8",
     "echarts": ">=6.0.0",
     "element-plus": ">=2.13.5",
     "monaco-editor": "*",

@@ -890,11 +890,7 @@
             if (!handledIf(e, [404, 422])) throw e
             return undefined
         })
-        if(fileMetadatas){
-            logFileSizeByPath.value[path] = Utils.humanFileSize(
-                fileMetadatas.size,
-            )
-        }
+        logFileSizeByPath.value[path] = Utils.humanFileSize(fileMetadatas?.size ?? 0)
     }
 
     function cancelLogsSSEClose() {

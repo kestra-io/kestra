@@ -25,26 +25,7 @@
     import {useMiscStore} from "override/stores/misc"
     import UsageCard from "./UsageCard.vue"
     import {dayjs} from "@kestra-io/design-system"
-
-    interface DailyExecution {
-        groupBy: string;
-        duration: {
-            count?: number;
-            sum?: string;
-        };
-    }
-
-    interface UsageData {
-        flows?: {
-            namespacesCount?: number;
-            count?: number;
-            taskTypeCount?: Record<string, number>;
-            triggerTypeCount?: Record<string, number>;
-        };
-        executions?: {
-            dailyExecutionsCount?: DailyExecution[];
-        };
-    }
+    import type {MiscControllerApiUsage, DailyExecutionStatistics} from "@kestra-io/kestra-sdk"
 
     interface UsageItem {
         key: string;
@@ -55,7 +36,7 @@
     }
 
     const props = defineProps<{
-        fetchedUsages?: UsageData;
+        fetchedUsages?: MiscControllerApiUsage;
     }>()
 
     const emit = defineEmits<{
@@ -67,7 +48,7 @@
     const miscStore = useMiscStore()
     const {t} = useI18n()
 
-    const usages = ref<UsageData>()
+    const usages = ref<MiscControllerApiUsage>()
 
     const isInstance = computed(() => route.params.type === "instance")
 
@@ -85,7 +66,7 @@
         }
     })
 
-    const dailyExecutions = computed<DailyExecution[]>(() =>
+    const dailyExecutions = computed<DailyExecutionStatistics[]>(() =>
         (usages.value?.executions?.dailyExecutionsCount ?? []).filter((entry) => entry.groupBy === "day"),
     )
 

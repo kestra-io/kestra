@@ -1,7 +1,6 @@
 {
   "packages/design-system/src/components/Data/KsDataTable/KsDataTable.vue": 31,
   "packages/design-system/src/components/Data/KsTable/KsTable.test.ts": 4,
-  "packages/kestra-sdk/src/client-facade.ts": 28,
   "src/components/MultiPanelGenericEditorView.spec.ts": 6,
   "src/components/executions/ChangeStatus.vue": 8,
   "src/components/executions/ExecutionRoot.vue": 1,

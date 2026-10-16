@@ -28,6 +28,7 @@
                                         <CircleOpacity />
                                         {{ $t('draft') }}
                                     </KsTag>
+                                    <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
@@ -70,6 +71,7 @@
                                         <CircleOpacity />
                                         {{ $t('draft') }}
                                     </KsTag>
+                                    <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
@@ -150,6 +152,7 @@
         updated?: string;  // ISO datetime string
         source?: string;
         draft?: boolean;
+        updatedBy?: string;
     }
 
     const {t} = useI18n()
@@ -269,7 +272,7 @@
     function options(excludeRevision: number | undefined) {
         return sortedRevisions.value
             .filter(rev => rev.revision !== excludeRevision)
-            .map(({revision, updated, draft}) => {
+            .map(({revision, updated, draft, updatedBy}) => {
                 const isCurrent = currentRevisionWithSource.value.revision === revision
                 return {
                     value: revision,
@@ -277,6 +280,7 @@
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
                     isDraft: draft === true,
+                    updatedBy,
                     text: formatRevisionText(revision),
                 }
             })

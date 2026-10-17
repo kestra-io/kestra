@@ -363,6 +363,6 @@
 .array-value-col {
     flex: 1;
     max-width: none;
-    padding-right: var(--ks-spacing-2);
+    padding-right: var(--ks-spacing-2) !important;
 }
 </style>

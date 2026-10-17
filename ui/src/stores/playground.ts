@@ -148,12 +148,19 @@ export const usePlaygroundStore = defineStore("playground", () => {
         const lastExecution = executions.value.length ? executions.value[0] : undefined
 
         if (canReplay && lastExecution && taskId) {
-            return await executionsStore.replayExecution({
-                executionId: lastExecution.id,
-                taskRunId: taskIdToTaskRunIdMap.get(taskId),
-                revision: flowStore.flow?.revision,
-                breakpoints,
-            })
+            try {
+                return await executionsStore.replayExecution({
+                    executionId: lastExecution.id,
+                    taskRunId: taskIdToTaskRunIdMap.get(taskId),
+                    revision: flowStore.flow?.revision,
+                    breakpoints,
+                })
+            } catch (error: unknown) {
+                // another tab's runs can push this one past the retention limit
+                if ((error as KestraHttpError | undefined)?.response?.status !== 404) {
+                    throw error
+                }
+            }
         }
 
         if(!flowStore.flow) {

@@ -75,6 +75,11 @@
     import {useMiscStore} from "override/stores/misc"
     import {useToast} from "../../utils/toast"
     import {problemDetail, problemFieldMessage} from "../../utils/problem"
+    import * as BasicAuth from "../../utils/basicAuth"
+
+    const props = defineProps<{
+        username?: string
+    }>()
 
     const visible = defineModel<boolean>({required: true})
 
@@ -82,8 +87,12 @@
     const toast = useToast()
     const miscStore = useMiscStore()
 
-    const emptyForm = () => ({username: "", currentPassword: "", password: ""})
+    const getCurrentUsername = () =>
+        props.username ?? BasicAuth.getStoredUsername() ?? ""
 
+    const emptyForm = (username = "") => ({username, currentPassword: "", password: ""})
+
+    const initialUsername = ref("")
     const form = ref(emptyForm())
     const confirmPassword = ref("")
     const isPasswordValid = ref(false)
@@ -91,7 +100,10 @@
     const serverErrors = ref<string[]>([])
 
     const isDirty = computed(() =>
-        Object.values(form.value).some(Boolean) || confirmPassword.value.length > 0,
+        form.value.username !== initialUsername.value ||
+        form.value.currentPassword.length > 0 ||
+        form.value.password.length > 0 ||
+        confirmPassword.value.length > 0,
     )
 
     const passwordsMatch = computed(() =>
@@ -105,13 +117,19 @@
         passwordsMatch.value,
     )
 
+    const reset = () => {
+        const currentUsername = getCurrentUsername()
+        initialUsername.value = currentUsername
+        form.value = emptyForm(currentUsername)
+        confirmPassword.value = ""
+        serverErrors.value = []
+    }
+
     watch(visible, (open) => {
         if (open) {
-            form.value = emptyForm()
-            confirmPassword.value = ""
-            serverErrors.value = []
+            reset()
         }
-    })
+    }, {immediate: true})
 
     async function submit() {
         if (!canSubmit.value || submitting.value) return
@@ -119,7 +137,9 @@
         submitting.value = true
         serverErrors.value = []
         try {
-            await miscStore.changeBasicAuth({...form.value, username: form.value.username.trim()})
+            const trimmedUsername = form.value.username.trim()
+            await miscStore.changeBasicAuth({...form.value, username: trimmedUsername})
+            BasicAuth.setStoredUsername(trimmedUsername)
             toast.success(t("change_password.success"))
             visible.value = false
         } catch (error) {

@@ -1,12 +1,26 @@
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {getCsrfToken} from "./csrf"
 import {useClient} from "@kestra-io/kestra-sdk"
+import {storageKeys} from "./constants"
 
 // The BASIC_AUTH cookie itself is HttpOnly and issued by the server (see MiscController#login/#logout).
 // The server also issues this non-HttpOnly cookie in lockstep, mirroring whether BASIC_AUTH is set;
 const AUTH_FLAG_COOKIE_NAME = "kestraBasicAuthenticated"
 
+export function getStoredUsername(): string | null {
+    return localStorage.getItem(storageKeys.BASIC_AUTH_USERNAME)
+}
+
+export function setStoredUsername(username: string): void {
+    localStorage.setItem(storageKeys.BASIC_AUTH_USERNAME, username)
+}
+
+export function removeStoredUsername(): void {
+    localStorage.removeItem(storageKeys.BASIC_AUTH_USERNAME)
+}
+
 export async function logout() {
+    removeStoredUsername()
     try {
         await fetch(`${apiUrlWithoutTenants()}/logout`, {
             method: "POST",
@@ -23,6 +37,7 @@ export async function signIn(credentials: {username: string, password: string}) 
     const {username, password} = credentials
     const trimmedUsername = username.trim()
     await validateCredentials(trimmedUsername, password)
+    setStoredUsername(trimmedUsername)
     return {username: trimmedUsername}
 }
 

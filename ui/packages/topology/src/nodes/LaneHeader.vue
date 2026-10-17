@@ -29,7 +29,12 @@
 <script setup lang="ts">
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useTaskIcon, SECTIONS, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {
+        useTaskIcon,
+        SECTIONS,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
     import * as Utils from "../utils/utils"
     import {getStatusStyle, computeAggregateState} from "../utils/status"

@@ -2,6 +2,7 @@ import {describe, expect, it} from "vitest"
 import {
     taskIdentityAtCursor,
     taskTypeAtCursor,
+    findTaskLikeAtCursor,
     scopePropertySuggestionsToTaskType,
     filterMissingRequiredTaskProperties,
 } from "./taskCompletionScoping"
@@ -260,3 +261,78 @@ describe("scopePropertySuggestionsToTaskType", () => {
         ).toHaveLength(suggestions.length)
     })
 })
+
+describe("findTaskLikeAtCursor", () => {
+    it("resolves the enclosing task when cursor is inside a top-level task", () => {
+        const cursorIndex = FLOW.indexOf("message: hi") + "message: hi".length
+        const task = findTaskLikeAtCursor({source: FLOW, cursorIndex})
+
+        expect(task).toBeDefined()
+        expect(task?.id).toBe("hello")
+        expect(task?.type).toBe("io.kestra.plugin.core.log.Log")
+        expect(task?.message).toBe("hi")
+    })
+
+    it("resolves the inner task when cursor is inside a nested flowable's task", () => {
+        const nested = `id: myflow
+namespace: my.ns
+tasks:
+  - id: parent
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: child
+        type: io.kestra.plugin.core.log.Log
+        message: inner
+`
+        const cursorIndex = nested.indexOf("message: inner") + "message: inner".length
+        const task = findTaskLikeAtCursor({source: nested, cursorIndex})
+
+        expect(task).toBeDefined()
+        expect(task?.id).toBe("child")
+        expect(task?.type).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("resolves to neither when cursor is outside of any task", () => {
+        const flowWithHeader = `id: myflow
+namespace: my.ns
+
+tasks:
+  - id: first
+    type: io.kestra.plugin.core.log.Log
+    message: first
+`
+        // Cursor at namespace line
+        const outsideIndex = flowWithHeader.indexOf("namespace") + 3
+        expect(findTaskLikeAtCursor({source: flowWithHeader, cursorIndex: outsideIndex})).toBeUndefined()
+    })
+
+    it("resolves to the task when cursor is inside errors block", () => {
+        const errorFlow = `id: myflow
+namespace: my.ns
+errors:
+  - id: error_handler
+    type: io.kestra.plugin.core.log.Log
+    message: failed
+`
+        const cursorIndex = errorFlow.indexOf("message: failed") + "message: failed".length
+        const task = findTaskLikeAtCursor({source: errorFlow, cursorIndex})
+
+        expect(task).toBeDefined()
+        expect(task?.id).toBe("error_handler")
+        expect(task?.type).toBe("io.kestra.plugin.core.log.Log")
+    })
+
+    it("returns undefined without throwing when YAML is malformed", () => {
+        const malformed = `id: myflow
+tasks:
+  - id: [invalid yaml syntax {{{{ ::::
+`
+        expect(() => findTaskLikeAtCursor({source: malformed, cursorIndex: malformed.length})).not.toThrow()
+        expect(findTaskLikeAtCursor({source: malformed, cursorIndex: malformed.length})).toBeUndefined()
+    })
+
+    it("returns undefined when source is empty", () => {
+        expect(findTaskLikeAtCursor({source: "", cursorIndex: 0})).toBeUndefined()
+    })
+})
+

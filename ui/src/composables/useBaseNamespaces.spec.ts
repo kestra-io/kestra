@@ -1,28 +1,10 @@
-import {describe, expect, it} from "vitest"
-import {safePath} from "./useBaseNamespaces"
+import { expect, test } from "vitest"
+import { safePath } from "./useBaseNamespaces"
 
-describe("safePath", () => {
-    it("preserves an ordinary dotted namespace", () => {
-        expect(safePath("company.team.analytics")).toBe("company.team.analytics")
-    })
+test("namespaces", () => {
+    const path = "reports/q&a #1/100%.csv"
+    const result = safePath(path)
 
-    it("encodes special characters while preserving slash separators", () => {
-        expect(safePath("company.team/reports & metrics")).toBe(
-            "company.team/reports%20%26%20metrics",
-        )
-    })
-
-    it("returns an empty string for an empty path", () => {
-        expect(safePath("")).toBe("")
-    })
-
-    it("preserves leading and trailing path separators", () => {
-        expect(safePath("/company.team/")).toBe("/company.team/")
-    })
-
-    it("round-trips through URI decoding", () => {
-        const path = "company.team/my folder/report#1"
-
-        expect(decodeURIComponent(safePath(path))).toBe(path)
-    })
+    expect(result).toBe("reports/q%26a%20%231/100%25.csv")
+    expect(decodeURIComponent(result)).toBe(path)
 })

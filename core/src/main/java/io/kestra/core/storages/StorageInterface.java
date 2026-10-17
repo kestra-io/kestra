@@ -420,13 +420,15 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      */
     default String getPath(URI uri) {
         if (uri == null) {
-            uri = URI.create("/");
+            return "";
         }
 
         parentTraversalGuard(uri);
         String path = uri.getPath();
-        path = path.replaceFirst("^/", "");
-        return path;
+        if (path == null) {
+            return "";
+        }
+        return path.replaceFirst("^/+", "");
     }
 
     /**
@@ -438,9 +440,15 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      */
     default String getPath(String tenantId, URI uri) {
         String path = getPath(uri);
-        path = tenantId + (path.startsWith("/") ? path : "/" + path);
+        if (tenantId == null) {
+            return path;
+        }
 
-        return path;
+        if (uri == null) {
+            return tenantId + "/";
+        }
+
+        return tenantId + "/" + path;
     }
 
     /**

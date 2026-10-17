@@ -55,7 +55,9 @@ public class LocalStorage implements StorageInterface {
     }
 
     protected Path getLocalPath(String tenantId, URI uri) {
-        Path basePath = Paths.get(this.basePath.toAbsolutePath().toString(), tenantId);
+        Path basePath = tenantId != null ?
+            Paths.get(this.basePath.toAbsolutePath().toString(), tenantId) :
+            this.basePath.toAbsolutePath();
         return getPath(uri, basePath);
     }
 

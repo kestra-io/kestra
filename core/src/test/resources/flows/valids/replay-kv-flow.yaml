@@ -1,0 +1,31 @@
+id: replay-kv-flow
+namespace: io.kestra.tests
+
+tasks:
+  - id: ok
+    type: io.kestra.plugin.core.log.Log
+    message: "ok executed"
+
+  - id: boom
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ kv('fail_flag') == 'yes' }}"
+    errorMessage: "boom failed"
+
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: "after executed"
+
+errors:
+  - id: on_error
+    type: io.kestra.plugin.core.log.Log
+    message: "on_error executed"
+
+finally:
+  - id: fin
+    type: io.kestra.plugin.core.log.Log
+    message: "fin executed"
+
+afterExecution:
+  - id: afterExecution
+    type: io.kestra.plugin.core.log.Log
+    message: "afterExecution executed"

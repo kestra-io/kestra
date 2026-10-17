@@ -18,7 +18,10 @@ function isPosthogDisabled(configs: Record<string, any> | undefined) {
     return configs?.isUiAnonymousUsageEnabled === false || import.meta.env.MODE === "development"
 }
 
-export function isPosthogEnabled(configs: Record<string, any> | undefined) {
+export function isPosthogEnabled(configs?: Record<string, any>) {
+    if (!configs) {
+        return false
+    }
     return !isPosthogDisabled(configs)
 }
 

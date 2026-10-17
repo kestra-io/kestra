@@ -1,5 +1,5 @@
 <template>
-    <div class="p-3">
+    <div class="filter-datetime-container">
         <KsDatePicker
             :modelValue="dateValue"
             type="datetime"
@@ -19,3 +19,9 @@
         "update:dateValue": [value: Date | null];
     }>()
 </script>
+
+<style scoped lang="scss">
+    .filter-datetime-container {
+        padding: var(--ks-spacing-4);
+    }
+</style>

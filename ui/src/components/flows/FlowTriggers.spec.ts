@@ -165,3 +165,34 @@ describe("FlowTriggers - executions link", () => {
         expect(executionsLinks(wrapper)).toHaveLength(0)
     })
 })
+
+// Issue #20528: with more triggers than fit on a page the table used to receive every
+// row while its pager emitted update:currentPage into nothing, so clicks snapped back
+// to page 1 and the row set never changed.
+describe("FlowTriggers - pagination", () => {
+    it("hands the table one page of rows and follows page changes", async () => {
+        const originalTriggers = flowStore.flow.triggers
+        flowStore.flow.triggers = Array.from({length: 30}, (_, i) => ({
+            id: `trigger-${i}`,
+            type: "io.kestra.plugin.core.trigger.Schedule",
+        }))
+
+        try {
+            const wrapper = mountTriggersTab()
+            await flushPromises()
+
+            const table = wrapper.findComponent({name: "KsDataTable"})
+            expect(table.props("total")).toBe(30)
+            expect(table.props("data")).toHaveLength(25)
+
+            table.vm.$emit("update:currentPage", 2)
+            await flushPromises()
+
+            const page2 = table.props("data") as Array<{id: string}>
+            expect(page2).toHaveLength(5)
+            expect(page2[0].id).toBe("trigger-25")
+        } finally {
+            flowStore.flow.triggers = originalTriggers
+        }
+    })
+})

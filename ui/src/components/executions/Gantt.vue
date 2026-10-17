@@ -36,7 +36,7 @@
                     id="gantt"
                     data-onboarding-target="execution-gantt"
                     shadow="never"
-                    :class="{'no-border': !hasValidDate}"
+                    :class="{'no-border': !hasValidDate, 'is-compact': verticalLayout}"
                 >
                     <template #header v-if="hasValidDate">
                         <div class="gantt-header">
@@ -61,8 +61,8 @@
                             </div>
                             <div class="bottom">
                                 <div class="scale" data-test="gantt-scale">
-                                    <span>{{ formatSeconds(0) }}</span>
-                                    <span>{{ formatSeconds(delta()) }}</span>
+                                    <span>{{ formatDuration(0) }}</span>
+                                    <span>{{ formatDuration(delta()) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -119,21 +119,22 @@
                                                     <Warning class="attempt_warn me-3" />
                                                 </KsTooltip>
                                             </div>
-                                            <div class="task-offset" data-test="gantt-task-offset">
+                                            <div v-if="!verticalLayout" class="task-offset" data-test="gantt-task-offset">
                                                 {{ item.offset }}
                                             </div>
                                             <div class="task-bar">
                                                 <div
                                                     :style="taskBarStyle(item)"
                                                     class="task-progress"
+                                                    data-test="gantt-task-bar"
                                                 />
                                             </div>
-                                            <div class="task-duration">
+                                            <div v-if="!verticalLayout" class="task-duration">
                                                 <small>
                                                     <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
                                                 </small>
                                             </div>
-                                            <div class="task-state" data-test="gantt-task-state">
+                                            <div class="task-state">
                                                 <KsExecutionStatus :status="item.task.state.current" />
                                             </div>
                                             <div class="task-actions" @click.stop>
@@ -199,6 +200,7 @@
         normalizeRouteLevelFilter,
         readRouteLevelFilter,
         KsExecutionStatus,
+        durationUtils,
         KsFilter as KSFilter,
         KsEmptyState,
         type AppliedFilter,
@@ -233,9 +235,9 @@
         name: string;
         start: number;
         width: number;
+        waitPercent: number;
         offset: string;
         color: string;
-        running: boolean;
         task: TaskRun;
         flowId?: string;
         namespace?: string;
@@ -453,6 +455,11 @@
             const task = taskWrapper.task
             const startTs = ts(task.state.histories[0].date)
 
+            const runningEntry = task.state.histories.find(h => h.state === State.RUNNING)
+            const waitPercent = runningEntry
+                ? Math.max(0, ((ts(runningEntry.date) - startTs) / executionDelta) * 100)
+                : 0
+
             const barPercents = barPercentsById[task.id]
             let width = barPercents.width
             if (State.isRunning(task.state.current)) {
@@ -464,9 +471,9 @@
                 name: task.taskId,
                 start: barPercents.start,
                 width,
-                offset: `+${formatSeconds(startTs - start.value)}`,
+                waitPercent,
+                offset: `+${formatDuration(startTs - start.value)}`,
                 color: COLORS[task.state.current],
-                running: Boolean(State.isRunning(task.state.current)),
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,
@@ -479,8 +486,8 @@
         series.value = newSeries
     }
 
-    function formatSeconds(ms: number): string {
-        return `${(ms / 1000).toFixed(ms === 0 ? 0 : 2)}s`
+    function formatDuration(ms: number): string {
+        return durationUtils.humanDuration(ms / 1000, {maxDecimalPoints: 2, units: ["h", "m", "s"], delimiter: " "})
     }
 
     function onTaskSelect(taskRunId: string): void {
@@ -515,9 +522,11 @@
     }
 
     function taskBarStyle(item: SeriesItem): Record<string, string> {
-        const width = Math.max(item.parentEndPercent !== undefined ? item.parentEndPercent - item.start : item.width, 3)
+        const end = item.parentEndPercent ?? item.start + item.width
+        const barStart = item.start + item.waitPercent
+        const width = Math.max(end - barStart, 3)
         return {
-            left: `${Math.max(0, Math.min(item.start, 100 - width))}%`,
+            left: `${Math.max(0, Math.min(barStart, 100 - width))}%`,
             width: `${width}%`,
             background: item.color,
         }
@@ -602,9 +611,14 @@
     .kel-card {
         --gantt-offset-width: 5rem;
         --gantt-bar-width: 12rem;
-        --gantt-duration-width: 5rem;
+        --gantt-duration-width: 9rem;
         --gantt-state-width: 8rem;
         padding: 0;
+
+        &.is-compact {
+            --gantt-bar-width: 6rem;
+            --gantt-duration-width: 0rem;
+        }
 
         :deep(.kel-card__header) {
             padding: 0;
@@ -724,7 +738,7 @@
 
                 .task-label {
                     flex: 1 1 0;
-                    min-width: 0;
+                    min-width: 6rem;
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
@@ -786,6 +800,8 @@
 
                 .task-duration {
                     flex: 0 0 var(--gantt-duration-width);
+                    min-width: 0;
+                    overflow: hidden;
 
                     small {
                         white-space: nowrap;

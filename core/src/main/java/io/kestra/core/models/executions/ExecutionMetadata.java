@@ -3,6 +3,7 @@ package io.kestra.core.models.executions;
 import java.time.Instant;
 import java.util.List;
 
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 
 import jakarta.validation.constraints.NotNull;
@@ -58,6 +59,37 @@ public class ExecutionMetadata {
         }
 
         return this.withTaskRunStatistic(this.taskRunStatistic == null ? other : this.taskRunStatistic.plus(other));
+    }
+
+    /**
+     * Per task id and state counts of the task runs of Loop sub-executions, accumulated like {@link #taskRunStatistic}.
+     */
+    @With
+    TaskRunStateCounts taskRunStateCounts;
+
+    /**
+     * Returns a copy with {@code other} folded into {@link #taskRunStateCounts}, or {@code this} when {@code other} is null or empty.
+     */
+    public ExecutionMetadata withTaskRunStateCountsPlus(TaskRunStateCounts other) {
+        if (other == null || other.isEmpty()) {
+            return this;
+        }
+
+        return this.withTaskRunStateCounts(this.taskRunStateCounts == null ? other : this.taskRunStateCounts.plus(other));
+    }
+
+    /**
+     * Per loop task id and state counts of the iterations of the loops nested in Loop sub-executions.
+     */
+    @With
+    TaskRunStateCounts loopIterationCounts;
+
+    public ExecutionMetadata withLoopIterationCountsPlus(TaskRunStateCounts other) {
+        if (other == null || other.isEmpty()) {
+            return this;
+        }
+
+        return this.withLoopIterationCounts(this.loopIterationCounts == null ? other : this.loopIterationCounts.plus(other));
     }
 
     public ExecutionMetadata nextAttempt() {

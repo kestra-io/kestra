@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.TaskRunStateCounts;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -92,6 +93,33 @@ public class LoopCaseTest {
         assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(4);
     }
 
+    public void loopNestedStateCounts(Execution execution) throws InternalException {
+        // Then
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.getTaskRunList().getFirst());
+        assertThat(outputs).containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 3));
+        assertThat(outputs.get(Loop.TASK_RUN_STATE_COUNTS_OUTPUT)).isEqualTo(
+            Map.of(
+                "inner", Map.of("SUCCESS", 3),
+                "log", Map.of("SUCCESS", 12),
+                "fail", Map.of("FAILED", 1, "SKIPPED", 11)
+            )
+        );
+        assertThat(outputs.get(Loop.LOOP_ITERATION_COUNTS_OUTPUT)).isEqualTo(Map.of("inner", Map.of("SUCCESS", 11, "FAILED", 1)));
+        assertThat(execution.getMetadata().getTaskRunStateCounts()).isEqualTo(
+            TaskRunStateCounts.fromMap(
+                Map.of(
+                    "inner", Map.of("SUCCESS", 3),
+                    "log", Map.of("SUCCESS", 12),
+                    "fail", Map.of("FAILED", 1, "SKIPPED", 11)
+                )
+            )
+        );
+        assertThat(execution.getMetadata().getLoopIterationCounts()).isEqualTo(
+            TaskRunStateCounts.fromMap(Map.of("inner", Map.of("SUCCESS", 11, "FAILED", 1), "outer", Map.of("SUCCESS", 3)))
+        );
+    }
+
     public void loopWithLoopUntil(Execution execution) throws InternalException {
         // Then — a LoopUntil nested inside a Loop: each of the 2 Loop iterations runs its own
         // LoopUntil for 2 iterations of 1 task, discarding the first iteration's task run
@@ -113,6 +141,9 @@ public class LoopCaseTest {
         // bubbled up and summed over the 2 Loop iterations: counted exactly once, not lost or doubled
         assertThat(execution.getMetadata().getTaskRunStatistic()).isNotNull();
         assertThat(execution.getMetadata().getTaskRunStatistic().count()).isEqualTo(6);
+        assertThat(execution.getMetadata().getTaskRunStateCounts().counts().values().stream().flatMap(m -> m.values().stream()).mapToLong(Long::longValue).sum())
+            .isEqualTo(6);
+        assertThat(execution.getMetadata().getTaskRunStateCounts().counts().get("log")).isEqualTo(Map.of(State.Type.SUCCESS, 4L));
     }
 
     public void loopFailed(Execution execution) throws InternalException {

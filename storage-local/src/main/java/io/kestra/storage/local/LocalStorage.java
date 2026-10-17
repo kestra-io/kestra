@@ -370,10 +370,15 @@ public class LocalStorage implements StorageInterface {
             return List.of();
         }
 
+        if (!Files.isDirectory(path)) {
+            Files.deleteIfExists(Path.of(path + ".metadata"));
+        }
+
         try (Stream<Path> walk = Files.walk(path)) {
             return walk.sorted(Comparator.reverseOrder())
                 .map(Path::toFile)
                 .peek(File::delete)
+                .filter(f -> !f.getName().endsWith(".metadata"))
                 .map(r -> getKestraUri(tenantId, r.toPath()))
                 .toList();
         }

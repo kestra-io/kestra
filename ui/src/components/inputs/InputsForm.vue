@@ -10,7 +10,7 @@
                 :required="input.required !== false"
                 :rules="requiredRules(input)"
                 :prop="input.id.includes('.') ? [input.id] : input.id"
-                :error="inputError(input.id)"
+                :error="customInputs[input.id] ? undefined : inputError(input.id)"
                 :inlineMessage="true"
             >
                 <template #label>
@@ -247,12 +247,21 @@
                         </div>
                     </div>
                 </div>
+                <component
+                    :is="customInputs[input.id]"
+                    v-if="customInputs[input.id]"
+                    :input="input"
+                    :errors="valueErrors(input.id)"
+                    :data-testid="`input-form-${input.id}`"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                />
                 <KsEditor
                     v-bind="editorBindings"
                     :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
                     :inline="true"
                     :navbar="false"
-                    v-if="input.type === 'JSON' || input.type === 'ION'"
+                    v-if="(input.type === 'JSON' || input.type === 'ION') && !customInputs[input.id]"
                     :data-testid="`input-form-${input.id}`"
                     lang="json"
                     v-model="inputsValues[input.id]"
@@ -332,7 +341,7 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMessage, KsEditor, debounce} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor, State, debounce, escapeHtml} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
@@ -354,7 +363,8 @@
     import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import {Flow} from "../../stores/flow"
-    import {InputMetaData} from "../../stores/executions"
+    import {InputError, InputMetaData} from "../../stores/executions"
+    import {useInputRendererExtension} from "override/components/inputs/inputRendererExtension"
 
     function toOption(item: ValueOptionLike): {label: string; value: string} {
         return typeof item === "string" ? {label: item, value: item} : item
@@ -464,6 +474,16 @@
         onRecapChange: (val) => emit("update:onRecap", val),
     })
 
+    const inputRendererExtension = useInputRendererExtension()
+
+    const customInputs = computed<Record<string, Component>>(() =>
+        Object.fromEntries(
+            visibleInputs.value
+                .map(input => [input.id, inputRendererExtension(input)])
+                .filter(([, renderer]) => renderer),
+        ),
+    )
+
     const dynamicInputIds = computed(() =>
         new Set(flattenInputs(props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
     )
@@ -511,6 +531,14 @@
         }
 
         return message
+    }
+
+    /** The errors `inputError` joins into one message, for a control that anchors each of them itself. */
+    function valueErrors(id: string): InputError[] {
+        if (!inputError(id)) {
+            return []
+        }
+        return inputsMetaData.value.find((it) => it.id === id)?.errors ?? []
     }
 
     function updateDefaults(): void {
@@ -744,6 +772,9 @@
 
                 metadataCallback(data)
             } else if (props.execution !== undefined) {
+                if (!State.isPaused(props.execution.state.current)) {
+                    return
+                }
                 const options = {id: props.execution.id}
                 const data = await executionsStore.validateResume({...options, formData})
 
@@ -886,10 +917,10 @@
 
     function getFilePlaceholder(value: unknown): string {
         if (typeof value === "string" && value.startsWith("nsfile://")) {
-            return t("defaultsToNamespaceFile", {name: value.substring(10)})
+            return t("defaultsToNamespaceFile", {name: escapeHtml(value.substring(10))})
         }
         if (value && typeof value === "object" && "name" in value && typeof (value as {name: unknown}).name === "string") {
-            return (value as {name: string}).name
+            return escapeHtml((value as {name: string}).name)
         }
         return t("no_file_choosen")
     }
@@ -940,8 +971,12 @@
     })
     updateDefaults()
 
+    let stopInputsWatch: (() => void) | undefined
+    let unmounted = false
+
     validateInputs().then(() => {
-        watch(
+        if (unmounted) return
+        stopInputsWatch = watch(
             () => ({...inputsValues}),
             (val) => {
                 if (JSON.stringify(val) !== JSON.stringify(previousInputsValues.value)) {
@@ -980,6 +1015,9 @@
     })
 
     onBeforeUnmount(() => {
+        unmounted = true
+        stopInputsWatch?.()
+        debouncedValidation.cancel()
         if (keyListener) {
             document.removeEventListener("keydown", keyListener)
         }
@@ -997,7 +1035,7 @@
         validateInputs()
     })
 
-    watch(() => props.execution, () => {
+    watch(() => props.execution?.id, () => {
         invalidateValidationCache()
         validateInputs()
     })

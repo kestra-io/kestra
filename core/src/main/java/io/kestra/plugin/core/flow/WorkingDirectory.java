@@ -235,6 +235,13 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     private Property<List<String>> outputFiles;
 
     @Override
+    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        return ListUtils.emptyOnNull(super.childTasks(runContext, parentTaskRun)).stream()
+            .map(resolvedTask -> resolvedTask.toBuilder().retryBudgetOwner(ResolvedTask.RetryBudgetOwner.PARENT_TASK_RUN).build())
+            .toList();
+    }
+
+    @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 

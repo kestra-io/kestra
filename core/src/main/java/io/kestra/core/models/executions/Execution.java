@@ -797,7 +797,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .anyMatch(taskRun -> (taskRun.getState().isFailed() && shouldNotBeRetried(resolvedTasks, parentTaskRun, taskRun)) || isKilledWithoutExecutionKill(taskRun, resolvedTasks));
     }
 
-    private static boolean shouldNotBeRetried(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun, TaskRun taskRun) {
+    private boolean shouldNotBeRetried(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun, TaskRun taskRun) {
         ResolvedTask resolvedTask = resolvedTasks.stream()
             .filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst()
             .orElse(null);
@@ -811,7 +811,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         if (!resolvedTask.getTask().shouldRetryOnFailure()) {
             return true;
         }
-        return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry());
+        return !retryBudgetOwner(resolvedTask, taskRun).shouldBeRetried(resolvedTask.getTask().getRetry());
+    }
+
+    private TaskRun retryBudgetOwner(ResolvedTask resolvedTask, TaskRun taskRun) {
+        if (resolvedTask.getRetryBudgetOwner() != ResolvedTask.RetryBudgetOwner.PARENT_TASK_RUN || taskRun.getParentTaskRunId() == null) {
+            return taskRun;
+        }
+        return findTaskRunByTaskRunIdIfPresent(taskRun.getParentTaskRunId()).orElse(taskRun);
     }
 
     public State.Type computeFinalState(Flow flow) {

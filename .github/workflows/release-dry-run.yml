@@ -1,0 +1,226 @@
+# Release Dry Run
+#
+# Validates the Kestra release pipeline end-to-end without publishing anything.
+# Mirrors:
+#   - .github/workflows/global-start-release.yml  (version bump + tag creation)
+#   - .github/workflows/pre-release.yml           (Gradle build via kestra-oss-build-artifacts)
+#   - kestra-io/actions composite/github-release  (JReleaser invocation)
+#
+# Safety design (the whole point of this workflow):
+#   - The temp branch, the version commit and the temp tag exist ONLY inside this
+#     job. Nothing is pushed to origin. Pushing a `v*` tag would trigger the real
+#     `pre-release.yml` workflow (it fires on `push: tags: v*`), so local-only git
+#     is what keeps this a dry run.
+#   - `permissions: contents: read` — the job literally cannot push.
+#   - The version input must contain `-dryrun` (e.g. `2.2.0-dryrun.1`), so a real
+#     release version can never be dry-run by accident.
+#   - JReleaser runs as `full-release --dry-run`: no GitHub release is created,
+#     no files are uploaded, no Slack announcements are sent.
+#   - Cleanup runs `if: always()` and then verifies no temp tag exists on origin.
+
+name: Release Dry Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Dry-run version, e.g. 2.2.0-dryrun.1 (must contain "-dryrun")'
+        required: true
+        type: string
+      base-ref:
+        description: 'Branch to cut the dry-run release from'
+        required: false
+        default: 'develop'
+        type: string
+      skip-ui-build:
+        description: 'Skip the UI build (npm ci && npm run build) for faster iteration'
+        required: false
+        default: false
+        type: boolean
+
+run-name: "Release dry-run ${{ inputs.version }}"
+
+# Read-only on purpose: every git mutation below is local to the runner.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-dry-run-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DRY_RUN_VERSION: ${{ inputs.version }}
+  BASE_REF: ${{ inputs.base-ref }}
+
+jobs:
+  release-dry-run:
+    name: Release dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if [[ -z "${DRY_RUN_VERSION:-}" ]]; then
+            echo "::error::version input is required (e.g. 2.2.0-dryrun.1)"
+            exit 1
+          fi
+          # A dry-run version must be unmistakably fake: require the -dryrun
+          # marker so nobody can accidentally dry-run a real release version.
+          if ! [[ "$DRY_RUN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-dryrun(\.[0-9]+)?$ ]]; then
+            echo "::error::version must look like 2.2.0-dryrun.1 (got '$DRY_RUN_VERSION')"
+            exit 1
+          fi
+          echo "TEMP_TAG=v$DRY_RUN_VERSION" >> "$GITHUB_ENV"
+          echo "TEMP_BRANCH=ci/release-dry-run/$DRY_RUN_VERSION-${{ github.run_id }}" >> "$GITHUB_ENV"
+          echo "Inputs look good."
+
+      - name: Checkout base ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BASE_REF }}
+          # Full history: JReleaser needs previous tags to generate the changelog.
+          fetch-depth: 0
+
+      - name: Safety checks
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "::error::This workflow must not run on a tag."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/$TEMP_TAG" >/dev/null; then
+            echo "::error::tag $TEMP_TAG already exists. Pick another version."
+            exit 1
+          fi
+          echo "Safe to proceed: temp tag $TEMP_TAG does not exist."
+
+      - name: Git - Configure
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      # Mirrors global-start-release.yml, except the branch, the version commit
+      # and the tag all stay local — pushing a v* tag would trigger the real
+      # pre-release workflow.
+      - name: Create temp branch, bump version, create temp tag
+        run: |
+          set -euo pipefail
+          git checkout -b "$TEMP_BRANCH"
+          sed -i "s/^version=.*/version=$DRY_RUN_VERSION/" ./gradle.properties
+          git add ./gradle.properties
+          git commit -m"chore(version): dry-run release '$DRY_RUN_VERSION'"
+          git tag -a "$TEMP_TAG" -m"$TEMP_TAG"
+          echo "Created local branch $TEMP_BRANCH and local tag $TEMP_TAG (nothing pushed)."
+
+      # Same composite the real build uses (kestra-oss-build-artifacts.yml).
+      - name: Setup - Build (Java + Node)
+        uses: kestra-io/actions/composite/setup-build@main
+        with:
+          java-enabled: true
+          node-enabled: true
+          java-version: 25
+
+      - name: UI - Build
+        if: ${{ !inputs.skip-ui-build }}
+        shell: bash
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
+
+      # Same Gradle invocation as kestra-oss-build-artifacts.yml.
+      # The plugin schema bundle step is intentionally skipped: it needs GCP
+      # credentials and downloads the full plugin catalog.
+      - name: Gradle - Build executable
+        shell: bash
+        run: ./gradlew executableJar --parallel --console=plain
+
+      # --- JReleaser dry-run (mirrors composite/github-release) ---
+
+      - name: JReleaser - Checkout config
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: kestra-io/actions
+          ref: main
+          path: jreleaser
+
+      - name: JReleaser - Generate variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "VERSION=${TEMP_TAG#v}" >> "$GITHUB_ENV"
+          # Same previous-stable-tag lookup as the real release action; the
+          # temp tag itself never matches the stable pattern, so this still
+          # resolves to the real previous release.
+          previous_tag=$(
+            git tag -l \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | sed -n "/^$TEMP_TAG$/q;p" \
+            | tail -n1
+          )
+          echo "Temp tag: $TEMP_TAG"
+          echo "Previous stable tag: $previous_tag"
+          echo "PREVIOUS_TAG=$previous_tag" >> "$GITHUB_ENV"
+          cp jreleaser/jreleaser.yml .
+
+      # --dry-run: JReleaser assembles files and generates the changelog and
+      # metadata, but creates no GitHub release, uploads nothing and announces
+      # nothing.
+      - name: JReleaser - Dry run
+        uses: jreleaser/release-action@97b5e2f0e845de2fe1dbbdf451ac6a21233fafff # v2
+        with:
+          arguments: 'full-release --dry-run'
+        env:
+          JRELEASER_BRANCH: ${{ env.BASE_REF }}
+          JRELEASER_PREVIOUS_TAG_NAME: ${{ env.PREVIOUS_TAG }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_PROJECT_VERSION: ${{ env.VERSION }}
+          # Never announce a dry-run on Slack.
+          JRELEASER_ANNOUNCE_SLACK_ACTIVE: NEVER
+
+      - name: JReleaser - Upload dry-run outputs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: jreleaser-dry-run
+          if-no-files-found: warn
+          path: |
+            out/jreleaser/trace.log
+            out/jreleaser/output.properties
+            out/jreleaser/release/
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Release dry-run ${{ env.DRY_RUN_VERSION }}"
+            echo ""
+            echo "- Temp branch: \`${{ env.TEMP_BRANCH }}\` (local only, never pushed)"
+            echo "- Temp tag: \`${{ env.TEMP_TAG }}\` (local only, never pushed)"
+            echo "- JReleaser ran \`full-release --dry-run\`: no GitHub release, no uploads, no Slack announcements."
+            echo "- Review the \`jreleaser-dry-run\` artifact (trace.log, output.properties, changelog) to validate the release outputs."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Runs even when the build or JReleaser failed, then proves nothing
+      # escaped to origin.
+      - name: Cleanup - Remove temp branch and tag
+        if: always()
+        run: |
+          set -uo pipefail
+          git checkout -q --detach HEAD || true
+          if git branch -D "$TEMP_BRANCH" 2>/dev/null; then
+            echo "Deleted local branch $TEMP_BRANCH"
+          else
+            echo "Branch $TEMP_BRANCH already gone"
+          fi
+          if git tag -d "$TEMP_TAG" 2>/dev/null; then
+            echo "Deleted local tag $TEMP_TAG"
+          else
+            echo "Tag $TEMP_TAG already gone"
+          fi
+          if git ls-remote --tags origin 2>/dev/null | grep -q "refs/tags/${TEMP_TAG}$"; then
+            echo "::error::TEMP TAG FOUND ON ORIGIN — investigate before running again!"
+            exit 1
+          fi
+          echo "Cleanup verified: no temp refs on origin."

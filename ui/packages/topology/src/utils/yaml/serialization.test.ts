@@ -219,7 +219,7 @@ describe("sortPredicate", () => {
     })
 
     test("sorts an unknown key after the known ones without dropping it", () => {
-        expect(sortKeys(["tasks", "retry", "id"])).toEqual(["id", "tasks", "retry"])
+        expect(sortKeys(["tasks", "customKey", "id"])).toEqual(["id", "tasks", "customKey"])
     })
 
     test("keeps a deterministic relative order for two unknown keys", () => {

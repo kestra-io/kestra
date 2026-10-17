@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from "vitest"
-import {isReauthOpen, recheckReauth, requestReauth, resolveReauth, submitReauth, useReauthDialog} from "./useReauthDialog"
+import {confirmReauth, isReauthOpen, recheckReauth, requestReauth, resolveReauth, submitReauth, useReauthDialog} from "./useReauthDialog"
 
 describe("useReauthDialog", () => {
     const signIn = vi.fn().mockResolvedValue(undefined)
@@ -73,5 +73,65 @@ describe("useReauthDialog", () => {
         expect(isReauthOpen()).toBe(true)
         resolveReauth(true)
         await expect(next).resolves.toBe(true)
+    })
+
+    describe("confirmReauth", () => {
+        it("calls the caller's confirm handler", async () => {
+            const confirm = vi.fn().mockResolvedValue(undefined)
+            const opened = requestReauth({confirm})
+
+            await confirmReauth()
+            expect(confirm).toHaveBeenCalledTimes(1)
+
+            resolveReauth(true)
+            await opened
+        })
+
+        it("resolves truthy and closes the dialog when reauth is resolved true", async () => {
+            const confirm = vi.fn().mockResolvedValue(undefined)
+            const opened = requestReauth({confirm})
+            expect(isReauthOpen()).toBe(true)
+
+            await confirmReauth()
+            resolveReauth(true)
+
+            await expect(opened).resolves.toBe(true)
+            expect(isReauthOpen()).toBe(false)
+        })
+
+        it("dismissing resolves falsy and closes the dialog", async () => {
+            const opened = requestReauth({signIn})
+            expect(isReauthOpen()).toBe(true)
+
+            resolveReauth(false)
+
+            await expect(opened).resolves.toBe(false)
+            expect(isReauthOpen()).toBe(false)
+        })
+
+        it("does not open two dialogs when called while one is pending", async () => {
+            const first = requestReauth({signIn})
+            const second = requestReauth({signIn})
+            expect(isReauthOpen()).toBe(true)
+
+            resolveReauth(true)
+            const [res1, res2] = await Promise.all([first, second])
+            expect(res1).toBe(true)
+            expect(res2).toBe(true)
+            expect(isReauthOpen()).toBe(false)
+        })
+
+        it("ensures the pending promise is always settled", async () => {
+            let settled = false
+            const opened = requestReauth({signIn}).then((res) => {
+                settled = true
+                return res
+            })
+
+            expect(settled).toBe(false)
+            resolveReauth(false)
+            await opened
+            expect(settled).toBe(true)
+        })
     })
 })

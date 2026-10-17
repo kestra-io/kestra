@@ -61,8 +61,8 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             return explicitValue.value
         }
 
-        if (!normalizedOnce.value && shouldApplyDefaultIfMissing()) {
-            return options.defaultValue?.()
+        if (shouldApplyDefaultIfMissing()) {
+            return options.defaultValue?.() ?? options.fallbackValue?.()
         }
 
         return options.fallbackValue?.()

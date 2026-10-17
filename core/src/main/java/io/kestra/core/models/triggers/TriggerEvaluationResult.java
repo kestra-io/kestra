@@ -41,7 +41,19 @@ public record TriggerEvaluationResult(
     @JsonProperty @Nullable Integer flowRevision,
     @JsonProperty @Nullable Instant scheduleDate,
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @Schema(implementation = Object.class) Map<String, Object> inputs) {
+    @Schema(implementation = Object.class) Map<String, Object> inputs,
+    @JsonProperty @Nullable String traceParent) {
+
+    public TriggerEvaluationResult(
+        String executionId,
+        State.Type stateType,
+        ExecutionTrigger trigger,
+        @Nullable List<Label> labels,
+        @Nullable Integer flowRevision,
+        @Nullable Instant scheduleDate,
+        Map<String, Object> inputs) {
+        this(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs, null);
+    }
 
     /**
      * Extracts a lightweight result from a full {@link Execution} (worker-side).
@@ -57,7 +69,8 @@ public record TriggerEvaluationResult(
             execution.getLabels(),
             execution.getFlowRevision(),
             execution.getScheduleDate(),
-            execution.getInputs()
+            execution.getInputs(),
+            execution.getTraceParent()
         );
     }
 
@@ -65,14 +78,14 @@ public record TriggerEvaluationResult(
      * Returns a copy with a different state type.
      */
     public TriggerEvaluationResult withState(State.Type state) {
-        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision, scheduleDate, inputs);
+        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision, scheduleDate, inputs, traceParent);
     }
 
     /**
      * Returns a copy with a different schedule date.
      */
     public TriggerEvaluationResult withScheduleDate(Instant scheduleDate) {
-        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs);
+        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs, traceParent);
     }
 
     /**
@@ -86,7 +99,7 @@ public record TriggerEvaluationResult(
             ? new State()
             : new State().withState(stateType);
 
-        return Execution.builder()
+        Execution.ExecutionBuilder builder = Execution.builder()
             .id(executionId)
             .tenantId(triggerId.getTenantId())
             .namespace(triggerId.getNamespace())
@@ -96,7 +109,12 @@ public record TriggerEvaluationResult(
             .trigger(trigger)
             .labels(labels)
             .scheduleDate(scheduleDate)
-            .inputs(inputs)
-            .build();
+            .inputs(inputs);
+
+        if (traceParent != null) {
+            builder.traceParent(traceParent);
+        }
+
+        return builder.build();
     }
 }

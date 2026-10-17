@@ -35,7 +35,7 @@
         placement="bottom-start"
         :width="320"
         :showArrow="false"
-        popperClass="p-0"
+        popperClass="condition-row-popper"
     >
         <template #reference>
             <button class="cond-value-trigger" type="button" :disabled="readOnly">
@@ -91,7 +91,7 @@
         placement="bottom-start"
         :width="300"
         :showArrow="false"
-        popperClass="p-0"
+        popperClass="condition-row-popper"
     >
         <template #reference>
             <button class="cond-value-trigger" type="button" :disabled="readOnly">
@@ -486,5 +486,11 @@
     &:hover {
         color: var(--ks-status-error);
     }
+}
+</style>
+
+<style lang="scss">
+.condition-row-popper.condition-row-popper {
+    padding: 0;
 }
 </style>

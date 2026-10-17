@@ -41,8 +41,8 @@ describe("date", () => {
         expect(date(INSTANT, "HH:mm:ss")).toBe("06:16:00")
     })
 
-    // The Gantt scale divides a time span into tick timestamps, so it has epoch millis rather
-    // than a string. Pre-serialising those with toISOString() threw on a non-finite value.
+    // Callers computing a timestamp hold epoch millis rather than a string. Pre-serialising
+    // those with toISOString() threw on a non-finite value.
     it.each([
         ["an epoch millisecond timestamp", dayjs(INSTANT).valueOf()],
         ["a Date", new Date(INSTANT)],
@@ -53,8 +53,8 @@ describe("date", () => {
         expect(date(value as string | number | Date, "HH:mm:ss")).toBe("06:16:00")
     })
 
-    // An execution cancelled before any task started yields a non-finite span; the label must
-    // degrade rather than throw, which is what `new Date(NaN).toISOString()` did.
+    // A non-finite timestamp must degrade to a placeholder rather than throw, which is what
+    // `new Date(NaN).toISOString()` did.
     it.each([
         ["NaN", NaN],
         ["-Infinity", -Infinity],

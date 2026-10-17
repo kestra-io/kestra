@@ -539,7 +539,7 @@ class DashboardControllerTest {
                 chartOptions:
                   displayName: A chart
                 source:
-                  type: io.kestra.plugin.core.dashboard.chart.mardown.sources.Text
+                  type: io.kestra.plugin.core.dashboard.chart.markdown.sources.Text
                   content: hello
             """;
 

@@ -1,4 +1,4 @@
-package io.kestra.plugin.core.dashboard.chart.mardown.sources;
+package io.kestra.plugin.core.dashboard.chart.markdown.sources;
 
 import org.junit.jupiter.api.Test;
 

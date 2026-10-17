@@ -2,6 +2,8 @@ import {describe, it, expect} from "vitest"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import * as FlowUtils from "./flowUtils"
 
+const LOG = "io.kestra.plugin.core.log.Log"
+
 export const flat = `
 id: flat
 namespace: io.kestra.tests
@@ -219,5 +221,51 @@ tasks:
         expect(FlowUtils.getAllTaskIds(null)).toEqual([])
         expect(FlowUtils.getAllTaskIds({})).toEqual([])
         expect(FlowUtils.getAllTaskIds({tasks: []})).toEqual([])
+    })
+})
+
+describe("getAllTaskIds", () => {
+    it("includes tasks from finally and after blocks", () => {
+        const flow = {
+            tasks: [{id: "step_1", type: LOG}],
+            errors: [{id: "error_1", type: LOG}],
+            finally: [{id: "cleanup_step", type: LOG}],
+            after: [{id: "after_step", type: LOG}],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow).sort()).toEqual(
+            ["after_step", "cleanup_step", "error_1", "step_1"],
+        )
+    })
+
+    it("works when finally and after are missing", () => {
+        const flow = {tasks: [{id: "a", type: LOG}]}
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual(["a"])
+    })
+
+    it("returns empty array for undefined flow", () => {
+        expect(FlowUtils.getAllTaskIds(undefined)).toEqual([])
+    })
+
+    it("collects nested tasks inside finally", () => {
+        const flow = {
+            finally: [{
+                id: "parent",
+                type: "io.kestra.plugin.core.flow.Sequential",
+                tasks: [{id: "child", type: LOG}],
+            }],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow).sort()).toEqual(["child", "parent"])
+    })
+
+    it("removes duplicate ids", () => {
+        const flow = {
+            tasks: [{id: "same", type: LOG}],
+            finally: [{id: "same", type: LOG}],
+        }
+
+        expect(FlowUtils.getAllTaskIds(flow)).toEqual(["same"])
     })
 })

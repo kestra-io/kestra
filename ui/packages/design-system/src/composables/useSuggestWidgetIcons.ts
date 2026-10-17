@@ -43,7 +43,7 @@ export function useSuggestWidgetIcons(ctx: SuggestWidgetIconsContext) {
     function replaceRowIcon(vsCodeIcon: HTMLElement, iconVNode: VNode) {
         vsCodeIcon.style.display = "none"
         const tempContainer = document.createElement("div")
-        render(h("div", {class: `${KESTRA_ICON_WRAPPER_CLASS} d-flex align-items-center me-1`}, iconVNode), tempContainer)
+        render(h("div", {class: KESTRA_ICON_WRAPPER_CLASS}, iconVNode), tempContainer)
         vsCodeIcon.after(tempContainer.firstElementChild!)
         tempContainer.remove()
     }

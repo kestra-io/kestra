@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
@@ -65,7 +66,7 @@ public interface HasSource {
      * @throws IOException if the file cannot be read.
      */
     static void readSourceFile(final ZipBombProtectionConfiguration zipBombProtection, final CompletedFileUpload fileUpload, final BiConsumer<String, String> reader) throws IOException {
-        String fileName = fileUpload.getFilename().toLowerCase();
+        String fileName = fileUpload.getFilename() == null ? "" : fileUpload.getFilename().toLowerCase(Locale.ROOT);
         try (InputStream inputStream = fileUpload.getInputStream()) {
 
             if (isYAML(fileName)) {
@@ -95,6 +96,10 @@ public interface HasSource {
     }
 
     private static boolean isYAML(final String fileName) {
-        return fileName.endsWith(".yaml") || fileName.endsWith(".yml");
+        if (fileName == null) {
+            return false;
+        }
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".yaml") || lower.endsWith(".yml");
     }
 }

@@ -4,9 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -82,5 +85,18 @@ class TextFileRendererTest {
         assertThat(renderer.supports("TXT")).isTrue();
         assertThat(renderer.supports("csv")).isFalse();
         assertThat(renderer.supports("ion")).isFalse();
+    }
+
+    @Test
+    @ResourceLock(Resources.LOCALE)
+    void shouldSupportUppercaseExtensionsUnderTurkishLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertThat(renderer.supports("TXT")).isTrue();
+            assertThat(renderer.supports("MD")).isTrue();
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 }

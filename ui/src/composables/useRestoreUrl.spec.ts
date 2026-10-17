@@ -119,6 +119,19 @@ describe("useRestoreUrl", () => {
         expect(result.localStorageValue).toBeNull()
     })
 
+    it("does not throw when mounting useRestoreUrl with malformed stored value", async () => {
+        const router = createTestRouter()
+        await router.push({name: "home", params: {tenant: "main", dashboard: "default"}})
+        window.sessionStorage.setItem("home_main_restore_url", "{ invalid json }")
+
+        expect(() => {
+            wrapper = mountRestoreUrl(router)
+        }).not.toThrow()
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        expect(router.currentRoute.value.query).toEqual({})
+    })
+
     it("ensures array-valued query parameters survive the round trip", () => {
         const stored = {tags: ["a", "b"]}
         window.sessionStorage.setItem("home_main_restore_url", JSON.stringify(stored))

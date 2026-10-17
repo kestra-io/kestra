@@ -46,10 +46,15 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
     protected FlowListeners flowListenersService;
 
     private static Flow createFlow(Boolean failed) {
+        return createFlow(failed, false);
+    }
+
+    private static Flow createFlow(Boolean failed, Boolean throwOnEvaluate) {
         RealtimeUnitTest schedule = RealtimeUnitTest.builder()
             .id("stream")
             .type(RealtimeUnitTest.class.getName())
             .failed(failed)
+            .throwOnEvaluate(throwOnEvaluate)
             .executionsToCreate(10)
             .build();
 
@@ -115,6 +120,26 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
     }
 
     @Test
+    void failedOnEvaluate() throws Exception {
+        Flow flow = createFlow(false, true);
+        CountDownLatch queueCount = new CountDownLatch(2);
+
+        this.run(
+            flow,
+            queueCount,
+            executionList ->
+            {
+                List<Execution> executionCount = executionList.stream()
+                    .filter(e -> e.getNamespace().equals(flow.getNamespace()) && e.getFlowId().equals(flow.getId()))
+                    .toList();
+
+                assertThat(executionCount.size(), greaterThan(1));
+                assertThat(SchedulerStreamingTest.evaluateCallCount, greaterThan(1));
+            }
+        );
+    }
+
+    @Test
     void failed() throws Exception {
         Flow flow = createFlow(true);
         CountDownLatch queueCount = new CountDownLatch(20);
@@ -135,6 +160,7 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
     }
 
     protected static Map<Boolean, Integer> startedEvaluate = new HashMap<>();
+    protected static int evaluateCallCount = 0;
 
     @SuperBuilder
     @ToString
@@ -150,7 +176,15 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
         @Builder.Default
         private Boolean failed = false;
 
+        @Builder.Default
+        private Boolean throwOnEvaluate = false;
+
         public Publisher<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
+            evaluateCallCount++;
+            if (Boolean.TRUE.equals(this.throwOnEvaluate)) {
+                throw new RuntimeException("Evaluate failed before returning Publisher");
+            }
+
             startedEvaluate.compute(this.failed, (val, integer) -> integer == null ? 1 : integer + 1);
 
             return Flux.create(fluxSink ->

@@ -124,12 +124,15 @@ export function useDependencies(
     const getChart = (): EChartsType | null =>
         graphRef.value?.getEchartsInstance?.() ?? null
 
-    // chartNodes/chartEdges are frozen after the initial render; applyStylesToChart() then updates
-    // styles imperatively with layout:"none" so ECharts never re-runs the force simulation.
+    // chartNodes/chartEdges are frozen after the initial render, then re-frozen once with the settled
+    // positions; applyStylesToChart() updates styles imperatively so ECharts never re-runs the force simulation.
     const chartNodes = ref<KsGraphNode[] | null>(null)
     const chartEdges = ref<KsGraphEdge[] | null>(null)
     /** Positions read back from ECharts once the force simulation has settled. */
     const capturedPositions = ref(new Map<string, {x: number; y: number}>())
+    // In the props too, not only in setOption: vue-echarts re-applies the props option on a theme switch,
+    // and a "force" there restarts the simulation from random seeds on that and every later resize.
+    const chartLayout = computed(() => (capturedPositions.value.size > 0 ? "none" : "force"))
     /** Only focusNode and fitGraph write it; anything else re-asserting it would yank the viewport back. */
     const viewState = ref<{zoom: number; center?: [number, number]}>({zoom: 1})
 
@@ -452,18 +455,18 @@ export function useDependencies(
         }]}, false)
     }
 
+    const withCapturedPositions = (nodes: KsGraphNode[]): KsGraphNode[] => nodes.map((n) => {
+        const pos = capturedPositions.value.get(n.id)
+        return pos ? {...n, x: pos.x, y: pos.y} : n
+    })
+
     /** Applies the latest styles directly to ECharts with layout:"none", bypassing the frozen props. */
     const applyStylesToChart = (): void => {
         const chart = getChart()
         if (!chart) return
         bindCanvasClicks()
-        const positions    = capturedPositions.value
-        const nodesWithPos = graphNodes.value.map((n) => {
-            const pos = positions.get(n.id)
-            return pos ? {...n, x: pos.x, y: pos.y} : n
-        })
-        const layout = positions.size > 0 ? "none" : "force"
-        chart.setOption({series: [{type: "graph", data: nodesWithPos, links: graphEdges.value, layout}]}, false)
+        const data = withCapturedPositions(graphNodes.value)
+        chart.setOption({series: [{type: "graph", data, links: graphEdges.value, layout: chartLayout.value}]}, false)
     }
 
     watch([graphNodes, graphEdges], () => {
@@ -490,6 +493,7 @@ export function useDependencies(
             capturePositions()
             if (capturedPositions.value.size > 0) {
                 const id = selectedNodeID.value
+                chartNodes.value = withCapturedPositions(graphNodes.value)
                 // Switch to layout:"none" now so the one-time refit it triggers happens under
                 // the initial focus below, rather than under the user's first click.
                 applyStylesToChart()
@@ -664,9 +668,11 @@ export function useDependencies(
         /** Live computed nodes and edges, reflecting selection, filter and theme changes. */
         graphNodes,
         graphEdges,
-        /** Frozen snapshots for KsGraph props, set once after the initial render. */
+        /** Frozen snapshots for KsGraph props, set after the initial render and again with the settled positions. */
         chartNodes,
         chartEdges,
+        /** KsGraph layout: "force" until the positions settle, then "none" for good. */
+        chartLayout,
         /** Intersection of the table filter and any isolated group; dims everything outside it. */
         shownNodeIDs,
         /** Drops the table filter and any pinned group together. */

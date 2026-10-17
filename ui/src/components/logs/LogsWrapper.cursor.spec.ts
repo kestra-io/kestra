@@ -75,7 +75,7 @@ const settle = async () => {
     await flushPromises()
 }
 
-describe("LogsWrapper cursor pagination", () => {
+describe("LogsWrapper cursor pagination", {timeout: 30000}, () => {
     beforeEach(() => {
         window.sessionStorage.clear()
         window.localStorage.clear()

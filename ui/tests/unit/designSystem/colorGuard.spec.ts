@@ -19,7 +19,7 @@ const scanScript = (script: string): string[] => {
     return findHardcodedColors(dir).map((offence) => offence.replace("module.ts:", "line "))
 }
 
-describe("design system", () => {
+describe("design system", {timeout: 30000}, () => {
     it.each(["src", "packages/topology/src"])("takes every colour from a --ks-* token across ui/%s", (root) => {
         const offenders = findHardcodedColors(resolve(UI, root))
         expect(

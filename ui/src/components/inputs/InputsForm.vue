@@ -118,10 +118,10 @@
                         v-model="inputsValues[input.id]"
                         @update:model-value="onChange(input)"
                         :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :max="input.max !== undefined && input.max >= (input.min ?? -Infinity) ? input.max : Infinity"
                         :step="1"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="input.min !== undefined || input.max !== undefined" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <span v-if="input.type === 'FLOAT'">
                     <KsInputNumber
@@ -129,10 +129,10 @@
                         v-model="inputsValues[input.id]"
                         @update:model-value="onChange(input)"
                         :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :max="input.max !== undefined && input.max >= (input.min ?? -Infinity) ? input.max : Infinity"
                         :step="0.001"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="input.min !== undefined || input.max !== undefined" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"

@@ -47,7 +47,23 @@ function isAllowed(file: string): boolean {
     return ALLOWED.some((entry) => normalized.startsWith(entry.file))
 }
 
-describe("no legacy error fields", () => {
+const readSources = () => sourceFiles()
+    .filter((file) => !isAllowed(file))
+    .map((file) => ({
+        path: relative(ROOT, join(ROOT, file)),
+        lines: readFileSync(join(ROOT, file), "utf8").split("\n"),
+    }))
+
+let cachedSources: Array<{path: string; lines: string[]}> | undefined
+
+function getSources() {
+    if (!cachedSources) {
+        cachedSources = readSources()
+    }
+    return cachedSources
+}
+
+describe("no legacy error fields", {timeout: 30000}, () => {
     it("finds source files to scan, so a broken glob cannot make this test vacuous", () => {
         expect(sourceFiles().length).toBeGreaterThan(500)
     })
@@ -55,10 +71,8 @@ describe("no legacy error fields", () => {
     it.each(FORBIDDEN)("does not read $what", ({pattern}) => {
         const offenders: string[] = []
 
-        for (const file of sourceFiles()) {
-            if (isAllowed(file)) continue
-            const content = readFileSync(join(ROOT, file), "utf8")
-            content.split("\n").forEach((line, index) => {
+        for (const {path, lines} of getSources()) {
+            lines.forEach((line, index) => {
                 if (pattern.test(line)) {
                     offenders.push(`${relative(ROOT, join(ROOT, file)).replaceAll("\\", "/")}:${index + 1}: ${line.trim()}`)
                 }

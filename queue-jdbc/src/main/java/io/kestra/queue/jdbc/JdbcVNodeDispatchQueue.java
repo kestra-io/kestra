@@ -6,6 +6,7 @@ import java.util.Set;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.services.IgnoreExecutionService;

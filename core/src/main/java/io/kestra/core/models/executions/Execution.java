@@ -25,6 +25,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
@@ -811,7 +812,12 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         if (!resolvedTask.getTask().shouldRetryOnFailure()) {
             return true;
         }
-        return !retryBudgetOwner(resolvedTask, taskRun).shouldBeRetried(resolvedTask.getTask().getRetry());
+        AbstractRetry retry = resolvedTask.getTask().getRetry();
+        if (retry != null && retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION) {
+            // each attempt is a new execution with fresh task runs, so the executor counts it on the execution
+            return taskRun.nextRetryDate(retry, this) == null;
+        }
+        return !retryBudgetOwner(resolvedTask, taskRun).shouldBeRetried(retry);
     }
 
     private TaskRun retryBudgetOwner(ResolvedTask resolvedTask, TaskRun taskRun) {

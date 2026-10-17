@@ -1,0 +1,28 @@
+id: replay-output-retention
+namespace: io.kestra.tests
+
+inputs:
+  - id: fail
+    type: BOOL
+    defaults: false
+
+tasks:
+  - id: first
+    type: io.kestra.plugin.core.debug.Return
+    format: >-
+      synthetic-order-snapshot synthetic-order-snapshot synthetic-order-snapshot
+      synthetic-order-snapshot synthetic-order-snapshot synthetic-order-snapshot
+      synthetic-order-snapshot synthetic-order-snapshot synthetic-order-snapshot
+      synthetic-order-snapshot synthetic-order-snapshot synthetic-order-snapshot
+      synthetic-order-snapshot synthetic-order-snapshot synthetic-order-snapshot
+  - id: second
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.fail ? missing_value : (outputs.first.value | length) }}"
+  - id: third
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.first.value }}"
+
+finally:
+  - id: cleanup
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs.first.value }}"

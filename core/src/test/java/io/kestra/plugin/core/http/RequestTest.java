@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.context.TestRunContextFactory;
@@ -400,7 +399,7 @@ class RequestTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
 
@@ -428,7 +427,7 @@ class RequestTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
 
@@ -483,7 +482,7 @@ class RequestTest {
                 bigStorage = storageInterface.put(
                     MAIN_TENANT,
                     null,
-                    new URI("/" + FriendlyId.createFriendlyId()),
+                    new URI("/" + IdUtils.create()),
                     in
                 );
             }

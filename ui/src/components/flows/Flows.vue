@@ -267,7 +267,7 @@
 
             </template>
 
-            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
+            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')" fixed="right">
                 <template #default="scope">
                     <div class="flow-actions-cell">
                         <KsIconButton

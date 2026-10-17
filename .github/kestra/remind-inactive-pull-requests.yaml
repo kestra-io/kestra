@@ -1,0 +1,303 @@
+id: remind-inactive-pull-requests
+namespace: community.github
+
+description: |
+  Reminds whoever a pull request is waiting for once it has seen no activity for `idleDays` days, in any public repository of the organization. The reminder is a comment on the pull request itself, so the author and the maintainers read it where the discussion is, and nothing is sent anywhere else.
+
+  **It is disabled by default.** The maintainers decide when to turn it on, by enabling the `daily` trigger, and can run the flow by hand at any time.
+
+  A pull request is looked at when it is open, not a draft, not opened by a bot, and last updated between `idleDays` and `lookbackDays` days ago. Older ones are left to the maintainers. The pull request is then read again, and its last meaningful activity is the latest of: a commit, a review or a comment by a person, a draft marked ready, a review requested. Labels, assignments, comments of bots and the reminders of this flow never count, so they cannot restart the clock.
+
+  Whoever acted last is not the one it is waiting for. When that was the author, the requested reviewers and the assignees are asked to look at it. When it was someone else, the author is asked to answer, and that person is mentioned too. A first reminder is posted after `idleDays` days without activity, a second one after another `escalateAfterDays` days, and then the flow stays silent until new activity starts the count again. It never closes a pull request, changes an assignee or adds a label: what happens next is up to the maintainers.
+
+  Pull requests of maintainers (anyone with push access to the repository), with one of the `exemptLabels`, or whose author is a bot or a deleted account are left alone.
+
+  Limits: search returns at most 1000 results. An update by a bot pushes a pull request out of the search for `idleDays` days. A repository whose pull request has more than 100 comments after the last reminder may be reminded again. A comment whose response is lost is retried and may be posted twice.
+
+  ### Setup
+  1. Create the secret `GITHUB_TOKEN`. It needs read and write on Pull requests in every repository of the organization, and its owner needs push access to them: GitHub requires that to read the permission of a user.
+  2. Enable the `daily` trigger when the maintainers are ready.
+
+# Two runs must not overlap, or the same pull requests would be reminded twice.
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+variables:
+  organization: kestra-io
+  idleDays: 7
+  escalateAfterDays: 7
+  # Pull requests idle for longer are abandoned rather than stalled: reminding hundreds of them at once would only be noise.
+  lookbackDays: 90
+  # Search returns at most 1000 results, that is 10 pages of 100. The last page is read first because acting on a pull request removes it from the results, which would shift the pages still to be read.
+  pages: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+  exemptLabels: [blocked, kind/do-not-merge]
+  # The first line of every reminder, hidden in the rendered comment, followed by the number of the reminder: it is how a later run recognises its own comments.
+  reminderMarker: '<!-- remind-inactive-pull-requests:'
+  pullRequestQuery: |
+    query($owner: String!, $name: String!, $number: Int!) {
+      repository(owner: $owner, name: $name) {
+        pullRequest(number: $number) {
+          state
+          isDraft
+          createdAt
+          author {
+            __typename
+            login
+          }
+          labels(first: 30) {
+            nodes {
+              name
+            }
+          }
+          assignees(first: 10) {
+            nodes {
+              login
+            }
+          }
+          reviewRequests(first: 10) {
+            nodes {
+              requestedReviewer {
+                __typename
+                ... on User {
+                  login
+                }
+              }
+            }
+          }
+          reviews(last: 30) {
+            nodes {
+              submittedAt
+              author {
+                __typename
+                login
+              }
+            }
+          }
+          commits(last: 1) {
+            nodes {
+              commit {
+                committedDate
+                author {
+                  user {
+                    login
+                  }
+                }
+              }
+            }
+          }
+          comments(last: 100) {
+            nodes {
+              createdAt
+              body
+              author {
+                __typename
+                login
+              }
+            }
+          }
+          timelineItems(last: 5, itemTypes: [READY_FOR_REVIEW_EVENT, REVIEW_REQUESTED_EVENT]) {
+            nodes {
+              __typename
+              ... on ReadyForReviewEvent {
+                createdAt
+                actor {
+                  login
+                }
+              }
+              ... on ReviewRequestedEvent {
+                createdAt
+                actor {
+                  login
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+triggers:
+  - id: daily
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * *"
+    disabled: true
+
+tasks:
+  - id: window
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      idle: >-
+        {{ now(timeZone='UTC') | dateAdd(-vars.idleDays, 'DAYS', format="yyyy-MM-dd'T'HH:mm:ss'Z'") }}
+      escalationWait: >-
+        {{ now(timeZone='UTC') | dateAdd(-vars.escalateAfterDays, 'DAYS', format="yyyy-MM-dd'T'HH:mm:ss'Z'") }}
+      escalation: >-
+        {{ now(timeZone='UTC') | dateAdd(-(vars.idleDays + vars.escalateAfterDays), 'DAYS', format="yyyy-MM-dd'T'HH:mm:ss'Z'") }}
+      oldest: >-
+        {{ now(timeZone='UTC') | dateAdd(-vars.lookbackDays, 'DAYS', format="yyyy-MM-dd'T'HH:mm:ss'Z'") }}
+
+  - id: each_page
+    type: io.kestra.plugin.core.flow.Loop
+    values: "{{ vars.pages }}"
+    concurrencyLimit: 1
+    tasks:
+      # A page that cannot be read (a rate limit, for example) must not stop the others.
+      - id: isolate_page
+        type: io.kestra.plugin.core.flow.AllowFailure
+        tasks:
+          # Dependabot opens a third of the open pull requests and is skipped below anyway, so excluding it here spares hundreds of lookups.
+          # Archived repositories are left out because nobody can act on them, and private ones because the comments here would be public.
+          # GitHub asks to wait at least a minute after a 403 or 429, so every request of this batch backs off slowly.
+          - id: search
+            type: io.kestra.plugin.core.http.Request
+            uri: "https://api.github.com/search/issues?q=org:{{ vars.organization }}+is:pr+is:open+is:public+archived:false+draft:false+-author:app/dependabot{% for label in vars.exemptLabels %}+-label:%22{{ label | urlencode }}%22{% endfor %}+updated:{{ outputs.window.values.oldest }}..{{ outputs.window.values.idle }}&sort=updated&order=asc&per_page=100&page={{ item.value }}"
+            headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+            timeout: PT30S
+            retry: {type: exponential, interval: PT10S, maxInterval: PT2M, maxAttempts: 4}
+
+          - id: each_pull_request
+            type: io.kestra.plugin.core.flow.Loop
+            values: "{{ outputs.search.body | jq('.items') | first }}"
+            concurrencyLimit: 1
+            tasks:
+              # A failure on one pull request must not stop the others.
+              - id: isolate
+                type: io.kestra.plugin.core.flow.AllowFailure
+                tasks:
+                  - id: pull_request
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      repository: >-
+                        {{ item.value | jq('.repository_url | split("/") | .[-2:] | join("/")') | first }}
+                      owner: >-
+                        {{ item.value | jq('.repository_url | split("/") | .[-2]') | first }}
+                      name: >-
+                        {{ item.value | jq('.repository_url | split("/") | .[-1]') | first }}
+                      number: "{{ item.value | jq('.number') | first }}"
+
+                  # The search is an index and may be out of date, so everything that decides the outcome is read again here.
+                  - id: get_pull_request
+                    type: io.kestra.plugin.core.http.Request
+                    method: POST
+                    uri: https://api.github.com/graphql
+                    contentType: application/json
+                    headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+                    timeout: PT30S
+                    retry: {type: exponential, interval: PT10S, maxInterval: PT2M, maxAttempts: 4}
+                    body: >-
+                      {{ {
+                        'query': vars.pullRequestQuery,
+                        'variables': {
+                          'owner': outputs.pull_request.values.owner,
+                          'name': outputs.pull_request.values.name,
+                          'number': item.value | jq('.number') | first
+                        }
+                      } }}
+
+                  # What happened last, and who did it. The comments of bots and of this flow are left out, because a reminder or a bot would
+                  # otherwise restart the count for good; so are labels and assignments, which say nothing about the work itself.
+                  - id: activity
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      json: >-
+                        {{ outputs.get_pull_request.body | jq('if .data.repository.pullRequest == null then {gone: true} else (.data.repository.pullRequest as $pr | ($pr.author.login // "") as $author | ($pr.comments.nodes | map(select(.body | startswith("' ~ vars.reminderMarker ~ '")))) as $own | ([{t: $pr.createdAt, who: $author}, (($pr.commits.nodes // [])[] | {t: .commit.committedDate, who: (.commit.author.user.login // $author)}), (($pr.reviews.nodes // [])[] | select(.author.__typename != "Bot" and .submittedAt != null) | {t: .submittedAt, who: (.author.login // "")}), (($pr.comments.nodes // [])[] | select(.author.__typename != "Bot" and (.body | startswith("' ~ vars.reminderMarker ~ '") | not)) | {t: .createdAt, who: (.author.login // "")}), (($pr.timelineItems.nodes // [])[] | {t: .createdAt, who: (.actor.login // $author)})] | max_by(.t)) as $last | {lastActivity: $last.t, lastActor: $last.who, turn: (if $last.who == $author then "maintainers" else "author" end), reminders: ([$own[] | select(.createdAt > $last.t) | .createdAt] | sort), mentions: (([($pr.reviewRequests.nodes // [])[].requestedReviewer | select(.__typename == "User") | .login] + [($pr.assignees.nodes // [])[].login]) | unique | map(select(. != $author)) | .[0:5] | map("@" + .) | join(", "))}) end') | first | toJson }}
+
+                  # Outputs are stored as text, hence the comparisons with 'true' below.
+                  - id: facts
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      exists: >-
+                        {{ outputs.activity.values.json | jq('.gone != true') | first }}
+                      isOpen: >-
+                        {{ outputs.get_pull_request.body | jq('(.data.repository.pullRequest.state // "") == "OPEN"') | first }}
+                      isDraft: >-
+                        {{ outputs.get_pull_request.body | jq('(.data.repository.pullRequest.isDraft // false)') | first }}
+                      isPerson: >-
+                        {{ outputs.get_pull_request.body | jq('(.data.repository.pullRequest.author.__typename // "") == "User"') | first }}
+                      author: >-
+                        {{ outputs.get_pull_request.body | jq('.data.repository.pullRequest.author.login // "ghost"') | first }}
+                      # Two lists go through one JSON object so that jq can intersect them.
+                      isExempt: >-
+                        {{ {'labels': (outputs.get_pull_request.body | jq('[(.data.repository.pullRequest.labels.nodes // [])[].name | ascii_downcase]') | first), 'exempt': vars.exemptLabels} | toJson | jq('(.labels - (.labels - (.exempt | map(ascii_downcase)))) | length > 0') | first }}
+                      lastActivity: >-
+                        {{ outputs.activity.values.json | jq('.lastActivity // ""') | first }}
+                      isIdle: >-
+                        {{ outputs.activity.values.json | jq('(.lastActivity // "") < "' ~ outputs.window.values.idle ~ '"') | first }}
+                      isAbandoned: >-
+                        {{ outputs.activity.values.json | jq('(.lastActivity // "") < "' ~ outputs.window.values.oldest ~ '"') | first }}
+                      isEscalationDue: >-
+                        {{ outputs.activity.values.json | jq('(.lastActivity // "") < "' ~ outputs.window.values.escalation ~ '"') | first }}
+                      turn: >-
+                        {{ outputs.activity.values.json | jq('.turn // "author"') | first }}
+                      lastActor: >-
+                        {{ outputs.activity.values.json | jq('.lastActor // ""') | first }}
+                      reminders: >-
+                        {{ outputs.activity.values.json | jq('(.reminders // []) | length') | first }}
+                      isFirstReminderOldEnough: >-
+                        {{ outputs.activity.values.json | jq('((.reminders // [])[0] // "9999") < "' ~ outputs.window.values.escalationWait ~ '"') | first }}
+                      mentions: >-
+                        {{ outputs.activity.values.json | jq('.mentions // ""') | first }}
+
+                  # The first matching rule wins. Two reminders are the most that one stall can get: after them the flow waits for new activity.
+                  - id: decide
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      outcome: >-
+                        {%- if outputs.facts.values.exists != 'true' -%}GONE
+                        {%- elseif outputs.facts.values.isOpen != 'true' -%}CLOSED
+                        {%- elseif outputs.facts.values.isDraft == 'true' -%}DRAFT
+                        {%- elseif outputs.facts.values.isPerson != 'true' -%}NOT_A_PERSON
+                        {%- elseif outputs.facts.values.isExempt == 'true' -%}EXEMPT
+                        {%- elseif outputs.facts.values.isIdle != 'true' -%}ACTIVE
+                        {%- elseif outputs.facts.values.isAbandoned == 'true' -%}ABANDONED
+                        {%- elseif outputs.facts.values.reminders == '0' -%}REMIND
+                        {%- elseif outputs.facts.values.reminders == '1' and outputs.facts.values.isEscalationDue == 'true' and outputs.facts.values.isFirstReminderOldEnough == 'true' -%}ESCALATE
+                        {%- else -%}WAIT
+                        {%- endif -%}
+
+                  - id: audit
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ outputs.pull_request.values.repository }}#{{ outputs.pull_request.values.number }}: {{ outputs.decide.values.outcome }}"
+
+                  - id: due
+                    type: io.kestra.plugin.core.flow.If
+                    condition: "{{ ['REMIND', 'ESCALATE'] contains outputs.decide.values.outcome }}"
+                    then:
+                      # Permission identifies maintainers; a pull request's association cannot, as GitHub only reports MEMBER for public members.
+                      - id: get_author_permission
+                        type: io.kestra.plugin.core.http.Request
+                        uri: "https://api.github.com/repos/{{ outputs.pull_request.values.repository }}/collaborators/{{ outputs.facts.values.author }}/permission"
+                        headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+                        timeout: PT30S
+                        retry: {type: exponential, interval: PT10S, maxInterval: PT2M, maxAttempts: 4}
+
+                      - id: contributor
+                        type: io.kestra.plugin.core.flow.If
+                        condition: "{{ not (['admin', 'write'] contains (outputs.get_author_permission.body | jq('.permission') | first)) }}"
+                        then:
+                          - id: reminder
+                            type: io.kestra.plugin.core.output.OutputValues
+                            values:
+                              message: |-
+                                {{ vars.reminderMarker }}{{ outputs.decide.values.outcome == 'REMIND' ? 1 : 2 }} -->
+                                {%- if outputs.facts.values.turn == 'author' and outputs.decide.values.outcome == 'REMIND' %}
+                                @{{ outputs.facts.values.author }} this pull request has had no activity for {{ vars.idleDays }} days since @{{ outputs.facts.values.lastActor }} last wrote on it. Could you push an update or reply here? If you are blocked or need more time, just say so.
+                                {%- elseif outputs.facts.values.turn == 'author' %}
+                                @{{ outputs.facts.values.author }} this pull request still has no activity after {{ vars.idleDays + vars.escalateAfterDays }} days. Please tell us whether you are still working on it, so that @{{ outputs.facts.values.lastActor }} and the other maintainers know what to expect.
+                                {%- elseif outputs.facts.values.mentions != '' and outputs.decide.values.outcome == 'REMIND' %}
+                                {{ outputs.facts.values.mentions }} this pull request by @{{ outputs.facts.values.author }} has been waiting for {{ vars.idleDays }} days without activity. Could someone review it, or say what is blocking it?
+                                {%- elseif outputs.facts.values.mentions != '' %}
+                                {{ outputs.facts.values.mentions }} this pull request by @{{ outputs.facts.values.author }} is still waiting after {{ vars.idleDays + vars.escalateAfterDays }} days. Please review it, or tell @{{ outputs.facts.values.author }} what is blocking it.
+                                {%- else %}
+                                A maintainer is needed on this pull request by @{{ outputs.facts.values.author }}: it has been waiting for {{ outputs.decide.values.outcome == 'REMIND' ? vars.idleDays : vars.idleDays + vars.escalateAfterDays }} days without activity, and nobody is assigned or asked to review it.
+                                {%- endif %}
+
+                          - id: reminder_comment
+                            type: io.kestra.plugin.core.http.Request
+                            method: POST
+                            uri: "https://api.github.com/repos/{{ outputs.pull_request.values.repository }}/issues/{{ outputs.pull_request.values.number }}/comments"
+                            headers: {Authorization: "Bearer {{ secret('GITHUB_TOKEN') }}", Accept: application/vnd.github+json}
+                            contentType: application/json
+                            body: "{{ {'body': outputs.reminder.values.message} }}"
+                            timeout: PT30S
+                            retry: {type: exponential, interval: PT10S, maxInterval: PT2M, maxAttempts: 4}

@@ -442,7 +442,6 @@
         raw_view.value ? ViewGrid : ViewList,
     )
 
-    // Keep listing every level: the old code passed the whole {value, direction} filter object, which never matched a level, so truncation here would change behavior.
     const currentLevelOrLower = computed(() => LogUtils.levelOrLower(undefined))
 
     const countByLogLevel = computed(() =>

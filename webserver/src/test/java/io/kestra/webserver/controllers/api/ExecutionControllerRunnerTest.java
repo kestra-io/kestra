@@ -3909,6 +3909,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows("flows/valids/webhook-response.yaml")
+    void webhookWithCustomResponse() {
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET(
+                "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS +
+                    "/webhook-response/webhook-response?challenge=verified&token=kestra"
+            ),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.getContentType()).contains(MediaType.TEXT_PLAIN_TYPE);
+        assertThat(response.getHeaders().get("X-Webhook-Token")).isEqualTo("kestra");
+        assertThat(response.body()).isEqualTo("verified");
+    }
+
+    @Test
     @LoadFlows("flows/valids/webhook-plaintext.yaml")
     void webhookWithPlainTextResponseContentType() {
         HttpResponse<String> response = client.toBlocking().exchange(

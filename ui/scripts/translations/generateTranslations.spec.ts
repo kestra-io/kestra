@@ -1,4 +1,4 @@
-import {describe, expect, it} from "vitest"
+import {afterEach, describe, expect, it} from "vitest"
 import {mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
@@ -9,7 +9,14 @@ import type {TranslationClient} from "./generateTranslations.ts"
 const clientReturning = (text: string) =>
     ({models: {generateContent: async () => ({text})}}) as unknown as TranslationClient
 
+const rejectingClient = () =>
+    ({models: {generateContent: async () => { throw new Error("403 permission denied") }}}) as unknown as TranslationClient
+
 describe("generateTranslations", () => {
+    afterEach(() => {
+        process.exitCode = undefined
+    })
+
     it("writes a language file a tenant type's folder does not have yet", async () => {
         const dir = mkdtempSync(join(tmpdir(), "translations-"))
         writeFileSync(join(dir, "en.json"), JSON.stringify({en: {greeting: "Hello"}}))
@@ -50,6 +57,43 @@ describe("generateTranslations", () => {
             expect(JSON.parse(readFileSync(join(dir, "ru.json"), "utf-8"))).toEqual({
                 ru: {online: "нет worker'ов онлайн | worker онлайн | worker'а онлайн | worker'ов онлайн"},
             })
+        } finally {
+            rmSync(dir, {recursive: true, force: true})
+        }
+    })
+
+    it("marks the run as failed and leaves the key unsettled when the client rejects every call", async () => {
+        const dir = mkdtempSync(join(tmpdir(), "translations-"))
+        writeFileSync(join(dir, "en.json"), JSON.stringify({en: {greeting: "Hello"}}))
+        const fingerprintsFile = join(dir, "fingerprints.json")
+
+        try {
+            await generateTranslations({
+                client: rejectingClient(),
+                translationsDir: dir,
+                fingerprintsFile,
+                languages: [["fr", "French"]],
+            })
+
+            expect(process.exitCode).toBe(1)
+            expect(JSON.parse(readFileSync(fingerprintsFile, "utf-8"))).not.toHaveProperty("greeting")
+        } finally {
+            rmSync(dir, {recursive: true, force: true})
+        }
+    })
+
+    it("leaves the exit code alone when every key was translated", async () => {
+        const dir = mkdtempSync(join(tmpdir(), "translations-"))
+        writeFileSync(join(dir, "en.json"), JSON.stringify({en: {greeting: "Hello"}}))
+
+        try {
+            await generateTranslations({
+                client: clientReturning("Bonjour"),
+                translationsDir: dir,
+                languages: [["fr", "French"]],
+            })
+
+            expect(process.exitCode).toBeUndefined()
         } finally {
             rmSync(dir, {recursive: true, force: true})
         }

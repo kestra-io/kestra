@@ -1,5 +1,5 @@
 <template>
-    <div class="h-100 d-flex flex-column">
+    <div class="editor-tab">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
             :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
@@ -38,7 +38,6 @@
                 v-bind="editorBindings"
                 id="flowFileEditorTab"
                 ref="editorRefElement"
-                class="flex-1"
                 :modelValue="previewSource ?? source"
                 :original="previewSource ? source : undefined"
                 :schemaType="flow ? 'flow': undefined"
@@ -449,6 +448,12 @@
 </script>
 
 <style scoped lang="scss">
+    .editor-tab {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
     .image-preview {
         margin: 2rem;
     }

@@ -604,7 +604,7 @@ public class ExecutorService {
                             list.add(flowableResult.get());
                             // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                             if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
-                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, runContext);
+                                this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
                             }
                         }
                     }
@@ -626,7 +626,7 @@ public class ExecutorService {
             if (
                 !executor.getExecution().getState().isRetrying() &&
                     taskRun.getState().isFailed() &&
-                    (task instanceof RunnableTask<?> || task instanceof Subflow)
+                    task != null && task.shouldRetryOnFailure()
             ) {
                 Instant nextRetryDate = null;
                 AbstractRetry.Behavior behavior = null;
@@ -903,13 +903,16 @@ public class ExecutorService {
     private void handleLoopCreated(ExecutorContext executor, Loop loop, TaskRun taskRun) throws InternalException, IOException {
         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), taskRun);
         var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
+        int iterationCount;
 
         if (valuesUri.isPresent()) {
             var init = loop.initFromUri(runContext, valuesUri.get());
+            iterationCount = init.totalCount();
+
             // save the iteration information in outputs to know how many loop iterations we already triggered
             taskOutputService.saveOutputs(
                 taskRun, Map.of(
-                    Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
                     Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
                     Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
                     Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
@@ -921,23 +924,17 @@ public class ExecutorService {
             }
         } else {
             var init = loop.initFromValues(runContext);
+            iterationCount = init.totalCount();
             // save the iteration information in outputs to know how many loop iterations we already triggered
             taskOutputService.saveOutputs(
                 taskRun, Map.of(
-                    Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                    Loop.ITERATION_COUNT_OUTPUT, iterationCount,
                     Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
                     Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
                 )
             );
 
-            if (init.totalCount() == 0) {
-                // if no loop iteration, we end the task immediately
-                executor.withExecution(
-                    executor.getExecution()
-                        .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
-                    "handleLoop"
-                );
-            } else {
+            if (iterationCount > 0) {
                 if (init.values().isLeft()) {
                     List<String> values = init.values().getLeft();
                     for (int i = 0; i < init.limit(); i++) {
@@ -959,6 +956,14 @@ public class ExecutorService {
                     "handleLoop"
                 );
             }
+        }
+
+        if (iterationCount == 0) {
+            executor.withExecution(
+                executor.getExecution()
+                    .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
+                "handleLoop"
+            );
         }
     }
 
@@ -989,7 +994,7 @@ public class ExecutorService {
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, RunContext runContext) throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
@@ -1015,6 +1020,13 @@ public class ExecutorService {
             } else {
                 leafTaskRunIds.add(descendant.getId());
             }
+            // No worker job or state transition of its own records why the task stopped: without this the task run
+            // shows a terminal state with no log line naming the sibling that failed. Logged on the interrupted task
+            // run itself so an operator looking at it sees the cause inline.
+            RunContext childRunContext = descendantTask != null
+                ? runContextFactory.of(executor.getFlow(), descendantTask, executor.getExecution(), descendant)
+                : runContextFactory.of(executor.getFlow(), executor.getExecution());
+            childRunContext.logger().warn("Task terminated because sibling task '{}' failed", failedTaskRun.getTaskId());
         }
 
         if (!resolvedFlowables.isEmpty()) {

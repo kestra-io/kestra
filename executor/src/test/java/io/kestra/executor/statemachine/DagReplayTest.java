@@ -41,12 +41,11 @@ class DagReplayTest {
         String replayId = IdUtils.create();
         List<Trace.Emission> emitted = harness.step(Replay.from(source, replayId, failed.getId(), null, null));
 
-        // Then: the running sibling is sent to a worker again instead of being inherited as RUNNING
-        assertThat(dispatchedTaskIds(emitted)).containsExactlyInAnyOrder("a", "b");
-
-        // And: the replay runs to the end
         harness.run(List.of(), ScriptedWorker.succeeding(T0));
-        assertThat(harness.executionStateStore().findByIdWithoutAcl(replayId).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // Then
+        assertThat(dispatchedTaskIds(emitted)).as("the replay sends the running sibling to a worker again instead of inheriting it as RUNNING").containsExactlyInAnyOrder("a", "b");
+        assertThat(harness.executionStateStore().findByIdWithoutAcl(replayId).getState().getCurrent()).as("the replay ran to the end").isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -57,14 +56,13 @@ class DagReplayTest {
         // When: the execution is restarted in place, one delivery of the Restart command
         List<Trace.Emission> emitted = harness.step(Restart.from(source, null));
 
-        // Then: the running sibling is sent to a worker again instead of being carried over as RUNNING
         Trace trace = harness.run(List.of(), ScriptedWorker.succeeding(T0));
+
+        // Then
         List<String> dispatched = new ArrayList<>(dispatchedTaskIds(emitted));
         trace.steps().forEach(step -> dispatched.addAll(dispatchedTaskIds(step.emitted())));
-        assertThat(dispatched).contains("a", "b");
-
-        // And: the restart runs to the end
-        assertThat(harness.executionStateStore().findByIdWithoutAcl(source.getId()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(dispatched).as("the restart sends the running sibling to a worker again instead of carrying it over as RUNNING; the whole run also dispatches the downstream task").contains("a", "b");
+        assertThat(harness.executionStateStore().findByIdWithoutAcl(source.getId()).getState().getCurrent()).as("the restart ran to the end").isEqualTo(State.Type.SUCCESS);
     }
 
     /** "a" failed while its independent sibling "b" was still running, and the execution was then terminated. */
@@ -114,7 +112,7 @@ class DagReplayTest {
 
     private static List<String> dispatchedTaskIds(List<Trace.Emission> emitted) {
         return emitted.stream()
-            .filter(emission -> "workerJobEvent".equals(emission.queue()))
+            .filter(emission -> Trace.WORKER_JOB_EVENT.equals(emission.queue()))
             .map(emission -> ((WorkerTask) emission.as(WorkerJobEvent.class).job()).getTaskRun().getTaskId())
             .toList();
     }

@@ -43,7 +43,7 @@ class FlowTriggerInvalidWhenCycleTest {
     }
 
     @Test
-    void anUnrenderableTriggerWhenIsLoggedOnBothSidesAndDoesNotFire() {
+    void shouldLogOnBothSidesAndNotFireWhenTheTriggerWhenCannotBeRendered() {
         // Given an upstream flow and a listener whose trigger-level `when` references `namespace`,
         // which is not available at trigger time and therefore cannot be rendered
         FlowWithSource upstream = upstream();
@@ -69,22 +69,21 @@ class FlowTriggerInvalidWhenCycleTest {
         assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
 
         // Then the trigger does not fire: no execution is created for the listener
-        List<Execution> triggered = trace.emitted("execution")
+        List<Execution> triggered = trace.emitted(Trace.EXECUTION)
             .map(emission -> emission.as(Execution.class))
             .filter(execution -> "invalid-when-listener".equals(execution.getFlowId()))
             .toList();
-        assertThat(triggered).isEmpty();
-
-        // and it is logged on both sides: an ERROR on the flow that owns the trigger (its misconfiguration)
+        assertThat(triggered).as("an unrenderable `when` never fires the trigger").isEmpty();
         assertThat(harness.logs())
+            .as("the misconfiguration is an ERROR on the flow that owns the trigger")
             .anyMatch(log -> log.getLevel() == Level.ERROR && "invalid-when-listener".equals(log.getFlowId()));
-        // and a WARN on the evaluated upstream execution (not its error, but it surfaces something went wrong)
         assertThat(harness.logs())
+            .as("the evaluated upstream execution gets a WARN: not its error, but it surfaces that something went wrong")
             .anyMatch(log -> log.getLevel() == Level.WARN && "invalid-when-upstream".equals(log.getFlowId()));
     }
 
     @Test
-    void anUnrenderableDependsOnWhenIsLoggedAndDoesNotFire() {
+    void shouldLogAndNotFireWhenTheDependsOnWhenCannotBeRendered() {
         // Given an upstream flow and a listener whose dependsOn entry has an unrenderable `when`
         FlowWithSource upstream = upstream();
         FlowWithSource listener = Flows.yaml("""
@@ -112,14 +111,13 @@ class FlowTriggerInvalidWhenCycleTest {
         assertThat(harness).hasExecutionInState(created, State.Type.SUCCESS);
 
         // Then the trigger does not fire: no execution command is created for the listener
-        List<Create> commands = trace.emitted("executionCommand")
+        List<Create> commands = trace.emitted(Trace.EXECUTION_COMMAND)
             .map(emission -> emission.as(Create.class))
             .filter(command -> "invalid-dependson-when-listener".equals(command.flowId()))
             .toList();
-        assertThat(commands).isEmpty();
-
-        // and the unrenderable dependsOn `when` is logged as an ERROR on the flow that owns the trigger
+        assertThat(commands).as("an unrenderable dependsOn `when` never fires the trigger").isEmpty();
         assertThat(harness.logs())
+            .as("the misconfiguration is an ERROR on the flow that owns the trigger")
             .anyMatch(log -> log.getLevel() == Level.ERROR && "invalid-dependson-when-listener".equals(log.getFlowId()));
     }
 }

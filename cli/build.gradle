@@ -69,6 +69,9 @@ dependencies {
     implementation project(":worker-controller")
     implementation project(":indexer")
 
+    // TEMPORARY: AGPL dependency to test the license check
+    implementation "com.itextpdf:itextpdf:5.5.13.4"
+
     //test
     testImplementation project(':tests')
     testImplementation "org.wiremock:wiremock-jetty12"

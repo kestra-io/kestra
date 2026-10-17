@@ -69,7 +69,7 @@
             loading: undefined,
             layout: "force",
             roam: true,
-            renderer: ChartRenderer.CANVAS,
+            renderer: ChartRenderer.SVG,
         },
     )
 

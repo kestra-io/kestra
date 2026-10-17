@@ -199,7 +199,7 @@ export const WithSelection: Story = {
     }),
 }
 
-/** SVG renderer — useful for print / high-DPI exports */
+/** SVG renderer (default) — sharp vector rendering at any page zoom and on high-DPI screens */
 export const SvgRenderer: Story = {
     render: () => ({
         components: {KsGraph},

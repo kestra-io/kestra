@@ -66,7 +66,7 @@
                 >
                     <CheckIcon
                         v-if="copied"
-                        class="text-success"
+                        class="check-icon"
                     />
                     <ContentCopy v-else />
                 </KsIconButton>
@@ -353,6 +353,10 @@
         top: var(--ks-spacing-2);
         right: var(--ks-spacing-2);
         z-index: 2;
+    }
+
+    .check-icon {
+        color: var(--ks-status-success);
     }
 
     .url {

@@ -1,7 +1,7 @@
 <template>
     <div class="revision" v-if="revisions && revisions.length > 1">
-        <div class="d-flex justify-content-end">
-            <KsSelect v-model="sideBySide" class="mb-3 display-select">
+        <div class="revision-header">
+            <KsSelect v-model="sideBySide" class="display-select">
                 <KsOption
                     v-for="item in displayTypes"
                     :key="String(item.value)"
@@ -10,7 +10,7 @@
                 />
             </KsSelect>
         </div>
-        <div class="revision-grid mb-2">
+        <div class="revision-grid">
             <div class="revision-grid-col" v-if="revisionLeft !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
@@ -44,7 +44,7 @@
                                 @click="restoreRevision(revisionLeft, revisionLeftText)"
                                 data-testid="restore-left"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
+                                <span class="restore-text">&nbsp;{{ $t("restore") }}</span>
                             </KsButton>
                         </KsButtonGroup>
                     </div>
@@ -86,7 +86,7 @@
                                 @click="restoreRevision(revisionRight, revisionRightText)"
                                 data-testid="restore-right"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
+                                <span class="restore-text">&nbsp;{{ $t("restore") }}</span>
                             </KsButton>
                         </KsButtonGroup>
                     </div>
@@ -100,7 +100,7 @@
         <KsEditor
             data-test="revision-diff"
             v-bind="editorBindings"
-            class="mt-1"
+            class="revision-diff"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
             :options="{diffSideBySide: sideBySide}"
             @editorMounted="revealHighlight"
@@ -111,8 +111,8 @@
             :showDoc="false"
         />
 
-        <div v-if="isLoadingRevisions" class="text-center p-4">
-            <span class="ml-2">{{ $t("loading") }}</span>
+        <div v-if="isLoadingRevisions" class="revisions-loading">
+            <span>{{ $t("loading") }}</span>
         </div>
     </div>
     <KsNoData
@@ -410,6 +410,28 @@
         height: 100%;
     }
 
+    .revision-header {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .restore-text {
+        display: none;
+
+        @media (min-width: 992px) {
+            display: inline-block;
+        }
+    }
+
+    .revision-diff {
+        margin-top: var(--ks-spacing-1);
+    }
+
+    .revisions-loading {
+        text-align: center;
+        padding: var(--ks-spacing-5);
+    }
+
     .ks-editor {
         flex: 1;
         padding-bottom: 1rem;
@@ -419,6 +441,7 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         margin-right: var(--ks-spacing-6);
+        margin-bottom: var(--ks-spacing-2);
     }
 
     .revision-grid-col {
@@ -470,6 +493,7 @@
 
     .display-select {
         width: 10%;
+        margin-bottom: var(--ks-spacing-4);
     }
 
     .revision-timestamp {

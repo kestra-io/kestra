@@ -1,32 +1,37 @@
 <template>
-    <KsDialog v-model="isKeyShortcutsDialogShown" headerClass="p-3" bodyClass="p-2" scrollable>
+    <KsDialog
+        v-model="isKeyShortcutsDialogShown"
+        headerClass="shortcuts-header"
+        bodyClass="shortcuts-body"
+        scrollable
+    >
         <template #header>
-            <div class="d-flex align-items-center gap-2 fw-normal">
+            <div class="header-title">
                 <KsIcon size="xl">
                     <Keyboard />
                 </KsIcon>
-                <span class="fs-6">
+                <span class="header-label">
                     {{ $t("editor_shortcuts.label") }}
                 </span>
             </div>
         </template>
 
-        <div class="d-flex flex-column gap-3 fw-normal">
+        <div class="commands-list">
             <div
                 v-for="(command, i) in commands"
                 :key="i"
-                class="d-flex align-items-center gap-3"
+                class="command-row"
             >
-                <div class="d-flex align-items-center gap-2 keys">
+                <div class="keys">
                     <template v-for="(key, index) in command.keys" :key="index">
                         <KsTag>{{ key }}</KsTag>
                         <span
                             v-if="index < command.keys.length - 1"
-                            class="fw-bold"
+                            class="key-separator"
                         >+</span>
                     </template>
                 </div>
-                <div class="text-break">
+                <div class="command-description">
                     {{ $t(command.description) }}
                 </div>
             </div>
@@ -101,6 +106,53 @@
 </script>
 
 <style scoped lang="scss">
+:deep(.shortcuts-header) {
+    padding: var(--ks-spacing-4);
+}
+
+:deep(.shortcuts-body) {
+    padding: var(--ks-spacing-2);
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    font-weight: var(--ks-font-weight-regular);
+}
+
+.header-label {
+    font-size: var(--ks-font-size-sm);
+}
+
+.commands-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-4);
+    font-weight: var(--ks-font-weight-regular);
+}
+
+.command-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-4);
+}
+
+.keys {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
+
+.key-separator {
+    font-weight: var(--ks-font-weight-bold);
+}
+
+.command-description {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
 .kel-tag {
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);

@@ -164,4 +164,18 @@ describe("FlowTriggers - executions link", () => {
 
         expect(executionsLinks(wrapper)).toHaveLength(0)
     })
+
+    it("renders design system classes and no Bootstrap classes", async () => {
+        const wrapper = mountTriggersTab()
+        await flushPromises()
+
+        const addWrapper = wrapper.find(".add-trigger-wrapper")
+        expect(addWrapper.exists()).toBe(true)
+        expect(addWrapper.classes()).not.toContain("mt-4")
+
+        const addBtn = wrapper.find(".add-trigger-btn")
+        expect(addBtn.exists()).toBe(true)
+        expect(addBtn.classes()).not.toContain("border-0")
+        expect(addBtn.classes()).not.toContain("p-3")
+    })
 })

@@ -48,9 +48,9 @@ export function flowSchema(bundle, version) {
     let groupIndex = 0;
     function groupUnions(value) {
         if (!value || typeof value !== "object") return;
-        const alternatives = value.anyOf;
-        if (Array.isArray(alternatives) && alternatives.length > 32 &&
-            alternatives.every(item => typeof item?.$ref === "string" && Object.keys(item).length === 1)) {
+        for (const child of Object.values(value)) groupUnions(child);
+        while (Array.isArray(value.anyOf) && value.anyOf.length > 32) {
+            const alternatives = value.anyOf;
             const key = JSON.stringify(alternatives);
             if (!unions.has(key)) {
                 const groups = [];
@@ -66,7 +66,6 @@ export function flowSchema(bundle, version) {
             }
             value.anyOf = unions.get(key);
         }
-        for (const child of Object.values(value)) groupUnions(child);
     }
     for (const definition of Object.values(definitions)) groupUnions(definition);
 

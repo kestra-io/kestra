@@ -46,7 +46,10 @@ test("large task unions share bounded groups without changing accepted tasks", (
         properties: {type: {const: `Task${i}`}, value: {type: "number"}},
         required: ["type", "value"],
     }]));
-    const union = {anyOf: Object.keys(tasks).map(name => ({$ref: `#/definitions/${name}`}))};
+    const union = {anyOf: Object.keys(tasks).map(name => ({allOf: [
+        {$ref: `#/definitions/${name}`},
+        {description: "Annotated task reference", properties: {value: {minimum: 0}}},
+    ]}))};
     const largeBundle = {
         ...bundle,
         definitions: {
@@ -67,10 +70,11 @@ test("large task unions share bounded groups without changing accepted tasks", (
     for (const ref of properties.task.anyOf) {
         assert.ok(schema.definitions[ref.$ref.slice("#/definitions/".length)].anyOf.length <= 32);
     }
-    const validate = new Ajv().compile(schema);
+    const validate = new Ajv({strictTypes: false}).compile(schema);
     for (const type of Object.keys(tasks)) {
         assert.equal(validate({task: {type, value: 1}}), true, type);
         assert.equal(validate({task: {type, value: "invalid"}}), false, type);
+        assert.equal(validate({task: {type, value: -1}}), false, type);
     }
     assert.equal(validate({task: {type: "Unknown", value: 1}}), false);
     assert.equal(validate({task: {type: "Task0"}}), false);

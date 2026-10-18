@@ -3,6 +3,7 @@ package io.kestra.core.secret;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -253,6 +254,19 @@ public class SecretFunctionTest {
     void getUnknownSecret() {
         var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
         assertThat(exception.getMessage()).isEqualTo("Cannot find secret for key 'unknown_secret_key'.");
+    }
+
+    @Test
+    @EnabledIfEnvironmentVariable(named = "SECRET_NEW_LINE", matches = "(?s).*")
+    void shouldFindLowerCaseSecretKeyUnderTurkishLocale() throws IOException {
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.of("tr", "TR"));
+
+        try {
+            assertThat(secretService.findSecret(null, null, "new_line")).isNotNull();
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 
     @MockBean(SecretService.class)

@@ -1,6 +1,7 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.util.Collections;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -124,5 +125,20 @@ class IsLastWorkingDayFunctionTest {
                 "{{ isLastWorkingDay('2025-01-31', 'MONDAY,BLURSDAY') }}", Collections.emptyMap()
             )
         ).isInstanceOf(IllegalVariableEvaluationException.class);
+    }
+
+    @Test
+    void shouldAcceptLowerCaseWorkingDaysUnderTurkishLocale() throws IllegalVariableEvaluationException {
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.of("tr", "TR"));
+
+        try {
+            String result = variableRenderer.render(
+                "{{ isLastWorkingDay('2025-11-28', workingDays='monday,tuesday,wednesday,thursday,friday') }}", Collections.emptyMap()
+            );
+            assertThat(result).isEqualTo("true");
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 }

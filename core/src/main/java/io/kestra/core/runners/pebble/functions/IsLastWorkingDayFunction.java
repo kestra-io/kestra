@@ -6,6 +6,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,7 +86,7 @@ public class IsLastWorkingDayFunction implements KestraFunction {
                 continue;
             }
             try {
-                result.add(DayOfWeek.valueOf(trimmed.toUpperCase()));
+                result.add(DayOfWeek.valueOf(trimmed.toUpperCase(Locale.ROOT)));
             } catch (IllegalArgumentException e) {
                 throw new PebbleException(
                     e,

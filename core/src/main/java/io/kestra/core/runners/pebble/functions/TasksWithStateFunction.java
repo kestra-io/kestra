@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -27,7 +28,7 @@ public class TasksWithStateFunction implements KestraFunction {
         if (!args.containsKey("state")) {
             throw new PebbleException(null, "The 'tasksWithState' function expects an argument 'state'.", lineNumber, self.getName());
         }
-        String stateToFilter = ((String) args.get("state")).toUpperCase();
+        String stateToFilter = ((String) args.get("state")).toUpperCase(Locale.ROOT);
 
         EvaluationContextImpl evaluationContext = (EvaluationContextImpl) context;
 
@@ -91,7 +92,7 @@ public class TasksWithStateFunction implements KestraFunction {
      */
     private static String toState(Object value) {
         if (value instanceof String || value instanceof Enum) {
-            return value.toString().toUpperCase();
+            return value.toString().toUpperCase(Locale.ROOT);
         }
         return null;
     }

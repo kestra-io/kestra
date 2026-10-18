@@ -35,13 +35,40 @@ export function flowSchema(bundle, version) {
                 throw new Error(`Missing schema definition: ${name}`);
             }
             if (!Object.hasOwn(definitions, name)) {
-                definitions[name] = bundle.definitions[name];
+                definitions[name] = structuredClone(bundle.definitions[name]);
                 visit(definitions[name]);
             }
         }
         for (const child of Object.values(value)) visit(child);
     }
     visit({$ref: root});
+
+    // Shared, bounded unions prevent Ajv from generating functions that exceed its stack limit.
+    const unions = new Map();
+    let groupIndex = 0;
+    function groupUnions(value) {
+        if (!value || typeof value !== "object") return;
+        const alternatives = value.anyOf;
+        if (Array.isArray(alternatives) && alternatives.length > 32 &&
+            alternatives.every(item => typeof item?.$ref === "string" && Object.keys(item).length === 1)) {
+            const key = JSON.stringify(alternatives);
+            if (!unions.has(key)) {
+                const groups = [];
+                for (let offset = 0; offset < alternatives.length; offset += 32) {
+                    let name;
+                    do {
+                        name = `__kestra_anyOf_${groupIndex++}`;
+                    } while (Object.hasOwn(definitions, name));
+                    definitions[name] = {anyOf: alternatives.slice(offset, offset + 32)};
+                    groups.push({$ref: `#/definitions/${name}`});
+                }
+                unions.set(key, groups);
+            }
+            value.anyOf = unions.get(key);
+        }
+        for (const child of Object.values(value)) groupUnions(child);
+    }
+    for (const definition of Object.values(definitions)) groupUnions(definition);
 
     return {
         $schema: "http://json-schema.org/draft-07/schema#",

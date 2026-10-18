@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {resolve} from "node:path";
+import {createRequire} from "node:module";
 import {releaseVersion, flowSchema, updateSchemaStore} from "./update.mjs";
 
 const bundle = {
@@ -35,6 +36,46 @@ test("fails on incomplete bundles instead of publishing a partial schema", () =>
     assert.throws(() => flowSchema({...bundle, roots: {}}, "2.0.5"), /full plugin schema bundle/);
     assert.throws(() => flowSchema({...bundle, definitions: {Flow: bundle.definitions.Flow}}, "2.0.5"), /Missing schema definition: Task/);
     assert.throws(() => flowSchema({...bundle, definitions: {Flow: {$ref: "https://example.org/schema.json"}}}, "2.0.5"), /Unsupported schema reference/);
+});
+
+test("large task unions share bounded groups without changing accepted tasks", () => {
+    const require = createRequire(resolve(process.env.SCHEMASTORE_DIR, "package.json"));
+    const Ajv = require("ajv");
+    const tasks = Object.fromEntries(Array.from({length: 65}, (_, i) => [`Task${i}`, {
+        type: "object",
+        properties: {type: {const: `Task${i}`}, value: {type: "number"}},
+        required: ["type", "value"],
+    }]));
+    const union = {anyOf: Object.keys(tasks).map(name => ({$ref: `#/definitions/${name}`}))};
+    const largeBundle = {
+        ...bundle,
+        definitions: {
+            ...tasks,
+            __kestra_anyOf_0: {type: "string"},
+            Flow: {type: "object", properties: {
+                task: union, otherTask: structuredClone(union),
+                label: {$ref: "#/definitions/__kestra_anyOf_0"},
+            }, required: ["task"]},
+        },
+    };
+    const before = structuredClone(largeBundle);
+    const schema = flowSchema(largeBundle, "2.0.5");
+    const properties = schema.definitions.Flow.properties;
+    assert.equal(properties.task.anyOf.length, 3);
+    assert.deepEqual(properties.task, properties.otherTask);
+    assert.deepEqual(schema.definitions.__kestra_anyOf_0, {type: "string"});
+    for (const ref of properties.task.anyOf) {
+        assert.ok(schema.definitions[ref.$ref.slice("#/definitions/".length)].anyOf.length <= 32);
+    }
+    const validate = new Ajv().compile(schema);
+    for (const type of Object.keys(tasks)) {
+        assert.equal(validate({task: {type, value: 1}}), true, type);
+        assert.equal(validate({task: {type, value: "invalid"}}), false, type);
+    }
+    assert.equal(validate({task: {type: "Unknown", value: 1}}), false);
+    assert.equal(validate({task: {type: "Task0"}}), false);
+    assert.deepEqual(largeBundle, before);
+    assert.deepEqual(flowSchema(largeBundle, "2.0.5"), schema);
 });
 
 function fixture(t) {

@@ -5,6 +5,8 @@ the released executable's SHA-256 checksum and extracts its embedded
 `plugins-schema.json`. It follows the flow root's references to produce a standalone
 Draft 7 schema, retaining full plugin definitions without starting a server or
 consulting the live plugin catalog. Releases without a full bundle fail explicitly.
+Large task and trigger unions use shared groups of references to avoid exceeding
+Ajv's stack limit while preserving the same accepted configurations.
 
 SchemaStore uses full versions (`kestra-MAJOR.MINOR.PATCH.json`). The script preserves
 existing versions and only advances the catalog default for a newer version. It

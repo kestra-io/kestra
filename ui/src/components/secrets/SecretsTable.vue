@@ -83,7 +83,7 @@
                         <template #content>
                             <span>{{ $t("secret.isReadOnly") }}</span>
                         </template>
-                        <KsIcon class="d-flex justify-content-center">
+                        <KsIcon class="locked-icon">
                             <Lock />
                         </KsIcon>
                     </KsTooltip>
@@ -711,5 +711,10 @@
         align-items: center;
         justify-content: space-between;
         width: 100%;
+    }
+
+    .locked-icon {
+        display: flex;
+        justify-content: center;
     }
 </style>

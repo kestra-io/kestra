@@ -2,7 +2,7 @@
     <div class="ks-editor edit-flow-editor">
         <nav v-if="!isDiff && navbar" class="top-nav">
             <slot name="nav">
-                <div class="text-nowrap">
+                <div class="top-nav-actions">
                     <KsButtonGroup>
                         <KsButton
                             :tooltip="$t('Fold content lines')"
@@ -21,12 +21,12 @@
                 </div>
             </slot>
         </nav>
-        <div class="editor-absolute-container pe-none">
+        <div class="editor-absolute-container">
             <slot name="absolute" />
         </div>
         <span v-if="label" class="label">{{ label }}</span>
-        <div class="editor-container" ref="container" :class="[containerClass, {'mb-2': label}]">
-            <div ref="editorContainer" class="editor-wrapper position-relative">
+        <div class="editor-container" ref="container" :class="[containerClass, {'has-label': label}]">
+            <div ref="editorContainer" class="editor-wrapper">
                 <div>
                     <div
                         data-testid="monaco-editor"
@@ -35,7 +35,7 @@
                         @dragover.prevent
                         @drop.prevent="onDrop"
                     />
-                    <div ref="datePickerWrapper" v-show="datePickerShown">
+                    <div ref="datePickerWrapper" v-show="datePickerShown" class="date-picker-wrapper">
                         <KsDatePicker
                             ref="datePicker"
                             type="datetime"
@@ -46,7 +46,7 @@
                             @keydown.esc.prevent="editorResolved?.focus()"
                             @keydown.enter.prevent="datePickerCallback"
                             :clearable="false"
-                            class="z-3"
+                            class="editor-date-picker"
                         />
                     </div>
                     <textarea
@@ -63,7 +63,7 @@
                 >
                     {{ placeholder }}
                 </div>
-                <div class="position-absolute bottom-right">
+                <div class="bottom-right">
                     <slot name="buttons" />
                 </div>
                 <div class="editor-footer-row">
@@ -396,5 +396,32 @@
         flex-shrink: 0;
         width: 1em;
         height: 1em;
+    }
+</style>
+
+<style scoped lang="scss">
+    .top-nav-actions {
+        white-space: nowrap;
+    }
+
+    .editor-absolute-container {
+        pointer-events: none;
+    }
+
+    .editor-container.has-label {
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .editor-wrapper {
+        position: relative;
+    }
+
+    .date-picker-wrapper,
+    .editor-date-picker {
+        z-index: var(--ks-z-dropdown);
+    }
+
+    .bottom-right {
+        position: absolute;
     }
 </style>

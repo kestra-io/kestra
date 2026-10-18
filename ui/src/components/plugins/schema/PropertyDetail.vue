@@ -49,7 +49,7 @@
                     <KsAlert type="info" :closable="false">
                         <slot
                             name="markdown"
-                            :content="INTERNAL_STORAGE_URI_HINT"
+                            :content="$t('plugins.internal_storage_uri_hint', {example: INTERNAL_STORAGE_URI_EXAMPLE})"
                         />
                     </KsAlert>
                 </div>
@@ -63,7 +63,7 @@
     import {KsAlert, KsTag} from "@kestra-io/design-system"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
 
-    const INTERNAL_STORAGE_URI_HINT = "Pebble expression referencing an Internal Storage URI e.g. `{{ outputs.mytask.uri }}`."
+    const INTERNAL_STORAGE_URI_EXAMPLE = "`{{ outputs.mytask.uri }}`"
 
     type ValueRow = {
         key: keyof JSONProperty;

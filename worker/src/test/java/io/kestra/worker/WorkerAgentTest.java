@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.MaintenanceService;
+import io.kestra.core.worker.models.WorkerInfo;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.services.WorkerConnectionService;
 
@@ -32,8 +33,27 @@ class WorkerAgentTest {
         assertThat(workerAgent(null).jobBufferSize(8)).isEqualTo(8);
     }
 
-    @SuppressWarnings("unchecked")
+    @Test
+    void shouldIdentifyItselfWithTheWorkerInfoIdWhenCreated() {
+        WorkerInfo workerInfo = new WorkerInfo();
+
+        assertThat(workerAgent(null, workerInfo).getId()).isEqualTo(workerInfo.getWorkerId());
+    }
+
+    @Test
+    void shouldUseAFreshIdWhenAnotherWorkerAlreadyClaimedTheWorkerInfoId() {
+        WorkerInfo workerInfo = new WorkerInfo();
+        workerAgent(null, workerInfo);
+
+        assertThat(workerAgent(null, workerInfo).getId()).isNotEqualTo(workerInfo.getWorkerId());
+    }
+
     private static WorkerAgent workerAgent(Integer jobBufferSize) {
+        return workerAgent(jobBufferSize, new WorkerInfo());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static WorkerAgent workerAgent(Integer jobBufferSize, WorkerInfo workerInfo) {
         return new WorkerAgent(
             mock(ApplicationEventPublisher.class),
             mock(WorkerConnectionService.class),
@@ -43,7 +63,8 @@ class WorkerAgentTest {
             mock(MaintenanceService.class),
             mock(MetricRegistry.class),
             mock(ServerConfig.class),
-            new WorkerConfig(null, jobBufferSize)
+            new WorkerConfig(null, jobBufferSize),
+            workerInfo
         );
     }
 }

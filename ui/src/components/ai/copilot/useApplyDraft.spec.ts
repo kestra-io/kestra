@@ -29,8 +29,7 @@ vi.mock("@kestra-io/design-system", () => ({
     ),
 }))
 
-let parsed: {namespace?: string; id?: string} = {}
-vi.mock("@kestra-io/topology", () => ({flowYamlUtils: {parse: () => parsed}}))
+// The YAML goes through topology's real parser, so each test states its target in its own source.
 
 const createFlow = vi.fn().mockResolvedValue({})
 const updateFlow = vi.fn().mockResolvedValue({})
@@ -69,6 +68,18 @@ const problem = (detail: string) => ({
 const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
 const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
+// The EE override is mocked so both the unsupported-in-OSS default and the EE-present path are testable.
+const testSuiteOpenInEditor = vi.fn()
+const testSuiteApply = vi.fn().mockResolvedValue(true)
+const testSuiteSupported = {value: false}
+vi.mock("override/components/ai/copilot/testSuiteDraftActions", () => ({
+    useTestSuiteDraftActions: () => ({
+        supported: testSuiteSupported.value,
+        openInEditor: testSuiteOpenInEditor,
+        apply: testSuiteApply,
+    }),
+}))
+
 import type {RouteLocationNormalizedLoaded, RouteParams} from "vue-router"
 import {useApplyDraft, isViewingFlow} from "./useApplyDraft"
 
@@ -79,7 +90,6 @@ describe("useApplyDraft", () => {
         vi.clearAllMocks()
         routeName = undefined
         routeParams = {tenant: "main"}
-        parsed = {namespace: "company.team", id: "my-flow"}
         alert.mockResolvedValue(undefined)
         createFlow.mockResolvedValue({})
         updateFlow.mockResolvedValue({})
@@ -90,6 +100,29 @@ describe("useApplyDraft", () => {
     })
 
     const dashboardDraft = (over = {}) => ({draftId: "d9", kind: "DASHBOARD" as const, yaml: "id: my-dash\ntitle: My dash", valid: true, constraints: null, ...over})
+    const testSuiteDraft = (over = {}) => ({draftId: "d10", kind: "TEST_SUITE" as const, yaml: "id: my-tests\nnamespace: company.team\nflowId: my-flow", valid: true, constraints: null, ...over})
+
+    it("reports unit tests unsupported in OSS", () => {
+        testSuiteSupported.value = false
+        expect(useApplyDraft().testSuiteSupported).toBe(false)
+    })
+
+    it("hands a unit-test draft to the EE test actions instead of the flow path", async () => {
+        testSuiteSupported.value = true
+        const {applying, apply, openInEditor} = useApplyDraft()
+
+        openInEditor(testSuiteDraft())
+        expect(testSuiteOpenInEditor).toHaveBeenCalled()
+        expect(push).not.toHaveBeenCalled()
+
+        expect(await apply(testSuiteDraft())).toBe(true)
+        expect(testSuiteApply).toHaveBeenCalled()
+        // Never mistaken for a flow — the flow API stays untouched.
+        expect(createFlow).not.toHaveBeenCalled()
+        // The in-flight flag is released once the EE path settles.
+        expect(applying.value).toBe(false)
+        testSuiteSupported.value = false
+    })
 
     it("openInEditor pushes flows/create with the drafted YAML as blueprintSourceYaml", () => {
         useApplyDraft().openInEditor(draft())
@@ -108,7 +141,6 @@ describe("useApplyDraft", () => {
         // is saved for review rather than going live unattended.
         expect(createFlow).toHaveBeenCalledWith(
             expect.objectContaining({body: "id: my-flow\nnamespace: company.team", draft: true}),
-            expect.objectContaining({showMessageOnError: false}),
         )
         expect(updateFlow).not.toHaveBeenCalled()
         // On success it navigates to the applied flow.
@@ -137,7 +169,6 @@ describe("useApplyDraft", () => {
         await useApplyDraft().apply(draft())
         expect(updateFlow).toHaveBeenCalledWith(
             expect.objectContaining({namespace: "company.team", id: "my-flow", body: "id: my-flow\nnamespace: company.team"}),
-            expect.objectContaining({showMessageOnError: false}),
         )
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "flows/update"}))
     })
@@ -188,7 +219,6 @@ describe("useApplyDraft", () => {
     })
 
     it("apply alerts and skips confirm when the draft has no namespace/id", async () => {
-        parsed = {} // no namespace/id parsed from the YAML
         await useApplyDraft().apply(draft({yaml: "not: a-flow"}))
         expect(alert).toHaveBeenCalled()
         expect(messageBox).not.toHaveBeenCalled()
@@ -245,7 +275,6 @@ describe("useApplyDraft", () => {
         await useApplyDraft().apply(draft())
         expect(loadFlow).toHaveBeenCalledWith(
             {namespace: "company.team", id: "my-flow", store: false},
-            expect.objectContaining({ignoreNotFound: true, showMessageOnError: false}),
         )
     })
 
@@ -266,9 +295,18 @@ describe("useApplyDraft", () => {
         expect(applying.value).toBe(false)
     })
 
+    it("throws a non-404 error during the diff fetch instead of silently falling back to empty", async () => {
+        messageBox.mockResolvedValueOnce(undefined)
+        loadFlow.mockRejectedValueOnce(Object.assign(new Error("server error"), {status: 500}))
+        await useApplyDraft().apply(draft())
+        expect(messageBox).not.toHaveBeenCalled()
+        expect(createFlow).not.toHaveBeenCalled()
+        expect(alert).toHaveBeenCalled()
+    })
+
     it("still shows the confirm (before-source falls back to empty) when the persisted-flow fetch fails", async () => {
         messageBox.mockResolvedValueOnce(undefined)
-        loadFlow.mockRejectedValueOnce(new Error("not found"))
+        loadFlow.mockRejectedValueOnce(Object.assign(new Error("not found"), {status: 404}))
         await useApplyDraft().apply(draft())
         expect(messageBox).toHaveBeenCalled()
         expect(createFlow).toHaveBeenCalled()
@@ -286,32 +324,29 @@ describe("useApplyDraft", () => {
     })
 
     it("apply CREATES the dashboard, then navigates to it (id only, no namespace)", async () => {
-        parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
         await useApplyDraft().apply(dashboardDraft())
         expect(clientPost).toHaveBeenCalledWith(
             "/api/v1/main/dashboards",
             "id: my-dash\ntitle: My dash",
-            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
+            expect.objectContaining({headers: {"Content-Type": "application/x-yaml"}}),
         )
         expect(clientPut).not.toHaveBeenCalled()
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "dashboards/update", params: {dashboard: "my-dash", tenant: "main"}}))
     })
 
     it("apply UPDATES the dashboard when create reports it already exists", async () => {
-        parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
         clientPost.mockRejectedValueOnce(dashboardExists)
         await useApplyDraft().apply(dashboardDraft())
         expect(clientPut).toHaveBeenCalledWith(
             "/api/v1/main/dashboards/my-dash",
             "id: my-dash\ntitle: My dash",
-            expect.objectContaining({showMessageOnError: false, headers: {"Content-Type": "application/x-yaml"}}),
+            expect.objectContaining({headers: {"Content-Type": "application/x-yaml"}}),
         )
     })
 
     it("apply alerts and skips confirm when the dashboard draft has no id", async () => {
-        parsed = {} // no id parsed
         await useApplyDraft().apply(dashboardDraft({yaml: "title: nope"}))
         expect(alert).toHaveBeenCalled()
         expect(confirm).not.toHaveBeenCalled()

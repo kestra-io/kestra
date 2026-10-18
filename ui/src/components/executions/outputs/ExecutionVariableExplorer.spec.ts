@@ -4,7 +4,11 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import ExecutionVariableExplorer from "./ExecutionVariableExplorer.vue"
-import {useExecutionsStore} from "../../../stores/executions"
+import type {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
+import {useExecutionsStore, type Execution} from "../../../stores/executions"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
+import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+import * as Utils from "../../../utils/utils"
 
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
@@ -45,6 +49,10 @@ const messages = {
         tasks_outputs: "Task outputs",
         tree: "Tree",
     },
+    loop_iterations_notice: {
+        outputs: "Loop iterations outputs live in their sub-executions",
+        view_iterations: "View iterations",
+    },
 }
 
 const globalConfig = {
@@ -64,7 +72,11 @@ const globalConfig = {
     },
 }
 
-function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string; type: string; variables?: Record<string, unknown>}) {
+function mountExplorer(
+    variables: Record<string, unknown>,
+    trigger?: {id: string; type: string; variables?: Record<string, unknown>},
+    taskRunList: Execution["taskRunList"] = [],
+) {
     const executionsStore = useExecutionsStore()
     executionsStore.execution = {
         id: "execution-id",
@@ -79,7 +91,7 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
         variables,
         trigger,
         inputs: {},
-        taskRunList: [],
+        taskRunList,
         state: {
             current: "SUCCESS",
             histories: [],
@@ -91,15 +103,44 @@ function mountExplorer(variables: Record<string, unknown>, trigger?: {id: string
     return i18nMount(ExecutionVariableExplorer, {messages, global: globalConfig})
 }
 
+function sidebarSections(wrapper: ReturnType<typeof i18nMount>): ExplorerSection[] {
+    return wrapper.findComponent({name: "SidebarList"}).props("sections") as ExplorerSection[]
+}
+
 async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
-    const item = sidebar.props("sections")
-        .find((section: {key: string; items: {label: string}[]}) => section.key === sectionKey)
-        .items
-        .find((candidate: {label: string}) => candidate.label === itemName)
+    const item = sidebarSections(wrapper)
+        .find((section) => section.key === sectionKey)
+        ?.items
+        .find((candidate) => candidate.label === itemName)
 
     await sidebar.vm.$emit("select", item)
     await flushPromises()
+}
+
+async function mountLoopExplorer(outputsByTaskRunId: Record<string, Record<string, unknown>>) {
+    vi.mocked(OutputsAPI.taskOutputsInformation).mockResolvedValueOnce([
+        {taskRunId: "loop-run", taskId: "loop"},
+        {taskRunId: "log-run", taskId: "log"},
+    ])
+    vi.mocked(OutputsAPI.taskRunOutputs).mockImplementation(async ({taskRunId}) => outputsByTaskRunId[taskRunId] ?? {})
+
+    useExecutionsStore().flow = {
+        id: "flow",
+        namespace: "io.kestra.tests",
+        tasks: [
+            {id: "loop", type: "io.kestra.plugin.core.flow.Loop", tasks: [{id: "hello", type: "io.kestra.plugin.core.log.Log"}]},
+            {id: "log", type: "io.kestra.plugin.core.log.Log"},
+        ],
+    } as FlowForExecution
+
+    const wrapper = mountExplorer({}, undefined, [
+        {id: "loop-run", taskId: "loop", state: {current: "SUCCESS", histories: []}},
+        {id: "log-run", taskId: "log", state: {current: "SUCCESS", histories: []}},
+    ])
+    await flushPromises()
+
+    return wrapper
 }
 
 describe("ExecutionVariableExplorer", () => {
@@ -246,10 +287,9 @@ describe("ExecutionVariableExplorer", () => {
         })
         await flushPromises()
 
-        const sidebar = wrapper.findComponent({name: "SidebarList"})
-        const triggerItems = sidebar.props("sections")
-            .find((section: {key: string; items: {label: string}[]}) => section.key === "triggers")
-            .items as {label: string}[]
+        const triggerItems = sidebarSections(wrapper)
+            .find((section) => section.key === "triggers")
+            ?.items ?? []
 
         // trigger variables sit at the top level, id/type only under `_context` — mirroring
         // RunVariables.java, not the DTO's own `id` / `type` / `variables` fields.
@@ -265,5 +305,51 @@ describe("ExecutionVariableExplorer", () => {
         await selectVariable(wrapper, "_context", "triggers")
         expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression"))
             .toBe("{{ trigger._context }}")
+    })
+
+    describe("loop iterations notice", () => {
+        test("shows the notice, narrowed to the Loop task, once a Loop output reports iterations", async () => {
+            const wrapper = await mountLoopExplorer({"loop-run": {iterationCount: 3}})
+
+            await selectVariable(wrapper, "loop", "tasksOutputs")
+
+            expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(true)
+            expect(wrapper.findComponent({name: "RouterLink"}).props("to").query["filters[taskId][EQUALS]"]).toBe("loop")
+        })
+
+        test("hides the notice for a Loop that ran no iteration", async () => {
+            const wrapper = await mountLoopExplorer({"loop-run": {iterationCount: 0}})
+
+            await selectVariable(wrapper, "loop", "tasksOutputs")
+
+            expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(false)
+        })
+
+        test("hides the notice for the output of a task that is not a Loop", async () => {
+            const wrapper = await mountLoopExplorer({"log-run": {iterationCount: 3}})
+
+            await selectVariable(wrapper, "log", "tasksOutputs")
+
+            expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(false)
+        })
+    })
+
+    test("keeps an empty-string variable visible in the sidebar and scalar viewer", async () => {
+        const wrapper = mountExplorer({
+            empty: "",
+        })
+        await flushPromises()
+
+        const items = sidebarSections(wrapper)
+            .find((section) => section.key === "variables")
+            ?.items ?? []
+
+        const byLabel = Object.fromEntries(
+            items.map((item): [string, ExplorerItem] => [item.label, item]),
+        )
+        expect(byLabel.empty.preview).toBe(Utils.EMPTY_STRING_DISPLAY)
+
+        await selectVariable(wrapper, "empty")
+        expect(wrapper.find(".viewer__scalar").text()).toBe(Utils.EMPTY_STRING_DISPLAY)
     })
 })

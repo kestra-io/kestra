@@ -319,6 +319,31 @@ LevelOfDetailExpanded.args = {
     defaultViewport: {x: 0, y: 0, zoom: 1.5},
 }
 
+export const LevelOfDetailExpandedWithoutDetails: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Expanded, no details to show",
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: `<div style="height: 600px; width: 100%;">
+            <Topology v-bind="args">
+                <template #taskDetails><span v-if="false" /></template>
+            </Topology>
+        </div>`,
+    }),
+    args: {...LevelOfDetailExpanded.args, id: "story-lod-expanded-empty"},
+    play: async ({canvasElement}) => {
+        const overlays = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"node-details-overlay\"]"))
+
+        await waitFor(() => expect(overlays().length).toBeGreaterThan(0))
+
+        for (const overlay of overlays()) {
+            expect(getComputedStyle(overlay).display).toBe("none")
+        }
+    },
+}
+
 const DURATION_BAR_SOURCE = `
 id: duration_bar_showcase
 namespace: qa.topology

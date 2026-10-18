@@ -1,6 +1,6 @@
 <template>
     <KsAutocomplete
-        class="flex-shrink-0"
+        class="doc-search"
         v-model="query"
         :fetchSuggestions="search"
         popperClass="doc-toc-search-popper"
@@ -9,16 +9,16 @@
         <template #default="{item}">
             <RouterLink
                 :to="{path: '/' + item.parsedUrl}"
-                class="d-flex gap-2"
+                class="search-result-link"
             >
                 {{ item.title }}
                 <ArrowRight class="is-justify-end" />
             </RouterLink>
         </template>
     </KsAutocomplete>
-    <ul class="toc d-flex flex-column gap-3">
+    <ul class="toc">
         <li v-for="{section, children} in sectionsWithChildren" :key="section">
-            <span class="text-secondary">
+            <span class="section-title">
                 {{ section.toUpperCase() }}
             </span>
             <RecursiveToc :parent="{children}" />
@@ -60,7 +60,19 @@
 </script>
 
 <style lang="scss" scoped>
+    .doc-search {
+        flex-shrink: 0;
+    }
+
+    .search-result-link {
+        display: flex;
+        gap: var(--ks-spacing-2);
+    }
+
     .toc {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
         flex: 1;
         min-height: 0;
         overflow-y: auto;
@@ -93,6 +105,7 @@
         padding: var(--ks-spacing-1) var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         letter-spacing: 0.05em;
+        color: var(--ks-text-secondary);
     }
 
     .toc :deep(a[class*="depth-"]), .toc :deep(span[class*="depth-"]) {

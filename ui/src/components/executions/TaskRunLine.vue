@@ -16,7 +16,7 @@
                 <ChevronRight v-else />
             </KsIcon>
         </div>
-        <div class="task-icon d-none d-md-inline-block">
+        <div class="task-icon">
             <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
@@ -26,7 +26,7 @@
         </div>
 
         <div
-            class="task-id flex-grow-1"
+            class="task-id"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
         >
             <KsTooltip>
@@ -42,7 +42,7 @@
                     {{ formatAttemptDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
                 <span>
-                    <span class="me-1 fw-bold">{{ currentTaskRun.taskId }}</span>
+                    <span class="task-id-text">{{ currentTaskRun.taskId }}</span>
                     <small v-if="currentTaskRun.value">
                         {{ currentTaskRun.value }}
                     </small>
@@ -50,8 +50,8 @@
             </KsTooltip>
         </div>
 
-        <div class="task-duration d-none d-md-inline-block">
-            <small class="me-1">
+        <div class="task-duration">
+            <small>
                 <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" :subject="currentTaskRun.taskId" />
             </small>
         </div>
@@ -81,7 +81,7 @@
     </div>
     <div class="attempt-header" :class="{'attempt-header--flush': hideHeader}">
         <KsSelect
-            class="d-none d-md-inline-block attempt-select"
+            class="attempt-select"
             :modelValue="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
             @change="emit('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
@@ -101,8 +101,8 @@
             <KsExecutionStatus size="small" :status="selectedAttempt(currentTaskRun).state.current" />
         </div>
 
-        <div class="task-duration d-none d-md-inline-block">
-            <small class="me-1">
+        <div class="task-duration">
+            <small>
                 <Duration
                     :histories="selectedAttempt(currentTaskRun).state.histories"
                     :subject="`${currentTaskRun.taskId}, ${$t('attempt')} ${(selectedAttemptNumberByTaskRunId[currentTaskRun.id] ?? 0) + 1}`"
@@ -257,7 +257,16 @@
             font-size: var(--ks-font-size-xs)
         }
 
+        .task-duration {
+            display: none;
+
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
+        }
+
         .task-duration small {
+            margin-inline-end: var(--ks-spacing-1);
             white-space: nowrap;
             color: var(--ks-text-secondary);
             line-height: 1;
@@ -270,6 +279,12 @@
         padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
 
         .task-icon {
+            display: none;
+
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
+
             flex-shrink: 0;
             width: var(--ks-spacing-6);
             height: var(--ks-spacing-6);
@@ -277,6 +292,7 @@
         }
 
         .task-id {
+            flex-grow: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -284,6 +300,11 @@
             span span {
                 color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-sm);
+            }
+
+            .task-id-text {
+                margin-inline-end: var(--ks-spacing-1);
+                font-weight: var(--ks-font-weight-bold);
             }
         }
     }
@@ -295,6 +316,14 @@
     }
 
     .attempt-header {
+        .attempt-select {
+            display: none;
+
+            @media (min-width: 768px) {
+                display: inline-block;
+            }
+        }
+
         .kel-select {
             width: 115px;
             height: 32px;

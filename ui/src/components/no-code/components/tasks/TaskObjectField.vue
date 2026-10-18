@@ -5,7 +5,7 @@
         :is="type"
         v-bind="componentProps"
         :disabled
-        class="mt-1 mb-2 wrapper"
+        class="wrapper field-wrapper"
     />
     <component
         v-else-if="frameRoot"
@@ -127,7 +127,7 @@
             :is="type"
             v-bind="componentProps"
             :disabled
-            class="mt-1 mb-2 wrapper"
+            class="wrapper field-wrapper"
         />
         <KsMarkdown
             v-if="inlineHelp && inlineHelpText && !isBoolean && !isNumber"
@@ -413,5 +413,10 @@
 
 .nested-card-body {
     padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
+}
+
+.field-wrapper {
+    margin-top: var(--ks-spacing-1);
+    margin-bottom: var(--ks-spacing-2);
 }
 </style>

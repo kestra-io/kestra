@@ -11,20 +11,14 @@
 </template>
 
 <script setup lang="ts">
+    import {computed, watch} from "vue"
     import {ElConfigProvider, ElPagination, type PaginationProps} from "element-plus"
-    import en from "element-plus/es/locale/lang/en"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import {designSystemLocale} from "../../i18n"
+    import {loadPaginationLocale, paginationLocaleFor} from "./paginationLocale"
 
-    const paginationLocale = {
-        ...en,
-        el: {
-            ...en.el,
-            pagination: {
-                ...en.el.pagination,
-                pagesize: " per page",
-            },
-        },
-    }
+    watch(designSystemLocale, (lang) => loadPaginationLocale(lang), {immediate: true})
+    const paginationLocale = computed(() => paginationLocaleFor(designSystemLocale.value))
 
     defineOptions({inheritAttrs: false})
 

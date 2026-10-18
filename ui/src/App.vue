@@ -95,6 +95,7 @@
 
         if (config.version) {
             await docStore.initResourceUrlTemplate(config.version)
+
             if (config.uuid) {
                 apiStore.loadFeeds({
                     version: config.version,

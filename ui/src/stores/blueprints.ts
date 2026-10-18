@@ -75,7 +75,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const getBlueprints = async (options: Options): Promise<BlueprintSearchResult> => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
-            const response = await axios.get<BlueprintSearchResult>(COMMUNITY, {params: options.params, ...VALIDATE})
+            const response = await axios.get<BlueprintSearchResult>(COMMUNITY, {params: options.params})
             return response.data
         }
 

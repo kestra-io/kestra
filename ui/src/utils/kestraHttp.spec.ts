@@ -31,7 +31,7 @@ vi.mock("nprogress", () => ({
 }))
 
 import type {Router} from "vue-router"
-import {handled, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
+import {handled, handledIf, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
 import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY, useServerReachability} from "../composables/useServerReachability"
 import {isReauthOpen, requestReauth, resolveReauth} from "../composables/useReauthDialog"
 
@@ -175,6 +175,22 @@ describe("setupKestraHttp central 404 handling", () => {
         await new Promise(r => setTimeout(r, 0))
         expect(coreStore.message).not.toBeUndefined()
     })
+
+    it("does not report a status the local catch block expects through handledIf", async () => {
+        const {coreStore, notFound} = triggerNotFound()
+        handledIf(notFound, [404])
+
+        await new Promise(r => setTimeout(r, 0))
+        expect(coreStore.message).toBeUndefined()
+    })
+
+    it("still reports a status the local catch block did not expect through handledIf", async () => {
+        const {coreStore, notFound} = triggerNotFound()
+        handledIf(notFound, [409])
+
+        await new Promise(r => setTimeout(r, 0))
+        expect(coreStore.message).toMatchObject({status: 404})
+    })
     beforeEach(() => {
         vi.spyOn(console, "error").mockImplementation(() => {})
     })
@@ -215,6 +231,51 @@ describe("isReportedCentrally", () => {
         expect(isReportedCentrally(failure(400))).toBe(false)
         expect(isReportedCentrally(failure(401))).toBe(false)
         expect(isReportedCentrally({status: 0} as KestraHttpError)).toBe(false)
+    })
+})
+
+describe("handledIf", () => {
+    const failure = (status: number) => Object.assign(new Error(`${status}`), {
+        status,
+        problem: {type: "https://kestra.io/problems/not-found", title: "Resource not found", status},
+        response: {data: {title: "problem"}},
+    }) as KestraHttpError
+
+    it("marks a status the caller expects as handled, wherever the error carries it", () => {
+        const onError = failure(404)
+        const onResponse = {response: {status: 404}}
+
+        expect(handledIf(onError, [409, 404])).toBe(true)
+        expect(handledIf(onResponse, [404])).toBe(true)
+
+        expect(onError.__kestra_handled).toBe(true)
+        expect(onResponse).toHaveProperty("__kestra_handled", true)
+        expect(isReportedCentrally(onError)).toBe(false)
+    })
+
+    it("leaves a status the caller does not expect, or a failure with no status, to the global toast", () => {
+        const error = failure(500)
+
+        expect(handledIf(error, [404])).toBe(false)
+        expect(handledIf(new Error("Network Error"), [404])).toBe(false)
+        expect(handledIf(undefined, [404])).toBe(false)
+
+        expect(error.__kestra_handled).toBeUndefined()
+        expect(isReportedCentrally(error)).toBe(true)
+    })
+
+    it("keeps the original error as it was, apart from the handled flag", () => {
+        const accepted = failure(404)
+        const rejected = failure(500)
+        const before = {accepted: {...accepted}, rejected: {...rejected}}
+
+        handledIf(accepted, [404])
+        handledIf(rejected, [404])
+
+        expect(accepted).toBeInstanceOf(Error)
+        expect(accepted.message).toBe("404")
+        expect({...accepted}).toEqual({...before.accepted, __kestra_handled: true})
+        expect({...rejected}).toEqual(before.rejected)
     })
 })
 

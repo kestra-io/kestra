@@ -1,0 +1,121 @@
+{
+  "nodes": [
+    {
+      "uid": "root.root-1",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    },
+    {
+      "uid": "root.end-1",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    },
+    {
+      "uid": "root.wait_for_link.root-1",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
+    },
+    {
+      "uid": "root.wait_for_link.end-1",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
+    },
+    {
+      "uid": "root.wait_for_link",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "wait_for_link",
+        "type": "io.kestra.plugin.core.flow.LoopUntil",
+        "checkFrequency": {
+          "interval": "PT30S",
+          "maxDuration": "PT5M",
+          "maxIterations": 5
+        },
+        "condition": "{{ fromJson(outputs.generate_download_link.body).status == 'ok' }}",
+        "tasks": [
+          {
+            "id": "generate_download_link",
+            "type": "io.kestra.plugin.core.log.Log",
+            "message": "Hello"
+          }
+        ]
+      },
+      "relationType": "SEQUENTIAL"
+    },
+    {
+      "uid": "root.wait_for_link.generate_download_link",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "generate_download_link",
+        "type": "io.kestra.plugin.core.log.Log",
+        "message": "Hello"
+      },
+      "relationType": "SEQUENTIAL"
+    }
+  ],
+  "edges": [
+    {
+      "source": "root.root-1",
+      "target": "root.wait_for_link.root-1",
+      "relation": {}
+    },
+    {
+      "source": "root.wait_for_link.root-1",
+      "target": "root.wait_for_link",
+      "relation": {}
+    },
+    {
+      "source": "root.wait_for_link",
+      "target": "root.wait_for_link.generate_download_link",
+      "relation": {
+        "relationType": "SEQUENTIAL"
+      }
+    },
+    {
+      "source": "root.wait_for_link.generate_download_link",
+      "target": "root.wait_for_link.end-1",
+      "relation": {}
+    },
+    {
+      "source": "root.wait_for_link.end-1",
+      "target": "root.end-1",
+      "relation": {}
+    }
+  ],
+  "clusters": [
+    {
+      "cluster": {
+        "uid": "cluster_root.wait_for_link",
+        "type": "io.kestra.core.models.hierarchies.GraphCluster",
+        "relationType": "SEQUENTIAL",
+        "taskNode": {
+          "uid": "root.wait_for_link",
+          "type": "io.kestra.core.models.hierarchies.GraphTask",
+          "task": {
+            "id": "wait_for_link",
+            "type": "io.kestra.plugin.core.flow.LoopUntil",
+            "checkFrequency": {
+              "interval": "PT30S",
+              "maxDuration": "PT5M",
+              "maxIterations": 5
+            },
+            "condition": "{{ fromJson(outputs.generate_download_link.body).status == 'ok' }}",
+            "tasks": [
+              {
+                "id": "generate_download_link",
+                "type": "io.kestra.plugin.core.log.Log",
+                "message": "Hello"
+              }
+            ]
+          },
+          "relationType": "SEQUENTIAL"
+        }
+      },
+      "nodes": [
+        "root.wait_for_link.root-1",
+        "root.wait_for_link.end-1",
+        "root.wait_for_link",
+        "root.wait_for_link.generate_download_link"
+      ],
+      "parents": [],
+      "start": "root.wait_for_link.root-1",
+      "end": "root.wait_for_link.end-1"
+    }
+  ]
+}

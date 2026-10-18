@@ -1,9 +1,9 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {flushPromises} from "@vue/test-utils"
-import {i18nMount} from "../../../tests/unit/i18nMount"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { flushPromises } from "@vue/test-utils"
+import { i18nMount } from "../../../tests/unit/i18nMount"
 
-import {createPinia} from "pinia"
-import {createMemoryHistory, createRouter, type Router} from "vue-router"
+import { createPinia } from "pinia"
+import { createMemoryHistory, createRouter, type Router } from "vue-router"
 import KestraDesignSystem from "@kestra-io/design-system"
 
 const searchLogs = vi.fn()
@@ -33,7 +33,7 @@ function mountLogsWrapper(router: Router) {
     return i18nMount(LogsWrapper, {
         global: {
             plugins: [createPinia(), router, KestraDesignSystem],
-            stubs: {Sections: true, TopNavBar: true},
+            stubs: { Sections: true, TopNavBar: true },
         },
     })
 }
@@ -41,9 +41,9 @@ function mountLogsWrapper(router: Router) {
 async function mountAtLogsList() {
     const router = createRouter({
         history: createMemoryHistory(),
-        routes: [{name: "logs/list", path: "/:tenant?/logs", component: {template: "<div/>"}}],
+        routes: [{ name: "logs/list", path: "/:tenant?/logs", component: { template: "<div/>" } }],
     })
-    await router.push({name: "logs/list", params: {tenant: "main"}})
+    await router.push({ name: "logs/list", params: { tenant: "main" } })
     await router.isReady()
     const wrapper = mountLogsWrapper(router)
     await settle()
@@ -56,7 +56,7 @@ const settle = async () => {
     await flushPromises()
 }
 
-describe("LogsWrapper cursor pagination", {timeout: 30000}, () => {
+describe("LogsWrapper cursor pagination", { timeout: 30000 }, () => {
     beforeEach(() => {
         window.sessionStorage.clear()
         window.localStorage.clear()
@@ -72,14 +72,14 @@ describe("LogsWrapper cursor pagination", {timeout: 30000}, () => {
     // A two-page cursor store: page 0 (p0) → page 1 (p1, last page with data) → empty.
     const useTwoPageCursorStore = () => {
         searchLogs.mockImplementation((params: any) => {
-            if (params.size === 1) return Promise.resolve({results: [], total: 0})
+            if (params.size === 1) return Promise.resolve({ results: [], total: 0 })
             switch (params.cursor) {
-            case undefined:
-                return Promise.resolve({results: [logWith("p0")], type: "CURSOR", nextCursor: "tok-1"})
-            case "tok-1":
-                return Promise.resolve({results: [logWith("p1")], type: "CURSOR", nextCursor: "tok-2"})
-            default:
-                return Promise.resolve({results: [], type: "CURSOR"})
+                case undefined:
+                    return Promise.resolve({ results: [logWith("p0")], type: "CURSOR", nextCursor: "tok-1" })
+                case "tok-1":
+                    return Promise.resolve({ results: [logWith("p1")], type: "CURSOR", nextCursor: "tok-2" })
+                default:
+                    return Promise.resolve({ results: [], type: "CURSOR" })
             }
         })
     }
@@ -123,7 +123,7 @@ describe("LogsWrapper cursor pagination", {timeout: 30000}, () => {
         expect((cursorWrapper.vm as any).logTableOptions.chart.shown).toBe(false)
 
         searchLogs.mockReset()
-        searchLogs.mockResolvedValue({results: [logWith("offset")], total: 1, type: "OFFSET"})
+        searchLogs.mockResolvedValue({ results: [logWith("offset")], total: 1, type: "OFFSET" })
         const offsetWrapper = await mountAtLogsList()
         expect((offsetWrapper.vm as any).logTableOptions.chart.shown).toBe(true)
     })
@@ -139,13 +139,13 @@ describe("LogsWrapper cursor pagination", {timeout: 30000}, () => {
     })
 
     it("shows the level-navigator chips in offset mode when counts are available", async () => {
-        const countsByLevel: Record<string, number> = {TRACE: 5, DEBUG: 5, INFO: 5, WARN: 2, ERROR: 0}
+        const countsByLevel: Record<string, number> = { TRACE: 5, DEBUG: 5, INFO: 5, WARN: 2, ERROR: 0 }
         searchLogs.mockImplementation((params: any) => {
             if (params.size === 1) {
                 const level = params.filters?.find((f: any) => f.field === "level")?.value
-                return Promise.resolve({total: countsByLevel[level] ?? 0})
+                return Promise.resolve({ total: countsByLevel[level] ?? 0 })
             }
-            return Promise.resolve({results: [logWith("offset")], total: 1, type: "OFFSET"})
+            return Promise.resolve({ results: [logWith("offset")], total: 1, type: "OFFSET" })
         })
         const wrapper = await mountAtLogsList()
 

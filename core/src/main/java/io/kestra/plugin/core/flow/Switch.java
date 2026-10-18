@@ -101,7 +101,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Schema(
         title = "The map of keys and a list of tasks to be executed if the conditional `value` matches the key"
     )
-    @PluginProperty(additionalProperties = Task[].class)
+    @PluginProperty
     private Map<String, List<Task>> cases;
 
     @PluginProperty

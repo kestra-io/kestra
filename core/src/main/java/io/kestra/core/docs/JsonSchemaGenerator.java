@@ -890,14 +890,23 @@ public class JsonSchemaGenerator {
             Content contentAnnotation = target.getAnnotationConsideringFieldAndGetter(Content.class);
             Schema contentSchemaAnnotation = contentAnnotation == null ? null : contentAnnotation.additionalPropertiesSchema();
 
-            if (pluginPropertyAnnotation != null) {
+            if (pluginPropertyAnnotation != null && pluginPropertyAnnotation.additionalProperties() != Object.class) {
                 return pluginPropertyAnnotation.additionalProperties();
-            } else if (target.getType().isInstanceOf(Map.class)) {
-                return target.getTypeParameterFor(Map.class, 1);
             } else if (schemaAnnotation != null && schemaAnnotation.additionalPropertiesSchema() != Void.class) {
                 return schemaAnnotation.additionalPropertiesSchema();
             } else if (contentSchemaAnnotation != null && contentSchemaAnnotation.additionalPropertiesSchema() != Void.class) {
                 return contentSchemaAnnotation.additionalPropertiesSchema();
+            }
+
+            ResolvedType type = target.getType();
+            if (type.isInstanceOf(Property.class) && !type.getTypeParameters().isEmpty()) {
+                type = type.getTypeParameters().getFirst();
+            }
+            if (type.isInstanceOf(Map.class)) {
+                ResolvedType valueType = type.getTypeParameters().size() > 1 ? type.getTypeParameters().get(1) : null;
+                if (valueType != null) {
+                    return valueType;
+                }
             }
 
             return Object.class;

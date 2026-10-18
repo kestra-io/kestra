@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZoneId;
@@ -967,5 +968,45 @@ class JsonSchemaGeneratorTest {
 
         assertThat(props.get("number").get("$ticketingRole"), is("TICKET_KEY"));
         assertThat(props.get("link").get("$ticketingRole"), is("TICKET_URL"));
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class TaskWithMapProperties extends Task {
+        @PluginProperty
+        private Map<String, URI> autoResolvedMap;
+
+        @PluginProperty
+        private Property<Map<String, Integer>> autoResolvedPropertyMap;
+
+        @PluginProperty(additionalProperties = String.class)
+        private Map<String, Object> legacyCustomMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldResolveMapValueTypesAsAdditionalProperties() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithMapProperties.class);
+        Map<String, Map<String, Object>> props = (Map<String, Map<String, Object>>) generate.get("properties");
+
+        Map<String, Object> autoResolvedMap = props.get("autoResolvedMap");
+        assertThat(autoResolvedMap.get("type"), is("object"));
+        Map<String, Object> autoAdditional = (Map<String, Object>) autoResolvedMap.get("additionalProperties");
+        assertThat(autoAdditional.get("type"), is("string"));
+        assertThat(autoAdditional.get("format"), is("uri"));
+
+        Map<String, Object> autoResolvedPropertyMap = props.get("autoResolvedPropertyMap");
+        assertThat(autoResolvedPropertyMap.get("type"), is("object"));
+        Map<String, Object> propAdditional = (Map<String, Object>) autoResolvedPropertyMap.get("additionalProperties");
+        assertThat(propAdditional.get("type"), is("integer"));
+
+        Map<String, Object> legacyCustomMap = props.get("legacyCustomMap");
+        assertThat(legacyCustomMap.get("type"), is("object"));
+        Map<String, Object> legacyAdditional = (Map<String, Object>) legacyCustomMap.get("additionalProperties");
+        assertThat(legacyAdditional.get("type"), is("string"));
     }
 }

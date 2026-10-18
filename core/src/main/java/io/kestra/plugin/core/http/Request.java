@@ -411,7 +411,7 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
         @Schema(
             title = "The headers of the response"
         )
-        @PluginProperty(additionalProperties = List.class)
+        @PluginProperty
         private final Map<String, List<String>> headers;
 
         @Schema(

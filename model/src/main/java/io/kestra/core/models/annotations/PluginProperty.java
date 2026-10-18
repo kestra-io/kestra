@@ -18,7 +18,9 @@ public @interface PluginProperty {
 
     /**
      * @return the Class for a map
+     * @deprecated Map value types are now resolved automatically. For untyped fields, use Swagger's {@link io.swagger.v3.oas.annotations.media.Schema#additionalPropertiesSchema()}.
      */
+    @Deprecated
     Class<?> additionalProperties() default Object.class;
 
     /**

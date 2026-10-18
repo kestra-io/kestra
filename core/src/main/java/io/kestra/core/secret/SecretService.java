@@ -2,6 +2,7 @@ package io.kestra.core.secret;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,14 +40,14 @@ public class SecretService {
             })
             .collect(
                 Collectors.toMap(
-                    entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(),
+                    entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(Locale.ROOT),
                     Map.Entry::getValue
                 )
             );
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
-        String secret = decodedSecrets.get(key.toUpperCase());
+        String secret = decodedSecrets.get(key.toUpperCase(Locale.ROOT));
         if (secret == null) {
             throw new SecretNotFoundException("Cannot find secret for key '" + key + "'.");
         }

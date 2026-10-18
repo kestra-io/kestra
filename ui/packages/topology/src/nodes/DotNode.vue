@@ -2,7 +2,7 @@
     <div class="dot-node" :class="classes">
         <Handle type="source" class="custom-handle" :position="sourcePosition" />
         <div class="dot" :class="classes">
-            <CircleIcon :class="{'text-danger': data.node.branchType === 'ERROR'}" class="circle" alt="circle" :size="5" />
+            <CircleIcon :class="{'error-branch': data.node.branchType === 'ERROR'}" class="circle" alt="circle" :size="5" />
         </div>
         <Handle type="target" class="custom-handle" :position="targetPosition" />
     </div>
@@ -28,7 +28,7 @@
     }))
 </script>
 
-<style scoped>
+<style scoped lang="scss">
     .custom-handle {
         visibility: hidden;
     }
@@ -49,5 +49,9 @@
         align-items: center;
         color: var(--ks-topology-dash);
         opacity: 0.4;
+    }
+
+    .error-branch {
+        color: var(--ks-text-error);
     }
 </style>

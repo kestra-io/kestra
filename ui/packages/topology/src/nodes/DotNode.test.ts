@@ -40,10 +40,10 @@ describe("DotNode", () => {
         expect(used.find(".dot").classes()).not.toContain("unused-path")
     })
 
-    it("should mark only error branches as dangerous", () => {
-        expect(mountDotNode({branchType: "ERROR"}).find(".circle").classes()).toContain("text-danger")
-        expect(mountDotNode({branchType: "FINALLY"}).find(".circle").classes()).not.toContain("text-danger")
-        expect(mountDotNode().find(".circle").classes()).not.toContain("text-danger")
+    it("should mark only error branches with error-branch class", () => {
+        expect(mountDotNode({branchType: "ERROR"}).find(".circle").classes()).toContain("error-branch")
+        expect(mountDotNode({branchType: "FINALLY"}).find(".circle").classes()).not.toContain("error-branch")
+        expect(mountDotNode().find(".circle").classes()).not.toContain("error-branch")
     })
 
     it("should render source and target handles", () => {

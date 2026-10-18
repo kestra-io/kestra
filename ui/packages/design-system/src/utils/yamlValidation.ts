@@ -10,6 +10,16 @@ export interface EditorMarker {
     severity: "error" | "warning" | "info";
 }
 
+const TASK_CONTAINER_KEYS = new Set([
+    "tasks",
+    "errors",
+    "finally",
+    "afterExecution",
+    "then",
+    "else",
+    "defaults",
+])
+
 export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
     const markers: EditorMarker[] = []
 
@@ -17,18 +27,14 @@ export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
         const doc = parseDocument(yamlSource, {keepSourceTokens: true})
         const seenIds = new Map<string, {line: number; col: number}>()
 
-        const processTasks = (tasks: unknown) => {
-            if (!isSeq(tasks)) return
+        const processTask = (taskMap: YAMLMap) => {
+            const idPair = taskMap.items.find(
+                (pair) => (pair.key as Scalar)?.value === "id",
+            )
 
-            for (const task of tasks.items) {
-                if (!isMap(task)) continue
-
-                const idPair = (task as YAMLMap).items.find(
-                    (pair) => (pair.key as Scalar)?.value === "id",
-                )
-
-                if (idPair && idPair.value) {
-                    const idNode = idPair.value as Scalar
+            if (idPair && idPair.value) {
+                const idNode = idPair.value as Scalar
+                if (idNode.value !== null && idNode.value !== undefined) {
                     const idValue = String(idNode.value)
 
                     if (idValue && idNode.range) {
@@ -50,14 +56,44 @@ export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
                         }
                     }
                 }
+            }
 
-                const taskMap = task as YAMLMap
-                for (const pair of taskMap.items) {
-                    const key = (pair.key as Scalar)?.value
-                    if (key === "tasks" || key === "errors" || key === "finally") {
-                        processTasks(pair.value)
+            for (const pair of taskMap.items) {
+                const key = (pair.key as Scalar)?.value
+                if (typeof key !== "string") continue
+
+                if (TASK_CONTAINER_KEYS.has(key)) {
+                    processTaskContainer(pair.value)
+                } else if (key === "cases" && isMap(pair.value)) {
+                    for (const casePair of (pair.value as YAMLMap).items) {
+                        processTaskContainer(casePair.value)
+                    }
+                } else if (key === "onPause") {
+                    processTaskContainer(pair.value)
+                }
+            }
+        }
+
+        const processTaskItem = (item: YAMLMap) => {
+            const taskPair = item.items.find(
+                (pair) => (pair.key as Scalar)?.value === "task",
+            )
+            if (taskPair && isMap(taskPair.value)) {
+                processTask(taskPair.value as YAMLMap)
+            } else {
+                processTask(item)
+            }
+        }
+
+        const processTaskContainer = (container: unknown) => {
+            if (isSeq(container)) {
+                for (const item of container.items) {
+                    if (isMap(item)) {
+                        processTaskItem(item as YAMLMap)
                     }
                 }
+            } else if (isMap(container)) {
+                processTaskItem(container as YAMLMap)
             }
         }
 
@@ -65,8 +101,8 @@ export function findDuplicateTaskIds(yamlSource: string): EditorMarker[] {
         if (isMap(contents)) {
             for (const pair of contents.items) {
                 const key = (pair.key as Scalar)?.value
-                if (key === "tasks" || key === "errors" || key === "finally") {
-                    processTasks(pair.value)
+                if (typeof key === "string" && TASK_CONTAINER_KEYS.has(key)) {
+                    processTaskContainer(pair.value)
                 }
             }
         }

@@ -130,6 +130,113 @@ tasks:
         expect(markers[0].message).toBe("Duplicate task id: \"shared_task_id\"")
     })
 
+    test("detects duplicates across If then and else branches", () => {
+        const yaml = `
+id: duplicate_ids_nested
+namespace: company.team
+tasks:
+  - id: check
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: from then
+    else:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: from else
+`
+        const markers = findDuplicateTaskIds(yaml)
+        expect(markers).toHaveLength(1)
+        expect(markers[0].taskId).toBe("hello")
+        expect(markers[0].severity).toBe("error")
+        expect(markers[0].message).toBe("Duplicate task id: \"hello\"")
+        expect(markers[0].startLineNumber).toBe(13)
+    })
+
+    test("detects duplicates in Switch cases and defaults", () => {
+        const yaml = `
+id: switch_flow
+namespace: company.team
+tasks:
+  - id: sw
+    type: io.kestra.plugin.core.flow.Switch
+    value: "{{ inputs.value }}"
+    cases:
+      first:
+        - id: case_task
+          type: io.kestra.plugin.core.log.Log
+      second:
+        - id: case_task
+          type: io.kestra.plugin.core.log.Log
+    defaults:
+      - id: case_task
+        type: io.kestra.plugin.core.log.Log
+`
+        const markers = findDuplicateTaskIds(yaml)
+        expect(markers).toHaveLength(2)
+        expect(markers[0].taskId).toBe("case_task")
+        expect(markers[1].taskId).toBe("case_task")
+    })
+
+    test("detects duplicates in Dag task items", () => {
+        const yaml = `
+id: dag_flow
+namespace: company.team
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: dag_task
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: dag_task
+          type: io.kestra.plugin.core.log.Log
+        dependsOn:
+          - dag_task
+`
+        const markers = findDuplicateTaskIds(yaml)
+        expect(markers).toHaveLength(1)
+        expect(markers[0].taskId).toBe("dag_task")
+        expect(markers[0].severity).toBe("error")
+    })
+
+    test("detects duplicates between top-level tasks and afterExecution", () => {
+        const yaml = `
+id: after_exec_flow
+namespace: company.team
+tasks:
+  - id: shared_id
+    type: io.kestra.plugin.core.log.Log
+afterExecution:
+  - id: shared_id
+    type: io.kestra.plugin.core.log.Log
+`
+        const markers = findDuplicateTaskIds(yaml)
+        expect(markers).toHaveLength(1)
+        expect(markers[0].taskId).toBe("shared_id")
+    })
+
+    test("detects duplicates inside Pause onPause", () => {
+        const yaml = `
+id: pause_flow
+namespace: company.team
+tasks:
+  - id: shared_id
+    type: io.kestra.plugin.core.log.Log
+  - id: pause_task
+    type: io.kestra.plugin.core.flow.Pause
+    onPause:
+      id: shared_id
+      type: io.kestra.plugin.core.log.Log
+`
+        const markers = findDuplicateTaskIds(yaml)
+        expect(markers).toHaveLength(1)
+        expect(markers[0].taskId).toBe("shared_id")
+    })
+
     test("malformed YAML returns an empty array instead of throwing", () => {
         const malformedYaml = `
 id: broken_flow

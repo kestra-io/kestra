@@ -82,6 +82,30 @@ errors:
         expect(ids).toContain("dup")
     })
 
+    test("detects duplicates inside nested then/else branches", () => {
+        const yaml = `
+id: duplicate_ids_nested
+namespace: company.team
+tasks:
+  - id: check
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: from then
+    else:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: from else
+`
+        const markers = findDuplicateTaskIds(yaml)
+        expect(markers.length).toBe(1)
+        expect(markers[0].taskId).toBe("hello")
+        expect(markers[0].severity).toBe("error")
+        expect(markers[0].message).toBe("Duplicate task id: \"hello\"")
+    })
+
     test("handles invalid yaml without throwing", () => {
         const yaml = ":::: not yaml ::::"
         expect(() => findDuplicateTaskIds(yaml)).not.toThrow()

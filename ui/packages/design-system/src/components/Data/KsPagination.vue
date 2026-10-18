@@ -11,20 +11,51 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import {ElConfigProvider, ElPagination, type PaginationProps} from "element-plus"
     import en from "element-plus/es/locale/lang/en"
+    import de from "element-plus/es/locale/lang/de"
+    import es from "element-plus/es/locale/lang/es"
+    import fr from "element-plus/es/locale/lang/fr"
+    import hi from "element-plus/es/locale/lang/hi"
+    import it from "element-plus/es/locale/lang/it"
+    import ja from "element-plus/es/locale/lang/ja"
+    import ko from "element-plus/es/locale/lang/ko"
+    import pl from "element-plus/es/locale/lang/pl"
+    import pt from "element-plus/es/locale/lang/pt"
+    import ptBr from "element-plus/es/locale/lang/pt-br"
+    import ru from "element-plus/es/locale/lang/ru"
+    import zhCn from "element-plus/es/locale/lang/zh-cn"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import {designSystemLocale} from "../../i18n"
 
-    const paginationLocale = {
-        ...en,
-        el: {
-            ...en.el,
-            pagination: {
-                ...en.el.pagination,
-                pagesize: " per page",
-            },
-        },
+    const EL_PLUS_LOCALES: Record<string, typeof en> = {
+        en,
+        de,
+        es,
+        fr,
+        hi,
+        it,
+        ja,
+        ko,
+        pl,
+        pt,
+        pt_BR: ptBr,
+        ru,
+        zh_CN: zhCn,
     }
+
+    const paginationLocale = computed(() => {
+        const locale = EL_PLUS_LOCALES[designSystemLocale.value] ?? en
+        if (locale === en) {
+            // keep the established English page-size label
+            return {
+                ...en,
+                el: {...en.el, pagination: {...en.el.pagination, pagesize: " per page"}},
+            }
+        }
+        return locale
+    })
 
     defineOptions({inheritAttrs: false})
 

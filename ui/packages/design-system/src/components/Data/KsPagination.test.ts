@@ -1,11 +1,14 @@
-import {describe, test, expect} from "vitest"
+import {describe, test, expect, afterEach} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../index"
+import {setDesignSystemLocale} from "../../i18n"
 import KsPagination from "./KsPagination.vue"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsPagination", () => {
+    afterEach(() => setDesignSystemLocale("en"))
+
     test("renders pagination element", () => {
         const wrapper = mount(KsPagination, {
             props: {total: 100, currentPage: 1, pageSize: 10},
@@ -28,5 +31,35 @@ describe("KsPagination", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".is-disabled").exists()).toBe(true)
+    })
+    test("follows the design-system locale (German)", () => {
+        setDesignSystemLocale("de")
+        const wrapper = mount(KsPagination, {
+            props: {total: 100, currentPage: 1, pageSize: 10, layout: "total, sizes"},
+            global: globalConfig,
+        })
+        expect(wrapper.text()).toContain("Gesamt")
+        expect(wrapper.text()).not.toContain("per page")
+    })
+
+    test("keeps the established English labels by default", () => {
+        const wrapper = mount(KsPagination, {
+            props: {total: 100, currentPage: 1, pageSize: 10, layout: "total, sizes"},
+            global: globalConfig,
+        })
+        expect(wrapper.text()).toContain("Total")
+        const locale = wrapper.findComponent({name: "ElConfigProvider"}).props("locale") as any
+        expect(locale.el.pagination.pagesize).toBe(" per page")
+    })
+
+    test("falls back to English for an unknown locale", () => {
+        setDesignSystemLocale("xx")
+        const wrapper = mount(KsPagination, {
+            props: {total: 100, currentPage: 1, pageSize: 10, layout: "total, sizes"},
+            global: globalConfig,
+        })
+        expect(wrapper.text()).toContain("Total")
+        const locale = wrapper.findComponent({name: "ElConfigProvider"}).props("locale") as any
+        expect(locale.el.pagination.pagesize).toBe(" per page")
     })
 })

@@ -420,7 +420,7 @@ export type ArtefactDraft = {
     constraints?: string | null;
 };
 
-export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
+export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP' | 'TEST_SUITE';
 
 export type Asset = {
     status?: string;

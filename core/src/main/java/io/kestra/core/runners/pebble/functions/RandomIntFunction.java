@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -23,7 +24,7 @@ public class RandomIntFunction implements KestraFunction {
                 self.getName()
             );
         }
-        return (int) (Math.floor(Math.random() * (upper - lower)) + lower);
+        return upper.equals(lower) ? lower : ThreadLocalRandom.current().nextLong(lower, upper);
     }
 
     @Override

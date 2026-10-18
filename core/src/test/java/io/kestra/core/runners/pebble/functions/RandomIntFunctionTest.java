@@ -77,4 +77,25 @@ class RandomIntFunctionTest {
         );
         assertThat(Long.parseLong(rendered) == 10).as(rendered).isTrue();
     }
+
+    @Test
+    void shouldStayWithinBoundsWhenBoundsExceedIntRange() throws IllegalVariableEvaluationException {
+        for (int i = 0; i < 100; i++) {
+            String rendered = variableRenderer.render(
+                "{{ randomInt(lower, upper) }}", Map.of("lower", 3000000000L, "upper", 3000000010L)
+            );
+            assertThat(Long.parseLong(rendered)).as(rendered).isBetween(3000000000L, 3000000009L);
+        }
+
+        boolean beyondInt = false;
+        for (int i = 0; i < 100; i++) {
+            String rendered = variableRenderer.render(
+                "{{ randomInt(lower, upper) }}", Map.of("lower", 0L, "upper", 5000000000L)
+            );
+            long value = Long.parseLong(rendered);
+            assertThat(value).as(rendered).isBetween(0L, 4999999999L);
+            beyondInt |= value > Integer.MAX_VALUE;
+        }
+        assertThat(beyondInt).isTrue();
+    }
 }

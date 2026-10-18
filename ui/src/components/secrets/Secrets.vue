@@ -10,9 +10,9 @@
             </ul>
         </template>
     </Navbar>
-    <section :class="secretsEnabled === undefined ? 'd-flex flex-column fill-height container' : 'full-container'">
-        <div v-if="secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
-            <div class="oss-secrets-block d-flex flex-column gap-4">
+    <section :class="secretsEnabled === undefined ? 'oss-section fill-height container' : 'full-container'">
+        <div v-if="secretsEnabled === undefined" class="oss-container">
+            <div class="oss-secrets-block">
                 <SecretsTable
                     v-if="hasData !== false"
                     v-show="hasData === true"
@@ -24,17 +24,17 @@
                     @has-data="hasData = $event"
                 />
                 <div v-if="hasData === false" class="oss-secrets-hint">
-                    <h6 class="fw-bold mb-1">
+                    <h6>
                         {{ $t('demos.secrets.add_env.intro') }}
                     </h6>
-                    <ul class="mb-0">
+                    <ul>
                         <li v-html="$t('demos.secrets.add_env.first')" />
                         <li v-html="$t('demos.secrets.add_env.second')" />
                         <li v-html="$t('demos.secrets.add_env.third')" />
                     </ul>
                 </div>
             </div>
-            <div class="secrets-divider my-4" />
+            <div class="secrets-divider" />
             <Empty type="secrets" demoCta :title="$t('demos.secrets.title')">
                 <template #description>
                     {{ $t('demos.secrets.message') }}
@@ -102,13 +102,39 @@
 </script>
 
 <style scoped lang="scss">
+    .oss-section {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .oss-container {
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        margin: 0;
+        padding: 0;
+        max-width: 100%;
+    }
+
     .oss-secrets-block {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-5);
         padding: 0;
     }
 
     .oss-secrets-hint {
         text-align: left;
         padding-inline-start: var(--ks-spacing-5);
+
+        h6 {
+            font-weight: var(--ks-font-weight-bold);
+            margin-bottom: var(--ks-spacing-1);
+        }
+
+        ul {
+            margin-bottom: 0;
+        }
 
         ul,
         li {
@@ -118,5 +144,6 @@
 
     .secrets-divider {
         border-top: 1px solid var(--ks-border-default);
+        margin-block: var(--ks-spacing-5);
     }
 </style>

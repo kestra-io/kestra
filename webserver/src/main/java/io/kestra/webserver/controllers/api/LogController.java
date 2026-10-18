@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.event.Level;
 
@@ -42,6 +44,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
@@ -146,21 +149,72 @@ public class LogController {
         String subscriberId = UUID.randomUUID().toString();
         List<QueryFilter> effectiveFilters = buildExecutionFilters(executionId, filters);
 
-        Flux<Event<FollowLogEvent>> flux = Flux.<Event<FollowLogEvent>> create(emitter ->
+        Flux<Event<FollowLogEvent>> flux = Flux.defer(() ->
         {
-            // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
-            emitter.next(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
+            Flux<Event<FollowLogEvent>> start = Flux.just(
+                Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start")
+            );
 
-            // fetch repository first
-            logRepository.findAsync(tenantService.resolveTenant(), effectiveFilters)
-                .toStream()
-                .forEach(logEntry -> emitter.next(Event.of(FollowLogEvent.from(logEntry)).id("progress")));
+            ConcurrentLinkedQueue<Event<FollowLogEvent>> buffered = new ConcurrentLinkedQueue<>();
+            AtomicReference<FluxSink<Event<FollowLogEvent>>> liveSink = new AtomicReference<>();
+            AtomicReference<Throwable> pendingError = new AtomicReference<>();
 
-            // consume in realtime — pass the same filter list, the streaming service uses
-            // the FollowLogEventMatcher (backed by Searchable<FollowLogEvent>) to apply it
-            logStreamingService.registerSubscriber(executionId, subscriberId, emitter, effectiveFilters);
-        }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+            Disposable incomingSubscription = Flux.<Event<FollowLogEvent>> create(
+                bridgeEmitter -> logStreamingService.registerSubscriber(executionId, subscriberId, bridgeEmitter, effectiveFilters),
+                FluxSink.OverflowStrategy.BUFFER
+            ).subscribe(
+                event ->
+                {
+                    FluxSink<Event<FollowLogEvent>> sink = liveSink.get();
+                    if (sink != null) {
+                        sink.next(event);
+                    } else {
+                        synchronized (buffered) {
+                            sink = liveSink.get();
+                            if (sink != null) {
+                                sink.next(event);
+                            } else {
+                                buffered.add(event);
+                            }
+                        }
+                    }
+                },
+                error ->
+                {
+                    FluxSink<Event<FollowLogEvent>> sink = liveSink.get();
+                    if (sink != null) {
+                        sink.error(error);
+                    } else {
+                        pendingError.set(error);
+                    }
+                }
+            );
+
+            Flux<Event<FollowLogEvent>> history = logRepository
+                .findAsync(tenantService.resolveTenant(), effectiveFilters)
+                .map(logEntry -> Event.of(FollowLogEvent.from(logEntry)).id("progress"));
+
+            Flux<Event<FollowLogEvent>> realtime = Flux.<Event<FollowLogEvent>> create(
+                emitter ->
+                {
+                    synchronized (buffered) {
+                        liveSink.set(emitter);
+                        Event<FollowLogEvent> pending;
+                        while ((pending = buffered.poll()) != null) {
+                            emitter.next(pending);
+                        }
+                        Throwable err = pendingError.get();
+                        if (err != null) {
+                            emitter.error(err);
+                        }
+                    }
+                },
+                FluxSink.OverflowStrategy.BUFFER
+            );
+
+            return Flux.concat(start, history, realtime)
+                .doFinally(signalType -> incomingSubscription.dispose());
+        }).timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
         return sseConnectionMetrics.track(
             flux, "logs",

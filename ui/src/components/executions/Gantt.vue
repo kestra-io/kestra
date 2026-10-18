@@ -85,13 +85,13 @@
                                     :active="active"
                                     :data-index="index"
                                 >
-                                    <div class="d-flex flex-column">
+                                    <div class="gantt-item">
                                         <div
-                                            class="gantt-row d-flex cursor-icon"
+                                            class="gantt-row cursor-icon"
                                             :class="{'is-expanded': selectedTaskRuns.includes(item.id)}"
                                             @click="onTaskSelect(item.id)"
                                         >
-                                            <div v-if="!verticalLayout" class="d-inline-flex">
+                                            <div v-if="!verticalLayout" class="expand-icon">
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
@@ -119,7 +119,7 @@
                                                     <template #content>
                                                         <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                                     </template>
-                                                    <Warning class="attempt_warn me-3" />
+                                                    <Warning class="attempt_warn" />
                                                 </KsTooltip>
                                             </div>
                                             <div class="task-bar">
@@ -136,7 +136,7 @@
                                                     />
                                                 </div>
                                             </div>
-                                            <div class="task-duration d-none d-md-inline-block">
+                                            <div class="task-duration">
                                                 <small>
                                                     <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
                                                 </small>
@@ -152,14 +152,14 @@
                                         </div>
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
-                                                <div class="task-details__inner p-2">
+                                                <div class="task-details__inner">
                                                     <GanttTaskLogs
                                                         :taskRun="item.task"
                                                         :taskType="taskTypeByTaskRunId[item.id]"
                                                         :execution="execution"
                                                         :flow="executionsStore.flow"
                                                         :levelFilter="effectiveSelectedLogLevel"
-                                                        class="mh-100 mx-3"
+                                                        class="task-logs"
                                                     />
                                                 </div>
                                             </div>
@@ -769,7 +769,13 @@
                 }
             }
 
+            .gantt-item {
+                display: flex;
+                flex-direction: column;
+            }
+
             .gantt-row {
+                display: flex;
                 align-items: center;
                 position: relative;
                 padding-right: var(--ks-spacing-8);
@@ -787,6 +793,10 @@
 
                 > * {
                     padding: 1rem .25rem;
+                }
+
+                .expand-icon {
+                    display: inline-flex;
                 }
 
                 .task-label {
@@ -839,10 +849,16 @@
                 .attempt_warn{
                     color: var(--ks-text-warning);
                     vertical-align: middle;
+                    margin-right: var(--ks-spacing-4);
                 }
 
                 .task-duration {
+                    display: none;
                     flex-shrink: 0;
+
+                    @media (min-width: 768px) {
+                        display: inline-block;
+                    }
 
                     small {
                         white-space: nowrap;
@@ -876,6 +892,16 @@
                 interpolate-size: allow-keywords;
                 overflow: hidden;
                 background: var(--ks-dropdown-bg-active);
+
+                &__inner {
+                    padding: var(--ks-spacing-2);
+                }
+
+                .task-logs {
+                    max-height: 100%;
+                    margin-left: var(--ks-spacing-4);
+                    margin-right: var(--ks-spacing-4);
+                }
             }
 
             .expand-enter-active,

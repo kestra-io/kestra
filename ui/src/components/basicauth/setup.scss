@@ -122,6 +122,12 @@
   }
 }
 
+.user-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ks-spacing-1);
+}
+
 :deep(.newsletter-form-item.kel-form-item) {
   margin-bottom: 0;
 }
@@ -152,6 +158,11 @@
   :deep(.kel-checkbox__label) {
     white-space: normal;
   }
+}
+
+.survey-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .success-step {

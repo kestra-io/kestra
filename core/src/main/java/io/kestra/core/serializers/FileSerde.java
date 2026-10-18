@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -57,8 +58,27 @@ public final class FileSerde {
      * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
      */
     public static boolean read(InputStream input, int maxLines, Consumer<Object> consumer) throws IOException {
+        return read(input, 0, maxLines, consumer);
+    }
+
+    /**
+     * Skips the first {@code skip} values without deserializing them, then reads at most {@code maxLines} values.
+     * <p>
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}.
+     *
+     * @return true if there were more values after the ones read
+     */
+    public static boolean read(InputStream input, long skip, int maxLines, Consumer<Object> consumer) throws IOException {
         MappingIterator<Object> iterator = createMappingIterator(DEFAULT_OBJECT_MAPPER, input, DEFAULT_TYPE_REFERENCE);
         try (iterator) {
+            JsonParser parser = iterator.getParser();
+            for (long skipped = 0; skipped < skip; skipped++) {
+                if (parser.nextToken() == null) {
+                    return false;
+                }
+                parser.skipChildren();
+            }
+            parser.clearCurrentToken();
             int nbLines = 0;
             while (iterator.hasNext()) {
                 if (nbLines >= maxLines) {

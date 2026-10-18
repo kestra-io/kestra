@@ -1,5 +1,5 @@
 <template>
-    <KsTooltip :content="tooltip">
+    <KsTooltip :content="tooltip" popperClass="ks-file-tag-tooltip">
         <KsTag :icon="icon" :label="label" truncate />
     </KsTooltip>
 </template>
@@ -25,3 +25,10 @@
     // A caller-supplied name is the part that gets clipped, so the tooltip has to carry it too.
     const tooltip = computed(() => (props.name ? `${label.value} (${props.uri})` : props.uri))
 </script>
+
+<style scoped>
+:global(.ks-file-tag-tooltip) {
+    max-width: min(20rem, 90vw);
+    overflow-wrap: anywhere;
+}
+</style>

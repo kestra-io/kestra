@@ -7,11 +7,14 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.*;
 
 import io.kestra.core.async.AsyncOperation;
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
+
+import jakarta.annotation.Nullable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
@@ -65,6 +68,14 @@ public interface ExecutionCommand extends HasUID, DispatchEvent, AsyncOperation 
      * @return the event identifier.
      */
     EventId eventId();
+
+    /**
+     * @return who the command was sent on behalf of, or {@code null} when the system sent it.
+     */
+    @Nullable
+    default Actor actor() {
+        return null;
+    }
 
     /**
      * @return the event type

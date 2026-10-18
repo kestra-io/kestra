@@ -1,12 +1,12 @@
 <template>
-    <div class="d-flex docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
+    <div class="docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
         <div
             v-if="mobileMenuOpen && $slots.menu"
             class="mobile-backdrop"
             @click="mobileMenuOpen = false"
         />
 
-        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar d-flex flex-column gap-3">
+        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar">
             <KsButton
                 v-if="isPluginsRoute"
                 :class="['mobile-close-toggle']"
@@ -73,11 +73,18 @@
 <style scoped lang="scss">
     @use '../../styles/responsive' as *;
 
+    .docs-layout-container {
+        display: flex;
+    }
+
     .docs-layout-container.full-height {
         min-height: 0;
     }
 
     .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
         background: var(--ks-bg-surface);
         padding: 2rem;
         height: 100%;
@@ -238,7 +245,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: var(--ks-bg-scrim);
             z-index: var(--ks-z-overlay);
             animation: fadeIn 0.3s ease;
         }
@@ -257,7 +264,7 @@
             max-width: 100vw;
             z-index: calc(var(--ks-z-overlay) + 1);
             transition: left 0.3s ease-in-out;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 2px 0 8px var(--ks-shadow-elevated);
             padding: 1rem;
             padding-top: 3.5rem;
             padding-right: 0.5rem;

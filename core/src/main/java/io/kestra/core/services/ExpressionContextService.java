@@ -467,7 +467,7 @@ public class ExpressionContextService {
 
     private List<String> buildNamespaceFiles(Flow flow) {
         try {
-            List<NamespaceFile> files = namespaceFactory.of(flow.getTenantId(), flow.getNamespace(), storageInterface).all();
+            List<NamespaceFile> files = namespaceFactory.of(flow.getTenantId(), flow.getNamespace()).all();
             return files.stream()
                 .map(file -> "read('" + file.path() + "')")
                 .sorted()

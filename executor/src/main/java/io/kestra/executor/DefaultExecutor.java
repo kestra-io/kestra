@@ -76,8 +76,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final List<QueueSubscriber<?>> queueSubscribers = new CopyOnWriteArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
-    private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
-    private final java.util.concurrent.ExecutorService executionExecutorService;
+    private final java.util.concurrent.ExecutorService messageExecutorService;
     private final int numberOfThreads;
 
     private Timer slaMonitorLoopTimer;
@@ -124,13 +123,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.multipleConditionStateStore = multipleConditionStateStore;
         this.metricRegistry = metricRegistry;
 
-        // By default, we start available processors count threads with a minimum of 4 by executor service
-        // for the worker task result queue and the execution queue.
+        // By default, we start available processors count threads with a minimum of 8.
+        // This executor is shared for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
         int threadCount = executorConfiguration.threadCount() != null ? executorConfiguration.threadCount() : 0;
-        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, kestraContext.getAllocatedCpuCores());
-        this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-worker-task-result-executor");
-        this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-execution-event-executor");
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(8, kestraContext.getAllocatedCpuCores() * 2);
+        this.messageExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "executor-message-executor");
 
         setState(ServiceState.CREATED);
     }
@@ -194,7 +192,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         .map(eithers -> CompletableFuture.runAsync(() ->
                         {
                             eithers.forEach(this::executionEventQueue);
-                        }, executionExecutorService))
+                        }, messageExecutorService))
                         .toList();
 
                     // directly process deserialization issues as most of the time there will be none
@@ -219,7 +217,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 .map(eithers -> CompletableFuture.runAsync(() ->
                 {
                     eithers.forEach(this::workerTaskResultQueue);
-                }, workerTaskResultExecutorService))
+                }, messageExecutorService))
                 .toList();
 
             // directly process deserialization issues as most of the time there will be none
@@ -232,7 +230,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         ));
         this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
-        this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribe(this::subflowExecutionEndQueue));
+        this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribeBatch(this::subflowExecutionEndQueue));
         this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
         this.queueSubscribers.addFirst(this.loopExecutionEventQueue.subscriber().subscribe(this::loopExecutionEventQueue));
         this.queueSubscribers.addFirst(this.killQueue.subscriber().subscribe(this::killQueue));
@@ -392,12 +390,19 @@ public class DefaultExecutor extends AbstractService implements Executor {
         executorCore.onSubflowExecutionResult(either.getLeft());
     }
 
-    private void subflowExecutionEndQueue(Either<SubflowExecutionEnd, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
-            return;
+    private void subflowExecutionEndQueue(List<Either<SubflowExecutionEnd, DeserializationException>> eithers) {
+        // Process the batch grouped by parent execution id, in sorted id order: every executor then acquires the
+        // per-parent `executions` FOR UPDATE locks in the same order, so concurrent executors handling overlapping
+        // parents can no longer form a lock cycle under heavy subflow fan-out.
+        Map<String, List<SubflowExecutionEnd>> messagesByParent = new TreeMap<>();
+        for (Either<SubflowExecutionEnd, DeserializationException> either : eithers) {
+            if (either.isRight()) {
+                log.error("Unable to deserialize a subflow execution end: {}", either.getRight().getMessage());
+                continue;
+            }
+            messagesByParent.computeIfAbsent(either.getLeft().parentExecutionId(), ignored -> new ArrayList<>()).add(either.getLeft());
         }
-        executorCore.onSubflowExecutionEnd(either.getLeft());
+        messagesByParent.values().forEach(messages -> messages.forEach(executorCore::onSubflowExecutionEnd));
     }
 
     private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {

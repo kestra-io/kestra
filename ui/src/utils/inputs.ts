@@ -149,7 +149,13 @@ export function normalize(type: InputType | undefined, value: any) {
     } else if (type === "DATE" || type === "DATETIME") {
         res = dayjs(res).toISOString()
     } else if (type === "TIME") {
-        res = dayjs().startOf("day").add(res, "seconds").toString()
+        const [hours, minutes, seconds = "0"] = String(res).split(":")
+        res = dayjs()
+            .startOf("day")
+            .hour(Number(hours))
+            .minute(Number(minutes))
+            .second(Number(seconds))
+            .toString()
     } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()

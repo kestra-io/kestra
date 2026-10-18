@@ -7,7 +7,7 @@ import {
 } from "vue-router"
 import type {AppliedFilter} from "../utils/filterTypes"
 
-type QueryLike = LocationQuery | LocationQueryRaw | Record<string, any>;
+type QueryLike = LocationQuery | LocationQueryRaw;
 
 interface UseRouteFilterPolicyOptions<T> {
     enabled?: () => boolean;
@@ -16,10 +16,10 @@ interface UseRouteFilterPolicyOptions<T> {
     fallbackValue?: () => T | undefined;
     applyDefaultIfMissing?: () => boolean;
     readFromRoute: (query: QueryLike) => T | undefined;
-    writeToRoute: (query: Record<string, any>, value: T | undefined) => Record<string, any>;
+    writeToRoute: (query: LocationQueryRaw, value: T | undefined) => LocationQueryRaw;
     hasUnsupportedRouteValue?: (query: QueryLike) => boolean;
     readFromAppliedFilters?: (filters: AppliedFilter[]) => T | undefined;
-    shouldSyncFromAppliedFilters?: (filters: AppliedFilter[], routeQuery: Record<string, any>) => boolean;
+    shouldSyncFromAppliedFilters?: (filters: AppliedFilter[], routeQuery: LocationQueryRaw) => boolean;
 }
 /**
  * Compare two policy values by content, not identity. Policy values may be objects
@@ -113,7 +113,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             normalizationPending.value = true
             startSettleTimeout()
             router.replace({
-                query: options.writeToRoute(route.query as Record<string, any>, nextValue),
+                query: options.writeToRoute(route.query, nextValue),
             })
         },
         {immediate: true},
@@ -129,7 +129,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         }
 
         router.replace({
-            query: options.writeToRoute(route.query as Record<string, any>, value),
+            query: options.writeToRoute(route.query, value),
         })
     }
 
@@ -140,7 +140,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
 
         if (
             options.shouldSyncFromAppliedFilters &&
-            !options.shouldSyncFromAppliedFilters(filters, route.query as Record<string, any>)
+            !options.shouldSyncFromAppliedFilters(filters, route.query)
         ) {
             return
         }

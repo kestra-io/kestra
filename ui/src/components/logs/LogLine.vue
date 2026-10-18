@@ -2,7 +2,7 @@
     <div
         v-if="filtered"
         class="line"
-        :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor}]"
+        :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor, dimmed}]"
         :style="rowStyle"
     >
         <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
@@ -21,7 +21,7 @@
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <time class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
+                <time v-if="log.timestamp" class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>
@@ -57,14 +57,15 @@
     import {LevelKey, parseStructured} from "../../utils/logs"
     import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault, DENSITY_PADDING} from "../../composables/useLogDisplay"
     import {Log} from "../../stores/logs"
-    import {useRouter} from "vue-router"
+    import {useRouter, type RouteLocationRaw} from "vue-router"
     import * as Filters from "../../utils/filters"
 
 
     // Props
     const props = defineProps<{
         cursor?: boolean,
-        log: Log,
+        dimmed?: boolean,
+        log: Partial<Log>,
         filter?: string,
         level?: LevelKey,
         excludeMetas?: (keyof Log)[],
@@ -101,8 +102,14 @@
         }
     })
 
+    type LogMeta = {
+        key: keyof Log
+        value: unknown
+        router?: RouteLocationRaw
+    }
+
     const metaWithValue = computed(() => {
-        const result: any[] = []
+        const result: LogMeta[] = []
         const excludes:(keyof Log)[] = [
             "message",
             "timestamp",
@@ -117,7 +124,7 @@
         for (const keyString in props.log) {
             const key = keyString as keyof Log
             if (props.log[key] && !excludes.includes(key)) {
-                let meta: any = {key, value: props.log[key]}
+                const meta: LogMeta = {key, value: props.log[key]}
                 if (key === "executionId") {
                     meta["router"] = {
                         name: "executions/update",
@@ -215,6 +222,10 @@ div.line {
 
     &.selected {
         background: var(--ks-bg-tag-hover);
+    }
+
+    &.dimmed {
+        opacity: 0.4;
     }
 
     &[class*="-0"] {

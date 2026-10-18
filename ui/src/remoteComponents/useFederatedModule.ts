@@ -1,4 +1,5 @@
 import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured, type Component} from "vue"
+import {useI18n} from "vue-i18n"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
@@ -12,6 +13,7 @@ function wrapWithErrorBoundary(inner: Component) {
         name: "FederatedModuleBoundary",
         inheritAttrs: false,
         setup(_, {attrs, slots}) {
+            const {t} = useI18n()
             const error = ref<Error | null>(null)
 
             onErrorCaptured((err: Error) => {
@@ -22,7 +24,7 @@ function wrapWithErrorBoundary(inner: Component) {
 
             return () => {
                 if (error.value) {
-                    return h("div", {class: "federated-module-error"}, "A plugin component failed to load.")
+                    return h("div", {class: "federated-module-error"}, t("plugins.ui_load_error"))
                 }
                 return h(inner, attrs, slots)
             }
@@ -144,8 +146,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     const RemoteComponent = defineComponent({
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
         inheritAttrs: false,
-        setup(props: { taskType: string } & KnownSlotProps[T], {attrs}) {
-            const {taskType, ...restProps} = props
+        setup(rawProps, {attrs}) {
+            // The declared props are the slot's own propNames, so the generic slot type can't be inferred from them.
+            const {taskType, ...restProps} = rawProps as unknown as {taskType: string} & KnownSlotProps[T]
             // ponytail: read inside render so shallowReactive tracks it — loadRemote completes after manifestReady
             return () => {
                 const Comp = RemoteComponents[taskType]
@@ -158,12 +161,19 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         return !!RemoteComponents[taskType]
     }
 
+    // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
+    function componentTypeFor(task?: {type?: string; taskRunner?: {type?: string}}): string {
+        const runnerType = task?.taskRunner?.type
+        return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
+    }
+
     return {
         RemoteComponent,
         taskAdditionalInfoRemote,
         manifestReady,
         resolveRemoteComponent,
         hasResolvedComponent,
+        componentTypeFor,
     }
 }
 

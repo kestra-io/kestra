@@ -1,6 +1,8 @@
 import {useRoute, useRouter} from "vue-router"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import type {Flow} from "@kestra-io/kestra-sdk"
 import {State} from "@kestra-io/design-system"
+import {handledIf} from "../../../utils/kestraHttp"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -49,7 +51,7 @@ export function useTourActions() {
     const tourFlowExists = async (id: string = TOUR_FLOW_ID) => {
         try {
             const flows = await FlowsAPI.listFlowsByNamespace({namespace: TOUR_NAMESPACE})
-            return (flows ?? []).some((flow: any) => flow?.id === id)
+            return (flows ?? []).some((flow: Flow) => flow?.id === id)
         } catch {
             return false
         }
@@ -147,7 +149,7 @@ export function useTourActions() {
 
     const showTaskDocs = async (cls: string) => {
         if (!pluginsStore.plugins?.length) {
-            await pluginsStore.listWithSubgroup({includeDeprecated: false})
+            await pluginsStore.listWithSubgroup()
         }
         await pluginsStore.updateDocumentation({cls})
     }
@@ -218,8 +220,10 @@ export function useTourActions() {
         } else {
             await FlowsAPI.createFlow({
                 body: source,
-                showMessageOnError: false,
-            } as Parameters<typeof FlowsAPI.createFlow>[0])
+            } as Parameters<typeof FlowsAPI.createFlow>[0]).catch((e: unknown) => {
+                handledIf(e, [409])
+                throw e
+            })
             await flowStore.loadFlow({namespace: TOUR_NAMESPACE, id: TOUR_FLOW_ID})
         }
         await flowStore.initYamlSource()
@@ -290,7 +294,7 @@ export function useTourActions() {
 
         const execution = await executionsStore.loadExecution({id: executionId})
         const failedTaskRun = (execution?.taskRunList ?? []).find(
-            (taskRun: any) => taskRun?.state?.current === "FAILED",
+            (taskRun) => taskRun?.state?.current === "FAILED",
         )
         const revision = await latestRevision()
 
@@ -391,8 +395,10 @@ export function useTourActions() {
         } else {
             await FlowsAPI.createFlow({
                 body: TOUR_REPORT_FLOW,
-                showMessageOnError: false,
-            } as Parameters<typeof FlowsAPI.createFlow>[0])
+            } as Parameters<typeof FlowsAPI.createFlow>[0]).catch((e: unknown) => {
+                handledIf(e, [409])
+                throw e
+            })
         }
         tourStore.setTourState({reportFlowCreated: true})
         await openFlowEditor(TOUR_REPORT_FLOW_ID)

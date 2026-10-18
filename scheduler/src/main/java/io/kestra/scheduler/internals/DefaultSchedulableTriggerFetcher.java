@@ -91,6 +91,19 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 }
 
                 final FlowWithSource rawFlow = maybeFlowTrigger.get();
+
+                final boolean disabledInDefinition = isDisabledInDefinition(rawFlow, triggerState.getTriggerId());
+
+                // The mirror is only refreshed by a trigger event, so correct it here: it is what the search
+                // filter and the API report, and a state written before it existed carries the wrong value.
+                if (disabledInDefinition != triggerState.isSourceDisabled()) {
+                    triggerState = triggerStateStore.save(triggerState.sourceDisabled(clock, disabledInDefinition));
+                }
+
+                if (disabledInDefinition) {
+                    return null;
+                }
+
                 final FlowWithSource flow;
                 try {
                     flow = TriggerFlowParser.parseForTrigger(flowParsingService, rawFlow, LOG);
@@ -139,7 +152,7 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 } catch (Exception e) {
                     logError(now, conditionContext, flow, trigger, e);
                     if (e instanceof InvalidTriggerConfigurationException) {
-                        triggerStateStore.save(triggerState.disabled(clock, true));
+                        disableForInvalidConfiguration(clock, triggerState, e);
                     }
                     return null;
                 }
@@ -158,8 +171,19 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                 .map(instant -> instant.atZone(tz))
                 .orElseGet(() -> now.truncatedTo(ChronoUnit.SECONDS));
         } catch (DateTimeException e) {
-            throw new InvalidTriggerConfigurationException();
+            throw new InvalidTriggerConfigurationException(
+                "The timezone of trigger '%s' is not a valid zone id: %s.".formatted(trigger.getId(), e.getMessage()),
+                e
+            );
         }
+    }
+
+    private static boolean isDisabledInDefinition(final FlowWithSource flow, final String triggerId) {
+        return ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(it -> it.getId().equals(triggerId))
+            .findFirst()
+            .map(AbstractTrigger::isDisabled)
+            .orElse(false);
     }
 
     private void disableUnparseable(final Clock clock, final TriggerState triggerState, final FlowProcessingException e) {
@@ -168,7 +192,18 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
             triggerState,
             LOG,
             Level.WARN,
-            "Disabled: the flow cannot be parsed on this version ({}). Fix the flow and save it to re-enable the trigger.",
+            "Disabled: the flow cannot be parsed on this version ({}). Fix the flow, then enable the trigger again.",
+            e.getMessage()
+        );
+    }
+
+    private void disableForInvalidConfiguration(final Clock clock, final TriggerState triggerState, final Throwable e) {
+        triggerStateStore.save(triggerState.disabled(clock, true));
+        Logs.logTrigger(
+            triggerState,
+            LOG,
+            Level.WARN,
+            "Disabled: the trigger configuration is invalid ({}). Fix the flow, then enable the trigger again.",
             e.getMessage()
         );
     }

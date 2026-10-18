@@ -48,11 +48,8 @@ echo ""
 echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')"
 start_time2=$(date +%s)
 
-echo "cd ./ui"
-cd ./ui
-
-echo 'sh ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"'
-./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"
+echo './e2e/run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"'
+./e2e/run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"
 
 end_time2=$(date +%s)
 elapsed2=$(( end_time2 - start_time2 ))

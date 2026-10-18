@@ -1,11 +1,11 @@
 import {defineStore} from "pinia"
 import {ref, computed} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
-import type {QueryFilter} from "@kestra-io/kestra-sdk"
+import type {LogEntry, QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
-import type {KestraRequestOptions} from "../utils/kestraHttp"
+import {handled} from "../utils/kestraHttp"
 
 /**
  * A route query only whose `filters[...]` keys reach the backend as filters. Left open because
@@ -58,21 +58,8 @@ export interface LogsDownloadResult {
     outcome: LogsDownloadOutcome;
 }
 
-export interface Log{
-    level: LevelKey;
-    namespace: string;
-    flowId: string;
-    executionId: string;
-    triggerId?: string;
-    taskId?: string;
-    thread: string;
-    taskRunId?: string;
-    index: number;
-    attemptNumber: number;
-    executionKind: "flow" | "playground";
-    timestamp: string;
-    message: string;
-}
+/** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
+export type Log = LogEntry & {index?: number}
 
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
@@ -168,18 +155,14 @@ export const useLogsStore = defineStore("logs", () => {
 
         let failed = false
 
-        // This failure is reported by the caller, so opt out of the SDK's global error toast:
-        // otherwise a 500 raises a raw internal-error message alongside it.
-        const requestOptions: KestraRequestOptions = {showMessageOnError: false}
-
         for (;;) {
             let response: Awaited<ReturnType<typeof LogsAPI.searchLogs>>
             try {
-                response = await LogsAPI.searchLogs(
-                    toSearchParams({...options, page, size}, cursor),
-                    requestOptions,
-                )
-            } catch (error) {
+                response = await LogsAPI.searchLogs(toSearchParams({...options, page, size}, cursor))
+            } catch (error: unknown) {
+                // This failure is reported by the caller, so keep it out of the global error toast:
+                // otherwise a 500 raises a raw internal-error message alongside it.
+                handled(error)
                 // Deep offset paging can be refused outright rather than returning a short page:
                 // Elasticsearch caps `from + size` at `index.max_result_window` (10 000 by
                 // default), so page 11 fails. Keep the pages already collected and say the export

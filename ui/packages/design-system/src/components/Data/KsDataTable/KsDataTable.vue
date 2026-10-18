@@ -3,7 +3,7 @@
         <slot name="empty" />
     </template>
 
-    <div class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
+    <div ref="wrapper" class="ks-data-table-wrapper" :class="{'no-pagination-gutter': noPaginationGutter, 'no-gutter': noGutter}" v-else>
         <nav v-if="hasNavBar" class="ks-data-table-navbar">
             <slot name="navbar" />
         </nav>
@@ -13,7 +13,7 @@
                 <slot name="top" />
             </div>
 
-            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot">
+            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}">
                 <slot name="table" />
             </div>
 
@@ -224,8 +224,20 @@
     const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
-    const tableRef = ref<InstanceType<typeof KsTable>>()
+    type DataRow = NonNullable<typeof props.data>[number]
+
+    interface KsTableHandle {
+        toggleRowSelection: (row: DataRow, selected?: boolean) => void
+        clearSelection: () => void
+        toggleAllSelection: () => void
+        getSelectionRows: () => DataRow[]
+        toggleRowExpansion: (row: DataRow, expanded?: boolean) => void
+        setScrollTop: (top: number) => void
+        $el?: HTMLElement
+    }
+    const tableRef = ref<KsTableHandle>()
     const container = ref<HTMLElement | null>(null)
+    const wrapper = ref<HTMLElement | null>(null)
     const hasSelection = ref(false)
     const lastCheckedIndex = ref<number | null>(null)
     const isShiftPressed = ref(false)
@@ -270,11 +282,12 @@
                 : s[rowKey as string] === row[rowKey as string],
         )
 
-        if (isShiftPressed.value && lastCheckedIndex.value !== null) {
+        if (currentIndex >= 0 && isShiftPressed.value && lastCheckedIndex.value !== null) {
             const start = Math.min(lastCheckedIndex.value, currentIndex)
             const end = Math.max(lastCheckedIndex.value, currentIndex)
             for (let i = start; i <= end; i++) {
-                tableRef.value?.toggleRowSelection(data[i], isChecked)
+                const pageRow = data[i]
+                if (pageRow !== undefined) tableRef.value?.toggleRowSelection(pageRow, isChecked)
             }
             await nextTick()
             const finalSelection = tableRef.value?.getSelectionRows() ?? []
@@ -399,16 +412,20 @@
         } else {
             const currentSelection = tableRef.value?.getSelectionRows() ?? []
             const rowKey = props.rowKey
-            const validSelection = currentSelection.filter((sel: unknown) => {
+            const validSelection = currentSelection.filter((sel) => {
                 const isFunction = typeof rowKey === "function"
                 return props.data.some(r => isFunction
                     ? (rowKey as (row: any) => any)(r) === (rowKey as (row: any) => any)(sel)
-                    : r[rowKey as string] === (sel as Record<string, unknown>)[rowKey as string])
+                    : r[rowKey as string] === sel[rowKey as string])
             })
             if (validSelection.length !== currentSelection.length) {
                 tableRef.value?.clearSelection()
-                hasSelection.value = false
+                for (const row of validSelection) {
+                    tableRef.value?.toggleRowSelection(row, true)
+                }
+                hasSelection.value = validSelection.length > 0
                 lastCheckedIndex.value = null
+                selectionChanged(validSelection)
             } else if (tableRef.value) {
                 selectionChanged(currentSelection)
             }
@@ -419,12 +436,29 @@
 
     watch([currentPageValue, currentSizeValue, loadRequest], () => callLoad(), {flush: "post"})
 
+    const scrollingAncestor = computed(() => {
+        for (let ancestor = wrapper.value?.parentElement; ancestor; ancestor = ancestor.parentElement) {
+            if (/auto|scroll/.test(getComputedStyle(ancestor).overflowY)) return ancestor
+        }
+        return undefined
+    })
+
+    const scrollBackToTop = () => {
+        tableRef.value?.setScrollTop(0)
+
+        if (!wrapper.value) return
+        const visibleTop = scrollingAncestor.value?.getBoundingClientRect().top ?? 0
+        if (wrapper.value.getBoundingClientRect().top < visibleTop) wrapper.value.scrollIntoView({block: "start"})
+    }
+
     const onPageChange = (page: number) => {
+        scrollBackToTop()
         emit("update:currentPage", page)
         emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
+        scrollBackToTop()
         emit("update:currentPage", 1)
         emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
@@ -459,6 +493,14 @@
 </script>
 
 <style lang="scss">
+    // Registered rather than declared on the wrapper: a plain declaration there would shadow a value
+    // an ancestor sets, which is the opposite of the override hook this is meant to be.
+    @property --ks-data-table-navbar-padding-block-start {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 0;
+    }
+
     .load-error {
         display: flex;
         flex-direction: column;
@@ -492,7 +534,7 @@
         }
 
         > .ks-data-table-navbar {
-            padding-block-start: var(--ks-data-table-navbar-padding-block-start, 0px);
+            padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
         .kel-pagination {

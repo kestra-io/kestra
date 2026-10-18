@@ -41,13 +41,13 @@ const GraphWrapper = defineComponent({
             if (props.subtype === EXECUTION) {
                 // mock the followExecutionDependencies method to prevent actual API calls 
                 // and WebSocket connections during testing
-                const executionsStore = useExecutionsStore() as any;
+                const executionsStore = useExecutionsStore();
                 executionsStore.followExecutionDependencies = () => {
                     return {
                         close: () => void 0,
                         onmessage: null,
                         onerror: null,
-                    };
+                    } as EventSource;
                 }
             }
         });

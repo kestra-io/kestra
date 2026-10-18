@@ -1,4 +1,3 @@
-@use "@kestra-io/design-system/src/assets/styles/variables.scss" as design;
 @use "@kestra-io/design-system/src/assets/styles/index.scss" as *;
 @use 'responsive' as mixin;
 
@@ -140,27 +139,6 @@ main {
     }
 }
 
-// status
-@each $key, $value in design.$colors {
-    .bg-#{$key} {
-        background-color: $value;
-    }
-
-    .kel-button.status-#{$key} {
-        cursor: default;
-        border: 0.5px solid $value;
-        background: var(--ks-bg-surface);
-
-        .material-design-icon {
-            color: $value;
-        }
-
-        html.dark & {
-            background: #2F3342;
-        }
-    }
-}
-
 // Browser autofill background color
 input:-webkit-autofill,
 input:-webkit-autofill:focus {
@@ -193,12 +171,11 @@ html.full-screen {
     }
 }
 
-// setup non color CSS variables
 :root{
-    --kel-box-shadow: $box-shadow;
-    --kel-box-shadow-light: $box-shadow-sm;
-    --kel-box-shadow-lighter: $box-shadow-sm;
-    --kel-box-shadow-dark: $box-shadow-lg;
+    --kel-box-shadow: 0 .5rem 1rem var(--ks-shadow-elevated);
+    --kel-box-shadow-light: 0 .125rem .25rem var(--ks-shadow-element);
+    --kel-box-shadow-lighter: 0 .125rem .25rem var(--ks-shadow-element);
+    --kel-box-shadow-dark: 0 1rem 3rem var(--ks-shadow-surface);
 
     --kel-transition-duration: 0.2s;
     --kel-transition-duration-fast: 0.2s;

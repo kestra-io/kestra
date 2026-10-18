@@ -12,26 +12,28 @@
             :data-test="`copilot-context-${pill.part}`"
             @close="emit('remove', pill.part)"
         >
-            <span>{{ pill.text[0] }}<KsId :value="pill.value" :shrink="false" />{{ pill.text[1] }}</span>
+            <i18n-t :keypath="pill.keypath" tag="span">
+                <template #[pill.slot]>
+                    <KsId :value="pill.value" :shrink="false" data-test="copilot-context-id" />
+                </template>
+            </i18n-t>
         </KsTag>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import type {ScopeBinding, ContextPart} from "./types"
     import {CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
-    import {splitTranslation} from "../../../utils/splitTranslation"
 
     const props = defineProps<{scope: ScopeBinding}>()
     const emit = defineEmits<{remove: [part: ContextPart]}>()
-    const {t} = useI18n()
 
     interface Pill {
         part: ContextPart
         value: string
-        text: [string, string]
+        keypath: string
+        slot: string
     }
 
     // One pill per present field — the resource first, then its namespace (deduped for a namespace
@@ -44,7 +46,7 @@
             .filter((part): part is ContextPart => Boolean(scope[part]))
             .map((part) => {
                 const {keypath, slot} = CONTEXT_PART_I18N[part]
-                return {part, value: scope[part] as string, text: splitTranslation(t, keypath, slot)}
+                return {part, value: scope[part] as string, keypath, slot}
             })
     })
 </script>

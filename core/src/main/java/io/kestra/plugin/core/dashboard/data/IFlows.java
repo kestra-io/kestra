@@ -19,7 +19,6 @@ public interface IFlows extends IData<IFlows.Fields> {
 
         List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
         if (!namespaceFilters.isEmpty()) {
-            updatedWhere.removeIf(filter -> filter.getField().equals(IFlows.Fields.NAMESPACE));
             namespaceFilters.forEach(f ->
             {
                 updatedWhere.add(f.toDashboardFilterBuilder(IFlows.Fields.NAMESPACE, f.value()));

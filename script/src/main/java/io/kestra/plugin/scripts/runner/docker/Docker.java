@@ -31,7 +31,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.NameParser;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -622,11 +621,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 Await.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
+                    TaskException failure = new TaskException(exitCode, defaultLogConsumer);
+                    if (isContainerOomKilled(dockerClient, runContainerId, logger)) {
+                        failure = new TaskException(
+                            "A process in container '%s' was killed by the out-of-memory killer (exit code %d). Increase the Docker task runner memory.memory limit (or the host's available memory), or reduce the task's memory usage."
+                                .formatted(runContainerId, exitCode),
+                            exitCode,
+                            defaultLogConsumer
+                        );
+                    }
+
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                         downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
                     }
 
-                    throw new TaskException(exitCode, defaultLogConsumer);
+                    throw failure;
                 } else if (logger.isDebugEnabled()) {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
@@ -651,6 +660,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 );
             }
             throw e;
+        }
+    }
+
+    static boolean isContainerOomKilled(InspectContainerResponse container) {
+        return container != null
+            && container.getState() != null
+            && Boolean.TRUE.equals(container.getState().getOOMKilled());
+    }
+
+    private boolean isContainerOomKilled(DockerClient dockerClient, String containerId, Logger logger) {
+        try {
+            return isContainerOomKilled(dockerClient.inspectContainerCmd(containerId).exec());
+        } catch (RuntimeException e) {
+            logger.debug("Unable to inspect container '{}' for OOM termination; preserving the original exit-code failure.", containerId, e);
+            return false;
         }
     }
 
@@ -980,23 +1004,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .longValue();
     }
 
-    private String getImageNameWithoutTag(String fullImageName) {
-        if (fullImageName == null || fullImageName.isEmpty()) {
-            return fullImageName;
-        }
-
-        int lastColonIndex = fullImageName.lastIndexOf(':');
-        int firstSlashIndex = fullImageName.indexOf('/');
-        if (lastColonIndex > -1 && (firstSlashIndex == -1 || lastColonIndex > firstSlashIndex)) {
-            return fullImageName.substring(0, lastColonIndex);
-        } else {
-            return fullImageName; // No tag found or the colon is part of the registry host
-        }
-    }
-
     private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {
-        var imageNameWithoutTag = getImageNameWithoutTag(image);
-        var parsedTagFromImage = NameParser.parseRepositoryTag(image);
+        var reference = DockerService.parseImageReference(image);
 
         if (policy.equals(PullPolicy.IF_NOT_PRESENT)) {
             try {
@@ -1009,7 +1018,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
         // and prevent errors with Podman trying to pull "image:tag:tag"
-        try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
+        try (var pull = dockerClient.pullImageCmd(reference.repos)) {
             RetryUtils.<Boolean, InternalServerErrorException> of(
                 Exponential.builder()
                     .delayFactor(2.0)
@@ -1022,15 +1031,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     throwable.getCause() instanceof ConnectionClosedException,
                 () ->
                 {
-                    var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
-                    var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
                     pull
-                        .withTag(tag)
+                        .withTag(reference.tag)
                         .exec(new PullImageResultCallback())
                         .awaitCompletion();
 
                     if (logger.isTraceEnabled()) {
-                        logger.trace("Image pulled [{}:{}]", repository, tag);
+                        logger.trace("Image pulled [{}:{}]", reference.repos, reference.tag);
                     }
 
                     return true;

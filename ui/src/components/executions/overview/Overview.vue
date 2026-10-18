@@ -8,6 +8,10 @@
                 v-if="execution.state.current === State.FAILED"
                 :execution
             />
+            <PausedAlert
+                v-if="execution.state.current === State.PAUSED"
+                :execution
+            />
         </div>
         <Topology
             class="topology"
@@ -38,6 +42,7 @@
 
     import Banner from "./components/Banner.vue"
     import ErrorAlert from "./components/main/ErrorAlert.vue"
+    import PausedAlert from "./components/main/PausedAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
 
@@ -62,6 +67,7 @@
         flex-direction: column;
         height: 100%;
         gap: var(--ks-spacing-4);
+        min-width: 0;
     }
 
     .banner {
@@ -77,13 +83,18 @@
         }
     }
 
+    #alerts {
+        min-width: 0;
+    }
+
     #alerts:empty {
         display: none;
     }
 
     .topology {
-        flex-shrink: 0;
-        --topology-height: 650px;
+        flex: 1;
+        // Floor so a short viewport still gets a usable graph; the page scrolls from there.
+        min-height: 400px;
     }
 
     #empty {

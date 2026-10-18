@@ -63,8 +63,8 @@ class ReadFileFunctionTest {
         URI nsFile = upsertNsFile(false, namespace, "Hello from version 1");
         upsertNsFile(nsFile.getPath(), false, namespace, "Hello from version 2");
 
-        // Version 2 will be deleted and should not be usable
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        // Deleting the file takes every revision it holds at this point with it
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.delete(Path.of(nsFile.getPath()));
 
         // Upsert will remove the `deleted` flag and create a new version with the new content
@@ -78,8 +78,16 @@ class ReadFileFunctionTest {
         );
         assertThat(illegalVariableEvaluationException.getCause().getCause()).isInstanceOf(FileNotFoundException.class);
 
-        render = variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=1)) }}", getVariables(namespace));
-        assertThat(render).isEqualTo("Hello from version 1");
+        // Revision 1 predates the deletion, so it goes with it: deleting the file deletes every revision it
+        // held at that point, and re-creating the path does not bring them back.
+        illegalVariableEvaluationException = assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=1)) }}", getVariables(namespace))
+        );
+        assertThat(illegalVariableEvaluationException.getCause().getCause()).isInstanceOf(FileNotFoundException.class);
+
+        // The revision written after the deletion is readable
+        render = variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=3)) }}", getVariables(namespace));
+        assertThat(render).isEqualTo("Hello from version 3");
     }
 
     @Test
@@ -367,7 +375,7 @@ class ReadFileFunctionTest {
     }
 
     private URI upsertNsFile(String filePath, boolean nsInAuthority, String namespace, String value) throws IOException, URISyntaxException {
-        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace);
         namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }

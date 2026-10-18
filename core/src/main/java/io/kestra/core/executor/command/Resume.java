@@ -3,6 +3,7 @@ package io.kestra.core.executor.command;
 import java.time.Instant;
 import java.util.Map;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.plugin.core.flow.Pause;
@@ -17,7 +18,8 @@ public record Resume(String tenantId,
     EventId eventId,
     Pause.Resumed resumed,
     @Nullable Map<String, Object> resumeInputs,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @Nullable Actor actor) implements ExecutionCommand {
     public static Resume from(Execution execution, Pause.Resumed resumed) {
         return new Resume(
             execution.getTenantId(),
@@ -27,6 +29,7 @@ public record Resume(String tenantId,
             Instant.now(),
             EventId.create(),
             resumed,
+            null,
             null,
             null
         );
@@ -42,11 +45,16 @@ public record Resume(String tenantId,
             EventId.create(),
             resumed,
             resumeInputs,
+            null,
             null
         );
     }
 
     public Resume withOperationId(String operationId) {
-        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId);
+        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId, actor);
+    }
+
+    public Resume withActor(Actor actor) {
+        return new Resume(tenantId, namespace, flowId, executionId, timestamp, eventId, resumed, resumeInputs, operationId, actor);
     }
 }

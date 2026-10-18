@@ -11,7 +11,7 @@ import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
-import io.kestra.core.services.KVStoreService;
+import io.kestra.core.services.KVService;
 import io.kestra.core.storages.kv.configuration.KVPurgeConfiguration;
 import io.kestra.core.tenant.TenantService;
 
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class KVPurgeCleaner {
 
     @Inject
-    private KVStoreService kvStoreService;
+    private KVService kvService;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -73,7 +73,7 @@ public class KVPurgeCleaner {
                         .map(KVEntry::from)
                         .toList();
                     if (!expiredEntries.isEmpty()) {
-                        kvStoreService.purge(tenant, namespace, expiredEntries);
+                        kvService.purge(tenant, namespace, expiredEntries);
                         log.info(
                             "{} KV store entries have been deleted on the namespace {} on tenant {}",
                             expiredEntries.size(), namespace, tenant

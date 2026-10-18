@@ -50,6 +50,8 @@ micronaut:
           - /metrics/.+
           - /prometheus(\?.*)?
     http-version: HTTP_1_1
+    # No CORS defaults are shipped on purpose: see NotFoundHeadersCorsCustomizer, which adds the
+    # 404-disambiguation headers to whatever CORS configurations a deployment defines itself.
   security:
     filter:
       enabled: false
@@ -104,11 +106,8 @@ micronaut:
       retry:
         enabled: true
       netty:
-        # Must stay off on Micronaut 5: this binder replaces the stock NIO event-loop factory with an
-        # instrumented one that drops its 'nio' qualifier, and Micronaut 5 looks transports up by qualifier, so
-        # enabling it fails startup with "No matching transport was found".
         queues:
-          enabled: false
+          enabled: true
         bytebuf-allocators:
           enabled: true
         channels:
@@ -144,6 +143,13 @@ endpoints:
       enabled: false
     discovery-client:
       enabled: false
+  # Micronaut ships /metrics non-sensitive but not /prometheus: align both so scrapers work out of the box.
+  metrics:
+    enabled: true
+    sensitive: false
+  prometheus:
+    enabled: true
+    sensitive: false
 
 kestra:
   tutorial-flows:

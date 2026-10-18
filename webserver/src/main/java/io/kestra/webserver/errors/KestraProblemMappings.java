@@ -29,6 +29,7 @@ import io.kestra.core.exceptions.KilledException;
 import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.exceptions.QueryTimeoutException;
 import io.kestra.core.exceptions.ResourceAccessDeniedException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.exceptions.TimeoutExceededException;
@@ -48,6 +49,8 @@ import io.kestra.plugin.core.trigger.WebhookInputRenderException;
 import io.kestra.webserver.services.ai.agent.tool.ToolPermissionDeniedException;
 
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.http.exceptions.BufferLengthExceededException;
+import io.micronaut.http.exceptions.ContentLengthExceededException;
 import io.micronaut.web.router.exceptions.UnsatisfiedBodyRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedQueryValueRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedRouteException;
@@ -85,8 +88,10 @@ public class KestraProblemMappings extends ExceptionTypeProblemMapper {
         to.accept(JacksonException.class, ProblemTypes.INVALID_JSON);
         to.accept(ConversionErrorException.class, ProblemTypes.INVALID_ARGUMENT);
         to.accept(DeserializationException.class, ProblemTypes.INTERNAL_ERROR);
-        // Exceeds the queue message-size limit, which is a client-input problem rather than a server failure.
+        // Exceeds the queue message or request body size limit, a client-input problem rather than a server failure.
         to.accept(MessageTooBigException.class, ProblemTypes.PAYLOAD_TOO_LARGE);
+        to.accept(BufferLengthExceededException.class, ProblemTypes.PAYLOAD_TOO_LARGE);
+        to.accept(ContentLengthExceededException.class, ProblemTypes.PAYLOAD_TOO_LARGE);
 
         // Request could not be bound to the route.
         to.accept(UnsatisfiedBodyRouteException.class, ProblemTypes.INVALID_REQUEST_BODY);
@@ -108,6 +113,7 @@ public class KestraProblemMappings extends ExceptionTypeProblemMapper {
         to.accept(WebhookInputRenderException.class, ProblemTypes.INVALID_REQUEST_BODY);
         to.accept(InvalidSourceSearchQueryException.class, ProblemTypes.BAD_REQUEST);
         to.accept(RegexUtils.RegexTimeoutException.class, ProblemTypes.BAD_REQUEST);
+        to.accept(QueryTimeoutException.class, ProblemTypes.BAD_REQUEST);
 
         // Authorization denials. 403 rather than a server error, so they are not recorded as incidents and
         // clients do not retry them.

@@ -27,6 +27,10 @@
             </KsIconButton>
         </div>
 
+        <p v-if="interactive" class="task-edit-data-hint">
+            {{ $t("block_editor.chip_hint") }}
+        </p>
+
         <div v-if="filterable" class="task-edit-data-filter">
             <Magnify class="task-edit-data-filter-ico" />
             <input
@@ -44,15 +48,16 @@
                 <button
                     class="task-edit-data-section-head"
                     type="button"
-                    :aria-expanded="!collapsed.has(section.key)"
+                    :aria-expanded="isExpanded(section.key)"
                     @click="toggle(section.key)"
                 >
-                    <ChevronRight class="task-edit-data-chevron" :class="{'task-edit-data-chevron--open': !collapsed.has(section.key)}" />
+                    <ChevronRight class="task-edit-data-chevron" :class="{'task-edit-data-chevron--open': isExpanded(section.key)}" />
                     <span class="task-edit-data-section-label">{{ section.label }}</span>
-                    <span class="task-edit-data-count">{{ section.chips.length }}</span>
+                    <KsNewBadge v-if="section.isNew">{{ $t("new") }}</KsNewBadge>
+                    <span class="task-edit-data-count">{{ chipCount(section) }}</span>
                 </button>
 
-                <div v-if="!collapsed.has(section.key)" class="task-edit-data-chips">
+                <div v-if="isExpanded(section.key)" class="task-edit-data-chips">
                     <template v-for="chip in section.chips" :key="chip.label">
                         <button
                             v-if="interactive"
@@ -60,11 +65,11 @@
                             type="button"
                             draggable="true"
                             :title="chip.expr"
-                            @click="chip.expr && copy(chip.expr)"
-                            @dragstart="chip.expr && onDragStart($event, chip.expr)"
+                            @mousedown.prevent
+                            @click="chip.expr && emit('chip-activate', chip.expr, section.key)"
+                            @dragstart="chip.expr && onDragStart($event, chip.expr, section.key)"
                         >
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
-                            <span v-if="copied === chip.expr" class="task-edit-data-chip-action">{{ $t("copied") }}</span>
                         </button>
                         <div v-else class="task-edit-data-chip task-edit-data-chip--static">
                             <span class="task-edit-data-chip-label">{{ chip.label }}</span>
@@ -83,23 +88,15 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {copyToClipboard} from "@kestra-io/design-system"
+    import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME} from "./chipInsertion"
+    import {KsNewBadge} from "@kestra-io/design-system"
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-
-    interface DataChip {
-        label: string
-        expr?: string
-        type?: string
-    }
-    interface DataSection {
-        key: string
-        label: string
-        chips: DataChip[]
-    }
+    import type {DataSection} from "./contextSections/types"
+    import {trackContextSectionExpanded} from "../../utils/analytics/taskEditorEvents"
 
     const props = withDefaults(defineProps<{
         kind: string
@@ -112,6 +109,7 @@
         side?: "left" | "right"
         stacked?: boolean
         interactive?: boolean
+        defaultCollapsedKeys?: string[]
     }>(), {
         filterable: false,
         collapsible: false,
@@ -119,14 +117,15 @@
         side: "left",
         stacked: false,
         interactive: true,
+        defaultCollapsedKeys: () => [],
     })
 
-    const emit = defineEmits<{(e: "toggle"): void}>()
-
+    const emit = defineEmits<{(e: "toggle"): void; (e: "chip-activate", expr: string, sectionKey: string): void}>()
 
     const filter = ref("")
-    const collapsed = ref(new Set<string>())
-    const copied = ref<string | undefined>(undefined)
+    const collapsed = ref(new Set<string>(props.defaultCollapsedKeys))
+
+    const isFiltering = computed(() => filter.value.trim() !== "")
 
     const visibleSections = computed<DataSection[]>(() => {
         const q = filter.value.trim().toLowerCase()
@@ -137,25 +136,30 @@
             .filter(section => section.chips.length > 0)
     })
 
+    function isExpanded(key: string) {
+        return isFiltering.value || !collapsed.value.has(key)
+    }
+
     function toggle(key: string) {
-        if (collapsed.value.has(key)) collapsed.value.delete(key)
-        else collapsed.value.add(key)
+        if (isFiltering.value) return
+        if (collapsed.value.has(key)) {
+            collapsed.value.delete(key)
+            trackContextSectionExpanded(`${props.kind}.${key}`)
+        } else {
+            collapsed.value.add(key)
+        }
         collapsed.value = new Set(collapsed.value)
     }
 
-    function onDragStart(event: DragEvent, expr: string) {
-        event.dataTransfer?.setData("text/plain", expr)
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
+    function chipCount(section: DataSection) {
+        return new Set(section.chips.map(chip => chip.groupKey ?? chip.label)).size
     }
 
-    let copiedTimer: ReturnType<typeof setTimeout> | undefined
-    function copy(expr: string) {
-        copyToClipboard(expr)
-        copied.value = expr
-        clearTimeout(copiedTimer)
-        copiedTimer = setTimeout(() => {
-            copied.value = undefined
-        }, 1200)
+    function onDragStart(event: DragEvent, expr: string, sectionKey: string) {
+        event.dataTransfer?.setData("text/plain", expr)
+        event.dataTransfer?.setData(CHIP_DRAG_MIME, expr)
+        event.dataTransfer?.setData(CHIP_SECTION_DRAG_MIME, sectionKey)
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
     }
 </script>
 
@@ -243,6 +247,12 @@
     }
 
     .task-edit-data-sub {
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-muted);
+    }
+
+    .task-edit-data-hint {
+        margin: 0 var(--ks-spacing-3) var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-muted);
     }
@@ -372,13 +382,6 @@
         font-family: var(--ks-font-family-mono);
         color: var(--ks-text-muted);
         text-transform: uppercase;
-    }
-
-    .task-edit-data-chip-action {
-        flex-shrink: 0;
-        font-size: var(--ks-font-size-xs);
-        font-family: var(--ks-font-family-mono);
-        color: var(--ks-text-link);
     }
 
     .task-edit-data-empty {

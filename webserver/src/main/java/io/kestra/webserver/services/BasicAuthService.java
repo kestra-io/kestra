@@ -94,10 +94,7 @@ public class BasicAuthService {
     @VisibleForTesting
     @PostConstruct
     public void init() {
-        if (
-            basicAuthConfiguration == null ||
-                (StringUtils.isBlank(basicAuthConfiguration.getUsername()) && StringUtils.isBlank(basicAuthConfiguration.getPassword()))
-        ) {
+        if (!isManagedByConfig()) {
             return;
         }
         try {
@@ -215,6 +212,15 @@ public class BasicAuthService {
         return credentials != null &&
             !StringUtils.isBlank(credentials.getUsername()) &&
             !StringUtils.isBlank(credentials.getPassword());
+    }
+
+    /**
+     * Returns {@code true} when credentials are set in the configuration file, which {@link #init()}
+     * re-applies at every startup, so any change made through the API would be silently reverted.
+     */
+    public boolean isManagedByConfig() {
+        return basicAuthConfiguration != null
+            && (StringUtils.isNotBlank(basicAuthConfiguration.getUsername()) || StringUtils.isNotBlank(basicAuthConfiguration.getPassword()));
     }
 
     /**

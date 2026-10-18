@@ -5,6 +5,7 @@
         :title="store.title"
         :description="store.description"
         :breadcrumb="store.breadcrumb"
+        :titleSiblings="store.titleSiblings"
         :mainIcon="store.hideMainIcon ? undefined : activeMenuIcon"
         :beta="store.beta"
         :isBookmarked="bookmarked"
@@ -47,6 +48,7 @@
             >
                 <AiMenuIcon />
             </KsIconButton>
+            <NotificationBell v-if="miscStore.configs" />
             <slot name="panel-toggle" />
         </template>
     </KsTopNavBar>
@@ -58,6 +60,7 @@
     import {KsIconButton} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
     import AiMenuIcon from "../ai/AiMenuIcon.vue"
+    import NotificationBell from "./NotificationBell.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
@@ -161,15 +164,24 @@
         return !!href && router.resolve(href).name === route.name
     })
 
-    const currentFavURI = computed(() =>
-        route.fullPath
+    const currentFavURI = computed(() => {
+        const fallback = route.fullPath
             .replace(/[&?]page=[^&]*/gi, "")
             .replace(/\?&/, "?")
-            .replace(/\?$/, ""),
-    )
+            .replace(/\?$/, "")
+        const query = Object.fromEntries(
+            Object.entries(route.query).filter(([key]) => key.toLowerCase() !== "page"),
+        )
+
+        return router.resolve({
+            path: route.path ?? fallback.split(/[?#]/)[0],
+            query,
+            hash: route.hash,
+        }).fullPath ?? fallback
+    })
 
     const bookmarked = computed(() =>
-        bookmarksStore.pages.some((page) => page.path === currentFavURI.value),
+        bookmarksStore.isBookmarked(currentFavURI.value),
     )
 
     const derivedBookmarkLabel = computed(() =>
@@ -240,16 +252,16 @@
         background:
             linear-gradient(
                 to right,
-                rgba(23, 97, 253, 0.22) 0%,
-                rgba(23, 97, 253, 0.08) 45%,
+                color-mix(in srgb, var(--ks-toggle-playground) 22%, transparent) 0%,
+                color-mix(in srgb, var(--ks-toggle-playground) 8%, transparent) 45%,
                 transparent 80%
             ),
             var(--ks-bg-overlay);
 
         .dark & {
             background:
-                linear-gradient(0deg, rgba(23, 97, 253, 0.15) 0%, rgba(23, 97, 253, 0.15) 100%),
-                var(--ks-bg-overlay, #1A1C22);
+                linear-gradient(color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent), color-mix(in srgb, var(--ks-toggle-playground) 15%, transparent)),
+                var(--ks-bg-overlay);
         }
     }
 </style>

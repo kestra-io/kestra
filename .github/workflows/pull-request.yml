@@ -12,6 +12,8 @@ jobs:
   # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
     runs-on: ubuntu-latest
+    # Above the curl ceiling in ee-compile-check, so curl's own error wins.
+    timeout-minutes: 50
     # The `secrets` context is not allowed in `if:` conditions, so expose the
     # app-id as a job-level env var (the `env` context IS allowed in `if:`) and
     # gate the steps on that instead.
@@ -24,7 +26,7 @@ jobs:
 
       # Dependabot PRs are not forks, but GitHub still withholds repo secrets from
       # workflow runs it triggers, so create-github-app-token would fail with an
-      # empty app-id. Guard on the secret itself rather than the triggering actor,
+      # empty client-id. Guard on the secret itself rather than the triggering actor,
       # since that's the actual precondition and it covers any other case where
       # these secrets aren't available to the run.
     - name: Generate GitHub App token for kestra-ee dispatch
@@ -32,7 +34,7 @@ jobs:
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       with:
-        app-id: ${{ secrets.GH_BOT_APP_ID }}
+        client-id: ${{ secrets.GH_BOT_APP_ID }}
         private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
         owner: kestra-io
         repositories: kestra-ee
@@ -123,6 +125,7 @@ jobs:
       ui-design-system: ${{ steps.changes.outputs.ui-design-system }}
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
+      e2e: ${{ steps.changes.outputs.e2e }}
     steps:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: changes
@@ -136,8 +139,10 @@ jobs:
               - 'ui/src/translations/**'
               - 'ui/scripts/translations/**'
               - 'ui/packages/design-system/**/*.locale.ts'
+            e2e:
+              - 'e2e/**'
             backend:
-              - '!{ui,.github}/**'
+              - '!{ui,e2e,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   # Fills in whatever the PR left missing or stale and commits it straight onto the branch, so the
@@ -145,8 +150,8 @@ jobs:
   # The scheduled `auto-translate-ui-keys.yml` still runs independently and remains the way to
   # translate `develop` or to force a full re-translation from a branch.
   #
-  # Branches in this repository only: a fork PR is withheld the API key and its branch cannot be
-  # pushed to with `GITHUB_TOKEN`. Those PRs still get the check below, they just have to run the
+  # Branches in this repository only: a fork PR is withheld the GCP credentials and its branch
+  # cannot be pushed to with `GITHUB_TOKEN`. Those PRs still get the check below, they just have to run the
   # generator themselves.
   translations-generate:
     name: 'Translations - Generate'
@@ -154,39 +159,56 @@ jobs:
     if: >-
       needs.file-changes.outputs.translations == 'true'
       && github.event.pull_request.head.repo.fork == false
+      && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: write
-    # The `secrets` context is not allowed in `if:`, and Dependabot PRs are not forks yet still get
-    # no secrets, so gate the steps on the key itself rather than on the actor.
+    # Gemini is reached through Vertex AI with the `GCP_SERVICE_ACCOUNT` key. The secret itself is never
+    # put in the job env, where `npm ci` would see it: only whether it is set is mirrored, so the steps
+    # can be gated on it and a repository without it skips generation instead of failing.
     env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      HAS_GCP_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        if: env.GEMINI_API_KEY != ''
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           node-version-file: 'ui/.nvmrc'
 
       - name: Install Node dependencies
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         run: npm ci
         working-directory: ui
 
+      - name: Authenticate to Google Cloud
+        if: env.HAS_GCP_CREDENTIALS == 'true'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Generate missing and stale translations
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         run: npm run translations:generate
         working-directory: ui
+        # Set here and not on the job: the auth step exports `GOOGLE_CLOUD_PROJECT` (the project the key
+        # belongs to), which would override a job-level value and send the calls to the wrong project.
+        env:
+          GOOGLE_CLOUD_PROJECT: kestra-prd
+          GOOGLE_CLOUD_LOCATION: global
 
       - name: Commit them onto the pull request
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
+        # The branch name is chosen by whoever pushed it, so keep it out of the script itself:
+        # interpolated directly, a `$(...)` in the name would run on the runner.
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           git config user.name "GitHub Action"
           git config user.email "actions@github.com"
@@ -198,7 +220,7 @@ jobs:
           fi
           git commit -m "chore(core): localize to languages other than english"
           # Generation is idempotent, so the run this push triggers finds nothing to do and stops.
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin "HEAD:${HEAD_REF}"
 
   # Kept off the frontend test path: a translation typo shouldn't block those, and this check needs
   # neither a build nor `npm ci` — just the checked-out files and Node itself. It is what stops an
@@ -223,7 +245,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: 'ui/.nvmrc'
 
@@ -235,12 +257,13 @@ jobs:
         if: github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != ''
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          client-id: ${{ secrets.GH_BOT_APP_ID }}
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           owner: kestra-io
           repositories: kestra-ee
 
-      # The same-name EE branch when the PR has a companion, otherwise the branch it targets.
+      # The same-name EE branch when the PR has a companion, otherwise the branch it targets. A stacked
+      # PR targets another OSS branch, which has no EE counterpart, hence the fall back to develop.
       - name: Resolve the EE branch
         id: ee-branch
         if: steps.ee-token.outputs.token != ''
@@ -249,11 +272,14 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if gh api "repos/kestra-io/kestra-ee/branches/$HEAD_REF" --silent 2>/dev/null; then
-            echo "ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=$BASE_REF" >> "$GITHUB_OUTPUT"
-          fi
+          for candidate in "$HEAD_REF" "$BASE_REF" develop; do
+            if gh api "repos/kestra-io/kestra-ee/branches/$candidate" --silent 2>/dev/null; then
+              echo "ref=$candidate" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "::error::No kestra-ee branch found for $HEAD_REF, $BASE_REF or develop."
+          exit 1
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout - EE sources
@@ -289,7 +315,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/translations-report"
           printf '{"pr": %s, "fork": %s, "outcome": "%s"}\n' "$PR_NUMBER" "$FORK" "$OUTCOME" > "$RUNNER_TEMP/translations-report/meta.json"
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         name: Upload the translation report
         if: always()
         with:
@@ -308,7 +334,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   design-system-frontend:
     name: Frontend - Design System tests
@@ -318,6 +343,32 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  e2e-checks:
+    name: E2E - Checks
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.e2e == 'true'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      # No browsers and no product build: this is the static half of what the frontend job used to
+      # cover for the specs, and it is the only check an e2e-only PR gets before the suite itself.
+      - working-directory: e2e
+        run: npm ci
+
+      - working-directory: e2e
+        run: npm run check:types
+
+      - working-directory: e2e
+        run: npm run test:lint
+
   backend:
     name: Backend - Tests
     needs: file-changes
@@ -325,8 +376,6 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:
@@ -341,7 +390,7 @@ jobs:
     # build; drafts are filtered by file-changes' own if. Fork PRs can't
     # share artifacts (their runs hold no repo write token), so they keep
     # the E2E build-from-source fallback below.
-    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
+    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.e2e == 'true') && github.event.pull_request.head.repo.fork == false"
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -354,7 +403,7 @@ jobs:
     needs: [file-changes, build-artifacts]
     # Runs when build-artifacts succeeded (prebuilt exe) or was skipped for a
     # fork (falls back to building from source); not when the build failed.
-    if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
+    if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.e2e == 'true')"
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
@@ -387,7 +436,7 @@ jobs:
   required-checks:
     name: Required checks
     if: always()
-    needs: [file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests]
+    needs: [file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled
@@ -405,7 +454,7 @@ jobs:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
+    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:

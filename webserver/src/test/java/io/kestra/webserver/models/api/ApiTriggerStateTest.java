@@ -15,7 +15,7 @@ class ApiTriggerStateTest {
     @Test
     void shouldExposeExecutionId() {
         TriggerState state = TriggerState
-            .of(TriggerId.of("tenant", "namespace", "flow", "trigger"), TriggerType.SCHEDULE, null, false, 0)
+            .of(TriggerId.of("tenant", "namespace", "flow", "trigger"), TriggerType.SCHEDULE, null, 0)
             .executionId(Clock.systemUTC(), "exec-123");
 
         ApiTriggerState dto = ApiTriggerState.from(state);

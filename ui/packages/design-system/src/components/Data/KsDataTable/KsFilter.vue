@@ -54,6 +54,7 @@
     import {useSavedFilters} from "./filter/composables/useSavedFilters"
     import {newGroupId} from "./filter/composables/useFilterGroups"
     import {useDataOptions} from "./filter/composables/useDataOptions"
+    import {usePeriodicRefresh} from "./filter/composables/usePeriodicRefresh"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts"
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, type SavedFilterAction} from "./filter/utils/filterAnalytics"
     import MainFilter from "./filter/MainFilter.vue"
@@ -208,6 +209,8 @@
         emits("refresh")
     }
 
+    usePeriodicRefresh(refreshData)
+
     provide(FILTER_CONTEXT_INJECTION_KEY, {
         configuration: computed(() => props.configuration),
         appliedFilters,
@@ -332,7 +335,7 @@
             border-color: var(--ks-btn-secondary-border-active);
 
             :deep(svg) {
-                color: var(--ks-content-link, var(--ks-text-link)) !important;
+                color: var(--ks-text-link) !important;
             }
         }
     }

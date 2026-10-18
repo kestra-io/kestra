@@ -12,8 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
-import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.models.SoftDeletable;
+import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TenantId;
@@ -31,8 +31,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
-    /** Metadata keys Kestra owns, under the prefix already reserved for system labels. Flat: the
-     * repositories address {@link #metadata} one level deep. */
+    /**
+     * Metadata keys Kestra owns, under the prefix already reserved for system labels. Flat: the
+     * repositories address {@link #metadata} one level deep.
+     */
     public static final String SYSTEM_METADATA_PREFIX = Label.SYSTEM_PREFIX;
 
     public static final String STATUS_METADATA_KEY = SYSTEM_METADATA_PREFIX + "status";
@@ -70,6 +72,17 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     @Size(max = 100)
     @Schema(title = "The day-2 actions offered on this asset, each backing onto a flow.")
     private List<@Valid FlowAction> assetActions;
+
+    @Nullable
+    @Valid
+    @Schema(title = "The asset this one is part of.", description = "At most one parent. Parent depth is limited by the service layer, not by this model.")
+    private AssetRelationRef partOf;
+
+    @Nullable
+    @Size(max = 50)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(title = "Assets related to this one.", description = "Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.")
+    private List<@Valid AssetRelationRef> related;
 
     @Nullable
     @Hidden
@@ -110,20 +123,27 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
      * Merges this asset over {@code previousAsset}, which is {@code null} on creation.
      *
      * @param previousAsset the stored asset this one is merged over, or {@code null} when creating.
-     * @param allowTypeChange whether the incoming type wins over the stored one; either falls back to the other
-     *                        when null, so creation (no previous asset) keeps the incoming type either way.
+     * @param namespaceDeclared whether the source explicitly declared the namespace field (present, even as
+     *        an explicit {@code null}) rather than omitting it — {@code true} lets this namespace (including
+     *        {@code null}, clearing it to Global) win over the stored one; {@code false} means it was omitted,
+     *        so the previous namespace is kept.
      * @return this asset, merged.
      */
-    public <T extends Asset> T toUpdated(T previousAsset, boolean allowTypeChange) {
+    public <T extends Asset> T toUpdated(T previousAsset, boolean namespaceDeclared) {
         this.created = Optional.ofNullable(previousAsset).map(Asset::getCreated).or(() -> Optional.ofNullable(this.created)).orElseGet(Instant::now);
         this.updated = Instant.now();
 
         String previousType = Optional.ofNullable(previousAsset).map(Asset::getType).orElse(null);
-        this.type = allowTypeChange
-            ? ObjectUtils.firstNonNull(this.type, previousType)
+        // External is a placeholder for "referenced but never declared", never a real user-chosen type: a
+        // real declared type always wins over it, regardless of write order.
+        this.type = (this.type != null && !External.ASSET_TYPE.equals(this.type))
+            ? this.type
             : ObjectUtils.firstNonNull(previousType, this.type);
-        // The namespace of an existing asset is immutable, as AssetsController.updateAsset already enforces
-        this.namespace = Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
+
+        this.namespace = namespaceDeclared
+            ? this.namespace
+            : Optional.ofNullable(previousAsset).map(Asset::getNamespace).orElse(this.namespace);
+
         this.displayName = Optional.ofNullable(this.displayName).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDisplayName)).orElse(null);
         this.description = Optional.ofNullable(this.description).or(() -> Optional.ofNullable(previousAsset).map(Asset::getDescription)).orElse(null);
         Map<String, Object> incomingMetadata = Optional.ofNullable(this.metadata).orElse(Collections.emptyMap());
@@ -131,7 +151,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         Map<String, Object> mergedMetadata = previousMetadata == null
             ? new HashMap<>(incomingMetadata)
             : MapUtils.mergeWithNullableValues(previousMetadata, incomingMetadata);
-        incomingMetadata.forEach((key, value) -> {
+        incomingMetadata.forEach((key, value) ->
+        {
             if (value == null) {
                 mergedMetadata.remove(key);
             }
@@ -142,7 +163,14 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
             ? this.assetActions
             : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
 
+        this.partOf = Optional.ofNullable(this.partOf).or(() -> Optional.ofNullable(previousAsset).map(Asset::getPartOf)).orElse(null);
+
         return (T) this;
+    }
+
+    /** Convenience for callers with no raw-source presence information: a non-null namespace is treated as declared. */
+    public <T extends Asset> T toUpdated(T previousAsset) {
+        return toUpdated(previousAsset, this.namespace != null);
     }
 
     @JsonProperty("status")
@@ -206,6 +234,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         metadata.put(name, value);
     }
 
+    @JsonProperty("partOf")
+    public void setPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+    }
+
+    @JsonProperty("related")
+    public void setRelated(List<AssetRelationRef> related) {
+        this.related = related;
+    }
+
     @Override
     public String uid() {
         return Asset.uid(tenantId, id);
@@ -227,6 +265,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     public Asset withAssetActions(List<FlowAction> assetActions) {
         this.assetActions = assetActions;
+        return this;
+    }
+
+    public Asset withPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+        return this;
+    }
+
+    public Asset withRelated(List<AssetRelationRef> related) {
+        this.related = related;
         return this;
     }
 }

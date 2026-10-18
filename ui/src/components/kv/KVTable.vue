@@ -286,7 +286,10 @@
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
     >
-        <InheritedKVs :namespace="namespacesStore?.namespace?.id" />
+        <InheritedKVs
+            v-if="namespacesStore.namespace?.id"
+            :namespace="namespacesStore.namespace.id"
+        />
     </KsDrawer>
 </template>
 
@@ -683,7 +686,7 @@
     }
 
     function removeKvs() {
-        const groupedByNamespace = groupBy(selection.value, (kv) => kv.namespace)
+        const groupedByNamespace = groupBy(selection.value, (item) => item.namespace)
         const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user?.isAllowed(resource.KVSTORE, action.DELETE, namespace)))
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs)
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n))

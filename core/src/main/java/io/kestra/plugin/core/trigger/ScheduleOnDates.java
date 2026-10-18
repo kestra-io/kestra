@@ -1,9 +1,9 @@
 package io.kestra.plugin.core.trigger;
 
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,7 +23,6 @@ import io.kestra.core.serializers.JacksonMapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -46,11 +45,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Plugin
 public class ScheduleOnDates extends AbstractTrigger implements Schedulable, TriggerOutput<VoidOutput> {
     private static final String PLUGIN_PROPERTY_RECOVER_MISSED_SCHEDULES = "recoverMissedSchedules";
-
-    @Schema(hidden = true)
-    @Builder.Default
-    @Null
-    private final Duration interval = null;
 
     private Map<String, Object> inputs;
 
@@ -95,19 +89,20 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> triggerContext) {
         ZonedDateTime now = SchedulerClock.now();
-        return triggerContext
+        ZonedDateTime last = triggerContext
             .map(ctx -> ctx.getBackfill() != null ? ctx.getBackfill().getCurrentDate() : ctx.getDate())
             .map(this::withTimeZone)
-            .or(() -> Optional.of(now))
-            .flatMap(dt ->
-            {
-                try {
-                    return nextDate(conditionContext.getRunContext(), date -> date.isAfter(dt));
-                } catch (IllegalVariableEvaluationException e) {
-                    log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
-                    throw new InvalidTriggerConfigurationException("Failed to evaluate schedule 'dates'. Cause: " + e.getMessage());
-                }
-            }).orElseGet(() -> now.plusYears(1));
+            .orElse(now);
+        ZonedDateTime next = firstDate(conditionContext, date -> date.isAfter(last)).orElseGet(() -> now.plusYears(1));
+
+        // Past its end, a backfill resumes at the regular date it held back, so dates that already ran are not replayed and later ones still run.
+        Backfill backfill = triggerContext.map(TriggerContext::getBackfill).orElse(null);
+        if (backfill != null && next.isAfter(backfill.getEnd())) {
+            ZonedDateTime resumeFrom = Optional.ofNullable(backfill.getPreviousNextExecutionDate()).orElse(now);
+            return firstDate(conditionContext, date -> date.isAfter(backfill.getEnd()) && !date.isBefore(resumeFrom))
+                .orElseGet(() -> now.plusYears(1));
+        }
+        return next;
     }
 
     @Override
@@ -117,16 +112,15 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     }
 
     @Override
-    public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) throws IllegalVariableEvaluationException {
-        // the previous date is "the previous date of the next date"
-        ZonedDateTime now = ZonedDateTime.now();
-        List<ZonedDateTime> previousDates = conditionContext.getRunContext().render(dates).asList(ZonedDateTime.class).stream()
-            .sorted()
-            .takeWhile(date -> date.isBefore(now))
-            .toList()
-            .reversed();
-
-        return previousDates.isEmpty() ? ZonedDateTime.now() : previousDates.getFirst();
+    public Optional<ZonedDateTime> previousEvaluationDate(ConditionContext conditionContext) throws IllegalVariableEvaluationException {
+        RunContext runContext = conditionContext.getRunContext();
+        ZonedDateTime now = SchedulerClock.now();
+        return runContext.render(dates)
+            .asList(ZonedDateTime.class).stream()
+            .filter(date -> date.isBefore(now))
+            .max(Comparator.naturalOrder())
+            .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
+            .map(date -> date.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private ZonedDateTime withTimeZone(ZonedDateTime date) {
@@ -134,6 +128,15 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
             return date;
         }
         return date.withZoneSameInstant(ZoneId.of(this.timezone));
+    }
+
+    private Optional<ZonedDateTime> firstDate(ConditionContext conditionContext, Predicate<ZonedDateTime> predicate) {
+        try {
+            return nextDate(conditionContext.getRunContext(), predicate);
+        } catch (IllegalVariableEvaluationException e) {
+            log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
+            throw new InvalidTriggerConfigurationException("Failed to evaluate schedule 'dates'. Cause: " + e.getMessage());
+        }
     }
 
     private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> predicate) throws IllegalVariableEvaluationException {

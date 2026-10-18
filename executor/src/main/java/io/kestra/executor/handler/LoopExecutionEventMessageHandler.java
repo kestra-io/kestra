@@ -133,6 +133,18 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                     // immediately terminate the loop
                     return terminateLoop(parentTaskRun, loop, executor, message.state(), taskRunStatistic);
                 } else {
+                    State.Type execState = executor.getExecution().getState().getCurrent();
+                    State.Type parentState = parentTaskRun.getState().getCurrent();
+                    if (execState == State.Type.KILLING || execState == State.Type.KILLED
+                        || parentState == State.Type.KILLING || parentState == State.Type.KILLED) {
+                        computeOutputs(parentTaskRun, outputs, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                        if (runningIteration == 0) {
+                            return terminateLoop(parentTaskRun, loop, executor, State.Type.KILLED, taskRunStatistic);
+                        }
+                        followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                        return null;
+                    }
+
                     // Check the next iteration index
                     int nextIndex = runningIteration + terminatedIteration;
                     if (nextIndex < iterationCount) {
@@ -320,7 +332,18 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
     // terminate the loop and its attempts
     private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state, TaskRunStatistic taskRunStatistic) throws InternalException {
-        State.Type finalState = state == State.Type.FAILED ? stateFailure(task) : State.Type.SUCCESS;
+        State.Type execState = executor.getExecution().getState().getCurrent();
+        State.Type parentState = parentTaskRun.getState().getCurrent();
+        State.Type finalState;
+        if (state == State.Type.FAILED) {
+            finalState = stateFailure(task);
+        } else if (state == State.Type.KILLED || parentState == State.Type.KILLED || parentState == State.Type.KILLING || execState == State.Type.KILLED || execState == State.Type.KILLING) {
+            finalState = State.Type.KILLED;
+        } else if (state == State.Type.CANCELLED || parentState == State.Type.CANCELLED || execState == State.Type.CANCELLED) {
+            finalState = State.Type.CANCELLED;
+        } else {
+            finalState = State.Type.SUCCESS;
+        }
         // as loops can run concurrently, the state might already be set by another task run
         TaskRun newTaskRun = parentTaskRun.getState().getCurrent() == finalState ? parentTaskRun : parentTaskRun.withStateAndAttempt(finalState);
 

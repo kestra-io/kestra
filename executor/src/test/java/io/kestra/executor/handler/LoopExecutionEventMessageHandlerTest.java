@@ -413,6 +413,76 @@ class LoopExecutionEventMessageHandlerTest {
             .containsEntry(Loop.TERMINATED_ITERATIONS_OUTPUT, Map.of("SUCCESS", 1, "SKIPPED", 1, "FAILED", 1));
     }
 
+    @Test
+    void shouldTerminateLoopWithKilledWhenIterationIsKilled() throws InternalException {
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.KILLED, null, null);
+        var maybeExecutor = handler.handle(message);
+
+        assertThat(maybeExecutor).isPresent();
+        var taskRun = maybeExecutor.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+    }
+
+    @Test
+    void shouldTerminateLoopWithKilledWhenParentExecutionIsKilling() throws InternalException {
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.KILLING);
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 1,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.SUCCESS, null, null);
+        var maybeExecutor = handler.handle(message);
+
+        assertThat(maybeExecutor).isPresent();
+        var taskRun = maybeExecutor.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+    }
+
+    @Test
+    void shouldNotEmitNextIterationWhenParentExecutionIsKilling() throws InternalException {
+        var flow = flowRepository.create(GenericFlow.of(loopFlow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.KILLING);
+        String loopTaskRunId = IdUtils.create();
+        var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
+        executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        taskOutputService.saveOutputs(
+            loopTaskRun, Map.of(
+                Loop.ITERATION_COUNT_OUTPUT, 3,
+                Loop.RUNNING_ITERATIONS_OUTPUT, 2,
+                Loop.TERMINATED_ITERATIONS_OUTPUT, Collections.emptyMap()
+            )
+        );
+
+        var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.SUCCESS, null, null);
+        var maybeExecutor = handler.handle(message);
+
+        assertThat(maybeExecutor).isEmpty();
+    }
+
     private Flow loopFlow() {
         return loopFlow(true);
     }

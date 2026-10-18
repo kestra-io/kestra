@@ -3,16 +3,22 @@ import {h} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 import ChangeExecutionStatus from "./ChangeExecutionStatus.vue"
 import type {Execution} from "../../stores/executions"
+import {useExecutionsStore} from "../../stores/executions"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 const isAllowedMock = vi.fn().mockReturnValue(true)
+const toastSuccessMock = vi.fn()
+const toastErrorMock = vi.fn()
 
 vi.mock("override/stores/auth", () => ({
     useAuthStore: () => ({user: {isAllowed: (...args: unknown[]) => isAllowedMock(...args)}}),
 }))
 
 vi.mock("../../utils/toast", () => ({
-    useToast: () => ({success: vi.fn(), error: vi.fn()}),
+    useToast: () => ({
+        success: (...args: unknown[]) => toastSuccessMock(...args),
+        error: (...args: unknown[]) => toastErrorMock(...args),
+    }),
 }))
 
 const messages = {
@@ -100,6 +106,8 @@ describe("ChangeExecutionStatus", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         isAllowedMock.mockReturnValue(true)
+        toastSuccessMock.mockClear()
+        toastErrorMock.mockClear()
     })
 
     test.each(RUNNING_FAMILY_STATES)(
@@ -160,5 +168,35 @@ describe("ChangeExecutionStatus", () => {
 
         await trigger.trigger("click")
         expect(wrapper.find("[data-test=\"body\"]").exists()).toBe(false)
+    })
+
+    test("reports error toast when changeExecutionStatus rejects", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.changeExecutionStatus = vi.fn().mockRejectedValue(new Error("State change rejected"))
+
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const trigger = wrapper.get("[data-test=\"trigger\"]")
+        await trigger.trigger("click")
+
+        await (wrapper.vm as unknown as {changeStatus: () => Promise<void>}).changeStatus()
+
+        expect(toastErrorMock).toHaveBeenCalled()
+        expect(toastSuccessMock).not.toHaveBeenCalled()
+    })
+
+    test("shows success toast when changeExecutionStatus succeeds", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.changeExecutionStatus = vi.fn().mockResolvedValue({})
+        executionsStore.waitForStateChange = vi.fn().mockResolvedValue(buildExecution("SUCCESS"))
+        executionsStore.followExecution = vi.fn()
+
+        const wrapper = mountChangeExecutionStatus("FAILED")
+        const trigger = wrapper.get("[data-test=\"trigger\"]")
+        await trigger.trigger("click")
+
+        await (wrapper.vm as unknown as {changeStatus: () => Promise<void>}).changeStatus()
+
+        expect(toastSuccessMock).toHaveBeenCalled()
+        expect(toastErrorMock).not.toHaveBeenCalled()
     })
 })

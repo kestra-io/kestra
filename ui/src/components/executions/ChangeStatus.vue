@@ -80,6 +80,8 @@
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {State} from "@kestra-io/design-system"
+    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
 
     // FIXME: any - execution/taskRun are untyped domain objects
     const props = withDefaults(defineProps<{
@@ -93,7 +95,7 @@
         attemptIndex: undefined,
     })
 
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
     const toast = useToast()
@@ -132,26 +134,32 @@
         return State.isTerminated(execution.state.current) && execution.state.current !== State.KILLED
     })
 
-    function changeStatus() {
+    async function changeStatus() {
         visible.value = false
 
         const taskRun = props.taskRun as any // FIXME: any
-        executionsStore
-            .changeStatus({
+        try {
+            await executionsStore.changeStatus({
                 executionId: (props.execution as {id: string}).id,
                 taskRunId: taskRun.id,
                 state: selectedStatus.value as string,
             })
-            .then(() => executionsStore.waitForStateChange(props.execution as any)) // FIXME: any
-            .then((execution: unknown) => {
-                // FIXME: any
-                ;(executionsStore as any).execution = execution // FIXME: any
-                // Re-subscribe to the execution SSE stream directly via the store
-                // instead of bubbling a `follow` event up to the route component.
-                executionsStore.followExecution({id: (props.execution as {id: string}).id}, t)
+            const execution = await executionsStore.waitForStateChange(props.execution as any) // FIXME: any
 
-                toast.success(t("change state done"))
-            })
+            // FIXME: any
+            ;(executionsStore as any).execution = execution // FIXME: any
+            // Re-subscribe to the execution SSE stream directly via the store
+            // instead of bubbling a `follow` event up to the route component.
+            executionsStore.followExecution({id: (props.execution as {id: string}).id}, t)
+
+            toast.success(t("change state done"))
+        } catch (e: unknown) {
+            const problem = asProblem(e)
+            toast.error(
+                problemBulkBody(problem, t, te),
+                problemTitle(problem, t, te),
+            )
+        }
     }
 </script>
 

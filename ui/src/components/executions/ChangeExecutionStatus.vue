@@ -85,10 +85,12 @@
     import {Execution, useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
+    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {problemBulkBody, problemTitle} from "../../utils/problem"
 
     const props = defineProps<{ execution: Execution }>()
 
-    const {t} = useI18n({useScope: "global"})
+    const {t, te} = useI18n({useScope: "global"})
     const toast = useToast()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
@@ -122,18 +124,26 @@
     const changeStatus = async () => {
         visible.value = false
 
-        await executionsStore.changeExecutionStatus({
-            executionId: props.execution.id,
-            state: selectedStatus.value!,
-        })
+        try {
+            await executionsStore.changeExecutionStatus({
+                executionId: props.execution.id,
+                state: selectedStatus.value!,
+            })
 
-        const execution = await executionsStore.waitForStateChange(props.execution) as Execution
+            const execution = await executionsStore.waitForStateChange(props.execution) as Execution
 
-        executionsStore.execution = execution
-        // Re-subscribe to the execution SSE stream directly via the store
-        // instead of bubbling a `follow` event up to the route component.
-        executionsStore.followExecution({id: props.execution.id}, t)
-        toast.success(t("change execution state done"))
+            executionsStore.execution = execution
+            // Re-subscribe to the execution SSE stream directly via the store
+            // instead of bubbling a `follow` event up to the route component.
+            executionsStore.followExecution({id: props.execution.id}, t)
+            toast.success(t("change execution state done"))
+        } catch (e: unknown) {
+            const problem = asProblem(e)
+            toast.error(
+                problemBulkBody(problem, t, te),
+                problemTitle(problem, t, te),
+            )
+        }
     }
 </script>
 

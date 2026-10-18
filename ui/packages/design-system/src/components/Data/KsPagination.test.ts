@@ -4,6 +4,8 @@ import KestraDesignSystem from "../../index"
 import {setDesignSystemLocale} from "../../i18n"
 import KsPagination from "./KsPagination.vue"
 
+type ElLocale = {name?: string; el: {pagination: {pagesize: string}}}
+
 const globalConfig = {plugins: [KestraDesignSystem]}
 
 describe("KsPagination", () => {
@@ -48,7 +50,7 @@ describe("KsPagination", () => {
             global: globalConfig,
         })
         expect(wrapper.text()).toContain("Total")
-        const locale = wrapper.findComponent({name: "ElConfigProvider"}).props("locale") as any
+        const locale = wrapper.findComponent({name: "ElConfigProvider"}).props("locale") as ElLocale
         expect(locale.el.pagination.pagesize).toBe(" per page")
     })
 
@@ -59,7 +61,7 @@ describe("KsPagination", () => {
             global: globalConfig,
         })
         expect(wrapper.text()).toContain("Total")
-        const locale = wrapper.findComponent({name: "ElConfigProvider"}).props("locale") as any
+        const locale = wrapper.findComponent({name: "ElConfigProvider"}).props("locale") as ElLocale
         expect(locale.el.pagination.pagesize).toBe(" per page")
     })
 })

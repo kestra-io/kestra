@@ -11,7 +11,7 @@
                             onlyIcon
                             :loadIcon="pluginsStore.loadIcon"
                         />
-                        <span class="dp-name text-truncate">{{ pluginName }}</span>
+                        <span class="dp-name">{{ pluginName }}</span>
                         <KsTag size="small" class="dp-kind-chip">{{ pluginKind }}</KsTag>
                         <div class="dp-actions">
                             <KsButton
@@ -25,7 +25,7 @@
                         </div>
                     </div>
                     <div class="dp-type">
-                        <span class="dp-cls text-truncate">{{ currentPlugin.cls }}</span>
+                        <span class="dp-cls">{{ currentPlugin.cls }}</span>
                         <KsTag v-if="currentPlugin.version" size="small" class="dp-version">
                             {{ currentPlugin.version }}
                         </KsTag>
@@ -89,10 +89,10 @@
             v-else-if="overrideIntro"
             :content="overrideIntro"
             class="dp-override-intro"
-            :class="{'position-absolute': absolute}"
+            :class="{'is-absolute': absolute}"
         />
 
-        <div v-else-if="introContent" class="dp-intro" :class="{'position-absolute': absolute}">
+        <div v-else-if="introContent" class="dp-intro" :class="{'is-absolute': absolute}">
             <div class="dp-intro-hero">
                 <div class="dp-intro-icon">
                     <BookOpenVariant :size="22" />
@@ -585,6 +585,10 @@
     padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-6);
   }
 
+  .is-absolute {
+    position: absolute;
+  }
+
   .dp-sticky {
     position: sticky;
     top: 0;
@@ -630,6 +634,9 @@
     color: var(--ks-text-primary);
     min-width: 0;
     flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .dp-kind-chip {
@@ -659,6 +666,9 @@
     color: var(--ks-text-dim);
     flex: 1;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .dp-version {

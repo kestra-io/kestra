@@ -18,7 +18,7 @@
             </template>
             <template #footer>
                 <div v-ks-loading="isLoading">
-                    <ValidationError class="me-2" link :errors="errors" />
+                    <ValidationError class="task-edit-drawer-error" link :errors="errors" />
 
                     <KsButton
                         :icon="ContentSave"
@@ -31,7 +31,7 @@
                     </KsButton>
                     <KsAlert
                         :closable="false"
-                        class="mb-0 mt-3"
+                        class="task-edit-revision-alert"
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
@@ -844,5 +844,14 @@
     .task-edit-required-icon {
         display: inline-flex;
         flex-shrink: 0;
+    }
+
+    .task-edit-drawer-error {
+        margin-right: var(--ks-spacing-2);
+    }
+
+    .task-edit-revision-alert {
+        margin-top: var(--ks-spacing-4);
+        margin-bottom: 0;
     }
 </style>

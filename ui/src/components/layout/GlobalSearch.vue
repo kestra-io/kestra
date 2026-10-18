@@ -17,7 +17,7 @@
                                 <span class="scope-prefix">{{ scopePrefix }}</span>
                             </template>
                             <template v-if="!query" #suffix>
-                                <span class="d-none d-sm-block">
+                                <span class="search-close-hint">
                                     <kbd>ESC</kbd> {{ $t("to close") }}
                                 </span>
                             </template>
@@ -39,11 +39,11 @@
                                         <component
                                             :is="item.kind === 'link' ? 'router-link' : 'button'"
                                             v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
-                                            class="result-link d-flex gap-2"
+                                            class="result-link"
                                             @click="onItemClick(item)"
                                         >
-                                            <div class="result-title d-flex gap-2 nav-item-title">
-                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" />
+                                            <div class="result-title nav-item-title">
+                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" />
                                                 <span v-if="item.parentTitle" class="result-parent">
                                                     {{ item.parentTitle }}
                                                 </span>
@@ -52,7 +52,7 @@
                                             </div>
                                             <span
                                                 v-if="index === activeIndex"
-                                                class="result-hint d-none d-sm-flex align-items-center"
+                                                class="result-hint"
                                             >
                                                 <span>{{ $t("jump to") }}</span>
                                             </span>
@@ -410,7 +410,17 @@
             gap: 6px;
         }
 
+        .search-close-hint {
+            display: none;
+
+            @media (min-width: 576px) {
+                display: block;
+            }
+        }
+
         .result-link {
+            display: flex;
+            gap: var(--ks-spacing-2);
             font-size: var(--ks-font-size-sm);
             padding: 6px 10px;
             border-radius: 6px;
@@ -427,6 +437,8 @@
         }
 
         .result-title {
+            display: flex;
+            gap: var(--ks-spacing-2);
             flex: 0 1 auto;
             min-width: 0;
         }
@@ -450,11 +462,17 @@
         }
 
         .result-hint {
+            display: none;
+            align-items: center;
             margin-left: auto;
             color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
+
+            @media (min-width: 576px) {
+                display: flex;
+            }
         }
 
         .empty {

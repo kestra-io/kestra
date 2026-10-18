@@ -31,7 +31,7 @@ vi.mock("nprogress", () => ({
 }))
 
 import type {Router} from "vue-router"
-import {handled, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
+import {handled, handledIf, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
 import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY, useServerReachability} from "../composables/useServerReachability"
 import {isReauthOpen, requestReauth, resolveReauth} from "../composables/useReauthDialog"
 
@@ -383,3 +383,63 @@ describe("setupKestraHttp session recovery", () => {
         expect(isReauthOpen()).toBe(true)
     })
 })
+
+describe("handledIf", () => {
+    it("marks an error handled when the predicate accepts its status", () => {
+        const directError = {status: 404}
+        expect(handledIf(directError, [404, 422])).toBe(true)
+        expect(isReportedCentrally(directError as KestraHttpError)).toBe(false)
+
+        const responseError = {response: {status: 422}}
+        expect(handledIf(responseError, [404, 422])).toBe(true)
+        expect(isReportedCentrally(responseError as KestraHttpError)).toBe(false)
+    })
+
+    it("leaves an error unhandled when the predicate rejects its status or has no status", () => {
+        const rejectedStatus = {status: 500}
+        expect(handledIf(rejectedStatus, [404, 422])).toBe(false)
+        expect((rejectedStatus as KestraHttpError).__kestra_handled).toBeUndefined()
+
+        const genericError = new Error("network failure")
+        expect(handledIf(genericError, [404])).toBe(false)
+        expect((genericError as KestraHttpError).__kestra_handled).toBeUndefined()
+    })
+
+    it("preserves the original error structure either way", () => {
+        const handledError = new Error("Not Found")
+        Object.assign(handledError, {status: 404, code: "RESOURCE_MISSING"})
+
+        expect(handledIf(handledError, [404])).toBe(true)
+        expect(handledError.message).toBe("Not Found")
+        expect((handledError as unknown as {code: string}).code).toBe("RESOURCE_MISSING")
+
+        const unhandledError = new Error("Internal Server Error")
+        Object.assign(unhandledError, {status: 500, code: "CRITICAL_FAILURE"})
+
+        expect(handledIf(unhandledError, [404])).toBe(false)
+        expect(unhandledError.message).toBe("Internal Server Error")
+        expect((unhandledError as unknown as {code: string}).code).toBe("CRITICAL_FAILURE")
+    })
+
+    it("composes with other request and error options rather than replacing them", () => {
+        const complexError: KestraHttpError = Object.assign(new Error("Flow missing"), {
+            status: 404,
+            config: {method: "get", url: "/api/v1/flows/missing"},
+            response: {
+                data: {title: "Not Found"},
+                status: 404,
+                statusText: "Not Found",
+                headers: {"content-type": "application/json"},
+                request: {responseURL: "http://localhost/api/v1/flows/missing"},
+                config: {method: "get", url: "/api/v1/flows/missing"},
+            },
+        })
+
+        expect(handledIf(complexError, [404])).toBe(true)
+        expect(complexError.config).toEqual({method: "get", url: "/api/v1/flows/missing"})
+        expect(complexError.response?.headers).toEqual({"content-type": "application/json"})
+        expect(complexError.response?.data).toEqual({title: "Not Found"})
+        expect(complexError.__kestra_handled).toBe(true)
+    })
+})
+

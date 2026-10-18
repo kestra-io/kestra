@@ -69,6 +69,31 @@ describe("FlowConcurrency", () => {
         expect(getMock).toHaveBeenCalledWith(
             "/api/v1/main/concurrency-limit/io.kestra.tests/flow",
         )
+
+        const summary = wrapper.find(".concurrency-summary")
+        expect(summary.exists()).toBe(true)
+        expect(summary.classes()).not.toContain("mb-3")
+
+        const header = wrapper.find(".summary-header")
+        expect(header.exists()).toBe(true)
+        expect(header.classes()).not.toContain("row")
+        expect(header.classes()).not.toContain("mb-3")
+
+        const info = wrapper.find(".summary-info")
+        expect(info.exists()).toBe(true)
+        expect(info.classes()).not.toContain("col")
+        expect(info.classes()).not.toContain("d-flex")
+        expect(info.classes()).not.toContain("align-items-center")
+
+        const status = wrapper.find(".summary-status")
+        expect(status.exists()).toBe(true)
+        expect(status.classes()).not.toContain("col")
+        expect(status.classes()).not.toContain("d-flex")
+        expect(status.classes()).not.toContain("justify-content-end")
+
+        const progressbar = wrapper.find(".progressbar")
+        expect(progressbar.exists()).toBe(true)
+        expect(progressbar.classes()).not.toContain("mb-3")
     })
 
     it("surfaces a leftover limit still holding slots for a flow without a concurrency block", async () => {

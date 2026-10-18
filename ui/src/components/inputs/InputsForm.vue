@@ -19,7 +19,7 @@
                         draggable="true"
                         @dragstart="onInputDragStart($event, input.id)"
                     >
-                        <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                        <KsMarkdown :content="inputLabel(input)" class="md-label" />
                         <KsButton
                             :icon="ContentCopyIcon"
                             :tooltip="`${$t('copy_to_clipboard')}: ${inputRefExpression(input.id)}`"
@@ -139,7 +139,7 @@
                     v-if="input.type === 'BOOL'"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChangeBool(input)"
-                    class="w-100 boolean-inputs"
+                    class="boolean-inputs"
                 />
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"
@@ -179,7 +179,7 @@
                 <div
                     v-if="input.type === 'ARRAY'"
                     :data-testid="`input-form-${input.id}`"
-                    class="w-100"
+                    class="array-container"
                 >
                     <div v-if="editingArrayId !== input.id" class="preview">
                         <div class="tags">
@@ -191,7 +191,7 @@
                             </KsTag>
                         </div>
                         <KsButton
-                            class="p-3"
+                            class="edit-array-btn"
                             @click="toggleArrayEdit(input.id)"
                             :icon="Pencil"
                         >
@@ -230,13 +230,13 @@
                             </div>
                         </div>
                         <KsButton
-                            class="add-new mt-1 border-0"
+                            class="add-new"
                             @click="addNewArrayItem(input)"
                             :icon="Plus"
                         >
                             {{ $t('add_new_item') }}
                         </KsButton>
-                        <div class="d-flex justify-content-end mt-2">
+                        <div class="edit-actions">
                             <KsButton
                                 @click="toggleArrayEdit(input.id)"
                                 type="primary"
@@ -302,7 +302,7 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-end">
+        <div class="errors-wrapper">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
 
@@ -335,7 +335,7 @@
         </div>
     </template>
 
-    <KsAlert type="info" :closable="false" class="mb-3" v-else>
+    <KsAlert type="info" :closable="false" class="empty-alert" v-else>
         {{ $t("no inputs") }}
     </KsAlert>
 </template>
@@ -1059,7 +1059,12 @@
 
 <style scoped lang="scss">
 .md-label {
+    display: inline-flex;
     height: var(--ks-font-size-lg);
+}
+
+.array-container {
+    width: 100%;
 }
 
 .input-label-row {
@@ -1150,6 +1155,7 @@
 }
 
 :deep(.boolean-inputs) {
+    width: 100%;
     display: flex;
     align-items: center;
 
@@ -1217,6 +1223,10 @@
             color: var(--ks-text-primary);
         }
     }
+
+    .edit-array-btn {
+        padding: var(--ks-spacing-4);
+    }
 }
 
 .edit_input {
@@ -1261,6 +1271,8 @@
     }
 
     .add-new {
+        margin-top: var(--ks-spacing-1);
+        border: 0;
         padding: 5px 8px;
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
@@ -1269,6 +1281,12 @@
         &:hover {
             color: var(--ks-text-secondary);
         }
+    }
+
+    .edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--ks-spacing-2);
     }
 }
 
@@ -1327,5 +1345,14 @@
     white-space: nowrap;
     padding-right: 16px;
   }
+}
+
+.errors-wrapper {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.empty-alert {
+    margin-bottom: var(--ks-spacing-4);
 }
 </style>

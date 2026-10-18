@@ -52,4 +52,35 @@ describe("Toc.vue — children fetch gated on resourceUrlTemplate", () => {
 
         expect(children).toHaveBeenCalledTimes(1)
     })
+
+    it("renders design system classes and no Bootstrap utility classes", async () => {
+        children.mockResolvedValueOnce({
+            guides: {
+                title: "Guides",
+                isSection: true,
+                children: {
+                    intro: {title: "Introduction", path: "guides/intro"},
+                },
+            },
+        })
+        docStoreState.resourceUrlTemplate = "http://localhost/api/v1{path}/versions/1.0.0"
+        const w = mountToc()
+        await nextTick()
+        await nextTick()
+
+        const autocomplete = w.findComponent({name: "KsAutocomplete"})
+        expect(autocomplete.classes()).toContain("doc-search")
+        expect(autocomplete.classes()).not.toContain("flex-shrink-0")
+
+        const list = w.find("ul.toc")
+        expect(list.exists()).toBe(true)
+        expect(list.classes()).not.toContain("d-flex")
+        expect(list.classes()).not.toContain("flex-column")
+        expect(list.classes()).not.toContain("gap-3")
+
+        const title = w.find(".section-title")
+        expect(title.exists()).toBe(true)
+        expect(title.text()).toBe("GET STARTED WITH KESTRA")
+        expect(title.classes()).not.toContain("text-secondary")
+    })
 })

@@ -1,17 +1,19 @@
 <template>
-    <div class="row card-group card-centered mb-2">
-        <a :href="parsedUrl" class="col-12 col-md-10 mb-4" v-for="[parsedUrl, metadata] in navigation" :key="parsedUrl">
-            <div class="card">
-                <div class="card-body">
-                    <div>
-                        <h4 class="text-white">{{ metadata.release }}</h4>
-                        <h4 class="card-title">{{ metadata.title }}</h4>
+    <KsRow class="card-group card-centered" justify="center">
+        <KsCol :xs="24" :md="20" class="release-item" v-for="[parsedUrl, metadata] in navigation" :key="parsedUrl">
+            <a :href="parsedUrl">
+                <div class="card">
+                    <div class="card-body">
+                        <div>
+                            <h4 class="release-version">{{ metadata.release }}</h4>
+                            <h4>{{ metadata.title }}</h4>
+                        </div>
+                        <p>{{ metadata.description }}</p>
                     </div>
-                    <p class="card-text">{{ metadata.description }}</p>
                 </div>
-            </div>
-        </a>
-    </div>
+            </a>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">
@@ -61,3 +63,17 @@
             return 0
         })
 </script>
+
+<style scoped lang="scss">
+    .card-group {
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .release-item {
+        margin-bottom: var(--ks-spacing-5);
+    }
+
+    .release-version {
+        color: var(--ks-text-primary);
+    }
+</style>

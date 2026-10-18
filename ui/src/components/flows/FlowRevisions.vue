@@ -33,6 +33,7 @@
     const {t} = useI18n()
 
     const flowStore = useFlowStore()
+    const unsavedChangeStore = useUnsavedChangesStore()
     const flow = computed(() => flowStore.flow)
     const storeRevisions = computed(() => flowStore.revisions)
 
@@ -102,7 +103,7 @@
         try {
             const saved = await flowStore.saveFlow({flow: revisionSource})
             flowStore.initYamlSource().catch(onRestoreError)
-            useUnsavedChangesStore().unsavedChange = false
+            unsavedChangeStore.unsavedChange = false
             toast.saved(saved.id)
 
             const loaded = await flowStore.loadRevisions({namespace, id, store: false})

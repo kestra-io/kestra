@@ -47,7 +47,7 @@
             @row-dblclick="(row: Execution) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
-            :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+            :defaultSort="defaultSort"
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="noDataText ?? $t('no_results.executions')"
             :rowKey="(row: Execution) => row.id"
@@ -428,7 +428,7 @@
     import {useI18n} from "vue-i18n"
     import {asProblem} from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../utils/problem"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, useTemplateRef} from "vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -775,6 +775,19 @@
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+
+    // The table reads defaultSort once, when it mounts, so it has to start from the URL sort that loadData
+    // uses: otherwise a page opened with ?sort=flowId:asc lists rows by flow under an arrow on Start date,
+    // and the first click on Flow re-applies the order it already has.
+    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
+        const parts = typeof sort === "string" ? sort.split(":") : []
+        if (parts.length !== 2 || !parts[0] || !parts[1]) {
+            return {prop: "state.startDate", order: "descending"}
+        }
+        // Read the direction as the API does: "asc" is ascending, anything else descending.
+        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
+    }
+    const defaultSort = sortFromQuery(route.query.sort)
     const localPage = ref(1)
     const localSize = ref(25)
     const currentPage = computed(() => props.embed ? localPage.value : urlPage.value)

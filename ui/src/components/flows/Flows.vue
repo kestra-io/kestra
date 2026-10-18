@@ -28,7 +28,7 @@
             :total="flowStore.total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'id', order: 'ascending'}"
+            :defaultSort="defaultSort"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
             @row-click="onRowClick"
@@ -539,6 +539,19 @@
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+
+    // The table reads defaultSort once, when it mounts, so it has to start from the URL sort that loadData
+    // uses: otherwise a page opened with ?sort=namespace:asc lists rows by namespace under an arrow on Id,
+    // and the first click on Namespace re-applies the order it already has.
+    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
+        const parts = typeof sort === "string" ? sort.split(":") : []
+        if (parts.length !== 2 || !parts[0] || !parts[1]) {
+            return {prop: "id", order: "ascending"}
+        }
+        // Read the direction as the API does: "asc" is ascending, anything else descending.
+        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
+    }
+    const defaultSort = sortFromQuery(route.query.sort)
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()

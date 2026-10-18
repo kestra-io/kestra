@@ -1,26 +1,26 @@
 <template>
-    <KsCard v-if="loading && flowStore.flow?.concurrency" class="mb-3">
-        <div class="text-center">
+    <KsCard v-if="loading && flowStore.flow?.concurrency" class="loading-card">
+        <div class="loading-content">
             <KsIcon class="is-loading">
                 <Loading />
             </KsIcon>
-            <span class="ms-2">{{ $t('loading') }}</span>
+            <span class="loading-text">{{ $t('loading') }}</span>
         </div>
     </KsCard>
-    <KsAlert v-else-if="error && flowStore.flow?.concurrency" type="error" :closable="false" class="mb-3">
+    <KsAlert v-else-if="error && flowStore.flow?.concurrency" type="error" :closable="false" class="concurrency-alert">
         {{ $t('flowConcurrency.loadError') }}
     </KsAlert>
     <div v-else-if="concurrencyLimit && flowStore.flow?.concurrency" data-test="concurrency-limit">
-        <KsCard class="concurrency-summary mb-3">
-            <div class="row mb-3">
-                <span class="col d-flex align-items-center">
-                    <h5 class="m-3">RUNNING</h5> {{ concurrencyLimit.running }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
+        <KsCard class="concurrency-summary">
+            <div class="summary-header">
+                <span class="summary-info">
+                    <h5>RUNNING</h5> {{ concurrencyLimit.running }}/{{ flowStore.flow?.concurrency?.limit }} {{ $t('active-slots') }}
                 </span>
-                <span class="col d-flex justify-content-end align-items-center">
-                    {{ $t('behavior') }}: <KsExecutionStatus class="mx-2" :status="flowStore.flow?.concurrency?.behavior" size="small" />
+                <span class="summary-status">
+                    {{ $t('behavior') }}: <KsExecutionStatus class="status-badge" :status="flowStore.flow?.concurrency?.behavior" size="small" />
                 </span>
             </div>
-            <div class="progressbar mb-3">
+            <div class="progressbar">
                 <KsProgress :stroke-width="16" color="var(--ks-status-info)" :percentage="progress" :showText="false" />
             </div>
         </KsCard>
@@ -39,7 +39,7 @@
         type="warning"
         :closable="false"
         :title="$t('flowConcurrency.staleLimit.title')"
-        class="mb-3"
+        class="concurrency-alert"
         data-test="concurrency-stale-limit"
     >
         {{ $t('flowConcurrency.staleLimit.message', {count: staleLimit.running}) }}
@@ -124,6 +124,7 @@
     }
     h5 {
         font-weight: bold;
+        margin: var(--ks-spacing-4);
         margin-left: 0 !important;
     }
 
@@ -137,12 +138,47 @@
         background-color: var(--ks-bg-surface);
     }
 
-    .concurrency-summary {
-        margin-inline: var(--ks-spacing-6);
+    .loading-card,
+    .concurrency-alert {
+        margin-bottom: var(--ks-spacing-4);
     }
 
-    .text-center {
+    .loading-content {
         text-align: center;
         padding: var(--ks-font-size-lg);
+    }
+
+    .loading-text {
+        margin-inline-start: var(--ks-spacing-2);
+    }
+
+    .concurrency-summary {
+        margin-inline: var(--ks-spacing-6);
+        margin-bottom: var(--ks-spacing-4);
+    }
+
+    .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--ks-spacing-4);
+    }
+
+    .summary-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .summary-status {
+        display: flex;
+        align-items: center;
+    }
+
+    .status-badge {
+        margin-inline: var(--ks-spacing-2);
+    }
+
+    .progressbar {
+        margin-bottom: var(--ks-spacing-4);
     }
 </style>

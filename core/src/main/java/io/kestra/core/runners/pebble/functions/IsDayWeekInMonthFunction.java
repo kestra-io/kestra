@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import io.kestra.core.exceptions.InternalException;
@@ -55,7 +56,7 @@ public class IsDayWeekInMonthFunction implements KestraFunction {
 
         DayOfWeek dayOfWeek;
         try {
-            dayOfWeek = DayOfWeek.valueOf(dayOfWeekArg.toString().toUpperCase());
+            dayOfWeek = DayOfWeek.valueOf(dayOfWeekArg.toString().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw new PebbleException(
                 e,
@@ -65,7 +66,7 @@ public class IsDayWeekInMonthFunction implements KestraFunction {
             );
         }
 
-        LocalDate computed = switch (positionArg.toString().toUpperCase()) {
+        LocalDate computed = switch (positionArg.toString().toUpperCase(Locale.ROOT)) {
             case "FIRST" -> localDate.with(TemporalAdjusters.firstInMonth(dayOfWeek));
             case "SECOND" -> localDate.with(TemporalAdjusters.firstInMonth(dayOfWeek)).plusWeeks(1);
             case "THIRD" -> localDate.with(TemporalAdjusters.firstInMonth(dayOfWeek)).plusWeeks(2);

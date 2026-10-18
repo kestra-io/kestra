@@ -133,4 +133,15 @@ describe("PluginDocumentation", () => {
 
         expect(wrapper.get("[data-test='plugin-doc-navchip-overview']").classes()).toContain("active")
     })
+
+    test("does not use Bootstrap utility classes and uses is-absolute", async () => {
+        const wrapper = await mountWithPlugin({cls: CLS, version: "1.0.0", schema: SCHEMA})
+        const name = wrapper.find(".dp-name")
+        expect(name.exists()).toBe(true)
+        expect(name.classes()).not.toContain("text-truncate")
+
+        const cls = wrapper.find(".dp-cls")
+        expect(cls.exists()).toBe(true)
+        expect(cls.classes()).not.toContain("text-truncate")
+    })
 })

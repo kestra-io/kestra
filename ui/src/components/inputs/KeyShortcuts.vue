@@ -1,32 +1,35 @@
 <template>
-    <KsDialog v-model="isKeyShortcutsDialogShown" headerClass="p-3" bodyClass="p-2" scrollable>
+    <KsDialog
+        v-model="isKeyShortcutsDialogShown"
+        scrollable
+    >
         <template #header>
-            <div class="d-flex align-items-center gap-2 fw-normal">
+            <div class="key-shortcuts__header">
                 <KsIcon size="xl">
                     <Keyboard />
                 </KsIcon>
-                <span class="fs-6">
+                <span class="key-shortcuts__title">
                     {{ $t("editor_shortcuts.label") }}
                 </span>
             </div>
         </template>
 
-        <div class="d-flex flex-column gap-3 fw-normal">
+        <div class="key-shortcuts__list">
             <div
                 v-for="(command, i) in commands"
                 :key="i"
-                class="d-flex align-items-center gap-3"
+                class="key-shortcuts__row"
             >
-                <div class="d-flex align-items-center gap-2 keys">
+                <div class="key-shortcuts__keys">
                     <template v-for="(key, index) in command.keys" :key="index">
                         <KsTag>{{ key }}</KsTag>
                         <span
                             v-if="index < command.keys.length - 1"
-                            class="fw-bold"
+                            class="key-shortcuts__plus"
                         >+</span>
                     </template>
                 </div>
-                <div class="text-break">
+                <div class="key-shortcuts__description">
                     {{ $t(command.description) }}
                 </div>
             </div>
@@ -101,6 +104,45 @@
 </script>
 
 <style scoped lang="scss">
+.key-shortcuts__header {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    font-weight: 400;
+}
+
+.key-shortcuts__title {
+    font-size: var(--ks-font-size-sm);
+}
+
+.key-shortcuts__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-4);
+    font-weight: 400;
+}
+
+.key-shortcuts__row {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-4);
+}
+
+.key-shortcuts__keys {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
+
+.key-shortcuts__plus {
+    font-weight: 700;
+}
+
+.key-shortcuts__description {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
 .kel-tag {
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);

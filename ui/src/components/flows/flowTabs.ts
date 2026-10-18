@@ -3,7 +3,6 @@ import type {Me} from "override/stores/auth"
 import resource from "../../models/resource"
 import action from "../../models/action"
 import {mergeTabRoutes, resolveDefaultTab} from "../../utils/routeTabs"
-import {ENTITY_REQUEST_OPTIONS} from "../../utils/routeEntityGuard"
 import {extraFlowTabRoutes} from "override/components/flows/flowTabsExtension"
 import {storageKeys} from "../../utils/constants"
 
@@ -139,7 +138,7 @@ export const FLOW_ENTITY_META: RouteMeta = {
             id: String(to.params.id),
             revision: to.query.revision ? String(to.query.revision) : undefined,
             allowDeleted: true,
-        }, ENTITY_REQUEST_OPTIONS)
+        })
     },
 }
 

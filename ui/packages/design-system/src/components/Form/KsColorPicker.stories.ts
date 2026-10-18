@@ -84,3 +84,21 @@ export const Size: Story = {
         </div>`,
     }),
 }
+
+export const AlphaOnSurface: Story = {
+    render: () => ({
+        components: {KsColorPicker},
+        setup() {
+            return {
+                value: ref("rgba(5, 66, 182, 0.08)"),
+                predefine: ["rgba(171, 0, 9, 0.08)", "rgba(164, 69, 0, 0.08)", "rgba(33, 93, 66, 0.08)", "rgba(5, 66, 182, 0.08)", "rgba(99, 27, 243, 0.08)"],
+            }
+        },
+        template: `
+            <div style="padding:24px;display:flex;align-items:center;gap:16px">
+                <ks-color-picker v-model="value" :predefine="predefine" show-alpha alpha-on-surface />
+                <span style="font-size:13px;opacity:0.6">Translucent swatches are shown over the page surface instead of a checkerboard</span>
+            </div>
+        `,
+    }),
+}

@@ -131,9 +131,9 @@
                 totals[segment.unit] += Math.round(segment.value)
             }
         }
-        let date = ""
-        if (totals.w) date += `${totals.w}W`
-        if (totals.d) date += `${totals.d}D`
+        // java.time.Duration.parse, which reads every duration in the backend, has no week designator.
+        const days = totals.w * 7 + totals.d
+        const date = days ? `${days}D` : ""
         let time = ""
         if (totals.h) time += `${totals.h}H`
         if (totals.m) time += `${totals.m}M`

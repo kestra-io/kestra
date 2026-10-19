@@ -106,12 +106,6 @@ describe("isPosthogEnabled", () => {
 
         expect(isPosthogEnabled({})).toBe(true)
     })
-
-    it("does not throw when the posthog global is absent", async () => {
-        const {isPosthogEnabled} = await import("./posthog")
-
-        expect(() => isPosthogEnabled({isUiAnonymousUsageEnabled: true})).not.toThrow()
-    })
 })
 
 describe("identifyPosthogUser", () => {
@@ -153,18 +147,45 @@ describe("identifyPosthogUser", () => {
         expect(posthogMock.opt_out_capturing).toHaveBeenCalledTimes(1)
     })
 
-    it("does not throw when the posthog client has no identify method", async () => {
-        const savedIdentify = posthogMock.identify
-        // @ts-expect-error — deliberately removing identify to exercise the !client?.identify guard
-        delete posthogMock.identify
+    it("swallows errors thrown by the identify method", async () => {
+        const identifyImplementation = posthogMock.identify.getMockImplementation()
+        posthogMock.identify.mockImplementation(() => {
+            throw new Error("identify failed")
+        })
 
-        const {identifyPosthogUser, initPosthogIfEnabled} = await import("./posthog")
-        await initPosthogIfEnabled({isUiAnonymousUsageEnabled: true})
+        try {
+            const {identifyPosthogUser, initPosthogIfEnabled} = await import("./posthog")
+            await initPosthogIfEnabled({isUiAnonymousUsageEnabled: true})
 
-        await expect(
-            identifyPosthogUser({isUiAnonymousUsageEnabled: true}, {foo: "bar"}),
-        ).resolves.toBeUndefined()
+            await expect(
+                identifyPosthogUser({isUiAnonymousUsageEnabled: true}, {foo: "bar"}),
+            ).resolves.toBeUndefined()
+            expect(posthogMock.identify).toHaveBeenCalledOnce()
+        } finally {
+            posthogMock.identify.mockReset()
+            if (identifyImplementation) {
+                posthogMock.identify.mockImplementation(identifyImplementation)
+            }
+        }
+    })
 
-        posthogMock.identify = savedIdentify
+    it("does not throw when the posthog client cannot be imported", async () => {
+        const posthogLoadAttempted = vi.fn()
+        vi.doMock("posthog-js", () => {
+            posthogLoadAttempted()
+            throw new Error("PostHog unavailable")
+        })
+
+        try {
+            const {identifyPosthogUser} = await import("./posthog")
+
+            await expect(
+                identifyPosthogUser({isUiAnonymousUsageEnabled: true}, {userId: "u1"}),
+            ).resolves.toBeUndefined()
+            expect(posthogLoadAttempted).toHaveBeenCalledOnce()
+        } finally {
+            vi.doUnmock("posthog-js")
+            vi.resetModules()
+        }
     })
 })

@@ -2,7 +2,6 @@ package io.kestra.queue.jdbc.client;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +129,23 @@ public class JdbcQueueClient {
                 .from(queueTable)
                 .where(condition)
                 .fetchOneInto(Integer.class);
+        });
+    }
+
+    /** Counts pending dispatch messages by queue name, including all routing keys. */
+    public Map<String, Long> pendingMessages(List<String> queueNames) {
+        if (queueNames.isEmpty()) {
+            return Map.of();
+        }
+        return dslContextWrapper.transactionResult(configuration ->
+        {
+            var count = DSL.count().cast(Long.class);
+            return DSL.using(configuration)
+                .select(TYPE, count)
+                .from(queueTable)
+                .where(TYPE.in(queueNames))
+                .groupBy(TYPE)
+                .fetchMap(TYPE, count);
         });
     }
 

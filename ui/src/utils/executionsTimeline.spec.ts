@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {
     assignLanes,
+    axisTickCount,
     axisTickFormat,
     bucketize,
     densitySeries,
@@ -219,5 +220,20 @@ describe("densitySeries", () => {
         expect(series).toHaveLength(10)
         expect(series.filter(bucket => bucket.total === 0)).toHaveLength(9)
         expect(bucketize(executions, 0, 1_000, 30)).toHaveLength(1)
+    })
+})
+
+describe("axisTickCount", () => {
+    it("should keep the full set of ticks when the lanes are wide", () => {
+        expect(axisTickCount(1100)).toBe(6)
+    })
+
+    it("should thin the ticks out so their labels do not overlap on a narrow screen", () => {
+        expect(axisTickCount(200)).toBe(2)
+        expect(axisTickCount(100)).toBe(1)
+    })
+
+    it("should never drop below a single interval", () => {
+        expect(axisTickCount(0)).toBe(1)
     })
 })

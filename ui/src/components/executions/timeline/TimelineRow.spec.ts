@@ -9,7 +9,7 @@ const i18n = createI18n({legacy: false, globalInjection: true, locale: "en", mes
 
 const stubs = {
     KsIconButton: defineComponent({name: "KsIconButton", template: "<button type=\"button\"><slot /></button>"}),
-    TimelineBar: defineComponent({name: "TimelineBar", template: "<div />"}),
+    TimelineBar: defineComponent({name: "TimelineBar", props: ["leftPercent", "widthPercent"], template: "<div />"}),
 }
 
 const executions: TimelineExecution[] = [
@@ -122,5 +122,24 @@ describe("TimelineRow", () => {
         })
 
         expect(wrapper.findAll(".timeline-lane")).toHaveLength(3)
+    })
+
+    it("should keep a run that outlasts the window inside the lane instead of overflowing it", () => {
+        const wrapper = mount(TimelineRow, {
+            props: {
+                label: "company.team",
+                executions: [{id: "long", namespace: "company.team", flowId: "flow", state: "RUNNING", startMs: 8_000, endMs: 30_000}],
+                rangeStartMs: 0,
+                rangeEndMs: 10_000,
+                availableWidthPx: 600,
+                packLanes: false,
+                dimmedStates: new Set<string>(),
+            },
+            global: {plugins: [i18n], stubs},
+        })
+
+        const bar = wrapper.getComponent({name: "TimelineBar"})
+        expect(bar.props("leftPercent")).toBe(80)
+        expect(bar.props("leftPercent") + bar.props("widthPercent")).toBe(100)
     })
 })

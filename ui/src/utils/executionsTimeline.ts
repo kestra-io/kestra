@@ -218,6 +218,13 @@ export function axisTickFormat(rangeSpanMs: number, tickCount: number): string {
     return "MMM D"
 }
 
+const MAX_AXIS_TICKS = 6
+const MIN_AXIS_TICK_SPACING_PX = 96
+
+export function axisTickCount(availableWidthPx: number): number {
+    return Math.min(MAX_AXIS_TICKS, Math.max(1, Math.floor(availableWidthPx / MIN_AXIS_TICK_SPACING_PX)))
+}
+
 export function buildAxisTicks(rangeStartMs: number, rangeEndMs: number, tickCount: number, nowMs: number): AxisTick[] {
     const span = rangeEndMs - rangeStartMs
     if (span <= 0) return []

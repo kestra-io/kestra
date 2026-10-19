@@ -87,7 +87,7 @@
 
     const rangeSpanMs = computed(() => Math.max(props.rangeEndMs - props.rangeStartMs, 1))
 
-    const toPercent = (ms: number) => ((ms - props.rangeStartMs) / rangeSpanMs.value) * 100
+    const toPercent = (ms: number) => ((Math.min(Math.max(ms, props.rangeStartMs), props.rangeEndMs) - props.rangeStartMs) / rangeSpanMs.value) * 100
 
     const shouldSkipLanePacking = computed(() =>
         props.packLanes && shouldBucketRow(props.executions, props.rangeStartMs, props.rangeEndMs, props.availableWidthPx),
@@ -242,7 +242,7 @@
 }
 
 .fail {
-    color: var(--ks-chart-failed);
+    color: var(--ks-text-error);
     font-weight: 600;
 }
 

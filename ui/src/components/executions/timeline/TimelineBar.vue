@@ -202,7 +202,7 @@
 .timeline-bucket {
     top: 0.125rem;
     bottom: 0.125rem;
-    border-radius: 0.125rem;
+    border-radius: var(--ks-radius-xs);
     cursor: default;
 }
 

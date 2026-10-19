@@ -168,6 +168,7 @@ public class ConcurrencySlotReleaseProcessor {
             && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
         // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
         boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
+            && execution.getState().getHistories().size() >= 2
             && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
 
         return !queuedThenKilled && !concurrencyShortCircuitState;

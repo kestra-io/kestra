@@ -224,6 +224,19 @@ class ConcurrencySlotReleaseProcessorTest {
         assertThatCode(() -> assertThat(processor.release(executor, true)).isEmpty()).doesNotThrowAnyException();
     }
 
+    @Test
+    void shouldNotThrowIndexOutOfBoundsExceptionWhenExecutionHasSingleHistoryEntry() {
+        // Given an execution with a single history entry in FAILED state (e.g. fast validation abort or synthetic event)
+        Execution execution = Execution.newExecution(flow, List.of())
+            .toBuilder()
+            .state(new State(State.Type.FAILED))
+            .build();
+        ExecutorContext executor = cycle(execution, execution);
+
+        // When / Then: should evaluate without throwing IndexOutOfBoundsException
+        assertThatCode(() -> processor.release(executor, true)).doesNotThrowAnyException();
+    }
+
     // --- fixtures
 
     private Execution created() {

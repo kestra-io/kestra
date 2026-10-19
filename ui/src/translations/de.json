@@ -702,6 +702,7 @@
       "nav_properties": "Eigenschaften",
       "non_dynamic": "nicht dynamisch",
       "format": "Format",
+      "internal_storage_uri_hint": "Pebble-Ausdruck, der auf eine interne Storage-URI verweist, z. B. {example}.",
       "max_items": "Max. Elemente",
       "max_length": "Max. Länge",
       "maximum": "Maximum",
@@ -2305,7 +2306,8 @@
           "title": {
             "flow": "Vorgeschlagener Flow",
             "dashboard": "Vorgeschlagenes Dashboard",
-            "app": "Vorgeschlagene App"
+            "app": "Vorgeschlagene App",
+            "test_suite": "Vorgeschlagener Unit-Test"
           },
           "valid": "Gültig",
           "invalid": "Änderungen erforderlich"
@@ -2362,18 +2364,7 @@
           "issues": "{n} veraltet",
           "failed": "{n} fehlgeschlagen",
           "last_run": "letzter Run {ago}",
-          "unknown": "{n} nicht getrackt",
-          "tests_failed": "{n} mit fehlgeschlagenen Tests"
-        },
-        "tests": {
-          "pass": "{count} Test | {count} Tests",
-          "warn": "{count} Test · Warnung | {count} Tests · Warnung",
-          "fail": "{failed}/{total} fehlgeschlagen",
-          "tooltip": {
-            "pass": "Der {count} dbt Test ist bestanden | Alle {count} dbt Tests sind bestanden",
-            "warn": "{count} dbt Test mit Warnungen bestanden | {count} dbt Tests bestanden, einige mit Warnungen",
-            "fail": "Der dbt-Test ist fehlgeschlagen | {failed} von {total} dbt-Tests sind fehlgeschlagen"
-          }
+          "unknown": "{n} nicht getrackt"
         },
         "recent_runs": "Letzte Runs",
         "group_by": "Gruppieren nach",

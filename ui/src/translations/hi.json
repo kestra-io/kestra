@@ -702,6 +702,7 @@
       "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
       "format": "फ़ॉर्मेट",
+      "internal_storage_uri_hint": "Pebble एक्सप्रेशन जो एक इंटरनल Storage URI को संदर्भित करता है, जैसे {example}।",
       "max_items": "अधिकतम आइटम",
       "max_length": "अधिकतम लंबाई",
       "maximum": "अधिकतम",
@@ -2305,7 +2306,8 @@
           "title": {
             "flow": "प्रस्तावित flow",
             "dashboard": "प्रस्तावित डैशबोर्ड",
-            "app": "प्रस्तावित ऐप"
+            "app": "प्रस्तावित ऐप",
+            "test_suite": "प्रस्तावित यूनिट टेस्ट"
           },
           "valid": "वैध",
           "invalid": "बदलाव की आवश्यकता है"
@@ -2362,18 +2364,7 @@
           "issues": "{n} बासी",
           "failed": "{n} विफल",
           "last_run": "अंतिम रन {ago}",
-          "unknown": "{n} ट्रैक नहीं किया गया",
-          "tests_failed": "{n} विफल परीक्षणों के साथ"
-        },
-        "tests": {
-          "pass": "{count} परीक्षण | {count} परीक्षण",
-          "warn": "{count} टेस्ट · चेतावनी | {count} टेस्ट · चेतावनी",
-          "fail": "{failed}/{total} विफल",
-          "tooltip": {
-            "pass": "{count} dbt टेस्ट पास हुआ | सभी {count} dbt टेस्ट पास हुए",
-            "warn": "{count} dbt test चेतावनी के साथ पास हुआ | {count} dbt tests पास हुए, कुछ चेतावनी के साथ",
-            "fail": "dbt टेस्ट विफल रहा | {total} dbt टेस्ट में से {failed} विफल रहे"
-          }
+          "unknown": "{n} ट्रैक नहीं किया गया"
         },
         "recent_runs": "हाल की रन",
         "group_by": "द्वारा समूहबद्ध करें",

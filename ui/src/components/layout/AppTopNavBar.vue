@@ -33,7 +33,7 @@
             <GlobalSearch class="trigger-flow-guided-step" />
         </template>
         <template #actions>
-            <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
+            <div id="topnav-actions-slot" />
             <NavBarActionsDropdown v-if="isMobile && !actionsMenuCount && bookmarkAction" standalone />
         </template>
         <template #panel-toggle>
@@ -261,6 +261,12 @@
         @media (max-width: 767px) {
             display: none;
         }
+    }
+
+    #topnav-actions-slot {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        align-items: center;
     }
 
     .playgroundMode {

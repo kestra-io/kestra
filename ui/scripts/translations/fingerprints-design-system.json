@@ -16,6 +16,7 @@
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|attemptNumber|description": "bd27163289bb",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|attemptNumber|label": "9271e3e2db5c",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|auto refresh": "c7c026a80acf",
+  "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|auto_refresh_tooltip": "fa1107288f4b",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|cancel": "19766ed6ccb2",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|childFilter|description": "218f65203485",
   "../../packages/design-system/src/components/Data/KsDataTable/KsFilter.locale.ts|filter|childFilter|label": "23be567534ab",

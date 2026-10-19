@@ -702,6 +702,7 @@
       "nav_properties": "Proprietà",
       "non_dynamic": "non dinamico",
       "format": "Formato",
+      "internal_storage_uri_hint": "Espressione Pebble che fa riferimento a un URI di Internal Storage, ad es. {example}.",
       "max_items": "Numero massimo di elementi",
       "max_length": "Lunghezza massima",
       "maximum": "Massimo",
@@ -2305,7 +2306,8 @@
           "title": {
             "flow": "flow Proposto",
             "dashboard": "Dashboard Proposta",
-            "app": "App proposta"
+            "app": "App proposta",
+            "test_suite": "Unit test proposto"
           },
           "valid": "Valido",
           "invalid": "Richiede modifiche"
@@ -2362,18 +2364,7 @@
           "issues": "{n} obsoleto",
           "failed": "{n} fallito",
           "last_run": "ultima esecuzione {ago}",
-          "unknown": "{n} non tracciato",
-          "tests_failed": "{n} con test falliti"
-        },
-        "tests": {
-          "pass": "{count} test | {count} test",
-          "warn": "{count} test · avviso | {count} test · avvisi",
-          "fail": "{failed}/{total} falliti",
-          "tooltip": {
-            "pass": "Il test dbt è stato superato | Tutti i {count} test dbt sono stati superati",
-            "warn": "{count} test dbt superato con avvisi | {count} test dbt superati, alcuni con avvisi",
-            "fail": "Il test dbt non è riuscito | {failed} di {total} test dbt non sono riusciti"
-          }
+          "unknown": "{n} non tracciato"
         },
         "recent_runs": "Esecuzioni recenti",
         "group_by": "Raggruppa per",

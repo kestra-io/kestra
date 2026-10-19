@@ -81,6 +81,7 @@
                                 <KsCheckbox
                                     v-if="log.id"
                                     class="log-row__checkbox"
+                                    :aria-label="$t('select')"
                                     :modelValue="selection.includes(log.id)"
                                     @change="(value: string | number | boolean) => toggleRow(log.id!, Boolean(value))"
                                 />
@@ -301,6 +302,7 @@
             return promise.then(() => {
                 toast.deleted(t("logs"))
                 toggleAllUnselected()
+                lastCountedKey = ""
                 refresh()
             })
         }).catch(() => {})

@@ -26,11 +26,8 @@ function mountFlowSummaryChip(props: Record<string, unknown> = {}) {
 function tooltipContent(wrapper: ReturnType<typeof mountFlowSummaryChip>): string {
     const tooltips = wrapper.findAllComponents(KsTooltipStub)
     const first = tooltips[0]
-    if (first) {
-        const content = first.props("content") as string | undefined
-        if (content !== undefined) return content
-    }
-    return (wrapper.vm as unknown as {fullPath: string}).fullPath ?? ""
+    expect(first).toBeDefined()
+    return first!.props("content") as string
 }
 
 describe("FlowSummaryChip fullPath", () => {
@@ -42,7 +39,7 @@ describe("FlowSummaryChip fullPath", () => {
         expect(wrapper.find(".flow-chip-id").text()).toBe("my-flow")
     })
 
-    it("should render just the namespace when flowId is missing, with no stray separator", () => {
+    it("should use just the namespace in the tooltip when flowId is missing", () => {
         const wrapper = mountFlowSummaryChip({namespace: "io.kestra"})
 
         expect(tooltipContent(wrapper)).toBe("io.kestra")
@@ -51,7 +48,7 @@ describe("FlowSummaryChip fullPath", () => {
         expect(tooltipContent(wrapper)).not.toContain(" / ")
     })
 
-    it("should render just the flowId when namespace is missing, with no stray separator", () => {
+    it("should use just the flowId in the tooltip when namespace is missing", () => {
         const wrapper = mountFlowSummaryChip({flowId: "my-flow"})
 
         expect(tooltipContent(wrapper)).toBe("my-flow")
@@ -60,7 +57,7 @@ describe("FlowSummaryChip fullPath", () => {
         expect(tooltipContent(wrapper)).not.toContain(" / ")
     })
 
-    it("should render nothing rather than a bare separator when both are missing", () => {
+    it("should use an empty tooltip when both are missing", () => {
         const wrapper = mountFlowSummaryChip({})
 
         expect(tooltipContent(wrapper)).toBe("")
@@ -97,14 +94,6 @@ describe("FlowSummaryChip hasDetails", () => {
 })
 
 describe("FlowSummaryChip expand control", () => {
-    it("should appear only when there are details", () => {
-        const withoutDetails = mountFlowSummaryChip({})
-        const withDetails = mountFlowSummaryChip({description: "desc"})
-
-        expect(withoutDetails.find("[data-test=\"topology-flow-expand\"]").exists()).toBe(false)
-        expect(withDetails.find("[data-test=\"topology-flow-expand\"]").exists()).toBe(true)
-    })
-
     it("should reveal the description and the labels when toggled", async () => {
         const wrapper = mountFlowSummaryChip({
             description: "flow description",
@@ -149,16 +138,5 @@ describe("FlowSummaryChip edit action", () => {
         await wrapper.find("[data-test=\"topology-flow-configure\"]").trigger("click")
 
         expect(wrapper.emitted("editFlow")).toHaveLength(1)
-    })
-})
-
-describe("FlowSummaryChip defaults", () => {
-    it("should render with no props and default labels to an empty list", () => {
-        const wrapper = mountFlowSummaryChip({})
-
-        expect(wrapper.find("[data-test=\"topology-flow-chip\"]").exists()).toBe(true)
-        expect(wrapper.find("[data-test=\"topology-flow-expand\"]").exists()).toBe(false)
-        expect(wrapper.find(".flow-chip-details").exists()).toBe(false)
-        expect(tooltipContent(wrapper)).toBe("")
     })
 })

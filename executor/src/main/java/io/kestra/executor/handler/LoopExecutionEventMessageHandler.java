@@ -151,7 +151,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                         // decide if we should continue to iterate or not
                         if (loop.getBreakWhen() != null) {
                             Map<String, Object> iterationVariables = Map.of(
-                                "item", RunVariables.of(message.loopRun()),
+                                "item", RunVariables.of(message.loopRun(), runContext.logger()),
                                 "iteration", Map.of(
                                     "executionId", message.executionId(),
                                     "state", message.state(),
@@ -184,7 +184,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                             }
                             String value = valuesAndOffset.getLeft().getFirst();
                             computeOutputs(parentTaskRun, outputs, taskOutputs, iterationCount, runningIteration + 1, terminatedByState, valuesAndOffset.getRight(), taskRunStatistic);
-                            var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value);
+                            var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value, loop.getParseValues());
                             executionQueue.emit(loopExecution);
                         } else {
                             // Non-URI mode: resolve all values in memory and pick by index
@@ -199,7 +199,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                     );
                                 }
                                 String value = values.get(nextIndex);
-                                var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value);
+                                var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value, loop.getParseValues());
                                 executionQueue.emit(loopExecution);
                             } else {
                                 List<Pair<String, String>> values = either.getRight();
@@ -210,7 +210,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                     );
                                 }
                                 Pair<String, String> value = values.get(nextIndex);
-                                var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, value.getKey(), value.getValue());
+                                var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, value.getKey(), value.getValue(), loop.getParseValues());
                                 executionQueue.emit(loopExecution);
                             }
                         }

@@ -50,8 +50,14 @@
         return true
     })
 
+    // Number() keeps decimals (parseInt turned 2.5 into 2) and the explicit empty check keeps 0;
+    // anything that is not a finite number (a Pebble expression, for example) stays out of the box.
     const val = computed(() => {
-        return values.value ? parseInt(values.value.toString(), 10) : undefined
+        if (values.value === undefined || values.value === null || values.value === "") {
+            return undefined
+        }
+        const parsed = Number(values.value)
+        return Number.isFinite(parsed) ? parsed : undefined
     })
 
     function onInput(value: number | undefined) {

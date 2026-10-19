@@ -2,7 +2,6 @@ import type {Page} from "@playwright/test"
 import {expect} from "@playwright/test"
 
 import {BasePage} from "./base.page"
-import {shared} from "../fixtures/shared"
 
 export class LogsPage extends BasePage {
 
@@ -10,16 +9,7 @@ export class LogsPage extends BasePage {
         super(page)
     }
 
-    async login() {
-        await this.page.goto("/")
-        await this.page.getByRole("textbox", {name: "Email"}).fill(shared.username)
-        await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-        await this.page.getByRole("button", {name: "Login"}).click()
-        await this.page.waitForURL((url) => !url.toString().includes("/login"), {timeout: 15000})
-    }
-
     async goto() {
-        await this.login()
         await this.page.goto("/ui/main/logs")
 
         await expect(this.page.getByRole("heading", {name: "Logs"})).toBeVisible()
@@ -35,8 +25,12 @@ export class LogsPage extends BasePage {
         await this.modifyQueryParam(this.page, {[param]: flowId})
     }
 
+    async waitForLogRows() {
+        await this.page.locator(".log-row").first().waitFor({state: "visible"})
+    }
+
     async getDisplayedLogCount(): Promise<number> {
-        await this.page.waitForLoadState("networkidle")
+        await this.waitForLogRows()
         return await this.page.locator(".log-row").count()
     }
 
@@ -45,29 +39,30 @@ export class LogsPage extends BasePage {
     }
 
     async selectLogRowByIndex(index: number = 0) {
-        const checkbox = this.page.locator(".log-row").nth(index).locator("label.el-checkbox")
+        const checkbox = this.page.locator(".log-row").nth(index).locator("label.kel-checkbox")
         await checkbox.waitFor({state: "visible"})
         await checkbox.click()
         await expect(checkbox).toContainClass("is-checked")
     }
 
     async clickOnSelectAll() {
-        await this.page.locator(".bulk-select").getByRole("button", {name: /Select all/}).click()
+        await this.page.locator(".ks-bulk-select").getByRole("button", {name: /Select all/}).click()
     }
 
     async clickOnDeleteAndConfirm() {
-        await this.page.locator(".bulk-select").getByRole("button", {name: "Delete"}).click()
-        await this.page.locator(".el-message-box").getByRole("button", {name: "Delete"}).click()
-        await this.page.waitForLoadState("networkidle")
+        await this.page.locator(".ks-bulk-select").getByRole("button", {name: "Delete"}).click()
+        const confirmation = this.page.locator(".kel-message-box")
+        await confirmation.getByRole("button", {name: "Delete"}).click()
+        await expect(confirmation).toBeHidden()
     }
 
     async expectBulkSelectBarToShow(selectedCount: number) {
-        const bar = this.page.locator(".bulk-select")
+        const bar = this.page.locator(".ks-bulk-select")
         await expect(bar).toBeVisible()
         await expect(bar).toContainText(`${selectedCount} selected`)
     }
 
     async expectBulkSelectBarHidden() {
-        await expect(this.page.locator(".bulk-select")).toHaveCount(0)
+        await expect(this.page.locator(".ks-bulk-select")).toHaveCount(0)
     }
 }

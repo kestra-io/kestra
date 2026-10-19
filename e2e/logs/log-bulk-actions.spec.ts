@@ -15,7 +15,7 @@ test.describe("Logs view Bulk Actions", () => {
                 {timeout: 15000},
             ).toBeGreaterThanOrEqual(3)
             await page.reload()
-            await page.waitForLoadState("networkidle")
+            await logsPage.waitForLogRows()
         })
 
         const initialDisplayed = await logsPage.getDisplayedLogCount()
@@ -34,8 +34,6 @@ test.describe("Logs view Bulk Actions", () => {
         })
     })
 
-    test.use({flow: {fileName: "hello.yaml", flowId: "my-hello-flow-1"}, executionCount: 3})
-
     test("Select All deletes every log matching the current filters", async ({logsPage, logsApi, executionsApi, page}) => {
         test.slow()
         await expect(page.getByRole("heading", {name: "Logs"})).toBeVisible()
@@ -46,7 +44,7 @@ test.describe("Logs view Bulk Actions", () => {
                 {timeout: 15000},
             ).toBeGreaterThanOrEqual(3)
             await page.reload()
-            await page.waitForLoadState("networkidle")
+            await logsPage.waitForLogRows()
         })
 
         await test.step("Select one row then expand to Select All", async () => {

@@ -338,6 +338,49 @@ public class FlowConcurrencyCaseTest {
         }
     }
 
+    public void flowConcurrencyQueueLoopUntilKilledWhilePaused(String tenantId) throws QueueException, InterruptedException {
+        String flowId = "flow-concurrency-queue-loop-until-killed";
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, flowId, Optional.empty())
+            .orElseThrow();
+        // the LoopUntil pauses the execution between two checks
+        Execution execution1 = runnerUtils.runOneUntilPaused(tenantId, NAMESPACE, flowId, null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        try {
+            assertThat(execution1.getState().getCurrent()).isEqualTo(Type.PAUSED);
+            assertThat(execution2.getState().getCurrent()).isEqualTo(Type.QUEUED);
+
+            // kill execution 1 while the LoopUntil waits for its next check
+            killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution1.getId())
+                    .isOnKillCascade(true)
+                    .tenantId(tenantId)
+                    .build()
+            );
+
+            // execution 2 must take the released slot; wait past the loop interval so a revived execution 1 would show
+            Execution running = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.RUNNING) || e.getState().isPaused(), execution2, Duration.ofSeconds(15));
+            assertThat(running.getState().getHistories().stream().anyMatch(h -> h.getState() == Type.RUNNING)).isTrue();
+
+            Thread.sleep(6000);
+            Execution killed = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), execution1);
+            assertThat(killed.getState().getCurrent()).isEqualTo(Type.KILLED);
+            // the kill must stick: no pause nor run after it
+            List<Type> states = killed.getState().getHistories().stream().map(History::getState).toList();
+            assertThat(states.subList(states.indexOf(Type.KILLING), states.size())).containsExactly(Type.KILLING, Type.KILLED);
+            assertThat(killed.findTaskRunsByTaskId("loop").getFirst().getState().getCurrent()).isEqualTo(Type.KILLED);
+            assertThat(killed.getTaskRunList()).allMatch(t -> t.getState().isTerminated());
+        } finally {
+            runnerUtils.killExecution(execution1);
+            runnerUtils.killExecution(execution2);
+            runnerUtils.awaitFlowExecutionNumber(2, tenantId, NAMESPACE, flowId);
+        }
+    }
+
     private URI storageUpload(String tenantId) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Gatherers;
 
+import io.kestra.core.trace.TraceUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
@@ -445,6 +446,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         Span.current().recordException(e).setStatus(StatusCode.ERROR);
                         return null;
+                    } finally {
+                        Span.current().setAttribute(TraceUtils.ATTR_STATE, execution.getState().getCurrent().name());
                     }
                 }
             )

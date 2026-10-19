@@ -16,6 +16,7 @@ public final class TraceUtils {
     public static final AttributeKey<String> ATTR_FLOW_ID = AttributeKey.stringKey("kestra.flowId");
     public static final AttributeKey<String> ATTR_EXECUTION_ID = AttributeKey.stringKey("kestra.executionId");
     public static final AttributeKey<String> ATTR_TASK_ID = AttributeKey.stringKey("kestra.taskId");
+    public static final AttributeKey<String> ATTR_STATE = AttributeKey.stringKey("kestra.state");
 
     public static final AttributeKey<String> ATTR_SOURCE = AttributeKey.stringKey("kestra.source");
 

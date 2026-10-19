@@ -94,6 +94,8 @@ public class HttpClient implements Closeable {
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
+    // The status codes Apache's DefaultRedirectStrategy follows, other 3xx are returned as the final response.
+    private static final Set<Integer> FOLLOWED_REDIRECT_CODES = Set.of(301, 302, 303, 307, 308);
     private static final Set<String> IDEMPOTENT_METHODS = Set.of("GET", "HEAD");
 
     @Builder
@@ -139,7 +141,7 @@ public class HttpClient implements Closeable {
             {
                 ClassicHttpResponse response = chain.proceed(request, scope);
                 Header location = response.getFirstHeader("Location");
-                if (location != null && response.getCode() >= 300 && response.getCode() < 400) {
+                if (location != null && FOLLOWED_REDIRECT_CODES.contains(response.getCode())) {
                     recordRedirect(scope.clientContext, HttpService.safeURI(request), response.getCode(), location.getValue());
                 }
                 return response;

@@ -2,6 +2,7 @@ package io.kestra.plugin.core.http;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
@@ -420,6 +421,17 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
             );
         }
         return bytes;
+    }
+
+    /**
+     * @deprecated kept for binary compatibility, the outputs built here carry no request summary and no timing.
+     */
+    @Deprecated
+    public Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body)
+        throws GeneralSecurityException, URISyntaxException, IOException, IllegalVariableEvaluationException {
+        var contentLength = body == null ? 0 : body.getBytes(StandardCharsets.UTF_8).length;
+        var summary = ResponseSummary.of(response, request.getUri(), contentLength, 0, runContext.usedSecrets());
+        return this.output(runContext, request, response, body, this.requestSummary(runContext, request), summary);
     }
 
     private Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body, RequestSummary requestSummary, ResponseSummary summary)

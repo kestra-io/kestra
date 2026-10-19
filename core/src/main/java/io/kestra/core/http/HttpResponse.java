@@ -13,6 +13,7 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.EndpointDetails;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -296,7 +297,10 @@ public class HttpResponse<T> {
     public static class Redirect {
         public static final String CONTEXT_ATTRIBUTE = "kestra.http.redirects";
 
+        @Schema(title = "The status code of the redirect response.")
         int code;
+
+        @Schema(title = "The URI the redirect pointed to.", description = "Resolved against the request URI when relative.")
         String location;
 
         @SuppressWarnings("unchecked")

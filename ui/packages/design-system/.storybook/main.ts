@@ -1,6 +1,6 @@
-import { fileURLToPath } from "node:url";
+import {fileURLToPath} from "node:url"
 import {mergeConfig} from "vite"
-import { resolve, dirname } from "path";
+import {resolve, dirname} from "path"
 import type {StorybookConfig} from "@storybook/vue3-vite"
 
 const srcDir = resolve(import.meta.dirname, "../src")
@@ -45,6 +45,6 @@ const config: StorybookConfig = {
 
 export default config
 
-function getAbsolutePath(value: string): any {
-    return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
+function getAbsolutePath(value: string): string {
+    return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)))
 }

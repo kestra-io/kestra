@@ -1203,6 +1203,7 @@
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
+    "relative": "Relative",
     "relative start date": "Relative start date",
     "now": "Now",
     "absolute": "Absolute",

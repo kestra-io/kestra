@@ -379,6 +379,42 @@ export const InputSelect: Story = {
     }
 };
 
+export const DescriptionDisplayMode: Story = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+        const popups = within(window.document.body);
+
+        const textDescription = await can.findByTestId("input-description-as_text");
+        expect(textDescription).toHaveTextContent("Shown as a text block");
+        expect(can.queryByTestId("input-description-as_tooltip")).toBeNull();
+
+        const field = can.getByTestId("input-form-as_text");
+        expect(textDescription.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        await userEvent.hover(can.getByRole("button", {name: "Description"}));
+        await waitFor(() => expect(popups.getByTestId("input-description-as_tooltip")).toHaveTextContent("Shown in a tooltip"));
+    },
+    render() {
+        return <Sut inputs={[
+            {
+                id: "as_text",
+                type: "STRING",
+                displayName: "Text description",
+                description: "Shown as a text block",
+                descriptionDisplayMode: "TEXT"
+            },
+            {
+                id: "as_tooltip",
+                type: "STRING",
+                displayName: "Tooltip description",
+                description: "Shown in a tooltip",
+                descriptionDisplayMode: "TOOLTIP"
+            },
+        ]}
+        />;
+    }
+};
+
 // Replay harness: mirrors FlowRun.fillInputsFromExecution — once the form signals ready, every leaf
 // is prefilled from a previous execution's `inputs` through the component's prefillInputValue.
 const PrefillSut = defineComponent((props: {inputs: InputMetaData[]; executionInputs: Record<string, unknown>}) => {

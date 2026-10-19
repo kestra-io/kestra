@@ -1,4 +1,5 @@
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
+import {client} from "@kestra-io/kestra-sdk/client"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {isLoopTaskType} from "@kestra-io/topology"
 import {handled} from "./kestraHttp"
@@ -19,10 +20,10 @@ export const MAX_LOG_URL_LENGTH = 3500
 export const CHAIN_CONCURRENCY = 6
 const URL_PREFIX_MARGIN = 200
 const CURSOR_MARGIN = 400
+export const LOG_URL_MARGIN = URL_PREFIX_MARGIN + CURSOR_MARGIN
 const FAILED_SEARCH_SIZE = 100
 const MAX_CHAIN_DEPTH = 8
 export const MAX_COLLECTION_REQUESTS = 60
-const EXECUTION_ID_FILTER_LENGTH = "&filters[executionId][IN]=".length
 
 export interface ScopeNode {
     id: string;
@@ -84,18 +85,30 @@ export const scopeLabel = (t: (key: string, named?: Record<string, unknown>) => 
 export const scopeEntriesOf = (chain: ScopeNode[]): LoopScopeEntry[] =>
     chain.map(({taskId, number}) => ({taskId, number}))
 
-export function logUrlReserve(params: {levelParams: Record<string, string>; kinds: string[]; q?: string}): number {
-    const others = [
-        ...Object.entries(params.levelParams).map(([key, value]) => `&${key}=${encodeURIComponent(value)}`),
-        `&filters[kind][IN]=${encodeURIComponent(params.kinds.join(","))}`,
-        params.q ? `&filters[q][EQUALS]=${encodeURIComponent(params.q)}` : "",
-        "&page=1&size=100&sort=timestamp:asc",
-    ].join("")
-    return URL_PREFIX_MARGIN + CURSOR_MARGIN + others.length
+type LogFilterSearch = Pick<MergedLogSearch, "kinds" | "levelParams" | "q">
+
+const executionIdsFilter = (executionIds: string[]): QueryFilter => ({field: "executionId", operation: "IN", value: executionIds})
+
+function logFilters({kinds, levelParams, q}: LogFilterSearch): QueryFilter[] {
+    const filters: QueryFilter[] = [{field: "kind", operation: "IN", value: kinds}, ...routeQueryToQueryFilters(levelParams)]
+    if (q) filters.push({field: "q", operation: "EQUALS", value: q})
+    return filters
 }
 
-export const executionIdsUrlLength = (ids: Iterable<string>): number =>
-    EXECUTION_ID_FILTER_LENGTH + encodeURIComponent([...ids].join(",")).length
+const serializedQueryLength = (query: Record<string, unknown>) => {
+    const url = client.buildUrl({baseUrl: "", url: "/", query})
+    return url.length - url.indexOf("?") - 1
+}
+
+export function logUrlReserve(search: LogFilterSearch): number {
+    const query = {filters: logFilters(search), page: 1, size: LOG_PAGE_SIZE, sort: ["timestamp:asc"]}
+    return LOG_URL_MARGIN + serializedQueryLength(query) + 1
+}
+
+export const executionIdsUrlLength = (ids: Iterable<string>): number => {
+    const executionIds = [...ids]
+    return executionIds.length ? serializedQueryLength({filters: [executionIdsFilter(executionIds)]}) : 0
+}
 
 async function mapLimit<T, R>(items: T[], limit: number, task: (item: T) => Promise<R>): Promise<R[]> {
     const results = new Array<R>(items.length)
@@ -313,12 +326,7 @@ export interface MergedLogSearch {
 }
 
 export async function searchMergedLogs(search: MergedLogSearch) {
-    const filters: QueryFilter[] = [
-        {field: "executionId", operation: "IN", value: search.executionIds},
-        {field: "kind", operation: "IN", value: search.kinds},
-        ...routeQueryToQueryFilters(search.levelParams),
-    ]
-    if (search.q) filters.push({field: "q", operation: "EQUALS", value: search.q})
+    const filters = [executionIdsFilter(search.executionIds), ...logFilters(search)]
     const response = await LogsAPI.searchLogs(
         {page: search.page, size: LOG_PAGE_SIZE, sort: ["timestamp:asc"], cursor: search.cursor, filters},
     ).catch((error: unknown) => {

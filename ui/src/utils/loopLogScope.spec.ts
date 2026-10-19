@@ -1,4 +1,6 @@
-import {describe, expect, it, vi} from "vitest"
+import {beforeAll, beforeEach, describe, expect, it, vi} from "vitest"
+import {configureClient} from "@kestra-io/kestra-sdk"
+import {client} from "@kestra-io/kestra-sdk/client"
 import {
     CHAIN_CONCURRENCY,
     collectFailedTargets,
@@ -6,11 +8,18 @@ import {
     createChainCache,
     executionIdsUrlLength,
     flowHasLoop,
+    LOG_URL_MARGIN,
     logUrlReserve,
+    MAX_LOG_URL_LENGTH,
     scopeLabel,
+    searchMergedLogs,
     type LogTargetDeps,
 } from "./loopLogScope"
 import type {LoopIteration} from "./loopIterations"
+
+beforeAll(() => {
+    configureClient({baseUrl: "http://localhost"})
+})
 
 const root = {id: "root", namespace: "company.team", flowId: "close_lite", startDate: "2026-10-09T09:49:13.994699Z"}
 
@@ -299,20 +308,54 @@ describe("request budget", () => {
 })
 
 describe("logUrlReserve", () => {
+    const levelParams = {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"}
+    const sentUrls: string[] = []
+
+    beforeEach(() => {
+        sentUrls.length = 0
+        configureClient({
+            baseUrl: "http://localhost",
+            fetch: async (input: RequestInfo | URL) => {
+                sentUrls.push((input as Request).url)
+                return new Response(JSON.stringify({results: [], total: 0}), {headers: {"content-type": "application/json"}})
+            },
+        })
+    })
+
+    const queryOf = (url: string) => url.slice(url.indexOf("?") + 1)
+
     it("shouldGrowWithTheLevelFilterAndTheTextSearch", () => {
-        const base = {levelParams: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"}, kinds: ["NORMAL", "LOOP"]}
+        const base = {levelParams, kinds: ["NORMAL", "LOOP"]}
 
         expect(logUrlReserve({...base, q: "a long search text"})).toBeGreaterThan(logUrlReserve(base))
+    })
+
+    it("shouldMeasureTheExecutionIdsWithTheSerializerTheClientIsConfiguredWith", () => {
+        client.setConfig({querySerializer: () => "x".repeat(10)})
+
+        expect(executionIdsUrlLength(["a", "b"])).toBe(10)
+    })
+
+    it("shouldAccountForExactlyTheQueryTheSdkSendsForALogSearch", async () => {
+        const ids = ["root", ...Array.from({length: 40}, (_, index) => `${"x".repeat(22)}${index}`)]
+        const search = {executionIds: ids, kinds: ["NORMAL", "LOOP"], levelParams, q: "needle é", page: 1}
+
+        await searchMergedLogs(search)
+
+        expect(logUrlReserve(search) + executionIdsUrlLength(ids)).toBe(LOG_URL_MARGIN + queryOf(sentUrls[0]).length)
     })
 
     it("shouldKeepTheFullUrlUnderTheLimitWithTheCursorMargin", async () => {
         const failures = Array.from({length: 300}, (_, index) => iteration(`${"x".repeat(22)}${index}`, "root", "per_region", index))
         const deps = depsFor(failures)
-        const reserve = logUrlReserve({levelParams: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"}, kinds: ["NORMAL", "LOOP"], q: "needle"})
+        const search = {kinds: ["NORMAL", "LOOP"], levelParams, q: "needle", page: 1, cursor: "c".repeat(300)}
+        const reserve = logUrlReserve(search)
 
         const targets = await collectFailedTargets(root, deps, {reserve})
+        await searchMergedLogs({...search, executionIds: targets.executionIds})
 
-        expect(reserve + executionIdsUrlLength(targets.executionIds)).toBeLessThanOrEqual(3500)
+        expect(reserve + executionIdsUrlLength(targets.executionIds)).toBeLessThanOrEqual(MAX_LOG_URL_LENGTH)
+        expect(sentUrls[0].length).toBeLessThanOrEqual(MAX_LOG_URL_LENGTH)
         expect(targets.end).toBeLessThan(targets.total)
     })
 })

@@ -23,7 +23,7 @@ class PostgresV2_1_05QueueOffsetBigintMigrationTest {
     V2_1_05QueueOffsetBigintMigration migration;
 
     @Test
-    void queueOffsetSequenceAndColumnAreBigintAndCanExceed32BitInt() {
+    void queueOffsetSequenceAndColumnAreBigintAndCanExceed32BitInt() throws Exception {
         migration.migrate();
 
         queueJdbcDataSourceProvider.wrapper().transaction(configuration -> {

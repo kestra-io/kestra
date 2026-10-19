@@ -83,6 +83,8 @@ public class TracesTest {
         assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("trace-parent");
         assertThat(attributes.get(TraceUtils.ATTR_EXECUTION_ID)).isEqualTo(result.getId());
         assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.executor.DefaultExecutor");
+        // assert that one trace has a taskId
+        assertThat(spans.stream().anyMatch(span -> span.getAttributes().get(TraceUtils.ATTR_TASK_ID) != null)).isTrue();
     }
 
     @Test

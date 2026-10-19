@@ -1,6 +1,9 @@
 import {describe, test, expect} from "vitest"
+import {ref} from "vue"
 import {createPebbleEntryTracker, isOffsetInPebbleBlock, isPebbleEnabled, pebbleBlockKeyAtOffset, PEBBLE_SCHEMA_TYPES} from "../../utils/pebbleBlock"
 import {findDuplicateTaskIds} from "../../utils/yamlValidation"
+import {useEditorDecorations} from "../../composables/useEditorDecorations"
+import type {editor as monacoEditor} from "monaco-editor/editor/editor.api"
 
 describe("KsEditor / pebbleBlock", () => {
     test("returns false for offset < 2", () => {
@@ -224,5 +227,48 @@ describe("KsEditor / isPebbleEnabled", () => {
         expect(isPebbleEnabled({lang: "json"})).toBe(false)
         expect(isPebbleEnabled({lang: "python"})).toBe(false)
         expect(isPebbleEnabled({lang: "plaintext"})).toBe(false)
+    })
+})
+
+describe("KsEditor / useEditorDecorations", () => {
+    test("decorates statement blocks and print blocks with highlight-pebble", () => {
+        const text = "message: condition {% if inputs. %}, expression  {{ inputs.cond }}"
+        const decorations: monacoEditor.IModelDeltaDecoration[] = []
+        const editorDouble = {
+            getModel: () => ({
+                getValue: () => text,
+                getPositionAt: (offset: number) => ({lineNumber: 1, column: offset + 1}),
+            }),
+            createDecorationsCollection: () => ({
+                clear: () => { decorations.length = 0 },
+                append: (d: monacoEditor.IModelDeltaDecoration[]) => { decorations.push(...d) },
+            }),
+        }
+        const codeEditor = editorDouble as unknown as monacoEditor.IStandaloneCodeEditor
+        const dec = useEditorDecorations({
+            pebbleEnabled: ref(true),
+            highlightLine: ref(undefined),
+            initialHighlight: ref(undefined),
+            codeEditor: () => codeEditor,
+            modifiedEditor: () => codeEditor,
+        })
+        dec.attach(codeEditor)
+        dec.highlightPebble()
+
+        expect(decorations).toHaveLength(2)
+        expect(decorations[0].options.inlineClassName).toBe("highlight-pebble")
+        expect(decorations[0].range).toEqual({
+            startLineNumber: 1,
+            startColumn: 20,
+            endLineNumber: 1,
+            endColumn: 36,
+        })
+        expect(decorations[1].options.inlineClassName).toBe("highlight-pebble")
+        expect(decorations[1].range).toEqual({
+            startLineNumber: 1,
+            startColumn: 50,
+            endLineNumber: 1,
+            endColumn: 67,
+        })
     })
 })

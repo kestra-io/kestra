@@ -1,5 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {effectScope, nextTick} from "vue"
+import type {Flow} from "../../../stores/flow"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({
@@ -29,10 +30,11 @@ vi.mock("../../../stores/flow", async () => {
     return {useFlowStore: () => flowStore}
 })
 
+const routeTabsMock = vi.hoisted(() => ({setTabs: vi.fn()}))
+
 vi.mock("../../../stores/routeTabs", () => ({
     useRouteTabsStore: () => ({
-        setTabs: vi.fn(),
-        clearTabsIfOwner: vi.fn(),
+        setTabs: routeTabsMock.setTabs,
     }),
 }))
 
@@ -57,6 +59,8 @@ describe("useFlowRoot", () => {
     const loadDependencies = vi.mocked(flowStore.loadDependencies)
     const loadFlow = vi.mocked(flowStore.loadFlow)
 
+    const makeFlow = (id: string): Flow => ({id, namespace: "company.team", source: ""})
+
     beforeEach(() => {
         vi.useFakeTimers()
         flowStore.flow = undefined
@@ -66,10 +70,21 @@ describe("useFlowRoot", () => {
         // useFlowRoot ignores what loadFlow resolves with, so the stub does not build a whole flow.
         loadFlow.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof flowStore.loadFlow>>)
         vi.mocked(flowStore.loadGraph).mockReset()
+        routeTabsMock.setTabs.mockReset()
     })
 
     afterEach(() => {
         vi.useRealTimers()
+    })
+
+    it("does not register flow tabs in the app header selector", () => {
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot())
+
+        expect(routeTabsMock.setTabs).not.toHaveBeenCalled()
+
+        scope.stop()
     })
 
     it("keeps the dependencies tab enabled when the store reports one dependency", async () => {
@@ -80,7 +95,7 @@ describe("useFlowRoot", () => {
         const scope = effectScope()
         const flowRoot = scope.run(() => useFlowRoot())!
 
-        flowStore.flow = {id: "myflow", namespace: "company.team"} as any
+        flowStore.flow = makeFlow("myflow")
         await nextTick()
         await vi.advanceTimersByTimeAsync(1000)
         await nextTick()
@@ -100,7 +115,7 @@ describe("useFlowRoot", () => {
     })
 
     it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
-        flowStore.flow = {id: "myflow", namespace: "company.team"} as any
+        flowStore.flow = makeFlow("myflow")
         const scope = effectScope()
 
         scope.run(() => useFlowRoot().setupLifecycle())
@@ -113,7 +128,7 @@ describe("useFlowRoot", () => {
     })
 
     it("fetches the flow when the store holds another one", async () => {
-        flowStore.flow = {id: "otherflow", namespace: "company.team"} as any
+        flowStore.flow = makeFlow("otherflow")
         const scope = effectScope()
 
         scope.run(() => useFlowRoot().setupLifecycle())

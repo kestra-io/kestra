@@ -36,7 +36,7 @@
                     id="gantt"
                     data-onboarding-target="execution-gantt"
                     shadow="never"
-                    :class="{'no-border': !hasValidDate}"
+                    :class="{'no-border': !hasValidDate, 'is-compact': verticalLayout}"
                 >
                     <template #header v-if="hasValidDate">
                         <div class="gantt-header">
@@ -60,13 +60,10 @@
                                 </div>
                             </div>
                             <div class="bottom">
-                                <div v-if="verticalLayout" class="timeline">
-                                    <span class="start">{{ startTime }}</span>
-                                    <span class="end">{{ endTime }}</span>
+                                <div class="scale" data-test="gantt-scale">
+                                    <span>{{ formatDuration(0) }}</span>
+                                    <span>{{ formatDuration(delta()) }}</span>
                                 </div>
-                                <span v-else class="tick" v-for="(date, i) in dates" :key="i">
-                                    {{ date }}
-                                </span>
                             </div>
                         </div>
                     </template>
@@ -122,24 +119,23 @@
                                                     <Warning class="attempt_warn me-3" />
                                                 </KsTooltip>
                                             </div>
-                                            <div class="task-bar">
-                                                <div :style="taskBarStyle(item)" class="task-progress">
-                                                    <KsProgress
-                                                        :left="Math.min(item.left, 90)"
-                                                        :percentage="Math.max(100 - item.left, 10)"
-                                                        :color="item.color"
-                                                        :stroke-width="7"
-                                                        :radius="81"
-                                                        :striped="item.running"
-                                                        :stripedFlow="item.running"
-                                                        :showText="false"
-                                                    />
-                                                </div>
+                                            <div v-if="!verticalLayout" class="task-offset" data-test="gantt-task-offset">
+                                                {{ item.offset }}
                                             </div>
-                                            <div class="task-duration" :class="{'d-none d-md-inline-block': !verticalLayout}">
+                                            <div class="task-bar">
+                                                <div
+                                                    :style="taskBarStyle(item)"
+                                                    class="task-progress"
+                                                    data-test="gantt-task-bar"
+                                                />
+                                            </div>
+                                            <div class="task-duration">
                                                 <small>
                                                     <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
                                                 </small>
+                                            </div>
+                                            <div class="task-state">
+                                                <KsExecutionStatus :status="item.task.state.current" />
                                             </div>
                                             <div class="task-actions" @click.stop>
                                                 <TaskRunActions
@@ -201,7 +197,6 @@
     import {RouterLink, useRoute} from "vue-router"
 
     import type {ExecutionTaskRun} from "./executionTaskRun"
-    import {date as dateFilter} from "../../utils/filters"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -220,6 +215,7 @@
         normalizeRouteLevelFilter,
         readRouteLevelFilter,
         KsExecutionStatus,
+        durationUtils,
         KsFilter as KSFilter,
         KsEmptyState,
         type AppliedFilter,
@@ -243,10 +239,6 @@
     import {useFirstFailure} from "../../composables/useFirstFailure"
 
     import {storageKeys} from "../../utils/constants"
-    // Explicit 24-hour format: the scale has no room for AM/PM, so a 12-hour clock would be ambiguous.
-    const TICK_FORMAT = "HH:mm:ss"
-    const PRECISE_TICK_FORMAT = "HH:mm:ss.SSS"
-
     type TaskRun = ExecutionTaskRun
 
     interface TaskWrapper {
@@ -259,9 +251,9 @@
         name: string;
         start: number;
         width: number;
-        left: number;
+        waitPercent: number;
+        offset: string;
         color: string;
-        running: boolean;
         task: TaskRun;
         flowId?: string;
         namespace?: string;
@@ -299,7 +291,6 @@
     const ts = (date: string | Date): number => new Date(date).getTime()
 
     const series = ref<SeriesItem[]>([])
-    const dates = ref<string[]>([])
     const selectedTaskRuns = ref<string[]>([])
     const search = ref<string>("")
     const selectedStates = ref<string[]>([])
@@ -433,17 +424,6 @@
 
     const hasValidDate = computed<boolean>(() => isFinite(delta()))
 
-    const startTime = computed<string>(() => {
-        if (!execution.value?.state?.histories?.[0]) return ""
-        return dateFilter(execution.value.state.histories[0].date, TICK_FORMAT)
-    })
-
-    const endTime = computed<string>(() => {
-        if (!execution.value?.state || !hasValidDate.value) return ""
-        const endDate = State.isRunning(execution.value.state.current) ? Date.now() : stop()
-        return dateFilter(endDate, TICK_FORMAT)
-    })
-
     function delta(): number {
         return stop() - start.value
     }
@@ -463,7 +443,6 @@
 
     function compute(): void {
         computeSeries()
-        computeDates()
     }
 
     function computeSeries(): void {
@@ -491,18 +470,11 @@
 
         for (const taskWrapper of tasks.value) {
             const task = taskWrapper.task
-            let stopTs: number
-            if (State.isRunning(task.state.current)) {
-                stopTs = ts(new Date())
-            } else {
-                const lastIndex = task.state.histories.length - 1
-                stopTs = ts(task.state.histories[lastIndex].date)
-            }
             const startTs = ts(task.state.histories[0].date)
 
-            const runningState = task.state.histories.filter(r => r.state === State.RUNNING)
-            const left = runningState.length > 0
-                ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100)
+            const runningEntry = task.state.histories.find(h => h.state === State.RUNNING)
+            const waitPercent = runningEntry
+                ? Math.max(0, ((ts(runningEntry.date) - startTs) / executionDelta) * 100)
                 : 0
 
             const barPercents = barPercentsById[task.id]
@@ -516,9 +488,9 @@
                 name: task.taskId,
                 start: barPercents.start,
                 width,
-                left,
+                waitPercent,
+                offset: `+${formatDuration(startTs - start.value)}`,
                 color: COLORS[task.state.current],
-                running: Boolean(State.isRunning(task.state.current)),
                 task,
                 flowId: task.flowId,
                 namespace: task.namespace,
@@ -531,26 +503,8 @@
         series.value = newSeries
     }
 
-    function computeDates(): void {
-        // An execution cancelled or failed before any task started has no span to divide, so
-        // `delta()` is non-finite and every tick would be an unusable placeholder.
-        if (!hasValidDate.value) {
-            dates.value = []
-            return
-        }
-
-        const duration = delta()
-        const ticks = 5
-        const startVal = start.value
-        const deltaVal = duration / ticks
-        const tickFormat = deltaVal < 1000 ? PRECISE_TICK_FORMAT : TICK_FORMAT
-        const newDates: string[] = []
-
-        for (let i = 0; i < ticks; i++) {
-            newDates.push(dateFilter(startVal + i * deltaVal, tickFormat))
-        }
-
-        dates.value = newDates
+    function formatDuration(ms: number): string {
+        return durationUtils.humanDuration(ms / 1000, {maxDecimalPoints: 2, units: ["h", "m", "s"], delimiter: " "})
     }
 
     function onTaskSelect(taskRunId: string): void {
@@ -585,11 +539,14 @@
     }
 
     function taskBarStyle(item: SeriesItem): Record<string, string> {
-        if (item.parentEndPercent !== undefined) {
-            return {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`}
+        const end = item.parentEndPercent ?? item.start + item.width
+        const barStart = item.start + item.waitPercent
+        const width = Math.max(end - barStart, 3)
+        return {
+            left: `${Math.max(0, Math.min(barStart, 100 - width))}%`,
+            width: `${width}%`,
+            background: item.color,
         }
-        const width = Math.max(item.width, 3)
-        return {left: `${Math.max(0, Math.min(item.start, 100 - width))}%`, width: `${width}%`}
     }
 
     watch(
@@ -669,7 +626,16 @@
     }
 
     .kel-card {
+        --gantt-offset-width: 5rem;
+        --gantt-bar-width: 12rem;
+        --gantt-duration-width: 9rem;
+        --gantt-state-width: 8rem;
         padding: 0;
+
+        &.is-compact {
+            --gantt-bar-width: 6rem;
+            --gantt-duration-width: 0rem;
+        }
 
         :deep(.kel-card__header) {
             padding: 0;
@@ -734,33 +700,14 @@
                     font-weight: normal;
                     background: var(--ks-bg-surface);
 
-                    > * {
-                        padding: .5rem;
-                        padding-right: 2.5rem;
-                        flex: 1;
-                    }
-
-                    .tick {
-                        text-align: end;
-
-                        &:first-child {
-                            background: var(--ks-bg-active);
-                        }
-                    }
-
-                    .timeline {
-                        flex: 1;
+                    .scale {
                         display: flex;
                         justify-content: space-between;
-                        align-items: center;
-                        padding: .5rem;
-                        font-weight: normal;
-
-                        .start,
-                        .end {
-                            font-size: var(--ks-font-size-sm);
-                            color: var(--ks-text-primary);
-                        }
+                        width: var(--gantt-bar-width);
+                        padding: 0 var(--ks-spacing-1);
+                        margin-left: auto;
+                        margin-right: calc(var(--ks-spacing-8) + var(--gantt-duration-width) + var(--gantt-state-width));
+                        color: var(--ks-text-secondary);
                     }
                 }
             }
@@ -808,8 +755,8 @@
                 }
 
                 .task-label {
-                    flex: 0 0 12rem;
-                    min-width: 0;
+                    flex: 1 1 0;
+                    min-width: 6rem;
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
@@ -836,10 +783,7 @@
 
                 .task-name {
                     display: inline-block;
-                    max-width: 12rem;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
+                    overflow-wrap: anywhere;
                     vertical-align: middle;
 
                     code {
@@ -859,8 +803,23 @@
                     vertical-align: middle;
                 }
 
+                .task-offset {
+                    flex: 0 0 var(--gantt-offset-width);
+                    text-align: end;
+                    white-space: nowrap;
+                    font-family: var(--kel-font-family-monospace);
+                    font-size: var(--ks-font-size-xs);
+                    color: var(--ks-text-secondary);
+                }
+
+                .task-state {
+                    flex: 0 0 var(--gantt-state-width);
+                }
+
                 .task-duration {
-                    flex-shrink: 0;
+                    flex: 0 0 var(--gantt-duration-width);
+                    min-width: 0;
+                    overflow: hidden;
 
                     small {
                         white-space: nowrap;
@@ -879,14 +838,20 @@
                 }
 
                 .task-bar {
-                    flex: 1 1 0;
-                    min-width: 0;
+                    flex: 0 0 var(--gantt-bar-width);
+                    position: relative;
+                    height: var(--ks-spacing-2);
+                    padding: 0;
+                    margin: 0 var(--ks-spacing-1);
+                    border-radius: var(--ks-spacing-1);
+                    background: var(--ks-bg-active);
                 }
 
                 .task-progress {
-                    position: relative;
-                    transition: all 0.3s;
-                    min-width: 5px;
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    border-radius: var(--ks-spacing-1);
                 }
             }
 
@@ -915,11 +880,11 @@
     @media (max-width: 767px) {
         #gantt .gantt-row {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto auto;
+            grid-template-columns: minmax(0, 1fr) auto auto auto;
             grid-template-areas:
-                "label duration actions"
-                "bar bar bar"
-                "failure failure failure";
+                "label duration state actions"
+                "bar bar bar bar"
+                "failure failure failure failure";
             align-items: center;
             gap: var(--ks-spacing-2) var(--ks-spacing-3);
             padding: var(--ks-spacing-3);
@@ -947,6 +912,10 @@
 
             .task-duration {
                 grid-area: duration;
+            }
+
+            .task-state {
+                grid-area: state;
             }
 
             .task-actions {

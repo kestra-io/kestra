@@ -44,8 +44,8 @@
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
-                    <span class="d-inline-flex align-items-center">
-                        <AiIcon class="me-1" />
+                    <span class="fix-with-ai">
+                        <AiIcon />
                         <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
@@ -377,7 +377,13 @@
         }
     }
 
-        .iteration-selector {
+    .fix-with-ai {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    .iteration-selector {
         border-bottom: var(--ks-border-block-primary);
         padding: var(--ks-spacing-2);
 

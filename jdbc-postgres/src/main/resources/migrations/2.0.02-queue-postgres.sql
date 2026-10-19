@@ -5,7 +5,7 @@
 -- 2.0.0-rcN table (already final) both converge here without ever losing a row.
 
 CREATE TABLE IF NOT EXISTS queues (
-    "offset"      SERIAL       PRIMARY KEY,
+    "offset"      BIGSERIAL    PRIMARY KEY,
     type          VARCHAR(250) NOT NULL,
     "routing_key" VARCHAR(250),
     key           VARCHAR(250) NOT NULL,

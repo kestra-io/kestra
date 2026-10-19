@@ -469,7 +469,7 @@
     import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-    import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFormItem, KsMessageBox, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
     import {useExecutionDeletionDialog} from "./composables/useExecutionDeletionDialog"
 
     import Delete from "vue-material-design-icons/Delete.vue"

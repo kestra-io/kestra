@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.AlreadyExistsException;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
@@ -989,12 +991,16 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         }
 
         // Persist
-        return this.save(flow, CrudEventType.UPDATE);
+        return this.save(flow, CrudEventType.UPDATE, previous);
+    }
+
+    @VisibleForTesting
+    public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
+        return this.save(flow, crudEventType, null);
     }
 
     @SneakyThrows(FlowProcessingException.class)
-    @VisibleForTesting
-    public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
+    private FlowWithSource save(GenericFlow flow, CrudEventType crudEventType, @Nullable FlowInterface previous) throws ConstraintViolationException {
 
         // Ensure the flow is parseable before saving.
         // For drafts with unparsable YAML, fall back to a FlowWithException so the raw source can
@@ -1017,14 +1023,25 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         // Update revision
         List<FlowWithSource> revisions = this.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId(), true);
-        final int revision = revisions.isEmpty() ? 1 : revisions.getLast().getRevision() + 1;
+        FlowWithSource last = revisions.isEmpty() ? null : revisions.getLast();
+        if (CrudEventType.CREATE == crudEventType && last != null && !last.isDeleted()) {
+            throw AlreadyExistsException.of("Flow", flow.getId(), flow.getNamespace());
+        }
+        if (previous != null && !previous.isDeleted() && last != null && last.isDeleted()) {
+            throw new ConflictException("Flow '%s' in namespace '%s' was deleted while it was being updated.".formatted(flow.getId(), flow.getNamespace()));
+        }
+        final int revision = last == null ? 1 : last.getRevision() + 1;
 
         flow = flow.toBuilder().revision(revision).updated(Instant.now()).build();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
         fields.put(field("source_code"), flow.getSource());
 
-        this.jdbcRepository.persist(flow, fields);
+        if (!this.insertRevision(flow, fields)) {
+            throw CrudEventType.CREATE == crudEventType
+                ? AlreadyExistsException.of("Flow", flow.getId(), flow.getNamespace())
+                : concurrentWrite(flow);
+        }
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
 
@@ -1105,10 +1122,34 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted.toFlow());
         fields.put(field("source_code"), deleted.getSource());
 
-        this.jdbcRepository.persist(deleted, fields);
+        if (!this.insertRevision(deleted, fields)) {
+            throw concurrentWrite(deleted);
+        }
 
         eventPublisher.publishEvent(CrudEvent.delete(flow));
         return deleted;
+    }
+
+    // Not an upsert: the revision key has to reject a concurrent writer that computed the same revision.
+    private boolean insertRevision(FlowInterface flow, Map<Field<Object>, Object> fields) {
+        try {
+            this.jdbcRepository.getDslContextWrapper().transaction(configuration -> DSL.using(configuration)
+                .insertInto(this.jdbcRepository.getTable())
+                .set(KEY_FIELD, this.jdbcRepository.key(flow))
+                .set(fields)
+                .execute()
+            );
+            return true;
+        } catch (IntegrityConstraintViolationException e) {
+            return false;
+        }
+    }
+
+    private static ConflictException concurrentWrite(FlowInterface flow) {
+        return new ConflictException(
+            "Revision %d of flow '%s' in namespace '%s' was saved by another request at the same time. Reload the flow and try again."
+                .formatted(flow.getRevision(), flow.getId(), flow.getNamespace())
+        );
     }
 
     @Override

@@ -75,14 +75,14 @@
                     }"
                     :prefix="'executions'"
                     :tableOptions="{
-                        chart: {shown: false},
+                        chart: {shown: !hideChart, value: showChart, callback: onShowChartChange},
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
                     :defaultDuration="chartDefaultDuration"
                 >
-                    <template #extra v-if="!hideChart">
+                    <template #extra v-if="!hideChart && showChart">
                         <KsSegmented
                             :modelValue="chartMode"
                             :options="chartModeOptions"
@@ -99,9 +99,12 @@
 
             <template v-else-if="showStatChart('timeline')" #top>
                 <ExecutionsTimeline
+                    ref="timelineRef"
                     :namespace="namespace"
                     :flowId="flowId"
                     :statuses="statuses"
+                    :labels="labels"
+                    :childFilter="childFilter"
                     v-model:drillNamespace="timelineDrillNamespace"
                     v-model:drillFlowId="timelineDrillFlowId"
                     v-model:expanded="timelineExpanded"
@@ -618,10 +621,11 @@
     const dblClickRouteName = ref("executions/update")
 
     type ChartMode = "counts" | "timeline"
-    const storedChartMode = localStorage.getItem(storageKeys.SHOW_CHART)
-    const chartMode = ref<ChartMode>(storedChartMode === "timeline" ? "timeline" : "counts")
+    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false")
+    const chartMode = ref<ChartMode>(localStorage.getItem(storageKeys.EXECUTIONS_CHART_MODE) === "timeline" ? "timeline" : "counts")
     const timelineExpanded = ref(false)
-    const fitHeightResolved = computed(() => (props.fitHeight ?? props.topbar) && !(chartMode.value === "timeline" && timelineExpanded.value))
+    const timelineRef = useTemplateRef<InstanceType<typeof ExecutionsTimeline>>("timelineRef")
+    const fitHeightResolved = computed(() => (props.fitHeight ?? props.topbar) && !(showStatChart("timeline") && timelineExpanded.value))
     const chartModeOptions = computed(() => [
         {label: t("chart mode.counts"), value: "counts", icon: Counter},
         {label: t("chart mode.timeline"), value: "timeline", icon: ChartLineVariant},
@@ -966,23 +970,32 @@
         }
     }
 
-    const onChartModeChange = (value: ChartMode) => {
-        chartMode.value = value
-        localStorage.setItem(storageKeys.SHOW_CHART, value)
-        if (value !== "timeline") {
-            timelineDrillNamespace.value = undefined
-            timelineDrillFlowId.value = undefined
-            timelineExpanded.value = false
-        }
+    const resetTimelineState = () => {
+        timelineDrillNamespace.value = undefined
+        timelineDrillFlowId.value = undefined
+        timelineExpanded.value = false
     }
 
-    const showStatChart = (mode: ChartMode) => {
-        return !props.hideChart && isDisplayedTop.value && chartMode.value === mode
+    const onChartModeChange = (value: ChartMode) => {
+        chartMode.value = value
+        localStorage.setItem(storageKeys.EXECUTIONS_CHART_MODE, value)
+        if (value !== "timeline") resetTimelineState()
+    }
+
+    const onShowChartChange = (value: boolean) => {
+        showChart.value = value
+        localStorage.setItem(storageKeys.SHOW_CHART, value.toString())
+        if (!value) resetTimelineState()
+    }
+
+    function showStatChart(mode: ChartMode) {
+        return !props.hideChart && isDisplayedTop.value && showChart.value && chartMode.value === mode
     }
 
     const refresh = () => {
         recomputeInterval.value = !recomputeInterval.value
         dataTable.value?.reload()
+        timelineRef.value?.reload()
     }
 
     const activeFilterConfiguration = computed(() =>

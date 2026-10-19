@@ -1,9 +1,7 @@
 import {computed, type ComputedRef} from "vue"
 import {useRoute} from "vue-router"
 import {deepMerge, type FilterConfiguration} from "@kestra-io/design-system"
-import {keepSupportedFilters, FILTER_FIELD_PATTERN} from "../components/executions/utils"
-
-export {FILTER_FIELD_PATTERN}
+import {keepSupportedFilters} from "../components/executions/utils"
 
 interface ExecutionsQueryScope {
     namespace?: string;

@@ -1,13 +1,11 @@
 <template>
-    <div class="executions-timeline" :class="{expanded}">
+    <div class="executions-timeline" :class="{expanded}" :style="{'--timeline-row-label-width': `${ROW_LABEL_WIDTH_PX}px`}">
         <TimelineToolbar
             :rangeStartMs="rangeStartMs"
             :rangeEndMs="rangeEndMs"
-            :activePreset="activePreset"
             :expanded="expanded"
             :domainExecutions="domainExecutions"
             :scrubberWidthPx="availableWidthPx"
-            @apply-preset="applyPreset"
             @custom-range="({startMs, endMs}) => setRange(startMs, endMs)"
             @zoom="zoom"
             @pan="pan"
@@ -117,22 +115,24 @@
     import {useTimelineRange, computeScrubberDomain, START_QUERY_KEY, END_QUERY_KEY, TIME_RANGE_QUERY_KEY} from "../../../composables/useTimelineRange"
     import {useExecutionFilter} from "../../filter/configurations/executionFilter"
     import {useFlowExecutionFilter} from "../../filter/configurations/flowExecutionFilter"
-    import {groupByNamespace, countByState, buildAxisTicks, axisTickFormat, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
-    const AXIS_TICK_COUNT = 6
-    // Must match the --timeline-row-label-width custom property set below.
     const ROW_LABEL_WIDTH_PX = 180
 
     const props = withDefaults(defineProps<{
         namespace?: string;
         flowId?: string;
         statuses?: string[];
+        labels?: Record<string, string>;
+        childFilter?: "MAIN" | "CHILD";
     }>(), {
         namespace: undefined,
         flowId: undefined,
         statuses: () => [],
+        labels: undefined,
+        childFilter: undefined,
     })
 
     const {t} = useI18n()
@@ -156,15 +156,17 @@
     })
 
     const activeFilterConfiguration = computed<FilterConfiguration>(() =>
-        (effectiveNamespace.value === undefined || effectiveFlowId.value === undefined) ? executionFilter.value : flowExecutionFilter.value,
+        (props.namespace === undefined || props.flowId === undefined) ? executionFilter.value : flowExecutionFilter.value,
     )
     const {loadQuery} = useExecutionsQueryScope(activeFilterConfiguration, computed(() => ({
         namespace: effectiveNamespace.value,
         flowId: effectiveFlowId.value,
         statuses: props.statuses,
+        labels: props.labels,
+        childFilter: props.childFilter,
     })))
 
-    const {rangeStartMs, rangeEndMs, activePreset, setRange, applyPreset, zoom, pan, goToNow} = useTimelineRange()
+    const {rangeStartMs, rangeEndMs, setRange, applyPreset, zoom, pan, goToNow, refreshNow} = useTimelineRange()
 
     const expanded = defineModel<boolean>("expanded", {default: false})
     const loading = ref(false)
@@ -268,8 +270,9 @@
     })
 
     const axisTicks = computed(() => {
-        const format = axisTickFormat(rangeEndMs.value - rangeStartMs.value, AXIS_TICK_COUNT)
-        return buildAxisTicks(rangeStartMs.value, rangeEndMs.value, AXIS_TICK_COUNT, Date.now()).map((tick, i) => ({
+        const tickCount = axisTickCount(availableWidthPx.value)
+        const format = axisTickFormat(rangeEndMs.value - rangeStartMs.value, tickCount)
+        return buildAxisTicks(rangeStartMs.value, rangeEndMs.value, tickCount, Date.now()).map((tick, i) => ({
             key: `${i}-${tick.ms}`,
             label: tick.isNow ? t("now") : dateUtils.dateFilter(new Date(tick.ms).toISOString(), format),
         }))
@@ -363,7 +366,11 @@
             }))
     }
 
+    let latestFetchId = 0
+
     async function fetchExecutions() {
+        const fetchId = ++latestFetchId
+        const isStale = () => fetchId !== latestFetchId
         loading.value = true
         error.value = undefined
         try {
@@ -373,35 +380,40 @@
                 sort: "state.startDate:desc",
                 commit: false,
             })
-            const response = await executionsStore.findExecutions(query) as PagedResultsApiLightExecution
-            rawExecutions.value = mapToTimelineExecutions(response.results)
-            fetchedTotal.value = response.total ?? response.results?.length ?? 0
-
             const [domainStartMs, domainEndMs] = computeScrubberDomain(rangeStartMs.value, rangeEndMs.value)
             const {[TIME_RANGE_QUERY_KEY]: _relativeRange, ...domainQuery} = query
-            const domainResponse = await executionsStore.findExecutions({
-                ...domainQuery,
-                [START_QUERY_KEY]: new Date(domainStartMs).toISOString(),
-                [END_QUERY_KEY]: new Date(domainEndMs).toISOString(),
-            }) as PagedResultsApiLightExecution
-            domainExecutions.value = mapToTimelineExecutions(domainResponse.results)
+            const [response, domainResponse] = await Promise.all([
+                executionsStore.findExecutions(query) as Promise<PagedResultsApiLightExecution>,
+                executionsStore.findExecutions({
+                    ...domainQuery,
+                    [START_QUERY_KEY]: new Date(domainStartMs).toISOString(),
+                    [END_QUERY_KEY]: new Date(domainEndMs).toISOString(),
+                }) as Promise<PagedResultsApiLightExecution>,
+            ])
+            if (isStale()) return
 
+            const fetched = mapToTimelineExecutions(response.results)
+            let legend = fetched
             if (dimmedStates.value.size > 0) {
                 const {[STATE_EXCLUDE_KEY]: _excluded, ...legendQuery} = query
                 const legendResponse = await executionsStore.findExecutions(legendQuery) as PagedResultsApiLightExecution
-                legendExecutions.value = mapToTimelineExecutions(legendResponse.results)
-            } else {
-                legendExecutions.value = rawExecutions.value
+                if (isStale()) return
+                legend = mapToTimelineExecutions(legendResponse.results)
             }
+
+            rawExecutions.value = fetched
+            fetchedTotal.value = response.total ?? response.results?.length ?? 0
+            domainExecutions.value = mapToTimelineExecutions(domainResponse.results)
+            legendExecutions.value = legend
         } catch (fetchError) {
+            if (isStale()) return
             console.error("Failed to load timeline executions", fetchError)
             error.value = t("executionsTimeline.error.description")
         } finally {
-            loading.value = false
+            if (!isStale()) loading.value = false
         }
     }
 
-    // page/size/sort come from the table sharing this route and never reach the timeline's own query.
     const fetchKey = computed(() => {
         const {page: _page, size: _size, sort: _sort, ...filters} = route.query
         return JSON.stringify({
@@ -414,6 +426,14 @@
     })
 
     watch(fetchKey, fetchExecutions, {immediate: true})
+
+    function reload() {
+        const previousKey = fetchKey.value
+        refreshNow()
+        if (fetchKey.value === previousKey) fetchExecutions()
+    }
+
+    defineExpose({reload})
 
     let resizeObserver: ResizeObserver | undefined
 
@@ -434,8 +454,6 @@
 
 <style scoped lang="scss">
 .executions-timeline {
-    --timeline-row-label-width: 11.25rem;
-
     display: flex;
     flex-direction: column;
     border: 1px solid var(--ks-border-default);

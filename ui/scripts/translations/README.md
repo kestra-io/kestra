@@ -7,7 +7,7 @@ This directory holds the tooling that keeps the Kestra UI translated. This READM
 - English is the single source of truth: [`ui/src/translations/en.json`](../../src/translations/en.json) here, `ui-ee/src/translations/ee_translations/en.json` in EE. The twelve other languages are **generated** from it via Gemini - never hand-written.
 - Every key carries a **fingerprint** of the English text its translations were generated from. Editing an English value (even just capitalisation) marks the key stale in all languages and fails the check until regenerated.
 - **One shared implementation** lives here. EE keeps only thin entry points that import from this directory, so the two repositories cannot drift into different prompts, rules, or change detection.
-- Two commands, the same in both repositories: `npm run translations:generate` (needs `GEMINI_API_KEY`) and `npm run translations:check`, which runs the PR gate and then the compiler-backed comparer, so a green local run is the same verdict CI gives.
+- Two commands, the same in both repositories: `npm run translations:generate` (needs `GOOGLE_CLOUD_PROJECT` and Application Default Credentials, see below) and `npm run translations:check`, which runs the PR gate and then the compiler-backed comparer, so a green local run is the same verdict CI gives.
 - A scheduled GitHub Action runs the generator every 3 hours on weekdays and opens a bot PR when there is anything to translate. A dependency-free gate applies the shared rules on every PR (forks included), on every push to `develop` and `releases/*`, and, in EE, whenever an OSS push changes the shared keys.
 
 ## The files
@@ -61,7 +61,9 @@ Why the split between `.ts` and `.mjs`: the PR gate must run straight after `act
 
 ## How generation works
 
-`npm run translations:generate`, run from `ui/` (or `ui-ee/` in EE). Needs `GEMINI_API_KEY`.
+`npm run translations:generate`, run from `ui/` (or `ui-ee/` in EE). Needs `GOOGLE_CLOUD_PROJECT` and Application Default Credentials: Gemini is reached through Vertex AI, so run `gcloud auth application-default login` once. `GOOGLE_CLOUD_LOCATION` defaults to `global`.
+
+A key whose translation fails (a rejected call, a missing permission) keeps its old value and is retried on the next run, but the run exits non-zero so it cannot pass for green in CI. Whatever did translate is still written first.
 
 ```mermaid
 flowchart TD
@@ -163,8 +165,8 @@ The gate does not stop at pull requests:
 
 - **Pushes.** `translations-push.yml` (OSS) and the `push` trigger of `translation-tests.yml` (EE) run the gate on every push to `develop` and `releases/*` that touches the UI, so a merge race between two green PRs, a direct push or a cherry-pick with a stale locale is reported by the branch itself instead of by the next unrelated PR against it.
 - **OSS to EE dispatch.** Most EE keys resolve against the OSS `en.json`, so an OSS push that renames or deletes a key can break EE without any EE change. Once the OSS push gate passed, its `notify-ee` job fires a `repository_dispatch` of type `oss-translations-updated` (payload: `branch`, `commit_sha`) at `kestra-io/kestra-ee`; `translation-tests.yml` there checks out the same-name EE branch and that exact OSS commit and runs both scopes. A dispatch always runs the workflow file of the EE default branch, which is why the EE checkout takes its branch from the payload.
-- **Fork PRs.** The PR workflow generates translations only for branches of this repository (a fork has no `GEMINI_API_KEY`), so a contributor cannot get the missing languages generated on their own. A maintainer runs `Translations - Generate for a pull request` from the Actions tab with the PR number: the workflow checks out the fork's head, generates, and pushes the commit onto the PR branch when it can (the PR allows maintainer edits and the `TRANSLATIONS_PUSH_TOKEN` secret holds a maintainer token); otherwise it uploads the commit as a patch artifact and comments the `git am` one-liner on the PR.
-- **Fork PRs, the comment.** The generate job never runs on a pull request from a fork, so when the gate then reports missing or stale keys, `translations-pr-comment.yml` (a `workflow_run` workflow, which is what has a writable token for a fork) posts one short sticky comment saying how to trigger the generation by hand: a maintainer runs `Translations - Generate for a pull request` with the pull request number, or the author allows maintainer edits or generates locally with a key. The comment is removed once the check passes; pull requests from this repository never get it.
+- **Fork PRs.** The PR workflow generates translations only for branches of this repository (a fork is withheld the `GCP_SERVICE_ACCOUNT` secret), so a contributor cannot get the missing languages generated on their own. A maintainer runs `Translations - Generate for a pull request` from the Actions tab with the PR number: the workflow checks out the fork's head, generates, and pushes the commit onto the PR branch when it can (the PR allows maintainer edits and the `TRANSLATIONS_PUSH_TOKEN` secret holds a maintainer token); otherwise it uploads the commit as a patch artifact and comments the `git am` one-liner on the PR.
+- **Fork PRs, the comment.** The generate job never runs on a pull request from a fork, so when the gate then reports missing or stale keys, `translations-pr-comment.yml` (a `workflow_run` workflow, which is what has a writable token for a fork) posts one short sticky comment saying how to trigger the generation by hand: a maintainer runs `Translations - Generate for a pull request` with the pull request number, or the author allows maintainer edits or generates locally (`gcloud auth application-default login` and `GOOGLE_CLOUD_PROJECT`, see above). The comment is removed once the check passes; pull requests from this repository never get it.
 - **Runtime.** Static rules only see literal keys, so the app also reports every key it could not resolve on the console (throwing in unit and Storybook tests); the Playwright fixtures in both repositories fail the test that rendered a raw key.
 
 ## Developer workflow

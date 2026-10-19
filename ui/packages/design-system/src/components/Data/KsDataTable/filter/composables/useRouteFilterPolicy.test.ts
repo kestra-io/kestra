@@ -5,6 +5,9 @@ import {useRouteFilterPolicy} from "./useRouteFilterPolicy"
 const mockRoute = reactive<{query: Record<string, string>}>({query: {}})
 const mockRouter = {
     replace: vi.fn((to: {query: Record<string, string>}) => {
+        for (const key of Object.keys(mockRoute.query)) {
+            delete mockRoute.query[key]
+        }
         Object.assign(mockRoute.query, to.query)
     }),
 }
@@ -39,6 +42,28 @@ describe("useRouteFilterPolicy", () => {
             })
 
             // On mount before router.replace lands, effectiveValue must already be defaultValue (INFO)
+            expect(effectiveValue.value).toEqual({value: "INFO", direction: "min"})
+        })
+    })
+
+    test("effectiveValue returns defaultValue while router navigation is in-flight and routeValue is undefined", () => {
+        scope.run(() => {
+            mockRoute.query = {}
+            mockRouter.replace.mockImplementationOnce(() => {
+                // Do not update mockRoute.query immediately to simulate async router
+            })
+
+            const {effectiveValue, isRouteSettled} = useRouteFilterPolicy({
+                defaultValue: () => ({value: "INFO", direction: "min" as const}),
+                applyDefaultIfMissing: () => true,
+                fallbackValue: () => ({value: "TRACE", direction: "min" as const}),
+                readFromRoute: (q) => q["level"] ? {value: q["level"] as string, direction: "min" as const} : undefined,
+                writeToRoute: (q, val) => ({...q, level: val?.value}),
+            })
+
+            // Navigation is still in flight:
+            expect(isRouteSettled.value).toBe(false)
+            // Even though routeValue is undefined, effectiveValue returns defaultValue:
             expect(effectiveValue.value).toEqual({value: "INFO", direction: "min"})
         })
     })
@@ -123,6 +148,40 @@ describe("useRouteFilterPolicy", () => {
                 writeToRoute: (q, val) => ({...q, level: val?.value}),
             })
 
+            expect(effectiveValue.value).toEqual({value: "TRACE", direction: "min"})
+        })
+    })
+
+    test("reverts to fallbackValue when user clears filter after normalization", async () => {
+        await scope.run(async () => {
+            mockRoute.query = {}
+            mockRouter.replace.mockClear()
+
+            const {effectiveValue, setRouteValue} = useRouteFilterPolicy({
+                defaultValue: () => ({value: "INFO", direction: "min" as const}),
+                applyDefaultIfMissing: () => true,
+                fallbackValue: () => ({value: "TRACE", direction: "min" as const}),
+                readFromRoute: (q) => q["level"] ? {value: q["level"] as string, direction: "min" as const} : undefined,
+                writeToRoute: (q, val) => {
+                    const next = {...q}
+                    if (val?.value) next.level = val.value
+                    else delete next.level
+                    return next
+                },
+            })
+
+            // Initial tick: in-flight normalization gives defaultValue
+            expect(effectiveValue.value).toEqual({value: "INFO", direction: "min"})
+
+            // Wait for normalization replace to land
+            await nextTick()
+            expect(effectiveValue.value).toEqual({value: "INFO", direction: "min"})
+
+            // Now simulate user clearing the filter chip
+            setRouteValue(undefined)
+            await nextTick()
+
+            // After clearing, effectiveValue should revert to fallbackValue (TRACE)
             expect(effectiveValue.value).toEqual({value: "TRACE", direction: "min"})
         })
     })

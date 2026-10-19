@@ -1,4 +1,4 @@
-import {test as base} from "@playwright/test"
+import {test as base} from "./auth"
 import {LogsPage} from "../pages/logs.page"
 import {LogsApi} from "../api/logs.api"
 import {ExecutionsApi} from "../api/executions.api"
@@ -17,6 +17,14 @@ type LogsFixtures = {
 export const test = base.extend<LogsFixtures>({
     flow: [{fileName: "hello.yaml", flowId: "my-hello-flow-1"}, {option: true}],
     executionCount: [3, {option: true}],
+    request: async ({playwright, baseURL}, use) => {
+        const context = await playwright.request.newContext({
+            baseURL,
+            storageState: {cookies: [], origins: []},
+        })
+        await use(context)
+        await context.dispose()
+    },
     flowsApi: async ({request, baseURL}, use) => {
         const flowsApi = new FlowsApi(request, baseURL)
         await use(flowsApi)

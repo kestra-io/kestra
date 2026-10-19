@@ -90,8 +90,8 @@
                                             class="gantt-row d-flex cursor-icon"
                                             :class="{
                                                 'is-expanded': selectedTaskRuns.includes(item.id),
-                                                'gantt-block-alt': item.blockIndex % 2 === 1,
-                                                'gantt-block-start': item.isBlockStart,
+                                                'gantt-block-alt': rowBlocks.get(item.id)?.isAlt,
+                                                'gantt-block-start': rowBlocks.get(item.id)?.isStart,
                                             }"
                                             @click="onTaskSelect(item.id)"
                                         >
@@ -267,9 +267,6 @@
     interface TaskWrapper {
         task: TaskRun;
         depth: number;
-        siblingIndex: number;
-        blockIndex: number;
-        isBlockStart: boolean;
     }
 
     interface SeriesItem {
@@ -285,9 +282,6 @@
         namespace?: string;
         attempts: number;
         depth: number | undefined;
-        siblingIndex: number;
-        blockIndex: number;
-        isBlockStart: boolean;
         parentEndPercent?: number;
     }
 
@@ -450,25 +444,21 @@
         return children
     })
 
-    const siblingMaxIndex = computed(() => {
-        const maxIndex = new Map<string, number>()
+    const lastChildByParent = computed(() => {
+        const lastChild = new Map<string, string>()
 
         for (const item of filteredSeries.value) {
-            const parentKey = item.task.parentTaskRunId ?? "__root__"
-            const currentMax = maxIndex.get(parentKey) ?? -1
-            maxIndex.set(parentKey, Math.max(currentMax, item.siblingIndex))
+            lastChild.set(item.task.parentTaskRunId ?? "__root__", item.id)
         }
 
-        return maxIndex
+        return lastChild
     })
 
     const hasChildren = (item: SeriesItem): boolean =>
         childrenByTaskId.value.has(item.id)
 
-    const isLastSibling = (item: SeriesItem): boolean => {
-        const parentKey = item.task.parentTaskRunId ?? "__root__"
-        return item.siblingIndex === siblingMaxIndex.value.get(parentKey)
-    }
+    const isLastSibling = (item: SeriesItem): boolean =>
+        lastChildByParent.value.get(item.task.parentTaskRunId ?? "__root__") === item.id
 
     const railSegments = (
         item: SeriesItem,
@@ -501,6 +491,27 @@
 
         return segments
     }
+
+    const rowBlocks = computed(() => {
+        const blocks = new Map<string, {isAlt: boolean; isStart: boolean}>()
+        const previousSiblingByParent = new Map<string, SeriesItem>()
+        let blockIndex = 0
+
+        filteredSeries.value.forEach((item, index) => {
+            const parentKey = item.task.parentTaskRunId ?? "__root__"
+            const previousSibling = previousSiblingByParent.get(parentKey)
+            const isStart = index > 0 && (hasChildren(item) || (previousSibling !== undefined && hasChildren(previousSibling)))
+
+            if (isStart) {
+                blockIndex++
+            }
+
+            blocks.set(item.id, {isAlt: blockIndex % 2 === 1, isStart})
+            previousSiblingByParent.set(parentKey, item)
+        })
+
+        return blocks
+    })
 
     const isProgressing = computed<boolean>(() => execution.value?.state?.current === State.RUNNING)
 
@@ -610,9 +621,6 @@
                 namespace: task.namespace,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
-                siblingIndex: taskWrapper.siblingIndex,
-                blockIndex: taskWrapper.blockIndex,
-                isBlockStart: taskWrapper.isBlockStart,
                 parentEndPercent: barPercents.parentEndPercent,
             }
             newSeries.push(seriesItem)
@@ -876,6 +884,8 @@
             }
 
             .gantt-row {
+                --gantt-band-bg: color-mix(in srgb, var(--ks-border-default) 60%, var(--ks-dropdown-bg));
+
                 align-items: center;
                 position: relative;
                 padding-right: var(--ks-spacing-8);
@@ -883,11 +893,11 @@
                 border-top: 1px solid var(--ks-border-default);
 
                 &.gantt-block-alt {
-                    background: var(--ks-bg-row-alternate);
+                    background: var(--gantt-band-bg);
                 }
 
                 &.gantt-block-start {
-                    box-shadow: inset 0 2px 0 var(--ks-border-strong);
+                    border-top-color: var(--ks-border-strong);
                 }
 
                 &.is-expanded {
@@ -919,11 +929,11 @@
                 .gantt-rail {
                     position: absolute;
                     display: block;
-                    background: var(--ks-border-default);
+                    background: var(--ks-border-strong);
                 }
 
                 .gantt-rail-vertical {
-                    left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
+                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: calc(0rem - var(--ks-spacing-2) - var(--ks-spacing-px) - var(--ks-spacing-px));
                     bottom: 0;
                     width: var(--ks-spacing-px);
@@ -936,16 +946,16 @@
                 }
 
                 .gantt-rail-outgoing {
-                    left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
-                    top: 50%;
-                    height: calc(50% + var(--ks-spacing-2) + var(--ks-spacing-px) + var(--ks-spacing-px));
+                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
+                    top: calc(50% + var(--ks-spacing-2));
+                    bottom: calc(0rem - var(--ks-spacing-2) - var(--ks-spacing-px) - var(--ks-spacing-px));
                     width: var(--ks-spacing-px);
                 }
 
                 .gantt-rail-elbow {
-                    left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
+                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: 50%;
-                    width: var(--ks-spacing-5);
+                    width: calc(var(--ks-spacing-5) - var(--ks-spacing-2));
                     height: var(--ks-spacing-px);
                 }
 

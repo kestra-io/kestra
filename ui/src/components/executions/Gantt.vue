@@ -488,7 +488,6 @@
 
             const isTerminal = isLastSibling(cursor)
 
-            // Stop higher ancestor rails when the path reaches the last sibling.
             if (!isDirectParent && isTerminal) {
                 break
             }
@@ -886,11 +885,11 @@
                 border-top: 1px solid var(--ks-border-default);
 
                 &.gantt-block-alt {
-                    background: color-mix(in srgb, var(--ks-dropdown-bg), var(--ks-white) 5.5%);
+                    background: var(--ks-bg-row-alternate);
                 }
 
                 &.gantt-block-start {
-                    box-shadow: inset 0 2px 0 var(--ks-border-default);
+                    box-shadow: inset 0 2px 0 var(--ks-border-strong);
                 }
 
                 &.is-expanded {
@@ -927,29 +926,29 @@
 
                 .gantt-rail-vertical {
                     left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
-                    top: -0.625rem;
+                    top: calc(-1 * var(--ks-spacing-2) - var(--ks-spacing-px));
                     bottom: 0;
-                    width: 1px;
+                    width: var(--ks-spacing-px);
 
                     &.is-terminal {
-                        top: -0.625rem;
+                        top: calc(-1 * var(--ks-spacing-2) - var(--ks-spacing-px));
                         bottom: auto;
-                        height: calc(50% + 0.625rem);
+                        height: calc(50% + var(--ks-spacing-2) + var(--ks-spacing-px));
                     }
                 }
 
                 .gantt-rail-outgoing {
                     left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: 50%;
-                    height: calc(50% + 0.625rem);
-                    width: 1px;
+                    height: calc(50% + var(--ks-spacing-2) + var(--ks-spacing-px));
+                    width: var(--ks-spacing-px);
                 }
 
                 .gantt-rail-elbow {
                     left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: 50%;
                     width: var(--ks-spacing-5);
-                    height: 1px;
+                    height: var(--ks-spacing-px);
                 }
 
                 .gantt-chevron {

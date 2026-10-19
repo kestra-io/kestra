@@ -37,6 +37,11 @@ public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
+    protected Field<Object> loopRunRootExecutionIdField() {
+        return DSL.field("JQ_STRING(\"value\", '.loopRun.rootExecutionId')");
+    }
+
+    @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
         return H2ExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }

@@ -1413,6 +1413,7 @@ export type LoopRun = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    rootExecutionId?: string | null;
 };
 
 export type LoopRunParent = {
@@ -2079,7 +2080,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'loopRunRootExecutionId' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2686,6 +2687,7 @@ export type LoopRunWritable = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    rootExecutionId?: string | null;
 };
 
 /**

@@ -1327,6 +1327,65 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void shouldFilterLoopSubExecutionsByLoopRunRootExecutionId() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution root1 = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+        Execution root2 = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+
+        TaskRun loopTaskRun1 = TaskRun.of(
+            root1, ResolvedTask.of(
+                Return.builder().id("loop").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+        TaskRun loopTaskRun2 = TaskRun.of(
+            root2, ResolvedTask.of(
+                Return.builder().id("loop").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+
+        // Level 1 iterations for root 1
+        Execution root1Level1 = executionRepository.save(root1.loopExecution(loopTaskRun1, 0, null, "item-0"));
+        executionRepository.save(root1.loopExecution(loopTaskRun1, 1, null, "item-1"));
+
+        // Nested Level 2 iteration for root 1
+        TaskRun nestedTaskRun = TaskRun.of(
+            root1Level1, ResolvedTask.of(
+                Return.builder().id("nestedLoop").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+        executionRepository.save(root1Level1.loopExecution(nestedTaskRun, 0, null, "nested-item-0"));
+
+        // Level 1 iteration for root 2
+        executionRepository.save(root2.loopExecution(loopTaskRun2, 0, null, "root2-item-0"));
+
+        QueryFilter kindFilter = QueryFilter.builder().field(QueryFilter.Field.KIND).operation(QueryFilter.Op.EQUALS).value(ExecutionKind.LOOP).build();
+        QueryFilter root1Filter = QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_ROOT_EXECUTION_ID).operation(QueryFilter.Op.EQUALS).value(root1.getId()).build();
+
+        // Should return all 3 iterations (including nested) for root 1
+        List<Execution> root1SubExecutions = executionRepository.find(
+            Pageable.UNPAGED, tenant,
+            List.of(kindFilter, root1Filter)
+        );
+        assertThat(root1SubExecutions).hasSize(3)
+            .allMatch(e -> root1.getId().equals(e.getLoopRun().rootExecutionId()));
+
+        // Test IN operator
+        List<Execution> inExecutions = executionRepository.find(
+            Pageable.UNPAGED, tenant,
+            List.of(kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_ROOT_EXECUTION_ID).operation(QueryFilter.Op.IN).value(List.of(root1.getId(), root2.getId())).build())
+        );
+        assertThat(inExecutions).hasSize(4);
+
+        // Test NOT_EQUALS operator
+        List<Execution> notEquals = executionRepository.find(
+            Pageable.UNPAGED, tenant,
+            List.of(kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_ROOT_EXECUTION_ID).operation(QueryFilter.Op.NOT_EQUALS).value(root1.getId()).build())
+        );
+        assertThat(notEquals).hasSize(1)
+            .allMatch(e -> root2.getId().equals(e.getLoopRun().rootExecutionId()));
+    }
+
+    @Test
     protected void shouldFindByLabel() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var exec1 = executionRepository.save(

@@ -431,6 +431,13 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("loopRunRootExecutionId")
+        LOOP_RUN_ROOT_EXECUTION_ID("loopRunRootExecutionId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         @JsonProperty("operationId")
         OPERATION_ID("operationId") {
             @Override
@@ -656,7 +663,7 @@ public record QueryFilter(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
                     Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID, Field.LOOP_RUN_VALUE,
-                    Field.OPERATION_ID, Field.OPERATION_OUTCOME
+                    Field.LOOP_RUN_ROOT_EXECUTION_ID, Field.OPERATION_ID, Field.OPERATION_OUTCOME
                 );
             }
         },

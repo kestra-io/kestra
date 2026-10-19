@@ -171,6 +171,25 @@ class LogControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void shouldPaginateLogsFromExecutionWhenPageAndSizeAreSet() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        LogEntry log1 = logEntry(tenant, Level.INFO, Instant.now().minusSeconds(3));
+        logRepository.save(log1);
+        logRepository.save(log1.toBuilder().message("second").timestamp(Instant.now().minusSeconds(2)).build());
+        logRepository.save(log1.toBuilder().message("third").timestamp(Instant.now().minusSeconds(1)).build());
+
+        List<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/" + tenant + "/logs/" + log1.getExecutionId() + "?page=2&size=2"),
+            Argument.of(List.class, LogEntry.class)
+        );
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.getFirst().getMessage()).isEqualTo("third");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void shouldDefaultToNormalKindAndAllowKindFilter() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);

@@ -275,6 +275,10 @@
                 box-shadow: 2px 0 8px var(--ks-shadow-elevated);
             }
 
+            @media (prefers-reduced-motion: reduce) {
+                transition: none;
+            }
+
             & > div {
                 flex: 1;
                 overflow: hidden;

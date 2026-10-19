@@ -66,7 +66,7 @@
             background: var(--ks-bg-inactive);
             color: var(--ks-text-primary);
             cursor: pointer;
-            transition: border-color var(--ks-duration-fast) ease, background-color var(--ks-duration-fast) ease;
+            transition: border-color var(--ks-duration-fast) var(--ks-ease-standard), background-color var(--ks-duration-fast) var(--ks-ease-standard);
 
             & input[type="radio"] {
                 appearance: none;

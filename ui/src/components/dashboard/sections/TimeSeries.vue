@@ -602,8 +602,8 @@
         const endRange = bucketLabelToDateRange(labels[brushState.value.endIdx], fmt, tz)
         if (!startRange || !endRange) return ""
         const formatStr = "YYYY-MM-DD HH:mm"
-        const start = dayjs(startRange.startMs).tz(tz).format(formatStr)
-        const end = dayjs(endRange.endMs).tz(tz).format(formatStr)
+        const start = dateUtils.dateFilter(startRange.startMs, formatStr)
+        const end = dateUtils.dateFilter(endRange.endMs, formatStr)
         const durationMs = endRange.endMs - startRange.startMs
         return `${start} → ${end} (${durationUtils.humanDuration(durationMs)})`
     })

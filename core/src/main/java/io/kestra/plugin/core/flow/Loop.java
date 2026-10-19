@@ -47,9 +47,10 @@ import lombok.experimental.SuperBuilder;
 @Schema(
     title = "Execute child tasks for each value in a list.",
     description = """
-        Renders `values` (list, map, map, URI, or expression) and runs the child task group once per item.
-        The current item is available as `item.value`; `item.index` exposes the index; if the values was a map, the key is available as `item.key`.
-        It values was an internal storage URI, the loop will perform one iteration per line.
+        Renders `values` (list, map, URI, or expression) and runs the child task group once per item.
+        The current item is available as `item.value`; `item.index` exposes the index; if `values` is a map, the key is available as `item.key`.
+        If `values` is an internal storage URI, the loop performs one iteration per line.
+        In nested loops, `item.parent` is the nearest enclosing loop, and `item.parents` lists all enclosing loops from the outermost (`item.parents[0]`) to the nearest.
 
         Control parallelism with `concurrencyLimit` (0 = unlimited, 1 = fully serialized, N = up to N concurrent task groups). To run tasks inside each group in parallel, wrap them in a `Parallel` task.
 
@@ -187,10 +188,10 @@ import lombok.experimental.SuperBuilder;
                               - id: full_table_name
                                 type: io.kestra.plugin.core.log.Log
                                 message: |
-                                  Full table name: {{item.parents[1].value }}_{{item.parent.value}}_{{item.value}}
+                                  Full table name: {{item.parents[0].value}}_{{item.parent.value}}_{{item.value}}
                                   Direct/current loop (months): {{item.value}}
-                                  Value of loop one higher up (years): {{item.parents[0].value}}
-                                  Further up (table types): {{item.parents[1].value}}
+                                  Nearest enclosing loop (years): {{item.parent.value}}
+                                  Outermost loop (buckets): {{item.parents[0].value}}
                 """
         ),
         @Example(

@@ -33,7 +33,7 @@ export function useViolationMarkers(options: {
     function apply(editor: monaco.editor.IStandaloneCodeEditor | undefined, errors: ValidationError[] | undefined) {
         clear()
         const model = editor?.getModel()
-        if (!editor || !model) return
+        if (!editor || !model || model.isDisposed()) return
         const markers = violationMarkers(model.getValue(), errors)
         monaco.editor.setModelMarkers(model, OWNER, markers.map(({message, lines}) => ({
             ...lines[0],

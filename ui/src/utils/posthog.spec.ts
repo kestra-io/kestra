@@ -144,11 +144,13 @@ describe("identifyPosthogUser", () => {
     })
 
     it("does nothing when analytics are disabled", async () => {
-        const {identifyPosthogUser} = await import("./posthog")
+        const {identifyPosthogUser, initPosthogIfEnabled} = await import("./posthog")
+        await initPosthogIfEnabled({isUiAnonymousUsageEnabled: true})
 
         await identifyPosthogUser({isUiAnonymousUsageEnabled: false}, {userId: "u1"})
 
         expect(posthogMock.identify).not.toHaveBeenCalled()
+        expect(posthogMock.opt_out_capturing).toHaveBeenCalledTimes(1)
     })
 
     it("does not throw when the posthog client has no identify method", async () => {

@@ -26,7 +26,6 @@ import TaskIcon from "./components/plugins/TaskIcon.vue"
 import {registerServiceWorker} from "./utils/serviceWorker"
 import {initPwaInstallCapture} from "./utils/pwaInstallState"
 import {storageKeys} from "./utils/constants"
-import {capturePosthogException} from "./utils/posthog"
 
 void registerServiceWorker()
 initPwaInstallCapture()
@@ -173,11 +172,6 @@ initApp(app, routes, null, en as Record<string, unknown>, {}, {
     beforeEach: tenantGuard,
     beforeResolve,
 }).then(({router, piniaStore}) => {
-    app.config.errorHandler = (error, _instance, info) => {
-        console.error(error)
-        capturePosthogException(useMiscStore().configs, error, {handler: "vue", info})
-    }
-
     setupTenantRouter(router, app)
 
     const $http = setupAxios(router)

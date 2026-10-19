@@ -13,7 +13,7 @@
             <span class="circle" :style="circle(level)" />
             <span>({{ (cursorIdx === undefined ? "" : `${cursorIdx + 1} / `) + totalCount }}) {{ level }}</span>
         </div>
-        <div v-if="!filterMode" class="d-flex align-items-end gap-1">
+        <div v-if="!filterMode" class="d-flex align-items-center gap-1">
             <ChevronUp class="icon-button" @click="forwardEvent('previous')" />
             <ChevronDown class="icon-button" @click="forwardEvent('next')" />
             <Close v-if="isSelected" class="icon-button" @click="forwardEvent('close')" :style="closeButton(level)" />

@@ -32,10 +32,12 @@ import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.storages.StorageContext;
@@ -50,6 +52,7 @@ import io.micronaut.http.multipart.CompletedPart;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import reactor.core.publisher.Flux;
@@ -444,14 +447,14 @@ public class FlowInputOutput {
                     resolvable.resolveWithValue(null);
                 }
             } else {
-                var parsedInput = parseData(execution, input, value);
                 try {
+                    var parsedInput = parseData(execution, input, value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
                     Set<InputOutputValidationException> exceptions = e.getConstraintViolations().stream()
-                        .map(c -> InputOutputValidationException.of(c.getMessage(), finalInput))
+                        .map(c -> InputOutputValidationException.of(c.getMessage(), finalInput, pathOf(c, finalInput)))
                         .collect(Collectors.toSet());
                     resolvable.resolveWithError(exceptions);
                 }
@@ -463,6 +466,23 @@ public class FlowInputOutput {
         }
 
         return resolvable.get();
+    }
+
+    /**
+     * The violation's property path when it points inside the value ({@code id.a[0].b}), null when it is about the
+     * input as a whole. Bean-validation violations on the input's own fields are not value locations, so the path is
+     * only kept when it continues past the id with a {@code .} or a {@code [}.
+     */
+    private static String pathOf(ConstraintViolation<?> violation, Input<?> input) {
+        String path = violation.getPropertyPath().toString();
+        String id = input.getId();
+
+        if (!path.startsWith(id) || path.length() == id.length()) {
+            return null;
+        }
+
+        char next = path.charAt(id.length());
+        return next == '.' || next == '[' ? path : null;
     }
 
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
@@ -479,6 +499,7 @@ public class FlowInputOutput {
             case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
+            case TABLE -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }
@@ -617,7 +638,7 @@ public class FlowInputOutput {
             case DATE -> TypeConverter.toLocalDate(current);
             case TIME -> TypeConverter.toLocalTime(current);
             case DURATION -> TypeConverter.toDuration(current);
-            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, FORM, REUSABLE_INPUTS -> null;
+            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, TABLE, FORM, REUSABLE_INPUTS -> null;
         });
     }
 
@@ -691,6 +712,7 @@ public class FlowInputOutput {
                         yield asList;
                     }
                 }
+                case TABLE -> parseTable(execution, (TableInput) data, current);
                 case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {
@@ -698,6 +720,74 @@ public class FlowInputOutput {
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");
         }
+    }
+
+    private List<Map<String, Object>> parseTable(Execution execution, TableInput table, Object current) throws Exception {
+        List<?> rows = current instanceof List<?> list ? list : JacksonMapper.toList(current.toString());
+
+        Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
+        List<Map<String, Object>> parsed = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            Object value = rows.get(i);
+            if (!(value instanceof Map<?, ?> map)) {
+                violations.add(violation("row " + (i + 1) + ": expected an object", table, table.getId() + "[" + i + "]", value));
+                continue;
+            }
+            parsed.add(parseRecord(execution, table.getColumns(), map, "row " + (i + 1) + ", column ", table.getId() + "[" + i + "]", violations));
+        }
+        if (!violations.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(violations);
+        }
+        return parsed;
+    }
+
+    /**
+     * Coerces and validates one record against its typed fields, a {@code TABLE} row against the table columns.
+     * Every failing field is reported into {@code violations} with {@code prefix} + the field id in front of the
+     * cause, so a caller can surface all of them at once, and with {@code path} + the field id as its property path
+     * ({@code disks[1].size_gb}), which is where the value sits inside the input.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private Map<String, Object> parseRecord(Execution execution, List<Input<?>> fields, Map<?, ?> row, String prefix, String path, Set<ConstraintViolation<?>> violations) {
+        Map<String, Object> record = new LinkedHashMap<>();
+        Set<String> declared = fields.stream().map(Input::getId).collect(Collectors.toSet());
+        row.keySet().stream()
+            .map(String::valueOf)
+            .filter(key -> !declared.contains(key))
+            .forEach(key -> violations.add(violation(prefix + "`" + key + "`: it is not declared", fields.getFirst(), path + "." + key, row.get(key))));
+        for (Input<?> field : fields) {
+            String label = prefix + "`" + field.getId() + "`";
+            String propertyPath = path + "." + field.getId();
+            Object value = row.get(field.getId());
+            if (value instanceof String s && s.isEmpty() && !isTextType(field.getType())) {
+                value = null;
+            }
+            if (value == null) {
+                if (Boolean.TRUE.equals(field.getRequired())) {
+                    violations.add(violation(label + ": missing required value", field, propertyPath, null));
+                } else {
+                    record.put(field.getId(), null);
+                }
+                continue;
+            }
+            try {
+                Type itemType = field instanceof ItemTypeInterface item ? item.getItemType() : null;
+                Object parsed = parseType(execution, field.getType(), field.getId(), itemType, value, field);
+                ((Input) field).validate(parsed);
+                record.put(field.getId(), parsed);
+            } catch (ConstraintViolationException e) {
+                Object invalid = value;
+                e.getConstraintViolations().forEach(c -> violations.add(violation(label + ": " + c.getMessage(), field, propertyPath, invalid)));
+            } catch (Exception e) {
+                violations.add(violation(label + ": " + e.getMessage(), field, propertyPath, value));
+            }
+        }
+        return record;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static ConstraintViolation<?> violation(String message, Input<?> input, String propertyPath, Object invalidValue) {
+        return ManualConstraintViolation.of(message, (Input) input, Input.class, propertyPath, invalidValue);
     }
 
     private static Execution minimalExecution(FlowInterface flow, String executionId, @Nullable List<Label> contributed) {

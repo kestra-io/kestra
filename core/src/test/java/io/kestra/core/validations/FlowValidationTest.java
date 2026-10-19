@@ -721,6 +721,19 @@ class FlowValidationTest {
               - id: cfg
                 type: REUSABLE_INPUTS
                 ref: my_block
+              - id: disks
+                type: TABLE
+                columns:
+                  - id: size_gb
+                    type: INT
+              - id: env
+                type: FORM
+                inputs:
+                  - id: volumes
+                    type: TABLE
+                    columns:
+                      - id: size_gb
+                        type: INT
             tasks:
               - id: hello
                 type: io.kestra.plugin.core.log.Log
@@ -731,7 +744,9 @@ class FlowValidationTest {
 
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getMessage())
-            .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.");
+            .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.")
+            .contains("Input 'disks' of type TABLE is only available in Enterprise Edition.")
+            .contains("Input 'volumes' of type TABLE is only available in Enterprise Edition.");
     }
 
     @Test

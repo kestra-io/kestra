@@ -1,7 +1,7 @@
 import {afterAll, beforeEach, describe, expect, it} from "vitest"
 import {isRef} from "vue"
 
-import {useStoredPanels, PreSerializedPanel} from "./useStoredPanels"
+import {useStoredPanels, PreSerializedPanel, STORED_PANELS_RELOAD_EVENT} from "./useStoredPanels"
 import {EditorElement, Tab} from "../utils/multiPanelTypes"
 
 function makeTab(uid: string): Tab {
@@ -94,6 +94,38 @@ describe("useStoredPanels", () => {
         expect(localStorage.length).toBe(0)
         expect(panels.value).toEqual([
             {tabs: [makeTab("a")], activeTab: makeTab("a"), size: 100},
+        ])
+    })
+
+    it("keeps its own layout when another window stores a different one for the same key", () => {
+        const {panels} = useStoredPanels(KEY, [elementKnowing("a", "b")], ["a"])
+
+        const otherWindowLayout = JSON.stringify([
+            {tabs: ["a"], activeTab: "a", size: 50},
+            {tabs: ["b"], activeTab: "b", size: 50},
+        ])
+        localStorage.setItem(KEY, otherWindowLayout)
+        window.dispatchEvent(new StorageEvent("storage", {key: KEY, newValue: otherWindowLayout, storageArea: localStorage}))
+
+        expect(panels.value).toEqual([
+            {tabs: [makeTab("a")], activeTab: makeTab("a"), size: 100},
+        ])
+    })
+
+    it("reloads the stored layout when asked to for its key", () => {
+        const {panels} = useStoredPanels(KEY, [elementKnowing("a", "b")], ["a"])
+
+        localStorage.setItem(KEY, JSON.stringify([
+            {tabs: ["a"], activeTab: "a", size: 50},
+            {tabs: ["b"], activeTab: "b", size: 50},
+        ]))
+        window.dispatchEvent(new CustomEvent(STORED_PANELS_RELOAD_EVENT, {detail: "kestra.panels.other"}))
+        expect(panels.value).toHaveLength(1)
+
+        window.dispatchEvent(new CustomEvent(STORED_PANELS_RELOAD_EVENT, {detail: KEY}))
+        expect(panels.value).toEqual([
+            {tabs: [makeTab("a")], activeTab: makeTab("a"), size: 50},
+            {tabs: [makeTab("b")], activeTab: makeTab("b"), size: 50},
         ])
     })
 

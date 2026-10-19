@@ -1,6 +1,6 @@
 <template>
     <div
-        class="kel-select__wrapper space-between"
+        class="kel-select__wrapper"
         :class="{'is-clickable': filterMode}"
         :style="wrapperStyle(level)"
         :role="filterMode ? 'button' : undefined"

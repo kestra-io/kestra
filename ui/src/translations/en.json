@@ -2817,6 +2817,7 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Are you sure you want to delete the log for {iteration}?",
-    "not started": "Not started"
+    "not started": "Not started",
+    "root_execution": "Root execution"
   }
 }

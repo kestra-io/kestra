@@ -11,7 +11,7 @@
                 </p>
 
                 <div v-else class="logs">
-                    <div v-for="(log, index) in logs.slice(0, MAX_PREVIEW_LOGS)" :key="index">
+                    <div v-for="(log, index) in logs.slice(-MAX_PREVIEW_LOGS)" :key="index">
                         <LogLine
                             :level="log.level"
                             :log="{...log, message: stripBackticks(log.message ?? '')}"
@@ -27,7 +27,13 @@
             </div>
         </KsAlert>
 
-        <button class="expand-btn" @click="expanded = !expanded">
+        <button
+            class="expand-btn"
+            data-test="error-alert-toggle"
+            :aria-label="expanded ? $t('collapse') : $t('expand')"
+            :aria-expanded="expanded"
+            @click="expanded = !expanded"
+        >
             <ChevronUp v-if="expanded" />
             <ChevronDown v-else />
         </button>

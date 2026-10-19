@@ -1,9 +1,6 @@
-import {describe, expect, it, test} from "vitest"
+import {describe, expect, test} from "vitest"
 import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
 import ChartLegend from "./ChartLegend.vue"
-
-const i18n = createI18n({legacy: false, globalInjection: true, locale: "en", messages: {en: {}}})
 
 const items = [
     {label: "SUCCESS", color: "var(--ks-chart-success)", count: 5},
@@ -11,10 +8,7 @@ const items = [
 ]
 
 function mountLegend(props: Record<string, unknown> = {}) {
-    return mount(ChartLegend, {
-        props: {items, ...props},
-        global: {plugins: [i18n]},
-    })
+    return mount(ChartLegend, {props: {items, ...props}})
 }
 
 describe("ChartLegend", () => {
@@ -48,7 +42,7 @@ describe("ChartLegend", () => {
         expect(wrapper.text()).not.toContain("(6.3)")
     })
 
-    it("should toggle a pill's own dimmed state locally when no toggledOff prop is given", async () => {
+    test("should toggle a pill's own dimmed state locally when no toggledOff prop is given", async () => {
         const wrapper = mountLegend()
 
         const failedItem = wrapper.findAll(".item")[1]
@@ -59,7 +53,7 @@ describe("ChartLegend", () => {
         expect(wrapper.findAll(".item")[1].classes()).toContain("off")
     })
 
-    it("should reflect an externally-controlled toggledOff set instead of its own local state", async () => {
+    test("should reflect an externally-controlled toggledOff set instead of its own local state", async () => {
         const wrapper = mountLegend({toggledOff: new Set(["FAILED"])})
 
         expect(wrapper.findAll(".item")[1].classes()).toContain("off")
@@ -69,7 +63,7 @@ describe("ChartLegend", () => {
         expect(wrapper.findAll(".item")[1].classes()).not.toContain("off")
     })
 
-    it("should still emit toggle in controlled mode without flipping its own local state", async () => {
+    test("should still emit toggle in controlled mode without flipping its own local state", async () => {
         const wrapper = mountLegend({toggledOff: new Set()})
 
         await wrapper.findAll(".item")[1].trigger("click")

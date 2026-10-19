@@ -49,13 +49,6 @@
 </script>
 
 <style scoped>
-    #side-menu {
-        .kel-select {
-            transition: background-color var(--ks-duration-base) ease;
-            background-color: transparent;
-        }
-    }
-
     .left-menu-footer {
         display: flex;
         flex-direction: column;

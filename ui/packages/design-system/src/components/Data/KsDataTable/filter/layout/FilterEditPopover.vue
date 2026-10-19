@@ -138,9 +138,24 @@
     }
 }
 
-.filter-popup-enter-active,
+.filter-popup-enter-active {
+    transition: opacity var(--ks-duration-fast) var(--ks-ease-out), transform var(--ks-duration-fast) var(--ks-ease-out);
+}
+
 .filter-popup-leave-active {
-    transition: opacity 120ms ease-out, transform 120ms ease-out;
+    transition: opacity var(--ks-duration-fast) var(--ks-ease-in), transform var(--ks-duration-fast) var(--ks-ease-in);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filter-popup-enter-active,
+    .filter-popup-leave-active {
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
+    }
+
+    .filter-popup-enter-from,
+    .filter-popup-leave-to {
+        transform: none;
+    }
 }
 
 .filter-popup-enter-from {

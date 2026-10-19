@@ -1206,31 +1206,6 @@
     display: flex;
     align-items: center;
     width: 100%;
-
-    .kel-radio-button {
-        &.is-active {
-            .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
-                color: var(--ks-text-primary);
-                background-color: var(--ks-btn-secondary-bg-active);
-                box-shadow: 0 0 0 0 var(--ks-border-focus);
-            }
-        }
-
-        .kel-radio-button__inner {
-            border: var(--ks-border-default);
-            transition: color var(--ks-duration-fast) var(--ks-ease-standard), border-color var(--ks-duration-fast) var(--ks-ease-standard), background-color var(--ks-duration-fast) var(--ks-ease-standard);
-
-            &:hover {
-                color: var(--ks-text-secondary);
-                border-color: var(--ks-border-focus);
-                background-color: var(--ks-bg-surface);
-            }
-
-            &:first-child {
-                border-left: var(--ks-border-default);
-            }
-        }
-    }
 }
 
 .kel-input-file {

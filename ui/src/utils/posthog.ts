@@ -1,3 +1,4 @@
+import type {AppConfig} from "vue"
 import {ensureUid} from "./uid"
 
 type PosthogCapturePayload = {
@@ -8,6 +9,9 @@ type PosthogCapturePayload = {
 
 const POSTHOG_QUEUE_MAX = 100
 const POSTHOG_QUEUE_MAX_AGE_MS = 5 * 60 * 1000 // 5 minutes
+const EXCEPTION_REPEAT_WINDOW_MS = 60 * 1000
+
+const recentExceptions = new Map<string, number>()
 
 let posthogInitPromise: Promise<void> | undefined
 let posthogQueue: PosthogCapturePayload[] = []
@@ -154,21 +158,40 @@ export function capturePosthogEvent(
     flushQueue()
 }
 
+function exceptionKey(error: unknown, properties?: Record<string, unknown>) {
+    const description = error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+    return `${description}|${String(properties?.info ?? "")}`
+}
+
+function isRepeatedException(key: string, now = Date.now()) {
+    const lastCapturedAt = recentExceptions.get(key)
+    if (lastCapturedAt !== undefined && now - lastCapturedAt < EXCEPTION_REPEAT_WINDOW_MS) return true
+
+    if (recentExceptions.size >= POSTHOG_QUEUE_MAX) recentExceptions.clear()
+    recentExceptions.set(key, now)
+    return false
+}
+
 export function capturePosthogException(
     configs: Record<string, unknown> | undefined,
     error: unknown,
     properties?: Record<string, unknown>,
 ) {
     if (isPosthogDisabled(configs)) return
+    if (isRepeatedException(exceptionKey(error, properties))) return
 
-    void ensurePosthogClient(configs).then((client) => {
-        if (!client?.captureException) return
-        try {
-            client.captureException(error, properties)
-        } catch {
-            // swallow
-        }
-    })
+    void ensurePosthogClient(configs)
+        .then((client) => client?.captureException?.(error, properties))
+        .catch(() => undefined)
+}
+
+export function createPosthogVueErrorHandler(
+    getConfigs: () => Record<string, unknown> | undefined,
+): NonNullable<AppConfig["errorHandler"]> {
+    return (error, _instance, info) => {
+        console.error(error, info)
+        capturePosthogException(getConfigs(), error, {handler: "vue", info})
+    }
 }
 
 export async function identifyPosthogUser(

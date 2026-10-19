@@ -176,4 +176,57 @@ class HttpRedactorTest {
         assertThat(redacted.get("Content-Location")).containsExactly("/hooks/***/x?token=***");
         assertThat(redacted.get("Link")).containsExactly("<https://example.com/page2?api_key=***>; rel=\"next\", <https://example.com/page3>; rel=\"last\"");
     }
+
+    @Test
+    void shouldRedactSegmentAlignedPathSpanCoveredBySlashContainingSecret() {
+        var secret = "T000/B000/XXXX";
+
+        assertThat(HttpRedactor.redactUri(URI.create("https://hooks.slack.com/services/T000/B000/XXXX"), Set.of(secret)))
+            .hasToString("https://hooks.slack.com/services/***");
+        assertThat(HttpRedactor.redactUri(URI.create("https://hooks.slack.com/services/T000%2FB000/XXXX?x=1"), Set.of(secret)))
+            .hasToString("https://hooks.slack.com/services/***?x=1");
+        assertThat(HttpRedactor.redactUri(URI.create("https://hooks.slack.com/services/T000/B000/XXXXY"), Set.of(secret)))
+            .hasToString("https://hooks.slack.com/services/T000/B000/XXXXY");
+    }
+
+    @Test
+    void shouldKeepPaginationTokensInUrlValuedHeadersButMaskCredentials() {
+        Map<String, List<String>> redacted = HttpRedactor.redactHeaders(
+            Map.of(
+                "Link", List.of("<https://api.example.com/items?page_token=abc&nextPageToken=def&cursor=ghi&access_token=zzz>; rel=\"next\""),
+                "Location", List.of("https://api.example.com/items?continuationToken=abc&code=xyz&k=s3cr3t-value")
+            ),
+            Set.of("s3cr3t-value")
+        );
+
+        assertThat(redacted.get("Link")).containsExactly("<https://api.example.com/items?page_token=abc&nextPageToken=def&cursor=ghi&access_token=***>; rel=\"next\"");
+        assertThat(redacted.get("Location")).containsExactly("https://api.example.com/items?continuationToken=abc&code=***&k=***");
+        assertThat(HttpRedactor.redactUri(URI.create("https://api.example.com/items?page_token=abc"), NO_SECRETS))
+            .hasToString("https://api.example.com/items?page_token=***");
+    }
+
+    @Test
+    void shouldNotTreatIdempotencyKeyAndWebSocketKeyAsSensitive() {
+        Map<String, List<String>> redacted = HttpRedactor.redactHeaders(
+            Map.of("Idempotency-Key", List.of("abc"), "SEC-WEBSOCKET-KEY", List.of("dGhl"), "X-Cache-Key", List.of("v")),
+            NO_SECRETS
+        );
+
+        assertThat(redacted.get("Idempotency-Key")).containsExactly("abc");
+        assertThat(redacted.get("SEC-WEBSOCKET-KEY")).containsExactly("dGhl");
+        assertThat(redacted.get("X-Cache-Key")).containsExactly("***");
+        assertThat(HttpRedactor.isSensitiveName("idempotency-key")).isFalse();
+    }
+
+    @Test
+    void shouldRedactCredentialsInUriFragment() {
+        assertThat(HttpRedactor.redactUri(URI.create("https://app.example.com/cb#access_token=abc&token_type=bearer&state=1"), NO_SECRETS))
+            .hasToString("https://app.example.com/cb#access_token=***&token_type=***&state=1");
+        assertThat(HttpRedactor.redactUri("https://app.example.com/cb#access_token=abc&token_type=bearer&state=1", NO_SECRETS))
+            .doesNotContain("abc");
+        Map<String, List<String>> redacted = HttpRedactor.redactHeaders(Map.of("Location", List.of("https://app.example.com/cb#access_token=abc&token_type=bearer")), NO_SECRETS);
+        assertThat(redacted.get("Location")).containsExactly("https://app.example.com/cb#access_token=***&token_type=bearer");
+        assertThat(HttpRedactor.redactUri(URI.create("https://app.example.com/p#s3cr3t-value"), Set.of("s3cr3t-value")))
+            .hasToString("https://app.example.com/p#***");
+    }
 }

@@ -29,7 +29,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record RequestSummary(
     @Schema(title = "The HTTP method.") String method,
     @Schema(
-        title = "The request URI.", description = "User-info is removed, query values holding credentials and path segments that are a resolved `secret()` are replaced with `***`."
+        title = "The request URI.",
+        description = "User-info is removed. Query and fragment values holding credentials, and path segments (or runs of segments) that are a resolved `secret()`, are replaced with `***`."
     ) URI uri,
     @Schema(title = "The host of the request URI.") String host,
     @Schema(title = "The path of the request URI.") String path,
@@ -102,7 +103,11 @@ public record RequestSummary(
 
     private static AuthType auth(HttpConfiguration options, HttpRequest request, Set<String> lowerHeaderNames) {
         if (options != null && options.getAuth() != null) {
-            return AuthType.valueOf(options.getAuth().getType().name());
+            return switch (options.getAuth().getType()) {
+                case BASIC -> AuthType.BASIC;
+                case BEARER -> AuthType.BEARER;
+                case DIGEST -> AuthType.DIGEST;
+            };
         }
         if (lowerHeaderNames.contains("authorization")) {
             // Only the scheme prefix is read, the credential itself is never kept.

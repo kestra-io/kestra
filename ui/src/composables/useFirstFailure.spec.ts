@@ -45,7 +45,7 @@ describe("useFirstFailure", () => {
         const store = useExecutionsStore()
         vi.spyOn(store, "loadLogs").mockResolvedValue([{
             taskRunId: "tr-1",
-            message: 'Loop iteration 2 ended in FAILED in sub-execution [[link execution="6NlmY8" flowId="monthly_close" namespace="company.finance"]]',
+            message: "Loop iteration 2 ended in FAILED in sub-execution [[link execution=\"6NlmY8\" flowId=\"monthly_close\" namespace=\"company.finance\"]]",
         }] as never)
 
         // When

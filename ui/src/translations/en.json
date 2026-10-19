@@ -1146,6 +1146,7 @@
     "kestra": "Kestra",
     "error detected": "Error(s) detected.",
     "warning detected": "Warning(s) detected.",
+    "schema warning": "Line {line}: {message}",
     "informative notice": "Note(s)",
     "open": "Open",
     "admin": "Admin",

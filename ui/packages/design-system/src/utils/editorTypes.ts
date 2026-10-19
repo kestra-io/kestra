@@ -35,9 +35,9 @@ export type KsEditorSchemaType = "flow" | "dashboard" | "app" | "testsuites" | "
 export interface KsEditorExposes {
     focus: () => void
     destroy: () => void
-    highlightLinesRange: (range: {start: number, end: number}) => void
+    highlightLinesRange: (range: { start: number, end: number }) => void
     clearLinesRangeHighlights: () => void
-    addContentWidget: (widget: {id: string, position: monaco.IPosition, height: number, right: string}) => Promise<void>
+    addContentWidget: (widget: { id: string, position: monaco.IPosition, height: number, right: string }) => Promise<void>
     removeContentWidget: (id: string) => void
     insertTextAtCursor: (text: string) => void
     monaco: typeof monaco
@@ -71,11 +71,12 @@ export interface KsEditorEmit {
     (e: "focus"): void
     (e: "focusout", value?: string): void
     (e: "update:modelValue", value: string): void
-    (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void
+    (e: "cursor", payload: { position: monaco.Position, model: monaco.editor.ITextModel }): void
     (e: "confirm", value?: string): void
     (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
     (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
     (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
+    (e: "editor-warnings", warnings: string[]): void
 }
 
 export interface KsEditorTemplateRefs {

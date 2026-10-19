@@ -24,7 +24,7 @@
             v-if="hasFlow"
             class="stat-validation"
             tooltipPlacement="bottom-end"
-            :errors="flowErrors"
+            :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
             :infos="flowStore.flowInfos"
             :iconOnly="isNarrow"
@@ -33,8 +33,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onUnmounted, watch, ref, onMounted} from "vue"
-    import * as monaco from "monaco-editor/editor/editor.api"
+    import {computed, onUnmounted, watch} from "vue"
     import {useI18n} from "vue-i18n"
 
     import History from "vue-material-design-icons/History.vue"
@@ -52,34 +51,9 @@
     const {t} = useI18n({useScope: "global"})
     const flowStore = useFlowStore()
 
-    // Listen for live validation markers from the Monaco editor
-    const schemaWarnings = ref<string[]>([])
-    const schemaErrors = ref<string[]>([])
-    let markerListener: monaco.IDisposable | undefined
-    onMounted(() => {    
-        markerListener = monaco.editor.onDidChangeMarkers(() => {
-            const markers = monaco.editor.getModelMarkers({})
-            schemaWarnings.value = markers
-                .filter(m => m.severity === monaco.MarkerSeverity.Warning && m.owner !== "backend-validation")
-                .map(m => `Line ${m.startLineNumber}: ${m.message}`)
-            schemaErrors.value = markers
-                .filter(m => m.severity === monaco.MarkerSeverity.Error && m.owner !== "backend-validation")
-                .map(m => `Line ${m.startLineNumber}: ${m.message}`)
-        })
-    })
-
     const hasFlow = computed(() => Boolean(flowStore.flow?.id && flowStore.flow?.namespace))
     const revisionsCount = computed(() => flowStore.revisionsCount)
     const dependenciesCount = computed(() => flowStore.dependenciesCount)
-    
-    const flowErrors = computed(() => {
-        const otherErrors = flowStore.flowErrors ?? []
-        const errors = [
-            ...otherErrors,
-            ...schemaErrors.value,
-        ]
-        return errors.length === 0 ? undefined : errors
-    })
 
     const flowWarnings = computed(() => {
         const outdatedWarning =
@@ -93,12 +67,13 @@
             ) ?? []
 
         const otherWarnings = flowStore.flowValidation?.warnings ?? []
+        const ksEditorWarnings=flowStore.ksEditorWarnings ?? []
 
         const warnings = [
             ...outdatedWarning,
             ...deprecationWarnings,
             ...otherWarnings,
-            ...schemaWarnings.value,
+            ...ksEditorWarnings,
         ]
 
         return warnings.length === 0 ? undefined : warnings
@@ -121,7 +96,6 @@
 
     onUnmounted(() => {
         cancelPendingRefresh?.()
-        markerListener?.dispose()
     })
 
     watch(

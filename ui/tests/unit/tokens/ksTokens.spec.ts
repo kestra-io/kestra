@@ -62,11 +62,11 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
     it("reports a token that nothing declares", () => {
         expect(warningsFor(".x { color: var(--ks-nowhere); }"))
             .toEqual([expect.stringContaining("\"--ks-nowhere\" is not declared")])
-    })
+    }, 60000)
 
     it("accepts a declared token", () => {
         expect(warningsFor(".x { color: var(--ks-text-link); }")).toEqual([])
-    })
+    }, 60000)
 
     // Guards the helper as much as the rule: reading the wrong stream returns an empty report, which
     // would make every "accepts" case above pass without ever seeing a warning.

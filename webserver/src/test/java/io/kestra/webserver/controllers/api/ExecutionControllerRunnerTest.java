@@ -2301,11 +2301,13 @@ class ExecutionControllerRunnerTest {
 
         executions = await().atMost(Duration.ofSeconds(10)).until(
             () -> client.toBlocking().retrieve(GET("/api/v1/%s/executions/search".formatted(tenantId)), Argument.of(PagedResults.class, Execution.class)),
-            it -> it.getTotal() == 4L
+            it -> it.getTotal() == 4L &&
+                it.getResults().stream().filter(e -> ((Execution) e).getLabels().contains(new Label(Label.REPLAY, "true"))).count() == 2 &&
+                it.getResults().stream().filter(e -> ((Execution) e).getLabels().contains(new Label(Label.REPLAYED, "true"))).count() == 2
         );
         assertThat(executions.getTotal()).isEqualTo(4L);
-        assertThat(executions.getResults().stream().filter(e -> e.getLabels().contains(new Label(Label.REPLAY, "true"))).count()).isEqualTo(2);
-        assertThat(executions.getResults().stream().filter(e -> e.getLabels().contains(new Label(Label.REPLAYED, "true"))).count()).isEqualTo(2);
+        assertThat(executions.getResults().stream().filter(e -> ((Execution) e).getLabels().contains(new Label(Label.REPLAY, "true"))).count()).isEqualTo(2);
+        assertThat(executions.getResults().stream().filter(e -> ((Execution) e).getLabels().contains(new Label(Label.REPLAYED, "true"))).count()).isEqualTo(2);
     }
 
     @Test

@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -158,7 +159,8 @@ class LogControllerFollowTest {
             .taskId("task")
             .taskRunId("task-run")
             .attemptNumber(0)
-            .timestamp(Instant.now())
+            // Truncated like every timestamp on the queue and in the store, so the stored copy here equals the one the queue dispatches.
+            .timestamp(Instant.now().truncatedTo(ChronoUnit.MICROS))
             .level(Level.INFO)
             .thread("main")
             .message(message)

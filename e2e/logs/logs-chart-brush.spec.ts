@@ -44,6 +44,11 @@ test("dragging across the logs chart filters the logs to that window, Escape cle
         await page.keyboard.press("Escape")
         await expect.poll(() => new URL(page.url()).searchParams.get(TIME_RANGE_KEY)).toBe("PT24H")
         expect(new URL(page.url()).searchParams.get(BRUSH_START_KEY)).toBeNull()
+
+        await chart.hover({trial: true, position: {x: box.width / 2, y: box.height / 2}})
+        await page.mouse.click(box.x + box.width / 2, y)
+        await expect.poll(() => new URL(page.url()).searchParams.get(BRUSH_START_KEY)).not.toBeNull()
+        await expect(page.getByRole("dialog")).toHaveCount(0)
     } finally {
         await executionsApi.removeExecutionsViaApi()
         await flowsApi.removeFlowsViaApi()

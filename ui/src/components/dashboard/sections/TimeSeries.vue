@@ -491,7 +491,7 @@
 
     function onChartClick(rawParams: unknown) {
         const params = rawParams as EchartsParams
-        if (params.seriesType !== "bar" || props.execution) return
+        if (params.seriesType !== "bar" || props.execution || isSelectable.value) return
 
         drillDown(
             [

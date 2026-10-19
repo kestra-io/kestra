@@ -1,4 +1,4 @@
-import {ChartChartOption, DashboardControllerDashboardResponse} from "@kestra-io/kestra-sdk"
+import {ChartChartOption, DashboardControllerDashboardResponse, QueryFilterField} from "@kestra-io/kestra-sdk"
 
 export interface Dashboard extends DashboardControllerDashboardResponse {
     charts: Chart[]
@@ -18,6 +18,8 @@ export interface Column {
 export interface ChartResults {
     results?: Record<string, unknown>[];
     total?: number;
+    /** The dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them. */
+    ignoredFilters?: QueryFilterField[];
 }
 
 export interface Chart extends ChartChartOption {

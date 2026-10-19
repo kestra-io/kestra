@@ -22,6 +22,7 @@ import javax.annotation.CheckReturnValue;
 import org.apache.commons.io.FilenameUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.SequenceWriter;
@@ -1129,15 +1130,17 @@ public class ExecutionController {
                     })
                         .last()
                         .map(Event::getData)
-                        .map(
-                            throwFunction(
-                                execution -> ExecutionResponse.fromExecution(
+                        .map(execution -> {
+                            try {
+                                return ExecutionResponse.fromExecution(
                                     execution,
                                     executionOutputService.getOutputs(execution),
                                     executionUrl
-                                )
-                            )
-                        )
+                                );
+                            } catch (InternalException e) {
+                                throw Exceptions.propagate(e);
+                            }
+                        })
                         .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
                 });

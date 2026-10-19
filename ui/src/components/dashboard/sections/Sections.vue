@@ -294,7 +294,7 @@ section#charts {
         }
 
         .chart-placeholder {
-            min-height: 200px; /* roughly the height of a rendered chart, so activation does not shift the layout*/
+            min-height: 200px; /* roughly the height of a rendered chart, so activation does not shift the layout */
 
             &.is-kpi {
                 min-height: 0;

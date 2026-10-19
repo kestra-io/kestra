@@ -1113,7 +1113,7 @@
 <style scoped>
 
 .revision-history-dialog-body {
-    /* We subtract the dialog margins and title height (78px)*/
+    /* We subtract the dialog margins and title height (78px) */
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 

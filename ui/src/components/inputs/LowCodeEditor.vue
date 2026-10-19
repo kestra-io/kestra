@@ -1483,8 +1483,8 @@
     width: 100%;
     position: relative;
 
-    /* Anchor the state icon (playground-button) to the node header area, not*/
-    /* the full VueFlow node element, so it doesn't overlap plugin UI details.*/
+    /* Anchor the state icon (playground-button) to the node header area, not */
+    /* the full VueFlow node element, so it doesn't overlap plugin UI details. */
     & :deep(.main-content) {
         position: relative;
     }

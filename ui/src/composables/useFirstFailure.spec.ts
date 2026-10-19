@@ -40,6 +40,22 @@ describe("useFirstFailure", () => {
         expect(message.value).toBe("boom x")
     })
 
+    it("shows a sub-execution link as its execution id instead of raw link markup", async () => {
+        // Given
+        const store = useExecutionsStore()
+        vi.spyOn(store, "loadLogs").mockResolvedValue([{
+            taskRunId: "tr-1",
+            message: 'Loop iteration 2 ended in FAILED in sub-execution [[link execution="6NlmY8" flowId="monthly_close" namespace="company.finance"]]',
+        }] as never)
+
+        // When
+        const {message} = effectScope().run(() => useFirstFailure(() => failedExecution("e1")))!
+        await flush()
+
+        // Then
+        expect(message.value).toBe("Loop iteration 2 ended in FAILED in sub-execution 6NlmY8")
+    })
+
     it("does not borrow an error log from another task run", async () => {
         // Given
         const store = useExecutionsStore()

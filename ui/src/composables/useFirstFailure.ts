@@ -5,6 +5,7 @@ import type {Log} from "../stores/logs"
 import {handledIf} from "../utils/kestraHttp"
 import {findFirstFailedTaskRun, taskRunPath} from "../utils/executionUtils"
 import {stripBackticks} from "../utils/logs"
+import {linkTagsAsText} from "../components/logs/linkify"
 
 export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefined>, enabled: MaybeRefOrGetter<boolean> = true) {
     const store = useExecutionsStore()
@@ -23,7 +24,7 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
 
     const message = computed(() => {
         const text = errorLogs.value.find((log) => log.taskRunId === failedTaskRun.value?.id)?.message
-        return text ? stripBackticks(text) : undefined
+        return text ? stripBackticks(linkTagsAsText(text)) : undefined
     })
 
     const logsRoute = computed(() => {

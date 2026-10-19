@@ -25,6 +25,26 @@ describe("humanizeNumber", () => {
 
         expect(humanizeNumber("1234567")).toBe((1234567).toLocaleString("de"))
     })
+
+    // The Metrics tab passes double values: they used to go through parseInt, so 0.75 showed as 0.
+    it.each([
+        [0.75, "0.75"],
+        [12.5, "12.5"],
+        [1234.56, "1,234.56"],
+        [5e-7, "0.0000005"],
+        [1e21, "1,000,000,000,000,000,000,000"],
+        [0.1 + 0.2, "0.3"],
+    ])("keeps the value of the metric %s", (value, expected) => {
+        expect(humanizeNumber(value)).toBe(expected)
+        expect(humanizeNumber(String(value))).toBe(expected)
+    })
+
+    it("uses the locale decimal separator for metric values", () => {
+        localStorage.setItem("lang", "de")
+
+        expect(humanizeNumber(0.75)).toBe("0,75")
+        expect(humanizeNumber(1234.56)).toBe("1.234,56")
+    })
 })
 
 describe("date", () => {

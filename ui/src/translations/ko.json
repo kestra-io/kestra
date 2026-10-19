@@ -1203,7 +1203,6 @@
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
-    "relative": "상대적",
     "relative start date": "상대적 시작 날짜",
     "now": "지금",
     "absolute": "절대적",
@@ -2878,8 +2877,7 @@
         "panForward": "앞으로 이동",
         "zoomIn": "확대",
         "zoomOut": "축소",
-        "range": "{start} → {end} ({duration})",
-        "rangePicker": "시간 범위 변경"
+        "range": "{start} → {end} ({duration})"
       },
       "row": {
         "openOwnPage": "이 페이지 열기",

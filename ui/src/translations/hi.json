@@ -1203,7 +1203,6 @@
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
-    "relative": "सापेक्ष",
     "relative start date": "सापेक्ष प्रारंभ तिथि",
     "now": "अब",
     "absolute": "पूर्ण",
@@ -2878,8 +2877,7 @@
         "panForward": "आगे खिसकाएं",
         "zoomIn": "ज़ूम इन करें",
         "zoomOut": "ज़ूम आउट करें",
-        "range": "{start} → {end} ({duration})",
-        "rangePicker": "समय सीमा बदलें"
+        "range": "{start} → {end} ({duration})"
       },
       "row": {
         "openOwnPage": "यह पेज खोलें",

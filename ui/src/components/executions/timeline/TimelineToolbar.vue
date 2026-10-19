@@ -14,50 +14,10 @@
         </div>
 
         <div class="secondary-controls">
-            <KsButton
-                ref="rangePillRef"
-                class="range-pill"
-                :class="{'is-active': rangePickerVisible}"
-                :icon="CalendarRange"
-                size="small"
-                :aria-label="$t('executionsTimeline.toolbar.rangePicker')"
-            >
-                {{ readout() }}
-            </KsButton>
-
-            <KsPopover
-                v-model:visible="rangePickerVisible"
-                trigger="click"
-                placement="bottom-start"
-                :width="320"
-                :showArrow="false"
-                :virtualRef="rangePillRef"
-                virtualTriggering
-            >
-                <div class="range-picker">
-                    <KsRadioGroup v-model="selectedMode" class="range-picker-mode">
-                        <KsRadioButton value="REL">
-                            {{ $t("relative") }}
-                        </KsRadioButton>
-                        <KsRadioButton value="ABS">
-                            {{ $t("absolute") }}
-                        </KsRadioButton>
-                    </KsRadioGroup>
-
-                    <TimeSelect
-                        v-if="selectedMode === 'REL'"
-                        allowCustom
-                        :timeRange="activePreset"
-                        @update:modelValue="onRelativeChange"
-                    />
-                    <DateRange
-                        v-else
-                        :startDate="new Date(rangeStartMs).toISOString()"
-                        :endDate="new Date(rangeEndMs).toISOString()"
-                        @update:modelValue="onAbsoluteChange"
-                    />
-                </div>
-            </KsPopover>
+            <span class="range-readout" data-test="timeline-range-readout">
+                <CalendarRange />
+                <KsText size="small">{{ readout() }}</KsText>
+            </span>
 
             <div class="zoom-controls">
                 <KsIconButton :tooltip="$t('executionsTimeline.toolbar.panBack')" placement="top" @click="emit('pan', -0.5)">
@@ -90,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import CalendarRange from "vue-material-design-icons/CalendarRange.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
@@ -100,9 +60,7 @@
     import Crosshairs from "vue-material-design-icons/Crosshairs.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
-    import {dateUtils, durationUtils, KsButton} from "@kestra-io/design-system"
-    import TimeSelect from "../date-select/TimeSelect.vue"
-    import DateRange from "../../layout/DateRange.vue"
+    import {dateUtils, durationUtils} from "@kestra-io/design-system"
     import TimelineScrubber from "./TimelineScrubber.vue"
     import type {TimelineExecution} from "../../../utils/executionsTimeline"
     import {computeScrubberDomain} from "../../../composables/useTimelineRange"
@@ -110,14 +68,12 @@
     const props = defineProps<{
         rangeStartMs: number;
         rangeEndMs: number;
-        activePreset?: string;
         expanded: boolean;
         domainExecutions: TimelineExecution[];
         scrubberWidthPx: number;
     }>()
 
     const emit = defineEmits<{
-        "apply-preset": [value: string];
         "zoom": [factor: number];
         "pan": [fractionOfSpan: number];
         "now": [];
@@ -127,10 +83,6 @@
 
     const {t} = useI18n()
 
-    const rangePickerVisible = ref(false)
-    const rangePillRef = ref<InstanceType<typeof KsButton> | null>(null)
-    const selectedMode = ref<"REL" | "ABS">(props.activePreset !== undefined ? "REL" : "ABS")
-
     // dateUtils.dateFilter() needs getCurrentInstance(), so this must stay a template-called function, not a computed.
     function readout() {
         return t("executionsTimeline.toolbar.range", {
@@ -138,15 +90,6 @@
             end: dateUtils.dateFilter(new Date(props.rangeEndMs).toISOString(), "lll"),
             duration: durationUtils.humanDuration((props.rangeEndMs - props.rangeStartMs) / 1000),
         })
-    }
-
-    function onRelativeChange({timeRange}: {timeRange?: string}) {
-        if (timeRange) emit("apply-preset", timeRange)
-    }
-
-    function onAbsoluteChange({startDate, endDate}: {startDate?: string; endDate?: string}) {
-        if (!startDate || !endDate) return
-        emit("custom-range", {startMs: Date.parse(startDate), endMs: Date.parse(endDate)})
     }
 
     const scrubberDomain = computed(() => computeScrubberDomain(props.rangeStartMs, props.rangeEndMs))
@@ -185,24 +128,12 @@
     gap: var(--ks-spacing-2);
 }
 
-.range-pill {
+.range-readout {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    color: var(--ks-text-secondary);
     font-variant-numeric: tabular-nums;
-}
-
-.range-pill.is-active {
-    color: var(--ks-text-primary);
-    background: var(--ks-btn-secondary-bg-active);
-    border-color: var(--ks-btn-secondary-border-active);
-}
-
-.range-picker {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-3);
-}
-
-.range-picker-mode {
-    align-self: flex-start;
 }
 
 .zoom-controls {

@@ -13,40 +13,19 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     }
 })
 
-vi.mock("../date-select/TimeSelect.vue", () => ({
-    default: defineComponent({
-        name: "TimeSelect",
-        emits: ["update:modelValue"],
-        template: "<button data-test=\"relative-preset\" @click=\"$emit('update:modelValue', {timeRange: 'PT1H'})\" />",
-    }),
-}))
-vi.mock("../../layout/DateRange.vue", () => ({
-    default: defineComponent({name: "DateRange", template: "<div data-test=\"absolute-picker\" />"}),
-}))
-
 const i18n = createI18n({
     legacy: false,
     globalInjection: true,
     locale: "en",
     messages: {en: {executionsTimeline: {toolbar: {
         range: "{start} → {end} ({duration})",
-        rangeSliderStart: "Start of visible time range",
-        rangeSliderEnd: "End of visible time range",
     }}}},
 })
 
-const passthroughStub = (name: string, slots: string[] = ["default"]) => defineComponent({
-    name,
-    inheritAttrs: false,
-    template: `<div>${slots.map(slot => slot === "default" ? "<slot />" : `<slot name="${slot}" />`).join("")}</div>`,
-})
-
 const stubs = {
-    KsPopover: passthroughStub("KsPopover", ["reference", "default"]),
     KsButton: defineComponent({name: "KsButton", template: "<button type=\"button\"><slot /></button>"}),
     KsIconButton: defineComponent({name: "KsIconButton", template: "<button type=\"button\"><slot /></button>"}),
-    KsRadioGroup: passthroughStub("KsRadioGroup"),
-    KsRadioButton: passthroughStub("KsRadioButton"),
+    KsText: defineComponent({name: "KsText", template: "<span><slot /></span>"}),
     TimelineScrubber: defineComponent({
         name: "TimelineScrubber",
         props: ["domainStartMs", "domainEndMs", "rangeStartMs", "rangeEndMs", "executions", "widthPx"],
@@ -55,7 +34,7 @@ const stubs = {
     }),
 }
 
-function mountToolbar(props: {rangeStartMs: number; rangeEndMs: number; activePreset?: string; expanded?: boolean}) {
+function mountToolbar(props: {rangeStartMs: number; rangeEndMs: number; expanded?: boolean}) {
     return mount(TimelineToolbar, {
         props: {expanded: false, domainExecutions: [], scrubberWidthPx: 600, ...props},
         global: {plugins: [i18n], stubs},
@@ -63,31 +42,19 @@ function mountToolbar(props: {rangeStartMs: number; rangeEndMs: number; activePr
 }
 
 describe("TimelineToolbar", () => {
-    it("should show the current range as a single readable pill instead of separate preset/date controls", () => {
-        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000, activePreset: "PT1H"})
+    it("should show the window as a read-only readout and leave picking a range to the filter bar", () => {
+        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000})
 
-        expect(wrapper.find(".range-pill").text()).toContain("→")
-        expect(wrapper.findComponent({name: "KsSelect"}).exists()).toBe(false)
+        const readout = wrapper.get("[data-test=timeline-range-readout]")
+        expect(readout.text()).toContain("→")
+        expect(readout.element.tagName).not.toBe("BUTTON")
+        expect(wrapper.findComponent({name: "KsPopover"}).exists()).toBe(false)
         expect(wrapper.findComponent({name: "KsDatePicker"}).exists()).toBe(false)
-    })
-
-    it("should emit apply-preset when a relative range is picked from the combined picker", async () => {
-        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000, activePreset: "PT1H"})
-
-        await wrapper.find("[data-test=relative-preset]").trigger("click")
-
-        expect(wrapper.emitted("apply-preset")).toEqual([["PT1H"]])
-    })
-
-    it("should show the absolute date-range picker instead of the relative one when switched to Absolute", () => {
-        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000, activePreset: undefined})
-
-        expect(wrapper.find("[data-test=absolute-picker]").exists()).toBe(true)
-        expect(wrapper.find("[data-test=relative-preset]").exists()).toBe(false)
+        expect(wrapper.findComponent({name: "TimeSelect"}).exists()).toBe(false)
     })
 
     it("should emit custom-range when the scrubber reports a finished brush", async () => {
-        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000, activePreset: "PT1H"})
+        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000})
 
         await wrapper.findComponent({name: "TimelineScrubber"}).vm.$emit("change", {startMs: 1000, endMs: 2000})
 

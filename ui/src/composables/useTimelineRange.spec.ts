@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it} from "vitest"
+import {afterEach, describe, expect, it, vi} from "vitest"
 import {defineComponent, h} from "vue"
 import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
 import {createRouter, createMemoryHistory, type Router} from "vue-router"
@@ -73,6 +73,65 @@ describe("useTimelineRange", () => {
         expect(query[TIME_RANGE_QUERY_KEY]).toBeUndefined()
         expect(query[START_QUERY_KEY]).toBeDefined()
         expect(query[END_QUERY_KEY]).toBeDefined()
+    })
+})
+
+describe("relative time range", () => {
+    const HOUR_MS = 60 * 60 * 1000
+
+    it("should take the window span from the filter bar's relative timeRange, ending now", async () => {
+        const router = createTestRouter()
+        await router.push({name: "executions/list", params: {tenant: "main"}, query: {[TIME_RANGE_QUERY_KEY]: "PT1H"}})
+        const before = Date.now()
+
+        const mounted = mountTimelineRange(router)
+
+        expect(mounted.range.rangeEndMs.value - mounted.range.rangeStartMs.value).toBe(HOUR_MS)
+        expect(mounted.range.rangeEndMs.value).toBeGreaterThanOrEqual(before)
+        mounted.wrapper.unmount()
+    })
+
+    it("should prefer an explicit start and end over a leftover timeRange", async () => {
+        const router = createTestRouter()
+        await router.push({
+            name: "executions/list",
+            params: {tenant: "main"},
+            query: {
+                [TIME_RANGE_QUERY_KEY]: "PT1H",
+                [START_QUERY_KEY]: "2026-01-01T00:00:00.000Z",
+                [END_QUERY_KEY]: "2026-01-03T00:00:00.000Z",
+            },
+        })
+
+        const mounted = mountTimelineRange(router)
+
+        expect(mounted.range.rangeEndMs.value - mounted.range.rangeStartMs.value).toBe(48 * HOUR_MS)
+        mounted.wrapper.unmount()
+    })
+
+    it("should fall back to the default day when the timeRange is not a duration", async () => {
+        const router = createTestRouter()
+        await router.push({name: "executions/list", params: {tenant: "main"}, query: {[TIME_RANGE_QUERY_KEY]: "garbage"}})
+
+        const mounted = mountTimelineRange(router)
+
+        expect(mounted.range.rangeEndMs.value - mounted.range.rangeStartMs.value).toBe(24 * HOUR_MS)
+        mounted.wrapper.unmount()
+    })
+
+    it("should move a relative window's end to the current time on refresh", async () => {
+        const router = createTestRouter()
+        await router.push({name: "executions/list", params: {tenant: "main"}, query: {[TIME_RANGE_QUERY_KEY]: "PT1H"}})
+        vi.useFakeTimers({now: Date.parse("2026-10-19T10:00:00.000Z")})
+        const mounted = mountTimelineRange(router)
+        const firstEndMs = mounted.range.rangeEndMs.value
+
+        vi.setSystemTime(Date.parse("2026-10-19T10:05:00.000Z"))
+        mounted.range.refreshNow()
+
+        expect(mounted.range.rangeEndMs.value - firstEndMs).toBe(5 * 60 * 1000)
+        vi.useRealTimers()
+        mounted.wrapper.unmount()
     })
 })
 

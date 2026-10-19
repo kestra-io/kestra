@@ -1,19 +1,6 @@
-import {computed} from "vue"
+import {computed, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {durationUtils} from "@kestra-io/design-system"
-
-export interface TimelineRangePreset {
-    value: string;
-    labelKey: string;
-}
-
-export const TIMELINE_RANGE_PRESETS: TimelineRangePreset[] = [
-    {value: "PT1H", labelKey: "datepicker.last1hour"},
-    {value: "PT12H", labelKey: "datepicker.last12hours"},
-    {value: "PT24H", labelKey: "datepicker.last24hours"},
-    {value: "PT168H", labelKey: "datepicker.last7days"},
-    {value: "PT720H", labelKey: "datepicker.last30days"},
-]
 
 const DEFAULT_RANGE_MS = durationUtils.duration("PT24H") * 1000
 export const MIN_RANGE_MS = durationUtils.duration("PT5M") * 1000
@@ -29,7 +16,6 @@ export function computeScrubberDomain(rangeStartMs: number, rangeEndMs: number, 
     const span = Math.max(rangeEndMs - rangeStartMs, MIN_RANGE_MS)
     const domainSpan = span * SCRUBBER_CONTEXT_MULTIPLIER
     const center = (rangeStartMs + rangeEndMs) / 2
-    // No execution can exist after now, so a domain reaching into the future is track nobody can use.
     const domainEndMs = Math.max(rangeEndMs, Math.min(center + domainSpan / 2, nowMs))
     return [domainEndMs - domainSpan, domainEndMs]
 }
@@ -37,28 +23,33 @@ export function computeScrubberDomain(rangeStartMs: number, rangeEndMs: number, 
 export function useTimelineRange() {
     const route = useRoute()
     const router = useRouter()
+    const nowMs = ref(Date.now())
+
+    function refreshNow() {
+        nowMs.value = Date.now()
+    }
+
+    const relativeRangeMs = computed<number | undefined>(() => {
+        const raw = route.query[TIME_RANGE_QUERY_KEY]
+        const value = Array.isArray(raw) ? raw[0] : raw
+        if (typeof value !== "string" || value.length === 0) return undefined
+        const seconds = durationUtils.duration(value)
+        return seconds > 0 ? seconds * 1000 : undefined
+    })
 
     const rangeEndMs = computed<number>(() => {
         const raw = route.query[END_QUERY_KEY]
         const parsed = typeof raw === "string" ? Date.parse(raw) : NaN
-        return Number.isNaN(parsed) ? Date.now() : parsed
+        return Number.isNaN(parsed) ? nowMs.value : parsed
     })
 
     const rangeStartMs = computed<number>(() => {
         const raw = route.query[START_QUERY_KEY]
         const parsed = typeof raw === "string" ? Date.parse(raw) : NaN
-        return Number.isNaN(parsed) ? rangeEndMs.value - DEFAULT_RANGE_MS : parsed
-    })
-
-    const activePreset = computed<string | undefined>(() => {
-        const span = rangeEndMs.value - rangeStartMs.value
-        const isPinnedToNow = Date.now() - rangeEndMs.value < 60_000
-        if (!isPinnedToNow) return undefined
-        return TIMELINE_RANGE_PRESETS.find(preset => Math.abs(durationUtils.duration(preset.value) * 1000 - span) < 1000)?.value
+        return Number.isNaN(parsed) ? rangeEndMs.value - (relativeRangeMs.value ?? DEFAULT_RANGE_MS) : parsed
     })
 
     function setRange(startMs: number, endMs: number) {
-        // No execution can exist after now, so every caller inherits the bound rather than each guarding it.
         const boundedEndMs = Math.min(endMs, Date.now())
         const clampedSpan = Math.min(Math.max(boundedEndMs - startMs, MIN_RANGE_MS), MAX_RANGE_MS)
         const {[TIME_RANGE_QUERY_KEY]: _timeRange, ...rest} = route.query
@@ -94,5 +85,5 @@ export function useTimelineRange() {
         setRange(Date.now() - (rangeEndMs.value - rangeStartMs.value), Date.now())
     }
 
-    return {rangeStartMs, rangeEndMs, activePreset, setRange, applyPreset, zoom, pan, goToNow}
+    return {rangeStartMs, rangeEndMs, setRange, applyPreset, zoom, pan, goToNow, refreshNow}
 }

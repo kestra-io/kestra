@@ -1203,7 +1203,6 @@
     "pause backfills": "暂停回填",
     "backfill executions": "回填执行",
     "execute backfill": "执行回填",
-    "relative": "相对",
     "relative start date": "相对开始日期",
     "now": "现在",
     "absolute": "绝对",
@@ -2878,8 +2877,7 @@
         "panForward": "向前平移",
         "zoomIn": "放大",
         "zoomOut": "缩小",
-        "range": "{start} → {end} ({duration})",
-        "rangePicker": "更改时间范围"
+        "range": "{start} → {end} ({duration})"
       },
       "row": {
         "openOwnPage": "打开此页面",

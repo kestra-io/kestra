@@ -1203,7 +1203,6 @@
     "pause backfills": "backfillを一時停止",
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
-    "relative": "相対",
     "relative start date": "相対開始日",
     "now": "現在",
     "absolute": "絶対",
@@ -2878,8 +2877,7 @@
         "panForward": "前方へ移動",
         "zoomIn": "ズームイン",
         "zoomOut": "ズームアウト",
-        "range": "{start} → {end} ({duration})",
-        "rangePicker": "時間範囲を変更"
+        "range": "{start} → {end} ({duration})"
       },
       "row": {
         "openOwnPage": "このページを開く",

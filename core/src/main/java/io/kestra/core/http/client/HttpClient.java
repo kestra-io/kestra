@@ -11,12 +11,14 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,7 +42,9 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.ParseException;
@@ -122,9 +126,23 @@ public class HttpClient implements Closeable {
         // Positioned right after REDIRECT so it re-runs on every hop RedirectExec follows, unlike a request interceptor which only runs once before the redirect loop starts.
         builder.addExecInterceptorAfter(
             ChainElement.REDIRECT.name(), "ssrf-guard",
-            (request, scope, chain) -> {
+            (request, scope, chain) ->
+            {
                 validateUri(HttpService.safeURI(request));
                 return chain.proceed(request, scope);
+            }
+        );
+
+        builder.addExecInterceptorAfter(
+            ChainElement.REDIRECT.name(), "redirect-recorder",
+            (request, scope, chain) ->
+            {
+                ClassicHttpResponse response = chain.proceed(request, scope);
+                Header location = response.getFirstHeader("Location");
+                if (location != null && response.getCode() >= 300 && response.getCode() < 400) {
+                    recordRedirect(scope.clientContext, HttpService.safeURI(request), response.getCode(), location.getValue());
+                }
+                return response;
             }
         );
 
@@ -556,6 +574,21 @@ public class HttpClient implements Closeable {
         return statusCode < 400;
     }
 
+    @SuppressWarnings("unchecked")
+    private static void recordRedirect(HttpClientContext context, URI from, int status, String location) {
+        String resolved;
+        try {
+            resolved = from.resolve(location).toString();
+        } catch (IllegalArgumentException e) {
+            resolved = location;
+        }
+
+        Object recorded = context.getAttribute(HttpResponse.Redirect.CONTEXT_ATTRIBUTE);
+        if (recorded instanceof List<?> list) {
+            ((List<HttpResponse.Redirect>) list).add(HttpResponse.Redirect.builder().code(status).location(resolved).build());
+        }
+    }
+
     private <T> HttpResponse<T> request(
         HttpRequest request,
         HttpClientContext httpClientContext,
@@ -566,7 +599,9 @@ public class HttpClient implements Closeable {
         List<Integer> retryableCodes = resolveRetryableStatusCodes(method);
         boolean retryTransportFailures = isMethodEligibleForTransportRetry(method);
 
-        return RetryUtils.<HttpResponse<T>, HttpClientException> of(
+        AtomicInteger attempts = new AtomicInteger();
+
+        HttpResponse<T> response = RetryUtils.<HttpResponse<T>, HttpClientException> of(
             configuration.getRetry(),
             retryFailed ->
             {
@@ -601,6 +636,8 @@ public class HttpClient implements Closeable {
             },
             () ->
             {
+                attempts.incrementAndGet();
+                httpClientContext.setAttribute(HttpResponse.Redirect.CONTEXT_ATTRIBUTE, new ArrayList<HttpResponse.Redirect>());
                 try {
                     return this.client.execute(
                         request.to(runContext),
@@ -621,6 +658,8 @@ public class HttpClient implements Closeable {
                 }
             }
         );
+
+        return response.toBuilder().retries(attempts.get() - 1).build();
     }
 
     /**
@@ -679,7 +718,9 @@ public class HttpClient implements Closeable {
         if (resolveAuthority(uri) == null) {
             // A list is configured but the URI carries no authority at all, so there is no host to check it
             // against: fail closed on both directions instead of silently letting an unmatchable URI through.
-            throw new IllegalArgumentException("The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(uri));
+            throw new IllegalArgumentException(
+                "The URI %s has no resolvable host to check against the configured allow/deny lists (kestra.tasks.http.allowed-list / kestra.tasks.http.denied-list).".formatted(uri)
+            );
         }
 
         // first check that if there is an allow list, it matches one
@@ -926,7 +967,9 @@ public class HttpClient implements Closeable {
     private static void rejectDeniedAddresses(String host, InetAddress[] addresses, List<String> deniedList) {
         for (InetAddress address : addresses) {
             if (deniedList.stream().anyMatch(entry -> isDeniedAddress(entry, address))) {
-                throw new IllegalArgumentException("The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(host, address.getHostAddress()));
+                throw new IllegalArgumentException(
+                    "The host '%s' resolves to the address '%s', which is in the configured denied list (kestra.tasks.http.denied-list).".formatted(host, address.getHostAddress())
+                );
             }
         }
     }

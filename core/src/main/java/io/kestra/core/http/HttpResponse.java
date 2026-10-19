@@ -53,6 +53,24 @@ public class HttpResponse<T> {
      */
     HttpRequest request;
 
+    /**
+     * The protocol version negotiated for the final response, e.g. {@code HTTP/1.1}, or {@code null} if unknown.
+     */
+    @Nullable
+    String protocol;
+
+    /**
+     * The redirects followed to reach this response, in order, or {@code null} if unknown.
+     */
+    @Nullable
+    List<Redirect> redirects;
+
+    /**
+     * The number of retries performed before this response was obtained, or {@code null} if unknown.
+     */
+    @Nullable
+    Integer retries;
+
     public static HttpResponse<byte[]> from(org.apache.hc.core5.http.HttpResponse response, HttpContext context) throws IOException {
         return HttpResponse.<byte[]> builder()
             .status(Status.builder().code(response.getCode()).reason(response.getReasonPhrase()).build())
@@ -76,6 +94,8 @@ public class HttpResponse<T> {
             .request(request)
             .headers(HttpService.toHttpHeaders(httpResponse.getHeaders()))
             .body(body)
+            .protocol(httpResponse.getVersion() != null ? httpResponse.getVersion().toString() : null)
+            .redirects(context instanceof HttpClientContext httpClientContext ? Redirect.recorded(httpClientContext) : null)
             .endpointDetail(
                 context instanceof HttpClientContext httpClientContext ? HttpResponse.EndpointDetail.from(httpClientContext.getEndpointDetails()) : null
             )
@@ -268,6 +288,21 @@ public class HttpResponse<T> {
                 case 522 -> CONNECTION_TIMED_OUT;
                 default -> throw new IllegalArgumentException("Invalid HTTP status code: " + code);
             };
+        }
+    }
+
+    @Value
+    @Builder
+    public static class Redirect {
+        public static final String CONTEXT_ATTRIBUTE = "kestra.http.redirects";
+
+        int code;
+        String location;
+
+        @SuppressWarnings("unchecked")
+        static List<Redirect> recorded(HttpClientContext context) {
+            Object recorded = context.getAttribute(CONTEXT_ATTRIBUTE);
+            return recorded instanceof List<?> list ? List.copyOf((List<Redirect>) list) : List.of();
         }
     }
 

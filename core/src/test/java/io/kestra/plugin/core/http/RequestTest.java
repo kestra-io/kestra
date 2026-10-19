@@ -17,12 +17,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -36,6 +36,7 @@ import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.*;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
@@ -751,8 +752,201 @@ class RequestTest {
         assertThat(output.getCode()).isEqualTo(200);
     }
 
+    @Test
+    void shouldOutputRequestSummaryWithoutLeakingSecrets() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofExpression("{{ '" + serverUrl() + "' }}/summary/post?plain=1&other={{secret('WEBHOOK_KEY')}}&api_key=abc"))
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue("application/json"))
+            .body(Property.ofValue("{\"password\":\"hunter2\"}"))
+            .headers(Property.ofValue(Map.of("Authorization", "Bearer {{ secret('WEBHOOK_KEY') }}", "Accept", "application/json")))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Request.Output output = task.run(runContext);
+
+        RequestSummary request = output.getRequest();
+        assertThat(request.method()).isEqualTo("POST");
+        assertThat(request.uri().getRawQuery()).isEqualTo("plain=1&other=***&api_key=***");
+        assertThat(request.host()).isEqualTo("localhost");
+        assertThat(request.path()).isEqualTo("/summary/post");
+        assertThat(request.queryParamNames()).containsExactly("plain", "other", "api_key");
+        assertThat(request.headerNames()).containsExactlyInAnyOrder("Authorization", "Accept");
+        assertThat(request.contentType()).isEqualTo("application/json");
+        assertThat(request.hasBody()).isTrue();
+        assertThat(request.bodyBytes()).isEqualTo("{\"password\":\"hunter2\"}".length());
+        assertThat(request.auth()).isEqualTo("AUTHORIZATION_HEADER");
+        assertThat(output.getUri().getRawQuery()).isEqualTo("plain=1&other=***&api_key=***");
+
+        String serialized = JacksonMapper.ofJson().writeValueAsString(output);
+        assertThat(serialized).doesNotContain("hunter2").doesNotContain("secretKey");
+    }
+
+    @Test
+    void shouldReportBasicAuthTypeAndFormFieldNames() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/summary/post"))
+            .method(Property.ofValue("POST"))
+            .contentType(Property.ofValue("application/x-www-form-urlencoded"))
+            .formData(Property.ofValue(Map.of("user", "john")))
+            .options(HttpConfiguration.builder().auth(BasicAuthConfiguration.builder().username(Property.ofValue("u")).password(Property.ofValue("p")).build()).build())
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getRequest().auth()).isEqualTo("BASIC");
+        assertThat(output.getRequest().formFieldNames()).containsExactly("user");
+        assertThat(output.getRequest().bodyBytes()).isEqualTo("user=john".length());
+    }
+
+    @Test
+    void shouldNotOutputRequestWhenDisabled() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello"))
+            .outputRequest(Property.ofValue(false))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getRequest()).isNull();
+        assertThat(output.getCode()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldOutputResponseSummary() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/hello"))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getReason()).isNotBlank();
+        assertThat(output.getContentType()).isNotNull();
+        assertThat(output.getContentLength()).isEqualTo("{ \"hello\": \"world\" }".length());
+        assertThat(output.getDurationMs()).isGreaterThanOrEqualTo(0);
+        assertThat(output.getFinalUri()).isEqualTo(serverUrl() + "/hello");
+        assertThat(output.getRedirects()).isEmpty();
+        assertThat(output.getProtocol()).isEqualTo("HTTP/1.1");
+        assertThat(output.getRetries()).isZero();
+    }
+
+    @Test
+    void shouldRedactResponseHeaders() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/summary/headers"))
+            .headers(Property.ofValue(Map.of("X-Custom", "{{ secret('WEBHOOK_KEY') }}")))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        Map<String, List<String>> headers = output.getHeaders();
+        assertThat(headers.get("set-cookie")).containsExactly("***", "***");
+        assertThat(headers.get("authorization")).containsExactly("***");
+        assertThat(headers.get("x-api-key")).containsExactly("***");
+        assertThat(headers.get("x-echo")).containsExactly("***");
+        assertThat(headers.get("x-plain")).containsExactly("visible");
+    }
+
+    @Test
+    void shouldReportRedirectsWithRedactedLocations() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/summary/redirect1"))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getRedirects()).hasSize(2);
+        assertThat(output.getRedirects().get(0).getCode()).isEqualTo(302);
+        assertThat(output.getRedirects().get(0).getLocation()).isEqualTo(serverUrl() + "/summary/redirect2?token=***&plain=1");
+        assertThat(output.getRedirects().get(1).getCode()).isEqualTo(307);
+        assertThat(output.getFinalUri()).isEqualTo(serverUrl() + "/hello");
+        assertThat(output.getUri()).hasToString(serverUrl() + "/summary/redirect1");
+    }
+
+    @Test
+    void shouldCountRetriesAfterRetriedBadGateway() throws Exception {
+        MockController.FLAKY_CALLS.set(0);
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/summary/flaky"))
+            .options(HttpConfiguration.builder().retry(Constant.builder().interval(Duration.ofMillis(10)).maxAttempts(3).build()).build())
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getCode()).isEqualTo(200);
+        assertThat(output.getRetries()).isEqualTo(1);
+        assertThat(output.getBody()).isEqualTo("recovered");
+    }
+
+    @Test
+    void shouldReportZeroContentLengthForEmptyResponse() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/summary/empty"))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getCode()).isEqualTo(204);
+        assertThat(output.getContentLength()).isZero();
+        assertThat(output.getContentType()).isNull();
+    }
+
     @Controller
     static class MockController {
+        private static final AtomicInteger FLAKY_CALLS = new AtomicInteger();
+
+        @Post(uri = "/summary/post", consumes = MediaType.ALL)
+        HttpResponse<String> summaryPost() {
+            return HttpResponse.ok("ok");
+        }
+
+        @Get("/summary/headers")
+        HttpResponse<String> summaryHeaders(HttpRequest<?> request) {
+            return HttpResponse.ok("ok")
+                .header("Set-Cookie", "a=1")
+                .header("Set-Cookie", "b=2")
+                .header("Authorization", "Basic abc")
+                .header("X-Api-Key", "key")
+                .header("X-Echo", request.getHeaders().get("X-Custom"))
+                .header("X-Plain", "visible");
+        }
+
+        @Get("/summary/redirect1")
+        HttpResponse<String> summaryRedirect1() {
+            return HttpResponse.<String> status(HttpStatus.FOUND).header("Location", "/summary/redirect2?token=abc&plain=1");
+        }
+
+        @Get("/summary/redirect2")
+        HttpResponse<String> summaryRedirect2() {
+            return HttpResponse.<String> status(HttpStatus.TEMPORARY_REDIRECT).header("Location", "/hello");
+        }
+
+        @Get("/summary/flaky")
+        HttpResponse<String> summaryFlaky() {
+            return FLAKY_CALLS.incrementAndGet() == 1 ? HttpResponse.status(HttpStatus.BAD_GATEWAY) : HttpResponse.ok("recovered");
+        }
+
+        @Get("/summary/empty")
+        HttpResponse<Void> summaryEmpty() {
+            return HttpResponse.noContent();
+        }
 
         private static final int LARGE_BODY_SIZE = 20 * 1024 * 1024; // 20MB > 19MB safeguard
         private static final String LARGE_BODY = "a".repeat(LARGE_BODY_SIZE);

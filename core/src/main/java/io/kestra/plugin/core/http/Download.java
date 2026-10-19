@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,6 +56,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
         )
     },
     metrics = {
+        @Metric(name = "response.time", type = "timer", description = "The duration of the HTTP call, including retries."),
+        @Metric(name = "retries", type = "counter", description = "The number of retries performed."),
         @Metric(name = "response.length", type = "counter", description = "The content length")
     },
     aliases = "io.kestra.plugin.fs.http.Download"
@@ -83,8 +86,10 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));
         ) {
             HttpRequest request = this.request(runContext);
+            RequestSummary requestSummary = this.requestSummary(runContext, request);
             AtomicReference<Long> size = new AtomicReference<>();
 
+            long start = System.nanoTime();
             HttpResponse<Void> response = client.request(
                 request,
                 throwConsumer(r ->
@@ -118,6 +123,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                     output.flush();
                 })
             );
+            Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
 
             if (size.get() == 0) {
                 if (runContext.render(this.failOnEmptyResponse).as(Boolean.class).orElseThrow()) {
@@ -146,11 +152,22 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
 
             logger.debug("File '{}' downloaded with size '{}'", from, size);
 
+            ResponseSummary summary = this.responseSummary(runContext, request, response, size.get(), elapsed);
+
             return Output.builder()
                 .code(response.getStatus().getCode())
+                .reason(summary.reason())
                 .uri(runContext.storage().putFile(tempFile, rFilename))
-                .headers(response.getHeaders().map())
+                .headers(this.redactedHeaders(runContext, response))
                 .length(size.get())
+                .request(requestSummary)
+                .contentType(summary.contentType())
+                .contentLength(summary.contentLength())
+                .durationMs(summary.durationMs())
+                .finalUri(summary.finalUri())
+                .redirects(summary.redirects())
+                .protocol(summary.protocol())
+                .retries(summary.retries())
                 .build();
         }
     }
@@ -225,8 +242,63 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         private final Long length;
 
         @Schema(
-            title = "The headers of the response"
+            title = "The headers of the response",
+            description = "Sensitive headers such as `Set-Cookie` or `Authorization`, and headers whose value is a secret, are replaced with `***`."
         )
         private final Map<String, List<String>> headers;
+
+        @Schema(
+            title = "The reason phrase of the response status",
+            description = "For example `OK` or `Service Unavailable`."
+        )
+        private final String reason;
+
+        @Schema(
+            title = "The summary of the request that was sent",
+            description = "Only present when `outputRequest` is `true`. Header values, query values and the request body are never included."
+        )
+        private final RequestSummary request;
+
+        @Schema(
+            title = "The content type of the response",
+            description = "The value of the `Content-Type` response header, or `null` if the server did not send one."
+        )
+        private final String contentType;
+
+        @Schema(
+            title = "The size of the downloaded file in bytes",
+            description = "Same value as `length`. `0` when the response has no body."
+        )
+        private final Long contentLength;
+
+        @Schema(
+            title = "The duration of the call in milliseconds",
+            description = "Measured around the client call, so it includes retries and the time to download the body."
+        )
+        private final Long durationMs;
+
+        @Schema(
+            title = "The final URI of the response",
+            description = "The URI reached after following redirects, with credentials in the user-info and query parameters redacted."
+        )
+        private final String finalUri;
+
+        @Schema(
+            title = "The redirects followed to reach the response",
+            description = "Each entry has the `code` of the redirect response and the redacted `location` it pointed to. Empty when no redirect was followed."
+        )
+        private final List<HttpResponse.Redirect> redirects;
+
+        @Schema(
+            title = "The HTTP protocol version of the response",
+            description = "For example `HTTP/1.1`."
+        )
+        private final String protocol;
+
+        @Schema(
+            title = "The number of retries performed",
+            description = "`0` when the first attempt succeeded."
+        )
+        private final Integer retries;
     }
 }

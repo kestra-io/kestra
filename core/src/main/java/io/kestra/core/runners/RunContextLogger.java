@@ -184,6 +184,10 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         return result;
     }
 
+    public Set<String> usedSecrets() {
+        return Set.copyOf(this.useSecrets);
+    }
+
     public void usedSecret(String secret) {
         if (secret != null && !secret.isEmpty()) {
             this.addSecretToMask(secret);

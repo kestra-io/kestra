@@ -94,6 +94,15 @@ public abstract class RunContext implements PropertyContext {
     public abstract Logger logger();
 
     /**
+     * Gets the resolved secret values read so far by this run context, so that a task can redact them from what it exposes.
+     *
+     * @return an immutable snapshot of the secret values, never {@code null}.
+     */
+    public Set<String> usedSecrets() {
+        return Set.of();
+    }
+
+    /**
      * Reports a lifecycle step of a multi-step task (e.g. a batch job or a runner that launches
      * an external resource) so UIs following the execution live can track progress. Emitted as a
      * regular INFO log line carrying a typed {@code step} token, so it rides the existing log

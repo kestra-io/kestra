@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
@@ -21,13 +22,18 @@ import org.apache.hc.core5.net.URIBuilder;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.HttpRedactor;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -61,6 +67,13 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
 
     @Builder.Default
     protected HttpConfiguration options = HttpConfiguration.builder().build();
+
+    @Builder.Default
+    @Schema(
+        title = "Whether to output a summary of the request that was sent.",
+        description = "When `true`, the `request` output describes the rendered request (method, redacted URI, header and parameter names, body size, authentication type). Header values, query values and body content are never included."
+    )
+    protected Property<Boolean> outputRequest = Property.ofValue(true);
 
     protected HttpClient client(RunContext runContext) throws IllegalVariableEvaluationException, MalformedURLException, URISyntaxException {
         return HttpClient.builder()
@@ -181,6 +194,42 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
         }
 
         return request.build();
+    }
+
+    protected RequestSummary requestSummary(RunContext runContext, HttpRequest request) throws IllegalVariableEvaluationException, IOException {
+        if (!runContext.render(this.outputRequest).as(Boolean.class).orElse(true)) {
+            return null;
+        }
+
+        Duration timeout = this.options != null && this.options.getTimeout() != null
+            ? runContext.render(this.options.getTimeout().getReadIdleTimeout()).as(Duration.class).orElse(null)
+            : null;
+        Boolean followRedirects = this.options != null ? runContext.render(this.options.getFollowRedirects()).as(Boolean.class).orElse(null) : null;
+
+        return RequestSummary.of(request, this.options, timeout, followRedirects, runContext.usedSecrets());
+    }
+
+    protected ResponseSummary responseSummary(RunContext runContext, HttpRequest request, HttpResponse<?> response, long contentLength, Duration elapsed) {
+        ResponseSummary summary = ResponseSummary.of(response, request.getUri(), contentLength, elapsed.toMillis(), runContext.usedSecrets());
+
+        runContext.metric(Timer.of("response.time", elapsed));
+        runContext.metric(Counter.of("retries", summary.retries()));
+        runContext.metric(Counter.of("response.length", contentLength));
+
+        runContext.logger().debug(
+            "{} {} responded with status code '{}' in {} ms after {} retries",
+            request.getMethod(),
+            HttpRedactor.redactUri(request.getUri(), runContext.usedSecrets()),
+            response.getStatus().getCode(),
+            summary.durationMs(),
+            summary.retries()
+        );
+
+        return summary;
+    }
+
+    protected Map<String, List<String>> redactedHeaders(RunContext runContext, HttpResponse<?> response) {
+        return HttpRedactor.redactHeaders(response.getHeaders().map(), runContext.usedSecrets());
     }
 
     private Charset defaultCharset(RunContext runContext) throws IllegalVariableEvaluationException {

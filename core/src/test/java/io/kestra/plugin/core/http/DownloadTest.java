@@ -301,11 +301,80 @@ class DownloadTest {
         assertThat(output.getUri().toString()).endsWith("file.with%5B%5Dbrackets.txt");
     }
 
+    @Test
+    void shouldOutputSummaryWithRedactedHeaders() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/sample.csv?api_key=abc"))
+            .build();
+
+        Download.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getContentLength()).isEqualTo(CSV_CONTENT.length()).isEqualTo(output.getLength());
+        assertThat(output.getContentType()).startsWith("text/csv");
+        assertThat(output.getHeaders().get("set-cookie")).containsExactly("***");
+        assertThat(output.getRequest().uri().getRawQuery()).isEqualTo("api_key=***");
+        assertThat(output.getRequest().hasBody()).isFalse();
+        assertThat(output.getFinalUri()).isEqualTo(embeddedServer.getURI() + "/sample.csv?api_key=***");
+        assertThat(output.getRedirects()).isEmpty();
+        assertThat(output.getRetries()).isZero();
+        assertThat(output.getDurationMs()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    void shouldReportRedirectAndSkipRequestWhenDisabled() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/redirect-to-csv"))
+            .outputRequest(Property.ofValue(false))
+            .build();
+
+        Download.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getRequest()).isNull();
+        assertThat(output.getRedirects()).hasSize(1);
+        assertThat(output.getRedirects().getFirst().getCode()).isEqualTo(302);
+        assertThat(output.getFinalUri()).isEqualTo(embeddedServer.getURI() + "/sample.csv");
+        assertThat(output.getLength()).isEqualTo(CSV_CONTENT.length());
+    }
+
+    @Test
+    void shouldReportZeroContentLengthWithoutContentTypeForEmptyResponse() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/204"))
+            .failOnEmptyResponse(Property.ofValue(false))
+            .build();
+
+        Download.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getContentLength()).isZero();
+        assertThat(output.getContentType()).isNull();
+    }
+
     @Controller()
     public static class SlackWebController {
+        @Get("redirect-to-csv")
+        public HttpResponse<String> redirectToCsv() {
+            return HttpResponse.<String> status(io.micronaut.http.HttpStatus.FOUND).header("Location", "/sample.csv");
+        }
+
         @Get("sample.csv")
         public HttpResponse<byte[]> csv() {
             return HttpResponse.ok(CSV_CONTENT.getBytes(StandardCharsets.UTF_8))
+                .header("Set-Cookie", "session=abc")
                 .contentType(io.micronaut.http.MediaType.TEXT_CSV_TYPE);
         }
 

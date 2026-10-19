@@ -2,9 +2,9 @@ package io.kestra.plugin.core.http;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -16,7 +16,9 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.HttpRedactor;
 import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Metric;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
@@ -42,6 +44,31 @@ import lombok.experimental.SuperBuilder;
 )
 @Plugin(
     examples = {
+        @Example(
+            title = "Call an API and log a safe summary of the call. The `request` and response summary outputs never contain header values, and credentials in the query string are replaced with `***`.",
+            full = true,
+            code = """
+                id: http_summary
+                namespace: company.team
+
+                tasks:
+                  - id: call_api
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://api.example.com/v1/orders?since={{ now() | dateAdd(-1, 'DAYS') | date('yyyy-MM-dd') }}&api_key={{ secret('API_KEY') }}"
+                    method: GET
+                    headers:
+                      Authorization: "Bearer {{ secret('API_TOKEN') }}"
+                      Accept: application/json
+                    options:
+                      followRedirects: true
+
+                  - id: report
+                    type: io.kestra.plugin.core.log.Log
+                    message: |
+                      {{ outputs.call_api.request.method }} {{ outputs.call_api.request.uri }}
+                      -> {{ outputs.call_api.code }} {{ outputs.call_api.contentType }} in {{ outputs.call_api.durationMs }} ms, {{ outputs.call_api.contentLength }} bytes
+                """
+        ),
         @Example(
             title = "Execute a Kestra flow via an HTTP POST request authenticated with basic auth. To pass a `user` input to the API call, we use the `formData` property. When using form data, make sure to set the `contentType` property to `multipart/form-data`.",
             full = true,
@@ -330,6 +357,11 @@ import lombok.experimental.SuperBuilder;
                 """
         )
     },
+    metrics = {
+        @Metric(name = "response.time", type = "timer", description = "The duration of the HTTP call, including retries."),
+        @Metric(name = "retries", type = "counter", description = "The number of retries performed."),
+        @Metric(name = "response.length", type = "counter", description = "The size of the response body in bytes.")
+    },
     aliases = "io.kestra.plugin.fs.http.Request"
 )
 public class Request extends AbstractHttp implements RunnableTask<Request.Output> {
@@ -346,13 +378,18 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
     public Output run(RunContext runContext) throws Exception {
         try (HttpClient client = this.client(runContext)) {
             HttpRequest request = this.request(runContext);
+            RequestSummary requestSummary = this.requestSummary(runContext, request);
 
+            long start = System.nanoTime();
             HttpResponse<Byte[]> response = client.request(request, Byte[].class);
+            Duration elapsed = Duration.ofNanos(System.nanoTime() - start);
 
             String body = null;
+            long contentLength = 0;
 
             if (response.getBody() != null) {
                 byte[] bytes = getResponseBytes(response);
+                contentLength = bytes.length;
                 body = IOUtils.toString(bytes, StandardCharsets.UTF_8.name());
             }
 
@@ -368,7 +405,7 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
                 }
             }
 
-            return this.output(runContext, request, response, body);
+            return this.output(runContext, request, response, body, requestSummary, this.responseSummary(runContext, request, response, contentLength, elapsed));
         }
     }
 
@@ -383,15 +420,24 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
         return bytes;
     }
 
-    public Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body)
-        throws GeneralSecurityException, URISyntaxException, IOException, IllegalVariableEvaluationException {
+    private Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body, RequestSummary requestSummary, ResponseSummary summary)
+        throws GeneralSecurityException, IOException, IllegalVariableEvaluationException {
         boolean encrypt = runContext.render(this.encryptBody).as(Boolean.class).orElseThrow();
         return Output.builder()
             .code(response.getStatus().getCode())
-            .headers(response.getHeaders().map())
-            .uri(request.getUri())
+            .reason(summary.reason())
+            .headers(this.redactedHeaders(runContext, response))
+            .uri(HttpRedactor.redactUri(request.getUri(), runContext.usedSecrets()))
             .body(encrypt ? null : body)
             .encryptedBody(encrypt ? EncryptedString.from(body, runContext) : null)
+            .request(requestSummary)
+            .contentType(summary.contentType())
+            .contentLength(summary.contentLength())
+            .durationMs(summary.durationMs())
+            .finalUri(summary.finalUri())
+            .redirects(summary.redirects())
+            .protocol(summary.protocol())
+            .retries(summary.retries())
             .build();
     }
 
@@ -399,7 +445,8 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URL of the current request"
+            title = "The URL of the current request",
+            description = "Credentials in the user-info and in the query parameters are redacted."
         )
         private final URI uri;
 
@@ -409,7 +456,8 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
         private final Integer code;
 
         @Schema(
-            title = "The headers of the response"
+            title = "The headers of the response",
+            description = "Sensitive headers such as `Set-Cookie` or `Authorization`, and headers whose value is a secret, are replaced with `***`."
         )
         @PluginProperty(additionalProperties = List.class)
         private final Map<String, List<String>> headers;
@@ -425,6 +473,60 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
             description = "If the `encryptBody` property is set to `true`, Kestra will automatically encrypt the output before storing it, and decrypt it when the output is retrieved in a downstream task."
         )
         private EncryptedString encryptedBody;
+
+        @Schema(
+            title = "The reason phrase of the response status",
+            description = "For example `OK` or `Service Unavailable`."
+        )
+        private final String reason;
+
+        @Schema(
+            title = "The summary of the request that was sent",
+            description = "Only present when `outputRequest` is `true`. Header values, query values and the request body are never included."
+        )
+        private final RequestSummary request;
+
+        @Schema(
+            title = "The content type of the response",
+            description = "The value of the `Content-Type` response header, or `null` if the server did not send one."
+        )
+        private final String contentType;
+
+        @Schema(
+            title = "The size of the response body in bytes",
+            description = "`0` when the response has no body."
+        )
+        private final Long contentLength;
+
+        @Schema(
+            title = "The duration of the call in milliseconds",
+            description = "Measured around the client call, so it includes retries and the time to read the response body."
+        )
+        private final Long durationMs;
+
+        @Schema(
+            title = "The final URI of the response",
+            description = "The URI reached after following redirects, with credentials in the user-info and query parameters redacted."
+        )
+        private final String finalUri;
+
+        @Schema(
+            title = "The redirects followed to reach the response",
+            description = "Each entry has the `code` of the redirect response and the redacted `location` it pointed to. Empty when no redirect was followed."
+        )
+        private final List<HttpResponse.Redirect> redirects;
+
+        @Schema(
+            title = "The HTTP protocol version of the response",
+            description = "For example `HTTP/1.1`."
+        )
+        private final String protocol;
+
+        @Schema(
+            title = "The number of retries performed",
+            description = "`0` when the first attempt succeeded."
+        )
+        private final Integer retries;
 
         @Schema(
             title = "The form data to be sent in the request body",

@@ -421,6 +421,14 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
+    public Set<String> usedSecrets() {
+        return logger.usedSecrets();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Logger logger() {
         return logger.get();
     }

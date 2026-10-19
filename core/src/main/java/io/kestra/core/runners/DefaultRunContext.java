@@ -417,9 +417,6 @@ public class DefaultRunContext extends RunContext {
         return new Secret(secretKey, this::logger).encrypt(plaintext);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Set<String> usedSecrets() {
         return logger.usedSecrets();

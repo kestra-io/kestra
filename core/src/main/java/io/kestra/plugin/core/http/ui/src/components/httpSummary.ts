@@ -197,7 +197,6 @@ export function formatStatus(code?: number, reason?: string): string | undefined
     return code === undefined ? undefined : [code, reason].filter(Boolean).join(" ");
 }
 
-// The host mounts the artifact in its own window, so its base path is read from there.
 export function fileName(uri: string): string {
     return uri.split("/").filter(Boolean).at(-1) ?? uri;
 }
@@ -220,6 +219,7 @@ export function downloadFileName(summary: Pick<HttpSummary, "fileUri" | "path" |
     return stored;
 }
 
+// The host mounts the artifact in its own window, so its base path is read from there.
 export function executionFileUrl(
     executionId: string | undefined,
     path: string,

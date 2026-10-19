@@ -26,6 +26,7 @@ import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.http.client.HttpRedactor;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.property.Property;
@@ -69,6 +70,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
     protected HttpConfiguration options = HttpConfiguration.builder().build();
 
     @Builder.Default
+    @PluginProperty(group = "advanced")
     @Schema(
         title = "Whether to output a summary of the request that was sent.",
         description = "Defaults to `true`. When `true`, the `request` output describes the rendered request: method, redacted URI, header, query parameter and form field names, body size and authentication type. It never holds header values, query values or body content. Set to `false` to omit it."
@@ -201,12 +203,12 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
             return null;
         }
 
-        Duration timeout = this.options != null && this.options.getTimeout() != null
+        var rTimeout = this.options != null && this.options.getTimeout() != null
             ? runContext.render(this.options.getTimeout().getReadIdleTimeout()).as(Duration.class).orElse(null)
             : null;
-        Boolean followRedirects = this.options != null ? runContext.render(this.options.getFollowRedirects()).as(Boolean.class).orElse(null) : null;
+        var rFollowRedirects = this.options != null ? runContext.render(this.options.getFollowRedirects()).as(Boolean.class).orElse(null) : null;
 
-        return RequestSummary.of(request, this.options, timeout, followRedirects, runContext.usedSecrets());
+        return RequestSummary.of(request, this.options, rTimeout, rFollowRedirects, runContext.usedSecrets());
     }
 
     protected ResponseSummary responseSummary(RunContext runContext, HttpRequest request, HttpResponse<?> response, long contentLength, Duration elapsed) {

@@ -445,7 +445,8 @@ export function getDateGrouping(startDate: Dayjs | string | undefined, endDate: 
     if (duration.asDays() > 365) {
         return {format: "YYYY-MM", unit: "month"}
     } else if (duration.asDays() > 180) {
-        return {format: "YYYY-[W]ww", unit: "week"}
+        // ISO week-year + ISO week: the week of 29 Dec 2025 is "2026-W01", so labels sort in time order
+        return {format: "GGGG-[W]WW", unit: "week"}
     } else if (duration.asDays() > 1) {
         return {format: "YYYY-MM-DD", unit: "day"}
     } else if (duration.asHours() > 1) {

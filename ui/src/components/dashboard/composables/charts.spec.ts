@@ -384,12 +384,26 @@ describe("fillTimeBucketLabels", () => {
         expect(labels).toEqual(["2026-08-30", "2026-08-31", "2026-09-01", "2026-09-02"])
     })
 
-    it("renders one distinct label per week for a weekly grouping", () => {
+    it("renders one distinct label per ISO week for a weekly grouping", () => {
         const labels = fillTimeBucketLabels(
-            ["2026-08-30 10:00:00", "2026-09-13 08:00:00"],
-            {format: "YYYY-[W]ww", unit: "week"},
+            ["2026-08-31 10:00:00", "2026-09-14 08:00:00"],
+            {format: "GGGG-[W]WW", unit: "week"},
         )
         expect(labels).toEqual(["2026-W36", "2026-W37", "2026-W38"])
+    })
+
+    it("keeps weeks in time order across New Year with the ISO week-year", () => {
+        const labels = fillTimeBucketLabels(
+            ["2025-12-15 00:00:00", "2025-12-22 00:00:00", "2025-12-29 00:00:00", "2026-01-05 00:00:00"],
+            {format: "GGGG-[W]WW", unit: "week"},
+        )
+        expect(labels).toEqual(["2025-W51", "2025-W52", "2026-W01", "2026-W02"])
+    })
+
+    it("labels the last days of December with the next ISO week-year when they belong to its week 1", () => {
+        const weekly = {format: "GGGG-[W]WW", unit: "week"} as const
+        expect(fillTimeBucketLabels(["2025-12-31 12:00:00"], weekly)).toEqual(["2026-W01"])
+        expect(fillTimeBucketLabels(["2027-01-02 12:00:00"], weekly)).toEqual(["2026-W53"])
     })
 
     it("keeps values that are not valid dates as labels verbatim", () => {

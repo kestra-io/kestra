@@ -106,7 +106,8 @@ export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping
 
     if (parsed.length) {
         const max = dayjs.max(parsed)!
-        let cursor = dayjs.min(parsed)!.startOf(grouping.unit)
+        // Weekly labels are ISO weeks (Monday start), so fill from the ISO week start, not dayjs's Sunday one
+        let cursor = dayjs.min(parsed)!.startOf(grouping.unit === "week" ? "isoWeek" : grouping.unit)
         for (let i = 0; cursor.isSameOrBefore(max) && i < MAX_FILLED_TIME_BUCKETS; i++) {
             labels.add(cursor.format(grouping.format))
             cursor = cursor.add(1, grouping.unit)

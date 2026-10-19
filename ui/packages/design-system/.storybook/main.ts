@@ -14,7 +14,13 @@ const config: StorybookConfig = {
     ],
     framework: {
         name: "@storybook/vue3-vite",
-        options: {},
+        options: {
+            // Storybook resolves this tsconfig from the git root, not from this file
+            docgen: {
+                plugin: "vue-component-meta",
+                tsconfig: "ui/packages/design-system/tsconfig.app.json",
+            },
+        },
     },
     async viteFinal(viteConfig) {
         viteConfig.plugins = [

@@ -126,6 +126,16 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 TaskRunStatistic taskRunStatistic = TaskRunStatistic.fromMap((Map<String, Object>) outputs.get(Loop.TASK_RUN_STATISTIC_OUTPUT))
                     .plus(message.taskRunStatistic());
 
+                boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated();
+                if (loopAlreadyEnded) {
+                    computeOutputs(parentTaskRun, outputs, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
+                    if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
+                        logLoopIterationFailure(parentTaskRun, loop, executor, message);
+                    }
+                    followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                    return null;
+                }
+
                 if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
                     // the failure happened inside an isolated loop sub-execution: log inside the parent exec
                     computeOutputs(parentTaskRun, outputs, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
@@ -148,7 +158,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                     "outputs", MapUtils.emptyOnNull(message.outputs())
                                     )
                             );
-                            boolean shouldBreak = runContext.render(loop.getBreakWhen()).skipCache().as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
+                            boolean shouldBreak = runContext.render(loop.getBreakWhen()).as(String.class, iterationVariables).map(s -> TruthUtils.isTruthy(s)).orElse(false);
                             if (shouldBreak) {
                                 // update the outputs with SKIPPED iterations
                                 terminatedByState.put(State.Type.SKIPPED.name(), iterationCount - nextIndex);

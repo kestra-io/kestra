@@ -41,6 +41,7 @@ import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.events.TriggerReceived;
@@ -125,6 +126,7 @@ public class TriggerEventHandler {
             case TriggerUpdated evt -> onTriggerUpdated(clock, evt);
             case TriggerFlowRevisionUpdated evt -> onTriggerFlowRevisionUpdated(evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
+            case TriggerExecutionDeleted evt -> onTriggerExecutionDeleted(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
             case TriggerWorkerLost evt -> onTriggerWorkerLost(clock, evt);
@@ -342,6 +344,11 @@ public class TriggerEventHandler {
             return;
         }
 
+        if (maybeState.get().getExecutionId() != null) {
+            onLockingExecutionTerminated(clock, event, maybeState.get());
+            return;
+        }
+
         findTriggerState(event).ifPresent(
             state -> triggerStateStore.save(
                 state
@@ -350,6 +357,53 @@ public class TriggerEventHandler {
                     .updateOnExecutionTerminated(clock, event.executionState())
             )
         );
+    }
+
+    /**
+     * Fenced by the locking execution id, as event-id ordering is unreliable across independent producers.
+     */
+    private void onLockingExecutionTerminated(Clock clock, TriggerExecutionTerminated event, TriggerState state) {
+        if (!state.getExecutionId().equals(event.executionId())) {
+            Logs.logTrigger(
+                event.id(),
+                Level.DEBUG,
+                "Ignoring event '{}' for execution '{}'. Cause: the trigger is locked on execution '{}'.",
+                event.type(),
+                event.executionId(),
+                state.getExecutionId()
+            );
+            return;
+        }
+        if (state.getLastEventId() == null || event.eventId().isNewerThan(state.getLastEventId())) {
+            state = state.lastEventId(clock, event.eventId());
+        }
+        triggerStateStore.save(
+            state
+                .locked(clock, false)
+                .updateOnExecutionTerminated(clock, event.executionState())
+        );
+    }
+
+    /**
+     * Handler method for {@link TriggerExecutionDeleted}.
+     * <p>
+     * Only releases a lock still held by the deleted execution, as the deletion may race with its termination.
+     *
+     * @param event the event.
+     */
+    void onTriggerExecutionDeleted(Clock clock, TriggerExecutionDeleted event) {
+        triggerStateStore.findByIdWithoutAcl(event.id()).ifPresent(state ->
+        {
+            if (!event.executionId().equals(state.getExecutionId())) {
+                return;
+            }
+            triggerStateStore.save(
+                state
+                    .locked(clock, false)
+                    .executionId(clock, null)
+                    .workerId(clock, null)
+            );
+        });
     }
 
     /**

@@ -1,0 +1,21 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "types": []
+  },
+  "include": [
+    "../src/**/*.ts",
+    "../src/**/*.tsx",
+    "../src/**/*.vue",
+    "../packages/design-system/src/**/*.vue",
+    "../packages/topology/src/**/*.vue"
+  ],
+  "exclude": [
+    "../src/**/*.spec.ts",
+    "../src/**/*.test.ts",
+    "../src/**/*.stories.ts",
+    "../src/**/*.stories.tsx"
+  ]
+}

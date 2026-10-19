@@ -4,6 +4,8 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export type AbstractFilterFilterType = 'CONTAINS' | 'ENDS_WITH' | 'EQUAL_TO' | 'GREATER_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'IN' | 'IS_FALSE' | 'IS_NOT_NULL' | 'IS_NULL' | 'IS_TRUE' | 'LESS_THAN' | 'LESS_THAN_OR_EQUAL_TO' | 'NOT_CONTAINS' | 'NOT_EQUAL_TO' | 'NOT_IN' | 'OR' | 'REGEX' | 'STARTS_WITH' | 'PREFIX';
+
 export type AbstractFlow = {
     id: string;
     namespace: string;
@@ -420,7 +422,7 @@ export type ArtefactDraft = {
     constraints?: string | null;
 };
 
-export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
+export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP' | 'TEST_SUITE';
 
 export type Asset = {
     status?: string;
@@ -662,6 +664,22 @@ export type DailyExecutionStatisticsDuration = {
     max: string;
     sum: string;
     count: number;
+};
+
+/**
+ * A page of chart rows.
+ */
+export type DashboardControllerChartData = {
+    results: Array<{
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    }>;
+    total: number;
+    /**
+     * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     */
+    ignoredFilters?: Array<QueryFilterField>;
 };
 
 export type DashboardControllerDashboardResponse = {
@@ -1028,6 +1046,32 @@ export type FlowAction = {
      * The label displayed on this action.
      */
     label?: string | null;
+    /**
+     * The conditions under which this action is offered.
+     *
+     * All conditions must hold, and an action without conditions is always offered. A field the resource does not have reads as null, so `NOT_EQUAL_TO`, `NOT_IN` and `NOT_CONTAINS` hold on it. A field is read as `status`, `namespace` or `metadata.<key>` on an asset.
+     */
+    when?: Array<FieldCondition> | null;
+};
+
+/**
+ * A condition the resource an action is attached to must satisfy for the action to be offered.
+ */
+export type FieldCondition = {
+    /**
+     * The field this condition reads.
+     */
+    field: string;
+    /**
+     * How the field is compared to the value.
+     */
+    operator: AbstractFilterFilterType;
+    /**
+     * The value the field is compared to.
+     *
+     * A list for `IN` and `NOT_IN`, ignored by `IS_NULL` and `IS_NOT_NULL`.
+     */
+    value?: string | number | boolean | Array<unknown> | null;
 };
 
 export type FlowControllerFlowWithDeprecatedTasks = {
@@ -1698,18 +1742,6 @@ export type PagedResultsFlow = {
  */
 export type PagedResultsKvEntry = {
     results: Array<KvEntry>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
-export type PagedResultsMapStringObject = {
-    results: Array<{
-        [key: string]: {
-            [key: string]: unknown;
-        };
-    }>;
     total: number;
 };
 
@@ -4784,7 +4816,7 @@ export type PreviewChartResponses = {
     /**
      * previewChart 200 response
      */
-    200: PagedResultsMapStringObject;
+    200: DashboardControllerChartData;
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];

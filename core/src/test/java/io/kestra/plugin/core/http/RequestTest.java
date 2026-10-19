@@ -778,11 +778,28 @@ class RequestTest {
         assertThat(request.contentType()).isEqualTo("application/json");
         assertThat(request.hasBody()).isTrue();
         assertThat(request.bodyBytes()).isEqualTo("{\"password\":\"hunter2\"}".length());
-        assertThat(request.auth()).isEqualTo("BEARER");
+        assertThat(request.auth()).isEqualTo(RequestSummary.AuthType.BEARER);
         assertThat(output.getUri().getRawQuery()).isEqualTo("plain=1&other=***&api_key=***");
 
         String serialized = JacksonMapper.ofJson().writeValueAsString(output);
         assertThat(serialized).doesNotContain("hunter2").doesNotContain("secretKey");
+    }
+
+    @Test
+    void shouldRedactSecretUsedAsPathSegment() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofExpression("{{ '" + serverUrl() + "' }}/summary/hook/{{ secret('WEBHOOK_KEY') }}/send"))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getUri().getPath()).isEqualTo("/summary/hook/***/send");
+        assertThat(output.getRequest().uri().getPath()).isEqualTo("/summary/hook/***/send");
+        assertThat(output.getRequest().path()).isEqualTo("/summary/hook/***/send");
+        assertThat(output.getFinalUri()).endsWith("/summary/hook/***/send");
+        assertThat(JacksonMapper.ofJson().writeValueAsString(output)).doesNotContain("secretKey");
     }
 
     @Test
@@ -797,7 +814,7 @@ class RequestTest {
 
         Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
 
-        assertThat(output.getRequest().auth()).isEqualTo("BEARER");
+        assertThat(output.getRequest().auth()).isEqualTo(RequestSummary.AuthType.BEARER);
     }
 
     @Test
@@ -814,7 +831,7 @@ class RequestTest {
 
         Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
 
-        assertThat(output.getRequest().auth()).isEqualTo("BASIC");
+        assertThat(output.getRequest().auth()).isEqualTo(RequestSummary.AuthType.BASIC);
         assertThat(output.getRequest().formFieldNames()).containsExactly("user");
         assertThat(output.getRequest().bodyBytes()).isEqualTo("user=john".length());
     }
@@ -884,8 +901,8 @@ class RequestTest {
         Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
 
         assertThat(output.getRedirects()).hasSize(2);
-        assertThat(output.getRedirects().get(0).getCode()).isEqualTo(302);
-        assertThat(output.getRedirects().get(0).getLocation()).isEqualTo(serverUrl() + "/summary/redirect2?token=***&plain=1");
+        assertThat(output.getRedirects().getFirst().getCode()).isEqualTo(302);
+        assertThat(output.getRedirects().getFirst().getLocation()).isEqualTo(serverUrl() + "/summary/redirect2?token=***&plain=1");
         assertThat(output.getRedirects().get(1).getCode()).isEqualTo(307);
         assertThat(output.getFinalUri()).isEqualTo(serverUrl() + "/hello");
         assertThat(output.getUri()).hasToString(serverUrl() + "/summary/redirect1");
@@ -941,6 +958,11 @@ class RequestTest {
                 .header("X-Api-Key", "key")
                 .header("X-Echo", request.getHeaders().get("X-Custom"))
                 .header("X-Plain", "visible");
+        }
+
+        @Get("/summary/hook/{token}/send")
+        HttpResponse<String> summaryHook(String token) {
+            return HttpResponse.ok("ok");
         }
 
         @Get("/summary/redirect1")

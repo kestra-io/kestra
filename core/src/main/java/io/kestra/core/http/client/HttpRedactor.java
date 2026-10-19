@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
@@ -47,6 +48,14 @@ public final class HttpRedactor {
 
     private static final Pattern SENSITIVE_NAME = Pattern.compile("(?i)(token|secret|password|credential|signature|api[-_]?key)");
 
+    // Matched on whole tokens only, so that names such as "page", "monkey" or "keyword" are left alone.
+    private static final Set<String> SENSITIVE_NAME_TOKENS = Set.of("key", "sig", "auth", "pass", "pwd");
+    private static final Pattern NAME_TOKEN_SEPARATOR = Pattern.compile("[^a-z0-9]+");
+    private static final Pattern CAMEL_CASE_BOUNDARY = Pattern.compile("([a-z0-9])([A-Z])");
+
+    private static final Set<String> URI_HEADERS = Set.of("location", "content-location");
+    private static final Pattern LINK_TARGET = Pattern.compile("<([^>]*)>");
+
     private HttpRedactor() {
     }
 
@@ -58,7 +67,15 @@ public final class HttpRedactor {
         if (SENSITIVE_HEADERS.contains(lower)) {
             return true;
         }
-        return !NON_SENSITIVE_NAMES.contains(lower) && SENSITIVE_NAME.matcher(name).find();
+        if (NON_SENSITIVE_NAMES.contains(lower)) {
+            return false;
+        }
+        return SENSITIVE_NAME.matcher(name).find() || hasSensitiveToken(name);
+    }
+
+    private static boolean hasSensitiveToken(String name) {
+        var separated = CAMEL_CASE_BOUNDARY.matcher(name).replaceAll("$1 $2").toLowerCase(Locale.ROOT);
+        return NAME_TOKEN_SEPARATOR.splitAsStream(separated).anyMatch(SENSITIVE_NAME_TOKENS::contains);
     }
 
     public static boolean isSecretValue(@Nullable String value, Set<String> secretValues) {
@@ -73,10 +90,19 @@ public final class HttpRedactor {
 
         headers.forEach((name, values) ->
         {
-            boolean sensitive = isSensitiveName(name);
+            var sensitive = isSensitiveName(name);
+            var lowerName = name.toLowerCase(Locale.ROOT);
             List<String> out = new ArrayList<>(values.size());
             for (String value : values) {
-                out.add(sensitive || isSecretValue(value, secretValues) ? REDACTED : value);
+                if (sensitive) {
+                    out.add(REDACTED);
+                } else if (URI_HEADERS.contains(lowerName)) {
+                    out.add(redactUri(value, secretValues));
+                } else if ("link".equals(lowerName)) {
+                    out.add(redactLink(value, secretValues));
+                } else {
+                    out.add(isSecretValue(value, secretValues) ? REDACTED : value);
+                }
             }
             redacted.put(name, out);
         });
@@ -85,11 +111,17 @@ public final class HttpRedactor {
     }
 
     /**
-     * Strips the user-info and masks query values whose parameter name is sensitive or whose decoded value is a secret.
+     * Strips the user-info, masks query values whose parameter name is sensitive or whose raw or decoded value is a secret,
+     * and masks path segments that are a secret. A URI that is entirely a secret keeps only its scheme and host.
      */
     public static URI redactUri(@Nullable URI uri, Set<String> secretValues) {
         if (uri == null) {
             return null;
+        }
+
+        if (isSecretValue(uri.toString(), secretValues) || isSecretValue(decode(uri.toString()), secretValues)) {
+            var host = uri.getRawAuthority() == null ? null : uri.getRawAuthority().substring(uri.getRawAuthority().lastIndexOf('@') + 1);
+            return URI.create(host == null ? REDACTED : (uri.getScheme() == null ? "" : uri.getScheme() + ":") + "//" + host + "/" + REDACTED);
         }
 
         StringBuilder sb = new StringBuilder();
@@ -105,7 +137,7 @@ public final class HttpRedactor {
         }
 
         if (uri.getRawPath() != null) {
-            sb.append(uri.getRawPath());
+            sb.append(redactPath(uri.getRawPath(), secretValues));
         }
         if (uri.getRawQuery() != null) {
             sb.append('?').append(redactQuery(uri.getRawQuery(), secretValues));
@@ -132,6 +164,42 @@ public final class HttpRedactor {
         }
     }
 
+    /**
+     * Redacts the target of each {@code <uri>} entry of a {@code Link} header and keeps the parameters that follow it.
+     */
+    private static String redactLink(String value, Set<String> secretValues) {
+        if (isSecretValue(value, secretValues)) {
+            return REDACTED;
+        }
+
+        var matcher = LINK_TARGET.matcher(value);
+        var sb = new StringBuilder();
+        while (matcher.find()) {
+            matcher.appendReplacement(sb, Matcher.quoteReplacement("<" + redactUri(matcher.group(1), secretValues) + ">"));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private static String redactPath(String rawPath, Set<String> secretValues) {
+        if (rawPath.isEmpty()) {
+            return rawPath;
+        }
+
+        var withoutLeadingSlash = rawPath.startsWith("/") ? rawPath.substring(1) : rawPath;
+        if (isSecretValue(withoutLeadingSlash, secretValues) || isSecretValue(decode(withoutLeadingSlash), secretValues)) {
+            return "/" + REDACTED;
+        }
+
+        var segments = rawPath.split("/", -1);
+        for (var i = 0; i < segments.length; i++) {
+            if (isSecretValue(segments[i], secretValues) || isSecretValue(decode(segments[i]), secretValues)) {
+                segments[i] = REDACTED;
+            }
+        }
+        return String.join("/", segments);
+    }
+
     private static String redactQuery(String rawQuery, Set<String> secretValues) {
         List<String> params = new ArrayList<>();
         for (String param : rawQuery.split("&", -1)) {
@@ -143,7 +211,7 @@ public final class HttpRedactor {
 
             String rawName = param.substring(0, eq);
             String rawValue = param.substring(eq + 1);
-            boolean redact = isSensitiveName(decode(rawName)) || isSecretValue(decode(rawValue), secretValues);
+            boolean redact = isSensitiveName(decode(rawName)) || isSecretValue(rawValue, secretValues) || isSecretValue(decode(rawValue), secretValues);
             params.add(redact ? rawName + "=" + REDACTED : param);
         }
 

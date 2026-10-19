@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.output.CountingOutputStream;
@@ -27,7 +28,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 )
 public record RequestSummary(
     @Schema(title = "The HTTP method.") String method,
-    @Schema(title = "The request URI.", description = "User-info is removed and query values holding credentials are replaced with `***`.") URI uri,
+    @Schema(
+        title = "The request URI.", description = "User-info is removed, query values holding credentials and path segments that are a resolved `secret()` are replaced with `***`."
+    ) URI uri,
     @Schema(title = "The host of the request URI.") String host,
     @Schema(title = "The path of the request URI.") String path,
     @Schema(title = "The names of the query parameters.") List<String> queryParamNames,
@@ -36,11 +39,12 @@ public record RequestSummary(
     @Schema(title = "The size of the request body in bytes.") long bodyBytes,
     @Schema(title = "Whether the request has a body.") boolean hasBody,
     @Schema(title = "The names of the form fields, when the body is form data.") List<String> formFieldNames,
-    @Schema(title = "The authentication mechanism, one of `NONE`, `BASIC`, `BEARER`, `DIGEST`, `API_KEY`, `AWS_SIGV4` or `AUTHORIZATION_HEADER`.") String auth,
+    @Schema(title = "The authentication mechanism, one of `NONE`, `BASIC`, `BEARER`, `DIGEST`, `API_KEY`, `AWS_SIGV4` or `AUTHORIZATION_HEADER`.") AuthType auth,
     @Schema(title = "The read idle timeout, if configured.") Duration timeout,
     @Schema(title = "Whether redirects are followed.") Boolean followRedirects) {
     static RequestSummary of(HttpRequest request, HttpConfiguration options, Duration timeout, Boolean followRedirects, Set<String> secretValues) throws IOException {
         URI uri = request.getUri();
+        URI redactedUri = HttpRedactor.redactUri(uri, secretValues);
 
         List<String> headerNames = request.getHeaders() == null ? List.of() : new ArrayList<>(request.getHeaders().map().keySet());
         Set<String> lowerHeaderNames = new LinkedHashSet<>();
@@ -50,15 +54,15 @@ public record RequestSummary(
         String contentType = body != null ? body.getContentType()
             : request.getHeaders() == null ? null : request.getHeaders().firstValue("Content-Type").orElse(null);
 
-        List<String> formFieldNames = body != null && body.getContent() instanceof java.util.Map<?, ?> map
+        List<String> formFieldNames = body != null && body.getContent() instanceof Map<?, ?> map
             ? map.keySet().stream().map(String::valueOf).toList()
             : List.of();
 
         return new RequestSummary(
             request.getMethod(),
-            HttpRedactor.redactUri(uri, secretValues),
+            redactedUri,
             uri.getHost(),
-            uri.getPath(),
+            redactedUri.getPath(),
             queryParamNames(uri),
             headerNames,
             contentType,
@@ -96,29 +100,39 @@ public record RequestSummary(
         }
     }
 
-    private static String auth(HttpConfiguration options, HttpRequest request, Set<String> lowerHeaderNames) {
+    private static AuthType auth(HttpConfiguration options, HttpRequest request, Set<String> lowerHeaderNames) {
         if (options != null && options.getAuth() != null) {
-            return options.getAuth().getType().name();
+            return AuthType.valueOf(options.getAuth().getType().name());
         }
         if (lowerHeaderNames.contains("authorization")) {
             // Only the scheme prefix is read, the credential itself is never kept.
             String scheme = request.getHeaders().firstValue("Authorization").orElse("").trim().toLowerCase(Locale.ROOT);
             if (scheme.startsWith("bearer ")) {
-                return "BEARER";
+                return AuthType.BEARER;
             }
             if (scheme.startsWith("basic ")) {
-                return "BASIC";
+                return AuthType.BASIC;
             }
             if (scheme.startsWith("aws4-hmac-sha256")) {
-                return "AWS_SIGV4";
+                return AuthType.AWS_SIGV4;
             }
         }
         if (lowerHeaderNames.contains("x-amz-date") || lowerHeaderNames.contains("x-amz-signature")) {
-            return "AWS_SIGV4";
+            return AuthType.AWS_SIGV4;
         }
         if (lowerHeaderNames.stream().anyMatch(name -> !"authorization".equals(name) && !"proxy-authorization".equals(name) && !"cookie".equals(name) && HttpRedactor.isSensitiveName(name))) {
-            return "API_KEY";
+            return AuthType.API_KEY;
         }
-        return lowerHeaderNames.contains("authorization") ? "AUTHORIZATION_HEADER" : "NONE";
+        return lowerHeaderNames.contains("authorization") ? AuthType.AUTHORIZATION_HEADER : AuthType.NONE;
+    }
+
+    public enum AuthType {
+        NONE,
+        BASIC,
+        BEARER,
+        DIGEST,
+        API_KEY,
+        AWS_SIGV4,
+        AUTHORIZATION_HEADER
     }
 }

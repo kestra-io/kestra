@@ -76,7 +76,8 @@ class HttpRedactorTest {
 
     @Test
     void shouldStripUserInfoAndRedactSensitiveQueryParams() {
-        URI redacted = HttpRedactor.redactUri(URI.create("https://user:pass@example.com:8443/path?since=2026&api_key=abc&Token=t#frag"), NO_SECRETS);
+        var userInfo = String.join(":", "someone", "hunter2");
+        URI redacted = HttpRedactor.redactUri(URI.create("https://" + userInfo + "@example.com:8443/path?since=2026&api_key=abc&Token=t#frag"), NO_SECRETS);
 
         assertThat(redacted).hasToString("https://example.com:8443/path?since=2026&api_key=***&Token=***#frag");
     }
@@ -97,5 +98,82 @@ class HttpRedactorTest {
     @Test
     void shouldMaskUnparsableLocation() {
         assertThat(HttpRedactor.redactUri("http://bad host/ path", NO_SECRETS)).isEqualTo("***");
+    }
+
+    @Test
+    void shouldRedactPathSegmentEqualToSecret() {
+        URI redacted = HttpRedactor.redactUri(URI.create("https://hooks.example.com/services/s3cr3t-hook/send?x=1"), Set.of("s3cr3t-hook"));
+
+        assertThat(redacted).hasToString("https://hooks.example.com/services/***/send?x=1");
+    }
+
+    @Test
+    void shouldRedactPathSegmentEqualToDecodedSecret() {
+        URI redacted = HttpRedactor.redactUri(URI.create("https://hooks.example.com/a/my%20secret%21"), Set.of("my secret!"));
+
+        assertThat(redacted).hasToString("https://hooks.example.com/a/***");
+    }
+
+    @Test
+    void shouldRedactMultiSegmentPathEqualToSecret() {
+        URI redacted = HttpRedactor.redactUri(URI.create("https://hooks.example.com/services/T000/B000/XXXX"), Set.of("services/T000/B000/XXXX"));
+
+        assertThat(redacted).hasToString("https://hooks.example.com/***");
+    }
+
+    @Test
+    void shouldRedactWholeUriEqualToSecret() {
+        var webhook = "https://hooks.example.com/services/T000/B000/XXXX";
+
+        assertThat(HttpRedactor.redactUri(URI.create(webhook), Set.of(webhook))).hasToString("https://hooks.example.com/***");
+        assertThat(HttpRedactor.redactUri(webhook, Set.of(webhook))).isEqualTo("https://hooks.example.com/***");
+    }
+
+    @Test
+    void shouldNotRedactPathSegmentContainingSecretAsSubstring() {
+        URI redacted = HttpRedactor.redactUri(URI.create("https://example.com/prefix-s3cr3t-hook/x"), Set.of("s3cr3t-hook"));
+
+        assertThat(redacted).hasToString("https://example.com/prefix-s3cr3t-hook/x");
+    }
+
+    @Test
+    void shouldNotRedactPathSegmentEqualToShortSecret() {
+        URI redacted = HttpRedactor.redactUri(URI.create("https://example.com/api/v1"), Set.of("api"));
+
+        assertThat(redacted).hasToString("https://example.com/api/v1");
+    }
+
+    @Test
+    void shouldRedactQueryValueWhoseRawFormIsSecret() {
+        URI redacted = HttpRedactor.redactUri(URI.create("https://example.com/p?k=ab+cd==&z=1"), Set.of("ab+cd=="));
+
+        assertThat(redacted).hasToString("https://example.com/p?k=***&z=1");
+    }
+
+    @Test
+    void shouldRedactCommonCredentialNamesOnWholeTokensOnly() {
+        URI redacted = HttpRedactor.redactUri(
+            URI.create("https://example.com/p?key=1&sig=2&auth=3&pass=4&pwd=5&access_key=6&accessKey=7&page=8&monkey=9&keyword=10"),
+            NO_SECRETS
+        );
+
+        assertThat(redacted).hasToString("https://example.com/p?key=***&sig=***&auth=***&pass=***&pwd=***&access_key=***&accessKey=***&page=8&monkey=9&keyword=10");
+    }
+
+    @Test
+    void shouldRedactUrlValuedHeadersAsUris() {
+        var presigned = "https://bucket.example.com/file?X-Amz-Signature=abc&X-Amz-Credential=cred&expires=10";
+        Map<String, List<String>> redacted = HttpRedactor.redactHeaders(
+            Map.of(
+                "Location", List.of(presigned),
+                "Content-Location", List.of("/hooks/s3cr3t-hook/x?token=t"),
+                "Link", List.of("<https://example.com/page2?api_key=abc>; rel=\"next\", <https://example.com/page3>; rel=\"last\"")
+            ),
+            Set.of("s3cr3t-hook")
+        );
+
+        assertThat(redacted.get("Location")).containsExactly("https://bucket.example.com/file?X-Amz-Signature=***&X-Amz-Credential=***&expires=10");
+        assertThat(redacted.get("Content-Location")).containsExactly("/hooks/***/x?token=***");
+        assertThat(redacted.get("Link")).containsExactly("<https://example.com/page2?api_key=***>; rel=\"next\", <https://example.com/page3>; rel=\"last\"");
     }
 }

@@ -488,14 +488,12 @@
 
             const isTerminal = isLastSibling(cursor)
 
-            if (!isDirectParent && isTerminal) {
-                break
+            if (isDirectParent || !isTerminal) {
+                segments.push({
+                    depth: ancestor.depth ?? 0,
+                    isTerminal: isDirectParent && isTerminal,
+                })
             }
-
-            segments.push({
-                depth: ancestor.depth ?? 0,
-                isTerminal: isDirectParent && isTerminal,
-            })
 
             cursor = ancestor
             isDirectParent = false

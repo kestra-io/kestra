@@ -1473,12 +1473,14 @@ export type LoopRun = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 export type LoopRunParent = {
     index?: number;
     key?: string | null;
     value?: string;
+    parseValues?: boolean;
 };
 
 export type MapObjectObject = {
@@ -2746,6 +2748,7 @@ export type LoopRunWritable = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 /**

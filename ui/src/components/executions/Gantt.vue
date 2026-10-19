@@ -102,19 +102,19 @@
                                             >
                                                 <span
                                                     v-if="hasChildren(item)"
-                                                    class="gantt-rail gantt-rail--outgoing"
+                                                    class="gantt-rail gantt-rail-outgoing"
                                                     :style="{'--rail-depth': item.depth || 0}"
                                                 />
                                                 <span
                                                     v-for="segment in railSegments(item)"
                                                     :key="`vertical-${segment.depth}`"
-                                                    class="gantt-rail gantt-rail--vertical"
+                                                    class="gantt-rail gantt-rail-vertical"
                                                     :class="{'is-terminal': segment.isTerminal}"
                                                     :style="{'--rail-depth': segment.depth}"
                                                 />
                                                 <span
                                                     v-if="(item.depth ?? 0) > 0"
-                                                    class="gantt-rail gantt-rail--elbow"
+                                                    class="gantt-rail gantt-rail-elbow"
                                                     :style="{'--rail-depth': (item.depth ?? 1) - 1}"
                                                 />
                                             </div>
@@ -436,12 +436,12 @@
 
     const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
 
-    const seriesById = computed(() => new Map(series.value.map((item) => [item.id, item])))
+    const seriesById = computed(() => new Map(filteredSeries.value.map((item) => [item.id, item])))
 
     const childrenByTaskId = computed(() => {
         const children = new Set<string>()
 
-        for (const item of series.value) {
+        for (const item of filteredSeries.value) {
             if (item.task.parentTaskRunId) {
                 children.add(item.task.parentTaskRunId)
             }
@@ -453,7 +453,7 @@
     const siblingMaxIndex = computed(() => {
         const maxIndex = new Map<string, number>()
 
-        for (const item of series.value) {
+        for (const item of filteredSeries.value) {
             const parentKey = item.task.parentTaskRunId ?? "__root__"
             const currentMax = maxIndex.get(parentKey) ?? -1
             maxIndex.set(parentKey, Math.max(currentMax, item.siblingIndex))
@@ -475,35 +475,31 @@
     ): Array<{depth: number; isTerminal: boolean}> => {
         const segments: Array<{depth: number; isTerminal: boolean}> = []
 
-        let ancestorId = item.task.parentTaskRunId
+        let cursor: SeriesItem | undefined = item
+        let isDirectParent = true
 
-        while (ancestorId) {
-            const ancestor = seriesById.value.get(ancestorId)
+        while (cursor && cursor.task.parentTaskRunId) {
+            const parentId = cursor.task.parentTaskRunId
+            const ancestor = seriesById.value.get(parentId)
 
             if (!ancestor) {
                 break
             }
 
-            let isTerminal = !hasChildren(item)
-            let cursor: SeriesItem | undefined = item
+            const isTerminal = isLastSibling(cursor)
 
-            while (cursor && cursor.id !== ancestor.id) {
-                if (!isLastSibling(cursor)) {
-                    isTerminal = false
-                }
-
-                const parentId: string | undefined = cursor.task.parentTaskRunId
-                cursor = parentId
-                    ? seriesById.value.get(parentId)
-                    : undefined
+            // Stop higher ancestor rails when the path reaches the last sibling.
+            if (!isDirectParent && isTerminal) {
+                break
             }
 
             segments.push({
                 depth: ancestor.depth ?? 0,
-                isTerminal,
+                isTerminal: isDirectParent && isTerminal,
             })
 
-            ancestorId = ancestor.task.parentTaskRunId
+            cursor = ancestor
+            isDirectParent = false
         }
 
         return segments
@@ -929,36 +925,36 @@
                     background: var(--ks-border-default);
                 }
 
-                .gantt-rail--vertical {
-                    left: calc(.25rem + 12px + var(--rail-depth, 0) * 30.5px);
-                    top: -10px;
+                .gantt-rail-vertical {
+                    left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
+                    top: -0.625rem;
                     bottom: 0;
                     width: 1px;
 
                     &.is-terminal {
-                        top: -10px;
+                        top: -0.625rem;
                         bottom: auto;
-                        height: calc(50% + 10px);
+                        height: calc(50% + 0.625rem);
                     }
                 }
 
-                .gantt-rail--outgoing {
-                    left: calc(.25rem + 12px + var(--rail-depth, 0) * 30.5px);
+                .gantt-rail-outgoing {
+                    left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: 50%;
-                    height: calc(50% + 10px);
+                    height: calc(50% + 0.625rem);
                     width: 1px;
                 }
 
-                .gantt-rail--elbow {
-                    left: calc(.25rem + 12px + var(--rail-depth, 0) * 30.5px);
+                .gantt-rail-elbow {
+                    left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: 50%;
-                    width: 30.5px;
+                    width: var(--ks-spacing-5);
                     height: 1px;
                 }
 
                 .gantt-chevron {
                     flex-shrink: 0;
-                    transform: translateX(calc(var(--depth, 0) * 30.5px));
+                    transform: translateX(calc(var(--depth, 0) * var(--ks-spacing-5)));
                 }
 
                 .task-label {
@@ -1042,6 +1038,22 @@
                     transition: all 0.3s;
                     min-width: 5px;
                 }
+            }
+
+            .task-details {
+                interpolate-size: allow-keywords;
+                overflow: hidden;
+                background: var(--ks-dropdown-bg-active);
+            }
+
+            .expand-enter-active,
+            .expand-leave-active {
+                transition: height 150ms ease;
+            }
+
+            .expand-enter-from,
+            .expand-leave-to {
+                height: 0;
             }
         }
     }

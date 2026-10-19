@@ -33,7 +33,7 @@
             <GlobalSearch class="trigger-flow-guided-step" />
         </template>
         <template #actions>
-            <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
+            <div id="topnav-actions-slot" />
         </template>
         <template #panel-toggle>
             <KsIconButton
@@ -246,6 +246,12 @@
         @media (max-width: 767px) {
             display: none;
         }
+    }
+
+    #topnav-actions-slot {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        align-items: center;
     }
 
     .playgroundMode {

@@ -71,7 +71,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
     @Builder.Default
     @Schema(
         title = "Whether to output a summary of the request that was sent.",
-        description = "When `true`, the `request` output describes the rendered request (method, redacted URI, header and parameter names, body size, authentication type). Header values, query values and body content are never included."
+        description = "Defaults to `true`. When `true`, the `request` output describes the rendered request: method, redacted URI, header, query parameter and form field names, body size and authentication type. It never holds header values, query values or body content. Set to `false` to omit it."
     )
     protected Property<Boolean> outputRequest = Property.ofValue(true);
 

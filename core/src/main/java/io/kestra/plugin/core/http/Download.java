@@ -38,7 +38,9 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Schema(
     title = "Download a file over HTTP(S) to Kestra storage.",
     description = """
-        Performs an HTTP request and streams the response body into internal storage. Validates Content-Length when present and can fail on empty responses (`failOnEmptyResponse`, unless `options.allowFailed` allows it). Filename is taken from `saveAs`, `Content-Disposition`, or derived from the URI."""
+        Performs an HTTP request and streams the response body into internal storage. Validates Content-Length when present and can fail on empty responses (`failOnEmptyResponse`, unless `options.allowFailed` allows it). Filename is taken from `saveAs`, `Content-Disposition`, or derived from the URI.
+
+        By default the task also outputs a `request` summary and response metadata such as `durationMs` and `retries`. Set `outputRequest` to `false` to drop the `request` summary. Sensitive data is redacted from the outputs: see the `headers` and `request` outputs."""
 )
 @Plugin(
     examples = {
@@ -237,13 +239,14 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
         private final Integer code;
 
         @Schema(
-            title = "The content-length of the response"
+            title = "The size of the downloaded file in bytes",
+            description = "Same value as `contentLength`."
         )
         private final Long length;
 
         @Schema(
             title = "The headers of the response",
-            description = "Sensitive headers such as `Set-Cookie` or `Authorization`, and headers whose value is a secret, are replaced with `***`."
+            description = "A header value is replaced with `***` when the header name is on the deny-list (`Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`, `X-Api-Key`, `X-Auth-Token`, `X-Amz-Security-Token`, `X-Amz-Signature`, `Ocp-Apim-Subscription-Key`), when the name contains `token`, `secret`, `password`, `credential`, `signature` or `api-key` (any case), or when the value is exactly a `secret()` resolved in the task. The `Access-Control-Allow-Credentials`, `Access-Control-Allow-Headers`, `Access-Control-Expose-Headers` and `Access-Control-Request-Headers` headers are never redacted by name."
         )
         private final Map<String, List<String>> headers;
 
@@ -255,7 +258,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
 
         @Schema(
             title = "The summary of the request that was sent",
-            description = "Only present when `outputRequest` is `true`. Header values, query values and the request body are never included."
+            description = "Only present when `outputRequest` is `true`. It holds the method, the redacted URI, the host and path, the names of query parameters, headers and form fields, the body size, the authentication type and the timeout. It never holds header values, query values or body content."
         )
         private final RequestSummary request;
 
@@ -267,7 +270,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
 
         @Schema(
             title = "The size of the downloaded file in bytes",
-            description = "Same value as `length`. `0` when the response has no body."
+            description = "The number of bytes written to internal storage, after any content-coding is decoded. Same value as `length`, and not the `Content-Length` header. `0` when the response has no body."
         )
         private final Long contentLength;
 
@@ -279,13 +282,13 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
 
         @Schema(
             title = "The final URI of the response",
-            description = "The URI reached after following redirects, with credentials in the user-info and query parameters redacted."
+            description = "The URI reached after following redirects. The user-info is removed, and query values are replaced with `***` when the parameter name is sensitive or the value is a resolved `secret()`."
         )
         private final String finalUri;
 
         @Schema(
             title = "The redirects followed to reach the response",
-            description = "Each entry has the `code` of the redirect response and the redacted `location` it pointed to. Empty when no redirect was followed."
+            description = "Each entry has the `code` of the redirect response and the `location` it pointed to, redacted like `finalUri`. Empty when no redirect was followed."
         )
         private final List<HttpResponse.Redirect> redirects;
 
@@ -297,7 +300,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
 
         @Schema(
             title = "The number of retries performed",
-            description = "`0` when the first attempt succeeded."
+            description = "Counts only the retries of the Kestra retry policy configured in `options.retry`. Redirects and retries done by the underlying HTTP stack are not counted. `0` when the first attempt succeeded."
         )
         private final Integer retries;
     }

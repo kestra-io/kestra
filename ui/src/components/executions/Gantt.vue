@@ -11,8 +11,6 @@
                 :execution="execution"
                 class="gantt-progress"
             />
-            <!-- No task runs to plot: hide the filter bar + card and show only the execution
-                 status (mirrors the versioned-plugins empty screen). -->
             <KsEmptyState v-if="series.length === 0" :image="emptyIllustration">
                 <template #description>
                     <span class="gantt-empty-status">
@@ -186,7 +184,6 @@
                                     </DynamicScrollerItem>
                                 </template>
                             </DynamicScroller>
-                            <!-- Task runs exist but the active filters/search hid them all. -->
                             <KsNoData
                                 v-else
                                 :title="$t('gantt_no_tasks_match_filters_title')"

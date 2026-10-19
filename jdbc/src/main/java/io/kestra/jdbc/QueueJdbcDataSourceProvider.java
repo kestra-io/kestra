@@ -108,6 +108,8 @@ public class QueueJdbcDataSourceProvider implements AutoCloseable {
                     });
                     properties.putIfAbsent("poolName", "kestra-queue-" + type.get());
                     HikariConfig hikariConfig = new HikariConfig(properties);
+                    // JdbcQueueClient#publish relies on autocommit instead of opening a transaction per message.
+                    hikariConfig.setAutoCommit(true);
                     this.dedicatedDataSource = new HikariDataSource(hikariConfig);
                     this.dedicatedWrapper = new JooqDSLContextWrapper(
                         DSL.using(this.dedicatedDataSource, resolvedDialect, jooqSettings),

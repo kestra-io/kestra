@@ -319,7 +319,8 @@
         }
     })
 
-    const currentFlow = ref<any | undefined>(undefined)
+    type FlowForExecution = Awaited<ReturnType<typeof executionsStore.loadFlowForExecution>>
+    const currentFlow = ref<FlowForExecution | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
     const hasOriginalInputs = computed(() => {
         const inputs = props.execution.inputs
@@ -472,12 +473,15 @@
     }
 
     const restart = async () => {
-        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
-        const response = await (executionsStore[method] as any)({
-            executionId: props.execution.id,
-            taskRunId: replayTaskRun.value?.id,
-            revision: props.isReplay ? revisionsSelected.value : undefined,
-        })
+        const response = props.isReplay
+            ? await executionsStore.replayExecution({
+                executionId: props.execution.id,
+                taskRunId: replayTaskRun.value?.id,
+                revision: revisionsSelected.value,
+            })
+            : await executionsStore.restartExecution({
+                executionId: props.execution.id,
+            })
 
         const newExecution = response
 

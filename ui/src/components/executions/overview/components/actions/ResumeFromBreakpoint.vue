@@ -50,6 +50,7 @@
     import {getAllTaskIds} from "../../../../../utils/flowUtils"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
+    import type {Breakpoint} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
 
@@ -103,7 +104,7 @@
                 store: true,
             })
             if (props.execution.breakpoints) {
-                selectedBreakpoints.value = props.execution.breakpoints.map((b: any) => b.value ? `${b.id}.${b.value}` : b.id)
+                selectedBreakpoints.value = props.execution.breakpoints.map((b: Breakpoint) => b.value ? `${b.id}.${b.value}` : b.id)
             }
         }
     })

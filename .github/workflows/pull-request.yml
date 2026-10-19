@@ -126,6 +126,7 @@ jobs:
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
       e2e: ${{ steps.changes.outputs.e2e }}
+      http-plugin-ui: ${{ steps.changes.outputs.http-plugin-ui }}
     steps:
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: changes
@@ -141,6 +142,8 @@ jobs:
               - 'ui/packages/design-system/**/*.locale.ts'
             e2e:
               - 'e2e/**'
+            http-plugin-ui:
+              - 'core/src/main/java/io/kestra/plugin/core/http/ui/**'
             backend:
               - '!{ui,e2e,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -369,6 +372,32 @@ jobs:
       - working-directory: e2e
         run: npm run test:lint
 
+  http-plugin-ui:
+    name: HTTP plugin UI - Checks
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.http-plugin-ui == 'true'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: core/src/main/java/io/kestra/plugin/core/http/ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: core/src/main/java/io/kestra/plugin/core/http/ui/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run check:types
+
+      - run: npm run test:unit
+
   backend:
     name: Backend - Tests
     needs: file-changes
@@ -436,7 +465,7 @@ jobs:
   required-checks:
     name: Required checks
     if: always()
-    needs: [file-changes, frontend, design-system-frontend, e2e-checks, backend, build-artifacts, e2e-tests]
+    needs: [file-changes, frontend, design-system-frontend, e2e-checks, http-plugin-ui, backend, build-artifacts, e2e-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed or was cancelled

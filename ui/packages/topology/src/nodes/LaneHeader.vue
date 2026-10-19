@@ -179,8 +179,8 @@
         overflow: hidden;
     }
 
-    /* A lane bar spans its whole cluster; the collapsed card is a task node's width instead, and*/
-    /* only fits the same row on the tighter gap.*/
+    /* A lane bar spans its whole cluster; the collapsed card is a task node's width instead, and */
+    /* only fits the same row on the tighter gap. */
     .lane-header--card {
         gap: var(--ks-spacing-1);
     }

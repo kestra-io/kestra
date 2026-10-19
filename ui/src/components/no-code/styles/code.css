@@ -45,7 +45,7 @@
     max-width: none;
     align-items: center;
 
-    /* HACK: reset Element Plus adjacent-button margin-left (horizontal-group assumption) in this vertical stack*/
+    /* HACK: reset Element Plus adjacent-button margin-left (horizontal-group assumption) in this vertical stack */
     & :deep(.kel-button) {
         margin-left: 0;
     }

@@ -167,7 +167,7 @@ export function useFlowEditorActions() {
     function reportSaveError(error: unknown) {
         const httpError = error as KestraHttpError
         if (httpError?.status === 401) {
-            toast.error("401 Unauthorized", undefined, {duration: 2000})
+            toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
         } else if (!isReportedCentrally(httpError)) {
             // A validation error and a lost connection reach here unreported; anything the
             // interceptor toasted, a 404 on a flow deleted under the editor included, is on screen
@@ -202,7 +202,7 @@ export function useFlowEditorActions() {
             await flushDirtyFiles()
         } catch (error) {
             if ((error as KestraHttpError)?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
+                toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
             }
         }
     }

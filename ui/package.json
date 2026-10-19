@@ -54,6 +54,7 @@
         "cronstrue": "^3.32.0",
         "dagre": "^0.8.5",
         "echarts": "^6.1.0",
+        "js-yaml": "^5.5.0",
         "mailchecker": "^6.0.21",
         "material-file-icons": "^2.4.0",
         "monaco-editor": "^0.57.0",

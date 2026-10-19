@@ -29,8 +29,8 @@
                         showDefault
                         class="logs-chart"
                         selectableChartId="logs_timeseries"
-                        :brushStart="brushStart"
-                        :brushEnd="brushEnd"
+                        :brushStart="brushRange?.startDate"
+                        :brushEnd="brushRange?.endDate"
                         @chart-select="onChartSelect"
                     />
                 </template>
@@ -172,7 +172,7 @@
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
-    import {buildBrushTimeRangeQuery} from "../../utils/logsBrushMappers"
+    import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, type BrushRange} from "../../utils/logsBrushMappers"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -279,24 +279,14 @@
 
         return rawValue as string | undefined
     })
-    const brushStart = computed(() => route.query.startDate as string | undefined)
-    const brushEnd = computed(() => route.query.endDate as string | undefined)
+    const brushRange = computed(() => readBrushRange(route.query))
 
-    function onChartSelect(event: {chartId: string; payload: {startDate: string; endDate: string} | null}) {
-        if (event.payload) {
-            const query = buildBrushTimeRangeQuery(
-                route.query as Record<string, string | string[] | undefined>,
-                event.payload.startDate,
-                event.payload.endDate,
-                pageKey,
-            )
-            router.push({query})
-        } else {
-            const query = {...route.query}
-            delete query.startDate
-            delete query.endDate
-            router.push({query})
-        }
+    function onChartSelect(range: BrushRange | null) {
+        router.push({
+            query: range
+                ? buildBrushTimeRangeQuery(route.query, range, pageKey)
+                : buildBrushClearQuery(route.query, pageKey),
+        })
     }
 
     const flowId = computed(() => route.params.id)

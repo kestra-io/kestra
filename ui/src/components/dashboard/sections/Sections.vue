@@ -81,7 +81,6 @@
                             :filters
                             :showDefault="props.showDefault"
                             v-bind="chartProps(chart)"
-                            @select="(payload: {startDate: string; endDate: string} | null) => emit('chart-select', {chartId: chart.id, payload})"
                         />
                         <KsSkeleton
                             v-else
@@ -108,6 +107,7 @@
 
     import {useRoute} from "vue-router"
     import {routeFamily} from "../../../utils/routeFamily"
+    import type {BrushRange} from "../../../utils/logsBrushMappers"
     const route = useRoute()
 
     import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsSkeleton, KsTooltip} from "@kestra-io/design-system"
@@ -144,7 +144,7 @@
     })
 
     const emit = defineEmits<{
-        "chart-select": [{chartId: string; payload: {startDate: string; endDate: string} | null}]
+        "chart-select": [BrushRange | null]
     }>()
 
     const props = defineProps<{
@@ -170,6 +170,7 @@
             selectable: true,
             brushStart: props.brushStart,
             brushEnd: props.brushEnd,
+            onSelect: (range: BrushRange | null) => emit("chart-select", range),
         }
     }
 

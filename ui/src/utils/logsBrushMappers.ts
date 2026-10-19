@@ -1,30 +1,49 @@
-import {dayjs} from "@kestra-io/design-system"
+import type {LocationQuery, LocationQueryRaw} from "vue-router"
+import {applyDefaultFilters, dayjs, normalizeRouteTimeRangeFilter} from "@kestra-io/design-system"
 
 export type DateRange = {startMs: number; endMs: number}
+export type BrushRange = {startDate: string; endDate: string}
 
-const NON_INVERTIBLE_FORMATS = new Set(["yyyy-MM", "yyyy-'W'ww"])
+export const BRUSH_START_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
+export const BRUSH_END_KEY = "filters[endDate][LESS_THAN_OR_EQUAL_TO]"
 
-const BUCKET_LABEL_PARSERS: Record<string, {pattern: RegExp; durationMs: number}> = {
-    "yyyy-MM-DD": {pattern: /^(\d{4})-(\d{2})-(\d{2})$/, durationMs: 24 * 60 * 60 * 1000},
-    "yyyy-MM-DD:HH:00": {pattern: /^(\d{4})-(\d{2})-(\d{2}):(\d{2}):00$/, durationMs: 60 * 60 * 1000},
-    "yyyy-MM-DD:HH:mm": {pattern: /^(\d{4})-(\d{2})-(\d{2}):(\d{2}):(\d{2})$/, durationMs: 60 * 1000},
+const TIME_RANGE_EQUALS_KEY = "filters[timeRange][EQUALS]"
+const ABSOLUTE_DATE_KEY_PREFIXES = ["filters[startDate]", "filters[endDate]"]
+
+const BUCKET_LABEL_PATTERNS: Record<string, RegExp> = {
+    day: /^(\d{4})-(\d{2})-(\d{2})$/,
+    hour: /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):00$/,
+    minute: /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/,
 }
 
-export function bucketLabelToDateRange(label: string, format: string, tz: string): DateRange | null {
-    if (NON_INVERTIBLE_FORMATS.has(format)) return null
+const FIXED_BUCKET_MS: Record<string, number> = {
+    hour: 60 * 60 * 1000,
+    minute: 60 * 1000,
+}
 
-    const parser = BUCKET_LABEL_PARSERS[format]
-    const match = parser?.pattern.exec(label)
-    if (!parser || !match) return null
+export function isBrushableUnit(unit: string): boolean {
+    return unit in BUCKET_LABEL_PATTERNS
+}
 
-    const [, year, month, day, hour = "00", minute = "00"] = match
-    const localDateTime = `${year}-${month}-${day}T${hour}:${minute}:00`
-    const parsed = dayjs.tz(localDateTime, tz)
+function wallClockToMs(year: number, month: number, day: number, hour: number, minute: number, tz: string): number | null {
+    const wallClock = new Date(Date.UTC(year, month - 1, day, hour, minute)).toISOString().slice(0, 19)
+    const parsed = dayjs.tz(wallClock, tz)
+    return parsed.isValid() && parsed.format("YYYY-MM-DDTHH:mm:ss") === wallClock ? parsed.valueOf() : null
+}
 
-    if (!parsed.isValid() || parsed.format("YYYY-MM-DDTHH:mm:ss") !== localDateTime) return null
+export function bucketLabelToDateRange(label: string, unit: string, tz: string): DateRange | null {
+    const match = BUCKET_LABEL_PATTERNS[unit]?.exec(label)
+    if (!match) return null
 
-    const startMs = parsed.valueOf()
-    return {startMs, endMs: startMs + parser.durationMs}
+    const [year, month, day, hour = 0, minute = 0] = match.slice(1).map(Number)
+    const startMs = wallClockToMs(year, month, day, hour, minute, tz)
+    if (startMs === null) return null
+
+    const endMs = unit === "day"
+        ? wallClockToMs(year, month, day + 1, 0, 0, tz)
+        : startMs + FIXED_BUCKET_MS[unit]
+
+    return endMs === null ? null : {startMs, endMs}
 }
 
 export function pixelSelectionToBucketIndices(
@@ -33,9 +52,6 @@ export function pixelSelectionToBucketIndices(
     bucketPx: number[],
 ): {start: number; end: number} | null {
     if (bucketPx.length === 0) return null
-
-    const lo = Math.min(xStart, xEnd)
-    const hi = Math.max(xStart, xEnd)
 
     const findNearest = (px: number): number => {
         let best = 0
@@ -50,35 +66,41 @@ export function pixelSelectionToBucketIndices(
         return best
     }
 
-    let startIdx = findNearest(lo)
-    let endIdx = findNearest(hi)
+    const start = findNearest(Math.min(xStart, xEnd))
+    const end = findNearest(Math.max(xStart, xEnd))
 
-    startIdx = Math.max(0, Math.min(startIdx, bucketPx.length - 1))
-    endIdx = Math.max(0, Math.min(endIdx, bucketPx.length - 1))
-
-    if (startIdx > endIdx) [startIdx, endIdx] = [endIdx, startIdx]
-
-    return {start: startIdx, end: endIdx}
+    return start <= end ? {start, end} : {start: end, end: start}
 }
 
-export function buildBrushTimeRangeQuery(
-    routeQuery: Record<string, string | string[] | undefined>,
-    isoStart: string,
-    isoEnd: string,
-    pageKey: string,
-): Record<string, string | undefined> {
-    const result: Record<string, string | undefined> = {...routeQuery} as Record<string, string | undefined>
-
-    delete result.timeRange
-    for (const key of Object.keys(result)) {
-        if (key.startsWith("filters[timeRange]")) {
-            delete result[key]
-        }
+function withoutTimeFilters(routeQuery: LocationQueryRaw, timeRange: string | undefined): LocationQueryRaw {
+    const query = normalizeRouteTimeRangeFilter(routeQuery, timeRange)
+    for (const key of Object.keys(query)) {
+        if (ABSOLUTE_DATE_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) delete query[key]
     }
+    return query
+}
 
-    result.startDate = isoStart
-    result.endDate = isoEnd
-    result[pageKey] = "1"
+export function buildBrushTimeRangeQuery(routeQuery: LocationQueryRaw, range: BrushRange, pageKey: string): LocationQueryRaw {
+    return {
+        ...withoutTimeFilters(routeQuery, undefined),
+        [BRUSH_START_KEY]: range.startDate,
+        [BRUSH_END_KEY]: range.endDate,
+        [pageKey]: "1",
+    }
+}
 
-    return result
+export function buildBrushClearQuery(routeQuery: LocationQueryRaw, pageKey: string): LocationQueryRaw {
+    const defaultTimeRange = applyDefaultFilters({}, {namespace: null, includeTimeRange: true}).query[TIME_RANGE_EQUALS_KEY]
+
+    return {
+        ...withoutTimeFilters(routeQuery, typeof defaultTimeRange === "string" ? defaultTimeRange : undefined),
+        [pageKey]: "1",
+    }
+}
+
+export function readBrushRange(routeQuery: LocationQuery | LocationQueryRaw): BrushRange | undefined {
+    const startDate = routeQuery[BRUSH_START_KEY]
+    const endDate = routeQuery[BRUSH_END_KEY]
+
+    return typeof startDate === "string" && typeof endDate === "string" ? {startDate, endDate} : undefined
 }

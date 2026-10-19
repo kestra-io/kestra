@@ -83,7 +83,7 @@ public record ProblemError(
             return of(
                 exception.getMessage(),
                 "/inputs/" + exception.getInputId(),
-                "inputs[" + exception.getInputId() + "]"
+                exception.getPath() != null ? "inputs." + exception.getPath() : "inputs[" + exception.getInputId() + "]"
             );
         }
         return of(exception.getMessage());

@@ -81,7 +81,7 @@
                         v-if="scope.row?.namespace !== undefined && areNamespaceSecretsReadOnly"
                     >
                         <template #content>
-                            <span v-html="$t('secret.isReadOnly')" />
+                            <span>{{ $t("secret.isReadOnly") }}</span>
                         </template>
                         <KsIcon class="d-flex justify-content-center">
                             <Lock />

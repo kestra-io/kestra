@@ -7,7 +7,7 @@
                 <NavBarAction :icon="TextBoxSearch" :to="{name: 'flows/search'}" :label="$t('source search')" />
 
                 <template #primary>
-                    <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
+                    <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="file-input">
                     <NavBarAction
                         v-if="canCreate"
                         type="primary"
@@ -104,11 +104,11 @@
                                     id: scope.row.id,
                                 },
                             }"
-                            class="me-1"
+                            class="flow-link"
                         >
                             <BreakableText :value="scope.row.id" />
                         </router-link>
-                        <KsTag size="small" v-if="scope.row.draft" class="me-1" plain>
+                        <KsTag size="small" v-if="scope.row.draft" class="draft-tag" plain>
                             <CircleOpacity />
                             {{ $t('draft') }}
                         </KsTag>
@@ -133,7 +133,11 @@
                     :label="$t('labels')"
                 >
                     <template #default="scope">
-                        <Labels :labels="scope.row.labels" :max="3" @click.prevent.stop />
+                        <Labels
+                            :labels="filterHiddenLabels(scope.row.labels, miscStore.configs?.hiddenLabelsPrefixes, route.query)"
+                            :max="3"
+                            @click.prevent.stop
+                        />
                     </template>
                 </KsTableColumn>
 
@@ -187,7 +191,7 @@
                         <div
                             @click.prevent.stop
                             v-if="lastExecutionByFlowReady && getLastExecution(scope.row as Flow)"
-                            class="d-flex justify-content-between align-items-center"
+                            class="execution-status-row"
                         >
                             <router-link
                                 :to="{
@@ -286,7 +290,9 @@
             large
         >
             <template #header>
-                <span v-if="selectedFlow?.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                    <template #id><code>{{ selectedFlow.id }}</code></template>
+                </i18n-t>
             </template>
             <FlowRun
                 v-if="executionsStore.flow"
@@ -307,6 +313,7 @@
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
+    import {filterHiddenLabels} from "../../utils/labels"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useFlowFilter} from "../filter/configurations/flowFilter"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -718,6 +725,24 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
+}
+
+.file-input {
+    display: none;
+}
+
+.flow-link {
+    margin-inline-end: var(--ks-spacing-1);
+}
+
+.draft-tag {
+    margin-inline-end: var(--ks-spacing-1);
+}
+
+.execution-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .flows-table .kel-table__cell {

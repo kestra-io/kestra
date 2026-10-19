@@ -33,7 +33,7 @@
             <GlobalSearch class="trigger-flow-guided-step" />
         </template>
         <template #actions>
-            <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
+            <div id="topnav-actions-slot" />
         </template>
         <template #panel-toggle>
             <KsIconButton
@@ -48,6 +48,7 @@
             >
                 <AiMenuIcon />
             </KsIconButton>
+            <NotificationBell v-if="miscStore.configs" />
             <slot name="panel-toggle" />
         </template>
     </KsTopNavBar>
@@ -59,6 +60,7 @@
     import {KsIconButton} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
     import AiMenuIcon from "../ai/AiMenuIcon.vue"
+    import NotificationBell from "./NotificationBell.vue"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
@@ -244,6 +246,12 @@
         @media (max-width: 767px) {
             display: none;
         }
+    }
+
+    #topnav-actions-slot {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        align-items: center;
     }
 
     .playgroundMode {

@@ -420,7 +420,7 @@ export type ArtefactDraft = {
     constraints?: string | null;
 };
 
-export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
+export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP' | 'TEST_SUITE';
 
 export type Asset = {
     status?: string;
@@ -474,6 +474,8 @@ export type AssetsInOut = {
     inputs?: Array<AssetIdentifier>;
     outputs?: Array<Asset>;
 };
+
+export type AsyncOperationTypeResourceType = 'EXECUTION' | 'TRIGGER';
 
 /**
  * A backfill configuration.
@@ -662,6 +664,22 @@ export type DailyExecutionStatisticsDuration = {
     count: number;
 };
 
+/**
+ * A page of chart rows.
+ */
+export type DashboardControllerChartData = {
+    results: Array<{
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    }>;
+    total: number;
+    /**
+     * the requested dashboard filters the chart's data source cannot narrow on, so its rows are not filtered by them
+     */
+    ignoredFilters?: Array<QueryFilterField>;
+};
+
 export type DashboardControllerDashboardResponse = {
     tenantId?: string;
     id: string;
@@ -711,6 +729,14 @@ export type EventExecution = {
 
 export type EventFollowLogEvent = {
     data: FollowLogEvent;
+    id?: string | null;
+    name?: string | null;
+    comment?: string | null;
+    retry?: string | null;
+};
+
+export type EventNotification = {
+    data: Notification;
     id?: string | null;
     name?: string | null;
     comment?: string | null;
@@ -1564,6 +1590,42 @@ export type NamespaceLight = {
     id: string;
 };
 
+export type Notification = {
+    outcome?: NotificationOutcome | null;
+    ongoing?: boolean;
+    id?: string;
+    userId?: string | null;
+    tenantId?: string | null;
+    type: string;
+    asyncOperationType?: string | null;
+    resourceType?: AsyncOperationTypeResourceType | null;
+    title: string;
+    referenceId?: string | null;
+    succeededItems?: number | null;
+    failedItems?: number | null;
+    totalItems?: number | null;
+    read?: boolean;
+    createdDate: string;
+    updatedDate: string;
+};
+
+export type NotificationControllerApiMarkAllRead = {
+    updated?: number;
+};
+
+export type NotificationControllerApiNotificationHistory = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+    nextCursor?: string | null;
+};
+
+export type NotificationControllerApiNotificationsSince = {
+    notifications?: Array<Notification>;
+    serverTime?: string;
+};
+
+export type NotificationOutcome = 'SUCCEEDED' | 'PARTIAL' | 'FAILED';
+
 export type Output = {
     id: string;
     description?: string;
@@ -1652,18 +1714,6 @@ export type PagedResultsFlow = {
  */
 export type PagedResultsKvEntry = {
     results: Array<KvEntry>;
-    total: number;
-};
-
-/**
- * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
- */
-export type PagedResultsMapStringObject = {
-    results: Array<{
-        [key: string]: {
-            [key: string]: unknown;
-        };
-    }>;
     total: number;
 };
 
@@ -2029,7 +2079,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2934,6 +2984,251 @@ export type GetProvidersResponses = {
 };
 
 export type GetProvidersResponse = GetProvidersResponses[keyof GetProvidersResponses];
+
+export type ListenUserNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/follow';
+};
+
+export type ListenUserNotificationsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListenUserNotificationsError = ListenUserNotificationsErrors[keyof ListenUserNotificationsErrors];
+
+export type ListenUserNotificationsResponses = {
+    /**
+     * listenUserNotifications 200 response
+     */
+    200: EventNotification;
+};
+
+export type ListenUserNotificationsResponse = ListenUserNotificationsResponses[keyof ListenUserNotificationsResponses];
+
+export type HistoryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Cursor of the previous page, as `<createdDate>,<id>`. Omit for the first page.
+         */
+        before?: string | null;
+        /**
+         * Maximum number of notifications to return
+         */
+        limit?: number;
+    };
+    url: '/api/v1/notifications/history';
+};
+
+export type HistoryErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type HistoryError = HistoryErrors[keyof HistoryErrors];
+
+export type HistoryResponses = {
+    /**
+     * history 200 response
+     */
+    200: NotificationControllerApiNotificationHistory;
+};
+
+export type HistoryResponse = HistoryResponses[keyof HistoryResponses];
+
+export type MarkAllReadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/read-all';
+};
+
+export type MarkAllReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkAllReadError = MarkAllReadErrors[keyof MarkAllReadErrors];
+
+export type MarkAllReadResponses = {
+    /**
+     * markAllRead 200 response
+     */
+    200: NotificationControllerApiMarkAllRead;
+};
+
+export type MarkAllReadResponse = MarkAllReadResponses[keyof MarkAllReadResponses];
+
+export type PollSinceData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The server timestamp returned by a previous call to this endpoint (or to /history)
+         */
+        since: string;
+    };
+    url: '/api/v1/notifications/since';
+};
+
+export type PollSinceErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PollSinceError = PollSinceErrors[keyof PollSinceErrors];
+
+export type PollSinceResponses = {
+    /**
+     * pollSince 200 response
+     */
+    200: NotificationControllerApiNotificationsSince;
+};
+
+export type PollSinceResponse = PollSinceResponses[keyof PollSinceResponses];
+
+export type UnreadCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/notifications/unread-count';
+};
+
+export type UnreadCountErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type UnreadCountError = UnreadCountErrors[keyof UnreadCountErrors];
+
+export type UnreadCountResponses = {
+    /**
+     * unreadCount 200 response
+     */
+    200: number;
+};
+
+export type UnreadCountResponse = UnreadCountResponses[keyof UnreadCountResponses];
+
+export type MarkReadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/read';
+};
+
+export type MarkReadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkReadError = MarkReadErrors[keyof MarkReadErrors];
+
+export type MarkReadResponses = {
+    /**
+     * markRead 200 response
+     */
+    200: unknown;
+};
+
+export type MarkUnreadData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/notifications/{id}/unread';
+};
+
+export type MarkUnreadErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type MarkUnreadError = MarkUnreadErrors[keyof MarkUnreadErrors];
+
+export type MarkUnreadResponses = {
+    /**
+     * markUnread 200 response
+     */
+    200: unknown;
+};
 
 export type GetExpressionFiltersData = {
     body?: never;
@@ -4493,7 +4788,7 @@ export type PreviewChartResponses = {
     /**
      * previewChart 200 response
      */
-    200: PagedResultsMapStringObject;
+    200: DashboardControllerChartData;
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];

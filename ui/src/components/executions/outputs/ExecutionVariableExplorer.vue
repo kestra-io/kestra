@@ -34,6 +34,13 @@
                                 </KsIconButton>
                             </div>
 
+                            <LoopIterationsNotice
+                                v-if="selectedLoopTaskId"
+                                kind="outputs"
+                                :taskId="selectedLoopTaskId"
+                                class="viewer-notice"
+                            />
+
                             <template v-if="selectedValue === undefined">
                                 <KsNoData
                                     :title="$t('variable_explorer.select_prompt')"
@@ -95,7 +102,7 @@
                                     </KsAlert>
                                 </div>
                                 <div class="viewer__scalar">
-                                    <code>{{ cappedRawValue }}</code>
+                                    <code>{{ scalarDisplay }}</code>
                                 </div>
                             </template>
                         </div>
@@ -148,7 +155,9 @@
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
+    import {loopTaskIds} from "../../../utils/flowUtils"
     import FilePreview from "../FilePreview.vue"
+    import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -182,7 +191,9 @@
 
     function previewText(value: unknown): string {
         if (value === null) return "null"
-        if (typeof value === "string") return value
+        if (typeof value === "string") {
+            return value === "" ? Utils.EMPTY_STRING_DISPLAY : value
+        }
         if (Array.isArray(value)) {
             return value.length === 1
                 ? t("variable_explorer.one_item")
@@ -393,6 +404,7 @@
 
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
+    const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
     const expression = ref<string>(seededExpression())
@@ -429,6 +441,10 @@
     // Only what is rendered is clipped: copyValue still hands over the whole value.
     const cappedRawValue = computed(() => Utils.capForDisplay(rawValue.value))
 
+    const scalarDisplay = computed(() =>
+        selectedValue.value === "" ? Utils.EMPTY_STRING_DISPLAY : cappedRawValue.value,
+    )
+
     // The raw view only ever holds an object, so it previews as valid JSON rather than clipped text.
     const rawPreview = computed(() => Utils.boundForDisplay(selectedValue.value))
 
@@ -446,6 +462,8 @@
             selectedValue.value = item.value
         }
         selectedBase.value = item.expression
+        selectedTaskId.value = (execution.value?.taskRunList ?? [])
+            .find((taskRun) => taskRun.id === item.taskRunId)?.taskId
         expressionPath.value = item.expression
         previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
@@ -470,6 +488,15 @@
                 : `{{ ${baseExpressionPath} }}`
         }
     }
+
+    const selectedLoopTaskId = computed(() => {
+        const taskId = selectedTaskId.value
+        if (!taskId || !loopTaskIds(executionsStore.flow).has(taskId)) {
+            return undefined
+        }
+        const iterationCount = (selectedValue.value as {iterationCount?: unknown} | undefined)?.iterationCount
+        return Number(iterationCount) > 0 ? taskId : undefined
+    })
 
     /** The lone file of the previewed value, offered to the debugger without requiring an evaluation. */
     const debuggedFileUri = computed(() => {
@@ -554,6 +581,10 @@
     &__panel--debug {
         border-left: 1px solid var(--ks-border-default);
     }
+}
+
+.viewer-notice {
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) 0;
 }
 
 :deep(.kel-splitter),

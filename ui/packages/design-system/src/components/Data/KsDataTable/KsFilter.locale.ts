@@ -19,6 +19,7 @@ export default {
             "edit filter": "Edit filter",
             "options": "Data Options",
             "auto refresh": "Auto refresh",
+            "auto_refresh_tooltip": "Auto refresh every {seconds} seconds",
             "refresh": "Refresh data",
             "save filter": "Save filter",
             "save filter tooltip": "Save applied filters",
@@ -286,6 +287,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filter by task identifier",
             },
+            "operationId": {
+                "label": "Operation ID",
+                "description": "Filter by async operation identifier",
+            },
             "taskRunId": {
                 "label": "Task Run ID",
                 "description": "Filter by task run identifier",
@@ -420,6 +425,7 @@ export default {
             "edit filter": "Filter bearbeiten",
             "options": "Datenoptionen",
             "auto refresh": "Auto-Aktualisierung",
+            "auto_refresh_tooltip": "Automatische Aktualisierung alle {seconds} Sekunden",
             "refresh": "Daten aktualisieren",
             "save filter": "Filter speichern",
             "save filter tooltip": "Angewandte Filter speichern",
@@ -687,6 +693,10 @@ export default {
                 "label": "Task-ID",
                 "description": "Nach Task-ID filtern",
             },
+            "operationId": {
+                "label": "Operations-ID",
+                "description": "Nach ID des asynchronen Vorgangs filtern",
+            },
             "taskRunId": {
                 "label": "Task-Run-ID",
                 "description": "Nach Task-Run-ID filtern",
@@ -821,6 +831,7 @@ export default {
             "edit filter": "Editar filtro",
             "options": "Opciones de Datos",
             "auto refresh": "Actualización automática",
+            "auto_refresh_tooltip": "Actualizar automáticamente cada {seconds} segundos",
             "refresh": "Actualizar datos",
             "save filter": "Guardar filtro",
             "save filter tooltip": "Guardar filtros aplicados",
@@ -1088,6 +1099,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtrar por identificador de task",
             },
+            "operationId": {
+                "label": "ID de operación",
+                "description": "Filtrar por identificador de operación asíncrona",
+            },
             "taskRunId": {
                 "label": "ID de Ejecución de Task",
                 "description": "Filtrar por identificador de ejecución de task",
@@ -1222,6 +1237,7 @@ export default {
             "edit filter": "Modifier le filtre",
             "options": "Options de Données",
             "auto refresh": "Rafraîchissement automatique",
+            "auto_refresh_tooltip": "Actualisation automatique toutes les {seconds} secondes",
             "refresh": "Rafraîchir les données",
             "save filter": "Enregistrer le filtre",
             "save filter tooltip": "Enregistrer les filtres appliqués",
@@ -1489,6 +1505,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtrer par identifiant de task",
             },
+            "operationId": {
+                "label": "ID d'opération",
+                "description": "Filtrer par identifiant d'opération asynchrone",
+            },
             "taskRunId": {
                 "label": "ID d'exécution de Task",
                 "description": "Filtrer par id d'exécution de task",
@@ -1623,6 +1643,7 @@ export default {
             "edit filter": "फ़िल्टर संपादित करें",
             "options": "डेटा विकल्प",
             "auto refresh": "स्वचालित रिफ्रेश",
+            "auto_refresh_tooltip": "हर {seconds} सेकंड में स्वतः रीफ़्रेश करें",
             "refresh": "डेटा रिफ्रेश करें",
             "save filter": "फ़िल्टर सहेजें",
             "save filter tooltip": "लागू किए गए फ़िल्टर सहेजें",
@@ -1890,6 +1911,10 @@ export default {
                 "label": "Task ID",
                 "description": "task identifier द्वारा फ़िल्टर करें",
             },
+            "operationId": {
+                "label": "ऑपरेशन ID",
+                "description": "एसिंक ऑपरेशन ID द्वारा फ़िल्टर करें",
+            },
             "taskRunId": {
                 "label": "Task रन ID",
                 "description": "task run पहचानकर्ता द्वारा फ़िल्टर करें",
@@ -2024,6 +2049,7 @@ export default {
             "edit filter": "Modifica filtro",
             "options": "Opzioni Dati",
             "auto refresh": "Aggiornamento automatico",
+            "auto_refresh_tooltip": "Aggiornamento automatico ogni {seconds} secondi",
             "refresh": "Aggiorna dati",
             "save filter": "Salva filtro",
             "save filter tooltip": "Salva i filtri applicati",
@@ -2291,6 +2317,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtra per identificatore task",
             },
+            "operationId": {
+                "label": "ID operazione",
+                "description": "Filtra per identificatore di operazione asincrona",
+            },
             "taskRunId": {
                 "label": "ID Esecuzione Task",
                 "description": "Filtra per identificatore di esecuzione del task",
@@ -2425,6 +2455,7 @@ export default {
             "edit filter": "フィルターを編集",
             "options": "データオプション",
             "auto refresh": "自動更新",
+            "auto_refresh_tooltip": "{seconds}秒ごとに自動更新",
             "refresh": "データを更新",
             "save filter": "フィルターを保存",
             "save filter tooltip": "適用されたフィルターを保存",
@@ -2692,6 +2723,10 @@ export default {
                 "label": "Task ID",
                 "description": "task 識別子でフィルター",
             },
+            "operationId": {
+                "label": "オペレーション ID",
+                "description": "非同期操作IDでフィルタリング",
+            },
             "taskRunId": {
                 "label": "Task 実行 ID",
                 "description": "task実行IDで絞り込む",
@@ -2826,6 +2861,7 @@ export default {
             "edit filter": "필터 편집",
             "options": "데이터 옵션",
             "auto refresh": "자동 새로 고침",
+            "auto_refresh_tooltip": "{seconds}초마다 자동 새로고침",
             "refresh": "데이터 새로 고침",
             "save filter": "필터 저장",
             "save filter tooltip": "적용된 필터 저장",
@@ -3093,6 +3129,10 @@ export default {
                 "label": "Task ID",
                 "description": "task 식별자로 필터링",
             },
+            "operationId": {
+                "label": "작업 ID",
+                "description": "비동기 작업 ID로 필터링",
+            },
             "taskRunId": {
                 "label": "Task 실행 ID",
                 "description": "`task` 실행 `id`로 필터링",
@@ -3227,6 +3267,7 @@ export default {
             "edit filter": "Edytuj filtr",
             "options": "Opcje Danych",
             "auto refresh": "Automatyczne odświeżanie",
+            "auto_refresh_tooltip": "Automatyczne odświeżanie co {seconds} sekund",
             "refresh": "Odśwież dane",
             "save filter": "Zapisz filtr",
             "save filter tooltip": "Zapisz zastosowane filtry",
@@ -3494,6 +3535,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtruj według ID Taska",
             },
+            "operationId": {
+                "label": "ID operacji",
+                "description": "Filtruj według ID operacji asynchronicznej",
+            },
             "taskRunId": {
                 "label": "ID Task Runa",
                 "description": "Filtruj według ID Task Runa",
@@ -3628,6 +3673,7 @@ export default {
             "edit filter": "Editar filtro",
             "options": "Opções de Dados",
             "auto refresh": "Atualização automática",
+            "auto_refresh_tooltip": "Atualizar automaticamente a cada {seconds} segundos",
             "refresh": "Atualizar dados",
             "save filter": "Salvar filtro",
             "save filter tooltip": "Salvar filtros aplicados",
@@ -3895,6 +3941,10 @@ export default {
                 "label": "ID da Task",
                 "description": "Filtrar por identificador de task",
             },
+            "operationId": {
+                "label": "ID da Operação",
+                "description": "Filtrar por identificador de operação assíncrona",
+            },
             "taskRunId": {
                 "label": "ID da Execução da Task",
                 "description": "Filtrar por identificador de execução de task",
@@ -4029,6 +4079,7 @@ export default {
             "edit filter": "Editar filtro",
             "options": "Opções de Dados",
             "auto refresh": "Atualização automática",
+            "auto_refresh_tooltip": "Atualizar automaticamente a cada {seconds} segundos",
             "refresh": "Atualizar dados",
             "save filter": "Salvar filtro",
             "save filter tooltip": "Salvar filtros aplicados",
@@ -4296,6 +4347,10 @@ export default {
                 "label": "Task ID",
                 "description": "Filtrar por identificador da task",
             },
+            "operationId": {
+                "label": "ID da Operação",
+                "description": "Filtrar por identificador de operação assíncrona",
+            },
             "taskRunId": {
                 "label": "ID da Execução da Task",
                 "description": "Filtrar por identificador de execução de task",
@@ -4430,6 +4485,7 @@ export default {
             "edit filter": "Редактировать фильтр",
             "options": "Параметры данных",
             "auto refresh": "Автоматическое обновление",
+            "auto_refresh_tooltip": "Автообновление каждые {seconds} секунд | Автообновление каждые {seconds} секунды | Автообновление каждые {seconds} секунд",
             "refresh": "Обновить данные",
             "save filter": "Сохранить фильтр",
             "save filter tooltip": "Сохранить примененные фильтры",
@@ -4697,6 +4753,10 @@ export default {
                 "label": "Task ID",
                 "description": "Фильтровать по task идентификатору",
             },
+            "operationId": {
+                "label": "ID операции",
+                "description": "Фильтровать по ID асинхронной операции",
+            },
             "taskRunId": {
                 "label": "ID запуска Task",
                 "description": "Фильтровать по идентификатору запуска task",
@@ -4831,6 +4891,7 @@ export default {
             "edit filter": "编辑过滤器",
             "options": "数据选项",
             "auto refresh": "自动刷新",
+            "auto_refresh_tooltip": "每 {seconds} 秒自动刷新",
             "refresh": "刷新数据",
             "save filter": "保存过滤器",
             "save filter tooltip": "保存已应用的过滤器",
@@ -5097,6 +5158,10 @@ export default {
             "taskId": {
                 "label": "Task ID",
                 "description": "按 task 标识符筛选",
+            },
+            "operationId": {
+                "label": "操作 ID",
+                "description": "按异步操作 ID 筛选",
             },
             "taskRunId": {
                 "label": "Task 运行 ID",

@@ -60,4 +60,16 @@ class ProblemErrorTest {
         assertThat(errors.get(1).pointer()).isEqualTo("/inputs/inputB");
         assertThat(errors.get(1).path()).isEqualTo("inputs[inputB]");
     }
+
+    @Test
+    void shouldReportNestedPathForInputErrorWithPath() {
+        var exception = new io.kestra.core.exceptions.InputOutputValidationException("must be a number", "table", false, java.util.List.of(), java.util.Map.of(), "table[0].qty");
+
+        var errors = ProblemError.ofInputErrors(exception);
+
+        assertThat(errors).singleElement().satisfies(error -> {
+            assertThat(error.pointer()).isEqualTo("/inputs/table");
+            assertThat(error.path()).isEqualTo("inputs.table[0].qty");
+        });
+    }
 }

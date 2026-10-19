@@ -130,6 +130,10 @@
             margin-left: var(--ks-spacing-2);
         }
 
+        > span {
+            width: var(--ks-button-content-width, auto);
+        }
+
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);
         }

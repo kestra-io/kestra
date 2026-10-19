@@ -25,6 +25,13 @@ public class InputOutputValidationException extends KestraRuntimeException {
     private final List<InputOutputValidationException> exceptions;
     private final Map<String, List<String>> fieldErrors;
 
+    /**
+     * Where the offending value sits inside a structured input, as {@code id.a[0].b}, or null when the error is
+     * about the input as a whole. A schema validation reports one error per location, so a form can show each
+     * message against the field it belongs to instead of collecting them all above the input.
+     */
+    private final String path;
+
     public InputOutputValidationException(String message) {
         this(message, null, false, List.of(), Map.of());
     }
@@ -48,7 +55,23 @@ public class InputOutputValidationException extends KestraRuntimeException {
         List<InputOutputValidationException> exceptions,
         Map<String, List<String>> fieldErrors
     ) {
+        this(message, inputId, renderError, exceptions, fieldErrors, null);
+    }
+
+    public InputOutputValidationException(String message, boolean renderError, String path) {
+        this(message, null, renderError, List.of(), Map.of(), path);
+    }
+
+    public InputOutputValidationException(
+        String message,
+        String inputId,
+        boolean renderError,
+        List<InputOutputValidationException> exceptions,
+        Map<String, List<String>> fieldErrors,
+        String path
+    ) {
         super(message);
+        this.path = path;
         this.inputId = inputId;
         this.renderError = renderError;
         this.exceptions = exceptions == null ? List.of() : List.copyOf(exceptions);
@@ -57,6 +80,10 @@ public class InputOutputValidationException extends KestraRuntimeException {
 
     public boolean isRenderError() {
         return renderError;
+    }
+
+    public String getPath() {
+        return path;
     }
 
     public String getInputId() {
@@ -74,6 +101,12 @@ public class InputOutputValidationException extends KestraRuntimeException {
     public static InputOutputValidationException of(String message, Input<?> input) {
         String inputMessage = "Invalid value for input" + " `" + input.getId() + "`. Cause: " + message;
         return new InputOutputValidationException(inputMessage, input.getId(), false);
+    }
+
+    /** As {@link #of(String, Input)}, but records where inside the value the error sits. */
+    public static InputOutputValidationException of(String message, Input<?> input, String path) {
+        String inputMessage = "Invalid value for input" + " `" + input.getId() + "`. Cause: " + message;
+        return new InputOutputValidationException(inputMessage, input.getId(), false, List.of(), Map.of(), path);
     }
 
     /** As {@link #of(String, Input)}, but flags the error as a render/resolution failure (broken field). */

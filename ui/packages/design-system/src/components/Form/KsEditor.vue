@@ -264,7 +264,7 @@
                     h4 {
                         font-size: var(--ks-font-size-base);
                         font-weight: bold;
-                        line-height: var(--kbs-body-line-height);
+                        line-height: var(--ks-line-height-base);
                     }
 
                     p {

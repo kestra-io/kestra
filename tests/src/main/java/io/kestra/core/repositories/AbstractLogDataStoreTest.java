@@ -874,6 +874,35 @@ public abstract class AbstractLogDataStoreTest {
         assertRemaining(tenant, "delfilter-exec", 1);
     }
 
+    @Test
+    void deleteByFilters_keepsNonNormalKindsUnlessAKindFilterIsGiven() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "delkind-null").flowId("delkind-flow").tenantId(tenant).build(),
+                log(Level.INFO, "delkind-normal").flowId("delkind-flow").executionKind(ExecutionKind.NORMAL).tenantId(tenant).build(),
+                log(Level.INFO, "delkind-loop").flowId("delkind-flow").executionKind(ExecutionKind.LOOP).tenantId(tenant).build(),
+                log(Level.INFO, "delkind-playground").flowId("delkind-flow").executionKind(ExecutionKind.PLAYGROUND).tenantId(tenant).build()
+            )
+        );
+        List.of("delkind-null", "delkind-normal", "delkind-loop", "delkind-playground").forEach(executionId -> awaitVisible(tenant, executionId));
+
+        logDataStore.deleteByFilters(tenant, List.of(cond(Field.FLOW_ID, Op.EQUALS, "delkind-flow")));
+
+        assertRemaining(tenant, "delkind-null", 1);
+        assertRemaining(tenant, "delkind-normal", 1);
+        assertThat(logDataStore.findByExecutionId(tenant, "delkind-loop", null)).hasSize(1);
+        assertThat(logDataStore.findByExecutionId(tenant, "delkind-playground", null)).hasSize(1);
+
+        logDataStore.deleteByFilters(
+            tenant,
+            List.of(cond(Field.FLOW_ID, Op.EQUALS, "delkind-flow"), cond(Field.KIND, Op.EQUALS, ExecutionKind.LOOP.name()))
+        );
+
+        assertRemaining(tenant, "delkind-loop", 1);
+        assertThat(logDataStore.findByExecutionId(tenant, "delkind-playground", null)).hasSize(1);
+    }
+
     private List<String> idsOf(String tenant, String executionId) {
         return logDataStore.find(Pageable.UNPAGED, tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, executionId)))
             .getContent().stream().map(LogEntry::getId).toList();

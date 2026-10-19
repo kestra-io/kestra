@@ -61,7 +61,7 @@
     }
 
     .collapse {
-        // 1.5rem between 576px and 768px, as before; res(sm) starts at 768px
+        // Bootstrap's sm breakpoint; res(sm) starts at 768px
         @media (min-width: 576px) {
             margin-bottom: var(--ks-spacing-5);
         }

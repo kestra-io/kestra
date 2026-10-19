@@ -1,11 +1,11 @@
 <template>
-    <div class="collapse mb-sm-4 mb-md-0">
-        <div class="button mb-2">
+    <div class="collapse">
+        <div class="button">
             <KsButton :tooltip="$t('toggle menu')" @click="isNavbarVisible = !isNavbarVisible">
                 <MenuIcon />
             </KsButton>
         </div>
-        <KsForm :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
+        <KsForm :inline="true" @submit.prevent :class="{open: isNavbarVisible}">
             <slot />
         </KsForm>
     </div>
@@ -61,6 +61,18 @@
     }
 
     .collapse {
+        // Bootstrap's sm breakpoint; res(sm) starts at 768px
+        @media (min-width: 576px) {
+            margin-bottom: var(--ks-spacing-5);
+        }
+        @include res(sm) {
+            margin-bottom: 0;
+        }
+
+        .button {
+            margin-bottom: var(--ks-spacing-2);
+        }
+
         > div:first-child {
             display: flex;
             @include res(sm) {
@@ -76,6 +88,10 @@
             .kel-form--inline {
                 display: none;
             }
+        }
+
+        .kel-form--inline.open {
+            display: block;
         }
     }
 </style>

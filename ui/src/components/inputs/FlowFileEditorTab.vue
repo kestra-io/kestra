@@ -61,7 +61,7 @@
                 @mouse-leave="() => highlightHoveredTask(-1)"
             >
                 <template #absolute>
-                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
+                    <ContentSave v-if="!flow" data-test="file-save" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />

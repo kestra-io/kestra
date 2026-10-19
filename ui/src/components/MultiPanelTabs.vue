@@ -90,7 +90,7 @@
                             >
                                 <component :is="tab.button.icon" class="tab-icon" />
                                 <span class="tab-title">{{ tab.button.label }}</span>
-                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
+                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" data-test="tab-dirty" />
                                 <CloseIcon
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"

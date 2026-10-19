@@ -33,7 +33,7 @@
                         <EnterpriseBadge :enable="(tab as Tab).locked">
                             <span class="tab-label-wrapper">
                                 {{ tab.title }}
-                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" inline />
+                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" :max="tab.max" type="primary" inline />
                             </span>
                         </EnterpriseBadge>
                     </component>
@@ -174,7 +174,7 @@
     }
 
     const containerClass = computed(() => {
-        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"px-0": true, "full-container": true}
+        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"full-container": true}
         return {"container": true, "tabs-flush-top": true}
     })
 
@@ -292,6 +292,11 @@
 </script>
 
 <style scoped lang="scss">
+    .full-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     section.maximized {
         margin: 0 !important;
         padding: 0;

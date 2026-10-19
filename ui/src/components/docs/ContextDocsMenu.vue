@@ -111,7 +111,7 @@
         background: var(--ks-btn-secondary-bg-default);
         box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
         font-weight: 600;
-        transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+        transition: background-color var(--ks-duration-fast) var(--ks-ease-standard), border-color var(--ks-duration-fast) var(--ks-ease-standard), color var(--ks-duration-fast) var(--ks-ease-standard);
 
         &.is-open {
             position: relative;
@@ -174,7 +174,7 @@
             display: block;
             padding: 0.25rem 0.5rem;
             border-radius: var(--docs-menu-link-radius);
-            transition: background-color 150ms ease, color 150ms ease;
+            transition: background-color var(--ks-duration-fast) var(--ks-ease-standard), color var(--ks-duration-fast) var(--ks-ease-standard);
             margin-bottom: 2px;
             cursor: pointer;
             width: 100%;

@@ -687,6 +687,7 @@
       "nav_properties": "Propriétés",
       "non_dynamic": "non dynamique",
       "format": "Format",
+      "internal_storage_uri_hint": "Expression Pebble faisant référence à un URI de stockage interne, par exemple {example}.",
       "max_items": "Nombre max. d'éléments",
       "max_length": "Longueur max",
       "maximum": "Maximum",
@@ -2290,7 +2291,8 @@
           "title": {
             "flow": "flow proposé",
             "dashboard": "Tableau de bord proposé",
-            "app": "Application proposée"
+            "app": "Application proposée",
+            "test_suite": "Test unitaire proposé"
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"

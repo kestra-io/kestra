@@ -147,6 +147,7 @@ public class DashboardController {
     protected FetchChartDataQuery buildDashboardChardDataQuery(String id, String chartId, ChartFiltersOverrides globalFilter) {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();
+        QueryFilter.validateRegexFilters(filters);
 
         filters = formatLabelsFilters(filters);
 
@@ -218,6 +219,7 @@ public class DashboardController {
         ChartFiltersOverrides globalFilter = previewRequest.globalFilter();
 
         List<QueryFilter> filters = globalFilter != null ? globalFilter.getFilters() : null;
+        QueryFilter.validateRegexFilters(filters);
 
         filters = formatLabelsFilters(filters);
 

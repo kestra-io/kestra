@@ -346,6 +346,45 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldRejectCatastrophicRegexInGlobalFilters() {
+        var catastrophic = ChartFiltersOverrides.builder().filters(
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.REGEX)
+                    .value("(a+)+$")
+                    .build()
+            )
+        ).build();
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+            """;
+
+        HttpClientResponseException preview = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", new DashboardController.PreviewRequest(chartYaml, catastrophic)),
+                PagedResults.class
+            )
+        );
+        HttpClientResponseException export = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", catastrophic),
+                Argument.of(byte[].class)
+            )
+        );
+
+        assertThat(preview.getStatus().getCode()).isEqualTo(400);
+        assertThat(preview.getMessage()).contains("catastrophic backtracking");
+        assertThat(export.getStatus().getCode()).isEqualTo(400);
+    }
+
+    @Test
     void shouldReturnValidationErrorWhenWhereFilterHasNoField() {
         String chartYaml = """
             id: table_executions_chart_id

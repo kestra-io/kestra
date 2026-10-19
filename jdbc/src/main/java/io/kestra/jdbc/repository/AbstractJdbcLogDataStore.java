@@ -166,13 +166,15 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
     @Override
     public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
-        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
-        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
-        }
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
         return toOffsetPage(findPageWithId(pageable, tenantId, condition), pageable);
+    }
+
+    private static Condition withDefaultKind(@Nullable List<QueryFilter> filters, Condition condition) {
+        if (QueryFilter.hasField(filters, QueryFilter.Field.KIND) || QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
+            return condition;
+        }
+        return NORMAL_KIND_CONDITION.and(condition);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -226,12 +228,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
-        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
-        // The only exception is when a filter specifies an executionId; in this case we should not restrict to any kind so the logs of that execution are always returned.
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
-        }
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
         return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
     }
 
@@ -242,11 +239,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         Instant afterTimestamp,
         @Nullable String afterKey,
         int pageSize) {
-        // Same default-kind rule as findAsync: NORMAL only unless a KIND or executionId filter is present.
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
-        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND) && !QueryFilter.hasField(filters, QueryFilter.Field.EXECUTION_ID)) {
-            condition = NORMAL_KIND_CONDITION.and(condition);
-        }
+        var condition = withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG));
 
         // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
         // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
@@ -504,7 +497,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             DSLContext context = DSL.using(configuration);
 
             var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId));
-            delete = delete.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+            delete = delete.and(withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG)));
 
             return delete.execute();
         });

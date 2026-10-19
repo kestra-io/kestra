@@ -15,6 +15,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.plugin.core.runner.Process;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -42,23 +43,18 @@ class DocumentationGeneratorTest {
             "## Examples",
             "> Minimal example",
             "id: \"test_task\"",
-            "requiredString: value",
+            "legacyDynamicString: value",
             "> Full example",
             "id: full_example",
             "## Properties",
-            "### `requiredString`",
-            "* **Dynamic:** ✔️",
-            "* **Required:** ✔️",
-            "* **Validation regExp:** `[a-z]+`",
-            "* **Min length:** `2`",
-            "* **Max length:** `10`",
-            "This property is currently in beta.",
+            "### `legacyDynamicString`",
+            "### `legacyNonDynamicString`",
             "### `booleanWithDefault`",
             "* **Default:** `false`",
-            "### `inclusiveInteger`",
+            "##### `inclusiveInteger`",
             "* **Minimum:** `>= 1`",
             "* **Maximum:** `<= 100`",
-            "### `exclusiveDecimal`",
+            "##### `exclusiveDecimal`",
             "* **Minimum:** `> 0`",
             "* **Maximum:** `< 1`",
             "### `items`",
@@ -83,11 +79,21 @@ class DocumentationGeneratorTest {
             "##### `name`",
             "##### `value`",
             "## Metrics",
-            "### `records`",
-            "* **Type:** ==counter==  (records)",
-            "### `duration`",
-            "* **Type:** ==timer=="
+            "### `records`\n* **Type:** ==counter==  (records)",
+            "### `duration`\n* **Type:** ==timer=="
         );
+        assertThat(render).doesNotContain("requires an Enterprise Edition");
+
+        assertThat(propertyDocumentation(render, "legacyDynamicString")).contains(
+            "* **Dynamic:** ✔️",
+            "* **Required:** ✔️",
+            "* **Validation regExp:** `[a-z]+`",
+            "* **Min length:** `2`",
+            "* **Max length:** `10`",
+            "This property is currently in beta."
+        );
+        assertThat(propertyDocumentation(render, "legacyNonDynamicString")).contains("* **Dynamic:** ❌");
+        assertThat(propertyDocumentation(render, "deprecatedProperty")).contains("⚠ Deprecated");
 
         int propertiesIndex = render.indexOf("Properties");
         int outputsIndex = render.indexOf("Outputs");
@@ -108,6 +114,13 @@ class DocumentationGeneratorTest {
         }
     }
 
+    private static String propertyDocumentation(String render, String property) {
+        String heading = "### `" + property + "`";
+        int start = render.indexOf(heading);
+        int end = render.indexOf("\n### `", start + heading.length());
+        return render.substring(start, end == -1 ? render.length() : end);
+    }
+
     @Test
     @SuppressWarnings("deprecation")
     void shouldRenderDeprecatedTaskDocumentation() throws IOException {
@@ -123,7 +136,7 @@ class DocumentationGeneratorTest {
         RegisteredPlugin core = pluginScanner.scan();
 
         List<Document> docs = documentationGenerator.generate(core);
-        Document doc = docs.stream().filter(candidate -> candidate.getIcon() != null).findFirst().orElseThrow();
+        Document doc = docs.getFirst();
         assertThat(doc.getIcon()).isNotNull();
         assertThat(doc.getBody()).contains("## <img width=\"25\" src=\"data:image/svg+xml;base64,");
     }
@@ -138,6 +151,22 @@ class DocumentationGeneratorTest {
         List<Document> docs = documentationGenerator.generate(list.stream().filter(r -> r.license() != null).findFirst().orElseThrow());
         Document doc = docs.getFirst();
         assertThat(doc.getBody()).contains("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra.");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void taskRunner() throws IOException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin scan = pluginScanner.scan();
+        Class<Process> processTaskRunner = scan.findClass(Process.class.getName()).orElseThrow();
+
+        PluginClassAndMetadata<Process> metadata = PluginClassAndMetadata.create(scan, processTaskRunner, Process.class, null);
+        ClassPluginDocumentation<Process> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), false);
+
+        String render = DocumentationGenerator.render(doc);
+
+        assertThat(render).contains("title: Process");
+        assertThat(render).contains("Run tasks as local subprocesses on the worker.");
     }
 
     private ClassPluginDocumentation<? extends Task> documentation(Class<? extends Task> task) {

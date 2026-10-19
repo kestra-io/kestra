@@ -38,77 +38,67 @@ describe("menuCustomization", () => {
     })
 
     describe("flattenMenuItems", () => {
-        it("shouldReturnFlatMenuUnchanged", () => {
-            const flatMenu: MenuItem[] = [
-                {id: "flows", title: "Flows"},
-                {id: "executions", title: "Executions"},
-            ]
-            expect(flattenMenuItems(flatMenu)).toEqual([
-                {id: "flows", title: "Flows"},
-                {id: "executions", title: "Executions"},
+        it("shouldReturnChildItemsOfEverySectionInOrder", () => {
+            expect(flattenMenuItems(menu).map((item) => item.id)).toEqual([
+                "flows",
+                "executions",
+                "logs",
+                "namespaces",
+                "hidden-one",
             ])
         })
 
-        it("shouldFlattenChildrenWithParentsInDisplayOrder", () => {
-            expect(flattenMenuItems(menu)).toEqual([
-                menu[0],
-                menu[0].child![0],
-                menu[0].child![1],
-                menu[0].child![2],
-                menu[1],
-                menu[1].child![0],
-                menu[1].child![1],
-            ])
+        it("shouldNotIncludeSectionObjects", () => {
+            const result = flattenMenuItems(menu)
+
+            expect(result).not.toContain(menu[0])
+            expect(result).not.toContain(menu[1])
         })
 
-        it("shouldFullyFlattenArbitrarilyDeepNesting", () => {
-            const deepMenu: MenuItem[] = [
-                {
-                    id: "level-1",
-                    title: "Level 1",
-                    child: [
-                        {
-                            id: "level-2",
-                            title: "Level 2",
-                            child: [
-                                {
-                                    id: "level-3",
-                                    title: "Level 3",
-                                    child: [
-                                        {id: "deep-item", title: "Deep Item"},
-                                    ],
-                                },
-                            ],
-                        },
-                    ],
-                },
+        it("shouldSkipSectionWithoutChild", () => {
+            const sections: MenuItem[] = [
+                {title: "Empty"},
+                {title: "Workspace", child: [{id: "flows", title: "Flows"}]},
             ]
-            expect(flattenMenuItems(deepMenu).map((item) => item.id)).toEqual([
-                "level-1",
-                "level-2",
-                "level-3",
-                "deep-item",
-            ])
+
+            expect(flattenMenuItems(sections).map((item) => item.id)).toEqual(["flows"])
         })
 
-        it("shouldKeepItemWithEmptyChildrenArray", () => {
-            const menuWithEmptyChild: MenuItem[] = [
-                {
-                    id: "workspace",
-                    title: "Workspace",
-                    child: [
-                        {id: "empty-item", title: "Empty", child: []},
-                    ],
-                },
+        it("shouldSkipSectionWithEmptyChildArray", () => {
+            const sections: MenuItem[] = [
+                {title: "Empty", child: []},
+                {title: "Workspace", child: [{id: "flows", title: "Flows"}]},
             ]
-            expect(flattenMenuItems(menuWithEmptyChild).map((item) => item.id)).toEqual([
-                "workspace",
-                "empty-item",
-            ])
+
+            expect(flattenMenuItems(sections).map((item) => item.id)).toEqual(["flows"])
         })
 
         it("shouldReturnEmptyListForEmptyMenu", () => {
             expect(flattenMenuItems([])).toEqual([])
+        })
+
+        it("shouldNotFlattenNestingBelowFirstChildLevel", () => {
+            const nested: MenuItem = {
+                id: "nested",
+                title: "Nested",
+                child: [{id: "deep", title: "Deep"}],
+            }
+            const result = flattenMenuItems([{title: "Section", child: [nested]}])
+
+            expect(result).toEqual([nested])
+            expect(result.map((item) => item.id)).not.toContain("deep")
+        })
+
+        it("shouldNotMutateInput", () => {
+            const input: MenuItem[] = [
+                {title: "Workspace", child: [{id: "flows", title: "Flows"}]},
+                {title: "Empty"},
+            ]
+            const snapshot = structuredClone(input)
+
+            flattenMenuItems(input)
+
+            expect(input).toEqual(snapshot)
         })
     })
 

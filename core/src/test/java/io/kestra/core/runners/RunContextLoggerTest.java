@@ -599,6 +599,33 @@ class RunContextLoggerTest {
         assertThat(logs).noneMatch(logEntry -> "suppressed info message".equals(logEntry.getMessage()));
     }
 
+    @Test
+    void shouldFallbackToClassNameWhenExceptionCauseHasNoMessage() {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        LogEntry base = LogEntry.of(execution);
+
+        Exception causeWithoutMessage = new java.net.ConnectException();
+        Exception topLevelException = new RuntimeException("Top level error", causeWithoutMessage);
+
+        ch.qos.logback.classic.spi.LoggingEvent event = new ch.qos.logback.classic.spi.LoggingEvent(
+            "io.kestra.core.runners.RunContextLogger",
+            (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("io.kestra.core.runners.RunContextLogger"),
+            ch.qos.logback.classic.Level.ERROR,
+            "Task failed",
+            topLevelException,
+            null
+        );
+
+        List<LogEntry> entries = RunContextLogger.logEntries(event, base);
+
+        assertThat(entries).hasSize(3);
+        assertThat(entries.get(0).getMessage()).isEqualTo("Task failed");
+        assertThat(entries.get(1).getMessage()).isEqualTo("java.net.ConnectException");
+        assertThat(entries.get(1).getMessage()).doesNotContain("null");
+        assertThat(entries.get(2).getLevel()).isEqualTo(Level.DEBUG);
+    }
+
     /**
      * Exposes the protected {@link RunContextLogger.BaseAppender#transform} for the test.
      */

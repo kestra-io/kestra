@@ -26,6 +26,12 @@ describe("ErrorToast", () => {
         expect(events).not.toHaveBeenCalled()
     })
 
+    it.each(["warning", "info", "primary"] as const)("does not report a %s toast as an error event", (variant) => {
+        mountToast({variant, title: "Heads up", content: "Something to know"})
+
+        expect(events).not.toHaveBeenCalled()
+    })
+
     it("reports an error toast as an error event", () => {
         mountToast({variant: "error", title: "Boom", content: "Something failed"})
 

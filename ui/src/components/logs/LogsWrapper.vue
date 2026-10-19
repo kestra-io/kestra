@@ -730,15 +730,15 @@
             .log-row {
                 display: flex;
                 align-items: flex-start;
-                gap: $spacer * 0.5;
+                gap: var(--ks-spacing-2);
 
                 &--selected {
-                    background-color: var(--ks-background-active);
+                    background-color: var(--ks-bg-active);
                 }
 
                 &__checkbox {
                     flex: 0 0 auto;
-                    padding-top: $spacer * 0.5;
+                    padding-top: var(--ks-spacing-2);
                 }
 
                 &__content {
@@ -749,7 +749,7 @@
         }
 
         .logs-bulk-actions {
-            margin-bottom: $spacer * 0.75;
+            margin-bottom: var(--ks-spacing-3);
         }
     }
 </style>

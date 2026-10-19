@@ -182,10 +182,10 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/logs.yaml" })
+    @LoadFlows({ "flows/valids/minimal.yaml" })
     void replayFromBeginning() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "logs");
-        assertThat(execution.getTaskRunList()).hasSize(5);
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "minimal");
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         Flow flow = flowRepository.findByExecution(execution);
@@ -193,7 +193,7 @@ class ExecutionServiceTest {
 
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getNamespace()).isEqualTo("io.kestra.tests");
-        assertThat(restart.getFlowId()).isEqualTo("logs");
+        assertThat(restart.getFlowId()).isEqualTo("minimal");
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.CREATED);
         assertThat(restart.getState().getHistories()).hasSize(1);

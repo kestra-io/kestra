@@ -3,7 +3,7 @@
 
 DROP TABLE IF EXISTS queues;
 CREATE TABLE IF NOT EXISTS queues (
-    "offset" BIGSERIAL PRIMARY KEY,
+    "offset" SERIAL PRIMARY KEY,
     type INT NOT NULL,
     "routing_key" VARCHAR(250),
     key VARCHAR(250) NOT NULL,

@@ -1218,7 +1218,7 @@
 
         .kel-radio-button__inner {
             border: var(--ks-border-default);
-            transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
+            transition: color var(--ks-duration-fast) var(--ks-ease-standard), border-color var(--ks-duration-fast) var(--ks-ease-standard), background-color var(--ks-duration-fast) var(--ks-ease-standard);
 
             &:hover {
                 color: var(--ks-text-secondary);

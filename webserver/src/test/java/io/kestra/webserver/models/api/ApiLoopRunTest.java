@@ -23,7 +23,8 @@ class ApiLoopRunTest {
             0,
             null,
             "EMEA",
-            List.of(new LoopRun.Parent(1, null, "Q1"))
+            List.of(new LoopRun.Parent(1, null, "Q1", true)),
+            true
         );
 
         var api = ApiLoopRun.of(loopRun);

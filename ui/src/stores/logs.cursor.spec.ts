@@ -1,10 +1,12 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
+import type {searchLogs as searchLogsSdk} from "@kestra-io/kestra-sdk/logs"
+
 const searchLogs = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/logs", () => ({
-    searchLogs: (...args: any[]) => searchLogs(...args),
+    searchLogs: (...args: Parameters<typeof searchLogsSdk>) => searchLogs(...args),
     deleteLogsFromFlow: vi.fn().mockResolvedValue({}),
 }))
 

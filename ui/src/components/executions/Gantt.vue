@@ -926,21 +926,21 @@
 
                 .gantt-rail-vertical {
                     left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
-                    top: calc(-1 * var(--ks-spacing-2) - var(--ks-spacing-px));
+                    top: calc(-1 * var(--ks-spacing-2) - 2 * var(--ks-spacing-px));
                     bottom: 0;
                     width: var(--ks-spacing-px);
 
                     &.is-terminal {
-                        top: calc(-1 * var(--ks-spacing-2) - var(--ks-spacing-px));
+                        top: calc(-1 * var(--ks-spacing-2) - 2 * var(--ks-spacing-px));
                         bottom: auto;
-                        height: calc(50% + var(--ks-spacing-2) + var(--ks-spacing-px));
+                        height: calc(50% + var(--ks-spacing-2) + 2 * var(--ks-spacing-px));
                     }
                 }
 
                 .gantt-rail-outgoing {
                     left: calc(var(--ks-spacing-1) + var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: 50%;
-                    height: calc(50% + var(--ks-spacing-2) + var(--ks-spacing-px));
+                    height: calc(50% + var(--ks-spacing-2) + 2 * var(--ks-spacing-px));
                     width: var(--ks-spacing-px);
                 }
 

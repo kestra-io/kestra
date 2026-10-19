@@ -254,4 +254,23 @@ class StateTest {
         // When / Then
         assertThat(state.isResumingFromBreakpoint()).isFalse();
     }
+
+    @Test
+    void shouldNotMutateOriginalStateHistoryWhenConstructedFromExistingState() {
+        // Given an existing state with CREATED and RUNNING
+        State original = new State().withState(State.Type.RUNNING);
+        int originalHistoryCount = original.getHistories().size();
+
+        // When creating a new state using State(State, Type)
+        State derived = new State(original, State.Type.RESUBMITTED);
+
+        // Then original state histories must remain untouched
+        assertThat(original.getHistories()).hasSize(originalHistoryCount);
+        assertThat(original.getCurrent()).isEqualTo(State.Type.RUNNING);
+
+        // And derived state has its own distinct history list including the new type
+        assertThat(derived.getHistories()).hasSize(originalHistoryCount + 1);
+        assertThat(derived.getCurrent()).isEqualTo(State.Type.RESUBMITTED);
+        assertThat(derived.getHistories()).isNotSameAs(original.getHistories());
+    }
 }

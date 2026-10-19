@@ -22,12 +22,12 @@ vi.mock("../no-code/components/TaskEditor.vue", () => ({
 import TaskEditPanes from "./TaskEditPanes.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
-function mountPanes(editorPath?: string) {
+function mountPanes(editorPath?: string, section = "tasks") {
     return i18nMount(TaskEditPanes, {
         messages: {form: "Form", source: "Source"},
         props: {
             modelValue: "id: some_task\ntype: io.kestra.plugin.core.log.Log\n",
-            section: "tasks",
+            section,
             activeTab: "form",
             editorPath,
         },
@@ -62,5 +62,17 @@ describe("TaskEditPanes", () => {
         // Then
         const editor = wrapper.findComponent({name: "KsEditor"})
         expect(editor.props("path")).toBe("prune_old")
+    })
+
+    it.each([
+        ["tasks", "task"],
+        ["errors", "task"],
+        ["triggers", "trigger"],
+    ])("declares the schema type the %s section is bound to", (section, schemaType) => {
+        // Given/When
+        const wrapper = mountPanes("some_task", section)
+
+        // Then - Monaco names the model `<schemaType>-<path>.yaml`, and `yamlSchemas` only binds `task-*` and `trigger-*`
+        expect(wrapper.findComponent({name: "KsEditor"}).props("schemaType")).toBe(schemaType)
     })
 })

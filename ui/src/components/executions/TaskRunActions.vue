@@ -383,7 +383,7 @@
         gap: var(--ks-spacing-1);
     }
 
-        .iteration-selector {
+    .iteration-selector {
         border-bottom: var(--ks-border-block-primary);
         padding: var(--ks-spacing-2);
 

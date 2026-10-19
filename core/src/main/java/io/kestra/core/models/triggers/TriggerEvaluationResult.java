@@ -89,6 +89,13 @@ public record TriggerEvaluationResult(
     }
 
     /**
+     * Returns a copy carrying the given W3C {@code traceparent}, so the created execution joins the upstream trace.
+     */
+    public TriggerEvaluationResult withTraceParent(@Nullable String traceParent) {
+        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs, traceParent);
+    }
+
+    /**
      * Reconstructs a full {@link Execution} from this lightweight result.
      *
      * @param triggerId the trigger identifier providing namespace, flowId, and tenantId.
@@ -99,7 +106,7 @@ public record TriggerEvaluationResult(
             ? new State()
             : new State().withState(stateType);
 
-        Execution.ExecutionBuilder builder = Execution.builder()
+        return Execution.builder()
             .id(executionId)
             .tenantId(triggerId.getTenantId())
             .namespace(triggerId.getNamespace())
@@ -109,12 +116,8 @@ public record TriggerEvaluationResult(
             .trigger(trigger)
             .labels(labels)
             .scheduleDate(scheduleDate)
-            .inputs(inputs);
-
-        if (traceParent != null) {
-            builder.traceParent(traceParent);
-        }
-
-        return builder.build();
+            .inputs(inputs)
+            .traceParent(traceParent)
+            .build();
     }
 }

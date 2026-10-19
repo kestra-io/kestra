@@ -1,8 +1,16 @@
 <template>
     <template v-if="initialInputs">
         <div v-if="isWizard && current?.kind === 'form' && (current.displayName || current.description)" class="wizard-step-header">
-            <h5 v-if="current.displayName" class="wizard-step-title">{{ current.displayName }}</h5>
-            <KsMarkdown v-if="current.description" :content="current.description" class="text-description" />
+            <h5 v-if="current.displayName" class="wizard-step-title">
+                {{ current.displayName }}
+                <KsTooltip v-if="stepDescriptionAsTooltip" placement="right" enterable>
+                    <template #content>
+                        <KsMarkdown class="description-tooltip" :content="current.description!" />
+                    </template>
+                    <KsButton :icon="HelpCircleOutlineIcon" :aria-label="$t('description')" link />
+                </KsTooltip>
+            </h5>
+            <KsMarkdown v-if="current.description && !stepDescriptionAsTooltip" :content="current.description" class="text-description" />
         </div>
 
         <template v-for="input in visibleInputs" :key="input.id">
@@ -485,6 +493,10 @@
         validateInputs,
         onRecapChange: (val) => emit("update:onRecap", val),
     })
+
+    const stepDescriptionAsTooltip = computed(() =>
+        current.value?.descriptionDisplayMode === "TOOLTIP" && !!current.value.description && !!current.value.displayName,
+    )
 
     const inputRendererExtension = useInputRendererExtension()
 

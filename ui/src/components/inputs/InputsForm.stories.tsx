@@ -223,6 +223,10 @@ export const Wizard: Story = {
         expect(can.getByTestId("wizard-back")).toBeTruthy();
         // The active FORM's displayName shows as a header above its fields.
         expect(canvasElement.querySelector(".wizard-step-title")).toHaveTextContent("Environment");
+        // A TOOLTIP description moves from the header text block into a hoverable icon next to the title.
+        expect(canvasElement.querySelector(".wizard-step-header .text-description")).toBeNull();
+        await userEvent.hover(within(canvasElement.querySelector(".wizard-step-title") as HTMLElement).getByRole("button", {name: "Description"}));
+        await waitFor(() => expect(within(window.document.body).getByText("Where the workload runs")).toBeTruthy());
 
         // Bar tracks progress: step 0 passed (filled), step 1 ("Environment") now active.
         const segs = can.getByTestId("wizard-progress").querySelectorAll(".ks-stepbar__seg");
@@ -255,6 +259,8 @@ export const Wizard: Story = {
                 id: "environment",
                 type: "FORM",
                 displayName: "Environment",
+                description: "Where the workload runs",
+                descriptionDisplayMode: "TOOLTIP",
                 inputs: [{id: "region", type: "STRING", required: false, displayName: "Region"}],
             },
             {id: "team", type: "STRING", required: false, displayName: "Team"},

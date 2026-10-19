@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {findFailedIterationChain, resolveIterationChain, type IterationParent} from "./loopIterations"
+import {findFailedIterationChain, MAX_CANDIDATE_PAGES, resolveIterationChain, type IterationParent} from "./loopIterations"
 
 const executions: Record<string, IterationParent> = {
     "outer-iteration-13": {parentId: "root", loopRun: {taskId: "per_customer", index: 12}},
@@ -64,6 +64,34 @@ describe("findFailedIterationChain", () => {
         await findFailedIterationChain(root, "per_invoice", {search, fetchParent: fetchSpy})
 
         expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it("shouldKeepLookingPastAPageOfCandidatesFromAnotherConcurrentExecutionOfTheSameFlow", async () => {
+        const search = vi.fn()
+            .mockResolvedValueOnce({results: [failed("x1", "stranger-iteration", 1), failed("x2", "stranger-iteration", 2)], total: 3})
+            .mockResolvedValueOnce({results: [failed("our-failure", "outer-iteration-13", 7)], total: 3})
+
+        const chain = await findFailedIterationChain(root, "per_invoice", {search, fetchParent: async (id) => executions[id]})
+
+        expect(search.mock.calls.map(([params]) => params.page)).toEqual([1, 2])
+        expect(chain?.leafId).toBe("our-failure")
+    })
+
+    it("shouldStopPagingOnceAChainIsFound", async () => {
+        const search = vi.fn().mockResolvedValue({results: [failed("our-failure", "outer-iteration-13", 7)], total: 40})
+
+        await findFailedIterationChain(root, "per_invoice", {search, fetchParent: async (id) => executions[id]})
+
+        expect(search).toHaveBeenCalledTimes(1)
+    })
+
+    it("shouldGiveUpAfterTheCandidatePageLimit", async () => {
+        const search = vi.fn().mockResolvedValue({results: [failed("x", "stranger-iteration", 1)], total: 100000})
+
+        const chain = await findFailedIterationChain(root, "per_invoice", {search, fetchParent: async (id) => executions[id]})
+
+        expect(chain).toBeUndefined()
+        expect(search.mock.calls.length).toBe(MAX_CANDIDATE_PAGES)
     })
 
     it("shouldReturnNothingWhenNoCandidateReachesTheRoot", async () => {

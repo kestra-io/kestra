@@ -19,6 +19,27 @@ describe("searchLoopIterations", () => {
         expect(filters).toContainEqual({field: "endDate", operation: "LESS_THAN_OR_EQUAL_TO", value: "2026-10-09T09:49:18Z"})
     })
 
+    it("shouldWidenTheStartBoundToTheSecondSoAnIterationStartedInTheSameSecondAsTheRootIsKept", async () => {
+        await searchLoopIterations({root, state: "FAILED"})
+
+        const {filters} = vi.mocked(ExecutionsAPI.searchExecutions).mock.calls[0][0] as {filters: {field: string; operation: string; value: string}[]}
+        expect(filters).toContainEqual({field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: "2026-10-09T09:49:13Z"})
+    })
+
+    it("shouldRoundTheEndBoundUpWhenTheRootEndedWithinAFractionOfASecondBelowMillisecondPrecision", async () => {
+        await searchLoopIterations({root: {...root, endDate: "2026-10-09T09:49:17.000400Z"}, state: "FAILED"})
+
+        const {filters} = vi.mocked(ExecutionsAPI.searchExecutions).mock.calls[0][0] as {filters: {field: string; value: string}[]}
+        expect(filters.find((filter) => filter.field === "endDate")?.value).toBe("2026-10-09T09:49:18Z")
+    })
+
+    it("shouldKeepTheEndBoundWhenTheRootEndedOnAWholeSecond", async () => {
+        await searchLoopIterations({root: {...root, endDate: "2026-10-09T09:49:17.000000Z"}, state: "FAILED"})
+
+        const {filters} = vi.mocked(ExecutionsAPI.searchExecutions).mock.calls[0][0] as {filters: {field: string; value: string}[]}
+        expect(filters.find((filter) => filter.field === "endDate")?.value).toBe("2026-10-09T09:49:17Z")
+    })
+
     it("shouldNotBoundTheSearchByAnEndDateWhileTheRootRuns", async () => {
         await searchLoopIterations({root, state: "FAILED"})
 

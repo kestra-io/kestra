@@ -116,7 +116,7 @@ node {
 }
 
 // -PskipUI=true gives a Java-only or --offline build, the jar then has no plugin-ui.
-if (!project.hasProperty('skipUI') && httpUiDir.asFile.exists()) {
+if (project.findProperty('skipUI')?.toString() != 'true' && httpUiDir.asFile.exists()) {
     tasks.register('npmInstallUI', com.github.gradle.node.npm.task.NpmTask) {
         args = ['ci', '--fetch-retries=5', '--fetch-retry-mintimeout=5000', '--fetch-retry-maxtimeout=60000']
         workingDir = httpUiDir.asFile

@@ -117,6 +117,7 @@
         (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
         (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
         (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
+        (e: "editor-warnings", warnings: string[]): void
     }>()
 
     const editorRef = ref<HTMLDivElement | null>(null)

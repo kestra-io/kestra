@@ -17,7 +17,7 @@
             :icons="pluginsStore.icons"
             :loadIcon="pluginsStore.loadIcon"
             :execution="executionsStore.execution"
-            :subflowsExecutions="executionsStore.subflowsExecutions"
+            :subflowsExecutions="executionsStore.graphExecutions"
             :playgroundEnabled="playgroundStore.enabled"
             :playgroundReadyToStart="playgroundStore.readyToStart"
             :replayEnabled="replayEnabled"
@@ -447,7 +447,7 @@
     function taskActionsContext(executionId: string | undefined, taskRunId: string | undefined, taskRunIds: string[]) {
         const execution = executionId === executionsStore.execution?.id
             ? executionsStore.execution
-            : Object.values(executionsStore.subflowsExecutions).find(execution => execution.id === executionId)
+            : executionId ? executionsStore.graphExecutions[executionId] : undefined
         const taskRuns = taskRunIds.flatMap(id => {
             const run = execution?.taskRunList?.find(run => run.id === id)
             return run ? [run] : []
@@ -462,7 +462,7 @@
     const flowSource = computed(() => flowStore.flowYaml || props.source)
 
     const effectiveFlowGraph = computed(() =>
-        playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
+        playgroundStore.enabled ? (executionsStore.scopedFlowGraph ?? props.flowGraph) : props.flowGraph,
     )
 
     const isTask = (value: unknown): value is FlowTask & Task =>

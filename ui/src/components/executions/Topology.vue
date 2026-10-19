@@ -48,7 +48,7 @@
     defineExpose({focusTask: (taskId: string) => editor.value?.focusTask(taskId)})
 
     const execution = computed(() => executionsStore.execution)
-    const flowGraph = computed(() => executionsStore.flowGraph)
+    const flowGraph = computed(() => executionsStore.scopedFlowGraph)
 
     const loading = ref(true)
     const previousExecutionId = ref<string | undefined>(undefined)

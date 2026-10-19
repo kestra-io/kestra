@@ -11,6 +11,7 @@ vi.mock("../utils/loopLogScope", async (importOriginal) => ({
     collectFailedTargets,
     collectScopedTargets,
     searchMergedLogs,
+    logUrlReserve: () => 0,
 }))
 
 const targets = {executionIds: ["root"], chains: {}, failedChains: [], scope: [], offset: 0, end: 0, total: 0}

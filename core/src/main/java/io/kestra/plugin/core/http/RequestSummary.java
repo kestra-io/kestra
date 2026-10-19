@@ -65,7 +65,7 @@ public record RequestSummary(
             body == null ? 0 : bodyBytes(body),
             body != null,
             formFieldNames,
-            auth(options, lowerHeaderNames),
+            auth(options, request, lowerHeaderNames),
             timeout,
             followRedirects
         );
@@ -96,9 +96,22 @@ public record RequestSummary(
         }
     }
 
-    private static String auth(HttpConfiguration options, Set<String> lowerHeaderNames) {
+    private static String auth(HttpConfiguration options, HttpRequest request, Set<String> lowerHeaderNames) {
         if (options != null && options.getAuth() != null) {
             return options.getAuth().getType().name();
+        }
+        if (lowerHeaderNames.contains("authorization")) {
+            // Only the scheme prefix is read, the credential itself is never kept.
+            String scheme = request.getHeaders().firstValue("Authorization").orElse("").trim().toLowerCase(Locale.ROOT);
+            if (scheme.startsWith("bearer ")) {
+                return "BEARER";
+            }
+            if (scheme.startsWith("basic ")) {
+                return "BASIC";
+            }
+            if (scheme.startsWith("aws4-hmac-sha256")) {
+                return "AWS_SIGV4";
+            }
         }
         if (lowerHeaderNames.contains("x-amz-date") || lowerHeaderNames.contains("x-amz-signature")) {
             return "AWS_SIGV4";

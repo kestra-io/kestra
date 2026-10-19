@@ -42,6 +42,22 @@ class HttpRedactorTest {
     }
 
     @Test
+    void shouldKeepCorsHeadersButStillRedactSecretValues() {
+        Map<String, List<String>> redacted = HttpRedactor.redactHeaders(
+            Map.of(
+                "Access-Control-Allow-Credentials", List.of("true"),
+                "access-control-allow-headers", List.of("Authorization, Content-Type"),
+                "Access-Control-Expose-Headers", List.of("s3cr3t-value")
+            ),
+            Set.of("s3cr3t-value")
+        );
+
+        assertThat(redacted.get("Access-Control-Allow-Credentials")).containsExactly("true");
+        assertThat(redacted.get("access-control-allow-headers")).containsExactly("Authorization, Content-Type");
+        assertThat(redacted.get("Access-Control-Expose-Headers")).containsExactly("***");
+    }
+
+    @Test
     void shouldRedactHeaderValueEqualToSecretOnly() {
         Map<String, List<String>> redacted = HttpRedactor.redactHeaders(
             Map.of("X-Echo", List.of("s3cr3t-value", "prefix-s3cr3t-value", "ok")),

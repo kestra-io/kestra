@@ -37,6 +37,14 @@ public final class HttpRedactor {
         "ocp-apim-subscription-key"
     );
 
+    // Matched by the name regex through "credential" but carrying only a boolean or a list of names.
+    private static final Set<String> NON_SENSITIVE_NAMES = Set.of(
+        "access-control-allow-credentials",
+        "access-control-allow-headers",
+        "access-control-expose-headers",
+        "access-control-request-headers"
+    );
+
     private static final Pattern SENSITIVE_NAME = Pattern.compile("(?i)(token|secret|password|credential|signature|api[-_]?key)");
 
     private HttpRedactor() {
@@ -46,7 +54,11 @@ public final class HttpRedactor {
         if (name == null) {
             return false;
         }
-        return SENSITIVE_HEADERS.contains(name.toLowerCase(Locale.ROOT)) || SENSITIVE_NAME.matcher(name).find();
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (SENSITIVE_HEADERS.contains(lower)) {
+            return true;
+        }
+        return !NON_SENSITIVE_NAMES.contains(lower) && SENSITIVE_NAME.matcher(name).find();
     }
 
     public static boolean isSecretValue(@Nullable String value, Set<String> secretValues) {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     BODY_PREVIEW_LIMIT,
+    downloadFileName,
     formatBytes,
     parseHttpOutputs,
 } from "../../src/components/httpSummary";
@@ -50,6 +51,21 @@ describe("parseHttpOutputs", () => {
         expect(summary?.fileUri).toContain("data.csv");
         expect(summary?.body).toBeUndefined();
         expect(summary?.bytes).toBe(1048576);
+    });
+});
+
+describe("downloadFileName", () => {
+    it("shouldKeepANamedStoredFile", () => {
+        expect(downloadFileName({ fileUri: "kestra:///ns/flow/exec/data.csv", path: "/export" })).toBe("data.csv");
+    });
+
+    it("shouldFallBackToTheRequestPathForAGeneratedTempName", () => {
+        expect(downloadFileName({ fileUri: "kestra:///ns/flow/exec/1234567.tmp", path: "/v1/my%20file.csv" })).toBe("my file.csv");
+    });
+
+    it("shouldFallBackToTheFinalUriThenTheStoredName", () => {
+        expect(downloadFileName({ fileUri: "kestra:///x/1234567.tmp", finalUri: "https://h.io/a/report.pdf" })).toBe("report.pdf");
+        expect(downloadFileName({ fileUri: "kestra:///x/1234567.tmp", path: "/" })).toBe("1234567.tmp");
     });
 });
 

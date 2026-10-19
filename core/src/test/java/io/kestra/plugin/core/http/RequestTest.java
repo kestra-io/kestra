@@ -778,11 +778,26 @@ class RequestTest {
         assertThat(request.contentType()).isEqualTo("application/json");
         assertThat(request.hasBody()).isTrue();
         assertThat(request.bodyBytes()).isEqualTo("{\"password\":\"hunter2\"}".length());
-        assertThat(request.auth()).isEqualTo("AUTHORIZATION_HEADER");
+        assertThat(request.auth()).isEqualTo("BEARER");
         assertThat(output.getUri().getRawQuery()).isEqualTo("plain=1&other=***&api_key=***");
 
         String serialized = JacksonMapper.ofJson().writeValueAsString(output);
         assertThat(serialized).doesNotContain("hunter2").doesNotContain("secretKey");
+    }
+
+    @Test
+    void shouldPreferAuthorizationHeaderSchemeOverApiKeyHeader() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/summary/post"))
+            .method(Property.ofValue("POST"))
+            .headers(Property.ofValue(Map.of("Authorization", "Bearer token-value", "X-Api-Key", "key-value")))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getRequest().auth()).isEqualTo("BEARER");
     }
 
     @Test

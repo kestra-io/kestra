@@ -202,6 +202,24 @@ export function fileName(uri: string): string {
     return uri.split("/").filter(Boolean).at(-1) ?? uri;
 }
 
+const GENERATED_TEMP_NAME = /^\d+\.tmp$/;
+
+// A saveAs or Content-Disposition name is already the storage name, only a generated temp name is worth replacing.
+export function downloadFileName(summary: Pick<HttpSummary, "fileUri" | "path" | "finalUri">): string | undefined {
+    const stored = summary.fileUri ? fileName(summary.fileUri) : undefined;
+    if (stored && !GENERATED_TEMP_NAME.test(stored)) return stored;
+
+    const segment = (summary.path ?? hostAndPath(summary.finalUri).path)?.split("/").filter(Boolean).at(-1);
+    if (segment) {
+        try {
+            return decodeURIComponent(segment);
+        } catch {
+            return segment;
+        }
+    }
+    return stored;
+}
+
 export function executionFileUrl(
     executionId: string | undefined,
     path: string,

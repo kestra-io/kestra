@@ -16,7 +16,7 @@ import {
 import {
     BODY_PREVIEW_LIMIT,
     executionFileUrl,
-    fileName,
+    downloadFileName,
     formatBytes,
     formatMillis,
     formatStatus,
@@ -135,7 +135,7 @@ const responseRows = computed(() => {
                 </KsTable>
                 <div v-if="summary.fileUri" class="file" data-test="http-summary-file">
                     <KsLink :href="fileUrl" target="_blank">
-                        <KsTag>{{ fileName(summary.fileUri) }}</KsTag>
+                        <KsTag>{{ downloadFileName(summary) }}</KsTag>
                     </KsLink>
                 </div>
             </section>

@@ -488,6 +488,40 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/flow-with-outputs.yml" }, tenantId = "flowwithoutputswaittrue")
+    void shouldReturnOutputsWhenWaitIsTrue() {
+        String tenantId = "flowwithoutputswaittrue";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/flow-with-outputs?wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(result.getOutputs()).isNotNull();
+        assertThat(result.getOutputs().get("key")).isEqualTo("{\"value\":\"flow-with-outputs\"}");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-with-outputs.yml" }, tenantId = "flowwithoutputswaitfalse")
+    void shouldNotReturnOutputsWhenWaitIsFalse() {
+        String tenantId = "flowwithoutputswaitfalse";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/flow-with-outputs?wait=false".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getOutputs()).isNull();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputsmall")
     void triggerExecutionInputSmall() {
         String tenantId = "triggerexecutioninputsmall";

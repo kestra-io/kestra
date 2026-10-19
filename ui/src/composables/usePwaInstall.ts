@@ -3,8 +3,6 @@ import {useStorage} from "@vueuse/core"
 import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../utils/pwaInstallState"
 import {storageKeys} from "../utils/constants"
 
-export const PWA_INSTALL_SNOOZE_MS = 30 * 24 * 60 * 60 * 1000
-
 function isStandalone(): boolean {
     return window.matchMedia("(display-mode: standalone)").matches ||
         // iOS Safari: no display-mode query, exposes navigator.standalone instead
@@ -19,8 +17,7 @@ export function usePwaInstall() {
     initPwaInstallCapture()
 
     const installed = ref(isStandalone())
-    const dismissedAt = useStorage(storageKeys.PWA_INSTALL_DISMISSED_AT, 0)
-    const dismissed = computed(() => Date.now() - dismissedAt.value < PWA_INSTALL_SNOOZE_MS)
+    const dismissed = useStorage(storageKeys.PWA_INSTALL_DISMISSED, false)
 
     const canInstall = computed(() =>
         deferredInstallPrompt.value !== null && !installed.value && !appInstalled.value && !dismissed.value && isSecureOrigin(),
@@ -41,7 +38,7 @@ export function usePwaInstall() {
     }
 
     function dismiss(): void {
-        dismissedAt.value = Date.now()
+        dismissed.value = true
     }
 
     return {canInstall, promptInstall, dismiss, dismissed}

@@ -1,7 +1,7 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent} from "vue"
 import {mount} from "@vue/test-utils"
-import {PWA_INSTALL_SNOOZE_MS, usePwaInstall} from "./usePwaInstall"
+import {usePwaInstall} from "./usePwaInstall"
 import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../utils/pwaInstallState"
 import {storageKeys} from "../utils/constants"
 
@@ -58,8 +58,7 @@ describe("usePwaInstall", () => {
 
     afterEach(() => {
         restoreLocation()
-        vi.useRealTimers()
-        localStorage.removeItem(storageKeys.PWA_INSTALL_DISMISSED_AT)
+        localStorage.removeItem(storageKeys.PWA_INSTALL_DISMISSED)
     })
 
     afterAll(() => {
@@ -156,17 +155,6 @@ describe("usePwaInstall", () => {
 
         expect(api.dismissed.value).toBe(true)
         expect(api.canInstall.value).toBe(false)
-    })
-
-    it("offers the install again once the snooze period has elapsed", () => {
-        vi.useFakeTimers()
-        mountPwaInstall().api.dismiss()
-
-        vi.advanceTimersByTime(PWA_INSTALL_SNOOZE_MS + 1)
-        const {api} = mountPwaInstall()
-        fireBeforeInstallPrompt()
-
-        expect(api.canInstall.value).toBe(true)
     })
 
     it("stays dismissed after a reload when the native install dialog is cancelled", async () => {

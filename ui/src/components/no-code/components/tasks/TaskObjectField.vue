@@ -157,19 +157,40 @@
     import IconCodeTags from "vue-material-design-icons/CodeTags.vue"
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
 
-    const modelValue = defineModel<any>()
+    type SubSchema = Record<string, unknown> & {
+        type?: string;
+        format?: string;
+        $ref?: string;
+        allOf?: unknown[];
+    }
+
+    type FieldSchema = Record<string, unknown> & {
+        title?: string;
+        description?: string;
+        markdownDescription?: string;
+        format?: string;
+        default?: unknown;
+        anyOf?: SubSchema[];
+        type?: string;
+        $ref?: string;
+        allOf?: unknown[];
+    }
+
+    const modelValue = defineModel<unknown>()
 
     const props = withDefaults(defineProps<{
-        schema: any;
+        schema?: unknown;
         root?: string;
         fieldKey: string;
-        task: any;
+        task?: unknown;
         required?: string[];
         disabled?: boolean;
         siblingKeys?: string[];
         rootOverride?: string;
         frameRoot?: boolean;
     }>(), {frameRoot: false})
+
+    const schemaObj = computed<FieldSchema>(() => (props.schema as FieldSchema) ?? {})
 
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent")
 
@@ -194,10 +215,10 @@
     const componentProps = computed(() => {
         return {
             modelValue: modelValue.value,
-            "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
+            "onUpdate:modelValue": (value: unknown) => {
                 modelValue.value = value
             },
-            "onUpdate:selectedSchema": (value: any) => {
+            "onUpdate:selectedSchema": (value: unknown) => {
                 hasSelectedASchema.value = value !== undefined
             },
             pebble: pebbleState.value,
@@ -206,17 +227,17 @@
             },
             task: props.task,
             root: fieldPath.value,
-            schema: props.schema,
+            schema: schemaObj.value,
             required: isRequired.value,
         }
     })
 
     const hasTooltip = computed(() => {
-        return props.schema?.title || props.schema?.description || props.schema?.markdownDescription
+        return schemaObj.value.title || schemaObj.value.description || schemaObj.value.markdownDescription
     })
 
     const helpText = computed(() => {
-        const schema = props.schema
+        const schema = schemaObj.value
         if (!schema) return ""
 
         const description = schema.description || schema.markdownDescription
@@ -228,12 +249,12 @@
     })
 
     const isAnyOf = computed(() => {
-        return Boolean(props.schema?.anyOf)
+        return Boolean(schemaObj.value.anyOf)
     })
 
     const isBoolean = computed(() => {
         if (simpleType.value === "boolean") return true
-        const anyOf = props.schema?.anyOf
+        const anyOf = schemaObj.value.anyOf
         if (!Array.isArray(anyOf) || anyOf.length !== 2) return false
         return anyOf.some(s => s.type === "boolean") && anyOf.some(s => s.type === "string" && !s.format)
     })
@@ -245,13 +266,13 @@
     const isNumber = computed(() => simpleType.value === "number")
 
     const hasToggle = computed(() =>
-        ["duration", "date-time"].includes(props.schema?.format ?? ""),
+        ["duration", "date-time"].includes(schemaObj.value.format ?? ""),
     )
 
     const {getBlockComponent} = useBlockComponent()
 
     const type = computed(() => {
-        return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
+        return getBlockComponent.value(schemaObj.value, props.fieldKey, props.siblingKeys)
     })
 
 
@@ -262,7 +283,7 @@
     })
 
     const schemaDefault = computed(() => {
-        const value = props.schema?.default
+        const value = schemaObj.value.default
         return value === undefined || value === null || typeof value === "object" ? undefined : String(value)
     })
 
@@ -272,12 +293,12 @@
     const fieldNav = inject(FIELD_NAV_INJECTION_KEY, undefined)
 
     const inlineHelp = computed(() => Boolean(fieldNav))
-    const inlineHelpText = computed(() => props.schema?.description || props.schema?.markdownDescription || props.schema?.title || "")
+    const inlineHelpText = computed(() => schemaObj.value.description || schemaObj.value.markdownDescription || schemaObj.value.title || "")
 
     const isObjectAnyOf = computed(() => {
-        const anyOf = props.schema?.anyOf
+        const anyOf = schemaObj.value.anyOf
         if (!Array.isArray(anyOf) || anyOf.length === 0) return false
-        return anyOf.every((s: any) => s.$ref || s.allOf || s.type === "object")
+        return anyOf.every((s: SubSchema) => Boolean(s.$ref || s.allOf || s.type === "object"))
     })
 
     const isNestedObject = computed(() =>

@@ -1,5 +1,5 @@
 <template>
-    <KsForm labelPosition="top" class="w-100">
+    <KsForm labelPosition="top" class="task-object-form">
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in protectedMainProperties" :key="fieldKey">
                 <Wrapper :merge>
@@ -337,6 +337,10 @@
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
+
+.task-object-form {
+    width: 100%;
+}
 
 .kel-form-item {
     width: 100%;

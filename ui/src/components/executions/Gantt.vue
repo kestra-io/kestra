@@ -939,6 +939,12 @@
             padding: var(--ks-spacing-2) var(--ks-spacing-3);
         }
 
+        #gantt .gantt-header .bottom .scale {
+            flex: 1 1 auto;
+            width: auto;
+            margin: 0 calc(var(--ks-spacing-3) + var(--ks-spacing-1));
+        }
+
         .copy-logs-label {
             display: none;
         }

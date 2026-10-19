@@ -1,5 +1,5 @@
 import {computed, onBeforeUnmount, ref, watch, type ComputedRef} from "vue"
-import {stringUtils, throttle} from "@kestra-io/design-system"
+import {State, stringUtils, throttle} from "@kestra-io/design-system"
 import {isLoopTaskType, loopIterationCountsOf, taskRunStateCountsOf, type LoopLaneData} from "@kestra-io/topology"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {useExecutionsStore, type Execution} from "../stores/executions"
@@ -29,9 +29,6 @@ interface LaneOutputs {
 const settle = <T>(promise: Promise<T>) => promise.catch(() => undefined)
 
 const afterLastDot = (uid: string) => stringUtils.afterLastDot(uid) ?? uid
-
-const RUNNING_STATES = ["CREATED", "QUEUED", "RUNNING", "RESTARTED", "KILLING", "PAUSED", "RETRYING"]
-const TERMINAL_STATES = ["SUCCESS", "FAILED", "KILLED", "WARNING", "CANCELLED"]
 
 interface FollowedExecution {
     executionId: string;
@@ -63,7 +60,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
     let userScopeSeq = 0
     let unmounted = false
 
-    const executionOf = (laneUid: string): Execution | undefined => executionsStore.subflowsExecutions[laneUid]
+    const executionOf = (laneUid: string): Execution | undefined => executionsStore.scopedIterations[laneUid]
 
     const hostOf = (lane: LoopLaneNode): Execution | undefined =>
         lane.parentUid ? executionOf(lane.parentUid) : executionsStore.execution
@@ -154,7 +151,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
             if (!host?.id || !taskRun) return []
             const cacheKey = `${taskRun.id}:${taskRun.state.current}:${host.id}`
             const cached = outputsByLane.value[lane.uid]
-            const terminal = TERMINAL_STATES.includes(taskRun.state.current)
+            const terminal = State.isTerminated(taskRun.state.current)
             if (cached?.key === cacheKey && terminal) return []
             return [{uid: lane.uid, cacheKey, hostId: host.id, taskRunId: taskRun.id}]
         })
@@ -173,7 +170,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
     const throttledRefreshOutputs = throttle(refreshOutputs, 1000)
 
     watch(
-        [() => executionsStore.execution, () => executionsStore.subflowsExecutions, laneNodesKey],
+        [() => executionsStore.execution, () => executionsStore.scopedIterations, laneNodesKey],
         () => throttledRefreshOutputs(),
         {immediate: true},
     )
@@ -219,15 +216,9 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         if (transientFailure) return
 
         const keep = new Set(resolved.map(({lane}) => lane.uid))
-        laneNodes.value.filter((lane) => !keep.has(lane.uid)).forEach((lane) => {
-            if (executionsStore.subflowsExecutions[lane.uid]) executionsStore.removeSubflowExecution(lane.uid)
-            closeSubscription(lane.uid)
-        })
-        resolved.forEach(({lane, execution}) => {
-            executionsStore.addSubflowExecution({subflow: lane.uid, execution})
-            follow(lane.uid, execution)
-        })
-        executionsStore.applyScopedExecutionIds()
+        laneNodes.value.filter((lane) => !keep.has(lane.uid)).forEach((lane) => closeSubscription(lane.uid))
+        executionsStore.setScopedIterations(Object.fromEntries(resolved.map(({lane, execution}) => [lane.uid, execution])))
+        resolved.forEach(({lane, execution}) => follow(lane.uid, execution))
         refreshOutputs()
 
         if (resolved.length !== entries.value.length) {
@@ -244,12 +235,12 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         const current = subscriptions.get(laneUid)
         if (current?.executionId === execution.id) return
         closeSubscription(laneUid)
-        if (!execution.state?.current || !RUNNING_STATES.includes(execution.state.current) || unmounted) return
+        if (!execution.state?.current || State.isTerminated(execution.state.current) || unmounted) return
 
         const subscription = executionsStore.subscribeToExecution(execution.id, {
             onExecution: (updated) => {
-                if (executionsStore.subflowsExecutions[laneUid]?.id !== execution.id) return
-                executionsStore.addSubflowExecution({subflow: laneUid, execution: updated})
+                if (executionsStore.scopedIterations[laneUid]?.id !== execution.id) return
+                executionsStore.setScopedIterations({...executionsStore.scopedIterations, [laneUid]: updated})
             },
             onEnd: () => {
                 if (subscriptions.get(laneUid)?.executionId === execution.id) closeSubscription(laneUid)
@@ -264,9 +255,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         unmounted = true
         subscriptions.forEach((subscription) => subscription.close())
         subscriptions.clear()
-        laneNodes.value.forEach((lane) => {
-            if (executionsStore.subflowsExecutions[lane.uid]) executionsStore.removeSubflowExecution(lane.uid)
-        })
+        executionsStore.setScopedIterations({})
     })
 
     const laneByUid = (uid: string) => laneNodes.value.find((lane) => lane.uid === uid)

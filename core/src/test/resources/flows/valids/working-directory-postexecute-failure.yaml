@@ -1,0 +1,21 @@
+id: working-directory-postexecute-failure
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    outputFiles:
+      - "out-[unclosed"
+    tasks:
+      - id: s1
+        type: io.kestra.plugin.core.debug.Return
+        format: s1
+
+  - id: after
+    type: io.kestra.plugin.core.debug.Return
+    format: after
+
+errors:
+  - id: onError
+    type: io.kestra.plugin.core.debug.Return
+    format: onError

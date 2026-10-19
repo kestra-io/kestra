@@ -176,9 +176,14 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
             } catch (Exception e) {
                 workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                // released first so the last subtask result is queued ahead of the parent failure
-                releaseHeldBackResult(heldBackResult);
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
+                // the executor ends the WorkingDirectory from its last subtask result and drops a parent failure joined later,
+                // so that result carries the failure
+                WorkerTaskResult lastResult = heldBackResult.get();
+                if (lastResult == null) {
+                    workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
+                } else if (lastResult.getTaskRun().getState().isTerminatedNoFail()) {
+                    heldBackResult.set(lastResult.withTaskRun(lastResult.getTaskRun().withStateAndAttempt(FAILED)));
+                }
             }
             this.logTerminated(workerTask, workerTask.getTaskRun());
         } finally {

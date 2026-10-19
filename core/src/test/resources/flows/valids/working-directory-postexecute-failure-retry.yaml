@@ -1,0 +1,16 @@
+id: working-directory-postexecute-failure-retry
+namespace: io.kestra.tests
+
+tasks:
+  - id: workingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    retry:
+      type: constant
+      maxAttempts: 2
+      interval: PT0.1S
+    outputFiles:
+      - "out-[unclosed"
+    tasks:
+      - id: s1
+        type: io.kestra.plugin.core.debug.Return
+        format: s1

@@ -42,6 +42,7 @@ import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.worker.WorkerGroups;
+import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.plugin.core.flow.WorkingDirectoryTest;
 import io.kestra.worker.WorkerSecurityService;
@@ -469,6 +470,29 @@ class WorkerTaskProcessorTest {
             .singleElement()
             .isNotNull()
             .satisfies(outputs -> assertThat(outputs.getOutputFiles()).containsKey("output.txt"));
+    }
+
+    @Test
+    void shouldFailTheLastSubtaskResultWhenWorkingDirectoryPostExecuteTasksFails() throws Exception {
+        WorkingDirectory workingDirectory = WorkingDirectory.builder()
+            .type(WorkingDirectory.class.getName())
+            .id("working-directory")
+            .outputFiles(Property.ofValue(List.of("out-[unclosed")))
+            .tasks(List.of(Return.builder().type(Return.class.getName()).id("s1").format(Property.ofValue("s1")).build()))
+            .build();
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+
+        newProcessor(resultQueue).process(workerTaskFor(workingDirectory, MAIN_TENANT));
+
+        // a separate WorkingDirectory failure could be joined after the executor already ended it from this result
+        assertThat(drain(resultQueue))
+            .filteredOn(result -> result.getTaskRun().getState().isTerminated())
+            .singleElement()
+            .satisfies(result -> {
+                assertThat(result.getTaskRun().getTaskId()).isEqualTo("s1");
+                assertThat(result.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+                assertThat(result.getOutputs()).containsEntry("value", "s1");
+            });
     }
 
     private WorkerTaskProcessor newProcessor(WorkerQueue<WorkerTaskResult> resultQueue) {

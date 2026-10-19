@@ -216,6 +216,18 @@ public class WorkingDirectoryTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/working-directory-postexecute-failure.yaml" })
+    void shouldFailWorkingDirectoryWhenPostExecuteTasksFails() throws Exception {
+        suite.postExecuteTasksFailure(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/working-directory-postexecute-failure-retry.yaml" })
+    void shouldRetryWorkingDirectoryWhenPostExecuteTasksFails() throws Exception {
+        suite.postExecuteTasksFailureRetry(runnerUtils);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/working-directory-secret-output.yml" })
     void secretOutputMasking() throws Exception {
         suite.secretOutputMasking(runnerUtils);
@@ -491,6 +503,22 @@ public class WorkingDirectoryTest {
 
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        }
+
+        public void postExecuteTasksFailure(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-postexecute-failure");
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("after")).isEmpty();
+            assertThat(execution.findTaskRunsByTaskId("onError")).isNotEmpty();
+        }
+
+        public void postExecuteTasksFailureRetry(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-postexecute-failure-retry");
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("workingDirectory").getFirst().getAttempts()).hasSize(2);
         }
 
         private void put(String path, String content) throws IOException, URISyntaxException {

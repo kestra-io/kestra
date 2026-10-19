@@ -50,7 +50,7 @@
                 </div>
             </div>
             <Transition name="node-details-overlay">
-                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay">
+                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay" data-test="node-details-overlay">
                     <slot name="details" />
                 </div>
             </Transition>
@@ -428,6 +428,10 @@
         box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
         max-height: 20rem;
         overflow: auto;
+    }
+
+    .node-details-overlay:empty {
+        display: none;
     }
 
     .node-details-overlay-enter-active,

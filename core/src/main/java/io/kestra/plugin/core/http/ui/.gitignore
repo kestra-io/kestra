@@ -1,0 +1,11 @@
+node_modules
+dist
+storybook-static
+*.local
+
+# federation specific build files
+.__mf__temp
+
+# yalc local package linking
+.yalc
+yalc.lock

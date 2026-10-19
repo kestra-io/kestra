@@ -1,9 +1,16 @@
-import type {Execution, Task} from "@kestra-io/kestra-sdk"
-import {HTTP_DOWNLOAD_TYPE, HTTP_REQUEST_TYPE} from "./httpSummary"
+import type { KnownSlotProps } from "@kestra-io/artifact-sdk";
 
-export const requestTask = {id: "call_api", type: HTTP_REQUEST_TYPE} as Task
-export const downloadTask = {id: "fetch_file", type: HTTP_DOWNLOAD_TYPE} as Task
-export const execution = {id: "exec1", taskRunList: []} as unknown as Execution
+type Props = KnownSlotProps["topology-details"];
+
+export const requestTask = {
+    id: "call_api",
+    type: "io.kestra.plugin.core.http.Request",
+} as unknown as Props["task"];
+export const downloadTask = {
+    id: "fetch_file",
+    type: "io.kestra.plugin.core.http.Download",
+} as unknown as Props["task"];
+export const execution = { id: "exec1", taskRunList: [] } as unknown as Props["execution"];
 
 const request = {
     method: "POST",
@@ -19,7 +26,7 @@ const request = {
     auth: "BEARER",
     timeout: "PT30S",
     followRedirects: true,
-}
+};
 
 export const successOutputs = {
     uri: "https://api.example.com/v1/items?token=***",
@@ -33,31 +40,35 @@ export const successOutputs = {
     redirects: [],
     protocol: "HTTP/1.1",
     retries: 0,
-    headers: {"content-type": ["application/json"]},
-    body: {id: 1, name: "item"},
-}
+    headers: { "content-type": ["application/json"] },
+    body: { id: 1, name: "item" },
+};
 
 export const redirectRetryOutputs = {
     ...successOutputs,
     finalUri: "https://api.example.com/v2/items",
     redirects: [
-        {code: 301, location: "https://api.example.com/v2/items"},
-        {code: 302, location: "https://api.example.com/v2/items"},
+        { code: 301, location: "https://api.example.com/v2/items" },
+        { code: 302, location: "https://api.example.com/v2/items" },
     ],
     retries: 2,
     durationMs: 2400,
-}
+};
 
 export const redactedHeadersOutputs = {
     ...successOutputs,
-    headers: {"set-cookie": ["***"], "content-type": ["application/json"], "x-request-id": ["abc-123"]},
-}
+    headers: {
+        "set-cookie": ["***"],
+        "content-type": ["application/json"],
+        "x-request-id": ["abc-123"],
+    },
+};
 
 export const encryptedBodyOutputs = {
     ...successOutputs,
     body: undefined,
-    encryptedBody: {value: "ciphertext"},
-}
+    encryptedBody: { value: "ciphertext" },
+};
 
 export const noRequestOutputs = {
     uri: "https://api.example.com/v1/items",
@@ -65,7 +76,7 @@ export const noRequestOutputs = {
     reason: "No Content",
     contentLength: 0,
     durationMs: 51,
-}
+};
 
 export const downloadOutputs = {
     uri: "kestra:///company/flow/executions/exec1/tasks/fetch_file/abc/data.csv",
@@ -78,4 +89,6 @@ export const downloadOutputs = {
     finalUri: "https://files.example.com/data.csv",
     headers: {},
     request,
-}
+};
+
+export const outputs = (value: Record<string, unknown>) => () => Promise.resolve(value);

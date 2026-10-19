@@ -49,14 +49,8 @@
         >
             <template #taskDetails="taskProps">
                 <slot name="taskDetails" v-bind="taskProps">
-                    <HttpSummaryCard
-                        v-if="isTask(taskProps.data.node?.task) && isHttpTaskType(taskProps.data.node.task.type)"
-                        :task="taskProps.data.node.task"
-                        :execution="exec"
-                        :fetchOutputs="fetchTaskOutputs(taskProps.data.node.task.id)"
-                    />
                     <TopologyDetailsRemote
-                        v-else-if="isTask(taskProps.data.node?.task)"
+                        v-if="isTask(taskProps.data.node?.task)"
                         :taskType="detailsTypeFor(taskProps.data.node.task)"
                         :task="taskWithSource(taskProps.data.node.task)"
                         :execution="exec"
@@ -243,12 +237,6 @@
                     class="mt-3"
                 />
             </div>
-            <HttpSummaryDrawer
-                v-if="isShowHttpSummaryOpen && isTask(selectedTask)"
-                :task="selectedTask"
-                :execution="exec"
-                :fetchOutputs="fetchTaskOutputs(selectedTask.id)"
-            />
             <div v-if="isShowCustomActionOpen && customActionMeta">
                 <KsEditor
                     :readOnly="true"
@@ -305,9 +293,6 @@
     import Vars from "../executions/Vars.vue"
     import MetricsTable from "../executions/MetricsTable.vue"
     import Restart from "../executions/overview/components/actions/Restart.vue"
-    import HttpSummaryCard from "../executions/httpSummary/HttpSummaryCard.vue"
-    import HttpSummaryDrawer from "../executions/httpSummary/HttpSummaryDrawer.vue"
-    import {HTTP_DOWNLOAD_TYPE, HTTP_REQUEST_TYPE, isHttpTaskType} from "../executions/httpSummary/httpSummary"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology, NodeMenu} from "@kestra-io/topology"
@@ -544,9 +529,6 @@
 
     const customActions = computed(() => {
         const result: Record<string, CustomActionConfig> = {}
-        const httpAction = {label: t("http_summary.action"), taskProp: "", lang: ""}
-        result[HTTP_REQUEST_TYPE] = httpAction
-        result[HTTP_DOWNLOAD_TYPE] = httpAction
         for (const [type, info] of Object.entries(taskAdditionalInfoRemote.value)) {
             const ca = info && "customAction" in info ? info.customAction : undefined
             if (isCustomActionConfig(ca) && ca.label) {
@@ -816,7 +798,6 @@
         isShowDescriptionOpen.value = false
         isShowConditionOpen.value = false
         isShowCustomActionOpen.value = false
-        isShowHttpSummaryOpen.value = false
         isInspectOpen.value = false
         isReplayPickerOpen.value = false
     }
@@ -1404,7 +1385,6 @@
 
     const customActionMeta = ref<CustomActionConfig>()
     const isShowCustomActionOpen = ref(false)
-    const isShowHttpSummaryOpen = ref(false)
 
     const customActionModelValue = computed(() => {
         if (!selectedTask.value || !customActionMeta.value?.taskProp) return ""
@@ -1417,13 +1397,6 @@
 
     const showCustomAction = (event: { task: FlowTask; customAction: CustomActionConfig }) => {
         const fullTask = taskWithSource(event.task)
-        if (isHttpTaskType(fullTask.type)) {
-            resetDrawerSections()
-            selectedTask.value = fullTask
-            isShowHttpSummaryOpen.value = true
-            isDrawerOpen.value = true
-            return
-        }
         if (!event.customAction.taskProp) {
             if (!isTask(fullTask)) return
             const taskType = modalTypeFor(fullTask)

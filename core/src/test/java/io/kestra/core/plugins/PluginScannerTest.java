@@ -8,6 +8,8 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.models.ui.PluginUiModule;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PluginScannerTest {
@@ -41,7 +43,24 @@ class PluginScannerTest {
         RegisteredPlugin core = pluginScanner.scan();
 
         assertThat(core.getEndpoints())
-            .anySatisfy(endpoint -> assertThat(endpoint)
-                .isInstanceOf(io.kestra.core.plugins.endpoint.TestScanEndpoint.class));
+            .anySatisfy(
+                endpoint -> assertThat(endpoint)
+                    .isInstanceOf(io.kestra.core.plugins.endpoint.TestScanEndpoint.class)
+            );
+    }
+
+    @Test
+    void shouldRegisterHttpTaskPluginUiForCore() {
+        PluginScanner pluginScanner = new PluginScanner(PluginScannerTest.class.getClassLoader());
+
+        RegisteredPlugin core = pluginScanner.scan();
+
+        assertThat(core.getPluginUiManifest())
+            .containsKeys("io.kestra.plugin.core.http.Request", "io.kestra.plugin.core.http.Download")
+            .allSatisfy(
+                (task, modules) -> assertThat(modules)
+                    .extracting(PluginUiModule::uiModule)
+                    .containsExactlyInAnyOrder("topology-details", "topology-task-drawer")
+            );
     }
 }

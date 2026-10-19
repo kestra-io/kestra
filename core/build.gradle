@@ -1,3 +1,7 @@
+plugins {
+    id 'com.github.node-gradle.node' version '7.1.0'
+}
+
 configurations {
     tests
     implementation.extendsFrom(micronaut)
@@ -96,4 +100,44 @@ dependencies {
     testImplementation "org.bouncycastle:bcpkix-jdk18on"
 
     testImplementation "org.wiremock:wiremock-jetty12"
+}
+
+// The http task artifact lives next to the tasks it decorates and is built into the resources
+// directory that PluginScanner reads (plugin-ui/manifest.json).
+def httpUiDir = layout.projectDirectory.dir('src/main/java/io/kestra/plugin/core/http/ui')
+def pluginUiOutput = layout.projectDirectory.dir('src/main/resources/plugin-ui')
+
+// Keep node_modules and the front-end sources out of the java source set, and so out of the sources jar.
+sourceSets.main.java.exclude 'io/kestra/plugin/core/http/ui/**'
+
+tasks.register('npmInstallUI', com.github.gradle.node.npm.task.NpmTask) {
+    args = ['ci', '--fetch-retries=5', '--fetch-retry-mintimeout=5000', '--fetch-retry-maxtimeout=60000']
+    workingDir = httpUiDir.asFile
+    inputs.files(httpUiDir.file('package.json'), httpUiDir.file('package-lock.json'))
+    outputs.dir(httpUiDir.dir('node_modules'))
+}
+
+tasks.register('buildUI', com.github.gradle.node.npm.task.NpmTask) {
+    dependsOn 'npmInstallUI'
+    args = ['run', 'build', '--', '--outDir', pluginUiOutput.asFile.absolutePath]
+    workingDir = httpUiDir.asFile
+    inputs.dir(httpUiDir.dir('src'))
+    inputs.files(
+        httpUiDir.file('package.json'),
+        httpUiDir.file('package-lock.json'),
+        httpUiDir.file('vite.config.ts'),
+        httpUiDir.file('tsconfig.json'),
+        httpUiDir.file('index.html')
+    )
+    outputs.dir(pluginUiOutput)
+}
+
+processResources.dependsOn 'buildUI'
+tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn 'buildUI' }
+
+// Spotless would otherwise walk node_modules and fail on the implicit dependency on npmInstallUI.
+spotless {
+    java {
+        targetExclude 'src/main/java/io/kestra/plugin/core/http/ui/**'
+    }
 }

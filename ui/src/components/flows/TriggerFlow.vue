@@ -26,7 +26,9 @@
             large
         >
             <template #header>
-                <span v-html="$t('execute the flow', {id: flowId})" />
+                <i18n-t keypath="execute the flow" tag="span">
+                    <template #id><code>{{ flowId }}</code></template>
+                </i18n-t>
             </template>
             <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
@@ -76,7 +78,7 @@
                     </KsSelect>
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="$t('inputs')">
-                    <div class="w-100">
+                    <div class="flow-inputs">
                         <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
@@ -289,8 +291,12 @@
     )
 </script>
 
-<style scoped>
+<style scoped lang="scss">
     .trigger-flow-wrapper {
         display: inline;
+    }
+
+    .flow-inputs {
+        width: 100%;
     }
 </style>

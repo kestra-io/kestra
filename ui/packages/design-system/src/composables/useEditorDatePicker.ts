@@ -7,7 +7,7 @@ export const DATE_PICKER_SUGGESTION_LABEL = "_DATE_PICKER_"
 
 type CodeEditor = monaco.editor.ICodeEditor
 
-interface DatePickerInstance {
+export interface DatePickerInstance {
     $el: {nextElementSibling: {querySelector: (selector: string) => HTMLInputElement | null} | null}
     handleOpen: () => void
     focus: () => void

@@ -22,7 +22,7 @@
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="mb-4" />
+                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="logs-chart" />
                 </template>
 
                 <template #table>
@@ -216,7 +216,7 @@
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
-            ? localStorage.getItem("defaultLogLevel") || "INFO"
+            ? localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO"
             : "INFO",
     )
     const {
@@ -523,6 +523,10 @@
     })
 </script>
 <style scoped lang="scss">
+
+    .logs-chart {
+        margin-bottom: var(--ks-spacing-5);
+    }
 
     .download-hint {
         margin: 0 0 var(--ks-spacing-3);

@@ -1,9 +1,10 @@
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
-import {expect} from "storybook/test"
+import {expect, waitFor} from "storybook/test"
 import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
 import switchCaseLabels from "../../../fixtures/flowgraphs/switch-case-labels.json"
+import nestedLoopDemo from "../../../fixtures/flowgraphs/nested-loop-demo.json"
 
 const ALLOW_FAILURE_SOURCE = `
 id: allow-failure-demo
@@ -233,7 +234,7 @@ const MIXED_LANE_EXECUTION = {
 // Mirrors the `executionId` the app stamps onto every node once an execution is loaded
 // (executions.ts's loadAugmentedGraph) — without it, TaskNode/ClusterNode never resolve a
 // task run for a node, and the story would render as if no execution existed at all.
-function withExecutionId(flowGraph: typeof STATUS_SHOWCASE_GRAPH, executionId: string) {
+function withExecutionId<T extends {nodes: object[]}>(flowGraph: T, executionId: string) {
     return {
         ...flowGraph,
         nodes: flowGraph.nodes.map((node) => ({...node, executionId})),
@@ -316,6 +317,31 @@ LevelOfDetailExpanded.args = {
     isHorizontal: true,
     execution: MIXED_LANE_EXECUTION,
     defaultViewport: {x: 0, y: 0, zoom: 1.5},
+}
+
+export const LevelOfDetailExpandedWithoutDetails: StoryObj<typeof Topology> = {
+    name: "Level of Detail — Expanded, no details to show",
+    render: (args) => ({
+        components: {Topology},
+        setup() {
+            return {args}
+        },
+        template: `<div style="height: 600px; width: 100%;">
+            <Topology v-bind="args">
+                <template #taskDetails><span v-if="false" /></template>
+            </Topology>
+        </div>`,
+    }),
+    args: {...LevelOfDetailExpanded.args, id: "story-lod-expanded-empty"},
+    play: async ({canvasElement}) => {
+        const overlays = () => Array.from(canvasElement.querySelectorAll<HTMLElement>("[data-test=\"node-details-overlay\"]"))
+
+        await waitFor(() => expect(overlays().length).toBeGreaterThan(0))
+
+        for (const overlay of overlays()) {
+            expect(getComputedStyle(overlay).display).toBe("none")
+        }
+    },
 }
 
 const DURATION_BAR_SOURCE = `
@@ -411,6 +437,31 @@ DurationBarComparison.args = {
     isHorizontal: false,
     execution: DURATION_BAR_EXECUTION,
 }
+DurationBarComparison.play = async ({canvasElement}) => {
+    const nodeOf = (taskId: string) => canvasElement.querySelector(`[data-id="root.${taskId}"]`) as HTMLElement | null
+    const barOf = (taskId: string) => nodeOf(taskId)?.querySelector("[data-test=\"duration-compact-bar\"]") as HTMLElement | null
+    const filledWidthOf = (taskId: string) =>
+        Array.from(barOf(taskId)!.querySelectorAll<HTMLElement>("[data-test^='duration-segment-']"))
+            .reduce((sum, segment) => sum + segment.getBoundingClientRect().width, 0)
+
+    await waitFor(() => expect(barOf("transform_data")).not.toBeNull())
+
+    expect(barOf("quick_query")).not.toBeNull()
+    expect(barOf("load_warehouse")).not.toBeNull()
+    expect(barOf("notify_team")).toBeNull()
+
+    const longest = filledWidthOf("transform_data")
+    expect(filledWidthOf("quick_query")).toBeLessThan(longest / 2)
+    expect(filledWidthOf("load_warehouse")).toBeLessThan(longest)
+
+    for (const taskId of ["quick_query", "transform_data", "notify_team"]) {
+        const box = nodeOf(taskId)!.getBoundingClientRect()
+        const card = nodeOf(taskId)!.querySelector(".node-core")!.getBoundingClientRect()
+        expect(nodeOf(taskId)!.style.height).toBe(`${NODE_SIZES.TASK_HEIGHT_EXECUTION}px`)
+        expect(Math.round(card.height)).toBe(Math.round(box.height))
+        expect(Math.round(card.top)).toBe(Math.round(box.top))
+    }
+}
 
 // A running task's bar keeps updating every tick — the node's laid-out box must not move as a
 // result (kestra-io/kestra#19666's hard constraint, the reason this issue's slot was reserved).
@@ -444,13 +495,14 @@ export const DurationBarRunningFootprint: StoryObj<typeof Topology> = {
         const node = () => canvasElement.querySelector("[data-id=\"root.quick_query\"]") as HTMLElement | null
 
         await expect(node()).not.toBeNull()
+        await waitFor(() => expect(node()!.querySelector(".node-footer [data-test=\"duration-compact-bar\"] .split-bar-running-live")).not.toBeNull())
         const dimensionsOf = (el: HTMLElement) => ({width: el.style.width, height: el.style.height})
         const before = dimensionsOf(node()!)
 
         await new Promise((resolve) => setTimeout(resolve, 350))
 
         expect(dimensionsOf(node()!)).toEqual(before)
-        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
+        expect(dimensionsOf(node()!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH_EXECUTION}px`, height: `${NODE_SIZES.TASK_HEIGHT_EXECUTION}px`})
     },
 }
 
@@ -498,5 +550,62 @@ export const FootprintInvariance: StoryObj<typeof Topology> = {
         expect(dimensionsOf(pill!)).toEqual({width: `${NODE_SIZES.TASK_WIDTH}px`, height: `${NODE_SIZES.TASK_HEIGHT}px`})
         expect(dimensionsOf(atRest!)).toEqual(dimensionsOf(pill!))
         expect(dimensionsOf(expanded!)).toEqual(dimensionsOf(pill!))
+    },
+}
+
+const NESTED_LOOP_SOURCE = `
+id: nested_loop_demo
+namespace: company.team
+tasks:
+  - id: per_region
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["EMEA", "AMER", "APAC"]
+    tasks:
+      - id: per_quarter
+        type: io.kestra.plugin.core.flow.Loop
+        values: ["Q1", "Q2", "Q3", "Q4"]
+        tasks:
+          - id: fetch_sales
+            type: io.kestra.plugin.core.log.Log
+            message: "Fetching {{ parent.taskrun.value }} {{ taskrun.value }}"
+          - id: summarize
+            type: io.kestra.plugin.core.log.Log
+            message: "Summarizing {{ parent.taskrun.value }} {{ taskrun.value }}"
+`.trim()
+
+const NESTED_LOOP_EXECUTION = {
+    id: "story-execution-nested-loop",
+    state: {current: "SUCCESS"},
+    taskRunList: [
+        taskRun("per_region", "SUCCESS"),
+        taskRun("per_quarter", "SUCCESS"),
+        taskRun("fetch_sales", "SUCCESS"),
+        taskRun("summarize", "SUCCESS"),
+    ],
+}
+
+export const NestedFlowableLanes: StoryObj<typeof Topology> = {
+    name: "Nested Flowable Lanes",
+    render: Template,
+    args: {
+        id: "story-nested-flowable-lanes",
+        source: NESTED_LOOP_SOURCE,
+        flowGraph: withExecutionId(nestedLoopDemo, NESTED_LOOP_EXECUTION.id) as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+        execution: NESTED_LOOP_EXECUTION,
+    },
+    play: async ({canvasElement}) => {
+        const laneOf = (id: string) => canvasElement.querySelector<HTMLElement>(`[data-id="${id}"]`)
+
+        await waitFor(() => expect(laneOf("cluster_root.per_region.per_quarter")).not.toBeNull())
+        const outer = laneOf("cluster_root.per_region")!.getBoundingClientRect()
+        const inner = laneOf("cluster_root.per_region.per_quarter")!.getBoundingClientRect()
+        const zoom = outer.height / parseFloat(laneOf("cluster_root.per_region")!.style.height)
+
+        expect(inner.top).toBeGreaterThanOrEqual(outer.top + NODE_SIZES.LANE_HEADER_HEIGHT * zoom)
+        expect(inner.left).toBeGreaterThanOrEqual(outer.left)
+        expect(inner.bottom).toBeLessThanOrEqual(outer.bottom)
+        expect(inner.right).toBeLessThanOrEqual(outer.right)
     },
 }

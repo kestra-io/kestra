@@ -1,6 +1,16 @@
 import {describe, expect, test} from "vitest"
 import * as YamlUtils from "./serialization.ts"
 
+describe("parse", () => {
+    test.each(["", "  \n", "# only a comment\n"])("returns undefined for a stream with no document: %j", (source) => {
+        expect(YamlUtils.parse(source)).toBeUndefined()
+    })
+
+    test("still rejects a stream holding several documents", () => {
+        expect(() => YamlUtils.parse("a: 1\n---\nb: 2\n")).toThrow()
+    })
+})
+
 describe("stringify with preserveCronQuotes", () => {
     test("adds quotes to unquoted cron values", () => {
         const yaml = {

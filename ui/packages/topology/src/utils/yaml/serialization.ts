@@ -1,6 +1,6 @@
 // Plain JavaScript objects to and from YAML text, via js-yaml.
 
-import {CORE_SCHEMA, dump, load, mergeTag, timestampTag} from "js-yaml"
+import {CORE_SCHEMA, YAMLException, dump, loadAll, mergeTag, timestampTag} from "js-yaml"
 
 // js-yaml 4 defaults: merge keys on load, YAML 1.1 words (yes/on) left unquoted on dump
 const LOAD_SCHEMA = CORE_SCHEMA.withTags(mergeTag)
@@ -10,7 +10,10 @@ export function parse<T = unknown>(item?: string, throwIfError = true): T | unde
     if (item === undefined) return undefined
 
     try {
-        return load(item, {schema: LOAD_SCHEMA}) as T
+        // js-yaml 5 `load` throws on a stream with no document, where 4 returned undefined
+        const documents = loadAll(item, {schema: LOAD_SCHEMA})
+        if (documents.length > 1) throw new YAMLException("expected a single document in the stream, but found more")
+        return documents[0] as T
     } catch (e) {
         if (throwIfError) throw e
         return undefined

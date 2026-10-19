@@ -51,7 +51,17 @@
     })
 
     const val = computed(() => {
-        return values.value ? parseInt(values.value.toString(), 10) : undefined
+        if (
+            values.value === undefined ||
+            values.value === null ||
+            values.value === "" ||
+            typeof values.value === "boolean" ||
+            typeof values.value === "object"
+        ) {
+            return undefined
+        }
+        const parsed = Number(values.value)
+        return Number.isFinite(parsed) ? parsed : undefined
     })
 
     function onInput(value: number | undefined) {

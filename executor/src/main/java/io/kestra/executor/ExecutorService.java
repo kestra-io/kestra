@@ -594,7 +594,7 @@ public class ExecutorService {
                             .collect(Collectors.toCollection(ArrayList::new));
                     }
                 }
-            } else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
+            } else if (task instanceof LoopUntil waitFor && taskRun.getState().getCurrent() == State.Type.RUNNING) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
                     Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);

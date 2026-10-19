@@ -100,4 +100,14 @@ describe("useExecutionsQueryScope", () => {
 
         expect(mounted.api.loadQuery({})["filters[state][IN]"]).toBe("SUCCESS,WARNING")
     })
+
+    it("should scope the query to the labels and the child filter handed down by the page", async () => {
+        const mounted = await mountScope(createTestRouter(), {}, {labels: {env: "prod"}, childFilter: "MAIN"})
+        wrapper = mounted.wrapper
+
+        const query = mounted.api.loadQuery({})
+
+        expect(query["filters[labels][EQUALS][env]"]).toBe("prod")
+        expect(query["filters[childFilter][EQUALS]"]).toBe("MAIN")
+    })
 })

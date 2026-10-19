@@ -9,6 +9,8 @@ interface ExecutionsQueryScope {
     namespace?: string;
     flowId?: string;
     statuses?: string[];
+    labels?: Record<string, string>;
+    childFilter?: "MAIN" | "CHILD";
 }
 
 export function useExecutionsQueryScope(
@@ -40,6 +42,14 @@ export function useExecutionsQueryScope(
 
         if (scope.value.flowId) {
             queryFilter["filters[flowId][EQUALS]"] = scope.value.flowId
+        }
+
+        Object.entries(scope.value.labels ?? {}).forEach(([key, value]) => {
+            queryFilter[`filters[labels][EQUALS][${key}]`] = value
+        })
+
+        if (scope.value.childFilter) {
+            queryFilter["filters[childFilter][EQUALS]"] = scope.value.childFilter
         }
 
         const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state

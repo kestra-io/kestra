@@ -2,8 +2,6 @@ package io.kestra.plugin.core.http;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -12,9 +10,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.io.output.CountingOutputStream;
-import org.apache.commons.io.output.NullOutputStream;
-import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
 
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.client.HttpRedactor;
@@ -37,7 +34,7 @@ public record RequestSummary(
     @Schema(title = "The names of the query parameters.") List<String> queryParamNames,
     @Schema(title = "The names of the request headers explicitly set, values are never exposed.") List<String> headerNames,
     @Schema(title = "The content type of the request body.") String contentType,
-    @Schema(title = "The size of the request body in bytes.") long bodyBytes,
+    @Schema(title = "The size of the request body in bytes.", description = "`-1` when the length is not known before sending.") long bodyBytes,
     @Schema(title = "Whether the request has a body.") boolean hasBody,
     @Schema(title = "The names of the form fields, when the body is form data.") List<String> formFieldNames,
     @Schema(title = "The authentication mechanism, one of `NONE`, `BASIC`, `BEARER`, `DIGEST`, `API_KEY`, `AWS_SIGV4` or `AUTHORIZATION_HEADER`.") AuthType auth,
@@ -64,7 +61,7 @@ public record RequestSummary(
             redactedUri,
             uri.getHost(),
             redactedUri.getPath(),
-            queryParamNames(uri),
+            queryParamNames(uri, secretValues),
             headerNames,
             contentType,
             body == null ? 0 : bodyBytes(body),
@@ -76,29 +73,17 @@ public record RequestSummary(
         );
     }
 
-    private static List<String> queryParamNames(URI uri) {
-        if (uri.getRawQuery() == null) {
-            return List.of();
-        }
-
+    private static List<String> queryParamNames(URI uri, Set<String> secretValues) {
         Set<String> names = new LinkedHashSet<>();
-        for (String param : uri.getRawQuery().split("&")) {
-            int eq = param.indexOf('=');
-            names.add(URLDecoder.decode(eq < 0 ? param : param.substring(0, eq), StandardCharsets.UTF_8));
+        for (NameValuePair param : new URIBuilder(uri).getQueryParams()) {
+            names.add(HttpRedactor.isSecretValue(param.getName(), secretValues) ? "***" : param.getName());
         }
         return List.copyOf(names);
     }
 
     private static long bodyBytes(HttpRequest.RequestBody body) throws IOException {
-        HttpEntity entity = body.to();
-        if (entity.getContentLength() >= 0) {
-            return entity.getContentLength();
-        }
-
-        try (CountingOutputStream counter = new CountingOutputStream(NullOutputStream.NULL_OUTPUT_STREAM)) {
-            entity.writeTo(counter);
-            return counter.getByteCount();
-        }
+        // Counting an unknown length would consume a non-repeatable entity before it is sent.
+        return body.to().getContentLength();
     }
 
     private static AuthType auth(HttpConfiguration options, HttpRequest request, Set<String> lowerHeaderNames) {

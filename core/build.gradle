@@ -105,7 +105,8 @@ dependencies {
 // The http task artifact lives next to the tasks it decorates and is built into the resources
 // directory that PluginScanner reads (plugin-ui/manifest.json).
 def httpUiDir = layout.projectDirectory.dir('src/main/java/io/kestra/plugin/core/http/ui')
-def pluginUiOutput = layout.projectDirectory.dir('src/main/resources/plugin-ui')
+def pluginUiResources = layout.buildDirectory.dir('generated/plugin-ui-resources')
+def pluginUiOutput = pluginUiResources.map { it.dir('plugin-ui') }
 
 // Keep node_modules and the front-end sources out of the java source set, and so out of the sources jar.
 sourceSets.main.java.exclude 'io/kestra/plugin/core/http/ui/**'
@@ -115,7 +116,7 @@ node {
     version = '24.11.0'
 }
 
-// -PskipUI=true gives a Java-only or --offline build, the jar then has no plugin-ui.
+// -PskipUI=true gives a Java-only or --offline build, the jar then has no plugin-ui. The artifact is built under build/ so that clean removes it.
 if (project.findProperty('skipUI')?.toString() != 'true' && httpUiDir.asFile.exists()) {
     tasks.register('npmInstallUI', com.github.gradle.node.npm.task.NpmTask) {
         args = ['ci', '--fetch-retries=5', '--fetch-retry-mintimeout=5000', '--fetch-retry-maxtimeout=60000']
@@ -126,7 +127,7 @@ if (project.findProperty('skipUI')?.toString() != 'true' && httpUiDir.asFile.exi
 
     tasks.register('buildUI', com.github.gradle.node.npm.task.NpmTask) {
         dependsOn 'npmInstallUI'
-        args = ['run', 'build', '--', '--outDir', pluginUiOutput.asFile.absolutePath]
+        args = ['run', 'build', '--', '--outDir', pluginUiOutput.get().asFile.absolutePath]
         workingDir = httpUiDir.asFile
         inputs.dir(httpUiDir.dir('src'))
         inputs.files(
@@ -139,6 +140,7 @@ if (project.findProperty('skipUI')?.toString() != 'true' && httpUiDir.asFile.exi
         outputs.dir(pluginUiOutput)
     }
 
+    sourceSets.main.resources.srcDir(pluginUiResources)
     processResources.dependsOn 'buildUI'
     tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn 'buildUI' }
 }

@@ -83,6 +83,13 @@ class HttpRedactorTest {
     }
 
     @Test
+    void shouldRedactBareQueryTokenEqualToSecret() {
+        URI redacted = HttpRedactor.redactUri(URI.create("https://example.com/notify?my%20secret%21&y=plain"), Set.of("my secret!"));
+
+        assertThat(redacted).hasToString("https://example.com/notify?***&y=plain");
+    }
+
+    @Test
     void shouldRedactQueryValueEqualToDecodedSecret() {
         URI redacted = HttpRedactor.redactUri(URI.create("https://example.com/p?x=my%20secret%21&y=plain"), Set.of("my secret!"));
 

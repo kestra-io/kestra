@@ -786,6 +786,38 @@ class RequestTest {
     }
 
     @Test
+    void shouldRedactSecretUsedAsBareQueryToken() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofExpression("{{ '" + serverUrl() + "' }}/summary/post?plain=1&{{ secret('WEBHOOK_KEY') }}"))
+            .method(Property.ofValue("POST"))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getUri().getRawQuery()).isEqualTo("plain=1&***");
+        assertThat(output.getRequest().queryParamNames()).containsExactly("plain", "***");
+        assertThat(output.getFinalUri()).doesNotContain("secretKey");
+    }
+
+    @Test
+    void shouldNotReportRedirectRefusedByTheClient() throws Exception {
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.ofValue(serverUrl() + "/summary/redirect-other-authority"))
+            .headers(Property.ofValue(Map.of("Authorization", "Bearer abc")))
+            .build();
+
+        Request.Output output = task.run(TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of()));
+
+        assertThat(output.getCode()).isEqualTo(302);
+        assertThat(output.getRedirects()).isEmpty();
+        assertThat(output.getFinalUri()).isEqualTo(serverUrl() + "/summary/redirect-other-authority");
+    }
+
+    @Test
     void shouldRedactSecretUsedAsPathSegment() throws Exception {
         Request task = Request.builder()
             .id(RequestTest.class.getSimpleName())
@@ -968,6 +1000,11 @@ class RequestTest {
         @Get("/summary/redirect1")
         HttpResponse<String> summaryRedirect1() {
             return HttpResponse.<String> status(HttpStatus.FOUND).header("Location", "/summary/redirect2?token=abc&plain=1");
+        }
+
+        @Get("/summary/redirect-other-authority")
+        HttpResponse<String> summaryRedirectOtherAuthority(io.micronaut.http.HttpRequest<?> request) {
+            return HttpResponse.<String> status(HttpStatus.FOUND).header("Location", "http://127.0.0.1:" + request.getServerAddress().getPort() + "/hello");
         }
 
         @Get("/summary/redirect2")

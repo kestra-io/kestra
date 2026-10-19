@@ -306,7 +306,14 @@ public class HttpResponse<T> {
         @SuppressWarnings("unchecked")
         static List<Redirect> recorded(HttpClientContext context) {
             Object recorded = context.getAttribute(CONTEXT_ATTRIBUTE);
-            return recorded instanceof List<?> list ? List.copyOf((List<Redirect>) list) : List.of();
+            if (!(recorded instanceof List<?> list)) {
+                return List.of();
+            }
+
+            // RedirectExec fills this only for the hops it follows, the recorder also sees a 3xx it refused to follow.
+            var redirectLocations = context.getRedirectLocations();
+            var followed = redirectLocations == null ? 0 : redirectLocations.size();
+            return List.copyOf(((List<Redirect>) list).subList(0, Math.min(followed, list.size())));
         }
     }
 

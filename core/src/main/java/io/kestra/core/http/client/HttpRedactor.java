@@ -129,6 +129,13 @@ public final class HttpRedactor {
         return redactUri(uri, secretValues, HttpRedactor::isSensitiveName);
     }
 
+    /**
+     * Same as {@link #redactUri(String, Set)} but masks only credential query parameters, like the {@code Location} header, so pagination cursors are kept.
+     */
+    public static String redactRedirectLocation(@Nullable String location, Set<String> secretValues) {
+        return redactUri(location, secretValues, HttpRedactor::isUriHeaderCredentialParam);
+    }
+
     private static URI redactUri(@Nullable URI uri, Set<String> secretValues, Predicate<String> sensitiveParam) {
         if (uri == null) {
             return null;
@@ -251,7 +258,7 @@ public final class HttpRedactor {
         for (var param : rawQuery.split("&", -1)) {
             var eq = param.indexOf('=');
             if (eq < 0) {
-                params.add(param);
+                params.add(isSecretValue(param, secretValues) || isSecretValue(decode(param), secretValues) ? REDACTED : param);
                 continue;
             }
 

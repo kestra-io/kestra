@@ -81,6 +81,5 @@ charts/kestra-starter/charts/
 cli/data/
 
 # Plugin UI artifact built from core/src/main/java/io/kestra/plugin/core/http/ui
-core/src/main/resources/plugin-ui/
 core/src/main/java/io/kestra/plugin/core/http/ui/node_modules/
 core/src/main/java/io/kestra/plugin/core/http/ui/dist/

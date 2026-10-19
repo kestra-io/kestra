@@ -7,7 +7,7 @@ import {
     useClient,
     type Check,
     type Execution as SDKExecution,
-    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as ApiInputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
@@ -32,7 +32,10 @@ import {useApiStore} from "./api"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
+export type {Check} from "@kestra-io/kestra-sdk"
+
+// `path` is added to `ApiInputError` on this branch, and the generated SDK only picks it up once `develop` regenerates it.
+export type InputError = ApiInputError & {path?: string}
 
 export interface ValidationResponse {
     checks?: Check[];
@@ -77,6 +80,10 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
+    /** Set on a TABLE input only: one input definition per column, each evaluated once per row. */
+    columns?: InputMetaData[];
+    minRows?: number;
+    maxRows?: number;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */
@@ -210,6 +217,10 @@ export const useExecutionsStore = defineStore("executions", () => {
             revision: options.revision,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
         }) as unknown as Promise<Execution>
+    }
+
+    const validateReplay = (options: { executionId: string; taskRunId?: string; revision?: number }) => {
+        return ExecutionsAPI.validateReplayExecution(options)
     }
 
     /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */
@@ -824,6 +835,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryReplayExecution,
         queryChangeExecutionStatus,
         replayExecution,
+        validateReplay,
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,

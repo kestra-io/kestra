@@ -3,6 +3,13 @@ import KsTable from "./KsTable.vue"
 import KsTableColumn from "./KsTableColumn.vue"
 import {i18nMount} from "../../../../tests/units/i18nMount"
 
+type KsTableExposedMethods = {
+    clearSelection: () => void
+    toggleAllSelection: () => void
+    clearSort: () => void
+    sort: (prop: string, order: string) => void
+}
+
 const globalConfig = {
 }
 
@@ -20,7 +27,7 @@ describe("KsTable", () => {
             props: {data: []},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).clearSelection).toBe("function")
+        expect(typeof (wrapper.vm as typeof wrapper.vm & KsTableExposedMethods).clearSelection).toBe("function")
     })
 
     test("exposes toggleAllSelection method", () => {
@@ -28,7 +35,7 @@ describe("KsTable", () => {
             props: {data: []},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).toggleAllSelection).toBe("function")
+        expect(typeof (wrapper.vm as typeof wrapper.vm & KsTableExposedMethods).toggleAllSelection).toBe("function")
     })
 
     test("exposes clearSort method", () => {
@@ -36,7 +43,7 @@ describe("KsTable", () => {
             props: {data: []},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).clearSort).toBe("function")
+        expect(typeof (wrapper.vm as typeof wrapper.vm & KsTableExposedMethods).clearSort).toBe("function")
     })
 
     test("exposes sort method", () => {
@@ -44,7 +51,7 @@ describe("KsTable", () => {
             props: {data: []},
             global: globalConfig,
         })
-        expect(typeof (wrapper.vm as any).sort).toBe("function")
+        expect(typeof (wrapper.vm as typeof wrapper.vm & KsTableExposedMethods).sort).toBe("function")
     })
 
     test("renders with columns", () => {

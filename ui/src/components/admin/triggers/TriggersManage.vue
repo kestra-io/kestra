@@ -300,7 +300,7 @@
             large
         >
             <template #header>
-                <span v-html="$t('backfill executions')" />
+                <span>{{ $t("backfill executions") }}</span>
             </template>
             <KsForm :model="backfill" labelPosition="top">
                 <div class="pickers">

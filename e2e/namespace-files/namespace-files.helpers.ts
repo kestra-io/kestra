@@ -67,7 +67,7 @@ export class FilesEditor {
     }
 
     dirtyMarker(uid: string): Locator {
-        return this.tab(uid).locator(".dirty-icon")
+        return this.tab(uid).locator("[data-test='tab-dirty']")
     }
 
     /** The content area of the panel holding `uid`: it renders that panel's active tab only. */

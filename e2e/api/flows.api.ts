@@ -7,6 +7,8 @@ import fs from "fs"
 import path from "path"
 
 export type StoredFlow = {
+    id: string;
+    namespace: string;
     source: string;
     revision: number;
 }
@@ -38,7 +40,7 @@ export class FlowsApi extends BaseApi {
         return flowId
     }
 
-    async createFlowViaApi(namespace: string, flowId: string, source: string) {
+    async createFlowViaApi(source: string) {
         const response = await this.request.post(`${this.apiUrl}/flows`, {
             headers: {
                 "Content-Type": "application/x-yaml",
@@ -52,7 +54,8 @@ export class FlowsApi extends BaseApi {
             throw new Error(`Flow creation failed with HTTP ${response.status()}: ${await response.text()}`)
         }
 
-        this.flows.push({namespace, id: flowId})
+        const {namespace, id}: StoredFlow = await response.json()
+        this.flows.push({namespace, id})
     }
 
     async getFlowViaApi(namespace: string, flowId: string): Promise<StoredFlow> {

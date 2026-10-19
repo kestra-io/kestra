@@ -223,6 +223,7 @@
                 id: props.blueprintId,
             })
         } else if (blueprint.value?.source && !blueprint.value.template) {
+            // A template's source still holds its arguments as placeholders, so no topology can be computed from it.
             const graph = await flowStore.getGraphFromSourceResponse({flow: blueprint.value.source})
             flowGraph.value = graph as unknown as FlowGraph
         }

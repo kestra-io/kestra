@@ -1390,7 +1390,6 @@
 
   .loop-progress {
     display: flex;
-    align-items: top;
     gap: var(--ks-spacing-3);
     margin-block: var(--ks-spacing-3);
   }

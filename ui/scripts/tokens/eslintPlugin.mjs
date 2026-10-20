@@ -59,7 +59,51 @@ const noUndeclaredKsToken = {
     },
 }
 
+const TOKEN = /^--ks-[A-Za-z0-9-]+$/
+
+/** The stylesheet half, for `@eslint/css`: every `var(--ks-…)` in `.css` and plain `<style>` blocks. */
+const noUndeclaredCssToken = {
+    meta: {
+        type: "problem",
+        docs: {description: "disallow var(--ks-*) in stylesheets when the token is declared nowhere", url},
+        schema: [],
+        messages: {undeclared: "{{detail}}"},
+    },
+    create(context) {
+        const source = context.sourceCode
+        const known = new Set(knownTokens())
+        declarationsIn(source.getText()).forEach(name => known.add(name))
+
+        const report = (token, hasFallback, loc) => {
+            if (TOKEN.test(token) && !known.has(token)) {
+                context.report({loc, messageId: "undeclared", data: {detail: undeclaredMessage(token, known, hasFallback)}})
+            }
+        }
+
+        return {
+            "Function[name=/^var$/i]"(node) {
+                const [first, ...rest] = node.children
+                if (first?.type !== "Identifier") return
+                report(first.name, rest.some(child => child.type === "Operator" && child.value === ","), first.loc)
+            },
+            // CSSTree leaves custom property values and `var()` fallbacks unparsed, so their tokens are found by text.
+            Raw(node) {
+                const at = node.loc.start.offset
+                for (const {token, index, hasFallback} of usagesIn(node.value)) {
+                    report(token, hasFallback, {
+                        start: source.getLocFromIndex(at + index),
+                        end: source.getLocFromIndex(at + index + token.length),
+                    })
+                }
+            },
+        }
+    },
+}
+
 export default {
     meta: {name: "kestra-tokens"},
-    rules: {"no-undeclared-ks-token": noUndeclaredKsToken},
+    rules: {
+        "no-undeclared-ks-token": noUndeclaredKsToken,
+        "no-undeclared-css-token": noUndeclaredCssToken,
+    },
 }

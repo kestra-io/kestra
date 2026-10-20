@@ -243,7 +243,7 @@
             padding-left: calc(5.5rem - 3px);
         }
 
-        a:hover, & :deep(span[class*="depth-"]):hover {
+        & a:hover, & :deep(span[class*="depth-"]):hover {
             color: var(--ks-text-link);
             background-color: var(--ks-btn-secondary-bg-hover);
         }

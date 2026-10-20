@@ -41,6 +41,8 @@ const TOKEN_REGEX = /^--ks-[A-Za-z0-9-]+$/
 const undeclaredRule = (primary) => {
     return (root, result) => {
         if (!validateOptions(result, undeclaredRuleName, {actual: primary, possible: [true]})) return
+        // Plain-CSS blocks and `style` attributes are linted by `kestra-tokens/no-undeclared-css-token`.
+        if (root.source?.lang === "css") return
 
         // The file in hand may declare tokens of its own, and in an editor it is unsaved, so its
         // declarations are read from this copy rather than from the one the repository scan saw.

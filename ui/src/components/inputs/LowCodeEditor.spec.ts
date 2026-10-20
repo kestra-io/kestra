@@ -63,14 +63,14 @@ vi.mock("@kestra-io/topology", async (importOriginal) => ({
 import LowCodeEditor from "./LowCodeEditor.vue"
 
 const FLOW = `
-id: dbt
+id: nested
 namespace: company.team
 tasks:
   - id: wdir
     type: io.kestra.plugin.core.flow.WorkingDirectory
     tasks:
-      - id: dbt
-        type: io.kestra.plugin.dbt.cli.DbtCLI
+      - id: log
+        type: io.kestra.plugin.core.log.Log
 `
 
 
@@ -96,7 +96,7 @@ describe("LowCodeEditor plugin UI lookup", () => {
         await flushPromises()
 
         expect(requestedTypes).toContain("io.kestra.plugin.core.flow.WorkingDirectory")
-        expect(requestedTypes).toContain("io.kestra.plugin.dbt.cli.DbtCLI")
+        expect(requestedTypes).toContain("io.kestra.plugin.core.log.Log")
         wrapper.unmount()
     })
 })

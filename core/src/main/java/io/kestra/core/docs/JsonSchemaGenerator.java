@@ -58,6 +58,7 @@ import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.TimezoneId;
+import io.kestra.core.validations.validator.TableInputValidator;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -155,7 +156,9 @@ public class JsonSchemaGenerator {
             objectNode = MAPPER.convertValue(schema, ObjectNode.class);
             collapseSingleUseDiscriminatorWrappers(objectNode);
 
-            return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
+            Map<String, Object> collapsed = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
+            restrictTableColumns(collapsed);
+            return collapsed;
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -302,6 +305,76 @@ public class JsonSchemaGenerator {
         } else if (node instanceof List<?> list) {
             list.forEach(value -> collectRefs(value, refs));
         }
+    }
+
+    /**
+     * Narrows the {@code columns} of a {@code TABLE} input to what {@link TableInputValidator} accepts, so that editors
+     * offer neither a forbidden column type nor a property a column cannot declare: each allowed type is reached
+     * through a copy of its definition without those properties.
+     */
+    @SuppressWarnings("unchecked")
+    private static void restrictTableColumns(Map<String, Object> schema) {
+        if (!(schema.get("definitions") instanceof Map<?, ?> rawDefinitions)) {
+            return;
+        }
+
+        Map<String, Object> definitions = (Map<String, Object>) rawDefinitions;
+        Set<String> allowedTypes = TableInputValidator.ALLOWED_COLUMN_TYPES.stream().map(Enum::name).collect(Collectors.toSet());
+        Map<String, Object> columnDefinitions = new LinkedHashMap<>();
+        definitions.values().forEach(definition ->
+        {
+            if (
+                !io.kestra.core.models.flows.Type.TABLE.name().equals(inputTypeOf(definition))
+                    || !(nested(definition, "properties", "columns", "items") instanceof Map<?, ?> items)
+                    || !(items.get("anyOf") instanceof List<?> branches)
+            ) {
+                return;
+            }
+
+            List<Object> restricted = new ArrayList<>();
+            for (Object branch : branches) {
+                String ref = branch instanceof Map<?, ?> map && map.get("$ref") instanceof String value ? value : null;
+                Object target = ref == null ? null : definitions.get(definitionName(ref));
+                String type = inputTypeOf(target);
+                if (type != null && !allowedTypes.contains(type)) {
+                    continue;
+                }
+                if (type == null || !(((Map<String, Object>) target).get("properties") instanceof Map<?, ?>)) {
+                    restricted.add(branch);
+                    continue;
+                }
+                String columnDefinition = definitionName(ref) + "-TableColumn";
+                columnDefinitions.computeIfAbsent(columnDefinition, key -> withoutForbiddenColumnProperties((Map<String, Object>) target));
+                restricted.add(Map.of("$ref", ref.substring(0, ref.lastIndexOf('/') + 1) + columnDefinition));
+            }
+            ((Map<String, Object>) items).put("anyOf", restricted);
+        });
+        definitions.putAll(columnDefinitions);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> withoutForbiddenColumnProperties(Map<String, Object> definition) {
+        Map<String, Object> copy = MAPPER.convertValue(definition, MAP_TYPE_REFERENCE);
+        ((Map<String, Object>) copy.get("properties")).keySet().removeAll(TableInputValidator.FORBIDDEN_COLUMN_PROPERTIES);
+        if (copy.get("required") instanceof List<?> required) {
+            copy.put("required", required.stream().filter(name -> !TableInputValidator.FORBIDDEN_COLUMN_PROPERTIES.contains(name)).toList());
+        }
+        return copy;
+    }
+
+    private static String inputTypeOf(Object definition) {
+        return nested(definition, "properties", "type", "const") instanceof String type ? type : null;
+    }
+
+    private static Object nested(Object node, String... keys) {
+        Object current = node;
+        for (String key : keys) {
+            if (!(current instanceof Map<?, ?> map)) {
+                return null;
+            }
+            current = map.get(key);
+        }
+        return current;
     }
 
     private static String definitionName(String ref) {

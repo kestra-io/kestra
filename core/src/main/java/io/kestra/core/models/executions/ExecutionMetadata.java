@@ -67,6 +67,18 @@ public class ExecutionMetadata {
     }
 
     /**
+     * Returns the metadata of a new attempt created by a restart, a replay, or a task run state change on a terminated execution.
+     * Such an attempt holds no slot until the concurrency gate admits it, so the claim of the previous attempt must not be carried
+     * over: the release would otherwise give back a slot the attempt never held. The claim is emptied rather than
+     * nulled, as a null claim makes the release fall back to the state history, which still has the previous attempt.
+     * <p>
+     * A resumed execution keeps its claim: it still holds its slot and does not go through the gate again.
+     */
+    public ExecutionMetadata nextAttemptWithoutConcurrencySlot() {
+        return this.nextAttempt().withConcurrencyScopes(List.of());
+    }
+
+    /**
      * Returns {@link #executionDepth}, defaulting to 0 for a root execution or one predating this field.
      */
     public int executionDepthOrZero() {

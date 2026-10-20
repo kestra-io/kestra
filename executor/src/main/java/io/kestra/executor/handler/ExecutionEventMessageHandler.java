@@ -276,9 +276,14 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                         return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
                                     }
 
+                                    // FAIL on a restarted execution only fails its task run, so the execution is not
+                                    // terminated yet: carry the rejection on, it claimed no slot
+                                    if (processed.getConcurrencyState() != ExecutionRunning.ConcurrencyState.RUNNING) {
+                                        executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
+                                    }
                                     // the execution claimed one slot in every scope: remember them so the release
                                     // decrements exactly these, even if the definitions change while it runs
-                                    if (executor.getExecution().getMetadata() != null) {
+                                    else if (executor.getExecution().getMetadata() != null) {
                                         executor.withExecution(
                                             execution.withMetadata(execution.getMetadata().withConcurrencyScopes(concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList())),
                                             "handleConcurrencyLimit"

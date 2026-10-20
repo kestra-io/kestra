@@ -380,7 +380,7 @@ public class ExecutionService {
             }
             Execution newExecution = execution
                 .childExecution(newExecutionId, Collections.emptyList(), execution.withState(State.Type.RESTARTED).getState())
-                .withMetadata(execution.getMetadata().nextAttempt())
+                .withMetadata(execution.getMetadata().nextAttemptWithoutConcurrencySlot())
                 .withLabels(newLabels);
             if (revision != null) {
                 newExecution = newExecution.withFlowRevision(revision);
@@ -454,7 +454,7 @@ public class ExecutionService {
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
         }
-        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels);
+        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttemptWithoutConcurrencySlot()).withLabels(newLabels);
 
         newExecution = revision != null ? newExecution.withFlowRevision(revision) : newExecution;
 
@@ -613,7 +613,7 @@ public class ExecutionService {
         if (!newLabels.contains(new Label(Label.REPLAY, "true"))) {
             newLabels.add(new Label(Label.REPLAY, "true"));
         }
-        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels)
+        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttemptWithoutConcurrencySlot()).withLabels(newLabels)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
         newExecution = revision != null ? applyNewRevision(flow, newExecution) : newExecution;
@@ -717,7 +717,10 @@ public class ExecutionService {
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
-        Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
+        // a terminated execution already gave its slot back, a paused one still holds it
+        Execution newExecution = execution.withMetadata(
+            execution.getState().isTerminated() ? execution.getMetadata().nextAttemptWithoutConcurrencySlot() : execution.getMetadata().nextAttempt()
+        );
 
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
 

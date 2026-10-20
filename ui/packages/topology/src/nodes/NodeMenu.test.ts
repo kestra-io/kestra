@@ -107,6 +107,13 @@ describe("NodeMenu with a single action", () => {
 
         expect(edit.onClick).toHaveBeenCalledTimes(1)
     })
+
+    it("should give the node-action--danger class to a danger action", () => {
+        const remove = action({danger: true})
+        const wrapper = mountNodeMenu([remove])
+
+        expect(wrapper.find("button .pencil-icon").classes()).toContain("node-action--danger")
+    })
 })
 
 describe("NodeMenu without actions", () => {

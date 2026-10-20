@@ -31,7 +31,7 @@
     const activeTab = useActiveTab()
     const secondaryAction = computed(() => activeTab.value ? secondaryActionComponents[activeTab.value] : undefined)
 
-    useRouteContext(routeInfo as any, false)
+    useRouteContext(routeInfo, false)
 
     setupLifecycle()
 </script>

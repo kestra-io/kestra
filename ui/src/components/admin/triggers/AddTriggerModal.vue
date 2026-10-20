@@ -76,7 +76,7 @@
                         :aria-label="copied ? $t('copied') : $t('copy')"
                         @click="copySource"
                     >
-                        <CheckIcon v-if="copied" class="text-success" />
+                        <CheckIcon v-if="copied" class="success-icon" />
                         <ContentCopy v-else />
                     </KsIconButton>
                     <KsEditor
@@ -382,6 +382,10 @@
             right: var(--ks-spacing-2);
             z-index: 2;
         }
+    }
+
+    .success-icon {
+        color: var(--ks-text-success);
     }
 
     .docs :deep(.plugin-doc) {

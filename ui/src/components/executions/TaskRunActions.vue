@@ -44,8 +44,8 @@
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
-                    <span class="d-inline-flex align-items-center">
-                        <AiIcon class="me-1" />
+                    <span class="fix-with-ai">
+                        <AiIcon />
                         <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
@@ -89,7 +89,7 @@
                     component="KsDropdownItem"
                     :key="`change-status-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
                     :execution="execution"
-                    :taskRun="currentTaskRun"
+                    :taskRun="currentTaskRunWithExecution"
                     :attemptIndex="currentAttemptIndex"
                     @follow="emit('follow', $event)"
                 />
@@ -164,7 +164,7 @@
     import Check from "vue-material-design-icons/Check.vue"
 
     import {State} from "@kestra-io/design-system"
-    import type {LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {LogEntry, TaskRun, TaskRunAttempt} from "@kestra-io/kestra-sdk"
     import type {Execution} from "../../stores/executions"
     import type {ExecutionTaskRun} from "./executionTaskRun"
     import type {Flow} from "../../stores/flow"
@@ -245,6 +245,14 @@
 
     const currentTaskRun = computed(() => {
         return currentTaskRuns.value.find((r) => r.id === selectedTaskRunId.value) || props.taskRun
+    })
+    const currentTaskRunWithExecution = computed<TaskRun>(() => {
+        return {
+            ...currentTaskRun.value, 
+            executionId: props.execution.id,
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId.toString(),
+        } satisfies TaskRun
     })
 
     function attempts(taskRun: ExecutionTaskRun): TaskRunAttempt[] {
@@ -369,7 +377,13 @@
         }
     }
 
-        .iteration-selector {
+    .fix-with-ai {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    .iteration-selector {
         border-bottom: var(--ks-border-block-primary);
         padding: var(--ks-spacing-2);
 

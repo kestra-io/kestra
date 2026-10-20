@@ -9,16 +9,16 @@
                     [`dash-width-${chart.chartOptions?.width || 6}`]: true
                 }"
             >
-                <div class="d-flex flex-column" :class="{'is-kpi': isKPIChart(chart.type)}">
-                    <div class="d-flex justify-content-between">
+                <div :class="{'is-kpi': isKPIChart(chart.type)}">
+                    <div class="chart-header">
                         <div id="charts_heading">
                             <p v-if="!isKPIChart(chart.type)">
-                                <span class="fs-6 fw-bold">
+                                <span>
                                     {{ labels(chart).title }}
                                 </span>
                                 <template v-if="labels(chart)?.description">
                                     <br>
-                                    <small class="fw-light">
+                                    <small>
                                         {{ labels(chart).description }}
                                     </small>
                                 </template>
@@ -37,7 +37,7 @@
                                         :icon="Download"
                                         :aria-label="$t('dashboards.export')"
                                         link
-                                        class="ms-2"
+                                        class="chart-action"
                                     />
                                     <template #dropdown>
                                         <KsDropdownMenu>
@@ -65,13 +65,13 @@
                                     :aria-label="$t('dashboards.edition.chart')"
                                     :icon="Pencil"
                                     link
-                                    class="ms-2"
+                                    class="chart-action"
                                 />
                             </KsIcon>
                         </div>
                     </div>
 
-                    <div :ref="(el) => observeChartBlock(el, chart.id)" class="flex-grow-1">
+                    <div :ref="(el) => observeChartBlock(el, chart.id)" class="chart-content">
                         <component
                             v-if="activatedCharts.has(chart.id)"
                             :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
@@ -234,6 +234,8 @@ section#charts {
 
     .dashboard-block {
         & > div {
+            display: flex;
+            flex-direction: column;
             height: 100%;
             padding: 1.25rem;
             background: var(--ks-bg-surface);
@@ -251,6 +253,19 @@ section#charts {
                 }
             }
 
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chart-content {
+            flex-grow: 1;
+        }
+
+        .chart-action {
+            margin-inline-start: var(--ks-spacing-2);
         }
 
         #charts_buttons {
@@ -274,10 +289,12 @@ section#charts {
             span {
                 color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-md);
+                font-weight: var(--ks-font-weight-bold);
             }
             small {
                 color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-xs);
+                font-weight: 300;
             }
         }
     }

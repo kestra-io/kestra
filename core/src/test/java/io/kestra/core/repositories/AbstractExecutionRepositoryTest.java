@@ -1259,10 +1259,10 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         for (int i = 0; i < 2; i++) {
-            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i));
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i,false));
         }
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i));
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i,false));
         }
 
         // When / Then: scoping to a single loop task returns only that task's iterations
@@ -1289,7 +1289,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i));
+            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i,false));
         }
         QueryFilter parentFilter = QueryFilter.builder().field(QueryFilter.Field.PARENT_ID).operation(QueryFilter.Op.EQUALS).value(parent.getId()).build();
         QueryFilter kindFilter = QueryFilter.builder().field(QueryFilter.Field.KIND).operation(QueryFilter.Op.EQUALS).value(ExecutionKind.LOOP).build();

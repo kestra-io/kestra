@@ -24,7 +24,6 @@ const config: StorybookConfig = {
         },
     },
     async viteFinal(viteConfig) {
-        const __dirname = path.dirname(fileURLToPath(import.meta.url))
         const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx")
 
         viteConfig.plugins = [
@@ -58,6 +57,6 @@ const config: StorybookConfig = {
 }
 export default config
 
-function getAbsolutePath(value: string): any {
+function getAbsolutePath(value: string): string {
     return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)))
 }

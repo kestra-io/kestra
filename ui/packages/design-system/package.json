@@ -112,7 +112,6 @@
     "vue-material-design-icons": "^5.4.0",
     "vue-router": "^5.4.0",
     "vue-tsc": "^3.3.13",
-    "yaml": "^2.9.1",
-    "eslint-plugin-storybook": "10.6.2"
+    "yaml": "^2.9.1"
   }
 }

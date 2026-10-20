@@ -1,0 +1,18 @@
+id: pause-on-pause-run-if-false
+namespace: io.kestra.tests
+
+tasks:
+  - id: sequential
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: pause
+        type: io.kestra.plugin.core.flow.Pause
+        runIf: "{{ false }}"
+        pauseDuration: PT1S
+        onPause:
+          id: on_pause
+          type: io.kestra.plugin.core.log.Log
+          message: the pause is skipped, this must not run
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: after the pause

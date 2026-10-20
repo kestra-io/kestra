@@ -535,6 +535,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-run-if-false.yaml")
+    protected void loopRunIfFalse(Execution execution) throws Exception {
+        loopCaseTest.loopRunIfFalse(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-failed-no-transmit.yaml")
     protected void loopTransmitFailedFalse(Execution execution) throws Exception {
         loopCaseTest.loopTransmitFailedFalse(execution);

@@ -130,6 +130,14 @@ public class LoopCaseTest {
         assertThat(subExecutions.getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    public void loopRunIfFalse(Execution execution) {
+        // Then — the Loop is skipped like any other task whose runIf is false: no iteration runs
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("loop").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null)).isEmpty();
+    }
+
     public void loopTransmitFailedFalse(Execution execution) throws InternalException {
         // Then — all iterations run but failures are not propagated, loop ends with SUCCESS
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

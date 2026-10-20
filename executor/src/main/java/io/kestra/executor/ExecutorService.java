@@ -719,7 +719,11 @@ public class ExecutorService {
                         }
                         case Pause pause when pause.getOnPause() != null -> {
                             // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks will dispatch it.
-                            onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                            // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
+                            RunContext runContext = runContextFactory.of(executor.getFlow(), pause, executor.getExecution(), taskRun);
+                            if (TruthUtils.isTruthy(runContext.render(pause.getRunIf()))) {
+                                onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                            }
                         }
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
@@ -882,7 +886,11 @@ public class ExecutorService {
             } else if (task instanceof Pause pause && pause.getOnPause() != null) {
                 // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks
                 // dispatches it like any other CREATED task run, immediately since it runs right after.
-                onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
+                RunContext runContext = runContextFactory.of(executor.getFlow(), pause, executor.getExecution(), taskRun);
+                if (TruthUtils.isTruthy(runContext.render(pause.getRunIf()))) {
+                    onPauseTaskRuns.add(TaskRun.of(executor.getExecution(), ResolvedTask.of(pause.getOnPause())));
+                }
             }
         } catch (Exception e) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
@@ -902,6 +910,11 @@ public class ExecutorService {
      */
     private void handleLoopCreated(ExecutorContext executor, Loop loop, TaskRun taskRun) throws InternalException, IOException {
         RunContext runContext = runContextFactory.of(executor.getFlow(), loop, executor.getExecution(), taskRun);
+        // a Loop whose runIf is false is skipped when its worker task is handled: don't start any iteration
+        if (!TruthUtils.isTruthy(runContext.render(loop.getRunIf()))) {
+            return;
+        }
+
         var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
         int iterationCount;
 

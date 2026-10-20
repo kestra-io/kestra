@@ -43,7 +43,7 @@
     import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import * as Utils from "../../../utils/utils"
+    import {getLanguageTag} from "../../../utils/utils"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
@@ -103,7 +103,7 @@
     const total = computed(() => pieData.value.reduce((acc, item) => acc + Number(item.value), 0))
 
     const totalValue = computed(() =>
-        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(Utils.getLanguageTag()),
+        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(getLanguageTag()),
     )
 
     const showSuccessRatio = computed(() => !isDuration && pieData.value.some((item) => item.name === "SUCCESS"))

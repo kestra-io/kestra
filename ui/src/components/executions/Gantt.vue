@@ -106,11 +106,10 @@
                                                     :style="{'--rail-depth': item.depth || 0}"
                                                 />
                                                 <span
-                                                    v-for="segment in railSegments(item)"
-                                                    :key="`vertical-${segment.depth}`"
-                                                    class="gantt-rail gantt-rail-vertical"
-                                                    :class="{'is-terminal': segment.isTerminal}"
-                                                    :style="{'--rail-depth': segment.depth}"
+                                                    v-for="depth in continuingRailDepths(item)"
+                                                    :key="depth"
+                                                    class="gantt-rail"
+                                                    :style="{'--rail-depth': depth}"
                                                 />
                                                 <span
                                                     v-if="(item.depth ?? 0) > 0"
@@ -460,36 +459,21 @@
     const isLastSibling = (item: SeriesItem): boolean =>
         lastChildByParent.value.get(item.task.parentTaskRunId ?? "__root__") === item.id
 
-    const railSegments = (
-        item: SeriesItem,
-    ): Array<{depth: number; isTerminal: boolean}> => {
-        const segments: Array<{depth: number; isTerminal: boolean}> = []
+    const continuingRailDepths = (item: SeriesItem): number[] => {
+        const depths: number[] = []
+        let cursor = item
+        let ancestor = seriesById.value.get(cursor.task.parentTaskRunId ?? "")
 
-        let cursor: SeriesItem | undefined = item
-        let isDirectParent = true
-
-        while (cursor && cursor.task.parentTaskRunId) {
-            const parentId = cursor.task.parentTaskRunId
-            const ancestor = seriesById.value.get(parentId)
-
-            if (!ancestor) {
-                break
-            }
-
-            const isTerminal = isLastSibling(cursor)
-
-            if (isDirectParent || !isTerminal) {
-                segments.push({
-                    depth: ancestor.depth ?? 0,
-                    isTerminal: isDirectParent && isTerminal,
-                })
+        while (ancestor) {
+            if (!isLastSibling(cursor)) {
+                depths.push(ancestor.depth ?? 0)
             }
 
             cursor = ancestor
-            isDirectParent = false
+            ancestor = seriesById.value.get(cursor.task.parentTaskRunId ?? "")
         }
 
-        return segments
+        return depths
     }
 
     const rowBlocks = computed(() => {
@@ -915,48 +899,26 @@
 
                 .gantt-rails {
                     position: absolute;
-                    inset: 0;
-                    padding: 0 !important;
+                    inset: calc(-1 * var(--ks-spacing-px)) 0 0;
                     pointer-events: none;
-                    z-index: 0;
-                }
-
-                > *:not(.gantt-rails) {
-                    position: relative;
-                    z-index: 1;
                 }
 
                 .gantt-rail {
                     position: absolute;
-                    display: block;
-                    background: var(--ks-border-strong);
-                }
-
-                .gantt-rail-vertical {
-                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
-                    top: calc(0rem - var(--ks-spacing-2) - var(--ks-spacing-px) - var(--ks-spacing-px));
+                    top: 0;
                     bottom: 0;
-                    width: var(--ks-spacing-px);
-
-                    &.is-terminal {
-                        top: calc(0rem - var(--ks-spacing-2) - var(--ks-spacing-px) - var(--ks-spacing-px));
-                        bottom: auto;
-                        height: calc(50% + var(--ks-spacing-2) + var(--ks-spacing-px) + var(--ks-spacing-px));
-                    }
+                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
+                    border-left: var(--ks-spacing-px) solid var(--ks-border-strong);
                 }
 
                 .gantt-rail-outgoing {
-                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
                     top: calc(50% + var(--ks-spacing-2));
-                    bottom: calc(0rem - var(--ks-spacing-2) - var(--ks-spacing-px) - var(--ks-spacing-px));
-                    width: var(--ks-spacing-px);
                 }
 
                 .gantt-rail-elbow {
-                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
-                    top: 50%;
+                    bottom: 50%;
                     width: calc(var(--ks-spacing-5) - var(--ks-spacing-2));
-                    height: var(--ks-spacing-px);
+                    border-bottom: var(--ks-spacing-px) solid var(--ks-border-strong);
                 }
 
                 .gantt-chevron {

@@ -247,14 +247,14 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         title = "Custom response headers.",
         description = "Headers returned to the webhook caller. Values can use expressions from the execution context. Set `wait` to `true` when an expression uses task or flow outputs."
     )
-    private Property<Map<CharSequence, CharSequence>> responseHeaders;
+    private Property<Map<String, String>> responseHeaders;
 
     @PluginProperty
     @Schema(
         title = "Custom response body.",
         description = "Body returned to the webhook caller instead of the default execution metadata or flow outputs. The value can use expressions from the execution context. Set `wait` to `true` when an expression uses task or flow outputs."
     )
-    private Property<Object> responseBody;
+    private Property<String> responseBody;
 
     @Override
     public Mono<HttpResponse<?>> evaluate(WebhookContext context) throws Exception {
@@ -328,10 +328,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
         Object body;
         if (this.responseBody != null) {
-            body = runContext.render(this.responseBody).as(Object.class).orElse(null);
-            if (body instanceof String renderedBody) {
-                body = runContext.renderTyped(renderedBody);
-            }
+            body = runContext.render(this.responseBody).as(String.class).orElse(null);
         } else if (terminated && this.getReturnOutputs()) {
             body = context.webhookService().executionOutputs(execution);
         } else {
@@ -339,10 +336,10 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         }
 
         Map<String, List<String>> headers = runContext.render(this.responseHeaders)
-            .asMap(CharSequence.class, CharSequence.class)
+            .asMap(String.class, String.class)
             .entrySet()
             .stream()
-            .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> List.of(entry.getValue().toString())));
+            .collect(Collectors.toMap(Map.Entry::getKey, entry -> List.of(entry.getValue())));
 
         if (this.responseContentType != null && headers.keySet().stream().noneMatch(name -> name.equalsIgnoreCase("Content-Type"))) {
             headers.put("Content-Type", List.of(this.responseContentType));

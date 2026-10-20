@@ -3926,6 +3926,21 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows("flows/valids/webhook-response.yaml")
+    void webhookCustomResponseDoesNotRenderRequestDataTwice() {
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET(
+                "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS +
+                    "/webhook-response/webhook-response?challenge=%7B%7B%20trigger.parameters.token%5B0%5D%20%7D%7D&token=kestra"
+            ),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isEqualTo("{{ trigger.parameters.token[0] }}");
+    }
+
+    @Test
     @LoadFlows("flows/valids/webhook-plaintext.yaml")
     void webhookWithPlainTextResponseContentType() {
         HttpResponse<String> response = client.toBlocking().exchange(

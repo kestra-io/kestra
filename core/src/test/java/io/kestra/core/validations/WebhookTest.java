@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
@@ -59,6 +60,41 @@ public class WebhookTest {
             .build();
 
         assertThat(modelValidator.isValid(nullContentType).isPresent()).isFalse();
+    }
+
+    @Test
+    void webhookResponseBodyAndReturnOutputsValidation() {
+        var invalidWebhook = Webhook.builder()
+            .id("webhook")
+            .type(Webhook.class.getName())
+            .key("webhook")
+            .wait(true)
+            .returnOutputs(true)
+            .responseBody(Property.ofValue("custom response"))
+            .build();
+
+        var validation = modelValidator.isValid(invalidWebhook);
+        assertThat(validation).isPresent();
+        assertThat(validation.get().getMessage()).contains("invalid webhook: responseBody and returnOutputs cannot be used together");
+
+        var responseBodyOnly = Webhook.builder()
+            .id("webhook")
+            .type(Webhook.class.getName())
+            .key("webhook")
+            .responseBody(Property.ofValue("custom response"))
+            .build();
+
+        assertThat(modelValidator.isValid(responseBodyOnly)).isEmpty();
+
+        var returnOutputsOnly = Webhook.builder()
+            .id("webhook")
+            .type(Webhook.class.getName())
+            .key("webhook")
+            .wait(true)
+            .returnOutputs(true)
+            .build();
+
+        assertThat(modelValidator.isValid(returnOutputsOnly)).isEmpty();
     }
 
     @Test

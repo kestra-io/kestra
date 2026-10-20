@@ -510,7 +510,7 @@ public class FlowInputOutput {
      * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
      * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
      */
-    private static boolean isTextType(Type type) {
+    public static boolean isTextType(Type type) {
         return type == Type.STRING || type == Type.SELECT
             || type == Type.EMAIL || type == Type.SECRET;
     }

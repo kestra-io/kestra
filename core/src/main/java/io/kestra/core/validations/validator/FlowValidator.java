@@ -17,11 +17,13 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
@@ -426,12 +428,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     /**
      * @return the constraint message when {@code rawValue} — a literal default or a value a trigger supplies — cannot
      * satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
-     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
+     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types). A
+     * {@code TABLE} is checked cell by cell against its columns, with each message prefixed by its row and column.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
         if (rawValue == null) {
             return Optional.empty();
+        }
+
+        if (input instanceof TableInput table) {
+            return tableLiteralValueViolation(table, rawValue);
         }
 
         String asString = rawValue.toString();
@@ -460,6 +467,56 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         return Optional.empty();
+    }
+
+    private static Optional<String> tableLiteralValueViolation(TableInput table, Object rawValue) {
+        List<?> rows;
+        try {
+            rows = rawValue instanceof List<?> list ? list : JacksonMapper.toList(rawValue.toString());
+        } catch (Exception e) {
+            return PebbleUtil.containsOpeningBlockDelimiter(rawValue.toString())
+                ? Optional.empty()
+                : Optional.of("`%s` is not a valid TABLE value".formatted(rawValue));
+        }
+
+        List<String> messages = new ArrayList<>();
+        try {
+            table.validate(rows);
+        } catch (ConstraintViolationException e) {
+            e.getConstraintViolations().forEach(violation -> messages.add(violation.getMessage()));
+        }
+
+        List<Input<?>> columns = ListUtils.emptyOnNull(table.getColumns());
+        Set<String> declared = columns.stream().map(Input::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        for (int i = 0; i < rows.size(); i++) {
+            String row = "row " + (i + 1);
+            if (!(rows.get(i) instanceof Map<?, ?> cells)) {
+                messages.add(row + ": expected an object");
+                continue;
+            }
+
+            cells.keySet().stream()
+                .map(String::valueOf)
+                .filter(key -> !declared.contains(key))
+                .forEach(key -> messages.add(row + ", column `" + key + "`: it is not declared"));
+
+            for (Input<?> column : columns) {
+                String cell = row + ", column `" + column.getId() + "`";
+                Object value = cells.get(column.getId());
+                if (value instanceof String s && s.isEmpty() && !FlowInputOutput.isTextType(column.getType())) {
+                    value = null;
+                }
+                if (value == null) {
+                    if (Boolean.TRUE.equals(column.getRequired())) {
+                        messages.add(cell + ": missing required value");
+                    }
+                    continue;
+                }
+                literalValueViolation(column, value).ifPresent(message -> messages.add(cell + ": " + message));
+            }
+        }
+
+        return messages.isEmpty() ? Optional.empty() : Optional.of(String.join(", ", messages));
     }
 
     /**

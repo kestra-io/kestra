@@ -5,6 +5,12 @@
       "cta": "Ver o que mudou"
     },
     "loading": "Carregando...",
+    "namespace_files_tip": {
+      "title": "Gerencie seus scripts como arquivos do namespace",
+      "description": "Em vez de escrever o script inline, abra o painel Arquivos, adicione-o como arquivo (por exemplo, main.py) e execute-o a partir do seu flow:",
+      "open_files": "Abrir arquivos",
+      "dont_show_again": "Não mostrar novamente"
+    },
     "more actions": "Mais ações",
     "recipe": {
       "create_flow": "Criar flow",

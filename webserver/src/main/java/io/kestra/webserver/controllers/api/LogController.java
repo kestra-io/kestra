@@ -16,6 +16,7 @@ import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
@@ -231,6 +232,10 @@ public class LogController {
             description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
         ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        if (ListUtils.isEmpty(filters)) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "At least one valid filter is required to delete logs by query.");
+        }
+
         logRepository.deleteByFilters(
             tenantService.resolveTenant(),
             QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)

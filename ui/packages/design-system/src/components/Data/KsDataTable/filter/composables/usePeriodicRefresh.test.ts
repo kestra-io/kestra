@@ -57,6 +57,12 @@ afterEach(() => {
 })
 
 describe("usePeriodicRefresh", () => {
+    test("shouldNamespaceEnabledKeyByRouteName", async () => {
+        const {getAutoRefreshEnabledKey} = await import("./usePeriodicRefresh")
+
+        expect(getAutoRefreshEnabledKey("executions")).toBe("autoRefreshEnabled_executions")
+    })
+
     // https://github.com/kestra-io/kestra/issues/20526: the interval used to be created only inside the
     // settings popover, so it died with the popover and never started on page load.
     // https://github.com/kestra-io/kestra/issues/20525: the tick called the refresh callback twice.

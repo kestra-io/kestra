@@ -64,7 +64,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .outputs-vars {
         margin-top: var(--ks-spacing-1);
     }

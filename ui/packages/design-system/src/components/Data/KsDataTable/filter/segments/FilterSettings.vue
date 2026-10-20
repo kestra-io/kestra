@@ -46,13 +46,13 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .settings-panel {
     display: flex;
     flex-direction: column;
     border-radius: var(--ks-radius-lg);
 
-    .header {
+    & .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -60,13 +60,13 @@
         background-color: var(--ks-bg-active);
         border-bottom: 1px solid var(--ks-border-default);
 
-        h6 {
+        & h6 {
             margin: 0;
             font-size: var(--ks-font-size-sm);
             font-weight: 700;
         }
 
-        :deep(.close-icon) {
+        & :deep(.close-icon) {
             color: var(--ks-text-dim);
 
             &:hover {
@@ -75,13 +75,13 @@
         }
     }
 
-    .list {
+    & .list {
         display: flex;
         flex-direction: column;
     }
 
-    .row,
-    :slotted(.row) {
+    /* Vue scopes a nested :slotted() rule that has children of its own as a plain one, so it stays flat. */
+    & .row {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -94,8 +94,21 @@
         }
     }
 
-    .row .label,
-    :slotted(.row) .label {
+    & :slotted(.row) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
+    }
+
+    & :slotted(.row):last-child {
+        border-bottom: none;
+    }
+
+    & .row .label,
+    & :slotted(.row) .label {
         font-size: var(--ks-font-size-sm);
         color: var(--ks-text-primary);
     }

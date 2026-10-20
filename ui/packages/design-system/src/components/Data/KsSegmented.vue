@@ -67,7 +67,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/segmented';
+</style>
 
+<style>
     .el-segmented__item-selected {
         font-weight: 500;
     }
@@ -78,8 +80,9 @@
         gap: var(--ks-spacing-1);
     }
 
-    // In light theme --ks-bg-hover-elevated equals --ks-bg-base, so the track
-    // background is invisible against the page; --ks-bg-elevated gives contrast.
+    /* In light theme --ks-bg-hover-elevated equals --ks-bg-base, so the track */
+    /* background is invisible against the page; --ks-bg-elevated gives contrast. */
+
     html:not(.dark) .el-segmented,
     html:not(.dark) .kel-segmented {
         --el-fill-color-light: var(--ks-bg-elevated);

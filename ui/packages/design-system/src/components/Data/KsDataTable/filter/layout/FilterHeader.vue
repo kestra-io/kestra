@@ -28,7 +28,7 @@
     const emits = defineEmits<{close: []}>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filter-header {
     display: flex;
     align-items: flex-start;
@@ -36,34 +36,34 @@
     padding: 1rem 1rem 0 1rem;
     gap: var(--ks-spacing-2);
 
-    .filter-title {
+    & .filter-title {
         min-width: 0;
         display: flex;
         flex-direction: column;
     }
 
-    .filter-label {
+    & .filter-label {
         font-size: var(--ks-font-size-base);
         margin: 0;
         font-weight: 600;
         color: var(--ks-text-primary);
     }
 
-    .filter-description {
+    & .filter-description {
         margin-top: 0.25rem;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
         line-height: 1.2;
     }
 
-    .filter-header-trailing {
+    & .filter-header-trailing {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
         flex-shrink: 0;
     }
 
-    :deep(.close-icon) {
+    & :deep(.close-icon) {
         font-size: var(--ks-font-size-base);
         padding-right: 0;
         cursor: pointer;

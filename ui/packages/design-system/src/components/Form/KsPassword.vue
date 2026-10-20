@@ -67,7 +67,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     @font-face {
         font-family: 'DiscFont';
         src: url('../../assets/fonts/obscure-disc.woff2') format('woff2');
@@ -76,7 +76,7 @@
     .ks-password {
         position: relative;
 
-        .hide {
+        & .hide {
             top: 5px;
             right: 5px;
             position: absolute;

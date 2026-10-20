@@ -234,7 +234,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .adv-overlay {
     position: fixed;
     inset: 0;
@@ -266,7 +266,7 @@
     background-color: var(--ks-bg-elevated);
     z-index: 1;
 
-    .adv-title {
+    & .adv-title {
         font-size: var(--ks-font-size-sm);
         font-weight: 600;
         color: var(--ks-text-primary);
@@ -282,7 +282,7 @@
 .adv-fade-leave-active {
     transition: opacity 120ms ease;
 
-    .adv-builder {
+    & .adv-builder {
         transition: transform 120ms ease, opacity 120ms ease;
     }
 }
@@ -291,7 +291,7 @@
 .adv-fade-leave-to {
     opacity: 0;
 
-    .adv-builder {
+    & .adv-builder {
         transform: translateY(-4px);
         opacity: 0;
     }

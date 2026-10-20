@@ -43,7 +43,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/time-picker';
+</style>
 
+<style>
     .ks-picker-host {
         display: contents;
     }

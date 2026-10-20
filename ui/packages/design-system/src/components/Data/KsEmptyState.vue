@@ -48,7 +48,7 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .ks-empty-state {
     width: 100%;
     height: 100%;
@@ -70,7 +70,7 @@
 }
 
 .ks-empty-state__artwork {
-    img {
+    & img {
         width: 120px;
         height: 120px;
         display: block;
@@ -104,7 +104,7 @@
     gap: 0.5rem;
     justify-content: flex-start;
 
-    :deep(.kel-button + .kel-button) {
+    & :deep(.kel-button + .kel-button) {
         margin-left: 0;
     }
 }

@@ -12,7 +12,7 @@
     }>()
 </script>
 
-<style lang="scss">
+<style>
     .ks-listing-page {
         padding-top: 2rem;
         padding-inline: 0;
@@ -23,13 +23,13 @@
             display: flex;
             flex-direction: column;
 
-            > .kel-table,
-            > .ks-data-table-wrapper {
+            & > .kel-table,
+            & > .ks-data-table-wrapper {
                 flex: 1;
                 min-height: 0;
             }
 
-            .kel-scrollbar__view {
+            & .kel-scrollbar__view {
                 height: 100%;
             }
         }

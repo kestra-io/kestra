@@ -323,14 +323,14 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .multi-select-panel {
     height: fit-content;
     max-height: 360px;
     display: flex;
     flex-direction: column;
 
-    .panel-header {
+    & .panel-header {
         border-bottom: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;
@@ -338,19 +338,19 @@
         z-index: 1;
         background-color: var(--ks-bg-surface);
 
-        .search-section {
+        & .search-section {
             padding: 1rem;
             padding-bottom: 0.5rem;
         }
 
-        .controls-section {
+        & .controls-section {
             display: flex;
             align-items: center;
             gap: 0;
             padding: var(--ks-spacing-2) var(--ks-spacing-4);
             margin-bottom: var(--ks-spacing-1);
 
-            .select-all-btn {
+            & .select-all-btn {
                 background: none;
                 border: none;
                 padding: 0;
@@ -360,21 +360,21 @@
                 flex: 1;
                 font-family: inherit;
 
-                .select-all-box {
+                & .select-all-box {
                     pointer-events: none;
                 }
 
-                :deep(.kel-checkbox__label) {
+                & :deep(.kel-checkbox__label) {
                     font-size: var(--ks-font-size-xs);
                     color: var(--ks-text-secondary);
                 }
 
-                :deep(.kel-checkbox.is-checked .kel-checkbox__label) {
+                & :deep(.kel-checkbox.is-checked .kel-checkbox__label) {
                     color: var(--ks-text-primary);
                 }
             }
 
-            .clear-btn {
+            & .clear-btn {
                 background: none;
                 border: none;
                 padding: 0;
@@ -391,7 +391,7 @@
         }
     }
 
-    .options-list {
+    & .options-list {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
@@ -401,7 +401,7 @@
             scrollbar-color: var(--ks-border-subtle) transparent;
         }
 
-        .option-item {
+        & .option-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -419,13 +419,13 @@
                 background-color: var(--ks-bg-hover-elevated);
             }
 
-            .option-content {
+            & .option-content {
                 display: flex;
                 align-items: center;
                 flex: 1;
                 min-width: 0;
 
-                .option-label {
+                & .option-label {
                     font-size: var(--ks-font-size-sm);
                     font-weight: 400;
                     word-break: break-word;
@@ -433,25 +433,25 @@
             }
         }
 
-        .no-options {
+        & .no-options {
             text-align: center;
             color: var(--ks-text-dim);
             font-size: var(--ks-font-size-sm);
 
-            :deep(.kel-alert__icon) {
+            & :deep(.kel-alert__icon) {
                 color: var(--ks-text-info);
                 font-size: var(--ks-font-size-xl);
             }
         }
 
-        .state-group {
+        & .state-group {
             border-bottom: 1px solid var(--ks-border-subtle);
 
             &:last-child {
                 border-bottom: none;
             }
 
-            .group-row {
+            & .group-row {
                 display: flex;
                 align-items: center;
                 padding: var(--ks-spacing-1) var(--ks-spacing-2) var(--ks-spacing-1) var(--ks-spacing-3);
@@ -461,7 +461,7 @@
                 }
             }
 
-            .group-toggle {
+            & .group-toggle {
                 background: none;
                 border: none;
                 padding: var(--ks-spacing-1);
@@ -470,12 +470,12 @@
                 align-items: center;
                 flex-shrink: 0;
 
-                .group-toggle-box {
+                & .group-toggle-box {
                     pointer-events: none;
                 }
             }
 
-            .group-label-btn {
+            & .group-label-btn {
                 display: flex;
                 align-items: center;
                 gap: var(--ks-spacing-2);
@@ -495,14 +495,14 @@
                 }
             }
 
-            .group-swatch {
+            & .group-swatch {
                 width: 9px;
                 height: 9px;
                 border-radius: 3px;
                 flex-shrink: 0;
             }
 
-            .group-label-text {
+            & .group-label-text {
                 font-size: var(--ks-font-size-sm);
                 font-weight: 600;
                 color: var(--ks-text-primary);
@@ -510,7 +510,7 @@
                 min-width: 0;
             }
 
-            .group-count {
+            & .group-count {
                 font-size: var(--ks-font-size-xs);
                 font-weight: 600;
                 padding: 1px var(--ks-spacing-2);
@@ -526,7 +526,7 @@
                 }
             }
 
-            .group-expand-btn {
+            & .group-expand-btn {
                 width: 28px;
                 height: 28px;
                 flex-shrink: 0;
@@ -549,7 +549,7 @@
                     outline-offset: 1px;
                 }
 
-                .expand-icon {
+                & .expand-icon {
                     transition: transform 0.15s ease;
                 }
             }
@@ -562,10 +562,10 @@
                 transform: rotate(-90deg);
             }
 
-            .group-options {
+            & .group-options {
                 padding-bottom: var(--ks-spacing-1);
 
-                .option-item {
+                & .option-item {
                     padding-left: var(--ks-spacing-6);
                     border-bottom: 1px solid var(--ks-border-subtle);
 
@@ -577,7 +577,7 @@
         }
     }
 
-    :deep(.kel-input__inner) {
+    & :deep(.kel-input__inner) {
         font-size: var(--ks-font-size-sm);
     }
 }

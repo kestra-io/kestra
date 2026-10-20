@@ -50,7 +50,9 @@
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/date-picker';
     @use 'element-plus/theme-chalk/src/date-picker-panel';
+</style>
 
+<style>
     .ks-picker-host {
         display: contents;
     }
@@ -61,7 +63,7 @@
         --kel-input-bg-color: var(--ks-bg-base);
         --kel-input-hover-border-color: var(--ks-border-strong);
 
-        .kel-input__icon {
+        & .kel-input__icon {
             margin-right: .25rem;
         }
     }
@@ -80,7 +82,7 @@
         --kel-datepicker-border-color: var(--ks-border-default);
         --kel-datepicker-inner-border-color: var(--ks-border-default);
 
-        .kel-date-table th {
+        & .kel-date-table th {
             border-bottom-color: var(--ks-border-default);
         }
     }

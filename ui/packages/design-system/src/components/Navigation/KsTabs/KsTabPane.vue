@@ -35,3 +35,6 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tab-pane';
 </style>
+
+<style>
+</style>

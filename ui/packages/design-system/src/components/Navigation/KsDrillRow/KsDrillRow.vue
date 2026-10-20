@@ -48,7 +48,7 @@
     }>()
 </script>
 
-<style lang="scss">
+<style>
     .kel-drill-row {
         display: flex;
         align-items: center;

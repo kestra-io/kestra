@@ -55,29 +55,32 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/autocomplete';
+</style>
 
+<style>
     .kel-autocomplete {
-        .kel-input {
+        & .kel-input {
             height: 100%;
             --kel-input-bg-color: var(--ks-bg-base);
         }
 
-        .kel-input__suffix-inner {
+        & .kel-input__suffix-inner {
             gap: .5rem;
 
-            > span:not(.material-design-icon) {
+            & > span:not(.material-design-icon) {
                 font-size: var(--ks-font-size-xs);
                 line-height: 1.25rem;
             }
         }
     }
+
     .kel-autocomplete-suggestion {
-        .kel-autocomplete-suggestion__wrap {
+        & .kel-autocomplete-suggestion__wrap {
             max-height: 40vh;
             padding: 10px 12px 10px 10px;
         }
 
-        li {
+        & li {
             --kel-fill-color-light: var(--ks-bg-hover-elevated);
             padding: 0 1rem;
             border-radius: 5px;
@@ -86,7 +89,7 @@
                 margin-bottom: 3px;
             }
 
-            a {
+            & a {
                 color: var(--ks-text-primary);
                 justify-content: space-between;
             }

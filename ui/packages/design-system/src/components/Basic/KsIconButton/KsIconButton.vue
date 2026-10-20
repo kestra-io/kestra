@@ -80,10 +80,9 @@
     const nativeType = computed(() => (props.to ? undefined : "button" as const))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-icon-button {
         --ks-icon-button-glyph: var(--ks-icon-size-sm);
-
         color: var(--ks-text-primary);
         width: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
         height: calc(var(--ks-icon-button-glyph) + var(--ks-spacing-2));
@@ -96,8 +95,8 @@
         padding: 0;
         cursor: pointer;
 
-        :deep(.material-design-icon),
-        :deep(.material-design-icon > .material-design-icon__svg) {
+        & :deep(.material-design-icon),
+        & :deep(.material-design-icon > .material-design-icon__svg) {
             width: var(--ks-icon-button-glyph);
             height: var(--ks-icon-button-glyph);
         }

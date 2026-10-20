@@ -57,13 +57,14 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     code.ks-id {
         white-space: nowrap;
     }
 
     code.ks-id--clickable {
         cursor: pointer;
+
         &:hover {
             text-decoration: underline;
         }

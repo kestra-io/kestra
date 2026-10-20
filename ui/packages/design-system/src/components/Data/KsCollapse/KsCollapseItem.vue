@@ -42,3 +42,6 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/collapse-item';
 </style>
+
+<style>
+</style>

@@ -94,7 +94,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filters-panel {
     height: fit-content;
     max-height: 500px;
@@ -102,13 +102,13 @@
     flex-direction: column;
     border-radius: var(--ks-radius-lg);
 
-    small {
+    & small {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-dim);
         font-weight: 400;
     }
 
-    .header {
+    & .header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
@@ -120,15 +120,15 @@
         top: 0;
         z-index: 1;
 
-        .title {
-            h6 {
+        & .title {
+            & h6 {
                 margin: 0;
                 font-size: var(--ks-font-size-sm);
                 font-weight: 700;
             }
         }
 
-        :deep(.close-icon) {
+        & :deep(.close-icon) {
             color: var(--ks-text-dim);
             font-size: var(--ks-font-size-base);
             cursor: pointer;
@@ -140,7 +140,7 @@
         }
     }
 
-    .list {
+    & .list {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
@@ -151,7 +151,7 @@
         }
     }
 
-    .item {
+    & .item {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -168,12 +168,12 @@
             border-bottom: none;
         }
 
-        .info {
+        & .info {
             display: flex;
             align-items: start;
             flex-direction: column;
 
-            .label {
+            & .label {
                 font-size: var(--ks-font-size-sm);
                 font-weight: 400;
                 line-height: 1.375rem;
@@ -181,7 +181,7 @@
         }
     }
 
-    .advanced {
+    & .advanced {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -195,14 +195,14 @@
             background-color: var(--ks-bg-hover-elevated);
         }
 
-        .label {
+        & .label {
             font-size: var(--ks-font-size-sm);
             font-weight: 600;
             color: var(--ks-text-link);
         }
     }
 
-    .footer {
+    & .footer {
         border-top: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;

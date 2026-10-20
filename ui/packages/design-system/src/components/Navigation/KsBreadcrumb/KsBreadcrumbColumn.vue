@@ -80,7 +80,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .column {
         position: relative;
         font-size: var(--ks-font-size-sm);

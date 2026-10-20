@@ -48,7 +48,7 @@
     watch(valid, (value) => emit("update:valid", value), {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-password-requirements {
         list-style: none;
         margin: 0;

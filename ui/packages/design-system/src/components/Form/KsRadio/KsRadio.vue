@@ -38,14 +38,16 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/radio';
+</style>
 
+<style>
     .kel-radio {
-        .kel-radio__inner::after {
+        & .kel-radio__inner::after {
             width: 6px;
             height: 6px;
         }
 
-        .kel-radio__input.is-checked + .kel-radio__label {
+        & .kel-radio__input.is-checked + .kel-radio__label {
             color: var(--kel-radio-text-color);
         }
     }

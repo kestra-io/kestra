@@ -75,6 +75,8 @@ public class TracesTest {
         assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("minimal");
         assertThat(attributes.get(TraceUtils.ATTR_EXECUTION_ID)).isEqualTo(result.getId());
         assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.jdbc.runner.JdbcExecutor");
+        // assert that one trace has a taskId
+        assertThat(spans.stream().anyMatch(span -> span.getAttributes().get(TraceUtils.ATTR_TASK_ID) != null)).isTrue();
     }
 
     @MockBean

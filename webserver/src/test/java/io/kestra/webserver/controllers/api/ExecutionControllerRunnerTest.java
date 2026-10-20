@@ -3429,6 +3429,27 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
     }
 
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml", "flows/valids/pause-test.yaml" }, tenantId = "shouldbulkresumepausedandbreakpoint")
+    void shouldResumePausedAndBreakpointExecutionsWhenBulkResumedTogether() throws QueueException {
+        String tenantId = "shouldbulkresumepausedandbreakpoint";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution paused = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        Execution triggered = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
+        Execution suspended = awaitExecution(tenantId, triggered.getId(), exec -> exec.getState().isBreakpoint());
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/" + tenantId + "/executions/resume/by-ids", List.of(paused.getId(), suspended.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
+        awaitExecution(tenantId, paused.getId(), exec -> !exec.getState().isPaused());
+        Execution resumed = awaitExecution(tenantId, suspended.getId(), exec -> exec.getState().isTerminated());
+        assertThat(resumed.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     @FlakyTest(description = "SSE event stream race: Thread.sleep workaround can miss 'end' events under CI load")
     @Test
     @LoadFlows(

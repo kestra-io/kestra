@@ -270,13 +270,32 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 () -> flowRepository.update(createTestingLogFlow(tenant, flowId, "v2"), previous)
             ));
 
-            boolean deleted = outcome(writes.getFirst(), IllegalStateException.class, ConflictException.class).isPresent();
+            boolean deleted = outcome(writes.getFirst(), ConflictException.class).isPresent();
             outcome(writes.getLast(), ConflictException.class);
             if (deleted) {
                 assertThat(flowRepository.findById(tenant, TEST_NAMESPACE, flowId)).isEmpty();
             }
         } finally {
             deleteFlow(previous);
+        }
+    }
+
+    @Test
+    void shouldRejectADeleteAsConflictWhenTheFlowChangedSinceItWasRead() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String flowId = "stale-delete";
+        FlowWithSource read = flowRepository.create(createTestingLogFlow(tenant, flowId, "v1"));
+        FlowWithSource updated = flowRepository.update(createTestingLogFlow(tenant, flowId, "v2"), read);
+
+        try {
+            assertThatThrownBy(() -> flowRepository.delete(read)).isInstanceOf(ConflictException.class);
+            assertThatThrownBy(() -> flowRepository.deleteWithoutAcl(read)).isInstanceOf(ConflictException.class);
+
+            flowRepository.delete(updated);
+            assertThatThrownBy(() -> flowRepository.delete(updated)).isInstanceOf(ConflictException.class);
+            assertThatThrownBy(() -> flowRepository.deleteWithoutAcl(updated)).isInstanceOf(ConflictException.class);
+        } finally {
+            deleteFlow(updated);
         }
     }
 

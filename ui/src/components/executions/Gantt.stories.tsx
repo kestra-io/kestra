@@ -1,5 +1,5 @@
 import { vueRouter } from "storybook-vue3-router";
-import type { Meta, StoryObj } from "@storybook/vue3";
+import type { Meta, StoryObj } from "@storybook/vue3-vite";
 import { within, expect, waitFor } from "storybook/test";
 import { configureClient, type FlowForExecution, type StateType } from "@kestra-io/kestra-sdk";
 import { useExecutionsStore, type Execution } from "../../stores/executions";

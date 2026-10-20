@@ -26,7 +26,7 @@ export const maskVueStyles = (text) => {
     const {descriptor} = parse(text, {sourceMap: false, ignoreEmpty: false})
     const kept = []
     for (const style of descriptor.styles) {
-        if (!style.lang && !style.src) kept.push({start: style.loc.start.offset, end: style.loc.end.offset})
+        if ((!style.lang || style.lang === "css") && !style.src) kept.push({start: style.loc.start.offset, end: style.loc.end.offset})
     }
     for (const attribute of descriptor.template?.ast ? staticStyleAttributes(descriptor.template.ast) : []) {
         const quote = attribute.value.loc.start.offset

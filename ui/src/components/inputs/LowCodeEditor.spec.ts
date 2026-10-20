@@ -74,11 +74,7 @@ tasks:
 `
 
 
-// The topology asks the server which task types ship a plugin UI (a box, a modal, a drawer). A task nested in
-// a flowable (WorkingDirectory, If, Parallel...) is still a node of its own, so its type must be in that
-// request too. Without it, `DbtCLI` inside a `WorkingDirectory` loses its "Show details" action, or shows it
-// only when the graph happens to load before the flow.
-// Regression: added in #20058, dropped while resolving conflicts in #19865.
+// A task nested in a flowable is still its own node, so its plugin UI must be requested too. This was lost once in a conflict merge.
 describe("LowCodeEditor plugin UI lookup", () => {
     beforeEach(() => {
         setActivePinia(createPinia())

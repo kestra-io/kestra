@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.trace.TraceUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Configuration;
 import org.slf4j.event.Level;
@@ -822,6 +823,8 @@ public class JdbcExecutor implements ExecutorInterface {
                                 executorState
                             );
                         }
+                    } finally {
+                        Span.current().setAttribute(TraceUtils.ATTR_STATE, executor.getExecution().getState().getCurrent().name());
                     }
 
                     return Pair.of(

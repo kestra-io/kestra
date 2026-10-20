@@ -24,6 +24,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import io.opentelemetry.api.trace.Span;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -1036,12 +1037,19 @@ public class DefaultWorker implements Worker {
                 workerJobCallable.runContext,
                 workerJobCallable.getType(),
                 Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
-                () -> workerSecurityService.callInSecurityContext(workerJobCallable)
+                () -> {
+                    State.Type state = workerSecurityService.callInSecurityContext(workerJobCallable);
+                    if (state != null) {
+                        Span.current().setAttribute(TraceUtils.ATTR_STATE, state.name());
+                    }
+                    return state;
+                }
             );
         } catch (Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
             // we add the exception to have some log in that case
             workerJobCallable.exception = e;
+            Span.current().setAttribute(TraceUtils.ATTR_STATE, State.Type.FAILED.name());
             return State.Type.FAILED;
         } finally {
             synchronized (this) {

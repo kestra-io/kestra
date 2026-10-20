@@ -1059,14 +1059,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         FlowWithSource existingFlow = existing
             .orElseThrow(() -> new IllegalStateException("Flow " + flow.getId() + " doesn't exists"));
 
-        Optional<FlowWithSource> last = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId());
-        if (last.isEmpty()) {
-            throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
-        }
-
-        if (!last.get().getRevision().equals(existingFlow.getRevision())) {
-            throw new IllegalStateException("Trying to deleted old revision, wanted " + existingFlow.getRevision() + ", last revision is " + last.get().getRevision());
-        }
+        checkIsLastRevision(existingFlow, this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()));
 
         return deleteFlow(flow, existingFlow);
     }
@@ -1078,14 +1071,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         FlowWithSource existingFlow = existing
             .orElseThrow(() -> new IllegalStateException("Flow " + flow.getId() + " doesn't exists"));
 
-        Optional<FlowWithSource> last = this.findByIdWithSourceWithoutAcl(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty());
-        if (last.isEmpty()) {
-            throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
-        }
-
-        if (!last.get().getRevision().equals(existingFlow.getRevision())) {
-            throw new IllegalStateException("Trying to deleted old revision, wanted " + existingFlow.getRevision() + ", last revision is " + last.get().getRevision());
-        }
+        checkIsLastRevision(existingFlow, this.findByIdWithSourceWithoutAcl(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty()));
 
         return deleteFlow(flow, existingFlow);
     }
@@ -1132,17 +1118,29 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     // Not an upsert: the revision key has to reject a concurrent writer that computed the same revision.
     private boolean insertRevision(FlowInterface flow, Map<Field<Object>, Object> fields) {
+        String key = this.jdbcRepository.key(flow);
         try {
             this.jdbcRepository.getDslContextWrapper().transaction(configuration -> DSL.using(configuration)
                 .insertInto(this.jdbcRepository.getTable())
-                .set(KEY_FIELD, this.jdbcRepository.key(flow))
+                .set(KEY_FIELD, key)
                 .set(fields)
                 .execute()
             );
             return true;
         } catch (IntegrityConstraintViolationException e) {
+            // MySQL reports a duplicate key and a NOT NULL violation with the same SQL state, so check the key itself.
+            if (!this.keyExists(key)) {
+                throw e;
+            }
+            log.debug("Revision {} of flow '{}' in namespace '{}' already exists: {}", flow.getRevision(), flow.getId(), flow.getNamespace(), e.getMessage());
             return false;
         }
+    }
+
+    private boolean keyExists(String key) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration).fetchExists(this.jdbcRepository.getTable(), KEY_FIELD.eq(key))
+        );
     }
 
     private static ConflictException concurrentWrite(FlowInterface flow) {
@@ -1150,6 +1148,18 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             "Revision %d of flow '%s' in namespace '%s' was saved by another request at the same time. Reload the flow and try again."
                 .formatted(flow.getRevision(), flow.getId(), flow.getNamespace())
         );
+    }
+
+    private static void checkIsLastRevision(FlowWithSource existing, Optional<FlowWithSource> last) {
+        if (last.isEmpty() || last.get().isDeleted()) {
+            throw new ConflictException("Flow '%s' in namespace '%s' was deleted by another request.".formatted(existing.getId(), existing.getNamespace()));
+        }
+        if (!last.get().getRevision().equals(existing.getRevision())) {
+            throw new ConflictException(
+                "Flow '%s' in namespace '%s' was updated to revision %d by another request. Reload the flow and try again."
+                    .formatted(existing.getId(), existing.getNamespace(), last.get().getRevision())
+            );
+        }
     }
 
     @Override

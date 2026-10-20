@@ -2148,7 +2148,7 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Resume a list of paused or breakpoint-suspended executions asynchronously")
+    @Operation(tags = { "Executions" }, summary = "Resume a list of paused or breakpoint-suspended executions asynchronously", description = "Executions in the BREAKPOINT state are resumed from their breakpoints; executions in the PAUSED state are resumed normally. Any remaining breakpoints are cleared, so a bulk-resumed BREAKPOINT execution runs to the end")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByIds(
@@ -2159,7 +2159,7 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-query")
-    @Operation(tags = { "Executions" }, summary = "Resume executions filtered by query parameters asynchronously; executions in the BREAKPOINT state are resumed from their breakpoints")
+    @Operation(tags = { "Executions" }, summary = "Resume paused or breakpoint-suspended executions filtered by query parameters asynchronously", description = "Executions in the BREAKPOINT state are resumed from their breakpoints; executions in the PAUSED state are resumed normally. Any remaining breakpoints are cleared, so a bulk-resumed BREAKPOINT execution runs to the end")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
@@ -2177,13 +2177,15 @@ public class ExecutionController {
         List<ProblemError> invalids = new ArrayList<>();
 
         for (Execution execution : executions) {
-            boolean resumable = execution.getState().isPaused()
-                || (execution.getState().isBreakpoint() && !ListUtils.isEmpty(execution.getBreakpoints()));
-            if (!resumable) {
+            if (!execution.getState().isPaused() && !ExecutionService.isResumableFromBreakpoint(execution)) {
                 invalids.add(
-                    executionProblem(execution.getId(), "execution not in state PAUSED or BREAKPOINT", ProblemTypes.CONFLICT)
+                    execution.getState().isBreakpoint()
+                        ? executionProblem(execution.getId(), "execution has no breakpoint defined", ProblemTypes.CONFLICT)
+                        : executionProblem(execution.getId(), "execution not in state PAUSED or BREAKPOINT", ProblemTypes.CONFLICT)
                 );
-            } else if (!validateExecutionACL(execution)) {
+                continue;
+            }
+            if (!validateExecutionACL(execution)) {
                 invalids.add(
                     executionProblem(execution.getId(), "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
                 );

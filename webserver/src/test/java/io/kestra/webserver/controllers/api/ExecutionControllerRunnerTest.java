@@ -560,6 +560,40 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/flow-with-outputs.yml" }, tenantId = "flowwithoutputswaittrue")
+    void shouldReturnOutputsWhenWaitIsTrue() {
+        String tenantId = "flowwithoutputswaittrue";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/flow-with-outputs?wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(result.getOutputs()).isNotNull();
+        assertThat(result.getOutputs().get("key")).isEqualTo("{\"value\":\"flow-with-outputs\"}");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-with-outputs.yml" }, tenantId = "flowwithoutputswaitfalse")
+    void shouldNotReturnOutputsWhenWaitIsFalse() {
+        String tenantId = "flowwithoutputswaitfalse";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/flow-with-outputs?wait=false".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getOutputs()).isNull();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputsmall")
     void triggerExecutionInputSmall() {
         String tenantId = "triggerexecutioninputsmall";
@@ -650,11 +684,11 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "getexecution")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "getexecution")
     void getExecution() {
         String tenantId = "getexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
-        Execution result = triggerExecutionInputsFlowExecution(tenantId, false);
+        Execution result = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false);
         awaitExecution(result.getId());
 
         // Get the triggered execution by execution id
@@ -2417,7 +2451,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "searchexecutions")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "searchexecutions")
     void searchExecutions() {
         String tenantId = "searchexecutions";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2427,7 +2461,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(executions.getTotal()).isEqualTo(0L);
 
-        Execution execution = triggerExecutionInputsFlowExecution(tenantId, false);
+        Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false);
         awaitExecution(execution.getId(), exec -> exec.getState().getCurrent().isSuccess());
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
@@ -3823,11 +3857,11 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/logs.yaml" })
+    @LoadFlows({ "flows/valids/minimal.yaml" })
     void shouldReturnBadRequestWhenKillByIdsCalledOnInvalidExecutions() {
         Execution execution = client.toBlocking().retrieve(
             POST(
-                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs",
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal",
                 null
             ),
             Execution.class

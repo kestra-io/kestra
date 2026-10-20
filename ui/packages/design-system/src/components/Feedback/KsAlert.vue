@@ -52,7 +52,9 @@
     @use '../../assets/styles/el-ns' as *;
     @use 'element-plus/theme-chalk/src/alert' as *;
     @use "element-plus/theme-chalk/src/common/var" as *;
+</style>
 
+<style>
     .kel-alert {
         --kel-alert-icon-size: 1.5rem;
         --kel-alert-icon-large-size: 1.5rem;
@@ -73,20 +75,20 @@
             --ks-alert-first-line-font-size: var(--kel-alert-description-font-size);
         }
 
-         .kel-alert__title {
+        & .kel-alert__title {
             line-height: var(--ks-line-height-base);
         }
 
-        .kel-alert__description {
+        & .kel-alert__description {
             line-height: var(--ks-line-height-base);
         }
 
-        .kel-alert__icon {
+        & .kel-alert__icon {
             height: var(--kel-alert-icon-size);
             align-self: flex-start;
 
-            .material-design-icon,
-            .material-design-icon > .material-design-icon__svg {
+            & .material-design-icon,
+            & .material-design-icon > .material-design-icon__svg {
                 height: var(--kel-alert-icon-size);
                 width: var(--kel-alert-icon-size);
             }
@@ -96,31 +98,77 @@
             padding-block: max(0px, calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2));
         }
 
-        .kel-alert__close-btn {
+        & .kel-alert__close-btn {
             top: 50%;
             transform: translateY(-50%);
             color: var(--ks-icon-muted);
         }
 
-        .kel-alert__title.with-description {
+        & .kel-alert__title.with-description {
             font-weight: bold;
         }
 
-        @each $type in (success, info, warning, error) {
-            &.kel-alert--#{$type}.is-light {
-                border: 1px solid var(--ks-border-#{$type});
-                background-color: var(--ks-bg-#{$type});
-                #{--kel-color-#{$type}}: var(--ks-text-#{$type});
+        &.kel-alert--success.is-light {
+            border: 1px solid var(--ks-border-success);
+            background-color: var(--ks-bg-success);
+            --kel-color-success: var(--ks-text-success);
 
-                &.is-banner {
-                    border-width: 0 0 1px;
-                    border-radius: 0;
-                    #{--kel-color-#{$type}}: var(--ks-text-primary);
-                }
+            &.is-banner {
+                border-width: 0 0 1px;
+                border-radius: 0;
+                --kel-color-success: var(--ks-text-primary);
+            }
 
-                .kel-alert__icon {
-                    color: var(--ks-icon-#{$type});
-                }
+            & .kel-alert__icon {
+                color: var(--ks-icon-success);
+            }
+        }
+
+        &.kel-alert--info.is-light {
+            border: 1px solid var(--ks-border-info);
+            background-color: var(--ks-bg-info);
+            --kel-color-info: var(--ks-text-info);
+
+            &.is-banner {
+                border-width: 0 0 1px;
+                border-radius: 0;
+                --kel-color-info: var(--ks-text-primary);
+            }
+
+            & .kel-alert__icon {
+                color: var(--ks-icon-info);
+            }
+        }
+
+        &.kel-alert--warning.is-light {
+            border: 1px solid var(--ks-border-warning);
+            background-color: var(--ks-bg-warning);
+            --kel-color-warning: var(--ks-text-warning);
+
+            &.is-banner {
+                border-width: 0 0 1px;
+                border-radius: 0;
+                --kel-color-warning: var(--ks-text-primary);
+            }
+
+            & .kel-alert__icon {
+                color: var(--ks-icon-warning);
+            }
+        }
+
+        &.kel-alert--error.is-light {
+            border: 1px solid var(--ks-border-error);
+            background-color: var(--ks-bg-error);
+            --kel-color-error: var(--ks-text-error);
+
+            &.is-banner {
+                border-width: 0 0 1px;
+                border-radius: 0;
+                --kel-color-error: var(--ks-text-primary);
+            }
+
+            & .kel-alert__icon {
+                color: var(--ks-icon-error);
             }
         }
     }

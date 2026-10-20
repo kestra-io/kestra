@@ -46,35 +46,37 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/form';
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+</style>
 
+<style>
     .kel-form {
         &.kel-form--small {
             &.kel-form--label-top .kel-form-item__label {
                 margin-bottom: 0;
             }
         }
-
     }
+
     form.ks-horizontal {
-        .kel-form-item {
-            @include res(xs) {
+        & .kel-form-item {
+            @media only screen and (max-width: 767px) {
                 display: block;
             }
 
-            @include res(sm) {
+            @media only screen and (min-width: 768px) {
                 --label-size: 16.6666666667%;
+
                 &.small {
                     --label-size: calc(16.6666666667% / 2);
                 }
 
-                .kel-form-item__label {
+                & .kel-form-item__label {
                     max-width: var(--label-size);
                     flex: 0 0 var(--label-size);
                     text-align: right;
                 }
 
-                .kel-form-item__content {
+                & .kel-form-item__content {
                     align-items: flex-start;
                     max-width: calc(100% - var(--label-size));
                     flex: 0 0 calc(100% - var(--label-size));
@@ -82,10 +84,10 @@
             }
         }
 
-        .submit {
+        & .submit {
             text-align: right;
 
-            .kel-form-item__content {
+            & .kel-form-item__content {
                 justify-content: end;
                 max-width: unset;
                 flex: 1;

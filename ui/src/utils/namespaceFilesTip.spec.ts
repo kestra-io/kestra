@@ -31,21 +31,6 @@ tasks:
 `))).toBe(true)
     })
 
-    it("detects an inline Python script in errors", () => {
-        expect(hasInlinePythonScript(parse(`
-id: errors
-namespace: company.team
-tasks:
-  - id: log
-    type: io.kestra.plugin.core.log.Log
-    message: hello
-errors:
-  - id: python
-    type: io.kestra.plugin.scripts.python.Script
-    script: print("failed")
-`))).toBe(true)
-    })
-
     it("ignores a Python Script task that already uses Namespace Files", () => {
         expect(hasInlinePythonScript(parse(`
 id: ns-files

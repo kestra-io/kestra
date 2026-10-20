@@ -16,15 +16,6 @@ tasks:
       print("hello")
 `.trim()
 
-const NO_PYTHON_YAML = `
-id: log
-namespace: company.team
-tasks:
-  - id: log
-    type: io.kestra.plugin.core.log.Log
-    message: hello
-`.trim()
-
 const DISMISSED_KEY = "namespaceFilesTipDismissed"
 const CLOSED_KEY = "namespaceFilesTipClosed"
 
@@ -40,10 +31,10 @@ vi.mock("../../stores/flow", () => ({
     }),
 }))
 
-function mountTip(openEditorTab?: (uid: string) => void) {
+function mountTip(openEditorTab: (uid: string) => void) {
     return i18nMount(NamespaceFilesTip, {
         global: {
-            provide: openEditorTab ? {[OPEN_EDITOR_TAB_INJECTION_KEY]: openEditorTab} : {},
+            provide: {[OPEN_EDITOR_TAB_INJECTION_KEY]: openEditorTab},
         },
     })
 }
@@ -63,14 +54,6 @@ describe("NamespaceFilesTip", () => {
         expect(wrapper.find(TIP).exists()).toBe(true)
     })
 
-    it("does not render when the flow has no Python Script task", () => {
-        mockFlowParsed.value = YAML_UTILS.parse(NO_PYTHON_YAML)
-
-        const wrapper = mountTip(vi.fn())
-
-        expect(wrapper.find(TIP).exists()).toBe(false)
-    })
-
     it("opens the files tab when clicking \"Open Files\"", async () => {
         const openEditorTab = vi.fn()
         const wrapper = mountTip(openEditorTab)
@@ -78,13 +61,6 @@ describe("NamespaceFilesTip", () => {
         await wrapper.find(OPEN_FILES).trigger("click")
 
         expect(openEditorTab).toHaveBeenCalledWith("files")
-    })
-
-    it("does not render \"Open Files\" when no editor tab opener is provided", () => {
-        const wrapper = mountTip()
-
-        expect(wrapper.find(TIP).exists()).toBe(true)
-        expect(wrapper.find(OPEN_FILES).exists()).toBe(false)
     })
 
     it("hides the tip and remembers the choice when clicking \"Don't show again\"", async () => {

@@ -82,7 +82,6 @@
         border-radius: var(--ks-radius-base);
         background: var(--ks-bg-base);
         overflow-x: auto;
-        /* Without it the longest YAML line sets the alert's minimum width and a narrow editor panel scrolls sideways. */
         contain: inline-size;
     }
 

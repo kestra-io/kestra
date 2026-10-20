@@ -97,11 +97,13 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
             violations.add("Fields can only appear once in `data.columns`.");
         }
 
-        if (
-            dataChart.getData().getColumns().entrySet().stream().anyMatch(entry -> entry.getValue().getField() != null && entry.getValue().getField().equals(Executions.Fields.LABELS))
-                && !("elasticsearch".equals(repositoryConfiguration.type()))
-        ) {
-            violations.add("LABELS column is only supported with an ElasticSearch database.");
+        if (!"elasticsearch".equals(repositoryConfiguration.type())) {
+            dataChart.getData().getColumns().entrySet().stream()
+                .filter(entry -> Executions.Fields.LABELS.equals(entry.getValue().getField()))
+                .forEach(entry -> violations.add(
+                    "Column '%s' of chart '%s' uses the LABELS field, which requires an Elasticsearch repository (this instance uses '%s'). Filter on a label in `data.where` or use another field instead."
+                        .formatted(entry.getKey(), dataChart.getId(), repositoryConfiguration.type())
+                ));
         }
 
         violations.addAll(DurationFilters.violations(dataChart.getData().getWhere(), dataChart.getData().durationFields()));

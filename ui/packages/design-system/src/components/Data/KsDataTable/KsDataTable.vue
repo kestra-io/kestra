@@ -644,7 +644,7 @@
 </style>
 
 <style scoped lang="scss">
-    .pagination {
+    .ks-data-table-wrapper :deep(.pagination) {
         margin-block: var(--ks-spacing-4);
     }
 </style>

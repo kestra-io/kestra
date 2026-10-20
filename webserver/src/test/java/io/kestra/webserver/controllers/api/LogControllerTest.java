@@ -369,6 +369,26 @@ class LogControllerTest {
     }
 
     @Test
+    void shouldRejectDeleteLogsByQueryWithoutUsableFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        logRepository.save(logEntry(tenant, Level.INFO));
+
+        HttpClientResponseException noFilter = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query"))
+        );
+        HttpClientResponseException misspelledFilter = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[levl][IN]=ERROR"))
+        );
+
+        assertThat(noFilter.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(misspelledFilter.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(logRepository.findAllAsync(tenant).count().block()).isEqualTo(1L);
+    }
+
+    @Test
     void searchLogsFilteredByDate() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         when(tenantService.resolveTenant()).thenReturn(tenant);

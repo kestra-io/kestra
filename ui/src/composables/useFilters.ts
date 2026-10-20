@@ -1,9 +1,18 @@
-import {Comparators} from "@kestra-io/design-system"
-import {getComparator} from "@kestra-io/design-system"
+import {Comparators, getComparator} from "@kestra-io/design-system"
 
 type LegacyFilter = { field: string, operation: (keyof typeof Comparators) | "IN" | "NOT_IN", value: string };
-const getItem: (key: string) => { name: string, value: string | LegacyFilter[] }[] = (key) => {
-    return JSON.parse(localStorage.getItem(key) || "[]")
+type SavedFilterItem = { name: string, value: string | LegacyFilter[] };
+
+const getItem = (key: string): SavedFilterItem[] => {
+    const raw = localStorage.getItem(key)
+    if (!raw) return []
+
+    try {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed) ? parsed : []
+    } catch {
+        return []
+    }
 }
 
 const setItem = (key: string, value: object) => {
@@ -29,15 +38,15 @@ export function useFilters(prefix: string) {
         getSavedItems: () => {
             let hasLegacyFilter = false
             const savedItems = getItem(keys.saved).map(({name, value}) => {
-                let stringValue
+                let stringValue = ""
                 if (typeof value === "string") {
                     stringValue = value
-                } else {
+                } else if (Array.isArray(value)) {
                     hasLegacyFilter = true
 
                     const comparator = (operation: LegacyFilter["operation"]) => getComparator(operation)
-                    stringValue = (value as LegacyFilter[]).map(f =>
-                        `${f.field}${comparator(f.operation)}${f.value.includes(" ") ? `"${f.value}"` : f.value}`,
+                    stringValue = value.map(f =>
+                        `${f.field}${comparator(f.operation)}${f.value?.includes(" ") ? `"${f.value}"` : f.value}`,
                     ).join(" ")
                 }
 

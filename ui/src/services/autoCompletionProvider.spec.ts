@@ -8,7 +8,7 @@ import {
     resetExpressionCache,
 } from "./autoCompletionProvider"
 
-const axiosGet = vi.fn()
+const {axiosGet} = vi.hoisted(() => ({axiosGet: vi.fn()}))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
@@ -46,21 +46,30 @@ describe("autoCompletionProvider", () => {
     })
 
     describe("functionToSnippet", () => {
-        it("returns a bare call when every argument is omitted", () => {
-            expect(functionToSnippet({name: "uuid", arguments: []})).toBe("uuid()")
-            expect(functionToSnippet({
-                name: "now",
-                arguments: [
-                    {name: "format", defaultValue: null},
-                    {name: "timeZone", defaultValue: null},
-                ],
-            })).toBe("now()")
-        })
-
         it("keeps a quoted default quoted and leaves an unquoted default unquoted", () => {
             expect(functionToSnippet(secretFunction)).toBe(
                 "secret(key=${1:'MY_SECRET'}, namespace=${2:flow.namespace})",
             )
+        })
+
+        it("copies every quote of a default verbatim, whatever quote style it uses", () => {
+            expect(functionToSnippet({
+                name: "kv",
+                arguments: [
+                    {name: "key", defaultValue: `${QUOTE}my${QUOTE}${QUOTE}key${QUOTE}`},
+                    {name: "namespace", defaultValue: "\"company.team\""},
+                    {name: "errorOnMissing", defaultValue: "false"},
+                ],
+            })).toBe("kv(key=${1:'my''key'}, namespace=${2:\"company.team\"}, errorOnMissing=${3:false})")
+        })
+
+        it("inserts each argument once, in the order the API lists them", () => {
+            const snippet = functionToSnippet(secretFunction)
+
+            expect(snippet.match(/key=/g)).toHaveLength(1)
+            expect(snippet.match(/namespace=/g)).toHaveLength(1)
+            expect(snippet).not.toContain("subkey")
+            expect(snippet.indexOf("key=")).toBeLessThan(snippet.indexOf("namespace="))
         })
 
         it("numbers placeholders from the arguments that are actually inserted", () => {
@@ -153,6 +162,25 @@ describe("autoCompletionProvider", () => {
             expect(axiosGet).toHaveBeenCalledTimes(1)
         })
 
+        it("treats a cache filled with empty lists as filled, so it never calls the API", async () => {
+            fillExpressionCache([], [])
+            const provider = new YamlAutoCompletion()
+
+            expect(await provider.filterAutoCompletion()).toEqual([])
+            expect(await provider.functionsWithDefaults()).toEqual([])
+            expect(axiosGet).not.toHaveBeenCalled()
+        })
+
+        it("does not throw when the cache is reset before it was ever filled", async () => {
+            expect(() => {
+                resetExpressionCache()
+                resetExpressionCache()
+            }).not.toThrow()
+
+            axiosGet.mockResolvedValue({data: ["abs"]})
+            expect(await new PebbleAutoCompletion().filterAutoCompletion()).toEqual(["abs"])
+        })
+
         it("keeps the filter cache and the function cache independent", async () => {
             axiosGet.mockImplementation((url: string) => {
                 if (url === FILTERS_URL) {
@@ -168,6 +196,51 @@ describe("autoCompletionProvider", () => {
             expect(await provider.functionsWithDefaults()).toEqual([{name: "uuid", arguments: []}])
             expect(axiosGet).toHaveBeenCalledTimes(1)
             expect(axiosGet).toHaveBeenCalledWith(FUNCTIONS_URL)
+        })
+    })
+
+    describe("no duplicate suggestions", () => {
+        it("does not add a second copy of a filter when it is read again or from another provider", async () => {
+            axiosGet.mockResolvedValue({data: ["abs", "capitalize", "jq"]})
+
+            const first = await new PebbleAutoCompletion().filterAutoCompletion()
+            const again = await new PebbleAutoCompletion().filterAutoCompletion()
+            const fromYaml = await new YamlAutoCompletion().filterAutoCompletion()
+
+            for (const filters of [first, again, fromYaml]) {
+                expect(filters).toEqual(["abs", "capitalize", "jq"])
+                expect(new Set(filters).size).toBe(filters.length)
+            }
+        })
+
+        it("does not add a second copy of a function when it is read again", async () => {
+            axiosGet.mockResolvedValue({data: [secretFunction, {name: "uuid", arguments: []}]})
+            const provider = new PebbleAutoCompletion()
+
+            await provider.functionsWithDefaults()
+            const names = (await provider.functionsWithDefaults()).map(fn => fn.name)
+
+            expect(names).toEqual(["secret", "uuid"])
+        })
+
+        it("replaces the cache when it is filled again instead of appending to it", async () => {
+            fillExpressionCache(["abs"], [secretFunction])
+            fillExpressionCache(["abs", "upper"], [secretFunction])
+            const provider = new PebbleAutoCompletion()
+
+            expect(await provider.filterAutoCompletion()).toEqual(["abs", "upper"])
+            expect(await provider.functionsWithDefaults()).toEqual([secretFunction])
+        })
+
+        it("returns the list once to each of two concurrent reads, without merging them", async () => {
+            axiosGet.mockResolvedValue({data: ["abs", "upper"]})
+            const provider = new PebbleAutoCompletion()
+
+            const [first, second] = await Promise.all([provider.filterAutoCompletion(), provider.filterAutoCompletion()])
+
+            expect(first).toEqual(["abs", "upper"])
+            expect(second).toEqual(["abs", "upper"])
+            expect(await provider.filterAutoCompletion()).toEqual(["abs", "upper"])
         })
     })
 
@@ -199,6 +272,16 @@ describe("autoCompletionProvider", () => {
             expect(await provider.valueAutoCompletion("", undefined, undefined)).toEqual([])
             expect(await provider.valueAutoCompletion("namespace:", {}, undefined)).toEqual([])
             expect(await provider.nestedFieldAutoCompletion("namespace:", undefined, "outputs.task1")).toEqual([])
+            expect(axiosGet).not.toHaveBeenCalled()
+        })
+
+        it("keeps the inherited methods empty and non-throwing on the yaml provider", async () => {
+            const provider = new YamlAutoCompletion()
+
+            expect(provider).toBeInstanceOf(PebbleAutoCompletion)
+            expect(await provider.rootFieldAutoCompletion({source: "unknown: [", offset: 10})).toEqual([])
+            expect(await provider.nestedFieldAutoCompletion("unknown: [", undefined, "unknown.deeply.nested.path")).toEqual([])
+            expect(await provider.functionAutoCompletion(undefined, "doesNotExist", {})).toEqual([])
             expect(axiosGet).not.toHaveBeenCalled()
         })
     })

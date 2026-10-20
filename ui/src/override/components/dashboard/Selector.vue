@@ -2,7 +2,7 @@
     <EnterpriseBadge enable class="locked" @click="router.push({name: 'dashboards/create'})">
         <slot>
             <KsButton :icon="ChartLineVariant">
-                <span class="text-truncate">{{ $t("dashboards.default") }}</span>
+                <KsText truncated>{{ $t("dashboards.default") }}</KsText>
             </KsButton>
         </slot>
     </EnterpriseBadge>

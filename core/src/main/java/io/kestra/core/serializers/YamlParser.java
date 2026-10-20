@@ -119,7 +119,7 @@ public final class YamlParser {
                 if (failure instanceof InvalidTypeIdException invalid) {
                     List<String> type = new ArrayList<>(at);
                     type.add("type");
-                    String detail = "Invalid type: %s\n%s".formatted(invalid.getTypeId(), invalid.getMessage());
+                    String detail = "Invalid type: %s\n%s".formatted(invalid.getTypeId(), invalid.getOriginalMessage());
                     invalidTypes.add(new ParseReport.InvalidType(located(detail, type, removals), invalid.getTypeId()));
                 } else {
                     String detail = failure.getCause() instanceof ConstraintViolationException cve ? cve.getMessage() : failure.getOriginalMessage();

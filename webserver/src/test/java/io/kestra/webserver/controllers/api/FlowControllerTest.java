@@ -1708,7 +1708,7 @@ class FlowControllerTest {
             {
                 assertThat(error.detail())
                     .startsWith("Invalid type: BOOLEAN\nCould not resolve type id 'BOOLEAN'")
-                    .contains("known type ids = [", "BOOL,", "through reference chain");
+                    .contains("known type ids = [", "BOOL,");
                 assertThat(error.pointer()).isEqualTo("/inputs/0/type");
                 assertThat(error.path()).isEqualTo("inputs[0].type");
             });

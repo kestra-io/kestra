@@ -82,9 +82,9 @@
                                     :active="active"
                                     :data-index="index"
                                 >
-                                    <div class="d-flex flex-column">
+                                    <div class="task-wrapper">
                                         <div
-                                            class="gantt-row d-flex cursor-icon"
+                                            class="gantt-row cursor-icon"
                                             :class="{
                                                 'is-expanded': selectedTaskRuns.includes(item.id),
                                                 'gantt-block-alt': rowBlocks.get(item.id)?.isAlt,
@@ -116,7 +116,7 @@
                                             </div>
                                             <div
                                                 v-if="!verticalLayout"
-                                                class="d-inline-flex gantt-chevron"
+                                                class="gantt-chevron"
                                                 :style="{'--depth': item.depth || 0}"
                                             >
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
@@ -146,7 +146,7 @@
                                                     <template #content>
                                                         <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                                     </template>
-                                                    <Warning class="attempt_warn me-3" />
+                                                    <Warning class="attempt_warn" />
                                                 </KsTooltip>
                                             </div>
                                             <div v-if="!verticalLayout" class="task-offset" data-test="gantt-task-offset">
@@ -178,14 +178,14 @@
                                         </div>
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
-                                                <div class="task-details__inner p-2">
+                                                <div class="task-details__inner">
                                                     <GanttTaskLogs
                                                         :taskRun="item.task"
                                                         :taskType="taskTypeByTaskRunId[item.id]"
                                                         :execution="execution"
                                                         :flow="executionsStore.flow"
                                                         :levelFilter="effectiveSelectedLogLevel"
-                                                        class="mh-100 mx-3"
+                                                        class="task-logs"
                                                     />
                                                 </div>
                                             </div>
@@ -706,6 +706,11 @@
         margin-bottom: var(--ks-spacing-4);
     }
 
+    .task-wrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
     .kel-card {
         --gantt-offset-width: 5rem;
         --gantt-bar-width: 12rem;
@@ -814,9 +819,14 @@
                 }
             }
 
+            .task-details__inner {
+                padding: var(--ks-spacing-2);
+            }
+
             .gantt-row {
                 --gantt-band-bg: color-mix(in srgb, var(--ks-border-default) 60%, var(--ks-dropdown-bg));
 
+                display: flex;
                 align-items: center;
                 position: relative;
                 padding-right: var(--ks-spacing-8);
@@ -869,6 +879,7 @@
                 }
 
                 .gantt-chevron {
+                    display: inline-flex;
                     flex-shrink: 0;
                     transform: translateX(calc(var(--depth, 0) * var(--ks-spacing-5)));
                 }
@@ -918,6 +929,7 @@
                 }
 
                 .attempt_warn {
+                    margin-right: var(--ks-spacing-4);
                     color: var(--ks-text-warning);
                     vertical-align: middle;
                 }
@@ -1020,6 +1032,12 @@
     .cursor-icon {
         cursor: pointer;
         color: var(--ks-icon-muted);
+    }
+
+    :deep(.task-logs) {
+        max-height: 100%;
+        margin-left: var(--ks-spacing-4);
+        margin-right: var(--ks-spacing-4);
     }
 
     :deep(.log-wrapper) {

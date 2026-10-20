@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook"
+
 import css from "@eslint/css"
 import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
@@ -96,6 +99,7 @@ export default defineConfig([
             "vue/enforce-style-attribute": "off",
         },
     },
+    ...storybook.configs["flat/recommended"],
     // `.css` files, plus the plain `<style>` blocks and `style="…"` attributes of each SFC.
     {
         files: ["**/*.css"],

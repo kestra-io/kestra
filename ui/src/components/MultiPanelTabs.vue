@@ -95,6 +95,7 @@
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"
                                     :title="$t('close')"
+                                    data-test="tab-close"
                                 />
                             </button>
                             <div v-else class="potential-container">

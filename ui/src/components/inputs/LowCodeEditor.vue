@@ -98,6 +98,7 @@
             :parentPath="modalTarget.parentPath"
             :refPath="modalTarget.refPath"
             :blockSchemaPath="modalTarget.blockSchemaPath"
+            :editedPath="modalPath"
             :crumbs="modalCrumbs"
             :creating="modalTarget.creating"
             @update:task="onModalTaskEdited"
@@ -279,12 +280,12 @@
 
 <script setup lang="ts">
     import {nextTick, onBeforeUnmount, onMounted, ref, inject, provide, watch, computed} from "vue"
+    import {useShownValidationErrors} from "../no-code/utils/useFieldValidationErrors"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
     import {useRoute, useRouter} from "vue-router"
     import {storageKeys, topologyOrientations} from "../../utils/constants"
-    import {useVueFlow} from "@vue-flow/core"
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
@@ -404,7 +405,6 @@
     const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
-    const {fitView} = useVueFlow(vueflowId.value)
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
@@ -745,11 +745,9 @@
     watch(() => props.horizontalDefault, (value) => {
         if (value !== undefined && value !== isHorizontal.value) {
             isHorizontal.value = value
-            fitViewOrientation()
         }
     })
     const vueFlow = ref<HTMLDivElement>()
-    const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
     const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
     const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL)))
@@ -781,8 +779,6 @@
     )
 
     onMounted(() => {
-        // Regenerate graph on window resize
-        observeWidth()
         pluginsStore.fetchIcons()
     })
 
@@ -811,24 +807,6 @@
             }
         },
     )
-
-    let resizeObserver: ResizeObserver | undefined
-
-    const observeResize = (onResize: () => void) => {
-        resizeObserver?.disconnect()
-        if (!vueFlow.value) return
-        resizeObserver = new ResizeObserver(onResize)
-        resizeObserver.observe(vueFlow.value)
-    }
-
-    const observeWidth = () => observeResize(() => {
-        clearTimeout(timer.value)
-        timer.value = setTimeout(() => {
-            nextTick(() => {
-                fitView()
-            })
-        }, 50)
-    })
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
@@ -965,8 +943,10 @@
         pushModalTarget({parentPath, blockSchemaPath, refPath})
     }
 
+    const shownValidationErrors = useShownValidationErrors()
+
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+        groupValidationIssuesByTask(shownValidationErrors.value, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({
@@ -1024,7 +1004,6 @@
 
     onBeforeUnmount(() => {
         window.removeEventListener("keydown", onPickerEscape)
-        resizeObserver?.disconnect()
     })
 
     const shortcutsOpen = ref(false)
@@ -1270,17 +1249,9 @@
         saveFlow: () => saveFlow(),
     })
 
-    const fitViewOrientation = () => observeResize(() => {
-        clearTimeout(timer.value)
-        nextTick(() => {
-            fitView()
-        })
-    })
-
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value
         isHorizontalLS.value = isHorizontal.value
-        fitViewOrientation()
     }
 
     const openFlow = (data: { link: { namespace: string; id: string; executionId?: string } }) => {

@@ -2,9 +2,9 @@
     h2 {
         font-weight: 600;
         border-top: 1px solid var(--ks-border-default);
-        margin-bottom: 2rem;
-        margin-top: 4.12rem;
-        padding-top: 3.125rem;
+        margin-bottom: var(--ks-spacing-3);
+        margin-top: var(--ks-spacing-6);
+        padding-top: var(--ks-spacing-4);
 
         > a {
             font-size: var(--ks-font-size-lg);
@@ -13,7 +13,7 @@
     }
 
     h3 {
-        padding-top: 1.25rem;
+        padding-top: var(--ks-spacing-2);
     }
 
     .btn:hover span {

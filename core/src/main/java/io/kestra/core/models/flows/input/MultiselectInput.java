@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.validations.MultiselectInputValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -73,8 +74,9 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
         Set<ConstraintViolation<?>> violations = new HashSet<>();
 
         if (!this.getAllowCustomValue()) {
-            Set<String> allowedValues = this.values.stream().map(ValueOption::value).collect(java.util.stream.Collectors.toSet());
-            for (String input : inputs) {
+            Set<Object> allowedValues = this.values.stream().map(v -> toItemType(v.value())).collect(java.util.stream.Collectors.toSet());
+            // the items have already been converted to `itemType` (e.g. Integer for INT), so they are not always strings
+            for (Object input : (List<?>) inputs) {
                 if (!allowedValues.contains(input)) {
                     violations.add(
                         ManualConstraintViolation.of(
@@ -90,6 +92,18 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
         }
         if (!violations.isEmpty()) {
             throw ManualConstraintViolation.toConstraintViolationException(violations);
+        }
+    }
+
+    /**
+     * Converts an allowed value the same way the submitted items are converted, so that `"1.50"` matches `1.5`.
+     * A value that cannot be converted is kept as is: it can't match a converted item.
+     */
+    private Object toItemType(String value) {
+        try {
+            return FlowInputOutput.parseScalarInputValue(itemType, value).orElse(value);
+        } catch (Exception e) {
+            return value;
         }
     }
 

@@ -7,10 +7,14 @@ on:
 jobs:
   publish:
     name: Pull Request - Delete Docker
-    if: github.repository == 'kestra-io/kestra' # prevent running on forks
+    if: github.repository == 'kestra-io/kestra' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      actions: write
     steps:
       - uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        continue-on-error: true
         with:
           package: kestra-pr
           delete-tags: ${{ github.event.pull_request.number }}

@@ -544,16 +544,15 @@ public class ExecutionService {
                 taskRun -> taskRun.getId().equals(taskRunId)
             );
 
+            TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
             GraphCluster graphCluster = GraphUtils.of(flow, execution);
             if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
-                TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
                 throw new IllegalArgumentException(
                     "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
                         .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
                 );
             }
 
-            // the successors of the replayed task run run again, they are dropped
             Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
                 .stream()
                 .filter(task -> task instanceof AbstractGraphTask)
@@ -563,11 +562,9 @@ public class ExecutionService {
                 .filter(id -> !taskRunToRestart.contains(id))
                 .collect(Collectors.toCollection(HashSet::new));
 
-            // Worker task, we need to remove all child in order to be restarted
             originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, graphCluster, taskRunToRestart));
 
-            // the stale error, finally and afterExecution task runs are dropped too, they run again if needed
-            Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, taskRunToRestart);
+            Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
             execution.getTaskRunList()
                 .stream()
                 .filter(taskRun -> handlerTaskIds.contains(taskRun.getTaskId()))
@@ -596,7 +593,6 @@ public class ExecutionService {
                     .toList()
             );
 
-            // removed task runs must not come back as non-terminated task runs
             Set<String> untouchedTaskRunIds = new HashSet<>(taskRunToRestart);
             untouchedTaskRunIds.addAll(originalTaskRunToRemove);
             this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
@@ -623,11 +619,12 @@ public class ExecutionService {
         return newExecution;
     }
 
-    private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, Set<String> taskRunToRestart) throws InternalException {
-        Set<String> handlerTaskIds = new HashSet<>();
-        handlerTaskIds.addAll(extractAllTaskIdsRecursive(flow.getErrors()));
-        handlerTaskIds.addAll(extractAllTaskIdsRecursive(flow.getFinally()));
-        handlerTaskIds.addAll(extractAllTaskIdsRecursive(flow.getAfterExecution()));
+    private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, String replayedTaskId, Set<String> taskRunToRestart) throws InternalException {
+        Set<String> staleHandlerTaskIds = new HashSet<>();
+        Set<String> flowHandlerTaskIds = handlerTaskIds(flow, flow.getErrors(), flow.getFinally(), flow.getAfterExecution());
+        if (!flowHandlerTaskIds.contains(replayedTaskId)) {
+            staleHandlerTaskIds.addAll(flowHandlerTaskIds);
+        }
 
         Set<String> restartedTaskIds = new HashSet<>();
         for (TaskRun taskRun : execution.getTaskRunList()) {
@@ -637,19 +634,22 @@ public class ExecutionService {
 
             restartedTaskIds.add(taskRun.getTaskId());
             if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof FlowableTask<?> flowableTask) {
-                handlerTaskIds.addAll(extractAllTaskIdsRecursive(flowableTask.getErrors()));
-                handlerTaskIds.addAll(extractAllTaskIdsRecursive(flowableTask.getFinally()));
+                Set<String> flowableHandlerTaskIds = handlerTaskIds(flow, flowableTask.getErrors(), flowableTask.getFinally(), null);
+                if (!flowableHandlerTaskIds.contains(replayedTaskId)) {
+                    staleHandlerTaskIds.addAll(flowableHandlerTaskIds);
+                }
             }
         }
 
-        handlerTaskIds.removeAll(restartedTaskIds);
-        return handlerTaskIds;
+        staleHandlerTaskIds.removeAll(restartedTaskIds);
+        return staleHandlerTaskIds;
     }
 
-    private Set<String> extractAllTaskIdsRecursive(@Nullable List<Task> tasks) {
-        return ListUtils.emptyOnNull(tasks)
-            .stream()
-            .flatMap(task -> extractAllTaskIdsRecursive(task).stream())
+    private Set<String> handlerTaskIds(Flow flow, List<Task> errors, List<Task> finallyTasks, @Nullable List<Task> afterExecution) {
+        return Stream.of(errors, finallyTasks, afterExecution)
+            .flatMap(tasks -> ListUtils.emptyOnNull(tasks).stream())
+            .flatMap(flow::allTasksWithChilds)
+            .map(Task::getId)
             .collect(Collectors.toSet());
     }
 
@@ -1383,7 +1383,6 @@ public class ExecutionService {
             .collect(Collectors.toSet());
     }
 
-    /** Original ids of the worker task children to restart, computed on the caller's graph. */
     private Set<String> workerTaskChildren(Flow flow, Execution execution, GraphCluster graphCluster, Set<String> taskRunToRestart) throws InternalException {
         Set<String> workerTaskRunId = taskRunToRestart
             .stream()
@@ -1459,20 +1458,6 @@ public class ExecutionService {
                 newExecutionId,
                 toRestart ? alterState : null
             );
-    }
-
-    private Set<String> extractAllTaskIdsRecursive(Task task) {
-        Set<String> ids = new HashSet<>();
-        if (task == null) {
-            return ids;
-        }
-        ids.add(task.getId());
-        if (task instanceof FlowableTask<?> flowableTask) {
-            for (Task child : ListUtils.emptyOnNull(flowableTask.allChildTasks())) {
-                ids.addAll(extractAllTaskIdsRecursive(child));
-            }
-        }
-        return ids;
     }
 
     private Set<String> taskRunWithAncestors(Execution execution, List<TaskRun> taskRuns) {

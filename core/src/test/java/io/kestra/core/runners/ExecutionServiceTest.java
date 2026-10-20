@@ -879,6 +879,58 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/replay-handler-sequence.yaml" })
+    void replaySecondHandlerTaskKeepsEarlierHandlerTasks() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-handler-sequence");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String secondErrorTaskRunId = execution.findTaskRunByTaskIdAndValue("second_error", List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, secondErrorTaskRunId, null, Optional.empty());
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.findTaskRunByTaskIdAndValue("first_error", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("second_error", List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        TaskRun secondError = completed.findTaskRunByTaskIdAndValue("second_error", List.of());
+        assertThat(secondError.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(secondError)).containsEntry("value", "yes");
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("first_error")).count()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-nested-handler-sequence.yaml" })
+    void replaySecondNestedHandlerTaskKeepsEarlierHandlerTasks() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-nested-handler-sequence");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String secondErrorTaskRunId = execution.findTaskRunByTaskIdAndValue("second_error", List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, secondErrorTaskRunId, null, Optional.empty());
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.findTaskRunByTaskIdAndValue("first_error", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("second_error", List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        TaskRun secondError = completed.findTaskRunByTaskIdAndValue("second_error", List.of());
+        assertThat(secondError.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(secondError)).containsEntry("value", "yes");
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("first_error")).count()).isEqualTo(1);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/replay-outputs.yaml" })
     void replayCopiesOutputsOfKeptTaskRunsOnly() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-outputs");
@@ -901,8 +953,63 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/replay-after-execution-sequence.yaml" })
+    void replaySecondAfterExecutionTaskKeepsEarlierAfterExecutionTasks() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-after-execution-sequence");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String secondAfterTaskRunId = execution.findTaskRunByTaskIdAndValue("second_after", List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, secondAfterTaskRunId, null, Optional.empty());
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.findTaskRunByTaskIdAndValue("first_after", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("second_after", List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId())
+                && e.getState().isTerminated()
+                && e.getTaskRunList().stream().anyMatch(tr -> tr.getTaskId().equals("second_after") && tr.getState().isTerminated()),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        TaskRun secondAfter = completed.findTaskRunByTaskIdAndValue("second_after", List.of());
+        assertThat(secondAfter.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskOutputService.getOutputs(secondAfter)).containsEntry("value", "yes");
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("first_after")).count()).isEqualTo(1);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/replay-kv-flow.yaml" })
-    void replayFromAfterExecutionRemovesStaleHandlers() throws Exception {
+    void replayFromFinallyKeepsAlreadyRunErrorHandler() throws Exception {
+        var kvStore = kvStoreService.get(MAIN_TENANT, "io.kestra.tests", null);
+        kvStore.put("fail_flag", new KVValueAndMetadata(null, "yes"));
+
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-kv-flow");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        Flow flow = flowRepository.findByExecution(execution);
+        String finTaskRunId = execution.findTaskRunByTaskIdAndValue("fin", List.of()).getId();
+
+        Execution replay = executionService.replay(execution, flow, finTaskRunId, null, Optional.empty());
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(replay.findTaskRunByTaskIdAndValue("on_error", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("fin", List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("on_error")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("fin")).count()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-kv-flow.yaml" })
+    void replayFromAfterExecutionKeepsAlreadyRunHandlers() throws Exception {
         var kvStore = kvStoreService.get(MAIN_TENANT, "io.kestra.tests", null);
         kvStore.put("fail_flag", new KVValueAndMetadata(null, "yes"));
 
@@ -915,10 +1022,19 @@ class ExecutionServiceTest {
         Execution replay = executionService.replay(execution, flow, afterExecutionTaskRunId, null, Optional.empty());
 
         assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(replay.getTaskRunList()).hasSize(3);
+        assertThat(replay.getTaskRunList()).hasSize(5);
+        assertThat(replay.findTaskRunByTaskIdAndValue("on_error", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(replay.findTaskRunByTaskIdAndValue("fin", List.of()).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(replay.findTaskRunByTaskIdAndValue("afterExecution", List.of()).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("on_error"))).isTrue();
-        assertThat(replay.getTaskRunList().stream().noneMatch(tr -> tr.getTaskId().equals("fin"))).isTrue();
+
+        Execution completed = runnerUtils.emitAndAwaitExecution(
+            e -> e.getId().equals(replay.getId()) && e.getState().isTerminated(),
+            replay,
+            Duration.ofSeconds(30)
+        );
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("on_error")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("fin")).count()).isEqualTo(1);
+        assertThat(completed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("afterExecution")).count()).isEqualTo(1);
     }
 
     @Test

@@ -5,6 +5,12 @@
       "cta": "Zobacz, co się zmieniło"
     },
     "loading": "Ładowanie...",
+    "namespace_files_tip": {
+      "title": "Zarządzaj skryptami jako plikami namespace'u",
+      "description": "Zamiast pisać skrypt inline, otwórz panel Pliki, dodaj go jako plik (np. main.py) i uruchom go ze swojego flow:",
+      "open_files": "Otwórz pliki",
+      "dont_show_again": "Nie pokazuj ponownie"
+    },
     "more actions": "Więcej akcji",
     "recipe": {
       "create_flow": "Utwórz Flow",

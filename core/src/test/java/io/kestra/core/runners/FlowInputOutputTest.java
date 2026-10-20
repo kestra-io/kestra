@@ -35,7 +35,9 @@ import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.flows.input.TableFilter;
 import io.kestra.core.models.flows.input.TableInput;
+import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.URIInput;
 import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.YamlInput;
@@ -1652,6 +1654,52 @@ class FlowInputOutputTest {
         assertThat(values.getFirst().exceptions()).isNull();
         assertThat(values.getFirst().isDefault()).isTrue();
         assertThat(values.getFirst().value()).isEqualTo(List.of(Map.of("size_gb", 10, "mountpoint", "/")));
+    }
+
+    private static TableInput componentsFilteredBy(TableFilter.Operation operation, Object value) {
+        return TableInput.builder()
+            .id("components")
+            .type(Type.TABLE)
+            .columns(List.of(
+                StringInput.builder().id("type").type(Type.STRING).build(),
+                StringInput.builder().id("name").type(Type.STRING).build()
+            ))
+            .defaults(Property.ofValue(List.of(
+                Map.of("type", "linux", "name", "web"),
+                Map.of("type", "windows", "name", "ad"),
+                Map.of("type", "linux", "name", "db")
+            )))
+            .dependsOn(new DependsOn(List.of("component_types"), null))
+            .filters(List.of(new TableFilter("type", operation, value)))
+            .build();
+    }
+
+    @Test
+    void shouldKeepOnlyTheDefaultRowsMatchingFiltersRenderedFromTheInputsTheyDependOn() {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(List.<Input<?>>of(types, components), null, DEFAULT_TEST_EXECUTION, Map.of("component_types", List.of("linux")));
+
+        InputAndValue table = values.get(1);
+        assertThat(table.exceptions()).isNull();
+        assertThat(table.value()).isEqualTo(List.of(Map.of("type", "linux", "name", "web"), Map.of("type", "linux", "name", "db")));
+        assertThat(((TableInput) table.input()).getFilters().getFirst().value()).isEqualTo(List.of("linux"));
+    }
+
+    @Test
+    void shouldKeepTheRowsSubmittedForAFilteredTable() {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        TableInput components = componentsFilteredBy(TableFilter.Operation.NOT_IN, "{{ inputs.component_types }}");
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.<Input<?>>of(types, components),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("component_types", List.of("linux"), "components", "[{\"type\": \"linux\", \"name\": \"web\"}]")
+        );
+
+        assertThat(values.get(1).value()).isEqualTo(List.of(Map.of("type", "linux", "name", "web")));
     }
 
     @Test

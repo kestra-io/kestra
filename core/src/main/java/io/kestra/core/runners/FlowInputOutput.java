@@ -487,6 +487,9 @@ public class FlowInputOutput {
                 RunContext runContextForDefault = decryptSecrets ? runContext : nonDecryptingContext.get();
                 try {
                     value = resolveDefaultValue(input, runContextForDefault);
+                    if (input instanceof TableInput table && value instanceof List<?> rows) {
+                        value = table.matchingRows(rows);
+                    }
                 } catch (Exception e) {
                     resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                     return resolvable.get();

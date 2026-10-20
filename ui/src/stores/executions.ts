@@ -87,6 +87,14 @@ export interface InputMetaData {
     columns?: InputMetaData[];
     minRows?: number;
     maxRows?: number;
+    filters?: TableFilter[];
+    allowRowDuplication?: boolean;
+}
+
+export interface TableFilter {
+    column: string;
+    operation: "EQUALS" | "NOT_EQUALS" | "IN" | "NOT_IN" | "CONTAINS";
+    value: unknown;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

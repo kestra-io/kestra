@@ -37,6 +37,10 @@ public class TableInputValidator implements ConstraintValidator<TableInputValida
         }
 
         List<String> violations = fieldViolations("columns", value.getColumns());
+        Set<String> columnIds = new HashSet<>(ListUtils.emptyOnNull(value.getColumns()).stream().map(Input::getId).toList());
+        ListUtils.emptyOnNull(value.getFilters()).stream()
+            .filter(filter -> filter.column() != null && !columnIds.contains(filter.column()))
+            .forEach(filter -> violations.add("filter on `" + filter.column() + "` is not about a declared column"));
         if (value.getMinRows() != null && value.getMaxRows() != null && value.getMinRows() > value.getMaxRows()) {
             violations.add("`minRows` cannot be greater than `maxRows`");
         }

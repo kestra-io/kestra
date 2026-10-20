@@ -89,7 +89,7 @@
     import {ref, computed, onMounted, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import axios from "axios"
+    import {publicFetchJson} from "../../utils/publicApi"
     import {KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
     import PluginLayout from "./PluginLayout.vue"
@@ -251,10 +251,9 @@
         if (!cls) return
 
         try {
-            const response = await axios.get<Blueprint[]>(
+            groupBlueprints.value = await publicFetchJson<Blueprint[]>(
                 `${API_URL}/v1/blueprints/plugin/${cls}/version/latest`,
-            )
-            groupBlueprints.value = response.data ?? []
+            ) ?? []
         } catch (err) {
             console.warn("Failed to load blueprints for group", cls, err)
             groupBlueprints.value = []

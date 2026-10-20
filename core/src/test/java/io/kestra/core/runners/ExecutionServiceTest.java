@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.TaskRunAttempt;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
@@ -24,6 +23,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
@@ -861,6 +861,9 @@ class ExecutionServiceTest {
         assertThat(updated.getTaskRunList()).hasSize(1);
         assertThat(updated.getTaskRunList().getFirst().getId()).isEqualTo(flowableId);
         assertThat(taskOutputRepository.findById(tenantId, childId)).isEmpty();
+    }
+
+    @Test
     @LoadFlows("flows/valids/minimal.yaml")
     void retryFlowableShouldWipeDescendantsAndStartNewAttempt() throws Exception {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
@@ -915,7 +918,7 @@ class ExecutionServiceTest {
 
         Execution execution = Execution.newExecution(flow, Collections.emptyList())
             .withState(State.Type.RETRYING);
-    
+
         Execution result = executionService.retryFlowable(execution, "unknown");
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.RUNNING);

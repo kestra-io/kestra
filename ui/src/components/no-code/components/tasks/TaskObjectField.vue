@@ -151,7 +151,7 @@
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
     import {useBlockComponent} from "./useBlockComponent"
-    import {FIELD_NAV_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
+    import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, FIELD_NAV_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
     import ClearButton from "./ClearButton.vue"
     import {KsMarkdown} from "@kestra-io/design-system"
@@ -256,9 +256,11 @@
     )
 
     const {getBlockComponent} = useBlockComponent()
+    const blockComponentOverride = inject(BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, undefined)
 
     const type = computed(() => {
-        return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
+        return blockComponentOverride?.(props.fieldKey, props.task)
+            ?? getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 
 

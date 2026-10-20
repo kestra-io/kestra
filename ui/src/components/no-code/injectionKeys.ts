@@ -5,6 +5,7 @@ import type {FieldNavigation} from "./utils/useFieldNavigation"
 import type {BlockDragContext} from "./blocks/useBlockDragAndDrop"
 import type {UnsetRequiredField} from "./utils/requiredFields"
 import type {Schema} from "./components/tasks/getTaskComponent"
+import type {TaskBlockComponent} from "./components/tasks/useBlockComponent"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
@@ -53,3 +54,5 @@ export const FIELD_VALIDATION_ERRORS_INJECTION_KEY = Symbol("field-validation-er
 export const BLOCK_DRAG_INJECTION_KEY = Symbol("block-drag-injection-key") as InjectionKey<BlockDragContext>
 export const UNSET_REQUIRED_FIELDS_INJECTION_KEY = Symbol("unset-required-fields-injection-key") as InjectionKey<Ref<UnsetRequiredField[]>>
 export const NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY = Symbol("navigate-to-required-field-injection-key") as InjectionKey<Ref<((path: string) => boolean) | undefined>>
+
+export const BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY = Symbol("block-component-override-injection-key") as InjectionKey<(fieldKey: string, task: unknown) => TaskBlockComponent | undefined>

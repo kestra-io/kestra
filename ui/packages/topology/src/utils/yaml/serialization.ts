@@ -1,10 +1,9 @@
 // Plain JavaScript objects to and from YAML text, via js-yaml.
 
-import {CORE_SCHEMA, YAMLException, dump, loadAll, mergeTag, timestampTag} from "js-yaml"
+import {CORE_SCHEMA, DUMP_SCHEMA, YAMLException, dump, loadAll, mergeTag} from "js-yaml"
 
-// js-yaml 4 defaults: merge keys on load, YAML 1.1 words (yes/on) left unquoted on dump
+// Merge keys as js-yaml 4 did; unquoted dates stay strings so a flow round-trips unchanged
 const LOAD_SCHEMA = CORE_SCHEMA.withTags(mergeTag)
-const DUMP_SCHEMA = CORE_SCHEMA.withTags(timestampTag)
 
 export function parse<T = unknown>(item?: string, throwIfError = true): T | undefined {
     if (item === undefined) return undefined
@@ -99,7 +98,7 @@ function transform(value: unknown): unknown {
         return value.map((r) => {
             return transform(r)
         })
-    } else if (typeof value === "string" || value instanceof String) {
+    } else if (typeof value === "string" || value instanceof String || value instanceof Date) {
         return value
     } else if (value instanceof Object) {
         const record = value as Record<string, unknown>

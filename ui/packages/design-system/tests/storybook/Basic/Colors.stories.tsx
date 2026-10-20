@@ -3,7 +3,7 @@
  * This is not a visual test, but it can be used to generate a visual test by taking a screenshot of the rendered output.
  */
 
-import type {Meta, StoryObj} from "@storybook/vue3"
+import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import themeVariables from "./Color-variables.json" with {type: "json"}
 import { ref } from "vue"
 

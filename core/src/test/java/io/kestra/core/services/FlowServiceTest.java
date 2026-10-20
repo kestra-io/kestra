@@ -421,7 +421,14 @@ class FlowServiceTest {
 
         assertThat(results.getFirst().getErrors())
             .singleElement()
-            .isEqualTo(new ValidationError("Invalid type: io.kestra.plugin.core.debug.UnknownTask", "/tasks/0/type", "tasks[0].type"));
+            .satisfies(error ->
+            {
+                assertThat(error.detail())
+                    .startsWith("Invalid type: io.kestra.plugin.core.debug.UnknownTask\n")
+                    .contains("No plugin registered for the defined type: 'io.kestra.plugin.core.debug.UnknownTask'", "through reference chain");
+                assertThat(error.pointer()).isEqualTo("/tasks/0/type");
+                assertThat(error.path()).isEqualTo("tasks[0].type");
+            });
     }
 
     @Test

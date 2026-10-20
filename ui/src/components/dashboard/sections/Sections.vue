@@ -9,16 +9,16 @@
                     [`dash-width-${chart.chartOptions?.width || 6}`]: true
                 }"
             >
-                <div class="d-flex flex-column" :class="{'is-kpi': isKPIChart(chart.type)}">
-                    <div class="d-flex justify-content-between">
+                <div :class="{'is-kpi': isKPIChart(chart.type)}">
+                    <div class="chart-header">
                         <div id="charts_heading">
                             <p v-if="!isKPIChart(chart.type)">
-                                <span class="fs-6 fw-bold">
+                                <span>
                                     {{ labels(chart).title }}
                                 </span>
                                 <template v-if="labels(chart)?.description">
                                     <br>
-                                    <small class="fw-light">
+                                    <small>
                                         {{ labels(chart).description }}
                                     </small>
                                 </template>
@@ -37,7 +37,7 @@
                                         :icon="Download"
                                         :aria-label="$t('dashboards.export')"
                                         link
-                                        class="ms-2"
+                                        class="chart-action"
                                     />
                                     <template #dropdown>
                                         <KsDropdownMenu>
@@ -65,13 +65,13 @@
                                     :aria-label="$t('dashboards.edition.chart')"
                                     :icon="Pencil"
                                     link
-                                    class="ms-2"
+                                    class="chart-action"
                                 />
                             </KsIcon>
                         </div>
                     </div>
 
-                    <div :ref="(el) => observeChartBlock(el, chart.id)" class="flex-grow-1">
+                    <div :ref="(el) => observeChartBlock(el, chart.id)" class="chart-content">
                         <component
                             v-if="activatedCharts.has(chart.id)"
                             :ref="(el: Element | ComponentPublicInstance | null) => registerChartComponent(el, chart.id)"
@@ -80,6 +80,7 @@
                             :dashboardId="dashboard.id"
                             :filters
                             :showDefault="props.showDefault"
+                            v-bind="chartProps(chart)"
                         />
                         <KsSkeleton
                             v-else
@@ -106,6 +107,7 @@
 
     import {useRoute} from "vue-router"
     import {routeFamily} from "../../../utils/routeFamily"
+    import type {BrushRange} from "../../../utils/logsBrushMappers"
     const route = useRoute()
 
     import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsSkeleton, KsTooltip} from "@kestra-io/design-system"
@@ -141,12 +143,19 @@
         refreshCharts,
     })
 
+    const emit = defineEmits<{
+        "chart-select": [BrushRange | null]
+    }>()
+
     const props = defineProps<{
         dashboard: Dashboard;
         charts?: Chart[];
         showDefault?: boolean;
         padding?: boolean;
         baseFilters?: QueryFilter[];
+        selectableChartId?: string;
+        brushStart?: string;
+        brushEnd?: string;
     }>()
 
     const chartTypesById = computed(() => new Map((props.charts ?? []).map((chart) => [chart.id, chart.type])))
@@ -154,6 +163,16 @@
     const {activatedCharts, observeChartBlock, placeholderHeight} = useLazyChartBlocks(
         (chartId) => isCanvasChart(chartTypesById.value.get(chartId) ?? ""),
     )
+
+    function chartProps(chart: Chart): Record<string, unknown> {
+        if (chart.id !== props.selectableChartId) return {}
+        return {
+            selectable: true,
+            brushStart: props.brushStart,
+            brushEnd: props.brushEnd,
+            onSelect: (range: BrushRange | null) => emit("chart-select", range),
+        }
+    }
 
     const labels = (chart: Chart) => ({
         title: getChartTitle(chart),
@@ -234,6 +253,8 @@ section#charts {
 
     .dashboard-block {
         & > div {
+            display: flex;
+            flex-direction: column;
             height: 100%;
             padding: 1.25rem;
             background: var(--ks-bg-surface);
@@ -251,6 +272,19 @@ section#charts {
                 }
             }
 
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chart-content {
+            flex-grow: 1;
+        }
+
+        .chart-action {
+            margin-inline-start: var(--ks-spacing-2);
         }
 
         #charts_buttons {
@@ -274,10 +308,12 @@ section#charts {
             span {
                 color: var(--ks-text-primary);
                 font-size: var(--ks-font-size-md);
+                font-weight: var(--ks-font-weight-bold);
             }
             small {
                 color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-xs);
+                font-weight: 300;
             }
         }
     }

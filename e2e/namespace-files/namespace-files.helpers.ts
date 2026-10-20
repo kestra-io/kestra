@@ -120,7 +120,7 @@ export class FilesEditor {
     }
 
     async closeTab(uid: string) {
-        await this.tab(uid).getByRole("img", {name: "Close"}).click()
+        await this.tab(uid).locator("[data-test='tab-close']").click()
         await expect(this.tab(uid)).toHaveCount(0)
     }
 

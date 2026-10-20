@@ -3167,15 +3167,21 @@ export const _4Ca5D6B4 = <ThrowOnError extends boolean = true>(parameters: {
 
 /**
  * Get logs for a specific execution, taskrun or task
+ *
+ * All logs are returned unless `page` or `size` is set.
  */
 export const _06C136Fdf = <ThrowOnError extends boolean = true>(parameters: {
     executionId: string;
     tenant: string;
+    page?: number | null;
+    size?: number | null;
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>) => {
     const params = buildClientParams([parameters], [{ args: [
                 { in: 'path', key: 'executionId' },
                 { in: 'path', key: 'tenant' },
+                { in: 'query', key: 'page' },
+                { in: 'query', key: 'size' },
                 { in: 'query', key: 'filters' }
             ] }]);
     return (options?.client ?? client).get<ListLogsFromExecutionResponses, ListLogsFromExecutionErrors, ThrowOnError>({

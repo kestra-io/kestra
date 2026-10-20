@@ -1,6 +1,5 @@
-
-import { describe, expect, it, vi } from "vitest"
-import { useDragAndDrop } from "./useDragAndDrop"
+import {describe, expect, it, vi} from "vitest"
+import {useDragAndDrop} from "./useDragAndDrop"
 
 describe("useDragAndDrop", () => {
     const createDragEvent = (withDataTransfer = true) => {
@@ -19,7 +18,7 @@ describe("useDragAndDrop", () => {
     }
 
     it("records the dragged index and sets effectAllowed to move", () => {
-        const { draggedIndex, handleDragStart } = useDragAndDrop()
+        const {draggedIndex, handleDragStart} = useDragAndDrop()
         const event = createDragEvent()
 
         handleDragStart(event, 2)
@@ -29,7 +28,7 @@ describe("useDragAndDrop", () => {
     })
 
     it("sets the dragged index on dataTransfer as text/plain", () => {
-        const { handleDragStart } = useDragAndDrop()
+        const {handleDragStart} = useDragAndDrop()
         const event = createDragEvent()
 
         handleDragStart(event, 3)
@@ -38,7 +37,7 @@ describe("useDragAndDrop", () => {
     })
 
     it("prevents default, records the hovered index and sets dropEffect to move", () => {
-        const { dragOverIndex, handleDragOver } = useDragAndDrop()
+        const {dragOverIndex, handleDragOver} = useDragAndDrop()
         const event = createDragEvent()
 
         handleDragOver(event, 4)
@@ -49,7 +48,7 @@ describe("useDragAndDrop", () => {
     })
 
     it("calls onReorder with the source and target indices when dropped", () => {
-        const { handleDragStart, handleDrop } = useDragAndDrop()
+        const {handleDragStart, handleDrop} = useDragAndDrop()
         const onReorder = vi.fn()
         const startEvent = createDragEvent()
         const dropEvent = createDragEvent()
@@ -62,7 +61,7 @@ describe("useDragAndDrop", () => {
     })
 
     it("does not reorder when the target equals the dragged index", () => {
-        const { handleDragStart, handleDrop } = useDragAndDrop()
+        const {handleDragStart, handleDrop} = useDragAndDrop()
         const onReorder = vi.fn()
 
         handleDragStart(createDragEvent(), 2)
@@ -72,7 +71,7 @@ describe("useDragAndDrop", () => {
     })
 
     it("does not reorder when no drag has started", () => {
-        const { handleDrop } = useDragAndDrop()
+        const {handleDrop} = useDragAndDrop()
         const onReorder = vi.fn()
 
         handleDrop(createDragEvent(), 3, onReorder)
@@ -81,7 +80,7 @@ describe("useDragAndDrop", () => {
     })
 
     it("clears both indices after a drop", () => {
-        const { draggedIndex, dragOverIndex, handleDragStart, handleDragOver, handleDrop } =
+        const {draggedIndex, dragOverIndex, handleDragStart, handleDragOver, handleDrop} =
             useDragAndDrop()
 
         handleDragStart(createDragEvent(), 1)
@@ -93,7 +92,7 @@ describe("useDragAndDrop", () => {
     })
 
     it("clears both indices after handleDragEnd", () => {
-        const { draggedIndex, dragOverIndex, handleDragStart, handleDragOver, handleDragEnd } =
+        const {draggedIndex, dragOverIndex, handleDragStart, handleDragOver, handleDragEnd} =
             useDragAndDrop()
 
         handleDragStart(createDragEvent(), 1)
@@ -104,8 +103,20 @@ describe("useDragAndDrop", () => {
         expect(dragOverIndex.value).toBeNull()
     })
 
+    it("does not throw when dataTransfer has no setData", () => {
+        const {draggedIndex, handleDragStart} = useDragAndDrop()
+        const event = {
+            preventDefault: vi.fn(),
+            dataTransfer: {effectAllowed: "", dropEffect: ""},
+        } as unknown as DragEvent
+
+        expect(() => handleDragStart(event, 2)).not.toThrow()
+        expect(draggedIndex.value).toBe(2)
+        expect(event.dataTransfer?.effectAllowed).toBe("move")
+    })
+
     it("does not throw when dataTransfer is absent", () => {
-        const { handleDragStart, handleDragOver } = useDragAndDrop()
+        const {handleDragStart, handleDragOver} = useDragAndDrop()
         const event = createDragEvent(false)
 
         expect(() => handleDragStart(event, 2)).not.toThrow()

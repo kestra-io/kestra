@@ -142,9 +142,9 @@ public final class Enums {
         return switch (value) {
             case List<?> list when !list.isEmpty() && enumClass.isInstance(list.getFirst()) -> (List<T>) list;
             case List<?> list when !list.isEmpty() && list.getFirst() instanceof String ->
-                list.stream().map(item -> Enum.valueOf(enumClass, item.toString().toUpperCase())).collect(Collectors.toList());
+                list.stream().map(item -> Enum.valueOf(enumClass, item.toString().toUpperCase(Locale.ROOT))).collect(Collectors.toList());
             case Enum<?> enumValue when enumClass.isInstance(enumValue) -> List.of(enumClass.cast(enumValue));
-            case String stringValue -> List.of(Enum.valueOf(enumClass, stringValue.toUpperCase()));
+            case String stringValue -> List.of(Enum.valueOf(enumClass, stringValue.toUpperCase(Locale.ROOT)));
             default -> throw new IllegalArgumentException("Field requires a " + enumClass.getSimpleName() + " or List<" + enumClass.getSimpleName() + "> value");
         };
     }

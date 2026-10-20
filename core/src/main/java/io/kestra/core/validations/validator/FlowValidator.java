@@ -470,53 +470,78 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     }
 
     private static Optional<String> tableLiteralValueViolation(TableInput table, Object rawValue) {
+        List<String> messages = tableLiteralValueViolations(table, rawValue).stream()
+            .map(TableCellViolation::toString)
+            .toList();
+        return messages.isEmpty() ? Optional.empty() : Optional.of(String.join(", ", messages));
+    }
+
+    /**
+     * @return every reason a literal {@code TABLE} value cannot satisfy the table and its columns, each one located on
+     * the row and column it is about, or on the whole table when both are null.
+     */
+    public static List<TableCellViolation> tableLiteralValueViolations(TableInput table, Object rawValue) {
         List<?> rows;
         try {
             rows = rawValue instanceof List<?> list ? list : JacksonMapper.toList(rawValue.toString());
         } catch (Exception e) {
             return PebbleUtil.containsOpeningBlockDelimiter(rawValue.toString())
-                ? Optional.empty()
-                : Optional.of("`%s` is not a valid TABLE value".formatted(rawValue));
+                ? List.of()
+                : List.of(new TableCellViolation(null, null, "`%s` is not a valid TABLE value".formatted(rawValue)));
         }
 
-        List<String> messages = new ArrayList<>();
+        List<TableCellViolation> violations = new ArrayList<>();
         try {
             table.validate(rows);
         } catch (ConstraintViolationException e) {
-            e.getConstraintViolations().forEach(violation -> messages.add(violation.getMessage()));
+            e.getConstraintViolations().forEach(violation -> violations.add(new TableCellViolation(null, null, violation.getMessage())));
         }
 
         List<Input<?>> columns = ListUtils.emptyOnNull(table.getColumns());
         Set<String> declared = columns.stream().map(Input::getId).filter(Objects::nonNull).collect(Collectors.toSet());
-        for (int i = 0; i < rows.size(); i++) {
-            String row = "row " + (i + 1);
-            if (!(rows.get(i) instanceof Map<?, ?> cells)) {
-                messages.add(row + ": expected an object");
+        for (int row = 0; row < rows.size(); row++) {
+            if (!(rows.get(row) instanceof Map<?, ?> cells)) {
+                violations.add(new TableCellViolation(row, null, "expected an object"));
                 continue;
             }
 
+            int index = row;
             cells.keySet().stream()
                 .map(String::valueOf)
                 .filter(key -> !declared.contains(key))
-                .forEach(key -> messages.add(row + ", column `" + key + "`: it is not declared"));
+                .forEach(key -> violations.add(new TableCellViolation(index, key, "it is not declared")));
 
             for (Input<?> column : columns) {
-                String cell = row + ", column `" + column.getId() + "`";
                 Object value = cells.get(column.getId());
                 if (value instanceof String s && s.isEmpty() && !FlowInputOutput.isTextType(column.getType())) {
                     value = null;
                 }
                 if (value == null) {
                     if (Boolean.TRUE.equals(column.getRequired())) {
-                        messages.add(cell + ": missing required value");
+                        violations.add(new TableCellViolation(row, column.getId(), "missing required value"));
                     }
                     continue;
                 }
-                literalValueViolation(column, value).ifPresent(message -> messages.add(cell + ": " + message));
+                literalValueViolation(column, value).ifPresent(message -> violations.add(new TableCellViolation(index, column.getId(), message)));
             }
         }
+        return violations;
+    }
 
-        return messages.isEmpty() ? Optional.empty() : Optional.of(String.join(", ", messages));
+    /**
+     * @param row the 0-based row index, or null when the violation is about the whole table
+     * @param column the column id, or null when the violation is about the whole row or table
+     */
+    public record TableCellViolation(@Nullable Integer row, @Nullable String column, String message) {
+        @Override
+        public String toString() {
+            if (row == null) {
+                return message;
+            }
+            return column == null
+                ? "row %d: %s".formatted(row + 1, message)
+                : "row %d, column `%s`: %s".formatted(row + 1, column, message);
+        }
     }
 
     /**

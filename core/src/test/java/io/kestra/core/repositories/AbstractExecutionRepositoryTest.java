@@ -13,8 +13,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.slf4j.event.Level;
 
 import com.devskiller.friendly_id.FriendlyId;
@@ -1368,8 +1370,10 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<Execution> failed = executionRepository.find(
             Pageable.UNPAGED, tenant,
-            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
-                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build())
+            List.of(
+                parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
+                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build()
+            )
         );
         assertThat(failed).isEmpty();
 
@@ -2152,6 +2156,46 @@ public abstract class AbstractExecutionRepositoryTest {
 
         // Then
         assertThat(value).isEqualTo((double) testCase.expectedIds().size());
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EnumSource(value = ExecutionKind.class, names = { "NORMAL", "PLAYGROUND", "TEST" })
+    protected void shouldCountTheSameExecutionsInChartAndTableForKindFilter(ExecutionKind kind) throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Stream.of(
+            Collections.nCopies(14, (ExecutionKind) null),
+            Collections.nCopies(29, ExecutionKind.PLAYGROUND),
+            Collections.nCopies(3, ExecutionKind.TEST)
+        )
+            .flatMap(List::stream)
+            .forEach(executionKind -> executionRepository.save(builder(tenantId, Type.SUCCESS, "flowA").kind(executionKind).build()));
+
+        List<QueryFilter> filters = kind == null ? List.of()
+            : List.of(QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(kind).build());
+        var startDate = ZonedDateTime.now().minusHours(1);
+        var endDate = ZonedDateTime.now().plusMinutes(1);
+        var chart = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(
+                Map.of(
+                    "date", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.START_DATE).build(),
+                    "state", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.STATE).build(),
+                    "total", ColumnDescriptor.<Executions.Fields> builder().agg(AggregationType.COUNT).build()
+                )
+            )
+            .build();
+        chart.updateWhereWithGlobalFilters(filters, startDate, endDate);
+
+        long tableTotal = executionRepository.find(Pageable.from(1, 1), tenantId, filters).getTotal();
+        long chartTotal = executionRepository.fetchData(tenantId, chart, startDate, endDate, null).stream()
+            .mapToLong(row -> ((Number) row.get("total")).longValue())
+            .sum();
+
+        assertThat(chartTotal).isEqualTo(tableTotal);
+        if (kind == null) {
+            assertThat(chartTotal).isEqualTo(14L);
+        }
     }
 
     @Test

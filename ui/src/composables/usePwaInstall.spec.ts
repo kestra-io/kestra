@@ -149,7 +149,6 @@ describe("usePwaInstall", () => {
 
     it("stays dismissed after a page reload", async () => {
         mountPwaInstall().api.dismiss()
-        // useStorage writes on the next flush, which a real reload always runs before.
         await nextTick()
 
         const {api} = mountPwaInstall()

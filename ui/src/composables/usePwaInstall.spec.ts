@@ -1,5 +1,5 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent} from "vue"
+import {defineComponent, nextTick} from "vue"
 import {mount} from "@vue/test-utils"
 import {usePwaInstall} from "./usePwaInstall"
 import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../utils/pwaInstallState"
@@ -147,8 +147,10 @@ describe("usePwaInstall", () => {
         expect(api.canInstall.value).toBe(true)
     })
 
-    it("stays dismissed after a page reload", () => {
+    it("stays dismissed after a page reload", async () => {
         mountPwaInstall().api.dismiss()
+        // useStorage writes on the next flush, which a real reload always runs before.
+        await nextTick()
 
         const {api} = mountPwaInstall()
         fireBeforeInstallPrompt()

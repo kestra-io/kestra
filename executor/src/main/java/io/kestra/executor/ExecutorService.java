@@ -693,7 +693,7 @@ public class ExecutorService {
             if (task instanceof FlowableTask<?>) {
                 try {
                     switch (task) {
-                        case LoopUntil waitFor when taskRun.getState().isRunning() -> {
+                        case LoopUntil waitFor when taskRun.getState().getCurrent() == State.Type.RUNNING -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                                 Map<String, Object> previousOutput = taskOutputService.getOutputs(taskRun);
                                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(taskRun), taskRun);
@@ -919,7 +919,7 @@ public class ExecutorService {
                 )
             );
             for (int i = 0; i < init.values().size(); i++) {
-                var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i));
+                var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i), loop.getParseValues());
                 executor.withLoopExecution(loopExecution, "handleLoopExecution");
             }
         } else {
@@ -938,14 +938,14 @@ public class ExecutorService {
                 if (init.values().isLeft()) {
                     List<String> values = init.values().getLeft();
                     for (int i = 0; i < init.limit(); i++) {
-                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i));
+                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i), loop.getParseValues());
                         executor.withLoopExecution(loopExecution, "handleLoopExecution");
                     }
                 } else {
                     List<Pair<String, String>> values = init.values().getRight();
                     for (int i = 0; i < init.limit(); i++) {
                         var value = values.get(i);
-                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue());
+                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue(), loop.getParseValues());
                         executor.withLoopExecution(loopExecution, "handleLoopExecution");
                     }
                 }

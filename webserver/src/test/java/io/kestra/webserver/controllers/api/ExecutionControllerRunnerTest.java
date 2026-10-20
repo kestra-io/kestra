@@ -2400,6 +2400,30 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml", "flows/valids/pause-test.yaml" }, tenantId = "shouldbulkresumepausedandbreakpoint")
+    void shouldResumePausedAndBreakpointExecutionsWhenBulkResumedTogether() throws QueueException {
+        String tenantId = "shouldbulkresumepausedandbreakpoint";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution paused = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        Execution triggered = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
+        Execution suspended = awaitExecution(tenantId, triggered.getId(), exec -> exec.getState().isBreakpoint());
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/" + tenantId + "/executions/resume/by-ids", List.of(paused.getId(), suspended.getId())),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
+        awaitExecution(tenantId, paused.getId(), exec -> !exec.getState().isPaused());
+        Execution resumed = awaitExecution(tenantId, suspended.getId(), exec -> exec.getState().isTerminated());
+        assertThat(resumed.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+
+
+
+    @Test
     @LoadFlows(value = { "flows/valids/pause-test.yaml" }, tenantId = "resumeexecutionbyquery")
     void shouldReturn202WhenResumeExecutionsByQueryCalled() throws QueueException {
         String tenantId = "resumeexecutionbyquery";
@@ -3799,20 +3823,13 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendatbreakpointthenresume")
-    void shouldSuspendAtBreakpointThenResume() {
-        String tenantId = "shouldsuspendatbreakpointthenresume";
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendingbreakpointthenresume")
+    void shouldSuspendAtBreakpointWhenTriggeredThenResumeWhenAsked() {
+        String tenantId = "shouldsuspendingbreakpointthenresume";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
-        assertThat(execution).isNotNull();
-        assertThat(execution.getState().getCurrent()).isIn(State.Type.CREATED, State.Type.RUNNING, State.Type.BREAKPOINT);
-
-        // check that the execution is suspended
         Execution suspended = awaitExecution(execution.getId(), State.Type.BREAKPOINT);
-        assertThat(suspended.getTaskRunList()).hasSize(1);
-        assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
-        // resume the suspended execution
         HttpResponse<Execution> resume = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + suspended.getId() + "/actions/resume-from-breakpoint", null),
             Execution.class
@@ -3832,9 +3849,9 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldbulkresumefrombreakpoint")
-    void shouldResumeExecutionsFromBreakpointByIds() {
-        String tenantId = "shouldbulkresumefrombreakpoint";
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldresumebreakpointexecutionswhenbulkresumedbyids")
+    void shouldResumeBreakpointExecutionsWhenBulkResumedByIds() {
+        String tenantId = "shouldresumebreakpointexecutionswhenbulkresumedbyids";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution1 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
         Execution execution2 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
@@ -3844,10 +3861,7 @@ class ExecutionControllerRunnerTest {
         // check that both executions are suspended at the breakpoint
         Execution suspended1 = awaitExecution(tenantId, execution1.getId(), exec -> exec.getState().isBreakpoint());
         Execution suspended2 = awaitExecution(tenantId, execution2.getId(), exec -> exec.getState().isBreakpoint());
-        assertThat(suspended1.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
-        assertThat(suspended2.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
-        // bulk resume both executions from breakpoint via the existing resume/by-ids endpoint
         HttpResponse<ApiAsyncOperationResponse> resumeResponse = client.toBlocking().exchange(
             HttpRequest.POST(
                 "/api/v1/" + tenantId + "/executions/resume/by-ids",

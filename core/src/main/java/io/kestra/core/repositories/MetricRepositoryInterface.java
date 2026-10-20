@@ -15,9 +15,24 @@ import io.micronaut.data.model.Pageable;
 import reactor.core.publisher.Flux;
 
 public interface MetricRepositoryInterface extends IndexingRepository<MetricEntry>, QueryBuilderInterface<Metrics.Fields> {
-    ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, Pageable pageable);
+    default ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, Pageable pageable) {
+        return findByExecutionId(tenantId, id, List.of(), pageable);
+    }
 
-    ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable);
+    /**
+     * Metrics of an execution, plus those of the given task runs, which the execution reused from an earlier one
+     * (Playground, Replay) and which therefore recorded their metrics under the execution that ran them.
+     */
+    ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, List<String> reusedTaskRunIds, Pageable pageable);
+
+    default ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
+        return findByExecutionIdAndTaskId(tenantId, executionId, taskId, List.of(), pageable);
+    }
+
+    /**
+     * @see #findByExecutionId(String, String, List, Pageable)
+     */
+    ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, List<String> reusedTaskRunIds, Pageable pageable);
 
     ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable);
 

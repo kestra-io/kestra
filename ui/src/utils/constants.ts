@@ -41,6 +41,7 @@ export const storageKeys = {
     NOCODE_ENGINE: "nocodeEngine",
     TASK_EDIT_DEFAULT_MODE: "taskEditDefaultMode",
     TASK_EDIT_MODE_HINT_DISMISSED: "taskEditModeHintDismissed",
+    PWA_INSTALL_DISMISSED: "pwaInstallDismissed",
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
     AUTO_REFRESH_ENABLED: "autoRefreshEnabled",
     DATE_FORMAT_STORAGE_KEY: "dateFormat",

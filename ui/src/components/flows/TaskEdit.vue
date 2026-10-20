@@ -18,7 +18,7 @@
             </template>
             <template #footer>
                 <div v-ks-loading="isLoading">
-                    <ValidationError class="me-2" link :errors="errors" />
+                    <ValidationError class="task-edit-validation-error" link :errors="errors" />
 
                     <KsButton
                         :icon="ContentSave"
@@ -31,7 +31,7 @@
                     </KsButton>
                     <KsAlert
                         :closable="false"
-                        class="mb-0 mt-3"
+                        class="task-edit-revision-alert"
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
@@ -283,14 +283,12 @@
     provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
 
     async function jumpToFirstUnsetRequired() {
-        const first = unsetRequiredFields.value[0]
-        if (!first) return
-
-        const selector = `[data-required-path="${first.path}"]`
-        let el = panelRef.value?.querySelector<HTMLElement>(selector)
-        if (!el && navigateToRequiredField.value?.(first.path)) {
+        let el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
+        if (!el) {
+            const first = unsetRequiredFields.value[0]
+            if (!first || !navigateToRequiredField.value?.(first.path)) return
             await nextTick()
-            el = panelRef.value?.querySelector<HTMLElement>(selector)
+            el = panelRef.value?.querySelector<HTMLElement>(`[data-required-path="${first.path}"]`)
         }
         if (!el) return
 
@@ -821,6 +819,15 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-top: 1px solid var(--ks-border-subtle);
         background: var(--ks-bg-surface);
+    }
+
+    .task-edit-validation-error {
+        margin-inline-end: var(--ks-spacing-2);
+    }
+
+    .task-edit-revision-alert {
+        margin-bottom: 0;
+        margin-top: var(--ks-spacing-4);
     }
 
     .task-edit-validation-status {

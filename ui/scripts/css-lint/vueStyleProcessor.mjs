@@ -30,7 +30,7 @@ export const maskVueStyles = (text) => {
     }
     for (const attribute of descriptor.template?.ast ? staticStyleAttributes(descriptor.template.ast) : []) {
         const quote = attribute.value.loc.start.offset
-        if (!`"'`.includes(text[quote]) || !attribute.value.content.trim()) continue
+        if (!/["']/.test(text[quote]) || !attribute.value.content.trim()) continue
         kept.push({start: attribute.loc.start.offset, open: quote + 1, end: attribute.loc.end.offset})
     }
     if (kept.length === 0) return null

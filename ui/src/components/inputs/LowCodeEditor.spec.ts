@@ -1,7 +1,7 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
+import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
+import {flushPromises} from "@vue/test-utils"
 import {defineComponent, ref} from "vue"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 import {createPinia, setActivePinia} from "pinia"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import type {ParsedFlow} from "../../stores/flow"
@@ -73,8 +73,12 @@ tasks:
         type: io.kestra.plugin.dbt.cli.DbtCLI
 `
 
-const i18n = createI18n({legacy: false, globalInjection: true, locale: "en", missingWarn: false, fallbackWarn: false})
 
+// The topology asks the server which task types ship a plugin UI (a box, a modal, a drawer). A task nested in
+// a flowable (WorkingDirectory, If, Parallel...) is still a node of its own, so its type must be in that
+// request too. Without it, `DbtCLI` inside a `WorkingDirectory` loses its "Show details" action, or shows it
+// only when the graph happens to load before the flow.
+// Regression: added in #20058, dropped while resolving conflicts in #19865.
 describe("LowCodeEditor plugin UI lookup", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
@@ -85,13 +89,13 @@ describe("LowCodeEditor plugin UI lookup", () => {
         localStorage.clear()
     })
 
-    it("requests the plugin UI of a task nested in a flowable", async () => {
+    test("requests the plugin UI of a task nested in a flowable", async () => {
         flowStore.flowYaml = FLOW
         flowStore.flowParsed = YAML_UTILS.parse<ParsedFlow>(FLOW)
 
-        const wrapper = mount(LowCodeEditor, {
+        const wrapper = i18nMount(LowCodeEditor, {
             props: {flowGraph: {nodes: [], edges: [], clusters: []}, isReadOnly: true},
-            global: {plugins: [i18n], stubs: {teleport: true}},
+            global: {stubs: {teleport: true}},
         })
         await flushPromises()
 

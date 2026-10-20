@@ -100,10 +100,20 @@ public class LogController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}")
-    @Operation(tags = { "Logs" }, summary = "Get logs for a specific execution, taskrun or task")
+    @Operation(tags = { "Logs" }, summary = "Get logs for a specific execution, taskrun or task", description = "All logs are returned unless `page` or `size` is set.")
     public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The current page, enables pagination when set") @Nullable @QueryValue @Min(1) Integer page,
+        @Parameter(description = "The current page size, enables pagination when set (defaults to 10)") @Nullable @QueryValue @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) Integer size,
         @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        if (page != null || size != null) {
+            return logRepository.find(
+                PageableUtils.from(page == null ? 1 : page, size == null ? 10 : size, List.of("timestamp:asc")),
+                tenantService.resolveTenant(),
+                buildExecutionFilters(executionId, filters)
+            ).getContent();
+        }
+
         return logRepository
             .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
             .collectList()

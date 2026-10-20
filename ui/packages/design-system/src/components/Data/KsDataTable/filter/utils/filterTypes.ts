@@ -96,6 +96,8 @@ export interface FilterKeyConfig {
     comparatorLabels?: Partial<Record<Comparators, string>>;
     /** When `true`, renders colored status tags in multi-select value display. */
     colored?: boolean;
+    /** Value the filter falls back to once the user removes it, so a reload does not reapply its default. */
+    clearedValue?: string;
 }
 
 export interface FilterValue {

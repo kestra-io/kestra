@@ -380,7 +380,7 @@ class LogControllerTest {
         );
         HttpClientResponseException misspelledFilter = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[levl][IN]=ERROR"))
+            () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[notAField][EQUALS]=ERROR"))
         );
 
         assertThat(noFilter.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());

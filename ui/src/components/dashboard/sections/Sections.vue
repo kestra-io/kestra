@@ -80,6 +80,7 @@
                             :dashboardId="dashboard.id"
                             :filters
                             :showDefault="props.showDefault"
+                            v-bind="chartProps(chart)"
                         />
                         <KsSkeleton
                             v-else
@@ -106,6 +107,7 @@
 
     import {useRoute} from "vue-router"
     import {routeFamily} from "../../../utils/routeFamily"
+    import type {BrushRange} from "../../../utils/logsBrushMappers"
     const route = useRoute()
 
     import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsSkeleton, KsTooltip} from "@kestra-io/design-system"
@@ -141,12 +143,19 @@
         refreshCharts,
     })
 
+    const emit = defineEmits<{
+        "chart-select": [BrushRange | null]
+    }>()
+
     const props = defineProps<{
         dashboard: Dashboard;
         charts?: Chart[];
         showDefault?: boolean;
         padding?: boolean;
         baseFilters?: QueryFilter[];
+        selectableChartId?: string;
+        brushStart?: string;
+        brushEnd?: string;
     }>()
 
     const chartTypesById = computed(() => new Map((props.charts ?? []).map((chart) => [chart.id, chart.type])))
@@ -154,6 +163,16 @@
     const {activatedCharts, observeChartBlock, placeholderHeight} = useLazyChartBlocks(
         (chartId) => isCanvasChart(chartTypesById.value.get(chartId) ?? ""),
     )
+
+    function chartProps(chart: Chart): Record<string, unknown> {
+        if (chart.id !== props.selectableChartId) return {}
+        return {
+            selectable: true,
+            brushStart: props.brushStart,
+            brushEnd: props.brushEnd,
+            onSelect: (range: BrushRange | null) => emit("chart-select", range),
+        }
+    }
 
     const labels = (chart: Chart) => ({
         title: getChartTitle(chart),

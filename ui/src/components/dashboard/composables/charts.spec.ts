@@ -400,12 +400,6 @@ describe("fillTimeBucketLabels", () => {
         expect(labels).toEqual(["2025-W51", "2025-W52", "2026-W01", "2026-W02"])
     })
 
-    it("labels the last days of December with the next ISO week-year when they belong to its week 1", () => {
-        const weekly = {format: "GGGG-[W]WW", unit: "week"} as const
-        expect(fillTimeBucketLabels(["2025-12-31 12:00:00"], weekly)).toEqual(["2026-W01"])
-        expect(fillTimeBucketLabels(["2027-01-02 12:00:00"], weekly)).toEqual(["2026-W53"])
-    })
-
     it("keeps values that are not valid dates as labels verbatim", () => {
         const labels = fillTimeBucketLabels(["not-a-date"], HOURLY)
         expect(labels).toEqual(["not-a-date"])

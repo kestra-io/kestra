@@ -44,7 +44,7 @@ const preview: Preview = {
          * is handled entirely by the Element Plus CSS variables in
          * storybook.css, which automatically switches with the theme.
          */
-        backgrounds: {disable: true},
+        backgrounds: {disabled: true},
         controls: {
             matchers: {
                 color: /[Cc]olor$/,

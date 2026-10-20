@@ -28,6 +28,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
@@ -666,7 +667,7 @@ class ExecutionServiceTest {
 
     @Test
     @LoadFlows({ "flows/valids/minimal.yaml" })
-    void shouldResumeFromBreakpoint() {
+    void shouldResumeFromBreakpoint() throws QueueException {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
         Execution execution = Execution.newExecution(flow, Collections.emptyList())
             .withBreakpoints(List.of(Breakpoint.of("date")))

@@ -21,6 +21,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.ResumeFromBreakpoint;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
@@ -37,6 +38,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
@@ -1130,7 +1132,7 @@ public class ExecutionService {
     public List<ExecutionKilledExecution> killLoopSubExecutions(final String tenantId, final String executionId) {
         return executionRepository.findLoopSubExecutions(tenantId, executionId, null)
             .stream()
-            .filter(subExecution -> subExecution.getState().isRunning() || subExecution.getState().isPaused())
+            .filter(subExecution -> subExecution.getState().isRunning() || subExecution.getState().isPaused() || subExecution.getState().isBreakpoint())
             .map(
                 subExecution -> (ExecutionKilledExecution) ExecutionKilledExecution.builder()
                     .executionId(subExecution.getId())
@@ -1548,7 +1550,7 @@ public class ExecutionService {
      *
      * @throws IllegalArgumentException if the execution is not suspended in a breakpoint
      */
-    public Execution resumeFromBreakpoint(Execution execution, Optional<String> breakpoints) {
+    public Execution resumeFromBreakpoint(Execution execution, Optional<String> breakpoints) throws QueueException {
         if (!execution.getState().isBreakpoint()) {
             throw new IllegalArgumentException("Execution is not suspended");
         }
@@ -1561,8 +1563,26 @@ public class ExecutionService {
             .withTaskRunList(breakpointTaskRunsToCreated(execution))
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
+        // the breakpoint may have been hit by a loop iteration, which is the run that actually has to move on
+        for (Execution iteration : executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null)) {
+            if (iteration.getState().isBreakpoint()) {
+                executionCommandQueue.emit(ResumeFromBreakpoint.from(iteration, breakpoints));
+            }
+        }
+
         eventPublisher.publishEvent(CrudEvent.of(execution, resumed));
         return resumed;
+    }
+
+    /**
+     * Suspend the parent of a loop iteration that stopped at a breakpoint, so the run shows where it stopped.
+     * The suspension goes on up when the parent is itself a loop iteration.
+     */
+    public Execution suspendAtLoopBreakpoint(Execution execution) throws QueueException {
+        if (execution.getKind() == ExecutionKind.LOOP) {
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.BREAKPOINT, null, null));
+        }
+        return execution.withState(State.Type.BREAKPOINT);
     }
 
     private static List<TaskRun> breakpointTaskRunsToCreated(Execution execution) {

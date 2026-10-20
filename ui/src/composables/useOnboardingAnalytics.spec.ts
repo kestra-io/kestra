@@ -6,7 +6,6 @@ import {
     useOnboardingAnalytics,
 } from "./useOnboardingAnalytics"
 
-// vi.mock calls are hoisted above the imports, so the fakes they use must be hoisted too.
 const {events, pageFromRoute} = vi.hoisted(() => ({
     events: vi.fn(),
     pageFromRoute: vi.fn(),
@@ -25,7 +24,6 @@ function setup() {
     return useOnboardingAnalytics({sceneIds: SCENE_IDS, guideId: GUIDE_ID}).trackOnboarding
 }
 
-// The composable calls apiStore.events once per tracked event; return what it was called with.
 function sentPayload() {
     expect(events).toHaveBeenCalledTimes(1)
     return events.mock.calls[0][0]
@@ -61,7 +59,7 @@ describe("useOnboardingAnalytics", () => {
     it("leaves step undefined for an action that is not a scene id", () => {
         setup()({event: "tour_continued", action: "not-a-scene"})
 
-        // undefined, not 0 and not -1
+    
         expect(sentPayload().onboarding.step).toBeUndefined()
     })
 
@@ -80,7 +78,9 @@ describe("useOnboardingAnalytics", () => {
             action: "create-flow",
             mode: "guided",
         })
-    })
+    expect(sentPayload().onboarding.template).toBe(TOUR_ANALYTICS_EXPERIENCE)
+        })
+    
 
     it("merges the additional fields into the onboarding payload", () => {
         setup()({event: "tour_closed", additional: {reason: "skipped", durationMs: 1200}})
@@ -88,7 +88,6 @@ describe("useOnboardingAnalytics", () => {
         const onboarding = sentPayload().onboarding
         expect(onboarding.reason).toBe("skipped")
         expect(onboarding.durationMs).toBe(1200)
-        // the regular fields are still there next to the extra ones
         expect(onboarding.event).toBe("tour_closed")
         expect(onboarding.guideId).toBe(GUIDE_ID)
     })

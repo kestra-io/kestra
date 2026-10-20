@@ -23,10 +23,12 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class TableInputValidator implements ConstraintValidator<TableInputValidation, TableInput> {
-    static final Set<Type> ALLOWED_COLUMN_TYPES = EnumSet.of(
+    public static final Set<Type> ALLOWED_COLUMN_TYPES = EnumSet.of(
         Type.STRING, Type.INT, Type.FLOAT, Type.BOOL, Type.DATE, Type.DATETIME, Type.TIME, Type.DURATION,
         Type.EMAIL, Type.URI, Type.SELECT, Type.MULTISELECT
     );
+
+    public static final Set<String> FORBIDDEN_COLUMN_PROPERTIES = Set.of("defaults", "prefill", "dependsOn", "expression");
 
     @Override
     public boolean isValid(@Nullable TableInput value, @NonNull AnnotationValue<TableInputValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {

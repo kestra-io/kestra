@@ -9,14 +9,14 @@
             {{ $t("documentationMenu") }}
         </KsButton>
         <div v-if="menuOpen" class="docsMenuContainer">
-            <ul class="docsMenu list-unstyled d-flex flex-column m-0">
+            <ul class="docsMenu">
                 <template v-if="rawStructure">
                     <li
                         v-for="{section, children} in sectionsWithChildren"
                         :key="section"
                         :class="{'active-section': isCurrentSection(section)}"
                     >
-                        <span class="text-secondary">
+                        <span>
                             {{ section.toUpperCase() }}
                         </span>
                         <RecursiveToc :parent="{children: children ?? []}">
@@ -161,6 +161,9 @@
     }
 
     .docsMenu {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
         list-style: none;
         padding-left: 0;
         max-height: calc(100vh - 210px);

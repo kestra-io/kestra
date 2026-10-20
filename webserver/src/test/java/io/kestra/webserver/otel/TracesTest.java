@@ -77,12 +77,13 @@ public class TracesTest {
 
         List<SpanData> spans = spansForTenant(tenantId);
         Attributes attributes = spans.getFirst().getAttributes();
-        assertThat(attributes.size()).isEqualTo(5);
+        assertThat(attributes.size()).isEqualTo(6);
         assertThat(attributes.get(TraceUtils.ATTR_TENANT_ID)).isEqualTo(tenantId);
         assertThat(attributes.get(TraceUtils.ATTR_NAMESPACE)).isEqualTo("io.kestra.tests");
         assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("trace-parent");
         assertThat(attributes.get(TraceUtils.ATTR_EXECUTION_ID)).isEqualTo(result.getId());
         assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.executor.DefaultExecutor");
+        assertThat(attributes.get(TraceUtils.ATTR_STATE)).isEqualTo(State.Type.CREATED.name());
         // assert that one trace has a taskId
         assertThat(spans.stream().anyMatch(span -> span.getAttributes().get(TraceUtils.ATTR_TASK_ID) != null)).isTrue();
     }

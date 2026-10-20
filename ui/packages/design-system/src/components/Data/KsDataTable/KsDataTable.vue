@@ -74,7 +74,7 @@
                 :pageSizes="pageSizeOptions"
                 @current-change="onPageChange"
                 @size-change="onSizeChange"
-                class="my-3"
+                class="pagination"
             />
         </div>
     </div>
@@ -642,3 +642,10 @@
         }
     }
 </style>
+
+<style scoped lang="scss">
+    .ks-data-table-wrapper :deep(.pagination) {
+        margin-block: var(--ks-spacing-4);
+    }
+</style>
+

@@ -1,17 +1,12 @@
 package io.kestra.webserver.controllers.api;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,7 +43,6 @@ import lombok.Builder;
 
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -282,6 +276,9 @@ class LogControllerTest {
             logs.stream().map(LogEntry::toPrettyString).collect(Collectors.joining("\n"))
         );
         assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("private, max-age=86400");
+        assertThat(response.getHeaders().get(HttpHeaders.CONTENT_TYPE)).isEqualTo("text/plain");
+        assertThat(response.getHeaders().get(HttpHeaders.CONTENT_DISPOSITION))
+            .isEqualTo("attachment; filename=\"" + executionId + ".log\"; filename*=utf-8''" + executionId + ".log");
     }
 
     @Test
@@ -308,26 +305,6 @@ class LogControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(response.getBody().orElse("")).isEmpty();
         assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
-    }
-
-    @Test
-    void shouldDeleteTheSpooledFileOnceTheDownloadIsSent() throws IOException {
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        when(tenantService.resolveTenant()).thenReturn(tenant);
-        String executionId = IdUtils.create();
-        seedExecution(tenant, executionId);
-        logRepository.save(logEntry(tenant, Level.INFO).toBuilder().executionId(executionId).build());
-        Set<Path> existing = spooledFiles();
-
-        client.toBlocking().retrieve(GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"), String.class);
-
-        await().atMost(Duration.ofSeconds(5)).until(() -> existing.containsAll(spooledFiles()));
-    }
-
-    private static Set<Path> spooledFiles() throws IOException {
-        try (Stream<Path> files = Files.list(Path.of(System.getProperty("java.io.tmpdir")))) {
-            return files.filter(file -> file.getFileName().toString().startsWith("execution-logs-")).collect(Collectors.toSet());
-        }
     }
 
     @SuppressWarnings("unchecked")

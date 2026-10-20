@@ -1,14 +1,10 @@
 package io.kestra.webserver.controllers.api;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 import org.slf4j.event.Level;
 
@@ -35,21 +31,24 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import reactor.core.Disposable;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-
-import static io.kestra.core.utils.Rethrow.throwConsumer;
+import reactor.core.scheduler.Schedulers;
 
 @Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogDataStoreInterface.class)
@@ -119,39 +118,59 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/download", produces = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
-    public HttpResponse<StreamedFile> downloadLogsFromExecution(
+    @ApiResponse(
+        responseCode = "200",
+        description = "downloadLogsFromExecution 200 response",
+        content = @Content(mediaType = MediaType.TEXT_PLAIN, schema = @Schema(type = "string", format = "binary"))
+    )
+    public HttpResponse<Flux<String>> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) throws IOException {
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
         // `private`, not `public`: these logs are tenant-scoped, so a shared cache must not replay
         // them to a different requester, even though a terminated execution's logs never change.
         String cacheControl = executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()
             ? "private, max-age=86400"
             : "no-cache";
 
-        // spooled to disk rather than streamed from the cursor: a slow client would otherwise hold a connection of the pool shared with the executor
-        Path file = Files.createTempFile("execution-logs-", ".log");
-        try {
-            try (Writer writer = Files.newBufferedWriter(file)) {
-                logRepository
-                    .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
-                    .index()
-                    .doOnNext(throwConsumer(log ->
-                    {
-                        if (log.getT1() > 0) {
-                            writer.write('\n');
-                        }
-                        writer.write(LogEntry.toPrettyString(log.getT2()));
-                    }))
-                    .blockLast();
-            }
+        Flux<String> lines = logRepository
+            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
+            .index((index, log) -> (index == 0 ? "" : "\n") + LogEntry.toPrettyString(log));
 
-            InputStream inputStream = Files.newInputStream(file, StandardOpenOption.DELETE_ON_CLOSE);
-            return HttpResponse.ok(new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log"))
-                .header(HttpHeaders.CACHE_CONTROL, cacheControl);
-        } catch (IOException | RuntimeException e) {
-            Files.deleteIfExists(file);
-            throw e;
-        }
+        return HttpResponse.ok(pacedByDemand(lines))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + executionId + ".log\"; filename*=utf-8''" + executionId + ".log")
+            .header(HttpHeaders.CACHE_CONTROL, cacheControl);
+    }
+
+    // findAsync pushes every row as soon as it is read, whatever was requested: blocking its thread until the client asks for more
+    // keeps a slow download from queuing the whole result in memory, at the cost of keeping the query open while the client reads
+    private static <T> Flux<T> pacedByDemand(Flux<T> source) {
+        return Flux.create(sink ->
+        {
+            AtomicReference<Thread> producer = new AtomicReference<>();
+            sink.onRequest(requested -> LockSupport.unpark(producer.get()));
+            Disposable subscription = source
+                .subscribeOn(Schedulers.boundedElastic())
+                .subscribe(
+                    item ->
+                    {
+                        producer.set(Thread.currentThread());
+                        while (sink.requestedFromDownstream() == 0 && !sink.isCancelled()) {
+                            if (Thread.interrupted()) {
+                                throw Exceptions.propagate(new InterruptedException());
+                            }
+                            LockSupport.park(sink);
+                        }
+                        sink.next(item);
+                    },
+                    sink::error,
+                    sink::complete
+                );
+            sink.onDispose(() ->
+            {
+                subscription.dispose();
+                LockSupport.unpark(producer.get());
+            });
+        });
     }
 
     @ExecuteOn(TaskExecutors.IO)

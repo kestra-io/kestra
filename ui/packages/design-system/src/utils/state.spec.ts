@@ -1,8 +1,9 @@
 import {describe, it, expect} from "vitest"
 import fs from "node:fs"
 import path from "node:path"
-import * as State from "../../../packages/design-system/src/utils/state"
+import * as State from "./state"
 
+const __dirname = path.dirname(new URL(import.meta.url).pathname)
 const CORE_STATE = path.resolve(__dirname, "../../../../core/src/main/java/io/kestra/core/models/flows/State.java")
 
 const terminatedFromCore = () => {

@@ -43,7 +43,7 @@
                                             @click="onItemClick(item)"
                                         >
                                             <div class="result-title nav-item-title">
-                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" class="result-icon" />
+                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" />
                                                 <span v-if="item.parentTitle" class="result-parent">
                                                     {{ item.parentTitle }}
                                                 </span>
@@ -442,10 +442,6 @@
             gap: var(--ks-spacing-2);
             flex: 0 1 auto;
             min-width: 0;
-
-            .result-icon {
-                vertical-align: middle;
-            }
         }
 
         .result-parent {

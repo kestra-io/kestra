@@ -55,7 +55,10 @@ export function humanDuration(
 ) {
     options = options || {maxDecimalPoints: 2}
     options.spacer = ""
-    options.language = localStorage.getItem("lang") || "en"
+    const language = localStorage.getItem("lang") || "en"
+    options.language = language
+    // humanize-duration has no regional variants such as pt_BR, so fall back to the base language, then English.
+    options.fallbacks = [language.split("_")[0], "en"]
     options.languages = humanizeDurationLanguages
     options.largest = 2
 

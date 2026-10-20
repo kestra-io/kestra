@@ -18,7 +18,7 @@
             </template>
             <template #footer>
                 <div v-ks-loading="isLoading">
-                    <ValidationError class="me-2" link :errors="errors" />
+                    <ValidationError class="task-edit-validation-error" link :errors="errors" />
 
                     <KsButton
                         :icon="ContentSave"
@@ -31,7 +31,7 @@
                     </KsButton>
                     <KsAlert
                         :closable="false"
-                        class="mb-0 mt-3"
+                        class="task-edit-revision-alert"
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
@@ -821,6 +821,15 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-top: 1px solid var(--ks-border-subtle);
         background: var(--ks-bg-surface);
+    }
+
+    .task-edit-validation-error {
+        margin-inline-end: var(--ks-spacing-2);
+    }
+
+    .task-edit-revision-alert {
+        margin-bottom: 0;
+        margin-top: var(--ks-spacing-4);
     }
 
     .task-edit-validation-status {

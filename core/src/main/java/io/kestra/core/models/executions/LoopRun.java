@@ -4,7 +4,7 @@ import java.util.List;
 
 import jakarta.annotation.Nullable;
 
-public record LoopRun(Execution parent, String taskId, String taskRunId, int index, @Nullable String key, String value, List<Parent> parents) {
-    public record Parent(int index, @Nullable String key, String value) {
+public record LoopRun(Execution parent, String taskId, String taskRunId, int index, @Nullable String key, String value, List<Parent> parents, boolean parseValues) {
+    public record Parent(int index, @Nullable String key, String value, boolean parseValues) {
     }
 }

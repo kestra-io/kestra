@@ -24,7 +24,7 @@ export function useExecutionDeletionDialog() {
         })
 
         const message = () => h("div", null, [
-            h("p", {class: "pb-3", innerHTML: messageHtml}),
+            h("p", {style: {paddingBottom: "var(--ks-spacing-4)"}, innerHTML: messageHtml}),
             offerNonTerminated ? h(KsFormItem, {label: t("execution-include-non-terminated")}, {
                 default: () => h(KsSwitch, {
                     modelValue: options.includeNonTerminated,

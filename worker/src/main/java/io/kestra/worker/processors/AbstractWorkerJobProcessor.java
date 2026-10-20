@@ -97,6 +97,9 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
                     if (state != null && state.isTerminatedInError()) {
                         Span.current().setStatus(StatusCode.ERROR, "Task ended in state " + state.name());
                     }
+                    if (state != null) {
+                        Span.current().setAttribute(TraceUtils.ATTR_STATE, state.name());
+                    }
                     return state;
                 }
             );
@@ -104,6 +107,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
             // should only occur if it fails in the tracing code which should be unexpected
             // we add the exception to have some log in that case
             workerJobCallable.setException(e);
+            Span.current().setAttribute(TraceUtils.ATTR_STATE, State.Type.FAILED.name());
             return State.Type.FAILED;
         } finally {
             this.currentWorkerCallable.set(null);

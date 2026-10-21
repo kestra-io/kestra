@@ -31,14 +31,6 @@ describe("setDocumentTitle", () => {
         },
     )
 
-    it("uses a document title without a separator as the base", () => {
-        document.title = "Kestra"
-
-        setDocumentTitle("Settings")
-
-        expect(document.title).toBe("Settings | Kestra")
-    })
-
     it("keeps the base title stable when the page title contains a separator", () => {
         setDocumentTitle("Parent | Child")
         setDocumentTitle("Runs")

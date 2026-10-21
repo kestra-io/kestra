@@ -291,6 +291,10 @@ export default {
                 "label": "Operation ID",
                 "description": "Filter by async operation identifier",
             },
+            "outputs": {
+                "label": "Searchable outputs",
+                "description": "Filter by the searchable outputs of the execution",
+            },
             "taskRunId": {
                 "label": "Task Run ID",
                 "description": "Filter by task run identifier",

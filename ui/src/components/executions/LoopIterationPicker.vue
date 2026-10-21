@@ -21,8 +21,8 @@
                 <KsSearch
                     v-model="query"
                     clearable
-                    :placeholder="$t('topology-graph.loop.search-placeholder')"
-                    :aria-label="$t('topology-graph.loop.search-placeholder')"
+                    :placeholder="$t('topology-graph.loop.search-by-index')"
+                    :aria-label="$t('topology-graph.loop.search-by-index')"
                 />
                 <KsScrollbar maxHeight="15rem">
                     <button
@@ -59,8 +59,9 @@
                                 @click="select(iteration.number)"
                             >
                                 <KsIcon size="xs" class="loop-picker-check"><Check /></KsIcon>
-                                <span class="loop-picker-number" data-test="loop-picker-number">#{{ iteration.number }}</span>
-                                <span class="loop-picker-value" data-test="loop-picker-value">{{ iteration.value }}</span>
+                                <span class="loop-picker-value" data-test="loop-picker-value">
+                                    {{ iterationLabel(t, iteration.number, iteration.value, isAmbiguous(iteration)) }}
+                                </span>
                                 <KsExecutionStatus size="small" :status="iteration.state" />
                             </button>
                             <KsButton
@@ -98,9 +99,6 @@
             >
                 <ChevronLeft />
             </KsIconButton>
-            <span class="loop-stepper-label" data-test="loop-stepper-label">
-                {{ $t("topology-graph.loop.step-of", {current: lane.scopedNumber, total: lane.iterationCount}) }}
-            </span>
             <KsIconButton
                 :ariaLabel="$t('topology-graph.loop.next-iteration')"
                 :disabled="lane.scopedNumber >= startedIterations"
@@ -122,7 +120,7 @@
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import {iterationLabel} from "../../utils/loopScope"
+    import {ambiguousValues, iterationLabel, iterationNumber} from "../../utils/loopScope"
     import {
         ITERATIONS_PAGE_SIZE,
         LoopIterationError,
@@ -180,8 +178,8 @@
     const pageCount = computed(() => Math.ceil(total.value / ITERATIONS_PAGE_SIZE))
 
     const numberQuery = computed(() => {
-        const match = /^#?([1-9]\d*)$/.exec(query.value.trim())
-        return match ? Number(match[1]) : undefined
+        const match = /^(\d+)$/.exec(query.value.trim())
+        return match ? iterationNumber(Number(match[1])) : undefined
     })
 
     const groups = computed<IterationGroup[]>(() => {
@@ -193,6 +191,8 @@
         if (otherItems.value.length) result.push({key: "others", label: t("topology-graph.loop.other-group"), items: otherItems.value})
         return result
     })
+
+    const isAmbiguous = computed(() => ambiguousValues([...matchItems.value, ...failedItems.value, ...otherItems.value]))
 
     function reset() {
         failedItems.value = []
@@ -343,11 +343,6 @@
 
     .loop-picker-option-active .loop-picker-check {
         visibility: visible;
-    }
-
-    .loop-picker-number {
-        flex-shrink: 0;
-        color: var(--ks-text-muted);
     }
 
     .loop-picker-value {

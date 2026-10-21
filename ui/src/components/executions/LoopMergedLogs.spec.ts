@@ -58,7 +58,10 @@ const globalConfig = {
 
 const mountMerged = () => i18nMount(LoopMergedLogs, {
     props: {levelParams: {}, running: false},
-    messages: {logs_view: {loop: {"show-in-overview-for": "Show {scope} in Overview", "batch-range": "Failed iterations {from}-{to} of {total}"}}},
+    messages: {
+        logs_view: {loop: {"show-in-overview-for": "Show {scope} in Overview", "batch-range": "Failed iterations {from}-{to} of {total}"}},
+        "topology-graph": {loop: {"iteration-index": "index {index}", "iteration-value-index": "{value} · index {index}"}},
+    },
     global: globalConfig,
 })
 
@@ -84,6 +87,28 @@ describe("executions/LoopMergedLogs", () => {
 
     afterEach(() => {
         localStorage.clear()
+    })
+
+    test("shouldLabelLinesByIterationValueAndOnlyAddTheIndexWhenTheValueRepeatsInTheSameLoopRun", () => {
+        const customer = (id: string, number: number) => ({id, taskId: "per_customer", number, value: "acme"})
+        const invoice = (id: string, number: number, value: string) => ({id, taskId: "per_invoice", number, value})
+        state.merged.targets.value = {
+            chains: {
+                a: [customer("c1", 1), invoice("a", 1, "INV")],
+                b: [customer("c1", 1), invoice("b", 2, "INV")],
+                c: [customer("c2", 2), invoice("c", 1, "INV")],
+            },
+            offset: 0, end: 3, total: 3, scope: [],
+        }
+        state.merged.lines.value = ["a", "b", "c"].map((executionId) => ({executionId, message: executionId, timestamp: "2026-10-09T09:49:15Z"}))
+
+        const labels = mountMerged().findAll("[data-test='loop-merged-scope-button']").map((button) => button.text())
+
+        expect(labels).toEqual([
+            "per_customer: acme · index 0 › per_invoice: INV · index 0",
+            "per_customer: acme · index 0 › per_invoice: INV · index 1",
+            "per_customer: acme · index 1 › per_invoice: INV",
+        ])
     })
 
     test("shouldRenderEachLineWithItsScopeAndAnAccessibleOverviewLink", () => {

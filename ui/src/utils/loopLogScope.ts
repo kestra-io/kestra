@@ -79,8 +79,12 @@ export function flowHasLoop(value: unknown): boolean {
     return Object.values(record).some(flowHasLoop)
 }
 
-export const scopeLabel = (t: (key: string, named?: Record<string, unknown>) => string, chain: ScopeNode[]): string =>
-    chain.map((node) => `${node.taskId}: ${iterationLabel(t, node.number, node.value)}`).join(" › ")
+export const scopeLabel = (
+    t: (key: string, named?: Record<string, unknown>) => string,
+    chain: ScopeNode[],
+    isAmbiguous: (node: ScopeNode) => boolean = () => false,
+): string =>
+    chain.map((node) => `${node.taskId}: ${iterationLabel(t, node.number, node.value, isAmbiguous(node))}`).join(" › ")
 
 export const scopeEntriesOf = (chain: ScopeNode[]): LoopScopeEntry[] =>
     chain.map(({taskId, number}) => ({taskId, number}))

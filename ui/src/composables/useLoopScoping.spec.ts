@@ -98,7 +98,7 @@ describe("useLoopScoping", () => {
         mocks.findIterationByNumber.mockResolvedValue({id: "it-2", number: 2, state: "SUCCESS"})
         mocks.loadIterationExecution.mockResolvedValue(iterationExecution("it-2", "SUCCESS"))
         const {store, route} = setup()
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
         expect(mocks.findIterationByNumber).toHaveBeenCalledWith("root", "per_region", 2)
@@ -106,10 +106,22 @@ describe("useLoopScoping", () => {
         expect(store.subflowsExecutions).toEqual({})
     })
 
+    it("shouldStillResolveAOneBasedLinkAndRewriteItAsAnIndex", async () => {
+        const {store, scoping, route} = setup()
+        route.query = {loopScope: "per_region:2"}
+        await flushPromises()
+
+        expect(mocks.findIterationByNumber).toHaveBeenCalledWith("root", "per_region", 2)
+        expect(store.scopedIterations.per_region.id).toBe("it-2")
+        scoping.stepLane("per_region", 1)
+        await flushPromises()
+        expect(route.query.loopScope).toBe("per_region@2")
+    })
+
     it("shouldDropAScopeThatNoLongerExists", async () => {
         mocks.findIterationByNumber.mockResolvedValue(undefined)
         const {route} = setup()
-        route.query = {loopScope: "per_region:99"}
+        route.query = {loopScope: "per_region@98"}
         await flushPromises()
 
         expect(route.query.loopScope).toBeUndefined()
@@ -118,17 +130,17 @@ describe("useLoopScoping", () => {
     it("shouldKeepTheScopeAndReportAFailureOnATransientError", async () => {
         mocks.findIterationByNumber.mockRejectedValue(new LoopIterationError("unknown"))
         const {scoping, route} = setup()
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
-        expect(route.query.loopScope).toBe("per_region:2")
+        expect(route.query.loopScope).toBe("per_region@1")
         expect(scoping.scopeFailure.value).toBe("unknown")
     })
 
     it("shouldTreatAForbiddenIterationAsDefinitive", async () => {
         mocks.findIterationByNumber.mockRejectedValue(new LoopIterationError("forbidden"))
         const {scoping, route} = setup()
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
         expect(scoping.scopeFailure.value).toBe("forbidden")
@@ -137,12 +149,12 @@ describe("useLoopScoping", () => {
 
     it("shouldNotReportANumberWhoseIterationIsNotTheLoadedOne", async () => {
         const {scoping, route, store} = setup()
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
         expect(scoping.lanes.value.per_region.scopedNumber).toBe(2)
 
         mocks.findIterationByNumber.mockRejectedValue(new LoopIterationError("unknown"))
-        route.query = {loopScope: "per_region:3"}
+        route.query = {loopScope: "per_region@2"}
         await flushPromises()
 
         expect(store.scopedIterations.per_region.id).toBe("it-2")
@@ -152,11 +164,11 @@ describe("useLoopScoping", () => {
     it("shouldReplaceTheStreamWhenSteppingToAnotherRunningIteration", async () => {
         mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id))
         const {store, subscriptions, route} = setup()
-        route.query = {loopScope: "per_region:1"}
+        route.query = {loopScope: "per_region@0"}
         await flushPromises()
         expect(subscriptions.map((s) => s.executionId)).toEqual(["it-1"])
 
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
         expect(subscriptions.map((s) => s.executionId)).toEqual(["it-1", "it-2"])
@@ -171,16 +183,16 @@ describe("useLoopScoping", () => {
 
         scoping.stepLane("per_region", 1)
         await flushPromises()
-        expect(route.query.loopScope).toBe("per_region:1")
+        expect(route.query.loopScope).toBe("per_region@0")
 
         scoping.stepLane("per_region", -1)
         await flushPromises()
-        expect(route.query.loopScope).toBe("per_region:1")
+        expect(route.query.loopScope).toBe("per_region@0")
     })
 
     it("shouldStepFromTheRequestedIterationWhileItIsStillLoading", async () => {
         const {scoping, route} = setup()
-        route.query = {loopScope: "per_region:1"}
+        route.query = {loopScope: "per_region@0"}
         await flushPromises()
         mocks.loadIterationExecution.mockReturnValue(new Promise(() => {}))
 
@@ -189,7 +201,7 @@ describe("useLoopScoping", () => {
         scoping.stepLane("per_region", 1)
         await flushPromises()
 
-        expect(route.query.loopScope).toBe("per_region:3")
+        expect(route.query.loopScope).toBe("per_region@2")
     })
 
     it("shouldNotOverwriteANewerScopeWhenAFailureLookupResolvesLate", async () => {
@@ -205,13 +217,13 @@ describe("useLoopScoping", () => {
         await pending
         await flushPromises()
 
-        expect(route.query.loopScope).toBe("per_region:3")
+        expect(route.query.loopScope).toBe("per_region@2")
     })
 
     it("shouldLeaveASubflowExpansionUntouchedWhenTheScopeIsCleared", async () => {
         const {scoping, store, route} = setup()
         store.addSubflowExecution({subflow: "per_region", execution: {id: "subflow-1"} as never})
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
         scoping.clearScope()
@@ -223,7 +235,7 @@ describe("useLoopScoping", () => {
 
     it("shouldDropScopedIterationsWhenTheComponentUnmounts", async () => {
         const {store, route, wrapper} = setup()
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
         wrapper.unmount()
@@ -234,7 +246,7 @@ describe("useLoopScoping", () => {
     it.each(["SUBMITTED", "QUEUED", "RETRYING", "BREAKPOINT"])("shouldFollowAnIterationThatIsStill%s", async (state) => {
         mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id, state))
         const {subscriptions, route} = setup()
-        route.query = {loopScope: "per_region:1"}
+        route.query = {loopScope: "per_region@0"}
         await flushPromises()
 
         expect(subscriptions.map((s) => s.executionId)).toEqual(["it-1"])
@@ -243,7 +255,7 @@ describe("useLoopScoping", () => {
     it.each(["SUCCESS", "FAILED", "KILLED", "WARNING", "CANCELLED", "SKIPPED"])("shouldNotFollowAnIterationThatIs%s", async (state) => {
         mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id, state))
         const {subscriptions, route} = setup()
-        route.query = {loopScope: "per_region:1"}
+        route.query = {loopScope: "per_region@0"}
         await flushPromises()
 
         expect(subscriptions).toEqual([])
@@ -253,7 +265,7 @@ describe("useLoopScoping", () => {
         let resolveIteration!: (value: unknown) => void
         mocks.loadIterationExecution.mockReturnValue(new Promise((resolve) => (resolveIteration = resolve)))
         const {store, route, wrapper} = setup()
-        route.query = {loopScope: "per_region:2"}
+        route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
         wrapper.unmount()

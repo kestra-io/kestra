@@ -51,20 +51,20 @@ describe("LoopIterationPicker", () => {
 
         await openPicker(lane({terminatedIterations: {FAILED: 1, SUCCESS: 3}}))
 
-        expect(body("[data-test='loop-picker-option']")).toEqual(expect.arrayContaining([expect.stringContaining("#2AMER"), expect.stringContaining("#1EMEA")]))
+        expect(body("[data-test='loop-picker-option']")).toEqual(expect.arrayContaining([expect.stringContaining("AMER"), expect.stringContaining("EMEA")]))
         expect(body("[data-test^='loop-picker-group-']")).toEqual(["Failed · 1", "Other iterations"])
         expect(mocks.search).toHaveBeenNthCalledWith(1, expect.objectContaining({state: "FAILED"}))
         expect(mocks.search).toHaveBeenNthCalledWith(2, expect.objectContaining({excludeState: "FAILED"}))
     })
 
-    it("shouldOfferAllIterationsFirstAndLabelRowsWithANumberAndValue", async () => {
+    it("shouldOfferAllIterationsFirstAndLabelRowsWithTheirValueOnly", async () => {
         mocks.search.mockResolvedValue(page([iteration(2, "AMER")]))
 
         await openPicker(lane({scopedNumber: 2}))
 
         expect(body("[data-test='loop-picker-all']")).toEqual(["All iterations"])
         const rows = [...document.body.querySelectorAll("[data-test='loop-picker-option']")]
-        expect(rows[0].querySelector("[data-test='loop-picker-number']")?.textContent).toBe("#2")
+        expect(rows[0].querySelector("[data-test='loop-picker-number']")).toBeNull()
         expect(rows[0].querySelector("[data-test='loop-picker-value']")?.textContent).toBe("AMER")
         expect(rows[0].className).toContain("loop-picker-option-active")
         expect(rows[0].getAttribute("aria-current")).toBe("true")
@@ -170,19 +170,19 @@ describe("LoopIterationPicker", () => {
         expect(body("[data-test='loop-picker-option']").join(" ")).not.toContain("STALE")
     })
 
-    it("shouldSearchByNumberOnTheMatchingPage", async () => {
+    it("shouldSearchByZeroBasedIndexOnTheMatchingPage", async () => {
         mocks.search.mockResolvedValue(page([iteration(7, "SEVEN")]))
         const wrapper = await openPicker(lane({}))
         mocks.search.mockClear()
 
         const input = document.body.querySelector("input") as HTMLInputElement
-        input.value = "#7"
+        input.value = "6"
         input.dispatchEvent(new Event("input"))
         await new Promise((resolve) => setTimeout(resolve, 350))
         await flushPromises()
 
         expect(mocks.search).toHaveBeenCalledWith(expect.objectContaining({page: 1}))
-        expect(body("[data-test='loop-picker-option']")).toEqual([expect.stringContaining("#7SEVEN")])
+        expect(body("[data-test='loop-picker-option']")).toEqual([expect.stringContaining("SEVEN")])
         wrapper.unmount()
     })
 
@@ -219,18 +219,18 @@ describe("LoopIterationPicker", () => {
     it("shouldShowTheStepperOnceScopedAndEmitTheStep", async () => {
         const wrapper = mountPicker(lane({scopedNumber: 2, scopedValue: "AMER"}))
 
-        expect(wrapper.find("[data-test='loop-picker-trigger']").text()).toBe("#2 AMER")
-        expect(wrapper.find("[data-test='loop-stepper-label']").text()).toBe("2 of 4")
+        expect(wrapper.find("[data-test='loop-picker-trigger']").text()).toBe("AMER")
+        expect(wrapper.find("[data-test='loop-stepper']").text()).toBe("")
 
         await wrapper.find("[data-test='loop-step-next']").trigger("click")
 
         expect(wrapper.emitted("step")).toEqual([[1]])
     })
 
-    it("shouldFallBackToTheIterationNumberWhenTheItemHasNoValue", () => {
+    it("shouldFallBackToTheZeroBasedIndexWhenTheItemHasNoValue", () => {
         const wrapper = mountPicker(lane({scopedNumber: 3}))
 
-        expect(wrapper.find("[data-test='loop-picker-trigger']").text()).toBe("Iteration 3")
+        expect(wrapper.find("[data-test='loop-picker-trigger']").text()).toBe("index 2")
     })
 
     it("shouldDisableTheStepperAtTheBounds", () => {
@@ -247,17 +247,41 @@ describe("LoopIterationPicker", () => {
         expect(wrapper.find("[data-test='loop-step-next']").attributes("disabled")).toBeDefined()
     })
 
-    it("shouldNotSearchForIterationZero", async () => {
+    it("shouldNotSearchForANegativeIndex", async () => {
         mocks.search.mockResolvedValue(page([iteration(1, "EMEA")]))
         await openPicker(lane({}))
         mocks.search.mockClear()
 
         const input = document.body.querySelector("input") as HTMLInputElement
-        input.value = "#0"
+        input.value = "-1"
         input.dispatchEvent(new Event("input"))
         await new Promise((resolve) => setTimeout(resolve, 350))
         await flushPromises()
 
         expect(mocks.search).not.toHaveBeenCalled()
+    })
+
+    it("shouldAddTheZeroBasedIndexToIterationsSharingAValue", async () => {
+        mocks.search.mockResolvedValue(page([iteration(1, "dup"), iteration(2, "dup"), iteration(3, "solo")]))
+
+        await openPicker(lane({}))
+
+        expect(body("[data-test='loop-picker-value']")).toEqual(["dup · index 0", "dup · index 1", "solo"])
+    })
+
+    it("shouldSearchIndexZeroOnTheFirstPageAndIndexFiftyOnTheSecond", async () => {
+        mocks.search.mockResolvedValue(page([]))
+        await openPicker(lane({}))
+
+        for (const [query, expectedPage] of [["0", 1], ["50", 2]] as const) {
+            mocks.search.mockClear()
+            const input = document.body.querySelector("input") as HTMLInputElement
+            input.value = query
+            input.dispatchEvent(new Event("input"))
+            await new Promise((resolve) => setTimeout(resolve, 350))
+            await flushPromises()
+
+            expect(mocks.search).toHaveBeenCalledWith(expect.objectContaining({page: expectedPage}))
+        }
     })
 })

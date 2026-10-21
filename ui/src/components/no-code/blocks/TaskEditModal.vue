@@ -76,6 +76,7 @@
                     :parentPath="parentPath"
                     :refPath="refPath"
                     :blockSchemaPath="blockSchemaPath"
+                    :editedPath="editedPath"
                     @update:task="emit('update:task', $event)"
                     @close="emit('close')"
                     @select-nested="(...args) => emit('select-nested', ...args)"
@@ -141,6 +142,7 @@
         parentPath: string
         refPath?: number
         blockSchemaPath: string
+        editedPath?: string
         crumbs: Crumb[]
         creating?: boolean
     }>()
@@ -193,7 +195,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-edit-modal-header {
         display: flex;
         align-items: center;

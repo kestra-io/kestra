@@ -54,7 +54,7 @@
     useScrollMemory(ref("context-panel-news"), scrollableElement)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .newsHeader {
         padding: 2rem 2rem 0;
 

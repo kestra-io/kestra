@@ -33,7 +33,7 @@
     defineProps<{isNamespace?: boolean}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .empty-template {
     min-height: calc(100vh - 174px);
     display: flex;

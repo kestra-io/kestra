@@ -85,10 +85,40 @@
                                     <div class="d-flex flex-column">
                                         <div
                                             class="gantt-row d-flex cursor-icon"
-                                            :class="{'is-expanded': selectedTaskRuns.includes(item.id)}"
+                                            :class="{
+                                                'is-expanded': selectedTaskRuns.includes(item.id),
+                                                'gantt-block-alt': rowBlocks.get(item.id)?.isAlt,
+                                                'gantt-block-start': rowBlocks.get(item.id)?.isStart,
+                                            }"
                                             @click="onTaskSelect(item.id)"
                                         >
-                                            <div v-if="!verticalLayout" class="d-inline-flex">
+                                            <div
+                                                v-if="!verticalLayout"
+                                                class="gantt-rails"
+                                                aria-hidden="true"
+                                            >
+                                                <span
+                                                    v-if="hasChildren(item)"
+                                                    class="gantt-rail gantt-rail-outgoing"
+                                                    :style="{'--rail-depth': item.depth || 0}"
+                                                />
+                                                <span
+                                                    v-for="depth in continuingRailDepths(item)"
+                                                    :key="depth"
+                                                    class="gantt-rail"
+                                                    :style="{'--rail-depth': depth}"
+                                                />
+                                                <span
+                                                    v-if="(item.depth ?? 0) > 0"
+                                                    class="gantt-rail gantt-rail-elbow"
+                                                    :style="{'--rail-depth': (item.depth ?? 1) - 1}"
+                                                />
+                                            </div>
+                                            <div
+                                                v-if="!verticalLayout"
+                                                class="d-inline-flex gantt-chevron"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
@@ -146,6 +176,15 @@
                                                 />
                                             </div>
                                         </div>
+                                        <LoopIterationTree
+                                            v-if="taskTypeByTaskRunId[item.id] === 'io.kestra.plugin.core.flow.Loop'"
+                                            :key="`${execution!.id}-${item.task.taskId}-${item.id}`"
+                                            :executionId="execution!.id"
+                                            :taskId="item.task.taskId"
+                                            :namespace="execution!.namespace"
+                                            :flowId="execution!.flowId"
+                                            :depth="item.depth || 0"
+                                        />
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
                                                 <div class="task-details__inner p-2">
@@ -221,6 +260,7 @@
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
+    import LoopIterationTree from "./LoopIterationTree.vue"
 
     import {storageKeys} from "../../utils/constants"
     type TaskRun = ExecutionTaskRun
@@ -389,6 +429,74 @@
     })
 
     const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
+
+    const seriesById = computed(() => new Map(filteredSeries.value.map((item) => [item.id, item])))
+
+    const childrenByTaskId = computed(() => {
+        const children = new Set<string>()
+
+        for (const item of filteredSeries.value) {
+            if (item.task.parentTaskRunId) {
+                children.add(item.task.parentTaskRunId)
+            }
+        }
+
+        return children
+    })
+
+    const lastChildByParent = computed(() => {
+        const lastChild = new Map<string, string>()
+
+        for (const item of filteredSeries.value) {
+            lastChild.set(item.task.parentTaskRunId ?? "__root__", item.id)
+        }
+
+        return lastChild
+    })
+
+    const hasChildren = (item: SeriesItem): boolean =>
+        childrenByTaskId.value.has(item.id)
+
+    const isLastSibling = (item: SeriesItem): boolean =>
+        lastChildByParent.value.get(item.task.parentTaskRunId ?? "__root__") === item.id
+
+    const continuingRailDepths = (item: SeriesItem): number[] => {
+        const depths: number[] = []
+        let cursor = item
+        let ancestor = seriesById.value.get(cursor.task.parentTaskRunId ?? "")
+
+        while (ancestor) {
+            if (!isLastSibling(cursor)) {
+                depths.push(ancestor.depth ?? 0)
+            }
+
+            cursor = ancestor
+            ancestor = seriesById.value.get(cursor.task.parentTaskRunId ?? "")
+        }
+
+        return depths
+    }
+
+    const rowBlocks = computed(() => {
+        const blocks = new Map<string, {isAlt: boolean; isStart: boolean}>()
+        const previousSiblingByParent = new Map<string, SeriesItem>()
+        let blockIndex = 0
+
+        filteredSeries.value.forEach((item, index) => {
+            const parentKey = item.task.parentTaskRunId ?? "__root__"
+            const previousSibling = previousSiblingByParent.get(parentKey)
+            const isStart = index > 0 && (hasChildren(item) || (previousSibling !== undefined && hasChildren(previousSibling)))
+
+            if (isStart) {
+                blockIndex++
+            }
+
+            blocks.set(item.id, {isAlt: blockIndex % 2 === 1, isStart})
+            previousSiblingByParent.set(parentKey, item)
+        })
+
+        return blocks
+    })
 
     const isProgressing = computed<boolean>(() => execution.value?.state?.current === State.RUNNING)
 
@@ -603,7 +711,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .gantt-progress {
         margin-bottom: var(--ks-spacing-4);
     }
@@ -620,7 +728,7 @@
             --gantt-duration-width: 0rem;
         }
 
-        :deep(.kel-card__header) {
+        & :deep(.kel-card__header) {
             padding: 0;
             font-size: var(--ks-font-size-sm);
 
@@ -696,7 +804,7 @@
             }
         }
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             padding: 0;
 
             .vue-recycle-scroller {
@@ -717,23 +825,62 @@
             }
 
             .gantt-row {
+                --gantt-band-bg: color-mix(in srgb, var(--ks-border-default) 60%, var(--ks-dropdown-bg));
+
                 align-items: center;
                 position: relative;
                 padding-right: var(--ks-spacing-8);
                 background: var(--ks-dropdown-bg);
                 border-top: 1px solid var(--ks-border-default);
 
+                &.gantt-block-alt {
+                    background: var(--gantt-band-bg);
+                }
+
+                &.gantt-block-start {
+                    border-top-color: var(--ks-border-strong);
+                }
+
                 &.is-expanded {
                     background: var(--ks-dropdown-bg-active);
                 }
 
-                * {
+                & * {
                     transition: none !important;
                     animation: none !important;
                 }
 
-                > * {
+                & > * {
                     padding: 1rem .25rem;
+                }
+
+                .gantt-rails {
+                    position: absolute;
+                    inset: calc(-1 * var(--ks-spacing-px)) 0 0;
+                    pointer-events: none;
+                }
+
+                .gantt-rail {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: calc(var(--ks-spacing-3) + var(--rail-depth, 0) * var(--ks-spacing-5));
+                    border-left: var(--ks-spacing-px) solid var(--ks-border-strong);
+                }
+
+                .gantt-rail-outgoing {
+                    top: calc(50% + var(--ks-spacing-2));
+                }
+
+                .gantt-rail-elbow {
+                    bottom: 50%;
+                    width: calc(var(--ks-spacing-5) - var(--ks-spacing-2));
+                    border-bottom: var(--ks-spacing-px) solid var(--ks-border-strong);
+                }
+
+                .gantt-chevron {
+                    flex-shrink: 0;
+                    transform: translateX(calc(var(--depth, 0) * var(--ks-spacing-5)));
                 }
 
                 .task-label {
@@ -780,7 +927,7 @@
                     }
                 }
 
-                .attempt_warn{
+                .attempt_warn {
                     color: var(--ks-text-warning);
                     vertical-align: middle;
                 }
@@ -891,7 +1038,7 @@
             margin-bottom: 0;
         }
 
-        > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
+        & > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
             border-radius: var(--kel-border-radius-round);
         }
     }

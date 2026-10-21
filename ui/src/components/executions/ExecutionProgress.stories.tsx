@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from "@storybook/vue3";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {within, expect, waitFor} from "storybook/test";
 import {configureClient} from "@kestra-io/kestra-sdk";
 import ExecutionProgress from "./ExecutionProgress.vue";

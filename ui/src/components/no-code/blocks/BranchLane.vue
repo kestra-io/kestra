@@ -230,20 +230,20 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .branch-lane {
         display: flex;
         flex-direction: column;
         border-left: 2px solid var(--ks-border-strong);
         padding-left: var(--ks-spacing-3);
+    }
 
-        &--error {
-            border-left-color: var(--ks-status-error);
-        }
+    .branch-lane--error {
+        border-left-color: var(--ks-status-error);
+    }
 
-        &--warning {
-            border-left-color: var(--ks-status-warning);
-        }
+    .branch-lane--warning {
+        border-left-color: var(--ks-status-warning);
     }
 
     .branch-lane-header {

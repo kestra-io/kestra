@@ -5,6 +5,12 @@
       "cta": "Посмотреть изменения"
     },
     "loading": "Загрузка...",
+    "namespace_files_tip": {
+      "title": "Управляйте скриптами как файлами namespace",
+      "description": "Вместо того чтобы писать скрипт inline, откройте панель «Файлы», добавьте его как файл (например, main.py) и запускайте из своего flow:",
+      "open_files": "Открыть файлы",
+      "dont_show_again": "Больше не показывать"
+    },
     "more actions": "Дополнительные действия",
     "recipe": {
       "create_flow": "Создать flow",
@@ -1780,6 +1786,14 @@
     "item": "элемент",
     "items": "элементы",
     "iterations": "Итерации",
+    "load_10_more": "Загрузить ещё 10",
+    "show_all_executions": "Показать все выполнения",
+    "failed_iterations_only": "Только неудачные итерации",
+    "loop_iterations_shown": "Показано {shown} из {total}",
+    "loop_iterations_load_error": "Не удалось загрузить итерации",
+    "retry": "Повторите попытку",
+    "no_iterations": "Пока нет итераций",
+    "no_failed_iterations": "Нет неудачных итераций",
     "loop_iterations_notice": {
       "logs": "Итерации Loop запускаются как отдельные под-egzekucje, поэтому их log'и здесь не отображаются.",
       "outputs": "Итерации Loop выполняются как отдельные под-egzekucje, поэтому их output не отображается здесь.",

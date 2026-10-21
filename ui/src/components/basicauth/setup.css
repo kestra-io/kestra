@@ -1,13 +1,4 @@
 
-%flexcol {
-  display: flex;
-  flex-direction: column;
-}
-
-%text-primary {
-  color: var(--ks-text-primary);
-}
-
 :global(body .fullscreen-layout:has(.setup-container)) {
   background: var(--ks-bg-base) url("../onboarding/assets/grid.svg") center / auto no-repeat;
 }
@@ -25,7 +16,8 @@
 }
 
 .setup-sidebar {
-  @extend %flexcol;
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
   padding: 0 1.5rem;
   border-radius: 12px;
@@ -48,7 +40,8 @@
 }
 
 .setup-main {
-  @extend %flexcol;
+  display: flex;
+  flex-direction: column;
   max-width: 60%;
   padding: 0 !important;
 
@@ -61,11 +54,12 @@
   width: 100%;
   padding: 1rem;
   overflow: hidden;
+}
 
-  &-body {
-    @extend %flexcol;
-    gap: 1rem;
-  }
+.setup-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .card-header {
@@ -75,7 +69,7 @@
     position: absolute;
     top: 0;
     right: 0;
-    @extend %text-primary;
+    color: var(--ks-text-primary);
     font-size: var(--ks-font-size-sm);
     font-weight: 400;
     transition: color 0.2s;
@@ -87,14 +81,14 @@
   }
 
   .header-title {
-    @extend %text-primary;
+    color: var(--ks-text-primary);
     font-weight: 600;
     font-size: var(--ks-font-size-xl);
     line-height: 36px;
   }
 
   .header-subtitle {
-    @extend %text-primary;
+    color: var(--ks-text-primary);
     display: block;
     margin-top: 0.5rem;
     font-weight: 400;
@@ -102,16 +96,18 @@
 }
 
 .user-form {
-  @extend %flexcol;
+  display: flex;
+  flex-direction: column;
   gap: var(--ks-spacing-4);
 
-  :deep(.kel-form-item) {
+  & :deep(.kel-form-item) {
     margin-bottom: 0;
   }
 }
 
 .user-field {
-  @extend %flexcol;
+  display: flex;
+  flex-direction: column;
   gap: var(--ks-spacing-2);
 }
 
@@ -138,7 +134,7 @@
 .use-case-checkboxes {
   margin-top: var(--ks-spacing-2);
 
-  :deep(.kel-checkbox-group) {
+  & :deep(.kel-checkbox-group) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--ks-spacing-4);
@@ -149,27 +145,29 @@
     }
   }
 
-  :deep(.kel-checkbox__label) {
+  & :deep(.kel-checkbox__label) {
     white-space: normal;
   }
 }
 
 .success-step {
-  @extend %flexcol;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   text-align: center;
   padding: var(--ks-spacing-6) 0;
 
 
   .success-content {
-    @extend %flexcol;
+    display: flex;
+    flex-direction: column;
     gap: var(--ks-spacing-2);
     margin-top: var(--ks-spacing-4);
   }
 
   .success-title,
   .success-subtitle {
-    @extend %text-primary;
+    color: var(--ks-text-primary);
     margin: 0;
   }
 

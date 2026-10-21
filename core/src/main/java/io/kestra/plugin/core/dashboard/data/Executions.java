@@ -42,7 +42,7 @@ import lombok.experimental.SuperBuilder;
                       legend:
                         enabled: true
                       column: namespace
-                    data
+                    data:
                       type: io.kestra.plugin.core.dashboard.data.Executions
                       columns:
                         namespace:

@@ -222,171 +222,171 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-overview {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-5);
         margin-top: var(--ks-spacing-8);
         min-width: 0;
+    }
 
-        &__title {
-            margin: 0;
-            font-size: var(--ks-font-size-xs);
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: var(--ks-text-primary);
+    .plugin-overview__title {
+        margin: 0;
+        font-size: var(--ks-font-size-xs);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--ks-text-primary);
+    }
+
+    .plugin-overview__block {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        padding-bottom: var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
+
+        &:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
+    }
 
-        &__block {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-2);
-            padding-bottom: var(--ks-spacing-4);
-            border-bottom: 1px solid var(--ks-border-default);
+    .plugin-overview__label {
+        margin: 0;
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
 
-            &:last-child {
-                border-bottom: none;
-                padding-bottom: 0;
-            }
-        }
+    .plugin-overview__latest {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+    }
 
-        &__label {
-            margin: 0;
-            font-size: var(--ks-font-size-xs);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
+    .plugin-overview__latest-row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__latest {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-1);
-        }
+    .plugin-overview__version {
+        font-size: var(--ks-font-size-md);
+        font-weight: 700;
+        color: var(--ks-text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
 
-        &__latest-row {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-        }
+    .plugin-overview__link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-link);
+        text-decoration: none;
+        width: fit-content;
 
-        &__version {
-            font-size: var(--ks-font-size-md);
-            font-weight: 700;
-            color: var(--ks-text-primary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            min-width: 0;
-        }
-
-        &__link {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-1);
-            font-size: var(--ks-font-size-xs);
+        &:hover {
             color: var(--ks-text-link);
-            text-decoration: none;
-            width: fit-content;
-
-            &:hover {
-                color: var(--ks-text-link);
-                text-decoration: underline;
-            }
+            text-decoration: underline;
         }
+    }
 
-        &__meta {
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-            line-height: 1.25rem;
-        }
+    .plugin-overview__meta {
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
+        line-height: 1.25rem;
+    }
 
-        &__previous {
-            width: 100%;
-        }
+    .plugin-overview__previous {
+        width: 100%;
+    }
 
-        &__version-option {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-px);
-            padding: var(--ks-spacing-2) 0;
-            line-height: 1.25rem;
-        }
+    .plugin-overview__version-option {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-px);
+        padding: var(--ks-spacing-2) 0;
+        line-height: 1.25rem;
+    }
 
-        &__version-option-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-2);
-        }
+    .plugin-overview__version-option-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__version-option-name {
-            font-size: var(--ks-font-size-xs);
-            font-weight: 600;
+    .plugin-overview__version-option-name {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
+
+    .plugin-overview__version-option-meta {
+        font-size: var(--ks-font-size-2xs);
+        color: var(--ks-text-secondary);
+    }
+
+    .plugin-overview__person {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
+    }
+
+    .plugin-overview__avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        background-color: var(--ks-bg-tag);
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-xs);
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .plugin-overview__avatar--img {
+        background-color: transparent;
+        object-fit: contain;
+    }
+
+    .plugin-overview__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
+    }
+
+    .plugin-overview__resource {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        background-color: var(--ks-bg-tag);
+        border-radius: var(--ks-radius-base);
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        text-decoration: none;
+        width: fit-content;
+
+        &:hover {
+            background-color: var(--ks-bg-active);
             color: var(--ks-text-primary);
         }
+    }
 
-        &__version-option-meta {
-            font-size: var(--ks-font-size-2xs);
-            color: var(--ks-text-secondary);
-        }
-
-        &__person {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-        }
-
-        &__avatar {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 50%;
-            background-color: var(--ks-bg-tag);
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-xs);
-            font-weight: 700;
-            flex-shrink: 0;
-
-            &--img {
-                background-color: transparent;
-                object-fit: contain;
-            }
-        }
-
-        &__tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--ks-spacing-2);
-        }
-
-        &__resource {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            padding: var(--ks-spacing-1) var(--ks-spacing-2);
-            background-color: var(--ks-bg-tag);
-            border-radius: var(--ks-radius-base);
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-xs);
-            font-weight: 600;
-            text-decoration: none;
-            width: fit-content;
-
-            &:hover {
-                background-color: var(--ks-bg-active);
-                color: var(--ks-text-primary);
-            }
-        }
-
-        &__resource-icon {
-            color: var(--ks-text-secondary);
-        }
+    .plugin-overview__resource-icon {
+        color: var(--ks-text-secondary);
     }
 
     .category-label {

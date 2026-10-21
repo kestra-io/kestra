@@ -101,7 +101,7 @@
     useRouteContext(routeInfo)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .oss-secrets-block {
         padding: 0;
     }

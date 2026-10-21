@@ -207,6 +207,49 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         this.useSecrets.add(index, secret);
     }
 
+    public String maskSecrets(@Nullable String data) {
+        if (data == null) {
+            return null;
+        }
+        for (String s : this.useSecrets) {
+            if (data.contains(s)) {
+                data = data.replace(s, "******");
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Masks every secret reported through {@link #usedSecret(String)}, walking maps and collections; any other value
+     * is masked through its {@code toString()}, so it comes back as a {@link String}.
+     */
+    public Object maskSecrets(@Nullable Object object) {
+        if (object instanceof Map<?, ?> value) {
+            return value
+                .entrySet()
+                .stream()
+                .map(
+                    e -> new AbstractMap.SimpleEntry<>(
+                        maskSecrets(e.getKey()),
+                        maskSecrets(e.getValue())
+                    )
+                )
+                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+        } else if (object instanceof Collection<?> value) {
+            return value
+                .stream()
+                .map(this::maskSecrets)
+                .toList();
+        } else if (object instanceof String string) {
+            return maskSecrets(string);
+        } else if (object == null) {
+            return null;
+        } else {
+            return maskSecrets(object.toString());
+        }
+    }
+
     public org.slf4j.Logger logger() {
         if (this.logger == null) {
             synchronized (this) {
@@ -390,43 +433,6 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             this.logger = logger;
         }
 
-        protected String replaceSecret(String data) {
-            for (String s : runContextLogger.useSecrets) {
-                if (data.contains(s)) {
-                    data = data.replace(s, "******");
-                }
-            }
-
-            return data;
-        }
-
-        private Object recursive(@Nullable Object object) {
-            if (object instanceof Map<?, ?> value) {
-                return value
-                    .entrySet()
-                    .stream()
-                    .map(
-                        e -> new AbstractMap.SimpleEntry<>(
-                            recursive(e.getKey()),
-                            recursive(e.getValue())
-                        )
-                    )
-                    .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
-            } else if (object instanceof Collection<?> value) {
-                return value
-                    .stream()
-                    .map(this::recursive)
-                    .toList();
-            } else if (object instanceof String string) {
-                return replaceSecret(string);
-            } else if (object == null) {
-                return null;
-            } else {
-                // toString will be called anyway at some point so better to all it now
-                return replaceSecret(object.toString());
-            }
-        }
-
         private Object[] replaceSecret(Object[] data) {
             if (data == null) {
                 return data;
@@ -435,7 +441,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             Object[] result = new Object[data.length];
 
             for (int i = 0; i < data.length; i++) {
-                result[i] = recursive(data[i]);
+                result[i] = runContextLogger.maskSecrets(data[i]);
             }
 
             return result;
@@ -443,7 +449,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
         protected ILoggingEvent transform(ILoggingEvent event) {
             try {
-                String message = replaceSecret(event.getMessage());
+                String message = runContextLogger.maskSecrets(event.getMessage());
                 Object[] argumentArray = replaceSecret(event.getArgumentArray());
                 Instant customTimestamp = null;
 
@@ -504,7 +510,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             // exception's message and stack trace (built into these entries below) carry the
             // original exception content untouched, so mask them here too.
             var entries = logEntries(e, logEntry).stream()
-                .map(entry -> entry.toBuilder().message(replaceSecret(entry.getMessage())).build())
+                .map(entry -> entry.toBuilder().message(runContextLogger.maskSecrets(entry.getMessage())).build())
                 .toList();
             logEmitter.emits(entries);
         }
@@ -533,7 +539,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             e = this.transform(e);
 
             try {
-                String line = replaceSecret(PATTERN_LAYOUT.doLayout(e));
+                String line = runContextLogger.maskSecrets(PATTERN_LAYOUT.doLayout(e));
                 fileOS.write(line.getBytes());
             } catch (IOException ex) {
                 // silently do nothing, the message will still be forwarded to the server log

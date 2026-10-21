@@ -36,7 +36,7 @@
     const DEMO_URL = "https://kestra.io/demo"
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .pricing {
         .header {
             margin-bottom: var(--ks-spacing-4);

@@ -242,6 +242,7 @@
       "last7days": "最近7天",
       "last30days": "最近30天",
       "last365days": "最近365天",
+      "allTime": "所有时间",
       "next5minutes": "接下来的5分钟",
       "next15minutes": "接下来的15分钟",
       "next1hour": "接下来1小时",
@@ -522,6 +523,21 @@
       "revision": "修订版 {revision}",
       "attempts": "{count} 次尝试 | {count} 次尝试",
       "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+    },
+    "execution_mobile": {
+      "failed_task": "失败的 task",
+      "view_task_logs": "查看 task 日志",
+      "revision_short": "版本 {revision}",
+      "more_labels": "+{count} 个标签 | +{count} 个标签",
+      "fewer_labels": "收起标签",
+      "jump_to_first_failure": "跳转到第一个失败",
+      "open_logs": "打开日志"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "登录后",
+      "execution_tab": "执行 {id} · {tab} 标签页",
+      "execution": "执行 {id}",
+      "tab": "{tab} 标签页"
     },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",

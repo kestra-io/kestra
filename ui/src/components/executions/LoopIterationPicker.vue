@@ -60,7 +60,7 @@
                             >
                                 <KsIcon size="xs" class="loop-picker-check"><Check /></KsIcon>
                                 <span class="loop-picker-value" data-test="loop-picker-value">
-                                    {{ iterationLabel(t, iteration.number, iteration.value, isAmbiguous(iteration)) }}
+                                    {{ iterationLabel($t, iteration.number, iteration.value, isAmbiguous(iteration)) }}
                                 </span>
                                 <KsExecutionStatus size="small" :status="iteration.state" />
                             </button>
@@ -283,7 +283,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .loop-picker {
         display: inline-flex;
         align-items: center;

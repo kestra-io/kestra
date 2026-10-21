@@ -2,7 +2,7 @@
     <div class="loop-merged-logs" data-test="loop-merged-logs">
         <div v-if="entries.length" class="loop-merged-scope" data-test="loop-merged-scope">
             <KsText size="small">{{ $t("topology-graph.loop.scope") }}</KsText>
-            <KsTag v-if="scopeChain.length" size="small">{{ scopeLabel(t, scopeChain, isAmbiguous) }}</KsTag>
+            <KsTag v-if="scopeChain.length" size="small">{{ scopeLabel($t, scopeChain, isAmbiguous) }}</KsTag>
             <KsButton link size="small" data-test="loop-merged-scope-clear" @click="setEntries([])">
                 {{ $t("topology-graph.loop.clear-scopes") }}
             </KsButton>
@@ -212,7 +212,7 @@
     defineExpose({refresh})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .loop-merged-logs {
         display: flex;
         flex-direction: column;
@@ -236,7 +236,7 @@
     .loop-merged-scroller {
         max-height: calc(100vh - 335px);
         background-color: var(--ks-bg-surface);
-        border-radius: var(--ks-spacing-1);
+        border-radius: var(--ks-radius-base);
     }
 
     .loop-merged-scroller-full {

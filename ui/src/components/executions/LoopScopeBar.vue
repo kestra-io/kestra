@@ -52,7 +52,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .loop-scope-bar {
         display: flex;
         flex-wrap: wrap;

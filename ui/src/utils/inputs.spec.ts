@@ -47,6 +47,13 @@ describe("normalize for ASSET posts asset ids", () => {
         expect(normalize("ASSET" as InputType, "web-01")).toBe("web-01")
         expect(normalize("ASSET" as InputType, "[\"web-01\"]")).toBe("[\"web-01\"]")
     })
+
+    it("keeps the edits made to the picked asset, whether resolved or already posted", () => {
+        const posted = "{\"id\":\"web-01\",\"overrides\":{\"owner\":\"bob\"}}"
+
+        expect(normalize("ASSET" as InputType, {id: "web-01", owner: "bob", overrides: {owner: "bob"}})).toBe(posted)
+        expect(normalize("ASSET" as InputType, posted)).toBe(posted)
+    })
 })
 
 describe("normalize for ION uses the structured-data editor contract", () => {

@@ -104,6 +104,8 @@ export interface InputMetaData {
     metadata?: Record<string, unknown>;
     multiple?: boolean;
     status?: string;
+    editableProperties?: boolean;
+    persistOverrides?: "NONE" | "UPDATE" | "CLONE";
 }
 
 export interface TableFilter {

@@ -338,7 +338,10 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             How to handle local files (input files, output files, namespace files, ...).
             By default, we create a volume and copy the file into the volume bind path.
             Configuring it to `MOUNT` will mount the working directory instead.
-            With `MOUNT`, the task files stay in memory when the worker temporary directory (`kestra.tasks.tmp-dir.path`) is on a tmpfs."""
+            With `MOUNT`, the Docker daemon binds the working directory from the Docker host, so the worker temporary directory
+            (`kestra.tasks.tmp-dir.path`) must be shared with the worker at the same path, as in the Kestra docker-compose file
+            (`/tmp/kestra-wd:/tmp/kestra-wd`). To keep the task files in memory without copying them, mount that directory as a tmpfs
+            on the Docker host: a tmpfs declared only inside the worker container is not visible to the Docker daemon."""
     )
     @NotNull
     @Builder.Default

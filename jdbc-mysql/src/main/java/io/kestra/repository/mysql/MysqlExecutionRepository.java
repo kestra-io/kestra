@@ -5,6 +5,7 @@ import java.util.*;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.impl.DSL;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
@@ -29,6 +30,11 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
         SystemFlowsConfiguration systemFlowsConfiguration,
         JdbcFilterService filterService) {
         super(repository, eventPublisher, systemFlowsConfiguration, filterService);
+    }
+
+    @Override
+    protected Field<Object> loopRunValueField() {
+        return DSL.field("value ->> '$.loopRun.value'");
     }
 
     @Override

@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 15;
@@ -26,6 +27,11 @@ public abstract class AbstractVNodeDispatchQueueTest extends AbstractQueueTest {
 
     @Inject
     private QueueService queueService;
+
+    @Test
+    void shouldNotThrowWhenEmittingEmptyBatch() {
+        assertThatCode(() -> vNodeDispatchQueue.emit(List.of())).doesNotThrowAnyException();
+    }
 
     @Test
     void singleConsumer() throws QueueException, InterruptedException {

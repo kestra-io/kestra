@@ -27,6 +27,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,6 +63,11 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     void restoreKestraContext() {
         KestraContext.setContext(realContext);
         queueService.setKestraContext(realContext);
+    }
+
+    @Test
+    void shouldNotThrowWhenEmittingEmptyBatch() {
+        assertThatCode(() -> dispatchQueue.emit(List.of())).doesNotThrowAnyException();
     }
 
     @Test

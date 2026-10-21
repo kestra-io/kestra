@@ -29,6 +29,7 @@ dependencies {
 
     // micronaut
     api "io.micronaut.data:micronaut-data-model"
+    api "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-server-netty"
 
     // utils

@@ -3,6 +3,7 @@ package io.kestra.core.executor.command;
 import java.time.Instant;
 import java.util.List;
 
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -16,7 +17,8 @@ public record UpdateLabels(String tenantId,
     Instant timestamp,
     EventId eventId,
     List<Label> labels,
-    @Nullable String operationId) implements ExecutionCommand {
+    @Nullable String operationId,
+    @Nullable Actor actor) implements ExecutionCommand {
     public static UpdateLabels from(Execution execution, List<Label> labels) {
         return new UpdateLabels(
             execution.getTenantId(),
@@ -26,11 +28,16 @@ public record UpdateLabels(String tenantId,
             Instant.now(),
             EventId.create(),
             labels,
+            null,
             null
         );
     }
 
     public UpdateLabels withOperationId(String operationId) {
-        return new UpdateLabels(tenantId, namespace, flowId, executionId, timestamp, eventId, labels, operationId);
+        return new UpdateLabels(tenantId, namespace, flowId, executionId, timestamp, eventId, labels, operationId, actor);
+    }
+
+    public UpdateLabels withActor(Actor actor) {
+        return new UpdateLabels(tenantId, namespace, flowId, executionId, timestamp, eventId, labels, operationId, actor);
     }
 }

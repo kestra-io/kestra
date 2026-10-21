@@ -4,10 +4,31 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import com.github.dockerjava.api.command.InspectContainerResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DockerErrorHandlingTest {
+    @Test
+    void shouldDetectConfirmedContainerOomTermination() {
+        InspectContainerResponse container = Mockito.mock(InspectContainerResponse.class);
+        InspectContainerResponse.ContainerState state = Mockito.mock(InspectContainerResponse.ContainerState.class);
+        Mockito.when(container.getState()).thenReturn(state);
+        Mockito.when(state.getOOMKilled()).thenReturn(true);
+
+        assertThat(Docker.isContainerOomKilled(container)).isTrue();
+    }
+
+    @Test
+    void shouldHandleMissingContainerInspectionMetadata() {
+        InspectContainerResponse container = Mockito.mock(InspectContainerResponse.class);
+
+        assertThat(Docker.isContainerOomKilled(container)).isFalse();
+        assertThat(Docker.isContainerOomKilled(null)).isFalse();
+    }
+
     @Test
     void shouldDetectDockerSocketErrorsFromNestedCauses() {
         RuntimeException exception = new RuntimeException(

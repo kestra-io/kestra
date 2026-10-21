@@ -24,7 +24,6 @@ public class FlowsSyncFromSourceCommand extends AbstractApiCommand {
     @Inject
     private TenantIdSelectorService tenantService;
 
-    @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
         super.call();

@@ -39,6 +39,7 @@ import {
     taskIdentityAtCursor,
 } from "./taskCompletionScoping"
 import {splitPluginTypeLabel} from "./pluginTypeCompletionLabel"
+import {registerIndentedBlockScalarTokenizer} from "./yamlBlockScalarTokenizer"
 import type {IPosition, IDisposable, CancellationToken} from "monaco-editor/editor/editor.api"
 import {storageKeys} from "../../../utils/constants"
 import IModel = monaco.editor.IModel;
@@ -72,6 +73,9 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             validate: validateYAML.value ?? true,
             schemas: yamlSchemas(),
         })
+
+        // Keep multi-line string content highlighted as plain text, whatever its indentation.
+        void registerIndentedBlockScalarTokenizer("yaml")
 
         // Keep Monaco YAML validation in sync with the blueprint store setting. The single instance must be
         // updated in place: calling configureMonacoYaml again would stack a second undisposed instance whose

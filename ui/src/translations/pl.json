@@ -5,6 +5,12 @@
       "cta": "Zobacz, co się zmieniło"
     },
     "loading": "Ładowanie...",
+    "namespace_files_tip": {
+      "title": "Zarządzaj skryptami jako plikami namespace'u",
+      "description": "Zamiast pisać skrypt inline, otwórz panel Pliki, dodaj go jako plik (np. main.py) i uruchom go ze swojego flow:",
+      "open_files": "Otwórz pliki",
+      "dont_show_again": "Nie pokazuj ponownie"
+    },
     "more actions": "Więcej akcji",
     "recipe": {
       "create_flow": "Utwórz Flow",
@@ -236,6 +242,7 @@
       "last7days": "Ostatnie 7 dni",
       "last30days": "Ostatnie 30 dni",
       "last365days": "Ostatnie 365 dni",
+      "allTime": "Cały czas",
       "next5minutes": "Następne 5 minut",
       "next15minutes": "Następne 15 minut",
       "next1hour": "Następna godzina",
@@ -291,7 +298,46 @@
       "help": "Pomoc",
       "issue": "Issue",
       "demo": "Demo",
-      "star": "Daj nam gwiazdkę"
+      "star": "Daj nam gwiazdkę",
+      "notifications": "Powiadomienia"
+    },
+    "notifications": {
+      "heading": "Powiadomienia",
+      "ongoing": "W toku",
+      "operation": {
+        "running": {
+          "EXECUTION_KILL": "Zabijanie wykonań: {count}",
+          "EXECUTION_PAUSE": "Wstrzymywanie wykonań: {count}",
+          "EXECUTION_RESUME": "Wznawianie wykonań: {count}",
+          "EXECUTION_RESTART": "Ponowne uruchamianie wykonań: {count}",
+          "EXECUTION_REPLAY": "Powtarzanie wykonań: {count}",
+          "EXECUTION_FORCE_RUN": "Wymuszanie uruchomienia wykonań: {count}",
+          "EXECUTION_UNQUEUE": "Usuwanie wykonań z kolejki: {count}",
+          "EXECUTION_CHANGE_STATUS": "Zmiana statusu wykonań: {count}",
+          "EXECUTION_SET_LABELS": "Ustawianie labels dla wykonań: {count}",
+          "TRIGGER_UNLOCK": "Odblokowywanie Triggerów: {count}",
+          "TRIGGER_DELETE": "Usuwanie Triggerów: {count}",
+          "TRIGGER_DISABLE": "Wyłączanie Triggerów: {count}",
+          "TRIGGER_ENABLE": "Włączanie Triggerów: {count}",
+          "BACKFILL_PAUSE": "Wstrzymywanie Backfilli: {count}",
+          "BACKFILL_RESUME": "Wznawianie Backfilli: {count}",
+          "BACKFILL_DELETE": "Usuwanie Backfilli: {count}"
+        },
+        "processed": "Przetworzone: {count}",
+        "rejected": "Odrzucone: {count}",
+        "elapsed": "trwa od {duration}"
+      },
+      "markAllRead": "Oznacz wszystkie jako przeczytane",
+      "markUnread": "Oznacz jako nieprzeczytane",
+      "markRead": "Oznacz jako przeczytane",
+      "empty": "Brak powiadomień",
+      "emptyUnread": "Brak nieprzeczytanych powiadomień",
+      "tabs": {
+        "all": "Wszystkie",
+        "unread": "Nieprzeczytane"
+      },
+      "bellAriaLabel": "Powiadomienia",
+      "bellAriaLabelRunning": "Powiadomienia, operacje w toku"
     },
     "source": "Źródło",
     "home": "Strona główna",
@@ -330,7 +376,7 @@
     "restart": "Uruchom ponownie",
     "restart tooltip": "Uruchom ponownie egzekucję od Taska <code>{state}</code>",
     "restarted": "Egzekucja została uruchomiona ponownie",
-    "restart confirm": "Czy na pewno chcesz ponownie uruchomić egzekucję <code>{id}</code>?",
+    "restart confirm": "Czy na pewno chcesz ponownie uruchomić egzekucję {id}?",
     "restart subflow warning": "Ta egzekucja została utworzona przez nadrzędną egzekucję i powinna zostać zrestartowana z jej poziomu. Ponowne uruchomienie jej samej pozostawi nadrzędną egzekucję w stanie FAILED, a jej kolejne Taski nie zostaną uruchomione. Przejdź do {parent}, aby ją zrestartować.",
     "restart subflow warning link": "egzekucja nadrzędna",
     "replay": "Replay",
@@ -338,7 +384,7 @@
     "replay from beginning tooltip": "Utwórz podobną egzekucję, zaczynając od początku",
     "replay latest revision": "Replay z najnowszą wersją",
     "replayed": "Uruchomiono Replay egzekucji",
-    "replay the execution": "Replay egzekucji <code>{executionId}</code> dla Flow <code>{flowId}</code>",
+    "replay the execution": "Replay egzekucji {executionId} dla Flow {flowId}",
     "prefill inputs": "Wypełnij",
     "current": "bieżący",
     "change state": "Zmień status",
@@ -348,9 +394,11 @@
     "yes": "Tak",
     "no": "Nie",
     "change state done": "Status Taska został zaktualizowany",
-    "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
+    "change state confirm": "Czy na pewno chcesz zmienić status Task Runa dla Taska {task} w egzekucji {id}?",
+    "change state confirm restart": "Egzekucja zostanie wtedy uruchomiona ponownie od następnego Taska, a nadrzędna egzekucja, jeśli istnieje, również.",
     "interrupt": "Przerwij",
-    "interrupt confirm": "Czy na pewno chcesz przerwać Task Run dla Taska <code>{task}</code> w egzekucji <code>{id}</code>?<br/>Spowoduje to zakończenie uruchomionego Taska w Workerze i ustawienie jego stanu.",
+    "interrupt confirm": "Czy na pewno chcesz przerwać Task Run dla Taska {task} w egzekucji {id}?",
+    "interrupt note": "Spowoduje to zakończenie uruchomionego Taska w Workerze i ustawienie jego stanu.",
     "interrupt done": "Uruchomienie Taska zostało przerwane",
     "interrupt target state": "Stan docelowy",
     "change state current state": "Aktualny status:",
@@ -387,31 +435,48 @@
     "modify inputs": "Zmień Inputy",
     "replay inputs new required": "Ta wersja ma Inputy. Zostaniesz poproszony o ich wypełnienie.",
     "replay select taskrun": "Wybierz Task Run, od którego ma zacząć się Replay:",
+    "replayCheck": {
+      "checking": "Sprawdzanie, czy wersja {revision} może zostać odtworzona z Taska {taskId}.",
+      "valid_title": "Wersja {revision} może zostać ponownie uruchomiona z Taska {taskId}.",
+      "valid_description": "Zadania poprzedzające są niezmienione, więc ich outputy są ponownie używane. Replay na innej wersji nigdy nie jest w pełni deterministyczny: sekrety, inputy plików i wyrażenia wywołujące systemy zewnętrzne mogą zwrócić coś innego niż oryginalne uruchomienie.",
+      "refused_title": "Wersja {revision} nie może zostać odtworzona z Taska {taskId}.",
+      "refused_description": "Zadanie, input lub zmienna, której wynik miałby zostać ponownie użyty, jest zdefiniowana inaczej w tej wersji.",
+      "error_title": "Nie można sprawdzić, czy wersja {revision} może zostać odtworzona z Taska {taskId}.",
+      "error_description": "Nadal możesz uruchomić Replay. Serwer stosuje te same zasady, gdy Replay się rozpoczyna i odrzuca je, jeśli wersja jest niekompatybilna.",
+      "whole_action": "Zamiast tego powtórz całą egzekucję",
+      "whole_title": "Wersja {revision} może zostać ponownie uruchomiona jako cała egzekucja.",
+      "whole_description": "Nie są ponownie używane wcześniejsze wyniki, więc każde Task uruchamia się ponownie w wersji {revision}. Oryginalna egzekucja jest zachowana i połączona.",
+      "confirm_from_task": "Replay z Taska",
+      "confirm_whole": "Odtwórz całą egzekucję"
+    },
     "change execution state done": "Status egzekucji zaktualizowany",
-    "mark as": "Oznacz jako <code>{status}</code>",
-    "unqueue as": "Usuń z kolejki jako <code>{status}</code>",
+    "mark as": "Oznacz jako {status}",
+    "unqueue as": "Usuń z kolejki jako {status}",
     "kill": "Zabij",
     "kill parents and subflow": "Zabij bieżącą egzekucję i Subflowy",
     "kill only parents": "Zabij tylko bieżącą egzekucję",
     "killed confirm": "Czy na pewno chcesz zabić egzekucję <code>{id}</code>?",
     "killed done": "Egzekucja została skierowana do zabicia",
     "resume": "Wznów",
-    "resumed title": "Wznów egzekucję <code>{id}</code>",
+    "resumed title": "Wznów egzekucję {id}",
     "resumed confirm": "Czy na pewno chcesz wznowić egzekucję <code>{id}</code>?",
     "resumed done": "Egzekucja została wznowiona",
-    "resume from breakpoint title": "Wznów egzekucję <code>{id}</code> od Breakpointa",
+    "resume from breakpoint title": "Wznów egzekucję {id} od Breakpointa",
     "resume from breakpoint done": "Egzekucja została wznowiona od Breakpointa",
     "breakpoints": "Breakpointy",
     "pause": "Wstrzymaj",
-    "pause title": "Wstrzymaj egzekucję <code>{id}</code>.<br/>Pamiętaj, że aktualnie uruchomione Taski będą nadal przetwarzane, a egzekucję trzeba będzie wznowić ręcznie.",
+    "pause title": "Wstrzymaj egzekucję {id}.",
+    "pause note": "Pamiętaj, że aktualnie uruchomione Taski będą nadal przetwarzane, a egzekucję trzeba będzie wznowić ręcznie.",
     "pause confirm": "Czy na pewno chcesz wstrzymać egzekucję <code>{id}</code>?",
     "pause done": "Egzekucja została wstrzymana",
     "unqueue": "Usuń z kolejki",
-    "unqueue title": "Czy na pewno chcesz usunąć z kolejki egzekucję <code>{id}</code>?<br/><br/>Pamiętaj, że limit Concurrency Flow nie będzie wtedy przestrzegany, więc może działać więcej egzekucji niż dozwolony limit.",
-    "unqueue title multiple": "Czy na pewno chcesz usunąć z kolejki <code>{count}</code> egzekucji?<br/><br/>Pamiętaj, że limit Concurrency Flow nie będzie wtedy przestrzegany, więc może działać więcej egzekucji niż dozwolony limit.",
+    "unqueue title": "Czy na pewno chcesz usunąć z kolejki egzekucję {id}?",
+    "unqueue note": "Pamiętaj, że limit Concurrency Flow nie będzie wtedy przestrzegany, więc może działać więcej egzekucji niż dozwolony limit.",
+    "unqueue title multiple": "Czy na pewno chcesz usunąć z kolejki {count} egzekucji?",
+    "unqueue multiple note": "Pamiętaj, że limit Concurrency Flow nie będzie wtedy przestrzegany, więc może działać więcej egzekucji niż dozwolony limit.",
     "unqueue done": "Egzekucja została usunięta z kolejki",
     "force run": "Wymuś uruchomienie",
-    "force run title": "Wymuś uruchomienie egzekucji <code>{id}</code>.",
+    "force run title": "Wymuś uruchomienie egzekucji {id}.",
     "force run confirm": "Czy na pewno chcesz wymusić uruchomienie egzekucji `{id}`?\n\nOSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowanie Task Runów.\n\nZostaną wykonane następujące przejścia:\n\n- Taski CREATED zostaną przeniesione do stanu RUNNING.\n- Taski RUNNING zostaną ponownie przesłane.\n- Taski QUEUED zostaną usunięte z kolejki.\n- Taski PAUSED zostaną wznowione.",
     "force run done": "Wymuszono uruchomienie egzekucji",
     "metrics": "Metryki",
@@ -458,6 +523,21 @@
       "revision": "Wersja {revision}",
       "attempts": "{count} próba | {count} próby | {count} prób",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+    },
+    "execution_mobile": {
+      "failed_task": "Nieudany task",
+      "view_task_logs": "Zobacz logi taska",
+      "revision_short": "rew. {revision}",
+      "more_labels": "+{count} label | +{count} labele | +{count} labeli",
+      "fewer_labels": "Pokaż mniej labeli",
+      "jump_to_first_failure": "Przejdź do pierwszego błędu",
+      "open_logs": "Otwórz logi"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Po zalogowaniu",
+      "execution_tab": "Wykonanie {id} · karta {tab}",
+      "execution": "Wykonanie {id}",
+      "tab": "Karta {tab}"
     },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
@@ -628,6 +708,16 @@
       "nav_overview": "Przegląd",
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
+      "format": "Format",
+      "internal_storage_uri_hint": "Wyrażenie Pebble odwołujące się do URI pamięci masowej wewnętrznej, np. {example}.",
+      "max_items": "Maksymalna liczba elementów",
+      "max_length": "Maksymalna długość",
+      "maximum": "Maksimum",
+      "min_items": "Min elementów",
+      "min_length": "Min długość",
+      "minimum": "Min",
+      "unit": "Jednostka",
+      "validation_regexp": "RegExp walidacji",
       "possible_values": "Możliwe wartości",
       "sub_type": "Podtyp",
       "required": "Wymagane"
@@ -697,7 +787,7 @@
     "execute flow behaviour": "Wykonaj Flow",
     "open in same tab": "W tej samej zakładce",
     "open in new tab": "W nowej zakładce",
-    "execute the flow": "Wykonaj Flow <code>{id}</code>",
+    "execute the flow": "Wykonaj Flow {id}",
     "discard execution confirmation": "Masz niezapisane Inputy. Czy na pewno chcesz odrzucić tę egzekucję?",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
     "session expired": "Twoja sesja wygasła",
@@ -869,12 +959,12 @@
     "restore": "Przywróć",
     "restore confirm": "Czy na pewno chcesz przywrócić wersję <code>{revision}</code>?",
     "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> egzekucji?",
-    "bulk replay": "Czy na pewno chcesz uruchomić Replay dla <code>{executionCount}</code> egzekucji?",
-    "bulk change state": "Czy na pewno chcesz zmienić status <code>{executionCount}</code> egzekucji?",
+    "bulk replay": "Czy na pewno chcesz uruchomić Replay dla {executionCount} egzekucji?",
+    "bulk change state": "Czy na pewno chcesz zmienić status {executionCount} egzekucji?",
     "bulk resume": "Czy na pewno chcesz wznowić <code>{executionCount}</code> egzekucji?",
     "bulk pause": "Czy na pewno chcesz wstrzymać <code>{executionCount}</code> egzekucji?",
     "bulk force run": "Czy na pewno chcesz wymusić uruchomienie `{executionCount}` egzekucji?\n\nOSTRZEŻENIE: wymuszone uruchomienie egzekucji nie jest gwarantowane i może spowodować zduplikowane egzekucje Tasków.\n\nZostaną wykonane następujące przejścia:\n\n- Taski CREATED zostaną przeniesione do stanu RUNNING.\n- Taski RUNNING zostaną ponownie przesłane.\n- Taski QUEUED zostaną usunięte z kolejki.\n- Taski PAUSED zostaną wznowione.",
-    "bulk restart": "Czy na pewno chcesz ponownie uruchomić <code>{executionCount}</code> egzekucji?",
+    "bulk restart": "Czy na pewno chcesz ponownie uruchomić {executionCount} egzekucji?",
     "bulk kill": "Czy na pewno chcesz zabić <code>{executionCount}</code> egzekucji?",
     "cancel": "Anuluj",
     "errorLogs": "Logi błędów",
@@ -975,7 +1065,6 @@
     "warning detected": "Wykryto ostrzeżenie(-a).",
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
-    "dependency task": "Task {taskId} jest zależnością innego Taska",
     "admin": "Administrator",
     "main_configuration": "Główna konfiguracja",
     "commit_id": "Id commit",
@@ -1084,11 +1173,11 @@
         "deletion": {
           "confirm": "Potwierdź",
           "title": "Potwierdź usunięcie zawartości",
-          "files": "Czy na pewno chcesz usunąć <code>{count}</code> plików?",
-          "folders": "Czy na pewno chcesz usunąć <code>{count}</code> folderów wraz z całą ich zawartością?",
-          "mixed": "Czy na pewno chcesz usunąć <code>{folders}</code> folderów i <code>{files}</code> plików?",
-          "file_single": "Czy na pewno chcesz usunąć plik <code>{name}</code>?",
-          "folder_single": "Czy na pewno chcesz usunąć folder <code>{name}</code> i całą jego zawartość?"
+          "files": "Czy na pewno chcesz usunąć {count} plików?",
+          "folders": "Czy na pewno chcesz usunąć {count} folderów wraz z całą ich zawartością?",
+          "mixed": "Czy na pewno chcesz usunąć {folders} folderów i {files} plików?",
+          "file_single": "Czy na pewno chcesz usunąć plik {name}?",
+          "folder_single": "Czy na pewno chcesz usunąć folder {name} i całą jego zawartość?"
         }
       },
       "revisions": {
@@ -1117,7 +1206,7 @@
     "backfill": "Backfill",
     "Set labels": "Ustaw etykiety",
     "manage labels": "Zarządzaj etykietami",
-    "Set labels to execution": "Dodaj lub zaktualizuj etykiety egzekucji <code>{id}</code>",
+    "Set labels to execution": "Dodaj lub zaktualizuj etykiety egzekucji {id}",
     "Set labels done": "Etykiety egzekucji zostały ustawione",
     "bulk set labels": "Czy na pewno chcesz ustawić etykiety dla <code>{executionCount}</code> egzekucji?",
     "true": "Prawda",
@@ -1713,10 +1802,26 @@
     "item": "element",
     "items": "elementy",
     "iterations": "Iteracje",
+    "load_10_more": "Załaduj 10 więcej",
+    "show_all_executions": "Pokaż wszystkie wykonania",
+    "failed_iterations_only": "Tylko nieudane iteracje",
+    "loop_iterations_shown": "Pokazano {shown} z {total}",
+    "loop_iterations_load_error": "Nie udało się załadować iteracji",
+    "retry": "Ponów",
+    "no_iterations": "Brak iteracji",
+    "no_failed_iterations": "Brak nieudanych iteracji",
+    "loop_iterations_notice": {
+      "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",
+      "outputs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich outputy nie są tutaj wyświetlane.",
+      "metrics": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich metryki nie są tutaj wyświetlane.",
+      "view_iterations": "Wyświetl iteracje"
+    },
     "cron": "Cron",
     "execution_started": "Egzekucja została uruchomiona!",
     "execution_failed": "Egzekucja nie powiodła się!",
     "last error was": "Ostatni błąd to",
+    "execution_paused": "Egzekucja wstrzymana",
+    "execution_paused_description": "Ta egzekucja oczekuje na walidację i wznowienie.",
     "active": "Aktywny",
     "flows imported": "Zaimportowano Flowy",
     "flows not imported": "Flowy niezaimportowane",
@@ -2014,6 +2119,7 @@
         "csv": "Eksportuj do CSV",
         "ion": "Eksportuj do ION"
       },
+      "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
       "show_all_statuses": "Pokaż wszystkie statusy",
       "quick_filters": {
         "all": "Wszystkie",
@@ -2215,7 +2321,8 @@
           "title": {
             "flow": "Proponowany Flow",
             "dashboard": "Proponowany Dashboard",
-            "app": "Proponowana App"
+            "app": "Proponowana App",
+            "test_suite": "Proponowany test jednostkowy"
           },
           "valid": "Prawidłowy",
           "invalid": "Wymaga zmian"
@@ -2260,6 +2367,13 @@
           "failed": "Niepowodzenie",
           "unknown": "Nieśledzone"
         },
+        "kind": {
+          "produces": "Produkuje",
+          "consumed_by": "Zużyte przez",
+          "upstream_of": "Upstream od",
+          "part_of": "Część",
+          "related": "Powiązane"
+        },
         "summary": {
           "fresh": "Wszystkie {n} Assety są aktualne",
           "issues": "{n} stałych",
@@ -2269,10 +2383,19 @@
         },
         "recent_runs": "Ostatnie uruchomienia",
         "group_by": "Grupuj według",
-        "groups": "Grupy ({n})",
+        "groups": "Grupy",
         "group_none": "Bez grupowania",
         "group_dataset": "Zbiór danych",
-        "ungrouped": "Bez grupy"
+        "group_consumer": "Konsument",
+        "no_consumer": "Brak konsumenta",
+        "hidden_consumer": "Ukryty Flow",
+        "ungrouped": "Bez grupy",
+        "hub": {
+          "notice": "Ten węzeł ma {count} relacji — pokazano tylko najnowsze, aby wykres był czytelny.",
+          "expand": "Załaduj więcej relacji",
+          "expand_failed": "Nie można załadować więcej relacji. Spróbuj ponownie."
+        },
+        "truncated": "Ten wykres był zbyt duży, aby wyświetlić go w całości; niektóre relacje zostały pominięte."
       },
       "search": {
         "placeholders": {
@@ -2713,8 +2836,8 @@
       "open_mode_hint": "Taski domyślnie otwierają się w oknie modalnym. W {settings} możesz ustawić zakładki jako domyślne."
     },
     "blocks": "Bloki",
-    "split_horizontal": "Podziel w poziomie",
-    "split_vertical": "Podziel pionowo",
+    "move_panel_to_bottom": "Przenieś panel na dół",
+    "move_panel_to_side": "Przenieś panel na bok",
     "pwa": {
       "install_title": "Zainstaluj Kestrę",
       "install_description": "Zainstaluj Kestrę jako aplikację, aby mieć szybszy dostęp i pełnoekranowy widok.",
@@ -2723,6 +2846,7 @@
     },
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
-    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?"
+    "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
+    "not started": "Nierozpoczęte"
   }
 }

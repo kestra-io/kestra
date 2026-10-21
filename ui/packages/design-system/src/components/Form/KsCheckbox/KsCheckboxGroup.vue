@@ -2,8 +2,8 @@
     <ElCheckboxGroup
         v-model="model"
         :class="props.size ? `kel-checkbox-group--${props.size}` : undefined"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event)"
+        v-bind="({...filteredProps(), ...$attrs} as CheckboxGroupProps)"
+        @change="emit('change', $event as T[])"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -11,14 +11,14 @@
     </ElCheckboxGroup>
 </template>
 
-<script setup lang="ts">
-    import {ElCheckboxGroup} from "element-plus"
+<script setup lang="ts" generic="T extends string | number">
+    import {ElCheckboxGroup, type CheckboxGroupProps} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any[]>()
+    const model = defineModel<T[]>()
 
     const props = defineProps<{
         disabled?: boolean
@@ -26,7 +26,7 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: any[]]
+        change: [value: T[]]
     }>()
 
     defineSlots<{

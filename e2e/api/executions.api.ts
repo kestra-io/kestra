@@ -36,6 +36,27 @@ export class ExecutionsApi extends BaseApi {
         const responseJson = await (await response).json()
 
         this.executionIds.push(responseJson["id"])
+
+        return responseJson["id"] as string
+    }
+
+    async generateWebhookExecutionViaApi(key: string, headers: Record<string, string> = {}) {
+        const response = await this.request.get(`${this.apiUrl}/executions/webhook/${shared.namespace}/${this.flowId}/${key}`, {
+            headers: {
+                "Accept": "application/json",
+                "Authorization": ExecutionsApi.AUTH,
+                ...headers,
+            },
+        })
+
+        if (response.status() !== 200) {
+            throw new Error(`Webhook execution creation failed with HTTP ${response.status()}: ${await response.text()}`)
+        }
+
+        const responseJson = await response.json()
+        this.executionIds.push(responseJson["id"])
+
+        return responseJson
     }
 
     /** Concurrent bulk variant of {@link generateExecutionViaApi} — the calls are independent. */

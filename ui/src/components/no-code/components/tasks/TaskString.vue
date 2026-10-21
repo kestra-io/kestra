@@ -2,10 +2,10 @@
     <div class="wrapper" :class="{'wrapper--toggle': hasToggle, 'wrapper--boolean': schema?.type === 'boolean'}">
         <KsDatePicker
             v-if="!pebble && schema?.format === 'date-time'"
-            :modelValue="modelValue"
+            :modelValue="typeof modelValue === 'string' ? modelValue : undefined"
             type="date"
             :placeholder="$t('no_code.choose_placeholder', {field: root || 'date'})"
-            @update:model-value="(v: Date | string | null) => onInput(v instanceof Date ? v.toISOString() : '')"
+            @update:model-value="(v: Date | string | null | undefined) => onInput(v instanceof Date ? v.toISOString() : '')"
         />
         <TaskDuration
             v-if="!pebble && schema?.format === 'duration'"
@@ -72,7 +72,7 @@
         modelValue?: string | boolean;
         schema?: Schema;
         root?: string;
-        task?: any;
+        task?: Record<string, unknown>;
     }>()
 
     const emit = defineEmits<{
@@ -133,7 +133,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 :deep(.placeholder) {
     top: -7px !important;
 }
@@ -148,12 +148,12 @@
     width: 100%;
     transition: border-color 0.12s ease, box-shadow 0.12s ease;
 
-    :deep(.disabled-field) {
+    & :deep(.disabled-field) {
         margin: 0!important;
         border-radius: 4px;
     }
 
-    :deep(.ks-editor){
+    & :deep(.ks-editor){
         flex: 1;
     }
 }

@@ -1,16 +1,18 @@
 // Plain JavaScript objects to and from YAML text, via js-yaml.
 
-import {
-    YAMLMap,
-    isPair,
-} from "yaml"
-import {dump, load} from "js-yaml"
+import {CORE_SCHEMA, DUMP_SCHEMA, YAMLException, dump, loadAll, mergeTag} from "js-yaml"
+
+// Merge keys as js-yaml 4 did; unquoted dates stay strings so a flow round-trips unchanged
+const LOAD_SCHEMA = CORE_SCHEMA.withTags(mergeTag)
 
 export function parse<T = unknown>(item?: string, throwIfError = true): T | undefined {
     if (item === undefined) return undefined
 
     try {
-        return load(item) as T
+        // js-yaml 5 `load` throws on a stream with no document, where 4 returned undefined
+        const documents = loadAll(item, {schema: LOAD_SCHEMA})
+        if (documents.length > 1) throw new YAMLException("expected a single document in the stream, but found more")
+        return documents[0] as T
     } catch (e) {
         if (throwIfError) throw e
         return undefined
@@ -55,8 +57,8 @@ export function stringify(item: unknown) {
 
     const yamlContent = dump(transform(value), {
         lineWidth: -1,
-        noCompatMode: true,
-        quotingType: "\"",
+        schema: DUMP_SCHEMA,
+        quoteStyle: "double",
     })
 
     return preserveCronQuotes(yamlContent)
@@ -91,24 +93,12 @@ function sort(value: Record<string, unknown>) {
         .sort(sortPredicate)
 }
 
-export function pairsToMap(pairs?: unknown) {
-    const map = new YAMLMap()
-    if (!Array.isArray(pairs) || !isPair(pairs[0])) {
-        return map
-    }
-
-    for (const pair of pairs) {
-        if (isPair(pair)) map.add(pair)
-    };
-    return map
-}
-
 function transform(value: unknown): unknown {
     if (value instanceof Array) {
         return value.map((r) => {
             return transform(r)
         })
-    } else if (typeof value === "string" || value instanceof String) {
+    } else if (typeof value === "string" || value instanceof String || value instanceof Date) {
         return value
     } else if (value instanceof Object) {
         const record = value as Record<string, unknown>
@@ -118,7 +108,7 @@ function transform(value: unknown): unknown {
             }
 
             return accumulator
-        }, Object.create({}))
+        }, {})
     }
 
     return value

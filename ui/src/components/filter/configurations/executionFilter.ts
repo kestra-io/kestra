@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {ALL_TIME_RANGE, FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
@@ -126,9 +126,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
+                    clearedValue: ALL_TIME_RANGE,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.RELATIVE_DATE
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},
@@ -207,6 +208,15 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.EQUALS,
                         Comparators.NOT_EQUALS,
                     ],
+                    valueType: "text",
+                    searchable: true,
+                },
+                {
+                    // QueryFilter.Field.OPERATION_ID supports EQUALS only, so there is no comparator to offer.
+                    key: "operationId",
+                    label: t("filter.operationId.label"),
+                    description: t("filter.operationId.description"),
+                    comparators: [Comparators.EQUALS],
                     valueType: "text",
                     searchable: true,
                 },

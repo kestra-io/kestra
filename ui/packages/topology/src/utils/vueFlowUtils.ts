@@ -2,7 +2,16 @@ import {MarkerType, Position, useVueFlow} from "@vue-flow/core"
 import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
-import {CLUSTER_PREFIX, DAGRE_NODE_SEP, DAGRE_RANK_SEP, NODE_SIZES, SMOOTH_STEP_OFFSET} from "./constants"
+import {
+    CLUSTER_PREFIX,
+    DAGRE_NODE_SEP,
+    DAGRE_RANK_SEP,
+    LOOP_RETURN_HEAD_GAP,
+    LOOP_RETURN_INSET,
+    NODE_SIZES,
+    SMOOTH_STEP_OFFSET,
+    SMOOTH_STEP_RADIUS,
+} from "./constants"
 import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
@@ -102,10 +111,14 @@ export type NodeDimensionsFn = (
     heightFn: (node: MinimalNode) => number,
 ) => {width: number; height: number}
 
+// A loop's return edge closes a cycle, so these walks follow the flow's own direction only.
+function forwardEdges(vueFlowId: string): GraphEdge[] {
+    return useVueFlow(vueFlowId).getEdges.value.filter((edge) => !edge.data?.loopReturn)
+}
+
 export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId)
     const nodes = []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.target === nodeUid) {
             nodes.push(edge)
             const recursiveEdge = predecessorsEdge(vueFlowId, edge.source)
@@ -118,9 +131,8 @@ export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[
 }
 
 export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId)
     const nodes = []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.source === nodeUid) {
             nodes.push(edge)
             const recursiveEdge = successorsEdge(vueFlowId, edge.target)
@@ -133,10 +145,10 @@ export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] 
 }
 
 export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge | GraphNode)[] {
-    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const {findNode} = useVueFlow(vueFlowId)
     const foundNode = findNode(nodeUid)
     const nodes: (GraphEdge | GraphNode)[] = foundNode ? [foundNode] : []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.target === nodeUid) {
             nodes.push(edge.sourceNode)
             const recursiveEdge = predecessorsNode(vueFlowId, edge.source)
@@ -149,9 +161,9 @@ export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge
 }
 
 export function successorsNode(vueFlowId: string, nodeUid: string) {
-    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const {findNode} = useVueFlow(vueFlowId)
     const nodes = [findNode(nodeUid)]
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.source === nodeUid) {
             nodes.push(edge.targetNode)
             const recursiveEdge = successorsNode(vueFlowId, edge.target)
@@ -189,7 +201,7 @@ export function generateDagreGraph(
     dagreGraph.setDefaultEdgeLabel(() => ({}))
     // Vertically, a lane's own first node carries the header's height, so dagre grows the cluster
     // around it and still leaves a full rank apart from whatever sits above. Horizontally the
-    // header is across the flow, on the axis `nodesep` governs, where no node can carry it.
+    // header is across the flow, where no node can carry it: `insertLaneHeaderBands` makes room after layout.
     dagreGraph.setGraph({
         rankdir: isHorizontal ? "LR" : "TB",
         ranksep: DAGRE_RANK_SEP,
@@ -229,7 +241,7 @@ export function generateDagreGraph(
             const nodeChild = edgeReplacer[cluster.cluster.uid]
                 ? edgeReplacer[cluster.cluster.uid]
                 : cluster.cluster.uid
-            if (!hiddenNodes.includes(nodeChild)) {
+            if (!hiddenNodes.includes(nodeChild) || collapsed.has(nodeChild)) {
                 dagreGraph.setParent(nodeChild, cluster.parents[cluster.parents.length - 1])
             }
         }
@@ -243,7 +255,54 @@ export function generateDagreGraph(
     }
 
     dagre.layout(dagreGraph)
+    if (isHorizontal) {
+        insertLaneHeaderBands(dagreGraph)
+    }
     return dagreGraph
+}
+
+function insertLaneHeaderBands(dagreGraph: dagre.graphlib.Graph) {
+    const boxOf = (uid: string) => {
+        const node = dagreGraph.node(uid)
+        return {top: node.y - node.height / 2, bottom: node.y + node.height / 2}
+    }
+    const ancestorsOf = (uid: string) => {
+        const ancestors: string[] = []
+        for (let parent = dagreGraph.parent(uid); parent; parent = dagreGraph.parent(parent)) {
+            ancestors.push(parent)
+        }
+        return ancestors
+    }
+    // @types/dagre declares children() as a single string; graphlib returns an array.
+    const childrenOf = (uid: string) => (dagreGraph.children(uid) as unknown as string[] | undefined) ?? []
+    const descendantsOf = (uid: string): string[] =>
+        childrenOf(uid).flatMap((child) => [child, ...descendantsOf(child)])
+    const siblingsOf = (uid: string) => {
+        const parent = dagreGraph.parent(uid)
+        const siblings = parent ? childrenOf(parent) : dagreGraph.nodes().filter((each) => !dagreGraph.parent(each))
+        return siblings.filter((each) => each !== uid)
+    }
+
+    for (const lane of dagreGraph.nodes().filter((uid) => childrenOf(uid).length)) {
+        const growing = [lane, ...ancestorsOf(lane)]
+        const moved = new Set(descendantsOf(lane))
+        for (const box of growing) {
+            const bottom = boxOf(box).bottom
+            for (const sibling of siblingsOf(box).filter((each) => boxOf(each).top >= bottom)) {
+                for (const each of [sibling, ...descendantsOf(sibling)]) {
+                    moved.add(each)
+                }
+            }
+        }
+
+        for (const uid of moved) {
+            dagreGraph.node(uid).y += NODE_SIZES.LANE_HEADER_HEIGHT
+        }
+        for (const uid of growing) {
+            dagreGraph.node(uid).y += NODE_SIZES.LANE_HEADER_HEIGHT / 2
+            dagreGraph.node(uid).height += NODE_SIZES.LANE_HEADER_HEIGHT
+        }
+    }
 }
 
 export function getNodePosition(
@@ -411,6 +470,10 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     if (node.branchType == BranchType.FINALLY) return "warning"
     if (collapsed.has(node.uid)) return "blue"
     return "default"
+}
+
+function isLoopTask(type?: string): boolean {
+    return Boolean(type?.endsWith(".LoopUntil") || type?.endsWith(".Loop"))
 }
 
 /** A flowable's own gate node (e.g. the `Parallel` task itself) is a real graph node — edges fan
@@ -652,6 +715,43 @@ export function fanOutSplitPosition(from: number, to: number, turn?: number): nu
     return (from + (turn ?? (from + to) / 2)) / 2
 }
 
+interface Point {
+    x: number;
+    y: number;
+}
+
+export interface LoopReturnBounds {
+    right: number;
+    bottom: number;
+    entry: Point;
+}
+
+/** A loop lane's return run: out of its end marker, along the lane's borders, and back to its
+ *  start marker, `entry`, across the flow so its head clears the edge coming into that marker. */
+export function loopReturnPath(source: Point, {right, bottom, entry}: LoopReturnBounds, isHorizontal: boolean): string {
+    const points = isHorizontal
+        ? [source, {x: right, y: source.y}, {x: right, y: bottom}, {x: entry.x, y: bottom}, {x: entry.x, y: entry.y + LOOP_RETURN_HEAD_GAP}]
+        : [source, {x: source.x, y: bottom}, {x: right, y: bottom}, {x: right, y: entry.y}, {x: entry.x + LOOP_RETURN_HEAD_GAP, y: entry.y}]
+    return roundedPolyline(points, SMOOTH_STEP_RADIUS)
+}
+
+function roundedPolyline(points: Point[], radius: number): string {
+    const length = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+    let d = `M${points[0].x},${points[0].y}`
+    for (let i = 1; i < points.length - 1; i++) {
+        const [before, corner, after] = [points[i - 1], points[i], points[i + 1]]
+        const r = Math.min(radius, length(before, corner) / 2, length(corner, after) / 2)
+        const towards = (p: Point) => ({
+            x: corner.x + Math.sign(p.x - corner.x) * r,
+            y: corner.y + Math.sign(p.y - corner.y) * r,
+        })
+        const [start, end] = [towards(before), towards(after)]
+        d += ` L${start.x},${start.y} Q${corner.x},${corner.y} ${end.x},${end.y}`
+    }
+    const last = points[points.length - 1]
+    return `${d} L${last.x},${last.y}`
+}
+
 export function getEdgeColorToken(edgeColor: string | null): string {
     switch (edgeColor) {
         case "danger":
@@ -735,15 +835,12 @@ export function generateGraph(
         }))
         .filter((edge) => edge.source !== edge.target)
 
-    // Vertically dagre holds the header's height itself (see `generateDagreGraph`), so the cluster
-    // box and its children need no adjustment afterwards — only the node carrying it renders lower.
+    // `generateDagreGraph` already makes room for every header; vertically only the node carrying it renders lower.
     const laneStartUids = new Set(
         clusters
             .filter((c) => !edgeReplacer[c.cluster.uid] && !collapsed.has(c.cluster.uid.replace(CLUSTER_PREFIX, "")) && c.start)
             .map((c) => c.start),
     )
-    const headerHeldByLayout = !isHorizontal
-    const clusterHeaderHeight = headerHeldByLayout ? 0 : NODE_SIZES.LANE_HEADER_HEIGHT
 
     const dagreGraph = generateDagreGraph(
         {...flowGraph, clusters, edges},
@@ -775,6 +872,12 @@ export function generateGraph(
 
     for (const cluster of clusters) {
         const clusterNodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
+        const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== clusterNodeUid
+        const parentClusterUid = cluster.parents?.[cluster.parents.length - 1]
+        if (collapsed.has(clusterNodeUid) && !absorbedByParent && parentClusterUid) {
+            const parentCluster = rawClusters.find((c) => c.uid === parentClusterUid)
+            if (parentCluster) clusterByNodeUid[clusterNodeUid] = parentCluster
+        }
         if (!edgeReplacer[cluster.cluster.uid] && !collapsed.has(clusterNodeUid)) {
             if (
                 cluster.cluster.taskNode?.task?.type === "io.kestra.core.tasks.flows.Dag"
@@ -791,14 +894,12 @@ export function generateGraph(
                 ? cluster.parents[cluster.parents.length - 1]
                 : undefined
             const clusterColor = computeClusterColor(cluster.cluster)
+            const childTaskIds = getClusterChildTaskIds(cluster, nodeByUid)
 
             const clusterPosition = getNodePosition(
                 dagreNode,
                 parentNode ? dagreGraph.node(parentNode) : undefined,
             )
-            if (parentNode) {
-                clusterPosition.y += clusterHeaderHeight
-            }
 
             elements.push({
                 id: clusterUid,
@@ -816,12 +917,12 @@ export function generateGraph(
                     height:
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
-                            : dagreNode.height + clusterHeaderHeight + "px",
+                            : dagreNode.height + "px",
                     borderRadius: "var(--ks-radius-base)",
                     padding: "0.5rem",
                 },
                 data: {
-                    collaspsible: true,
+                    collaspsible: childTaskIds.length > 0,
                     color: clusterColor,
                     // The triggers box is the only place a trigger can be added from the canvas:
                     // triggers are not tasks, so no edge `+` ever targets them.
@@ -837,7 +938,7 @@ export function generateGraph(
                     // Parallel/Sequential/If/… lane; `Triggers` and a subflow call keep their own
                     // node and menu.
                     isFlowableLane: isTrueFlowableCluster(cluster.cluster),
-                    childTaskIds: getClusterChildTaskIds(cluster, nodeByUid),
+                    childTaskIds,
                     executionId: cluster.cluster.taskNode
                         ? nodeByUid[cluster.cluster.taskNode.uid]?.executionId
                         : undefined,
@@ -887,12 +988,9 @@ export function generateGraph(
                 dagreNode,
                 cluster ? dagreGraph.node(cluster.uid) : undefined,
             )
-            if (cluster) {
-                nodePosition.y += clusterHeaderHeight
-            }
             // Its dagre box is a header taller than the node; the node itself sits at the bottom
             // of it, leaving the header the space above.
-            if (headerHeldByLayout && laneStartUids.has(node.uid)) {
+            if (!isHorizontal && laneStartUids.has(node.uid)) {
                 nodePosition.y += NODE_SIZES.LANE_HEADER_HEIGHT
             }
 
@@ -1015,6 +1113,51 @@ export function generateGraph(
                 animated: animated,
             })
         }
+    }
+
+    for (const cluster of clusters) {
+        const clusterUid = cluster.cluster.uid
+        const taskNode = cluster.cluster.taskNode
+        if (
+            !isLoopTask(taskNode?.task?.type) ||
+            edgeReplacer[clusterUid] ||
+            collapsed.has(clusterUid.replace(CLUSTER_PREFIX, "")) ||
+            hiddenOrAliased.includes(cluster.start) ||
+            hiddenOrAliased.includes(cluster.end) ||
+            !nodeByUid[cluster.start] ||
+            !nodeByUid[cluster.end]
+        ) {
+            continue
+        }
+
+        const dagreNode = dagreGraph.node(clusterUid)
+        const startNode = dagreGraph.node(cluster.start)
+        if (!dagreNode || !startNode) continue
+
+        elements.push({
+            id: `loop-return|${cluster.end}|${cluster.start}`,
+            source: cluster.end,
+            target: cluster.start,
+            type: "edge",
+            markerEnd: {
+                id: "marker-custom",
+                type: MarkerType.ArrowClosed,
+                color: getEdgeColorToken(null),
+            },
+            data: {
+                loopReturn: {
+                    right: dagreNode.x + dagreNode.width / 2 - LOOP_RETURN_INSET,
+                    bottom: dagreNode.y + dagreNode.height / 2 - LOOP_RETURN_INSET,
+                    // A vertical lane start sits at the bottom of a dagre box one header taller than it.
+                    entry: {
+                        x: startNode.x,
+                        y: startNode.y + (!isHorizontal && laneStartUids.has(cluster.start) ? NODE_SIZES.LANE_HEADER_HEIGHT / 2 : 0),
+                    },
+                },
+            },
+            style: {zIndex: 10},
+            animated: false,
+        })
     }
 
     return elements

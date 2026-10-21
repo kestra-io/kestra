@@ -1,5 +1,5 @@
 <template>
-    <ElOptionGroup v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElOptionGroup v-bind="({...filteredProps(), ...$attrs} as InstanceType<typeof ElOptionGroup>['$props'])">
         <template v-if="$slots.default" #default>
             <slot />
         </template>

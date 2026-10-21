@@ -12,7 +12,7 @@ describe("resolveStateGroups", () => {
 
         expect(byKey.running).toEqual(["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING"])
         expect(byKey.paused).toEqual(["PAUSED", "BREAKPOINT"])
-        expect(byKey.completed).toEqual(["SUCCESS", "WARNING", "SKIPPED", "RETRIED"])
+        expect(byKey.completed).toEqual(["SUCCESS", "WARNING", "SKIPPED", "RETRIED", "RESUBMITTED"])
         expect(byKey.failed).toEqual(["FAILED", "KILLING", "KILLED", "CANCELLED"])
     })
 

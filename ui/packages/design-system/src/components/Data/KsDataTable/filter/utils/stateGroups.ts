@@ -22,7 +22,7 @@ export const STATE_GROUPS: StateGroup[] = [
         key: "completed",
         labelKey: "filter.state_group.completed",
         token: "--ks-status-success",
-        states: ["SUCCESS", "WARNING", "SKIPPED", "RETRIED"],
+        states: ["SUCCESS", "WARNING", "SKIPPED", "RETRIED", "RESUBMITTED"],
     },
     {
         key: "failed",

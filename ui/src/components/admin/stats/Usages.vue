@@ -156,14 +156,14 @@
     watch(
         () => props.fetchedUsages,
         async (next) => {
-            usages.value = next ?? await miscStore.loadAllUsages()
+            usages.value = next ?? await miscStore.loadAllUsages() as UsageData
             emit("loaded")
         },
         {immediate: true},
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .usages {
         .header {
             display: flex;

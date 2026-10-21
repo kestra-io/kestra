@@ -1,10 +1,9 @@
-import {computed, onBeforeUnmount, onUnmounted, ref, watch} from "vue"
+import {computed, onUnmounted, ref, watch} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {watchDebounced} from "@vueuse/core"
 
 import {useFlowStore} from "../../../stores/flow"
-import {useRouteTabsStore} from "../../../stores/routeTabs"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc"
 import {useActiveTab} from "../../../composables/useActiveTab"
@@ -20,11 +19,8 @@ export function useFlowRoot() {
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
-    const routeTabsStore = useRouteTabsStore()
-
     const previousFlow = ref<string | undefined>(undefined)
     const deleted = ref(false)
-    const tabsOwnerId = Symbol("flow-root-tabs")
 
     const user = computed(() => authStore.user)
     const activeTabName = useActiveTab()
@@ -88,15 +84,6 @@ export function useFlowRoot() {
             })
     })
 
-    function syncTabsToStore() {
-        routeTabsStore.setTabs({
-            ownerId: tabsOwnerId,
-            tabs: tabs.value,
-            routeName: FLOW_PARENT_ROUTE,
-            displayMode: "select",
-        })
-    }
-
     const routeName = computed(() => route.params && route.params.id ? FLOW_PARENT_ROUTE : "")
 
     const namespaceBreadcrumb = useNamespaceBreadcrumb(() => route.params.namespace?.toString(), {
@@ -113,14 +100,12 @@ export function useFlowRoot() {
 
     const ready = computed(() => user.value && flowStore.flow)
 
-    watch(tabs, () => syncTabsToStore(), {immediate: true, deep: true})
-
     // Reload flow data when navigating to a different flow (namespace/id), regardless of
     // which tab that navigation lands on.
     watch(() => [route.params.namespace, route.params.id], () => load())
 
     watch(activeTabName, (newTab) => {
-        if (newTab === "overview" || newTab === "executions") {
+        if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
                 const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
@@ -148,10 +133,6 @@ export function useFlowRoot() {
         // NOTE: Flow creation component is ./FlowCreate.vue
         flowStore.isCreating = false
         load()
-
-        onBeforeUnmount(() => {
-            routeTabsStore.clearTabsIfOwner(tabsOwnerId)
-        })
 
         onUnmounted(() => {
             flowStore.flow = undefined

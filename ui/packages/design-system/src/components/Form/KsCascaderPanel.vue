@@ -1,7 +1,7 @@
 <template>
     <ElCascaderPanel
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as CascaderPanelProps)"
         ref="cascaderPanelRef"
         @change="emit('change', $event)"
     >
@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
     import {useTemplateRef} from "vue"
-    import {ElCascaderPanel} from "element-plus"
+    import {ElCascaderPanel, type CascaderNode, type CascaderOption, type CascaderPanelProps, type CascaderValue} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     const cascader = useTemplateRef<{
@@ -22,18 +22,18 @@
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<CascaderValue | null>()
 
     const props = defineProps<{
-        options?: any[]
+        options?: CascaderOption[]
     }>()
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: CascaderValue | null | undefined]
     }>()
 
     defineSlots<{
-        default?: (scope: {data: any; node: any}) => unknown
+        default?: (scope: {data: CascaderOption; node: CascaderNode}) => unknown
     }>()
 
     defineExpose({

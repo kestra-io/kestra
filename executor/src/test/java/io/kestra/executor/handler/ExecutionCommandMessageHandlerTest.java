@@ -1,8 +1,10 @@
 package io.kestra.executor.handler;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,12 +17,15 @@ import org.mockito.quality.Strictness;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent.Outcome;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.events.Actor;
+import io.kestra.core.events.CrudEvent;
 import io.kestra.core.executor.command.ChangeTaskRunState;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.ForceRun;
 import io.kestra.core.executor.command.Pause;
 import io.kestra.core.executor.command.Replay;
+import io.kestra.core.executor.command.Reschedule;
 import io.kestra.core.executor.command.Restart;
 import io.kestra.core.executor.command.Resume;
 import io.kestra.core.executor.command.ResumeFromBreakpoint;
@@ -39,6 +44,7 @@ import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.executor.ExecutionDelayStateStore;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.KillSwitchActionService;
@@ -66,6 +72,8 @@ class ExecutionCommandMessageHandlerTest {
     @Mock
     ExecutionStateStore executionStateStore;
     @Mock
+    ExecutionDelayStateStore executionDelayStateStore;
+    @Mock
     ExecutionEventMessageHandler executionEventMessageHandler;
     @Mock
     AsyncOperationService asyncOperationService;
@@ -88,6 +96,7 @@ class ExecutionCommandMessageHandlerTest {
         handler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
             taskOutputService,
             executionOutputService,
@@ -615,6 +624,74 @@ class ExecutionCommandMessageHandlerTest {
 
         assertThat(result).isEmpty();
         verifyNoInteractions(executionService);
+    }
+
+    @Test
+    void shouldAttributeEventsPublishedWhileApplyingACommandToItsActor() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.SUCCESS);
+        var updated = lockedExecution("exec-1", State.Type.SUCCESS);
+        stubLock(existing, mock(FlowWithSource.class));
+        var actor = new Actor("user-id", "10.0.0.1", null);
+        var command = UpdateLabels.from(existing, List.of()).withActor(actor);
+        AtomicReference<CrudEvent<Execution>> published = new AtomicReference<>();
+        when(executionService.updateLabels(existing, List.of())).thenAnswer(invocation ->
+        {
+            published.set(CrudEvent.of(existing, updated));
+            return updated;
+        });
+
+        handler.handle(command);
+
+        assertThat(published.get().getActor()).isEqualTo(actor);
+        assertThat(CrudEvent.of(existing, updated).getActor()).as("the actor must not outlive the command").isNull();
+    }
+
+    @Test
+    void shouldAttributeTheReplayedExecutionToTheReplayActor() throws Exception {
+        var flow = mock(FlowWithSource.class);
+        var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
+        var actor = new Actor("user-id", "10.0.0.1", null);
+        AtomicReference<CrudEvent<Execution>> published = new AtomicReference<>();
+        when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
+        when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"))).thenAnswer(invocation ->
+        {
+            published.set(CrudEvent.create(newExecution));
+            return newExecution;
+        });
+
+        handler.handle(replayCommand.withActor(actor));
+
+        assertThat(published.get().getActor()).isEqualTo(actor);
+    }
+
+    @Test
+    void shouldFailRescheduleWhenExecutionCannotBeRescheduled() {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = Reschedule.from(existing, Instant.now().plusSeconds(60)).withOperationId("op");
+        when(executionService.canBeRescheduled(existing)).thenReturn(false);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(executionDelayStateStore);
+        verify(asyncOperationService).emitProcessedIfAsync(eq(command), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void shouldFailRescheduleWhenScheduledStartIsBeingProcessed() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.CREATED);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = Reschedule.from(existing, Instant.now().plusSeconds(60)).withOperationId("op");
+        when(executionService.canBeRescheduled(existing)).thenReturn(true);
+        when(executionDelayStateStore.saveUnlessProcessing(any())).thenReturn(false);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isEmpty();
+        verify(executionService, never()).reschedule(any(), any());
+        verify(asyncOperationService).emitProcessedIfAsync(eq(command), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
     }
 
     // ---- helpers ----

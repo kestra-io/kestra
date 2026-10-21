@@ -1,5 +1,11 @@
 <template>
-    <div class="theme-picker" role="radiogroup">
+    <div
+        class="theme-picker"
+        :class="{'theme-picker--grid': columns}"
+        :style="columns ? {'--theme-picker-columns': columns} : undefined"
+        role="radiogroup"
+        :aria-label="ariaLabel"
+    >
         <KsButton
             v-for="option in options"
             :key="option.value"
@@ -14,12 +20,14 @@
             @click="emit('update:modelValue', option.value)"
         >
             <span class="theme-picker__content">
-                <span class="theme-picker__preview">
-                    <template v-if="option.preview === 'sync'">
-                        <ThemeWindow class="theme-picker__window theme-picker__window--dark-2" />
-                        <ThemeWindow class="theme-picker__window theme-picker__window--light theme-picker__window--sync" />
-                    </template>
-                    <ThemeWindow v-else class="theme-picker__window" :class="`theme-picker__window--${option.preview}`" />
+                <span class="theme-picker__preview" :class="{'theme-picker__preview--custom': $slots.preview}">
+                    <slot name="preview" :option="option">
+                        <template v-if="option.preview === 'sync'">
+                            <ThemeWindow class="theme-picker__window theme-picker__window--dark-2" />
+                            <ThemeWindow class="theme-picker__window theme-picker__window--light theme-picker__window--sync" />
+                        </template>
+                        <ThemeWindow v-else-if="option.preview" class="theme-picker__window" :class="`theme-picker__window--${option.preview}`" />
+                    </slot>
                 </span>
                 <KsText tag="span" size="small" class="theme-picker__label">{{ option.label }}</KsText>
             </span>
@@ -35,12 +43,18 @@
     export type ThemeOption = {
         value: string
         label: string
-        preview: "dark-2" | "dark" | "light" | "sync"
+        preview?: "dark-2" | "dark" | "light" | "sync"
     }
 
     defineProps<{
-        modelValue: string
+        modelValue?: string
         options: ThemeOption[]
+        ariaLabel?: string
+        columns?: number
+    }>()
+
+    defineSlots<{
+        preview?: (props: {option: ThemeOption}) => unknown
     }>()
 
     const emit = defineEmits<{
@@ -55,7 +69,14 @@
         display: flex;
         gap: 0.5rem;
 
+        &--grid {
+            display: grid;
+            grid-template-columns: repeat(var(--theme-picker-columns), minmax(0, 1fr));
+        }
+
         &__option.kel-button {
+            --ks-button-content-width: 100%;
+
             flex: 1 1 0;
             min-width: 0;
             margin: 0;
@@ -137,6 +158,11 @@
 
         &__option--selected &__window {
             --tp-frame: var(--ks-border-focus);
+        }
+
+        &__option--selected &__preview--custom {
+            border-radius: var(--ks-radius-base);
+            box-shadow: 0 0 0 2px var(--ks-border-focus);
         }
 
         &__label {

@@ -1,5 +1,5 @@
 <template>
-    <ElForm ref="formRef" v-bind="({...filteredProps(), ...$attrs} as any)" @submit="emit('submit', $event)">
+    <ElForm ref="formRef" v-bind="({...filteredProps(), ...$attrs} as FormProps)" @submit="emit('submit', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
-    import {ElForm, type FormValidateCallback} from "element-plus"
+    import {ElForm, type FormInstance, type FormProps, type FormValidateCallback} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -36,9 +36,9 @@
 
     defineExpose({
         validate: (callback: FormValidateCallback) => formRef.value?.validate(callback),
-        resetFields: (...args: any[]) => formRef.value?.resetFields(...args),
-        clearValidate: (...args: any[]) => formRef.value?.clearValidate(...args),
-        validateField: (...args: any[]) => formRef.value?.validateField(...args),
+        resetFields: (...args: Parameters<FormInstance["resetFields"]>) => formRef.value?.resetFields(...args),
+        clearValidate: (...args: Parameters<FormInstance["clearValidate"]>) => formRef.value?.clearValidate(...args),
+        validateField: (...args: Parameters<FormInstance["validateField"]>) => formRef.value?.validateField(...args),
         scrollToField: (prop: string) => formRef.value?.scrollToField(prop),
     })
 </script>

@@ -10,6 +10,7 @@ const meta: Meta<typeof KsBadge> = {
     argTypes: {
         type: {control: "select", options: ["primary", "success", "warning", "danger", "info"]},
         inline: {control: "boolean"},
+        size: {control: "select", options: ["default", "small"]},
         isDot: {control: "boolean"},
         hidden: {control: "boolean"},
     },
@@ -75,6 +76,20 @@ export const Inline: Story = {
                     Capped by the default max
                     <ks-badge :value="1200" type="primary" inline />
                 </span>
+            </div>
+        `,
+    }),
+}
+
+/** Small: a compact pill for icon buttons, where the default one covers half the glyph. */
+export const Small: Story = {
+    render: () => ({
+        components: {KsBadge, KsButton},
+        template: `
+            <div style="padding:24px;display:flex;gap:24px">
+                <ks-badge :value="3" type="danger"><ks-button>Default</ks-button></ks-badge>
+                <ks-badge :value="3" type="danger" size="small"><ks-button>Small</ks-button></ks-badge>
+                <ks-badge :value="12" :max="9" type="danger" size="small"><ks-button>Capped</ks-button></ks-badge>
             </div>
         `,
     }),

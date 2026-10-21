@@ -1,16 +1,44 @@
 import {describe, expect, it, beforeEach, afterEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
+import {createApp, type App} from "vue"
+import {createMemoryHistory, createRouter} from "vue-router"
 
 import {useBookmarksStore} from "./bookmarks"
 
 const STORAGE_KEY = "starred.bookmarks"
+const decodedFilterPath = "/main/flows/edit/tutorial/getting-started-elt-pipeline/overview?filters[timeRange][EQUALS]=PT24H"
+const encodedFilterPath = "/main/flows/edit/tutorial/getting-started-elt-pipeline/overview?filters%5BtimeRange%5D%5BEQUALS%5D=PT24H"
+const spaceEncodedPath = "/main/flows/edit/tutorial/getting-started-elt-pipeline/overview?q=a%20b"
+const spaceCanonicalPath = "/main/flows/edit/tutorial/getting-started-elt-pipeline/overview?q=a+b"
 
 describe("bookmarks store", () => {
+    let app: App | undefined
+
     beforeEach(() => {
         localStorage.clear()
         setActivePinia(createPinia())
     })
-    afterEach(() => localStorage.clear())
+
+    afterEach(() => {
+        app?.unmount()
+        app = undefined
+        localStorage.clear()
+    })
+
+    function storeWithRouter() {
+        const pinia = createPinia()
+        const router = createRouter({
+            history: createMemoryHistory(),
+            routes: [{path: "/:pathMatch(.*)*", component: {}}],
+        })
+
+        app = createApp({})
+        app.use(router)
+        app.use(pinia)
+        setActivePinia(pinia)
+
+        return app.runWithContext(() => useBookmarksStore())
+    }
 
     it("should refresh a derived label when the page name changed language", () => {
         const store = useBookmarksStore()
@@ -87,5 +115,50 @@ describe("bookmarks store", () => {
         expect(store.pages[0].custom).toBe(false)
         store.refreshLabel({path: "/flows", label: "Ablaeufe"})
         expect(store.pages[0].label).toBe("Ablaeufe")
+    })
+
+    it("should match encoded and decoded query filter paths as the same bookmark", () => {
+        const store = storeWithRouter()
+
+        store.add({path: decodedFilterPath, label: "Overview"})
+        store.add({path: encodedFilterPath, label: "Overview"})
+
+        expect(store.pages).toEqual([{path: decodedFilterPath, label: "Overview", custom: false}])
+        expect(store.isBookmarked(encodedFilterPath)).toBe(true)
+    })
+
+    it("should update encoded and decoded query filter paths as the same bookmark", () => {
+        const store = storeWithRouter()
+
+        store.add({path: decodedFilterPath, label: "Overview"})
+        store.refreshLabel({path: encodedFilterPath, label: "Flow overview"})
+        store.rename({path: encodedFilterPath, label: "My overview"})
+
+        expect(store.pages[0]).toMatchObject({path: decodedFilterPath, label: "My overview", custom: true})
+
+        store.remove({path: encodedFilterPath})
+
+        expect(store.pages).toEqual([])
+    })
+
+    it("should collapse stored duplicate paths that differ only by query encoding", () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([
+            {path: encodedFilterPath, label: "Overview", custom: false},
+            {path: decodedFilterPath, label: "My overview", custom: true},
+        ]))
+
+        const store = storeWithRouter()
+
+        expect(store.pages).toEqual([{path: decodedFilterPath, label: "My overview", custom: true}])
+    })
+
+    it("should match space-encoded query values with router-canonical query values", () => {
+        const store = storeWithRouter()
+
+        store.add({path: spaceEncodedPath, label: "Search"})
+        store.add({path: spaceCanonicalPath, label: "Search"})
+
+        expect(store.pages).toEqual([{path: spaceCanonicalPath, label: "Search", custom: false}])
+        expect(store.isBookmarked(spaceEncodedPath)).toBe(true)
     })
 })

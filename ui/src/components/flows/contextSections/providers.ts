@@ -13,11 +13,6 @@ function tenantParams(tenant?: string) {
     return tenant ? {tenant} : {}
 }
 
-// These are best-effort sidebar suggestions, not the primary surface for KV/secrets/files: a missing
-// namespace or a transient failure must fall back to no chips rather than stack the shared HTTP
-// client's error toast on top of the task editor.
-const SILENT = {showMessageOnError: false, ignoreNotFound: true}
-
 // The backend's page-size cap (PageableUtils.MAX_PAGE_SIZE) — without it listAllKeys defaults to 10.
 // Reads page 1 only: a namespace with more than this many of its own keys silently drops the rest,
 // while the inherited keys below are unbounded — an asymmetry worth revisiting if it comes up.
@@ -37,12 +32,8 @@ export const kvContextSectionProvider: ContextSectionProvider = async ({namespac
                 size: KV_LIST_PAGE_SIZE,
                 filters: [{field: "namespace", operation: "EQUALS", value: namespace}],
             },
-            SILENT as Parameters<typeof KvAPI.listAllKeys>[1],
         ),
-        KvAPI.listKeysWithInheritence(
-            namespaceParams(namespace, tenant),
-            SILENT as Parameters<typeof KvAPI.listKeysWithInheritence>[1],
-        ),
+        KvAPI.listKeysWithInheritence(namespaceParams(namespace, tenant)),
     ])
     const keys = [...new Set([
         ...asArray<{key?: string}>(own?.results).map(entry => entry.key),
@@ -59,10 +50,7 @@ export const kvContextSectionProvider: ContextSectionProvider = async ({namespac
 }
 
 export const secretsContextSectionProvider: ContextSectionProvider = async ({namespace, tenant}) => {
-    const inherited = await NamespaceAPI.inheritedSecrets(
-        namespaceParams(namespace, tenant),
-        SILENT as Parameters<typeof NamespaceAPI.inheritedSecrets>[1],
-    )
+    const inherited = await NamespaceAPI.inheritedSecrets(namespaceParams(namespace, tenant))
     const names = [...new Set(
         Object.values(inherited ?? {}).flat().filter((name): name is string => typeof name === "string"),
     )]
@@ -79,10 +67,7 @@ export const secretsContextSectionProvider: ContextSectionProvider = async ({nam
 export const namespaceFilesContextSectionProvider: ContextSectionProvider = async ({namespace, tenant}) => {
     // An empty q matches nothing server-side; "*" is the namespace-files search's own match-all
     // query. Unbounded and unvirtualized: a namespace with very many files renders every one of them.
-    const paths = await FilesAPI.searchNamespaceFiles(
-        {...namespaceParams(namespace, tenant), q: "*"},
-        SILENT as Parameters<typeof FilesAPI.searchNamespaceFiles>[1],
-    )
+    const paths = await FilesAPI.searchNamespaceFiles({...namespaceParams(namespace, tenant), q: "*"})
     const filePaths = asArray<string>(paths)
     if (!filePaths.length) return null
 

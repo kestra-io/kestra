@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
+import io.kestra.core.events.Actor;
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
@@ -14,6 +15,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
@@ -22,11 +24,13 @@ import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.executor.ExecutionDelayStateStore;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
 import io.kestra.executor.KillSwitchActionService;
 
+import io.micronaut.core.propagation.PropagatedContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<ExecutionCommand> {
     private final ExecutionService executionService;
     private final ExecutionStateStore executionStateStore;
+    private final ExecutionDelayStateStore executionDelayStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
@@ -48,6 +53,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     public ExecutionCommandMessageHandler(
         ExecutionService executionService,
         ExecutionStateStore executionStateStore,
+        ExecutionDelayStateStore executionDelayStateStore,
         FlowMetaStoreInterface flowMetaStore,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
@@ -57,6 +63,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         KillSwitchActionService killSwitchActionService) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
+        this.executionDelayStateStore = executionDelayStateStore;
         this.flowMetaStore = flowMetaStore;
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
@@ -91,7 +98,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         {
             AsyncOperationProcessedEvent.Outcome outcome = AsyncOperationProcessedEvent.Outcome.SUCCEEDED;
             String error = null;
-            try {
+            try (PropagatedContext.Scope _ = Actor.propagate(message.actor())) {
                 var flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 var executorContext = new ExecutorContext(execution, flow);
                 var newExecution = switch (message) {
@@ -101,6 +108,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         executionService.pause(execution);
                     case Unqueue unqueueCommand ->
                         executionService.unqueue(execution, unqueueCommand.state());
+                    case Reschedule rescheduleCommand ->
+                        reschedule(execution, rescheduleCommand);
                     case ForceRun ignored ->
                         executionService.forceRun(execution, executorContext.getFlow());
                     case ChangeTaskRunState changeTaskRunStateCommand ->
@@ -129,6 +138,24 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 asyncOperationService.emitProcessedIfAsync(message, message.tenantId(), message.executionId(), outcome, error);
             }
         });
+    }
+
+    private Execution reschedule(Execution execution, Reschedule command) {
+        if (!executionService.canBeRescheduled(execution)) {
+            throw new IllegalStateException("Cannot reschedule execution '%s': it has already started or was never scheduled.".formatted(execution.getId()));
+        }
+
+        var executionDelay = ExecutionDelay.builder()
+            .executionId(execution.getId())
+            .date(command.scheduleDate())
+            .state(State.Type.CREATED)
+            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+            .build();
+        if (!executionDelayStateStore.saveUnlessProcessing(executionDelay)) {
+            throw new IllegalStateException("Cannot reschedule execution '%s': its scheduled start is being processed.".formatted(execution.getId()));
+        }
+
+        return executionService.reschedule(execution, command.scheduleDate());
     }
 
     private Optional<ExecutorContext> handleCreate(Create command) {
@@ -192,15 +219,18 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     .orElseThrow(() -> new FlowNotFoundException(sourceExecution));
             }
 
-            var newExecution = executionService.replay(
-                sourceExecution,
-                flow,
-                command.taskRunId(),
-                command.revision(),
-                Optional.ofNullable(command.breakpoints()),
-                true,
-                command.executionId()
-            );
+            Execution newExecution;
+            try (PropagatedContext.Scope _ = Actor.propagate(command.actor())) {
+                newExecution = executionService.replay(
+                    sourceExecution,
+                    flow,
+                    command.taskRunId(),
+                    command.revision(),
+                    Optional.ofNullable(command.breakpoints()),
+                    true,
+                    command.executionId()
+                );
+            }
 
             var persisted = persistNewExecutionWithKillSwitch(newExecution);
             if (persisted.isEmpty()) {

@@ -4,9 +4,19 @@ import {createPinia} from "pinia"
 import {createI18n} from "vue-i18n"
 import {createMemoryHistory, createRouter} from "vue-router"
 import {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu} from "@kestra-io/design-system"
+import type {State, StateType} from "@kestra-io/kestra-sdk"
+import type {Execution} from "../../stores/executions"
 import TaskRunActions from "./TaskRunActions.vue"
 
-async function mountActions(type: string, grouped = false) {
+function state(current: StateType): State {
+    return {current, histories: []}
+}
+
+function executionProps(id: string, namespace: string, flowId: string, executionState: State = state("RUNNING")): Execution {
+    return {id, namespace, flowId, flowRevision: 1, originalId: id, metadata: {originalCreatedDate: ""}, state: executionState}
+}
+
+async function mountActions(type: string, grouped = false, executionState: State = state("RUNNING")) {
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [
@@ -15,13 +25,13 @@ async function mountActions(type: string, grouped = false) {
         ],
     })
     await router.push({name: "topology", params: {tenant: "test-tenant", id: "parent-execution"}})
-    const taskRun = {id: "task-run", taskId: "loop", state: {current: "RUNNING"}}
+    const taskRun = {id: "task-run", taskId: "loop", state: state("RUNNING")}
     const wrapper = mount(TaskRunActions, {
         attachTo: document.body,
         props: {
             taskRun,
             taskRuns: grouped ? [taskRun, {...taskRun, id: "another-task-run"}] : undefined,
-            execution: {id: "parent-execution", namespace: "tests", flowId: "loop-flow", state: {current: "RUNNING"}},
+            execution: executionProps("parent-execution", "tests", "loop-flow", executionState),
             flow: {tasks: [{id: "parallel", type: "io.kestra.plugin.core.flow.Parallel", tasks: [{id: "loop", type}]}]},
         },
         global: {
@@ -61,6 +71,26 @@ describe("TaskRunActions", () => {
         })
     })
 
+    it("shouldBoundIterationsToTheParentWindowSoTheDefaultTimeRangeIsNotApplied", async () => {
+        const {wrapper, router} = await mountActions("io.kestra.plugin.core.flow.Loop", false, {
+            ...state("SUCCESS"),
+            startDate: "2026-10-05T08:00:00Z",
+            endDate: "2026-10-05T08:03:00Z",
+        })
+        const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
+
+        await iterations!.get("[role=\"menuitem\"]").trigger("click")
+        await flushPromises()
+
+        expect(router.currentRoute.value.query).toEqual({
+            "filters[parentId][EQUALS]": "parent-execution",
+            "filters[kind][EQUALS]": "LOOP",
+            "filters[taskId][EQUALS]": "loop",
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-10-05T08:00:00.000Z",
+            "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2026-10-05T08:03:00.000Z",
+        })
+    })
+
     it("shouldHideIterationsWhenTaskIsNotALoop", async () => {
         const {wrapper} = await mountActions("io.kestra.plugin.core.log.Log")
 
@@ -79,8 +109,8 @@ describe("TaskRunActions", () => {
         const {wrapper, router} = await mountActions("io.kestra.plugin.core.log.Log")
         await wrapper.setProps({
             taskType: "io.kestra.plugin.core.flow.Loop",
-            taskRun: {id: "subflow-task-run", taskId: "subflow-loop", state: {current: "RUNNING"}},
-            execution: {id: "subflow-execution", namespace: "tests", flowId: "child-flow", state: {current: "RUNNING"}},
+            taskRun: {id: "subflow-task-run", taskId: "subflow-loop", state: state("RUNNING")},
+            execution: executionProps("subflow-execution", "tests", "child-flow"),
         })
         const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
 

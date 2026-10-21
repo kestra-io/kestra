@@ -1,7 +1,9 @@
 package io.kestra.core.runners.pebble.functions;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,6 +32,7 @@ abstract class AbstractFileFunction implements KestraFunction {
     static final String TENANT_ID = "tenantId";
     static final String ID = "id";
     static final String PATH = "path";
+    static final String REVISION = "revision";
 
     private static final Pattern URI_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*:.*");
     private static final Pattern EXECUTION_FILE = Pattern.compile(".*/.*/executions/.*/tasks/.*/.*");
@@ -119,6 +122,32 @@ abstract class AbstractFileFunction implements KestraFunction {
     protected abstract String getErrorMessage();
 
     protected abstract Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException;
+
+    // functionName names the caller in the 'revision' argument's error message.
+    protected InputStream openStream(String functionName, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
+        return switch (path.getScheme()) {
+            case StorageContext.KESTRA_SCHEME -> storageInterface.get().get(tenantId, namespace, path);
+            case LocalPath.FILE_SCHEME -> localPathFactory.get().createLocalPath().get(path);
+            case Namespace.NAMESPACE_FILE_SCHEME -> namespaceFileContentInputStream(functionName, path, namespace, tenantId, args);
+            default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));
+        };
+    }
+
+    private InputStream namespaceFileContentInputStream(String functionName, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
+        Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace);
+
+        if (args.containsKey(REVISION)) {
+            Integer revision;
+            try {
+                revision = Integer.parseInt(args.get(REVISION).toString());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("The '" + functionName + "' function expects the 'revision' argument to be a valid integer.");
+            }
+            return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath())), revision);
+        }
+
+        return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath())));
+    }
 
     boolean isFileUriValid(String namespace, String flowId, String executionId, URI path) {
         // Internal storage URI should be: kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion or kestra:///$namespace/$flowId/executions/$executionId/trigger/$triggerName/$random.ion

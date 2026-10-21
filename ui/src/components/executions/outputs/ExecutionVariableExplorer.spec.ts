@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
@@ -351,5 +351,68 @@ describe("ExecutionVariableExplorer", () => {
 
         await selectVariable(wrapper, "empty")
         expect(wrapper.find(".viewer__scalar").text()).toBe(Utils.EMPTY_STRING_DISPLAY)
+    })
+})
+
+describe("ExecutionVariableExplorer on a phone", () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        vi.stubGlobal("matchMedia", (query: string) => ({
+            matches: true,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+        }))
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    const listIsVisible = (wrapper: ReturnType<typeof i18nMount>) =>
+        wrapper.findComponent({name: "SidebarList"}).attributes("style") !== "display: none;"
+
+    test("starts on the full-width list without the viewer", async () => {
+        // Given / When
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(true)
+        expect(wrapper.find("[data-test=\"variable-back\"]").exists()).toBe(false)
+    })
+
+    test("opens the viewer with a breadcrumb when a variable is tapped and returns with the back button", async () => {
+        // Given
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // When
+        await selectVariable(wrapper, "greeting")
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(false)
+        expect(wrapper.find(".viewer__breadcrumb").text()).toBe("vars › greeting")
+
+        // When
+        await wrapper.find("[data-test=\"variable-back\"]").trigger("click")
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(true)
+        expect(wrapper.find("[data-test=\"variable-back\"]").exists()).toBe(false)
+    })
+
+    test("keeps the debugger prefilled when a variable is selected while it is collapsed", async () => {
+        // Given
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // When
+        await selectVariable(wrapper, "greeting")
+
+        // Then
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression")).toBe("{{ vars.greeting }}")
     })
 })

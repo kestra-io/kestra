@@ -12,7 +12,7 @@
     const miscStore = useMiscStore()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .plugin-doc-wrapper {
     background-color: var(--ks-bg-surface);
 }

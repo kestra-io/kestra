@@ -58,6 +58,7 @@ export function useFilters(
 
     // CRUD + structural ops — depend on routeSync.updateRoute to push to the URL.
     const actions = useFilterActions({
+        configuration,
         tree,
         dismissed,
         preApplied,

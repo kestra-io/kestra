@@ -28,7 +28,7 @@
                     :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="true" class="me-1" :status="state" />
+                        <KsExecutionStatus size="small" :label="true" class="unqueue-status" :status="state" />
                         <i18n-t keypath="unqueue as" tag="span">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>
@@ -92,3 +92,9 @@
             })
     }
 </script>
+
+<style scoped>
+.unqueue-status {
+    margin-inline-end: var(--ks-spacing-1);
+}
+</style>

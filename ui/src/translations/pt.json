@@ -5,6 +5,12 @@
       "cta": "Ver o que mudou"
     },
     "loading": "A carregar...",
+    "namespace_files_tip": {
+      "title": "Gerir os seus scripts como ficheiros do namespace",
+      "description": "Em vez de escrever o script inline, abra o painel Ficheiros, adicione-o como ficheiro (por ex., main.py) e execute-o a partir do seu flow:",
+      "open_files": "Abrir ficheiros",
+      "dont_show_again": "Não mostrar novamente"
+    },
     "more actions": "Mais ações",
     "recipe": {
       "create_flow": "Criar um flow",
@@ -236,6 +242,7 @@
       "last7days": "Últimos 7 dias",
       "last30days": "Últimos 30 dias",
       "last365days": "Últimos 365 dias",
+      "allTime": "Todo o tempo",
       "next5minutes": "Próximos 5 minutos",
       "next15minutes": "Próximos 15 minutos",
       "next1hour": "Próxima 1 hora",
@@ -516,6 +523,21 @@
       "revision": "Revisão {revision}",
       "attempts": "{count} tentativa | {count} tentativas",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
+    "execution_mobile": {
+      "failed_task": "Task com falha",
+      "view_task_logs": "Ver logs da task",
+      "revision_short": "rev. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Mostrar menos labels",
+      "jump_to_first_failure": "Ir para a primeira falha",
+      "open_logs": "Abrir logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Após iniciar sessão",
+      "execution_tab": "Execução {id} · separador {tab}",
+      "execution": "Execução {id}",
+      "tab": "Separador {tab}"
     },
     "concurrency limits": "Limites de Concurrency",
     "system overview": "Visão Geral do Sistema",
@@ -1780,6 +1802,14 @@
     "item": "item",
     "items": "itens",
     "iterations": "Iterações",
+    "load_10_more": "Carregar mais 10",
+    "show_all_executions": "Mostrar todas as execuções",
+    "failed_iterations_only": "Apenas iterações com falha",
+    "loop_iterations_shown": "{shown} de {total} mostrados",
+    "loop_iterations_load_error": "Falha ao carregar iterações",
+    "retry": "Repetir",
+    "no_iterations": "Ainda sem iterações",
+    "no_failed_iterations": "Nenhuma iteração com falha",
     "loop_iterations_notice": {
       "logs": "As iterações do Loop são executadas como sub-execuções separadas, portanto, seus logs não são exibidos aqui.",
       "outputs": "As iterações de loop são executadas como sub-execuções separadas, portanto, suas saídas não são exibidas aqui.",

@@ -31,7 +31,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useNow} from "@vueuse/core"
+    import {useIntervalFn, useNow} from "@vueuse/core"
     import {durationUtils} from "@kestra-io/design-system"
     import Loading from "vue-material-design-icons/Loading.vue"
     import {humanizeNumber} from "../../utils/filters"
@@ -42,7 +42,7 @@
     defineEmits<{click: []}>()
 
     const {t, te} = useI18n()
-    const now = useNow({interval: 1000})
+    const now = useNow({scheduler: (cb) => useIntervalFn(cb, 1000)})
 
     const formatCount = (value: number) => humanizeNumber(String(value))
 
@@ -72,7 +72,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .operation {
         cursor: pointer;
         transition: border-color 0.15s ease;

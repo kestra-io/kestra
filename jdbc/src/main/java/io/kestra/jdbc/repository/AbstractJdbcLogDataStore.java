@@ -489,11 +489,16 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
-    public int deleteByFilters(String tenantId, List<QueryFilter> filters) {
+    public void deleteByFilters(String tenantId, List<QueryFilter> filters) {
+        deleteByFiltersAndCount(tenantId, filters);
+    }
+
+    @Override
+    public OptionalInt deleteByFiltersAndCount(String tenantId, List<QueryFilter> filters) {
         if (!canPurge()) {
-            return 0;
+            return OptionalInt.of(0);
         }
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        return OptionalInt.of(this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
             DSLContext context = DSL.using(configuration);
 
@@ -501,7 +506,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             delete = delete.and(withDefaultKind(filters, this.filter(filters, DATE_COLUMN, Resource.LOG)));
 
             return delete.execute();
-        });
+        }));
     }
 
     @Override

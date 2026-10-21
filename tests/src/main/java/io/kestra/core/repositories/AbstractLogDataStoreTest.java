@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
@@ -870,10 +871,25 @@ public abstract class AbstractLogDataStoreTest {
         logDataStore.save(log(Level.INFO, "delfilter-exec").tenantId(tenant).build());
         awaitVisible(tenant, "delfilter-exec");
 
-        int deleted = logDataStore.deleteByFilters(tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "delfilter-exec")));
-
-        assertThat(deleted).isEqualTo(logDataStore.canPurge() ? 1 : 0);
+        logDataStore.deleteByFilters(tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "delfilter-exec")));
         assertRemaining(tenant, "delfilter-exec", 1);
+    }
+
+    @Test
+    void deleteByFiltersAndCount_returnsTheDeletedCount() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "delcount-exec").tenantId(tenant).build(),
+                log(Level.WARN, "delcount-exec").tenantId(tenant).build()
+            )
+        );
+        awaitVisible(tenant, "delcount-exec");
+
+        OptionalInt deleted = logDataStore.deleteByFiltersAndCount(tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "delcount-exec")));
+
+        assertThat(deleted).hasValue(logDataStore.canPurge() ? 2 : 0);
+        assertRemaining(tenant, "delcount-exec", 2);
     }
 
     @Test

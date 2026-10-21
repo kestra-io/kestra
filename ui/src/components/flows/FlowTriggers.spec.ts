@@ -200,3 +200,44 @@ it("filters expanded logs by trigger even before a scheduler state exists", asyn
         ]))
     }
 })
+
+it("keeps each expanded trigger's logs in its own panel when responses arrive out of order", async () => {
+    const releaseFirst: (() => void)[] = []
+    searchLogs.mockImplementation((params: {size?: number; filters?: {field: string; value?: unknown}[]}) => {
+        if (params.size === 1) return Promise.resolve({results: [], total: 0})
+        const triggerId = params.filters?.find(filter => filter.field === "triggerId")?.value as string
+        const response = {
+            total: 1,
+            results: [{
+                namespace: "company.team",
+                flowId: "my-flow",
+                triggerId,
+                level: "INFO",
+                timestamp: "2026-06-02T08:00:00Z",
+                thread: "thread",
+                message: `${triggerId} evaluated`,
+            }],
+        }
+        // The first trigger answers last, which used to let it overwrite the other panel's rows.
+        return triggerId === "trigger-a"
+            ? new Promise(resolve => releaseFirst.push(() => resolve(response)))
+            : Promise.resolve(response)
+    })
+    const wrapper = mountTriggersTab()
+    await flushPromises()
+
+    const expanders = wrapper.findAll(".kel-table__expand-icon")
+    await expanders[0].trigger("click")
+    await expanders[1].trigger("click")
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(200)
+    releaseFirst.forEach(release => release())
+    await flushPromises()
+
+    const panels = wrapper.findAll(".log-panel")
+    expect(panels).toHaveLength(2)
+    expect(panels[0].text()).toContain("trigger-a evaluated")
+    expect(panels[0].text()).not.toContain("trigger-b evaluated")
+    expect(panels[1].text()).toContain("trigger-b evaluated")
+    expect(panels[1].text()).not.toContain("trigger-a evaluated")
+})

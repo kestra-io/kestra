@@ -9,6 +9,8 @@ class Kestra < Formula
 
   def install
     bin.install "kestra-2.0.7" => "kestra"
+    # Release assets lose their executable bit on download.
+    chmod 0555, bin/"kestra"
   end
 
   test do

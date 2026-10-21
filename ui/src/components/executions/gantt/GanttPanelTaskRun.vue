@@ -135,7 +135,7 @@
         gap: var(--ks-spacing-4);
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
 
-        h3 {
+        & h3 {
             margin: 0 0 var(--ks-spacing-2);
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-semibold);

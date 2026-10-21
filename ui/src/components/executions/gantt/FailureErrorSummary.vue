@@ -15,7 +15,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .failure-error-summary__status {
         position: relative;
         min-height: 3rem;

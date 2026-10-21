@@ -102,13 +102,14 @@ import reactor.core.publisher.Mono;
 
                 tasks:
                   - id: handle_request
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      result: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
 
                 outputs:
                   - id: response
                     type: STRING
-                    value: "{{ outputs.handle_request.value }}"
+                    value: "{{ outputs.handle_request.values.result }}"
 
                 triggers:
                   - id: webhook

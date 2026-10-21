@@ -192,10 +192,12 @@
 
             if (shouldShowHelloDialog()) localStorage.setItem(storageKeys.SHOW_SURVEY_DIALOG_AFTER_LOGIN, "true")
 
-            if (redirectPath.value) {
+            if (redirectPath.value && hint.value) {
                 router.push(redirectPath.value)
             } else if (await shouldShowWelcome()) {
                 router.push({name: "ai"})
+            } else if (redirectPath.value) {
+                router.push(redirectPath.value)
             } else {
                 router.push({name: "home", params: {tenant: route.params.tenant}})
             }

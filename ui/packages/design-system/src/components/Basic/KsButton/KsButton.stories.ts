@@ -358,7 +358,7 @@ export const Block: Story = {
     },
 }
 
-/** Link primary – a link button of type primary reads as a link in the primary text colour, not as white text */
+/** Link primary – a link button of type primary takes the link colour */
 export const LinkPrimary: Story = {
     render: () => ({
         components: {KsButton},
@@ -371,6 +371,10 @@ export const LinkPrimary: Story = {
     }),
     play: async ({canvasElement}) => {
         const primary = canvasElement.querySelector(".kel-button.is-link.kel-button--primary") as HTMLElement
-        await expect(getComputedStyle(primary).color).not.toBe("rgb(255, 255, 255)")
+        const linkColor = document.createElement("span")
+        linkColor.style.color = "var(--ks-text-link)"
+        canvasElement.appendChild(linkColor)
+        await expect(getComputedStyle(primary).color).toBe(getComputedStyle(linkColor).color)
+        linkColor.remove()
     },
 }

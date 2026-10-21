@@ -1,15 +1,27 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
+import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import BasicAuthLogin from "./BasicAuthLogin.vue"
 import {i18nMount} from "../../../tests/unit/i18nMount"
+import {storageKeys} from "../../utils/constants"
 
-const {route} = vi.hoisted(() => ({
+const {route, push, shouldShowWelcome} = vi.hoisted(() => ({
     route: {query: {} as Record<string, string>, params: {} as Record<string, string>},
+    push: vi.fn(),
+    shouldShowWelcome: vi.fn(),
 }))
 vi.mock("vue-router", () => ({
     useRoute: () => route,
-    useRouter: () => ({push: vi.fn()}),
+    useRouter: () => ({push}),
 }))
+vi.mock("@kestra-io/kestra-sdk", async (importOriginal) => ({
+    ...await importOriginal<typeof import("@kestra-io/kestra-sdk")>(),
+    useClient: () => ({get: vi.fn().mockResolvedValue({data: {isBasicAuthInitialized: true}})}),
+}))
+vi.mock("../../utils/basicAuth", () => ({signIn: vi.fn().mockResolvedValue({username: "admin@kestra.io"})}))
+vi.mock("../../utils/welcomeGuard", () => ({shouldShowWelcome}))
+vi.mock("../../utils/posthog", () => ({identifyPosthogUser: vi.fn()}))
+vi.mock("override/stores/misc", () => ({useMiscStore: () => ({loadConfigs: vi.fn().mockResolvedValue({})})}))
 
 const messages = {
     email: "Email",
@@ -32,7 +44,21 @@ function mountLogin() {
 beforeEach(() => {
     route.query = {}
     route.params = {}
+    push.mockReset()
+    shouldShowWelcome.mockReset()
 })
+
+afterEach(() => {
+    sessionStorage.removeItem(storageKeys.SESSION_ACTIVE)
+})
+
+async function signIn() {
+    const wrapper = mountLogin()
+    await wrapper.find("input[name=\"username\"]").setValue("admin@kestra.io")
+    await wrapper.find("input[name=\"password\"]").setValue("password")
+    await wrapper.find("form").trigger("submit")
+    await flushPromises()
+}
 
 describe("BasicAuthLogin redirect ('from' param) open-redirect protection", () => {
     it.each([
@@ -96,5 +122,45 @@ describe("BasicAuthLogin after sign-in hint", () => {
 
         // When / Then
         expect(mountLogin().find("[data-test=\"login-after-sign-in\"]").exists()).toBe(false)
+    })
+})
+
+describe("BasicAuthLogin after sign-in destination", () => {
+    it("opens the welcome page on a fresh instance when from is not a deep link", async () => {
+        // Given
+        route.query = {from: "/dashboards"}
+        shouldShowWelcome.mockResolvedValue(true)
+
+        // When
+        await signIn()
+
+        // Then
+        expect(push).toHaveBeenCalledWith({name: "ai"})
+    })
+
+    it("follows a deep link to an execution even on a fresh instance", async () => {
+        // Given
+        const from = "/executions/company.finance/monthly_close/2qncB78egtgMA8D0HVACE2/gantt"
+        route.query = {from}
+        shouldShowWelcome.mockResolvedValue(true)
+
+        // When
+        await signIn()
+
+        // Then
+        expect(push).toHaveBeenCalledWith(from)
+        expect(shouldShowWelcome).not.toHaveBeenCalled()
+    })
+
+    it("follows from once the instance has flows", async () => {
+        // Given
+        route.query = {from: "/dashboards"}
+        shouldShowWelcome.mockResolvedValue(false)
+
+        // When
+        await signIn()
+
+        // Then
+        expect(push).toHaveBeenCalledWith("/dashboards")
     })
 })

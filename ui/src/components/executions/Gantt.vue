@@ -86,7 +86,6 @@
                                         <div
                                             class="gantt-row cursor-icon"
                                             :class="{
-                                                'd-flex': !verticalLayout,
                                                 'is-expanded': selectedTaskRuns.includes(item.id),
                                                 'gantt-block-alt': rowBlocks.get(item.id)?.isAlt,
                                                 'gantt-block-start': rowBlocks.get(item.id)?.isStart,
@@ -846,6 +845,7 @@
             .gantt-row {
                 --gantt-band-bg: color-mix(in srgb, var(--ks-border-default) 60%, var(--ks-dropdown-bg));
 
+                display: flex;
                 align-items: center;
                 position: relative;
                 padding-right: var(--ks-spacing-8);

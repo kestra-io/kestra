@@ -9,7 +9,6 @@ import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 import * as Utils from "../../../utils/utils"
-
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
     useRoute: () => ({query: {}}),

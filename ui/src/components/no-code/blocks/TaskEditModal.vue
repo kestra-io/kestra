@@ -14,6 +14,7 @@
             <div class="task-edit-modal-header">
                 <span class="task-edit-modal-title">{{ title }}</span>
                 <KsIconButton
+                    v-if="!outsideFlow"
                     class="task-edit-modal-header-action"
                     :type="docsOpen ? 'primary' : 'default'"
                     :aria-label="$t('documentation.documentation')"
@@ -77,6 +78,7 @@
                     :refPath="refPath"
                     :blockSchemaPath="blockSchemaPath"
                     :editedPath="editedPath"
+                    :outsideFlow="outsideFlow"
                     @update:task="emit('update:task', $event)"
                     @close="emit('close')"
                     @select-nested="(...args) => emit('select-nested', ...args)"
@@ -145,6 +147,7 @@
         editedPath?: string
         crumbs: Crumb[]
         creating?: boolean
+        outsideFlow?: boolean
     }>()
 
     const emit = defineEmits<{

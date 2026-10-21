@@ -87,6 +87,7 @@
 
         <div class="task-edit-panel-body">
             <TaskEditData
+                v-if="!outsideFlow"
                 class="task-edit-col task-edit-col-inputs"
                 :class="{'task-edit-col--collapsed': inputsCollapsed}"
                 kind="inputs"
@@ -221,6 +222,7 @@
         size?: string;
         presentation?: "drawer" | "panel";
         hideTabstrip?: boolean;
+        outsideFlow?: boolean;
         editorKey?: string;
         taskPath?: string;
     }
@@ -240,6 +242,7 @@
         size: undefined,
         presentation: "drawer",
         hideTabstrip: false,
+        outsideFlow: false,
         editorKey: undefined,
         taskPath: undefined,
     })
@@ -405,7 +408,7 @@
     })
 
     const flowStore = useFlowStore()
-    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly || props.outsideFlow ? undefined : props.namespace))
     const localTaskErrors = ref<ApiValidationError[] | undefined>()
     const errors = computed(() => {
         const split = validationErrorLines(localTaskErrors.value)
@@ -475,7 +478,7 @@
 
     const outputSections = computed(() => {
         const properties = declaredOutputProperties.value
-        if (!properties) return []
+        if (!properties || props.outsideFlow) return []
         const names = Object.keys(properties)
         if (!names.length) return []
         const chips = names.map(name => ({
@@ -565,10 +568,10 @@
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         taskBaseline.value = taskYaml.value
-        if (propTaskType.value) {
+        if (propTaskType.value && !props.outsideFlow) {
             pluginsStore.load({cls: propTaskType.value}).catch(() => {})
         }
-        if (taskYaml.value) {
+        if (taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
                 .then((result) => { localTaskErrors.value = result?.errors })
@@ -579,7 +582,7 @@
     }
 
     const commitEdit = () => {
-        if (lastValidatedValue.value !== taskYaml.value) {
+        if (lastValidatedValue.value !== taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({
                 task: taskYaml.value,
@@ -636,7 +639,7 @@
             taskBaseline.value = incoming
         }
         const incomingType = newTask?.type ?? YAML_UTILS.parse<Partial<Task>>(incoming)?.type
-        if (typeof incomingType === "string" && incomingType) {
+        if (typeof incomingType === "string" && incomingType && !props.outsideFlow) {
             await pluginsStore.load({cls: incomingType}).catch(() => {})
         }
     }, {immediate: true})
@@ -645,7 +648,7 @@
     watch(taskYaml, () => {
         const task = YAML_UTILS.parse<Partial<Task>>(taskYaml.value)
         const parsedType = task?.type
-        if (parsedType && parsedType !== type.value) {
+        if (parsedType && parsedType !== type.value && !props.outsideFlow) {
             type.value = parsedType
             clearTimeout(typeLoadTimer.value)
             typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: parsedType}).catch(() => {}), 500)

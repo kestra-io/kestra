@@ -1,29 +1,25 @@
 import {describe, expect, it} from "vitest"
-import {mount} from "@vue/test-utils"
-import KestraDesignSystem, {KsCollapseItem} from "@kestra-io/design-system"
-
+import {KsCollapseItem} from "@kestra-io/design-system"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 import "../../utils/global"
 import RecursiveToc from "./RecursiveToc.vue"
 import {DISABLED_PAGES} from "./docsUtils"
 
+interface TocChild {
+    path: string
+    title: string
+    sidebarTitle?: string
+    children?: TocChild[]
+}
+
 function mountRecursiveToc(props: {
     parent: {
-        children: Array<{
-            path: string
-            title: string
-            sidebarTitle?: string
-            children?: any[]
-        }>
+        children: TocChild[]
     }
     depth?: number
     makeIndexNavigable?: boolean
 }) {
-    return mount(RecursiveToc, {
-        props,
-        global: {
-            plugins: [KestraDesignSystem],
-        },
-    })
+    return i18nMount(RecursiveToc, {props})
 }
 
 describe("RecursiveToc", () => {

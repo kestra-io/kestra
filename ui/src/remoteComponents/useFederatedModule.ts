@@ -5,7 +5,6 @@ import {loadRemote, registerRemotes, registerShared} from "@module-federation/en
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {KnownSlotsPropNames, ManifestsRegistry, type KnownSlotProps} from "@kestra-io/slot-contracts"
 import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
-import {getCsrfToken} from "../utils/csrf"
 
 
 function wrapWithErrorBoundary(inner: Component) {
@@ -61,14 +60,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         try {
             // get the manifest of the all the tasks we will
             // have in the graph
-            // The generated SDK client (client.gen) uses its own axios.create() instance
-            // which does not pick up the CSRF interceptor configured in main.ts.
-            // Explicitly forward the CSRF token so this POST is not rejected by CsrfTokenFilter.
-            const csrfToken = getCsrfToken()
-            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest(
-                {body: Array.from(taskTypes)},
-                csrfToken ? {headers: {"X-CSRF-TOKEN": csrfToken}} : undefined,
-            )
+            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest({body: Array.from(taskTypes)})
             pluginTaskManifests = pluginTaskManifestsResponse?.manifest ?? {}
         } catch (error) {
             console.error("[FederatedModule] Failed to load plugin UI manifest:", error)
@@ -80,7 +72,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
             for(const manifest of pluginTaskManifests[taskTypeKey]){
                 if(manifest.uiModule === slotName){
                     if(manifest.staticInfo){
-                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo
+                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo as ManifestsRegistry[T]
                     }
                 }
             }
@@ -146,8 +138,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     const RemoteComponent = defineComponent({
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
         inheritAttrs: false,
-        setup(props: { taskType: string } & KnownSlotProps[T], {attrs}) {
-            const {taskType, ...restProps} = props
+        setup(rawProps, {attrs}) {
+            // The declared props are the slot's own propNames, so the generic slot type can't be inferred from them.
+            const {taskType, ...restProps} = rawProps as unknown as {taskType: string} & KnownSlotProps[T]
             // ponytail: read inside render so shallowReactive tracks it — loadRemote completes after manifestReady
             return () => {
                 const Comp = RemoteComponents[taskType]

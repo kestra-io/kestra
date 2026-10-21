@@ -139,7 +139,11 @@
 
                 <div class="source-search__spacer" />
 
-                <span v-if="!showLoadingState" class="source-search__summary" v-html="summaryCross" />
+                <i18n-t v-if="!showLoadingState" keypath="source_search.summary_cross" tag="span" class="source-search__summary">
+                    <template #matches><strong>{{ $t("source_search.match_count", summaryMatchCount) }}</strong></template>
+                    <template #resources><strong>{{ $t("source_search.count_resources", summaryResourceCount) }}</strong></template>
+                    <template #types><strong>{{ $t("source_search.count_types", summaryActiveTypeCount) }}</strong></template>
+                </i18n-t>
 
                 <div v-if="!showLoadingState" class="source-search__match-nav">
                     <KsIconButton
@@ -244,7 +248,11 @@
                         {{ hiddenTypeHint }}
                     </KsText>
 
-                    <p v-if="suggestedQuery">{{ didYouMeanTranslation[0] }}<KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>{{ didYouMeanTranslation[1] }}</p>
+                    <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p">
+                        <template #suggestion>
+                            <KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
+                        </template>
+                    </i18n-t>
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
@@ -316,7 +324,7 @@
     import {ref, computed, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
-    import {debounce, escapeHtml} from "@kestra-io/design-system"
+    import {debounce} from "@kestra-io/design-system"
     import TopNavBar from "../layout/TopNavBar.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import SourceSearchResults from "./SourceSearchResults.vue"
@@ -339,7 +347,6 @@
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
-    import {splitTranslation} from "../../utils/splitTranslation"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
     import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
@@ -352,7 +359,6 @@
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
-    const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
     const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
@@ -496,12 +502,6 @@
     const summaryMatchCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.countFor(type), 0))
     const summaryResourceCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.resourceCountFor(type), 0))
     const summaryActiveTypeCount = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.countFor(type) > 0).length)
-    const strong = (value: string) => `<strong>${escapeHtml(value)}</strong>`
-    const summaryCross = computed(() => t("source_search.summary_cross", {
-        matches: strong(t("source_search.match_count", summaryMatchCount.value)),
-        resources: strong(t("source_search.count_resources", summaryResourceCount.value)),
-        types: strong(t("source_search.count_types", summaryActiveTypeCount.value)),
-    }))
 
     const anyCountingSelected = computed(() => selectedTypes.value.some((type) => crossResourceSearchStore.statusFor(type) === "counting"))
     const failedSelectedTypes = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.statusFor(type) === "failed"))
@@ -787,7 +787,7 @@
     fetchResults()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search {
     display: flex;
     flex-direction: column;

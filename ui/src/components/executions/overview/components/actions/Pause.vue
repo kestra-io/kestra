@@ -10,7 +10,13 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('pause title', {id: escapeHtml(execution.id)})" />
+            <span>
+                <i18n-t keypath="pause title" tag="span">
+                    <template #id><code>{{ execution.id }}</code></template>
+                </i18n-t>
+                <br>
+                {{ $t("pause note") }}
+            </span>
         </template>
         <template #footer>
             <KsButton :icon="Pause" type="primary" @click="pause()" nativeType="submit">
@@ -26,7 +32,7 @@
     import {useExecutionsStore} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
     import {useAuthStore} from "override/stores/auth"
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"

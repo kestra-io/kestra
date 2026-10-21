@@ -288,6 +288,7 @@ public final class ExecutorTestHarness {
                 loopExecutionEventQueue,
                 Mockito.mock(AsyncOperationWaiter.class),
                 Mockito.mock(AsyncOperationsConfiguration.class),
+                Mockito.mock(TriggerEventQueue.class),
                 Optional.empty()
             )
         );
@@ -360,6 +361,7 @@ public final class ExecutorTestHarness {
         this.executionCommandMessageHandler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
             taskOutputService,
             executionOutputService,

@@ -13,10 +13,17 @@
             </template>
 
             <template #default>
-                <p v-html="$t('interrupt confirm', {id: escape(execution.id), task: escape(taskRun.taskId)})" />
+                <p>
+                    <i18n-t keypath="interrupt confirm" tag="span">
+                        <template #task><code>{{ taskRun.taskId }}</code></template>
+                        <template #id><code>{{ execution.id }}</code></template>
+                    </i18n-t>
+                    <br>
+                    {{ $t("interrupt note") }}
+                </p>
 
                 <p>
-                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="status-badge" :status="taskRun.state.current" />
                 </p>
 
                 <KsSelect
@@ -31,7 +38,7 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
+                            <KsExecutionStatus size="small" :label="true" class="status-badge" :status="item.code" />
                             <i18n-t keypath="mark as" tag="span">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
@@ -59,7 +66,6 @@
 <script setup lang="ts">
     import Stop from "vue-material-design-icons/Stop.vue"
     import {computed, ref} from "vue"
-    import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
@@ -136,3 +142,8 @@
             })
     }
 </script>
+<style scoped>
+.status-badge {
+    margin-inline-end: var(--ks-spacing-1);
+}
+</style>

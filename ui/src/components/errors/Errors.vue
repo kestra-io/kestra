@@ -44,7 +44,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .img {
         margin-top: 7rem;
         max-height: 156px;

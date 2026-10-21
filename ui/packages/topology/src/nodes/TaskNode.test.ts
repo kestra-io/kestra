@@ -7,6 +7,7 @@ import {
     EXECUTION_INJECTION_KEY,
     SUBFLOWS_EXECUTIONS_INJECTION_KEY,
     LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
+    VALIDATION_ISSUES_INJECTION_KEY,
 } from "../injectionKeys"
 
 import type {GraphTaskRun} from "../utils/vueFlowUtils"
@@ -43,8 +44,9 @@ function taskRunWithHistory(taskId: string, histories: {date: number; state: str
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false}: {
+function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map()}: {
     execution?: Record<string, unknown>,
+    validationIssues?: Map<string, string[]>,
     taskRuns?: GraphTaskRun[],
     replayEnabled?: boolean,
     task?: typeof TASK & {errors?: unknown[]},
@@ -88,6 +90,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                 ),
                 [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
                 [LONGEST_TASK_RUN_DURATION_INJECTION_KEY as symbol]: computed(() => computeLongestTaskRunDuration(taskRuns)),
+                [VALIDATION_ISSUES_INJECTION_KEY as symbol]: computed(() => validationIssues),
             },
         },
     })
@@ -341,5 +344,19 @@ describe("TaskNode anatomy", () => {
         const bar = wrapper.find(".node-core > .node-footer [data-test=\"duration-compact-bar\"]")
         expect(bar.exists()).toBe(true)
         expect((bar.find("[data-test=\"duration-segment-running\"]").element as HTMLElement).style.width).toBe("25%")
+    })
+})
+
+describe("TaskNode validation", () => {
+    it("should outline a task that has validation errors", () => {
+        const wrapper = mountTaskNode({validationIssues: new Map([["my-task", ["message: must not be null"]]])})
+
+        expect(wrapper.find(".node-core--error").exists()).toBe(true)
+    })
+
+    it("should not outline a task without validation errors", () => {
+        const wrapper = mountTaskNode({validationIssues: new Map([["other-task", ["message: must not be null"]]])})
+
+        expect(wrapper.find(".node-core--error").exists()).toBe(false)
     })
 })

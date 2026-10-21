@@ -7,7 +7,7 @@
 
             <div v-if="logs.length">
                 <p v-if="!expanded" class="error-preview">
-                    {{ $t('last error was') }}: {{ stripBackticks(logs.at(-1)?.message ?? '') }}
+                    {{ $t('last error was') }}: {{ stripBackticks(linkTagsAsText(logs.at(-1)?.message ?? '')) }}
                 </p>
 
                 <div v-else class="logs">
@@ -44,6 +44,7 @@
     import {Log} from "../../../../../stores/logs"
     import {handledIf} from "../../../../../utils/kestraHttp"
     import LogLine from "../../../../logs/LogLine.vue"
+    import {linkTagsAsText} from "../../../../logs/linkify"
 
     const MAX_PREVIEW_LOGS = 4
     const EXCLUDED_METAS: (keyof Log)[] = ["namespace", "flowId", "executionId"]
@@ -93,7 +94,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .error-wrapper {
         position: relative;
         min-width: 0;
@@ -132,7 +133,7 @@
         min-width: 0;
         overflow: hidden;
 
-        :deep(.kel-alert__content) {
+        & :deep(.kel-alert__content) {
             min-width: 0;
             width: 100%;
             gap: 0;
@@ -156,7 +157,7 @@
                 .logs {
                     padding-top: var(--ks-spacing-5);
 
-                    > div {
+                    & > div {
                         width: 100%;
                     }
 

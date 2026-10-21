@@ -307,10 +307,14 @@
 
         <KsDialog
             v-model="confirmation.visible"
-            :title="confirmationLabels.title"
+            :title="$t('namespace files.dialog.deletion.title')"
             @keydown.enter.prevent="removeItems()"
         >
-            <span class="py-3" v-html="confirmationLabels.message" />
+            <i18n-t :keypath="deletionMessage.keypath" tag="span" class="py-3">
+                <template v-for="(value, name) in deletionMessage.params" :key="name" #[name]>
+                    <code>{{ value }}</code>
+                </template>
+            </i18n-t>
             <template #footer>
                 <div>
                     <KsButton @click="confirmation.visible = false">
@@ -387,7 +391,6 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
-    import {escapeHtml} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
@@ -508,18 +511,14 @@
 
     const multiSelected = computed(() => selectedNodes.value.length > 1)
 
-    const confirmationLabels = computed(() => {
-        const files = confirmation.value.nodes?.filter(n => n.type === "File")
-        const filesCount = files?.length ?? 0
-        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
-        const foldersCount = folders?.length ?? 0
-        const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escapeHtml(folders?.[0].fileName)})
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escapeHtml(files?.[0].fileName)})
-        else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
-        else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
-        else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
-        return labels
+    const deletionMessage = computed((): {keypath: string, params: Record<string, string | number>} => {
+        const files = confirmation.value.nodes?.filter(n => n.type === "File") ?? []
+        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory") ?? []
+        if (folders.length === 1) return {keypath: "namespace files.dialog.deletion.folder_single", params: {name: folders[0].fileName}}
+        if (files.length === 1) return {keypath: "namespace files.dialog.deletion.file_single", params: {name: files[0].fileName}}
+        if (folders.length > 0 && files.length > 0) return {keypath: "namespace files.dialog.deletion.mixed", params: {folders: folders.length, files: files.length}}
+        if (folders.length > 0) return {keypath: "namespace files.dialog.deletion.folders", params: {count: folders.length}}
+        return {keypath: "namespace files.dialog.deletion.files", params: {count: files.length}}
     })
 
     function nodeClass(data: any) {
@@ -1111,10 +1110,10 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .revision-history-dialog-body {
-    // We subtract the dialog margins and title height (78px)
+    /* We subtract the dialog margins and title height (78px) */
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 
@@ -1126,7 +1125,7 @@
     width: 20%;
 
     .filter{
-        :deep(.kel-select__wrapper) {
+        & :deep(.kel-select__wrapper) {
             min-height: 32px;
             height: 32px;
             padding-right: 0px;
@@ -1155,7 +1154,7 @@
         }
     }
 
-    :deep(.kel-button):not(.kel-dialog .kel-button) {
+    & :deep(.kel-button):not(.kel-dialog .kel-button) {
         border: 0;
         background: none;
         outline: none;
@@ -1197,7 +1196,7 @@
         }
     }
 
-    :deep(.kel-tree) {
+    & :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-bg-surface);
@@ -1253,7 +1252,7 @@
         }
     }
 
-    :deep(.tree-node-hitbox) {
+    & :deep(.tree-node-hitbox) {
         width: 100%;
         flex: 1;
         display: flex;

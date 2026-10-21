@@ -38,6 +38,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 
     Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
+13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.scss` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
 
 ## Best practices for keeping the design system healthy
 
@@ -52,7 +53,8 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### While you write code
 
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
-- Keep the style **inside** the SFC. `<style scoped src="./x.scss">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Keep the style **inside** the SFC. `<style scoped src="./x.css">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Write styles as plain CSS: no `lang="scss"` and no new `.scss` file outside `packages/design-system/` (kestra-io/kestra#21346). Native nesting works with `scoped`, but start a nested selector with `&` (`& :deep(.x)`, `& > *`), or Vue puts `[data-v-*]` on the nested part instead of the parent.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
 - Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
@@ -95,10 +97,10 @@ Reject (or ask to fix) anything that:
 
 - No hardcoded user-facing strings. Always go through i18n.
 - **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
-- Pass plurals and interpolation as named arguments to `$t(...)`, never string-concatenate. `<i18n-t>` is not used, and `tests/unit/i18n/i18nGuard.spec.ts` fails on it.
-- A string that embeds a component (`router-link`, `KsId`) renders through `splitTranslation(t, key, slot)` from `src/utils/splitTranslation`, which returns the text on each side of the placeholder. Keep the two halves and the component on one physical line: Vue turns a line break between an interpolation and an element into a space.
-- A string that embeds static markup (a `<code>` fragment) passes the markup as a named argument and renders with `v-html`.
-- Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
+- Pass plurals and interpolation as named arguments to `$t(...)`, never string-concatenate.
+- A string that embeds markup or a component (`<code>`, `router-link`, `KsId`) renders through `<i18n-t keypath="..." tag="span">` (vue-i18n's component interpolation, registered globally, so there is nothing to import), with one named slot per placeholder: `Mark as {status}` becomes `<template #status><code>{{ item.code }}</code></template>`. Keep the markup out of the translation, so no `v-html` and no `escapeHtml` are needed, and translators can reorder the placeholders.
+- `splitTranslation(t, key, slot)` and markup passed as a named argument to `v-html` are older patterns for the same job. Don't add new uses; move a string to `<i18n-t>` when you touch it.
+- Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly. `tests/unit/dateFormatGuard.spec.ts` (and its `ui-ee` twin) fails on `dayjs(...).format(`, `toLocaleString()` on a `Date`, and `Intl.DateTimeFormat` in `src/`; a file that serializes a date rather than displaying it goes in its `ALLOWED` list with the reason.
 - Date arithmetic goes through the `dayjs` re-exported by the design system. `dayjs` objects are **immutable**, so `d.add(1, "day")` returns a new instance and mutating idioms (`cursor.add(...)` in a loop) silently no-op — reassign instead. Parse untrusted input with `dateUtils.parseIso()`: bare `dayjs()` happily reads an epoch number or a bare year as a date.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
 
@@ -345,14 +347,14 @@ When retiring a `Ks*` component, prop, or token:
 <template>
     <KsButton type="primary">{{ t("save") }}</KsButton>
 </template>
-<style lang="scss" scoped>
+<style scoped>
     /* Almost always: no custom CSS is needed at all. */
 </style>
 ```
 
 If your `<style>` block needs to exist:
 
-```scss
+```css
 /* Right: --ks-* tokens, no SCSS vars in feature code, no :deep */
 .my-feature {
     background: var(--ks-bg-surface);

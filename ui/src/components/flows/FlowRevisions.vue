@@ -25,6 +25,7 @@
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
+    import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
     import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
     const route = useRoute()
     const router = useRouter()
@@ -32,6 +33,7 @@
     const {t} = useI18n()
 
     const flowStore = useFlowStore()
+    const unsavedChangeStore = useUnsavedChangesStore()
     const flow = computed(() => flowStore.flow)
     const storeRevisions = computed(() => flowStore.revisions)
 
@@ -101,6 +103,7 @@
         try {
             const saved = await flowStore.saveFlow({flow: revisionSource})
             flowStore.initYamlSource().catch(onRestoreError)
+            unsavedChangeStore.unsavedChange = false
             toast.saved(saved.id)
 
             const loaded = await flowStore.loadRevisions({namespace, id, store: false})
@@ -154,7 +157,7 @@
     watch(() => [route.params.namespace, route.params.id], fetchRevisions)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-revisions {
         min-height: calc(100vh - 190px);
     }

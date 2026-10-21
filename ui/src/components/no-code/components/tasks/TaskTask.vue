@@ -1,5 +1,5 @@
 <template>
-    <div class="w-100">
+    <div class="task-wrapper">
         <LeafBlockCard
             v-if="isSet"
             :block="cardBlock"
@@ -113,3 +113,9 @@
         model.value = undefined
     }
 </script>
+
+<style scoped>
+.task-wrapper {
+    width: 100%;
+}
+</style>

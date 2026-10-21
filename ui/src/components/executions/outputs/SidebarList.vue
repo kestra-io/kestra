@@ -113,7 +113,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .sidebar {
     display: flex;
     flex-direction: column;

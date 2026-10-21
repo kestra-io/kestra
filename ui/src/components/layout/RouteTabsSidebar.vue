@@ -21,7 +21,7 @@
                             @click="navigate"
                         >
                             <template v-if="tab.count !== undefined" #suffix>
-                                <KsBadge :value="tab.count" type="primary" inline class="count" />
+                                <KsBadge :value="tab.count" :max="tab.max" type="primary" inline class="count" />
                             </template>
                         </KsSideBarItem>
                     </router-link>
@@ -103,7 +103,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .route-tabs-sidebar {
         width: 200px;
         flex-shrink: 0;

@@ -33,7 +33,9 @@
             </div>
 
             <div class="set-labels__footer">
-                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: escapeHtml(execution.id)})" />
+                <i18n-t keypath="Set labels to execution" tag="p" class="set-labels__description">
+                    <template #id><code>{{ execution.id }}</code></template>
+                </i18n-t>
                 <div class="set-labels__actions">
                     <KsButton @click="onCancel">
                         {{ $t("cancel") }}
@@ -52,7 +54,7 @@
     import {useI18n} from "vue-i18n"
     import Close from "vue-material-design-icons/Close.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
 
     import LabelInput from "../labels/LabelInput.vue"
     import {filterValidLabels} from "./utils"
@@ -153,7 +155,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .set-labels-tag {
         display: inline-flex;
         align-items: center;
@@ -193,35 +195,35 @@
     .set-labels {
         display: flex;
         flex-direction: column;
+    }
 
-        &__body {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-3);
-            padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-4);
-        }
+    .set-labels__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-4);
+    }
 
-        &__description {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-            margin: 0;
-            min-width: 0;
-        }
+    .set-labels__description {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+        margin: 0;
+        min-width: 0;
+    }
 
-        &__footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-            padding: var(--ks-spacing-3) var(--ks-spacing-4);
-            border-top: 1px solid var(--ks-border-default);
-            background: var(--ks-bg-base);
-        }
+    .set-labels__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        border-top: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-base);
+    }
 
-        &__actions {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-        }
+    .set-labels__actions {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
     }
 </style>

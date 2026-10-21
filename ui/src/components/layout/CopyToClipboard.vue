@@ -24,7 +24,7 @@
     const copyText = () => Utils.copy(props.text)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .clipboard {
     z-index: 1;

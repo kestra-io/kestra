@@ -524,6 +524,21 @@
       "attempts": "{count} intento | {count} intentos",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Task fallida",
+      "view_task_logs": "Ver logs de la task",
+      "revision_short": "rev. {revision}",
+      "more_labels": "+{count} etiqueta | +{count} etiquetas",
+      "fewer_labels": "Mostrar menos etiquetas",
+      "jump_to_first_failure": "Ir al primer fallo",
+      "open_logs": "Abrir logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Tras iniciar sesión",
+      "execution_tab": "Ejecución {id} · pestaña {tab}",
+      "execution": "Ejecución {id}",
+      "tab": "Pestaña {tab}"
+    },
     "concurrency limits": "Límites de Concurrencia",
     "system overview": "Visión General del Sistema",
     "usage": "Uso",

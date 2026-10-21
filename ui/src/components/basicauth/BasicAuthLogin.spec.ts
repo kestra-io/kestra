@@ -12,7 +12,7 @@ const {route, push, shouldShowWelcome} = vi.hoisted(() => ({
 }))
 vi.mock("vue-router", () => ({
     useRoute: () => route,
-    useRouter: () => ({push}),
+    useRouter: () => ({push, options: {history: {base: "/ui"}}}),
 }))
 vi.mock("@kestra-io/kestra-sdk", async (importOriginal) => ({
     ...await importOriginal<typeof import("@kestra-io/kestra-sdk")>(),
@@ -150,6 +150,42 @@ describe("BasicAuthLogin after sign-in destination", () => {
         // Then
         expect(push).toHaveBeenCalledWith(from)
         expect(shouldShowWelcome).not.toHaveBeenCalled()
+    })
+
+    it.each([true, false])("returns to a deep link recorded with the app base path (fresh instance: %s)", async (fresh) => {
+        // Given
+        route.query = {from: "/ui/main/executions/company.finance/monthly_close/2qncB78egtgMA8D0HVACE2/logs"}
+        shouldShowWelcome.mockResolvedValue(fresh)
+
+        // When
+        await signIn()
+
+        // Then
+        expect(push).toHaveBeenCalledWith("/main/executions/company.finance/monthly_close/2qncB78egtgMA8D0HVACE2/logs")
+    })
+
+    it("drops the app base path from any other from once the instance has flows", async () => {
+        // Given
+        route.query = {from: "/ui/main/namespaces/edit/company.finance?tab=files"}
+        shouldShowWelcome.mockResolvedValue(false)
+
+        // When
+        await signIn()
+
+        // Then
+        expect(push).toHaveBeenCalledWith("/main/namespaces/edit/company.finance?tab=files")
+    })
+
+    it("keeps a path that only starts with the same letters as the app base path", async () => {
+        // Given
+        route.query = {from: "/uikit/main/flows"}
+        shouldShowWelcome.mockResolvedValue(false)
+
+        // When
+        await signIn()
+
+        // Then
+        expect(push).toHaveBeenCalledWith("/uikit/main/flows")
     })
 
     it("follows from once the instance has flows", async () => {

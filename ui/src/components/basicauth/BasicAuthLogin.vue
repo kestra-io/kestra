@@ -98,9 +98,16 @@
     const SHORT_ID_LENGTH = 8
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+    const withoutRouterBase = (path: string) => {
+        const base = router.options.history.base
+        if (!base || base === "/") return path
+        if (path === base) return "/"
+        return path.startsWith(`${base}/`) ? path.slice(base.length) : path
+    }
+
     const redirectPath = computed(() => {
         const raw = route.query.from as string | undefined
-        return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined
+        return raw && raw.startsWith("/") && !raw.startsWith("//") ? withoutRouterBase(raw) : undefined
     })
 
     const hint = computed(() => loginRedirectHint(redirectPath.value))

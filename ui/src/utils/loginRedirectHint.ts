@@ -23,7 +23,7 @@ const TAB_LABEL_KEYS: Map<string, string> = new Map(Object.entries({
     "promote": "promote.label",
 }))
 
-const PREFIX = "^(?:/ui)?(?:/[A-Za-z0-9_-]+)?"
+const PREFIX = "^(?:/[A-Za-z0-9_-]+)?"
 const NAMESPACE = "([A-Za-z0-9._-]+)"
 const ID = "([A-Za-z0-9_-]+)"
 const EXECUTION_PATH = new RegExp(`${PREFIX}/executions/${NAMESPACE}/${ID}/${ID}(?:/([^/]+))?/?$`)

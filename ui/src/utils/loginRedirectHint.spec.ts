@@ -7,8 +7,8 @@ describe("loginRedirectHint", () => {
             .toEqual({namespace: "company.finance", flowId: "monthly_close", executionId: "2qncB78egtgMA8D0HVACE2", tabLabelKey: "gantt"})
     })
 
-    it("accepts a tenant prefix and the app base path, and defaults to the overview tab", () => {
-        expect(loginRedirectHint("/ui/main/executions/ns/flow/abc"))
+    it("accepts a tenant prefix and defaults to the overview tab", () => {
+        expect(loginRedirectHint("/main/executions/ns/flow/abc"))
             .toEqual({namespace: "ns", flowId: "flow", executionId: "abc", tabLabelKey: "overview"})
     })
 

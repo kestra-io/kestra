@@ -784,6 +784,30 @@ class FlowValidationTest {
     }
 
     @Test
+    void shouldStillLoadATriggerThatSetsAssetFailureBehavior() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 0 1 1 *"
+                assets:
+                  assetFailureBehavior: FAIL
+                  outputs:
+                    - id: table
+                      type: TABLE
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+        assertThat(flow.getTriggers().getFirst().getAssets().getOutputs()).isNotNull();
+    }
+
+    @Test
     void shouldRejectMalformedAssetsDeclaration() {
         Flow flow = YamlParser.parse("""
             id: test

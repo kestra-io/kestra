@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.TriggerAssetsDeclaration;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
@@ -156,7 +157,7 @@ public abstract class AbstractFeatureUsageReportTest {
                         .logToFile(true)
                         .failOnTriggerError(true)
                         .allowConcurrent(true)
-                        .assets(new AssetsDeclaration(null, null, null, null))
+                        .assets(new TriggerAssetsDeclaration(null, null, null))
                         .build()
                 )
             )

@@ -66,7 +66,6 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tag';
     @use "element-plus/theme-chalk/src/common/var.scss" as *;
-    @use "../../../assets/styles/variables.scss" as *;
 
     $tag-color-map: (
         primary: (

@@ -1,4 +1,4 @@
-// Element reset ported from Bootstrap 5.3.8 reboot, reading --ks-* tokens instead of Bootstrap's variables.
+/* Element reset ported from Bootstrap 5.3.8 reboot, reading --ks-* tokens instead of Bootstrap's variables. */
 
 *,
 *::before,
@@ -251,6 +251,7 @@ caption {
 
 th {
     text-align: inherit;
+    /* eslint-disable-next-line css/no-invalid-properties -- WebKit's match-parent, with inherit as the fallback */
     text-align: -webkit-match-parent;
 }
 

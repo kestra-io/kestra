@@ -1034,7 +1034,7 @@
         color: var(--ks-icon-muted);
     }
 
-    :deep(.task-logs) {
+    .task-logs {
         max-height: 100%;
         margin-left: var(--ks-spacing-4);
         margin-right: var(--ks-spacing-4);

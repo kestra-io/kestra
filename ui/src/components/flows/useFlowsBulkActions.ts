@@ -150,11 +150,8 @@ export default function useFlowsBulkActions(options: {
     }
 
     async function exportFlowsAsStream(query: LocationQuery) {
-        const data = await FlowsAPI.exportFlowsByQuery(
-            {filters: routeQueryToQueryFilters(query)},
-            {headers: {Accept: "text/csv"}},
-        )
-        const url = window.URL.createObjectURL(new Blob([data]))
+        const data = await FlowsAPI.exportFlows({filters: routeQueryToQueryFilters(query)})
+        const url = window.URL.createObjectURL(new Blob([data as unknown as string]))
         const link = document.createElement("a")
         link.href = url
         link.setAttribute("download", "flows.csv")

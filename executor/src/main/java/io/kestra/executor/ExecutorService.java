@@ -212,9 +212,6 @@ public class ExecutorService {
             // process flowable tasks
             executor = this.handleFlowableTasks(executor);
 
-            // a pausing task genuinely gates the pause (unlike Pause's fire-and-forget onPause); PAUSING surfaces that window.
-            executor = this.handlePausing(executor);
-
             // send worker task to the Worker
             // this is important to do it after handleFlowableTasks so tasks created by flowable tasks are processed immediately.
             executor = this.handleWorkerTasks(executor);
@@ -579,9 +576,11 @@ public class ExecutorService {
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
         List<TaskRun> onPauseTaskRuns = new ArrayList<>();
+        boolean pausing = false;
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
+            TaskRun resolvedTaskRun = taskRun;
 
             // For running flowable tasks: compute both next task runs and the worker task result in a single pass.
             if (taskRun.getState().isRunning() && task instanceof FlowableTask<?> && this.canChildrenProgress(executor.getExecution(), taskRun)) {
@@ -605,6 +604,7 @@ public class ExecutorService {
                             // do NOT add the result: the parent must not terminate
                         } else {
                             list.add(flowableResult.get());
+                            resolvedTaskRun = flowableResult.get().getTaskRun();
                             // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                             if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
                                 this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
@@ -617,6 +617,10 @@ public class ExecutorService {
                     runContext.logger().error("Failed to process flowable task {}: {}", taskRun.getId(), e.getMessage(), e);
                     executor.withExecution(executor.getExecution().withTaskRun(taskRun.withState(State.Type.FAILED)), "flowableValidation");
                 }
+            }
+
+            if (!pausing && task instanceof PausableTask pausableTask) {
+                pausing = this.isPausing(executor, pausableTask, resolvedTaskRun);
             }
 
             // For KILLING flowable tasks: only compute worker task result (kill-path) — no new child tasks
@@ -821,19 +825,19 @@ public class ExecutorService {
 
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskDelay");
 
-        if (list.isEmpty()) {
-            return executor;
+        boolean pausedThisPass = list.stream().anyMatch(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED);
+
+        if (!list.isEmpty()) {
+            if (!onPauseTaskRuns.isEmpty()) {
+                executor.withTaskRun(onPauseTaskRuns, "handlePauses");
+            }
+
+            executor = this.handlePausedDelay(executor, list);
+
+            this.addWorkerTaskResults(executor, list);
         }
 
-        if (!onPauseTaskRuns.isEmpty()) {
-            executor.withTaskRun(onPauseTaskRuns, "handlePauses");
-        }
-
-        executor = this.handlePausedDelay(executor, list);
-
-        this.addWorkerTaskResults(executor, list);
-
-        return executor;
+        return this.handlePauseState(executor, pausing, pausedThisPass);
     }
 
     /**
@@ -1185,81 +1189,48 @@ public class ExecutorService {
                         log.warn("Unable to notify paused task '{}' for execution '{}'", workerTaskResult.getTaskRun().getTaskId(), executor.getExecution().getId(), e);
                     }
                 }));
-
-            // A sibling pausable task still gating the pause (its own taskRun isn't PAUSED yet, even in this
-            // pass's own results) keeps the execution out of PAUSED, so it can keep running its onWait.
-            Set<String> pausedThisPass = workerTaskResults.stream()
-                .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
-                .map(workerTaskResult -> workerTaskResult.getTaskRun().getId())
-                .collect(Collectors.toSet());
-
-            if (!hasPausingTask(executor, pausedThisPass)) {
-                return this.pauseExecution(executor, "handlePausedDelay")
-                    .withWorkerTaskDelays(list, "handlePausedDelay");
-            }
         }
 
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
-    /** Every PAUSED transition must go through here, or a Loop sub-execution's emit is easy to forget. */
-    private ExecutorContext pauseExecution(ExecutorContext executor, String reason) throws QueueException {
-        ExecutorContext updated = executor.withExecution(executor.getExecution().withState(State.Type.PAUSED), reason);
-
-        if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
-            loopExecutionEventQueue.emit(
-                new LoopExecutionEvent(
-                    executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null, null
-                )
-            );
+    /** A task run can only be pausing until it first pauses, so the RunContext is built for that short window only. */
+    private boolean isPausing(ExecutorContext executor, PausableTask pausableTask, TaskRun taskRun) {
+        if (taskRun.getState().getCurrent() != State.Type.RUNNING || taskRun.getState().getHistories().stream().anyMatch(history -> history.getState() == State.Type.PAUSED)) {
+            return false;
         }
-
-        return updated;
+        RunContext runContext = runContextFactory.of(executor.getFlow(), (Task) pausableTask, executor.getExecution(), taskRun);
+        return pausableTask.isPausing(runContext, taskRun);
     }
 
-    /** {@code excludedTaskRunIds} covers task runs whose merged state still reads RUNNING for the rest of the pass that just resolved them to PAUSED. */
-    private boolean hasPausingTask(ExecutorContext executor, Set<String> excludedTaskRunIds) {
-        return ListUtils.emptyOnNull(executor.getExecution().getTaskRunList())
-            .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
-            .filter(taskRun -> !excludedTaskRunIds.contains(taskRun.getId()))
-            .anyMatch(taskRun -> {
-                Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
-                // checked before building the RunContext: a task run can only be pausing until it first pauses
-                if (!(task instanceof PausableTask pausableTask) || taskRun.getState().getHistories().stream().anyMatch(history -> history.getState() == State.Type.PAUSED)) {
-                    return false;
-                }
-                RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                return pausableTask.isPausing(runContext, taskRun);
-            });
-    }
-
-    /** RUNNING &lt;-&gt; PAUSING while any pausable task is still pausing, resolving to PAUSED instead of RUNNING when a sibling already paused. */
-    private ExecutorContext handlePausing(ExecutorContext executor) throws QueueException {
+    /** A pausing task gates the pause (unlike Pause's fire-and-forget onPause): the execution stays PAUSING until no pausable task is pausing any more. */
+    private ExecutorContext handlePauseState(ExecutorContext executor, boolean pausing, boolean pausedThisPass) throws QueueException {
         State.Type current = executor.getExecution().getState().getCurrent();
-        if (current != State.Type.RUNNING && current != State.Type.PAUSING) {
-            return executor;
+
+        if (pausing) {
+            return current == State.Type.RUNNING ? executor.withExecution(executor.getExecution().withState(State.Type.PAUSING), "handlePauseState") : executor;
         }
 
-        boolean waiting = hasPausingTask(executor, Collections.emptySet());
+        boolean pause = pausedThisPass
+            ? current != State.Type.PAUSED
+            : current == State.Type.PAUSING && executor.getExecution().getTaskRunList().stream().anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.PAUSED);
 
-        if (waiting && current == State.Type.RUNNING) {
-            return executor.withExecution(executor.getExecution().withState(State.Type.PAUSING), "handlePausing");
-        }
+        if (pause) {
+            ExecutorContext updated = executor.withExecution(executor.getExecution().withState(State.Type.PAUSED), "handlePauseState");
 
-        if (!waiting && current == State.Type.PAUSING) {
-            boolean hasPausedTaskRun = ListUtils.emptyOnNull(executor.getExecution().getTaskRunList())
-                .stream()
-                .anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.PAUSED);
-
-            if (hasPausedTaskRun) {
-                return this.pauseExecution(executor, "handlePausing");
+            // propagate the pause to the parent execution when running inside a Loop sub-execution
+            if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
+                loopExecutionEventQueue.emit(
+                    new LoopExecutionEvent(
+                        executor.getExecution().getLoopRun(), executor.getExecution().getId(), State.Type.PAUSED, null, null
+                    )
+                );
             }
 
-            return executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handlePausing");
+            return updated;
         }
 
-        return executor;
+        return current == State.Type.PAUSING ? executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handlePauseState") : executor;
     }
 
     private ExecutorContext handleNeverRunnedKilling(ExecutorContext executor) throws InternalException {

@@ -331,6 +331,16 @@ describe("useLoopScoping", () => {
         expect(lanes.map((lane) => lane.uid)).toEqual(["per_region"])
     })
 
+    it("shouldLeaveTheScopeOfAnotherViewWhenADisabledInstanceUnmounts", async () => {
+        const {store, wrapper} = setup(false)
+        store.setScopedIterations({per_region: iterationExecution("it-2", "SUCCESS")} as never)
+        await flushPromises()
+
+        wrapper.unmount()
+
+        expect(store.scopedIterations.per_region.id).toBe("it-2")
+    })
+
     it("shouldDoNothingOutsideAReadOnlyExecution", async () => {
         const {scoping} = setup(false)
         await flushPromises()

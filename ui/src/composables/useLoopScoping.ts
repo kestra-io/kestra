@@ -66,6 +66,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
     const subscriptions = new Map<string, FollowedExecution>()
     let userScopeSeq = 0
     let unmounted = false
+    let ownsScopedIterations = false
 
     const executionOf = (laneUid: string): Execution | undefined => executionsStore.scopedIterations[laneUid]
 
@@ -226,6 +227,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         for (const laneUid of [...subscriptions.keys()]) {
             if (!keep.has(laneUid)) closeSubscription(laneUid)
         }
+        ownsScopedIterations = true
         executionsStore.setScopedIterations(Object.fromEntries(resolved.map(({lane, execution}) => [lane.uid, execution])))
         resolved.forEach(({lane, execution}) => follow(lane.uid, execution))
         refreshOutputs()
@@ -264,7 +266,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         unmounted = true
         subscriptions.forEach((subscription) => subscription.close())
         subscriptions.clear()
-        executionsStore.setScopedIterations({})
+        if (ownsScopedIterations) executionsStore.setScopedIterations({})
     })
 
     const laneByUid = (uid: string) => laneNodes.value.find((lane) => lane.uid === uid)

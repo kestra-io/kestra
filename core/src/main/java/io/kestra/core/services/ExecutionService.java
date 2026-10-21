@@ -1489,6 +1489,20 @@ public class ExecutionService {
         return newExecution;
     }
 
+    public boolean canBeRescheduled(Execution execution) {
+        return execution.getState().isCreated() && execution.getScheduleDate() != null;
+    }
+
+    public Execution reschedule(Execution execution, Instant scheduleDate) {
+        if (!canBeRescheduled(execution)) {
+            throw new IllegalArgumentException("Only scheduled executions that have not started can be rescheduled.");
+        }
+
+        Execution newExecution = execution.withScheduleDate(scheduleDate);
+        eventPublisher.publishEvent(CrudEvent.of(execution, newExecution));
+        return newExecution;
+    }
+
     /**
      * Remove true if the execution is terminated, including afterExecution tasks if it's not a loop execution.
      */

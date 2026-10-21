@@ -28,7 +28,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-list-wrapper {
         height: 100%;
         display: flex;

@@ -61,7 +61,7 @@
     defineOptions({inheritAttrs: false})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .wrapper {
         display: flex;
         flex-direction: column;
@@ -77,7 +77,7 @@
         border-radius: var(--ks-radius-base);
         box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             height: 100%;
             padding: 0;
         }
@@ -93,7 +93,7 @@
 
     .topology {
         flex: 1;
-        // Floor so a short viewport still gets a usable graph; the page scrolls from there.
+        /* Floor so a short viewport still gets a usable graph; the page scrolls from there. */
         min-height: 400px;
     }
 

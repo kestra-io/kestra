@@ -286,7 +286,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .big-file-warning,
     .load-error {
         display: flex;

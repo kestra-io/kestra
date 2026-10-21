@@ -22,7 +22,7 @@
     const router = useRouter()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .locked {
         cursor: pointer;
     }

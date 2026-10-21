@@ -81,15 +81,15 @@
     const descriptionParts = computed(() => (props.trigger.description ?? "").split(/(`[^`]+`)/g))
 </script>
 
-<style scoped lang="scss">
-    $card-min-height: 8.75rem;
-
+<style scoped>
     .trigger-card {
+        --trigger-card-min-height: 8.75rem;
+
         display: flex;
         flex-direction: column;
-        min-height: $card-min-height;
+        min-height: var(--trigger-card-min-height);
         content-visibility: auto;
-        contain-intrinsic-height: auto $card-min-height;
+        contain-intrinsic-height: auto var(--trigger-card-min-height);
         padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
         border: var(--ks-border-block-primary);
         border-radius: var(--ks-radius-base);

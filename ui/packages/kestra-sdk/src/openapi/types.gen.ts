@@ -7271,6 +7271,58 @@ export type ValidateReplayExecutionResponses = {
     200: unknown;
 };
 
+export type RescheduleExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The new scheduled start date
+         */
+        scheduleDate: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/reschedule';
+};
+
+export type RescheduleExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution is not scheduled, has already started, or its scheduled start is being processed
+     */
+    409: ProblemDetail;
+    /**
+     * if the scheduleDate is not in the future
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type RescheduleExecutionError = RescheduleExecutionErrors[keyof RescheduleExecutionErrors];
+
+export type RescheduleExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type RescheduleExecutionResponse = RescheduleExecutionResponses[keyof RescheduleExecutionResponses];
+
 export type RestartExecutionData = {
     body?: never;
     path: {

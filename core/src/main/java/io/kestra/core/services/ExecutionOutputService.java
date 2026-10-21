@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionOutput;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.repositories.ExecutionOutputRepositoryInterface;
+import io.kestra.core.runners.AssetInputResolver;
 import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 import io.kestra.core.searchable.SearchableDataUtils;
 import io.kestra.core.services.configuration.ExecutionOutputConfiguration;
@@ -17,6 +18,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 
 import jakarta.inject.Singleton;
@@ -29,12 +31,14 @@ import jakarta.inject.Singleton;
 public class ExecutionOutputService extends AbstractOutputService {
     private final ExecutionOutputRepositoryInterface outputRepository;
     private final SearchableDataRepositoryInterface searchableDataRepository;
+    private final Provider<AssetInputResolver> assetInputResolver;
 
     public ExecutionOutputService(ExecutionOutputRepositoryInterface outputRepository, SearchableDataRepositoryInterface searchableDataRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
-                                  ExecutionOutputConfiguration executionOutputConfiguration) {
+                                  ExecutionOutputConfiguration executionOutputConfiguration, Provider<AssetInputResolver> assetInputResolver) {
         super(storageInterface, namespaceFactory, executionOutputConfiguration.limit());
         this.outputRepository = outputRepository;
         this.searchableDataRepository = searchableDataRepository;
+        this.assetInputResolver = assetInputResolver;
     }
 
     /**
@@ -69,6 +73,7 @@ public class ExecutionOutputService extends AbstractOutputService {
 
     /**
      * Get the outputs of an execution. This method will read the outputs from the database or from the internal storage depending on where they are stored.
+     * An {@code ASSET} output, stored as its asset id, is returned as the asset read live.
      */
     @SuppressWarnings("deprecation")
     public Map<String, Object> getOutputs(Execution execution) throws InternalException {
@@ -92,7 +97,8 @@ public class ExecutionOutputService extends AbstractOutputService {
             return null;
         }
 
-        return MapUtils.emptyOnNull(read(() -> StorageContext.forExecution(execution), output.get().value(), output.get().uri()));
+        Map<String, Object> outputs = MapUtils.emptyOnNull(read(() -> StorageContext.forExecution(execution), output.get().value(), output.get().uri()));
+        return outputs.isEmpty() ? outputs : assetInputResolver.get().expandOutputs(execution, outputs);
     }
 
     /**

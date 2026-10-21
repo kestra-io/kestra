@@ -21,6 +21,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.runners.DefaultRunContext;
@@ -148,5 +149,22 @@ class SubflowTest {
         assertTrue(result.isPresent());
         assertThat(result.get().getState()).isEqualTo(State.Type.CANCELLED);
         assertThat(result.get().getParentTaskRun().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+    }
+
+    @Test
+    void shouldKeepOnlyTheIdOfAnAssetOutputOfTheSubflow() {
+        Output output = Output.builder().id("vm").type(OutputType.ASSET).value("web-01").build();
+        Mockito.when(inputAndOutput.typedOutputs(Mockito.any(FlowInterface.class), Mockito.any(), Mockito.anyMap()))
+            .thenReturn(Map.of("vm", Map.of("id", "web-01", "displayName", "Web")));
+
+        Optional<SubflowExecutionResult> result = new Subflow().createSubflowExecutionResult(
+            runContext,
+            TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
+            Flow.builder().outputs(List.of(output)).build(),
+            Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build(),
+            Collections.emptyMap()
+        );
+
+        assertThat(result.orElseThrow().getOutputs()).containsEntry("outputs", Map.of("vm", "web-01"));
     }
 }

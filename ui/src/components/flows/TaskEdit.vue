@@ -18,7 +18,7 @@
             </template>
             <template #footer>
                 <div v-ks-loading="isLoading">
-                    <ValidationError class="me-2" link :errors="errors" />
+                    <ValidationError class="task-edit-validation-error" link :errors="errors" />
 
                     <KsButton
                         :icon="ContentSave"
@@ -31,7 +31,7 @@
                     </KsButton>
                     <KsAlert
                         :closable="false"
-                        class="mb-0 mt-3"
+                        class="task-edit-revision-alert"
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
@@ -198,7 +198,7 @@
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
-    import {flattenTaskIds} from "../../utils/flowableBlockOps"
+    import {upstreamTaskIds} from "../../utils/flowableBlockOps"
     import {useContextSections} from "../../composables/useContextSections"
     import type {DataSection} from "./contextSections/types"
     import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
@@ -222,6 +222,7 @@
         presentation?: "drawer" | "panel";
         hideTabstrip?: boolean;
         editorKey?: string;
+        taskPath?: string;
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -240,6 +241,7 @@
         presentation: "drawer",
         hideTabstrip: false,
         editorKey: undefined,
+        taskPath: undefined,
     })
 
     const emit = defineEmits<{
@@ -283,14 +285,12 @@
     provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
 
     async function jumpToFirstUnsetRequired() {
-        const first = unsetRequiredFields.value[0]
-        if (!first) return
-
-        const selector = `[data-required-path="${first.path}"]`
-        let el = panelRef.value?.querySelector<HTMLElement>(selector)
-        if (!el && navigateToRequiredField.value?.(first.path)) {
+        let el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
+        if (!el) {
+            const first = unsetRequiredFields.value[0]
+            if (!first || !navigateToRequiredField.value?.(first.path)) return
             await nextTick()
-            el = panelRef.value?.querySelector<HTMLElement>(selector)
+            el = panelRef.value?.querySelector<HTMLElement>(`[data-required-path="${first.path}"]`)
         }
         if (!el) return
 
@@ -434,11 +434,7 @@
             })})
         }
 
-        const ids: string[] = []
-        flattenTaskIds(flow.tasks, ids)
-        flattenTaskIds(flow.errors, ids)
-        flattenTaskIds(flow.finally, ids)
-        const upstream = [...new Set(ids)].filter(id => id && id !== currentTaskId.value)
+        const upstream = upstreamTaskIds(flow, currentTaskId.value, props.taskPath)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
@@ -673,7 +669,7 @@
     defineExpose({open: onShow, flushPendingEdit})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-edit-panel {
         display: flex;
         flex-direction: column;
@@ -752,39 +748,35 @@
         flex-direction: column;
     }
 
-    @mixin task-edit-stacked {
-        flex-direction: column;
-
-        .task-edit-col {
-            flex: none;
-            width: 100%;
-            height: auto;
-            border: none;
-            border-bottom: 1px solid var(--ks-border-subtle);
-        }
-
-        .task-edit-col-inputs,
-        .task-edit-col-output {
-            max-height: 30%;
-        }
-
-        .task-edit-col-params {
-            order: -1;
-            flex: 1 1 auto;
-            min-height: 55%;
-        }
-
-        .task-edit-col-inputs.task-edit-col--collapsed,
-        .task-edit-col-output.task-edit-col--collapsed {
-            flex: none;
-            width: 100%;
-            max-height: none;
-        }
-    }
-
     @container (max-width: 760px) {
         .task-edit-panel-body {
-            @include task-edit-stacked;
+            flex-direction: column;
+
+            .task-edit-col {
+                flex: none;
+                width: 100%;
+                height: auto;
+                border: none;
+                border-bottom: 1px solid var(--ks-border-subtle);
+            }
+
+            .task-edit-col-inputs,
+            .task-edit-col-output {
+                max-height: 30%;
+            }
+
+            .task-edit-col-params {
+                order: -1;
+                flex: 1 1 auto;
+                min-height: 55%;
+            }
+
+            .task-edit-col-inputs.task-edit-col--collapsed,
+            .task-edit-col-output.task-edit-col--collapsed {
+                flex: none;
+                width: 100%;
+                max-height: none;
+            }
         }
     }
 
@@ -821,6 +813,15 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-top: 1px solid var(--ks-border-subtle);
         background: var(--ks-bg-surface);
+    }
+
+    .task-edit-validation-error {
+        margin-inline-end: var(--ks-spacing-2);
+    }
+
+    .task-edit-revision-alert {
+        margin-bottom: 0;
+        margin-top: var(--ks-spacing-4);
     }
 
     .task-edit-validation-status {

@@ -262,14 +262,7 @@
                 >
                     <KsButton
                         :tag="RouterLink"
-                        :to="{
-                            name: 'executions/list',
-                            query: {
-                                'filters[parentId][EQUALS]': followedExecution.id,
-                                'filters[kind][EQUALS]': 'LOOP',
-                                'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
-                            }
-                        }"
+                        :to="loopIterationsRoute(followedExecution, asTaskRun(currentTaskRun).taskId)"
                         size="small"
                     >
                         {{ $t("iterations") }}
@@ -277,7 +270,7 @@
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
-                        :executionId="followedExecution.id"
+                        :execution="followedExecution"
                         :taskId="asTaskRun(currentTaskRun).taskId"
                         :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
@@ -320,6 +313,7 @@
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const {t} = useI18n()
 
@@ -1325,7 +1319,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .log-group-more {
     display: flex;
@@ -1346,7 +1340,7 @@
         background: var(--ks-bg-hover);
     }
 
-    :deep(.material-design-icon) {
+    & :deep(.material-design-icon) {
         display: inline-flex;
         align-items: center;
         line-height: 0;
@@ -1376,7 +1370,7 @@
 }
 
 .log-wrapper {
-  :deep(
+  & :deep(
     > .vue-recycle-scroller__item-wrapper
       > .vue-recycle-scroller__item-view
       > div
@@ -1384,7 +1378,7 @@
     padding-bottom: 1rem;
   }
 
-  :deep(.line) {
+  & :deep(.line) {
     padding-left: 0;
   }
 
@@ -1410,7 +1404,7 @@
       }
     }
 
-    :deep(.kel-card__body) {
+    & :deep(.kel-card__body) {
       padding: 0;
     }
 
@@ -1444,7 +1438,7 @@
     transition: max-height 0.2s ease-out;
     max-height: 300px;
 
-    :deep(.vue-recycle-scroller__item-view > div) {
+    & :deep(.vue-recycle-scroller__item-view > div) {
       min-height: 2rem;
     }
 
@@ -1452,7 +1446,7 @@
       max-height: calc(100vh - 250px);
     }
 
-    :deep(.line) {
+    & :deep(.line) {
       padding: var(--ks-spacing-1) var(--ks-spacing-3);
 
       &.cursor {

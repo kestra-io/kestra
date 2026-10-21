@@ -58,12 +58,12 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .bell {
         .toggle {
             color: var(--ks-icon-muted);
 
-            :deep(svg) {
+            & :deep(svg) {
                 fill: currentColor;
                 stroke: currentColor;
             }

@@ -1220,13 +1220,13 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .full-container {
     min-height: 0;
     display: flex;
     flex-direction: column;
 
-    > * {
+    & > * {
         flex: 1;
     }
 }
@@ -1240,17 +1240,17 @@
     border-radius: 7px;
     box-shadow: 1px 1px 3px 1px var(--ks-status-warning);
 
-    :deep(.kel-alert__title) {
+    & :deep(.kel-alert__title) {
         font-size: var(--ks-font-size-base);
         color: var(--ks-status-warning);
         font-weight: bold;
     }
 
-    :deep(.kel-alert__description) {
+    & :deep(.kel-alert__description) {
         font-size: var(--ks-font-size-xs);
     }
 
-    :deep(.kel-alert__icon) {
+    & :deep(.kel-alert__icon) {
         color: var(--ks-status-warning);
     }
 }

@@ -113,7 +113,7 @@
     useRouteContext(routeInfo)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .dashboard-trigger {
         display: inline-flex;
         align-items: center;

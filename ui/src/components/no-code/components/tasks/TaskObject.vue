@@ -9,6 +9,17 @@
                 </Wrapper>
             </template>
 
+            <Wrapper v-for="[unknownKey, unknownValue] in unknownProperties" :key="`unknown-${unknownKey}`">
+                <template #tasks>
+                    <TaskUnknownField
+                        :fieldKey="unknownKey"
+                        :value="unknownValue"
+                        :errors="errorsAt(unknownKey)"
+                        @remove="onObjectInput(unknownKey, undefined)"
+                    />
+                </template>
+            </Wrapper>
+
             <div v-if="mainProperties.length && hasGroupedProperties" class="form-groups">
                 <div
                     v-for="section in groupSections"
@@ -82,14 +93,17 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue"
+    import {computed, inject, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import TaskDict from "./TaskDict.vue"
     import Wrapper from "./Wrapper.vue"
     import TaskObjectField from "./TaskObjectField.vue"
+    import TaskUnknownField from "./TaskUnknownField.vue"
+    import {unknownPropertiesOf} from "./unknownProperties"
     import {collapseEmptyValues} from "./MixinTask"
-    import {DATA_TYPES_MAP_INJECTION_KEY} from "../../injectionKeys"
+    import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
+    import {hasErrorUnder} from "../../../../utils/validationErrors"
 
     defineOptions({
         inheritAttrs: false,
@@ -104,7 +118,7 @@
         merge?: boolean;
         properties?: any;
         metadataInputs?: boolean;
-        modelValue?: Model;
+        modelValue?: Model | null;
         required?: boolean;
         schema?: Schema;
         root?: string;
@@ -294,6 +308,39 @@
         return groupSections.value.length > 0 || deprecatedProperties.value.length > 0
     })
 
+    const validationErrors = inject(FIELD_VALIDATION_ERRORS_INJECTION_KEY, undefined)
+
+    const errorsAt = (key: string): string[] =>
+        validationErrors?.value.get(props.root ? `${props.root}.${key}` : key) ?? []
+
+    const unknownProperties = computed<Entry[]>(() => unknownPropertiesOf(
+        props.modelValue,
+        props.properties ?? props.schema?.properties,
+        Boolean(props.schema?.additionalProperties),
+    ))
+
+    const erroredGroups = computed<string[]>(() => {
+        const errors = validationErrors?.value
+        if (!errors?.size) return []
+        const holdsAnError = (properties: Entry[]) => properties.some(([key]) =>
+            hasErrorUnder(errors, props.root ? `${props.root}.${key}` : key))
+        return [
+            ...groupSections.value.filter(section => holdsAnError(section.properties)).map(section => section.key),
+            ...(holdsAnError(deprecatedProperties.value) ? ["deprecated"] : []),
+        ]
+    })
+
+    let openedForErrors: string[] = []
+
+    watch(() => erroredGroups.value.join("|"), () => {
+        for (const group of erroredGroups.value) {
+            if (!openedForErrors.includes(group) && !activeNames.value.includes(group)) {
+                activeNames.value.push(group)
+            }
+        }
+        openedForErrors = erroredGroups.value
+    }, {immediate: true})
+
     function onInput(value: any) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
@@ -313,14 +360,14 @@
             fieldKey: key,
             task: props.modelValue,
             schema: schema,
-            required: props.schema?.required,
+            required: props.modelValue == null ? undefined : props.schema?.required,
             siblingKeys: Object.keys(props.properties ?? props.schema?.properties ?? {}),
         } as const
     }
 </script>
 
 <!-- eslint-disable-next-line vue/enforce-style-attribute -->
-<style lang="scss">
+<style>
     .kel-form-item__content {
         display: block !important;
         .kel-form-item {
@@ -335,9 +382,8 @@
     }
 </style>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .task-object-form {
     width: 100%;
 }
@@ -345,7 +391,7 @@
 .kel-form-item {
     width: 100%;
     margin-bottom: 0;
-    > :deep(.kel-form-item__label) {
+    & > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;

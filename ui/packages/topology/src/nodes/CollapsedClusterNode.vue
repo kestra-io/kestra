@@ -113,7 +113,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .collapsed-lane {
         width: 100%;
         height: 100%;

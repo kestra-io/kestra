@@ -53,16 +53,16 @@ import lombok.experimental.SuperBuilder;
                     type: io.kestra.plugin.core.flow.Parallel
                     tasks:
                       - id: 1st
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.startDate }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.startDate }}"
 
                       - id: 2nd
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.id }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.id }}"
 
                   - id: last
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         ),
         @Example(
@@ -82,23 +82,23 @@ import lombok.experimental.SuperBuilder;
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
                           - id: task1
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                           - id: task2
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                       - id: sequence2
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
                           - id: task3
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
 
                           - id: task4
-                            type: io.kestra.plugin.core.debug.Return
-                            format: "{{ task.id }}"
+                            type: io.kestra.plugin.core.log.Log
+                            message: "{{ task.id }}"
                 """
         ),
         @Example(

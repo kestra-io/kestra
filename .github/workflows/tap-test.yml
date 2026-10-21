@@ -1,0 +1,24 @@
+name: Homebrew tap
+
+on:
+  pull_request:
+    paths:
+      - "Formula/**"
+      - ".github/workflows/tap-test.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "Formula/**"
+
+jobs:
+  test:
+    name: Audit, install and test the formula
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Audit the formula
+        run: brew audit --strict --online Formula/kestra.rb
+      - name: Install from the local formula
+        run: brew install --formula ./Formula/kestra.rb
+      - name: Test the installation
+        run: brew test --verbose kestra

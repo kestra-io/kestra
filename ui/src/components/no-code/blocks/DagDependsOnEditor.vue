@@ -46,7 +46,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .dag-depends-on {
         display: flex;
         align-items: center;

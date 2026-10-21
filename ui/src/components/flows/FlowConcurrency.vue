@@ -114,7 +114,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .img-size {
         max-width: 200px;
     }

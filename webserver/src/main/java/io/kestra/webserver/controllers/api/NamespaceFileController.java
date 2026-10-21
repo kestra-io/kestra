@@ -17,7 +17,6 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -28,7 +27,6 @@ import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -345,21 +343,22 @@ public class NamespaceFileController {
         String pathWithoutScheme = encodedPath.getPath();
 
         String tenantId = tenantService.resolveTenant();
+        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
+
+        // Without this, a retried delete would see the remaining sibling as the parent's only child and delete the parent.
+        if (!namespaceStorage.exists(Path.of(pathWithoutScheme))) {
+            return List.of();
+        }
 
         String zombieAwarePathToDelete = pathWithoutScheme;
         String parentPathToCheck = NamespaceFileMetadata.parentPath(zombieAwarePathToDelete);
         while (
-            parentPathToCheck != null && !parentPathToCheck.equals("/") && namespaceFileService.findMetadata(
-                Pageable.from(1, 2), tenantService.resolveTenant(), List.of(
-                    QueryFilter.builder().field(QueryFilter.Field.PARENT_PATH).operation(QueryFilter.Op.EQUALS).value(parentPathToCheck).build()
-                ), false
-            ).size() == 1
+            parentPathToCheck != null && !parentPathToCheck.equals("/") && namespaceStorage.children(parentPathToCheck, false).size() == 1
         ) {
             zombieAwarePathToDelete = parentPathToCheck;
             parentPathToCheck = NamespaceFileMetadata.parentPath(parentPathToCheck);
         }
 
-        Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);
         return namespaceStorage.delete(Path.of(zombieAwarePathToDelete));
     }
 

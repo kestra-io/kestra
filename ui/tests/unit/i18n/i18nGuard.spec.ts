@@ -14,8 +14,8 @@ const ROOTS = [
 
 const TWO_SCRIPT_BLOCKS = `<template>
     <div>
-        <i18n-t keypath="first" />
-        <I18nT keypath="second" />
+        <span>{{ t("first") }}</span>
+        <span v-t="'second'" />
     </div>
 </template>
 

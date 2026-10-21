@@ -264,7 +264,7 @@
                     h4 {
                         font-size: var(--ks-font-size-base);
                         font-weight: bold;
-                        line-height: var(--kbs-body-line-height);
+                        line-height: var(--ks-line-height-base);
                     }
 
                     p {
@@ -393,6 +393,9 @@
     }
 
     .kestra-icon-wrapper {
+        display: flex;
+        align-items: center;
+        margin-right: var(--ks-spacing-1);
         flex-shrink: 0;
         width: 1em;
         height: 1em;

@@ -5,6 +5,12 @@
       "cta": "変更点を確認"
     },
     "loading": "読み込み中...",
+    "namespace_files_tip": {
+      "title": "スクリプトをNamespaceファイルとして管理",
+      "description": "スクリプトをインラインで書く代わりに、ファイルパネルを開き、ファイル（例: main.py）として追加して、flowから実行します:",
+      "open_files": "ファイルを開く",
+      "dont_show_again": "今後表示しない"
+    },
     "more actions": "その他のアクション",
     "recipe": {
       "create_flow": "flowを作成",
@@ -236,6 +242,7 @@
       "last7days": "過去7日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
+      "allTime": "すべての期間",
       "next5minutes": "次の5分",
       "next15minutes": "次の15分",
       "next1hour": "次の1時間",
@@ -369,7 +376,7 @@
     "restart": "再起動",
     "restart tooltip": "<code>{state}</code>タスクから実行を再起動",
     "restarted": "実行が再開されました",
-    "restart confirm": "実行 <code>{id}</code> を再起動してもよろしいですか？",
+    "restart confirm": "実行 {id} を再起動してもよろしいですか？",
     "restart subflow warning": "このExecutionは親Executionによって作成されたため、そこから再起動する必要があります。これ単独で再起動すると、親ExecutionはFAILEDのままになり、次のTaskは実行されません。再起動するには、{parent}に移動してください。",
     "restart subflow warning link": "親 Execution",
     "replay": "リプレイ",
@@ -377,7 +384,7 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replayed": "実行がリプレイされました",
-    "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
+    "replay the execution": "フロー{flowId}の実行{executionId}を再実行する",
     "prefill inputs": "自動入力",
     "current": "現在",
     "change state": "状態を変更",
@@ -387,9 +394,11 @@
     "yes": "はい",
     "no": "いいえ",
     "change state done": "タスクの状態が更新されました",
-    "change state confirm": "実行 <code>{id}</code> の <code>{task}</code> タスクのタスク実行状態を変更してもよろしいですか？<br/>これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
+    "change state confirm": "実行 {id} の {task} タスクのタスク実行状態を変更してもよろしいですか？",
+    "change state confirm restart": "これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
     "interrupt": "中断",
-    "interrupt confirm": "実行 <code>{id}</code> 内の <code>{task}</code> Task の Task Run を中断してもよろしいですか？<br/>これにより、Worker 内で実行中の Task が終了し、その状態が設定されます。",
+    "interrupt confirm": "実行 {id} 内の {task} Task の Task Run を中断してもよろしいですか？",
+    "interrupt note": "これにより、Worker 内で実行中の Task が終了し、その状態が設定されます。",
     "interrupt done": "Task実行が中断されました",
     "interrupt target state": "ターゲット状態",
     "change state current state": "現在のステータスは:",
@@ -426,31 +435,48 @@
     "modify inputs": "入力を変更",
     "replay inputs new required": "このリビジョンにはinputがあります。入力を求められます。",
     "replay select taskrun": "再生するタスク実行を選択してください:",
+    "replayCheck": {
+      "checking": "リビジョン {revision} がタスク {taskId} からリプレイ可能か確認しています。",
+      "valid_title": "リビジョン {revision} は、Task {taskId} からリプレイできます。",
+      "valid_description": "その前のタスクは変更されていないため、その出力は再利用されます。別のリビジョンでリプレイしても、完全に決定論的になることはありません。Secret、ファイル input、および外部システムを呼び出す式は、元の実行とは異なるものを返す可能性があります。",
+      "refused_title": "リビジョン {revision} は Task {taskId} からリプレイできません。",
+      "refused_description": "結果が再利用されるはずのタスク、入力、または変数が、このリビジョンでは異なる方法で定義されています。",
+      "error_title": "リビジョン {revision} が Task {taskId} からリプレイ可能か確認できませんでした。",
+      "error_description": "引き続きリプレイできます。サーバーはリプレイ開始時に同じルールを適用し、リビジョンに互換性がない場合は拒否します。",
+      "whole_action": "代わりにExecution全体をリプレイする",
+      "whole_title": "リビジョン {revision} は、完全な実行としてリプレイできます。",
+      "whole_description": "以前の結果は再利用されないため、すべてのTaskはリビジョン {revision} で再度実行されます。元のExecutionは保持され、リンクされます。",
+      "confirm_from_task": "Taskからリプレイ",
+      "confirm_whole": "Execution全体をリプレイ"
+    },
     "change execution state done": "実行状態が更新されました",
-    "mark as": "<code>{status}</code>としてマーク",
-    "unqueue as": "<code>{status}</code>としてキューから外す",
+    "mark as": "{status}としてマーク",
+    "unqueue as": "{status}としてキューから外す",
     "kill": "キル",
     "kill parents and subflow": "現在のflowとsubflowを終了",
     "kill only parents": "現在のもののみを終了",
     "killed confirm": "実行 <code>{id}</code> を強制終了してもよろしいですか？",
     "killed done": "実行はキルのためにキューに入れられました",
     "resume": "再開",
-    "resumed title": "実行<code>{id}</code>を再開",
+    "resumed title": "実行{id}を再開",
     "resumed confirm": "実行 <code>{id}</code> を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
-    "resume from breakpoint title": "ブレークポイントから実行 <code>{id}</code> を再開します",
+    "resume from breakpoint title": "ブレークポイントから実行 {id} を再開します",
     "resume from breakpoint done": "ブレークポイントから実行が再開されました",
     "breakpoints": "ブレークポイント",
     "pause": "一時停止",
-    "pause title": "実行 <code>{id}</code> を一時停止します。<br/>現在実行中のタスクは引き続き処理され、実行は手動で再開する必要があることに注意してください。",
+    "pause title": "実行 {id} を一時停止します。",
+    "pause note": "現在実行中のタスクは引き続き処理され、実行は手動で再開する必要があることに注意してください。",
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "unqueue": "キューから削除",
-    "unqueue title": "実行 <code>{id}</code> のキュー解除をしますか？<br/><br/>これはflowの同時実行制限に従わないため、許可された制限よりも多くの実行が実行される可能性があることに注意してください。",
-    "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
+    "unqueue title": "実行 {id} のキュー解除をしますか？",
+    "unqueue note": "これはflowの同時実行制限に従わないため、許可された制限よりも多くの実行が実行される可能性があることに注意してください。",
+    "unqueue title multiple": "{count}件の実行をキューから外してもよろしいですか？",
+    "unqueue multiple note": "flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
     "unqueue done": "実行はキューから外されました",
     "force run": "強制実行",
-    "force run title": "実行 <code>{id}</code> を強制的に実行します。",
+    "force run title": "実行 {id} を強制的に実行します。",
     "force run confirm": "実行 `{id}` を強制的に実行してもよろしいですか？\n\n警告: 実行の強制実行は保証されておらず、重複する Task Run が作成される可能性があります。\n\n以下の遷移が行われます。\n\n- CREATED Task は RUNNING 状態に移行します。\n- RUNNING Task は再送信されます。\n- QUEUED Task はキューから削除されます。\n- PAUSED Task は再開されます。",
     "force run done": "実行は強制的に実行されました",
     "metrics": "メトリクス",
@@ -497,6 +523,21 @@
       "revision": "リビジョン {revision}",
       "attempts": "{count} 回の試行 | {count} 回の試行",
       "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
+    },
+    "execution_mobile": {
+      "failed_task": "失敗した task",
+      "view_task_logs": "task の logs を表示",
+      "revision_short": "リビジョン {revision}",
+      "more_labels": "+{count} 件の label | +{count} 件の label",
+      "fewer_labels": "label の表示を減らす",
+      "jump_to_first_failure": "最初の失敗へ移動",
+      "open_logs": "logs を開く"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "サインイン後",
+      "execution_tab": "実行 {id} · {tab} タブ",
+      "execution": "実行 {id}",
+      "tab": "{tab} タブ"
     },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
@@ -668,6 +709,7 @@
       "nav_properties": "プロパティ",
       "non_dynamic": "非動的",
       "format": "フォーマット",
+      "internal_storage_uri_hint": "Pebble式で内部Storage URIを参照します (例: {example})。",
       "max_items": "最大項目数",
       "max_length": "最大長",
       "maximum": "最大",
@@ -745,7 +787,7 @@
     "execute flow behaviour": "Flowを実行",
     "open in same tab": "同じタブで",
     "open in new tab": "新しいタブで",
-    "execute the flow": "Flow <code>{id}</code>を実行",
+    "execute the flow": "Flow {id}を実行",
     "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",
     "session expired": "セッションの有効期限が切れました",
@@ -917,12 +959,12 @@
     "restore": "復元",
     "restore confirm": "リビジョン <code>{revision}</code> を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
-    "bulk replay": "<code>{executionCount}</code>件の実行を再実行してもよろしいですか？",
-    "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
+    "bulk replay": "{executionCount}件の実行を再実行してもよろしいですか？",
+    "bulk change state": "以下の実行の状態を変更してもよろしいですか？{executionCount} 実行。",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
     "bulk force run": "`{executionCount}`件のExecutionを強制実行してもよろしいですか？\n\n警告：Executionの強制実行は保証されておらず、重複するTaskのExecutionが作成される可能性があります。\n\n以下の遷移が実行されます。\n\n- CREATED TaskはRUNNING状態に移行します。\n- RUNNING Taskは再送信されます。\n- QUEUED Taskはキューから削除されます。\n- PAUSED Taskは再開されます。",
-    "bulk restart": "<code>{executionCount}</code>件の実行を再起動してもよろしいですか？",
+    "bulk restart": "{executionCount}件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
     "cancel": "キャンセル",
     "errorLogs": "エラーログ",
@@ -1131,11 +1173,11 @@
         "deletion": {
           "confirm": "確認",
           "title": "コンテンツの削除を確認",
-          "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
-          "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
-          "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
-          "file_single": "ファイル <code>{name}</code> を削除してもよろしいですか？",
-          "folder_single": "フォルダー<code>{name}</code>とそのすべての内容を削除してもよろしいですか？"
+          "files": "{count} 個のファイルを削除してもよろしいですか？",
+          "folders": "{count} 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
+          "mixed": "{folders} フォルダーと {files} ファイルを削除してもよろしいですか？",
+          "file_single": "ファイル {name} を削除してもよろしいですか？",
+          "folder_single": "フォルダー{name}とそのすべての内容を削除してもよろしいですか？"
         }
       },
       "revisions": {
@@ -1164,7 +1206,7 @@
     "backfill": "Backfill",
     "Set labels": "ラベルを設定",
     "manage labels": "ラベルを管理",
-    "Set labels to execution": "実行<code>{id}</code>のラベルを追加または更新",
+    "Set labels to execution": "実行{id}のラベルを追加または更新",
     "Set labels done": "実行のラベルが正常に設定されました",
     "bulk set labels": "<code>{executionCount}</code>件の実行にlabelを設定してもよろしいですか？",
     "true": "はい",
@@ -1760,6 +1802,14 @@
     "item": "アイテム",
     "items": "アイテム",
     "iterations": "イテレーション",
+    "load_10_more": "さらに10件読み込む",
+    "show_all_executions": "すべての実行を表示",
+    "failed_iterations_only": "失敗した反復のみ",
+    "loop_iterations_shown": "{total}件中{shown}件表示",
+    "loop_iterations_load_error": "反復の読み込みに失敗しました",
+    "retry": "再試行",
+    "no_iterations": "まだ反復がありません",
+    "no_failed_iterations": "失敗した反復はありません",
     "loop_iterations_notice": {
       "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",
       "outputs": "ループのイテレーションは個別のサブExecutionとして実行されるため、そのOutputはここに表示されません。",
@@ -1770,6 +1820,8 @@
     "execution_started": "実行が開始されました！",
     "execution_failed": "実行が失敗しました！",
     "last error was": "最後のエラーは",
+    "execution_paused": "実行が一時停止",
+    "execution_paused_description": "この実行は検証と再開を待っています。",
     "active": "アクティブ",
     "flows imported": "フローがインポートされました",
     "flows not imported": "インポートされていないFlows",
@@ -2067,6 +2119,7 @@
         "csv": "CSVにエクスポート",
         "ion": "ION にエクスポート"
       },
+      "ignoredFilters": "{filters} フィルターはこのチャートには適用されません。 | {filters} フィルターはこのチャートには適用されません。",
       "show_all_statuses": "すべてのステータスを表示",
       "quick_filters": {
         "all": "すべて",
@@ -2268,7 +2321,8 @@
           "title": {
             "flow": "提案された flow",
             "dashboard": "提案ダッシュボード",
-            "app": "提案アプリ"
+            "app": "提案アプリ",
+            "test_suite": "提案された単体テスト"
           },
           "valid": "有効",
           "invalid": "変更が必要です"
@@ -2313,30 +2367,35 @@
           "failed": "失敗",
           "unknown": "追跡されていません"
         },
+        "kind": {
+          "produces": "生成",
+          "consumed_by": "消費元",
+          "upstream_of": "アップストリームの",
+          "part_of": "一部",
+          "related": "関連"
+        },
         "summary": {
           "fresh": "すべての {n} Asset は最新です",
           "issues": "{n} ステーブル",
           "failed": "{n} 失敗",
           "last_run": "最終実行 {ago}",
-          "unknown": "{n} は追跡されていません",
-          "tests_failed": "失敗したテストを含む{n}"
-        },
-        "tests": {
-          "pass": "{count} テスト | {count} テスト",
-          "warn": "{count} テスト · 警告",
-          "fail": "{failed}/{total} 失敗",
-          "tooltip": {
-            "pass": "{count} dbtテストが合格しました | すべての{count} dbtテストが合格しました",
-            "warn": "{count} 個のdbtテストが警告付きで合格しました | {count} 個のdbtテストが警告付きで合格しました",
-            "fail": "dbtテストに失敗しました | {total}個のdbtテストのうち{failed}個が失敗しました"
-          }
+          "unknown": "{n} は追跡されていません"
         },
         "recent_runs": "最近の実行",
         "group_by": "グループ化",
-        "groups": "グループ（{n}）",
+        "groups": "グループ",
         "group_none": "グループ化なし",
         "group_dataset": "データセット",
-        "ungrouped": "グループ化されていません"
+        "group_consumer": "コンシューマー",
+        "no_consumer": "コンシューマーなし",
+        "hidden_consumer": "非表示のFlow",
+        "ungrouped": "グループ化されていません",
+        "hub": {
+          "notice": "このノードには {count} 個のリレーションがあります。グラフを読みやすくするため、最新のもののみが表示されています。",
+          "expand": "その他の関連を読み込む",
+          "expand_failed": "関係をさらに読み込めませんでした。もう一度お試しください。"
+        },
+        "truncated": "このグラフは大きすぎて全体を表示できませんでした。一部の関連は省略されています。"
       },
       "search": {
         "placeholders": {

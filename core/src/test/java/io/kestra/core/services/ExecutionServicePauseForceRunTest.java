@@ -13,6 +13,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.storages.StorageInterface;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -59,6 +60,7 @@ class ExecutionServicePauseForceRunTest {
             mock(DispatchQueueInterface.class),
             mock(AsyncOperationWaiter.class),
             mock(AsyncOperationsConfiguration.class),
+            mock(TriggerEventQueue.class),
             Optional.empty()
         );
     }

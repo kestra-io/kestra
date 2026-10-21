@@ -13,8 +13,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.flows.Type;
 import io.kestra.core.repositories.ExecutionOutputRepositoryInterface;
 import io.kestra.core.searchable.SearchableOutput;
 import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
@@ -50,7 +50,7 @@ class ExecutionOutputServiceTest {
             .build();
     }
 
-    private Output output(String id, Type type, Boolean searchable) {
+    private Output output(String id, OutputType type, Boolean searchable) {
         return Output.builder().id(id).type(type).searchable(searchable).value("{{ outputs.x }}").build();
     }
 
@@ -173,10 +173,10 @@ class ExecutionOutputServiceTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
         Flow flow = flow(
-            output("name", Type.STRING, true),
-            output("count", Type.INT, true),
-            output("ignored", Type.STRING, false),
-            output("unset", Type.STRING, null)
+            output("name", OutputType.STRING, true),
+            output("count", OutputType.INT, true),
+            output("ignored", OutputType.STRING, false),
+            output("unset", OutputType.STRING, null)
         );
 
         // When
@@ -196,7 +196,7 @@ class ExecutionOutputServiceTest {
         Execution execution = execution(tenant, State.Type.SUCCESS);
 
         // When
-        executionOutputService.saveOutputs(LOGGER, flow(output("name", Type.STRING, false)), execution, Map.of("name", "value"));
+        executionOutputService.saveOutputs(LOGGER, flow(output("name", OutputType.STRING, false)), execution, Map.of("name", "value"));
 
         // Then
         assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "name")).isEmpty();
@@ -209,7 +209,7 @@ class ExecutionOutputServiceTest {
         Execution execution = execution(tenant, State.Type.SUCCESS);
 
         // When
-        executionOutputService.saveOutputs(LOGGER, flow(output("name", Type.STRING, true)), execution, Collections.emptyMap());
+        executionOutputService.saveOutputs(LOGGER, flow(output("name", OutputType.STRING, true)), execution, Collections.emptyMap());
 
         // Then
         assertThat(searchableOutputRepository.findById(tenant, execution.getId(), "name")).isEmpty();
@@ -222,7 +222,7 @@ class ExecutionOutputServiceTest {
         Execution execution = execution(tenant, State.Type.SUCCESS);
 
         // When
-        executionOutputService.saveOutputs(LOGGER, flow(output("json", Type.JSON, true)), execution, Map.of("json", Map.of("a", "b")));
+        executionOutputService.saveOutputs(LOGGER, flow(output("json", OutputType.JSON, true)), execution, Map.of("json", Map.of("a", "b")));
 
         // Then
         assertThat(executionOutputService.getOutputs(execution)).containsKey("json");
@@ -248,7 +248,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true), output("tags", Type.ARRAY, false));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true), output("tags", OutputType.ARRAY, false));
 
         // When
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", List.of("ORD-1", 2, true), "tags", List.of("a")));
@@ -266,7 +266,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true));
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", List.of("a", "b")));
 
         // When
@@ -281,7 +281,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true), output("count", Type.INT, true));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true), output("count", OutputType.INT, true));
 
         // When
         executionOutputService.saveOutputs(LOGGER, flow, execution, Map.of("orderIds", List.of(), "other", "value"));
@@ -295,7 +295,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true), output("name", Type.STRING, true));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true), output("name", OutputType.STRING, true));
         Logger logger = mock(Logger.class);
 
         // When
@@ -313,7 +313,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("text", Type.STRING, true), output("short", Type.STRING, true));
+        Flow flow = flow(output("text", OutputType.STRING, true), output("short", OutputType.STRING, true));
         String tooLong = "a".repeat(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH + 10);
 
         // When
@@ -330,7 +330,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("text", Type.STRING, true));
+        Flow flow = flow(output("text", OutputType.STRING, true));
         // the emoji is 2 chars and starts at the last allowed position
         String value = "a".repeat(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH - 1) + "\uD83D\uDE00" + "b";
 
@@ -347,7 +347,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("orderIds", Type.ARRAY, true));
+        Flow flow = flow(output("orderIds", OutputType.ARRAY, true));
         List<String> items = java.util.stream.IntStream.range(0, ExecutionOutputService.MAX_SEARCHABLE_ARRAY_ITEMS + 5).mapToObj(i -> "ORD-" + i).toList();
 
         // When
@@ -364,7 +364,7 @@ class ExecutionOutputServiceTest {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
-        Flow flow = flow(output("text", Type.STRING, true));
+        Flow flow = flow(output("text", OutputType.STRING, true));
         String value = "a".repeat(ExecutionOutputService.MAX_SEARCHABLE_VALUE_LENGTH);
 
         // When

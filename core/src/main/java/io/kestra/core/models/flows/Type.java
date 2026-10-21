@@ -26,7 +26,8 @@ public enum Type {
     EMAIL(EmailInput.class.getName()),
     FORM(FormInput.class.getName()),
     REUSABLE_INPUTS(ReusableInputsInput.class.getName()),
-    TABLE(TableInput.class.getName());
+    TABLE(TableInput.class.getName()),
+    ASSET(AssetInput.class.getName());
 
     private final String clsName;
 

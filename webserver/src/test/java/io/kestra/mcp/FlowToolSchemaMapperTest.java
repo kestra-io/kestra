@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.FieldSource;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.*;
 import io.kestra.core.models.property.Property;
@@ -206,76 +207,64 @@ class FlowToolSchemaMapperTest {
 
     final static List<OutputConversionTestCase> outputConversionTestCases = List.of(
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.STRING).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.STRING).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.STRING).value("v").description("An output").build())
+            .output(Output.builder().id("o").type(OutputType.STRING).value("v").description("An output").build())
             .expectedSchema(Map.of("type", "string", "description", "An output"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.INT).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.INT).value("v").build())
             .expectedSchema(Map.of("type", "integer"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.FLOAT).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.FLOAT).value("v").build())
             .expectedSchema(Map.of("type", "number"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.BOOL).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.BOOL).value("v").build())
             .expectedSchema(Map.of("type", "boolean"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.DATETIME).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.DATETIME).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.DATE).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.DATE).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.TIME).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.TIME).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.DURATION).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.DURATION).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.FILE).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.FILE).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.JSON).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.JSON).value("v").build())
             .expectedSchema(Map.of("type", "object"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.URI).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.URI).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.SECRET).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.SECRET).value("v").build())
             .expectedSchema(Map.of("type", "string"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.ARRAY).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.ARRAY).value("v").build())
             .expectedSchema(Map.of("type", "array"))
             .build(),
         OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.MULTISELECT).value("v").build())
-            .expectedSchema(Map.of("type", "array"))
-            .build(),
-        OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.YAML).value("v").build())
+            .output(Output.builder().id("o").type(OutputType.YAML).value("v").build())
             .expectedSchema(Map.of("type", "object"))
-            .build(),
-        OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.EMAIL).value("v").build())
-            .expectedSchema(Map.of("type", "string"))
-            .build(),
-        OutputConversionTestCase.builder()
-            .output(Output.builder().id("o").type(Type.SELECT).value("v").build())
-            .expectedSchema(Map.of("type", "string"))
             .build()
     );
 

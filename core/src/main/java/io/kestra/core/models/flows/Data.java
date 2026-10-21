@@ -13,13 +13,6 @@ public interface Data {
     String getId();
 
     /**
-     * The Type for this data.
-     *
-     * @return a type.
-     */
-    Type getType();
-
-    /**
      * The Display Name for this data.
      *
      * @return a string displayName.

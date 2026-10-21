@@ -136,6 +136,22 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
     return result
 }
 
+/** The asset ids an `ASSET` input value designates: an id, a JSON array of ids, or the assets the server resolved. */
+export function assetInputIds(value: unknown): string[] {
+    let parsed = value
+    if (typeof value === "string" && value.trim().startsWith("[")) {
+        try {
+            parsed = JSON.parse(value)
+        } catch {
+            parsed = value
+        }
+    }
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    return items
+        .map((item) => (item !== null && typeof item === "object" ? (item as {id?: unknown}).id : item))
+        .filter((id): id is string => typeof id === "string" && id !== "")
+}
+
 export function normalize(type: InputType | undefined, value: any) {
     let res = value
 
@@ -162,6 +178,9 @@ export function normalize(type: InputType | undefined, value: any) {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }
+    } else if ((type as string) === "ASSET") {
+        const ids = assetInputIds(res)
+        res = Array.isArray(res) || (typeof res === "string" && res.trim().startsWith("[")) ? JSON.stringify(ids) : ids[0]
     } else if (type === "YAML") {
         if (typeof res !== "string") {
             res = YAML_UTILS.stringify(res).toString()

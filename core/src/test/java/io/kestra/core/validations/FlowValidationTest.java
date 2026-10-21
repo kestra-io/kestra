@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,6 +34,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class FlowValidationTest {
@@ -734,6 +737,9 @@ class FlowValidationTest {
                     columns:
                       - id: size_gb
                         type: INT
+              - id: vm
+                type: ASSET
+                assetType: io.kestra.plugin.ee.assets.VM
             tasks:
               - id: hello
                 type: io.kestra.plugin.core.log.Log
@@ -746,7 +752,90 @@ class FlowValidationTest {
         assertThat(validate.get().getMessage())
             .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.")
             .contains("Input 'disks' of type TABLE is only available in Enterprise Edition.")
-            .contains("Input 'volumes' of type TABLE is only available in Enterprise Edition.");
+            .contains("Input 'volumes' of type TABLE is only available in Enterprise Edition.")
+            .contains("Input 'vm' of type ASSET is only available in Enterprise Edition.");
+    }
+
+    @Test
+    void assetInputRejectsAnUnsafeOrInvalidAssetIdRegex() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: unsafe
+                type: ASSET
+                assetId: "(a+)+$"
+              - id: invalid
+                type: ASSET
+                assetId: "web-("
+              - id: dynamic
+                type: ASSET
+                assetId: "{{ inputs.prefix }}"
+              - id: valid
+                type: ASSET
+                assetId: "^web-"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage())
+            .contains("inputs[unsafe]: `assetId` is too long or prone to catastrophic backtracking")
+            .contains("inputs[invalid]: `assetId` is not a valid regular expression")
+            .doesNotContain("inputs[dynamic]")
+            .doesNotContain("inputs[valid]");
+    }
+
+    @Test
+    void assetCannotBeAnArrayOrMultiselectItemType() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: array
+                type: ARRAY
+                itemType: ASSET
+              - id: multiselect
+                type: MULTISELECT
+                itemType: ASSET
+                values: [a]
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage())
+            .contains("inputs[array]: `itemType` cannot be ASSET")
+            .contains("inputs[multiselect]: `itemType` cannot be ASSET");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"TABLE", "FORM", "REUSABLE_INPUTS", "SELECT", "MULTISELECT", "EMAIL"})
+    void flowOutputRejectsAnInputOnlyType(String type) {
+        String source = """
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: out
+                type: %s
+                value: hi
+            """.formatted(type);
+
+        assertThatThrownBy(() -> YamlParser.parse(source, Flow.class))
+            .hasMessageContaining(type)
+            .hasMessageContaining("STRING");
     }
 
     @Test

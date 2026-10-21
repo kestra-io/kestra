@@ -241,6 +241,7 @@ class JsonSchemaGeneratorTest {
             // discriminator
             assertThat(schema, not(containsString("ReusableInputsInput")));
             assertThat(schema, not(containsString("TableInput")));
+            assertThat(schema, not(containsString("AssetInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
         });
@@ -262,6 +263,24 @@ class JsonSchemaGeneratorTest {
             var testSuiteProperties = properties(testSuiteDefinitions.get(TestSuite.class.getName()));
             assertThat(List.of("source", "deleted"), everyItem(not(in(testSuiteProperties.keySet()))));
             assertThat(testSuiteProperties.keySet(), hasItems("id", "flowId", "testCases"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void flowOutputTypeListsOnlyOutputTypesAvailableInOpenSource() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> schema = jsonSchemaGenerator.schemas(Flow.class);
+            var definitions = (Map<String, Map<String, Object>>) schema.get("definitions");
+            var output = definitions.get(io.kestra.core.models.flows.Output.class.getName());
+            var type = (Map<String, Object>) ((Map<String, Object>) output.get("properties")).get("type");
+
+            assertThat((List<String>) type.get("enum"), containsInAnyOrder(
+                "STRING", "INT", "FLOAT", "BOOL", "DATETIME", "DATE", "TIME", "DURATION", "FILE", "JSON", "ION", "URI", "SECRET", "ARRAY", "YAML"
+            ));
         });
     }
 

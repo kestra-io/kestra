@@ -87,6 +87,13 @@ export interface InputMetaData {
     columns?: InputMetaData[];
     minRows?: number;
     maxRows?: number;
+    /** Set on an ASSET input only: the filters of the assets that can be picked, rendered by the server. */
+    assetType?: string;
+    assetId?: string;
+    namespace?: string;
+    metadata?: Record<string, unknown>;
+    multiple?: boolean;
+    status?: string;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

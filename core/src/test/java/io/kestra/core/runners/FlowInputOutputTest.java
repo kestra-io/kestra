@@ -745,7 +745,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("duck").type(Type.URI).build()
+                    Output.builder().id("duck").type(OutputType.URI).build()
                 )
             )
             .build();
@@ -769,7 +769,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("duck").type(Type.URI).build()
+                    Output.builder().id("duck").type(OutputType.URI).build()
                 )
             )
             .build();
@@ -788,7 +788,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("secret").type(Type.SECRET).build()
+                    Output.builder().id("secret").type(OutputType.SECRET).build()
                 )
             )
             .build();

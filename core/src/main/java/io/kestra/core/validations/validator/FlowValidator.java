@@ -478,7 +478,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         try {
-            FlowInputOutput.parseScalarInputValue(output.getType(), rawValue);
+            FlowInputOutput.parseScalarInputValue(output.getType().parsedAs(), rawValue);
         } catch (Exception e) {
             return Optional.of("`%s` is not a valid %s value".formatted(asString, output.getType()));
         }

@@ -35,6 +35,7 @@ import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.runners.DisabledAssetInputResolver;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -247,7 +248,8 @@ public final class ExecutorTestHarness {
             () -> runContextFactoryRef[0],
             new EncryptionConfig(null),
             new DisabledReusableInputsExpander(),
-            new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false))
+            new LocalPathFactory(new LocalFilesConfiguration(List.of(), false, false)),
+            new DisabledAssetInputResolver()
         );
         ApplicationContext runContextBeanLocator = Mockito.mock(ApplicationContext.class, invocation ->
         {

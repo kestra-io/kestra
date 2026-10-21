@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,8 +9,11 @@ import java.util.function.Function;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.AssetInputValidation;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -74,6 +78,39 @@ public class AssetInput extends Input<Object> implements RenderableInput {
             return asset.get("id").toString();
         }
         return resolved;
+    }
+
+    /**
+     * @return the asset ids written literally in {@code defaults}, or an empty list when there are none or they are an expression
+     */
+    public List<String> staticDefaultIds() {
+        if (getDefaults() == null) {
+            return List.of();
+        }
+        String raw = getDefaults().toString().trim();
+        if (raw.isEmpty() || PebbleUtil.containsOpeningBlockDelimiter(raw)) {
+            return List.of();
+        }
+        if (!raw.startsWith("[")) {
+            return List.of(raw);
+        }
+        try {
+            return JacksonMapper.toList(raw).stream().map(String::valueOf).toList();
+        } catch (JsonProcessingException e) {
+            // a Property built from a List value prints as [a, b] rather than as JSON
+            return Arrays.stream(raw.substring(1, raw.length() - 1).split(",")).map(String::trim).filter(id -> !id.isEmpty()).toList();
+        }
+    }
+
+    /**
+     * @return whether a filter is an expression, which can only be rendered once the execution exists
+     */
+    public boolean hasDynamicFilters() {
+        return PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(assetType))
+            || PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(assetId))
+            || PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(namespace))
+            || PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(status))
+            || (metadata != null && metadata.values().stream().anyMatch(value -> PebbleUtil.containsOpeningBlockDelimiter(String.valueOf(value))));
     }
 
     @Override

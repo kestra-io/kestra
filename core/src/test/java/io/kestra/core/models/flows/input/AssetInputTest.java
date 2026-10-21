@@ -6,6 +6,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.property.Property;
 
 import jakarta.validation.ConstraintViolationException;
 
@@ -60,5 +61,17 @@ class AssetInputTest {
         assertThat(rendered.getDisplayName()).isEqualTo("Virtual machine");
         assertThat(rendered.getMultiple()).isTrue();
         assertThat(rendered.getStatus()).isEqualTo("retired");
+    }
+
+    @Test
+    void readsTheDefaultIdsWrittenLiterallyButNotAnExpression() {
+        assertThat(withDefaults(Property.ofValue("web-01")).staticDefaultIds()).containsExactly("web-01");
+        assertThat(withDefaults(Property.ofValue(List.of("web-01", "db-01"))).staticDefaultIds()).containsExactly("web-01", "db-01");
+        assertThat(withDefaults(Property.ofExpression("{{ inputs.vm }}")).staticDefaultIds()).isEmpty();
+        assertThat(withDefaults(null).staticDefaultIds()).isEmpty();
+    }
+
+    private static AssetInput withDefaults(Property<Object> defaults) {
+        return AssetInput.builder().id("vm").type(Type.ASSET).defaults(defaults).build();
     }
 }

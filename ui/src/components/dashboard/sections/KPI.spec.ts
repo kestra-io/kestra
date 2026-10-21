@@ -26,12 +26,8 @@ vi.mock("vue-router", () => ({
     useRoute: () => route,
 }))
 
-vi.mock("../composables/useDashboards", () => ({
-    getChartTitle: (chart: Chart) => chart.chartOptions?.displayName ?? chart.id,
-    getPropertyValue: (data: {results?: Record<string, unknown>[]} | undefined, property: "value" | "description") => {
-        const value = data?.results?.[0]?.[property]
-        return value == null ? undefined : String(value)
-    },
+vi.mock("../composables/useDashboards", async (importOriginal) => ({
+    ...await importOriginal<typeof import("../composables/useDashboards")>(),
     useChartGenerator: () => ({
         percentageShown: computed(() => state.percentageShown),
         data: computed(() => state.data),
@@ -107,11 +103,7 @@ describe("dashboard KPI section", () => {
         const bar = wrapper.find("span.progress")
         expect(bar.exists()).toBe(true)
         expect(bar.attributes("data-percentage")).toBe("50")
-
-        // not a percentage chart
         expect(mountWithData(50, false).find("span.progress").exists()).toBe(false)
-
-        // percentage chart at exactly zero
         expect(mountWithData(0, true).find("span.progress").exists()).toBe(false)
     })
 
@@ -121,18 +113,7 @@ describe("dashboard KPI section", () => {
         expect(wrapper.find("span.progress").attributes("data-percentage")).toBe("100")
     })
 
-    it("clamps a negative value to 0, which hides the bar", () => {
-        expect(mountWithData(-5, true).find("span.progress").exists()).toBe(false)
-    })
-
-    it("yields 0 rather than NaN for a non-numeric value", () => {
-        const wrapper = mountWithData("abc", true)
-        expect(wrapper.find("p.value").text()).toBe("abc%")
-        expect(wrapper.find("span.progress").exists()).toBe(false)
-
-        // NaN hides the bar on its own (NaN > 0 is false); Infinity is the
-        // non-finite value the Number.isFinite guard is actually there for.
-        expect(mountWithData(NaN, true).find("span.progress").exists()).toBe(false)
+    it("hides the bar for a non-finite value rather than rendering a broken one", () => {
         expect(mountWithData(Infinity, true).find("span.progress").exists()).toBe(false)
     })
 

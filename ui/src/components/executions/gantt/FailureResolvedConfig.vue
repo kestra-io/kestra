@@ -24,10 +24,13 @@
     const error = ref(false)
     const resolvedYaml = ref<string | undefined>(undefined)
 
+    let latestLoad = 0
     async function load() {
+        const current = ++latestLoad
         if (props.flowLoading) return
         if (!props.rawBlock) {
             resolvedYaml.value = undefined
+            loading.value = false
             return
         }
 
@@ -35,16 +38,18 @@
         error.value = false
         resolvedYaml.value = undefined
         try {
+            const rawBlock = props.rawBlock
             const {rendered} = await renderExpressions({
-                expressions: [props.rawBlock],
+                expressions: [rawBlock],
                 executionId: props.executionId,
                 taskRunId: props.taskRunId,
             })
-            resolvedYaml.value = rendered?.[props.rawBlock]
+            if (current !== latestLoad) return
+            resolvedYaml.value = rendered?.[rawBlock]
         } catch {
-            error.value = true
+            if (current === latestLoad) error.value = true
         } finally {
-            loading.value = false
+            if (current === latestLoad) loading.value = false
         }
     }
 

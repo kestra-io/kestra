@@ -105,7 +105,7 @@ const meta: Meta<typeof PanelHost> = {
                 const {expressions} = JSON.parse((context.body as string) ?? "{}") as {expressions?: string[]}
                 const rendered: Record<string, string> = {}
                 for (const expression of expressions ?? []) {
-                    rendered[expression] = /^\{\{ inputs\.(\w+) \}\}$/.test(expression) ? "us-east-1" : expression
+                    rendered[expression] = /^\{\{ inputs\['[\w.-]+'\] \}\}$/.test(expression) ? "us-east-1" : expression
                 }
                 return {rendered}
             },

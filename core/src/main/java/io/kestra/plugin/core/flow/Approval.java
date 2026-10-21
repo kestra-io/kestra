@@ -384,7 +384,6 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         Map<String, Object> current = runContext.currentOutput();
         Decision.Type decision = this.decisionType(runContext);
 
-        // skipCache: the task instance is shared across executions.
         String title = current != null && current.get("title") != null ? (String) current.get("title") : this.renderTitle(runContext);
         String url = current != null && current.get("url") != null ? (String) current.get("url") : this.executionUrl(runContext);
         String caseId = current == null ? null : (String) current.get("caseId");

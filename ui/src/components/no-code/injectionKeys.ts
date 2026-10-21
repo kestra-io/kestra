@@ -55,4 +55,5 @@ export const BLOCK_DRAG_INJECTION_KEY = Symbol("block-drag-injection-key") as In
 export const UNSET_REQUIRED_FIELDS_INJECTION_KEY = Symbol("unset-required-fields-injection-key") as InjectionKey<Ref<UnsetRequiredField[]>>
 export const NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY = Symbol("navigate-to-required-field-injection-key") as InjectionKey<Ref<((path: string) => boolean) | undefined>>
 
-export const BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY = Symbol("block-component-override-injection-key") as InjectionKey<(fieldKey: string, task: unknown) => TaskBlockComponent | undefined>
+/** `null` hides the field, `undefined` keeps the schema-driven component. */
+export const BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY = Symbol("block-component-override-injection-key") as InjectionKey<(fieldKey: string, task: unknown) => TaskBlockComponent | null | undefined>

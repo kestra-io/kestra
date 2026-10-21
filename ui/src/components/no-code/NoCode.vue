@@ -224,7 +224,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .no-code {
         height: 100%;
         overflow-y: auto;

@@ -570,7 +570,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
   .plugin-doc {
     --ks-table-row-hover-bg: transparent;
   }

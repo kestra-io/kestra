@@ -280,7 +280,7 @@
     loadMetrics()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .metric-controls {
         display: flex;
         align-items: center;

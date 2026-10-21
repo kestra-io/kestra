@@ -261,7 +261,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 #side-menu {
     position: relative;
     width: 215px;
@@ -332,27 +332,27 @@
     border: var(--ks-border-width-thin) solid var(--ks-border-strong);
     border-radius: var(--ks-radius-base);
     box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
+}
 
-    &__item {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        width: 100%;
-        padding: var(--ks-spacing-2);
-        border: 0;
-        border-radius: var(--ks-radius-xs);
-        background: transparent;
-        color: var(--ks-text-primary);
-        font: inherit;
-        font-size: var(--ks-font-size-xs);
-        text-align: left;
-        cursor: pointer;
+.sidebar-context-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    width: 100%;
+    padding: var(--ks-spacing-2);
+    border: 0;
+    border-radius: var(--ks-radius-xs);
+    background: transparent;
+    color: var(--ks-text-primary);
+    font: inherit;
+    font-size: var(--ks-font-size-xs);
+    text-align: left;
+    cursor: pointer;
 
-        &:hover,
+    &:hover,
         &:focus-visible {
-            background: var(--ks-bg-hover-elevated);
-            outline: none;
-        }
+        background: var(--ks-bg-hover-elevated);
+        outline: none;
     }
 }
 </style>

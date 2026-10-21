@@ -74,7 +74,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .vars {
     display: flex;
     flex-direction: column;

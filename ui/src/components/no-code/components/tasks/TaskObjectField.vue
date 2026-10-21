@@ -294,11 +294,11 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .kel-form-item {
     width: 100%;
 
-    > :deep(.kel-form-item__label) {
+    & > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;

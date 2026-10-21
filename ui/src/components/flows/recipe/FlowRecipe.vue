@@ -311,7 +311,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-recipe {
         padding: var(--ks-spacing-4);
     }

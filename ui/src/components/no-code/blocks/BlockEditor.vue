@@ -741,7 +741,7 @@
     const commandMenuItems = computed<BlockCommandMenuItem[]>(() => buildCommandMenuItems(commandMenuContext.value))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-editor {
         position: relative;
         height: 100%;

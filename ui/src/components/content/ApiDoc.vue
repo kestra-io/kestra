@@ -30,7 +30,7 @@
     const theme = ref(getTheme())
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     rapi-doc {
         background: transparent;
         width: 100%;

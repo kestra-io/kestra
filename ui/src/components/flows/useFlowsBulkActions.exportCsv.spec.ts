@@ -9,8 +9,12 @@ vi.mock("../../stores/flow", () => ({useFlowStore: () => ({total: 0})}))
 
 const CSV = "id,namespace\nexport_a,qa.followup\nexport_b,qa.followup\n"
 
-const backendFetch = vi.fn(async (request: Request) => {
-    const {pathname} = new URL(request.url)
+function requestUrl(input: URL | RequestInfo): URL {
+    return new URL(input instanceof Request ? input.url : input)
+}
+
+const backendFetch = vi.fn(async (input: URL | RequestInfo, _init?: RequestInit) => {
+    const {pathname} = requestUrl(input)
     if (pathname.endsWith("/flows/export/by-query/csv")) {
         return new Response(CSV, {status: 200, headers: {"Content-Type": "text/csv"}})
     }
@@ -69,6 +73,6 @@ describe("useFlowsBulkActions exportFlowsAsStream", () => {
         // Then
         expect(clickedDownloads).toEqual(["flows.csv"])
         expect(await readText(createdBlobs[0])).toEqual(CSV)
-        expect(new URL(backendFetch.mock.calls[0][0].url).pathname).toMatch(/\/flows\/export\/by-query\/csv$/)
+        expect(requestUrl(backendFetch.mock.calls[0][0]).pathname).toMatch(/\/flows\/export\/by-query\/csv$/)
     })
 })

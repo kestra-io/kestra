@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
 import {createApp, defineComponent, h, nextTick} from "vue"
 import type {App} from "vue"
+import {createI18n} from "vue-i18n"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({name: "logs", path: "/logs"}),
@@ -20,6 +21,7 @@ const mountSettingUp = (setup: () => void) => {
             },
         }),
     )
+    app.use(createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false}))
     app.mount(document.createElement("div"))
     apps.push(app)
     return app

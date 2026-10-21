@@ -41,7 +41,7 @@ public class DatasourceProvider {
             }
 
             Optional<String> queueType = context.getProperty("kestra.queue.type", String.class);
-            return queueType.isPresent() && (queueType.get().equals("h2") || queueType.get().equals("memory"));
+            return queueType.isPresent() && (queueType.get().equalsIgnoreCase("h2") || queueType.get().equalsIgnoreCase("memory"));
         }
     }
 }

@@ -547,7 +547,7 @@
     defineExpose({collapseAll, expandAll})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-results {
     height: 100%;
     overflow-y: auto;
@@ -803,14 +803,14 @@
         overflow-wrap: anywhere;
         color: var(--ks-text-dim);
 
-        :deep(mark) {
+        & :deep(mark) {
             background-color: var(--ks-status-background-warning);
             color: var(--ks-text-primary);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-old) {
+        & :deep(.result-match-old) {
             background-color: var(--ks-status-background-failed);
             color: var(--ks-text-error);
             text-decoration: line-through;
@@ -818,14 +818,14 @@
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-new) {
+        & :deep(.result-match-new) {
             background-color: var(--ks-status-background-success);
             color: var(--ks-text-success);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-arrow) {
+        & :deep(.result-match-arrow) {
             color: var(--ks-text-muted);
         }
     }
@@ -860,7 +860,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -877,7 +877,7 @@
     color: var(--ks-text-primary);
     max-width: 100%;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

@@ -554,13 +554,11 @@
     })
 </script>
 
-<style lang="scss">
-    .ks-restart-tooltip--no-pointer {
-        pointer-events: none;
-    }
-</style>
+<style scoped>
+:global(.ks-restart-tooltip--no-pointer) {
+    pointer-events: none;
+}
 
-<style scoped lang="scss">
 .modal-header {
     .modal-title {
         font-size: var(--ks-font-size-base);
@@ -592,7 +590,7 @@
 }
 
 .radio-item {
-    :deep(.kel-radio__input) {
+    & :deep(.kel-radio__input) {
         .kel-radio__inner {
             width: 18px;
             height: 18px;
@@ -605,7 +603,7 @@
         }
     }
 
-    :deep(.kel-radio__label) {
+    & :deep(.kel-radio__label) {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         padding-left: 8px;
@@ -613,7 +611,7 @@
 
 
     &.is-checked {
-        :deep(.kel-radio__input) {
+        & :deep(.kel-radio__input) {
             .kel-radio__inner {
                 border-color: var(--ks-btn-primary-bg-default);
                 background-color: var(--ks-btn-primary-bg-default);
@@ -624,7 +622,7 @@
             }
         }
 
-        :deep(.kel-radio__label) {
+        & :deep(.kel-radio__label) {
             color: var(--ks-text-primary) !important;
         }
     }

@@ -5,6 +5,12 @@
       "cta": "Siehe, was sich geändert hat"
     },
     "loading": "Wird geladen...",
+    "namespace_files_tip": {
+      "title": "Verwalte deine Skripte als Namespace-Dateien",
+      "description": "Statt dein Skript inline zu schreiben, öffne das Dateien-Panel, füge es als Datei hinzu (z. B. main.py) und führe es aus deinem flow aus:",
+      "open_files": "Dateien öffnen",
+      "dont_show_again": "Nicht mehr anzeigen"
+    },
     "more actions": "Weitere Aktionen",
     "recipe": {
       "create_flow": "Flow erstellen",
@@ -236,6 +242,7 @@
       "last7days": "Letzte 7 Tage",
       "last30days": "Letzte 30 Tage",
       "last365days": "Letzte 365 Tage",
+      "allTime": "Gesamte Zeit",
       "next5minutes": "Nächste 5 Minuten",
       "next15minutes": "Nächste 15 Minuten",
       "next1hour": "Nächste Stunde",
@@ -517,6 +524,21 @@
       "attempts": "{count} Versuch | {count} Versuche",
       "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Fehlgeschlagene Task",
+      "view_task_logs": "Task-Logs anzeigen",
+      "revision_short": "Rev. {revision}",
+      "more_labels": "+{count} Label | +{count} Labels",
+      "fewer_labels": "Weniger Labels anzeigen",
+      "jump_to_first_failure": "Zum ersten Fehler springen",
+      "open_logs": "Logs öffnen"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Nach der Anmeldung",
+      "execution_tab": "Ausführung {id} · Tab {tab}",
+      "execution": "Ausführung {id}",
+      "tab": "Tab {tab}"
+    },
     "concurrency limits": "Concurrency-Limits",
     "system overview": "Systemübersicht",
     "usage": "Verwendung",
@@ -687,6 +709,7 @@
       "nav_properties": "Eigenschaften",
       "non_dynamic": "nicht dynamisch",
       "format": "Format",
+      "internal_storage_uri_hint": "Pebble-Ausdruck, der auf eine interne Storage-URI verweist, z. B. {example}.",
       "max_items": "Max. Elemente",
       "max_length": "Max. Länge",
       "maximum": "Maximum",
@@ -1779,6 +1802,14 @@
     "item": "Element",
     "items": "Elemente",
     "iterations": "Iterationen",
+    "load_10_more": "10 weitere laden",
+    "show_all_executions": "Alle Ausführungen anzeigen",
+    "failed_iterations_only": "Nur fehlgeschlagene Iterationen",
+    "loop_iterations_shown": "{shown} von {total} angezeigt",
+    "loop_iterations_load_error": "Iterationen konnten nicht geladen werden",
+    "retry": "Versuche es erneut",
+    "no_iterations": "Noch keine Iterationen",
+    "no_failed_iterations": "Keine fehlgeschlagenen Iterationen",
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",
       "outputs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Outputs hier nicht angezeigt.",
@@ -2290,7 +2321,8 @@
           "title": {
             "flow": "Vorgeschlagener Flow",
             "dashboard": "Vorgeschlagenes Dashboard",
-            "app": "Vorgeschlagene App"
+            "app": "Vorgeschlagene App",
+            "test_suite": "Vorgeschlagener Unit-Test"
           },
           "valid": "Gültig",
           "invalid": "Änderungen erforderlich"

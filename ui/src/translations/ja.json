@@ -5,6 +5,12 @@
       "cta": "変更点を確認"
     },
     "loading": "読み込み中...",
+    "namespace_files_tip": {
+      "title": "スクリプトをNamespaceファイルとして管理",
+      "description": "スクリプトをインラインで書く代わりに、ファイルパネルを開き、ファイル（例: main.py）として追加して、flowから実行します:",
+      "open_files": "ファイルを開く",
+      "dont_show_again": "今後表示しない"
+    },
     "more actions": "その他のアクション",
     "recipe": {
       "create_flow": "flowを作成",
@@ -236,6 +242,7 @@
       "last7days": "過去7日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
+      "allTime": "すべての期間",
       "next5minutes": "次の5分",
       "next15minutes": "次の15分",
       "next1hour": "次の1時間",
@@ -517,6 +524,21 @@
       "attempts": "{count} 回の試行 | {count} 回の試行",
       "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
     },
+    "execution_mobile": {
+      "failed_task": "失敗した task",
+      "view_task_logs": "task の logs を表示",
+      "revision_short": "リビジョン {revision}",
+      "more_labels": "+{count} 件の label | +{count} 件の label",
+      "fewer_labels": "label の表示を減らす",
+      "jump_to_first_failure": "最初の失敗へ移動",
+      "open_logs": "logs を開く"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "サインイン後",
+      "execution_tab": "実行 {id} · {tab} タブ",
+      "execution": "実行 {id}",
+      "tab": "{tab} タブ"
+    },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
     "usage": "使用",
@@ -687,6 +709,7 @@
       "nav_properties": "プロパティ",
       "non_dynamic": "非動的",
       "format": "フォーマット",
+      "internal_storage_uri_hint": "Pebble式で内部Storage URIを参照します (例: {example})。",
       "max_items": "最大項目数",
       "max_length": "最大長",
       "maximum": "最大",
@@ -1779,6 +1802,14 @@
     "item": "アイテム",
     "items": "アイテム",
     "iterations": "イテレーション",
+    "load_10_more": "さらに10件読み込む",
+    "show_all_executions": "すべての実行を表示",
+    "failed_iterations_only": "失敗した反復のみ",
+    "loop_iterations_shown": "{total}件中{shown}件表示",
+    "loop_iterations_load_error": "反復の読み込みに失敗しました",
+    "retry": "再試行",
+    "no_iterations": "まだ反復がありません",
+    "no_failed_iterations": "失敗した反復はありません",
     "loop_iterations_notice": {
       "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",
       "outputs": "ループのイテレーションは個別のサブExecutionとして実行されるため、そのOutputはここに表示されません。",
@@ -2290,7 +2321,8 @@
           "title": {
             "flow": "提案された flow",
             "dashboard": "提案ダッシュボード",
-            "app": "提案アプリ"
+            "app": "提案アプリ",
+            "test_suite": "提案された単体テスト"
           },
           "valid": "有効",
           "invalid": "変更が必要です"

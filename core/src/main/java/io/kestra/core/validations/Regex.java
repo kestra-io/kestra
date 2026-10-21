@@ -11,6 +11,12 @@ import jakarta.validation.Payload;
 
 import static java.lang.annotation.ElementType.*;
 
+/**
+ * Validates that a string compiles as a regular expression.
+ *
+ * @deprecated use {@link SafeRegexValidation}, which also rejects patterns prone to catastrophic backtracking.
+ */
+@Deprecated(forRemoval = true, since = "2.1.0")
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = RegexValidator.class)
 @Target({ METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE })

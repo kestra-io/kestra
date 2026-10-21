@@ -67,7 +67,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .description {
     margin-bottom: var(--ks-spacing-3);
 }

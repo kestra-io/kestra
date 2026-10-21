@@ -191,6 +191,15 @@
                                                 </RouterLink>
                                             </div>
                                         </div>
+                                        <LoopIterationTree
+                                            v-if="taskTypeByTaskRunId[item.id] === 'io.kestra.plugin.core.flow.Loop'"
+                                            :key="`${execution!.id}-${item.task.taskId}-${item.id}`"
+                                            :executionId="execution!.id"
+                                            :taskId="item.task.taskId"
+                                            :namespace="execution!.namespace"
+                                            :flowId="execution!.flowId"
+                                            :depth="item.depth || 0"
+                                        />
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
                                                 <div class="task-details__inner p-2">
@@ -268,6 +277,7 @@
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
     import {useFirstFailure} from "../../composables/useFirstFailure"
+    import LoopIterationTree from "./LoopIterationTree.vue"
 
     import {storageKeys} from "../../utils/constants"
     type TaskRun = ExecutionTaskRun

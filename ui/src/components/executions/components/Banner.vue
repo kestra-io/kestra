@@ -156,6 +156,7 @@
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
 
     import {Execution, useExecutionsStore} from "../../../stores/executions"
+    import {useExecutionSummary} from "../../../composables/useExecutionSummary"
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "../../../utils/utils"
     import {useToast} from "../../../utils/toast"
@@ -192,22 +193,7 @@
 
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
-    const statusLabel = computed(() => {
-        const status = props.execution.state.current
-        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    })
-
-    const matchesStatus = (type: "replay" | "replayed" | "restarted") =>
-        props.execution.labels?.some(
-            (label) => label.key === `system.${type}` && String(label.value) === "true",
-        ) ?? false
-
-    const replayed = computed(() => matchesStatus("replay") || matchesStatus("replayed"))
-    const restarted = computed(() => matchesStatus("restarted"))
-
-    const createdDate = computed(() =>
-        dayjs(props.execution.state.histories?.[0]?.date).toDate(),
-    )
+    const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)
 
     const scheduleDate = computed(() =>
         props.execution.scheduleDate ? dayjs(props.execution.scheduleDate).toDate() : undefined,
@@ -234,25 +220,12 @@
             : undefined
     })
 
-    const replaysLink = computed(() => ({
-        name: "executions/list",
-        query: {
-            "filters[parentId][EQUALS]": matchesStatus("replay") ? props.execution.parentId ?? props.execution.id : props.execution.id,
-            sort: "state.endDate:desc",
-        },
-    }))
-
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>
         props.execution.taskRunList?.filter(
             (tr) => !State.isRunning(tr.state?.current ?? "CREATED"),
         ).length ?? 0,
     )
-
-    const copyId = () => {
-        Utils.copy(props.execution.id)
-        toast.success(t("copied"))
-    }
 
     const copyLogs = () => {
         executionsStore

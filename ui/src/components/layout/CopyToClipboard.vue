@@ -40,5 +40,11 @@
     height: 2rem;
     padding: 0;
     cursor: pointer;
+
+    @media (pointer: coarse) {
+        width: 2.75rem;
+        min-width: 2.75rem;
+        height: 2.75rem;
+    }
 }
 </style>

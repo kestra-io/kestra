@@ -49,7 +49,7 @@
                     </KsTooltip>
                 </div>
                 <div class="logs-toolbar__actions">
-                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" />
+                    <Restart v-if="executionsStore.execution && !isMobile" :execution="executionsStore.execution" />
                     <LogDisplaySettings />
                     <KsButton
                         square
@@ -73,6 +73,7 @@
                 :levelFilter="effectiveLevelValue"
                 :excludeMetas="(['namespace', 'flowId', 'taskId', 'executionId'] as any)"
                 :filter="filter"
+                :taskRunId="routeTaskRunId"
                 :levelToHighlight="cursorLogLevel"
                 @log-cursor="logCursor = $event"
                 :logCursor="logCursor"
@@ -106,7 +107,6 @@
                     data-test="logs-scroller"
                     data-scroll-key="raw-logs"
                     :class="{'fullscreen-logs': fullscreenModalOpen}"
-                    :style="{maxHeight: fullscreenModalOpen ? undefined : 'max(15rem, calc(100vh - 335px - var(--execution-banner-height, 0px)))', marginTop: '0.5rem'}"
                     :buffer="200"
                     :prerender="20"
                     @scroll.capture.passive="rememberLogScroll"
@@ -143,6 +143,7 @@
 <script setup lang="ts">
     import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
     import {useRoute} from "vue-router"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
@@ -208,6 +209,7 @@
     }
 
     const {t} = useI18n()
+    const isMobile = useIsMobile()
     const toast = useToast()
 
 
@@ -266,6 +268,10 @@
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
 
     const filter = ref<string | undefined>(undefined)
+    const routeTaskRunId = computed(() => {
+        const value = route.query["filters[taskRunId][EQUALS]"]
+        return typeof value === "string" && value ? value : undefined
+    })
     const openedTaskrunsCount = ref(0)
     const raw_view = ref((localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true")
     const emptyLogIndicesByLevel = () =>
@@ -432,6 +438,7 @@
         }
 
         const filtered = logResults.filter(log => {
+            if (routeTaskRunId.value && log.taskRunId !== routeTaskRunId.value) return false
             if (!filter.value) return true
             return log.message?.toLowerCase().includes(filter.value.toLowerCase())
         })
@@ -655,6 +662,14 @@
   }
 
   .log-lines.temporal {
+    margin-top: 0.5rem;
+    max-height: max(15rem, calc(100vh - 335px - var(--execution-banner-height, 0px)));
+    max-height: max(15rem, calc(100dvh - 335px - var(--execution-banner-height, 0px)));
+
+    &.fullscreen-logs {
+      max-height: none;
+    }
+
     .line {
       align-items: flex-start;
     }

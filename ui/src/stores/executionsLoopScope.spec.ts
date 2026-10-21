@@ -124,7 +124,43 @@ describe("executions store loop scope", () => {
 
         await store.loadAugmentedGraph({id: "main"})
 
-        expect(store.flowGraph?.edges[0].unused).toBeFalsy()
+        expect(store.scopedFlowGraph?.edges[0].unused).toBeFalsy()
+    })
+
+    it("shouldRecomputeUnusedEdgesWhenAnIterationIsScopedAfterTheGraphLoaded", async () => {
+        executionFlowGraphMock.mockResolvedValue({
+            ...graph(),
+            edges: [{source: "per_region.upload", target: "write_report"}],
+        })
+        const store = useExecutionsStore()
+        store.execution = {id: "main", taskRunList: [{taskId: "per_region"}, {taskId: "write_report"}]} as never
+        await store.loadAugmentedGraph({id: "main"})
+        expect(store.scopedFlowGraph?.edges[0].unused).toBe(true)
+
+        store.setScopedIterations({per_region: {id: "iteration-1", taskRunList: [{taskId: "upload"}]} as never})
+        expect(store.scopedFlowGraph?.edges[0].unused).toBe(false)
+
+        store.setScopedIterations({})
+        expect(store.scopedFlowGraph?.edges[0].unused).toBe(true)
+    })
+
+    it("shouldKeepTheSubflowExecutionOnNodesOfASubflowExpandedInsideAScopedLoop", async () => {
+        executionFlowGraphMock.mockResolvedValue({
+            nodes: [
+                {uid: "per_region", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "per_region", type: "io.kestra.plugin.core.flow.Loop"}},
+                {uid: "per_region.call", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "call", type: "io.kestra.plugin.core.flow.Subflow"}},
+                {uid: "per_region.call.child", type: "io.kestra.core.models.hierarchies.GraphTask", task: {id: "child", type: "io.kestra.plugin.core.log.Log"}},
+            ],
+            clusters: [{cluster: {uid: "cluster_per_region.call", type: "io.kestra.core.models.hierarchies.SubflowGraphCluster"}}],
+            edges: [],
+        })
+        const store = useExecutionsStore()
+        store.addSubflowExecution({subflow: "per_region.call", execution: {id: "subflow-1"} as never})
+        await store.loadAugmentedGraph({id: "main"})
+
+        store.setScopedIterations({per_region: {id: "iteration-1"} as never})
+
+        expect(executionIds(store.scopedFlowGraph)).toEqual({per_region: "main", "per_region.call": "iteration-1", "per_region.call.child": "subflow-1"})
     })
 
     it("shouldDropTheScopeWhenTheExecutionIsCleared", async () => {

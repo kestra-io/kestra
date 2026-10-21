@@ -43,7 +43,7 @@ vi.mock("./useTaskRunOutputs", () => ({loadTaskRunOutputs: mocks.loadTaskRunOutp
 
 const {useRoute} = await import("vue-router")
 const {useExecutionsStore} = await import("../stores/executions")
-const {useLoopScoping} = await import("./useLoopScoping")
+const {useLoopScoping, loopLaneNodes} = await import("./useLoopScoping")
 const {LoopIterationError} = await import("../utils/loopIterations")
 
 const LOOP_TYPE = "io.kestra.plugin.core.flow.Loop"
@@ -247,6 +247,40 @@ describe("useLoopScoping", () => {
         await flushPromises()
 
         expect(subscriptions).toEqual([])
+    })
+
+    it("shouldNotWriteTheScopeOnceUnmountedWhileTheIterationIsLoading", async () => {
+        let resolveIteration!: (value: unknown) => void
+        mocks.loadIterationExecution.mockReturnValue(new Promise((resolve) => (resolveIteration = resolve)))
+        const {store, route, wrapper} = setup()
+        route.query = {loopScope: "per_region:2"}
+        await flushPromises()
+
+        wrapper.unmount()
+        resolveIteration(iterationExecution("it-2", "SUCCESS"))
+        await flushPromises()
+
+        expect(store.scopedIterations).toEqual({})
+    })
+
+    it("shouldStopLoadingALaneWhoseOutputsCannotBeFetched", async () => {
+        mocks.loadTaskRunOutputs.mockRejectedValue(new Error("502"))
+        const {scoping} = setup()
+        await flushPromises()
+
+        expect(scoping.lanes.value.per_region.status).toBe("unknown")
+    })
+
+    it("shouldIgnoreLoopsInsideAnExpandedSubflow", () => {
+        const lanes = loopLaneNodes({
+            clusters: [
+                {cluster: {uid: "cluster_call_child", type: "io.kestra.core.models.hierarchies.SubflowGraphCluster", taskNode: {uid: "call_child", task: {type: "io.kestra.plugin.core.flow.Subflow"}}}},
+                {cluster: {uid: "cluster_call_child.inner_loop", type: "x", taskNode: {uid: "call_child.inner_loop", task: {type: LOOP_TYPE}}}},
+                {cluster: {uid: "cluster_per_region", type: "x", taskNode: {uid: "per_region", task: {type: LOOP_TYPE}}}},
+            ],
+        } as never)
+
+        expect(lanes.map((lane) => lane.uid)).toEqual(["per_region"])
     })
 
     it("shouldDoNothingOutsideAReadOnlyExecution", async () => {

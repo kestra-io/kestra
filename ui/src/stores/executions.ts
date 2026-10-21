@@ -686,6 +686,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    const ranTaskIds = computed<Record<string, string[]>>((previous) => {
+        const next: Record<string, string[]> = {}
+        for (const exec of [execution.value, ...Object.values(subflowsExecutions.value), ...Object.values(scopedIterations.value)]) {
+            if (exec?.id) next[exec.id] = [...new Set((exec.taskRunList ?? []).map(taskRun => taskRun.taskId))].sort()
+        }
+        return previous && isDeepEqual(previous, next) ? previous : next
+    })
+
     function isUnused(nodeByUid: Record<string, FlowGraphNode>, nodeUid: string): boolean {
         const nodeToCheck = nodeByUid[nodeUid]
 
@@ -703,27 +711,23 @@ export const useExecutionsStore = defineStore("executions", () => {
             return true
         }
 
-        const executionId = scopedExecutionId(nodeToCheck.uid, scopedIterations.value) ?? nodeToCheck.executionId
-        const nodeExecution = executionId === execution.value?.id ? execution.value
-            : Object.values({...subflowsExecutions.value, ...scopedIterations.value}).find(exec => exec.id === executionId)
-
-        if (!nodeExecution) {
-            return true
-        }
-
-        return !nodeExecution.taskRunList?.some(taskRun => taskRun.taskId === nodeToCheck.task?.id)
+        return !ranTaskIds.value[nodeToCheck.executionId]?.some(taskId => taskId === nodeToCheck.task?.id)
     }
+
+    const subflowPathsOf = (graph: FlowGraph) => graph.clusters
+        ?.map(c => c.cluster)
+        ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
+        ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
+        ?? []
+
+    const insideSubflow = (subflowPaths: string[], nodeUid: string) => subflowPaths.some(subflowPath => nodeUid.startsWith(subflowPath + "."))
 
     /** Visits nodes shallowest first, so a parent is in `nodeByUid` before a child checks whether it is unused. */
     const loadAugmentedGraph = async (options: GraphOptions) => {
         const params = options.params ? options.params : {}
         const graph = await fetchGraph({id: options.id, params})
 
-        const subflowPaths = graph.clusters
-            ?.map(c => c.cluster)
-            ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
-            ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
-            ?? []
+        const subflowPaths = subflowPathsOf(graph)
         const nodeByUid: Record<string, FlowGraphNode> = {}
 
         graph.nodes
@@ -769,12 +773,20 @@ export const useExecutionsStore = defineStore("executions", () => {
     const scopedFlowGraph = computed<FlowGraph | undefined>(() => {
         const graph = flowGraph.value
         if (!graph || !Object.keys(scopedIterationIds.value).length) return graph
+
+        const subflowPaths = subflowPathsOf(graph)
+        const nodes = graph.nodes.map(node => {
+            const executionId = scopedExecutionId(node.uid, scopedIterationIds.value, subflowPaths)
+            return executionId ? {...node, executionId} : node
+        })
+        const nodeByUid: Record<string, FlowGraphNode> = Object.fromEntries(nodes.map(node => [node.uid, node]))
+
         return {
             ...graph,
-            nodes: graph.nodes.map(node => {
-                const executionId = scopedExecutionId(node.uid, scopedIterationIds.value)
-                return executionId ? {...node, executionId} : node
-            }),
+            nodes: nodes.map(node => insideSubflow(subflowPaths, node.uid) || node.task
+                ? node
+                : {...node, unused: isUnused(nodeByUid, node.uid)}),
+            edges: graph.edges.map(edge => ({...edge, unused: isUnused(nodeByUid, edge.target) || isUnused(nodeByUid, edge.source)})),
         }
     })
 

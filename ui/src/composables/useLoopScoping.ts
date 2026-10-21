@@ -1,5 +1,5 @@
 import {computed, onBeforeUnmount, ref, watch, type ComputedRef} from "vue"
-import {State, stringUtils, throttle} from "@kestra-io/design-system"
+import {CLUSTER_PREFIX, State, stringUtils, throttle} from "@kestra-io/design-system"
 import {isLoopTaskType, loopIterationCountsOf, taskRunStateCountsOf, type LoopLaneData} from "@kestra-io/topology"
 import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
 import {useExecutionsStore, type Execution} from "../stores/executions"
@@ -28,6 +28,8 @@ interface LaneOutputs {
 
 const settle = <T>(promise: Promise<T>) => promise.catch(() => undefined)
 
+const FAILED_OUTPUTS = "failed"
+
 const afterLastDot = (uid: string) => stringUtils.afterLastDot(uid) ?? uid
 
 interface FollowedExecution {
@@ -36,10 +38,15 @@ interface FollowedExecution {
 }
 
 export function loopLaneNodes(graph: Pick<FlowGraph, "clusters"> | undefined): LoopLaneNode[] {
-    const uids = (graph?.clusters ?? [])
+    const clusters = graph?.clusters ?? []
+    const subflowPaths = clusters
+        .filter((entry) => entry.cluster.type.endsWith("SubflowGraphCluster"))
+        .map((entry) => entry.cluster.uid.replace(CLUSTER_PREFIX, ""))
+    const uids = clusters
         .map((entry) => entry.cluster.taskNode)
         .filter((taskNode) => taskNode && isLoopTaskType(taskNode.task.type))
         .map((taskNode) => taskNode!.uid)
+        .filter((uid) => !subflowPaths.some((subflowPath) => uid.startsWith(`${subflowPath}.`)))
 
     return uids.map((uid) => ({
         uid,
@@ -158,12 +165,12 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
 
         const loaded = await Promise.all(pending.map(async (item) => {
             const outputs = await settle(loadTaskRunOutputs(item.hostId, item.taskRunId))
-            return outputs ? {...item, outputs} : undefined
+            return outputs ? {...item, outputs} : {...item, cacheKey: `${item.cacheKey}:${FAILED_OUTPUTS}`, outputs: {}}
         }))
         if (seq !== outputsSeq || unmounted) return
 
         const next = {...outputsByLane.value}
-        loaded.forEach((item) => item && (next[item.uid] = {key: item.cacheKey, outputs: item.outputs}))
+        loaded.forEach((item) => (next[item.uid] = {key: item.cacheKey, outputs: item.outputs}))
         outputsByLane.value = next
     }
 
@@ -200,10 +207,10 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
             const lane = laneNodes.value.find((candidate) => candidate.taskId === entry.taskId && candidate.parentUid === parentLane?.uid)
             if (!lane) break
             const iteration = await definitive(findIterationByNumber(parentId, lane.taskId, entry.number))
-            if (seq !== resolveSeq) return
+            if (seq !== resolveSeq || unmounted) return
             if (!iteration) break
             const execution = await definitive(loadIterationExecution(iteration.id))
-            if (seq !== resolveSeq) return
+            if (seq !== resolveSeq || unmounted) return
             if (!execution) break
             resolved.push({lane, iteration, execution})
             parentId = iteration.id
@@ -216,7 +223,9 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         if (transientFailure) return
 
         const keep = new Set(resolved.map(({lane}) => lane.uid))
-        laneNodes.value.filter((lane) => !keep.has(lane.uid)).forEach((lane) => closeSubscription(lane.uid))
+        for (const laneUid of [...subscriptions.keys()]) {
+            if (!keep.has(laneUid)) closeSubscription(laneUid)
+        }
         executionsStore.setScopedIterations(Object.fromEntries(resolved.map(({lane, execution}) => [lane.uid, execution])))
         resolved.forEach(({lane, execution}) => follow(lane.uid, execution))
         refreshOutputs()

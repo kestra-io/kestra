@@ -320,7 +320,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flowable-cluster {
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);

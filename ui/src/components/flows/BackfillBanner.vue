@@ -83,7 +83,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .backfill-banner {
     display: flex;
     align-items: center;

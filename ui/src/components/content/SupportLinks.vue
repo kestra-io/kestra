@@ -42,7 +42,7 @@
     ]
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 h2.support-title{
     border: none;
     font-size: var(--ks-font-size-lg);
@@ -69,7 +69,7 @@ h2.support-title{
     h3{
         font-size: var(--ks-font-size-lg);
         padding: 0;
-        margin: 0
+        margin: 0;
     }
     p{
         margin-top: .5rem;

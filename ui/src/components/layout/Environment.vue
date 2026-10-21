@@ -33,7 +33,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 #environment {
     display: flex;
     align-items: baseline;

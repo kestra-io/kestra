@@ -54,7 +54,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-editor-footer {
         position: absolute;
         left: 0;

@@ -64,9 +64,8 @@
     })
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 :deep(.kel-input__icon) {
     .lock-icon {
         color: var(--ks-text-inactive);

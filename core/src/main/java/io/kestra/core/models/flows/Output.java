@@ -2,8 +2,12 @@ package io.kestra.core.models.flows;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.validations.OutputValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,8 +30,8 @@ public class Output implements Data {
     /**
      * The types of output that can be searchable: a scalar value or an array of scalar values.
      */
-    public static final Set<Type> SEARCHABLE_TYPES = Collections.unmodifiableSet(EnumSet.of(
-        Type.STRING, Type.EMAIL, Type.SELECT, Type.INT, Type.BOOL, Type.FLOAT, Type.URI, Type.DATETIME, Type.DATE, Type.TIME, Type.DURATION, Type.ARRAY
+    public static final Set<OutputType> SEARCHABLE_TYPES = Collections.unmodifiableSet(EnumSet.of(
+        OutputType.STRING, OutputType.INT, OutputType.BOOL, OutputType.FLOAT, OutputType.URI, OutputType.DATETIME, OutputType.DATE, OutputType.TIME, OutputType.DURATION, OutputType.ARRAY
     ));
 
     /**
@@ -79,4 +83,18 @@ public class Output implements Data {
      * By default, an output is not searchable.
      */
     Boolean searchable;
+
+    /**
+     * @return the output values as an execution stores them, an {@code ASSET} output being reduced to the asset id
+     */
+    public static Map<String, Object> storedValues(List<Output> outputs, Map<String, Object> values) {
+        if (outputs == null || values == null) {
+            return values;
+        }
+        Map<String, Object> stored = new HashMap<>(values);
+        outputs.stream()
+            .filter(output -> OutputType.ASSET == output.getType() && stored.get(output.getId()) != null)
+            .forEach(output -> stored.put(output.getId(), AssetInput.storedValue(stored.get(output.getId()))));
+        return stored;
+    }
 }

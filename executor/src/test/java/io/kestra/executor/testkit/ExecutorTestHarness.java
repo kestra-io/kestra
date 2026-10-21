@@ -222,7 +222,8 @@ public final class ExecutorTestHarness {
             Mockito.mock(SearchableOutputRepositoryInterface.class),
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
-            new ExecutionOutputConfiguration(-1)
+            new ExecutionOutputConfiguration(-1),
+            DisabledAssetInputResolver::new
         );
         // Real Pebble engine without Micronaut: the mocked ApplicationContext returns no Extension
         // beans, so only Pebble built-ins are available (same pattern as RunVariablesTest).

@@ -1,6 +1,6 @@
 <template>
-    <section class="row empty">
-        <div class="col-sm-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+    <KsRow tag="section" class="empty" justify="center">
+        <KsCol :md="16" :lg="12">
             <KsEmptyState
                 :title="resolvedTitle"
                 :description="resolvedDescription"
@@ -27,14 +27,14 @@
                 </template>
             </KsEmptyState>
             <slot name="content" />
-        </div>
-    </section>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {KsButton, KsEmptyState} from "@kestra-io/design-system"
+    import {KsButton, KsCol, KsEmptyState, KsRow} from "@kestra-io/design-system"
 
     import generic from "../../../assets/empty_visuals/generic.svg"
     import {images} from "./images"

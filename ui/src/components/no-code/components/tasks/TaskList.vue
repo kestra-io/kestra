@@ -20,6 +20,7 @@
                         :dragOver="dragOverIndex === elementIndex"
                         :runnable="playgroundStore.enabled && hasId(element)"
                         :showDuplicate="hasId(element)"
+                        :showIcon="!isInputs"
                         :icons="pluginsStore.icons"
                         @select="onSelect(elementIndex)"
                         @open-split="onSelect(elementIndex, true)"
@@ -166,6 +167,8 @@
     const {runTask, playgroundStore} = usePlaygroundRun()
     const {dragOverIndex, handleDragStart, handleDragOver, handleDrop, handleDragEnd} = useDragAndDrop()
 
+    const isInputs = computed(() => props.root === "inputs")
+
     const hasId = (element: Task) => displayTaskOf(element).id != null
 
     const cardLabel = (element: Task) => {
@@ -205,7 +208,7 @@
     const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .tasks-wrapper {
     width: 100%;
 }

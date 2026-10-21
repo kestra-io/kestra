@@ -20,6 +20,7 @@
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
         "build:sdk": "node scripts/ensure-sdk.mjs",
+        "generate:sbom": "cyclonedx-npm --spec-version 1.6 --omit dev --output-reproducible --output-format JSON --output-file build/sbom/bom.json",
         "generate:openapi-spec": "cd .. && ./gradlew :webserver:generateOpenapiSpec",
         "generate:sdk": "node scripts/ensure-sdk.mjs --check-spec",
         "preview": "vite preview",
@@ -49,7 +50,6 @@
         "@vue-flow/core": "^1.48.2",
         "@vueuse/core": "^15.0.0",
         "ansi-to-html": "^0.7.2",
-        "axios": "1.20.0",
         "change-case": "5.4.4",
         "cronstrue": "^3.32.0",
         "dagre": "^0.8.5",
@@ -82,6 +82,7 @@
         "yaml": "^2.9.1"
     },
     "devDependencies": {
+        "@cyclonedx/cyclonedx-npm": "^6.0.1",
         "@google/genai": "^2.30.0",
         "@hey-api/openapi-ts": "0.99.0",
         "@module-federation/vite": "^1.23.5",
@@ -140,7 +141,6 @@
         "lightningcss-linux-x64-gnu": "^1.33.0"
     },
     "overrides": {
-        "axios": "1.20.0",
         "dompurify": "^3.4.13",
         "js-yaml@^4": "^4.3.2"
     },

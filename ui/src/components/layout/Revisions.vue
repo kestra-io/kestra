@@ -479,6 +479,9 @@
     }
     .revision-restore-label {
         display: none;
+        @media (min-width: 992px) {
+            display: inline-block;
+        }
     }
     .revision-loading {
         text-align: center;

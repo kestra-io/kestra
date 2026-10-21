@@ -38,21 +38,6 @@
     const text = (value: unknown): string | undefined =>
         typeof value === "string" && value.length ? value : undefined
 
-    /**
-     * Both lineage rows render from here and they do not always live in the same flow.
-     *
-     * `trigger.variables` carries the upstream execution for children started by a subflow
-     * task, a ForEachItem or a flow trigger, which is the lineage #19606 is about. The
-     * backend ships `executionId`, `namespace` and `flowId` together in that bag
-     * (`ExecutableUtils.java:222-228`, `trigger/Flow.java:321-324`), so the parent's own
-     * flow is already known and needs no lookup. Requiring all three also keeps an
-     * unrelated plugin trigger that happens to expose an `executionId` from being read as
-     * lineage.
-     *
-     * `parentId` is set only by `Execution.childExecution(...)`, which copies `namespace`,
-     * `flowId` and `tenantId` from the parent (`Execution.java:409-411`), so restart and
-     * replay lineage stays on the current execution's flow.
-     */
     const parent = computed(() => {
         const variables = props.execution.trigger?.variables as
             | Record<string, unknown>
@@ -86,8 +71,6 @@
         const target = parent.value
         const {id: currentId, originalId, tenantId} = props.execution
 
-        // after a first restart `originalId === parentId` and the original execution row
-        // already shows that id, so the parent row skips the duplicate
         if (!target || target.id === currentId || target.id === originalId) return undefined
 
         return {
@@ -107,10 +90,6 @@
 </script>
 
 <style scoped>
-    /*
-     * Both lineage rows render from this component, so their styles live here and no
-     * parent scoped rule has to reach across the component boundary.
-     */
     .meta-item {
         display: inline-flex;
         align-items: center;

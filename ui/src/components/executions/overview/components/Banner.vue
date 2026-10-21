@@ -466,10 +466,6 @@
                     display: inline-flex;
                 }
 
-                &__link {
-                    color: var(--ks-text-link);
-                }
-
                 &:hover {
                     background: var(--ks-bg-hover);
                     color: var(--ks-text-primary);

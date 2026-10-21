@@ -21,6 +21,7 @@ import io.kestra.core.validations.TenantId;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -29,8 +30,8 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class LogEntry implements TenantInterface, DispatchEvent {
-    @Hidden
     @Nullable
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Row key, set on read; the input of DELETE /logs/by-ids.")
     String id;
 
     @Hidden

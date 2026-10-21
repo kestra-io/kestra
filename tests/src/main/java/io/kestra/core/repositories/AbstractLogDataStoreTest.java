@@ -870,7 +870,9 @@ public abstract class AbstractLogDataStoreTest {
         logDataStore.save(log(Level.INFO, "delfilter-exec").tenantId(tenant).build());
         awaitVisible(tenant, "delfilter-exec");
 
-        logDataStore.deleteByFilters(tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "delfilter-exec")));
+        int deleted = logDataStore.deleteByFilters(tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "delfilter-exec")));
+
+        assertThat(deleted).isEqualTo(logDataStore.canPurge() ? 1 : 0);
         assertRemaining(tenant, "delfilter-exec", 1);
     }
 

@@ -195,8 +195,8 @@
         vertical-align: middle;
     }
     :global(.validation-error-tooltip-popper) {
-        padding: 0;
-        background-color: transparent;
+        padding: 0 !important;
+        background-color: transparent !important;
     }
     :global(.validation-error-label-hidden) {
         display: none;

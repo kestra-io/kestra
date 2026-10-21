@@ -1,5 +1,5 @@
 import "./vue-flow-styles.css"
-import "./topology.scss"
+import "./topology.css"
 export {default as Topology} from "./Topology.vue"
 export {default as NodeMenu} from "./nodes/NodeMenu.vue"
 export type {NodeAction} from "./nodes/NodeMenu.vue"

@@ -23,7 +23,6 @@
     ],
     "sideEffects": [
         "**/*.css",
-        "**/*.scss",
         "./dist/style.css",
         "./src/index.ts"
     ],

@@ -248,7 +248,7 @@ export type ApiExecution = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecution = {
@@ -264,7 +264,25 @@ export type ApiLightExecution = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
+};
+
+/**
+ * Slim projection of LoopRun, without the parent `Execution` it carries for internal use. Used wherever a loop iteration's identity needs to reach the API or the UI, so a list of iterations doesn't each embed a copy of the execution that contains the loop.
+ */
+export type ApiLoopRun = {
+    taskId: string;
+    taskRunId: string;
+    index?: number;
+    key?: string | null;
+    value: string;
+    parents?: Array<ApiLoopRunParent>;
+};
+
+export type ApiLoopRunParent = {
+    index?: number;
+    key?: string | null;
+    value: string;
 };
 
 /**
@@ -2615,7 +2633,7 @@ export type ApiExecutionWritable = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecutionWritable = {
@@ -2631,7 +2649,7 @@ export type ApiLightExecutionWritable = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 /**

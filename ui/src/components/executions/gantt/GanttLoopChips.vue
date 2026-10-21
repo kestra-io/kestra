@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, watch} from "vue"
+    import {computed, watch} from "vue"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
     import FilterVariant from "vue-material-design-icons/FilterVariant.vue"
     import {KsTag} from "@kestra-io/design-system"
@@ -39,17 +39,17 @@
     }>()
 
     const tree = useGanttTree()
-    const handle = tree.loopHandle(props.loop)
-    const active = computed(() => handle.failedOnly.value)
+    const handle = computed(() => tree.loopHandle(props.loop))
+    const active = computed(() => handle.value.failedOnly.value)
 
     function toggle() {
-        const showFailedOnly = !handle.failedOnly.value
-        handle.setFailedOnly(showFailedOnly)
+        const showFailedOnly = !handle.value.failedOnly.value
+        handle.value.setFailedOnly(showFailedOnly)
         if (showFailedOnly) tree.setExpanded(props.nodeKey, true)
     }
 
-    onMounted(() => handle.loadCounts())
-    watch(() => props.state, () => handle.loadCounts({force: true}))
+    watch(handle, (current) => current.loadCounts(), {immediate: true})
+    watch(() => props.state, () => handle.value.loadCounts({force: true}))
 </script>
 
 <style scoped>

@@ -3,7 +3,7 @@
         <KsButton
             size="small"
             :icon="ChevronUp"
-            :disabled="!previous"
+            :disabled="!canStepPrevious"
             :aria-label="$t('gantt_panel.previous_iteration')"
             data-test="gantt-step-previous"
             @click="step(-1)"
@@ -55,10 +55,18 @@
     const iteration = computed(() => owningIteration(props.node)!)
     const handle = computed(() => tree.loopHandle(iteration.value.loop))
     const rows = computed(() => handle.value.iterations.value)
-    const previous = computed(() => [...rows.value].reverse().find(row => row.index < iteration.value.row.index))
-    const next = computed(() => rows.value.find(row => row.index > iteration.value.row.index))
-    const canStepNext = computed(() => next.value !== undefined || handle.value.hasMore.value)
     const totalCount = computed(() => handle.value.totalCount.value ?? handle.value.total.value)
+    const failedOnly = computed(() => handle.value.failedOnly.value)
+    const previous = computed(() => failedOnly.value
+        ? [...rows.value].reverse().find(row => row.index < iteration.value.row.index)
+        : rows.value.find(row => row.index === iteration.value.row.index - 1))
+    const next = computed(() => failedOnly.value
+        ? rows.value.find(row => row.index > iteration.value.row.index)
+        : rows.value.find(row => row.index === iteration.value.row.index + 1))
+    const canStepPrevious = computed(() => failedOnly.value ? previous.value !== undefined : iteration.value.row.index > 0)
+    const canStepNext = computed(() => failedOnly.value
+        ? next.value !== undefined || handle.value.hasMore.value
+        : next.value !== undefined || handle.value.hasMore.value || iteration.value.row.index + 1 < totalCount.value)
 
     const iterationRoute = computed(() => ({
         name: "executions/update/gantt",

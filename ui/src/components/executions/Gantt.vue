@@ -136,6 +136,7 @@
                                                     >
                                                         <GanttLoopChips
                                                             v-if="nodeOf(item).kind === 'loop'"
+                                                            :key="nodeOf(item).key"
                                                             :loop="loopRefOf(nodeOf(item))"
                                                             :state="item.task.state.current"
                                                             :nodeKey="nodeOf(item).key"

@@ -879,7 +879,7 @@
     }
 }
 
-.trigger-logs {
+:deep(.trigger-logs) {
     margin: var(--ks-spacing-4);
 }
 
@@ -891,5 +891,4 @@
     border: 0;
     padding: var(--ks-spacing-4);
 }
-
 </style>

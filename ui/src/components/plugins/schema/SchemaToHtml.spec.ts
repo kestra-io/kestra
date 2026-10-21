@@ -42,7 +42,7 @@ describe("SchemaToHtml", () => {
     test("section headings follow the app language", async () => {
         const wrapper = i18nMount(defineComponent({
             render: () => h(Suspense, null, {default: () => h(SchemaToHtml, {schema: SCHEMA, pluginType: "io.kestra.plugin.core.log.Log", noUrlChange: true})}),
-        }), {locales: {en: GERMAN}})
+        }), {messages: GERMAN})
 
         await flushPromises()
 

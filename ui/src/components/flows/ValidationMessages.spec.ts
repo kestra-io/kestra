@@ -1,13 +1,9 @@
 import {describe, expect, test} from "vitest"
-import {mount} from "@vue/test-utils"
-import KestraDesignSystem, {KsText} from "@kestra-io/design-system"
+import {KsText} from "@kestra-io/design-system"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 import ValidationMessages from "./ValidationMessages.vue"
 
-const mountMessages = (messages: string[]) =>
-    mount(ValidationMessages, {
-        props: {messages},
-        global: {plugins: [KestraDesignSystem]},
-    })
+const mountMessages = (messages: string[]) => i18nMount(ValidationMessages, {props: {messages}})
 
 describe("ValidationMessages", () => {
     test("renders one line per message, in order", () => {
@@ -23,7 +19,7 @@ describe("ValidationMessages", () => {
         const wrapper = mountMessages(["Invalid flow configuration", "Missing required property"])
 
         const lines = wrapper.findAllComponents(KsText)
-        expect(lines.length).toBeGreaterThan(0)
+        expect(lines).toHaveLength(2)
         for (const line of lines) {
             expect(line.props("type")).toBe("danger")
             expect(line.props("size")).toBe("small")

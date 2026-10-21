@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -26,10 +25,7 @@ import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.assets.Asset;
-import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
-import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.AssetFailureBehavior;
@@ -386,6 +382,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             )
         );
 
+        TaskAttemptAssets assets = new TaskAttemptAssets(runContext, workerTask, Instant.now());
+        assets.emitAtStart();
+
         AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
         metricRunningCount.incrementAndGet();
 
@@ -415,94 +414,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
 
-        TaskRunWithOutput.AssetEmission assetEmission = TaskRunWithOutput.AssetEmission.OK;
-        try {
-            if (workerTask.getTask().getAssets() != null) {
-                // We need to have the task outputs injected before rendering the assets
-                Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
-
-                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
-
-                // Rendered independently so an unrenderable output doesn't discard the inputs of the same task.
-                List<AssetIdentifier> declaredInputs = List.of();
-                try {
-                    declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
-                } catch (IllegalVariableEvaluationException e) {
-                    logger.warn("Unable to render the declared asset inputs of task '{}'", taskRun.getTaskId(), e);
-                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-                }
-
-                List<Asset> declaredOutputs = List.of();
-                try {
-                    declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);
-                } catch (IllegalVariableEvaluationException e) {
-                    logger.warn("Unable to render the declared asset outputs of task '{}'", taskRun.getTaskId(), e);
-                    assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-                }
-
-                // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
-                // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
-                List<AssetsInOut> bundles = new ArrayList<>();
-                if (!declaredInputs.isEmpty() || !declaredOutputs.isEmpty()) {
-                    bundles.add(new AssetsInOut(declaredInputs, declaredOutputs));
-                }
-                for (AssetEmit emit : runContext.assets().emitted()) {
-                    try {
-                        emit.outputs().forEach(runContext::validate);
-                        bundles.add(new AssetsInOut(emit.inputs(), emit.outputs()));
-                    } catch (ConstraintViolationException e) {
-                        logger.warn("Skipping the assets emitted by task '{}': {}", taskRun.getTaskId(), violationsUnder("", e));
-                        assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-                    }
-                }
-
-                if (!bundles.isEmpty()) {
-                    taskRun = taskRun.withAssetEmits(withDefaultInputNamespace(bundles, taskRun.getNamespace()));
-                }
-            }
-        } catch (ConstraintViolationException e) {
-            // validate() re-checks the whole task bean, so only an assets-scoped violation is the declaration's fault
-            String assetViolations = violationsUnder("assets", e);
-            if (assetViolations.isEmpty()) {
-                logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
-                assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-            } else {
-                logger.error("Invalid asset declaration for taskRun '{}': {}", taskRun.getId(), assetViolations);
-                assetEmission = TaskRunWithOutput.AssetEmission.DECLARATION_INVALID;
-            }
-        } catch (Exception e) {
-            logger.warn("Unable to emit the assets of task '{}'", taskRun.getTaskId(), e);
-            assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
-        }
+        TaskRunWithOutput.AssetEmission assetEmission = assets.emitAtEnd(taskRun, state, outputs);
 
         return new TaskRunWithOutput(taskRun, outputs, assetEmission);
-    }
-
-    private static String violationsUnder(String propertyPathPrefix, ConstraintViolationException e) {
-        return e.getConstraintViolations().stream()
-            .filter(violation -> violation.getPropertyPath().toString().startsWith(propertyPathPrefix))
-            .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
-            .collect(Collectors.joining(", "));
-    }
-
-    /**
-     * A declared asset input without a namespace belongs to the flow referencing it, and left null it is
-     * filtered out of the view of every user whose asset permission is scoped to namespaces rather than
-     * global. Outputs are untouched here: an omitted output namespace must reach {@link Asset#toUpdated}
-     * as {@code null} so it keeps the stored asset's namespace instead of being silently rewritten to the
-     * flow's own.
-     */
-    private static List<AssetsInOut> withDefaultInputNamespace(List<AssetsInOut> bundles, String namespace) {
-        return bundles.stream()
-            .map(
-                bundle -> new AssetsInOut(
-                    bundle.getInputs().stream()
-                        .map(input -> input.namespace() == null ? input.withNamespace(namespace) : input)
-                        .toList(),
-                    bundle.getOutputs()
-                )
-            )
-            .toList();
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

@@ -57,7 +57,10 @@ public class TaskRun implements TenantInterface {
     @With
     List<TaskRunAttempt> attempts;
 
-    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own lineage event.
+    /**
+     * @deprecated assets are written when the task emits them, so nothing reads this anymore; kept so plugins built against 2.0 that still set it keep linking.
+     */
+    @Deprecated(forRemoval = true, since = "2.1.0")
     @With
     @Nullable
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

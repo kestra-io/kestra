@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.assets.Asset;
@@ -16,17 +18,20 @@ import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.Custom;
 import io.kestra.core.models.assets.External;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.AssetFailureBehavior;
+import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.runners.AssetEmit;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
@@ -36,6 +41,7 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkingDirFactory;
 import io.kestra.core.runners.WorkerTaskData;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.IdUtils;
@@ -46,8 +52,10 @@ import io.kestra.worker.queues.InMemoryWorkerQueue;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -92,6 +100,22 @@ class WorkerTaskProcessorTest {
 
     @Inject
     private DispatchQueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private AssetManagerFactory assetManagerFactory;
+
+    @MockBean(AssetManagerFactory.class)
+    AssetManagerFactory assetManagerFactory() {
+        return new RecordingAssetManagerFactory();
+    }
+
+    @BeforeEach
+    void resetAssets() {
+        recorded().declaredEmits.clear();
+        recorded().refusal = null;
+        recorded().refuseOnlyAtStart = false;
+        recorded().runtimeRefusal = null;
+    }
 
     @Test
     void shouldEmitFailedResultWhenTaskFailsOnItsOwnDuringShutdownDrain() throws Exception {
@@ -140,14 +164,14 @@ class WorkerTaskProcessorTest {
         // Then the inputs are still emitted, and the unrendered outputs only show up in the state
         List<WorkerTaskResult> results = drain(resultQueue);
         TaskRun taskRun = results.getLast().getTaskRun();
-        assertThat(taskRun.getAssetEmits())
+        assertThat(recorded().of(taskRun.getId()))
             .as("a failing output must not discard the declared inputs")
-            .singleElement()
-            .satisfies(bundle ->
+            .allSatisfy(declaredEmit ->
             {
-                assertThat(bundle.getInputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
-                assertThat(bundle.getOutputs()).isEmpty();
-            });
+                assertThat(declaredEmit.emit().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
+                assertThat(declaredEmit.emit().outputs()).isEmpty();
+            })
+            .isNotEmpty();
         assertThat(taskRun.getState().getCurrent())
             .as("a partially emitted declaration is still an emission failure, escalated per assetFailureBehavior")
             .isEqualTo(State.Type.WARNING);
@@ -167,13 +191,94 @@ class WorkerTaskProcessorTest {
         List<WorkerTaskResult> results = drain(resultQueue);
         TaskRun taskRun = results.getLast().getTaskRun();
         assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(taskRun.getAssetEmits())
-            .singleElement()
-            .satisfies(bundle ->
+        assertThat(recorded().of(taskRun.getId()).getLast().emit())
+            .satisfies(emit ->
             {
-                assertThat(bundle.getInputs()).extracting(AssetIdentifier::namespace).containsExactly("io.kestra.unit-test");
-                assertThat(bundle.getOutputs()).extracting(Asset::getNamespace).containsExactly((String) null);
+                assertThat(emit.inputs()).extracting(AssetIdentifier::namespace).containsExactly("io.kestra.unit-test");
+                assertThat(emit.outputs()).extracting(Asset::getNamespace).containsExactly((String) null);
             });
+    }
+
+    @Test
+    void shouldEmitDeclaredAssetsWhenTheTaskStartsAndAgainWhenItEnds() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask());
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        List<RecordingAssetManagerFactory.DeclaredEmit> emits = recorded().of(taskRun.getId());
+        assertThat(emits).hasSize(2);
+
+        RecordingAssetManagerFactory.DeclaredEmit start = emits.getFirst();
+        assertThat(start.state()).isEqualTo(State.Type.RUNNING);
+        assertThat(start.alreadyUsed()).isEmpty();
+        assertThat(start.emit().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input");
+        assertThat(start.emit().outputs()).extracting(Asset::getId).containsExactly("static-output", "output-from-task-outputs");
+        assertThat(start.emit().outputs().getFirst().getMetadata()).containsEntry("region", "eu").doesNotContainKeys("value", Asset.STATUS_METADATA_KEY);
+        assertThat(start.emit().outputs().getLast().getDisplayName()).isNull();
+
+        RecordingAssetManagerFactory.DeclaredEmit end = emits.getLast();
+        assertThat(end.state()).isEqualTo(State.Type.SUCCESS);
+        assertThat(end.alreadyUsed()).containsExactlyInAnyOrder("declared-input", "static-output", "output-from-task-outputs");
+        assertThat(end.emit().inputs()).extracting(AssetIdentifier::id).containsExactly("declared-input", "produced-source");
+        assertThat(end.emit().outputs()).extracting(Asset::getId).containsExactly("static-output", "output-from-task-outputs", "produced-host");
+        assertThat(end.emit().outputs().getFirst().getMetadata())
+            .containsEntry("value", "produced")
+            .containsEntry(Asset.STATUS_METADATA_KEY, "active");
+    }
+
+    @Test
+    void shouldApplyAssetFailureBehaviorWhenAnEmitIsRefused() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().refusal = "static-output: the asset is locked by another execution";
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask());
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldApplyAssetFailureBehaviorWhenOnlyTheEmitAtStartIsRefused() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().refusal = "static-output: the asset is locked by another execution";
+        recorded().refuseOnlyAtStart = true;
+
+        processor.process(outputsReferencingTaskOutputsWorkerTask());
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldApplyAssetFailureBehaviorWhenAnAssetEmittedWhileRunningIsRefused() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        recorded().runtimeRefusal = "emitted: the asset is locked by another execution";
+        EmitsWhileRunning task = EmitsWhileRunning.builder()
+            .type(EmitsWhileRunning.class.getName())
+            .id("emitting_task")
+            .assets(new AssetsDeclaration(Property.ofValue(true), null, null, null))
+            .build();
+
+        processor.process(workerTaskFor(task));
+
+        assertThat(drain(resultQueue).getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+    }
+
+    @Test
+    void shouldGiveTheAssetsTheExecutionKindOfTheTaskRunWhenItIsATest() throws Exception {
+        InMemoryWorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(100);
+        WorkerTaskProcessor processor = newProcessor(resultQueue);
+        WorkerTask workerTask = outputsReferencingTaskOutputsWorkerTask();
+        workerTask.setExecutionKind(ExecutionKind.TEST);
+
+        processor.process(workerTask);
+
+        TaskRun taskRun = drain(resultQueue).getLast().getTaskRun();
+        assertThat(recorded().of(taskRun.getId())).isNotEmpty().allSatisfy(declaredEmit -> assertThat(declaredEmit.executionKind()).isEqualTo(ExecutionKind.TEST));
     }
 
     @Test
@@ -306,7 +411,7 @@ class WorkerTaskProcessorTest {
         List<WorkerTaskResult> results = drain(resultQueue);
         String taskRunId = results.getLast().getTaskRun().getId();
         assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        assertThat(recorded().of(taskRunId)).isEmpty();
         LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
         assertThat(errorLog).isNotNull();
         assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
@@ -324,7 +429,7 @@ class WorkerTaskProcessorTest {
         List<WorkerTaskResult> results = drain(resultQueue);
         String taskRunId = results.getLast().getTaskRun().getId();
         assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        assertThat(recorded().of(taskRunId)).isEmpty();
         LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
         assertThat(errorLog).isNotNull();
         assertThat(errorLog.getMessage()).contains("assets.outputs[0].ttl").contains("must be a UTC instant");
@@ -342,7 +447,7 @@ class WorkerTaskProcessorTest {
         List<WorkerTaskResult> results = drain(resultQueue);
         String taskRunId = results.getLast().getTaskRun().getId();
         assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        assertThat(recorded().of(taskRunId)).isEmpty();
         LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
         assertThat(errorLog).isNotNull();
         assertThat(errorLog.getMessage()).contains("assets.inputs[0].id").contains("must not be blank");
@@ -403,7 +508,7 @@ class WorkerTaskProcessorTest {
         List<WorkerTaskResult> results = drain(resultQueue);
         String taskRunId = results.getLast().getTaskRun().getId();
         assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        assertThat(recorded().of(taskRunId)).isEmpty();
         LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
         assertThat(errorLog).isNotNull();
         assertThat(errorLog.getMessage()).contains("assets.inputs[0].id").contains("must not be blank");
@@ -421,7 +526,7 @@ class WorkerTaskProcessorTest {
         List<WorkerTaskResult> results = drain(resultQueue);
         String taskRunId = results.getLast().getTaskRun().getId();
         assertThat(results.getLast().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(results.getLast().getTaskRun().getAssetEmits()).isNullOrEmpty();
+        assertThat(recorded().of(taskRunId)).isEmpty();
         LogEntry errorLog = TestsUtils.awaitLog(logs, log -> taskRunId.equals(log.getTaskRunId()) && log.getMessage() != null && log.getMessage().startsWith("Invalid asset declaration"));
         assertThat(errorLog).isNotNull();
         assertThat(errorLog.getMessage()).contains("assets.outputs[0].id").contains("must not be blank");
@@ -464,6 +569,51 @@ class WorkerTaskProcessorTest {
             .task(task)
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();
+    }
+
+    private RecordingAssetManagerFactory recorded() {
+        return (RecordingAssetManagerFactory) assetManagerFactory;
+    }
+
+    private WorkerTask outputsReferencingTaskOutputsWorkerTask() {
+        ProducesValue task = ProducesValue.builder()
+            .type(ProducesValue.class.getName())
+            .id("asset_task")
+            .assets(
+                new AssetsDeclaration(
+                    Property.ofValue(false),
+                    declaredInputs(
+                        List.of(
+                            Map.of("id", "declared-input", "type", "MY_OWN_ASSET_TYPE"),
+                            Map.of("id", "{{ outputs.asset_task.value }}-source", "type", "MY_OWN_ASSET_TYPE")
+                        )
+                    ),
+                    declaredOutputs(
+                        List.of(
+                            Map.of(
+                                "id", "static-output", "type", "custom",
+                                "metadata", Map.of("region", "eu", "value", "{{ outputs.asset_task.value }}", Asset.STATUS_METADATA_KEY, "active")
+                            ),
+                            Map.of("id", "output-from-task-outputs", "type", "custom", "displayName", "{{ outputs.asset_task.value }}"),
+                            Map.of("id", "{{ outputs.asset_task.value }}-host", "type", "custom")
+                        )
+                    ),
+                    Property.ofValue(AssetFailureBehavior.WARN)
+                )
+            )
+            .build();
+
+        return workerTaskFor(task);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Property<List<AssetIdentifier>> declaredInputs(List<Map<String, Object>> inputs) {
+        return JacksonMapper.ofJson().convertValue(inputs, Property.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Property<List<Asset>> declaredOutputs(List<Map<String, Object>> outputs) {
+        return JacksonMapper.ofJson().convertValue(outputs, Property.class);
     }
 
     private WorkerTask unrenderableOutputsWorkerTask() {
@@ -710,6 +860,33 @@ class WorkerTaskProcessorTest {
         public VoidOutput run(RunContext runContext) throws Exception {
             Property.as(this.count, runContext, Integer.class);
             return null;
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class EmitsWhileRunning extends Task implements RunnableTask<VoidOutput> {
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            runContext.assets().emit(new AssetEmit(List.of(), List.of(Custom.builder().id("emitted").type("custom").build())));
+            return null;
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class ProducesValue extends Task implements RunnableTask<ProducesValue.ValueOutput> {
+        @Override
+        public ValueOutput run(RunContext runContext) {
+            return ValueOutput.builder().value("produced").build();
+        }
+
+        @Builder
+        @Getter
+        public static class ValueOutput implements Output {
+            private final String value;
         }
     }
 }

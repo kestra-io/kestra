@@ -78,7 +78,7 @@ export const CustomWidth: Story = {
     }),
 }
 
-/** Large – widens the dialog to 756px (capped at 90vw) */
+/** Large – widens the dialog to 756px (capped at 92vw) */
 export const Large: Story = {
     render: () => ({
         components: {KsButton, KsDialog},
@@ -313,4 +313,30 @@ export const DirtyGuard: Story = {
         await userEvent.keyboard("{Escape}")
         await waitFor(() => expect(document.querySelector(".kel-message-box")).toBeTruthy())
     },
+}
+
+/** Mobile – an explicit `width` is still capped at 92vw, so a 650px dialog never overflows a phone */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() { return {visible: ref(true)} },
+        template: `
+            <div style="padding:16px">
+                <ks-button @click="visible = true">Open</ks-button>
+                <ks-dialog v-model="visible" title="Wide dialog" :width="650">
+                    <p>The dialog shrinks to the viewport instead of scrolling horizontally.</p>
+                </ks-dialog>
+            </div>
+        `,
+    }),
 }

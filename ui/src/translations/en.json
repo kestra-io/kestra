@@ -524,8 +524,25 @@
       "attempts": "{count} attempt | {count} attempts",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Failed task",
+      "view_task_logs": "View task logs",
+      "revision_short": "rev. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Show fewer labels",
+      "jump_to_first_failure": "Jump to first failure",
+      "open_logs": "Open logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "After sign-in",
+      "execution_tab": "Execution {id} · {tab} tab",
+      "execution": "Execution {id}",
+      "tab": "{tab} tab"
+    },
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
+    "workspace": "Workspace",
+    "resources": "Resources",
     "usage": "Usage",
     "namespaces": "Namespaces",
     "tasks": "Tasks",

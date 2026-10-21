@@ -24,9 +24,12 @@
     const error = ref(false)
     const values = ref<Record<string, unknown>>({})
 
+    let latestLoad = 0
     async function load() {
+        const current = ++latestLoad
         if (props.referencedTaskIds.length === 0) {
             values.value = {}
+            loading.value = false
             return
         }
 
@@ -39,15 +42,16 @@
                 if (!taskRun) continue
 
                 const outputs = await loadTaskRunOutputs(props.executionId, taskRun.id)
+                if (current !== latestLoad) return
                 for (const [key, value] of Object.entries(outputs)) {
                     merged[`${taskId}.${key}`] = value
                 }
             }
             values.value = merged
         } catch {
-            error.value = true
+            if (current === latestLoad) error.value = true
         } finally {
-            loading.value = false
+            if (current === latestLoad) loading.value = false
         }
     }
 

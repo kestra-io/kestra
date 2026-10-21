@@ -15,11 +15,13 @@ import type {Chart, ChartResults} from "../types"
 
 const chart: Chart = {id: "rows_loaded", type: "io.kestra.plugin.core.dashboard.chart.KPI"}
 
-function mountGenerator(provided?: (chartId: string) => ChartResults | undefined) {
+function mountGenerator(provided?: (chartId: string, pagination?: {pageNumber: number; pageSize: number}) => ChartResults | undefined, pagination?: {pageNumber: number; pageSize: number}) {
     let data: ReturnType<typeof useChartGenerator>["data"] | undefined
     const Probe = defineComponent({
         setup() {
-            data = useChartGenerator("dashboard-id", {chart, filters: [], showDefault: false}).data
+            const generator = useChartGenerator("dashboard-id", {chart, filters: [], showDefault: false}, !pagination)
+            data = generator.data
+            if (pagination) void generator.generate(pagination)
             return () => h("div")
         },
     })
@@ -35,6 +37,11 @@ describe("useChartGenerator with provided results", () => {
         await vi.waitFor(() => expect(data()).toEqual({results: [{value: "rows_loaded"}], total: 1}))
 
         expect(generate).not.toHaveBeenCalled()
+    })
+
+    it("hands the requested page to the host", async () => {
+        const data = mountGenerator((_chartId, pagination) => ({results: [{page: pagination?.pageNumber}], total: 9}), {pageNumber: 2, pageSize: 5})
+        await vi.waitFor(() => expect(data()).toEqual({results: [{page: 2}], total: 9}))
     })
 
     it("still calls the dashboard API when no host provides rows", async () => {

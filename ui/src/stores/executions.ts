@@ -61,6 +61,7 @@ export interface InputMetaData {
     type: InputType
     displayName?: string;
     description?: string;
+    descriptionDisplayMode?: "TEXT" | "TOOLTIP";
     required?: boolean;
     defaults?: unknown;
     value?: unknown;

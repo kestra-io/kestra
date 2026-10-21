@@ -103,6 +103,12 @@ public class ExecutionDelayProcessor {
                         && execution.getState().getCurrent() != State.Type.KILLING
                 ) {
                     if (executionDelay.getTaskRunId() == null) {
+                        // a scheduled start must not revive an execution that already left CREATED (force run, reschedule)
+                        if (!execution.getState().isCreated()) {
+                            log.warn("Skipping the expired scheduled start of the execution '{}': it is no longer CREATED.", execution.getId());
+                            return null;
+                        }
+
                         // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                         Execution markAsExecution = execution.withState(executionDelay.getState());
                         executor = executor.withExecution(markAsExecution, "pausedRestart");

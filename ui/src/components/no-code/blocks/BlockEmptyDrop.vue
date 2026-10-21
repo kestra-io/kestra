@@ -49,7 +49,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-empty-drop {
         display: flex;
         background: transparent;

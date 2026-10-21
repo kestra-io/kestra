@@ -10,7 +10,7 @@
     defineProps<{messages: string[]}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .validation-messages {
         display: flex;
         flex-direction: column;

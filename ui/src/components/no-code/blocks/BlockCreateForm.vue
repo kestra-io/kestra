@@ -45,7 +45,7 @@
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => emit("close"))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-create-form {
         display: flex;
         flex-direction: column;

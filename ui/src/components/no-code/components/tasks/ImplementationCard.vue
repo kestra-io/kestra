@@ -140,7 +140,7 @@
     const rawValue = computed(() => YAML_UTILS.stringify(props.modelValue))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .implementation-card {
     border: 1px solid var(--ks-border-default);
     border-radius: var(--ks-radius-base);

@@ -47,7 +47,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .docsMenu {
         .depth-0 {
             padding-left: var(--ks-font-size-lg);

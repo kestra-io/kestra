@@ -439,7 +439,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .kel-form {
     width: 100%;
 }

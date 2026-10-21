@@ -61,8 +61,8 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: before_approval
-                    type: io.kestra.plugin.core.debug.Return
-                    format: Output data that needs to be validated by a human
+                    type: io.kestra.plugin.core.log.Log
+                    message: Output data that needs to be validated by a human
 
                   - id: pause
                     type: io.kestra.plugin.core.flow.Pause
@@ -75,8 +75,8 @@ import lombok.experimental.SuperBuilder;
                       - echo "Manual approval received! Continuing the execution..."
 
                   - id: post_resume
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
                 """
         ),
         @Example(
@@ -151,8 +151,8 @@ import lombok.experimental.SuperBuilder;
                     behavior: WARN
 
                   - id: post_resume
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
                 """
         )
     }

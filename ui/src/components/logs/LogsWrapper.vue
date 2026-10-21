@@ -543,7 +543,7 @@
         if (newValue) refresh()
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
 
     .logs-chart {
         margin-bottom: var(--ks-spacing-5);
@@ -577,28 +577,30 @@
         margin: 0 var(--ks-spacing-6) var(--ks-spacing-3);
         padding: var(--ks-spacing-2) 0;
         background: var(--ks-bg-base);
+    }
 
-        &__left {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__left {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__actions {
-            display: flex;
-            align-items: center;
-            margin-left: auto;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        gap: var(--ks-spacing-2);
+    }
 
-        :deep(.kel-button) {
+    .logs-toolbar {
+        & :deep(.kel-button) {
             margin: 0;
         }
     }
 
     .log-panel {
-        > div.log-content {
+        & > div.log-content {
             margin-bottom: 1rem;
             .navbar {
                 border: 1px solid var(--ks-border-default);
@@ -623,7 +625,7 @@
                 background-color: var(--ks-bg-sidebar);
             }
 
-            > * + * {
+            & > * + * {
                 border-top: 1px solid var(--ks-border-default);
             }
         }

@@ -96,7 +96,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .raw-editor {
         position: relative;
     }

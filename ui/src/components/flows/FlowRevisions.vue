@@ -157,7 +157,7 @@
     watch(() => [route.params.namespace, route.params.id], fetchRevisions)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-revisions {
         min-height: calc(100vh - 190px);
     }

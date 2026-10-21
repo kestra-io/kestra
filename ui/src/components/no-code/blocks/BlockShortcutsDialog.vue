@@ -39,7 +39,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-editor-shortcuts {
         display: grid;
         grid-template-columns: 1fr 1fr;

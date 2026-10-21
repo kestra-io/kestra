@@ -195,7 +195,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-edit-modal-header {
         display: flex;
         align-items: center;

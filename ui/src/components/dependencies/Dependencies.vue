@@ -320,7 +320,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .dependencies-wrapper {
     display: flex;
     flex-direction: column;

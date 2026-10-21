@@ -75,7 +75,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .quick-filters {
         display: flex;
         align-items: center;
@@ -94,76 +94,76 @@
                 overflow-x: auto;
             }
         }
+    }
 
-        &__group {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            min-width: 0;
-            max-width: 100%;
-        }
+    .quick-filters__group {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        min-width: 0;
+        max-width: 100%;
+    }
 
-        &__label {
-            display: inline-flex;
-            align-items: center;
-            height: var(--ks-spacing-6);
-            font-size: var(--ks-font-size-sm);
-            font-weight: 400;
-            line-height: 1;
-            color: var(--ks-text-secondary);
-            white-space: nowrap;
-        }
+    .quick-filters__label {
+        display: inline-flex;
+        align-items: center;
+        height: var(--ks-spacing-6);
+        font-size: var(--ks-font-size-sm);
+        font-weight: 400;
+        line-height: 1;
+        color: var(--ks-text-secondary);
+        white-space: nowrap;
+    }
 
-        &__levels {
-            display: inline-flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: var(--ks-spacing-1);
-        }
+    .quick-filters__levels {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-1);
+    }
 
-        &__level {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-1);
-            height: var(--ks-spacing-6);
-            padding: 0 var(--ks-spacing-3);
-            border: 1px solid transparent;
-            border-radius: var(--ks-radius-lg);
-            background: transparent;
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-sm);
-            font-weight: 500;
-            white-space: nowrap;
-            cursor: pointer;
-            transition:
+    .quick-filters__level {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        height: var(--ks-spacing-6);
+        padding: 0 var(--ks-spacing-3);
+        border: 1px solid transparent;
+        border-radius: var(--ks-radius-lg);
+        background: transparent;
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-sm);
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
                 background-color var(--ks-duration-base) ease,
-                border-color var(--ks-duration-base) ease,
-                color var(--ks-duration-base) ease;
+            border-color var(--ks-duration-base) ease,
+            color var(--ks-duration-base) ease;
 
-            &:hover {
-                background: var(--level-bg);
-                color: var(--ks-text-primary);
-            }
-
-            &:focus-visible {
-                outline: 2px solid var(--level-color);
-                outline-offset: 2px;
-            }
-
-            &--active {
-                background: var(--level-bg);
-                border-color: var(--level-border);
-                color: var(--ks-text-primary);
-                font-weight: 500;
-            }
+        &:hover {
+            background: var(--level-bg);
+            color: var(--ks-text-primary);
         }
 
-        &__dot {
-            width: var(--ks-spacing-2);
-            height: var(--ks-spacing-2);
-            border-radius: 50%;
-            background: var(--level-color);
-            flex-shrink: 0;
+        &:focus-visible {
+            outline: 2px solid var(--level-color);
+            outline-offset: 2px;
         }
+    }
+
+    .quick-filters__level--active {
+        background: var(--level-bg);
+        border-color: var(--level-border);
+        color: var(--ks-text-primary);
+        font-weight: 500;
+    }
+
+    .quick-filters__dot {
+        width: var(--ks-spacing-2);
+        height: var(--ks-spacing-2);
+        border-radius: 50%;
+        background: var(--level-color);
+        flex-shrink: 0;
     }
 </style>

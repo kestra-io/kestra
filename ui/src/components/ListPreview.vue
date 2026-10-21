@@ -121,7 +121,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .list-preview-container {
         width: 100%;
         overflow: auto;
@@ -131,7 +131,7 @@
         table-layout: fixed;
         width: 100%;
 
-        :deep(.kel-table__body-wrapper) {
+        & :deep(.kel-table__body-wrapper) {
             overflow-x: auto;
         }
     }

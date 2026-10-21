@@ -93,7 +93,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .unqueue-status {
     margin-inline-end: var(--ks-spacing-1);
 }

@@ -52,7 +52,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .quick-filters {
         display: flex;
         align-items: center;

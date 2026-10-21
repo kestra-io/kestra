@@ -40,6 +40,7 @@
                         <div
                             v-if="(selection.length > 0 || queryBulkAction) && logsStore.logs && logsStore.logs.length > 0"
                             class="logs-bulk-actions"
+                            data-test="logs-bulk-actions"
                         >
                             <KsBulkSelect
                                 :selectAll="queryBulkAction"
@@ -48,7 +49,7 @@
                                 @toggle-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
-                                <KsButton :icon="Delete" @click="confirmDeleteLogs">
+                                <KsButton :icon="Delete" data-test="logs-bulk-delete" @click="confirmDeleteLogs">
                                     {{ $t("delete") }}
                                 </KsButton>
                             </KsBulkSelect>
@@ -81,6 +82,7 @@
                                 <KsCheckbox
                                     v-if="log.id"
                                     class="log-row__checkbox"
+                                    data-test="log-row-checkbox"
                                     :aria-label="$t('select')"
                                     :modelValue="selection.includes(log.id)"
                                     @change="(value: string | number | boolean) => toggleRow(log.id!, Boolean(value))"
@@ -595,6 +597,7 @@
         return JSON.stringify(filters)
     })
     watch(filterQueryKey, () => {
+        toggleAllUnselected()
         dataTable.value?.resetAndReload()
     })
 
@@ -641,8 +644,12 @@
         if (newValue) refresh()
     })
 
-    watch(() => logsStore.logs, () => {
-        toggleAllUnselected()
+    watch(() => logsStore.logs, (logs) => {
+        const listedIds = new Set((logs ?? []).map(log => log.id))
+        selection.value = selection.value.filter(id => listedIds.has(id))
+        if (selection.value.length === 0) {
+            queryBulkAction.value = false
+        }
     })
 </script>
 <style scoped>
@@ -736,16 +743,16 @@
                 align-items: flex-start;
                 gap: var(--ks-spacing-2);
 
-                &--selected {
+                &.log-row--selected {
                     background-color: var(--ks-bg-active);
                 }
 
-                &__checkbox {
+                & .log-row__checkbox {
                     flex: 0 0 auto;
                     padding-top: var(--ks-spacing-2);
                 }
 
-                &__content {
+                & .log-row__content {
                     flex: 1 1 auto;
                     min-width: 0;
                 }

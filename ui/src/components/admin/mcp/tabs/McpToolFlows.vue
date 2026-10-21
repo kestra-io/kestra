@@ -21,7 +21,9 @@
         <KsDataTable
             v-else
             fitHeight
-            :data="filteredTools"
+            v-model:currentPage="currentPage"
+            v-model:pageSize="pageSize"
+            :data="pagedTools"
             :total="filteredTools.length"
             :loading="loading"
             :rowKey="rowKey"
@@ -133,6 +135,7 @@
     import {useMcpToolsFilter} from "../../../filter/configurations/mcpToolsFilter"
     import {useTableColumns, type ColumnConfig} from "@kestra-io/design-system"
     import {useToolFlowCreation} from "../useToolFlowCreation"
+    import {useClientPagination} from "../../../../composables/useClientPagination"
 
     import {KsButton, KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"
     import Plus from "vue-material-design-icons/Plus.vue"
@@ -236,6 +239,8 @@
                 .some((field) => field && field.toLowerCase().includes(needle)),
         )
     })
+
+    const {currentPage, pageSize, paged: pagedTools} = useClientPagination(filteredTools)
 
     function activeAnnotations(annotations: McpToolAnnotations): string[] {
         return ANNOTATION_KEYS

@@ -15,7 +15,6 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -577,6 +576,7 @@ public class ExecutorService {
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
         List<TaskRun> onPauseTaskRuns = new ArrayList<>();
+        Map<String, State.Type> executionLevelOutcomes = new LinkedHashMap<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
@@ -603,6 +603,11 @@ public class ExecutorService {
                             // do NOT add the result: the parent must not terminate
                         } else {
                             list.add(flowableResult.get());
+                            TaskRun resolvedTaskRun = flowableResult.get().getTaskRun();
+                            if (task instanceof PausableTask pausableTask && resolvedTaskRun.getState().isTerminated()) {
+                                pausableTask.executionLevelOutcome(runContext, executor.getExecution(), resolvedTaskRun)
+                                    .ifPresent(outcome -> executionLevelOutcomes.put(resolvedTaskRun.getId(), outcome));
+                            }
                             // fail-fast: a flowable that just resolved to FAILED asks to interrupt its still-running children
                             if (flowableResult.get().getTaskRun().getState().isFailed() && task instanceof OnChildFailureInterface onChildFailure) {
                                 this.interruptOnChildFailure(executor, onChildFailure, taskRun, flowableResult.get().getTaskRun(), runContext);
@@ -831,37 +836,22 @@ public class ExecutorService {
 
         this.addWorkerTaskResults(executor, list);
 
-        executor = this.handleExecutionLevelOutcome(executor, list);
+        executor = this.handleExecutionLevelOutcomes(executor, executionLevelOutcomes);
 
         boolean pausedThisPass = list.stream().anyMatch(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED);
         return this.handlePauseState(executor, pausedThisPass);
     }
 
-    private ExecutorContext handleExecutionLevelOutcome(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws QueueException, IllegalVariableEvaluationException, InternalException {
-        for (WorkerTaskResult workerTaskResult : workerTaskResults) {
+    /** Applied once the results are merged, so the terminating cascade starts from the pausable task run's own terminal state. */
+    private ExecutorContext handleExecutionLevelOutcomes(ExecutorContext executor, Map<String, State.Type> outcomes) throws QueueException, InternalException {
+        for (Map.Entry<String, State.Type> outcome : outcomes.entrySet()) {
             if (executor.getExecution().getState().isTerminated() || executor.getExecution().getState().getCurrent() == State.Type.KILLING) {
                 break;
             }
 
-            TaskRun taskRun = workerTaskResult.getTaskRun();
-            if (!taskRun.getState().isTerminated()) {
-                continue;
-            }
-
-            Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
-            if (!(task instanceof PausableTask pausableTask)) {
-                continue;
-            }
-
-            RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-            Optional<State.Type> outcome = pausableTask.executionLevelOutcome(runContext, executor.getExecution(), taskRun);
-            if (outcome.isEmpty()) {
-                continue;
-            }
-
-            if (outcome.get() == State.Type.KILLED) {
+            if (outcome.getValue() == State.Type.KILLED) {
                 Execution killing = executionService.kill(executor.getExecution(), executor.getFlow(), Optional.empty());
-                executor.withExecution(killing, "handleExecutionLevelOutcome");
+                executor.withExecution(killing, "handleExecutionLevelOutcomes");
                 killQueue.emit(
                     ExecutionKilledExecution.builder()
                         .state(ExecutionKilled.State.REQUESTED)
@@ -871,9 +861,9 @@ public class ExecutorService {
                         .build()
                 );
             } else {
-                TaskRun current = executor.getExecution().findTaskRunByTaskRunId(taskRun.getId());
-                Execution terminated = ExecutionTerminator.terminate(executor.getExecution(), current, outcome.get());
-                executor.withExecution(terminated, "handleExecutionLevelOutcome");
+                TaskRun current = executor.getExecution().findTaskRunByTaskRunId(outcome.getKey());
+                Execution terminated = ExecutionTerminator.terminate(executor.getExecution(), current, outcome.getValue());
+                executor.withExecution(terminated, "handleExecutionLevelOutcomes");
             }
         }
 

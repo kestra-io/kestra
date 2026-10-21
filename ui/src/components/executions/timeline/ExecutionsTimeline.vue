@@ -115,10 +115,11 @@
     import {useTimelineRange, computeScrubberDomain, START_QUERY_KEY, END_QUERY_KEY, TIME_RANGE_QUERY_KEY} from "../../../composables/useTimelineRange"
     import {useExecutionFilter} from "../../filter/configurations/executionFilter"
     import {useFlowExecutionFilter} from "../../filter/configurations/flowExecutionFilter"
-    import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, isWithinNamespace, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
+    const TIME_FILTER_KEYS = [TIME_RANGE_QUERY_KEY, START_QUERY_KEY, END_QUERY_KEY]
     const ROW_LABEL_WIDTH_PX = 180
 
     const props = withDefaults(defineProps<{
@@ -146,7 +147,7 @@
     const drillNamespace = defineModel<string | undefined>("drillNamespace", {default: undefined})
     const drillFlowId = defineModel<string | undefined>("drillFlowId", {default: undefined})
 
-    const effectiveNamespace = computed(() => props.namespace ?? drillNamespace.value)
+    const effectiveNamespace = computed(() => drillNamespace.value ?? props.namespace)
     const effectiveFlowId = computed(() => props.flowId ?? drillFlowId.value)
 
     const viewLevel = computed<"all" | "namespace" | "flow">(() => {
@@ -212,16 +213,19 @@
         }
 
         if (viewLevel.value === "namespace") {
-            const group = groupByNamespace(scopedExecutions.value).find(g => g.namespace === effectiveNamespace.value)
-            return (group?.flows ?? []).map(flow => ({
-                key: `${flow.namespace}.${flow.flowId}`,
-                label: flow.flowId,
-                executions: flow.executions,
-                total: flow.total,
-                failed: flow.failed,
-                namespace: flow.namespace,
-                flowId: flow.flowId,
-            }))
+            const namespace = effectiveNamespace.value!
+            return groupByNamespace(scopedExecutions.value)
+                .filter(group => isWithinNamespace(group.namespace, namespace))
+                .flatMap(group => group.flows)
+                .map(flow => ({
+                    key: `${flow.namespace}.${flow.flowId}`,
+                    label: flow.namespace === namespace ? flow.flowId : `${flow.namespace.slice(namespace.length + 1)}.${flow.flowId}`,
+                    executions: flow.executions,
+                    total: flow.total,
+                    failed: flow.failed,
+                    namespace: flow.namespace,
+                    flowId: flow.flowId,
+                }))
         }
 
         return groupByNamespace(scopedExecutions.value).map(group => ({
@@ -280,18 +284,17 @@
 
     const breadcrumbItems = computed<KsBreadcrumbItem[]>(() => {
         const items: KsBreadcrumbItem[] = []
-        if (props.namespace === undefined) {
+        const isDrilled = drillNamespace.value !== undefined || drillFlowId.value !== undefined
+        items.push({
+            label: props.namespace ?? t("executionsTimeline.breadcrumb.all"),
+            onClick: resetToAll,
+            disabled: !isDrilled,
+        })
+        if (drillNamespace.value && drillNamespace.value !== props.namespace) {
             items.push({
-                label: t("executionsTimeline.breadcrumb.all"),
-                onClick: resetToAll,
-                disabled: viewLevel.value === "all",
-            })
-        }
-        if (effectiveNamespace.value) {
-            items.push({
-                label: effectiveNamespace.value,
+                label: drillNamespace.value,
                 onClick: resetToNamespace,
-                disabled: viewLevel.value === "namespace" || props.namespace !== undefined,
+                disabled: viewLevel.value === "namespace",
             })
         }
         if (effectiveFlowId.value) {
@@ -311,9 +314,8 @@
 
     function onDrillIn(row: TimelineRowData) {
         if (viewLevel.value === "flow") return
-        if (viewLevel.value === "all") {
-            drillNamespace.value = row.namespace
-        } else if (row.flowId) {
+        drillNamespace.value = row.namespace
+        if (viewLevel.value === "namespace" && row.flowId) {
             drillFlowId.value = row.flowId
         }
     }
@@ -344,7 +346,9 @@
 
     function resetFilters() {
         const {page: _p, size: _s, sort: _so, ...rest} = route.query
-        const cleared = Object.fromEntries(Object.entries(rest).filter(([key]) => !key.startsWith("filters[") && key !== "q"))
+        const cleared = Object.fromEntries(Object.entries(rest).filter(([key]) =>
+            TIME_FILTER_KEYS.includes(key) || (!key.startsWith("filters[") && key !== "q"),
+        ))
         router.push({query: cleared})
     }
 
@@ -452,7 +456,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .executions-timeline {
     display: flex;
     flex-direction: column;

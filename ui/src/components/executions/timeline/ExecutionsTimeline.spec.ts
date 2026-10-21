@@ -58,7 +58,8 @@ const i18n = createI18n({
 
 const TimelineRowStub = defineComponent({
     name: "TimelineRow",
-    props: ["label", "executions", "total", "failed", "rangeStartMs", "rangeEndMs", "availableWidthPx", "packLanes", "dimmedStates"],
+    props: ["label", "executions", "total", "failed", "rangeStartMs", "rangeEndMs", "availableWidthPx", "packLanes", "dimmedStates", "drillable"],
+    emits: ["drill-in", "open-own-page", "show-only-flow"],
     template: "<div class=\"stub-row\" :data-label=\"label\" :data-total=\"total\" :data-failed=\"failed\" />",
 })
 
@@ -100,11 +101,11 @@ const stubs = {
     KsButton: {template: "<button><slot /></button>"},
 }
 
-function buildExecution(id: string, state: string) {
+function buildExecution(id: string, state: string, {namespace = "company.team", flowId = "flow-a"}: {namespace?: string; flowId?: string} = {}) {
     return {
         id,
-        namespace: "company.team",
-        flowId: "flow-a",
+        namespace,
+        flowId,
         state: {current: state, startDate: "2026-01-01T00:00:00Z", endDate: "2026-01-01T00:01:00Z"},
     }
 }
@@ -274,5 +275,56 @@ describe("ExecutionsTimeline", () => {
         await settle()
 
         expect(store.findExecutions.mock.calls.length).toBeGreaterThan(callsBeforeReload)
+    })
+
+    it("should draw the flows of child namespaces at the namespace level, as the prefix query fetches them", async () => {
+        store.findExecutions.mockResolvedValue({
+            results: [
+                buildExecution("parent", "SUCCESS", {namespace: "company", flowId: "flow-a"}),
+                buildExecution("child-1", "FAILED", {namespace: "company.team", flowId: "flow-b"}),
+                buildExecution("child-2", "SUCCESS", {namespace: "company.team", flowId: "flow-b"}),
+            ],
+            total: 3,
+        })
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router, {props: {namespace: "company"}})
+
+        const rows = wrapper.findAll(".stub-row").map(row => [row.attributes("data-label"), row.attributes("data-total")])
+        expect(rows).toEqual(expect.arrayContaining([["flow-a", "1"], ["team.flow-b", "2"]]))
+        expect(rows).toHaveLength(2)
+    })
+
+    it("should scope a drill into a child-namespace flow to that flow's own namespace", async () => {
+        store.findExecutions.mockResolvedValue({
+            results: [buildExecution("child", "SUCCESS", {namespace: "company.team", flowId: "flow-b"})],
+            total: 1,
+        })
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router, {props: {namespace: "company"}})
+        wrapper.getComponent(TimelineRowStub).vm.$emit("drill-in")
+        await settle()
+
+        expect(wrapper.emitted("update:drillNamespace")?.at(-1)).toEqual(["company.team"])
+        expect(wrapper.emitted("update:drillFlowId")?.at(-1)).toEqual(["flow-b"])
+    })
+
+    it("should keep the time range when the empty state resets the other filters", async () => {
+        store.findExecutions.mockResolvedValue({results: [], total: 0})
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router, {query: {
+            "filters[timeRange][EQUALS]": "PT1H",
+            "filters[state][IN]": "FAILED",
+            "q": "nightly",
+        }})
+        await wrapper.findAll("button").find(button => button.text() === "Reset filters")!.trigger("click")
+        await settle()
+
+        const query = router.currentRoute.value.query
+        expect(query["filters[timeRange][EQUALS]"]).toBe("PT1H")
+        expect(query["filters[state][IN]"]).toBeUndefined()
+        expect(query.q).toBeUndefined()
     })
 })

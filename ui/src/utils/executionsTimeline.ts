@@ -218,6 +218,10 @@ export function axisTickFormat(rangeSpanMs: number, tickCount: number): string {
     return "MMM D"
 }
 
+export function isWithinNamespace(namespace: string, parent: string): boolean {
+    return namespace === parent || namespace.startsWith(`${parent}.`)
+}
+
 const MAX_AXIS_TICKS = 6
 const MIN_AXIS_TICK_SPACING_PX = 96
 

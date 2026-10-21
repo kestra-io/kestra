@@ -8,6 +8,7 @@ import {
     buildAxisTicks,
     countByState,
     groupByNamespace,
+    isWithinNamespace,
     shouldBucketRow,
     type TimelineExecution,
 } from "./executionsTimeline"
@@ -235,5 +236,16 @@ describe("axisTickCount", () => {
 
     it("should never drop below a single interval", () => {
         expect(axisTickCount(0)).toBe(1)
+    })
+})
+
+describe("isWithinNamespace", () => {
+    it("should match the namespace itself and its descendants, like the PREFIX filter", () => {
+        expect(isWithinNamespace("company", "company")).toBe(true)
+        expect(isWithinNamespace("company.team", "company")).toBe(true)
+    })
+
+    it("should not match a sibling that only shares the leading characters", () => {
+        expect(isWithinNamespace("companyx", "company")).toBe(false)
     })
 })

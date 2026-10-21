@@ -1002,7 +1002,7 @@
         (props.namespace === undefined || props.flowId === undefined) ? executionFilter.value : flowExecutionFilter.value,
     )
     const executionsQueryScope = computed(() => ({
-        namespace: props.namespace ?? timelineDrillNamespace.value,
+        namespace: timelineDrillNamespace.value ?? props.namespace,
         flowId: props.flowId ?? timelineDrillFlowId.value,
         statuses: props.statuses,
         labels: props.labels,

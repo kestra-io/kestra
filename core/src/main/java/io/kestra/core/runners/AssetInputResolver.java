@@ -34,4 +34,12 @@ public interface AssetInputResolver {
     default List<Execution> expandInputs(List<Execution> executions) {
         return executions;
     }
+
+    /**
+     * @return the ids among {@code ids} that the current user cannot find, that do not match the filters of {@code input},
+     *         or that a flow of {@code flowNamespace} cannot reach
+     */
+    default List<String> unknownIds(String tenantId, String flowNamespace, AssetInput input, List<String> ids) {
+        return List.of();
+    }
 }

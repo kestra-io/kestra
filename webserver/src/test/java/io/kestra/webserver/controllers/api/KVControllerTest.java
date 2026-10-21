@@ -388,7 +388,7 @@ class KVControllerTest {
     }
 
     @Test
-    void setKeyValueShouldRejectATtlBeyondTheLatestExpirationDate() throws IOException {
+    void shouldRejectSetKeyValueWhenTtlIsBeyondTheLatestExpirationDate() throws IOException {
         HttpClientResponseException exception = Assertions.assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(

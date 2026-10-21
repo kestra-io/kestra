@@ -26,7 +26,10 @@ public class KVMetadata {
             try {
                 this.expirationDate = Instant.now().plus(ttl);
             } catch (ArithmeticException | DateTimeException e) {
-                throw new IllegalArgumentException("ttl '" + ttl + "' is too large: the expiration date would be beyond the latest supported date", e);
+                throw new IllegalArgumentException(
+                    String.format("ttl '%s' is too large: the expiration date would be beyond the latest supported date", ttl),
+                    e
+                );
             }
         }
     }

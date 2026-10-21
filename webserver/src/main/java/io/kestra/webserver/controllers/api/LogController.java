@@ -1,9 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-import java.util.OptionalInt;
 
 import org.slf4j.event.Level;
 
@@ -12,14 +12,14 @@ import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.FollowLogEvent;
-import io.kestra.core.utils.ListUtils;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
-import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
@@ -32,8 +32,10 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -43,8 +45,8 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -131,27 +133,28 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/download", produces = MediaType.TEXT_PLAIN)
     @Operation(tags = { "Logs" }, summary = "Download logs for a specific execution, taskrun or task")
-    @ApiResponse(
-        responseCode = "200",
-        description = "downloadLogsFromExecution 200 response",
-        content = @Content(mediaType = MediaType.TEXT_PLAIN, schema = @Schema(type = "string", format = "binary"))
-    )
-    public HttpResponse<Flux<String>> downloadLogsFromExecution(
+    public HttpResponse<StreamedFile> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
+        List<LogEntry> logs = logRepository
+            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
+            .collectList()
+            .block();
+        InputStream inputStream = new java.io.ByteArrayInputStream(
+            (logs == null ? List.<LogEntry> of() : logs).stream()
+                .map(LogEntry::toPrettyString)
+                .collect(java.util.stream.Collectors.joining("\n"))
+                .getBytes()
+        );
+
+        MutableHttpResponse<StreamedFile> response = HttpResponse.ok(new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log"));
+        if (!executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()) {
+            return response.header(HttpHeaders.CACHE_CONTROL, "no-cache");
+        }
+
         // `private`, not `public`: these logs are tenant-scoped, so a shared cache must not replay
         // them to a different requester, even though a terminated execution's logs never change.
-        String cacheControl = executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()
-            ? "private, max-age=86400"
-            : "no-cache";
-
-        Flux<String> lines = logRepository
-            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
-            .index((index, log) -> (index == 0 ? "" : "\n") + LogEntry.toPrettyString(log));
-
-        return HttpResponse.ok(lines)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + executionId + ".log\"; filename*=utf-8''" + executionId + ".log")
-            .header(HttpHeaders.CACHE_CONTROL, cacheControl);
+        return response.header(HttpHeaders.CACHE_CONTROL, "private, max-age=86400");
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -229,7 +232,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/by-query")
     @Operation(tags = { "Logs" }, summary = "Delete logs matching the given filters")
-    @ApiResponse(responseCode = "200", description = "On success; `count` is omitted when the log store cannot report the number of deleted logs", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     @ApiResponse(responseCode = "400", description = "At least one valid filter is required", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<BulkResponse> deleteLogsByQuery(
         @Parameter(
@@ -240,11 +243,10 @@ public class LogController {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "At least one valid filter is required to delete logs by query.");
         }
 
-        OptionalInt count = logRepository.deleteByFiltersAndCount(
+        int count = logRepository.deleteByFilters(
             tenantService.resolveTenant(),
             QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
         );
-        return HttpResponse.ok(BulkResponse.builder().count(count.isPresent() ? count.getAsInt() : null).build());
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
-
 }

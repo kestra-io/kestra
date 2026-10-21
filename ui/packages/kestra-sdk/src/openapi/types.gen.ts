@@ -755,6 +755,8 @@ export type DependsOn = {
     condition?: string | null;
 };
 
+export type DescriptionDisplayMode = 'TEXT' | 'TOOLTIP';
+
 export type DocumentationWithSchema = {
     markdown?: string;
     schema?: PluginSchema;
@@ -1398,6 +1400,12 @@ export type InputObject = {
      * The description of the input.
      */
     description?: string;
+    /**
+     * How the description of the input is displayed.
+     *
+     * `TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`.
+     */
+    descriptionDisplayMode?: DescriptionDisplayMode;
     /**
      * The dependencies of the input.
      */

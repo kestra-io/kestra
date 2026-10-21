@@ -156,6 +156,34 @@ describe("TaskEdit", () => {
         vi.useRealTimers()
     })
 
+    it("does not emit an edit the debounce already committed again when it is unmounted", async () => {
+        // Regression: the debounced commit left its timer set, so unmounting re-emitted the edit; in the
+        // task modal that stale edit landed on the block the user had just navigated to.
+        vi.useFakeTimers()
+        const onUpdateTask = vi.fn()
+        const wrapper = i18nMount(TaskEdit, {
+            messages: {close: "Close"},
+            props: {
+                task: {id: "verify_backups", type: "io.kestra.plugin.core.log.Log", message: "hi"},
+                section: "tasks",
+                flowId: "my_flow",
+                namespace: "company.team",
+                presentation: "panel",
+                "onUpdate:task": onUpdateTask,
+            },
+            global: {plugins: [KestraDesignSystem]},
+        })
+        await wrapper.vm.$nextTick()
+
+        wrapper.findComponent({name: "TaskEditPanes"}).vm.$emit("input", "id: verify_backups\ntype: io.kestra.plugin.core.log.Log\nmessage: edited")
+        vi.advanceTimersByTime(500)
+        wrapper.unmount()
+
+        expect(onUpdateTask).toHaveBeenCalledTimes(1)
+
+        vi.useRealTimers()
+    })
+
     it("starts the Output column expanded when the task type declares outputs", async () => {
         pluginsStoreState.plugin = {schema: {outputs: {properties: {uri: {type: "string"}}}}}
         const wrapper = mountTaskEdit()

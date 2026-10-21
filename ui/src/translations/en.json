@@ -1858,7 +1858,32 @@
         "filter_failed": "Failed {count}",
         "filter_success": "Success {count}",
         "search_value": "Search by exact value",
-        "range": "{from}–{to} of {total}"
+        "range": "{from}–{to} of {total}",
+        "tabs": {
+            "attempts": "Attempts",
+            "configuration": "Configuration",
+            "inputs_outputs": "Inputs & outputs",
+            "structure": "Structure"
+        },
+        "no_error": "No error message was recorded for this task run.",
+        "no_attempts": "No attempt was recorded for this task run.",
+        "elapsed": "+{duration}",
+        "configuration_empty": "This task's definition could not be found in the flow revision this execution ran on.",
+        "configuration_error": "Could not resolve this task's configuration. Try again from Edit flow.",
+        "execution_inputs": "Execution inputs",
+        "no_inputs": "This flow declares no inputs.",
+        "inputs_error": "Could not resolve the execution's inputs.",
+        "consumed_outputs": "Outputs consumed",
+        "no_consumed_outputs": "This task's configuration does not reference any other task's outputs.",
+        "consumed_outputs_error": "Could not load the referenced tasks' outputs.",
+        "view_definition": "View task definition",
+        "hide_definition": "Hide task definition",
+        "relation": {
+            "focused": "This task",
+            "parent": "Parent task",
+            "sibling": "Sibling task",
+            "child": "Child task"
+        }
     },
     "loop_iterations_notice": {
         "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",

@@ -8,6 +8,7 @@ import {useLoopIterations, type LoopIterationRow} from "../../../composables/use
 import type {ExecutionTaskRun} from "../executionTaskRun"
 
 export const LOOP_TYPE = "io.kestra.plugin.core.flow.Loop"
+export const SUBFLOW_TYPE = "io.kestra.plugin.core.flow.Subflow"
 
 export interface LoopRef {
     parentExecutionId: string;

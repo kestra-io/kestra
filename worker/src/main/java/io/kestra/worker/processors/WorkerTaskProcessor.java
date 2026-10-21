@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.AssetFailureBehavior;
@@ -43,7 +42,6 @@ import io.kestra.worker.processors.internals.WorkerTaskCallable;
 import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.services.ExecutionKilledManager;
 
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.models.flows.State.Type.*;
@@ -180,7 +178,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
 
-            if (isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+            if (isInterruptedForResubmission(state)) {
                 // The Worker is terminating and forcibly interrupted this still-running task (grace period
                 // elapsed or force shutdown), so its failed state is an artifact of the shutdown, not a real
                 // failure: we return immediately without emitting any result as it will be resubmitted
@@ -211,17 +209,16 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     );
                     state = FAILED;
                 }
-            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
-                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
-                AssetFailureBehavior assetFailureBehavior = AssetFailureBehavior.WARN;
-                if (assetsDeclaration != null) {
-                    try {
-                        assetFailureBehavior = runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
-                    } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
-                        // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
-                        runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
-                    }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.LOCKS_NOT_RELEASED) {
+                if (!state.isTerminatedInError()) {
+                    runContext.logger().error(
+                        "Task state changed from {} to {} because the assets it locked could not be released, which assetFailureBehavior does not soften",
+                        state, FAILED
+                    );
+                    state = FAILED;
                 }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
+                AssetFailureBehavior assetFailureBehavior = TaskAttemptAssets.assetFailureBehavior(runContext, workerTask);
                 State.Type newState = assetFailureBehavior.apply(state);
                 if (newState != state) {
                     runContext.logger().warn(
@@ -385,14 +382,21 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         TaskAttemptAssets assets = new TaskAttemptAssets(runContext, workerTask, Instant.now());
         assets.emitAtStart();
 
-        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
-        metricRunningCount.incrementAndGet();
+        io.kestra.core.models.flows.State.Type state;
+        WorkerTaskCallable workerTaskCallable = null;
+        if (!assets.isRefusedByALock()) {
+            AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
+            metricRunningCount.incrementAndGet();
 
-        // run it
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
-        io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
+            // run it
+            workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
+            state = callJob(workerTaskCallable);
 
-        metricRunningCount.decrementAndGet();
+            metricRunningCount.decrementAndGet();
+        } else {
+            logger.error("The task was not run because another owner locked the assets it writes: {}", String.join(" ", assets.lockRefusals()));
+            state = FAILED;
+        }
 
         // attempt
         TaskRunAttempt taskRunAttempt = builder
@@ -412,11 +416,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         TaskRun taskRun = workerTask.getTaskRun()
             .withAttempts(attempts);
 
-        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
+        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable).map(WorkerTaskCallable::getTaskOutput).map(it -> it.toMap()).orElse(null);
 
-        TaskRunWithOutput.AssetEmission assetEmission = assets.emitAtEnd(taskRun, state, outputs);
+        TaskRunWithOutput.AssetEmission assetEmission = assets.emitAtEnd(taskRun, state, outputs, isInterruptedForResubmission(state));
 
         return new TaskRunWithOutput(taskRun, outputs, assetEmission);
+    }
+
+    private boolean isInterruptedForResubmission(io.kestra.core.models.flows.State.Type state) {
+        return isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed();
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

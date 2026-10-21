@@ -33,6 +33,7 @@ import io.kestra.core.queues.event.Event;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.runners.ExecutionTerminatedNotifier;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.LocalPathFactory;
@@ -130,6 +131,7 @@ public final class ExecutorTestHarness {
     private final SLAMonitorProcessor slaMonitorProcessor;
     private final List<Runnable> loops = new ArrayList<>();
     private final List<Trace.Emission> journal = new ArrayList<>();
+    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers = new ArrayList<>(List.of(execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution))));
     private int workerJobsAnswered = 0;
 
     // in-memory fakes
@@ -481,7 +483,7 @@ public final class ExecutorTestHarness {
             loopExecutionEventQueue,
             executionStatisticQueue,
             triggerEventQueue,
-            execution -> journal.add(new Trace.Emission(journal.size(), "executionTerminated", execution)),
+            executionTerminatedNotifiers,
             executionCommandMessageHandler,
             executionEventMessageHandler,
             workerTaskResultMessageHandler,
@@ -527,6 +529,11 @@ public final class ExecutorTestHarness {
         );
         executor.initMetrics();
         executor.run();
+    }
+
+    public ExecutorTestHarness notifyExecutionTerminatedFirstTo(ExecutionTerminatedNotifier notifier) {
+        executionTerminatedNotifiers.addFirst(notifier);
+        return this;
     }
 
     /**

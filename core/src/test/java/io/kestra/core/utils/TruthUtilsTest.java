@@ -12,6 +12,8 @@ class TruthUtilsTest {
         assertThat(TruthUtils.isTruthy("1")).isTrue();
         assertThat(TruthUtils.isTruthy("This should be true")).isTrue();
         assertThat(TruthUtils.isTruthy(null)).isFalse();
+        assertThat(TruthUtils.isTruthy("False")).isFalse();
+        assertThat(TruthUtils.isTruthy("FALSE")).isFalse();
     }
 
     @Test
@@ -22,5 +24,7 @@ class TruthUtilsTest {
         assertThat(TruthUtils.isFalsy("-0")).isTrue();
         assertThat(TruthUtils.isFalsy("")).isTrue();
         assertThat(TruthUtils.isFalsy(null)).isFalse();
+        assertThat(TruthUtils.isFalsy("False")).isTrue();
+        assertThat(TruthUtils.isFalsy("FALSE")).isTrue();
     }
 }

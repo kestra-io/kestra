@@ -1,8 +1,16 @@
 <template>
     <template v-if="initialInputs">
         <div v-if="isWizard && current?.kind === 'form' && (current.displayName || current.description)" class="wizard-step-header">
-            <h5 v-if="current.displayName" class="wizard-step-title">{{ current.displayName }}</h5>
-            <KsMarkdown v-if="current.description" :content="current.description" class="text-description" />
+            <h5 v-if="current.displayName" class="wizard-step-title">
+                {{ current.displayName }}
+                <KsTooltip v-if="stepDescriptionAsTooltip" placement="right" enterable>
+                    <template #content>
+                        <KsMarkdown class="description-tooltip" :content="current.description!" />
+                    </template>
+                    <KsButton :icon="HelpCircleOutlineIcon" :aria-label="$t('description')" link />
+                </KsTooltip>
+            </h5>
+            <KsMarkdown v-if="current.description && !stepDescriptionAsTooltip" :content="current.description" class="text-description" />
         </div>
 
         <template v-for="input in visibleInputs" :key="input.id">
@@ -27,8 +35,20 @@
                             link
                             @click.prevent="copyInputRef(input.id)"
                         />
+                        <KsTooltip v-if="input.description && input.descriptionDisplayMode === 'TOOLTIP'" placement="right" enterable>
+                            <template #content>
+                                <KsMarkdown :data-testid="`input-description-${input.id}`" class="description-tooltip" :content="input.description" />
+                            </template>
+                            <KsButton
+                                :icon="HelpCircleOutlineIcon"
+                                :aria-label="$t('description')"
+                                link
+                                @click.prevent
+                            />
+                        </KsTooltip>
                     </span>
                 </template>
+                <KsMarkdown v-if="input.description && input.descriptionDisplayMode !== 'TOOLTIP'" :data-testid="`input-description-${input.id}`" class="text-description" :content="input.description" />
                 <KsEditor
                     v-bind="editorBindings"
                     :options="{fullHeight: false}"
@@ -283,7 +303,6 @@
                     :modelValue="durationInputValue(input.id)"
                     @update:model-value="setInputValue(input.id, $event, input)"
                 />
-                <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
             </KsFormItem>
         </template>
 
@@ -358,6 +377,7 @@
     import PlusIcon from "vue-material-design-icons/Plus.vue"
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue"
     import ContentCopyIcon from "vue-material-design-icons/ContentCopy.vue"
+    import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue"
@@ -474,6 +494,10 @@
         validateInputs,
         onRecapChange: (val) => emit("update:onRecap", val),
     })
+
+    const stepDescriptionAsTooltip = computed(() =>
+        current.value?.descriptionDisplayMode === "TOOLTIP" && !!current.value.description && !!current.value.displayName,
+    )
 
     const inputRendererExtension = useInputRendererExtension()
 
@@ -1184,6 +1208,12 @@
     width: 100%;
     font-size: var(--ks-font-size-xs);
     color: var(--ks-text-secondary);
+}
+
+.description-tooltip {
+    max-width: 30rem;
+    max-height: 20rem;
+    overflow-y: auto;
 }
 
 :deep(.boolean-inputs) {

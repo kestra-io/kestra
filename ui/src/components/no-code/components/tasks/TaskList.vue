@@ -20,6 +20,7 @@
                         :dragOver="dragOverIndex === elementIndex"
                         :runnable="playgroundStore.enabled && hasId(element)"
                         :showDuplicate="hasId(element)"
+                        :showIcon="!isInputs"
                         :icons="pluginsStore.icons"
                         @select="onSelect(elementIndex)"
                         @open-split="onSelect(elementIndex, true)"
@@ -165,6 +166,8 @@
     const pluginsStore = usePluginsStore()
     const {runTask, playgroundStore} = usePlaygroundRun()
     const {dragOverIndex, handleDragStart, handleDragOver, handleDrop, handleDragEnd} = useDragAndDrop()
+
+    const isInputs = computed(() => props.root === "inputs")
 
     const hasId = (element: Task) => displayTaskOf(element).id != null
 

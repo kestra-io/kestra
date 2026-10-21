@@ -1,6 +1,144 @@
 <template>
     <div class="variable-explorer">
-        <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
+        <DefineViewer>
+            <div class="viewer" :class="{'viewer--fill': isRawEditor}">
+                <div v-if="isMobile" class="viewer__header viewer__header--mobile">
+                    <KsIconButton :aria-label="$t('back')" data-test="variable-back" @click="closeDetail">
+                        <ArrowLeft :size="20" />
+                    </KsIconButton>
+                    <KsText class="viewer__breadcrumb" truncated>
+                        {{ selectedBase.split('.').join(' › ') }}
+                    </KsText>
+                    <KsIconButton
+                        v-if="selectedValue !== undefined && !fileSelectedOutput"
+                        :aria-label="$t('copy')"
+                        @click="copyValue"
+                    >
+                        <ContentCopy :size="16" />
+                    </KsIconButton>
+                    <KsSegmented
+                        v-if="isExpandableValue && !fileSelectedOutput"
+                        v-model="viewMode"
+                        :options="viewModes"
+                        size="small"
+                        class="viewer__modes"
+                    />
+                </div>
+                <div v-else class="viewer__header">
+                    <KsSegmented
+                        v-if="isExpandableValue && !fileSelectedOutput"
+                        v-model="viewMode"
+                        :options="viewModes"
+                        size="small"
+                    />
+                    <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
+                    <KsIconButton
+                        v-if="selectedValue !== undefined && !fileSelectedOutput"
+                        :aria-label="$t('copy')"
+                        @click="copyValue"
+                    >
+                        <ContentCopy :size="16" />
+                    </KsIconButton>
+                </div>
+
+                <LoopIterationsNotice
+                    v-if="selectedLoopTaskId"
+                    kind="outputs"
+                    :taskId="selectedLoopTaskId"
+                    class="viewer-notice"
+                />
+
+                <template v-if="selectedValue === undefined">
+                    <KsNoData
+                        :title="$t('variable_explorer.select_prompt')"
+                        :description="$t('variable_explorer.select_hint')"
+                    />
+                </template>
+
+                <template v-else-if="isRawEditor">
+                    <div v-if="rawPreview.truncated" class="truncated-banner">
+                        <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                            <template #title>
+                                <div class="truncated-row">
+                                    <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                        {{ $t('download') }}
+                                    </KsButton>
+                                </div>
+                            </template>
+                        </KsAlert>
+                    </div>
+                    <KsEditor
+                        v-bind="editorBindings"
+                        :readOnly="true"
+                        :inline="true"
+                        :navbar="false"
+                        :modelValue="rawPreviewText"
+                        lang="json"
+                    />
+                </template>
+
+                <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
+                    <FilePreview
+                        :key="fileSelectedOutput"
+                        :path="fileSelectedOutput"
+                        :executionId="execution.id"
+                    />
+                </div>
+
+                <KsJsonTree
+                    v-else-if="isExpandableValue"
+                    :value="selectedValue"
+                    :basePath="selectedBase"
+                    :selectedPath="expressionPath"
+                    defaultExpanded
+                    @select="onSelectPath"
+                />
+
+                <template v-else>
+                    <div v-if="isRawTruncated" class="truncated-banner">
+                        <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
+                            <template #title>
+                                <div class="truncated-row">
+                                    <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
+                                    <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
+                                        {{ $t('download') }}
+                                    </KsButton>
+                                </div>
+                            </template>
+                        </KsAlert>
+                    </div>
+                    <div class="viewer__scalar">
+                        <code>{{ scalarDisplay }}</code>
+                    </div>
+                </template>
+            </div>
+        </DefineViewer>
+
+        <div v-if="isMobile" class="variable-explorer__mobile">
+            <div class="variable-explorer__mobile-main">
+                <SidebarList
+                    v-show="!detailOpen"
+                    :sections="sections"
+                    :selectedExpression="selectedBase"
+                    @select="selectItem"
+                    @search-change="onSearchChange"
+                />
+                <ReuseViewer v-if="detailOpen" />
+            </div>
+            <KsCollapse v-model="debugOpen" class="variable-explorer__mobile-debug">
+                <KsCollapseItem name="expression" :title="$t('variable_explorer.expression')">
+                    <ExpressionDebugger
+                        hideTitle
+                        :execution="execution"
+                        :expression="expression"
+                        :fileUri="debuggedFileUri"
+                    />
+                </KsCollapseItem>
+            </KsCollapse>
+        </div>
+
+        <KsSplitter v-else layout="horizontal">
             <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
             <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
                 <KsSplitter layout="horizontal" class="variable-explorer__inner-splitter">
@@ -16,96 +154,7 @@
 
                     <!-- Center: tree / raw JSON of the selected value -->
                     <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--viewer">
-                        <div class="viewer" :class="{'viewer--fill': isRawEditor}">
-                            <div class="viewer__header">
-                                <KsSegmented
-                                    v-if="isExpandableValue && !fileSelectedOutput"
-                                    v-model="viewMode"
-                                    :options="viewModes"
-                                    size="small"
-                                />
-                                <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
-                                <KsIconButton
-                                    v-if="selectedValue !== undefined && !fileSelectedOutput"
-                                    :aria-label="$t('copy')"
-                                    @click="copyValue"
-                                >
-                                    <ContentCopy :size="16" />
-                                </KsIconButton>
-                            </div>
-
-                            <LoopIterationsNotice
-                                v-if="selectedLoopTaskId"
-                                kind="outputs"
-                                :taskId="selectedLoopTaskId"
-                                class="viewer-notice"
-                            />
-
-                            <template v-if="selectedValue === undefined">
-                                <KsNoData
-                                    :title="$t('variable_explorer.select_prompt')"
-                                    :description="$t('variable_explorer.select_hint')"
-                                />
-                            </template>
-
-                            <template v-else-if="isRawEditor">
-                                <div v-if="rawPreview.truncated" class="truncated-banner">
-                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
-                                        <template #title>
-                                            <div class="truncated-row">
-                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
-                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
-                                                    {{ $t('download') }}
-                                                </KsButton>
-                                            </div>
-                                        </template>
-                                    </KsAlert>
-                                </div>
-                                <KsEditor
-                                    v-bind="editorBindings"
-                                    :readOnly="true"
-                                    :inline="true"
-                                    :navbar="false"
-                                    :modelValue="rawPreviewText"
-                                    lang="json"
-                                />
-                            </template>
-
-                            <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
-                                <FilePreview
-                                    :key="fileSelectedOutput"
-                                    :path="fileSelectedOutput"
-                                    :executionId="execution.id"
-                                />
-                            </div>
-
-                            <KsJsonTree
-                                v-else-if="isExpandableValue"
-                                :value="selectedValue"
-                                :basePath="selectedBase"
-                                :selectedPath="expressionPath"
-                                defaultExpanded
-                                @select="onSelectPath"
-                            />
-
-                            <template v-else>
-                                <div v-if="isRawTruncated" class="truncated-banner">
-                                    <KsAlert type="warning" :closable="false" data-test="raw-value-truncated">
-                                        <template #title>
-                                            <div class="truncated-row">
-                                                <span>{{ $t('large_outputs.value_truncated', {size: rawValueSize}) }}</span>
-                                                <KsButton size="small" :icon="Download" data-test="download-raw" @click="downloadValue">
-                                                    {{ $t('download') }}
-                                                </KsButton>
-                                            </div>
-                                        </template>
-                                    </KsAlert>
-                                </div>
-                                <div class="viewer__scalar">
-                                    <code>{{ scalarDisplay }}</code>
-                                </div>
-                            </template>
-                        </div>
+                        <ReuseViewer />
                     </KsSplitterPanel>
                 </KsSplitter>
             </KsSplitterPanel>
@@ -126,7 +175,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useDebounceFn, useMediaQuery} from "@vueuse/core"
+    import {createReusableTemplate, useDebounceFn} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useRoute} from "vue-router"
 
@@ -135,6 +184,9 @@
         KsSplitterPanel,
         KsSegmented,
         KsIconButton,
+        KsCollapse,
+        KsCollapseItem,
+        KsText,
         KsAlert,
         KsButton,
         KsEditor,
@@ -143,6 +195,7 @@
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
+    import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Download from "vue-material-design-icons/Download.vue"
 
@@ -150,6 +203,7 @@
     import {loadExecutionOutputs, loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
     import {handledIf} from "../../../utils/kestraHttp"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import {useIsMobile} from "../../../composables/useIsMobile"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
@@ -462,6 +516,7 @@
             selectedValue.value = item.value
         }
         selectedBase.value = item.expression
+        detailOpen.value = true
         selectedTaskId.value = (execution.value?.taskRunList ?? [])
             .find((taskRun) => taskRun.id === item.taskRunId)?.taskId
         expressionPath.value = item.expression
@@ -551,7 +606,15 @@
 
     const leftWidth = ref("25%")
     const rightWidth = ref("30%")
-    const isMobile = useMediaQuery("(max-width: 768px)")
+    const isMobile = useIsMobile()
+
+    const [DefineViewer, ReuseViewer] = createReusableTemplate()
+    const detailOpen = ref(false)
+    const debugOpen = ref<string[]>([])
+
+    function closeDetail() {
+        detailOpen.value = false
+    }
 </script>
 
 <style scoped>
@@ -657,10 +720,53 @@
     overflow-y: auto;
 }
 
-@media (max-width: 768px) {
-    :deep(.kel-splitter-bar) {
-        height: 4px !important;
-        width: auto !important;
+.variable-explorer__mobile {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.variable-explorer__mobile-main {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 0;
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-spacing-2);
+    overflow: hidden;
+}
+
+.variable-explorer__mobile-debug {
+    flex: none;
+    max-height: 60%;
+    margin-top: var(--ks-spacing-2);
+    overflow-y: auto;
+}
+
+.viewer__header--mobile {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.viewer__breadcrumb {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.viewer__modes {
+    flex-basis: 100%;
+}
+
+@media (max-width: 767px) {
+    .viewer {
+        width: 100%;
+    }
+
+    .viewer__scalar code {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
     }
 }
 </style>

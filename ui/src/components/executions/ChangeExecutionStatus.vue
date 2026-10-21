@@ -4,7 +4,7 @@
         :disabled="!enabled"
         trigger="click"
         placement="bottom-start"
-        :width="376"
+        width="min(376px, 92vw)"
         :showArrow="false"
         popperClass="change-state-popover"
         :popperStyle="POPPER_STYLE"

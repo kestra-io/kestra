@@ -28,8 +28,9 @@ describe("Duration", () => {
         const wrapper = mount(Duration, {props: {field: undefined, startDate: START}})
 
         await vi.advanceTimersByTimeAsync(60_000)
-        await wrapper.setProps({field: 70, startDate: START})
+        await wrapper.setProps({field: 65, startDate: START})
 
-        expect(wrapper.text()).toBe(durationUtils.humanDuration(70))
+        await vi.advanceTimersByTimeAsync(5_000)
+        expect(wrapper.text()).toBe(durationUtils.humanDuration(65))
     })
 })

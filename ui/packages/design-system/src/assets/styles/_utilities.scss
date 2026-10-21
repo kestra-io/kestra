@@ -6,10 +6,6 @@
  * @see https://github.com/kestra-io/kestra/issues/20834, the "Remove Bootstrap from the frontend" epic tracking the migration
  */
 
-.align-middle {
-    vertical-align: middle !important;
-}
-
 .overflow-hidden {
     overflow: hidden !important;
 }
@@ -277,16 +273,6 @@
     z-index: 3 !important;
 }
 
-@media (min-width: 576px) {
-    .d-sm-block {
-        display: block !important;
-    }
-
-    .d-sm-flex {
-        display: flex !important;
-    }
-
-}
 
 @media (min-width: 768px) {
     .d-md-inline-block {

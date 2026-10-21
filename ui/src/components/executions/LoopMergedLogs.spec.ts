@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
-import {ref} from "vue"
+import {ref, type Ref} from "vue"
 import {createPinia, setActivePinia} from "pinia"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import LoopMergedLogs from "./LoopMergedLogs.vue"
@@ -8,6 +8,7 @@ import {useExecutionsStore} from "../../stores/executions"
 const state = vi.hoisted(() => ({
     merged: undefined as unknown as ReturnType<typeof buildMerged>,
     setEntries: vi.fn(),
+    entries: undefined as unknown as Ref<{taskId: string; number: number}[]>,
 }))
 
 function buildMerged() {
@@ -36,7 +37,7 @@ vi.mock("vue-router", () => ({
 
 vi.mock("../../composables/useLoopScope", async () => {
     const {ref: vueRef} = await import("vue")
-    return {useLoopScope: () => ({entries: vueRef([]), key: vueRef(""), setEntries: state.setEntries})}
+    return {useLoopScope: () => ({entries: state.entries, key: vueRef(""), setEntries: state.setEntries})}
 })
 
 vi.mock("../../composables/useLoopMergedLogs", () => ({useLoopMergedLogs: () => state.merged}))
@@ -67,6 +68,18 @@ describe("executions/LoopMergedLogs", () => {
         useExecutionsStore().execution = {id: "root", namespace: "company.team", flowId: "close_lite", state: {current: "SUCCESS"}} as never
         state.merged = buildMerged()
         state.setEntries.mockClear()
+        state.entries = ref([])
+    })
+
+    test("shouldLetTheUserClearAScopeWhoseIterationNoLongerExists", async () => {
+        state.entries.value = [{taskId: "per_customer", number: 99}]
+        state.merged.failure.value = "not-found"
+        const wrapper = mountMerged()
+
+        expect(wrapper.find("[data-test=loop-merged-logs-error]").exists()).toBe(true)
+        expect(wrapper.find("[data-test=loop-merged-logs-retry]").exists()).toBe(false)
+        await wrapper.find("[data-test=loop-merged-scope-clear]").trigger("click")
+        expect(state.setEntries).toHaveBeenCalledWith([])
     })
 
     afterEach(() => {

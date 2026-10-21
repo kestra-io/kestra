@@ -14,7 +14,7 @@
         </KsDialog>
 
         <Teleport v-if="logsTarget" :to="logsTarget">
-            <LoopIterationsNotice kind="logs" />
+            <LoopIterationsNotice v-if="!merged" kind="logs" />
             <KSFilter
                 :configuration="logExecutionsFilter"
                 :tableOptions="{

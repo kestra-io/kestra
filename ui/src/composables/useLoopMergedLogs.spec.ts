@@ -316,4 +316,21 @@ describe("useLoopMergedLogs", () => {
         expect(collectFailedTargets.mock.calls[0][2]).toMatchObject({offset: 0})
         scope.stop()
     })
+
+    it("shouldNotDropANextBatchClickWhenAFinishRefreshFiresDuringIt", async () => {
+        collectFailedTargets.mockResolvedValue(batch(0, 148, 400))
+        const {options, logs, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        options.running.value = false
+        await vi.advanceTimersByTimeAsync(0)
+        collectFailedTargets.mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(batch(148, 300, 400)), POST_FINISH_REFRESH_DELAYS_MS[0] * 2)))
+
+        const moving = logs.nextBatch()
+        await vi.advanceTimersByTimeAsync(POST_FINISH_REFRESH_DELAYS_MS[0] * 2)
+        await moving
+
+        expect(logs.hasPreviousBatch.value).toBe(true)
+        expect(logs.targets.value).toMatchObject({offset: 148})
+        scope.stop()
+    })
 })

@@ -1,24 +1,25 @@
 <template>
     <div class="loop-merged-logs" data-test="loop-merged-logs">
+        <div v-if="entries.length" class="loop-merged-scope" data-test="loop-merged-scope">
+            <KsText size="small">{{ $t("topology-graph.loop.scope") }}</KsText>
+            <KsTag v-if="scopeChain.length" size="small">{{ scopeLabel(t, scopeChain) }}</KsTag>
+            <KsButton link size="small" data-test="loop-merged-scope-clear" @click="setEntries([])">
+                {{ $t("topology-graph.loop.clear-scopes") }}
+            </KsButton>
+        </div>
+
         <KsAlert
             v-if="failure && !lines.length"
             type="error"
             :title="failureMessage"
             data-test="loop-merged-logs-error"
         >
-            <KsButton link type="danger" size="small" data-test="loop-merged-logs-retry" @click="refresh()">
+            <KsButton v-if="failure === 'unknown'" link type="danger" size="small" data-test="loop-merged-logs-retry" @click="refresh()">
                 {{ $t("topology-graph.loop.retry") }}
             </KsButton>
         </KsAlert>
 
         <template v-else>
-            <div v-if="scopeChain.length" class="loop-merged-scope" data-test="loop-merged-scope">
-                <KsText size="small">{{ $t("topology-graph.loop.scope") }}</KsText>
-                <KsTag size="small">{{ scopeLabel(t, scopeChain) }}</KsTag>
-                <KsButton link size="small" data-test="loop-merged-scope-clear" @click="setEntries([])">
-                    {{ $t("topology-graph.loop.clear-scopes") }}
-                </KsButton>
-            </div>
 
             <div v-if="batchRange" class="loop-merged-batches" data-test="loop-merged-batches">
                 <KsText size="small" data-test="loop-merged-batch-range">

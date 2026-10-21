@@ -159,7 +159,9 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         let elapsed = 0
         for (const delay of POST_FINISH_REFRESH_DELAYS_MS) {
             elapsed += delay
-            settleTimers.push(setTimeout(() => load(true), elapsed))
+            settleTimers.push(setTimeout(() => {
+                if (!loading.value) load(true)
+            }, elapsed))
         }
     }
 

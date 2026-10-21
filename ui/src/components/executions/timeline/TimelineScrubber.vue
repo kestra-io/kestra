@@ -249,7 +249,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .timeline-scrubber {
         position: relative;
         height: 4rem;

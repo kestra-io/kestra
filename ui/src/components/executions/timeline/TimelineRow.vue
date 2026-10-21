@@ -158,7 +158,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .timeline-row {
     display: flex;
     align-items: center;

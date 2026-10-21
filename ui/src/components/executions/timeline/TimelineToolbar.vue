@@ -101,7 +101,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .timeline-toolbar {
     display: flex;
     flex-direction: column;

@@ -172,7 +172,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .timeline-bar {
     position: absolute;
     top: 0.3rem;
@@ -314,7 +314,7 @@
     gap: var(--ks-spacing-1);
     font-size: var(--ks-font-size-xs);
 
-    .hint {
+    & .hint {
         color: var(--ks-text-secondary);
     }
 }
@@ -330,11 +330,11 @@
     display: flex;
     flex-direction: column;
 
-    .popover-id {
+    & .popover-id {
         margin-bottom: var(--ks-spacing-2);
     }
 
-    .popover-row {
+    & .popover-row {
         display: flex;
         justify-content: space-between;
         gap: var(--ks-spacing-3);
@@ -346,18 +346,18 @@
             border-bottom: none;
         }
 
-        .k {
+        & .k {
             color: var(--ks-text-secondary);
         }
 
-        .v {
+        & .v {
             color: var(--ks-text-primary);
             font-weight: 500;
             text-align: right;
         }
     }
 
-    .popover-actions {
+    & .popover-actions {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);

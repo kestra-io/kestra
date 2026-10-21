@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook"
+
 import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
 import {defineConfig, globalIgnores} from "eslint/config"
@@ -90,5 +93,5 @@ export default defineConfig([
             "vue/enforce-style-attribute": "off",
         },
     },
-
+    ...storybook.configs["flat/recommended"],
 ])

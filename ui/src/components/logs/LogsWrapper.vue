@@ -22,7 +22,17 @@
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="logs-chart" />
+                    <Sections
+                        ref="dashboard"
+                        :charts
+                        :dashboard="DEFAULT_DASHBOARD"
+                        showDefault
+                        class="logs-chart"
+                        selectableChartId="logs_timeseries"
+                        :brushStart="brushRange?.startDate"
+                        :brushEnd="brushRange?.endDate"
+                        @chart-select="onChartSelect"
+                    />
                 </template>
 
                 <template #table>
@@ -162,6 +172,7 @@
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
+    import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, type BrushRange} from "../../utils/logsBrushMappers"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -268,6 +279,16 @@
 
         return rawValue as string | undefined
     })
+    const brushRange = computed(() => readBrushRange(route.query))
+
+    function onChartSelect(range: BrushRange | null) {
+        router.push({
+            query: range
+                ? buildBrushTimeRangeQuery(route.query, range, pageKey)
+                : buildBrushClearQuery(route.query, pageKey),
+        })
+    }
+
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
     const charts = computed(() => {

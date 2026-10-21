@@ -5,6 +5,12 @@
       "cta": "查看更改"
     },
     "loading": "加载中...",
+    "namespace_files_tip": {
+      "title": "将脚本作为 namespace 文件管理",
+      "description": "无需内联编写脚本，打开文件面板，将其添加为文件（例如 main.py），然后从您的 flow 中运行：",
+      "open_files": "打开文件",
+      "dont_show_again": "不再显示"
+    },
     "more actions": "更多操作",
     "recipe": {
       "create_flow": "创建 flow",

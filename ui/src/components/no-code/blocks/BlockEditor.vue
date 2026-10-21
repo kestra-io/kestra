@@ -19,6 +19,7 @@
         :flowId="flowId"
         :namespace="namespace"
         :editorKey="editingItemPath"
+        :taskPath="editingPath"
         :isHidden="true"
         presentation="panel"
         :hideTabstrip="true"

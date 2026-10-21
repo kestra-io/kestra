@@ -56,6 +56,7 @@ import static io.kestra.core.models.flows.State.Type.*;
 
 @Slf4j
 public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> {
+    private static final Set<String> ASSET_IDENTITY_KEYS = Set.of("id", "type", "namespace");
 
     private final String workerId;
     private final String workerGroup;
@@ -251,7 +252,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
 
-            if (isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+            if (isInterruptedForResubmission(state)) {
                 // The Worker is terminating and forcibly interrupted this still-running task (grace period
                 // elapsed or force shutdown), so its failed state is an artifact of the shutdown, not a real
                 // failure: we return immediately without emitting any result as it will be resubmitted
@@ -282,17 +283,16 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     );
                     state = FAILED;
                 }
-            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
-                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
-                AssetFailureBehavior assetFailureBehavior = AssetFailureBehavior.WARN;
-                if (assetsDeclaration != null) {
-                    try {
-                        assetFailureBehavior = runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
-                    } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
-                        // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
-                        runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
-                    }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.LOCKS_NOT_RELEASED) {
+                if (!state.isTerminatedInError()) {
+                    runContext.logger().error(
+                        "Task state changed from {} to {} because the assets it locked could not be released, which assetFailureBehavior does not soften",
+                        state, FAILED
+                    );
+                    state = FAILED;
                 }
+            } else if (taskRunWithOutput.assetEmission() == TaskRunWithOutput.AssetEmission.FAILED) {
+                AssetFailureBehavior assetFailureBehavior = assetFailureBehavior(runContext, workerTask);
                 State.Type newState = assetFailureBehavior.apply(state);
                 if (newState != state) {
                     runContext.logger().warn(
@@ -456,14 +456,22 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         Instant attemptStartDate = Instant.now();
         StartAssets startAssets = emitStartAssets(runContext, workerTask, attemptStartDate);
 
-        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
-        metricRunningCount.incrementAndGet();
+        boolean refusedByALock = !startAssets.lockRefusals().isEmpty() && assetFailureBehavior(runContext, workerTask) == AssetFailureBehavior.FAIL;
+        io.kestra.core.models.flows.State.Type state;
+        WorkerTaskCallable workerTaskCallable = null;
+        if (!refusedByALock) {
+            AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
+            metricRunningCount.incrementAndGet();
 
-        // run it
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
-        io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
+            // run it
+            workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry, workerGroup);
+            state = callJob(workerTaskCallable);
 
-        metricRunningCount.decrementAndGet();
+            metricRunningCount.decrementAndGet();
+        } else {
+            logger.error("Task '{}' was not run because another owner locked the assets it writes: {}", workerTask.getTaskRun().getTaskId(), String.join(" ", startAssets.lockRefusals()));
+            state = FAILED;
+        }
 
         // attempt
         TaskRunAttempt taskRunAttempt = builder
@@ -483,12 +491,13 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         TaskRun taskRun = workerTask.getTaskRun()
             .withAttempts(attempts);
 
-        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
+        Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable).map(WorkerTaskCallable::getTaskOutput).map(it -> it.toMap()).orElse(null);
 
         TaskRunWithOutput.AssetEmission assetEmission = startAssets.assetEmission();
         List<String> assetFailures = new ArrayList<>(startAssets.failures());
+        assetFailures.addAll(startAssets.lockRefusals());
         try {
-            if (workerTask.getTask().getAssets() != null && runContext instanceof DefaultRunContext defaultRunContext) {
+            if (workerTask.getTask().getAssets() != null && !refusedByALock && runContext instanceof DefaultRunContext defaultRunContext) {
                 // We need to have the task outputs injected before rendering the assets
                 Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
 
@@ -533,6 +542,24 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             assetEmission = TaskRunWithOutput.AssetEmission.FAILED;
         }
 
+        if (runContext instanceof DefaultRunContext defaultRunContext) {
+            boolean locked = startAssets.locked();
+            try {
+                locked |= runContext.assets().emitted().stream().anyMatch(AssetEmit::lock);
+            } catch (Exception e) {
+                // without an emitter, the task emitted nothing it could have locked
+            }
+            // a resubmitted attempt runs under the same task run, so it keeps the locks and the state they restore
+            if (locked && !isInterruptedForResubmission(state)) {
+                try {
+                    defaultRunContext.finishAssets(state);
+                } catch (Exception e) {
+                    logger.error("Unable to release the assets locked by task '{}'", taskRun.getTaskId(), e);
+                    assetEmission = TaskRunWithOutput.AssetEmission.LOCKS_NOT_RELEASED;
+                }
+            }
+        }
+
         if (!assetFailures.isEmpty()) {
             logger.warn("Some assets of task '{}' were not written: {}", taskRun.getTaskId(), String.join(", ", assetFailures));
             if (assetEmission == TaskRunWithOutput.AssetEmission.OK) {
@@ -543,11 +570,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
         return new TaskRunWithOutput(taskRun, outputs, assetEmission);
     }
 
-    private record StartAssets(Set<String> used, List<String> failures, TaskRunWithOutput.AssetEmission assetEmission) {
-        private static final StartAssets NONE = new StartAssets(Set.of(), List.of(), TaskRunWithOutput.AssetEmission.OK);
+    private boolean isInterruptedForResubmission(io.kestra.core.models.flows.State.Type state) {
+        return isStopped() && isShutdownInterrupted() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed();
     }
-
-    private static final Set<String> ASSET_IDENTITY_KEYS = Set.of("id", "type", "namespace");
 
     // rendered before the task runs, so a property needing its outputs is skipped, and an asset whose identity needs them is left out until the end
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -620,14 +645,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 return StartAssets.NONE;
             }
             AssetEmitter declared = defaultRunContext.declaredAssets(RUNNING, attemptStartDate, null, Set.of());
-            declared.emit(new AssetEmit(withDefaultNamespace(inputs, workerTask.getTaskRun().getNamespace()), outputs));
+            declared.emit(new AssetEmit(withDefaultNamespace(inputs, workerTask.getTaskRun().getNamespace()), outputs, true));
             Set<String> used = new HashSet<>();
             inputs.forEach(input -> used.add(input.id()));
             outputs.forEach(output -> used.add(output.getId()));
-            return new StartAssets(used, declared.failures(), TaskRunWithOutput.AssetEmission.OK);
+            return new StartAssets(used, declared.failures(), declared.lockRefusals(), TaskRunWithOutput.AssetEmission.OK, !outputs.isEmpty());
         } catch (Exception e) {
             logger.warn("Unable to emit the assets of task '{}' at start", taskId, e);
-            return new StartAssets(Set.of(), List.of(), TaskRunWithOutput.AssetEmission.FAILED);
+            // a lock may have been taken before the emit failed
+            return new StartAssets(Set.of(), List.of(), List.of(), TaskRunWithOutput.AssetEmission.FAILED, true);
         }
     }
 
@@ -736,5 +762,27 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     tags
                 )
             );
+    }
+
+    private static AssetFailureBehavior assetFailureBehavior(RunContext runContext, WorkerTask workerTask) {
+        AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
+        if (assetsDeclaration == null) {
+            return AssetFailureBehavior.WARN;
+        }
+        try {
+            return runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
+        } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
+            // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
+            runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
+            return AssetFailureBehavior.WARN;
+        }
+    }
+
+    /**
+     * @param lockRefusals why declared outputs locked by another owner were refused: the task is not run when its assetFailureBehavior is FAIL
+     * @param locked whether the declared outputs were locked, so the end of the attempt has to release them
+     */
+    private record StartAssets(Set<String> used, List<String> failures, List<String> lockRefusals, TaskRunWithOutput.AssetEmission assetEmission, boolean locked) {
+        private static final StartAssets NONE = new StartAssets(Set.of(), List.of(), List.of(), TaskRunWithOutput.AssetEmission.OK, false);
     }
 }

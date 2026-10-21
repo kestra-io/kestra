@@ -104,7 +104,7 @@ public class ExecutorCore {
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
     private final TriggerEventQueue triggerEventQueue;
-    private final ExecutionTerminatedNotifier executionTerminatedNotifier;
+    private final List<ExecutionTerminatedNotifier> executionTerminatedNotifiers;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final ExecutionCommandMessageHandler executionCommandMessageHandler;
     private final ExecutionEventMessageHandler executionEventMessageHandler;
@@ -141,7 +141,7 @@ public class ExecutorCore {
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         TriggerEventQueue triggerEventQueue,
-        ExecutionTerminatedNotifier executionTerminatedNotifier,
+        List<ExecutionTerminatedNotifier> executionTerminatedNotifiers,
         WorkerJobRunningStateStore workerJobRunningStateStore,
         ExecutionCommandMessageHandler executionCommandMessageHandler,
         ExecutionEventMessageHandler executionEventMessageHandler,
@@ -171,7 +171,7 @@ public class ExecutorCore {
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.executionStatisticQueue = executionStatisticQueue;
         this.triggerEventQueue = triggerEventQueue;
-        this.executionTerminatedNotifier = executionTerminatedNotifier;
+        this.executionTerminatedNotifiers = executionTerminatedNotifiers;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.executionCommandMessageHandler = executionCommandMessageHandler;
         this.executionEventMessageHandler = executionEventMessageHandler;
@@ -486,10 +486,12 @@ public class ExecutorCore {
     }
 
     private void notifyExecutionTerminated(Execution execution) {
-        try {
-            this.executionTerminatedNotifier.executionTerminated(execution);
-        } catch (Exception e) {
-            log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+        for (ExecutionTerminatedNotifier notifier : executionTerminatedNotifiers) {
+            try {
+                notifier.executionTerminated(execution);
+            } catch (Exception e) {
+                log.warn("Unable to notify execution terminated for execution '{}'", execution.getId(), e);
+            }
         }
     }
 

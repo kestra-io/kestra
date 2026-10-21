@@ -276,6 +276,12 @@ public class DefaultRunContext extends RunContext {
         return assetManagerFactory.declared(this, assetEmitContext, state, startDate, endDate, alreadyUsed);
     }
 
+    public void finishAssets(State.Type state) {
+        if (assetEmitContext != null) {
+            assetManagerFactory.finish(this, assetEmitContext, state);
+        }
+    }
+
     void setTrigger(final AbstractTrigger trigger) {
         this.trigger = trigger;
     }

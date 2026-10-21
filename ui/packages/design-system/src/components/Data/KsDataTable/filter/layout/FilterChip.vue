@@ -47,6 +47,7 @@
         Comparators,
     } from "../utils/filterTypes"
     import {isDateRangeValue} from "../utils/filterChipFactory"
+    import {ALL_TIME_RANGE} from "../utils/constants"
     import FilterEditPopover from "./FilterEditPopover.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -61,6 +62,7 @@
         {label: t("datepicker.last7days"), value: "PT168H"},
         {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
+        {label: t("datepicker.allTime"), value: ALL_TIME_RANGE},
     ]
 
     const getRelativeDateLabel = (value: string): string => {
@@ -110,7 +112,7 @@
             return value.toLocaleDateString()
         case value && typeof value === "object" && "startDate" in value:
             return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`
-        case typeof value === "string" && /^P(T?\d+[HMD]|\d+[YMDW])/.test(value):
+        case typeof value === "string" && (value === ALL_TIME_RANGE || /^P(T?\d+[HMD]|\d+[YMDW])/.test(value)):
             return getRelativeDateLabel(value)
         default:
             return String(value)

@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {ALL_TIME_RANGE, FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import resource from "../../../models/resource"
 import action from "../../../models/action"
 import {useNamespacesStore} from "override/stores/namespaces"
@@ -146,9 +146,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
+                    clearedValue: ALL_TIME_RANGE,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.RELATIVE_DATE
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},

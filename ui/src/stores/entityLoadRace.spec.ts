@@ -6,10 +6,11 @@ vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn(), replace: vi.fn(), beforeEach: vi.fn(), afterEach: vi.fn()}),
 }))
 
-const {flowApi, executionApi, clientGet} = vi.hoisted(() => ({
+const {flowApi, executionApi, clientGet, trackBlueprintSelection} = vi.hoisted(() => ({
     flowApi: vi.fn(),
     executionApi: vi.fn(),
     clientGet: vi.fn(),
+    trackBlueprintSelection: vi.fn(),
 }))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
@@ -39,7 +40,7 @@ vi.mock("override/stores/misc", () => ({
 }))
 
 vi.mock("../utils/tabTracking", () => ({
-    trackBlueprintSelection: vi.fn(),
+    trackBlueprintSelection,
 }))
 
 // static imports: the store modules drag in heavy singletons (e.g. Monaco), which re-registering
@@ -54,6 +55,7 @@ describe("entity load ordering", () => {
         flowApi.mockReset()
         executionApi.mockReset()
         clientGet.mockReset()
+        trackBlueprintSelection.mockReset()
     })
 
     it("drops a flow load the user has navigated away from", async () => {
@@ -128,6 +130,8 @@ describe("entity load ordering", () => {
         await slow
 
         expect(store.blueprint?.id).toBe("fast")
+        expect(trackBlueprintSelection).toHaveBeenCalledTimes(1)
+        expect(trackBlueprintSelection).toHaveBeenCalledWith("fast")
     })
 
     it("drops a custom blueprint load the user has navigated away from", async () => {
@@ -145,5 +149,7 @@ describe("entity load ordering", () => {
         await slow
 
         expect(store.blueprint?.id).toBe("fast")
+        expect(trackBlueprintSelection).toHaveBeenCalledTimes(1)
+        expect(trackBlueprintSelection).toHaveBeenCalledWith("fast")
     })
 })

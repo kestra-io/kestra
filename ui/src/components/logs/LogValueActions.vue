@@ -68,7 +68,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .log-value-trigger {
         cursor: pointer;
         color: var(--ks-text-secondary);

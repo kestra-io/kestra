@@ -366,7 +366,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-run-buttons {
         padding: 0 .5rem;
         border: none;

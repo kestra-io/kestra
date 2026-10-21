@@ -167,7 +167,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 :deep(.hello-survey-dialog) {
     border-radius: 8px;
     border: 1px solid var(--ks-border-default);
@@ -215,7 +215,7 @@
     }
 
     .company-size-options {
-        :deep(.kel-radio-group) {
+        & :deep(.kel-radio-group) {
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
@@ -267,7 +267,7 @@
     }
 
     .use-case-options {
-        :deep(.kel-checkbox-group) {
+        & :deep(.kel-checkbox-group) {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px 24px;
@@ -312,7 +312,7 @@
     .newsletter-section {
         padding-top: 4px;
 
-        :deep(.kel-checkbox) {
+        & :deep(.kel-checkbox) {
             .kel-checkbox__input {
                 .kel-checkbox__inner {
                     background-color: transparent;

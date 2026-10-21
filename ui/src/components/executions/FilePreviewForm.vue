@@ -88,7 +88,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .file-preview-alert {
         margin-bottom: var(--ks-spacing-2);
     }

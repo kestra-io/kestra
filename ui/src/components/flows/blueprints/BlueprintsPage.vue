@@ -103,7 +103,7 @@
     defineExpose({reload: () => browser.value?.reload()})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .main-container {
         padding: var(--ks-spacing-6) !important;
 

@@ -137,22 +137,22 @@
                         :data-testid="`input-form-${input.id}`"
                         v-model="inputsValues[input.id]"
                         @update:model-value="onChange(input)"
-                        :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :min="numberMin(input)"
+                        :max="numberMax(input)"
                         :step="1"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="hasLimit(input.min) || hasLimit(input.max)" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <span v-if="input.type === 'FLOAT'">
                     <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
                         v-model="inputsValues[input.id]"
                         @update:model-value="onChange(input)"
-                        :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :min="numberMin(input)"
+                        :max="numberMax(input)"
                         :step="0.001"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="hasLimit(input.min) || hasLimit(input.max)" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"
@@ -724,15 +724,28 @@
         }, {})
     })
 
+    function hasLimit(value: unknown): value is number {
+        return typeof value === "number"
+    }
+
+    function numberMin(input: InputMetaData): number {
+        return hasLimit(input.min) ? input.min : -Infinity
+    }
+
+    function numberMax(input: InputMetaData): number {
+        if (!hasLimit(input.max)) return Infinity
+        return hasLimit(input.min) && input.min > input.max ? Infinity : input.max
+    }
+
     function numberHint(input: InputMetaData): string | false {
         const {min, max} = input
 
-        if (min !== undefined && max !== undefined) {
+        if (hasLimit(min) && hasLimit(max)) {
             if (min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`
             return `Minimum value is ${min}, maximum value is ${max}.`
-        } else if (min !== undefined) {
+        } else if (hasLimit(min)) {
             return `Minimum value is ${min}.`
-        } else if (max !== undefined) {
+        } else if (hasLimit(max)) {
             return `Maximum value is ${max}.`
         }
         return false

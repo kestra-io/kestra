@@ -13,17 +13,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
-import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.assets.AssetIdentifier;
-import io.kestra.core.models.assets.AssetUser;
-import io.kestra.core.models.assets.AssetsDeclaration;
-import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -70,7 +65,6 @@ public class ExecutorService {
     protected final BroadcastQueueInterface<ExecutionKilled> killQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final RunContextLoggerFactory runContextLoggerFactory;
-    private final AssetService assetService;
     private final RunContextInitializer runContextInitializer;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
@@ -88,7 +82,6 @@ public class ExecutorService {
         BroadcastQueueInterface<ExecutionKilled> killQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         RunContextLoggerFactory runContextLoggerFactory,
-        AssetService assetService,
         RunContextInitializer runContextInitializer,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
@@ -103,7 +96,6 @@ public class ExecutorService {
         this.killQueue = killQueue;
         this.loopExecutionEventQueue = loopExecutionEventQueue;
         this.runContextLoggerFactory = runContextLoggerFactory;
-        this.assetService = assetService;
         this.runContextInitializer = runContextInitializer;
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
@@ -1568,28 +1560,8 @@ public class ExecutorService {
                 .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
                 .map(throwFunction(fixtureAndTaskRun ->
                 {
-                    AssetsDeclaration assetsDeclaration = executor.getFlow().findTaskByTaskId(fixtureAndTaskRun.taskRun.getTaskId()).getAssets();
                     return WorkerTaskResult.builder()
-                        .taskRun(
-                            fixtureAndTaskRun.taskRun()
-                                .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                                .withAssetEmits(
-                                    List.of(
-                                        new AssetsInOut(
-                                            Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
-                                                .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
-                                                .stream()
-                                                .flatMap(Collection::stream)
-                                                .map(throwFunction(assetIdentifier -> assetIdentifier.withTenantId(executor.getFlow().getTenantId())))
-                                                .toList(),
-                                            fixtureAndTaskRun.fixture().getAssets() == null ? null
-                                                : fixtureAndTaskRun.fixture().getAssets().stream()
-                                                    .map(asset -> asset.withTenantId(executor.getFlow().getTenantId()))
-                                                    .toList()
-                                        )
-                                    )
-                                )
-                        )
+                        .taskRun(fixtureAndTaskRun.taskRun().withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS)))
                         .outputs(fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
                         .build();
                 }
@@ -1881,61 +1853,23 @@ public class ExecutorService {
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
 
-            // may be escalated below by assetFailureBehavior; kept separate from `taskRun` for the metrics in the finally block
-            TaskRun finalTaskRun = taskRun;
             try {
                 // outputs
                 taskOutputService.saveOutputs(taskRun, workerTaskResult.getOutputs());
-
-                ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
-                boolean hasAssets = taskRun.getAssetEmits() != null && taskRun.getAssetEmits().stream()
-                    .anyMatch(bundle -> !bundle.getInputs().isEmpty() || !bundle.getOutputs().isEmpty());
-                if (
-                    hasAssets
-                        && executionKind != ExecutionKind.TEST
-                ) {
-                    AssetUser assetUser = new AssetUser(
-                        taskRun.getTenantId(),
-                        taskRun.getNamespace(),
-                        taskRun.getFlowId(),
-                        newExecution.getFlowRevision(),
-                        taskRun.getExecutionId(),
-                        taskRun.getTaskId(),
-                        taskRun.getId(),
-                        taskRun.getState().getCurrent(),
-                        taskRun.getState().getStartDate(),
-                        taskRun.getState().getEndDate().orElse(null)
-                    );
-
-                    try {
-                        Optional<TaskRun> escalated = assetService.processTaskRunAssets(assetUser, taskRun, newExecution, flow, executionKind);
-                        if (escalated.isPresent()) {
-                            finalTaskRun = escalated.get();
-                            executor.withExecution(executor.getExecution().withTaskRun(finalTaskRun), "addWorkerTaskResult");
-                        }
-                    } catch (Exception e) {
-                        // a bug in asset-lineage/escalation processing must not prevent the taskRun's own
-                        // (already-terminated) result from being recorded; metrics below still tag from taskRun
-                        log.error("Unable to process assets for taskRun {}", taskRun.getId(), e);
-                    }
-                }
             } finally {
-                // tagged from finalTaskRun so a state escalated above by assetFailureBehavior is reflected in the metrics too
-                WorkerTaskResult finalWorkerTaskResult = workerTaskResult.withTaskRun(finalTaskRun);
                 metricRegistry
                     .counter(
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION,
-                        metricRegistry.tags(finalWorkerTaskResult)
+                        metricRegistry.tags(workerTaskResult)
                     )
                     .increment();
 
-                // duration from the original taskRun: withState() above would otherwise inflate it by the escalation delay
                 metricRegistry
                     .timer(
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION,
                         MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
-                        metricRegistry.tags(finalWorkerTaskResult)
+                        metricRegistry.tags(workerTaskResult)
                     )
                     .record(taskRun.getState().getDurationOrComputeIt());
             }

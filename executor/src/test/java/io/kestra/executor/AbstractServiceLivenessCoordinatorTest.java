@@ -27,6 +27,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -43,6 +44,7 @@ import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerInstance;
+import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskData;
@@ -444,6 +446,30 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         });
         assertThat(resubmitted).doesNotContain(child.uid());
         assertThat(workerJobRunningStateStore.existsByKeyAndWorker(child.uid(), inactive.uid())).isFalse();
+    }
+
+    @Test
+    void shouldKeepTheExecutionKindWhenTheTaskIsResubmitted() throws Exception {
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);
+        WorkerTaskRunning orphaned = workerTaskRunning(inactive.uid());
+        orphaned.setExecutionKind(ExecutionKind.TEST);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, orphaned);
+
+        List<WorkerJob> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job()));
+
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+                return resubmitted.stream().anyMatch(job -> orphaned.uid().equals(job.uid()));
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        assertThat(resubmitted).filteredOn(job -> orphaned.uid().equals(job.uid()))
+            .singleElement().isInstanceOfSatisfying(WorkerTask.class, job -> assertThat(job.getExecutionKind()).isEqualTo(ExecutionKind.TEST));
     }
 
     @Test

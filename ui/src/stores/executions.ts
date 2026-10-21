@@ -94,6 +94,13 @@ export interface InputMetaData {
     allowRowDuplication?: boolean;
     /** The indexes of the rows of `defaults` matching the rendered filters, set by the server. */
     matchingDefaults?: number[];
+    /** Set on an ASSET input only: the filters of the assets that can be picked, rendered by the server. */
+    assetType?: string;
+    assetId?: string;
+    namespace?: string;
+    metadata?: Record<string, unknown>;
+    multiple?: boolean;
+    status?: string;
 }
 
 export interface TableFilter {

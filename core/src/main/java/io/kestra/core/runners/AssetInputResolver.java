@@ -1,0 +1,20 @@
+package io.kestra.core.runners;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.input.AssetInput;
+
+import jakarta.annotation.Nullable;
+
+/**
+ * Resolves the value of an {@code ASSET} input or output (an asset id, a list of ids, or previously resolved assets)
+ * into the assets it designates, re-fetched from the asset store.
+ * <p>
+ * This is an Enterprise Edition concern: the open-source default ({@code DisabledAssetInputResolver}) errors.
+ */
+public interface AssetInputResolver {
+    /**
+     * @param input the declaring input, whose filters the assets must match, or {@code null} for a flow output
+     * @return a map per asset, or a list of them when the input accepts {@code multiple} assets
+     */
+    Object resolve(Execution execution, @Nullable AssetInput input, Object value);
+}

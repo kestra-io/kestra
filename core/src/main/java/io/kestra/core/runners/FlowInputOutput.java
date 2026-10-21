@@ -32,6 +32,7 @@ import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.AssetInput;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
@@ -81,6 +82,7 @@ public class FlowInputOutput {
     private final ReusableInputsExpander reusableInputsExpander;
     private final LocalPathFactory localPathFactory;
     private final SearchableDataRepositoryInterface searchableDataRepository;
+    private final AssetInputResolver assetInputResolver;
 
     @Inject
     public FlowInputOutput(
@@ -89,13 +91,15 @@ public class FlowInputOutput {
         EncryptionConfig encryptionConfig,
         ReusableInputsExpander reusableInputsExpander,
         LocalPathFactory localPathFactory,
-        SearchableDataRepositoryInterface searchableDataRepository) {
+        SearchableDataRepositoryInterface searchableDataRepository,
+        AssetInputResolver assetInputResolver) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = encryptionConfig.asOptional();
         this.reusableInputsExpander = reusableInputsExpander;
         this.localPathFactory = localPathFactory;
         this.searchableDataRepository = searchableDataRepository;
+        this.assetInputResolver = assetInputResolver;
     }
 
     /**
@@ -344,7 +348,7 @@ public class FlowInputOutput {
                     }
                 }
 
-                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
+                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.input() instanceof AssetInput ? AssetInput.storedValue(it.value()) : it.value());
             })
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
         // saved only once every input is valid, so a rejected execution leaves no orphan rows
@@ -550,7 +554,7 @@ public class FlowInputOutput {
                 }
             } else {
                 try {
-                    var parsedInput = parseData(execution, input, value);
+                    var parsedInput = parseData(execution, input, input.getType(), value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     if (!resolvable.get().isDefault() && input instanceof TableInput table && parsedInput.isPresent() && parsedInput.get().getValue() instanceof List<?> rows) {
                         table.validateSubmittedRows(rows);
@@ -605,6 +609,9 @@ public class FlowInputOutput {
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
             case TABLE -> resolveDefaultPropertyAsList(input, renderer, Object.class);
+            case ASSET -> Boolean.TRUE.equals(((AssetInput) input).getMultiple())
+                ? resolveDefaultPropertyAsList(input, renderer, String.class)
+                : resolveDefaultPropertyAs(input, renderer, String.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }
@@ -688,7 +695,7 @@ public class FlowInputOutput {
                             throw InputOutputValidationException.of("Output '" + output.getId() + "' is required", output);
                         }
                     }
-                    return parseData(execution, output, current);
+                    return parseData(execution, output, output.getType() == null ? null : output.getType().parsedAs(), current);
                 } catch (IllegalArgumentException | ConstraintViolationException e) {
                     throw InputOutputValidationException.of(e.getMessage(), output);
                 } catch (Exception e) {
@@ -706,8 +713,9 @@ public class FlowInputOutput {
     private Optional<AbstractMap.SimpleEntry<String, Object>> parseData(
         final Execution execution,
         final Data data,
+        final Type type,
         final Object current) throws Exception {
-        if (data.getType() == null) {
+        if (type == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
 
@@ -716,7 +724,7 @@ public class FlowInputOutput {
         return Optional.of(
             new AbstractMap.SimpleEntry<>(
                 data.getId(),
-                parseType(execution, data.getType(), data.getId(), elementType, current, data)
+                parseType(execution, type, data.getId(), elementType, current, data)
             )
         );
     }
@@ -748,7 +756,7 @@ public class FlowInputOutput {
             case DATE -> TypeConverter.toLocalDate(current);
             case TIME -> TypeConverter.toLocalTime(current);
             case DURATION -> TypeConverter.toDuration(current);
-            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, TABLE, FORM, REUSABLE_INPUTS -> null;
+            case FILE, URI, SECRET, JSON, ION, YAML, ARRAY, MULTISELECT, TABLE, FORM, REUSABLE_INPUTS, ASSET -> null;
         });
     }
 
@@ -823,6 +831,7 @@ public class FlowInputOutput {
                     }
                 }
                 case TABLE -> parseTable(execution, (TableInput) data, current);
+                case ASSET -> assetInputResolver.resolve(execution, data instanceof AssetInput assetInput ? assetInput : null, current);
                 case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {

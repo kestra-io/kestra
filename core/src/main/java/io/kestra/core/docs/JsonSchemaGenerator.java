@@ -48,6 +48,7 @@ import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.enums.MonacoLanguages;
 import io.kestra.core.models.property.Data;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.OutputType;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -918,6 +919,18 @@ public class JsonSchemaGenerator {
             anyOf.add(literalBranch);
             anyOf.add(expressionBranch);
             memberAttributes.set("anyOf", anyOf);
+        });
+
+        // UNKNOWN only lets a flow saved with a removed output type still load, it is never a type to write.
+        builder.forTypesInGeneral().withTypeAttributeOverride((typeAttributes, scope, context) ->
+        {
+            if (OutputType.class.equals(scope.getType().getErasedType()) && typeAttributes.get("enum") instanceof ArrayNode values) {
+                for (int i = values.size() - 1; i >= 0; i--) {
+                    if (OutputType.UNKNOWN.name().equals(values.get(i).asText())) {
+                        values.remove(i);
+                    }
+                }
+            }
         });
 
         // Add Plugin annotation special docs

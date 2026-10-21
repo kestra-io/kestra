@@ -47,6 +47,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.secret.SecretNotFoundException;
 import io.kestra.core.secret.SecretService;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
@@ -881,7 +882,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("duck").type(Type.URI).build()
+                    Output.builder().id("duck").type(OutputType.URI).build()
                 )
             )
             .build();
@@ -905,7 +906,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("duck").type(Type.URI).build()
+                    Output.builder().id("duck").type(OutputType.URI).build()
                 )
             )
             .build();
@@ -917,11 +918,31 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldKeepTheValueOfAnOutputWhenItsTypeIsNoLongerKnown() {
+        Flow flow = YamlParser.parse("""
+            id: test-flow
+            namespace: io.kestra.test
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            outputs:
+              - id: choices
+                type: MULTISELECT
+                value: "{{ outputs.hello }}"
+            """, Flow.class);
+
+        Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of("choices", List.of("a", "b")));
+
+        assertThat(result.get("choices")).isEqualTo(List.of("a", "b"));
+    }
+
+    @Test
     void shouldFailWhenRequiredOutputIsNull() {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .outputs(List.of(Output.builder().id("duck").type(Type.STRING).build()))
+            .outputs(List.of(Output.builder().id("duck").type(OutputType.STRING).build()))
             .build();
 
         assertThatThrownBy(() -> flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of()))
@@ -934,7 +955,7 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .outputs(List.of(Output.builder().id("duck").type(Type.STRING).required(false).build()))
+            .outputs(List.of(Output.builder().id("duck").type(OutputType.STRING).required(false).build()))
             .build();
 
         Map<String, Object> result = flowInputOutput.typedOutputs(flow, DEFAULT_TEST_EXECUTION, Map.of());
@@ -950,7 +971,7 @@ class FlowInputOutputTest {
             .namespace("io.kestra.test")
             .outputs(
                 List.of(
-                    Output.builder().id("secret").type(Type.SECRET).build()
+                    Output.builder().id("secret").type(OutputType.SECRET).build()
                 )
             )
             .build();

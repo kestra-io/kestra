@@ -102,14 +102,10 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
         scopes.forEach(this::decrement);
 
         // Scan the queued candidates FIFO within the widest freed scope: candidates outside it
-        // share no counter with the released execution, so their fit cannot have changed. The
-        // fake needs the whole queued list, hence the kit queued store (a production
-        // implementation would add a scan operation to its own queued storage instead).
-        InMemoryExecutionQueuedStateStore queuedStore = (InMemoryExecutionQueuedStateStore) executionQueuedStateStore;
+        // share no counter with the released execution, so their fit cannot have changed.
         ScopedConcurrencyLimit widest = widestScope(scopes);
-        List<ExecutionQueued> candidates = queuedStore.queued().stream()
+        List<ExecutionQueued> candidates = executionQueuedStateStore.getAllForAllTenants().stream()
             .filter(queued -> covers(widest, queued.getTenantId(), queued.getNamespace(), queued.getFlowId()))
-            .sorted(Comparator.comparing(ExecutionQueued::getDate))
             .toList();
 
         int attempts = 0;
@@ -121,7 +117,7 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
             boolean fits = candidateScopes.stream().allMatch(scope -> running(scope) < scope.concurrency().getLimit());
             if (fits) {
                 candidateScopes.forEach(this::increment);
-                queuedStore.remove(candidate.getExecution());
+                executionQueuedStateStore.remove(candidate.getExecution());
                 return Optional.of(consumer.apply(NoopTransactionContext.INSTANCE, candidate.getExecution()));
             }
             // a blocked candidate is skipped, not head-of-line blocking: it is reconsidered

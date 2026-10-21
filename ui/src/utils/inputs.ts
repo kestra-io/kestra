@@ -100,6 +100,7 @@ export interface WizardStep {
     title?: string;
     displayName?: string;
     description?: string;
+    descriptionDisplayMode?: InputMetaData["descriptionDisplayMode"];
     leafIds?: string[];
 }
 
@@ -123,7 +124,7 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
             flushRun()
             const leafIds = flattenInputs([input]).map((l) => l.id)
             if (leafIds.length) {
-                result.push({kind: "form", title: input.displayName || input.id, displayName: input.displayName, description: input.description, leafIds})
+                result.push({kind: "form", title: input.displayName || input.id, displayName: input.displayName, description: input.description, descriptionDisplayMode: input.descriptionDisplayMode, leafIds})
             }
         } else {
             run.push(input.id)

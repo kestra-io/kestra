@@ -147,7 +147,7 @@ describe("getDateGrouping()", () => {
     })
 
     it("returns a week grouping for ranges over 180 days", () => {
-        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "YYYY-[W]ww", unit: "week"})
+        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "GGGG-[W]WW", unit: "week"})
     })
 
     it("returns a day grouping for ranges over a day", () => {

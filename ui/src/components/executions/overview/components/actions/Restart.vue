@@ -56,7 +56,9 @@
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="$t('restart confirm', {id: escapeHtml(execution.id)})" />
+            <i18n-t keypath="restart confirm" tag="p" class="mb-0">
+                <template #id><code>{{ execution.id }}</code></template>
+            </i18n-t>
             <KsAlert
                 v-if="parentLink"
                 type="warning"
@@ -65,7 +67,11 @@
                 class="mt-3"
                 data-test="restart-subflow-warning"
             >
-                {{ parentWarning[0] }}<router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>{{ parentWarning[1] }}
+                <i18n-t keypath="restart subflow warning" tag="span">
+                    <template #parent>
+                        <router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>
+                    </template>
+                </i18n-t>
             </KsAlert>
         </div>
 
@@ -227,12 +233,10 @@
         scrollable
     >
         <template #header>
-            <span
-                v-html="$t('replay the execution', {
-                    executionId: escapeHtml(execution.id),
-                    flowId: escapeHtml(execution.flowId)
-                })"
-            />
+            <i18n-t keypath="replay the execution" tag="span">
+                <template #executionId><code>{{ execution.id }}</code></template>
+                <template #flowId><code>{{ execution.flowId }}</code></template>
+            </i18n-t>
         </template>
 
         <ReplayWithInputs
@@ -249,7 +253,7 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
@@ -264,7 +268,6 @@
     import {KsId} from "@kestra-io/design-system"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {asItemKey} from "../../../../layout/navBarActionsContext"
-    import {splitTranslation} from "../../../../../utils/splitTranslation"
 
     defineOptions({inheritAttrs: false})
 
@@ -315,7 +318,6 @@
             },
         }
     })
-    const parentWarning = computed(() => splitTranslation(t, "restart subflow warning", "parent"))
 
     const currentFlow = ref<any | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
@@ -552,13 +554,11 @@
     })
 </script>
 
-<style lang="scss">
-    .ks-restart-tooltip--no-pointer {
-        pointer-events: none;
-    }
-</style>
+<style scoped>
+:global(.ks-restart-tooltip--no-pointer) {
+    pointer-events: none;
+}
 
-<style scoped lang="scss">
 .modal-header {
     .modal-title {
         font-size: var(--ks-font-size-base);
@@ -590,7 +590,7 @@
 }
 
 .radio-item {
-    :deep(.kel-radio__input) {
+    & :deep(.kel-radio__input) {
         .kel-radio__inner {
             width: 18px;
             height: 18px;
@@ -603,7 +603,7 @@
         }
     }
 
-    :deep(.kel-radio__label) {
+    & :deep(.kel-radio__label) {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         padding-left: 8px;
@@ -611,7 +611,7 @@
 
 
     &.is-checked {
-        :deep(.kel-radio__input) {
+        & :deep(.kel-radio__input) {
             .kel-radio__inner {
                 border-color: var(--ks-btn-primary-bg-default);
                 background-color: var(--ks-btn-primary-bg-default);
@@ -622,7 +622,7 @@
             }
         }
 
-        :deep(.kel-radio__label) {
+        & :deep(.kel-radio__label) {
             color: var(--ks-text-primary) !important;
         }
     }

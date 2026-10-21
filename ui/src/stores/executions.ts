@@ -7,7 +7,7 @@ import {
     useClient,
     type Check,
     type Execution as SDKExecution,
-    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as ApiInputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
@@ -32,7 +32,10 @@ import {useApiStore} from "./api"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
+export type {Check} from "@kestra-io/kestra-sdk"
+
+// `path` is added to `ApiInputError` on this branch, and the generated SDK only picks it up once `develop` regenerates it.
+export type InputError = ApiInputError & {path?: string}
 
 export interface ValidationResponse {
     checks?: Check[];
@@ -58,6 +61,7 @@ export interface InputMetaData {
     type: InputType
     displayName?: string;
     description?: string;
+    descriptionDisplayMode?: "TEXT" | "TOOLTIP";
     required?: boolean;
     defaults?: unknown;
     value?: unknown;
@@ -77,6 +81,10 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
+    /** Set on a TABLE input only: one input definition per column, each evaluated once per row. */
+    columns?: InputMetaData[];
+    minRows?: number;
+    maxRows?: number;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */
@@ -324,12 +332,17 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
+    let latestExecutionsSearch = 0
+
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findExecutions(options: ExecutionSearchOptions & { onlyTotal: true }): Promise<number>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution | number> {
+        const search = options.commit === false ? undefined : ++latestExecutionsSearch
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
-            if (options.commit !== false) {
+            if (options.commit !== false && search === latestExecutionsSearch) {
                 executions.value = response.results as unknown as Execution[]
                 total.value = response.total ?? 0
             }

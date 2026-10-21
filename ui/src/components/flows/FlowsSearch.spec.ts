@@ -140,7 +140,7 @@ describe("FlowsSearch", () => {
         await flushPromises()
 
         // The stale search must not clear the loading state.
-        expect(wrapper.find('[data-test="source-search-loading"]').exists()).toBe(true)
+        expect(wrapper.find("[data-test=\"source-search-loading\"]").exists()).toBe(true)
 
         wrapper.unmount()
     })

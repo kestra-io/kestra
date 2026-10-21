@@ -145,7 +145,7 @@
                                 <SearchField
                                     :router="false"
                                     @search="onSearch"
-                                    class="me-2"
+                                    class="search"
                                 />
                             </KsFormItem>
                             <KsFormItem>
@@ -235,7 +235,7 @@
                     :navbar="false"
                     :modelValue="selectedTask.runIf"
                     lang="yaml"
-                    class="mt-3"
+                    class="detail"
                 />
             </div>
             <div v-if="isShowCustomActionOpen && customActionMeta">
@@ -246,7 +246,7 @@
                     :navbar="false"
                     :modelValue="customActionModelValue"
                     :lang="customActionMeta.lang"
-                    class="mt-3"
+                    class="detail"
                 />
                 <TaskDrawerRemote
                     v-if="isTask(selectedTask)"
@@ -261,7 +261,7 @@
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
                     :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
                     displayMode="full"
-                    class="mt-3"
+                    class="detail"
                 />
             </div>
         </KsDrawer>
@@ -308,6 +308,7 @@
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {BlockType} from "../no-code/utils/types"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
@@ -616,7 +617,8 @@
     const resolveTaskTopologyDetails = async (tasks: FlowTask[] = []) => {
         const taskTypes = new Set<string>()
         const runnerTypes = new Set<string>()
-        tasks.forEach((task) => {
+        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
+        getAllTasks(tasks).forEach((task: FlowTask) => {
             if (!task?.type) {
                 return
             }
@@ -705,7 +707,7 @@
             const sourceTasks: FlowTask[] = YAML_UTILS.parse<ParsedFlow>(source)?.tasks ?? []
             const flowParsedTasks: FlowTask[] = flowStore.flowParsed?.tasks ?? []
             const hasRunner = (task: FlowTask) => Boolean(task.taskRunner?.type)
-            if (sourceTasks.some(hasRunner) && !flowParsedTasks.some(hasRunner)) {
+            if (getAllTasks(sourceTasks).some(hasRunner) && !getAllTasks(flowParsedTasks).some(hasRunner)) {
                 await resolveTaskTopologyDetails(sourceTasks)
             }
         },
@@ -1401,6 +1403,14 @@
 </script>
 
 <style scoped lang="scss">
+.search {
+    margin-inline-end: var(--ks-spacing-2);
+}
+
+.detail {
+    margin-top: var(--ks-spacing-4);
+}
+
 .tab-body {
     padding-block: var(--ks-spacing-3) var(--ks-spacing-6);
 }

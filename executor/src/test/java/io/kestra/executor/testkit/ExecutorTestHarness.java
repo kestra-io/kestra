@@ -647,7 +647,10 @@ public final class ExecutorTestHarness {
     private void answerWorkerJobs(ScriptedWorker worker) {
         List<WorkerJobEvent> jobs = workerJobEventQueue.emittedMessages();
         for (; workerJobsAnswered < jobs.size(); workerJobsAnswered++) {
-            workerTaskResultQueue.emit(worker.run((WorkerTask) jobs.get(workerJobsAnswered).job()));
+            WorkerTaskResult result = worker.run((WorkerTask) jobs.get(workerJobsAnswered).job());
+            if (result != null) {
+                workerTaskResultQueue.emit(result);
+            }
         }
     }
 

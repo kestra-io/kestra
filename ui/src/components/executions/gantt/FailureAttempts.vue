@@ -47,7 +47,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .failure-attempts {
         display: flex;
         flex-direction: column;

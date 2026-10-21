@@ -53,7 +53,7 @@
     const markdownContent = computed(() => "```yaml\n" + (resolvedYaml.value ?? "") + "\n```")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .resolved-config__status {
         position: relative;
         min-height: 4rem;

@@ -54,7 +54,7 @@
     watch(() => [props.executionId, props.referencedTaskIds.join(",")], load, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .upstream-outputs__status {
         position: relative;
         min-height: 4rem;

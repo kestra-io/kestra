@@ -1,5 +1,7 @@
 import {computed, ref} from "vue"
+import {useStorage} from "@vueuse/core"
 import {appInstalled, deferredInstallPrompt, initPwaInstallCapture} from "../utils/pwaInstallState"
+import {storageKeys} from "../utils/constants"
 
 function isStandalone(): boolean {
     return window.matchMedia("(display-mode: standalone)").matches ||
@@ -15,7 +17,7 @@ export function usePwaInstall() {
     initPwaInstallCapture()
 
     const installed = ref(isStandalone())
-    const dismissed = ref(false)
+    const dismissed = useStorage(storageKeys.PWA_INSTALL_DISMISSED, false)
 
     const canInstall = computed(() =>
         deferredInstallPrompt.value !== null && !installed.value && !appInstalled.value && !dismissed.value && isSecureOrigin(),
@@ -28,8 +30,11 @@ export function usePwaInstall() {
         }
 
         await prompt.prompt()
-        await prompt.userChoice
+        const {outcome} = await prompt.userChoice
         deferredInstallPrompt.value = null
+        if (outcome === "dismissed") {
+            dismiss()
+        }
     }
 
     function dismiss(): void {

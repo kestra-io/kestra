@@ -290,8 +290,9 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      * reclaims: {@link #handleAllWorkersForUncleanShutdown} re-emits tasks for unclean workers only,
      * so an entry left by a worker that terminated gracefully keeps its task run {@code SUBMITTED}
      * forever. Only {@code INACTIVE} workers are considered, so a worker that is merely disconnected
-     * keeps its jobs until the termination grace period has decided its fate, and a worker configured
-     * with {@link WorkerTaskRestartStrategy#NEVER} keeps them for good.
+     * keeps its jobs until the termination grace period has decided its fate. A worker configured
+     * with {@link WorkerTaskRestartStrategy#NEVER} is not resubmitted; once that same grace period
+     * has elapsed, its leftover entries are deleted so the table does not keep them.
      * <p>
      * A worker is only reclaimed from once its termination grace period has elapsed since it became
      * {@code INACTIVE}: a worker that terminated gracefully gets there in the same tick, while the executor
@@ -312,29 +313,60 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             return;
         }
 
-        Set<String> reclaimableWorkerUids = candidateWorkerUids
+        List<ServiceInstance> inactivePastGrace = candidateWorkerUids
             .stream()
             .map(serviceInstanceRepository::findById)
             .flatMap(Optional::stream)
             .filter(instance -> instance.is(INACTIVE))
-            .filter(instance -> instance.config() != null && instance.config().workerTaskRestartStrategy().isRestartable())
+            .filter(instance -> instance.config() != null)
             .filter(instance -> instance.isTerminationGracePeriodElapsed(now))
+            .toList();
+
+        Set<String> reclaimableWorkerUids = inactivePastGrace
+            .stream()
+            .filter(instance -> instance.config().workerTaskRestartStrategy().isRestartable())
             .map(ServiceInstance::uid)
             .collect(Collectors.toSet());
 
-        if (reclaimableWorkerUids.isEmpty()) {
-            return;
+        if (!reclaimableWorkerUids.isEmpty()) {
+            workerJobRunningStateStore.processOrphanWorkerJobs(NoTransactionContext.INSTANCE, reclaimableWorkerUids, (txContext, workerJobRunning) ->
+            {
+                log.warn(
+                    "Reclaiming the worker job '{}' left by the worker '{}': the worker is no longer part of the cluster.",
+                    workerJobRunning.uid(),
+                    workerJobRunning.getWorkerInstance().uid()
+                );
+                workerJobOrphanCounter.increment();
+                resubmitWorkerJobRunning(txContext, workerJobRunning);
+            });
         }
 
-        workerJobRunningStateStore.processOrphanWorkerJobs(NoTransactionContext.INSTANCE, reclaimableWorkerUids, (txContext, workerJobRunning) ->
+        inactivePastGrace
+            .stream()
+            .filter(instance -> !instance.config().workerTaskRestartStrategy().isRestartable())
+            .map(ServiceInstance::uid)
+            .forEach(this::purgeWorkerJobsLeftByWorker);
+    }
+
+    /**
+     * Deletes running entries still held by an inactive worker whose tasks must not be restarted.
+     * <p>
+     * The delete is limited to the worker that still owns the row, so a job resubmitted under the same
+     * key and taken by another worker is left in place.
+     */
+    private void purgeWorkerJobsLeftByWorker(final String workerUid) {
+        workerJobRunningStateStore.processWorkerJobsForDeadWorker(NoTransactionContext.INSTANCE, workerUid, (txContext, workerJobRunning) ->
         {
             log.warn(
-                "Reclaiming the worker job '{}' left by the worker '{}': the worker is no longer part of the cluster.",
+                "Discarding the worker job '{}' left by the inactive worker '{}': this worker does not restart its tasks.",
                 workerJobRunning.uid(),
                 workerJobRunning.getWorkerInstance().uid()
             );
-            workerJobOrphanCounter.increment();
-            resubmitWorkerJobRunning(txContext, workerJobRunning);
+            workerJobRunningStateStore.deleteByKeyAndWorker(
+                txContext,
+                workerJobRunning.uid(),
+                workerJobRunning.getWorkerInstance().uid()
+            );
         });
     }
 

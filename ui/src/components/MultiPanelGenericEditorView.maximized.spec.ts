@@ -91,17 +91,19 @@ describe("MultiPanelGenericEditorView with a maximized panel", () => {
         expect(wrapper.find(".panel-maximized").exists()).toBe(false)
     })
 
-    test("closing the maximized tab from the header keeps the editor consistent", async () => {
+    test("closing a tab in a panel before the maximized one leaves fullscreen instead of shifting it", async () => {
         // Given
-        const wrapper = mountEditor()
-        await maximizeFirstPanel(wrapper)
+        const wrapper = mountEditor(["code", "topology", "files"])
+        await wrapper.findAll("[data-test='panel-maximize']")[1].trigger("click")
+        expect(visibleTabs(wrapper)).toEqual(["topology"])
 
         // When
         await headerButton(wrapper, "code").trigger("click")
         await nextTick()
 
         // Then
-        expect(visibleTabs(wrapper)).toEqual(["topology"])
+        expect(wrapper.find(".panel-maximized").exists()).toBe(false)
+        expect(visibleTabs(wrapper)).toEqual(["topology", "files"])
     })
 
     test("focusing a tab hidden behind the maximized panel leaves fullscreen and shows it", async () => {

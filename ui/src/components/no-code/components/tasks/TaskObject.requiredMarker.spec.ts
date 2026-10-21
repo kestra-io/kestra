@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest"
+import {afterAll, describe, test, expect} from "vitest"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObject from "./TaskObject.vue"
 
@@ -19,6 +19,10 @@ function mountObject(modelValue: Record<string, unknown> | null | undefined) {
         global: {plugins: [KestraDesignSystem]},
     })
 }
+
+const settleLazyTaskComponents = () => import("./getTaskComponent")
+
+afterAll(settleLazyTaskComponents)
 
 describe("TaskObject required-field indicator", () => {
     test("does not flag a required field inside an optional object that is not set", () => {

@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest"
+import {afterAll, describe, test, expect} from "vitest"
 import {ref} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObjectField from "./TaskObjectField.vue"
@@ -23,6 +23,10 @@ function mountField(pluginDefaults: Record<string, unknown>) {
         },
     })
 }
+
+const settleLazyTaskComponents = () => import("./getTaskComponent")
+
+afterAll(settleLazyTaskComponents)
 
 describe("TaskObjectField required-field indicator", () => {
     test("flags an unset required field as missing, with a locatable data-required-path", () => {

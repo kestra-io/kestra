@@ -96,6 +96,11 @@ public class StorageKVBackend implements KVBackend {
             return Optional.empty();
         }
 
+        if (Optional.ofNullable(maybeMetadata.get().getExpirationDate()).map(Instant.now()::isAfter).orElse(false)) {
+            this.delete(tenant, namespace, key);
+            return Optional.empty();
+        }
+
         return Optional.of(KVEntry.from(maybeMetadata.get()));
     }
 

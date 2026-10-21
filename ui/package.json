@@ -50,7 +50,6 @@
         "@vue-flow/core": "^1.48.2",
         "@vueuse/core": "^15.0.0",
         "ansi-to-html": "^0.7.2",
-        "axios": "1.20.0",
         "change-case": "5.4.4",
         "cronstrue": "^3.32.0",
         "dagre": "^0.8.5",
@@ -142,7 +141,6 @@
         "lightningcss-linux-x64-gnu": "^1.33.0"
     },
     "overrides": {
-        "axios": "1.20.0",
         "dompurify": "^3.4.13",
         "js-yaml@^4": "^4.3.2"
     },

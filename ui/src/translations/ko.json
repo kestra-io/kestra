@@ -5,6 +5,12 @@
       "cta": "변경 사항 확인"
     },
     "loading": "로딩 중...",
+    "namespace_files_tip": {
+      "title": "스크립트를 namespace 파일로 관리하세요",
+      "description": "스크립트를 인라인으로 작성하는 대신, 파일 패널을 열어 파일(예: main.py)로 추가한 다음 flow에서 실행하세요:",
+      "open_files": "파일 열기",
+      "dont_show_again": "다시 표시하지 않기"
+    },
     "more actions": "추가 작업",
     "recipe": {
       "create_flow": "flow 생성",
@@ -236,6 +242,7 @@
       "last7days": "지난 7일",
       "last30days": "지난 30일",
       "last365days": "지난 365일",
+      "allTime": "모든 시간",
       "next5minutes": "다음 5분",
       "next15minutes": "다음 15분",
       "next1hour": "다음 1시간",
@@ -1780,6 +1787,14 @@
     "item": "항목",
     "items": "항목",
     "iterations": "반복",
+    "load_10_more": "10개 더 불러오기",
+    "show_all_executions": "모든 실행 보기",
+    "failed_iterations_only": "실패한 반복만",
+    "loop_iterations_shown": "{total}개 중 {shown}개 표시됨",
+    "loop_iterations_load_error": "반복 로드 실패",
+    "retry": "다시 시도",
+    "no_iterations": "아직 반복이 없습니다",
+    "no_failed_iterations": "실패한 반복이 없습니다",
     "loop_iterations_notice": {
       "logs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 로그는 여기에 표시되지 않습니다.",
       "outputs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 출력은 여기에 표시되지 않습니다.",

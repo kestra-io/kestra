@@ -5,6 +5,12 @@
       "cta": "Siehe, was sich geändert hat"
     },
     "loading": "Wird geladen...",
+    "namespace_files_tip": {
+      "title": "Verwalte deine Skripte als Namespace-Dateien",
+      "description": "Statt dein Skript inline zu schreiben, öffne das Dateien-Panel, füge es als Datei hinzu (z. B. main.py) und führe es aus deinem flow aus:",
+      "open_files": "Dateien öffnen",
+      "dont_show_again": "Nicht mehr anzeigen"
+    },
     "more actions": "Weitere Aktionen",
     "recipe": {
       "create_flow": "Flow erstellen",
@@ -236,6 +242,7 @@
       "last7days": "Letzte 7 Tage",
       "last30days": "Letzte 30 Tage",
       "last365days": "Letzte 365 Tage",
+      "allTime": "Gesamte Zeit",
       "next5minutes": "Nächste 5 Minuten",
       "next15minutes": "Nächste 15 Minuten",
       "next1hour": "Nächste Stunde",
@@ -1780,6 +1787,14 @@
     "item": "Element",
     "items": "Elemente",
     "iterations": "Iterationen",
+    "load_10_more": "10 weitere laden",
+    "show_all_executions": "Alle Ausführungen anzeigen",
+    "failed_iterations_only": "Nur fehlgeschlagene Iterationen",
+    "loop_iterations_shown": "{shown} von {total} angezeigt",
+    "loop_iterations_load_error": "Iterationen konnten nicht geladen werden",
+    "retry": "Versuche es erneut",
+    "no_iterations": "Noch keine Iterationen",
+    "no_failed_iterations": "Keine fehlgeschlagenen Iterationen",
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",
       "outputs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Outputs hier nicht angezeigt.",

@@ -524,6 +524,21 @@
       "attempts": "{count} próba | {count} próby | {count} prób",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Nieudany task",
+      "view_task_logs": "Zobacz logi taska",
+      "revision_short": "rew. {revision}",
+      "more_labels": "+{count} label | +{count} labele | +{count} labeli",
+      "fewer_labels": "Pokaż mniej labeli",
+      "jump_to_first_failure": "Przejdź do pierwszego błędu",
+      "open_logs": "Otwórz logi"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Po zalogowaniu",
+      "execution_tab": "Wykonanie {id} · karta {tab}",
+      "execution": "Wykonanie {id}",
+      "tab": "Karta {tab}"
+    },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
     "usage": "Użycie",

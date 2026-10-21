@@ -146,18 +146,6 @@
     transition: opacity var(--ks-duration-fast) var(--ks-ease-in), transform var(--ks-duration-fast) var(--ks-ease-in);
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .filter-popup-enter-active,
-    .filter-popup-leave-active {
-        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
-    }
-
-    .filter-popup-enter-from,
-    .filter-popup-leave-to {
-        transform: none;
-    }
-}
-
 .filter-popup-enter-from {
     opacity: 0;
     transform: translateY(-4px);
@@ -172,5 +160,17 @@
 .filter-popup-leave-to {
     opacity: 0;
     transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filter-popup-enter-active,
+    .filter-popup-leave-active {
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
+    }
+
+    .filter-popup-enter-from,
+    .filter-popup-leave-to {
+        transform: none;
+    }
 }
 </style>

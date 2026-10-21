@@ -257,7 +257,7 @@
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
-    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {asProblem, type FlowForExecution} from "@kestra-io/kestra-sdk"
     import {handled} from "../../../../../utils/kestraHttp"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
@@ -319,7 +319,7 @@
         }
     })
 
-    const currentFlow = ref<any | undefined>(undefined)
+    const currentFlow = ref<FlowForExecution | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
     const hasOriginalInputs = computed(() => {
         const inputs = props.execution.inputs
@@ -472,12 +472,13 @@
     }
 
     const restart = async () => {
-        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
-        const response = await (executionsStore[method] as any)({
-            executionId: props.execution.id,
-            taskRunId: replayTaskRun.value?.id,
-            revision: props.isReplay ? revisionsSelected.value : undefined,
-        })
+        const response = props.isReplay
+            ? await executionsStore.replayExecution({
+                executionId: props.execution.id,
+                taskRunId: replayTaskRun.value?.id,
+                revision: revisionsSelected.value,
+            })
+            : await executionsStore.restartExecution({executionId: props.execution.id})
 
         const newExecution = response
 

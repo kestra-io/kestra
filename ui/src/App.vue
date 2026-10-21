@@ -11,6 +11,7 @@
                 <router-view />
             </component>
         </div>
+        <div id="bottom-actions-slot" />
     </div>
     <TourOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />

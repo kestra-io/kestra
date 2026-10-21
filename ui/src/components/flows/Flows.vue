@@ -32,6 +32,7 @@
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
             @row-click="onRowClick"
+            :mobileColumns="mobileColumns"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
             :rowClassName="rowClasses"
             :selectable="canCheck"
@@ -203,7 +204,7 @@
                                     }
                                 }"
                             >
-                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" />
+                                <KsExecutionStatus :status="getLastExecution(scope.row as Flow)!.status" size="small" :dot="isMobile" />
                             </router-link>
                         </div>
                     </template>
@@ -267,7 +268,7 @@
 
             </template>
 
-            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
+            <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')" fixed="right">
                 <template #default="scope">
                     <div class="flow-actions-cell">
                         <KsIconButton
@@ -310,6 +311,8 @@
 
 <script setup lang="ts">
     import {ref, computed, useTemplateRef, watch} from "vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
+    import {isPlainRowActivation} from "../../utils/rowNavigation"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
@@ -364,7 +367,6 @@
     import type {Flow} from "../../stores/flow"
     import useFlowsBulkActions from "./useFlowsBulkActions"
 
-    const NON_NAVIGATING_TARGETS = "a, button, input, canvas, [role='button']"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -399,6 +401,8 @@
     const toast = useToast()
 
     const flowFilter = useFlowFilter()
+
+    const isMobile = useIsMobile()
 
     const lastExecutionByFlowReady = ref(false)
     const latestExecutions = ref<ExecutionControllerLastExecutionResponse[]>([])
@@ -471,6 +475,17 @@
         initialVisibleColumns: [],
     })
 
+    const mobileColumns = computed(() => {
+        const shown = (prop: string) => displayColumns.value.includes(prop) ? prop : undefined
+        return {
+            leading: shown("state.current"),
+            title: "id",
+            meta: ["namespace"].filter(shown),
+            metaAside: shown("state.startDate"),
+            actions: "action",
+        }
+    })
+
     watch(extensionColumnsVisible, visible => {
         if (visible && flowStore.flows?.length) {
             loadExtensionData(flowStore.flows)
@@ -518,13 +533,7 @@
     }
 
     const onRowClick = (item: Flow, column: {type?: string} | undefined, event: Event) => {
-        if (column?.type === "selection") return
-
-        const click = event as MouseEvent
-        // a modifier-click is the browser's own open-in-a-new-tab gesture, which RouterLink deliberately
-        // lets through without preventDefault, so the current tab must stay where it is
-        if (click.metaKey || click.ctrlKey || click.shiftKey || click.altKey || click.button !== 0) return
-        if ((event.target as HTMLElement)?.closest(NON_NAVIGATING_TARGETS)) return
+        if (!isPlainRowActivation(column, event)) return
 
         router.push({
             name: route.name?.toString().replace("/list", "/update"),

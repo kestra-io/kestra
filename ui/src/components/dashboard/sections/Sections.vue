@@ -293,6 +293,12 @@ section#charts {
             opacity: 1;
         }
 
+        @media (hover: none) {
+            #charts_buttons {
+                opacity: 1;
+            }
+        }
+
         .chart-placeholder {
             min-height: 200px; /* roughly the height of a rendered chart, so activation does not shift the layout */
 

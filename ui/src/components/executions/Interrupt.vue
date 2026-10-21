@@ -142,7 +142,7 @@
             })
     }
 </script>
-<style scoped lang="scss">
+<style scoped>
 .status-badge {
     margin-inline-end: var(--ks-spacing-1);
 }

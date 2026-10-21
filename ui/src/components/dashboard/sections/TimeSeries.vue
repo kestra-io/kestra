@@ -763,7 +763,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .chart {
         display: flex;
         flex-direction: column;
@@ -785,10 +785,6 @@
             min-height: 0;
             position: relative;
 
-            &--selectable {
-                cursor: crosshair;
-            }
-
             &:focus {
                 outline: none;
             }
@@ -797,6 +793,10 @@
                 width: 100%;
                 height: 100%;
             }
+        }
+
+        & .canvas-wrapper--selectable {
+            cursor: crosshair;
         }
     }
 

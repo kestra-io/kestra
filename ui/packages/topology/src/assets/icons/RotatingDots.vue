@@ -9,7 +9,7 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .loading-dots-circle {
     animation: rotate 2s linear infinite;
 }

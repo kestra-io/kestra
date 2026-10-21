@@ -6,8 +6,10 @@ import java.util.Optional;
 
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DisplayExpressionRenderer;
@@ -66,7 +68,8 @@ public class ExpressionController {
             "secret() is masked as [secret: KEY], env() is kept raw, only a safe allowlist of pure functions is " +
             "invoked, and anything else is kept raw. Resolution is all-or-nothing per expression: an expression that " +
             "references anything unresolvable is returned unchanged. Provide an executionId to resolve against an " +
-            "execution context, or a flow source to resolve against a flow context; otherwise only globals are available."
+            "execution context (add a taskRunId to also resolve task-run-local bindings like taskrun.value), or a " +
+            "flow source to resolve against a flow context; otherwise only globals are available."
     )
     public RenderedExpressions renderExpressions(@Valid @Body RenderExpressionRequest request) throws FlowProcessingException {
         Map<String, Object> variables = variablesFor(request);
@@ -79,6 +82,15 @@ public class ExpressionController {
                 .findById(tenantService.resolveTenant(), request.executionId())
                 .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find execution '" + request.executionId() + "'"));
             Flow flow = flowRepository.findByExecution(execution);
+
+            if (request.taskRunId() != null) {
+                TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(request.taskRunId())
+                    .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find task run '" + request.taskRunId() + "' on execution '" + request.executionId() + "'"));
+                Task task = flow.findTaskByTaskIdOrNull(taskRun.getTaskId());
+                if (task != null) {
+                    return runContextFactory.of(flow, task, execution, taskRun, false).getVariables();
+                }
+            }
 
             return runContextFactory.of(flow, execution, false).getVariables();
         }
@@ -109,6 +121,7 @@ public class ExpressionController {
     public record RenderExpressionRequest(
         @NotEmpty @Size(max = 500) @Schema(description = "The raw Pebble expressions to render") List<String> expressions,
         @Nullable @Schema(description = "Resolve against this execution's context") String executionId,
+        @Nullable @Schema(description = "Resolve against this task run's context within the execution (requires executionId)") String taskRunId,
         @Nullable @Schema(description = "Resolve against this flow's context (with flowId)") String namespace,
         @Nullable @Schema(description = "Resolve against this flow's context (with namespace)") String flowId,
         @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow) {

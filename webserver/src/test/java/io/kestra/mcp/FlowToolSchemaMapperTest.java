@@ -76,6 +76,26 @@ class FlowToolSchemaMapperTest {
             .expectedSchema(Map.of("type", "string", "format", "duration", "description", "Must be at least PT1S. Must be at most PT1M."))
             .build(),
         InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).build())
+            .expectedSchema(Map.of("type", "string", "description", "The id of a Kestra asset."))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).multiple(true).assetType("io.kestra.plugin.ee.assets.VM").namespace("infra").status("active").assetId("^web-").build())
+            .expectedSchema(Map.of(
+                "type", "array",
+                "items", Map.of("type", "string"),
+                "description", "The ids of Kestra assets, of type io.kestra.plugin.ee.assets.VM, in namespace infra or a child namespace, with status active, whose id matches ^web-."
+            ))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).metadata(Map.of("team", "ops", "env", "prod")).build())
+            .expectedSchema(Map.of("type", "string", "description", "The id of a Kestra asset, with metadata env = prod and team = ops."))
+            .build(),
+        InputConversionTestCase.builder()
+            .input(AssetInput.builder().type(Type.ASSET).metadata(Map.of()).build())
+            .expectedSchema(Map.of("type", "string", "description", "The id of a Kestra asset."))
+            .build(),
+        InputConversionTestCase.builder()
             .input(EmailInput.builder().type(Type.EMAIL).build())
             .expectedSchema(Map.of("type", "string", "format", "email", "pattern", EmailInput.EMAIL_PATTERN))
             .build(),
@@ -156,14 +176,6 @@ class FlowToolSchemaMapperTest {
         InputConversionTestCase.builder()
             .input(URIInput.builder().type(Type.URI).build())
             .expectedSchema(Map.of("type", "string", "format", "uri"))
-            .build(),
-        InputConversionTestCase.builder()
-            .input(AssetInput.builder().type(Type.ASSET).build())
-            .expectedSchema(Map.of("type", "string"))
-            .build(),
-        InputConversionTestCase.builder()
-            .input(AssetInput.builder().type(Type.ASSET).multiple(true).build())
-            .expectedSchema(Map.of("type", "array", "items", Map.of("type", "string")))
             .build(),
         InputConversionTestCase.builder()
             .input(YamlInput.builder().type(Type.YAML).build())

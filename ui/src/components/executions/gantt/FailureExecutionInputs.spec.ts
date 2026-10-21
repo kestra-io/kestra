@@ -24,6 +24,12 @@ function mountInputs(inputIds: string[]) {
     })
 }
 
+function deferred<T>() {
+    let resolve!: (value: T) => void
+    const promise = new Promise<T>((res) => { resolve = res })
+    return {promise, resolve}
+}
+
 describe("FailureExecutionInputs", () => {
     afterEach(() => {
         vi.clearAllMocks()
@@ -40,8 +46,8 @@ describe("FailureExecutionInputs", () => {
     it("should render one expression per declared input, batched in a single call", async () => {
         mocks.renderExpressions.mockResolvedValue({
             rendered: {
-                "{{ inputs.region }}": "us-east-1",
-                "{{ inputs.token }}": "[secret: token]",
+                "{{ inputs['region'] }}": "us-east-1",
+                "{{ inputs['token'] }}": "[secret: token]",
             },
         })
 
@@ -50,7 +56,7 @@ describe("FailureExecutionInputs", () => {
 
         expect(mocks.renderExpressions).toHaveBeenCalledTimes(1)
         expect(mocks.renderExpressions).toHaveBeenCalledWith(expect.objectContaining({
-            expressions: ["{{ inputs.region }}", "{{ inputs.token }}"],
+            expressions: ["{{ inputs['region'] }}", "{{ inputs['token'] }}"],
             executionId: "exec-1",
         }))
         expect(wrapper.text()).toContain("us-east-1")
@@ -64,5 +70,39 @@ describe("FailureExecutionInputs", () => {
         await flushPromises()
 
         expect(wrapper.text()).toContain("Could not resolve")
+    })
+
+    it("should read hyphenated and dotted input ids with bracket access, one bracket per segment", async () => {
+        mocks.renderExpressions.mockResolvedValue({
+            rendered: {
+                "{{ inputs['my-input'] }}": "hyphen value",
+                "{{ inputs['group']['child'] }}": "nested value",
+            },
+        })
+
+        const wrapper = mountInputs(["my-input", "group.child"])
+        await flushPromises()
+
+        expect(mocks.renderExpressions).toHaveBeenCalledWith(expect.objectContaining({
+            expressions: ["{{ inputs['my-input'] }}", "{{ inputs['group']['child'] }}"],
+        }))
+        expect(wrapper.text()).toContain("hyphen value")
+        expect(wrapper.text()).toContain("nested value")
+    })
+
+    it("should keep the current execution's inputs when an earlier render answers last", async () => {
+        const first = deferred<{rendered: Record<string, string>}>()
+        const second = deferred<{rendered: Record<string, string>}>()
+        mocks.renderExpressions.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+
+        const wrapper = mountInputs(["region"])
+        await wrapper.setProps({executionId: "exec-2"})
+        second.resolve({rendered: {"{{ inputs['region'] }}": "region of exec-2"}})
+        await flushPromises()
+        first.resolve({rendered: {"{{ inputs['region'] }}": "region of exec-1"}})
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("region of exec-2")
+        expect(wrapper.text()).not.toContain("region of exec-1")
     })
 })

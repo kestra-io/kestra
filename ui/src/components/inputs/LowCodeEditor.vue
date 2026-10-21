@@ -145,7 +145,7 @@
                                 <SearchField
                                     :router="false"
                                     @search="onSearch"
-                                    class="search-field-spacing"
+                                    class="search"
                                 />
                             </KsFormItem>
                             <KsFormItem>
@@ -235,7 +235,7 @@
                     :navbar="false"
                     :modelValue="selectedTask.runIf"
                     lang="yaml"
-                    class="top-spacing"
+                    class="detail"
                 />
             </div>
             <div v-if="isShowCustomActionOpen && customActionMeta">
@@ -246,7 +246,7 @@
                     :navbar="false"
                     :modelValue="customActionModelValue"
                     :lang="customActionMeta.lang"
-                    class="top-spacing"
+                    class="detail"
                 />
                 <TaskDrawerRemote
                     v-if="isTask(selectedTask)"
@@ -261,7 +261,7 @@
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
                     :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
                     displayMode="full"
-                    class="top-spacing"
+                    class="detail"
                 />
             </div>
         </KsDrawer>
@@ -1403,11 +1403,11 @@
 </script>
 
 <style scoped lang="scss">
-.search-field-spacing {
+.search {
     margin-inline-end: var(--ks-spacing-2);
 }
 
-.top-spacing {
+.detail {
     margin-top: var(--ks-spacing-4);
 }
 

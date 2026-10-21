@@ -85,7 +85,7 @@ public class ExpressionController {
 
             if (request.taskRunId() != null) {
                 TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(request.taskRunId())
-                    .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find task run '" + request.taskRunId() + "' on execution '" + request.executionId() + "'"));
+                    .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Unable to find task run '%s' on execution '%s'.".formatted(request.taskRunId(), request.executionId())));
                 Task task = flow.findTaskByTaskIdOrNull(taskRun.getTaskId());
                 if (task != null) {
                     return runContextFactory.of(flow, task, execution, taskRun, false).getVariables();

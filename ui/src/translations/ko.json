@@ -524,8 +524,25 @@
       "attempts": "{count}회 시도 | {count}회 시도",
       "tasks": "task {completed}/{count}개 | task {completed}/{count}개"
     },
+    "execution_mobile": {
+      "failed_task": "실패한 task",
+      "view_task_logs": "task logs 보기",
+      "revision_short": "리비전 {revision}",
+      "more_labels": "+{count}개 label | +{count}개 label",
+      "fewer_labels": "label 접기",
+      "jump_to_first_failure": "첫 번째 실패로 이동",
+      "open_logs": "logs 열기"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "로그인 후",
+      "execution_tab": "실행 {id} · {tab} 탭",
+      "execution": "실행 {id}",
+      "tab": "{tab} 탭"
+    },
     "concurrency limits": "동시성 제한",
     "system overview": "시스템 개요",
+    "workspace": "워크스페이스",
+    "resources": "리소스",
     "usage": "사용량",
     "namespaces": "Namespaces",
     "tasks": "Tasks",

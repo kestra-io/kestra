@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.input.AssetInput;
 
+import java.util.List;
 import java.util.Map;
 
 import jakarta.annotation.Nullable;
@@ -25,5 +26,12 @@ public interface AssetInputResolver {
      */
     default Map<String, Object> expandOutputs(Execution execution, Map<String, Object> outputs) {
         return outputs;
+    }
+
+    /**
+     * @return the executions with their {@code ASSET} inputs read live, for an API response only: the result must never be persisted
+     */
+    default List<Execution> expandInputs(List<Execution> executions) {
+        return executions;
     }
 }

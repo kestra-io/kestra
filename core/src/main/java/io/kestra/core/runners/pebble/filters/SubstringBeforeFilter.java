@@ -38,9 +38,11 @@ public class SubstringBeforeFilter implements Filter {
             );
         }
 
-        String separator = (String) args.get("separator");
-        ;
+        Object separatorObj = args.get("separator");
+        if (!(separatorObj instanceof String)) {
+            throw new PebbleException(null, "The 'substringBefore' filter argument 'separator' must be a string. Actual type was: " + separatorObj.getClass().getName(), lineNumber, self.getName());
+        }
 
-        return StringUtils.substringBefore(input.toString(), separator);
+        return StringUtils.substringBefore(input.toString(), (String) separatorObj);
     }
 }

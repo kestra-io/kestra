@@ -33,9 +33,11 @@ public class SubstringAfterFilter implements Filter {
             throw new PebbleException(null, "The 'substringAfter' filter expects an argument 'separator'.", lineNumber, self.getName());
         }
 
-        String separator = (String) args.get("separator");
-        ;
+        Object separatorObj = args.get("separator");
+        if (!(separatorObj instanceof String)) {
+            throw new PebbleException(null, "The 'substringAfter' filter argument 'separator' must be a string. Actual type was: " + separatorObj.getClass().getName(), lineNumber, self.getName());
+        }
 
-        return StringUtils.substringAfter(input.toString(), separator);
+        return StringUtils.substringAfter(input.toString(), (String) separatorObj);
     }
 }

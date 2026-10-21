@@ -14,6 +14,7 @@ const webhookBlock: ArtifactBlock = {
 
 describe("webhookArtifactProvider", () => {
     it("returns no lens when the flow has no namespace or id", () => {
-        expect(webhookArtifactProvider.provide(webhookBlock, {t})).toEqual([])
+        expect(webhookArtifactProvider.provide(webhookBlock, {namespace: "company.team", t})).toEqual([])
+        expect(webhookArtifactProvider.provide(webhookBlock, {id: "my-flow", t})).toEqual([])
     })
 })

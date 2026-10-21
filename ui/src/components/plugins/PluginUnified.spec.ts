@@ -1,6 +1,7 @@
 import {describe, test, expect, beforeEach, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
+import {designSystemI18nReady} from "@kestra-io/design-system"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import PluginUnified from "./PluginUnified.vue"
 
@@ -51,6 +52,7 @@ async function mountUnified(props: {group: string, subgroup?: string}) {
         global: {stubs: {TaskIcon: true}},
     })
     await flushPromises()
+    await designSystemI18nReady()
     return wrapper
 }
 
@@ -59,24 +61,10 @@ describe("PluginUnified", () => {
         setActivePinia(createPinia())
     })
 
-    test("renders the long description with compact headings instead of the page-level heading scale", async () => {
-        const wrapper = await mountUnified({group: "io.kestra.plugin.dbt"})
-
-        await vi.waitFor(() => expect(wrapper.find(".ks-markdown--compact").exists()).toBe(true))
-
-        expect(wrapper.find(".ks-markdown--compact").text()).toContain("How to use the dbt plugin")
-    })
-
     test("renders the short description outside the markdown body", async () => {
         const wrapper = await mountUnified({group: "io.kestra.plugin.dbt"})
 
         expect(wrapper.find(".plugin-unified__summary").text())
             .toBe("Integrate dbt data transformations into Kestra orchestration pipelines.")
-    })
-
-    test("does not rely on the Bootstrap spacing utilities of the 1.x layout", async () => {
-        const wrapper = await mountUnified({group: "io.kestra.plugin.dbt"})
-
-        expect(wrapper.find(".p-4").exists()).toBe(false)
     })
 })

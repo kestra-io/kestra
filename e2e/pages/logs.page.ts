@@ -39,30 +39,30 @@ export class LogsPage extends BasePage {
     }
 
     async selectLogRowByIndex(index: number = 0) {
-        const checkbox = this.page.locator(".log-row").nth(index).locator("label.kel-checkbox")
+        const checkbox = this.page.locator(".log-row").nth(index).locator("[data-test=log-row-checkbox]")
         await checkbox.waitFor({state: "visible"})
         await checkbox.click()
-        await expect(checkbox).toContainClass("is-checked")
+        await expect(checkbox.getByRole("checkbox")).toBeChecked()
     }
 
     async clickOnSelectAll() {
-        await this.page.locator(".ks-bulk-select").getByRole("button", {name: /Select all/}).click()
+        await this.page.locator("[data-test=bulk-select-all]").click()
     }
 
     async clickOnDeleteAndConfirm() {
-        await this.page.locator(".ks-bulk-select").getByRole("button", {name: "Delete"}).click()
-        const confirmation = this.page.locator(".kel-message-box")
+        await this.page.locator("[data-test=logs-bulk-delete]").click()
+        const confirmation = this.page.getByRole("dialog")
         await confirmation.getByRole("button", {name: "Delete"}).click()
         await expect(confirmation).toBeHidden()
     }
 
     async expectBulkSelectBarToShow(selectedCount: number) {
-        const bar = this.page.locator(".ks-bulk-select")
+        const bar = this.page.locator("[data-test=logs-bulk-actions]")
         await expect(bar).toBeVisible()
         await expect(bar).toContainText(`${selectedCount} selected`)
     }
 
     async expectBulkSelectBarHidden() {
-        await expect(this.page.locator(".ks-bulk-select")).toHaveCount(0)
+        await expect(this.page.locator("[data-test=logs-bulk-actions]")).toHaveCount(0)
     }
 }

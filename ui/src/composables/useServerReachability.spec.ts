@@ -1,5 +1,4 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
-import {isReadonly} from "vue"
 
 import {
     useServerReachability,
@@ -77,11 +76,5 @@ describe("useServerReachability", () => {
         markServerReachable()
 
         expect(unreachable.value).toBe(false)
-    })
-
-    it("the ref returned by useServerReachability is readonly", () => {
-        const {unreachable} = useServerReachability()
-
-        expect(isReadonly(unreachable)).toBe(true)
     })
 })

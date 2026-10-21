@@ -14,10 +14,10 @@ describe("LoopScopeBar", () => {
         expect(wrapper.find("[data-test='loop-scope-clear']").exists()).toBe(false)
     })
 
-    it("shouldShowEachScopeWithItsNumberAndValue", () => {
+    it("shouldShowEachScopeWithItsValueOrItsZeroBasedIndex", () => {
         const wrapper = mountBar({entries: [{taskId: "per_region", number: 2, value: "AMER"}, {taskId: "per_quarter", number: 1}]})
 
-        expect(wrapper.find("[data-test='loop-scope-trail']").text()).toBe("per_region: #2 AMERper_quarter: Iteration 1")
+        expect(wrapper.find("[data-test='loop-scope-trail']").text()).toBe("per_region: AMERper_quarter: index 0")
     })
 
     it("shouldEmitClearJumpAndToggleFromTheirButtons", async () => {

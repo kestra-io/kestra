@@ -2,7 +2,7 @@
     <div class="loop-merged-logs" data-test="loop-merged-logs">
         <div v-if="entries.length" class="loop-merged-scope" data-test="loop-merged-scope">
             <KsText size="small">{{ $t("topology-graph.loop.scope") }}</KsText>
-            <KsTag v-if="scopeChain.length" size="small">{{ scopeLabel(t, scopeChain) }}</KsTag>
+            <KsTag v-if="scopeChain.length" size="small">{{ scopeLabel(t, scopeChain, isAmbiguous) }}</KsTag>
             <KsButton link size="small" data-test="loop-merged-scope-clear" @click="setEntries([])">
                 {{ $t("topology-graph.loop.clear-scopes") }}
             </KsButton>
@@ -121,7 +121,7 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {useLoopScope} from "../../composables/useLoopScope"
     import {useLoopMergedLogs} from "../../composables/useLoopMergedLogs"
-    import {LOOP_SCOPE_QUERY_KEY, serializeLoopScope} from "../../utils/loopScope"
+    import {ambiguousValues, LOOP_SCOPE_QUERY_KEY, serializeLoopScope} from "../../utils/loopScope"
     import {scopeEntriesOf, scopeLabel, type ScopeNode} from "../../utils/loopLogScope"
     import {EXECUTION_PARENT_ROUTE} from "./executionTabs"
     import type {Log} from "../../stores/logs"
@@ -171,6 +171,15 @@
 
     const scopeChain = computed(() => targets.value?.scope ?? [])
 
+    const withParents = (chain: ScopeNode[]) => chain.map((node, depth) => ({...node, parentId: chain[depth - 1]?.id}))
+
+    const isAmbiguous = computed(() => {
+        const nodes = [scopeChain.value, ...Object.values(targets.value?.chains ?? {})].flatMap(withParents)
+        const ambiguous = ambiguousValues(nodes)
+        const parentOf = new Map(nodes.map((node) => [node.id, node.parentId]))
+        return (node: ScopeNode) => ambiguous({...node, parentId: parentOf.get(node.id)})
+    })
+
     const batchRange = computed(() => {
         if (!targets.value || !(hasPreviousBatch.value || hasNextBatch.value)) return undefined
         const {offset, end, total} = targets.value
@@ -184,7 +193,7 @@
         return {
             index,
             uid: `${line.executionId ?? ""}-${line.taskRunId ?? ""}-${line.attemptNumber ?? 0}-${line.timestamp ?? ""}-${index}`,
-            label: chain.length ? scopeLabel(t, chain) : t("logs_view.loop.this-execution"),
+            label: chain.length ? scopeLabel(t, chain, isAmbiguous.value) : t("logs_view.loop.this-execution"),
             chain,
             log: line as Partial<Log>,
         }

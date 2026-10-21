@@ -361,16 +361,22 @@ describe("logUrlReserve", () => {
 })
 
 describe("scopeLabel", () => {
-    const t = (key: string, named?: Record<string, unknown>) => key === "topology-graph.loop.iteration-label" ? `#${named?.number} ${named?.value}` : `Iteration ${named?.number}`
+    const t = (key: string, named?: Record<string, unknown>) => key === "topology-graph.loop.iteration-index" ? `index ${named?.index}` : `${named?.value} · index ${named?.index}`
 
-    it("shouldJoinEachLoopWithItsIterationLabel", () => {
-        const chain = [{id: "a", taskId: "per_customer", number: 13, value: "13"}, {id: "b", taskId: "per_invoice", number: 7, value: "7"}]
+    it("shouldJoinEachLoopWithTheValueOfItsIteration", () => {
+        const chain = [{id: "a", taskId: "per_customer", number: 13, value: "acme"}, {id: "b", taskId: "per_invoice", number: 7, value: "INV-7"}]
 
-        expect(scopeLabel(t, chain)).toBe("per_customer: #13 13 › per_invoice: #7 7")
+        expect(scopeLabel(t, chain)).toBe("per_customer: acme › per_invoice: INV-7")
     })
 
-    it("shouldFallBackToTheIterationNumberWhenThereIsNoValue", () => {
-        expect(scopeLabel(t, [{id: "a", taskId: "per_customer", number: 3}])).toBe("per_customer: Iteration 3")
+    it("shouldFallBackToTheZeroBasedIndexWhenThereIsNoValue", () => {
+        expect(scopeLabel(t, [{id: "a", taskId: "per_customer", number: 3}])).toBe("per_customer: index 2")
+    })
+
+    it("shouldAddTheIndexOnlyToTheAmbiguousLoop", () => {
+        const chain = [{id: "a", taskId: "per_customer", number: 1, value: "acme"}, {id: "b", taskId: "per_invoice", number: 2, value: "dup"}]
+
+        expect(scopeLabel(t, chain, (node) => node.id === "b")).toBe("per_customer: acme › per_invoice: dup · index 1")
     })
 })
 

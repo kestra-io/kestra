@@ -88,7 +88,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 #buttons {
     display: flex;

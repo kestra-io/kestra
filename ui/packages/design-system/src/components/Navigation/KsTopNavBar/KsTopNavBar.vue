@@ -190,6 +190,12 @@
         }
     }
 
+    .star {
+        @media (max-width: 767px) {
+            display: none;
+        }
+    }
+
     .dock-toggle {
         &.is-open {
             color: var(--ks-icon-default);

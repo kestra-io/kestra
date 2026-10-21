@@ -86,6 +86,23 @@
         font-variant-ligatures: none;
     }
 
+    @media (pointer: coarse) {
+        .kel-input,
+        .kel-input.kel-input--small,
+        .kel-input.kel-input--large {
+            --kel-input-height: 2.75rem;
+        }
+
+        .kel-input__inner,
+        .kel-textarea__inner {
+            font-size: 1rem;
+        }
+
+        .kel-textarea__inner {
+            min-height: 2.75rem;
+        }
+    }
+
     .kel-textarea__inner {
         /* A full-width textarea has nothing to gain from horizontal resizing, and both it and a */
         /* long unbroken word were producing a horizontal scrollbar under the field. */

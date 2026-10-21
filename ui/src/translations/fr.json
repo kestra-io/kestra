@@ -5,6 +5,12 @@
       "cta": "Voir les modifications"
     },
     "loading": "Chargement...",
+    "namespace_files_tip": {
+      "title": "Gérez vos scripts comme fichiers du namespace",
+      "description": "Au lieu d'écrire votre script en ligne, ouvrez le panneau Fichiers, ajoutez-le comme fichier (par ex. main.py) et exécutez-le depuis votre flow :",
+      "open_files": "Ouvrir les fichiers",
+      "dont_show_again": "Ne plus afficher"
+    },
     "more actions": "Plus d'actions",
     "recipe": {
       "create_flow": "Créer un flow",
@@ -236,6 +242,7 @@
       "last7days": "7 derniers jours",
       "last30days": "30 derniers jours",
       "last365days": "365 derniers jours",
+      "allTime": "Tout le temps",
       "next5minutes": "Les 5 prochaines minutes",
       "next15minutes": "Prochaines 15 minutes",
       "next1hour": "Prochaine 1 heure",
@@ -516,6 +523,21 @@
       "revision": "Révision {revision}",
       "attempts": "{count} tentative | {count} tentatives",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
+    "execution_mobile": {
+      "failed_task": "Task en échec",
+      "view_task_logs": "Voir les logs de la task",
+      "revision_short": "rév. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Afficher moins de labels",
+      "jump_to_first_failure": "Aller au premier échec",
+      "open_logs": "Ouvrir les logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Après la connexion",
+      "execution_tab": "Exécution {id} · onglet {tab}",
+      "execution": "Exécution {id}",
+      "tab": "Onglet {tab}"
     },
     "concurrency limits": "Limites de Concurrence",
     "system overview": "Vue d'ensemble du système",
@@ -1780,6 +1802,14 @@
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
+    "load_10_more": "Charger 10 de plus",
+    "show_all_executions": "Afficher toutes les exécutions",
+    "failed_iterations_only": "Itérations échouées uniquement",
+    "loop_iterations_shown": "{shown} sur {total} affichés",
+    "loop_iterations_load_error": "Échec du chargement des itérations",
+    "retry": "Réessayer",
+    "no_iterations": "Pas encore d'itérations",
+    "no_failed_iterations": "Aucune itération échouée",
     "loop_iterations_notice": {
       "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
       "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",

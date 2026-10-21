@@ -1,7 +1,17 @@
-import {beforeEach, describe, expect, it} from "vitest"
+import {afterAll, beforeAll, beforeEach, describe, expect, it} from "vitest"
 import {setDocumentTitle} from "./documentTitle"
 
 describe("setDocumentTitle", () => {
+    let initialTitle: string
+
+    beforeAll(() => {
+        initialTitle = document.title
+    })
+
+    afterAll(() => {
+        document.title = initialTitle
+    })
+
     beforeEach(() => {
         document.title = "Kestra"
     })

@@ -562,6 +562,11 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "No task of this flow provides an artifact.",
+      "count": "no artifacts | {artifacts} artifact · {tasks} task | {artifacts} artifacts · {tasks} tasks"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",

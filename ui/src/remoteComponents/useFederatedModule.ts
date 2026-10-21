@@ -40,9 +40,17 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
     }
 }
 
+// A slot that hosts several modules per task type ("execution-artifact") registers each one as
+// `<slot>/<id>` in the manifest; the module is then keyed `<taskType>/<id>` here.
+function moduleKey(slotName: string, uiModule: string | undefined, taskTypeKey: string): string | undefined {
+    if (uiModule === slotName) return taskTypeKey
+    return uiModule?.startsWith(`${slotName}/`) ? `${taskTypeKey}/${uiModule.slice(slotName.length + 1)}` : undefined
+}
+
 export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(slotName: T) {
 
     const RemoteComponents = shallowReactive<Record<string, Component>>({})
+    const subtitleResolvers = shallowReactive<Record<string, (ctx: never) => unknown>>({})
     const taskAdditionalInfoRemote = ref<Record<string, ManifestsRegistry[T]>>({})
 
     const manifestReady = ref(false)
@@ -70,9 +78,10 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
 
         for(const taskTypeKey in pluginTaskManifests){
             for(const manifest of pluginTaskManifests[taskTypeKey]){
-                if(manifest.uiModule === slotName){
+                const key = moduleKey(slotName, manifest.uiModule, taskTypeKey)
+                if(key){
                     if(manifest.staticInfo){
-                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo as ManifestsRegistry[T]
+                        taskAdditionalInfoRemote.value[key] = manifest.staticInfo as ManifestsRegistry[T]
                     }
                 }
             }
@@ -80,7 +89,8 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
 
         for(const taskTypeKey in pluginTaskManifests){
             for(const manifest of pluginTaskManifests[taskTypeKey]){
-                if(manifest.uiModule === slotName){
+                const key = moduleKey(slotName, manifest.uiModule, taskTypeKey)
+                if(key){
                     const remoteName = `remote--${taskTypeKey}`
                     const basePath = `${apiUrlWithoutTenants()}/plugins/${manifest.group}/pluginUi/`
 
@@ -114,11 +124,11 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
                     })
 
                     const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : []
-                    const remoteId = `${remoteName}/${taskRoot}/${slotName}`
+                    const remoteId = `${remoteName}/${taskRoot}/${manifest.uiModule}`
                     
-                    let module: {default: Component} | null = null
+                    let module: {default: Component, getSubtitle?: (ctx: never) => unknown} | null = null
                     try {
-                        module = await loadRemote<{default: Component}>(remoteId)
+                        module = await loadRemote<{default: Component, getSubtitle?: (ctx: never) => unknown}>(remoteId)
                     } catch(err) {
                         console.error(`[FederatedModule] loadRemote FAILED for "${remoteId}":`, err)
                         continue
@@ -129,7 +139,10 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
                         continue
                     }
 
-                    RemoteComponents[taskTypeKey] = markRaw(wrapWithErrorBoundary(module.default))
+                    RemoteComponents[key] = markRaw(wrapWithErrorBoundary(module.default))
+                    if(typeof module.getSubtitle === "function"){
+                        subtitleResolvers[key] = module.getSubtitle
+                    }
                 }
             }
         }
@@ -166,6 +179,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         resolveRemoteComponent,
         hasResolvedComponent,
         componentTypeFor,
+        subtitleResolvers,
     }
 }
 

@@ -15,7 +15,7 @@
         <div class="editor-wrapper">
             <KsSplitter class="default-theme editor-panels" :layout="splitOrientation">
                 <KsSplitterPanel min="100">
-                    <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
+                    <MultiPanelTabs v-model="panels" v-model:maximizedPanelIndex="maximizedPanelIndex" @remove-tab="onRemoveTab" />
                 </KsSplitterPanel>
                 <KsSplitterPanel v-if="bottomVisible && slots['bottom-panel']" size="30%" min="100">
                     <slot name="bottom-panel" />
@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, useSlots} from "vue"
+    import {computed, ref, useSlots} from "vue"
     import {useStorage} from "@vueuse/core"
     import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"
     import ViewSplitHorizontal from "vue-material-design-icons/ViewSplitHorizontal.vue"
@@ -59,7 +59,17 @@
 
     const defaultPanelSize = computed(() => panels.value.length ? panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length : 1)
 
+    const maximizedPanelIndex = ref<number | null>(null)
+
+    function leaveFullscreenUnlessTabIsShown(tabValue: string) {
+        const index = maximizedPanelIndex.value
+        if (index !== null && !panels.value[index]?.tabs.some(t => t.uid === tabValue)) {
+            maximizedPanelIndex.value = null
+        }
+    }
+
     function focusTab(tabValue: string){
+        leaveFullscreenUnlessTabIsShown(tabValue)
         for(const panel of panels.value){
             const t = panel.tabs.find(e => e.uid === tabValue)
             if(t) panel.activeTab = t
@@ -114,6 +124,8 @@
         if(emit("set-tab-value", tabValue) === false) {
             return
         }
+
+        leaveFullscreenUnlessTabIsShown(tabValue)
 
         if(openTabs.value.includes(tabValue)){
             onRemoveTab(tabValue)

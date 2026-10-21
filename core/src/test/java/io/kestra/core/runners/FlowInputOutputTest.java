@@ -1703,6 +1703,29 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldCheckASelectColumnAgainstTheValuesOfItsExpression() {
+        MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
+        TableInput components = TableInput.builder()
+            .id("components")
+            .type(Type.TABLE)
+            .dependsOn(new DependsOn(List.of("component_types"), null))
+            .columns(List.of(SelectInput.builder().id("type").type(Type.SELECT).expression("{{ inputs.component_types }}").build()))
+            .build();
+
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.<Input<?>>of(types, components),
+            null,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("component_types", List.of("linux"), "components", "[{\"type\": \"linux\"}, {\"type\": \"windows\"}]")
+        );
+
+        InputAndValue table = values.get(1);
+        assertThat(((SelectInput) ((TableInput) table.input()).getColumns().getFirst()).getValues()).extracting(ValueOption::value).containsExactly("linux");
+        assertThat(table.exceptions()).extracting(InputOutputValidationException::getMessage).singleElement().asString()
+            .contains("row 2, column `type`");
+    }
+
+    @Test
     void shouldResolveTableNestedInFormAsNestedList() {
         Flow flow = flowWith(
             FormInput.builder().id("env").type(Type.FORM).inputs(List.of(disksInput(null, null))).build()

@@ -2,7 +2,7 @@ function isNullOrUndefined(value: unknown): value is null | undefined {
     return value === null || value === undefined
 }
 
-export function removeNullAndUndefined(obj: unknown): unknown {
+export function removeNullAndUndefined(obj: unknown, keepAsIs?: (key: string) => boolean): unknown {
     if (isNullOrUndefined(obj)) {
         return undefined
     }
@@ -21,6 +21,11 @@ export function removeNullAndUndefined(obj: unknown): unknown {
         for (const key in record) {
             const rawValue = record[key]
             if (isNullOrUndefined(rawValue)) {
+                continue
+            }
+            if (keepAsIs?.(key)) {
+                hasValue = true
+                newObj[key] = rawValue
                 continue
             }
             const newVal = removeNullAndUndefined(rawValue)

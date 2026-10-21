@@ -74,5 +74,11 @@ describe("cleanUp", () => {
                 ],
             })
         })
+
+        it("keeps a top-level field as it is when told to, empty values included", () => {
+            const task = {id: "rows", description: null, defaults: [{name: "web", cpus: null}, {name: null, cpus: null}]}
+            expect(removeNullAndUndefined(task, (key) => key === "defaults"))
+                .toEqual({id: "rows", defaults: [{name: "web", cpus: null}, {name: null, cpus: null}]})
+        })
     })
 })

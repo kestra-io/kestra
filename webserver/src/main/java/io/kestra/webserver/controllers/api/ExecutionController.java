@@ -1117,22 +1117,20 @@ public class ExecutionController {
         // Same reason for the Micronaut propagated context: it carries the server request and its
         // authentication, which the CREATE event listeners need to attribute the execution to its author.
         final PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
-        return flowInputOutput.readExecutionInputs(resolvedFlow, executionId, contributed, inputs)
-            .flatMap(executionInputs ->
+        return flowInputOutput.validateExecutionInputs(resolvedFlow, executionId, contributed, inputs)
+            .flatMap(validated ->
             {
-                List<Check> failed = flowService.getFailedChecks(resolvedFlow, executionInputs);
+                List<Check> failed = flowService.getFailedChecks(resolvedFlow, validated.typed());
                 Check.Behavior behavior = Check.resolveBehavior(failed);
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
-                    return Mono.error(
-                        new IllegalArgumentException(
-                            "Flow execution blocked: one or more condition checks evaluated to false."
-                                + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(
-                                    Collectors.joining(", ")
-                                )
-                        )
-                    );
+                    return Mono.error(blockedByChecks(failed));
                 }
 
+                // A failed execution runs nothing, so it does not write the edits made to its assets either.
+                FlowInputOutput.ValidatedInputs ofKind = kind
+                    .map(k -> validated.withExecution(validated.execution().toBuilder().kind(k).build()))
+                    .orElse(validated);
+                Map<String, Object> executionInputs = flowInputOutput.storeExecutionInputs(ofKind, !Check.Behavior.FAIL_EXECUTION.equals(behavior));
                 Create createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
                     .withLabels(parsedLabels)
                     .withInputs(executionInputs)
@@ -1614,7 +1612,7 @@ public class ExecutionController {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
         controlDraftExecutableAs(flow, execution.getKind());
 
-        return blockingReplay(execution, taskRunId, revision, breakpoints);
+        return blockingReplay(execution, IdUtils.create(), taskRunId, revision, breakpoints);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1656,8 +1654,23 @@ public class ExecutionController {
             Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
             controlDraftExecutableAs(flow, current.getKind());
 
-            return flowInputOutput.readExecutionInputs(flow, current, inputs)
-                .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+            requireTaskRun(current, taskRunId);
+            String newExecutionId = IdUtils.create();
+            // The edits made to the assets of ASSET inputs are written as the replayed execution, not the one it replays.
+            return flowInputOutput.validateExecutionInputs(flow, current, inputs)
+                .flatMap(validated -> {
+                    // The executor evaluates the checks again on the replay, but only after the edits would have been written.
+                    List<Check> failed = flowService.getFailedChecks(flow, validated.typed());
+                    Check.Behavior behavior = Check.resolveBehavior(failed);
+                    if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
+                        return Mono.error(blockedByChecks(failed));
+                    }
+                    Map<String, Object> newInputs = flowInputOutput.storeExecutionInputs(
+                        validated.withExecution(current.toBuilder().id(newExecutionId).build()),
+                        !Check.Behavior.FAIL_EXECUTION.equals(behavior)
+                    );
+                    return Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), newExecutionId, taskRunId, revision, breakpoints));
+                });
         });
     }
 
@@ -1684,14 +1697,16 @@ public class ExecutionController {
         return HttpResponse.ok();
     }
 
-    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
-        if (taskRunId != null) {
-            if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
-                throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
-            }
-        }
+    private static IllegalArgumentException blockedByChecks(List<Check> failed) {
+        return new IllegalArgumentException(
+            "Flow execution blocked: one or more condition checks evaluated to false."
+                + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", "))
+        );
+    }
 
-        var newExecutionId = IdUtils.create();
+    private HttpResponse<Execution> blockingReplay(Execution execution, String newExecutionId, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+        requireTaskRun(execution, taskRunId);
+
         Actor actor = actorResolver.resolve();
 
         this.replayCounter.increment();
@@ -1734,6 +1749,12 @@ public class ExecutionController {
             executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
                 .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"))
         ));
+    }
+
+    private static void requireTaskRun(Execution execution, @Nullable String taskRunId) {
+        if (taskRunId != null && execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
+            throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
+        }
     }
 
     private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId, @Nullable Actor actor)

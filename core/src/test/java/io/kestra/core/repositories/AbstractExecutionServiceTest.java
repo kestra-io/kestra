@@ -89,6 +89,41 @@ public abstract class AbstractExecutionServiceTest {
     }
 
     @Test
+    void shouldKeepTheNewValuesOfAReplayWhenItsInputsWereChanged() throws Exception {
+        String tenantId = TestsUtils.randomTenant();
+        Flow flow = Flow.builder()
+            .namespace("io.kestra.test")
+            .id("replay-searchable-changed")
+            .tenantId(tenantId)
+            .revision(1)
+            .build();
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenantId)
+            .state(new State().withState(State.Type.RUNNING).withState(State.Type.SUCCESS))
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(flow.getRevision())
+            .metadata(ExecutionMetadata.builder().originalCreatedDate(Instant.now()).build())
+            .build();
+        searchableDataRepository.saveBatch(List.of(
+            new SearchableData(tenantId, execution.getId(), "orderId", 0, "ORD-1"),
+            new SearchableData(tenantId, execution.getId(), "orderIds", 0, "ORD-2"),
+            new SearchableData(tenantId, execution.getId(), "orderIds", 1, "ORD-3")
+        ));
+        String replayId = IdUtils.create();
+        searchableDataRepository.saveBatch(List.of(new SearchableData(tenantId, replayId, "orderIds", 0, "NEW-1")));
+
+        executionService.replay(execution, flow, null, null, Optional.empty(), false, replayId);
+
+        assertThat(searchableDataRepository.findByExecutionId(tenantId, replayId, Pageable.from(1, 10)))
+            .containsExactlyInAnyOrder(
+                new SearchableData(tenantId, replayId, "orderId", 0, "ORD-1"),
+                new SearchableData(tenantId, replayId, "orderIds", 0, "NEW-1")
+            );
+    }
+
+    @Test
     void purge() throws Exception {
         String tenantId = TestsUtils.randomTenant();
         URL resource = AbstractExecutionServiceTest.class.getClassLoader().getResource("application-test.yml");

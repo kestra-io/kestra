@@ -48,6 +48,7 @@ const globalConfig = {
         KsFilter: FilterStub,
         TaskRunDetails: {template: "<div data-test='task-run-details' />"},
         LoopMergedLogs: MergedStub,
+        LoopIterationsNotice: {template: "<div data-test='loop-iterations-notice' />"},
         Restart: true,
         LogDisplaySettings: true,
         LogLine: true,
@@ -94,6 +95,17 @@ describe("executions/Logs loop iterations mode", () => {
         expect(wrapper.find("[data-test='task-run-details']").exists()).toBe(false)
         expect(routeState.route.query[LEVEL_KEY]).toBe("ERROR")
         expect(mergedLevel(wrapper)).toEqual({[LEVEL_KEY]: "ERROR"})
+    })
+
+    test("shouldOnlySayIterationLogsAreHiddenWhenTheyAre", async () => {
+        const wrapper = mountLogs(loopFlow)
+        await flushPromises()
+        expect(wrapper.find("[data-test='loop-iterations-notice']").exists()).toBe(false)
+
+        wrapper.findComponent<typeof FilterStub>("[data-test='logs-mode-switch']").vm.$emit("update:modelValue", "execution")
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='loop-iterations-notice']").exists()).toBe(true)
     })
 
     test("shouldKeepTheExistingViewAndDefaultLevelWhenTheFlowHasNoLoop", async () => {

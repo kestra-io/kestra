@@ -541,6 +541,8 @@
     },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
+    "workspace": "工作区",
+    "resources": "资源",
     "usage": "使用情况",
     "namespaces": "命名空间",
     "tasks": "任务",

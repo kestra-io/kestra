@@ -612,7 +612,10 @@
         }
 
         taskYaml.value = value
-        timer.value = setTimeout(commitEdit, 500)
+        timer.value = setTimeout(() => {
+            timer.value = undefined
+            commitEdit()
+        }, 500)
     }
 
     const flushPendingEdit = () => {

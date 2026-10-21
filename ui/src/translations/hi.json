@@ -242,6 +242,7 @@
       "last7days": "पिछले 7 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
+      "allTime": "हर समय",
       "next5minutes": "अगले 5 मिनट",
       "next15minutes": "अगले 15 मिनट",
       "next1hour": "अगले 1 घंटे",
@@ -522,6 +523,21 @@
       "revision": "संशोधन {revision}",
       "attempts": "{count} प्रयास | {count} प्रयास",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
+    "execution_mobile": {
+      "failed_task": "विफल task",
+      "view_task_logs": "task के logs देखें",
+      "revision_short": "रिव. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "कम labels दिखाएं",
+      "jump_to_first_failure": "पहली विफलता पर जाएं",
+      "open_logs": "Logs खोलें"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "साइन-इन के बाद",
+      "execution_tab": "निष्पादन {id} · {tab} टैब",
+      "execution": "निष्पादन {id}",
+      "tab": "{tab} टैब"
     },
     "concurrency limits": "समानांतरता सीमाएँ",
     "system overview": "सिस्टम अवलोकन",

@@ -18,31 +18,39 @@
         executionId: string
     }>()
 
+    const quoteSegment = (segment: string) => `['${segment.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}']`
+    const inputExpression = (id: string) => `{{ inputs${id.split(".").map(quoteSegment).join("")} }}`
+
     const loading = ref(false)
     const error = ref(false)
     const values = ref<Record<string, string>>({})
 
+    let latestLoad = 0
     async function load() {
+        const current = ++latestLoad
         if (props.inputIds.length === 0) {
             values.value = {}
+            loading.value = false
             return
         }
 
         loading.value = true
         error.value = false
         try {
-            const expressions = props.inputIds.map((id) => `{{ inputs.${id} }}`)
+            const inputIds = [...props.inputIds]
+            const expressions = inputIds.map(inputExpression)
             const {rendered} = await renderExpressions({
                 expressions,
                 executionId: props.executionId,
             })
+            if (current !== latestLoad) return
             values.value = Object.fromEntries(
-                props.inputIds.map((id, index) => [id, rendered?.[expressions[index]] ?? ""]),
+                inputIds.map((id, index) => [id, rendered?.[expressions[index]] ?? ""]),
             )
         } catch {
-            error.value = true
+            if (current === latestLoad) error.value = true
         } finally {
-            loading.value = false
+            if (current === latestLoad) loading.value = false
         }
     }
 

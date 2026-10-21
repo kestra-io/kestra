@@ -28,6 +28,12 @@ function mountOutputs(referencedTaskIds: string[], taskRunList: ReturnType<typeo
     })
 }
 
+function deferred<T>() {
+    let resolve!: (value: T) => void
+    const promise = new Promise<T>((res) => { resolve = res })
+    return {promise, resolve}
+}
+
 describe("FailureUpstreamOutputs", () => {
     afterEach(() => {
         vi.clearAllMocks()
@@ -72,5 +78,21 @@ describe("FailureUpstreamOutputs", () => {
         await flushPromises()
 
         expect(wrapper.text()).toContain("Could not load")
+    })
+
+    it("should keep the current references' outputs when an earlier load answers last", async () => {
+        const first = deferred<Record<string, unknown>>()
+        const second = deferred<Record<string, unknown>>()
+        mocks.loadTaskRunOutputs.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+
+        const wrapper = mountOutputs(["extract"], [taskRun("tr-extract", "extract"), taskRun("tr-load", "load")])
+        await wrapper.setProps({referencedTaskIds: ["load"]})
+        second.resolve({rows: "from load"})
+        await flushPromises()
+        first.resolve({rows: "from extract"})
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("load.rows")
+        expect(wrapper.text()).not.toContain("extract.rows")
     })
 })

@@ -33,6 +33,12 @@ function mountConfig(props: Partial<{rawBlock: string | undefined; flowLoading: 
     })
 }
 
+function deferred<T>() {
+    let resolve!: (value: T) => void
+    const promise = new Promise<T>((res) => { resolve = res })
+    return {promise, resolve}
+}
+
 describe("FailureResolvedConfig", () => {
     afterEach(() => {
         vi.clearAllMocks()
@@ -83,5 +89,21 @@ describe("FailureResolvedConfig", () => {
         await flushPromises()
 
         expect(wrapper.text()).toContain("Could not resolve")
+    })
+
+    it("should keep the selected task run's configuration when an earlier render answers last", async () => {
+        const first = deferred<{rendered: Record<string, string>}>()
+        const second = deferred<{rendered: Record<string, string>}>()
+        mocks.renderExpressions.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+
+        const wrapper = mountConfig()
+        await wrapper.setProps({taskRunId: "tr-2"})
+        second.resolve({rendered: {[RAW_BLOCK]: "resolved for tr-2"}})
+        await flushPromises()
+        first.resolve({rendered: {[RAW_BLOCK]: "resolved for tr-1"}})
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("resolved for tr-2")
+        expect(wrapper.text()).not.toContain("resolved for tr-1")
     })
 })

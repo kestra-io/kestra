@@ -8,9 +8,11 @@ class Kestra < Formula
   depends_on "openjdk@25"
 
   def install
-    bin.install "kestra-2.0.7" => "kestra"
+    libexec.install "kestra-2.0.7" => "kestra"
     # Release assets lose their executable bit on download.
-    chmod 0555, bin/"kestra"
+    chmod 0555, libexec/"kestra"
+    # openjdk@25 is keg-only, so it is not on PATH: point the launcher at it.
+    (bin/"kestra").write_env_script libexec/"kestra", JAVA_HOME: Formula["openjdk@25"].opt_prefix
   end
 
   test do

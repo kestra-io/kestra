@@ -85,7 +85,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts :baseFilters="lockedFilters" showDefault class="mb-4" />
+                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts :baseFilters="lockedFilters" showDefault class="stat-charts" />
             </template>
 
             <template #bulk-actions>
@@ -252,10 +252,10 @@
                     <template v-else-if="col.prop === 'inputs'">
                         <KsTooltip>
                             <template #content>
-                                <pre class="mb-0">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
+                                <pre class="inputs-preview">{{ JSON.stringify(scope.row?.inputs, null, "\t") }}</pre>
                             </template>
                             <div>
-                                <Import v-if="scope.row?.inputs" class="fs-5" />
+                                <Import v-if="scope.row?.inputs" class="inputs-icon" />
                             </div>
                         </KsTooltip>
                     </template>
@@ -319,7 +319,7 @@
                     :value="item.code"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="item.code" />
+                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="item.code" />
                         <i18n-t keypath="mark as" tag="span">
                             <template #status><code>{{ item.code }}</code></template>
                         </i18n-t>
@@ -362,7 +362,7 @@
                     :value="state"
                 >
                     <template #default>
-                        <KsExecutionStatus size="small" :label="false" class="me-1" :status="state" />
+                        <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="state" />
                         <i18n-t keypath="unqueue as" tag="span">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>
@@ -1258,6 +1258,22 @@
 </script>
 
 <style scoped>
+.stat-charts {
+    margin-bottom: var(--ks-spacing-5);
+}
+
+.inputs-preview {
+    margin-bottom: 0;
+}
+
+.inputs-icon {
+    font-size: var(--ks-font-size-xl);
+}
+
+.status-indicator {
+    margin-inline-end: var(--ks-spacing-1);
+}
+
 .full-container {
     min-height: 0;
     display: flex;

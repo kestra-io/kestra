@@ -94,6 +94,8 @@ export interface InputMetaData {
     metadata?: Record<string, unknown>;
     multiple?: boolean;
     status?: string;
+    editableProperties?: boolean;
+    persistOverrides?: "NONE" | "UPDATE" | "CLONE";
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */

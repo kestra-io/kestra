@@ -136,16 +136,27 @@ export function buildWizardSteps(inputs: InputMetaData[] | undefined): WizardSte
     return result
 }
 
+function parseAssetInputValue(value: unknown): unknown {
+    if (typeof value !== "string" || !/^\s*[[{]/.test(value)) {
+        return value
+    }
+    try {
+        return JSON.parse(value)
+    } catch {
+        return value
+    }
+}
+
+/** The edits made in the form to the picked asset of an `ASSET` input, if any. */
+export function assetInputOverrides(value: unknown): Record<string, unknown> | undefined {
+    const parsed = parseAssetInputValue(value)
+    const overrides = parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as {overrides?: unknown}).overrides : undefined
+    return overrides !== null && typeof overrides === "object" ? overrides as Record<string, unknown> : undefined
+}
+
 /** The asset ids an `ASSET` input value designates: an id, a JSON array of ids, or the assets the server resolved. */
 export function assetInputIds(value: unknown): string[] {
-    let parsed = value
-    if (typeof value === "string" && value.trim().startsWith("[")) {
-        try {
-            parsed = JSON.parse(value)
-        } catch {
-            parsed = value
-        }
-    }
+    const parsed = parseAssetInputValue(value)
     const items = Array.isArray(parsed) ? parsed : [parsed]
     return items
         .map((item) => (item !== null && typeof item === "object" ? (item as {id?: unknown}).id : item))
@@ -180,7 +191,12 @@ export function normalize(type: InputType | undefined, value: any) {
         }
     } else if ((type as string) === "ASSET") {
         const ids = assetInputIds(res)
-        res = Array.isArray(res) || (typeof res === "string" && res.trim().startsWith("[")) ? JSON.stringify(ids) : ids[0]
+        const overrides = assetInputOverrides(res)
+        if (overrides) {
+            res = JSON.stringify({id: ids[0], overrides})
+        } else {
+            res = Array.isArray(res) || (typeof res === "string" && res.trim().startsWith("[")) ? JSON.stringify(ids) : ids[0]
+        }
     } else if (type === "YAML") {
         if (typeof res !== "string") {
             res = YAML_UTILS.stringify(res).toString()

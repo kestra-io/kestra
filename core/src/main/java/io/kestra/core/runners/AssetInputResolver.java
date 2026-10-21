@@ -34,4 +34,12 @@ public interface AssetInputResolver {
     default List<Execution> expandInputs(List<Execution> executions) {
         return executions;
     }
+
+    /**
+     * Reduces a resolved value to what the execution being created stores, persisting the edits made in the form when
+     * {@code persistOverrides} asks for it. Only called on a real execution creation, never to validate the inputs.
+     */
+    default Object store(Execution execution, AssetInput input, Object resolved) {
+        return AssetInput.storedValue(resolved);
+    }
 }

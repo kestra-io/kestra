@@ -17,13 +17,17 @@ import jakarta.inject.Singleton;
 public class AssetInputValidator implements ConstraintValidator<AssetInputValidation, AssetInput> {
     @Override
     public boolean isValid(@Nullable AssetInput value, @NonNull AnnotationValue<AssetInputValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
-        if (value == null || value.getAssetId() == null || PebbleUtil.containsOpeningBlockDelimiter(value.getAssetId())) {
+        if (value == null) {
             return true;
         }
 
-        Optional<String> violation = RegexUtils.isSafeUserRegex(value.getAssetId())
-            ? RegexUtils.syntaxError(value.getAssetId()).map(error -> "`assetId` is not a valid regular expression: " + error)
-            : Optional.of("`assetId` is too long or prone to catastrophic backtracking");
+        Optional<String> violation = assetIdViolation(value.getAssetId());
+        if (violation.isEmpty() && Boolean.TRUE.equals(value.getEditableProperties()) && Boolean.TRUE.equals(value.getMultiple())) {
+            violation = Optional.of("`editableProperties` cannot be used with `multiple`");
+        }
+        if (violation.isEmpty() && AssetInput.PersistOverrides.UNKNOWN == value.getPersistOverrides()) {
+            violation = Optional.of("`persistOverrides` must be one of NONE, UPDATE or CLONE");
+        }
         if (violation.isEmpty()) {
             return true;
         }
@@ -31,5 +35,14 @@ public class AssetInputValidator implements ConstraintValidator<AssetInputValida
         context.disableDefaultConstraintViolation();
         context.buildConstraintViolationWithTemplate(violation.get()).addConstraintViolation();
         return false;
+    }
+
+    private static Optional<String> assetIdViolation(@Nullable String assetId) {
+        if (assetId == null || PebbleUtil.containsOpeningBlockDelimiter(assetId)) {
+            return Optional.empty();
+        }
+        return RegexUtils.isSafeUserRegex(assetId)
+            ? RegexUtils.syntaxError(assetId).map(error -> "`assetId` is not a valid regular expression: " + error)
+            : Optional.of("`assetId` is too long or prone to catastrophic backtracking");
     }
 }

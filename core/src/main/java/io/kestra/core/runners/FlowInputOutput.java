@@ -314,7 +314,7 @@ public class FlowInputOutput {
                 if (it.exceptions() != null && !it.exceptions().isEmpty()) {
                     throw InputOutputValidationException.merge(it.exceptions());
                 }
-                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.input() instanceof AssetInput ? AssetInput.storedValue(it.value()) : it.value());
+                return new AbstractMap.SimpleEntry<>(it.input().getId(), it.input() instanceof AssetInput assetInput ? assetInputResolver.store(execution, assetInput, it.value()) : it.value());
             })
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
         if (resolved.size() < data.size()) {

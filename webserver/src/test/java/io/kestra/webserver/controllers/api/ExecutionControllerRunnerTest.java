@@ -3969,6 +3969,21 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows("flows/valids/webhook-response-body.yaml")
+    void shouldRenderResponseBodyForEachCallWhenResponseBodyIsSet() {
+        String webhookUri = "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-response-body/webhook-response-body";
+
+        HttpResponse<String> first = client.toBlocking().exchange(POST(webhookUri + "?validationToken=abc123", ""), String.class);
+        HttpResponse<String> second = client.toBlocking().exchange(POST(webhookUri + "?validationToken=xyz789", ""), String.class);
+
+        assertThat(first.getStatus().getCode()).isEqualTo(200);
+        assertThat(first.getContentType().orElseThrow().toString()).isEqualTo("text/plain");
+        assertThat(first.body()).isEqualTo("abc123");
+        // the trigger is shared by both calls, so the second one must not get the body rendered for the first one
+        assertThat(second.body()).isEqualTo("xyz789");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/minimal.yaml")
     void exportExecutions(Execution execution) {
         HttpResponse<byte[]> response = client.toBlocking().exchange(

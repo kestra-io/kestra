@@ -29,6 +29,9 @@ class RunContextPropertyTest {
 
         runContextProperty = new RunContextProperty<>(null, runContext);
         assertThat(runContextProperty.as(String.class, Map.of("key", "value"))).isEqualTo(Optional.empty());
+
+        runContextProperty = new RunContextProperty<String>(null, runContext).skipCache();
+        assertThat(runContextProperty.as(String.class)).isEqualTo(Optional.empty());
     }
 
     @Test

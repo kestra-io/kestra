@@ -1,0 +1,15 @@
+id: webhook-response-body
+namespace: io.kestra.tests
+
+tasks:
+  - id: log_request
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ trigger.parameters.validationToken[0] ?? 'notification received' }}"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhook-response-body
+    wait: true
+    responseContentType: "text/plain"
+    responseBody: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"

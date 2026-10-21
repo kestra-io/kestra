@@ -573,9 +573,20 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean }) => {
+    const loadLogs = (options: {
+        executionId: string;
+        params?: FilterQuery;
+        store?: boolean;
+        page?: number;
+        size?: number;
+    }) => {
         return LogsAPI.listLogsFromExecution(
-            {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
+            {
+                executionId: options.executionId,
+                page: options.page ?? (options.params?.page !== undefined ? Number(options.params.page) : undefined),
+                size: options.size ?? (options.params?.size !== undefined ? Number(options.params.size) : undefined),
+                filters: routeQueryToQueryFilters(options.params ?? {}),
+            },
         ).then(data => {
             if (options.store === false) {
                 return data

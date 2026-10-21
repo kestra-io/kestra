@@ -288,4 +288,30 @@ describe("TaskRunActions", () => {
         // Defaults to the first task run since it's a clean execution id
         expect((wrapper2.vm as unknown as { selectedTaskRunId: string }).selectedTaskRunId).toBe("tr-1")
     })
+
+    it("requests 100 logs when triggering fix with AI", async () => {
+        const executionsStore = useExecutionsStore()
+        executionsStore.loadLogs = vi.fn().mockResolvedValue([])
+
+        const wrapper = mountActions({
+            taskRun: {
+                id: "tr-failed",
+                taskId: "task-failed",
+                state: state("FAILED"),
+                attempts: [{state: state("FAILED")}],
+            },
+            execution: executionProps("ex-failed"),
+        })
+
+        const fixBtn = wrapper.find(".fix-with-ai")
+        expect(fixBtn.exists()).toBe(true)
+        await fixBtn.trigger("click")
+
+        expect(executionsStore.loadLogs).toHaveBeenCalledWith({
+            store: false,
+            executionId: "ex-failed",
+            params: {taskRunId: "tr-failed", minLevel: "ERROR"},
+            size: 100,
+        })
+    })
 })

@@ -99,7 +99,7 @@
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
             :allowDrop="
-                (_draggingNode: KsTreeNode<TreeNode>, drop: KsTreeNode<TreeNode>, dropType: AllowDropType) => !drop.data?.leaf || dropType !== 'inner'
+                (_draggingNode, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
             "
             :draggable="canManageFiles"
             nodeKey="id"
@@ -402,8 +402,6 @@
         TreeNodeFile,
         useFileExplorerStore,
     } from "../../stores/fileExplorer"
-    import type {KsTreeNode} from "@kestra-io/design-system"
-    import type {AllowDropType, TreeNodeData} from "element-plus"
     import Revisions, {Revision} from "../layout/Revisions.vue"
     import {FILES_REFRESH_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
     import Crud from "override/components/auth/Crud.vue"
@@ -537,8 +535,8 @@
         return {keypath: "namespace files.dialog.deletion.files", params: {count: files.length}}
     })
 
-    function nodeClass(data: TreeNodeData): string {
-        if (selectedNodes.value.includes(data.id)) {
+    function nodeClass(data: Record<string, unknown>): string {
+        if (typeof data.id === "string" && selectedNodes.value.includes(data.id)) {
             return "node selected-tree-node"
         }
         return "node"

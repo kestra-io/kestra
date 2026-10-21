@@ -154,7 +154,7 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
 
     void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);
 
-    void deleteByFilters(String tenantId, List<QueryFilter> filters);
+    int deleteByFilters(String tenantId, List<QueryFilter> filters);
 
     default int deleteByIds(String tenantId, List<String> ids) {
         return 0;

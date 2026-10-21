@@ -1,6 +1,7 @@
 package io.kestra.core.utils;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Utility class for evaluating condition truthiness.
@@ -16,17 +17,17 @@ public final class TruthUtils {
     }
 
     /**
-     * Checks if the condition is truthy (non-null and not in {@code ["false", "0", "-0", ""]}).
+     * Checks if the condition is truthy (non-null and not in {@code ["false", "0", "-0", ""]}, compared case-insensitively).
      */
     public static boolean isTruthy(String condition) {
-        return condition != null && !FALSE_VALUES.contains(condition.trim());
+        return condition != null && !FALSE_VALUES.contains(condition.trim().toLowerCase(Locale.ROOT));
     }
 
     /**
-     * Checks if the condition is explicitly falsy (non-null and in {@code ["false", "0", "-0", ""]}).
+     * Checks if the condition is explicitly falsy (non-null and in {@code ["false", "0", "-0", ""]}, compared case-insensitively).
      * Returns {@code false} when the condition is {@code null}.
      */
     public static boolean isFalsy(String condition) {
-        return condition != null && FALSE_VALUES.contains(condition.trim());
+        return condition != null && FALSE_VALUES.contains(condition.trim().toLowerCase(Locale.ROOT));
     }
 }

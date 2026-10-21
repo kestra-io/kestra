@@ -23,4 +23,14 @@ class TruthUtilsTest {
         assertThat(TruthUtils.isFalsy("")).isTrue();
         assertThat(TruthUtils.isFalsy(null)).isFalse();
     }
+
+    @Test
+    void shouldTreatFalseAsFalsyWhenCaseVaries() {
+        assertThat(TruthUtils.isTruthy("False")).isFalse();
+        assertThat(TruthUtils.isTruthy("FALSE")).isFalse();
+        assertThat(TruthUtils.isTruthy("fAlSe")).isFalse();
+        assertThat(TruthUtils.isFalsy("False")).isTrue();
+        assertThat(TruthUtils.isFalsy("FALSE")).isTrue();
+        assertThat(TruthUtils.isFalsy("fAlSe")).isTrue();
+    }
 }

@@ -106,6 +106,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
                 .required(getRequired())
                 .defaults(getDefaults())
                 .description(getDescription())
+                .descriptionDisplayMode(getDescriptionDisplayMode())
                 .dependsOn(getDependsOn())
                 .itemType(getItemType())
                 .displayName(getDisplayName())

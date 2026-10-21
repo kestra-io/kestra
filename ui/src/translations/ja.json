@@ -1987,7 +1987,32 @@
       "filter_failed": "失敗 {count}",
       "filter_success": "成功 {count}",
       "search_value": "完全一致する value で検索",
-      "range": "{total} 件中 {from}–{to}"
+      "range": "{total} 件中 {from}–{to}",
+      "tabs": {
+        "attempts": "試行",
+        "configuration": "設定",
+        "inputs_outputs": "Input と output",
+        "structure": "構造"
+      },
+      "no_error": "この Task 実行にはエラーメッセージが記録されていません。",
+      "no_attempts": "この Task 実行には試行が記録されていません。",
+      "elapsed": "+{duration}",
+      "configuration_empty": "この実行で使われた flow のリビジョンに、この task の定義が見つかりません。",
+      "configuration_error": "この task の設定を解決できませんでした。Flowを編集 から再試行してください。",
+      "execution_inputs": "実行の input",
+      "no_inputs": "この flow は input を宣言していません。",
+      "inputs_error": "実行の input を解決できませんでした。",
+      "consumed_outputs": "参照している output",
+      "no_consumed_outputs": "この task の設定は、他の task の output を参照していません。",
+      "consumed_outputs_error": "参照先の task の output を読み込めませんでした。",
+      "view_definition": "Task の定義を表示",
+      "hide_definition": "Task の定義を非表示",
+      "relation": {
+        "focused": "この task",
+        "parent": "親 task",
+        "sibling": "兄弟 task",
+        "child": "子 task"
+      }
     },
     "loop_iterations_notice": {
       "logs": "ループのイテレーションは個別のサブ実行として実行されるため、ログはここに表示されません。",

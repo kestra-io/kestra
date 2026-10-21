@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {ref} from "vue"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import {useExecutionsStore} from "../../stores/executions"
 import LoopIterationTree from "./LoopIterationTree.vue"
@@ -96,6 +97,41 @@ describe("LoopIterationTree", () => {
         expect(mockExecution).toHaveBeenCalledTimes(1)
         expect(mockExecution).toHaveBeenCalledWith({executionId: "it-0"})
         expect(wrapper.findAll("[data-test='iteration-task-run']")).toHaveLength(1)
+    })
+
+    it("shouldListTheInnerLoopIterationsWhenANestedLoopRowIsExpandedInsideAnIteration", async () => {
+        useExecutionsStore().flow = {
+            id: "nested_loop_demo",
+            namespace: "company.team",
+            tasks: [{id: "per_region", type: LOOP_TYPE, tasks: [{id: "per_quarter", type: LOOP_TYPE, tasks: []}]}],
+        } as unknown as FlowForExecution
+        findExecutions.mockImplementation((async (options: Record<string, unknown>) => {
+            if (options.onlyTotal) return 1
+            return options["filters[taskId][EQUALS]"] === "per_quarter"
+                ? {results: [iterationExecution("inner-0", "Q1", 0)], total: 1}
+                : {results: [iterationExecution("outer-0", "EMEA", 0)], total: 1}
+        }) as never)
+        mockExecution.mockResolvedValue({
+            id: "outer-0",
+            taskRunList: [{id: "tr-quarter", taskId: "per_quarter", state: {current: "SUCCESS", histories}}],
+        })
+        const wrapper = mountTree()
+        await flushPromises()
+
+        await wrapper.get("[data-test='gantt-row-chevron']").trigger("click")
+        await flushPromises()
+        await wrapper.get("[data-test='iteration-task-run'] [data-test='gantt-row-chevron']").trigger("click")
+        await flushPromises()
+
+        expect(findExecutions).toHaveBeenCalledWith(expect.objectContaining({
+            "filters[parentId][EQUALS]": "outer-0",
+            "filters[kind][EQUALS]": "LOOP",
+            "filters[taskId][EQUALS]": "per_quarter",
+        }))
+        expect(wrapper.findAll("[data-test='loop-iteration-row']").map(row => row.text())).toEqual([
+            expect.stringContaining("EMEA"),
+            expect.stringContaining("Q1"),
+        ])
     })
 
     it("shouldSelectIterationRowWithoutTogglingItWhenRowIsClicked", async () => {

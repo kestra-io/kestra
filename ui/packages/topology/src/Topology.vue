@@ -41,7 +41,11 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...clusterProps, ...taskActionProps}" />
+                    </template>
+                </ClusterNode>
             </template>
 
             <template #node-dot="dotProps">
@@ -126,7 +130,11 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...CollapsedProps, ...taskActionProps}" />
+                    </template>
+                </CollapsedClusterNode>
             </template>
 
             <template #edge-edge="EdgeProps">

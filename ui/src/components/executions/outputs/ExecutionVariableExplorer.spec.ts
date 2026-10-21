@@ -21,6 +21,11 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     executionOutputs: vi.fn().mockResolvedValue({}),
 }))
 
+const variableValueRenderer = vi.fn()
+vi.mock("../../../override/components/executions/outputs/variableValueExtension", () => ({
+    useVariableValueRenderer: () => variableValueRenderer,
+}))
+
 vi.mock("../FilePreview.vue", () => ({
     default: {
         name: "FilePreview",
@@ -159,6 +164,10 @@ describe("ExecutionVariableExplorer", () => {
         setActivePinia(createPinia())
     })
 
+    afterEach(() => {
+        variableValueRenderer.mockReset()
+    })
+
     test("tags the flow outputs declared searchable by the flow", async () => {
         vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({orderIds: "ORD-1", plain: "x"})
         useExecutionsStore().flow = computeFlowForExecution({
@@ -205,6 +214,28 @@ describe("ExecutionVariableExplorer", () => {
 
         expect(items?.map((item) => [item.label, item.searchable])).toEqual([["orderId", true], ["plain", false]])
         expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(true)
+    })
+
+    test("shows the edition's viewer for a variable it renders, above the tree", async () => {
+        const flow = {id: "flow", namespace: "io.kestra.tests"} as FlowForExecution
+        useExecutionsStore().flow = flow
+        variableValueRenderer.mockImplementation((path: string) => path === "vars.vm" || path === "vars.unset" ? {template: "<div data-test=\"custom-viewer\" />"} : undefined)
+        const wrapper = mountExplorer({vm: {id: "web-01"}, other: {id: "db-01"}, unset: null})
+        await flushPromises()
+
+        await selectVariable(wrapper, "vm")
+
+        expect(variableValueRenderer).toHaveBeenCalledWith("vars.vm", flow)
+        expect(wrapper.find("[data-test=custom-viewer]").exists()).toBe(true)
+        expect(wrapper.findComponent({name: "KsJsonTree"}).exists()).toBe(true)
+
+        await selectVariable(wrapper, "other")
+
+        expect(wrapper.find("[data-test=custom-viewer]").exists()).toBe(false)
+
+        await selectVariable(wrapper, "unset")
+
+        expect(wrapper.find("[data-test=custom-viewer]").exists()).toBe(false)
     })
 
     test("uses render for variables containing expressions", async () => {

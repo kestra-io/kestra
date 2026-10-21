@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 import org.slf4j.event.Level;
@@ -232,7 +233,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/by-query")
     @Operation(tags = { "Logs" }, summary = "Delete logs matching the given filters")
-    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "200", description = "On success; `count` is omitted when the log store cannot report the number of deleted logs", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     @ApiResponse(responseCode = "400", description = "At least one valid filter is required", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<BulkResponse> deleteLogsByQuery(
         @Parameter(
@@ -243,10 +244,10 @@ public class LogController {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "At least one valid filter is required to delete logs by query.");
         }
 
-        int count = logRepository.deleteByFilters(
+        OptionalInt count = logRepository.deleteByFiltersAndCount(
             tenantService.resolveTenant(),
             QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
         );
-        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+        return HttpResponse.ok(BulkResponse.builder().count(count.isPresent() ? count.getAsInt() : null).build());
     }
 }

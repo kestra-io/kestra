@@ -63,7 +63,16 @@ const rootExecution = {
 
 const iterationExecution = (id: string, state = "RUNNING") => ({id, state: {current: state}, taskRunList: [], loopRun: {value: "AMER", index: Number(id.replace("it-", "")) - 1}})
 
-function setup(enabled = true) {
+const nestedGraph = {
+    nodes: [],
+    edges: [],
+    clusters: [
+        ...graph.clusters,
+        {cluster: {uid: "cluster_per_region.per_quarter", type: "x", taskNode: {uid: "per_region.per_quarter", task: {type: LOOP_TYPE}}}, nodes: [], parents: [], start: "", end: ""},
+    ],
+}
+
+function setup(enabled = true, flowGraph: typeof graph = graph) {
     const store = useExecutionsStore()
     store.execution = rootExecution as never
     const subscriptions: {executionId: string; close: ReturnType<typeof vi.fn>; emit: (e: unknown) => void}[] = []
@@ -77,7 +86,7 @@ function setup(enabled = true) {
     const enabledRef = ref(enabled)
     const wrapper = mount(defineComponent({
         setup() {
-            scoping = useLoopScoping(computed(() => graph as never), computed(() => enabledRef.value))
+            scoping = useLoopScoping(computed(() => flowGraph as never), computed(() => enabledRef.value))
             return () => null
         },
     }))
@@ -218,6 +227,33 @@ describe("useLoopScoping", () => {
         await flushPromises()
 
         expect(route.query.loopScope).toBe("per_region@2")
+    })
+
+    it("shouldMoveTheOuterScopeWhenTheScopedOuterIterationHasNoInnerFailure", async () => {
+        mocks.findFirstFailedIteration.mockResolvedValue(undefined)
+        mocks.findFailedIterationChain.mockResolvedValue({entries: [{taskId: "per_region", number: 2}, {taskId: "per_quarter", number: 3}], leafId: "q-3"})
+        const {scoping, route} = setup(true, nestedGraph)
+        route.query = {loopScope: "per_region@0"}
+        await flushPromises()
+
+        await scoping.scopeFirstFailure("per_region.per_quarter")
+        await flushPromises()
+
+        expect(mocks.findFirstFailedIteration).toHaveBeenCalledWith("it-1", "per_quarter")
+        expect(route.query.loopScope).toBe("per_region@1,per_quarter@2")
+    })
+
+    it("shouldStayInTheScopedOuterIterationWhenItHasTheFailure", async () => {
+        mocks.findFirstFailedIteration.mockImplementation(async (parentId: string) => parentId === "it-2" ? {id: "q-1", number: 1, state: "FAILED"} : undefined)
+        const {scoping, route} = setup(true, nestedGraph)
+        route.query = {loopScope: "per_region@1"}
+        await flushPromises()
+
+        await scoping.scopeFirstFailure("per_region.per_quarter")
+        await flushPromises()
+
+        expect(mocks.findFailedIterationChain).not.toHaveBeenCalled()
+        expect(route.query.loopScope).toBe("per_region@1,per_quarter@0")
     })
 
     it("shouldLeaveASubflowExpansionUntouchedWhenTheScopeIsCleared", async () => {

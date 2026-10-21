@@ -309,14 +309,15 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         if (!lane || !root?.id) return
 
         const host = hostOf(lane)
+        const childOf = (parent: LoopLaneNode) => laneNodes.value.find((child) => child.parentUid === parent.uid)
+        const failedInScope = host?.id ? await settle(findFirstFailedIteration(host.id, lane.taskId)) : undefined
+        if (seq !== userScopeSeq) return
+
         let chain: LoopScopeEntry[]
         let parentId: string
-        let current: LoopLaneNode | undefined
-
-        if (host?.id) {
-            chain = entries.value.slice(0, loopDepth(lane))
-            parentId = host.id
-            current = lane
+        if (failedInScope) {
+            chain = [...entries.value.slice(0, loopDepth(lane)), {taskId: lane.taskId, number: failedInScope.number}]
+            parentId = failedInScope.id
         } else {
             const found = await settle(findFailedIterationChain(
                 {id: root.id, namespace: root.namespace, flowId: root.flowId, startDate: root.state?.startDate},
@@ -325,8 +326,8 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
             if (seq !== userScopeSeq || !found) return
             chain = found.entries
             parentId = found.leafId
-            current = laneNodes.value.find((child) => child.parentUid === lane.uid)
         }
+        let current = childOf(lane)
 
         while (current) {
             const failed = await settle(findFirstFailedIteration(parentId, current.taskId))
@@ -334,8 +335,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
             if (!failed) break
             chain.push({taskId: current.taskId, number: failed.number})
             parentId = failed.id
-            const uid: string = current.uid
-            current = laneNodes.value.find((child) => child.parentUid === uid)
+            current = childOf(current)
         }
         setEntries(chain)
     }

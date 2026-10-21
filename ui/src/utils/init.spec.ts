@@ -26,4 +26,18 @@ describe("initApp", () => {
 
         expect(forwarded).toHaveBeenCalledWith(configs, error, "render function")
     })
+
+    it("keeps an error handler installed before it, such as Storybook's", async () => {
+        const app = createApp({})
+        const storybookHandler = vi.fn()
+        app.config.errorHandler = storybookHandler
+
+        await initApp(app, [], null, {})
+
+        const error = new Error("story crashed")
+        app.config.errorHandler?.(error, null, "render function")
+
+        expect(storybookHandler).toHaveBeenCalledWith(error, null, "render function")
+        expect(forwarded).not.toHaveBeenCalled()
+    })
 })

@@ -1827,7 +1827,7 @@
     "retry": "Retry",
     "no_iterations": "No iterations yet",
     "no_failed_iterations": "No failed iterations",
-    "gantt_tree_label": "Execution task runs",
+    "gantt_tree_label": "Execution timeline",
     "gantt_row_expand": "Expand {name}",
     "gantt_row_collapse": "Collapse {name}",
     "gantt_failed_only": "Failed only",

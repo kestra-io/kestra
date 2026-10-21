@@ -173,7 +173,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .expression-debugger {
     display: flex;
     flex-direction: column;

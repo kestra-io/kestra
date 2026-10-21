@@ -15,7 +15,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .logo {
         width: 100%;
 

@@ -205,7 +205,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     :global(body .fullscreen-layout:has(.oss-login)) {
         background: var(--ks-bg-base) url("../onboarding/assets/grid.svg") center calc(50% + 165px) / auto no-repeat;
     }

@@ -31,7 +31,7 @@
     const isBlueprints = computed(() => String(route.name ?? "").startsWith("blueprints"))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .product-tour-nudge {
         position: relative;
         margin: var(--ks-spacing-4) var(--ks-spacing-2) 0;

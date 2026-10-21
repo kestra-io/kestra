@@ -700,13 +700,13 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .full-container {
     min-height: 0;
     display: flex;
     flex-direction: column;
 
-    > * {
+    & > * {
         flex: 1;
     }
 }

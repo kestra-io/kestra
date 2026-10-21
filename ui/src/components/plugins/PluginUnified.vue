@@ -179,7 +179,7 @@
     watch(() => [props.group, props.subgroup], async () => await loadData(), {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .section {
         h2 {
             color: var(--ks-text-primary);

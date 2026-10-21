@@ -78,7 +78,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         String flowNamespace = runContext.flowInfo().namespace();
         String renderedKey = runContext.render(this.key).as(String.class).orElse(null);
-        boolean renderedErrorOnMissing = Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow());
+        boolean rErrorOnMissing = runContext.render(this.errorOnMissing).as(Boolean.class).orElse(false);
 
         Optional<KVValue> value;
         try {
@@ -89,13 +89,13 @@ public class Get extends Task implements RunnableTask<Get.Output> {
                 value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
             }
         } catch (ResourceExpiredException e) {
-            if (renderedErrorOnMissing) {
+            if (rErrorOnMissing) {
                 throw e;
             }
             value = Optional.empty();
         }
 
-        if (renderedErrorOnMissing && value.isEmpty()) {
+        if (rErrorOnMissing && value.isEmpty()) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }
 

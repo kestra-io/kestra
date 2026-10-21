@@ -125,7 +125,7 @@ class GetTest {
     }
 
     @Test
-    void shouldGetGivenExpiredKey() throws Exception {
+    void shouldReturnNullGivenExpiredKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();
         RunContext runContext = this.runContextFactory.of(
@@ -150,10 +150,93 @@ class GetTest {
 
         // Then
         assertThat(run.getValue()).isNull();
+    }
 
+    @Test
+    void shouldFailGivenExpiredKeyAndErrorOnMissing() throws Exception {
+        // Given
+        String namespaceId = "io.kestra." + IdUtils.create();
+        RunContext runContext = this.runContextFactory.of(
+            namespaceId, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY
+                )
+            )
+        );
+
+        Get get = Get.builder()
+            .id(Get.class.getSimpleName())
+            .type(Get.class.getName())
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .errorOnMissing(Property.ofValue(true))
+            .build();
+
+        final KVStore kv = runContext.namespaceKv(namespaceId);
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "value"));
-        Get finalGet = get.toBuilder().errorOnMissing(Property.ofValue(true)).build();
-        assertThatThrownBy(() -> finalGet.run(runContext))
+
+        // When / Then
+        assertThatThrownBy(() -> get.run(runContext))
+            .isInstanceOf(ResourceExpiredException.class);
+    }
+
+    @Test
+    void shouldReturnNullGivenExpiredKeyAndExplicitNamespace() throws Exception {
+        // Given
+        String targetNamespace = "io.kestra." + IdUtils.create();
+        String flowNamespace = targetNamespace + ".child";
+        RunContext runContext = this.runContextFactory.of(
+            flowNamespace, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", targetNamespace
+                )
+            )
+        );
+
+        Get get = Get.builder()
+            .id(Get.class.getSimpleName())
+            .type(Get.class.getName())
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .build();
+
+        final KVStore kv = runContext.namespaceKv(targetNamespace);
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "value"));
+
+        // When
+        Get.Output run = get.run(runContext);
+
+        // Then
+        assertThat(run.getValue()).isNull();
+    }
+
+    @Test
+    void shouldFailGivenExpiredKeyAndExplicitNamespaceAndErrorOnMissing() throws Exception {
+        // Given
+        String targetNamespace = "io.kestra." + IdUtils.create();
+        String flowNamespace = targetNamespace + ".child";
+        RunContext runContext = this.runContextFactory.of(
+            flowNamespace, Map.of(
+                "inputs", Map.of(
+                    "key", TEST_KV_KEY,
+                    "namespace", targetNamespace
+                )
+            )
+        );
+
+        Get get = Get.builder()
+            .id(Get.class.getSimpleName())
+            .type(Get.class.getName())
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .errorOnMissing(Property.ofValue(true))
+            .build();
+
+        final KVStore kv = runContext.namespaceKv(targetNamespace);
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "value"));
+
+        // When / Then
+        assertThatThrownBy(() -> get.run(runContext))
             .isInstanceOf(ResourceExpiredException.class);
     }
 }

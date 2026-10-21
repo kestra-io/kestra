@@ -15,10 +15,11 @@ const messages = {
 
 const execution = {id: "e1", namespace: "ns", flowId: "flow", kind: "NORMAL", state: {current: "FAILED"}} as unknown as Execution
 
-const errorLogs = ["EMEA", "AMER", "LATAM", "ANZ", "JP", "APAC"].map((region, index) => ({
+// Newest first, as the server answers the paginated `sort=timestamp:desc` request.
+const errorLogs = ["APAC", "JP", "ANZ", "LATAM"].map((region, index) => ({
     level: "ERROR",
     taskId: "reconcile",
-    timestamp: `2026-10-14T11:55:49.${700 + index}Z`,
+    timestamp: `2026-10-14T11:55:49.${705 - index}Z`,
     message: `Ledger ${region} is off`,
 }))
 
@@ -40,6 +41,23 @@ describe("ErrorAlert", () => {
     })
 
     afterAll(() => localStorage.clear())
+
+    it("requests only the 4 newest error logs from the server", async () => {
+        // Given
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue(errorLogs as never)
+
+        // When
+        mountAlert()
+        await flushPromises()
+
+        // Then
+        expect(loadLogs).toHaveBeenCalledWith(expect.objectContaining({
+            store: false,
+            executionId: "e1",
+            size: 4,
+            sort: "timestamp:desc",
+        }))
+    })
 
     it("ends the expanded view with the error the collapsed preview quotes", async () => {
         // Given

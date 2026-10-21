@@ -79,6 +79,8 @@
 
     onMounted(async () => {
         try {
+            // Only the last MAX_PREVIEW_LOGS errors are ever shown, so ask the server
+            // for just those (newest first) instead of the full error log list.
             const response = await store.loadLogs({
                 store: false,
                 executionId: props.execution.id,
@@ -86,9 +88,11 @@
                     "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
                     "filters[kind][IN]": props.execution.kind,
                 },
+                size: MAX_PREVIEW_LOGS,
+                sort: "timestamp:desc",
             })
 
-            if (response.length) logs.value = response
+            if (response.length) logs.value = [...response].reverse()
         } catch (e: unknown) {
             // The user may lack ACCESS_LOGS; anything else is left to the global toast.
             handledIf(e, [403, 404])

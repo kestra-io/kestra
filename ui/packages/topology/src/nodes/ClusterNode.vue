@@ -135,7 +135,7 @@
         return Utils.afterLastDot(props.id ?? "")
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .circle-button {
         pointer-events: auto !important;
     }

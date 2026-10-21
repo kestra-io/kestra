@@ -18,10 +18,8 @@
     const isNavbarVisible = ref(false)
 </script>
 
-<style scoped lang="scss">
-    @use '../../styles/responsive' as *;
-
-    @include res(sm) {
+<style scoped>
+    @media only screen and (min-width: 768px) {
         :deep(.kel-form--inline) {
             .kel-form-item {
                 margin-right: 5px;
@@ -31,11 +29,11 @@
                 }
 
                 .kel-form-item__content {
-                    > *:not(.kel-button-group) {
+                    & > *:not(.kel-button-group) {
                         width: 200px;
                     }
 
-                    > .kel-button-group {
+                    & > .kel-button-group {
                         max-width: 200px;
                     }
                 }
@@ -43,7 +41,7 @@
         }
     }
 
-    @include res(xs) {
+    @media only screen and (max-width: 767px) {
         :deep(.kel-form--inline) {
             .kel-form-item {
                 display: block;
@@ -61,11 +59,11 @@
     }
 
     .collapse {
-        // Bootstrap's sm breakpoint; res(sm) starts at 768px
+        /* Bootstrap's sm breakpoint; the query below starts at 768px */
         @media (min-width: 576px) {
             margin-bottom: var(--ks-spacing-5);
         }
-        @include res(sm) {
+        @media only screen and (min-width: 768px) {
             margin-bottom: 0;
         }
 
@@ -73,9 +71,9 @@
             margin-bottom: var(--ks-spacing-2);
         }
 
-        > div:first-child {
+        & > div:first-child {
             display: flex;
-            @include res(sm) {
+            @media only screen and (min-width: 768px) {
                 display: none;
             }
 
@@ -84,7 +82,7 @@
             }
         }
 
-        @include res(xs) {
+        @media only screen and (max-width: 767px) {
             .kel-form--inline {
                 display: none;
             }

@@ -1,13 +1,13 @@
 <template>
-    <div class="row card-group card-centered mb-2">
-        <a :href="parsedUrl" class="col-12 col-md-10 mb-4" v-for="[parsedUrl, metadata] in navigation" :key="parsedUrl">
+    <div class="card-group card-centered">
+        <a :href="parsedUrl" class="release-card" v-for="[parsedUrl, metadata] in navigation" :key="parsedUrl">
             <div class="card">
                 <div class="card-body">
                     <div>
-                        <h4 class="text-white">{{ metadata.release }}</h4>
-                        <h4 class="card-title">{{ metadata.title }}</h4>
+                        <h4 class="release-version">{{ metadata.release }}</h4>
+                        <h4>{{ metadata.title }}</h4>
                     </div>
-                    <p class="card-text">{{ metadata.description }}</p>
+                    <p>{{ metadata.description }}</p>
                 </div>
             </div>
         </a>
@@ -61,3 +61,17 @@
             return 0
         })
 </script>
+
+<style scoped lang="scss">
+    .card-group {
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .release-card {
+        margin-bottom: var(--ks-spacing-5);
+    }
+
+    .release-version {
+        color: var(--ks-text-primary);
+    }
+</style>

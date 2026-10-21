@@ -862,7 +862,7 @@ public class ExecutorService {
                 );
             } else {
                 TaskRun current = executor.getExecution().findTaskRunByTaskRunId(outcome.getKey());
-                Execution terminated = ExecutionTerminator.terminate(executor.getExecution(), current, outcome.getValue());
+                Execution terminated = executor.getExecution().withTaskRunStateCascaded(current, outcome.getValue()).withState(outcome.getValue());
                 executor.withExecution(terminated, "handleExecutionLevelOutcomes");
             }
         }

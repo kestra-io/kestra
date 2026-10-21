@@ -11,7 +11,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.ExecutionTerminator;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -76,9 +75,17 @@ public class Exit extends Task implements ExecutionUpdatableTask {
 
     @Override
     public Execution update(Execution execution, RunContext runContext) throws Exception {
-        // KILLED bypasses findLastNotTerminated; the executor detects it and sends a killing event.
         State.Type exitState = executionState(runContext);
-        return ExecutionTerminator.terminate(execution, execution.findLastNotTerminated().orElse(null), exitState);
+
+        if (exitState == State.Type.KILLED) {
+            // the executor will detect it and send a killing event
+            return execution.withState(State.Type.KILLED);
+        }
+
+        return execution.findLastNotTerminated()
+            .map(taskRun -> execution.withTaskRunStateCascaded(taskRun, exitState))
+            .orElse(execution)
+            .withState(exitState);
     }
 
     @Override

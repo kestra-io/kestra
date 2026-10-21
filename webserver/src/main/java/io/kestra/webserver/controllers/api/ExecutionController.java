@@ -292,6 +292,7 @@ public class ExecutionController {
     private Counter resumeCounter;
     private Counter resumeFromBreakpointCounter;
     private Counter forceRunCounter;
+    private Counter rescheduleCounter;
     private Counter changeStatusCounter;
     private Counter changeTaskRunStateCounter;
     private Counter killCounter;
@@ -307,6 +308,8 @@ public class ExecutionController {
         resumeFromBreakpointCounter = this.metricRegistry
             .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION);
         forceRunCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION);
+        rescheduleCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL_DESCRIPTION);
         changeStatusCounter = this.metricRegistry
             .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL_DESCRIPTION);
         changeTaskRunStateCounter = this.metricRegistry
@@ -340,7 +343,7 @@ public class ExecutionController {
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantService.resolveTenant(),
-            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true),
             dateFilter
         );
         var apiExecution = executions.stream()
@@ -2753,6 +2756,33 @@ public class ExecutionController {
         return awaitBlockingAction(
             executionId, "Force run",
             (operationId, actor) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(operationId).withActor(actor))
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/reschedule")
+    @Operation(tags = { "Executions" }, summary = "Reschedule a scheduled execution that has not started yet")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "422", description = "if the scheduleDate is not in the future")
+    @ApiResponse(responseCode = "409", description = "if the execution is not scheduled, has already started, or its scheduled start is being processed")
+    public Mono<HttpResponse<Execution>> rescheduleExecution(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The new scheduled start date") @NotNull @QueryValue ZonedDateTime scheduleDate) {
+        if (!scheduleDate.toInstant().isAfter(Instant.now())) {
+            throw new IllegalArgumentException("The scheduleDate must be in the future.");
+        }
+
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        if (!executionService.canBeRescheduled(execution)) {
+            throw new ConflictException("Cannot reschedule execution: only scheduled executions in the CREATED state can be rescheduled.");
+        }
+
+        this.rescheduleCounter.increment();
+
+        return awaitBlockingAction(
+            executionId, "Reschedule",
+            (operationId, actor) -> executionCommandQueue.emit(Reschedule.from(execution, scheduleDate.toInstant()).withOperationId(operationId).withActor(actor))
         );
     }
 

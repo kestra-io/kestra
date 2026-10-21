@@ -2,6 +2,7 @@ import {afterEach, beforeEach, describe, expect, it} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
 import {date, humanizeDuration, humanizeNumber} from "./filters"
 import {storageKeys} from "./constants"
+import {SUPPORT_LOCALES} from "../translations/languages"
 
 describe("humanizeNumber", () => {
     afterEach(() => {
@@ -138,5 +139,18 @@ describe("humanizeDuration", () => {
         expect(result).not.toBe("")
         expect(result).not.toMatch(/nan/i)
         expect(result).toBe("5s")
+    })
+})
+
+describe("humanizeDuration in every supported language", () => {
+    afterEach(() => {
+        localStorage.removeItem("lang")
+    })
+
+    // humanize-duration only knows base languages such as "pt", so a regional locale like "pt_BR" must fall back instead of throwing.
+    it.each([...SUPPORT_LOCALES])("formats a duration without throwing for %s", (lang) => {
+        localStorage.setItem("lang", lang)
+        expect(() => humanizeDuration(5025)).not.toThrow()
+        expect(humanizeDuration(5025)).not.toBe("")
     })
 })

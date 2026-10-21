@@ -291,7 +291,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .full-container {
         padding-left: 0;
         padding-right: 0;
@@ -312,7 +312,7 @@
     .editor-splitter {
         height: 100%;
 
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             display: flex;
             flex-direction: column;
         }
@@ -331,7 +331,7 @@
     }
 
     .ks-tabs-bar {
-        :deep(.kel-tabs__item.is-disabled) {
+        & :deep(.kel-tabs__item.is-disabled) {
             &:after {
                 top: 0;
                 content: "";
@@ -347,8 +347,8 @@
             }
         }
 
-        :deep(.kel-tabs__nav-next.is-disabled),
-        :deep(.kel-tabs__nav-prev.is-disabled) {
+        & :deep(.kel-tabs__nav-next.is-disabled),
+        & :deep(.kel-tabs__nav-prev.is-disabled) {
             display: none;
         }
     }

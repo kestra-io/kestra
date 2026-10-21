@@ -73,7 +73,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .summary-card {
         display: flex;
         flex-direction: column;

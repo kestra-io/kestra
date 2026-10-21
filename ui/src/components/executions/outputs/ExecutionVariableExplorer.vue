@@ -554,33 +554,33 @@
     const isMobile = useMediaQuery("(max-width: 768px)")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .variable-explorer {
     display: flex;
     width: 100%;
     height: 100%;
     min-height: 0;
     overflow: hidden;
+}
 
-    &__panel {
-        display: flex;
-        min-height: 0;
-        overflow: hidden;
-    }
+.variable-explorer__panel {
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
 
-    &__panel--main {
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-spacing-2);
-        overflow: hidden;
-    }
+.variable-explorer__panel--main {
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-spacing-2);
+    overflow: hidden;
+}
 
-    &__panel--sidebar {
-        background-color: var(--ks-bg-base);
-    }
+.variable-explorer__panel--sidebar {
+    background-color: var(--ks-bg-base);
+}
 
-    &__panel--debug {
-        border-left: 1px solid var(--ks-border-default);
-    }
+.variable-explorer__panel--debug {
+    border-left: 1px solid var(--ks-border-default);
 }
 
 .viewer-notice {
@@ -605,23 +605,25 @@
     min-height: 0;
     overflow: auto;
     background-color: var(--ks-bg-surface);
+}
 
-    &__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-3) var(--ks-spacing-4);
-        border-bottom: 1px solid var(--ks-border-default);
-    }
+.viewer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ks-spacing-2);
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
+    border-bottom: 1px solid var(--ks-border-default);
+}
 
-    &__scalar {
-        font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-sm);
-        word-break: break-word;
-        padding: var(--ks-spacing-2) var(--ks-spacing-4);
-    }
+.viewer__scalar {
+    font-family: var(--ks-font-family-mono);
+    font-size: var(--ks-font-size-sm);
+    word-break: break-word;
+    padding: var(--ks-spacing-2) var(--ks-spacing-4);
+}
 
+.viewer {
     .file-preview {
         padding: var(--ks-spacing-4);
     }

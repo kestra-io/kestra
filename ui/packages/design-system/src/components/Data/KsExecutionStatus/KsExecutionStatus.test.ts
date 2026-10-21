@@ -2,6 +2,9 @@ import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../index"
 import KsExecutionStatus from "./KsExecutionStatus.vue"
+import {EXECUTION_STATUSES} from "./types"
+// @ts-expect-error - plain .mjs module, shared with the linters
+import {knownTokens} from "../../../../../../scripts/tokens/knownTokens.mjs"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -128,5 +131,14 @@ describe("KsExecutionStatus", () => {
             })
             expect(wrapper.find(`.ks-execution-status--${status.toLowerCase()}`).exists()).toBe(true)
         }
+    })
+
+    test("declares the colour and background token of every status", () => {
+        const known: Set<string> = knownTokens()
+        const missing = Object.keys(EXECUTION_STATUSES)
+            .flatMap(status => [`--ks-status-${status.toLowerCase()}`, `--ks-status-background-${status.toLowerCase()}`])
+            .filter(token => !known.has(token))
+
+        expect(missing).toEqual([])
     })
 })

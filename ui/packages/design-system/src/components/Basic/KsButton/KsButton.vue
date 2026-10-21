@@ -7,7 +7,7 @@
         <ElButton
             :aria-label="tooltip"
             v-bind="({...filteredProps(), ...$attrs})"
-            :class="{'is-square': square}"
+            :class="{'is-square': square, 'kel-button--toned': tone}"
             @click="emit('click', $event)"
             plain
         >
@@ -25,7 +25,7 @@
     <ElButton
         v-else
         v-bind="({...filteredProps(), ...$attrs})"
-        :class="{'is-square': square}"
+        :class="{'is-square': square, 'kel-button--toned': tone}"
         @click="emit('click', $event)"
         plain
     >
@@ -43,10 +43,24 @@
 
 <script lang="ts">
     export type KsButtonType = "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
+
+    interface KsButtonTone {
+        border: string
+        text: string
+    }
+
+    export const KS_BUTTON_TONES: Partial<Record<KsButtonType | "error", KsButtonTone>> = {
+        primary: {border: "var(--ks-btn-primary-bg-default)", text: "var(--ks-btn-primary-text)"},
+        success: {border: "var(--ks-border-success)", text: "var(--ks-text-success)"},
+        warning: {border: "var(--ks-border-warning)", text: "var(--ks-text-warning)"},
+        danger: {border: "var(--ks-border-error)", text: "var(--ks-text-error)"},
+        error: {border: "var(--ks-border-error)", text: "var(--ks-text-error)"},
+        info: {border: "var(--ks-border-info)", text: "var(--ks-text-info)"},
+    }
 </script>
 
 <script setup lang="ts">
-    import type {Component} from "vue"
+    import {computed, type Component} from "vue"
 
     import {ElButton} from "element-plus"
 
@@ -86,6 +100,8 @@
     }>()
 
     const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square"])
+
+    const tone = computed(() => (props.type ? KS_BUTTON_TONES[props.type] : undefined))
 </script>
 
 <style lang="scss">
@@ -140,56 +156,11 @@
             --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
             --kel-button-active-border-color: var(--ks-btn-secondary-border-active);
 
-            &.kel-button--primary {
-                --kel-button-text-color: var(--ks-btn-primary-text);
-                --kel-button-hover-text-color: var(--ks-btn-primary-text);
-                --kel-button-hover-border-color: var(--ks-btn-primary-bg-default);
-                --kel-button-active-text-color: var(--ks-btn-primary-text);
-                --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
-                --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
-            }
-
-            &.kel-button--success {
-                --kel-button-text-color: var(--ks-text-success);
-                --kel-button-hover-text-color: var(--ks-text-success);
-                --kel-button-hover-border-color: var(--ks-border-success);
-                --kel-button-active-text-color: var(--ks-text-success);
-                --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
-                --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
-            }
-
-            &.kel-button--warning {
-                --kel-button-text-color: var(--ks-text-warning);
-                --kel-button-hover-text-color: var(--ks-text-warning);
-                --kel-button-hover-border-color: var(--ks-border-warning);
-                --kel-button-active-text-color: var(--ks-text-warning);
-                --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
-                --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
-            }
-
-            &.kel-button--danger {
-                --kel-button-text-color: var(--ks-text-error);
-                --kel-button-hover-text-color: var(--ks-text-error);
-                --kel-button-hover-border-color: var(--ks-border-error);
-                --kel-button-active-text-color: var(--ks-text-error);
-                --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
-                --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
-            }
-
-            &.kel-button--error {
-                --kel-button-text-color: var(--ks-text-error);
-                --kel-button-hover-text-color: var(--ks-text-error);
-                --kel-button-hover-border-color: var(--ks-border-error);
-                --kel-button-active-text-color: var(--ks-text-error);
-                --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
-                --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
-            }
-
-            &.kel-button--info {
-                --kel-button-text-color: var(--ks-text-info);
-                --kel-button-hover-text-color: var(--ks-text-info);
-                --kel-button-hover-border-color: var(--ks-border-info);
-                --kel-button-active-text-color: var(--ks-text-info);
+            &.kel-button--toned {
+                --kel-button-text-color: v-bind("tone?.text");
+                --kel-button-hover-text-color: v-bind("tone?.text");
+                --kel-button-hover-border-color: v-bind("tone?.border");
+                --kel-button-active-text-color: v-bind("tone?.text");
                 --kel-button-active-bg-color: var(--ks-btn-secondary-bg-active);
                 --kel-button-active-border-color: var(--ks-btn-secondary-border-default);
             }

@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {within, userEvent, expect, waitFor} from "storybook/test"
 import {markRaw, ref} from "vue"
-import KsButton from "./KsButton.vue"
+import KsButton, {KS_BUTTON_TONES} from "./KsButton.vue"
 
 // Inline SVG icons as components to avoid external dependencies
 const DownloadIcon = markRaw({
@@ -76,6 +76,7 @@ export const Types: Story = {
                 <ks-button :icon="DownloadIcon" type="danger">Danger</ks-button>
                 <ks-button :icon="DownloadIcon" type="info">Info</ks-button>
                 <ks-button :icon="DownloadIcon" text>Text</ks-button>
+                <ks-button :icon="DownloadIcon" type="success" tooltip="Download" />
             </div>
 
             <div style="padding:24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
@@ -89,6 +90,24 @@ export const Types: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const resolved = (value: string) => {
+            const probe = document.createElement("span")
+            probe.style.color = value
+            canvasElement.append(probe)
+            const color = getComputedStyle(probe).color
+            probe.remove()
+            return color
+        }
+
+        for (const [label, type] of [["Primary", "primary"], ["Success", "success"], ["Warning", "warning"], ["Danger", "danger"], ["Info", "info"]] as const) {
+            const button = canvas.getAllByRole("button", {name: label}).find(element => !element.hasAttribute("disabled"))
+            await expect(getComputedStyle(button as Element).color).toBe(resolved(KS_BUTTON_TONES[type]!.text))
+        }
+        await expect(getComputedStyle(canvas.getByRole("button", {name: "Download"})).color)
+            .toBe(resolved(KS_BUTTON_TONES.success!.text))
+    },
 }
 
 /** All sizes */

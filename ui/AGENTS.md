@@ -63,6 +63,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### When extending the design system
 
 - Component styles are plain CSS. A component that needs Element Plus's base styles keeps them in a `<style lang="scss">` block holding only the `el-ns` and `theme-chalk` `@use` lines, placed before the plain `<style>` with its own rules, so each published component entry still ships its chalk CSS. Palette colours are `var(--ks-<family>-<step>)`, not `palette.$base-*`.
+- Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.

@@ -1069,6 +1069,43 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldDelayRetryWhenRealtimeTriggerFailedToStart() {
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, 0)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, "exec-123", State.Type.FAILED, realtimeState.getDispatchEpoch());
+        Instant before = CLOCK.instant();
+
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        TriggerState updated = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
+        assertThat(updated.isLocked()).isFalse();
+        assertThat(updated.getNextEvaluationDate()).isAfterOrEqualTo(before.plus(TriggerEventHandler.REALTIME_FAILED_START_RETRY_DELAY));
+    }
+
+    @Test
+    void shouldRestartImmediatelyWhenRealtimeStreamEnded() {
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, 0)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, realtimeState.getDispatchEpoch());
+
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        TriggerState updated = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
+        assertThat(updated.isLocked()).isFalse();
+        assertThat(updated.getNextEvaluationDate()).isEqualTo(realtimeState.getNextEvaluationDate());
+    }
+
+    @Test
     void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
         // GIVEN — a realtime trigger on its second dispatch, running on worker-2
         TriggerState firstDispatch = TriggerState

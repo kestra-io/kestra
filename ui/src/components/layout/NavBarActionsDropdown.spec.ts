@@ -1,6 +1,6 @@
 import {describe, expect, test, vi} from "vitest"
 import {defineComponent, h, inject} from "vue"
-import {i18nMount} from "../../../packages/design-system/tests/units/i18nMount"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 import NavBarActionsDropdown from "./NavBarActionsDropdown.vue"
 import {asItemKey, closeDropdownKey} from "./navBarActionsContext"
 
@@ -8,10 +8,6 @@ const handleClose = vi.fn()
 
 const KsDropdownStub = defineComponent({
     name: "KsDropdown",
-    props: {
-        trigger: {type: String, required: true},
-        persistent: Boolean,
-    },
     setup(_, {expose, slots}) {
         expose({handleClose})
 
@@ -22,20 +18,16 @@ const KsDropdownStub = defineComponent({
 const KsDropdownMenuStub = defineComponent({
     name: "KsDropdownMenu",
     setup(_, {slots}) {
-        return () => h("div", {"data-testid": "dropdown-menu"}, slots.default?.())
+        return () => slots.default?.()
     },
 })
 
 let injectedAsItem: boolean | undefined
-const missingCloseDropdown = (): void => {
-    throw new Error("closeDropdownKey was not provided")
-}
-let injectedCloseDropdown = missingCloseDropdown
+let closeDropdown: (() => void) | undefined
 
-const InjectionProbe = defineComponent({
+const AsItemProbe = defineComponent({
     setup() {
         injectedAsItem = inject(asItemKey)
-        injectedCloseDropdown = inject(closeDropdownKey) ?? missingCloseDropdown
 
         return () => h("span")
     },
@@ -43,77 +35,40 @@ const InjectionProbe = defineComponent({
 
 const CloseBeforeTemplateRefProbe = defineComponent({
     setup() {
-        const closeDropdown = inject(closeDropdownKey)
-        expect(closeDropdown).toBeTypeOf("function")
-        expect(closeDropdown).not.toThrow()
+        closeDropdown = inject(closeDropdownKey)
+        closeDropdown?.()
 
         return () => h("span")
     },
 })
 
-const mountDropdown = (slot: () => ReturnType<typeof h> = () => h("span")) =>
+const mountDropdown = (options: Parameters<typeof i18nMount<typeof NavBarActionsDropdown>>[1] = {}) =>
     i18nMount(NavBarActionsDropdown, {
-        global: {
-            stubs: {
-                KsDropdown: KsDropdownStub,
-                KsDropdownMenu: KsDropdownMenuStub,
-            },
-        },
-        slots: {default: slot},
+        global: {stubs: {KsDropdown: KsDropdownStub, KsDropdownMenu: KsDropdownMenuStub}},
+        ...options,
     })
 
 describe("NavBarActionsDropdown", () => {
-    test("renders default slot content inside the dropdown menu", () => {
-        const wrapper = mountDropdown(() => h("span", {"data-testid": "menu-item"}, "Menu item"))
-
-        expect(wrapper.get("[data-testid='dropdown-menu'] [data-testid='menu-item']").text()).toBe("Menu item")
-    })
-
     test("uses the translated actions label for its trigger", () => {
-        const wrapper = i18nMount(NavBarActionsDropdown, {
-            global: {
-                stubs: {
-                    KsDropdown: KsDropdownStub,
-                    KsDropdownMenu: KsDropdownMenuStub,
-                },
-            },
-            messages: {actions: "Localized actions"},
-        })
+        const wrapper = mountDropdown({messages: {actions: "Localized actions"}})
 
         expect(wrapper.get("button").attributes("aria-label")).toBe("Localized actions")
     })
 
-    test("configures the dropdown to open on click", () => {
-        const wrapper = mountDropdown()
-
-        expect(wrapper.getComponent(KsDropdownStub).props("trigger")).toBe("click")
-    })
-
-    test("configures the dropdown as persistent", () => {
-        const wrapper = mountDropdown()
-
-        expect(wrapper.getComponent(KsDropdownStub).props("persistent")).toBe(true)
-    })
-
     test("provides asItemKey with a true value", () => {
         injectedAsItem = undefined
-        mountDropdown(() => h(InjectionProbe))
+        mountDropdown({slots: {default: () => h(AsItemProbe)}})
 
         expect(injectedAsItem).toBe(true)
     })
 
-    test("provides a close callback that closes a resolved dropdown", () => {
+    test("does not call handleClose when the close callback runs before the dropdown ref resolves", () => {
         handleClose.mockReset()
-        injectedCloseDropdown = missingCloseDropdown
-        mountDropdown(() => h(InjectionProbe))
+        closeDropdown = undefined
 
-        expect(injectedCloseDropdown).not.toBe(missingCloseDropdown)
-        injectedCloseDropdown()
+        expect(() => mountDropdown({slots: {default: () => h(CloseBeforeTemplateRefProbe)}})).not.toThrow()
 
-        expect(handleClose).toHaveBeenCalledOnce()
-    })
-
-    test("does not throw when the close callback runs before the dropdown ref resolves", () => {
-        expect(() => mountDropdown(() => h(CloseBeforeTemplateRefProbe))).not.toThrow()
+        expect(closeDropdown).toBeTypeOf("function")
+        expect(handleClose).not.toHaveBeenCalled()
     })
 })

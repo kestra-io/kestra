@@ -43,7 +43,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .state-history {
         padding-left: var(--ks-spacing-1);
     }

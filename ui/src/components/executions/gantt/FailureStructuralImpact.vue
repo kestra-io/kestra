@@ -81,7 +81,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .structural-impact {
         display: flex;
         flex-direction: column;

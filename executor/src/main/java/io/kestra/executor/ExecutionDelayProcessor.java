@@ -142,7 +142,8 @@ public class ExecutionDelayProcessor {
                                 executionDelay.getTaskRunId(),
                                 expiredDecision.get(),
                                 null,
-                                null
+                                null,
+                                false
                             )
                             : executionService.markAs(
                                 execution,
@@ -151,7 +152,7 @@ public class ExecutionDelayProcessor {
                                 executionDelay.getState()
                             );
 
-                        if (expiredDecision.isEmpty() && markAsExecution.getKind() == ExecutionKind.LOOP) {
+                        if (markAsExecution.getKind() == ExecutionKind.LOOP) {
                             // notify the parent execution
                             loopExecutionEventQueue.emit(new LoopExecutionEvent(markAsExecution.getLoopRun(), markAsExecution.getId(), markAsExecution.getState().getCurrent(), null, null));
                         }

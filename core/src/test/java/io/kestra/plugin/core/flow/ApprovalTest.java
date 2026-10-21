@@ -212,7 +212,7 @@ public class ApprovalTest {
 
         Execution decided = executionService.decide(
             execution, flow, taskRunId, new PausableTask.Decision(PausableTask.Decision.Type.APPROVED, "ok"), Map.of(),
-            PausableTask.Resumed.now("alice", State.Type.RUNNING)
+            PausableTask.Resumed.now("alice", State.Type.RUNNING), true
         );
 
         execution = runnerUtils.emitAndAwaitExecution(

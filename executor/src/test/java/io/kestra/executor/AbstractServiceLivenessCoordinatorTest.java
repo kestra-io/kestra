@@ -280,6 +280,14 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        // The coordinator can only handle a worker whose service instance is already registered.
+        Await.until(
+            () -> serviceInstanceRepository.findById(worker.getId())
+                .filter(instance -> instance.is(Service.ServiceState.RUNNING))
+                .isPresent(),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(30)
+        );
         // WHEN - stop first worker.
         worker.stopNow(); // simulate a non-graceful stop (hard shutdown, crash, etc.).
 

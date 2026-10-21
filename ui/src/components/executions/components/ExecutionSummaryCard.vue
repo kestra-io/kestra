@@ -30,7 +30,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .execution-summary {
         padding-bottom: var(--ks-spacing-4);
     }

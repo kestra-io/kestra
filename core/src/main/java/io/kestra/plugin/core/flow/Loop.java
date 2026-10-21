@@ -249,6 +249,17 @@ public class Loop extends AbstractBranch<Loop.Output> {
     )
     private Object values;
 
+    @NotNull
+    @Builder.Default
+    @Schema(
+        title = "Whether to parse the values as maps / objects",
+        description = """
+            If set to true, Kestra will parse the values as JSON or ION maps / objects when creating the `item.value` attribute.
+            If set to false, Kestra will treat the values as strings.
+            """
+    )
+    private Boolean parseValues = false;
+
     @PositiveOrZero
     @NotNull
     @Builder.Default

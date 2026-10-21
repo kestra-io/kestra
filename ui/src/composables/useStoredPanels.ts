@@ -2,7 +2,7 @@ import {useStorage} from "@vueuse/core";
 import {EditorElement, Panel, Tab} from "../utils/multiPanelTypes";
 import {ref} from "vue";
 
-interface PreSerializedPanel {
+export interface PreSerializedPanel {
     tabs: string[];
     activeTab: string | undefined;
     size: number;
@@ -49,6 +49,7 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
         initialPanels,
         undefined,
         {
+            listenToStorageChanges: false,
             serializer: {
                 write,
                 read(v?: string) {

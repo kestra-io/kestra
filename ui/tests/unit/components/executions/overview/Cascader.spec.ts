@@ -42,20 +42,30 @@ const i18n = createI18n({
 
 // shallowMount auto-stubs children, so the panel stub is what exposes the built options.
 const stubs = {
+    "el-input": {
+        props: ["modelValue", "placeholder", "suffixIcon"],
+        emits: ["update:modelValue"],
+        template:
+            "<input data-test=\"filter\" :value=\"modelValue\" @input=\"$emit('update:modelValue', ($event.target).value)\" />",
+    },
     "el-cascader-panel": {
         props: ["options"],
         template: "<div data-test=\"panel\">{{ JSON.stringify(options) }}</div>",
     },
 };
 
-const options = (elements: Record<string, any>) => {
-    const wrapper = shallowMount(Cascader, {
+const mountCascader = (elements: Record<string, any>) =>
+    shallowMount(Cascader, {
         props: {title: "Flow Outputs", empty: "none", elements, execution: {id: "exec-1"} as any},
         global: {plugins: [i18n], stubs},
     });
 
-    return JSON.parse(wrapper.find("[data-test=panel]").text());
+const options = (elements: Record<string, any>) => {
+    return JSON.parse(mountCascader(elements).find("[data-test=panel]").text());
 };
+
+const panelOptions = (wrapper: ReturnType<typeof mountCascader>) =>
+    JSON.parse(wrapper.find("[data-test=panel]").text());
 
 describe("overview Cascader", () => {
     test("keeps a small tree whole and hangs scalars off their key", () => {
@@ -99,5 +109,41 @@ describe("overview Cascader", () => {
 
         expect(leaf.tooLarge).toBeUndefined();
         expect(leaf.label).toHaveLength(9 * 1024);
+    });
+
+    // Truthy leaf checks dropped 0 / false / "" / null from the variables column (#16194).
+    test("keeps falsy scalar leaves in the tree", () => {
+        const nodes = options({
+            zero: 0,
+            flag: false,
+            empty: "",
+            missing: null,
+        });
+
+        expect(nodes).toHaveLength(4);
+        expect(nodes.map((n: {label: string}) => n.label)).toEqual(["zero", "flag", "empty", "missing"]);
+        expect(nodes[0].children[0]).toMatchObject({label: 0, value: 0});
+        expect(nodes[1].children[0]).toMatchObject({label: false, value: false});
+        expect(nodes[2].children[0]).toMatchObject({label: "", value: ""});
+        expect(nodes[3].children[0]).toMatchObject({label: null, value: null});
+    });
+
+    // Keeping falsy leaves means search must stringify labels — raw 0/false/null have no toLowerCase.
+    test("search does not throw when falsy scalar leaves are present", async () => {
+        const wrapper = mountCascader({
+            zero: 0,
+            flag: false,
+            missing: null,
+            ok: "hello",
+        });
+
+        await wrapper.find("[data-test=filter]").setValue("zero");
+        expect(panelOptions(wrapper).map((n: {label: string}) => n.label)).toEqual(["zero"]);
+
+        await wrapper.find("[data-test=filter]").setValue("false");
+        expect(panelOptions(wrapper).map((n: {label: string}) => n.label)).toEqual(["flag"]);
+
+        await wrapper.find("[data-test=filter]").setValue("0");
+        expect(panelOptions(wrapper).map((n: {label: string}) => n.label)).toEqual(["zero"]);
     });
 });

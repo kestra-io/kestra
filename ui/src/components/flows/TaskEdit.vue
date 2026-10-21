@@ -59,7 +59,7 @@
                         ref="editor"
                         @save="saveTask"
                         v-model="taskYaml"
-                        :schemaType="section.toLowerCase()"
+                        :schemaType="sectionSchemaType(section)"
                         :fullHeight="false"
                         :navbar="false"
                         lang="yaml"
@@ -93,6 +93,7 @@
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
+    import {sectionSchemaType} from "./sectionSchemaType";
     import {usePluginsStore} from "../../stores/plugins";
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";

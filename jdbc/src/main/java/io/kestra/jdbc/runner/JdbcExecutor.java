@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
+import io.kestra.core.trace.TraceUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Configuration;
 import org.slf4j.event.Level;
@@ -822,6 +823,8 @@ public class JdbcExecutor implements ExecutorInterface {
                                 executorState
                             );
                         }
+                    } finally {
+                        Span.current().setAttribute(TraceUtils.ATTR_STATE, executor.getExecution().getState().getCurrent().name());
                     }
 
                     return Pair.of(
@@ -1481,8 +1484,13 @@ public class JdbcExecutor implements ExecutorInterface {
                             executor = executor.withExecution(markAsExecution, "pausedRestart");
                         }
                     }
-                    // Handle failed task retries
-                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
+                    // Handle failed task retries — skip if the execution is being killed so the retry does not race
+                    // the kill, or is already over (killed while it waited): a retry must never revive a terminated execution
+                    else if (
+                        executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
+                            && pair.getLeft().getState().getCurrent() != State.Type.KILLING
+                            && !pair.getLeft().getState().isTerminated()
+                    ) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
                             findFlowOrThrow(pair.getKey()),
@@ -1495,8 +1503,11 @@ public class JdbcExecutor implements ExecutorInterface {
                         Execution newExecution = executionService.replay(executor.getExecution(), findFlowOrThrow(executor.getExecution()), null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
-                    // Handle WaitFor
-                    else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
+                    // Handle WaitFor — skip if the execution is over (killed while it waited): it must never be revived
+                    else if (
+                        executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)
+                            && !pair.getLeft().getState().isTerminated()
+                    ) {
                         Execution execution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");
                     }

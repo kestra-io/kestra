@@ -212,6 +212,11 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         boolean childTaskExecuted = this.childTaskRunExecuted(execution, parentTaskRun);
+        // a loop killed between two iterations has no running child left to report its KILLED state
+        if (childTaskExecuted && parentTaskRun.getState().getCurrent() == State.Type.KILLING) {
+            return Optional.of(State.Type.KILLED);
+        }
+
         if (childTaskExecuted && nextExecutionDate(runContext, execution, parentTaskRun) != null) {
             return Optional.empty();
         }

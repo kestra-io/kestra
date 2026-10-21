@@ -12,7 +12,7 @@ index c691eb9..7351bdd 100644
  
      doDefinition: withDocument((document, position) =>
 diff --git a/node_modules/monaco-yaml/yaml.worker.js b/node_modules/monaco-yaml/yaml.worker.js
-index 71c11d4..1b7b968 100644
+index 71c11d4..f32b516 100644
 --- a/node_modules/monaco-yaml/yaml.worker.js
 +++ b/node_modules/monaco-yaml/yaml.worker.js
 @@ -2889,23 +2889,25 @@ var JSONDocument2 = class {
@@ -62,7 +62,7 @@ index 71c11d4..1b7b968 100644
          validationResult.problems.push({
            location: { offset: node.offset, length: node.length },
            severity: DiagnosticSeverity2.Warning,
-@@ -3646,8 +3648,11 @@ function validate2(node, schema, originalSchema, validationResult, matchingSchem
+@@ -3646,6 +3648,9 @@ function validate2(node, schema, originalSchema, validationResult, matchingSchem
      }
      return bestMatch;
    }
@@ -70,11 +70,8 @@ index 71c11d4..1b7b968 100644
 +    return gracefulMatches && !maxOneMatch && callFromAutoComplete && propertiesValueMatches > 0;
 +  }
    function genericComparison(node2, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas) {
--    if (!maxOneMatch && !subValidationResult.hasProblems() && (!bestMatch.validationResult.hasProblems() || callFromAutoComplete)) {
-+    if (!maxOneMatch && !subValidationResult.hasProblems() && !bestMatch.validationResult.hasProblems()) {
+     if (!maxOneMatch && !subValidationResult.hasProblems() && (!bestMatch.validationResult.hasProblems() || callFromAutoComplete)) {
        bestMatch.matchingSchemas.merge(subMatchingSchemas);
-       bestMatch.validationResult.propertiesMatches += subValidationResult.propertiesMatches;
-       bestMatch.validationResult.propertiesValueMatches += subValidationResult.propertiesValueMatches;
 @@ -3659,7 +3664,7 @@ function validate2(node, schema, originalSchema, validationResult, matchingSchem
            validationResult: subValidationResult,
            matchingSchemas: subMatchingSchemas

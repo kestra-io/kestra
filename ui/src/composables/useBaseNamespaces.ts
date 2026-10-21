@@ -250,7 +250,7 @@ export const useBaseNamespacesStore = () => {
 
     async function fileMetadata(this: any, payload: {namespace: string; path: string}): Promise<{size?: number}> {
         const URL = `${base(payload.namespace)}/files/stats?path=${slashPrefix(safePath(payload.path))}`;
-        const request = await axios.get(URL);
+        const request = await axios.get(URL, {ignoreNotFound: true});
         return request.data;
     }
 

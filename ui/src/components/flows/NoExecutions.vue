@@ -12,7 +12,7 @@
             <p class="desc">
                 {{ isNamespace ? $t("no-executions-view.namespace_sub_title") : $t("no-executions-view.sub_title") }}
             </p>
-            <div v-if="flow && !flow.deleted" class="trigger">
+            <div v-if="flow && !flow.deleted && canExecute" class="trigger">
                 <TriggerFlow
                     type="primary"
                     :disabled="flow.disabled"
@@ -34,6 +34,9 @@
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
     import noexecutionimg from "../../assets/onboarding/noexecution.svg"
     import {useFlowStore} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import permission from "../../models/permission"
+    import action from "../../models/action"
     //@ts-expect-error no declaration file
     import TriggerFlow from "../flows/TriggerFlow.vue"
 
@@ -43,7 +46,11 @@
     })
 
     const flowStore = useFlowStore();
+    const authStore = useAuthStore();
     const flow = computed(() => flowStore.flow)
+    const canExecute = computed(() =>
+        flow.value && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
+    )
 </script>
 
 <style scoped lang="scss">

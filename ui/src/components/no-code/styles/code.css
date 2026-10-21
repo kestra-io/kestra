@@ -1,19 +1,11 @@
-$code-primary: var(--ks-text-link);
-$code-secondary: var(--ks-text-secondary);
-$code-gray: var(--ks-text-primary);
-$code-card-color: var(--ks-bg-surface);
-$code-border-color: var(--ks-border-default);
-
-$code-font-sm: var(--ks-font-size-sm);
-
 .collapse {
     & * {
-        font-size: $code-font-sm;
+        font-size: var(--ks-font-size-sm);
     }
 
-    :deep(*) {
+    & :deep(*) {
         --kel-collapse-header-bg-color: initial;
-        --kel-collapse-header-text-color: #{--ks-text-secondary};
+        --kel-collapse-header-text-color: --ks-text-secondary;
         --kel-collapse-content-bg-color: initial;
 
         .kel-collapse-item__header,
@@ -23,14 +15,14 @@ $code-font-sm: var(--ks-font-size-sm);
 
         .kel-collapse-item__header {
             justify-content: space-between;
-            color: $code-secondary;
+            color: var(--ks-text-secondary);
         }
     }
 }
 
 .label {
-    color: $code-gray;
-    font-size: $code-font-sm;
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-sm);
 }
 
 .task-collection {
@@ -44,7 +36,7 @@ $code-font-sm: var(--ks-font-size-sm);
     height: 32px;
     cursor: pointer;
     padding-left: 0;
-    color: $code-gray;
+    color: var(--ks-text-primary);
     text-align: right;
 }
 
@@ -53,20 +45,20 @@ $code-font-sm: var(--ks-font-size-sm);
     max-width: none;
     align-items: center;
 
-    // HACK: reset Element Plus adjacent-button margin-left (horizontal-group assumption) in this vertical stack
-    :deep(.kel-button) {
+    /* HACK: reset Element Plus adjacent-button margin-left (horizontal-group assumption) in this vertical stack */
+    & :deep(.kel-button) {
         margin-left: 0;
     }
 }
 
 .wrapper {
-    :deep(*) {
-        --kel-disabled-text-color: #{$code-gray};
+    & :deep(*) {
+        --kel-disabled-text-color: var(--ks-text-primary);
 
         .kel-input__inner,
         .kel-textarea__inner {
-            color: $code-gray;
-            font-size: $code-font-sm;
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-sm);
         }
     }
 }

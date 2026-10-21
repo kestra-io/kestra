@@ -53,7 +53,8 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### While you write code
 
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
-- Keep the style **inside** the SFC. `<style scoped src="./x.scss">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Keep the style **inside** the SFC. `<style scoped src="./x.css">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Write styles as plain CSS: no `lang="scss"` and no new `.scss` file outside `packages/design-system/` (kestra-io/kestra#21346). Native nesting works with `scoped`, but start a nested selector with `&` (`& :deep(.x)`, `& > *`), or Vue puts `[data-v-*]` on the nested part instead of the parent.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
 - Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
@@ -348,14 +349,14 @@ When retiring a `Ks*` component, prop, or token:
 <template>
     <KsButton type="primary">{{ t("save") }}</KsButton>
 </template>
-<style lang="scss" scoped>
+<style scoped>
     /* Almost always: no custom CSS is needed at all. */
 </style>
 ```
 
 If your `<style>` block needs to exist:
 
-```scss
+```css
 /* Right: --ks-* tokens, no SCSS vars in feature code, no :deep */
 .my-feature {
     background: var(--ks-bg-surface);
@@ -370,7 +371,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`) |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
@@ -419,7 +420,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
@@ -437,7 +438,7 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
-| `KsExecutionStatus` | Execution / task status badge with icon and color |
+| `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
 | `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
 

@@ -188,4 +188,21 @@
             color: var(--ks-text-primary);
         }
     }
+
+    @media (max-width: 767px) {
+        .ks-breadcrumb {
+            min-width: 0;
+        }
+
+        .ks-breadcrumb__item,
+        .ks-breadcrumb__separator {
+            display: none;
+        }
+
+        .ks-breadcrumb__current {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
 </style>

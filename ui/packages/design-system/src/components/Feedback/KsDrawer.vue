@@ -130,6 +130,8 @@
 
             @media only screen and (max-width: 767px) {
                 width: 95%;
+                min-width: 0;
+                max-width: 92vw;
             }
 
             @media only screen and (min-width: 992px) {
@@ -183,6 +185,7 @@
 
         &.full-screen {
             width: 99% !important;
+            max-width: none;
         }
 
         & .kel-drawer__header {

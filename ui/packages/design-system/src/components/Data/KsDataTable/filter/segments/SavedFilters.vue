@@ -184,6 +184,12 @@
             &:focus-within .action-buttons {
                 opacity: 1;
             }
+
+            @media (hover: none) {
+                & .action-buttons {
+                    opacity: 1;
+                }
+            }
         }
     }
 

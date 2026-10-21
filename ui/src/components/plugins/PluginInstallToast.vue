@@ -140,7 +140,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-install-toast {
         display: flex;
         flex-direction: column;

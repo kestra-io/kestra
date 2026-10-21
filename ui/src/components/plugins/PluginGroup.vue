@@ -89,7 +89,7 @@
     import {ref, computed, onMounted, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import axios from "axios"
+    import {publicFetchJson} from "../../utils/publicApi"
     import {KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
     import PluginCard from "./PluginCard.vue"
     import PluginLayout from "./PluginLayout.vue"
@@ -251,10 +251,9 @@
         if (!cls) return
 
         try {
-            const response = await axios.get<Blueprint[]>(
+            groupBlueprints.value = await publicFetchJson<Blueprint[]>(
                 `${API_URL}/v1/blueprints/plugin/${cls}/version/latest`,
-            )
-            groupBlueprints.value = response.data ?? []
+            ) ?? []
         } catch (err) {
             console.warn("Failed to load blueprints for group", cls, err)
             groupBlueprints.value = []
@@ -285,31 +284,31 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-group {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-3);
+    }
 
-        &__title {
-            margin: 0;
-            font-size: var(--ks-font-size-sm);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
+    .plugin-group__title {
+        margin: 0;
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
 
-        &__grid {
-            display: grid;
-            gap: var(--ks-spacing-3);
-            grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
-        }
+    .plugin-group__grid {
+        display: grid;
+        gap: var(--ks-spacing-3);
+        grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
+    }
 
-        &--blueprints {
-            margin-top: var(--ks-spacing-6);
-        }
+    .plugin-group--blueprints {
+        margin-top: var(--ks-spacing-6);
+    }
 
-        &__state {
-            padding: var(--ks-spacing-6) 0;
-        }
+    .plugin-group__state {
+        padding: var(--ks-spacing-6) 0;
     }
 </style>

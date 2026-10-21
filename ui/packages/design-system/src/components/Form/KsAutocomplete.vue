@@ -74,6 +74,16 @@
         }
     }
 
+    @media (pointer: coarse) {
+        .kel-autocomplete .kel-input {
+            --kel-input-height: 2.75rem;
+        }
+
+        .kel-autocomplete .kel-input__inner {
+            font-size: 1rem;
+        }
+    }
+
     .kel-autocomplete-suggestion {
         & .kel-autocomplete-suggestion__wrap {
             max-height: 40vh;

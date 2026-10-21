@@ -361,6 +361,7 @@ public final class ExecutorTestHarness {
         this.executionCommandMessageHandler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
             taskOutputService,
             executionOutputService,

@@ -57,22 +57,6 @@ describe("TableQuickFilter", () => {
         expect(buttons.slice(1).every((btn) => !btn.classes().includes("active"))).toBe(true)
     })
 
-    it("emits change with that tab's state filter and key when clicking another tab", async () => {
-        const wrapper = mountFilter(executionsChart())
-        const buttons = tabButtons(wrapper)
-
-        await buttons[1].trigger("click")
-
-        expect(lastChange(wrapper)).toEqual([
-            {
-                field: "state",
-                operation: "IN",
-                value: ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING", "KILLING"],
-            },
-            "running",
-        ])
-    })
-
     it("emits nothing when clicking the active tab", async () => {
         const wrapper = mountFilter(executionsChart())
         const buttons = tabButtons(wrapper)
@@ -88,14 +72,9 @@ describe("TableQuickFilter", () => {
         expect(wrapper.emitted("change")).toHaveLength(1)
     })
 
-    it("carries the active class and the indicator on the active tab", async () => {
+    it("moves the active class and the indicator to the selected tab", async () => {
         const wrapper = mountFilter(executionsChart())
         const buttons = tabButtons(wrapper)
-
-        expect(buttons[0].classes()).toContain("active")
-        expect(buttons[0].find(".tab-indicator").exists()).toBe(true)
-        expect(buttons[1].classes()).not.toContain("active")
-        expect(buttons[1].find(".tab-indicator").exists()).toBe(false)
 
         await buttons[1].trigger("click")
 

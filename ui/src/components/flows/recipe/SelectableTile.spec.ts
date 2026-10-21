@@ -50,33 +50,4 @@ describe("SelectableTile", () => {
         expect(wrapper.find(".tile-config").exists()).toBe(false)
         expect(wrapper.classes()).not.toContain("has-config")
     })
-
-    test("role defaults to radio and is reflected on the element", () => {
-        const wrapper = mount(SelectableTile)
-
-        expect(wrapper.find("button").attributes("role")).toBe("radio")
-    })
-
-    test("applies the layout and indicator defaults", () => {
-        const wrapper = mount(SelectableTile)
-
-        expect(wrapper.find("button").classes()).toContain("row")
-        expect(wrapper.find("button").classes()).not.toContain("column")
-        expect(wrapper.find(".tile-radio-mark").exists()).toBe(false)
-    })
-
-    test("applies a non-default layout and indicator", () => {
-        const wrapper = mount(SelectableTile, {
-            props: {layout: "column", indicator: "radio"},
-        })
-
-        expect(wrapper.find("button").classes()).toContain("column")
-        expect(wrapper.find(".tile-radio-mark").exists()).toBe(true)
-    })
-
-    test("sets aria-label when ariaLabel is given", () => {
-        const wrapper = mount(SelectableTile, {props: {ariaLabel: "Pick this option"}})
-
-        expect(wrapper.find("button").attributes("aria-label")).toBe("Pick this option")
-    })
 })

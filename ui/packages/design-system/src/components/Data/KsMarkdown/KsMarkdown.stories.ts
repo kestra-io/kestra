@@ -7,6 +7,7 @@ const meta: Meta<typeof KsMarkdown> = {
     tags: ["autodocs"],
     argTypes: {
         content: {control: "text"},
+        compact: {control: "boolean"},
     },
     parameters: {
         docs: {
@@ -338,6 +339,14 @@ export const Html: Story = {
     parameters: {controls: {disable: true}},
 }
 
+
+/** Headings scaled to the UI type scale, for markdown shown inside a panel. */
+export const Compact: Story = {
+    args: {
+        compact: true,
+        content: "# H1 — Main title\n\n## H2 — Section\n\n### H3 — Subsection\n\nBody text under the headings.",
+    },
+}
 
 /** Headings H1–H6 with hoverable `#` anchor links. */
 export const HeadingLinks: Story = {

@@ -15,6 +15,14 @@ vi.mock("./shikiHighlighter", async (importOriginal) => {
 const BASE64_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
 
 describe("KsMarkdown", () => {
+    test("adds the compact modifier only when the compact prop is set", () => {
+        const regular = i18nMount(KsMarkdown, {props: {content: "# Title"}})
+        const compact = i18nMount(KsMarkdown, {props: {content: "# Title", compact: true}})
+
+        expect(regular.find(".ks-markdown--compact").exists()).toBe(false)
+        expect(compact.find(".ks-markdown--compact").exists()).toBe(true)
+    })
+
     test("adds a hidden anchor link to each heading", () => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: "# My Title"}})
         const anchor = wrapper.find("h1#my-title a.anchor")

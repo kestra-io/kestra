@@ -4,6 +4,7 @@ vi.mock("vue-router", () => ({
     useRoute: () => ({name: "executions/list", query: {}}),
 }))
 
+import {Comparators} from "@kestra-io/design-system"
 import {useExecutionFilter} from "./executionFilter"
 import {useFlowExecutionFilter} from "./flowExecutionFilter"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
@@ -48,5 +49,16 @@ describe("execution filter configurations declare triggerId", () => {
     it("useFlowExecutionFilter", () => {
         const config = setup(() => useFlowExecutionFilter())
         expect(config.value.keys.map((k: {key: string}) => k.key)).toContain("triggerId")
+    })
+})
+
+describe("execution filter configurations declare searchable outputs", () => {
+    it.each([
+        ["useExecutionFilter", useExecutionFilter],
+        ["useFlowExecutionFilter", useFlowExecutionFilter],
+    ])("%s", (_name, useComposable) => {
+        const config = setup(() => useComposable())
+        const outputs = config.value.keys.find((k: {key: string}) => k.key === "outputs")
+        expect(outputs).toMatchObject({valueType: "key-value", comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN]})
     })
 })

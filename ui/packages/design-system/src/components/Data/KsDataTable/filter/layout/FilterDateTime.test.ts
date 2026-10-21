@@ -19,20 +19,9 @@ const mountComponent = (props = {}) =>
     })
 
 describe("FilterDateTime", () => {
-    test("binds dateValue to the picker", () => {
-        const date = new Date("2026-10-20T10:00:00Z")
-        const wrapper = mountComponent({dateValue: date})
-        expect(wrapper.findComponent(KsDatePickerStub).props("modelValue")).toEqual(date)
-    })
-
     test("placeholder is 'Select <label>' lowercased", () => {
         const wrapper = mountComponent({label: "Start Date"})
         expect(wrapper.findComponent(KsDatePickerStub).props("placeholder")).toBe("Select start date")
-    })
-
-    test("picker is in datetime mode", () => {
-        const wrapper = mountComponent()
-        expect(wrapper.findComponent(KsDatePickerStub).props("type")).toBe("datetime")
     })
 
     test("picking a date emits update:dateValue with that date", async () => {

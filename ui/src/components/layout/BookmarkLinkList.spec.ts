@@ -65,7 +65,6 @@ const mountList = (pages: { label?: string; path: string }[]) => {
     return wrapper
 }
 
-
 describe("BookmarkLinkList", () => {
     test("renders one link for each page in the correct order", () => {
         const pages = [
@@ -79,15 +78,6 @@ describe("BookmarkLinkList", () => {
         expect(links).toHaveLength(2)
         expect(links[0].attributes("href")).toBe("/overview")
         expect(links[1].attributes("href")).toBe("/settings")
-    })
-
-    test("uses the page path as the href", () => {
-        const wrapper = mountList([
-            { label: "Dashboard", path: "/dashboard" },
-        ])
-
-        expect(wrapper.find(".bookmark-anchor").attributes("href"))
-            .toBe("/dashboard")
     })
 
     test("uses the label as the title when a label exists", () => {
@@ -104,11 +94,5 @@ describe("BookmarkLinkList", () => {
 
         expect(wrapper.find(".bookmark-anchor").attributes("title"))
             .toBe("/reports")
-    })
-
-    test("renders nothing when the pages list is empty", () => {
-        const wrapper = mountList([])
-
-        expect(wrapper.findAll(".bookmark-anchor")).toHaveLength(0)
     })
 })

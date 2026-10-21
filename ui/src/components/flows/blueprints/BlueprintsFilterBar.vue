@@ -1,6 +1,6 @@
 <template>
     <div :class="{'embed-top': showEmbed}">
-        <KsRow class="filter-row" :class="{'mb-3': !showEmbed && !inline}" justify="center">
+        <KsRow class="filter-row" :class="{spaced: !showEmbed && !inline}" justify="center">
             <KsFilter
                 class="filter"
                 :configuration="blueprintFilter"
@@ -71,7 +71,11 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+    .spaced {
+        margin-bottom: var(--ks-spacing-4);
+    }
+
     .embed-top {
         display: flex;
         flex-direction: column;

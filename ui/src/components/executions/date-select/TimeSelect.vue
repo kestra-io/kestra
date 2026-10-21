@@ -117,7 +117,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .duration-examples {
     margin-top: var(--ks-spacing-2);
     line-height: 1.5;

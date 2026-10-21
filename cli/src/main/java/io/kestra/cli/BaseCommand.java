@@ -59,6 +59,10 @@ public abstract class BaseCommand {
         System.out.println(message(message, format));
     }
 
+    public static void emitReplacedByKestractl() {
+        stdOut("This command is deprecated and will be removed in a future version. Please use kestractl instead (https://kestra.io/docs/kestra-cli/kestractl).");
+    }
+
     public static void stdErr(String message, Object... format) {
         System.err.println(message(message, format));
     }

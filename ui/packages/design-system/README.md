@@ -11,7 +11,7 @@ writing feature code against this package.
 ## Peer dependencies
 
 The package ships no framework of its own: `vue`, `element-plus`, `vue-i18n`, `vue-router`,
-`vue-material-design-icons`, `echarts`, `monaco-editor`, `bootstrap`
+`vue-material-design-icons`, `echarts`, `monaco-editor`
 and `yaml` are peer dependencies, so the host app owns their versions. See `peerDependencies` in
 [`package.json`](package.json) for the supported ranges.
 
@@ -93,7 +93,7 @@ to stub or enumerate the exports.
 
 ### Styles and tokens
 
-The global stylesheet (Element Plus theme, Bootstrap reset, fonts, `--ks-*` tokens for light and
+The global stylesheet (Element Plus theme, CSS reset, fonts, `--ks-*` tokens for light and
 both dark themes) is a separate entry of the published package, imported once at bootstrap:
 
 ```ts

@@ -206,7 +206,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .plugin-implementation {
     width: 100%;
     display: flex;

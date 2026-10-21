@@ -1,6 +1,34 @@
 import {describe, expect, test} from "vitest"
 import * as YamlUtils from "./serialization.ts"
 
+describe("parse", () => {
+    test.each(["", "  \n", "# only a comment\n"])("returns undefined for a stream with no document: %j", (source) => {
+        expect(YamlUtils.parse(source)).toBeUndefined()
+    })
+
+    test("still rejects a stream holding several documents", () => {
+        expect(() => YamlUtils.parse("a: 1\n---\nb: 2\n")).toThrow()
+    })
+
+    test("resolves a merge key", () => {
+        expect(YamlUtils.parse("base: &base {a: 1}\nx:\n  <<: *base\n  b: 2\n")).toEqual({base: {a: 1}, x: {a: 1, b: 2}})
+    })
+
+    test("keeps an unquoted date as a string", () => {
+        expect(YamlUtils.parse("at: 2024-01-01\n")).toEqual({at: "2024-01-01"})
+    })
+})
+
+describe("stringify", () => {
+    test.each(["yes", "on", "no", "off", "y"])("quotes the YAML 1.1 boolean word %j so it stays a string", (word) => {
+        expect(YamlUtils.stringify({value: word})).toBe(`value: "${word}"\n`)
+    })
+
+    test("writes a Date as a timestamp", () => {
+        expect(YamlUtils.stringify({at: new Date("2024-01-01T00:00:00.000Z")})).toBe("at: 2024-01-01T00:00:00.000Z\n")
+    })
+})
+
 describe("stringify with preserveCronQuotes", () => {
     test("adds quotes to unquoted cron values", () => {
         const yaml = {

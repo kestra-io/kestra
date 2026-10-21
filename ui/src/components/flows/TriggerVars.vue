@@ -16,7 +16,7 @@
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
-                    <KsButton @click="emit('on-copy')" size="small" class="ms-2">
+                    <KsButton @click="emit('on-copy')" size="small" class="copy-button">
                         {{ $t('copy url') }}
                     </KsButton>
                 </template>
@@ -59,7 +59,11 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .copy-button {
+        margin-inline-start: var(--ks-spacing-2);
+    }
+
     :deep(.markdown) {
         p {
             margin-bottom: auto;

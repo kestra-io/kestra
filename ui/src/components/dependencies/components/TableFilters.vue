@@ -45,7 +45,7 @@
     const flow = defineModel<boolean>("flow", {required: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     section#filtering {
         position: sticky;
         top: 0;
@@ -54,7 +54,7 @@
         background-color: var(--ks-bg-input);
         border-bottom: 1px solid var(--ks-border-default);
 
-        :deep(.kel-input__wrapper), :deep(.kel-select__wrapper) {
+        & :deep(.kel-input__wrapper), & :deep(.kel-select__wrapper) {
             margin-bottom: var(--ks-spacing-2);
             font-size: var(--ks-font-size-sm);
         }

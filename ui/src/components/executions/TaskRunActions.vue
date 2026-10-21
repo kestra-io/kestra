@@ -44,8 +44,8 @@
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
-                    <span class="d-inline-flex align-items-center">
-                        <AiIcon class="me-1" />
+                    <span class="fix-with-ai">
+                        <AiIcon />
                         <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
@@ -89,7 +89,7 @@
                     component="KsDropdownItem"
                     :key="`change-status-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
                     :execution="execution"
-                    :taskRun="currentTaskRun"
+                    :taskRun="currentTaskRunWithExecution"
                     :attemptIndex="currentAttemptIndex"
                     @follow="emit('follow', $event)"
                 />
@@ -164,13 +164,13 @@
     import Check from "vue-material-design-icons/Check.vue"
 
     import {State} from "@kestra-io/design-system"
-    import type {LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {LogEntry, TaskRun, TaskRunAttempt} from "@kestra-io/kestra-sdk"
     import type {Execution} from "../../stores/executions"
     import type {ExecutionTaskRun} from "./executionTaskRun"
     import type {Flow} from "../../stores/flow"
 
     import * as Utils from "../../utils/utils"
-    import {findTaskById} from "../../utils/flowUtils"
+    import {findTaskById, LOOP_TASK_TYPE} from "../../utils/flowUtils"
     import {useToast} from "../../utils/toast"
     import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
@@ -190,6 +190,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const props = withDefaults(defineProps<{
         taskRun: ExecutionTaskRun
@@ -245,6 +246,14 @@
     const currentTaskRun = computed(() => {
         return currentTaskRuns.value.find((r) => r.id === selectedTaskRunId.value) || props.taskRun
     })
+    const currentTaskRunWithExecution = computed<TaskRun>(() => {
+        return {
+            ...currentTaskRun.value, 
+            executionId: props.execution.id,
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId.toString(),
+        } satisfies TaskRun
+    })
 
     function attempts(taskRun: ExecutionTaskRun): TaskRunAttempt[] {
         if (props.execution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
@@ -264,7 +273,7 @@
         const executionId = currentTaskRun.value.outputs?.executionId
         return typeof executionId === "string" ? executionId : undefined
     })
-    const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === "io.kestra.plugin.core.flow.Loop")
+    const isLoop = computed(() => (props.taskType ?? findTaskById(props.flow, props.taskRun.taskId)?.type) === LOOP_TASK_TYPE)
 
     const hasWorkerId = computed<boolean>(() =>
         currentTaskRun.value.attempts?.find((attempt: { workerId?: string | null }) => attempt.workerId != null) !== undefined,
@@ -275,14 +284,7 @@
     )
 
     function openIterations() {
-        router.push({
-            name: "executions/list",
-            query: {
-                "filters[parentId][EQUALS]": props.execution.id,
-                "filters[kind][EQUALS]": "LOOP",
-                "filters[taskId][EQUALS]": props.taskRun.taskId,
-            },
-        })
+        router.push(loopIterationsRoute(props.execution, props.taskRun.taskId))
     }
 
     function downloadNameFor(currentTaskRunId: string): string {
@@ -364,7 +366,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-run-buttons {
         padding: 0 .5rem;
         border: none;
@@ -375,7 +377,13 @@
         }
     }
 
-        .iteration-selector {
+    .fix-with-ai {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    .iteration-selector {
         border-bottom: var(--ks-border-block-primary);
         padding: var(--ks-spacing-2);
 

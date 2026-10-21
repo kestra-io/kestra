@@ -91,6 +91,11 @@ html.dark {
     #{--ks-dependencies-edge-faded}: $base-gray-cool-400;
     #{--ks-dependencies-edge-hovered}: $base-gray-cool-white;
     #{--ks-dependencies-edge-selected}: $base-primary-200;
+    #{--ks-dependencies-edge-produces}: $base-blue-300;
+    #{--ks-dependencies-edge-consumed-by}: $base-green-300;
+    #{--ks-dependencies-edge-upstream-of}: $base-orange-300;
+    #{--ks-dependencies-edge-part-of}: $base-yellow-300;
+    #{--ks-dependencies-edge-related}: $base-gray-cool-100;
     #{--ks-dependencies-node-background-assets}: $base-blue-300;
     #{--ks-dependencies-node-background-default}: $base-gray-cool-500;
     #{--ks-dependencies-node-background-faded}: $base-gray-cool-700;

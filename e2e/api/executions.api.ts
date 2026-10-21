@@ -36,6 +36,8 @@ export class ExecutionsApi extends BaseApi {
         const responseJson = await (await response).json()
 
         this.executionIds.push(responseJson["id"])
+
+        return responseJson["id"] as string
     }
 
     async generateWebhookExecutionViaApi(key: string, headers: Record<string, string> = {}) {

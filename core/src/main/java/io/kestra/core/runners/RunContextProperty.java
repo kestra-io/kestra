@@ -56,6 +56,7 @@ public class RunContextProperty<T> {
      * <p>
      * This ensures that each time the property is rendered, the underlying
      * expression is re-evaluated to produce a fresh result.
+     * Only needed to render the property again with the same run context and different additional variables.
      *
      * @return a new {@link Property} that bypasses the cache
      */
@@ -68,8 +69,7 @@ public class RunContextProperty<T> {
      *
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
+     * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
      */
     public Optional<T> as(Class<T> clazz) throws IllegalVariableEvaluationException {
         var as = Optional.ofNullable(getProperty())
@@ -84,8 +84,7 @@ public class RunContextProperty<T> {
      *
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
+     * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
      */
     public Optional<T> as(Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         var as = Optional.ofNullable(getProperty())
@@ -101,8 +100,7 @@ public class RunContextProperty<T> {
      *
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
+     * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
      */
     @SuppressWarnings("unchecked")
     public <I> T asList(Class<I> itemClazz) throws IllegalVariableEvaluationException {
@@ -120,8 +118,7 @@ public class RunContextProperty<T> {
      *
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
+     * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
      */
     @SuppressWarnings("unchecked")
     public <I> T asList(Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -139,8 +136,7 @@ public class RunContextProperty<T> {
      *
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
+     * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
      */
     @SuppressWarnings("unchecked")
     public <K, V> T asMap(Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
@@ -158,8 +154,7 @@ public class RunContextProperty<T> {
      *
      * Validation will only occur if the runContext has been created with a Task or an AbstractTrigger.<br>
      *
-     * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
-     * Warning, due to the caching mechanism, this method is not thread-safe.
+     * This method is safe to be used as many times as you want as the rendering and conversion will be cached for this run context.
      */
     @SuppressWarnings("unchecked")
     public <K, V> T asMap(Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {

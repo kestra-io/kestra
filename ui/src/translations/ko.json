@@ -5,6 +5,12 @@
       "cta": "변경 사항 확인"
     },
     "loading": "로딩 중...",
+    "namespace_files_tip": {
+      "title": "스크립트를 namespace 파일로 관리하세요",
+      "description": "스크립트를 인라인으로 작성하는 대신, 파일 패널을 열어 파일(예: main.py)로 추가한 다음 flow에서 실행하세요:",
+      "open_files": "파일 열기",
+      "dont_show_again": "다시 표시하지 않기"
+    },
     "more actions": "추가 작업",
     "recipe": {
       "create_flow": "flow 생성",
@@ -236,6 +242,7 @@
       "last7days": "지난 7일",
       "last30days": "지난 30일",
       "last365days": "지난 365일",
+      "allTime": "모든 시간",
       "next5minutes": "다음 5분",
       "next15minutes": "다음 15분",
       "next1hour": "다음 1시간",
@@ -369,7 +376,7 @@
     "restart": "재시작",
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
     "restarted": "실행이 다시 시작되었습니다.",
-    "restart confirm": "실행 <code>{id}</code>를 다시 시작하시겠습니까?",
+    "restart confirm": "실행 {id}를 다시 시작하시겠습니까?",
     "restart subflow warning": "이 Execution은 상위 Execution에 의해 생성되었으므로 거기서부터 다시 시작해야 합니다. 이 Execution만 다시 시작하면 상위 Execution은 FAILED 상태로 남아 다음 Task가 실행되지 않습니다. 다시 시작하려면 {parent}로 이동하세요.",
     "restart subflow warning link": "상위 execution",
     "replay": "재실행",
@@ -377,7 +384,7 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replayed": "실행이 다시 재생됩니다.",
-    "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
+    "replay the execution": "flow {flowId}의 실행 {executionId}을(를) 다시 실행합니다.",
     "prefill inputs": "미리 채우기",
     "current": "현재",
     "change state": "상태 변경",
@@ -387,9 +394,11 @@
     "yes": "네",
     "no": "아니요",
     "change state done": "작업 상태가 업데이트되었습니다",
-    "change state confirm": "실행 <code>{id}</code>의 <code>{task}</code> task에 대한 task 실행 상태를 변경하시겠습니까?<br/>그러면 다음 task부터 실행이 다시 시작되고, 상위 실행이 있는 경우 상위 실행도 다시 시작됩니다.",
+    "change state confirm": "실행 {id}의 {task} task에 대한 task 실행 상태를 변경하시겠습니까?",
+    "change state confirm restart": "그러면 다음 task부터 실행이 다시 시작되고, 상위 실행이 있는 경우 상위 실행도 다시 시작됩니다.",
     "interrupt": "중단",
-    "interrupt confirm": "실행 <code>{id}</code>의 <code>{task}</code> Task에 대한 Task Run을 중단하시겠습니까?<br/>Worker 내에서 실행 중인 Task를 종료하고 해당 상태를 설정합니다.",
+    "interrupt confirm": "실행 {id}의 {task} Task에 대한 Task Run을 중단하시겠습니까?",
+    "interrupt note": "Worker 내에서 실행 중인 Task를 종료하고 해당 상태를 설정합니다.",
     "interrupt done": "Task 실행이 중단되었습니다.",
     "interrupt target state": "대상 상태",
     "change state current state": "현재 상태는:",
@@ -426,31 +435,48 @@
     "modify inputs": "입력 수정",
     "replay inputs new required": "이 수정본에는 input이 있습니다. 입력하라는 메시지가 표시됩니다.",
     "replay select taskrun": "어떤 task run을 재생할지 선택하십시오:",
+    "replayCheck": {
+      "checking": "리비전 {revision}이 Task {taskId}에서 Replay될 수 있는지 확인 중입니다.",
+      "valid_title": "Revision {revision}을(를) Task {taskId}부터 Replay할 수 있습니다.",
+      "valid_description": "이전 Task는 변경되지 않았으므로 해당 Output이 재사용됩니다. 다른 Revision에서 Replay하는 것은 완전히 결정적이지 않습니다. Secret, 파일 Input 및 외부 시스템을 호출하는 표현식은 원래 실행과 다른 것을 반환할 수 있습니다.",
+      "refused_title": "리비전 {revision}은(는) Task {taskId}에서 다시 재생할 수 없습니다.",
+      "refused_description": "결과가 재사용될 Task, input 또는 변수가 이 버전에서 다르게 정의되었습니다.",
+      "error_title": "리비전 {revision}이 Task {taskId}에서 Replay될 수 있는지 확인할 수 없습니다.",
+      "error_description": "그래도 Replay할 수 있습니다. 서버는 Replay가 시작될 때 동일한 규칙을 적용하며, 버전이 호환되지 않으면 거부합니다.",
+      "whole_action": "대신 전체 Execution을 Replay합니다.",
+      "whole_title": "Revision {revision}을 전체 Execution으로 Replay할 수 있습니다.",
+      "whole_description": "이전 결과는 재사용되지 않으므로 모든 Task는 revision {revision}에서 다시 실행됩니다. 원본 Execution은 유지되고 연결됩니다.",
+      "confirm_from_task": "Task에서 Replay",
+      "confirm_whole": "전체 Execution Replay"
+    },
     "change execution state done": "실행 상태가 업데이트되었습니다",
-    "mark as": "<code>{status}</code>로 표시",
-    "unqueue as": "<code>{status}</code>로 대기열에서 제거",
+    "mark as": "{status}로 표시",
+    "unqueue as": "{status}로 대기열에서 제거",
     "kill": "종료",
     "kill parents and subflow": "현재 및 subflow 종료",
     "kill only parents": "현재 것만 종료",
     "killed confirm": "실행 <code>{id}</code>를 종료하시겠습니까?",
     "killed done": "종료 중입니다.",
     "resume": "재개",
-    "resumed title": "실행 <code>{id}</code> 재개",
+    "resumed title": "실행 {id} 재개",
     "resumed confirm": "실행 <code>{id}</code>을(를) 다시 시작하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
-    "resume from breakpoint title": "`{id}` 실행을 중단점에서 재개",
+    "resume from breakpoint title": "{id} 실행을 중단점에서 재개",
     "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
     "breakpoints": "중단점",
     "pause": "일시 중지",
-    "pause title": "실행 <code>{id}</code>를 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 재개해야 합니다.",
+    "pause title": "실행 {id}를 일시 중지합니다.",
+    "pause note": "현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 재개해야 합니다.",
     "pause confirm": "실행 <code>{id}</code>를 일시 중지하시겠습니까?",
     "pause done": "실행이 PAUSED 상태입니다.",
     "unqueue": "대기열에서 제거",
-    "unqueue title": "실행 <code>{id}</code>의 대기열에서 제거하시겠습니까?<br/><br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 실행될 수 있습니다.",
-    "unqueue title multiple": "<code>{count}</code>개의 실행을 대기열에서 제거하시겠습니까?<br/><br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
+    "unqueue title": "실행 {id}의 대기열에서 제거하시겠습니까?",
+    "unqueue note": "이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 실행될 수 있습니다.",
+    "unqueue title multiple": "{count}개의 실행을 대기열에서 제거하시겠습니까?",
+    "unqueue multiple note": "이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "force run": "강제 실행",
-    "force run title": "실행 <code>{id}</code> 강제 실행.",
+    "force run title": "실행 {id} 강제 실행.",
     "force run confirm": "실행 `{id}`를 강제로 실행하시겠습니까?\n\n경고: 실행 강제 실행은 보장되지 않으며 중복 Task 실행을 생성할 수 있습니다.\n\n다음 전환이 수행됩니다:\n\n- CREATED Task는 실행 중 상태로 이동됩니다.\n- RUNNING Task는 다시 제출됩니다.\n- QUEUED Task는 대기열에서 제거됩니다.\n- PAUSED Task는 재개됩니다.",
     "force run done": "실행이 강제로 실행됨",
     "metrics": "메트릭",
@@ -497,6 +523,21 @@
       "revision": "수정본 {revision}",
       "attempts": "{count}회 시도 | {count}회 시도",
       "tasks": "task {completed}/{count}개 | task {completed}/{count}개"
+    },
+    "execution_mobile": {
+      "failed_task": "실패한 task",
+      "view_task_logs": "task logs 보기",
+      "revision_short": "리비전 {revision}",
+      "more_labels": "+{count}개 label | +{count}개 label",
+      "fewer_labels": "label 접기",
+      "jump_to_first_failure": "첫 번째 실패로 이동",
+      "open_logs": "logs 열기"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "로그인 후",
+      "execution_tab": "실행 {id} · {tab} 탭",
+      "execution": "실행 {id}",
+      "tab": "{tab} 탭"
     },
     "concurrency limits": "동시성 제한",
     "system overview": "시스템 개요",
@@ -668,6 +709,7 @@
       "nav_properties": "속성",
       "non_dynamic": "비동적",
       "format": "형식",
+      "internal_storage_uri_hint": "내부 Storage URI를 참조하는 Pebble 표현식 (예: {example}).",
       "max_items": "최대 항목",
       "max_length": "최대 길이",
       "maximum": "최대",
@@ -745,7 +787,7 @@
     "execute flow behaviour": "Flow 실행",
     "open in same tab": "동일한 탭에서",
     "open in new tab": "새 탭에서",
-    "execute the flow": "Flow <code>{id}</code> 실행",
+    "execute the flow": "Flow {id} 실행",
     "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "unsaved changed ?": "저장되지 않은 변경 사항이 있습니다. 이 페이지를 떠나시겠습니까?",
     "session expired": "세션이 만료되었습니다.",
@@ -917,12 +959,12 @@
     "restore": "복원",
     "restore confirm": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
-    "bulk replay": "<code>{executionCount}</code> 개의 실행을 재실행하시겠습니까?",
-    "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
+    "bulk replay": "{executionCount} 개의 실행을 재실행하시겠습니까?",
+    "bulk change state": "{executionCount} 실행의 상태를 변경하시겠습니까?",
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",
     "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
     "bulk force run": "`{executionCount}`개의 실행을 강제로 실행하시겠습니까?\n\n경고: 실행 강제 실행은 보장되지 않으며 중복 Task 실행을 생성할 수 있습니다.\n\n다음 전환이 수행됩니다:\n\n- CREATED Task는 실행 중 상태로 이동됩니다.\n- RUNNING Task는 다시 제출됩니다.\n- QUEUED Task는 대기열에서 제거됩니다.\n- PAUSED Task는 재개됩니다.",
-    "bulk restart": "<code>{executionCount}</code> 개의 실행을 재시작하시겠습니까?",
+    "bulk restart": "{executionCount} 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
     "cancel": "취소",
     "errorLogs": "오류 log",
@@ -1131,11 +1173,11 @@
         "deletion": {
           "confirm": "확인",
           "title": "콘텐츠 삭제 확인",
-          "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
-          "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
-          "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
-          "file_single": "파일 <code>{name}</code>을(를) 삭제하시겠습니까?",
-          "folder_single": "폴더 <code>{name}</code> 및 모든 내용을 삭제하시겠습니까?"
+          "files": "{count}개의 파일을 삭제하시겠습니까?",
+          "folders": "{count}개의 폴더와 모든 내용을 삭제하시겠습니까?",
+          "mixed": "{folders} 폴더와 {files} 파일을 삭제하시겠습니까?",
+          "file_single": "파일 {name}을(를) 삭제하시겠습니까?",
+          "folder_single": "폴더 {name} 및 모든 내용을 삭제하시겠습니까?"
         }
       },
       "revisions": {
@@ -1164,7 +1206,7 @@
     "backfill": "Backfill",
     "Set labels": "라벨 설정",
     "manage labels": "label 관리",
-    "Set labels to execution": "실행 <code>{id}</code>의 라벨 추가 또는 업데이트",
+    "Set labels to execution": "실행 {id}의 라벨 추가 또는 업데이트",
     "Set labels done": "실행의 라벨이 성공적으로 설정되었습니다",
     "bulk set labels": "<code>{executionCount}</code>개의 실행에 label을 설정하시겠습니까?",
     "true": "참",
@@ -1760,6 +1802,14 @@
     "item": "항목",
     "items": "항목",
     "iterations": "반복",
+    "load_10_more": "10개 더 불러오기",
+    "show_all_executions": "모든 실행 보기",
+    "failed_iterations_only": "실패한 반복만",
+    "loop_iterations_shown": "{total}개 중 {shown}개 표시됨",
+    "loop_iterations_load_error": "반복 로드 실패",
+    "retry": "다시 시도",
+    "no_iterations": "아직 반복이 없습니다",
+    "no_failed_iterations": "실패한 반복이 없습니다",
     "loop_iterations_notice": {
       "logs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 로그는 여기에 표시되지 않습니다.",
       "outputs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 출력은 여기에 표시되지 않습니다.",
@@ -1770,6 +1820,8 @@
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",
     "last error was": "마지막 오류는",
+    "execution_paused": "실행 일시 중지",
+    "execution_paused_description": "이 실행은 검증 및 재개를 기다리고 있습니다.",
     "active": "활성화됨",
     "flows imported": "Flow가 가져왔습니다.",
     "flows not imported": "가져오지 않은 Flow",
@@ -2067,6 +2119,7 @@
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"
       },
+      "ignoredFilters": "{filters} 필터는 이 차트에 적용되지 않습니다. | {filters} 필터는 이 차트에 적용되지 않습니다.",
       "show_all_statuses": "모든 상태 표시",
       "quick_filters": {
         "all": "전체",
@@ -2268,7 +2321,8 @@
           "title": {
             "flow": "제안된 flow",
             "dashboard": "제안된 대시보드",
-            "app": "제안된 앱"
+            "app": "제안된 앱",
+            "test_suite": "제안된 단위 테스트"
           },
           "valid": "유효",
           "invalid": "수정 필요"
@@ -2313,30 +2367,35 @@
           "failed": "실패함",
           "unknown": "추적되지 않음"
         },
+        "kind": {
+          "produces": "생성",
+          "consumed_by": "사용됨",
+          "upstream_of": "상위의",
+          "part_of": "일부",
+          "related": "관련 항목"
+        },
         "summary": {
           "fresh": "모든 {n} Asset이 최신입니다.",
           "issues": "{n} 고정",
           "failed": "{n} 실패함",
           "last_run": "마지막 실행 {ago}",
-          "unknown": "{n} 추적되지 않음",
-          "tests_failed": "실패한 테스트가 있는 {n}개"
-        },
-        "tests": {
-          "pass": "{count} 테스트 | {count} 테스트",
-          "warn": "{count} 테스트 · 경고 | {count} 테스트 · 경고",
-          "fail": "{failed}/{total} 실패",
-          "tooltip": {
-            "pass": "{count} dbt 테스트 통과 | 모든 {count} dbt 테스트 통과",
-            "warn": "{count} dbt 테스트 경고와 함께 통과 | {count} dbt 테스트 통과, 일부 경고 포함",
-            "fail": "dbt 테스트 실패 | dbt 테스트 {total}개 중 {failed}개 실패"
-          }
+          "unknown": "{n} 추적되지 않음"
         },
         "recent_runs": "최근 실행",
         "group_by": "그룹화 기준",
-        "groups": "그룹 ({n})",
+        "groups": "그룹",
         "group_none": "그룹화 없음",
         "group_dataset": "데이터셋",
-        "ungrouped": "그룹 해제됨"
+        "group_consumer": "컨슈머",
+        "no_consumer": "소비자 없음",
+        "hidden_consumer": "숨겨진 Flow",
+        "ungrouped": "그룹 해제됨",
+        "hub": {
+          "notice": "이 노드에는 {count}개의 관계가 있습니다. 그래프를 읽기 쉽게 유지하기 위해 가장 최근 관계만 표시됩니다.",
+          "expand": "더 많은 관계 로드",
+          "expand_failed": "더 많은 관계를 로드할 수 없습니다. 다시 시도해 주세요."
+        },
+        "truncated": "이 그래프는 너무 커서 전체를 표시할 수 없습니다. 일부 관계는 생략되었습니다."
       },
       "search": {
         "placeholders": {

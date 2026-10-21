@@ -152,7 +152,7 @@ export default () => {
             textStyle: {
                 color: cssVar("--kel-text-color-primary"),
                 fontSize: 12,
-                fontFamily: cssVar("--kbs-font-sans-serif"),
+                fontFamily: cssVar("--ks-font-family-sans"),
             },
             extraCssText: "box-shadow: var(--kel-box-shadow);",
             axisPointer: {

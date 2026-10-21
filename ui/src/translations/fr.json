@@ -5,6 +5,12 @@
       "cta": "Voir les modifications"
     },
     "loading": "Chargement...",
+    "namespace_files_tip": {
+      "title": "Gérez vos scripts comme fichiers du namespace",
+      "description": "Au lieu d'écrire votre script en ligne, ouvrez le panneau Fichiers, ajoutez-le comme fichier (par ex. main.py) et exécutez-le depuis votre flow :",
+      "open_files": "Ouvrir les fichiers",
+      "dont_show_again": "Ne plus afficher"
+    },
     "more actions": "Plus d'actions",
     "recipe": {
       "create_flow": "Créer un flow",
@@ -236,6 +242,7 @@
       "last7days": "7 derniers jours",
       "last30days": "30 derniers jours",
       "last365days": "365 derniers jours",
+      "allTime": "Tout le temps",
       "next5minutes": "Les 5 prochaines minutes",
       "next15minutes": "Prochaines 15 minutes",
       "next1hour": "Prochaine 1 heure",
@@ -369,7 +376,7 @@
     "restart": "Relancer",
     "restart tooltip": "Relancer l'exécution depuis la tâche dans l'état <code>{state}</code>",
     "restarted": "L'exécution est redémarrée",
-    "restart confirm": "Voulez-vous vraiment redémarrer l'exécution <code>{id}</code> ?",
+    "restart confirm": "Voulez-vous vraiment redémarrer l'exécution {id} ?",
     "restart subflow warning": "Cette exécution a été créée par une exécution parente et doit être redémarrée à partir de celle-ci. La redémarrer seule laisse l'exécution parente FAILED et ses prochaines tasks ne s'exécuteront pas. Accédez au {parent} pour la redémarrer.",
     "restart subflow warning link": "exécution parente",
     "replay": "Rejouer",
@@ -377,7 +384,7 @@
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replayed": "L'exécution est rejouée",
-    "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
+    "replay the execution": "Rejouer l'exécution {executionId} pour le flow {flowId}",
     "prefill inputs": "Pré-remplir",
     "current": "actuel",
     "change state": "Changer l'état",
@@ -387,9 +394,11 @@
     "yes": "Oui",
     "no": "Non",
     "change state done": "L'état de la task a été mis à jour",
-    "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?<br/>Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
+    "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche {task} dans l'exécution {id} ?",
+    "change state confirm restart": "Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
     "interrupt": "Interrompre",
-    "interrupt confirm": "Voulez-vous vraiment interrompre l'exécution du Task Run pour le Task <code>{task}</code> dans l'Execution <code>{id}</code> ?<br/>Cela mettra fin au Task en cours d'exécution dans le Worker et définira son état.",
+    "interrupt confirm": "Voulez-vous vraiment interrompre l'exécution du Task Run pour le Task {task} dans l'Execution {id} ?",
+    "interrupt note": "Cela mettra fin au Task en cours d'exécution dans le Worker et définira son état.",
     "interrupt done": "L'exécution de la Task a été interrompue",
     "interrupt target state": "État cible",
     "change state current state": "Statut actuel :",
@@ -426,31 +435,48 @@
     "modify inputs": "Modifier les inputs",
     "replay inputs new required": "Cette révision a des inputs. Vous serez invité à les remplir.",
     "replay select taskrun": "Sélectionnez le task run à rejouer à partir de :",
+    "replayCheck": {
+      "checking": "Vérification si la révision {revision} peut être rejouée à partir du Task {taskId}.",
+      "valid_title": "La version {revision} peut être rejouée à partir de la Task {taskId}.",
+      "valid_description": "Les tâches précédentes sont inchangées, leurs outputs sont donc réutilisés. Rejouer sur une autre révision n'est jamais entièrement déterministe : les secrets, les inputs de fichiers et les expressions appelant des systèmes externes peuvent renvoyer quelque chose de différent de l'exécution originale.",
+      "refused_title": "La révision {revision} ne peut pas être rejouée à partir de la tâche {taskId}.",
+      "refused_description": "Une tâche, une entrée ou une variable dont le résultat serait réutilisé est définie différemment dans cette révision.",
+      "error_title": "Impossible de vérifier si la révision {revision} peut être rejouée à partir de la Task {taskId}.",
+      "error_description": "Vous pouvez toujours rejouer. Le serveur applique les mêmes règles au démarrage du Replay et le refuse si la révision est incompatible.",
+      "whole_action": "Rejouer toute l'exécution à la place",
+      "whole_title": "La version {revision} peut être rejouée comme une exécution complète.",
+      "whole_description": "Aucun résultat antérieur n'est réutilisé, donc chaque Task s'exécute à nouveau sur la révision {revision}. L'exécution originale est conservée et liée.",
+      "confirm_from_task": "Replay à partir de la tâche",
+      "confirm_whole": "Rejouer l'exécution entière"
+    },
     "change execution state done": "État d'exécution mis à jour",
-    "mark as": "Marqué comme <code>{status}</code>",
-    "unqueue as": "Se désenfile en tant que <code>{status}</code>",
+    "mark as": "Marquer comme {status}",
+    "unqueue as": "Se désenfile en tant que {status}",
     "kill": "Arrêter",
     "kill parents and subflow": "Tuer le flow actuel et les subflows",
     "kill only parents": "Tuer uniquement le courant",
     "killed confirm": "Voulez-vous vraiment tuer l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "resume": "Reprendre",
-    "resumed title": "Reprendre l'exécution <code>{id}</code>",
+    "resumed title": "Reprendre l'exécution {id}",
     "resumed confirm": "Voulez-vous vraiment reprendre l'exécution <code>{id}</code> ?",
     "resumed done": "L'exécution est reprise",
-    "resume from breakpoint title": "Reprendre l'exécution <code>{id}</code> depuis le point d'arrêt",
+    "resume from breakpoint title": "Reprendre l'exécution {id} depuis le point d'arrêt",
     "resume from breakpoint done": "L'exécution est reprise depuis le point d'arrêt",
     "breakpoints": "Points d'arrêt",
     "pause": "Pause",
-    "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tâches en cours d'exécution seront toujours traitées et que l'exécution devra être reprise manuellement.",
+    "pause title": "Mettre en pause l'exécution {id}.",
+    "pause note": "Notez que les tâches en cours d'exécution seront toujours traitées et que l'exécution devra être reprise manuellement.",
     "pause confirm": "Voulez-vous vraiment mettre en pause l'exécution <code>{id}</code> ?",
     "pause done": "L'exécution est en PAUSE",
     "unqueue": "Défilement",
-    "unqueue title": "Voulez-vous vraiment défiler l'exécution <code>{id}</code> ?<br/><br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, ce qui pourrait entraîner un nombre d'exécutions supérieur à la limite autorisée.",
-    "unqueue title multiple": "Êtes-vous sûr de vouloir désenfiler <code>{count}</code> exécutions ?<br/><br/>Notez que cela ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
+    "unqueue title": "Voulez-vous vraiment défiler l'exécution {id} ?",
+    "unqueue note": "Notez qu'elle ne respectera pas la limite de concurrence du flow, ce qui pourrait entraîner un nombre d'exécutions supérieur à la limite autorisée.",
+    "unqueue title multiple": "Êtes-vous sûr de vouloir désenfiler {count} exécutions ?",
+    "unqueue multiple note": "Notez que cela ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
     "unqueue done": "L'exécution est retirée de la file d'attente",
     "force run": "Forcer l'exécution",
-    "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
+    "force run title": "Forcer l'exécution de l'exécution {id}.",
     "force run confirm": "Voulez-vous vraiment forcer l'exécution `{id}` ?\n\nAVERTISSEMENT : le forçage d'une exécution n'est pas garanti et peut créer des exécutions de Task en double.\n\nLes transitions suivantes seront effectuées :\n\n- Les Tasks CREATED passeront à l'état RUNNING.\n- Les Tasks RUNNING seront soumises à nouveau.\n- Les Tasks QUEUED seront retirées de la file d'attente.\n- Les Tasks PAUSED seront reprises.",
     "force run done": "L'exécution est forcée",
     "metrics": "Mesures",
@@ -497,6 +523,21 @@
       "revision": "Révision {revision}",
       "attempts": "{count} tentative | {count} tentatives",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+    },
+    "execution_mobile": {
+      "failed_task": "Task en échec",
+      "view_task_logs": "Voir les logs de la task",
+      "revision_short": "rév. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Afficher moins de labels",
+      "jump_to_first_failure": "Aller au premier échec",
+      "open_logs": "Ouvrir les logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Après la connexion",
+      "execution_tab": "Exécution {id} · onglet {tab}",
+      "execution": "Exécution {id}",
+      "tab": "Onglet {tab}"
     },
     "concurrency limits": "Limites de Concurrence",
     "system overview": "Vue d'ensemble du système",
@@ -668,6 +709,7 @@
       "nav_properties": "Propriétés",
       "non_dynamic": "non dynamique",
       "format": "Format",
+      "internal_storage_uri_hint": "Expression Pebble faisant référence à un URI de stockage interne, par exemple {example}.",
       "max_items": "Nombre max. d'éléments",
       "max_length": "Longueur max",
       "maximum": "Maximum",
@@ -745,7 +787,7 @@
     "execute flow behaviour": "Exécuter le flow",
     "open in same tab": "Dans le même onglet",
     "open in new tab": "Dans un nouvel onglet",
-    "execute the flow": "Exécuter le flow <code>{id}</code>",
+    "execute the flow": "Exécuter le flow {id}",
     "discard execution confirmation": "Vous avez des inputs non enregistrés. Êtes-vous sûr de vouloir abandonner cette exécution ?",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
     "session expired": "Votre session a expiré",
@@ -917,12 +959,12 @@
     "restore": "Restaurer",
     "restore confirm": "Voulez-vous vraiment restaurer la révision <code>{revision}</code> ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
-    "bulk replay": "Êtes-vous sur de vouloir rejouer <code>{executionCount}</code> exécution(s)?",
-    "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
+    "bulk replay": "Êtes-vous sur de vouloir rejouer {executionCount} exécution(s)?",
+    "bulk change state": "Êtes-vous sûr de vouloir changer l'état de {executionCount} exécution(s) ?",
     "bulk resume": "Êtes-vous sur de vouloir reprendre <code>{executionCount}</code> exécution(s)?",
     "bulk pause": "Êtes-vous sûr de vouloir mettre en pause l'exécution de <code>{executionCount}</code> ?",
     "bulk force run": "Voulez-vous vraiment forcer l'exécution de `{executionCount}` exécution(s) ?\n\nAVERTISSEMENT : l'exécution forcée d'une exécution n'est pas garantie et peut créer des exécutions de Task en double.\n\nLes transitions suivantes seront effectuées :\n\n- Les Tasks CREATED passeront à l'état RUNNING.\n- Les Tasks RUNNING seront soumises à nouveau.\n- Les Tasks QUEUED seront retirées de la file d'attente.\n- Les Tasks PAUSED seront reprises.",
-    "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> exécution(s) ?",
+    "bulk restart": "Êtes-vous sur de vouloir redémarrer {executionCount} exécution(s) ?",
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> exécution(s) ?",
     "cancel": "Annuler",
     "errorLogs": "Logs d'erreurs",
@@ -1131,11 +1173,11 @@
         "deletion": {
           "confirm": "Confirmer",
           "title": "Confirmer la suppression du contenu",
-          "files": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> fichier(s) ?",
-          "folders": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> dossier(s) et tout son contenu ?",
-          "mixed": "Êtes-vous sûr de vouloir supprimer le(s) dossier(s) <code>{folders}</code> et le(s) fichier(s) <code>{files}</code> ?",
-          "file_single": "Êtes-vous sûr de vouloir supprimer le fichier <code>{name}</code> ?",
-          "folder_single": "Êtes-vous sûr de vouloir supprimer le dossier <code>{name}</code> et tout son contenu ?"
+          "files": "Êtes-vous sûr de vouloir supprimer {count} fichier(s) ?",
+          "folders": "Êtes-vous sûr de vouloir supprimer {count} dossier(s) et tout son contenu ?",
+          "mixed": "Êtes-vous sûr de vouloir supprimer le(s) dossier(s) {folders} et le(s) fichier(s) {files} ?",
+          "file_single": "Êtes-vous sûr de vouloir supprimer le fichier {name} ?",
+          "folder_single": "Êtes-vous sûr de vouloir supprimer le dossier {name} et tout son contenu ?"
         }
       },
       "revisions": {
@@ -1164,7 +1206,7 @@
     "backfill": "Backfill",
     "Set labels": "Ajouter des labels",
     "manage labels": "Gérer les labels",
-    "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
+    "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution {id}",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
     "bulk set labels": "Voulez-vous vraiment définir des labels pour <code>{executionCount}</code> exécution(s) ?",
     "true": "Vrai",
@@ -1760,6 +1802,14 @@
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
+    "load_10_more": "Charger 10 de plus",
+    "show_all_executions": "Afficher toutes les exécutions",
+    "failed_iterations_only": "Itérations échouées uniquement",
+    "loop_iterations_shown": "{shown} sur {total} affichés",
+    "loop_iterations_load_error": "Échec du chargement des itérations",
+    "retry": "Réessayer",
+    "no_iterations": "Pas encore d'itérations",
+    "no_failed_iterations": "Aucune itération échouée",
     "loop_iterations_notice": {
       "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
       "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",
@@ -1770,6 +1820,8 @@
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",
     "last error was": "La dernière erreur était",
+    "execution_paused": "Exécution mise en pause",
+    "execution_paused_description": "Cette exécution est en attente de validation et de reprise.",
     "active": "Actif",
     "flows imported": "Flux importés",
     "flows not imported": "Flows non importés",
@@ -2067,6 +2119,7 @@
         "csv": "Exporter vers CSV",
         "ion": "Exporter vers ION"
       },
+      "ignoredFilters": "Le filtre {filters} ne s'applique pas à ce graphique. | Les filtres {filters} ne s'appliquent pas à ce graphique.",
       "show_all_statuses": "Afficher tous les états",
       "quick_filters": {
         "all": "Tout",
@@ -2268,7 +2321,8 @@
           "title": {
             "flow": "flow proposé",
             "dashboard": "Tableau de bord proposé",
-            "app": "Application proposée"
+            "app": "Application proposée",
+            "test_suite": "Test unitaire proposé"
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"
@@ -2313,30 +2367,35 @@
           "failed": "Échec",
           "unknown": "Non suivi"
         },
+        "kind": {
+          "produces": "Produit",
+          "consumed_by": "Consommé par",
+          "upstream_of": "En amont de",
+          "part_of": "Fait partie de",
+          "related": "Associé"
+        },
         "summary": {
           "fresh": "Tous les {n} assets sont à jour",
           "issues": "{n} obsolète | {n} obsolètes",
           "failed": "{n} échec | {n} échecs",
           "last_run": "dernière exécution {ago}",
-          "unknown": "{n} non suivi",
-          "tests_failed": "{n} avec des tests échoués"
-        },
-        "tests": {
-          "pass": "{count} test | {count} tests",
-          "warn": "{count} test · avertissement | {count} tests · avertissement",
-          "fail": "{failed}/{total} échecs",
-          "tooltip": {
-            "pass": "Le {count} test dbt a réussi | Tous les {count} tests dbt ont réussi",
-            "warn": "{count} test dbt réussi avec avertissements | {count} tests dbt réussis, certains avec avertissements",
-            "fail": "Le test dbt a échoué | {failed} des {total} tests dbt ont échoué"
-          }
+          "unknown": "{n} non suivi"
         },
         "recent_runs": "Exécutions récentes",
         "group_by": "Grouper par",
-        "groups": "Groupes ({n})",
+        "groups": "Groupes",
         "group_none": "Pas de regroupement",
         "group_dataset": "Jeu de données",
-        "ungrouped": "Non groupé"
+        "group_consumer": "Consommateur",
+        "no_consumer": "Aucun consommateur",
+        "hidden_consumer": "Flow masqué",
+        "ungrouped": "Non groupé",
+        "hub": {
+          "notice": "Ce nœud a {count} relations — seules les plus récentes sont affichées pour que le graphe reste lisible.",
+          "expand": "Charger plus de relations",
+          "expand_failed": "Impossible de charger plus de relations. Veuillez réessayer."
+        },
+        "truncated": "Ce graphique était trop grand pour être affiché en entier ; certaines relations ont été omises."
       },
       "search": {
         "placeholders": {

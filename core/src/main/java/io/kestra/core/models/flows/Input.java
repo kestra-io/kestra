@@ -49,6 +49,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
         @JsonSubTypes.Type(value = FormInput.class, name = "FORM"),
         @JsonSubTypes.Type(value = ReusableInputsInput.class, name = "REUSABLE_INPUTS"),
+        @JsonSubTypes.Type(value = TableInput.class, name = "TABLE"),
     }
 )
 @InputValidation
@@ -72,6 +73,12 @@ public abstract class Input<T> implements Data {
         title = "The description of the input."
     )
     String description;
+
+    @Schema(
+        title = "How the description of the input is displayed.",
+        description = "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+    )
+    DescriptionDisplayMode descriptionDisplayMode;
 
     @Schema(
         title = "The dependencies of the input."

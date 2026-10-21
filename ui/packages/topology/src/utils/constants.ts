@@ -83,6 +83,15 @@ export const DAGRE_NODE_SEP = 50
 // turn, so a turn placed inside it would be ignored.
 export const SMOOTH_STEP_OFFSET = 20
 
+// vue-flow's default smooth-step corner radius.
+export const SMOOTH_STEP_RADIUS = 5
+
+// How far inside its lane border a loop's return path runs, parallel to it.
+export const LOOP_RETURN_INSET = 12
+
+// How far from its start marker's centre a loop's return arrowhead stops, so it does not cover the marker.
+export const LOOP_RETURN_HEAD_GAP = 12
+
 // Below PILL, only a minimal glanceable pill renders; above EXPANDED, the node also renders the
 // `details` slot as an overlay. Neither ever changes `NODE_SIZES`, so crossing either threshold
 // only repaints the node — it never re-runs dagre.

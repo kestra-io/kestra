@@ -42,7 +42,7 @@
                     </template>
                 </DocsLayout>
             </template>
-            <KsMarkdown v-else :content="OFFLINE_MD" class="m-3" />
+            <KsMarkdown v-else :content="OFFLINE_MD" class="offline-markdown" />
         </div>
     </ContextInfoContent>
 </template>
@@ -210,7 +210,7 @@
     useScrollMemory(ref("context-panel-docs"), scrollableElement)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .back-button {
         background: var(--ks-btn-secondary-bg-default);
@@ -260,6 +260,10 @@
         flex-direction: column;
         gap: 1rem;
         margin-bottom: 1rem;
+    }
+
+    .offline-markdown {
+        margin: var(--ks-spacing-4);
     }
 
     .docs-toolbar {

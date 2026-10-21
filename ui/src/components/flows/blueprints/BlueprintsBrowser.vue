@@ -378,7 +378,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .blueprints {
         width: 100%;
     }

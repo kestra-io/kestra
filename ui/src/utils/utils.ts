@@ -94,6 +94,9 @@ const DISPLAY_MAX_LINES = 200
 // a 2.5 MiB string value pretty-prints to a single line and blocked for ~1 s under the other caps.
 export const DISPLAY_MAX_LINE_CHARS = 2000
 
+/** Stand-in when a value is `""`; plain text would otherwise leave an empty cell. */
+export const EMPTY_STRING_DISPLAY = "\"\""
+
 /**
  * Clip text to what a value viewer can render without wedging the main thread: a few MiB of
  * output values blocked it for seconds (kestra-io/kestra#19316). Compare lengths to detect a clip.
@@ -442,7 +445,7 @@ export function getDateGrouping(startDate: Dayjs | string | undefined, endDate: 
     if (duration.asDays() > 365) {
         return {format: "YYYY-MM", unit: "month"}
     } else if (duration.asDays() > 180) {
-        return {format: "YYYY-[W]ww", unit: "week"}
+        return {format: "GGGG-[W]WW", unit: "week"}
     } else if (duration.asDays() > 1) {
         return {format: "YYYY-MM-DD", unit: "day"}
     } else if (duration.asHours() > 1) {

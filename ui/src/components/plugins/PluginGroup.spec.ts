@@ -6,8 +6,8 @@ import {createPinia, setActivePinia} from "pinia"
 import KestraDesignSystem from "@kestra-io/design-system"
 import PluginGroup from "./PluginGroup.vue"
 
-vi.mock("axios", () => ({
-    default: {get: vi.fn().mockResolvedValue({data: []})},
+vi.mock("../../utils/publicApi", () => ({
+    publicFetchJson: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({

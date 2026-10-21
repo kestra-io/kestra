@@ -496,7 +496,7 @@
     }, {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-execution-checks-alerts {
         margin-bottom: 1rem;
     }

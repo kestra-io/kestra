@@ -52,7 +52,7 @@
     const uuid = computed(() => `workerinfo-${props.taskRun.id}`)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .title {
         font-weight: var(--ks-font-weight-semibold);
     }
@@ -62,7 +62,7 @@
         flex-direction: column;
         gap: var(--ks-spacing-3);
 
-        > div + div {
+        & > div + div {
             border-top: var(--ks-border-block-secondary);
             padding-top: var(--ks-spacing-3);
         }

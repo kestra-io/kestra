@@ -41,7 +41,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .card {
     display: flex;
     align-items: center;
@@ -68,7 +68,7 @@
         height: var(--ks-icon-size-lg);
         color: var(--ks-icon-muted);
 
-        :deep(svg) {
+        & :deep(svg) {
             width: var(--ks-icon-size-lg);
             height: var(--ks-icon-size-lg);
         }

@@ -90,7 +90,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     /* Sits on --ks-bg-base, where the progress track (--ks-bg-hover) resolves to the same color and
        would be invisible; the surface background is what makes the unfilled part of the bar read. */
     .execution-progress {

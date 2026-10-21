@@ -11,7 +11,7 @@
     defineProps<{merge?: boolean, transparent?: boolean}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .schema-wrapper {
     margin-left: calc(-1 * var(--ks-spacing-5));
     margin-right: calc(-1 * var(--ks-spacing-5));

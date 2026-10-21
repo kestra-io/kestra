@@ -182,7 +182,7 @@ export interface ToolResultEvent {
 export interface ProposedStep {
     /** What the step does, e.g. "Mock external task outputs". */
     title: string
-    /** Optional target/detail line, e.g. the file path "tests/…​.test.yml". */
+    /** Optional target/detail line, e.g. the file path "tests/….test.yml". */
     detail?: string | null
 }
 

@@ -82,7 +82,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .kill-dropdown {
         width: 100%;
     }
@@ -90,7 +90,7 @@
     .m-dropdown-menu {
         width: fit-content !important;
 
-        :deep(.kel-dropdown-menu__item:hover) {
+        & :deep(.kel-dropdown-menu__item:hover) {
             background-color: var(--ks-log-background-error) !important;
             color: var(--ks-status-error) !important;
         }

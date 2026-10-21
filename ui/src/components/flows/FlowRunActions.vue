@@ -45,7 +45,7 @@
     defineProps<{flowRun: FlowRunInstance | null}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-run-actions {
     display: flex;
     align-items: center;

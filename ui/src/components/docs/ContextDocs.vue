@@ -210,7 +210,7 @@
     useScrollMemory(ref("context-panel-docs"), scrollableElement)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .back-button {
         background: var(--ks-btn-secondary-bg-default);

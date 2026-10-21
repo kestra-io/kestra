@@ -1,7 +1,7 @@
 <template>
     <div>
         <header class="plugin-unified__header">
-            <h1 class="plugin-unified__title">
+            <h1 class="plugin-unified__title" data-test="plugin-title">
                 <TaskIcon
                     class="plugin-unified__icon"
                     :onlyIcon="true"
@@ -16,6 +16,7 @@
             v-if="plugin?.longDescription"
             compact
             class="plugin-unified__long"
+            data-test="plugin-long-description"
             :content="plugin.longDescription"
         />
 

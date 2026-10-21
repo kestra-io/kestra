@@ -16,7 +16,6 @@
   "src/components/no-code/components/tasks/TaskObject.vue": 17,
   "src/components/no-code/components/tasks/TaskObjectField.vue": 7,
   "src/components/no-code/components/tasks/fieldNesting.ts": 16,
-  "src/components/no-code/components/tasks/getTaskComponent.ts": 7,
   "src/components/no-code/utils/cleanUp.ts": 4,
   "src/components/no-code/utils/useFieldNavigation.ts": 1,
   "src/stores/executions.bulkRestart.spec.ts": 1,

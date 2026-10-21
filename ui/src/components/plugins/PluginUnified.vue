@@ -229,7 +229,7 @@
         margin: 0;
         font-size: var(--ks-font-size-lg);
         font-weight: var(--ks-font-weight-bold);
-        line-height: 1.2;
+        line-height: var(--ks-line-height-tight);
         color: var(--ks-text-primary);
     }
 
@@ -243,7 +243,7 @@
     .plugin-unified__summary {
         margin: var(--ks-spacing-3) 0 0;
         font-size: var(--ks-font-size-sm);
-        line-height: 1.55;
+        line-height: var(--ks-line-height-base);
         color: var(--ks-text-secondary);
     }
 

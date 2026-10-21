@@ -375,10 +375,11 @@ class LogControllerTest {
         logRepository.save(logEntry(tenant, Level.WARN));
         logRepository.save(logEntry(tenant, Level.ERROR));
 
-        HttpResponse<?> delete = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[level][IN]=ERROR")
+        BulkResponse delete = client.toBlocking().retrieve(
+            HttpRequest.DELETE("/api/v1/" + tenant + "/logs/by-query?filters[level][IN]=ERROR"),
+            BulkResponse.class
         );
-        assertThat(delete.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(delete.getCount()).isEqualTo(1);
 
         CursorOrOffsetPagedResults<LogEntry> remaining = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search"),

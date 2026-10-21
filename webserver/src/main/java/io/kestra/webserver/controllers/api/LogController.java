@@ -18,6 +18,7 @@ import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
@@ -41,8 +42,11 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -228,7 +232,9 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/by-query")
     @Operation(tags = { "Logs" }, summary = "Delete logs matching the given filters")
-    public HttpResponse<?> deleteLogsByQuery(
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "At least one valid filter is required", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
+    public HttpResponse<BulkResponse> deleteLogsByQuery(
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
@@ -237,10 +243,10 @@ public class LogController {
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "At least one valid filter is required to delete logs by query.");
         }
 
-        logRepository.deleteByFilters(
+        int count = logRepository.deleteByFilters(
             tenantService.resolveTenant(),
             QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
         );
-        return HttpResponse.ok();
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 }

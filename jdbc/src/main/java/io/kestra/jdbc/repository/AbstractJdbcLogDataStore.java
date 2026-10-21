@@ -489,11 +489,11 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
-    public void deleteByFilters(String tenantId, List<QueryFilter> filters) {
+    public int deleteByFilters(String tenantId, List<QueryFilter> filters) {
         if (!canPurge()) {
-            return;
+            return 0;
         }
-        this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
             DSLContext context = DSL.using(configuration);
 

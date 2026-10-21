@@ -1,5 +1,5 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl} from "./utils"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars, getDateGrouping, downloadUrl, humanFileSize, humanTextSize, splitFirst, getParentNamespaces, isFile, isIon} from "./utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
     vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
@@ -147,7 +147,7 @@ describe("getDateGrouping()", () => {
     })
 
     it("returns a week grouping for ranges over 180 days", () => {
-        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "YYYY-[W]ww", unit: "week"})
+        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "GGGG-[W]WW", unit: "week"})
     })
 
     it("returns a day grouping for ranges over a day", () => {
@@ -175,5 +175,124 @@ describe("executionVars()", () => {
 
     it("returns an empty list when data is undefined", () => {
         expect(executionVars(undefined as unknown as Record<string, unknown>)).toEqual([])
+    })
+})
+
+describe("humanFileSize()", () => {
+    it("returns a sub-threshold size as '<n> B'", () => {
+        expect(humanFileSize(512)).toBe("512 B")
+    })
+
+    it("uses binary units by default, so 1024 is 1.0 KiB", () => {
+        expect(humanFileSize(1024)).toBe("1.0 KiB")
+    })
+
+    it("switches to powers of 1000 when si is true, so 1000 is 1.0 kB", () => {
+        expect(humanFileSize(1000, true)).toBe("1.0 kB")
+    })
+
+    it("honours dp for the number of decimal places", () => {
+        expect(humanFileSize(1536, false, 2)).toBe("1.50 KiB")
+    })
+
+    it("drops the decimals entirely when dp is 0", () => {
+        expect(humanFileSize(1024, false, 0)).toBe("1 KiB")
+    })
+
+    it("formats a negative size rather than treating it as below the threshold", () => {
+        expect(humanFileSize(-1024)).toBe("-1.0 KiB")
+    })
+
+    it("returns the literal '0B' for undefined", () => {
+        expect(humanFileSize(undefined as unknown as number)).toBe("0B")
+    })
+})
+
+describe("humanTextSize()", () => {
+    it("measures the UTF-8 byte length, counting a multi-byte character as more than one byte", () => {
+        expect(humanTextSize("€")).toBe("3 B")
+    })
+})
+
+
+describe("splitFirst()", () => {
+    it("drops the first segment and rejoins the rest", () => {
+        expect(splitFirst("a/b/c", "/")).toBe("b/c")
+        expect(splitFirst("namespace/flow/task/output", "/")).toBe("flow/task/output")
+        expect(splitFirst("a:b:c", ":")).toBe("b:c")
+    })
+
+    it("returns an empty string when the separator is absent", () => {
+        expect(splitFirst("abc", "/")).toBe("")
+        expect(splitFirst("no_separator", ":")).toBe("")
+        expect(splitFirst("", "/")).toBe("")
+    })
+
+    it("returns an empty string when there is only one segment before the separator", () => {
+        expect(splitFirst("a/", "/")).toBe("")
+    })
+})
+
+describe("getParentNamespaces()", () => {
+    it("returns every ancestor of a nested namespace, in order", () => {
+        expect(getParentNamespaces("a.b.c")).toEqual(["a", "a.b", "a.b.c"])
+        expect(getParentNamespaces("company.team.project")).toEqual([
+            "company",
+            "company.team",
+            "company.team.project",
+        ])
+    })
+
+    it("returns nothing extra for a root-level namespace", () => {
+        expect(getParentNamespaces("company")).toEqual(["company"])
+        expect(getParentNamespaces("root")).toEqual(["root"])
+    })
+
+    it("returns an empty array for empty or falsy namespace", () => {
+        expect(getParentNamespaces("")).toEqual([])
+    })
+})
+
+describe("isFile()", () => {
+    it("returns true for an internal-storage file URI", () => {
+        expect(isFile("kestra:///company/flow/execution/file.txt")).toBe(true)
+        expect(isFile("kestra:///output.ion")).toBe(true)
+        expect(isFile("nsfile:///data/input.csv")).toBe(true)
+    })
+
+    it("returns false for an ordinary string or non-file values", () => {
+        expect(isFile("ordinary-string")).toBe(false)
+        expect(isFile("https://example.com/file.txt")).toBe(false)
+        expect(isFile("/local/path/file.txt")).toBe(false)
+        expect(isFile("")).toBe(false)
+        expect(isFile(null)).toBe(false)
+        expect(isFile(undefined)).toBe(false)
+        expect(isFile(123)).toBe(false)
+        expect(isFile({})).toBe(false)
+    })
+})
+
+describe("isIon()", () => {
+    it("returns true only for a file URI ending in .ion, case-insensitively", () => {
+        expect(isIon("kestra:///data/output.ion")).toBe(true)
+        expect(isIon("kestra:///data/OUTPUT.ION")).toBe(true)
+        expect(isIon("kestra:///data/records.Ion")).toBe(true)
+        expect(isIon("nsfile:///data/output.ion")).toBe(true)
+    })
+
+    it("returns false for a file URI with a different extension", () => {
+        expect(isIon("kestra:///data/output.csv")).toBe(false)
+        expect(isIon("kestra:///data/output.json")).toBe(false)
+        expect(isIon("kestra:///data/output.txt")).toBe(false)
+    })
+
+    it("returns false for a non-file value that merely ends in .ion", () => {
+        expect(isIon("regular-text.ion")).toBe(false)
+        expect(isIon("https://example.com/data.ion")).toBe(false)
+        expect(isIon("/local/path/test.ion")).toBe(false)
+        expect(isIon(".ion")).toBe(false)
+        expect(isIon(null)).toBe(false)
+        expect(isIon(undefined)).toBe(false)
+        expect(isIon({uri: "kestra:///data/output.ion"})).toBe(false)
     })
 })

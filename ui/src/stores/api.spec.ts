@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
-const axiosPost = vi.fn().mockResolvedValue({data: {}})
+const publicFetch = vi.fn().mockResolvedValue(new Response())
 
 vi.mock("nprogress", () => ({
     start: vi.fn(),
@@ -19,11 +19,9 @@ vi.mock("vue-router", () => ({
     }),
 }))
 
-vi.mock("axios", () => ({
-    default: {
-        post: axiosPost,
-        get: vi.fn(),
-    },
+vi.mock("../utils/publicApi", () => ({
+    publicFetch,
+    publicFetchJson: vi.fn(),
 }))
 
 const capturePosthogEvent = vi.fn()
@@ -49,11 +47,10 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 describe("api store events", () => {
     beforeEach(() => {
         vi.resetModules()
-        axiosPost.mockClear()
+        publicFetch.mockClear()
         capturePosthogEvent.mockClear()
         disablePosthog.mockClear()
         setActivePinia(createPinia())
-        localStorage.clear()
     })
 
     it("buffers events until configs are available and flushes", async () => {
@@ -74,7 +71,7 @@ describe("api store events", () => {
             $referring_domain: "example.test",
         })
 
-        expect(axiosPost).not.toHaveBeenCalled()
+        expect(publicFetch).not.toHaveBeenCalled()
         expect(capturePosthogEvent).not.toHaveBeenCalled()
 
         miscStore.configs = {
@@ -85,8 +82,8 @@ describe("api store events", () => {
 
         await apiStore.flushQueuedEvents()
 
-        expect(axiosPost).toHaveBeenCalledTimes(1)
-        const payload = axiosPost.mock.calls[0][1]
+        expect(publicFetch).toHaveBeenCalledTimes(1)
+        const payload = publicFetch.mock.calls[0][1].body
         expect(payload.iid).toBe("iid-1")
         expect(payload.uid).toBe("uid-123")
         expect(payload.page?.origin).toBeUndefined()
@@ -105,7 +102,7 @@ describe("api store events", () => {
         const miscStore = useMiscStore()
 
         await apiStore.events({type: "PAGE"})
-        expect(axiosPost).not.toHaveBeenCalled()
+        expect(publicFetch).not.toHaveBeenCalled()
 
         miscStore.configs = {
             uuid: "iid-3",
@@ -113,8 +110,8 @@ describe("api store events", () => {
             isUiAnonymousUsageEnabled: true,
         }
 
-        await vi.waitFor(() => expect(axiosPost).toHaveBeenCalledTimes(1))
-        expect(axiosPost.mock.calls[0][1].iid).toBe("iid-3")
+        await vi.waitFor(() => expect(publicFetch).toHaveBeenCalledTimes(1))
+        expect(publicFetch.mock.calls[0][1].body.iid).toBe("iid-3")
     })
 
     it("drops events when analytics is disabled", async () => {
@@ -139,7 +136,7 @@ describe("api store events", () => {
             },
         })
 
-        expect(axiosPost).not.toHaveBeenCalled()
+        expect(publicFetch).not.toHaveBeenCalled()
         expect(capturePosthogEvent).not.toHaveBeenCalled()
         expect(disablePosthog).not.toHaveBeenCalled()
     })

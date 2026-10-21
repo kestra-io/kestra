@@ -50,7 +50,7 @@
                 </div>
             </div>
             <Transition name="node-details-overlay">
-                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay">
+                <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay" data-test="node-details-overlay">
                     <slot name="details" />
                 </div>
             </Transition>
@@ -296,6 +296,11 @@
         outline-offset: 2px;
     }
 
+    .node-core.node-core--error {
+        border-color: var(--ks-border-error);
+        box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-error);
+    }
+
     /* The card the user picked up: it stays in the layout as the hole the task came out of. */
     .node-wrapper--dragging .node-core {
         opacity: 0.35;
@@ -428,6 +433,10 @@
         box-shadow: 0 0.5rem 1rem var(--ks-shadow-elevated);
         max-height: 20rem;
         overflow: auto;
+    }
+
+    .node-details-overlay:empty {
+        display: none;
     }
 
     .node-details-overlay-enter-active,

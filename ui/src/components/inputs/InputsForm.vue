@@ -405,7 +405,7 @@
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
-        formGroups?: Record<string, {displayName?: string; description?: string}>;
+        formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
         renderLabels?: string[];

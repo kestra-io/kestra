@@ -1,0 +1,22 @@
+id: flow-concurrency-queue-loop-until-killed
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.LoopUntil
+    condition: "{{ false }}"
+    failOnMaxReached: true
+    checkFrequency:
+      interval: PT5S
+      maxIterations: 100
+    tasks:
+      - id: iteration
+        type: io.kestra.plugin.core.log.Log
+        message: "iteration {{ outputs.loop.iterationCount ?? 0 }}"
+  - id: after
+    type: io.kestra.plugin.core.log.Log
+    message: after the loop

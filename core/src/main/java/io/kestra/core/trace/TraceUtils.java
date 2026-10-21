@@ -15,6 +15,8 @@ public final class TraceUtils {
     public static final AttributeKey<String> ATTR_NAMESPACE = AttributeKey.stringKey("kestra.namespace");
     public static final AttributeKey<String> ATTR_FLOW_ID = AttributeKey.stringKey("kestra.flowId");
     public static final AttributeKey<String> ATTR_EXECUTION_ID = AttributeKey.stringKey("kestra.executionId");
+    public static final AttributeKey<String> ATTR_TASK_ID = AttributeKey.stringKey("kestra.taskId");
+    public static final AttributeKey<String> ATTR_STATE = AttributeKey.stringKey("kestra.state");
 
     public static final AttributeKey<String> ATTR_SOURCE = AttributeKey.stringKey("kestra.source");
 
@@ -50,6 +52,11 @@ public final class TraceUtils {
 
         if (flowInfo.tenantId() != null) {
             builder.put(ATTR_TENANT_ID, flowInfo.tenantId());
+        }
+
+        var taskRunInfo = runContext.taskRunInfo();
+        if (taskRunInfo != null && taskRunInfo.taskId() != null) {
+            builder.put(ATTR_TASK_ID, taskRunInfo.taskId());
         }
 
         return builder.build();

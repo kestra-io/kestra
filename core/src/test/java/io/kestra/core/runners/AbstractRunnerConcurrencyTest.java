@@ -94,4 +94,10 @@ public abstract class AbstractRunnerConcurrencyTest {
     void flowConcurrencyQueueKilled() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueKilled("flow-concurrency-queue-killed");
     }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-loop-until-killed.yml" }, tenantId = "flow-concurrency-queue-loop-until-killed")
+    void flowConcurrencyQueueLoopUntilKilledWhilePaused() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueLoopUntilKilledWhilePaused("flow-concurrency-queue-loop-until-killed");
+    }
 }

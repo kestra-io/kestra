@@ -209,3 +209,32 @@ export const TitleSlot: Story = {
         `,
     }),
 }
+
+/** Mobile – below 768px only the monogram and the current entity name remain; ancestors and separators are hidden */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsBreadcrumb},
+        setup() {
+            const items: KsBreadcrumbItem[] = [
+                {label: "Executions", onClick: () => {}},
+                {label: "company.finance", onClick: () => {}},
+            ]
+            return {items}
+        },
+        template: `
+            <div style="padding:16px">
+                <ks-breadcrumb :items="items" title="a_very_long_flow_name_that_must_not_push_the_actions_off_screen" show-leading />
+            </div>
+        `,
+    }),
+}

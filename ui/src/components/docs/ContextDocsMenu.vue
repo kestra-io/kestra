@@ -89,29 +89,9 @@
     const sectionsWithChildren = computed(() => buildDocsSections(buildDocsToc(rawStructure.value)))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     ul > li > span:first-child {
         font-size: var(--ks-font-size-xs);
-    }
-
-    $scrollbar-width: 6px;
-    $link-radius: 6px;
-
-    @mixin custom-scrollbar {
-        &::-webkit-scrollbar {
-            width: $scrollbar-width;
-        }
-        &::-webkit-scrollbar-track {
-            background: transparent;
-            border-radius: $link-radius;
-        }
-        &::-webkit-scrollbar-thumb {
-            background-color: transparent;
-            border-radius: $link-radius;
-        }
-        &:hover::-webkit-scrollbar-thumb {
-            background-color: var(--ks-border-default);
-        }
     }
 
     .docsMenuWrapper {
@@ -161,6 +141,9 @@
     }
 
     .docsMenu {
+        --docs-menu-scrollbar-width: 6px;
+        --docs-menu-link-radius: 6px;
+
         display: flex;
         flex-direction: column;
         margin: 0;
@@ -170,52 +153,106 @@
         overflow-y: auto;
         padding-right: 0.25rem;
 
-        @include custom-scrollbar;
+        &::-webkit-scrollbar {
+            width: var(--docs-menu-scrollbar-width);
+        }
+        &::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: var(--docs-menu-link-radius);
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: transparent;
+            border-radius: var(--docs-menu-link-radius);
+        }
+        &:hover::-webkit-scrollbar-thumb {
+            background-color: var(--ks-border-default);
+        }
 
-        a, :deep(span[class*="depth-"]) {
+        a, & :deep(span[class*="depth-"]) {
             color: var(--ks-text-primary);
             text-decoration: none;
             display: block;
             padding: 0.25rem 0.5rem;
-            border-radius: $link-radius;
+            border-radius: var(--docs-menu-link-radius);
             transition: all 0.2s ease;
             margin-bottom: 2px;
             cursor: pointer;
             width: 100%;
+        }
 
-            @for $i from 0 through 5 {
-                $base-pad: 0.5rem + ($i * 1rem);
+        a.depth-0, & :deep(span[class*="depth-"]).depth-0 {
+            padding-left: 0.5rem;
+            font-weight: 500;
+        }
 
-                &.depth-#{$i} {
-                    padding-left: $base-pad;
-                    @if $i == 0 {
-                        font-weight: 500;
-                    } @else if $i == 1 {
-                        font-size: var(--ks-font-size-base);
-                        color: var(--ks-text-secondary);
-                    } @else {
-                        font-size: var(--ks-font-size-xs);
-                        color: var(--ks-text-secondary);
-                        opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
-                    }
-                }
+        a.active-page.depth-0, & :deep(span[class*="depth-"]).active-page.depth-0 {
+            padding-left: calc(0.5rem - 3px);
+        }
 
-                &.active-page.depth-#{$i} {
-                    padding-left: calc(#{$base-pad} - 3px);
-                }
-            }
+        a.depth-1, & :deep(span[class*="depth-"]).depth-1 {
+            padding-left: 1.5rem;
+            font-size: var(--ks-font-size-base);
+            color: var(--ks-text-secondary);
+        }
 
-            &:hover {
-                color: var(--ks-text-link);
-                background-color: var(--ks-btn-secondary-bg-hover);
-            }
+        a.active-page.depth-1, & :deep(span[class*="depth-"]).active-page.depth-1 {
+            padding-left: calc(1.5rem - 3px);
+        }
 
-            &.active-page {
-                color: var(--ks-text-link) !important;
-                font-weight: var(--ks-font-weight-semibold);
-                opacity: 1 !important;
-                background-color: var(--ks-btn-secondary-bg-hover);
-            }
+        a.depth-2, & :deep(span[class*="depth-"]).depth-2 {
+            padding-left: 2.5rem;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+            opacity: 0.9;
+        }
+
+        a.active-page.depth-2, & :deep(span[class*="depth-"]).active-page.depth-2 {
+            padding-left: calc(2.5rem - 3px);
+        }
+
+        a.depth-3, & :deep(span[class*="depth-"]).depth-3 {
+            padding-left: 3.5rem;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+            opacity: 0.8;
+        }
+
+        a.active-page.depth-3, & :deep(span[class*="depth-"]).active-page.depth-3 {
+            padding-left: calc(3.5rem - 3px);
+        }
+
+        a.depth-4, & :deep(span[class*="depth-"]).depth-4 {
+            padding-left: 4.5rem;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+            opacity: 0.7;
+        }
+
+        a.active-page.depth-4, & :deep(span[class*="depth-"]).active-page.depth-4 {
+            padding-left: calc(4.5rem - 3px);
+        }
+
+        a.depth-5, & :deep(span[class*="depth-"]).depth-5 {
+            padding-left: 5.5rem;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+            opacity: 0.6;
+        }
+
+        a.active-page.depth-5, & :deep(span[class*="depth-"]).active-page.depth-5 {
+            padding-left: calc(5.5rem - 3px);
+        }
+
+        a:hover, & :deep(span[class*="depth-"]):hover {
+            color: var(--ks-text-link);
+            background-color: var(--ks-btn-secondary-bg-hover);
+        }
+
+        a.active-page, & :deep(span[class*="depth-"]).active-page {
+            color: var(--ks-text-link) !important;
+            font-weight: var(--ks-font-weight-semibold);
+            opacity: 1 !important;
+            background-color: var(--ks-btn-secondary-bg-hover);
         }
 
         li {
@@ -225,7 +262,7 @@
                 margin-bottom: 0;
             }
 
-            > span {
+            & > span {
                 display: block;
                 padding: 0.25rem 0.5rem;
                 margin-bottom: 0.15rem;
@@ -234,11 +271,11 @@
                 letter-spacing: 0.05em;
                 color: var(--ks-text-secondary);
                 text-transform: uppercase;
-                border-radius: $link-radius;
+                border-radius: var(--docs-menu-link-radius);
             }
 
             &.active-section {
-                > span {
+                & > span {
                     color: var(--ks-text-link);
                 }
             }

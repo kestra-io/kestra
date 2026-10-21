@@ -300,7 +300,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .trigger-flow-wrapper {
         display: inline;
     }

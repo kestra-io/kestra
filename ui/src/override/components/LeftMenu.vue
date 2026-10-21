@@ -48,7 +48,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     #side-menu {
         .kel-select {
             transition: all 0.2s ease;

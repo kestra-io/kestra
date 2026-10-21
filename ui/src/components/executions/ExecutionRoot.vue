@@ -35,7 +35,7 @@
 
     setupLifecycle()
 </script>
-<style scoped lang="scss">
+<style scoped>
     .full-space {
         flex: 1 1 auto;
     }

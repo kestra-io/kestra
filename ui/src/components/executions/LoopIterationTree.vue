@@ -174,7 +174,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .loop-toggle {
         display: flex;
         align-items: center;

@@ -13,17 +13,17 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .settings-block {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-4);
+    }
 
-        &__heading {
-            align-self: flex-start;
-            font-size: var(--ks-font-size-lg);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-        }
+    .settings-block__heading {
+        align-self: flex-start;
+        font-size: var(--ks-font-size-lg);
+        font-weight: 600;
+        color: var(--ks-text-primary);
     }
 </style>

@@ -218,7 +218,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .filterPadding {
     margin-top: 2rem;

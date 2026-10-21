@@ -87,7 +87,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     /* The link fills the dropdown row so a modifier click anywhere on it reaches the anchor. */
     .nav-bar-action-link {
         flex: 1;

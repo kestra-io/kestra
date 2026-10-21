@@ -107,7 +107,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .tour-title {
         font-size: var(--ks-font-size-2xl);
     }
@@ -126,7 +126,7 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
 
-        :deep(a) {
+        & :deep(a) {
             color: var(--ks-text-link);
             text-decoration: none;
 

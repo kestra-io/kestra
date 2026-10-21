@@ -315,7 +315,7 @@
         onReverted: () => toast.warning(t("namespace and id readonly")),
     })
 
-    const timeout = ref<any>(null)
+    const timeout = ref<number | null>(null)
 
     const editorContent = computed(() => source.value)
 
@@ -371,7 +371,7 @@
         if(!props.flow) return
 
         // throttle the trigger of the flow update
-        clearTimeout(timeout.value)
+        clearTimeout(timeout.value ?? undefined)
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source: newValue,
@@ -385,7 +385,7 @@
     }
 
     onBeforeUnmount(() => {
-        clearTimeout(timeout.value)
+        clearTimeout(timeout.value ?? undefined)
     })
 
     function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
@@ -397,7 +397,7 @@
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
     // path as the Save button — including auto-install of missing plugins before persisting.
     const saveFlowYaml = async () => {
-        clearTimeout(timeout.value)
+        clearTimeout(timeout.value ?? undefined)
         if(!editorRefElement.value?.getEditor()) return
 
         await save()
@@ -407,7 +407,7 @@
     const sendingContent = ref<string>()
 
     const saveFileContent = async () => {
-        clearTimeout(timeout.value)
+        clearTimeout(timeout.value ?? undefined)
         const content = source.value
         if(!namespace.value || !props.path || props.flow || content === sendingContent.value) return
         sendingContent.value = content

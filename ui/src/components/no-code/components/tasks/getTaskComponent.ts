@@ -1,5 +1,6 @@
 import {pascalCase} from "change-case"
 import type {Component} from "vue"
+import type {TaskBlockComponent} from "./useBlockComponent"
 import {resolve$ref} from "../../../../utils/utils"
 import {SECTIONS_IDS} from "../../utils/useFlowFields"
 import {isImplementationPicker} from "./discriminatedUnion"
@@ -162,14 +163,10 @@ export function getType(property: Schema, definitions: Record<string, Schema>, k
     return typeof property.type === "string" ? property.type : "expression"
 }
 
-export function getTaskComponent(property: Schema, definitions: Record<string, Schema>, key?: string, siblingKeys?: string[]): TaskComponent | Record<string, never> {
+export function getTaskComponent(property: Schema, definitions: Record<string, Schema>, key?: string, siblingKeys?: string[]): TaskBlockComponent {
     const typeString = getType(property, definitions, key, siblingKeys)
     const type = pascalCase(typeString)
-    const component = TasksComponents[`./Task${type}.vue`]?.default
+    const component = TasksComponents[`./Task${type}.vue`]?.default ?? {}
 
-    if (component) {
-        component.ksTaskName = typeString
-    }
-
-    return component ?? {}
+    return Object.assign(component, {ksTaskName: typeString})
 }

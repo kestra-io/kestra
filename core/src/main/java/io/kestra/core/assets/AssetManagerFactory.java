@@ -49,4 +49,10 @@ public class AssetManagerFactory {
             }
         };
     }
+
+    /**
+     * Ends the locks the task run took on its outputs, once an attempt ended in {@code state}.
+     */
+    public void finish(RunContext runContext, AssetEmitContext context, State.Type state) {
+    }
 }

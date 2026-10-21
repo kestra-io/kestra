@@ -21,6 +21,8 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunWithOutput;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.AssetFailureBehavior;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.AssetEmit;
 import io.kestra.core.runners.AssetEmitter;
 import io.kestra.core.runners.DefaultRunContext;
@@ -44,6 +46,9 @@ final class TaskAttemptAssets {
     private final Instant startDate;
     private final Set<String> used = new HashSet<>();
     private final List<String> failures = new ArrayList<>();
+    private final List<String> lockRefusals = new ArrayList<>();
+    private boolean locked;
+    private boolean refusedByALock;
     private TaskRunWithOutput.AssetEmission emission = TaskRunWithOutput.AssetEmission.OK;
 
     TaskAttemptAssets(RunContext runContext, WorkerTask workerTask, Instant startDate) {
@@ -135,23 +140,41 @@ final class TaskAttemptAssets {
                 return;
             }
             AssetEmitter declared = defaultRunContext.assets(new DefaultRunContext.Declared(RUNNING, startDate, null, Set.of()));
-            declared.emit(new AssetEmit(withDefaultNamespace(inputs, workerTask.getTaskRun().getNamespace()), outputs));
+            declared.emit(new AssetEmit(withDefaultNamespace(inputs, workerTask.getTaskRun().getNamespace()), outputs, true));
             inputs.forEach(input -> used.add(input.id()));
             outputs.forEach(output -> used.add(output.getId()));
             failures.addAll(declared.failures());
+            lockRefusals.addAll(declared.lockRefusals());
+            failures.addAll(lockRefusals);
+            locked = !outputs.isEmpty();
+            refusedByALock = !lockRefusals.isEmpty() && AssetFailureBehavior.FAIL == assetFailureBehavior(runContext, workerTask);
         } catch (Exception e) {
             logger.warn("Unable to emit the assets at the start of the task", e);
             emission = TaskRunWithOutput.AssetEmission.FAILED;
+            // a lock may have been taken before the emit failed
+            locked = true;
         }
     }
 
     /**
-     * @param taskRun the task run with the attempt that just ended, whose outputs the declared assets may reference
+     * @return whether another owner locked the declared outputs and the task's assetFailureBehavior is FAIL, so the task must not run
      */
-    TaskRunWithOutput.AssetEmission emitAtEnd(TaskRun taskRun, State.Type state, Map<String, Object> outputs) {
+    boolean isRefusedByALock() {
+        return refusedByALock;
+    }
+
+    List<String> lockRefusals() {
+        return lockRefusals;
+    }
+
+    /**
+     * @param taskRun the task run with the attempt that just ended, whose outputs the declared assets may reference
+     * @param resubmitted whether the attempt was interrupted to be resubmitted under the same task run, which keeps the locks
+     */
+    TaskRunWithOutput.AssetEmission emitAtEnd(TaskRun taskRun, State.Type state, Map<String, Object> outputs, boolean resubmitted) {
         Logger logger = runContext.logger();
         try {
-            if (workerTask.getTask().getAssets() != null && runContext instanceof DefaultRunContext defaultRunContext) {
+            if (workerTask.getTask().getAssets() != null && !refusedByALock && runContext instanceof DefaultRunContext defaultRunContext) {
                 // We need to have the task outputs injected before rendering the assets
                 Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun, outputs);
 
@@ -198,6 +221,19 @@ final class TaskAttemptAssets {
             emission = TaskRunWithOutput.AssetEmission.FAILED;
         }
 
+        if (runContext instanceof DefaultRunContext defaultRunContext) {
+            boolean lockedByThePlugin = defaultRunContext.assetsIfCreated().map(emitter -> emitter.emitted().stream().anyMatch(AssetEmit::lock)).orElse(false);
+            // a resubmitted or retried attempt runs under the same task run, so it keeps the locks and the state they restore
+            if ((locked || lockedByThePlugin) && !resubmitted && !isRetriedInTheSameTaskRun(taskRun, state)) {
+                try {
+                    defaultRunContext.finishAssets(state);
+                } catch (Exception e) {
+                    logger.error("Unable to release the assets locked by task '{}'", taskRun.getTaskId(), e);
+                    emission = TaskRunWithOutput.AssetEmission.LOCKS_NOT_RELEASED;
+                }
+            }
+        }
+
         if (!failures.isEmpty()) {
             logger.warn("Some assets of task '{}' were not written: {}", taskRun.getTaskId(), String.join(", ", failures));
             if (TaskRunWithOutput.AssetEmission.OK == emission) {
@@ -206,6 +242,25 @@ final class TaskAttemptAssets {
         }
 
         return emission;
+    }
+
+    static AssetFailureBehavior assetFailureBehavior(RunContext runContext, WorkerTask workerTask) {
+        AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
+        if (assetsDeclaration == null) {
+            return AssetFailureBehavior.WARN;
+        }
+        try {
+            return runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
+        } catch (IllegalVariableEvaluationException | ConstraintViolationException e) {
+            // validate() re-checks the whole task bean, so an unrelated invalid field throws here too
+            runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
+            return AssetFailureBehavior.WARN;
+        }
+    }
+
+    private boolean isRetriedInTheSameTaskRun(TaskRun taskRun, State.Type state) {
+        AbstractRetry retry = workerTask.getTask().getRetry();
+        return state.isFailed() && retry != null && AbstractRetry.Behavior.RETRY_FAILED_TASK == retry.getBehavior() && taskRun.shouldBeRetried(retry);
     }
 
     @SuppressWarnings("unchecked")

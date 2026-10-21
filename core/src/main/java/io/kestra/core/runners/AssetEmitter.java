@@ -15,4 +15,11 @@ public interface AssetEmitter {
     default List<String> failures() {
         return List.of();
     }
+
+    /**
+     * @return why outputs of a locking emit were refused because another owner holds their lock; refused at the start of an attempt, they keep the task from running when its assetFailureBehavior is FAIL.
+     */
+    default List<String> lockRefusals() {
+        return List.of();
+    }
 }

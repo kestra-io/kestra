@@ -1,8 +1,10 @@
 package io.kestra.mcp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -352,10 +354,21 @@ public class FlowToolSchemaMapper {
     }
 
     private static Map<String, Object> toAssetType(AssetInput input, Map<String, Object> baseSchema) {
-        if (Boolean.TRUE.equals(input.getMultiple())) {
+        boolean multiple = Boolean.TRUE.equals(input.getMultiple());
+        if (multiple) {
             baseSchema.put("type", "array");
             baseSchema.put("items", Map.of("type", "string"));
         }
+
+        List<String> filters = new ArrayList<>();
+        Optional.ofNullable(input.getAssetType()).ifPresent(type -> filters.add("of type " + type));
+        Optional.ofNullable(input.getNamespace()).ifPresent(namespace -> filters.add("in namespace " + namespace + " or a child namespace"));
+        Optional.ofNullable(input.getStatus()).ifPresent(status -> filters.add("with status " + status));
+        Optional.ofNullable(input.getAssetId()).ifPresent(pattern -> filters.add("whose id matches " + pattern));
+        Optional.ofNullable(input.getMetadata()).filter(metadata -> !metadata.isEmpty()).ifPresent(metadata -> filters.add("with metadata " + metadata));
+
+        String expected = multiple ? "The ids of Kestra assets" : "The id of a Kestra asset";
+        appendConstraint(baseSchema, filters.isEmpty() ? expected + "." : expected + ", " + String.join(", ", filters) + ".");
         return baseSchema;
     }
 

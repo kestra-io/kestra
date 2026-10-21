@@ -94,6 +94,12 @@
                     />
                 </div>
 
+                <component
+                    :is="customViewer"
+                    v-else-if="customViewer"
+                    :value="selectedValue"
+                />
+
                 <KsJsonTree
                     v-else-if="isExpandableValue"
                     :value="selectedValue"
@@ -219,6 +225,7 @@
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import {loopTaskIds} from "../../../utils/flowUtils"
+    import {useVariableValueRenderer} from "override/components/executions/outputs/variableValueExtension"
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
@@ -475,6 +482,8 @@
     const selectedBase = ref<string>("")
     const selectedFlowOutputId = ref<string>()
     const selectedSearchable = computed(() => selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
+    const variableValueRenderer = useVariableValueRenderer()
+    const customViewer = computed(() => selectedBase.value ? variableValueRenderer(selectedBase.value, executionsStore.flow) : undefined)
     const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)

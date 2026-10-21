@@ -16,9 +16,11 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Tap the repository
+        run: brew tap kestra-io/kestra "$GITHUB_WORKSPACE"
       - name: Audit the formula
-        run: brew audit --strict --online Formula/kestra.rb
-      - name: Install from the local formula
-        run: brew install --formula ./Formula/kestra.rb
+        run: brew audit --strict --new kestra-io/kestra/kestra
+      - name: Install from the tapped formula
+        run: brew install kestra-io/kestra/kestra
       - name: Test the installation
-        run: brew test --verbose kestra
+        run: brew test --verbose kestra-io/kestra/kestra

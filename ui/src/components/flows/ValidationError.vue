@@ -136,7 +136,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .validation-tooltip {
         padding: 0;
         width: fit-content;
@@ -149,7 +149,7 @@
         display:flex;
         flex-direction: column;
 
-        > * {
+        & > * {
             height: fit-content;
             margin: 0;
         }

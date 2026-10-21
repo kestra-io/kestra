@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
     import {computed,ref,watch} from "vue"
-    import type {AxiosError} from "axios"
+    import {PublicApiError} from "../../utils/publicApi"
     import TopNavBar from "../layout/TopNavBar.vue"
     import useRouteContext from "../../composables/useRouteContext"
     import {useDocStore} from "../../stores/doc"
@@ -107,7 +107,7 @@
             try {
                 response = await docStore.fetchResource(path.value ? `/docs/${path.value}` : "/docs")
             } catch (error) {
-                loadError.value = (error as AxiosError).response?.status === 404 ? "notFound" : "failed"
+                loadError.value = error instanceof PublicApiError && error.status === 404 ? "notFound" : "failed"
                 return
             }
 
@@ -124,7 +124,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .docs-not-found {
         display: flex;
         flex-direction: column;

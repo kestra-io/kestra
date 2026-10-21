@@ -51,7 +51,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .webhook-panel {
         display: flex;
         flex-direction: column;

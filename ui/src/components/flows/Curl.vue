@@ -121,7 +121,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .curl-wrapper {
         position: relative;
     }

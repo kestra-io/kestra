@@ -111,7 +111,7 @@
     const statusType = computed(() => (props.disabled ? "danger" : "success"))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .server-card {
         display: flex;
         align-items: center;
@@ -144,17 +144,17 @@
         border-radius: var(--ks-radius-sm);
         color: var(--ks-icon-muted);
 
-        :deep(.material-design-icon),
-        :deep(.material-design-icon__svg) {
+        & :deep(.material-design-icon),
+        & :deep(.material-design-icon__svg) {
             width: 24px;
             height: 24px;
         }
 
-        :deep(.material-design-icon) {
+        & :deep(.material-design-icon) {
             display: inline-flex;
         }
 
-        :deep(.material-design-icon__svg) {
+        & :deep(.material-design-icon__svg) {
             position: static;
         }
     }

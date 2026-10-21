@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeAll, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeAll, afterAll, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
 // Bulk restart goes through the generated SDK (ExecutionsAPI.restartExecutionsBy*), not through
@@ -50,6 +50,13 @@ describe("executions store - bulk restart", () => {
         configureClient({baseUrl: "http://localhost", fetch: fetchSpy})
         ;({useExecutionsStore} = await import("./executions"))
     }, 60000)
+
+    // The SDK client is shared by every spec in the worker (`isolate: false`), so a `fetch` left
+    // installed here would answer the requests of whichever spec runs next.
+    afterAll(async () => {
+        const {configureClient} = await import("@kestra-io/kestra-sdk")
+        configureClient({fetch: undefined})
+    })
 
     beforeEach(() => {
         fetchSpy.mockClear()

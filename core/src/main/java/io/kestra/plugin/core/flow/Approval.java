@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -368,7 +369,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .on((String) current.get("on"))
             .comment((String) current.get("comment"))
             .inputs((Map<String, Object>) current.get("inputs"))
-            .due((String) current.get("due"))
+            .due(current.get("due") == null ? null : Instant.parse(current.get("due").toString()))
             .build();
     }
 
@@ -452,7 +453,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         private Map<String, Object> inputs;
 
         @Schema(title = "When the request expires without a decision, computed from `timeout`. Empty without one.")
-        private String due;
+        private Instant due;
 
         @Schema(title = "A link to the execution page.")
         private String url;

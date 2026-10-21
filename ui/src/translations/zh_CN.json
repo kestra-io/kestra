@@ -242,6 +242,7 @@
       "last7days": "最近7天",
       "last30days": "最近30天",
       "last365days": "最近365天",
+      "allTime": "所有时间",
       "next5minutes": "接下来的5分钟",
       "next15minutes": "接下来的15分钟",
       "next1hour": "接下来1小时",
@@ -522,6 +523,21 @@
       "revision": "修订版 {revision}",
       "attempts": "{count} 次尝试 | {count} 次尝试",
       "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+    },
+    "execution_mobile": {
+      "failed_task": "失败的 task",
+      "view_task_logs": "查看 task 日志",
+      "revision_short": "版本 {revision}",
+      "more_labels": "+{count} 个标签 | +{count} 个标签",
+      "fewer_labels": "收起标签",
+      "jump_to_first_failure": "跳转到第一个失败",
+      "open_logs": "打开日志"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "登录后",
+      "execution_tab": "执行 {id} · {tab} 标签页",
+      "execution": "执行 {id}",
+      "tab": "{tab} 标签页"
     },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
@@ -1786,6 +1802,14 @@
     "item": "项目",
     "items": "项目",
     "iterations": "迭代次数",
+    "load_10_more": "加载更多10项",
+    "show_all_executions": "显示所有执行",
+    "failed_iterations_only": "仅显示失败的迭代",
+    "loop_iterations_shown": "已显示 {shown} / {total}",
+    "loop_iterations_load_error": "加载迭代失败",
+    "retry": "重试",
+    "no_iterations": "暂无迭代",
+    "no_failed_iterations": "没有失败的迭代",
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",
       "outputs": "循环迭代作为单独的子 Execution 运行，因此它们的 output 不在此处显示。",

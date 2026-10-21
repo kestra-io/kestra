@@ -1,4 +1,4 @@
-import {dayjs, type Dayjs} from "@kestra-io/design-system"
+import {State, dayjs, type Dayjs} from "@kestra-io/design-system"
 import type {Execution as ApiExecution, useClient} from "@kestra-io/kestra-sdk"
 import type {RouteLocationRaw} from "vue-router"
 import {apiUrl} from "override/utils/route"
@@ -71,6 +71,23 @@ export function loopIterationsRoute(
             ...parentTimeBound(parent?.state, now),
         },
     }
+}
+
+type ExecutionTaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+export function findFirstFailedTaskRun(execution: Execution): ExecutionTaskRun | undefined {
+    const failed = (execution.taskRunList ?? []).filter((taskRun) => State.isFailed(taskRun.state?.current))
+    const parentIds = new Set(failed.map((taskRun) => taskRun.parentTaskRunId))
+    return failed.find((taskRun) => !parentIds.has(taskRun.id))
+}
+
+export function taskRunPath(execution: Execution, taskRun: ExecutionTaskRun): string[] {
+    const byId = new Map((execution.taskRunList ?? []).map((candidate) => [candidate.id, candidate]))
+    const path: string[] = []
+    for (let current: ExecutionTaskRun | undefined = taskRun; current; current = current.parentTaskRunId ? byId.get(current.parentTaskRunId) : undefined) {
+        path.unshift(current.value ? `${current.taskId} ${current.value}` : current.taskId)
+    }
+    return path
 }
 
 function parentTimeBound(state: LoopParentExecution["state"], now: Dayjs | undefined): Record<string, string> {

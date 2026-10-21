@@ -206,7 +206,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-id {
         margin: 0;
     }

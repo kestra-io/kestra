@@ -1110,10 +1110,10 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .revision-history-dialog-body {
-    // We subtract the dialog margins and title height (78px)
+    /* We subtract the dialog margins and title height (78px) */
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 
@@ -1125,7 +1125,7 @@
     width: 20%;
 
     .filter{
-        :deep(.kel-select__wrapper) {
+        & :deep(.kel-select__wrapper) {
             min-height: 32px;
             height: 32px;
             padding-right: 0px;
@@ -1154,7 +1154,7 @@
         }
     }
 
-    :deep(.kel-button):not(.kel-dialog .kel-button) {
+    & :deep(.kel-button):not(.kel-dialog .kel-button) {
         border: 0;
         background: none;
         outline: none;
@@ -1196,7 +1196,7 @@
         }
     }
 
-    :deep(.kel-tree) {
+    & :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-bg-surface);
@@ -1252,7 +1252,7 @@
         }
     }
 
-    :deep(.tree-node-hitbox) {
+    & :deep(.tree-node-hitbox) {
         width: 100%;
         flex: 1;
         display: flex;

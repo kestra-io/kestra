@@ -71,7 +71,7 @@
     const editorBindings = useEditorBindings()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .documentation {
         padding: var(--ks-spacing-4);
     }

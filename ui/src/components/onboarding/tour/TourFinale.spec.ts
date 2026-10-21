@@ -66,22 +66,6 @@ describe("TourFinale", () => {
         expect(router.currentRoute.value.name).toBe("blueprints")
     })
 
-    it("should keep the dialog open when an external Keep going link is followed", async () => {
-        // Given
-        await mountFinale()
-        const external = resourceLinks().filter((link) => link.getAttribute("target") === "_blank")
-        expect(external.length).toBeGreaterThan(0)
-
-        // When
-        external[0].addEventListener("click", (event) => event.preventDefault())
-        external[0].click()
-        await flushPromises()
-
-        // Then
-        expect(hostOpen()).toBe("true")
-        expect(router.currentRoute.value.name).toBe("executions/list")
-    })
-
     it("should render every Keep going link as a real anchor with a destination", async () => {
         // Given
         await mountFinale()

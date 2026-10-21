@@ -5,6 +5,7 @@ import {flushPromises} from "@vue/test-utils"
 const taskOutputsInformationMock = vi.fn()
 const taskRunOutputsMock = vi.fn()
 const executionOutputsMock = vi.fn()
+const clientGetMock = vi.fn()
 
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskOutputsInformation: (...args: unknown[]) => taskOutputsInformationMock(...args),
@@ -12,13 +13,20 @@ vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     executionOutputs: (...args: unknown[]) => executionOutputsMock(...args),
 }))
 
-import {useHasTaskRunOutputs, loadTaskRunOutputs, loadExecutionOutputs} from "./useTaskRunOutputs"
+vi.mock("@kestra-io/kestra-sdk", () => ({
+    useClient: () => ({get: (...args: unknown[]) => clientGetMock(...args)}),
+}))
+
+vi.mock("override/utils/route", () => ({apiUrl: () => "/api/v1/main"}))
+
+import {useHasTaskRunOutputs, loadTaskRunOutputs, loadExecutionOutputs, callTaskRunEndpoint} from "./useTaskRunOutputs"
 
 describe("useTaskRunOutputs", () => {
     beforeEach(() => {
         taskOutputsInformationMock.mockReset()
         taskRunOutputsMock.mockReset()
         executionOutputsMock.mockReset()
+        clientGetMock.mockReset()
     })
 
     test("resolves true for a task run present in taskOutputsInformation", async () => {
@@ -99,5 +107,17 @@ describe("useTaskRunOutputs", () => {
         const outputs = await loadExecutionOutputs("exec-2")
 
         expect(outputs).toEqual({})
+    })
+
+    test("callTaskRunEndpoint calls the plugin endpoint of the task run with its query parameters", async () => {
+        clientGetMock.mockResolvedValue({data: {compiledSql: "select 1"}})
+
+        const body = await callTaskRunEndpoint("io.kestra.plugin.dbt.cli.DbtCLI", "compiled-sql", "exec-1", "tr-1", {uniqueId: "model.shop.orders"})
+
+        expect(body).toEqual({compiledSql: "select 1"})
+        expect(clientGetMock).toHaveBeenCalledWith(
+            "/api/v1/main/plugins/io.kestra.plugin.dbt.cli.DbtCLI/endpoints/compiled-sql/exec-1/tr-1",
+            {params: {uniqueId: "model.shop.orders"}},
+        )
     })
 })

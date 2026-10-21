@@ -1,5 +1,7 @@
 import {ref, watch, type ComputedRef, type Ref} from "vue"
+import {useClient} from "@kestra-io/kestra-sdk"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+import {apiUrl} from "override/utils/route"
 import {handledIf} from "../utils/kestraHttp"
 
 // Since Kestra 2.0, task run outputs are no longer embedded on the Execution
@@ -86,4 +88,11 @@ export async function loadExecutionOutputs(executionId: string): Promise<Record<
         if (handledIf(e, [404])) return {}
         throw e
     }
+}
+
+// `cls` only selects the plugin, so any of its classes works.
+export async function callTaskRunEndpoint(cls: string, name: string, executionId: string, taskRunId: string, params: Record<string, string> = {}): Promise<unknown> {
+    const url = `${apiUrl()}/plugins/${encodeURIComponent(cls)}/endpoints/${encodeURIComponent(name)}/${executionId}/${taskRunId}`
+    const response = await useClient().get(url, {params})
+    return response.data
 }

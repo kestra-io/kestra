@@ -1,6 +1,7 @@
 import {h, inject, onMounted, ref, type Component} from "vue"
 import {KsSkeleton} from "@kestra-io/design-system"
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
+import type {Schema} from "./getTaskComponent"
 
 type TaskComponents = typeof import("./getTaskComponent")
 
@@ -27,10 +28,10 @@ export function useBlockComponent() {
     const definitions = definitionsRef?.value ?? {}
 
     const resolve = (module: TaskComponents) =>
-        (property: unknown, key?: string, siblingKeys?: string[]): TaskBlockComponent =>
+        (property: Schema, key?: string, siblingKeys?: string[]): TaskBlockComponent =>
             module.getTaskComponent(property, definitions, key, siblingKeys)
 
-    const getBlockComponent = ref<(property: unknown, key?: string, siblingKeys?: string[]) => TaskBlockComponent>(
+    const getBlockComponent = ref<(property: Schema, key?: string, siblingKeys?: string[]) => TaskBlockComponent>(
         loaded ? resolve(loaded) : () => SkeletonComponent,
     )
 

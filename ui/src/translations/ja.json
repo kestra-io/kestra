@@ -541,6 +541,8 @@
     },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
+    "workspace": "ワークスペース",
+    "resources": "リソース",
     "usage": "使用",
     "namespaces": "Namespaces",
     "tasks": "Tasks",

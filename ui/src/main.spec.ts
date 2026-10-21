@@ -8,6 +8,7 @@ vi.mock("./utils/monacoEnvironment", () => ({}))
 vi.mock("./components/plugins/TaskIcon.vue", () => ({default: {render: () => null}}))
 vi.mock("./utils/serviceWorker", () => ({registerServiceWorker: vi.fn()}))
 vi.mock("./utils/pwaInstallState", () => ({initPwaInstallCapture: vi.fn()}))
+vi.mock("./utils/preloadErrorReload", () => ({setupPreloadErrorReloadHandler: vi.fn()}))
 vi.mock("nprogress", () => ({default: {start: vi.fn(), set: vi.fn(), done: vi.fn()}}))
 vi.mock("./utils/init", () => ({
     default: vi.fn(async () => {

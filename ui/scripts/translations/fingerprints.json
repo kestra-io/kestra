@@ -1694,6 +1694,7 @@
   "replayed": "224d14f20b40",
   "reset": "6b983a81e5e8",
   "reset to defaults": "e240e635ff6d",
+  "resources": "e89b30aa1dc3",
   "restart": "6b983a81e5e8",
   "restart confirm": "7552aaf31c8c",
   "restart execution title": "6fb38fe9b6d8",
@@ -2182,6 +2183,7 @@
   "wordmark_colors": "ad6ec7e711bb",
   "worker information": "d9690f106922",
   "workerId": "283c035a5126",
+  "workspace": "87bb59ba2f92",
   "wrong labels": "f62b1e53b73f",
   "yes": "85a39ab345d6"
 }

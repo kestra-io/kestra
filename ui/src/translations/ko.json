@@ -541,6 +541,8 @@
     },
     "concurrency limits": "동시성 제한",
     "system overview": "시스템 개요",
+    "workspace": "워크스페이스",
+    "resources": "리소스",
     "usage": "사용량",
     "namespaces": "Namespaces",
     "tasks": "Tasks",

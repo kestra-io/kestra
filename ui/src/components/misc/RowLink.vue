@@ -63,7 +63,7 @@
             color: var(--ks-text-primary);
             text-transform: capitalize;
             font-size: var(--ks-font-size-sm);
-            line-height: 1.5;
+            line-height: var(--ks-line-height-base);
         }
 
         .chevron-right-icon {

@@ -340,11 +340,11 @@ export const Html: Story = {
 }
 
 
-/** Headings scaled to the UI type scale, for markdown shown inside a panel. */
+/** Headings kept below a `lg` page title (h1 `lg`, h2 `base`, h3-h6 `sm`), for markdown shown inside a panel. */
 export const Compact: Story = {
     args: {
         compact: true,
-        content: "# H1 — Main title\n\n## H2 — Section\n\n### H3 — Subsection\n\nBody text under the headings.",
+        content: "# H1 — Main title\n\n## H2 — Section\n\n### H3 — Subsection\n\n#### H4 — Detail\n\nBody text under the headings.",
     },
 }
 

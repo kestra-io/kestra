@@ -9,6 +9,9 @@ export const SEARCH_QUERY_KEY = "filters[q][EQUALS]"
 /** Filter-key shorthand for the timeRange chip (split into startDate/endDate on the wire). */
 export const TIME_RANGE_KEY = "timeRange"
 
+/** timeRange value for an explicitly unbounded interval, as opposed to no interval at all. */
+export const ALL_TIME_RANGE = "ALL"
+
 /** Route query key that carries the dateFilter meta selector for timeRange. */
 export const DATE_FILTER_KEY = "dateFilter"
 

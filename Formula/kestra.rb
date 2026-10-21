@@ -12,7 +12,7 @@ class Kestra < Formula
     # Release assets lose their executable bit on download.
     chmod 0555, libexec/"kestra"
     # openjdk@25 is keg-only, so it is not on PATH: point the launcher at it.
-    (bin/"kestra").write_env_script libexec/"kestra", JAVA_HOME: Formula["openjdk@25"].opt_prefix
+    (bin/"kestra").write_env_script libexec/"kestra", JAVA_HOME: formula_opt_prefix("openjdk@25")
   end
 
   test do

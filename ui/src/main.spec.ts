@@ -1,5 +1,4 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
-import {flushPromises} from "@vue/test-utils"
 import {createPinia, setActivePinia} from "pinia"
 import {createMemoryHistory, createRouter} from "vue-router"
 
@@ -44,11 +43,17 @@ describe("application API base URL", () => {
         vi.stubGlobal("fetch", fetch)
 
         await import("./main")
-        await flushPromises()
+        const {client} = await import("@kestra-io/kestra-sdk/client")
+        // The client is configured once the mocked app init resolves, so wait for that
+        // rather than for a single tick, which a slow runner can miss.
+        await vi.waitFor(() => expect(client.getConfig().baseUrl).toBe(baseUrl.replace(/\/$/, "")))
         const {searchFlows} = await import("@kestra-io/kestra-sdk/flows")
-        await searchFlows()
+        const result = await searchFlows().catch((error: unknown) => error)
 
-        expect(fetch).toHaveBeenCalledOnce()
+        expect(
+            fetch,
+            `searchFlows() returned ${JSON.stringify(result)} without calling the stubbed fetch`,
+        ).toHaveBeenCalledOnce()
         const request = fetch.mock.calls[0][0] as Request
         expect(new URL(request.url).pathname).toBe(expectedPath)
     })

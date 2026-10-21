@@ -3,6 +3,7 @@ package io.kestra.core.models.flows.input;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
@@ -33,8 +34,9 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
         description = "Each column is a regular input declaration (e.g. `INT` with `min`/`max`, `STRING` with a `validator`) " +
             "applied to the corresponding key of every row. The value is a list of objects, referenced as " +
             "`{{ inputs.myTable[0].myColumn }}`. Columns cannot be of type `TABLE`, `ARRAY`, `FORM`, `FILE`, `SECRET`, " +
-            "`JSON`, `ION` or `YAML`, and cannot declare `defaults`, `prefill`, `dependsOn` or an `expression`. " +
-            "This input type is only available in the Enterprise Edition."
+            "`JSON`, `ION` or `YAML`, and cannot declare `defaults` or `dependsOn`. A column's `prefill` fills the new rows, " +
+            "and a `SELECT` or `MULTISELECT` column can take its values from an `expression`, rendered with the inputs listed " +
+            "in the table's `dependsOn`. This input type is only available in the Enterprise Edition."
     )
     @NotNull
     @Valid
@@ -73,11 +75,20 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
 
     @Override
     public Input<?> render(Function<String, Object> renderer) {
-        if (ListUtils.isEmpty(filters) || filters.stream().noneMatch(filter -> filter.value() instanceof String text && PebbleUtil.containsOpeningBlockDelimiter(text))) {
+        List<Input<?>> declared = ListUtils.emptyOnNull(columns);
+        List<Input<?>> renderedColumns = declared.stream().<Input<?>>map(column -> RenderableInput.mayRenderInput(column, renderer)).toList();
+        boolean columnsRendered = IntStream.range(0, declared.size()).anyMatch(index -> renderedColumns.get(index) != declared.get(index));
+        boolean filtersRendered = ListUtils.emptyOnNull(filters).stream().anyMatch(filter -> filter.value() instanceof String text && PebbleUtil.containsOpeningBlockDelimiter(text));
+        if (!columnsRendered && !filtersRendered) {
             return this;
         }
         Map<String, Object> rendered = JacksonMapper.toMap(this);
-        rendered.put("filters", filters.stream().map(filter -> new TableFilter(filter.column(), filter.operation(), renderedValue(filter, renderer))).toList());
+        if (columnsRendered) {
+            rendered.put("columns", renderedColumns);
+        }
+        if (filtersRendered) {
+            rendered.put("filters", filters.stream().map(filter -> new TableFilter(filter.column(), filter.operation(), renderedValue(filter, renderer))).toList());
+        }
         return JacksonMapper.toMap(rendered, TableInput.class);
     }
 

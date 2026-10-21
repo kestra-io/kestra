@@ -8,8 +8,6 @@ import java.util.Set;
 
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
-import io.kestra.core.models.flows.input.MultiselectInput;
-import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.TableInputValidation;
@@ -28,7 +26,7 @@ public class TableInputValidator implements ConstraintValidator<TableInputValida
         Type.EMAIL, Type.URI, Type.SELECT, Type.MULTISELECT
     );
 
-    public static final Set<String> FORBIDDEN_COLUMN_PROPERTIES = Set.of("defaults", "prefill", "dependsOn", "expression");
+    public static final Set<String> FORBIDDEN_COLUMN_PROPERTIES = Set.of("defaults", "dependsOn");
 
     @Override
     public boolean isValid(@Nullable TableInput value, @NonNull AnnotationValue<TableInputValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
@@ -83,13 +81,6 @@ public class TableInputValidator implements ConstraintValidator<TableInputValida
             }
             if (field.getDefaults() != null) {
                 violations.add("field `" + id + "` cannot declare `defaults`");
-            }
-            if (field.getPrefill() != null) {
-                violations.add("field `" + id + "` cannot declare `prefill`");
-            }
-            if (field instanceof SelectInput select && select.getExpression() != null
-                || field instanceof MultiselectInput multiselect && multiselect.getExpression() != null) {
-                violations.add("field `" + id + "` cannot declare an `expression`");
             }
         }
         return violations;

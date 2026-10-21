@@ -457,6 +457,34 @@ class FlowValidationTest {
     }
 
     @Test
+    void tableColumnsWithPrefillAndExpression_valid() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: components
+                type: TABLE
+                columns:
+                  - id: cpus
+                    type: INT
+                    prefill: 2
+                  - id: type
+                    type: SELECT
+                    expression: "{{ ['linux', 'windows'] }}"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.map(ConstraintViolationException::getMessage).orElse(""))
+            .doesNotContain("cannot declare")
+            .contains("Input 'components' of type TABLE is only available in Enterprise Edition.");
+    }
+
+    @Test
     void tableInputDefaultsWithExpressions_valid() {
         Flow flow = YamlParser.parse("""
             id: test

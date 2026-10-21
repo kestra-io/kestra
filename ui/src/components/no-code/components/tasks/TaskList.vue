@@ -205,7 +205,7 @@
     const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .tasks-wrapper {
     width: 100%;
 }

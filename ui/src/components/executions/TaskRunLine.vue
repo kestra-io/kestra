@@ -238,7 +238,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .taskrun-header,
     .attempt-header {
         display: flex;
@@ -247,14 +247,14 @@
         padding: var(--ks-spacing-1) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
 
-        > * {
+        & > * {
             display: flex;
             align-items: center;
         }
 
         small {
             font-family: var(--kel-font-family-monospace);
-            font-size: var(--ks-font-size-xs)
+            font-size: var(--ks-font-size-xs);
         }
 
         .task-duration small {
@@ -299,7 +299,7 @@
             width: 115px;
             height: 32px;
 
-            :deep(.kel-select__wrapper) {
+            & :deep(.kel-select__wrapper) {
                 height: 32px;
                 min-height: 32px;
             }

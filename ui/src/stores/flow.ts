@@ -174,11 +174,17 @@ export const useFlowStore = defineStore("flow", () => {
 
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value)
 
+    const saveAttempted = ref(false)
+    watch(flowYamlOrigin, () => {
+        saveAttempted.value = false
+    })
+
     watch(haveChange, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
+        saveAttempted.value = true
         const isDraft = draft ?? flow.value?.draft ?? false
 
         if (!haveChange.value && !isCreating.value) {
@@ -1075,6 +1081,7 @@ export const useFlowStore = defineStore("flow", () => {
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        saveAttempted,
         previewSource,
         declinePreview,
         haveChange,

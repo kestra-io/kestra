@@ -394,6 +394,9 @@
     }
 
     .kestra-icon-wrapper {
+        display: flex;
+        align-items: center;
+        margin-right: var(--ks-spacing-1);
         flex-shrink: 0;
         width: 1em;
         height: 1em;

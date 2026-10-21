@@ -5,7 +5,6 @@ import {withThemeByClassName} from "@storybook/addon-themes"
 import initApp from "../src/utils/init"
 import {globalI18n, setMissingKeyPolicy} from "../src/translations/i18n"
 import {configureClient, useClient} from "@kestra-io/kestra-sdk"
-import axios from "axios"
 import {createMemoryHistory, type RouterOptions} from "vue-router"
 import {vueRouter} from "storybook-vue3-router"
 import "../src/styles/vendor.scss"
@@ -14,21 +13,6 @@ import en from "../src/translations/en.json"
 
 window.KESTRA_BASE_PATH = "/ui/"
 window.KESTRA_UI_PATH = "./"
-
-// No backend is running during storybook tests, so short-circuit every axios
-// request with an empty successful response instead of letting it hit the
-// network — this prevents network errors, proxy failures, and the Vue/axios
-// error cascade that follows. The fetch-based SDK — which is everything except
-// the 4 remaining axios importers in src/ — is handled by ./apiMock instead.
-// Per axios docs, a custom adapter is just a function assigned to
-// `axios.defaults.adapter`: https://axios-http.com/docs/adapters — it must NOT
-// be read back out and re-invoked (axios.defaults.adapter is normally an array
-// of built-in adapter *names* like ["xhr", "http", "fetch"], not a callable).
-// This is intentionally unconditional rather than gated on `config.url`
-// containing "/api/": the SDK does not set a fixed `baseURL`, so a request's
-// `config.url` is not guaranteed to contain that substring, and there is no
-// real backend for ANY request to legitimately reach in this environment.
-axios.defaults.adapter = async (config) => ({data: [], status: 200, statusText: "OK", headers: {}, config, request: {}})
 
 // Mirrors the #topnav-*-slot elements rendered by AppTopNavBar.vue, which
 // TopNavBar.vue's <Teleport> targets rely on. In the real app AppTopNavBar

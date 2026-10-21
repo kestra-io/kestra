@@ -5,6 +5,12 @@
       "cta": "查看更改"
     },
     "loading": "加载中...",
+    "namespace_files_tip": {
+      "title": "将脚本作为 namespace 文件管理",
+      "description": "无需内联编写脚本，打开文件面板，将其添加为文件（例如 main.py），然后从您的 flow 中运行：",
+      "open_files": "打开文件",
+      "dont_show_again": "不再显示"
+    },
     "more actions": "更多操作",
     "recipe": {
       "create_flow": "创建 flow",
@@ -236,6 +242,7 @@
       "last7days": "最近7天",
       "last30days": "最近30天",
       "last365days": "最近365天",
+      "allTime": "所有时间",
       "next5minutes": "接下来的5分钟",
       "next15minutes": "接下来的15分钟",
       "next1hour": "接下来1小时",
@@ -1780,6 +1787,14 @@
     "item": "项目",
     "items": "项目",
     "iterations": "迭代次数",
+    "load_10_more": "加载更多10项",
+    "show_all_executions": "显示所有执行",
+    "failed_iterations_only": "仅显示失败的迭代",
+    "loop_iterations_shown": "已显示 {shown} / {total}",
+    "loop_iterations_load_error": "加载迭代失败",
+    "retry": "重试",
+    "no_iterations": "暂无迭代",
+    "no_failed_iterations": "没有失败的迭代",
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",
       "outputs": "循环迭代作为单独的子 Execution 运行，因此它们的 output 不在此处显示。",

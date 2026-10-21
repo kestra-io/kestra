@@ -5,6 +5,12 @@
       "cta": "See what changed"
     },
     "loading": "Loading...",
+    "namespace_files_tip": {
+      "title": "Manage your scripts as Namespace Files",
+      "description": "Instead of writing your script inline, open the Files panel, add it as a file (e.g. main.py) and run it from your flow:",
+      "open_files": "Open Files",
+      "dont_show_again": "Don't show again"
+    },
     "more actions": "More actions",
     "recipe": {
       "create_flow": "Create flow",
@@ -236,6 +242,7 @@
       "last7days": "Last 7 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
+      "allTime": "All time",
       "next5minutes": "Next 5 minutes",
       "next15minutes": "Next 15 minutes",
       "next1hour": "Next 1 hour",
@@ -1781,6 +1788,14 @@
     "item": "item",
     "items": "items",
     "iterations": "Iterations",
+    "load_10_more": "Load 10 more",
+    "show_all_executions": "Show all executions",
+    "failed_iterations_only": "Failed iterations only",
+    "loop_iterations_shown": "{shown} of {total} shown",
+    "loop_iterations_load_error": "Failed to load iterations",
+    "retry": "Retry",
+    "no_iterations": "No iterations yet",
+    "no_failed_iterations": "No failed iterations",
     "loop_iterations_notice": {
         "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
         "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",

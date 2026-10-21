@@ -228,21 +228,21 @@
     )
 </script>
 
-<style scoped lang="scss">
-    // :deep because the tooltip wrapper renders a Fragment root, so this component's scope id
-    // reaches the nav ancestor but not the button itself.
+<style scoped>
+    /* :deep because the tooltip wrapper renders a Fragment root, so this component's scope id */
+    /* reaches the nav ancestor but not the button itself. */
     :deep(.copilot-button) {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
 
-        // :hover is covered so this matches KsIconButton's own hover rule on specificity; without it
-        // the open state is repainted while the pointer is on the button.
+        /* :hover is covered so this matches KsIconButton's own hover rule on specificity; without it */
+        /* the open state is repainted while the pointer is on the button. */
         &.is-open,
         &.is-open:hover {
             color: var(--ks-text-link);
         }
 
-        // Same breakpoint as the dock toggle it sits next to: the dock it opens is desktop-only.
+        /* Same breakpoint as the dock toggle it sits next to: the dock it opens is desktop-only. */
         @media (max-width: 767px) {
             display: none;
         }

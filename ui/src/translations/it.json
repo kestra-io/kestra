@@ -5,6 +5,12 @@
       "cta": "Vedi cosa è cambiato"
     },
     "loading": "Caricamento...",
+    "namespace_files_tip": {
+      "title": "Gestisci i tuoi script come file del namespace",
+      "description": "Invece di scrivere lo script inline, apri il pannello File, aggiungilo come file (ad es. main.py) ed eseguilo dal tuo flow:",
+      "open_files": "Apri file",
+      "dont_show_again": "Non mostrare più"
+    },
     "more actions": "Altre azioni",
     "recipe": {
       "create_flow": "Crea flow",
@@ -236,6 +242,7 @@
       "last7days": "Ultimi 7 giorni",
       "last30days": "Ultimi 30 giorni",
       "last365days": "Ultimi 365 giorni",
+      "allTime": "Tutto il tempo",
       "next5minutes": "Prossimi 5 minuti",
       "next15minutes": "I prossimi 15 minuti",
       "next1hour": "Prossima 1 ora",
@@ -1780,6 +1787,14 @@
     "item": "elemento",
     "items": "elementi",
     "iterations": "Iterazioni",
+    "load_10_more": "Carica altri 10",
+    "show_all_executions": "Mostra tutte le esecuzioni",
+    "failed_iterations_only": "Solo iterazioni fallite",
+    "loop_iterations_shown": "{shown} di {total} mostrati",
+    "loop_iterations_load_error": "Impossibile caricare le iterazioni",
+    "retry": "Riprova",
+    "no_iterations": "Ancora nessuna iterazione",
+    "no_failed_iterations": "Nessuna iterazione fallita",
     "loop_iterations_notice": {
       "logs": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi i loro log non vengono visualizzati qui.",
       "outputs": "Le iterazioni del Loop vengono eseguite come sub-execution separate, quindi i loro output non vengono visualizzati qui.",

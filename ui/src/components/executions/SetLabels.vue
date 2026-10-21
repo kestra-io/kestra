@@ -155,7 +155,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .set-labels-tag {
         display: inline-flex;
         align-items: center;
@@ -195,35 +195,35 @@
     .set-labels {
         display: flex;
         flex-direction: column;
+    }
 
-        &__body {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-3);
-            padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-4);
-        }
+    .set-labels__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-4);
+    }
 
-        &__description {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-            margin: 0;
-            min-width: 0;
-        }
+    .set-labels__description {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+        margin: 0;
+        min-width: 0;
+    }
 
-        &__footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-            padding: var(--ks-spacing-3) var(--ks-spacing-4);
-            border-top: 1px solid var(--ks-border-default);
-            background: var(--ks-bg-base);
-        }
+    .set-labels__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        border-top: 1px solid var(--ks-border-default);
+        background: var(--ks-bg-base);
+    }
 
-        &__actions {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-        }
+    .set-labels__actions {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
     }
 </style>

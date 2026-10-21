@@ -45,7 +45,7 @@ export default async (
 
     const piniaStore = createPinia()
     app.use(piniaStore)
-    app.config.errorHandler = createPosthogVueErrorHandler(() => useMiscStore().configs)
+    app.config.errorHandler ??= createPosthogVueErrorHandler(() => useMiscStore().configs)
 
     router.beforeEach(documentationGuard)
 

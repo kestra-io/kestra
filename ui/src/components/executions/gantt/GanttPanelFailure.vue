@@ -113,7 +113,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .panel-failure {
         display: flex;
         flex-direction: column;

@@ -49,7 +49,7 @@
     watch(() => [props.executionId, props.inputIds.join(",")], load, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .execution-inputs__status {
         position: relative;
         min-height: 4rem;

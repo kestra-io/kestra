@@ -59,7 +59,7 @@ export interface LogsDownloadResult {
 }
 
 /** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
-export type Log = LogEntry & {index?: number; id?: string}
+export type Log = LogEntry & {index?: number}
 
 function setupLogsStore() {
     const logs = ref<Log[]>()

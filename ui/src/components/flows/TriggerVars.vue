@@ -59,7 +59,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .copy-button {
         margin-inline-start: var(--ks-spacing-2);
     }

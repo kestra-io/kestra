@@ -18,6 +18,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;
@@ -25,6 +26,11 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
 
     @Inject
     private BroadcastQueueInterface<TestBroadcast> broadcastQueue;
+
+    @Test
+    void shouldNotThrowWhenEmittingEmptyBatch() {
+        assertThatCode(() -> broadcastQueue.emit(List.of())).doesNotThrowAnyException();
+    }
 
     @Test
     void singleConsumer() throws QueueException, InterruptedException {

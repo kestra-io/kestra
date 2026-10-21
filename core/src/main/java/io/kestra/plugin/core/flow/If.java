@@ -191,7 +191,7 @@ public class If extends Task implements FlowableTask<If.Output> {
             .toList();
         if (ListUtils.isEmpty(childTasks)) {
             // no next task to run, we guess the state from the parent task
-            return Optional.of(execution.guessFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
+            return Optional.of(execution.computeFinalState(null, parentTaskRun, this.isAllowFailure(), this.isAllowWarning()));
         }
 
         return FlowableUtils.resolveState(

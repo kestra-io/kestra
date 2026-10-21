@@ -1,11 +1,14 @@
 <template>
-    <button
-        type="button"
+    <component
+        :is="dot ? 'span' : 'button'"
+        :type="dot ? undefined : 'button'"
         :class="classes"
-        :disabled="disabled"
+        :disabled="dot ? undefined : disabled"
+        :role="dot ? 'img' : undefined"
+        v-bind="forwardedAttrs"
     >
         <component
-            v-if="icon"
+            v-if="icon && !dot"
             :is="statusIcon"
             class="ks-execution-status__icon"
         />
@@ -17,12 +20,16 @@
                 {{ displayText }}
             </template>
         </span>
-    </button>
+    </component>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, useAttrs} from "vue"
     import {EXECUTION_STATUSES, type ExecutionStatus} from "./types"
+
+    defineOptions({inheritAttrs: false})
+
+    const attrs = useAttrs()
 
     const props = withDefaults(defineProps<{
         status: ExecutionStatus;
@@ -32,6 +39,7 @@
         glow?: boolean;
         clickable?: boolean;
         disabled?: boolean;
+        dot?: boolean;
     }>(), {
         icon: true,
         size: "default",
@@ -39,6 +47,7 @@
         glow: false,
         clickable: false,
         disabled: false,
+        dot: false,
     })
 
     defineSlots<{
@@ -53,10 +62,16 @@
         return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase())
     })
 
+    const forwardedAttrs = computed(() => ({
+        ...(props.dot ? {"aria-label": displayText.value} : {}),
+        ...Object.fromEntries(Object.entries(attrs).filter(([, value]) => value !== undefined)),
+    }))
+
     const classes = computed(() => [
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
         props.size !== "default" && `ks-execution-status--${props.size}`,
+        props.dot && "ks-execution-status--dot",
         props.glow && "ks-execution-status--glow",
         props.clickable && !props.disabled && "ks-execution-status--clickable",
     ].filter(Boolean))
@@ -118,7 +133,21 @@ $statusList: created, submitted, restarted, success, running, killing, killed, w
         gap: 0.25rem;
     }
 
-    /* Bootstrap's reboot puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties
+    &.ks-execution-status--dot {
+        position: relative;
+        width: 0.625rem;
+        height: 0.625rem;
+        padding: 0;
+        border-radius: 50%;
+        background-color: currentColor;
+        pointer-events: none;
+
+        .ks-execution-status__text {
+            display: none;
+        }
+    }
+
+    /* The CSS reset (_reboot.scss) puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties
        with this scoped block's `.ks-execution-status[data-v-hash]` at (0,2,0) and wins on source
        order — so the badge advertised a click it does not handle. The extra `:not()` breaks the
        tie. `inherit` rather than `default`: a badge is often the target inside a clickable row,

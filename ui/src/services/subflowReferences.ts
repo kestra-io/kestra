@@ -7,6 +7,10 @@ const SUBFLOW_TASK_TYPES = new Set<string>([
     "io.kestra.core.tasks.flows.ForEachItem",
 ])
 
+export function isSubflowTaskType(type: string | undefined): boolean {
+    return type !== undefined && SUBFLOW_TASK_TYPES.has(type)
+}
+
 export interface SubflowLink {
     range: [number, number]
     target: {namespace: string; flowId: string}

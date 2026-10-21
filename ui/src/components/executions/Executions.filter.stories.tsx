@@ -113,7 +113,7 @@ vi.mock("@kestra-io/kestra-sdk/executions", () => ({
 }))
 
 import {vueRouter} from "storybook-vue3-router";
-import type {Meta, StoryObj} from "@storybook/vue3";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {Me, useAuthStore} from "override/stores/auth";
 import {useMiscStore} from "override/stores/misc";
 import {useNamespacesStore} from "override/stores/namespaces";

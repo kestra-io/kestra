@@ -19,7 +19,7 @@
     const emit = defineEmits<{undo: []}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .undo-toast {
         position: absolute;
         bottom: var(--undo-toast-offset, var(--ks-spacing-4));

@@ -1,12 +1,14 @@
-import {beforeEach, describe, expect, test, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import ExecutionVariableExplorer from "./ExecutionVariableExplorer.vue"
+import type {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
 import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+import * as Utils from "../../../utils/utils"
 
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
@@ -101,12 +103,16 @@ function mountExplorer(
     return i18nMount(ExecutionVariableExplorer, {messages, global: globalConfig})
 }
 
+function sidebarSections(wrapper: ReturnType<typeof i18nMount>): ExplorerSection[] {
+    return wrapper.findComponent({name: "SidebarList"}).props("sections") as ExplorerSection[]
+}
+
 async function selectVariable(wrapper: ReturnType<typeof i18nMount>, itemName: string, sectionKey = "variables") {
     const sidebar = wrapper.findComponent({name: "SidebarList"})
-    const item = sidebar.props("sections")
-        .find((section: {key: string; items: {label: string}[]}) => section.key === sectionKey)
-        .items
-        .find((candidate: {label: string}) => candidate.label === itemName)
+    const item = sidebarSections(wrapper)
+        .find((section) => section.key === sectionKey)
+        ?.items
+        .find((candidate) => candidate.label === itemName)
 
     await sidebar.vm.$emit("select", item)
     await flushPromises()
@@ -281,10 +287,9 @@ describe("ExecutionVariableExplorer", () => {
         })
         await flushPromises()
 
-        const sidebar = wrapper.findComponent({name: "SidebarList"})
-        const triggerItems = sidebar.props("sections")
-            .find((section: {key: string; items: {label: string}[]}) => section.key === "triggers")
-            .items as {label: string}[]
+        const triggerItems = sidebarSections(wrapper)
+            .find((section) => section.key === "triggers")
+            ?.items ?? []
 
         // trigger variables sit at the top level, id/type only under `_context` — mirroring
         // RunVariables.java, not the DTO's own `id` / `type` / `variables` fields.
@@ -327,5 +332,87 @@ describe("ExecutionVariableExplorer", () => {
 
             expect(wrapper.find("[data-test=loop-iterations-notice]").exists()).toBe(false)
         })
+    })
+
+    test("keeps an empty-string variable visible in the sidebar and scalar viewer", async () => {
+        const wrapper = mountExplorer({
+            empty: "",
+        })
+        await flushPromises()
+
+        const items = sidebarSections(wrapper)
+            .find((section) => section.key === "variables")
+            ?.items ?? []
+
+        const byLabel = Object.fromEntries(
+            items.map((item): [string, ExplorerItem] => [item.label, item]),
+        )
+        expect(byLabel.empty.preview).toBe(Utils.EMPTY_STRING_DISPLAY)
+
+        await selectVariable(wrapper, "empty")
+        expect(wrapper.find(".viewer__scalar").text()).toBe(Utils.EMPTY_STRING_DISPLAY)
+    })
+})
+
+describe("ExecutionVariableExplorer on a phone", () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        vi.stubGlobal("matchMedia", (query: string) => ({
+            matches: true,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+        }))
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    const listIsVisible = (wrapper: ReturnType<typeof i18nMount>) =>
+        wrapper.findComponent({name: "SidebarList"}).attributes("style") !== "display: none;"
+
+    test("starts on the full-width list without the viewer", async () => {
+        // Given / When
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(true)
+        expect(wrapper.find("[data-test=\"variable-back\"]").exists()).toBe(false)
+    })
+
+    test("opens the viewer with a breadcrumb when a variable is tapped and returns with the back button", async () => {
+        // Given
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // When
+        await selectVariable(wrapper, "greeting")
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(false)
+        expect(wrapper.find(".viewer__breadcrumb").text()).toBe("vars › greeting")
+
+        // When
+        await wrapper.find("[data-test=\"variable-back\"]").trigger("click")
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(true)
+        expect(wrapper.find("[data-test=\"variable-back\"]").exists()).toBe(false)
+    })
+
+    test("keeps the debugger prefilled when a variable is selected while it is collapsed", async () => {
+        // Given
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // When
+        await selectVariable(wrapper, "greeting")
+
+        // Then
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression")).toBe("{{ vars.greeting }}")
     })
 })

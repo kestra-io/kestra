@@ -186,7 +186,7 @@
             }
 
             @media (hover: none) {
-                .action-buttons {
+                & .action-buttons {
                     opacity: 1;
                 }
             }

@@ -140,7 +140,7 @@
         background-color: currentColor;
         pointer-events: none;
 
-        .ks-execution-status__text {
+        & .ks-execution-status__text {
             display: none;
         }
     }

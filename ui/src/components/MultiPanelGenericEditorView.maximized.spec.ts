@@ -103,4 +103,32 @@ describe("MultiPanelGenericEditorView with a maximized panel", () => {
         // Then
         expect(visibleTabs(wrapper)).toEqual(["topology"])
     })
+
+    test("focusing a tab hidden behind the maximized panel leaves fullscreen and shows it", async () => {
+        // Given
+        const wrapper = mountEditor()
+        await maximizeFirstPanel(wrapper)
+
+        // When
+        wrapper.vm.focusTab("topology")
+        await nextTick()
+
+        // Then
+        expect(wrapper.find(".panel-maximized").exists()).toBe(false)
+        expect(visibleTabs(wrapper)).toEqual(["code", "topology"])
+    })
+
+    test("focusing the tab of the maximized panel keeps fullscreen", async () => {
+        // Given
+        const wrapper = mountEditor()
+        await maximizeFirstPanel(wrapper)
+
+        // When
+        wrapper.vm.focusTab("code")
+        await nextTick()
+
+        // Then
+        expect(wrapper.find(".panel-maximized").exists()).toBe(true)
+        expect(visibleTabs(wrapper)).toEqual(["code"])
+    })
 })

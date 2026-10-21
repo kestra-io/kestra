@@ -795,7 +795,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .expiration-hint {
         display: block;
         margin-top: var(--ks-spacing-1);

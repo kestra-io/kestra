@@ -168,7 +168,7 @@
     const historyVisible = ref(false)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .tab-icon{
         color: var(--ks-text-inactive);
@@ -280,7 +280,7 @@
     }
 
     .kill-run-button{
-        margin-right: 4rem
+        margin-right: 4rem;
     }
 
     .pillTabs {

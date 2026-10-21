@@ -78,7 +78,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .iteration-task-runs {
         display: flex;
         flex-direction: column;

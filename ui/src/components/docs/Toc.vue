@@ -59,7 +59,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .toc {
         flex: 1;
         min-height: 0;
@@ -104,17 +104,39 @@
         color: var(--ks-text-primary);
         text-decoration: none;
 
-        @for $i from 0 through 5 {
-            &.depth-#{$i} {
-                padding-left: calc(var(--ks-spacing-2) + #{$i} * var(--ks-spacing-4));
+        &.depth-0 {
+            padding-left: calc(var(--ks-spacing-2) + 0 * var(--ks-spacing-4));
+            font-weight: var(--ks-font-weight-medium);
+        }
 
-                @if $i == 0 {
-                    font-weight: var(--ks-font-weight-medium);
-                } @else {
-                    font-size: var(--ks-font-size-xs);
-                    color: var(--ks-text-secondary);
-                }
-            }
+        &.depth-1 {
+            padding-left: calc(var(--ks-spacing-2) + 1 * var(--ks-spacing-4));
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+        }
+
+        &.depth-2 {
+            padding-left: calc(var(--ks-spacing-2) + 2 * var(--ks-spacing-4));
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+        }
+
+        &.depth-3 {
+            padding-left: calc(var(--ks-spacing-2) + 3 * var(--ks-spacing-4));
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+        }
+
+        &.depth-4 {
+            padding-left: calc(var(--ks-spacing-2) + 4 * var(--ks-spacing-4));
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
+        }
+
+        &.depth-5 {
+            padding-left: calc(var(--ks-spacing-2) + 5 * var(--ks-spacing-4));
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-secondary);
         }
 
         &:hover {

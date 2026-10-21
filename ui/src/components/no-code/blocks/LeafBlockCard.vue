@@ -163,7 +163,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .leaf-block-card {
         position: relative;
         display: flex;
@@ -187,28 +187,27 @@
             border-color: var(--ks-border-focus);
             box-shadow: 0 0 0 2px var(--ks-border-focus);
         }
+    }
 
-        &--selected {
-            border-color: var(--ks-border-focus);
-            background: var(--ks-bg-active);
-        }
+    .leaf-block-card--selected {
+        border-color: var(--ks-border-focus);
+        background: var(--ks-bg-active);
+    }
 
-        &--drag-over {
-            border-color: var(--ks-text-link);
-            border-style: dashed;
-        }
+    .leaf-block-card--drag-over {
+        border-color: var(--ks-text-link);
+        border-style: dashed;
+    }
 
-        &--drag-forbidden {
-            border-color: var(--ks-border-error);
-            border-style: dashed;
-            cursor: not-allowed;
-        }
+    .leaf-block-card--drag-forbidden {
+        border-color: var(--ks-border-error);
+        border-style: dashed;
+        cursor: not-allowed;
+    }
 
-        &--error,
-        &--error:hover {
-            border-color: var(--ks-border-error);
-            box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-error);
-        }
+    .leaf-block-card--error, .leaf-block-card--error:hover {
+        border-color: var(--ks-border-error);
+        box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-error);
     }
 
     .leaf-block-card-grip {
@@ -291,14 +290,12 @@
         }
     }
 
-    .leaf-block-card-action {
-        &--run:hover {
-            color: var(--ks-text-success);
-        }
+    .leaf-block-card-action--run:hover {
+        color: var(--ks-text-success);
+    }
 
-        &--danger:hover {
-            color: var(--ks-text-error);
-        }
+    .leaf-block-card-action--danger:hover {
+        color: var(--ks-text-error);
     }
 
     .block-kbd-focused {

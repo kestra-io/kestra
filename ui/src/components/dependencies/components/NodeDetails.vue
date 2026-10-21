@@ -177,7 +177,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .details {
         display: flex;
         flex-direction: column;

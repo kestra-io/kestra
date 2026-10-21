@@ -103,7 +103,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .property-detail > * {
         display: flex;
         justify-content: space-between;
@@ -135,7 +135,7 @@
             padding-bottom: 0;
         }
 
-        > * {
+        & > * {
             width: fit-content;
         }
     }

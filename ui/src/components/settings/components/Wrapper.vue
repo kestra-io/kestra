@@ -4,7 +4,7 @@
     </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
     .settings-wrapper {
         width: min(600px, 100% - var(--ks-spacing-6));
         margin: 0 auto;

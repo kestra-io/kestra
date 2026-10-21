@@ -326,7 +326,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .search-overlay {
         position: fixed;
         top: 0;
@@ -354,7 +354,7 @@
             font-size: var(--ks-font-size-sm);
         }
 
-        :deep(.kel-input) {
+        & :deep(.kel-input) {
             font-size: var(--ks-font-size-sm);
 
             .kel-input__wrapper {

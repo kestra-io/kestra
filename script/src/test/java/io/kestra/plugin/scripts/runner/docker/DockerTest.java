@@ -141,16 +141,6 @@ class DockerTest extends AbstractTaskRunnerTest {
     void shouldReportOomWhenDockerConfirmsOomKill() throws Exception {
         var runContext = runContext(this.runContextFactory);
 
-        var docker = Docker.builder()
-            .image("rockylinux:9.3-minimal")
-            .memory(
-                Memory.builder()
-                    .memory(Property.ofValue("16MB"))
-                    .memorySwap(Property.ofValue("16MB"))
-                    .build()
-            )
-            .build();
-
         var taskCommands = new CommandsWrapper(runContext)
             .withCommands(
                 Property.ofValue(
@@ -164,6 +154,16 @@ class DockerTest extends AbstractTaskRunnerTest {
 
         TaskException oomException = null;
         for (int attempt = 0; attempt < 3 && oomException == null; attempt++) {
+            // A runner is marked killed by its own cleanup, so each attempt needs a fresh one.
+            var docker = Docker.builder()
+                .image("rockylinux:9.3-minimal")
+                .memory(
+                    Memory.builder()
+                        .memory(Property.ofValue("16MB"))
+                        .memorySwap(Property.ofValue("16MB"))
+                        .build()
+                )
+                .build();
             try {
                 docker.run(
                     runContext,

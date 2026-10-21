@@ -103,11 +103,11 @@ public class Dag extends Task implements FlowableTask<VoidOutput>, OnChildFailur
     @Schema(
         title = "What to do with the other still-running tasks when one task fails.",
         description = """
-            `CONTINUE` (default): other tasks keep running to completion, as today.
+            `CONTINUE`: other tasks keep running to completion, as today.
 
-            `CANCELLED` / `FAILED`: as soon as a task fails with no retry left, every other still-running task in this DAG is interrupted and lands in the given state. The DAG itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
+            `CANCEL` / `FAIL` (default): as soon as a task fails with no retry left, every other still-running task in this DAG is interrupted and lands in the given state. The DAG itself still resolves to `FAILED` and its `errors`/`finally` tasks still run normally."""
     )
-    private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.CONTINUE);
+    private final Property<OnChildFailure> onChildFailure = Property.ofValue(OnChildFailure.FAIL);
 
     @NotEmpty
     private List<@Valid DagTask> tasks;

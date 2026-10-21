@@ -55,6 +55,7 @@
 <style scoped lang="scss">
     .loop-scope-bar {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-1) var(--ks-spacing-3);

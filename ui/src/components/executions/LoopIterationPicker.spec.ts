@@ -240,4 +240,24 @@ describe("LoopIterationPicker", () => {
         expect(first.find("[data-test='loop-step-previous']").attributes("disabled")).toBeDefined()
         expect(last.find("[data-test='loop-step-next']").attributes("disabled")).toBeDefined()
     })
+
+    it("shouldDisableNextAtTheLastStartedIterationOfARunningLoop", () => {
+        const wrapper = mountPicker(lane({scopedNumber: 3, iterationCount: 10, runningIterations: 1, terminatedIterations: {SUCCESS: 2}}))
+
+        expect(wrapper.find("[data-test='loop-step-next']").attributes("disabled")).toBeDefined()
+    })
+
+    it("shouldNotSearchForIterationZero", async () => {
+        mocks.search.mockResolvedValue(page([iteration(1, "EMEA")]))
+        await openPicker(lane({}))
+        mocks.search.mockClear()
+
+        const input = document.body.querySelector("input") as HTMLInputElement
+        input.value = "#0"
+        input.dispatchEvent(new Event("input"))
+        await new Promise((resolve) => setTimeout(resolve, 350))
+        await flushPromises()
+
+        expect(mocks.search).not.toHaveBeenCalled()
+    })
 })

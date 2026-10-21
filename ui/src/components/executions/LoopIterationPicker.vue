@@ -103,7 +103,7 @@
             </span>
             <KsIconButton
                 :ariaLabel="$t('topology-graph.loop.next-iteration')"
-                :disabled="lane.scopedNumber >= (lane.iterationCount ?? 0)"
+                :disabled="lane.scopedNumber >= startedIterations"
                 data-test="loop-step-next"
                 @click.stop="emit('step', 1)"
             >
@@ -172,10 +172,15 @@
     )
 
     const failedCount = computed(() => props.lane.terminatedIterations?.FAILED ?? 0)
+
+    const startedIterations = computed(() => Math.min(
+        props.lane.iterationCount ?? 0,
+        (props.lane.runningIterations ?? 0) + Object.values(props.lane.terminatedIterations ?? {}).reduce((sum, count) => sum + count, 0),
+    ))
     const pageCount = computed(() => Math.ceil(total.value / ITERATIONS_PAGE_SIZE))
 
     const numberQuery = computed(() => {
-        const match = /^#?(\d+)$/.exec(query.value.trim())
+        const match = /^#?([1-9]\d*)$/.exec(query.value.trim())
         return match ? Number(match[1]) : undefined
     })
 

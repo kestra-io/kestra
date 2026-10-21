@@ -31,11 +31,15 @@ export function withScopedIteration(entries: LoopScopeEntry[], depth: number, ta
     return [...entries.slice(0, depth), {taskId, number}]
 }
 
-export function scopedExecutionId(nodeUid: string, executionsByPath: Record<string, {id?: string}>): string | undefined {
-    const path = Object.keys(executionsByPath)
+export function deepestEnclosingPath(nodeUid: string, paths: Iterable<string>): string | undefined {
+    return [...paths]
         .filter((candidate) => nodeUid.startsWith(`${candidate}.`))
         .sort((a, b) => b.length - a.length)[0]
-    return path ? executionsByPath[path]?.id : undefined
+}
+
+export function scopedExecutionId(nodeUid: string, executionsByPath: Record<string, {id?: string}>, subflowPaths: string[] = []): string | undefined {
+    const path = deepestEnclosingPath(nodeUid, [...Object.keys(executionsByPath), ...subflowPaths])
+    return path && !subflowPaths.includes(path) ? executionsByPath[path]?.id : undefined
 }
 
 export interface LoopScopeTrailEntry extends LoopScopeEntry {

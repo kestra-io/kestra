@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.runners.IndexingRepository;
 import io.kestra.plugin.core.dashboard.data.Metrics;
@@ -20,10 +21,10 @@ public interface MetricRepositoryInterface extends IndexingRepository<MetricEntr
     }
 
     /**
-     * Metrics of an execution, plus those of the given task runs, which the execution reused from an earlier one
-     * (Playground, Replay) and which therefore recorded their metrics under the execution that ran them.
+     * Metrics of an execution, plus those of the task runs it reused from an earlier one (Playground, Replay), which
+     * were recorded under each task run's {@code sourceExecutionId} and {@code sourceTaskRunId}.
      */
-    ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, List<String> reusedTaskRunIds, Pageable pageable);
+    ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String id, List<TaskRun> reusedTaskRuns, Pageable pageable);
 
     default ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
         return findByExecutionIdAndTaskId(tenantId, executionId, taskId, List.of(), pageable);
@@ -32,7 +33,7 @@ public interface MetricRepositoryInterface extends IndexingRepository<MetricEntr
     /**
      * @see #findByExecutionId(String, String, List, Pageable)
      */
-    ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, List<String> reusedTaskRunIds, Pageable pageable);
+    ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, List<TaskRun> reusedTaskRuns, Pageable pageable);
 
     ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable);
 

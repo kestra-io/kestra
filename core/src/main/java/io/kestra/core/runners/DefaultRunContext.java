@@ -7,6 +7,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.assets.AssetEmitContext;
 import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -25,6 +27,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -39,6 +42,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -91,6 +95,7 @@ public class DefaultRunContext extends RunContext {
     private AbstractTrigger trigger;
 
     private volatile AssetEmitter assetEmitter;
+    private AssetEmitContext assetEmitContext;
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
@@ -258,6 +263,18 @@ public class DefaultRunContext extends RunContext {
         this.task = task;
     }
 
+    void setAssetEmitContext(final AssetEmitContext assetEmitContext) {
+        this.assetEmitContext = assetEmitContext;
+    }
+
+    /**
+     * Returns an emitter for the assets declared under the task's {@code assets}, sent on behalf of its task run in the given state.
+     * Only the worker writes declared assets, so unlike {@link #assets()} this is not on {@link RunContext}.
+     */
+    public AssetEmitter assets(Declared declared) {
+        return assetManagerFactory.declared(this, assetEmitContext, declared.state(), declared.startDate(), declared.endDate(), declared.alreadyUsed());
+    }
+
     void setTrigger(final AbstractTrigger trigger) {
         this.trigger = trigger;
     }
@@ -276,6 +293,7 @@ public class DefaultRunContext extends RunContext {
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretOutputs = this.secretOutputs;
         runContext.decryptVariables = this.decryptVariables;
+        runContext.assetEmitContext = this.assetEmitContext;
         if (isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);
@@ -694,6 +712,8 @@ public class DefaultRunContext extends RunContext {
             synchronized (this) {
                 if (this.assetEmitter == null) {
                     this.assetEmitter = assetManagerFactory.of(
+                        this,
+                        assetEmitContext,
                         Optional.ofNullable(task).map(Task::getAssets)
                             .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
                             .flatMap(throwFunction(assets -> render(assets.getEnableAuto()).as(Boolean.class)))
@@ -704,6 +724,13 @@ public class DefaultRunContext extends RunContext {
         }
 
         return this.assetEmitter;
+    }
+
+    /**
+     * @return the emitter of this run context, empty when nothing asked for one, so nothing was emitted
+     */
+    public Optional<AssetEmitter> assetsIfCreated() {
+        return Optional.ofNullable(this.assetEmitter);
     }
 
     @Override
@@ -816,5 +843,11 @@ public class DefaultRunContext extends RunContext {
             context.trigger = trigger;
             return context;
         }
+    }
+
+    /**
+     * @param alreadyUsed the ids of the assets whose usage this task run already recorded, which are only linked and written again
+     */
+    public record Declared(State.Type state, Instant startDate, @Nullable Instant endDate, Set<String> alreadyUsed) {
     }
 }

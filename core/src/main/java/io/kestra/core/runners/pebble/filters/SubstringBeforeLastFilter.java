@@ -29,7 +29,8 @@ public class SubstringBeforeLastFilter implements Filter {
             return null;
         }
 
-        if (!args.containsKey("separator")) {
+        Object separator = args.get("separator");
+        if (separator == null) {
             throw new PebbleException(
                 null,
                 "The 'substringBeforeLast' filter expects an argument 'separator'.",
@@ -38,9 +39,6 @@ public class SubstringBeforeLastFilter implements Filter {
             );
         }
 
-        String separator = (String) args.get("separator");
-        ;
-
-        return StringUtils.substringBeforeLast(input.toString(), separator);
+        return StringUtils.substringBeforeLast(input.toString(), separator.toString());
     }
 }

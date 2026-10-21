@@ -29,13 +29,11 @@ public class SubstringAfterFilter implements Filter {
             return null;
         }
 
-        if (!args.containsKey("separator")) {
+        Object separator = args.get("separator");
+        if (separator == null) {
             throw new PebbleException(null, "The 'substringAfter' filter expects an argument 'separator'.", lineNumber, self.getName());
         }
 
-        String separator = (String) args.get("separator");
-        ;
-
-        return StringUtils.substringAfter(input.toString(), separator);
+        return StringUtils.substringAfter(input.toString(), separator.toString());
     }
 }

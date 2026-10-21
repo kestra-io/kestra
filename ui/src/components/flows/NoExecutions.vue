@@ -4,7 +4,7 @@
             <img
                 :src="executeimg"
                 alt="Kestra"
-                >
+            >
             <h2 class="title">
                 {{ $t("no-executions-view.title") }}
             </h2>

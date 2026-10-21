@@ -53,7 +53,7 @@
     import TopNavBar from "../layout/TopNavBar.vue"
     import Empty from "../layout/empty/Empty.vue"
     import useRouteContext from "../../composables/useRouteContext"
-    import {useClient} from "@kestra-io/kestra-sdk"
+    import {useClient, type ConcurrencyLimit, type PagedResultsConcurrencyLimit} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
     import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
 
@@ -68,23 +68,13 @@
         }
     })
 
-    interface ConcurrencyLimit {
-        tenantId: string
-        namespace: string,
-        flowId: string,
-        running: number
-    }
-
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
 
     const axios = useClient()
-    const data = ref<{
-        total: number;
-        results: ConcurrencyLimit[]
-    }>()
+    const data = ref<PagedResultsConcurrencyLimit>()
 
     async function loadData(){
-        const response = await axios.get(`${baseUrl.value}/concurrency-limit/search`)
+        const response = await axios.get<PagedResultsConcurrencyLimit>(`${baseUrl.value}/concurrency-limit/search`)
         if(response?.status !== 200){
             throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }
@@ -99,7 +89,7 @@
 
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true
-        newRunningCount.value = row.running
+        newRunningCount.value = row.running ?? 0
         editingRow.value = row
     }
 

@@ -162,7 +162,7 @@
     import SetLabels from "../SetLabels.vue"
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
-    import ParentExecutionLink from "./ParentExecutionLink.vue"
+    import ParentExecutionLink from "../overview/components/ParentExecutionLink.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"

@@ -10047,7 +10047,7 @@ export type DeleteLogsByQueryError = DeleteLogsByQueryErrors[keyof DeleteLogsByQ
 
 export type DeleteLogsByQueryResponses = {
     /**
-     * On success
+     * On success; `count` is omitted when the log store cannot report the number of deleted logs
      */
     200: BulkResponse;
 };

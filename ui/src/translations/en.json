@@ -1949,7 +1949,6 @@
     "iterations": "Iterations",
     "load_10_more": "Load 10 more",
     "show_all_executions": "Show all executions",
-    "failed_iterations_only": "Failed iterations only",
     "loop_iterations_shown": "{shown} of {total} shown",
     "loop_iterations_load_error": "Failed to load iterations",
     "retry": "Retry",

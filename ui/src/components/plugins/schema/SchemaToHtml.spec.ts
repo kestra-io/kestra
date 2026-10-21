@@ -4,6 +4,7 @@ import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 import SchemaToHtml from "./SchemaToHtml.vue"
+import type {JSONSchema} from "./utils/schemaUtils"
 
 vi.mock("@kestra-io/design-system/shiki", () => ({
     getShiki: vi.fn().mockResolvedValue({
@@ -14,6 +15,7 @@ vi.mock("@kestra-io/design-system/shiki", () => ({
     loadLanguageOnDemand: vi.fn().mockResolvedValue(false),
 }))
 
+// JSONSchema.properties mixes property entries with section keys, which no object literal satisfies.
 const SCHEMA = {
     properties: {
         properties: {message: {type: "string"}},
@@ -24,7 +26,7 @@ const SCHEMA = {
     definitions: {
         "io.kestra.Example": {title: "Example", properties: {name: {type: "string"}}},
     },
-}
+} as unknown as JSONSchema
 
 const GERMAN = {
     plugins: {

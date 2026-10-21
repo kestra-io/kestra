@@ -2128,6 +2128,25 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume-inputs.yaml" })
+    @SuppressWarnings("unchecked")
+    void shouldForwardOnResumeInputsWhenResumingLoopParentExecution() throws QueueException, InternalException {
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "loop-pause-resume-inputs");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/actions/resume", MultipartBody.builder().addPart("approved", "true").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(pausedExecution.getId(), State.Type.SUCCESS);
+
+        Execution iteration = executionRepository.findLoopSubExecutions(TENANT_ID, pausedExecution.getId(), null).getFirst();
+        Map<String, Object> outputs = taskOutputService.getOutputs(iteration.findTaskRunsByTaskId("pause").getFirst());
+        assertThat((Map<String, Object>) outputs.get("onResume")).containsEntry("approved", true);
+    }
+
+    @Test
     @LoadFlowsWithTenant({ "flows/valids/minimal.yaml" })
     void shouldReturnUpdatedExecutionWhenUpdateExecutionStatusSucceeds(String tenantId) throws TimeoutException, QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);

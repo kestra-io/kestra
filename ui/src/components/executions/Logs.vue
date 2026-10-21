@@ -124,7 +124,7 @@
                             <LogLine
                                 @click="logCursor = asLog(item).index.toString()"
                                 class="line"
-                                :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === asLog(item).level, 'opacity-40': cursorLogLevel && cursorLogLevel !== asLog(item).level}"
+                                :dimmed="!!cursorLogLevel && cursorLogLevel !== asLog(item).level"
                                 :cursor="asLog(item).index.toString() === logCursor"
                                 :excludeMetas="(['namespace', 'flowId', 'executionId'] as any)"
                                 :level="effectiveLevelValue?.value as any"
@@ -624,11 +624,11 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .attempt-wrapper {
     background-color: var(--ks-bg-surface);
 
-    :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
+    & :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
       border-top: 1px solid var(--ks-border-default);
     }
 
@@ -642,7 +642,7 @@
       padding: .5rem;
     }
 
-    :deep(.vue-recycle-scroller__item-view > div) {
+    & :deep(.vue-recycle-scroller__item-view > div) {
       min-height: 2rem;
     }
   }
@@ -664,28 +664,30 @@
     padding: var(--ks-spacing-2) 0;
     margin-bottom: var(--ks-spacing-2);
     background: var(--ks-bg-base);
+  }
 
-    &__left {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--ks-spacing-2);
-    }
+  .logs-toolbar__left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+  }
 
-    &__actions {
-      display: flex;
-      align-items: center;
-      gap: var(--ks-spacing-2);
-      margin-left: auto;
-    }
+  .logs-toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    margin-left: auto;
+  }
 
-    &__text-btn {
-      font-size: var(--ks-font-size-xs);
-    }
-
-    :deep(.kel-button) {
+  .logs-toolbar {
+    & :deep(.kel-button) {
         margin: 0;
     }
+  }
+
+  .logs-toolbar__text-btn {
+    font-size: var(--ks-font-size-xs);
   }
 
   .fullscreen-logs-container {

@@ -70,20 +70,20 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                     cases:
                       FIRST:
                         - id: first
-                          type: io.kestra.plugin.core.debug.Return
-                          format: "{{ task.id }} > {{ taskrun.startDate }}"
+                          type: io.kestra.plugin.core.log.Log
+                          message: "{{ task.id }} > {{ taskrun.startDate }}"
                       SECOND:
                         - id: second
-                          type: io.kestra.plugin.core.debug.Return
-                          format: "{{ task.id }} > {{ taskrun.startDate }}"
+                          type: io.kestra.plugin.core.log.Log
+                          message: "{{ task.id }} > {{ taskrun.startDate }}"
                       THIRD:
                         - id: third
-                          type: io.kestra.plugin.core.debug.Return
-                          format: "{{ task.id }} > {{ taskrun.startDate }}"
+                          type: io.kestra.plugin.core.log.Log
+                          message: "{{ task.id }} > {{ taskrun.startDate }}"
                     defaults:
                       - id: default
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ task.id }} > {{ taskrun.startDate }}"
+                        type: io.kestra.plugin.core.log.Log
+                        message: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         )
     }
@@ -119,7 +119,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {
-        return runContext.render(this.value).skipCache().as(String.class).orElseThrow();
+        return runContext.render(this.value).as(String.class).orElseThrow();
     }
 
     @Override

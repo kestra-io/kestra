@@ -112,7 +112,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-editor-stats {
         display: flex;
         align-items: center;

@@ -29,7 +29,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-error-badge {
         display: inline-flex;
         align-items: center;

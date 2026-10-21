@@ -78,7 +78,7 @@ describe("DrillDownDrawer", () => {
         const rowDetail = vi.fn().mockReturnValue({name: "executions/update", params: {tenant: "main", id: "e1"}})
         registerDrillDownPreview("test/drawer-table/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "start date"}],
             fetch: fetchMock,
             rowDetail,
         })
@@ -98,6 +98,7 @@ describe("DrillDownDrawer", () => {
         const dataTable = wrapper.findComponent(KsDataTable)
         expect(dataTable.props("data")).toEqual([{id: "e1", namespace: "ns", flowId: "f1"}])
         expect(dataTable.props("total")).toBe(1)
+        expect(wrapper.findComponent({name: "KsTableColumn"}).props("label")).toBe("Start date")
 
         await dataTable.vm.$emit("row-dblclick", {id: "e1", namespace: "ns", flowId: "f1"})
 
@@ -113,7 +114,7 @@ describe("DrillDownDrawer", () => {
         })
         registerDrillDownPreview("test/drawer-pagination/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "id"}],
             fetch: fetchMock,
             rowDetail: vi.fn(),
         })
@@ -137,7 +138,7 @@ describe("DrillDownDrawer", () => {
             .mockResolvedValueOnce({results: [{id: "from-second-target"}], total: 1})
         registerDrillDownPreview("test/drawer-retarget/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "id"}],
             fetch: fetchMock,
             rowDetail: vi.fn(),
         })
@@ -168,7 +169,7 @@ describe("DrillDownDrawer", () => {
             .mockResolvedValueOnce({results: [{id: "current"}], total: 1})
         registerDrillDownPreview("test/drawer-race/list", {
             mode: "table",
-            columns: [{prop: "id", label: "Id"}],
+            columns: [{prop: "id", label: "id"}],
             fetch: fetchMock,
             rowDetail: vi.fn(),
         })

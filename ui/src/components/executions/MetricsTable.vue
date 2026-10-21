@@ -21,7 +21,7 @@
         <template v-for="col in displayColumns" :key="col">
             <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">
-                    <p class="m-0">
+                    <p class="task-id">
                         {{ scope.row.taskId }}
                     </p>
                 </template>
@@ -152,7 +152,7 @@
         metricsTotal.value = response.total
     }
 
-    watch(() => props.taskRunId, () => {
+    watch([() => props.execution?.id, () => props.execution?.state?.current, () => props.taskRunId], () => {
         dataTable.value?.resetAndReload()
     })
 
@@ -206,7 +206,11 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+    .task-id {
+        margin: 0;
+    }
+
     .tag {
         display: inline-flex;
         align-items: center;

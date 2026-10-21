@@ -23,7 +23,7 @@
             <KsCard>
                 <KsEditor
                     v-bind="editorBindings"
-                    class="position-relative"
+                    class="editor-container"
                     lang="yaml"
                     readOnly
                     inline
@@ -90,7 +90,7 @@
     onMounted(ensureInstalledPluginsLoaded)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .header {
         margin: 0 0 var(--ks-spacing-4);
 
@@ -132,7 +132,7 @@
         gap: var(--ks-spacing-4);
         min-height: 100%;
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             padding: 0;
         }
 
@@ -143,5 +143,9 @@
             background: var(--ks-bg-surface);
             box-shadow: 0 2px 8px 0 var(--ks-shadow-surface);
         }
+    }
+
+    .editor-container {
+        position: relative;
     }
 </style>

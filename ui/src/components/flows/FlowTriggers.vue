@@ -266,7 +266,7 @@
         large
     >
         <template #header>
-            <span v-html="$t('backfill executions')" />
+            <span>{{ $t("backfill executions") }}</span>
         </template>
         <KsForm :model="backfill" labelPosition="top">
             <div class="pickers">
@@ -835,9 +835,9 @@
     })
 </script>
 
-<style lang="scss" scoped>
-// The parent flow tab strips horizontal padding when a data table is present
-// (full-width-table behaviour); restore the standard gutter for this tab.
+<style scoped>
+/* The parent flow tab strips horizontal padding when a data table is present */
+/* (full-width-table behaviour); restore the standard gutter for this tab. */
 .triggers-tab {
     padding-inline: var(--ks-spacing-5);
 }

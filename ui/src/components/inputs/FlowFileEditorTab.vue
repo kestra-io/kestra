@@ -1,5 +1,5 @@
 <template>
-    <div class="h-100 d-flex flex-column">
+    <div class="editor-tab">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
             :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
@@ -34,11 +34,11 @@
                     </div>
                 </KsAlert>
             </div>
+            <NamespaceFilesTip v-if="flow && previewSource === undefined && !flowStore.isReadOnly" />
             <KsEditor
                 v-bind="editorBindings"
                 id="flowFileEditorTab"
                 ref="editorRefElement"
-                class="flex-1"
                 :modelValue="previewSource ?? source"
                 :original="previewSource ? source : undefined"
                 :schemaType="flow ? 'flow': undefined"
@@ -62,7 +62,7 @@
                 @mouse-leave="() => highlightHoveredTask(-1)"
             >
                 <template #absolute>
-                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
+                    <ContentSave v-if="!flow" data-test="file-save" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -118,6 +118,7 @@
     import {humanFileSize} from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
+    import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
     import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
 
@@ -448,7 +449,13 @@
     } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .editor-tab {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
     .image-preview {
         margin: 2rem;
     }

@@ -44,16 +44,16 @@ import reactor.core.publisher.Mono;
 @Schema(
     title = "Trigger a Flow via an authenticated webhook URL.",
     description = """
-        Exposes a signed endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow. Secured by the required `key`; keep it secret.
+        Exposes an endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow without signing in. The required `key` is its only protection: store it as a secret and reference it with `{{ secret('...') }}`.
 
-        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
+        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. It is untrusted input: pass it to script tasks through `env`, never inside `commands`, `beforeCommands`, `script`, or `interpreter`, where it would be run as code. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
 
         Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Add a webhook trigger to the current flow with the key `4wjtkzwVGBM9yKnjm3yv8r`; the webhook will be available at the URI `/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/4wjtkzwVGBM9yKnjm3yv8r`.",
+            title = "Add a webhook trigger to the current flow with its key read from the `WEBHOOK_KEY` secret; the webhook will be available at the URI `/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/{key}`, where `{key}` is the value of that secret.",
             code = """
                 id: webhook_flow
                 namespace: company.team
@@ -66,7 +66,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                 """,
             full = true
         ),
@@ -86,7 +86,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                     when: "{{ trigger.body.hello == 'world' }}"
                 """,
             full = true
@@ -102,18 +102,19 @@ import reactor.core.publisher.Mono;
 
                 tasks:
                   - id: handle_request
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      result: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
 
                 outputs:
                   - id: response
                     type: STRING
-                    value: "{{ outputs.handle_request.value }}"
+                    value: "{{ outputs.handle_request.values.result }}"
 
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                     wait: true
                     returnOutputs: true
                     responseContentType: "text/plain"
@@ -142,7 +143,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                 """,
             full = true
         ),
@@ -165,7 +166,7 @@ import reactor.core.publisher.Mono;
                 triggers:
                   - id: webhook
                     type: io.kestra.plugin.core.trigger.Webhook
-                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    key: "{{ secret('WEBHOOK_KEY') }}"
                     fetchType: STORE
                 """,
             full = true

@@ -10,7 +10,7 @@
                 :required="input.required !== false"
                 :rules="requiredRules(input)"
                 :prop="input.id.includes('.') ? [input.id] : input.id"
-                :error="inputError(input.id)"
+                :error="customInputs[input.id] ? undefined : inputError(input.id)"
                 :inlineMessage="true"
             >
                 <template #label>
@@ -247,12 +247,21 @@
                         </div>
                     </div>
                 </div>
+                <component
+                    :is="customInputs[input.id]"
+                    v-if="customInputs[input.id]"
+                    :input="input"
+                    :errors="valueErrors(input.id)"
+                    :data-testid="`input-form-${input.id}`"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                />
                 <KsEditor
                     v-bind="editorBindings"
                     :options="{fullHeight: false, showScroll: inputsValues[input.id]?.length > 530}"
                     :inline="true"
                     :navbar="false"
-                    v-if="input.type === 'JSON' || input.type === 'ION'"
+                    v-if="(input.type === 'JSON' || input.type === 'ION') && !customInputs[input.id]"
                     :data-testid="`input-form-${input.id}`"
                     lang="json"
                     v-model="inputsValues[input.id]"
@@ -354,7 +363,8 @@
     import ChevronRightIcon from "vue-material-design-icons/ChevronRight.vue"
     import CheckIcon from "vue-material-design-icons/Check.vue"
     import {Flow} from "../../stores/flow"
-    import {InputMetaData} from "../../stores/executions"
+    import {InputError, InputMetaData} from "../../stores/executions"
+    import {useInputRendererExtension} from "override/components/inputs/inputRendererExtension"
 
     function toOption(item: ValueOptionLike): {label: string; value: string} {
         return typeof item === "string" ? {label: item, value: item} : item
@@ -464,6 +474,16 @@
         onRecapChange: (val) => emit("update:onRecap", val),
     })
 
+    const inputRendererExtension = useInputRendererExtension()
+
+    const customInputs = computed<Record<string, Component>>(() =>
+        Object.fromEntries(
+            visibleInputs.value
+                .map(input => [input.id, inputRendererExtension(input)])
+                .filter(([, renderer]) => renderer),
+        ),
+    )
+
     const dynamicInputIds = computed(() =>
         new Set(flattenInputs(props.initialInputs ?? []).filter(it => it.expression || it.dependsOn).map(it => it.id)),
     )
@@ -511,6 +531,14 @@
         }
 
         return message
+    }
+
+    /** The errors `inputError` joins into one message, for a control that anchors each of them itself. */
+    function valueErrors(id: string): InputError[] {
+        if (!inputError(id)) {
+            return []
+        }
+        return inputsMetaData.value.find((it) => it.id === id)?.errors ?? []
     }
 
     function updateDefaults(): void {
@@ -1029,7 +1057,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .md-label {
     height: var(--ks-font-size-lg);
 }
@@ -1181,7 +1209,7 @@
         padding: 5px;
         gap: 4px;
 
-        :deep(.kel-tag) {
+        & :deep(.kel-tag) {
             display: inline-flex;
             align-items: center;
             border-radius: 4px;
@@ -1205,14 +1233,14 @@
         }
 
         .array-cell {
-            :deep(.kel-input__wrapper) {
+            & :deep(.kel-input__wrapper) {
                 box-shadow: none;
                 border: 1px solid var(--ks-border-default);
                 border-radius: 5px;
                 padding-right: var(--ks-spacing-5);
             }
 
-            :deep(.kel-input__inner) {
+            & :deep(.kel-input__inner) {
                 color: var(--ks-text-warning) !important;
                 font-size: var(--ks-font-size-sm) !important;
             }

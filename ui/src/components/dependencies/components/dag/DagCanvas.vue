@@ -44,18 +44,20 @@
 <script setup lang="ts">
     import {computed, nextTick, provide, ref, useTemplateRef, watch} from "vue"
     import {useResizeObserver} from "@vueuse/core"
-    import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
+    import {VueFlow, useVueFlow, Position} from "@vue-flow/core"
     import {Background} from "@vue-flow/background"
     import {GRAPH_BACKGROUND, MIN_ZOOM, untilNodesMeasured, useScreenshot} from "@kestra-io/topology"
     import {cssVar, stringUtils} from "@kestra-io/design-system"
     import {useTheme} from "../../../../composables/useTheme"
     import AssetNode from "./AssetNode.vue"
+    import {useFederatedModule} from "../../../../remoteComponents/useFederatedModule"
     import {computeDagLayout} from "../../utils/dagLayout"
-    import {computeTrace, traceEdgeKey} from "../../utils/dagTrace"
-    import {DAG_CARD, DAG_CARD_WITH_TESTS_HEIGHT, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
-    import {hasDbtTests} from "../../utils/dbtTests"
+    import {computeTrace, extendTraceWithDirectEdges, traceEdgeKey} from "../../utils/dagTrace"
+    import {DAG_CARD, DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN, DAG_CARD_FOOTER} from "../../utils/dagConstants"
     import {ASSET, nodesOf, edgesOf} from "../../utils/types"
-    import type {Element, DbtTestFields} from "../../utils/types"
+    import type {Element} from "../../utils/types"
+    import {isLineageEdge} from "../../utils/relationKind"
+    import {dagEdgeStyle} from "../../utils/dagEdge"
 
     const props = defineProps<{
         elements: Element[];
@@ -84,10 +86,20 @@
 
     const nodes = computed(() => nodesOf(props.elements))
 
-    // One height for the whole graph: only graphs with a dbt test footer pay for the extra row.
-    const cardHeight = computed(() => (nodes.value.some((node) => node.metadata.subtype === ASSET && hasDbtTests(node.metadata))
-        ? DAG_CARD_WITH_TESTS_HEIGHT
-        : DAG_CARD.height))
+    // Plugins ship the footer of their assets' cards as an artifact, resolved by the task type that produced the asset.
+    const {RemoteComponent: CardFooter, taskAdditionalInfoRemote, resolveRemoteComponent, hasResolvedComponent} = useFederatedModule("asset-card-footer")
+
+    const producers = computed(() => [...new Set(nodes.value.flatMap((node) => {
+        const producer = node.metadata.subtype === ASSET ? node.metadata.producer : undefined
+        return producer ? [producer] : []
+    }))].sort())
+
+    watch(producers, (types) => resolveRemoteComponent(types.map((cls) => ({cls, version: undefined}))), {immediate: true})
+
+    // One height for the whole graph, so rows stay aligned: only graphs holding an asset with a footer pay for the extra room.
+    const cardHeight = computed(() => DAG_CARD.height + Math.max(0, ...producers.value
+        .filter(hasResolvedComponent)
+        .map((producer) => taskAdditionalInfoRemote.value[producer]?.footerHeight ?? 0)))
 
     const edges = computed(() => {
         const known = new Set(nodes.value.map((node) => node.id))
@@ -98,12 +110,15 @@
         nodes.value.filter((node) => node.metadata.subtype !== ASSET).map((node) => node.id),
     ))
 
+    // PART_OF and RELATED are not data-flow steps, so ranking the DAG through them misplaces assets.
+    const lineageEdges = computed(() => edges.value.filter((edge) => isLineageEdge(edge.kind)))
+
     const layout = computed(() => {
-        const produced = new Set(edges.value.map((edge) => edge.source))
+        const produced = new Set(lineageEdges.value.map((edge) => edge.source))
 
         return computeDagLayout(
             nodes.value.map((node) => node.id),
-            edges.value.map(({source, target}) => ({source, target})),
+            lineageEdges.value.map(({source, target}) => ({source, target})),
             {
                 columnGap: DAG_CARD.width + 120,
                 rowGap: cardHeight.value + 32,
@@ -119,9 +134,10 @@
             return []
         }
 
-        const metadata = node.metadata as DbtTestFields & {
+        const metadata = node.metadata as {
             assetType?: string;
             producer?: string;
+            assetMetadata?: Record<string, unknown>;
             status?: string;
             updated?: string;
         }
@@ -142,19 +158,22 @@
                 iconCls: isAsset ? (metadata.producer ?? metadata.assetType) : undefined,
                 isFlow: !isAsset,
                 assetType: isAsset ? metadata.assetType : undefined,
+                producer: isAsset ? metadata.producer : undefined,
+                metadata: isAsset ? (metadata.assetMetadata ?? {}) : {},
                 status: isAsset ? (metadata.status ?? "unknown") : "unknown",
                 updated: metadata.updated,
-                dbtTestStatus: isAsset ? metadata.dbtTestStatus : undefined,
-                dbtTestsTotal: isAsset ? metadata.dbtTestsTotal : undefined,
-                dbtTestsFailed: isAsset ? metadata.dbtTestsFailed : undefined,
             },
         }]
     }))
 
-    const trace = computed(() => computeTrace(
+    const focusID = computed(() => props.hovered ?? props.selected)
+
+    // The trace stays lineage-only; direct PART_OF/RELATED neighbours are folded in one hop afterwards.
+    const trace = computed(() => extendTraceWithDirectEdges(
+        computeTrace(lineageEdges.value, focusID.value, (id) => flowNodeIDs.value.has(id)),
         edges.value,
-        props.hovered ?? props.selected,
-        (id) => flowNodeIDs.value.has(id),
+        focusID.value,
+        isLineageEdge,
     ))
 
     const vfEdges = computed(() => {
@@ -169,23 +188,16 @@
                 : false
             const source = positions.get(edge.source)
             const target = positions.get(edge.target)
-            const backwards = !!source && !!target && source.x > target.x
-            const stroke = cssVar(onPath ? "--ks-text-link" : "--ks-border-default")
+            // Column order is arbitrary for PART_OF/RELATED, so only lineage edges can run backwards.
+            const backwards = isLineageEdge(edge.kind) && !!source && !!target && source.x > target.x
+            const styled = dagEdgeStyle(edge, {onPath, dimmed: outsideFilter || (!!lit && !onPath), backwards}, cssVar)
 
             return {
                 id: edge.id,
                 source: edge.source,
                 target: edge.target,
                 type: "smoothstep",
-                markerEnd: {type: MarkerType.ArrowClosed, color: stroke},
-                style: {
-                    stroke,
-                    strokeWidth: onPath ? 2 : 1,
-                    strokeDasharray: backwards ? "6 4" : undefined,
-                    opacity: outsideFilter || (lit && !onPath)
-                        ? 0.4
-                        : backwards && !onPath ? 0.65 : 1,
-                },
+                ...styled,
             }
         })
     })
@@ -194,6 +206,7 @@
     provide(DAG_HOVERED, computed(() => props.hovered))
     provide(DAG_TRACED, computed(() => trace.value?.nodes ?? null))
     provide(DAG_SHOWN, computed(() => props.shown ?? null))
+    provide(DAG_CARD_FOOTER, CardFooter)
 
     const bounds = computed(() => {
         const positions = vfNodes.value.map(({position}) => position)
@@ -280,7 +293,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .canvas {
         width: 100%;
         height: 100%;

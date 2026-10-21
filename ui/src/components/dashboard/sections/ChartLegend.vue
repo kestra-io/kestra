@@ -105,7 +105,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .legend {
         display: flex;
         flex-wrap: wrap;

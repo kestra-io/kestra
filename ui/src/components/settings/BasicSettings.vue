@@ -162,7 +162,7 @@
                 :label="$t('settings.blocks.theme.fields.color_mode')"
             >
                 <template #description>
-                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode')" /><br>
+                    <span>{{ $t("settings.blocks.theme.descriptions.color_mode") }}</span><br>
                     <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
                 </template>
                 <KsThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
@@ -796,7 +796,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-template {
     display: flex;
     flex-direction: column;

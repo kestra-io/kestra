@@ -120,7 +120,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .overview {
         display: flex;
         flex-direction: column;
@@ -173,7 +173,7 @@
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
 
-            :deep(.task-icon) {
+            & :deep(.task-icon) {
                 flex-shrink: 0;
                 width: 1.5rem;
                 height: 1.5rem;
@@ -182,7 +182,7 @@
             &.missing {
                 color: var(--ks-text-secondary);
 
-                :deep(.task-icon) {
+                & :deep(.task-icon) {
                     opacity: 0.4;
                     filter: grayscale(1);
                 }
@@ -221,7 +221,7 @@
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-bold);
 
-            :deep(.open-in-new-icon) {
+            & :deep(.open-in-new-icon) {
                 margin-left: 0.25rem;
             }
         }

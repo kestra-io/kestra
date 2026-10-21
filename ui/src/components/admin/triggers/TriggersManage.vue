@@ -300,7 +300,7 @@
             large
         >
             <template #header>
-                <span v-html="$t('backfill executions')" />
+                <span>{{ $t("backfill executions") }}</span>
             </template>
             <KsForm :model="backfill" labelPosition="top">
                 <div class="pickers">
@@ -1006,13 +1006,13 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .triggers-manage {
         display: flex;
         flex-direction: column;
         min-height: 0;
 
-        :deep(tr.no-expand .kel-table__expand-icon) {
+        & :deep(tr.no-expand .kel-table__expand-icon) {
             pointer-events: none;
 
             .kel-icon {
@@ -1020,7 +1020,7 @@
             }
         }
 
-        :deep(.kel-table) a {
+        & :deep(.kel-table) a {
             color: var(--ks-text-link);
         }
     }

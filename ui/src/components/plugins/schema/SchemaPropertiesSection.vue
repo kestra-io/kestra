@@ -283,7 +283,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .nested :deep(p) {
         font-size: var(--ks-font-size-sm);
         line-height: 22px;
@@ -301,18 +301,18 @@
     .property-flag {
         display: inline-flex;
         align-items: center;
+    }
 
-        &--required {
-            color: var(--ks-status-error);
-        }
+    .property-flag--required {
+        color: var(--ks-status-error);
+    }
 
-        &--info {
-            color: var(--ks-status-info);
-        }
+    .property-flag--info {
+        color: var(--ks-status-info);
+    }
 
-        &--warning {
-            color: var(--ks-status-warning);
-        }
+    .property-flag--warning {
+        color: var(--ks-status-warning);
     }
 
     .property-button-right {
@@ -397,11 +397,11 @@
             border-bottom: 0;
         }
 
-        :deep(> .collapse-button > .collapse-button__label) {
+        & :deep(> .collapse-button > .collapse-button__label) {
             color: var(--ks-text-primary);
         }
 
-        :deep(> .collapse-button) {
+        & :deep(> .collapse-button) {
             padding: .75rem 1rem;
 
             &:not(.collapsed) {
@@ -409,11 +409,11 @@
             }
         }
 
-        :deep(.property-detail) {
+        & :deep(.property-detail) {
             background-color: var(--ks-bg-base);
             padding: 1rem 0;
 
-            > * {
+            & > * {
                 padding-left: 1rem;
                 padding-right: 1rem;
             }
@@ -521,18 +521,18 @@
         line-height: 1.5;
         color: var(--ks-text-secondary);
 
-        :deep(p) {
+        & :deep(p) {
             margin: 0;
             font-size: var(--ks-font-size-sm);
             line-height: 1.5;
             color: var(--ks-text-secondary);
         }
 
-        :deep(p + p) {
+        & :deep(p + p) {
             margin-top: var(--ks-spacing-2);
         }
 
-        :deep(code) {
+        & :deep(code) {
             font-family: var(--ks-font-family-mono);
             font-size: 0.92em;
             background: var(--ks-bg-tag);

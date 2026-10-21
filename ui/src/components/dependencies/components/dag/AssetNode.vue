@@ -42,18 +42,15 @@
                 >{{ typeName }}</KsText>
             </div>
 
-            <KsTooltip
-                v-if="tests"
-                :content="testsTooltip"
-                :enterable="false"
-            >
-                <div :class="['tests', tests.state]">
-                    <KsIcon size="xs" :color="dbtTestColorOf(tests.state)">
-                        <component :is="dbtTestIconOf(tests.state)" />
-                    </KsIcon>
-                    <KsText size="small" class="tests-label">{{ testsLabel }}</KsText>
-                </div>
-            </KsTooltip>
+            <component
+                :is="footer"
+                v-if="footer && data.producer"
+                :taskType="data.producer"
+                :assetId="id"
+                :assetType="data.assetType"
+                :metadata="data.metadata"
+                class="footer"
+            />
         </div>
 
         <Handle type="source" :position="Position.Right" />
@@ -69,17 +66,17 @@
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
     import {statusIconOf, statusColorOf, normalizeStatus} from "../../utils/assetStatus"
-    import {normalizeDbtTests, dbtTestIconOf, dbtTestColorOf} from "../../utils/dbtTests"
-    import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
-    import type {DbtTestFields} from "../../utils/types"
+    import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN, DAG_CARD_FOOTER} from "../../utils/dagConstants"
 
     const props = defineProps<{
         id: string;
-        data: DbtTestFields & {
+        data: {
             name: string;
             iconCls?: string;
             isFlow?: boolean;
             assetType?: string;
+            producer?: string;
+            metadata?: Record<string, unknown>;
             status: string;
             updated?: string;
         };
@@ -93,20 +90,11 @@
     const hovered = inject(DAG_HOVERED)
     const traced = inject(DAG_TRACED)
     const shown = inject(DAG_SHOWN)
+    const footer = inject(DAG_CARD_FOOTER, undefined)
 
     const status = computed(() => normalizeStatus(props.data.status))
     const typeName = computed(() => (props.data.assetType ? stringUtils.afterLastDot(props.data.assetType) : undefined))
     const statusLabel = computed(() => t(`dependency.dag.status.${status.value}`))
-
-    const tests = computed(() => normalizeDbtTests(props.data.dbtTestStatus, props.data.dbtTestsTotal, props.data.dbtTestsFailed))
-
-    const testsLabel = computed(() => (tests.value
-        ? t(`dependency.dag.tests.${tests.value.state}`, tests.value, tests.value.total)
-        : undefined))
-
-    const testsTooltip = computed(() => (tests.value
-        ? t(`dependency.dag.tests.tooltip.${tests.value.state}`, tests.value, tests.value.total)
-        : undefined))
 
     /** One class, not several booleans: the states are exclusive and stacking them clashed. */
     const cardState = computed(() => {
@@ -126,7 +114,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .card {
         --ks-dag-status: var(--ks-status-neutral);
 
@@ -138,7 +126,6 @@
         box-sizing: border-box;
         overflow: hidden;
         padding: var(--ks-spacing-2);
-        padding-left: var(--ks-spacing-4);
         border: 1px solid var(--ks-border-subtle);
         border-radius: var(--ks-radius-base);
         background: var(--ks-bg-surface);
@@ -247,30 +234,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
-
-        .tests {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            min-width: 0;
-        }
-
-        .tests-label {
-            min-width: 0;
-            font-size: var(--ks-font-size-xs);
-            color: var(--ks-text-secondary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .tests.warn .tests-label {
-            color: var(--ks-text-warning);
-        }
-
-        .tests.fail .tests-label {
-            color: var(--ks-text-error);
         }
 
         &.fresh .age {

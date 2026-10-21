@@ -6,7 +6,7 @@
             :title="$t('dependency.dag.group_by')"
         >
             <SelectGroup />
-            <span class="label">{{ pinnedLabel ?? $t("dependency.dag.groups", {n: groups.length}) }}</span>
+            <span class="label">{{ pinnedLabel ?? $t("dependency.dag.groups") }}</span>
             <ChevronDown />
         </KsButton>
 
@@ -111,7 +111,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .picker {
         min-width: 16rem;
 

@@ -17,15 +17,13 @@
                 size="small"
                 :data-state="segment.key"
                 :class="{'muted-pill': !segment.filterStates}"
-                :to="segment.filterStates ? {
-                    name: 'executions/list',
-                    query: {
-                        'filters[parentId][EQUALS]': executionId,
-                        'filters[kind][EQUALS]': 'LOOP',
-                        'filters[taskId][EQUALS]': taskId,
-                        'filters[state][IN]': segment.filterStates.join(',')
-                    }
-                } : undefined"
+                :to="segment.filterStates 
+                    ? loopIterationsRoute(
+                        execution, 
+                        taskId, 
+                        {'filters[state][IN]': segment.filterStates.join(',')}
+                    )
+                    : undefined"
             >
                 <span :style="{backgroundColor: segment.color}" class="colored-dot" />
                 {{ segment.count }} {{ segment.label }}
@@ -39,6 +37,7 @@
     import {State} from "@kestra-io/design-system"
     import {RouterLink} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import {loopIterationsRoute, type LoopParentExecution} from "../../utils/executionUtils"
 
     const {t} = useI18n({useScope: "global"})
     const loopStateColors = State.color()
@@ -52,7 +51,7 @@
     }
 
     const props = defineProps<{
-        executionId: string;
+        execution: LoopParentExecution;
         currentTaskRunId: string;
         taskId: string;
         loopTaskState?: string;
@@ -130,12 +129,12 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
   .progress-bar {
     margin-block: .3rem;
     flex: 1;
 
-    :deep(.kel-progress__text) {
+    & :deep(.kel-progress__text) {
       font-size: var(--ks-font-size-sm) !important;
       color: var(--ks-text-secondary);
     }

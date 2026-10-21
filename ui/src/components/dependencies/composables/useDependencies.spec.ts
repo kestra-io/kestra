@@ -6,7 +6,7 @@ import {type Node, type Edge, FLOW, EXECUTION, NAMESPACE} from "../utils/types"
 import {setActivePinia, createPinia} from "pinia"
 import {mount} from "@vue/test-utils"
 import {useNamespacesStore} from "override/stores/namespaces"
-import {AxiosResponse} from "axios"
+import type {AxiosLikeResponse} from "@kestra-io/kestra-sdk"
 import type {EChartsType} from "echarts/core"
 import {useFlowStore} from "../../../stores/flow"
 import {RouteParams} from "vue-router"
@@ -101,6 +101,12 @@ vi.mock("vue-router", () => ({
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
 
+const toastError = vi.fn()
+vi.mock("../../../../src/utils/toast", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../../../../src/utils/toast")>(),
+  useToast: () => ({error: toastError}),
+}))
+
 // Minimal KsGraph ref mock that satisfies the KsGraphRef interface.
 function makeGraphRef() {
   return ref({
@@ -192,7 +198,7 @@ describe("useDependencies composable", () => {
 
       vi.spyOn(nameSpacesStore, "loadDependencies").mockResolvedValue({
         data: mockData,
-      } as AxiosResponse)
+      } as AxiosLikeResponse)
 
       const {isLoading, getElements} = mountComponentWithUseDependencies("NAMESPACE", "test-id", {}, false)
 
@@ -295,6 +301,50 @@ describe("useDependencies composable", () => {
       })
     })
 
+    it("keeps flow nodes outside the asset DAG view on the default symbol so hover colours apply", async () => {
+      const {graphNodes} = mountControlled("A")
+      await nextTick()
+
+      graphNodes.value.forEach(n => expect(n.symbol).toBeUndefined())
+    })
+
+    it("draws flow nodes of the asset DAG view as image symbols", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: makeControlledElements(), count: 4})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          return {composable: useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies, undefined, true)}
+        },
+      })
+      await nextTick()
+
+      const {graphNodes} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+      graphNodes.value.forEach(n => expect(String(n.symbol)).toMatch(/^image:\/\//))
+    })
+
+    it("isolating a multi-valued group keeps an asset that belongs to several of them", async () => {
+      const graphRef = makeGraphRef()
+      const node = (id: string) => ({data: {id, type: "NODE", flow: id, metadata: {subtype: "ASSET"}}})
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [node("shared"), node("only-a"), node("only-b")], count: 3})
+      const consumersOf: Record<string, string[]> = {shared: ["a", "b"], "only-a": ["a"], "only-b": ["b"]}
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const membersOf = ref((n: Node) => consumersOf[n.id])
+          return {composable: useDependencies(graphRef, FLOW, "shared", {}, fetchAssetDependencies, undefined, true, undefined, membersOf)}
+        },
+      })
+      await nextTick()
+      const {isolateGroup, shownNodeIDs} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      isolateGroup("a")
+      expect([...shownNodeIDs.value!].sort()).toEqual(["only-a", "shared"])
+
+      isolateGroup("b")
+      expect([...shownNodeIDs.value!].sort()).toEqual(["only-b", "shared"])
+    })
+
     it("every edge carries emphasis.lineStyle with the hover edge colour", async () => {
       const {graphEdges} = mountControlled("A")
       await nextTick()
@@ -330,6 +380,41 @@ describe("useDependencies composable", () => {
         expect(blur?.itemStyle?.color).toBe(n.itemStyle?.color)
         expect(blur?.itemStyle?.opacity ?? 1).toBe(n.itemStyle?.opacity ?? 1)
       })
+    })
+  })
+
+  describe("edge arrow symbol", () => {
+    function mountWithEdgeKinds() {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "A", type: "NODE", flow: "flow-a", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "B", type: "NODE", flow: "flow-b", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "C", type: "NODE", flow: "flow-c", namespace: "ns", metadata: {subtype: "FLOW"}}},
+          {data: {id: "e1", type: "EDGE", source: "A", target: "B", kind: "UPSTREAM_OF", directed: true}},
+          {data: {id: "e2", type: "EDGE", source: "A", target: "C", kind: "RELATED", directed: false}},
+        ],
+        count: 3,
+      })
+      return mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "A", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+    }
+
+    it("suppresses the arrowhead only for the undirected (RELATED) edge", async () => {
+      const wrapper = mountWithEdgeKinds()
+      await nextTick()
+      const {graphEdges} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      const toDirected = graphEdges.value.find((e) => e.target === "B")
+      const toUndirected = graphEdges.value.find((e) => e.target === "C")
+
+      expect((toDirected?.symbol as string[] | undefined)?.[1]).toBe("arrow")
+      expect((toUndirected?.symbol as string[] | undefined)?.[1]).toBe("none")
     })
   })
 
@@ -448,6 +533,151 @@ describe("useDependencies composable", () => {
 
         const focusCalls = cameraCalls(chartMock.setOption.mock.calls)
         expect(focusCalls).toHaveLength(0)
+    })
+  })
+
+  describe("expandNode", () => {
+    function mountWithExpand() {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "hub", type: "NODE", flow: "hub", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-1", type: "NODE", flow: "peer-1", namespace: "ns", metadata: {subtype: "ASSET"}}},
+        ],
+        count: 2,
+      })
+      const expandAssetNode = vi.fn().mockResolvedValue({
+        data: [
+          {data: {id: "hub", type: "NODE", flow: "hub", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-1", type: "NODE", flow: "peer-1", namespace: "ns", metadata: {subtype: "ASSET"}}},
+          {data: {id: "peer-2", type: "NODE", flow: "peer-2", namespace: "ns", metadata: {subtype: "ASSET"}}},
+        ],
+        count: 3,
+      })
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(
+            graphRef, FLOW, "hub", {}, fetchAssetDependencies, undefined, true, expandAssetNode,
+          )
+          return {composable}
+        },
+      })
+      return {wrapper, expandAssetNode, ...(wrapper.vm.composable as ReturnType<typeof useDependencies>)}
+    }
+
+    it("merges a hub's expanded relations without duplicating nodes already on screen", async () => {
+      const {getElements, expandNode, expandAssetNode} = mountWithExpand()
+      await nextTick()
+      await nextTick()
+
+      expect(getElements()).toHaveLength(2)
+
+      await expandNode("hub")
+      expect(getElements()).toHaveLength(3)
+      expect(getElements().filter((el) => el.data.id === "peer-2")).toHaveLength(1)
+
+      // A second expand (e.g. clicking "Load more" again) must not duplicate what's already shown.
+      await expandNode("hub")
+      expect(getElements()).toHaveLength(3)
+      expect(expandAssetNode).toHaveBeenCalledTimes(2)
+    })
+
+    function mountWithHubs(expandResult: unknown) {
+      const graphRef = makeGraphRef()
+      const hub = (id: string, metadata = {}) => ({data: {id, type: "NODE", flow: id, namespace: "ns", metadata: {subtype: "ASSET", collapsed: true, expandable: true, ...metadata}}})
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [hub("hub-a"), hub("hub-b")], count: 2})
+      const expandAssetNode = vi.fn().mockImplementation(() => expandResult instanceof Error ? Promise.reject(expandResult) : Promise.resolve(expandResult))
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "hub-a", {}, fetchAssetDependencies, undefined, true, expandAssetNode)
+          return {composable}
+        },
+      })
+      return {...(wrapper.vm.composable as ReturnType<typeof useDependencies>)}
+    }
+
+    const nodeMeta = (getElements: () => {data: {id: string; metadata?: unknown}}[], id: string) =>
+      getElements().find((el) => el.data.id === id)?.data.metadata
+
+    it("refreshes only the expanded hub and leaves other collapsed hubs untouched", async () => {
+      const plain = (id: string) => ({data: {id, type: "NODE", flow: id, namespace: "ns", metadata: {subtype: "ASSET"}}})
+      const {getElements, expandNode} = mountWithHubs({
+        data: [plain("hub-a"), plain("hub-b"), plain("peer")],
+        count: 3,
+      })
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(nodeMeta(getElements, "hub-a")).not.toHaveProperty("collapsed")
+      expect(nodeMeta(getElements, "hub-b")).toMatchObject({collapsed: true, expandable: true})
+      expect(getElements().map((el) => el.data.id)).toContain("peer")
+    })
+
+    it("updates the expanded hub's own metadata even when no new peer is added", async () => {
+      const {getElements, expandNode} = mountWithHubs({
+        data: [{data: {id: "hub-a", type: "NODE", flow: "hub-a", namespace: "ns", metadata: {subtype: "ASSET", collapsed: true, expandable: false, exhausted: true}}}],
+        count: 1,
+      })
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(nodeMeta(getElements, "hub-a")).toMatchObject({expandable: false, exhausted: true})
+      expect(getElements()).toHaveLength(2)
+    })
+
+    it("shows an error toast and keeps the graph when the expand request fails", async () => {
+      toastError.mockClear()
+      const {getElements, expandNode, expandingNodeID} = mountWithHubs(new Error("boom"))
+      await nextTick()
+      await nextTick()
+
+      await expandNode("hub-a")
+
+      expect(toastError).toHaveBeenCalledTimes(1)
+      expect(getElements()).toHaveLength(2)
+      expect(expandingNodeID.value).toBeUndefined()
+    })
+
+    it("is a no-op when no expandAssetNode was supplied", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [], count: 0})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "hub", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+      await nextTick()
+      const {expandNode, getElements} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      await expandNode("hub")
+
+      expect(getElements()).toHaveLength(0)
+    })
+  })
+
+  describe("graphTruncated", () => {
+    it("reflects the truncated flag from fetchAssetDependencies", async () => {
+      const graphRef = makeGraphRef()
+      const fetchAssetDependencies = vi.fn().mockResolvedValue({data: [], count: 0, truncated: true})
+      const wrapper = mount({
+        template: "<div></div>",
+        setup() {
+          const composable = useDependencies(graphRef, FLOW, "x", {}, fetchAssetDependencies)
+          return {composable}
+        },
+      })
+      await nextTick()
+      const {graphTruncated} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+
+      expect(graphTruncated.value).toBe(true)
     })
   })
 

@@ -136,4 +136,34 @@
     .count {
         flex-shrink: 0;
     }
+
+    @media (max-width: 767px) {
+        nav.route-tabs-sidebar {
+            width: 100%;
+            height: auto;
+            padding: var(--ks-spacing-2) 0;
+            border-right: 0;
+            border-bottom: 1px solid var(--ks-border-default);
+        }
+
+        .tabs-list {
+            flex-direction: row;
+            align-items: center;
+            gap: var(--ks-spacing-1);
+            padding: 0 var(--ks-spacing-3);
+            overflow-x: auto;
+        }
+
+        .tabs-list > * {
+            flex: none;
+        }
+
+        .tab-header {
+            display: none;
+        }
+
+        .indented {
+            margin-left: 0;
+        }
+    }
 </style>

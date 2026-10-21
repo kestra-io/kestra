@@ -3,8 +3,8 @@
 // WHY THIS EXISTS
 // ---------------
 // There is no backend behind Storybook, yet almost every component tree issues HTTP calls. Before
-// this module the only stub was `axios.defaults.adapter` (see preview.ts), which covers just the 4
-// files in src/ that still import axios. Everything else is fetch-based:
+// this module the only stub was an axios adapter, which covered just the few files in src/ that
+// imported axios. Everything is fetch-based now:
 //
 //   * the generated SDK (packages/kestra-sdk/src/openapi/*) resolves
 //     `options.fetch ?? _config.fetch ?? globalThis.fetch` per request (openapi/client/client.gen.ts),
@@ -45,6 +45,7 @@ type RoutePattern = {key: string; segments: string[]}
 type MockedFetch = typeof fetch & {__kestraApiMock?: boolean}
 
 const API_MARKER = "/api/v1"
+const PUBLIC_API_ORIGIN = "https://api.kestra.io"
 
 /**
  * Payloads for the API routes stories actually reach, keyed by `METHOD <path from /api/v1 onward>`.
@@ -273,7 +274,11 @@ function installFetchMock(): void {
 
         // Anything that is not an API call — Vite's module graph, monaco assets, the storybook and
         // vitest channels — goes to the untouched native fetch.
-        if (path === undefined) return native(input, init)
+        if (path === undefined) {
+            // kestra.io's public API (feeds, docs, plugin catalog): no story depends on it, so it answers empty.
+            if (rawUrl.startsWith(PUBLIC_API_ORIGIN)) return Promise.resolve(jsonResponse({status: 200, data: []}))
+            return native(input, init)
+        }
 
         const signal = init?.signal ?? (isRequest ? (input as Request).signal : undefined)
         if (signal?.aborted) {

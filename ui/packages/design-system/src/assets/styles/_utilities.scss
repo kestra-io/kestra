@@ -78,10 +78,6 @@
     justify-content: center !important;
 }
 
-.justify-content-between {
-    justify-content: space-between !important;
-}
-
 .align-items-center {
     align-items: center !important;
 }
@@ -116,11 +112,6 @@
     margin-left: 1rem !important;
 }
 
-.my-3 {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
-}
-
 .my-4 {
     margin-top: 1.5rem !important;
     margin-bottom: 1.5rem !important;
@@ -136,10 +127,6 @@
 
 .mt-3 {
     margin-top: 1rem !important;
-}
-
-.mt-4 {
-    margin-top: 1.5rem !important;
 }
 
 .me-0 {
@@ -253,10 +240,6 @@
     font-size: 0.875rem !important;
 }
 
-.fw-light {
-    font-weight: 300 !important;
-}
-
 .fw-normal {
     font-weight: 400 !important;
 }
@@ -280,10 +263,6 @@
 .text-break {
     word-wrap: break-word !important;
     word-break: break-word !important;
-}
-
-.text-secondary {
-    color: inherit !important;
 }
 
 .text-success {

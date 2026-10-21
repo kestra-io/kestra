@@ -204,7 +204,7 @@
         })
     }, {immediate: true})
 </script>
-<style scoped lang="scss">
+<style scoped>
 div.line {
     position: relative;
     display: flex;
@@ -249,14 +249,14 @@ div.line {
         text-transform: uppercase;
         line-height: 1.6;
         user-select: none;
+    }
 
-        &--clickable {
-            cursor: pointer;
-            border-radius: var(--ks-radius-xs);
+    .log-level--clickable {
+        cursor: pointer;
+        border-radius: var(--ks-radius-xs);
 
-            &:hover {
-                background: var(--ks-bg-hover);
-            }
+        &:hover {
+            background: var(--ks-bg-hover);
         }
     }
 
@@ -337,12 +337,12 @@ div.line {
         word-break: break-word;
     }
 
-    :deep(.log-message p) {
+    & :deep(.log-message p) {
         display: inline;
         margin-bottom: 0;
     }
 
-    :deep(.log-highlight) {
+    & :deep(.log-highlight) {
         background: var(--ks-bg-tag-active);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -354,7 +354,7 @@ div.line {
         margin-top: 2px;
     }
 
-    :deep(.clipboard) {
+    & :deep(.clipboard) {
         position: static;
         flex: none;
         opacity: 0;

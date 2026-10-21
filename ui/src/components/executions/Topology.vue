@@ -268,15 +268,15 @@
         }
     }
 </script>
-<style scoped lang="scss">
+<style scoped>
     .kel-card {
-        // A fixed height left most of a tall viewport unused:
-        // https://github.com/kestra-io/kestra/issues/19685.
+        /* A fixed height left most of a tall viewport unused: */
+        /* https://github.com/kestra-io/kestra/issues/19685. */
         height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             height: 100%;
             display: flex;
             padding: 0;

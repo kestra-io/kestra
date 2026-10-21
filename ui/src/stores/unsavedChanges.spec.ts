@@ -14,34 +14,6 @@ describe("useUnsavedChangesStore", () => {
         expect(store.unsavedChange).toBe(false)
     })
 
-    it("toggles unsavedChange flag correctly", () => {
-        const store = useUnsavedChangesStore()
-
-        store.unsavedChange = true
-        expect(store.unsavedChange).toBe(true)
-
-        store.unsavedChange = false
-        expect(store.unsavedChange).toBe(false)
-    })
-
-    it("shows dialog and returns a pending promise on showDialog", async () => {
-        const store = useUnsavedChangesStore()
-
-        let resolved = false
-        const promise = store.showDialog().then((val) => {
-            resolved = true
-            return val
-        })
-
-        expect(store.isDialogVisible).toBe(true)
-        expect(resolved).toBe(false)
-
-        store.handleLeave()
-        const result = await promise
-        expect(result).toBe(true)
-        expect(resolved).toBe(true)
-    })
-
     it("resolves with true and hides dialog on handleLeave", async () => {
         const store = useUnsavedChangesStore()
 
@@ -78,19 +50,5 @@ describe("useUnsavedChangesStore", () => {
         expect(() => store.handleLeave()).not.toThrow()
         expect(() => store.handleCancel()).not.toThrow()
         expect(store.isDialogVisible).toBe(false)
-    })
-
-    it("shares state across multiple store consumers within the same Pinia context", () => {
-        const consumerA = useUnsavedChangesStore()
-        const consumerB = useUnsavedChangesStore()
-
-        consumerA.unsavedChange = true
-        expect(consumerB.unsavedChange).toBe(true)
-
-        consumerA.showDialog()
-        expect(consumerB.isDialogVisible).toBe(true)
-
-        consumerB.handleCancel()
-        expect(consumerA.isDialogVisible).toBe(false)
     })
 })

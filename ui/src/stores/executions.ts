@@ -573,10 +573,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean }) => {
-        return LogsAPI.listLogsFromExecution(
-            {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
-        ).then(data => {
+    // `page` and `size` turn on the endpoint's optional pagination; without them every matching log is returned.
+    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; page?: number; size?: number }) => {
+        return LogsAPI.listLogsFromExecution({
+            executionId: options.executionId,
+            filters: routeQueryToQueryFilters(options.params ?? {}),
+            ...(options.page !== undefined ? {page: options.page} : {}),
+            ...(options.size !== undefined ? {size: options.size} : {}),
+        }).then(data => {
             if (options.store === false) {
                 return data
             }

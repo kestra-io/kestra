@@ -20,26 +20,116 @@ const histories = [
     {state: "SUCCESS", date: "2026-10-08T00:00:01Z"},
 ]
 
+async function mountGantt(flowTasks: Array<Record<string, unknown>>, taskRunList: Array<Record<string, unknown>>) {
+    const pinia = createPinia()
+    const store = useExecutionsStore(pinia)
+    store.flow = {id: "flow", namespace: "company.team", tasks: flowTasks} as FlowForExecution
+    store.execution = {
+        id: "execution",
+        namespace: "company.team",
+        flowId: "flow",
+        state: {current: "SUCCESS", histories},
+        taskRunList,
+    } as Execution
+    const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [{path: "/", component: {template: "<div />"}}],
+    })
+    await router.push("/")
+    const wrapper = i18nMount(Gantt, {
+        global: {
+            plugins: [pinia, router],
+            stubs: {
+                KSFilter: true,
+                TaskRunActions: true,
+                TaskIcon: true,
+                Duration: true,
+                DynamicScroller: {
+                    props: ["items"],
+                    template: "<div><slot v-for='(item, index) in items' :item='item' :index='index' :active='true' /></div>",
+                },
+                DynamicScrollerItem: {template: "<div><slot /></div>"},
+            },
+        },
+    })
+    await flushPromises()
+    return {wrapper, store}
+}
+
+const logTask = (id: string) => ({id, type: "io.kestra.plugin.core.log.Log"})
+
+describe("Gantt layout", () => {
+    it("shouldShowOffsetAndScaleForEachTaskRun", async () => {
+        const {wrapper} = await mountGantt([logTask("first")], [
+            {
+                id: "tr-1",
+                taskId: "first",
+                state: {
+                    current: "SKIPPED",
+                    histories: [
+                        {state: "CREATED", date: "2026-10-08T00:00:00.500Z"},
+                        {state: "SKIPPED", date: "2026-10-08T00:00:00.800Z"},
+                    ],
+                },
+            },
+        ])
+        try {
+            expect(wrapper.get("[data-test='gantt-task-offset']").text()).toBe("+0.50s")
+            expect(wrapper.get("[data-test='gantt-scale']").text()).toBe("0s0.80s")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+
+    it("shouldDrawBarsOnOneScaleAndLeaveWaitBeforeRunningAsGap", async () => {
+        const {wrapper} = await mountGantt([logTask("first"), logTask("second")], [
+            {
+                id: "tr-1",
+                taskId: "first",
+                state: {
+                    current: "SUCCESS",
+                    histories: [
+                        {state: "CREATED", date: "2026-10-08T00:00:00Z"},
+                        {state: "RUNNING", date: "2026-10-08T00:00:00Z"},
+                        {state: "SUCCESS", date: "2026-10-08T00:00:01Z"},
+                    ],
+                },
+            },
+            {
+                id: "tr-2",
+                taskId: "second",
+                state: {
+                    current: "SUCCESS",
+                    histories: [
+                        {state: "CREATED", date: "2026-10-08T00:00:01Z"},
+                        {state: "RUNNING", date: "2026-10-08T00:00:02Z"},
+                        {state: "SUCCESS", date: "2026-10-08T00:00:04Z"},
+                    ],
+                },
+            },
+        ])
+        try {
+            const bars = wrapper.findAll<HTMLElement>("[data-test='gantt-task-bar']")
+            expect(bars).toHaveLength(2)
+            expect([bars[0].element.style.left, bars[0].element.style.width]).toEqual(["0%", "25%"])
+            expect([bars[1].element.style.left, bars[1].element.style.width]).toEqual(["50%", "50%"])
+            expect(wrapper.get("[data-test='gantt-scale']").text()).toBe("0s4s")
+        } finally {
+            wrapper.unmount()
+        }
+    })
+})
+
 describe("Gantt subflow logs", () => {
     afterAll(() => localStorage.clear())
 
     it("shouldSelectEachChildExecutionWithoutParentTaskFiltersWhenExpandingLoopIterations", async () => {
-        const pinia = createPinia()
-        const store = useExecutionsStore(pinia)
-        store.flow = {
-            id: "parent",
-            namespace: "company.team",
-            tasks: [
+        const {wrapper, store} = await mountGantt(
+            [
                 {id: "call_child", type: "io.kestra.plugin.core.flow.Subflow"},
                 {id: "summary", type: "io.kestra.plugin.core.log.Log"},
             ],
-        } as FlowForExecution
-        store.execution = {
-            id: "parent-execution",
-            namespace: "company.team",
-            flowId: "parent",
-            state: {current: "SUCCESS", histories},
-            taskRunList: [
+            [
                 ...["a", "b"].map(value => ({
                     id: `parent-task-${value}`,
                     taskId: "call_child",
@@ -49,29 +139,7 @@ describe("Gantt subflow logs", () => {
                 })),
                 {id: "summary-task", taskId: "summary", state: {current: "SUCCESS", histories}},
             ],
-        } as Execution
-        const router = createRouter({
-            history: createMemoryHistory(),
-            routes: [{path: "/", component: {template: "<div />"}}],
-        })
-        await router.push("/")
-        const wrapper = i18nMount(Gantt, {
-            global: {
-                plugins: [pinia, router],
-                stubs: {
-                    KSFilter: true,
-                    TaskRunActions: true,
-                    TaskIcon: true,
-                    Duration: true,
-                    DynamicScroller: {
-                        props: ["items"],
-                        template: "<div><slot v-for='(item, index) in items' :item='item' :index='index' :active='true' /></div>",
-                    },
-                    DynamicScrollerItem: {template: "<div><slot /></div>"},
-                },
-            },
-        })
-        await flushPromises()
+        )
         try {
             for (const label of wrapper.findAll("[data-test='gantt-task-label']")) {
                 await label.trigger("click")

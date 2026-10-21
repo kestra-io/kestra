@@ -236,7 +236,7 @@
     const pathOf = (id: string): string => id.slice(prefixOf(id).length, id.length - leafOf(id).length)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .name {
     display: flex;
     min-width: 0;
@@ -249,7 +249,7 @@
     outline: none;
     border-radius: 0;
 
-    :deep(.kel-table__empty-text) {
+    & :deep(.kel-table__empty-text) {
         width: 100%;
         font-size: var(--ks-font-size-sm);
     }
@@ -357,7 +357,7 @@ section#row {
             flex: 0 0 auto;
         }
 
-        :deep(a:hover .kel-icon) {
+        & :deep(a:hover .kel-icon) {
             color: var(--ks-text-link);
         }
     }

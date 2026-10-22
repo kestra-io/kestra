@@ -1,14 +1,10 @@
 import {describe, test, expect} from "vitest"
-import {mount} from "@vue/test-utils"
-import KestraDesignSystem from "../../../../../index"
 import FilterText from "./FilterText.vue"
 import KsInput from "../../../../Form/KsInput.vue"
+import {i18nMount} from "../../../../../../tests/units/i18nMount"
 
-const globalConfig = {plugins: [KestraDesignSystem]}
-
-const mountFilterText = (label: string, textValue: string) => mount(FilterText, {
+const mountFilterText = (label: string, textValue: string) => i18nMount(FilterText, {
     props: {label, textValue},
-    global: globalConfig,
 })
 
 describe("FilterText", () => {

@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
 import {ref, nextTick} from "vue"
 import Outputs from "./Outputs.vue"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 
 const hasOutputsRef = ref(true)
 const mockLoadTaskRunOutputs = vi.fn()
@@ -48,7 +48,7 @@ const stubs = {
 }
 
 function mountOutputs(propsOverrides = {}) {
-    return mount(Outputs, {
+    return i18nMount(Outputs, {
         props: {
             taskRun: {id: "task-run-1", state: {current: "SUCCESS"}},
             executionId: "exec-1",
@@ -57,9 +57,6 @@ function mountOutputs(propsOverrides = {}) {
         },
         global: {
             stubs,
-            mocks: {
-                $t: (key: string) => key,
-            },
         },
     })
 }
@@ -108,17 +105,14 @@ describe("Outputs.vue", () => {
         await nextTick()
         expect(mockLoadTaskRunOutputs).toHaveBeenCalledTimes(1)
 
-        // Close
         await wrapper.find("[data-test=outputs-trigger]").trigger("click")
         await nextTick()
         expect(wrapper.find("[data-test=outputs-drawer]").exists()).toBe(false)
 
-        // Reopen
         await wrapper.find("[data-test=outputs-trigger]").trigger("click")
         await nextTick()
         expect(wrapper.find("[data-test=outputs-drawer]").exists()).toBe(true)
 
-        // Should not have fetched again
         expect(mockLoadTaskRunOutputs).toHaveBeenCalledTimes(1)
     })
 

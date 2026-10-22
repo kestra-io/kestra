@@ -115,6 +115,7 @@ const routes: KestraRouteRecord[] = [
     {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue"), ossOnly: true},
     {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue"), ossOnly: true},
     {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue"), ossOnly: true},
+    {name: "credentials/list", path: "/:tenant?/credentials", component: () => import("../components/demo/Credentials.vue"), ossOnly: true},
     {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue"), ossOnly: true},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue"), ossOnly: true},
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue"), ossOnly: true},

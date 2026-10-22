@@ -723,11 +723,14 @@ public class ExecutionService {
      * Resumes an Approval task run with a decision; unlike {@link #resume}, the caller targets a specific task run since an execution can have several Approvals paused at once.
      */
     public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs) throws Exception {
-        return this.decide(execution, flow, taskRunId, decision, inputs, null);
+        return this.decide(execution, flow, taskRunId, decision, inputs, null, true);
     }
 
-    /** {@code resumed} supplies the reviewer identity; its target state is ignored since a decided Approval always resumes RUNNING. */
-    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed) throws Exception {
+    /**
+     * {@code resumed} supplies the reviewer identity; its target state is ignored since a decided Approval always resumes RUNNING.
+     * {@code notifyLoopParent} is false for a caller that notifies the Loop parent itself, as the expired-delay path does for a Pause.
+     */
+    public Execution decide(final Execution execution, FlowInterface flow, String taskRunId, PausableTask.Decision decision, @Nullable Map<String, Object> inputs, @Nullable PausableTask.Resumed resumed, boolean notifyLoopParent) throws Exception {
         TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId);
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
         if (!(flowWithSource.findTaskByTaskId(taskRun.getTaskId()) instanceof Approval approval)) {
@@ -749,6 +752,9 @@ public class ExecutionService {
         Map<String, Object> merged = MapUtils.merge(priorOutputs, taskOutputService.getOutputs(decidedTaskRun));
         taskOutputService.saveOutputs(decidedTaskRun, merged);
 
+        if (notifyLoopParent && decidedExecution.getKind() == ExecutionKind.LOOP) {
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(decidedExecution.getLoopRun(), decidedExecution.getId(), decidedExecution.getState().getCurrent(), null, null));
+        }
         return decidedExecution;
     }
 

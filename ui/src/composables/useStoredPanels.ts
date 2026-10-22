@@ -50,7 +50,6 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
         if(!v) return []
         const rawPanels: PreSerializedPanel[] = JSON.parse(v)
         const convertedPanels = rawPanels
-            .filter((p) => p.tabs.length)
             .map((p):Panel => {
                 const tabsConverted = deserializeTabTags(p.tabs)
                 const activeTab = tabsConverted.find((t) => t.uid === p.activeTab) ?? tabsConverted[0]
@@ -60,6 +59,7 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
                     size: p.size,
                 }
             })
+            .filter((p) => p.tabs.length)
 
         return convertedPanels
     }

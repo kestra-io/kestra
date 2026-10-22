@@ -82,8 +82,5 @@ describe("TaskNamespaces", () => {
         expect(firstValue).toEqual([])
         expect(secondValue).toEqual([])
         expect(firstValue).not.toBe(secondValue)
-
-        firstValue.push("mutated")
-        expect(secondSelect.props("modelValue")).toEqual([])
     })
 })

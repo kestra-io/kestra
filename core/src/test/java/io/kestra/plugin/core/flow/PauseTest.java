@@ -173,6 +173,18 @@ public class PauseTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/pause-on-pause-nested.yaml")
+    void shouldExecuteOnPauseTaskOnceWhenNested(Execution execution) throws Exception {
+        suite.shouldExecuteOnPauseTaskOnceWhenNested(execution);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/pause-on-pause-manual-resume.yaml" })
+    void shouldExecuteOnPauseTaskOnceWhenResumed() throws Exception {
+        suite.shouldExecuteOnPauseTaskOnceWhenResumed(runnerUtils);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/pause-errors-finally-after-execution.yaml")
     void shouldExecuteErrorsFinallyAndAfterExecution(Execution execution) throws Exception {
         suite.shouldExecuteErrorsFinallyAndAfterExecution(execution);
@@ -472,6 +484,28 @@ public class PauseTest {
             assertThat(execution.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
             assertThat(execution.findTaskRunsByTaskId("on_pause")).isEmpty();
             assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        }
+
+        public void shouldExecuteOnPauseTaskOnceWhenNested(Execution execution) {
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(execution.findTaskRunsByTaskId("on_pause")).hasSize(1);
+            assertThat(execution.findTaskRunsByTaskId("on_pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        }
+
+        public void shouldExecuteOnPauseTaskOnceWhenResumed(TestRunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-on-pause-manual-resume", null, null, Duration.ofSeconds(30));
+            String executionId = execution.getId();
+            Flow flow = flowRepository.findByExecution(execution);
+
+            Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, Pause.Resumed.now());
+            execution = runnerUtils.emitAndAwaitExecution(
+                e -> e.getId().equals(executionId) && e.getState().isTerminated(),
+                resumed,
+                Duration.ofSeconds(30)
+            );
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(execution.findTaskRunsByTaskId("on_pause")).hasSize(1);
         }
 
         public void shouldExecuteErrorsFinallyAndAfterExecution(Execution execution) throws Exception {

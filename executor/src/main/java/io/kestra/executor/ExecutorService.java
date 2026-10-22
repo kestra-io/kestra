@@ -735,7 +735,7 @@ public class ExecutorService {
                                 }
                             }
                         }
-                        case Pause pause when pause.getOnPause() != null -> {
+                        case Pause pause when pause.getOnPause() != null && taskRun.getState().getCurrent() == State.Type.CREATED -> {
                             // if a Pause task defines an onPause, we must create a TaskRun for it; handleWorkerTasks will dispatch it.
                             // A Pause whose runIf is false is skipped when its worker task is handled, so it has no onPause.
                             RunContext runContext = runContextFactory.of(executor.getFlow(), pause, executor.getExecution(), taskRun);
@@ -840,12 +840,12 @@ public class ExecutorService {
 
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskDelay");
 
-        if (list.isEmpty()) {
-            return executor;
-        }
-
         if (!onPauseTaskRuns.isEmpty()) {
             executor.withTaskRun(onPauseTaskRuns, "handlePauses");
+        }
+
+        if (list.isEmpty()) {
+            return executor;
         }
 
         executor = this.handlePausedDelay(executor, list);

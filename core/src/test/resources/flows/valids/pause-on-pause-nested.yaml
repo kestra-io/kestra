@@ -1,0 +1,20 @@
+id: pause-on-pause-nested
+namespace: io.kestra.tests
+
+tasks:
+  - id: sequential
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: pause
+        type: io.kestra.plugin.core.flow.Pause
+        pauseDuration: PT0.5S
+        onPause:
+          id: on_pause
+          type: io.kestra.plugin.core.log.Log
+          message: on pause
+  - id: after
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: log
+        type: io.kestra.plugin.core.log.Log
+        message: after the pause

@@ -90,6 +90,5 @@ describe("flow store", () => {
 
         const title = useCoreStore().message?.title
         expect(title).toBe("topology-graph.expand_subflow_error")
-        expect(title).not.toBe("Couldn't expand subflow")
     })
 })

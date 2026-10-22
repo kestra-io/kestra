@@ -81,6 +81,12 @@ export default defineConfig([
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],
             "vue/component-name-in-template-casing": ["error", "PascalCase", {"registeredComponentsOnly": true}],
             "vue/attribute-hyphenation": ["error", "never"],
+            // vue-i18n defaults <i18n-t> to the parent scope and warns on every render when it falls
+            // back to the global one, the only scope Kestra's messages live in.
+            "vue/no-restricted-syntax": ["error", {
+                selector: "VElement[rawName=/^(i18n-t|I18nT)$/]:not(:has(VAttribute[key.name='scope']))",
+                message: "Set scope=\"global\" on <i18n-t>.",
+            }],
         },
     },
     {

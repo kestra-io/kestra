@@ -14,10 +14,6 @@
     display: flex !important;
 }
 
-.d-inline-flex {
-    display: inline-flex !important;
-}
-
 .d-none {
     display: none !important;
 }

@@ -24,11 +24,11 @@
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
     import MetricsTable from "./MetricsTable.vue"
     import {Execution} from "../../stores/executions"
-    import type {TaskRun} from "@kestra-io/kestra-sdk"
+    import type {ExecutionTaskRun} from "./executionTaskRun"
 
     const props = defineProps<{
         embed?: boolean;
-        taskRun: TaskRun;
+        taskRun: ExecutionTaskRun;
         execution: Execution;
     }>()
 

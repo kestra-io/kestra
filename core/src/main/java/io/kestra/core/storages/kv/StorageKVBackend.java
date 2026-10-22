@@ -96,7 +96,12 @@ public class StorageKVBackend implements KVBackend {
             return Optional.empty();
         }
 
-        return Optional.of(KVEntry.from(maybeMetadata.get()));
+        PersistedKvMetadata metadata = maybeMetadata.get();
+        if (Optional.ofNullable(metadata.getExpirationDate()).map(Instant.now()::isAfter).orElse(false)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(KVEntry.from(metadata));
     }
 
     @Override

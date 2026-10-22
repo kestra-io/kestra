@@ -311,6 +311,23 @@ class InternalKVStoreTest {
         assertThat(result.get().value()).isEqualTo(42);
     }
 
+    @Test
+    void setWithOverwriteFalseAfterTtlExpired() throws Exception {
+        InternalKVStore kv = kv();
+        String key = "cooldown";
+        
+        // 1. First set key with short TTL and overwrite: false
+        kv.put(key, new KVValueAndMetadata(new KVMetadata("lock", Duration.ofMillis(100)), "locked"));
+        
+        // 2. Wait for TTL to pass (e.g. 200ms)
+        Thread.sleep(200);
+
+        // 3. StorageKVBackend.get() should now treat the expired entry as empty, allowing new writes with overwrite: false to succeed without throwing "Key already exists"
+        Assertions.assertDoesNotThrow(() -> 
+            kv.put(key, new KVValueAndMetadata(new KVMetadata("lock", Duration.ofMinutes(5)), "locked"))
+        );
+    }
+
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
         return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface, kvMetadataStateStore);

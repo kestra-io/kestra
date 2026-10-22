@@ -19,7 +19,7 @@ class StorageNamespaceFileBackendTest {
     private static final String NAMESPACE = "io.kestra.tests";
 
     @Test
-    void shouldAddressEveryOperationWithTheNamespaceFileUri() throws IOException {
+    void shouldUseNamespaceFileUriWhenAccessingStorage() throws IOException {
         // A URI built through java.nio.file.Path carries the drive letter on Windows, so the write and read paths diverged.
         StorageInterface storage = mock(StorageInterface.class);
         FileAttributes attributes = mock(FileAttributes.class);

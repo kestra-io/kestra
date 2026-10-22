@@ -7,6 +7,7 @@ export interface ExecutionArtifact {
     key: string
     taskId: string
     taskType: string
+    cls: string
     title: string
     description?: string
 }
@@ -15,7 +16,7 @@ export const EXECUTION_ARTIFACTS_KEY: InjectionKey<ReturnType<typeof useExecutio
 
 export function useExecutionArtifacts() {
     const executionsStore = useExecutionsStore()
-    const {RemoteComponent, taskAdditionalInfoRemote, resolveRemoteComponent, subtitleResolvers} = useFederatedModule("execution-artifact")
+    const {RemoteComponent, taskAdditionalInfoRemote, manifestReady, hasResolvedComponent, hasFailedComponent, resolveRemoteComponent, subtitleResolvers} = useFederatedModule("execution-artifact")
 
     const tasks = computed(() => getAllTasks(executionsStore.flow?.tasks))
 
@@ -30,10 +31,11 @@ export function useExecutionArtifacts() {
                 key: `${task.id}:${key}`,
                 taskId: task.id,
                 taskType: key,
+                cls: task.type,
                 title: info?.title ?? key.slice(task.type.length + 1),
                 description: info?.description,
             })),
     ))
 
-    return {RemoteComponent, artifacts, tasks, subtitleResolvers}
+    return {RemoteComponent, artifacts, tasks, subtitleResolvers, manifestReady, hasResolvedComponent, hasFailedComponent}
 }

@@ -54,6 +54,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     const taskAdditionalInfoRemote = ref<Record<string, ManifestsRegistry[T]>>({})
 
     const manifestReady = ref(false)
+    const failedModules = shallowReactive<Record<string, true>>({})
 
     async function resolveRemoteComponent(taskTypes: {cls: string, version: string | undefined}[]) {
         
@@ -131,11 +132,13 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
                         module = await loadRemote<{default: Component, getSubtitle?: (ctx: never) => unknown}>(remoteId)
                     } catch(err) {
                         console.error(`[FederatedModule] loadRemote FAILED for "${remoteId}":`, err)
+                        failedModules[key] = true
                         continue
                     }
 
                     if(!module){
                         console.error(`[FederatedModule] loadRemote returned null for "${remoteId}"`)
+                        failedModules[key] = true
                         continue
                     }
 
@@ -166,6 +169,10 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         return !!RemoteComponents[taskType]
     }
 
+    function hasFailedComponent(taskType: string): boolean {
+        return !!failedModules[taskType]
+    }
+
     // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
     function componentTypeFor(task?: {type?: string; taskRunner?: {type?: string}}): string {
         const runnerType = task?.taskRunner?.type
@@ -178,6 +185,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         manifestReady,
         resolveRemoteComponent,
         hasResolvedComponent,
+        hasFailedComponent,
         componentTypeFor,
         subtitleResolvers,
     }

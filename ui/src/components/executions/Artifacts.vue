@@ -1,5 +1,6 @@
 <template>
-    <KsEmpty v-if="!artifacts.length" data-test="execution-artifacts-empty">
+    <KsSkeleton v-if="!manifestReady" animated :rows="4" data-test="execution-artifacts-loading" />
+    <KsEmpty v-else-if="!artifacts.length" data-test="execution-artifacts-empty">
         <template #description>
             {{ $t("execution_artifacts.empty") }}
         </template>
@@ -7,14 +8,14 @@
     <div v-else class="artifacts-layout">
         <nav class="artifacts-list" :aria-label="$t('execution_artifacts.title')">
             <KsText size="small" class="artifacts-count muted">
-                {{ $t("execution_artifacts.count", {artifacts: $t("execution_artifacts.artifacts", {count: artifacts.length}, artifacts.length), tasks: $t("execution_artifacts.tasks", {count: groups.length}, groups.length)}) }}
+                {{ countLabel }}
             </KsText>
             <section v-for="group in groups" :key="group.taskId" class="artifacts-group">
                 <div class="artifacts-group-header">
-                    <span class="artifacts-task-icon"><TaskIcon :cls="group.taskType" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
+                    <span class="artifacts-task-icon"><TaskIcon :cls="group.cls" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
                     <KsText tag="strong">{{ group.taskId }}</KsText>
-                    <KsText size="small" class="muted">{{ afterLastDot(group.taskType) }}</KsText>
-                    <KsText v-if="durations[group.taskId]" size="small" class="artifacts-duration">{{ durations[group.taskId] }}</KsText>
+                    <KsText size="small" class="muted">{{ afterLastDot(group.cls) }}</KsText>
+                    <KsText v-if="durations[group.taskId]" size="small" class="muted artifacts-duration">{{ durations[group.taskId] }}</KsText>
                 </div>
                 <button
                     v-for="artifact in group.artifacts"
@@ -34,108 +35,138 @@
                 </button>
             </section>
         </nav>
-        <section v-if="selected" ref="viewer" class="artifacts-viewer" data-test="execution-artifact-viewer">
-            <header class="artifacts-viewer-header">
-                <span class="artifacts-task-icon artifacts-task-icon-large"><TaskIcon :cls="selected.taskType.split('/')[0]" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
-                <div>
-                    <KsText tag="strong">{{ selected.title }}</KsText>
-                    <KsText size="small" class="muted">{{ selected.taskId }}</KsText>
+        <div ref="inlineViewerTarget" class="artifacts-viewer-slot" />
+        <KsDialog
+            v-model="fullscreenOpen"
+            :title="$t('execution_artifacts.title')"
+            data-test="execution-artifact-fullscreen-dialog"
+            fill
+            fullscreen
+        >
+            <div ref="fullscreenViewerTarget" class="artifacts-viewer-slot" />
+        </KsDialog>
+        <Teleport v-if="viewerTarget && selected" :to="viewerTarget">
+            <section class="artifacts-viewer" data-test="execution-artifact-viewer">
+                <header class="artifacts-viewer-header">
+                    <span class="artifacts-task-icon artifacts-task-icon-large"><TaskIcon :cls="selected.cls" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
+                    <div>
+                        <KsText tag="strong">{{ selected.title }}</KsText>
+                        <KsText size="small" class="muted">{{ selected.taskId }}</KsText>
+                    </div>
+                    <KsSegmented
+                        v-if="siblings.length > 1"
+                        :modelValue="selected.key"
+                        class="artifacts-switch"
+                        variant="neutral"
+                        @update:modelValue="selectedKey = String($event)"
+                        :options="siblingOptions"
+                    />
+                    <KsIconButton
+                        :tooltip="fullscreenLabel"
+                        :aria-label="fullscreenLabel"
+                        :aria-pressed="fullscreenOpen"
+                        filled
+                        data-test="execution-artifact-fullscreen"
+                        @click="fullscreenOpen = !fullscreenOpen"
+                    >
+                        <component :is="fullscreenOpen ? FullscreenExit : Fullscreen" />
+                    </KsIconButton>
+                </header>
+                <div class="artifacts-viewer-body">
+                    <RemoteComponent
+                        v-if="hasResolvedComponent(selected.taskType)"
+                        :key="selected.key"
+                        :taskType="selected.taskType"
+                        :task="selectedTask"
+                        :execution="execution"
+                        :namespace="execution?.namespace"
+                        :flowId="execution?.flowId"
+                        :tenant="tenant"
+                        v-bind="selectedFetchers"
+                    />
+                    <KsAlert v-else-if="hasFailedComponent(selected.taskType)" type="error" :closable="false" data-test="execution-artifact-error">
+                        {{ $t("plugins.ui_load_error") }}
+                    </KsAlert>
+                    <KsSkeleton v-else animated :rows="4" data-test="execution-artifact-loading" />
                 </div>
-                <KsSegmented
-                    v-if="siblings.length > 1"
-                    :modelValue="selected.key"
-                    class="artifacts-switch"
-                    variant="neutral"
-                    @update:modelValue="selectedKey = String($event)"
-                    :options="siblings.map((a) => ({label: a.title, value: a.key}))"
-                />
-                <KsIconButton
-                    :tooltip="$t(`multi_panel_editor.${isFullscreen ? 'exit_fullscreen' : 'fullscreen'}`)"
-                    filled
-                    data-test="execution-artifact-fullscreen"
-                    @click="toggleFullscreen"
-                >
-                    <OpenInNew />
-                </KsIconButton>
-            </header>
-            <div class="artifacts-viewer-body">
-                <RemoteComponent
-                    :key="selected.key"
-                    :taskType="selected.taskType"
-                    :task="selectedTask"
-                    :execution="execution"
-                    :namespace="execution?.namespace"
-                    :flowId="execution?.flowId"
-                    :tenant="tenant"
-                    :fetchOutputs="fetchOutputs(selected.taskId)"
-                    :fetchMetrics="fetchMetrics(selected.taskId)"
-                />
-            </div>
-        </section>
+            </section>
+        </Teleport>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onBeforeUnmount, onMounted, ref, useTemplateRef, watch} from "vue"
-    import {useRoute} from "vue-router"
-    import type {Execution, PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
+    import {computed, inject, ref, useTemplateRef, watch} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import type {PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-    import {KsEmpty, KsIcon, KsIconButton, KsSegmented, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import {KsAlert, KsDialog, KsEmpty, KsIcon, KsIconButton, KsSegmented, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+    import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../stores/plugins"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
-    import {EXECUTION_ARTIFACTS_KEY} from "./composables/useExecutionArtifacts"
+    import {EXECUTION_ARTIFACTS_KEY, type ExecutionArtifact} from "./composables/useExecutionArtifacts"
 
     const {afterLastDot} = stringUtils
 
+    const {t} = useI18n()
     const route = useRoute()
+    const router = useRouter()
     const pluginsStore = usePluginsStore()
     pluginsStore.fetchIcons()
     const executionsStore = useExecutionsStore()
 
-    const {RemoteComponent, artifacts, tasks, subtitleResolvers} = inject(EXECUTION_ARTIFACTS_KEY)!
+    const {RemoteComponent, artifacts, tasks, subtitleResolvers, manifestReady, hasResolvedComponent, hasFailedComponent} = inject(EXECUTION_ARTIFACTS_KEY)!
 
-    const execution = computed(() => (executionsStore.execution ?? undefined) as unknown as Execution | undefined)
+    const execution = computed<Execution | undefined>(() => executionsStore.execution ?? undefined)
     const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
 
     const groups = computed(() => {
-        const byTask = new Map<string, {taskId: string, taskType: string, artifacts: typeof artifacts.value}>()
+        const byTask = new Map<string, {taskId: string, cls: string, artifacts: ExecutionArtifact[]}>()
         for (const artifact of artifacts.value) {
-            const group = byTask.get(artifact.taskId) ?? {taskId: artifact.taskId, taskType: artifact.taskType.split("/")[0], artifacts: []}
+            const group = byTask.get(artifact.taskId) ?? {taskId: artifact.taskId, cls: artifact.cls, artifacts: []}
             group.artifacts.push(artifact)
             byTask.set(artifact.taskId, group)
         }
         return [...byTask.values()]
     })
 
-    const viewer = useTemplateRef<HTMLElement>("viewer")
-    const isFullscreen = ref(false)
-    const syncFullscreen = () => {
-        isFullscreen.value = document.fullscreenElement === viewer.value
-    }
-    const toggleFullscreen = () => isFullscreen.value ? document.exitFullscreen() : viewer.value?.requestFullscreen()
-    onMounted(() => document.addEventListener("fullscreenchange", syncFullscreen))
-    onBeforeUnmount(() => document.removeEventListener("fullscreenchange", syncFullscreen))
+    const countLabel = computed(() => t("execution_artifacts.count", {
+        artifacts: t("execution_artifacts.artifacts", {count: artifacts.value.length}, artifacts.value.length),
+        tasks: t("execution_artifacts.tasks", {count: groups.value.length}, groups.value.length),
+    }))
 
-    const selectedKey = ref<string>()
+    const inlineViewerTarget = useTemplateRef<HTMLElement>("inlineViewerTarget")
+    const fullscreenViewerTarget = useTemplateRef<HTMLElement>("fullscreenViewerTarget")
+    const fullscreenOpen = ref(false)
+    const viewerTarget = computed(() => fullscreenOpen.value
+        ? fullscreenViewerTarget.value ?? inlineViewerTarget.value
+        : inlineViewerTarget.value)
+    const fullscreenLabel = computed(() => t(fullscreenOpen.value ? "execution_artifacts.exit_fullscreen" : "execution_artifacts.fullscreen"))
+
+    const selectedKey = computed({
+        get: () => typeof route.query.artifact === "string" ? route.query.artifact : undefined,
+        set: (key) => router.replace({query: {...route.query, artifact: key}}),
+    })
     const selected = computed(() => artifacts.value.find((a) => a.key === selectedKey.value) ?? artifacts.value[0])
     const siblings = computed(() => artifacts.value.filter((a) => a.taskId === selected.value?.taskId))
+    const siblingOptions = computed(() => siblings.value.map((a) => ({label: a.title, value: a.key})))
     const selectedTask = computed(() => tasks.value.find((task) => task.id === selected.value?.taskId))
 
-    const durations = computed(() => Object.fromEntries(groups.value.flatMap(({taskId}) => {
-        const duration = execution.value?.taskRunList?.filter((run) => run.taskId === taskId).at(-1)?.state?.duration
-        return duration ? [[taskId, durationUtils.humanDuration(duration as unknown as string)]] : []
-    })))
+    const runsOf = (taskId: string) => execution.value?.taskRunList?.filter((run) => run.taskId === taskId) ?? []
 
-    const currentTaskRunId = (taskId: string) =>
-        execution.value?.taskRunList?.filter((run) => run.taskId === taskId).at(-1)?.id
+    // A task inside a loop runs once per iteration: the header shows the total, the viewer reads the latest run.
+    const durations = computed(() => Object.fromEntries(groups.value.flatMap(({taskId}) => {
+        const seconds = runsOf(taskId).reduce((sum, run) => sum + (run.state?.duration ? durationUtils.duration(run.state.duration) : 0), 0)
+        return seconds ? [[taskId, durationUtils.humanDuration(seconds)]] : []
+    })))
 
     // Resolved when called, so an artifact opened on a still-running execution reads the latest run.
     const fetchOutputs = (taskId: string) => ({taskRunId}: {taskRunId?: string} = {}) => {
-        const runId = taskRunId ?? currentTaskRunId(taskId)
+        const runId = taskRunId ?? runsOf(taskId).at(-1)?.id
         return execution.value?.id && runId ? loadTaskRunOutputs(execution.value.id, runId) : Promise.resolve({})
     }
 
@@ -152,16 +183,35 @@
         })
     }
 
-    const subtitles = ref<Record<string, string | undefined>>({})
+    // Built once per selection: a plugin watching these props must not reload on every execution update.
+    const selectedFetchers = computed(() => selected.value && {
+        fetchOutputs: fetchOutputs(selected.value.taskId),
+        fetchMetrics: fetchMetrics(selected.value.taskId),
+    })
 
-    // Re-read when the execution moves on: outputs a subtitle summarises only exist once the task ran.
-    watch([artifacts, () => Object.keys(subtitleResolvers).length, () => execution.value?.state?.current], () => {
+    const subtitles = ref<Record<string, string | undefined>>({})
+    const subtitleSequences = new Map<string, number>()
+    const artifactKeys = computed(() => artifacts.value.map((a) => a.key).join())
+    const taskRunStates = computed(() => (execution.value?.taskRunList ?? []).map((run) => `${run.id}${run.state?.current}`).join())
+
+    // Re-read when a task run changes state: outputs a subtitle summarises only exist once the task ran.
+    watch([artifactKeys, () => Object.keys(subtitleResolvers).length, taskRunStates], () => {
+        const outputsByRun = new Map<string, Promise<unknown>>()
+        const sharedFetchOutputs = (taskId: string) => (options: {taskRunId?: string} = {}) => {
+            const cacheKey = `${taskId}:${options.taskRunId ?? ""}`
+            if (!outputsByRun.has(cacheKey)) outputsByRun.set(cacheKey, fetchOutputs(taskId)(options))
+            return outputsByRun.get(cacheKey)!
+        }
+
         for (const artifact of artifacts.value) {
             const resolve = subtitleResolvers[artifact.taskType] as ((ctx: unknown) => unknown) | undefined
             const task = tasks.value.find((t) => t.id === artifact.taskId)
             if (!resolve || !task) continue
-            Promise.resolve(resolve({task, execution: execution.value, fetchOutputs: fetchOutputs(task.id), fetchMetrics: fetchMetrics(task.id)}))
+            const sequence = (subtitleSequences.get(artifact.key) ?? 0) + 1
+            subtitleSequences.set(artifact.key, sequence)
+            Promise.resolve(resolve({task, execution: execution.value, fetchOutputs: sharedFetchOutputs(task.id), fetchMetrics: fetchMetrics(task.id)}))
                 .then((subtitle) => {
+                    if (subtitleSequences.get(artifact.key) !== sequence) return
                     subtitles.value = {...subtitles.value, [artifact.key]: typeof subtitle === "string" ? subtitle : undefined}
                 })
                 .catch((error) => console.error(`[ExecutionArtifacts] getSubtitle failed for "${artifact.key}":`, error))
@@ -203,7 +253,6 @@
 
     .artifacts-duration {
         margin-left: auto;
-        color: var(--ks-text-success);
     }
 
     .artifacts-switch {
@@ -220,10 +269,6 @@
         align-items: flex-start;
         min-width: 0;
         text-align: left;
-
-        & > * {
-            align-self: flex-start;
-        }
     }
 
     .muted {
@@ -231,9 +276,13 @@
     }
 
     .artifacts-count {
-        align-self: flex-start;
         padding: var(--ks-spacing-2);
         text-transform: uppercase;
+    }
+
+    .artifacts-group {
+        display: flex;
+        flex-direction: column;
     }
 
     .artifacts-group-header {
@@ -248,7 +297,6 @@
         align-items: center;
         justify-content: flex-start;
         gap: var(--ks-spacing-2);
-        width: calc(100% - var(--ks-spacing-4));
         margin-left: var(--ks-spacing-4);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         font: inherit;
@@ -263,13 +311,20 @@
         }
 
         &.selected {
+            background: var(--ks-bg-active);
+            border-color: var(--ks-border-focus);
+
             & .artifacts-item-icon {
                 color: var(--ks-icon-active);
             }
-
-            background: var(--ks-bg-active);
-            border-color: var(--ks-border-focus);
         }
+    }
+
+    .artifacts-viewer-slot {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
     }
 
     .artifacts-viewer {
@@ -283,10 +338,6 @@
         border-radius: var(--ks-radius-base);
     }
 
-    .artifacts-viewer:fullscreen {
-        background: var(--ks-bg-surface);
-    }
-
     .artifacts-viewer-header {
         display: flex;
         align-items: center;
@@ -297,10 +348,6 @@
         & > div {
             display: flex;
             flex-direction: column;
-
-            & > * {
-                align-self: flex-start;
-            }
         }
     }
 

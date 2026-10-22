@@ -143,7 +143,6 @@
         if (applyDuration(props.modelValue ?? "")) {
             updateDuration()
         } else {
-            // Keep a value the picker can't represent instead of replacing it with an empty duration.
             customDuration.value = props.modelValue ?? ""
         }
     })

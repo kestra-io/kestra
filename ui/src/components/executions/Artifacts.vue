@@ -45,8 +45,8 @@
                     v-if="siblings.length > 1"
                     :modelValue="selected.key"
                     class="artifacts-switch"
+                    variant="neutral"
                     @update:modelValue="selectedKey = String($event)"
-                    size="small"
                     :options="siblings.map((a) => ({label: a.title, value: a.key}))"
                 />
             </header>
@@ -213,6 +213,7 @@
     }
 
     .artifacts-count {
+        align-self: flex-start;
         padding: var(--ks-spacing-2);
         text-transform: uppercase;
     }

@@ -1,7 +1,7 @@
 <template>
     <ElSegmented
         v-model="model"
-        :class="props.disabled ? 'is-disabled' : undefined"
+        :class="[props.disabled ? 'is-disabled' : undefined, props.variant === 'neutral' ? 'ks-segmented-neutral' : undefined]"
         v-bind="({...filteredProps(), ...$attrs} as SegmentedProps)"
         @change="emit('change', $event)"
     >
@@ -34,13 +34,14 @@
         size?: "large" | "default" | "small"
         disabled?: boolean
         block?: boolean
+        variant?: "primary" | "neutral"
     }>()
 
     const emit = defineEmits<{
         change: [value: string | number | boolean]
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["variant"])
 
     // Only take over the item rendering when an icon is actually in play, so options without one
     // keep Element Plus's own markup.
@@ -87,6 +88,17 @@
     html:not(.dark) .kel-segmented {
         --el-fill-color-light: var(--ks-bg-elevated);
         --kel-fill-color-light: var(--ks-bg-elevated);
+    }
+
+    .kel-segmented.ks-segmented-neutral {
+        --kel-segmented-bg-color: var(--ks-bg-hover);
+        --kel-segmented-color: var(--ks-text-secondary);
+        --kel-segmented-item-selected-bg-color: var(--ks-bg-elevated);
+        --kel-segmented-item-selected-color: var(--ks-text-primary);
+
+        & .kel-segmented__item {
+            padding-inline: var(--ks-spacing-3);
+        }
     }
 
     .el-segmented.is-disabled .el-segmented__item-selected,

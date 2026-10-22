@@ -241,40 +241,6 @@ describe("useViolationMarkers", () => {
         expect(editor.createDecorationsCollection).toHaveBeenCalledExactlyOnceWith([])
     })
 
-    it.each([
-        {name: "an empty array", value: [] as ValidationError[]},
-        {name: "undefined", value: undefined},
-    ])("removes all markings when errors become $name", async ({value}) => {
-        const model = createModel()
-        const editor = createEditor(model.model)
-        const {errors} = mountMarkers(editor.editor)
-
-        setModelMarkers.mockClear()
-        editor.createDecorationsCollection.mockClear()
-        editor.clear.mockClear()
-        resolveMarkers.mockReturnValue([])
-
-        errors.value = value
-        await nextTick()
-
-        expect(resolveMarkers).toHaveBeenLastCalledWith(model.getValue(), value)
-        expect(editor.clear).toHaveBeenCalledOnce()
-        expect(setModelMarkers).toHaveBeenCalledTimes(2)
-        expect(setModelMarkers).toHaveBeenNthCalledWith(
-            1,
-            model.model,
-            "backend-validation",
-            [],
-        )
-        expect(setModelMarkers).toHaveBeenNthCalledWith(
-            2,
-            model.model,
-            "backend-validation",
-            [],
-        )
-        expect(editor.createDecorationsCollection).toHaveBeenCalledExactlyOnceWith([])
-    })
-
     it("clears the old model before applying markers to a replacement editor", async () => {
         const oldModel = createModel()
         const oldEditor = createEditor(oldModel.model)

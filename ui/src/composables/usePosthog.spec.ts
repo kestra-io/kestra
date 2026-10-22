@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
+import {trackSetupEvent} from "./usePosthog"
 
 const {posthogEvents, miscStore, uidState} = vi.hoisted(() => ({
     posthogEvents: vi.fn(),
@@ -19,80 +20,79 @@ vi.mock("../utils/uid", () => ({
     ensureUid: () => "user-uid",
 }))
 
+function sentPayload() {
+    expect(posthogEvents).toHaveBeenCalledOnce()
+    return posthogEvents.mock.calls[0][0]
+}
+
 describe("trackSetupEvent", () => {
     beforeEach(() => {
-        posthogEvents.mockClear()
+        posthogEvents.mockReset()
         miscStore.configs = {isAnonymousUsageEnabled: true, uuid: "instance-uuid"}
         uidState.value = "user-uid"
     })
 
-    it("should send nothing when anonymous usage is disabled", async () => {
+    it("should send nothing when anonymous usage is disabled", () => {
         miscStore.configs = {isAnonymousUsageEnabled: false, uuid: "instance-uuid"}
 
-        const {trackSetupEvent} = await import("./usePosthog")
         trackSetupEvent("setup_flow:completed", {}, {username: "user@example.com"})
 
         expect(posthogEvents).not.toHaveBeenCalled()
     })
 
-    it("should send nothing when no uid exists", async () => {
+    it("should send nothing when no uid exists", () => {
         uidState.value = undefined
 
-        const {trackSetupEvent} = await import("./usePosthog")
         trackSetupEvent("setup_flow:completed", {}, {username: "user@example.com"})
 
         expect(posthogEvents).not.toHaveBeenCalled()
     })
 
-    it("should forward the event type, the instance id and the user id", async () => {
-        const {trackSetupEvent} = await import("./usePosthog")
+    it("should forward the event type, the instance id and the user id", () => {
         trackSetupEvent("setup_flow:completed", {}, {username: "user@example.com"})
 
-        expect(posthogEvents).toHaveBeenCalledWith(expect.objectContaining({
+        expect(sentPayload()).toMatchObject({
             type: "setup_flow:completed",
             instance_id: "instance-uuid",
             user_id: "user-uid",
-        }))
+        })
     })
 
-    it("should attach the user info when a first name was given", async () => {
-        const {trackSetupEvent} = await import("./usePosthog")
+    it("should attach the user info when a first name was given", () => {
         trackSetupEvent("setup_flow:completed", {}, {
             firstName: "Ada",
             lastName: "Lovelace",
             username: "ada@example.com",
         })
 
-        expect(posthogEvents).toHaveBeenCalledWith(expect.objectContaining({
+        expect(sentPayload()).toMatchObject({
             user_firstname: "Ada",
             user_lastname: "Lovelace",
             user_email: "ada@example.com",
-        }))
+        })
     })
 
-    it("should attach no user info when no first name was given", async () => {
-        const {trackSetupEvent} = await import("./usePosthog")
+    it("should attach no user info when no first name was given", () => {
         trackSetupEvent("setup_flow:completed", {}, {username: "ada@example.com"})
 
-        const payload = posthogEvents.mock.calls[0][0]
+        const payload = sentPayload()
         expect(payload).not.toHaveProperty("user_firstname")
         expect(payload).not.toHaveProperty("user_lastname")
         expect(payload).not.toHaveProperty("user_email")
     })
 
-    it("should merge the additional data in and let it override the user info", async () => {
-        const {trackSetupEvent} = await import("./usePosthog")
+    it("should merge the additional data in and let it override the user info", () => {
         trackSetupEvent("setup_flow:completed", {user_email: "override@example.com", source: "setup"}, {
             firstName: "Ada",
             lastName: "Lovelace",
             username: "ada@example.com",
         })
 
-        expect(posthogEvents).toHaveBeenCalledWith(expect.objectContaining({
+        expect(sentPayload()).toMatchObject({
             user_firstname: "Ada",
             user_lastname: "Lovelace",
             user_email: "override@example.com",
             source: "setup",
-        }))
+        })
     })
 })

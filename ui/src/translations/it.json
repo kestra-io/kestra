@@ -242,6 +242,7 @@
       "last7days": "Ultimi 7 giorni",
       "last30days": "Ultimi 30 giorni",
       "last365days": "Ultimi 365 giorni",
+      "allTime": "Tutto il tempo",
       "next5minutes": "Prossimi 5 minuti",
       "next15minutes": "I prossimi 15 minuti",
       "next1hour": "Prossima 1 ora",
@@ -523,8 +524,25 @@
       "attempts": "{count} tentativo | {count} tentativi",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Task non riuscita",
+      "view_task_logs": "Vedi i log della task",
+      "revision_short": "rev. {revision}",
+      "more_labels": "+{count} etichetta | +{count} etichette",
+      "fewer_labels": "Mostra meno etichette",
+      "jump_to_first_failure": "Vai al primo errore",
+      "open_logs": "Apri i log"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Dopo l'accesso",
+      "execution_tab": "Esecuzione {id} · scheda {tab}",
+      "execution": "Esecuzione {id}",
+      "tab": "Scheda {tab}"
+    },
     "concurrency limits": "Limiti di Concorrenza",
     "system overview": "Panoramica del sistema",
+    "workspace": "Area di lavoro",
+    "resources": "Risorse",
     "usage": "Utilizzo",
     "namespaces": "Namespaces",
     "tasks": "Tasks",

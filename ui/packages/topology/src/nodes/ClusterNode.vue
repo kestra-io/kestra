@@ -33,6 +33,9 @@
                     </KsTooltip>
                 </span>
             </template>
+            <template #taskActions="taskActionProps">
+                <slot name="taskActions" v-bind="taskActionProps" />
+            </template>
         </LaneHeader>
         <div v-else class="cluster-heading" :style="{height: `${NODE_SIZES.LANE_HEADER_HEIGHT}px`}">
             <span
@@ -135,7 +138,7 @@
         return Utils.afterLastDot(props.id ?? "")
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .circle-button {
         pointer-events: auto !important;
     }

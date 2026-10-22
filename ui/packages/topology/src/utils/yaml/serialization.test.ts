@@ -223,3 +223,60 @@ describe("stringify with preserveCronQuotes", () => {
         expect(result).toContain("cron: \"0 0 * * *\"")
     })
 })
+
+describe("sortPredicate", () => {
+    const sortKeys = (keys: string[]) => [...keys].sort(YamlUtils.sortPredicate)
+
+    test("puts known keys in their documented order, id and type first", () => {
+        const documentedOrder = [
+            "id",
+            "type",
+            "namespace",
+            "description",
+            "revision",
+            "inputs",
+            "variables",
+            "tasks",
+            "errors",
+            "triggers",
+            "listeners",
+            "pluginDefaults",
+        ]
+
+        expect(sortKeys([...documentedOrder].reverse())).toEqual(documentedOrder)
+    })
+
+    test("sorts an unknown key after the known ones without dropping it", () => {
+        expect(sortKeys(["tasks", "customKey", "id"])).toEqual(["id", "tasks", "customKey"])
+    })
+
+    test("keeps a deterministic relative order for two unknown keys", () => {
+        expect(YamlUtils.sortPredicate("zeta", "alpha")).toBe(0)
+        expect(sortKeys(["zeta", "alpha"])).toEqual(["zeta", "alpha"])
+        expect(sortKeys(["alpha", "zeta"])).toEqual(["alpha", "zeta"])
+        expect(sortKeys(["zeta", "id", "alpha"])).toEqual(["id", "zeta", "alpha"])
+    })
+
+    test("is symmetric and sorts the same keys twice to the same result", () => {
+        const keys = ["triggers", "customB", "id", "namespace", "customA", "type"]
+        const pairs = [
+            ["id", "type"],
+            ["triggers", "id"],
+            ["id", "customA"],
+            ["customB", "customA"],
+            ["tasks", "tasks"],
+        ]
+
+        for (const [left, right] of pairs) {
+            expect(YamlUtils.sortPredicate(left, right) === -YamlUtils.sortPredicate(right, left)).toBe(true)
+        }
+
+        const once = sortKeys(keys)
+        expect(sortKeys(once)).toEqual(once)
+    })
+
+    test("sorts an empty key list without throwing", () => {
+        expect(() => sortKeys([])).not.toThrow()
+        expect(sortKeys([])).toEqual([])
+    })
+})

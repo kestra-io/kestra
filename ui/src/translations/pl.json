@@ -541,6 +541,8 @@
     },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
+    "workspace": "Obszar roboczy",
+    "resources": "Zasoby",
     "usage": "Użycie",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -1396,6 +1398,12 @@
           "third": "Uruchom ponownie instancję Kestra, aby sekret został wczytany."
         }
       },
+      "credentials": {
+        "label": "Poświadczenia",
+        "header": "Poświadczenia",
+        "title": "Uwierzytelnij się raz, używaj w każdym Tasku",
+        "message": "W Kestra Enterprise Edition uwierzytelnianie serwer–serwer można skonfigurować raz jako poświadczenie, dzięki czemu Access Tokeny są pobierane i odświeżane w czasie działania, zamiast być zapisane na stałe w Twoich Flowach. Poświadczenia można tworzyć na poziomie Tenanta lub namespace'u i używać ich w dowolnym Tasku."
+      },
       "apps": {
         "title": "Twórz własne Apps w Kestrze",
         "message": "Apps w Kestra Enterprise Edition pozwalają tworzyć własne interfejsy, które współpracują z workflowami Kestry spoza platformy. Dzięki temu możesz używać swoich workflowów jako backendu dla własnych aplikacji, a osoby nietechniczne mogą wprowadzać dane przez formularze lub wznawiać wstrzymane workflowy oczekujące na zatwierdzenie.",
@@ -1474,6 +1482,10 @@
           "title": "Zarządzaj sekretami w bezpieczny sposób",
           "message": "W Kestra Enterprise Edition możesz przechowywać i kontrolować sekrety na poziomie namespace'u, minimalizując ryzyko i zapewniając izolację poświadczeń każdego zespołu. Dzięki zagnieżdżonej hierarchii możesz też skonfigurować poświadczenia w nadrzędnym namespace'ie, a odziedziczą je wszystkie podrzędne namespace'y. Obsługa dedykowanych menedżerów sekretów i szczegółowe uprawnienia na poziomie namespace'u dodatkowo wzmacniają bezpieczeństwo i zgodność."
         },
+        "credentials": {
+          "title": "Ogranicz poświadczenia do tego namespace'u",
+          "message": "W Kestra Enterprise Edition możesz konfigurować poświadczenia na poziomie namespace'u, dzięki czemu Taski w tym namespace'ie i jego podrzędnych namespace'ach pobierają i odświeżają Access Tokeny w czasie działania, zamiast przechowywać je we Flowach. Poświadczenie zdefiniowane w nadrzędnym namespace'ie dziedziczą wszystkie podrzędne namespace'y."
+        },
         "assets": {
           "title": "Centralizuj zarządzanie Assetami",
           "message": "W Kestra Enterprise Edition Assets prowadzi bieżący inwentarz zasobów, z którymi współpracują Twoje workflowy. Mogą to być tabele baz danych, maszyny wirtualne, pliki lub dowolny zewnętrzny system, z którego korzystasz."
@@ -1485,6 +1497,11 @@
         "policies": {
           "title": "Wymuszaj reguły zarządzania w tym namespace'ie",
           "message": "W Kestra Enterprise Edition polityki pozwalają definiować reguły obowiązujące każdy Flow w tym namespace'ie i w jego namespace'ach podrzędnych: wstrzykiwać wspólne wartości domyślne, ograniczać wartości właściwości, blokować pluginy i wymagać etykiet zgodności, przy czym każda zmiana jest w pełni widoczna dla autorów Flowów."
+        },
+        "reusable-inputs": {
+          "label": "Reusable Inputy",
+          "title": "Zdefiniuj Inputy raz, używaj ich wszędzie",
+          "message": "W Kestra Enterprise Edition Reusable Inputy pozwalają raz zdefiniować nazwaną grupę typowanych Inputów na poziomie namespace'u i odwoływać się do niej w dowolnym Flow. Zestaw z nadrzędnego namespace'u jest dostępny w podrzędnych namespace'ach, dzięki czemu zespoły współdzielą te same definicje Inputów zamiast powtarzać je w każdym Flow."
         },
         "history": {
           "title": "Zarządzaj historią wersji w jednym miejscu",

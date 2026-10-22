@@ -40,3 +40,6 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/checkbox-group';
 </style>
+
+<style>
+</style>

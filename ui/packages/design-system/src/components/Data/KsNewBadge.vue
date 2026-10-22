@@ -8,7 +8,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-new-badge {
         display: inline-block;
         flex-shrink: 0;

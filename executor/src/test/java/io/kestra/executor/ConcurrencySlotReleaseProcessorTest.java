@@ -169,7 +169,7 @@ class ConcurrencySlotReleaseProcessorTest {
         // history still has RUNNING from the first attempt, so only the stamp tells that this
         // attempt never held a slot.
         Execution restarted = created().withState(State.Type.RUNNING).withState(State.Type.FAILED).withState(State.Type.RESTARTED);
-        restarted = restarted.withMetadata(restarted.getMetadata().nextAttempt().withConcurrencyScopes(List.of()));
+        restarted = restarted.withMetadata(restarted.getMetadata().nextAttempt());
         Execution execution = restarted.withState(State.Type.QUEUED).withState(State.Type.KILLED);
 
         // When
@@ -183,7 +183,7 @@ class ConcurrencySlotReleaseProcessorTest {
     void shouldNotReleaseWhenARestartedAttemptWasRejectedByTheGate() {
         // Given: a FAIL rejection is recorded as RESTARTED -> RUNNING -> FAILED
         Execution restarted = created().withState(State.Type.RUNNING).withState(State.Type.FAILED).withState(State.Type.RESTARTED);
-        restarted = restarted.withMetadata(restarted.getMetadata().nextAttempt().withConcurrencyScopes(List.of()));
+        restarted = restarted.withMetadata(restarted.getMetadata().nextAttempt());
         Execution execution = restarted.withState(State.Type.RUNNING).withState(State.Type.FAILED);
 
         // When

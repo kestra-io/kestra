@@ -60,22 +60,18 @@ public class ExecutionMetadata {
         return this.withTaskRunStatistic(this.taskRunStatistic == null ? other : this.taskRunStatistic.plus(other));
     }
 
+    /**
+     * Returns the metadata of a new attempt, as created by a restart, a replay, or a task run state change.
+     * A new attempt holds no slot until the concurrency gate admits it, so the claim of the previous attempt is
+     * not carried over: the release would otherwise give back a slot the attempt never held. The claim is emptied
+     * rather than nulled, as a null claim makes the release fall back to the state history, which still has the
+     * previous attempt.
+     */
     public ExecutionMetadata nextAttempt() {
         return this.toBuilder()
             .attemptNumber(this.attemptNumber + 1)
+            .concurrencyScopes(List.of())
             .build();
-    }
-
-    /**
-     * Returns the metadata of a new attempt created by a restart, a replay, or a task run state change on a terminated execution.
-     * Such an attempt holds no slot until the concurrency gate admits it, so the claim of the previous attempt must not be carried
-     * over: the release would otherwise give back a slot the attempt never held. The claim is emptied rather than
-     * nulled, as a null claim makes the release fall back to the state history, which still has the previous attempt.
-     * <p>
-     * A resumed execution keeps its claim: it still holds its slot and does not go through the gate again.
-     */
-    public ExecutionMetadata nextAttemptWithoutConcurrencySlot() {
-        return this.nextAttempt().withConcurrencyScopes(List.of());
     }
 
     /**

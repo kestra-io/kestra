@@ -13,10 +13,8 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.NullSource;
 import org.slf4j.event.Level;
 
 import com.devskiller.friendly_id.FriendlyId;
@@ -34,6 +32,7 @@ import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.GreaterThan;
 import io.kestra.core.models.dashboards.filters.In;
+import io.kestra.core.models.dashboards.filters.Or;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
@@ -1314,10 +1313,10 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         for (int i = 0; i < 2; i++) {
-            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i,false));
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i, false));
         }
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i,false));
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i, false));
         }
 
         // When / Then: scoping to a single loop task returns only that task's iterations
@@ -1344,7 +1343,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i,false));
+            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i, false));
         }
         QueryFilter parentFilter = QueryFilter.builder().field(QueryFilter.Field.PARENT_ID).operation(QueryFilter.Op.EQUALS).value(parent.getId()).build();
         QueryFilter kindFilter = QueryFilter.builder().field(QueryFilter.Field.KIND).operation(QueryFilter.Op.EQUALS).value(ExecutionKind.LOOP).build();
@@ -2159,9 +2158,8 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @ParameterizedTest
-    @NullSource
-    @EnumSource(value = ExecutionKind.class, names = { "NORMAL", "PLAYGROUND", "TEST" })
-    protected void shouldCountTheSameExecutionsInChartAndTableForKindFilter(ExecutionKind kind) throws IOException {
+    @MethodSource("kindFilterExpectedTotals")
+    protected void shouldCountTheSameExecutionsInChartAndTableForKindFilter(ExecutionKind kind, long expectedTotal) throws IOException {
         var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Stream.of(
             Collections.nCopies(14, (ExecutionKind) null),
@@ -2193,9 +2191,53 @@ public abstract class AbstractExecutionRepositoryTest {
             .sum();
 
         assertThat(chartTotal).isEqualTo(tableTotal);
-        if (kind == null) {
-            assertThat(chartTotal).isEqualTo(14L);
-        }
+        assertThat(chartTotal).isEqualTo(expectedTotal);
+    }
+
+    static Stream<Arguments> kindFilterExpectedTotals() {
+        return Stream.of(
+            Arguments.of(null, 14L),
+            // NORMAL currently matches 0 because normal executions have a null kind: https://github.com/kestra-io/kestra/issues/21536
+            Arguments.of(ExecutionKind.NORMAL, 0L),
+            Arguments.of(ExecutionKind.PLAYGROUND, 29L),
+            Arguments.of(ExecutionKind.TEST, 3L)
+        );
+    }
+
+    @Test
+    protected void shouldCountNonNormalExecutionsWhenKindFilterIsNested() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        executionRepository.save(builder(tenantId, Type.SUCCESS, "flowA").kind(ExecutionKind.PLAYGROUND).build());
+        executionRepository.save(builder(tenantId, Type.SUCCESS, "flowA").kind(ExecutionKind.TEST).build());
+
+        var nestedKindFilter = Or.<Executions.Fields> builder()
+            .field(Executions.Fields.STATE)
+            .values(
+                List.of(
+                    Or.<Executions.Fields> builder()
+                        .field(Executions.Fields.STATE)
+                        .values(List.of(EqualTo.<Executions.Fields> builder().field(Executions.Fields.KIND).value(ExecutionKind.PLAYGROUND.name()).build()))
+                        .build(),
+                    EqualTo.<Executions.Fields> builder().field(Executions.Fields.KIND).value(ExecutionKind.TEST.name()).build()
+                )
+            )
+            .build();
+        var startDate = ZonedDateTime.now().minusHours(1);
+        var endDate = ZonedDateTime.now().plusMinutes(1);
+        var chart = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(Map.of("total", ColumnDescriptor.<Executions.Fields> builder().agg(AggregationType.COUNT).build()))
+            .where(List.of(nestedKindFilter))
+            .build();
+        var kpi = ExecutionsKPI.builder()
+            .type(ExecutionsKPI.class.getName())
+            .columns(ColumnDescriptor.<ExecutionsKPI.Fields> builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+            .where(List.of(nestedKindFilter))
+            .build();
+
+        assertThat(executionRepository.fetchData(tenantId, chart, startDate, endDate, null))
+            .singleElement().extracting("total").hasToString("2");
+        assertThat(executionRepository.fetchValue(tenantId, kpi, startDate, endDate, false)).isEqualTo(2.0);
     }
 
     @Test

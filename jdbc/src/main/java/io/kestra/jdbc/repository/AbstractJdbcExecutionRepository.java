@@ -296,7 +296,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     private static boolean hasKindFilter(@Nullable List<? extends AbstractFilter<Executions.Fields>> filters) {
-        return filters != null && filters.stream().anyMatch(filter -> filter.getField() == Executions.Fields.KIND);
+        return filters != null && filters.stream().anyMatch(AbstractJdbcExecutionRepository::containsKindFilter);
+    }
+
+    private static boolean containsKindFilter(AbstractFilter<?> filter) {
+        if (filter instanceof Or<?> orFilter) {
+            return orFilter.getValues().stream().anyMatch(AbstractJdbcExecutionRepository::containsKindFilter);
+        }
+        return filter.getField() == Executions.Fields.KIND;
     }
 
     @Override

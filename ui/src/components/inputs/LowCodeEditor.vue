@@ -286,6 +286,7 @@
     import {useStorage} from "@vueuse/core"
     import {useRoute, useRouter} from "vue-router"
     import {storageKeys, topologyOrientations} from "../../utils/constants"
+    import {useVueFlow} from "@vue-flow/core"
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
@@ -406,6 +407,7 @@
     const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
+    const {fitView, getNodes} = useVueFlow(vueflowId.value)
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
@@ -1250,6 +1252,15 @@
         updateYaml: (yaml: string) => applyGraphYaml(yaml),
         saveFlow: () => saveFlow(),
     })
+
+    const FOCUS_MAX_ZOOM = 1
+
+    function focusTask(taskId: string) {
+        const node = getNodes.value.find((candidate) => candidate.id.split(".").at(-1) === taskId)
+        if (node) fitView({nodes: [node.id], maxZoom: FOCUS_MAX_ZOOM, duration: 300})
+    }
+
+    defineExpose({focusTask})
 
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value

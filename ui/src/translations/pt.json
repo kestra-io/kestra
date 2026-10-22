@@ -242,6 +242,7 @@
       "last7days": "Últimos 7 dias",
       "last30days": "Últimos 30 dias",
       "last365days": "Últimos 365 dias",
+      "allTime": "Todo o tempo",
       "next5minutes": "Próximos 5 minutos",
       "next15minutes": "Próximos 15 minutos",
       "next1hour": "Próxima 1 hora",
@@ -523,8 +524,25 @@
       "attempts": "{count} tentativa | {count} tentativas",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Task com falha",
+      "view_task_logs": "Ver logs da task",
+      "revision_short": "rev. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Mostrar menos labels",
+      "jump_to_first_failure": "Ir para a primeira falha",
+      "open_logs": "Abrir logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Após iniciar sessão",
+      "execution_tab": "Execução {id} · separador {tab}",
+      "execution": "Execução {id}",
+      "tab": "Separador {tab}"
+    },
     "concurrency limits": "Limites de Concurrency",
     "system overview": "Visão Geral do Sistema",
+    "workspace": "Espaço de trabalho",
+    "resources": "Recursos",
     "usage": "Uso",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -1380,6 +1398,12 @@
           "third": "Reinicie sua instância Kestra para que o segredo seja carregado."
         }
       },
+      "credentials": {
+        "label": "Credenciais",
+        "header": "Credenciais",
+        "title": "Autentique uma vez e reutilize em cada task",
+        "message": "Na Kestra Enterprise Edition, a autenticação servidor a servidor pode ser configurada uma vez como uma credencial, para que os tokens de acesso sejam solicitados e atualizados em tempo de execução, em vez de serem codificados em seus flows. As credenciais podem ser criadas no nível do tenant ou do namespace e referenciadas a partir de qualquer task."
+      },
       "apps": {
         "title": "Crie Apps personalizadas com Kestra",
         "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação.",
@@ -1458,6 +1482,10 @@
           "title": "Gerenciar Segredos de Forma Segura",
           "message": "Na Kestra Enterprise Edition, você pode armazenar e controlar segredos no nível do namespace, minimizando riscos e garantindo que as credenciais de cada equipe permaneçam isoladas. Graças à hierarquia aninhada, você também pode configurar credenciais em um namespace pai, e elas serão herdadas por todos os namespaces filhos. O suporte para gerenciadores de segredos dedicados e configurações de permissão granulares no nível do namespace fortalece ainda mais a segurança e a conformidade."
         },
+        "credentials": {
+          "title": "Restrinja as credenciais a este namespace",
+          "message": "Na Kestra Enterprise Edition, você pode configurar credenciais no nível do namespace, para que as tasks deste namespace e de seus filhos solicitem e atualizem tokens de acesso em tempo de execução, em vez de armazená-los nos flows. Uma credencial definida em um namespace pai é herdada por todos os namespaces filhos."
+        },
         "assets": {
           "title": "Centralizar Gestão de Ativos",
           "message": "Na Kestra Enterprise Edition, Assets mantém um inventário ativo de recursos com os quais seus workflows interagem. Esses recursos podem ser tabelas de banco de dados, máquinas virtuais, arquivos ou qualquer sistema externo com o qual você trabalhe."
@@ -1469,6 +1497,11 @@
         "policies": {
           "title": "Aplicar Regras de Governança Neste namespace",
           "message": "Na Kestra Enterprise Edition, Políticas permitem definir regras que se aplicam a cada flow neste namespace e seus filhos — injetar padrões compartilhados, restringir valores de propriedade, bloquear plugins e exigir labels de conformidade, com cada alteração totalmente visível para os autores do flow."
+        },
+        "reusable-inputs": {
+          "label": "Inputs Reutilizáveis",
+          "title": "Defina Inputs Uma Vez e Reutilize-os em Qualquer Lugar",
+          "message": "Na Kestra Enterprise Edition, os inputs reutilizáveis permitem definir uma vez um grupo nomeado de inputs tipados no nível do namespace e referenciá-lo em qualquer flow. Um conjunto em um namespace pai fica disponível para os namespaces filhos, assim as equipes compartilham as mesmas definições de inputs em vez de repeti-las em cada flow."
         },
         "history": {
           "title": "Gerenciar Histórico de Revisões em Um Só Lugar",

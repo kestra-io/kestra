@@ -242,6 +242,7 @@
       "last7days": "過去7日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
+      "allTime": "すべての期間",
       "next5minutes": "次の5分",
       "next15minutes": "次の15分",
       "next1hour": "次の1時間",
@@ -523,8 +524,25 @@
       "attempts": "{count} 回の試行 | {count} 回の試行",
       "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
     },
+    "execution_mobile": {
+      "failed_task": "失敗した task",
+      "view_task_logs": "task の logs を表示",
+      "revision_short": "リビジョン {revision}",
+      "more_labels": "+{count} 件の label | +{count} 件の label",
+      "fewer_labels": "label の表示を減らす",
+      "jump_to_first_failure": "最初の失敗へ移動",
+      "open_logs": "logs を開く"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "サインイン後",
+      "execution_tab": "実行 {id} · {tab} タブ",
+      "execution": "実行 {id}",
+      "tab": "{tab} タブ"
+    },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
+    "workspace": "ワークスペース",
+    "resources": "リソース",
     "usage": "使用",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -1380,6 +1398,12 @@
           "third": "シークレットをロードするためにKestraインスタンスを再起動してください。"
         }
       },
+      "credentials": {
+        "label": "認証情報",
+        "header": "認証情報",
+        "title": "一度の認証を、すべてのtaskで再利用",
+        "message": "Kestra Enterprise Editionでは、サーバー間認証をクレデンシャルとして一度設定できます。これにより、アクセストークンはflowにハードコードされるのではなく、実行時に要求および更新されます。クレデンシャルはtenantまたはnamespaceレベルで作成でき、任意のtaskから参照できます。"
+      },
       "apps": {
         "title": "Kestraでカスタムアプリを構築する",
         "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
@@ -1458,6 +1482,10 @@
           "title": "秘密を安全に管理する方法",
           "message": "Kestra Enterprise Editionでは、namespaceレベルでシークレットを保存および制御できるため、リスクを最小限に抑え、各チームの認証情報が分離された状態を保てます。ネストされた階層により、親namespaceで認証情報を設定すると、すべての子namespaceに継承されます。専用のシークレットマネージャーと詳細なnamespaceレベルの権限設定のサポートにより、セキュリティとコンプライアンスがさらに強化されます。"
         },
+        "credentials": {
+          "title": "認証情報をこのnamespaceに限定する",
+          "message": "Kestra Enterprise Editionでは、namespaceレベルでクレデンシャルを設定できます。これにより、このnamespaceとその子namespaceのtaskは、アクセストークンをflowに保存するのではなく、実行時に要求および更新します。親namespaceで定義したクレデンシャルは、すべての子namespaceに継承されます。"
+        },
         "assets": {
           "title": "資産管理の集中化",
           "message": "Kestra Enterprise Editionでは、Assetsはワークフローがやり取りするリソースのライブインベントリを保持します。これらのリソースには、データベーステーブル、仮想マシン、ファイル、または使用する外部システムが含まれます。"
@@ -1469,6 +1497,11 @@
         "policies": {
           "title": "この namespace 全体にガバナンスルールを適用する",
           "message": "Kestra Enterprise Editionでは、ポリシーにより、このnamespaceとその子孫のすべてのflowに適用されるルールを定義できます。共有のデフォルト値の注入、プロパティ値の制限、プラグインのブロック、コンプライアンスlabelの要求などが可能になり、すべての変更はflowの作成者に完全に表示されます。"
+        },
+        "reusable-inputs": {
+          "label": "再利用可能な入力",
+          "title": "inputを一度定義して、どこでも再利用",
+          "message": "Kestra Enterprise Editionでは、再利用可能なinputを使うと、型付きinputの名前付きグループをnamespaceレベルで一度定義し、任意のflowから参照できます。親namespaceのセットは子namespaceでも利用できるため、チームはflowごとに繰り返すことなく同じinput定義を共有できます。"
         },
         "history": {
           "title": "一箇所でリビジョン履歴を管理",

@@ -4,7 +4,7 @@
         :disabled="!enabled"
         trigger="click"
         placement="bottom-start"
-        :width="400"
+        width="min(400px, 92vw)"
         :showArrow="false"
         :popperStyle="{padding: '0', overflow: 'hidden', borderRadius: '0.875rem', background: 'var(--ks-bg-elevated)', boxShadow: '0px 8px 24px 0px var(--ks-shadow-elevated)'}"
     >

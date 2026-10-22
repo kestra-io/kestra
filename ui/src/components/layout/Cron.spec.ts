@@ -40,11 +40,10 @@ describe("Cron", () => {
         expect(wrapper.text()).toContain("12:00 AM")
     })
 
-    test("handles an invalid cron expression without crashing", () => {
+    test("falls back to the raw expression when the cron expression is invalid", () => {
         vi.spyOn(Utils, "getLang").mockReturnValue("en")
         const wrapper = mount(Cron, {props: {cronExpression: "invalid-cron-expression"}})
 
-        expect(wrapper.exists()).toBe(true)
-        expect(wrapper.text()).not.toBe("")
+        expect(wrapper.text()).toBe("invalid-cron-expression")
     })
 })

@@ -1,6 +1,5 @@
 import {describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import {defineComponent} from "vue"
 import TimelineToolbar from "./TimelineToolbar.vue"
 
@@ -13,14 +12,10 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     }
 })
 
-const i18n = createI18n({
-    legacy: false,
-    globalInjection: true,
-    locale: "en",
-    messages: {en: {executionsTimeline: {toolbar: {
-        range: "{start} → {end} ({duration})",
-    }}}},
-})
+const messages = {executionsTimeline: {
+    toolbar: {range: "{start} → {end} ({duration})"},
+    scrubber: {ignoredFilters: "Ignores {filters}"},
+}}
 
 const stubs = {
     KsButton: defineComponent({name: "KsButton", template: "<button type=\"button\"><slot /></button>"}),
@@ -28,16 +23,17 @@ const stubs = {
     KsText: defineComponent({name: "KsText", template: "<span><slot /></span>"}),
     TimelineScrubber: defineComponent({
         name: "TimelineScrubber",
-        props: ["domainStartMs", "domainEndMs", "rangeStartMs", "rangeEndMs", "executions", "widthPx"],
+        props: ["domainStartMs", "domainEndMs", "rangeStartMs", "rangeEndMs", "density", "densityGranularityMs", "widthPx"],
         emits: ["change"],
         template: "<div data-test=\"range-scrubber\" />",
     }),
 }
 
-function mountToolbar(props: {rangeStartMs: number; rangeEndMs: number; expanded?: boolean}) {
-    return mount(TimelineToolbar, {
-        props: {expanded: false, domainExecutions: [], scrubberWidthPx: 600, ...props},
-        global: {plugins: [i18n], stubs},
+function mountToolbar(props: {rangeStartMs: number; rangeEndMs: number; expanded?: boolean; densityIgnoredFilters?: string[]}) {
+    return i18nMount(TimelineToolbar, {
+        messages,
+        props: {expanded: false, density: [], densityGranularityMs: 60_000, densityIgnoredFilters: [], scrubberWidthPx: 600, ...props},
+        global: {stubs},
     })
 }
 
@@ -59,5 +55,17 @@ describe("TimelineToolbar", () => {
         await wrapper.findComponent({name: "TimelineScrubber"}).vm.$emit("change", {startMs: 1000, endMs: 2000})
 
         expect(wrapper.emitted("custom-range")).toEqual([[{startMs: 1000, endMs: 2000}]])
+    })
+
+    it("should say which filters the density bar cannot apply", () => {
+        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000, densityIgnoredFilters: ["Hierarchy", "Search"]})
+
+        expect(wrapper.get("[data-test=timeline-density-ignored]").text()).toBe("Ignores Hierarchy, Search")
+    })
+
+    it("should stay quiet when the density bar applies every filter", () => {
+        const wrapper = mountToolbar({rangeStartMs: 0, rangeEndMs: 60 * 60 * 1000})
+
+        expect(wrapper.find("[data-test=timeline-density-ignored]").exists()).toBe(false)
     })
 })

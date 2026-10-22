@@ -56,7 +56,7 @@
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {dateUtils, durationUtils} from "@kestra-io/design-system"
-    import {densitySeries, isFailedLikeState, type StateBucket, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {densitySeries, isFailedLikeState, type DensityPoint, type StateBucket} from "../../../utils/executionsTimeline"
     import {MIN_RANGE_MS} from "../../../composables/useTimelineRange"
 
     const props = defineProps<{
@@ -64,7 +64,8 @@
         domainEndMs: number;
         rangeStartMs: number;
         rangeEndMs: number;
-        executions: TimelineExecution[];
+        density: DensityPoint[];
+        densityGranularityMs: number;
         widthPx: number;
     }>()
 
@@ -88,12 +89,14 @@
     const MIN_BUCKETS = 16
     const MAX_BUCKETS = 140
 
-    const bucketCount = computed(() =>
-        Math.min(MAX_BUCKETS, Math.max(MIN_BUCKETS, Math.round(props.widthPx / BUCKET_TARGET_WIDTH_PX))),
-    )
+    const bucketCount = computed(() => {
+        const byWidth = Math.min(MAX_BUCKETS, Math.max(MIN_BUCKETS, Math.round(props.widthPx / BUCKET_TARGET_WIDTH_PX)))
+        const byGranularity = Math.max(1, Math.round(domainSpanMs.value / Math.max(props.densityGranularityMs, 1)))
+        return Math.min(byWidth, byGranularity)
+    })
 
     const buckets = computed(() =>
-        densitySeries(props.executions, props.domainStartMs, props.domainEndMs, bucketCount.value),
+        densitySeries(props.density, props.domainStartMs, props.domainEndMs, bucketCount.value),
     )
 
     const hoveredBucket = computed(() => {
@@ -346,6 +349,30 @@
 
     .scrubber-segment[data-state="CANCELLED"] {
         background: var(--ks-chart-cancelled);
+    }
+
+    .scrubber-segment[data-state="SKIPPED"] {
+        background: var(--ks-chart-skipped);
+    }
+
+    .scrubber-segment[data-state="RESTARTED"] {
+        background: var(--ks-chart-restarted);
+    }
+
+    .scrubber-segment[data-state="RETRIED"] {
+        background: var(--ks-chart-retried);
+    }
+
+    .scrubber-segment[data-state="RETRYING"] {
+        background: var(--ks-chart-retrying);
+    }
+
+    .scrubber-segment[data-state="BREAKPOINT"] {
+        background: var(--ks-chart-breakpoint);
+    }
+
+    .scrubber-segment[data-state="SUBMITTED"] {
+        background: var(--ks-chart-created);
     }
 
     .scrubber-selection {

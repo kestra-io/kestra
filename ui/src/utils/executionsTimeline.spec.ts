@@ -4,7 +4,11 @@ import {
     axisTickCount,
     axisTickFormat,
     bucketize,
+    densityPointsFrom,
     densitySeries,
+    MAX_DENSITY_REQUESTS,
+    planDensityRequests,
+    stateChartColor,
     buildAxisTicks,
     countByState,
     groupByNamespace,
@@ -216,11 +220,79 @@ describe("densitySeries", () => {
             {id: "1", namespace: "n", flowId: "f", state: "SUCCESS", startMs: 100, endMs: 200},
         ]
 
-        const series = densitySeries(executions, 0, 1_000, 10)
+        const series = densitySeries([{startMs: 100, state: "SUCCESS", count: 1}], 0, 1_000, 10)
 
         expect(series).toHaveLength(10)
         expect(series.filter(bucket => bucket.total === 0)).toHaveLength(9)
         expect(bucketize(executions, 0, 1_000, 30)).toHaveLength(1)
+    })
+
+    it("should add up aggregated counts instead of counting one run per point", () => {
+        const series = densitySeries([
+            {startMs: 100, state: "SUCCESS", count: 1200},
+            {startMs: 150, state: "FAILED", count: 30},
+        ], 0, 1_000, 10)
+
+        expect(series[1].total).toBe(1230)
+        expect(series[1].byState).toEqual({SUCCESS: 1200, FAILED: 30})
+    })
+})
+
+describe("densityPointsFrom", () => {
+    it("should read the date, state and count of each aggregated row", () => {
+        expect(densityPointsFrom([
+            {date: "2026-10-19T10:00:00.000Z", state: "FAILED", total: 4},
+            {date: "not a date", state: "SUCCESS", total: 1},
+        ])).toEqual([{startMs: Date.parse("2026-10-19T10:00:00.000Z"), state: "FAILED", count: 4}])
+    })
+})
+
+describe("planDensityRequests", () => {
+    const HOUR_MS = 60 * 60 * 1000
+    const NOW_MS = Date.parse("2026-10-22T12:00:00.000Z")
+
+    it("should ask for minutes over a short window, in one request reaching now", () => {
+        const plan = planDensityRequests(NOW_MS - 2 * HOUR_MS, NOW_MS, NOW_MS)
+
+        expect(plan.granularityMs).toBe(60_000)
+        expect(plan.requests).toEqual([{startMs: NOW_MS - 2 * HOUR_MS, endMs: NOW_MS, lookAheadEndMs: undefined}])
+    })
+
+    it("should cover the default two-day context in hours, chunked so the backend keeps an hourly grouping", () => {
+        const plan = planDensityRequests(NOW_MS - 48 * HOUR_MS, NOW_MS, NOW_MS)
+
+        expect(plan.granularityMs).toBe(HOUR_MS)
+        expect(plan.requests.length).toBeLessThanOrEqual(MAX_DENSITY_REQUESTS)
+        expect(plan.requests[0].startMs).toBe(NOW_MS - 48 * HOUR_MS)
+        expect(plan.requests.at(-1)!.endMs).toBe(NOW_MS)
+        plan.requests.slice(1).forEach((request, index) => expect(request.startMs).toBe(plan.requests[index].endMs))
+        plan.requests.forEach(request => expect((request.lookAheadEndMs ?? NOW_MS) - request.startMs).toBeLessThan(48 * HOUR_MS))
+    })
+
+    it("should let a run that ends after its chunk still count, by looking one chunk ahead", () => {
+        const plan = planDensityRequests(NOW_MS - 48 * HOUR_MS, NOW_MS, NOW_MS)
+        const [first, second] = plan.requests
+
+        expect(first.lookAheadEndMs).toBe(Math.min(first.endMs + (second.endMs - second.startMs), NOW_MS))
+    })
+
+    it("should bound a past window by its own end instead of now", () => {
+        const plan = planDensityRequests(NOW_MS - 10 * 24 * HOUR_MS, NOW_MS - 9 * 24 * HOUR_MS, NOW_MS)
+
+        expect(plan.requests.at(-1)!.lookAheadEndMs).toBeDefined()
+    })
+
+    it("should never send more than the request budget, even over a year", () => {
+        const plan = planDensityRequests(NOW_MS - 2 * 365 * 24 * HOUR_MS, NOW_MS, NOW_MS)
+
+        expect(plan.requests.length).toBeLessThanOrEqual(MAX_DENSITY_REQUESTS)
+    })
+})
+
+describe("stateChartColor", () => {
+    it("should map a state to its chart token, and states without one to the closest token", () => {
+        expect(stateChartColor("BREAKPOINT")).toBe("var(--ks-chart-breakpoint)")
+        expect(stateChartColor("SUBMITTED")).toBe("var(--ks-chart-created)")
     })
 })
 

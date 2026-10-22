@@ -1,6 +1,6 @@
-import {afterEach, describe, expect, it, vi} from "vitest"
-import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
+import {flushPromises, VueWrapper} from "@vue/test-utils"
 import {createMemoryHistory, createRouter, type Router} from "vue-router"
 import {defineComponent, nextTick} from "vue"
 
@@ -12,6 +12,14 @@ const store = vi.hoisted(() => ({
 
 vi.mock("../../../stores/executions", () => ({
     useExecutionsStore: () => store,
+}))
+
+const density = vi.hoisted(() => ({
+    fetchDensity: vi.fn(),
+}))
+
+vi.mock("../../../composables/useExecutionsDensity", () => ({
+    useExecutionsDensity: () => density,
 }))
 
 const filterConfig = vi.hoisted(() => ({
@@ -39,22 +47,15 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
 
 import ExecutionsTimeline from "./ExecutionsTimeline.vue"
 
-const i18n = createI18n({
-    legacy: false,
-    globalInjection: true,
-    locale: "en",
-    messages: {
-        en: {
-            now: "Now",
-            executionsTimeline: {
-                breadcrumb: {all: "All", total: "Total {count}", failed: "Failed {count}"},
-                error: {title: "Error title", description: "Error description"},
-                truncated: {description: "Showing {shown} of {total}"},
-                empty: {description: "Empty", resetFilters: "Reset filters", widenRange: "Widen range"},
-            },
-        },
+const messages = {
+    now: "Now",
+    executionsTimeline: {
+        breadcrumb: {all: "All", total: "Total {count}", failed: "Failed {count}"},
+        error: {title: "Error title", description: "Error description"},
+        truncated: {description: "Showing {shown} of {total}"},
+        empty: {description: "Empty", resetFilters: "Reset filters", widenRange: "Widen range"},
     },
-})
+}
 
 const TimelineRowStub = defineComponent({
     name: "TimelineRow",
@@ -82,7 +83,7 @@ const ChartLegendStub = defineComponent({
 
 const TimelineToolbarStub = defineComponent({
     name: "TimelineToolbar",
-    props: ["rangeStartMs", "rangeEndMs", "expanded", "domainExecutions", "scrubberWidthPx"],
+    props: ["rangeStartMs", "rangeEndMs", "expanded", "density", "densityGranularityMs", "densityIgnoredFilters", "scrubberWidthPx"],
     template: "<div />",
 })
 
@@ -125,11 +126,14 @@ async function settle() {
     await flushPromises()
 }
 
-async function mountTimeline(router: Router, {query = {}, props = {}}: {query?: Record<string, string>; props?: Record<string, unknown>} = {}) {
+const DEFAULT_TIME_RANGE = {"filters[timeRange][EQUALS]": "PT24H"}
+
+async function mountTimeline(router: Router, {query = DEFAULT_TIME_RANGE, props = {}}: {query?: Record<string, string>; props?: Record<string, unknown>} = {}) {
     await router.push({name: "executions/list", params: {tenant: "main"}, query})
-    const wrapper = mount(ExecutionsTimeline, {
+    const wrapper = i18nMount(ExecutionsTimeline, {
+        messages,
         props,
-        global: {plugins: [i18n, router], stubs},
+        global: {plugins: [router], stubs},
     })
     await settle()
     return wrapper
@@ -138,9 +142,15 @@ async function mountTimeline(router: Router, {query = {}, props = {}}: {query?: 
 describe("ExecutionsTimeline", () => {
     let wrapper: VueWrapper | undefined
 
+    beforeEach(() => {
+        density.fetchDensity.mockResolvedValue({points: [], granularityMs: 60_000, ignoredFilters: []})
+    })
+
     afterEach(() => {
         wrapper?.unmount()
         store.findExecutions.mockReset()
+        density.fetchDensity.mockReset()
+        vi.useRealTimers()
     })
 
     it("should agree the breadcrumb failed count with the sum of per-row failed counts when a KILLING execution is present", async () => {
@@ -246,17 +256,15 @@ describe("ExecutionsTimeline", () => {
 
         const router = createTestRouter()
         wrapper = await mountTimeline(router)
-        const [staleMain, staleDomain] = resolvers.splice(0)
+        const [staleMain] = resolvers.splice(0)
 
         await router.push({query: {"filters[timeRange][EQUALS]": "PT1H"}})
         await settle()
-        const [freshMain, freshDomain] = resolvers.splice(0)
+        const [freshMain] = resolvers.splice(0)
 
         freshMain({results: [buildExecution("fresh", "SUCCESS")], total: 1})
-        freshDomain({results: [], total: 0})
         await settle()
         staleMain({results: [buildExecution("stale-1", "FAILED"), buildExecution("stale-2", "FAILED")], total: 2})
-        staleDomain({results: [], total: 0})
         await settle()
 
         expect(wrapper.find(".stub-row").attributes("data-total")).toBe("1")
@@ -310,21 +318,56 @@ describe("ExecutionsTimeline", () => {
         expect(wrapper.emitted("update:drillFlowId")?.at(-1)).toEqual(["flow-b"])
     })
 
-    it("should keep the time range when the empty state resets the other filters", async () => {
+    it("should hand the reset to the page so it can restore the filter bar's defaults", async () => {
         store.findExecutions.mockResolvedValue({results: [], total: 0})
 
         const router = createTestRouter()
-        wrapper = await mountTimeline(router, {query: {
-            "filters[timeRange][EQUALS]": "PT1H",
-            "filters[state][IN]": "FAILED",
-            "q": "nightly",
-        }})
+        wrapper = await mountTimeline(router)
         await wrapper.findAll("button").find(button => button.text() === "Reset filters")!.trigger("click")
+
+        expect(wrapper.emitted("reset-filters")).toHaveLength(1)
+    })
+
+    it("should hold its first load until the page's default time range lands in the URL", async () => {
+        store.findExecutions.mockResolvedValue({results: [], total: 0})
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router, {query: {}})
+        expect(store.findExecutions).not.toHaveBeenCalled()
+
+        await router.replace({query: DEFAULT_TIME_RANGE})
         await settle()
 
-        const query = router.currentRoute.value.query
-        expect(query["filters[timeRange][EQUALS]"]).toBe("PT1H")
-        expect(query["filters[state][IN]"]).toBeUndefined()
-        expect(query.q).toBeUndefined()
+        expect(store.findExecutions).toHaveBeenCalledTimes(1)
+        expect(store.findExecutions.mock.calls[0][0]).toMatchObject(DEFAULT_TIME_RANGE)
+    })
+
+    it("should load anyway when no default time range ever lands", async () => {
+        vi.useFakeTimers()
+        store.findExecutions.mockResolvedValue({results: [], total: 0})
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router, {query: {}})
+        expect(store.findExecutions).not.toHaveBeenCalled()
+
+        await vi.advanceTimersByTimeAsync(2000)
+
+        expect(store.findExecutions).toHaveBeenCalledTimes(1)
+    })
+
+    it("should feed the density bar from the aggregate over the context window, not from the capped rows", async () => {
+        store.findExecutions.mockResolvedValue({results: [buildExecution("1", "SUCCESS")], total: 5000})
+        density.fetchDensity.mockResolvedValue({points: [{startMs: 1, state: "SUCCESS", count: 5000}], granularityMs: 3_600_000, ignoredFilters: ["childFilter"]})
+
+        const router = createTestRouter()
+        wrapper = await mountTimeline(router)
+
+        const [query, startMs, endMs] = density.fetchDensity.mock.calls[0]
+        const toolbar = wrapper.getComponent(TimelineToolbarStub)
+        expect(query).toMatchObject(DEFAULT_TIME_RANGE)
+        expect(endMs - startMs).toBe(2 * (toolbar.props("rangeEndMs") - toolbar.props("rangeStartMs")))
+        expect(toolbar.props("density")).toEqual([{startMs: 1, state: "SUCCESS", count: 5000}])
+        expect(toolbar.props("densityGranularityMs")).toBe(3_600_000)
+        expect(toolbar.props("densityIgnoredFilters")).toEqual(["childFilter"])
     })
 })

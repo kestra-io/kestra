@@ -4,7 +4,9 @@
             :rangeStartMs="rangeStartMs"
             :rangeEndMs="rangeEndMs"
             :expanded="expanded"
-            :domainExecutions="domainExecutions"
+            :density="density.points"
+            :densityGranularityMs="density.granularityMs"
+            :densityIgnoredFilters="densityIgnoredFilterLabels"
             :scrubberWidthPx="availableWidthPx"
             @custom-range="({startMs, endMs}) => setRange(startMs, endMs)"
             @zoom="zoom"
@@ -49,7 +51,7 @@
                         {{ $t("executionsTimeline.empty.description") }}
                     </template>
                     <div class="empty-actions">
-                        <KsButton @click="resetFilters">
+                        <KsButton @click="emit('reset-filters')">
                             {{ $t("executionsTimeline.empty.resetFilters") }}
                         </KsButton>
                         <KsButton type="primary" @click="applyPreset('PT168H')">
@@ -113,14 +115,16 @@
     import {useExecutionsStore} from "../../../stores/executions"
     import {useExecutionsQueryScope} from "../../../composables/useExecutionsQueryScope"
     import {useTimelineRange, computeScrubberDomain, START_QUERY_KEY, END_QUERY_KEY, TIME_RANGE_QUERY_KEY} from "../../../composables/useTimelineRange"
+    import {useExecutionsDensity, type ExecutionsDensity} from "../../../composables/useExecutionsDensity"
     import {useExecutionFilter} from "../../filter/configurations/executionFilter"
     import {useFlowExecutionFilter} from "../../filter/configurations/flowExecutionFilter"
-    import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, isWithinNamespace, type TimelineExecution} from "../../../utils/executionsTimeline"
+    import {groupByNamespace, countByState, buildAxisTicks, axisTickCount, axisTickFormat, isFailedLikeState, isWithinNamespace, stateChartColor, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const MAX_FETCHED_EXECUTIONS = 1000
     const STATE_EXCLUDE_KEY = "filters[state][NOT_IN]"
     const TIME_FILTER_KEYS = [TIME_RANGE_QUERY_KEY, START_QUERY_KEY, END_QUERY_KEY]
     const ROW_LABEL_WIDTH_PX = 180
+    const ROUTE_SETTLE_TIMEOUT_MS = 2000
 
     const props = withDefaults(defineProps<{
         namespace?: string;
@@ -135,6 +139,10 @@
         labels: undefined,
         childFilter: undefined,
     })
+
+    const emit = defineEmits<{
+        "reset-filters": [];
+    }>()
 
     const {t} = useI18n()
     const route = useRoute()
@@ -238,28 +246,12 @@
         }))
     })
 
-    const STATE_CHART_COLOR_VARS: Record<string, string> = {
-        SUCCESS: "var(--ks-chart-success)",
-        FAILED: "var(--ks-chart-failed)",
-        WARNING: "var(--ks-chart-warning)",
-        PAUSED: "var(--ks-chart-paused)",
-        CANCELLED: "var(--ks-chart-cancelled)",
-        SKIPPED: "var(--ks-chart-skipped)",
-        CREATED: "var(--ks-chart-created)",
-        RESTARTED: "var(--ks-chart-restarted)",
-        RETRIED: "var(--ks-chart-retried)",
-        RETRYING: "var(--ks-chart-retrying)",
-        QUEUED: "var(--ks-chart-queued)",
-        RUNNING: "var(--ks-chart-running)",
-        KILLING: "var(--ks-chart-killing)",
-        KILLED: "var(--ks-chart-killed)",
-    }
 
     const legendExecutions = ref<TimelineExecution[]>([])
     const legendItems = computed(() =>
         countByState(legendExecutions.value).map(({state, count}) => ({
             label: state,
-            color: STATE_CHART_COLOR_VARS[state] ?? `var(--ks-chart-${state.toLowerCase()})`,
+            color: stateChartColor(state),
             count,
         })),
     )
@@ -344,15 +336,11 @@
         })
     }
 
-    function resetFilters() {
-        const {page: _p, size: _s, sort: _so, ...rest} = route.query
-        const cleared = Object.fromEntries(Object.entries(rest).filter(([key]) =>
-            TIME_FILTER_KEYS.includes(key) || (!key.startsWith("filters[") && key !== "q"),
-        ))
-        router.push({query: cleared})
-    }
-
-    const domainExecutions = ref<TimelineExecution[]>([])
+    const {fetchDensity} = useExecutionsDensity()
+    const density = ref<ExecutionsDensity>({points: [], granularityMs: 60_000, ignoredFilters: []})
+    const densityIgnoredFilterLabels = computed(() => density.value.ignoredFilters.map(field =>
+        field === "q" ? t("search") : activeFilterConfiguration.value.keys?.find(key => key.key === field)?.label ?? field,
+    ))
 
     const fetchedTotal = ref(0)
     const isTruncated = computed(() => fetchedTotal.value > rawExecutions.value.length)
@@ -385,14 +373,9 @@
                 commit: false,
             })
             const [domainStartMs, domainEndMs] = computeScrubberDomain(rangeStartMs.value, rangeEndMs.value)
-            const {[TIME_RANGE_QUERY_KEY]: _relativeRange, ...domainQuery} = query
-            const [response, domainResponse] = await Promise.all([
+            const [response, fetchedDensity] = await Promise.all([
                 executionsStore.findExecutions(query) as Promise<PagedResultsApiLightExecution>,
-                executionsStore.findExecutions({
-                    ...domainQuery,
-                    [START_QUERY_KEY]: new Date(domainStartMs).toISOString(),
-                    [END_QUERY_KEY]: new Date(domainEndMs).toISOString(),
-                }) as Promise<PagedResultsApiLightExecution>,
+                fetchDensity(query, domainStartMs, domainEndMs),
             ])
             if (isStale()) return
 
@@ -407,7 +390,7 @@
 
             rawExecutions.value = fetched
             fetchedTotal.value = response.total ?? response.results?.length ?? 0
-            domainExecutions.value = mapToTimelineExecutions(domainResponse.results)
+            density.value = fetchedDensity
             legendExecutions.value = legend
         } catch (fetchError) {
             if (isStale()) return
@@ -429,7 +412,14 @@
         })
     })
 
-    watch(fetchKey, fetchExecutions, {immediate: true})
+    const hasTimeFilter = computed(() => TIME_FILTER_KEYS.some(key => route.query[key] !== undefined))
+    const settleTimedOut = ref(false)
+    const isRouteSettled = computed(() => hasTimeFilter.value || settleTimedOut.value)
+    const settleTimer = setTimeout(() => settleTimedOut.value = true, ROUTE_SETTLE_TIMEOUT_MS)
+
+    watch([fetchKey, isRouteSettled], () => {
+        if (isRouteSettled.value) fetchExecutions()
+    }, {immediate: true})
 
     function reload() {
         const previousKey = fetchKey.value
@@ -452,6 +442,7 @@
     })
 
     onUnmounted(() => {
+        clearTimeout(settleTimer)
         resizeObserver?.disconnect()
     })
 </script>

@@ -7,11 +7,16 @@
                 :domainEndMs="domainEndMs"
                 :rangeStartMs="rangeStartMs"
                 :rangeEndMs="rangeEndMs"
-                :executions="domainExecutions"
+                :density="density"
+                :densityGranularityMs="densityGranularityMs"
                 :widthPx="scrubberWidthPx"
                 @change="onScrubberChange"
             />
         </div>
+
+        <KsText v-if="densityIgnoredFilters.length > 0" size="small" class="density-note" data-test="timeline-density-ignored">
+            {{ $t("executionsTimeline.scrubber.ignoredFilters", {filters: densityIgnoredFilters.join(", ")}) }}
+        </KsText>
 
         <div class="secondary-controls">
             <span class="range-readout" data-test="timeline-range-readout">
@@ -62,14 +67,16 @@
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue"
     import {dateUtils, durationUtils} from "@kestra-io/design-system"
     import TimelineScrubber from "./TimelineScrubber.vue"
-    import type {TimelineExecution} from "../../../utils/executionsTimeline"
+    import type {DensityPoint} from "../../../utils/executionsTimeline"
     import {computeScrubberDomain} from "../../../composables/useTimelineRange"
 
     const props = defineProps<{
         rangeStartMs: number;
         rangeEndMs: number;
         expanded: boolean;
-        domainExecutions: TimelineExecution[];
+        density: DensityPoint[];
+        densityGranularityMs: number;
+        densityIgnoredFilters: string[];
         scrubberWidthPx: number;
     }>()
 
@@ -119,6 +126,10 @@
 
 .range-scrubber {
     width: 100%;
+}
+
+.density-note {
+    color: var(--ks-text-secondary);
 }
 
 .secondary-controls {

@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from "vitest"
-import {mount, type VueWrapper} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
+import {type VueWrapper} from "@vue/test-utils"
 
 vi.mock("@kestra-io/design-system", async (importOriginal) => {
     const actual = await importOriginal<typeof import("@kestra-io/design-system")>()
@@ -11,15 +11,10 @@ vi.mock("@kestra-io/design-system", async (importOriginal) => {
     }
 })
 import TimelineScrubber from "./TimelineScrubber.vue"
-import type {TimelineExecution} from "../../../utils/executionsTimeline"
+import type {DensityPoint} from "../../../utils/executionsTimeline"
 import {MIN_RANGE_MS} from "../../../composables/useTimelineRange"
 
-const i18n = createI18n({
-    legacy: false,
-    globalInjection: true,
-    locale: "en",
-    messages: {en: {executionsTimeline: {scrubber: {label: "density"}, toolbar: {range: "{start} {end} {duration}"}}}},
-})
+const messages = {executionsTimeline: {scrubber: {label: "density"}, toolbar: {range: "{start} {end} {duration}"}}}
 
 const RANGE_START = 0
 const RANGE_END = 86_400_000
@@ -28,23 +23,24 @@ const DOMAIN_END = 129_600_000
 const DOMAIN_SPAN = DOMAIN_END - DOMAIN_START
 const TRACK_WIDTH = 500
 
-const executions: TimelineExecution[] = [
-    {id: "1", namespace: "company.team", flowId: "flow", state: "SUCCESS", startMs: 0.1 * RANGE_END, endMs: 0.1 * RANGE_END + 1_000},
-    {id: "2", namespace: "company.team", flowId: "flow", state: "FAILED", startMs: 0.8 * RANGE_END, endMs: 0.8 * RANGE_END + 1_000},
+const density: DensityPoint[] = [
+    {startMs: 0.1 * RANGE_END, state: "SUCCESS", count: 1},
+    {startMs: 0.8 * RANGE_END, state: "FAILED", count: 1},
 ]
 
-function mountScrubber(overrides: {executions?: TimelineExecution[]} = {}) {
-    const wrapper = mount(TimelineScrubber, {
+function mountScrubber(overrides: {density?: DensityPoint[]; densityGranularityMs?: number} = {}) {
+    const wrapper = i18nMount(TimelineScrubber, {
+        messages,
         props: {
             domainStartMs: DOMAIN_START,
             domainEndMs: DOMAIN_END,
             rangeStartMs: RANGE_START,
             rangeEndMs: RANGE_END,
-            executions,
+            density,
+            densityGranularityMs: 60_000,
             widthPx: TRACK_WIDTH,
             ...overrides,
         },
-        global: {plugins: [i18n]},
     })
 
     // jsdom never lays elements out, so the track measures 0 and every pointer position would collapse onto the range start.
@@ -129,19 +125,12 @@ describe("TimelineScrubber", () => {
     })
 
     it("should stack a failure under the successes it shares a bucket with instead of hiding it", () => {
-        const busy: TimelineExecution[] = [
-            ...Array.from({length: 5}, (_, index) => ({
-                id: `ok-${index}`,
-                namespace: "company.team",
-                flowId: "flow",
-                state: "SUCCESS",
-                startMs: 0.5 * RANGE_END,
-                endMs: 0.5 * RANGE_END + 1_000,
-            })),
-            {id: "ko", namespace: "company.team", flowId: "flow", state: "FAILED", startMs: 0.5 * RANGE_END, endMs: 0.5 * RANGE_END + 1_000},
+        const busy: DensityPoint[] = [
+            {startMs: 0.5 * RANGE_END, state: "SUCCESS", count: 5},
+            {startMs: 0.5 * RANGE_END, state: "FAILED", count: 1},
         ]
 
-        const wrapper = mountScrubber({executions: busy})
+        const wrapper = mountScrubber({density: busy})
 
         expect(wrapper.findAll(".scrubber-segment").map(segment => segment.attributes("data-state"))).toEqual(["FAILED", "SUCCESS"])
     })
@@ -173,4 +162,9 @@ describe("TimelineScrubber", () => {
         expect(wrapper.findAll(".scrubber-axis span")).toHaveLength(2)
     })
 
+    it("should not draw finer bars than the aggregated counts it was given", () => {
+        const wrapper = mountScrubber({densityGranularityMs: DOMAIN_SPAN / 4})
+
+        expect(wrapper.findAll(".scrubber-bar")).toHaveLength(4)
+    })
 })

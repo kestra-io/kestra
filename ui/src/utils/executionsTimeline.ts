@@ -129,8 +129,14 @@ export function shouldBucketRow(
     return false
 }
 
+export interface DensityPoint {
+    startMs: number;
+    state: string;
+    count: number;
+}
+
 function fillBuckets(
-    executions: TimelineExecution[],
+    points: DensityPoint[],
     rangeStartMs: number,
     rangeEndMs: number,
     bucketCount: number,
@@ -144,11 +150,11 @@ function fillBuckets(
         dominantState: "",
     }))
 
-    for (const execution of executions) {
-        const index = slotIndexFor(execution.startMs, rangeStartMs, rangeEndMs, bucketCount, bucketSpanMs)
+    for (const point of points) {
+        const index = slotIndexFor(point.startMs, rangeStartMs, rangeEndMs, bucketCount, bucketSpanMs)
         const bucket = buckets[index]
-        bucket.total += 1
-        bucket.byState[execution.state] = (bucket.byState[execution.state] ?? 0) + 1
+        bucket.total += point.count
+        bucket.byState[point.state] = (bucket.byState[point.state] ?? 0) + point.count
     }
 
     for (const bucket of buckets) {
@@ -164,6 +170,14 @@ function fillBuckets(
     return buckets
 }
 
+export function densityPointsFrom(rows: Record<string, unknown>[]): DensityPoint[] {
+    return rows
+        .map(row => ({startMs: Date.parse(String(row.date)), state: String(row.state), count: Number(row.total)}))
+        .filter(point => !Number.isNaN(point.startMs) && point.count > 0)
+}
+
+const toPoint = (execution: TimelineExecution): DensityPoint => ({startMs: execution.startMs, state: execution.state, count: 1})
+
 export function bucketize(
     executions: TimelineExecution[],
     rangeStartMs: number,
@@ -174,11 +188,11 @@ export function bucketize(
     if (span <= 0 || availableWidthPx <= 0) return []
 
     const {slotCount, slotSpanMs} = slotResolution(span, availableWidthPx)
-    return fillBuckets(executions, rangeStartMs, rangeEndMs, slotCount, slotSpanMs).filter(bucket => bucket.total > 0)
+    return fillBuckets(executions.map(toPoint), rangeStartMs, rangeEndMs, slotCount, slotSpanMs).filter(bucket => bucket.total > 0)
 }
 
 export function densitySeries(
-    executions: TimelineExecution[],
+    points: DensityPoint[],
     rangeStartMs: number,
     rangeEndMs: number,
     bucketCount: number,
@@ -186,7 +200,55 @@ export function densitySeries(
     const span = rangeEndMs - rangeStartMs
     if (span <= 0 || bucketCount <= 0) return []
 
-    return fillBuckets(executions, rangeStartMs, rangeEndMs, bucketCount, span / bucketCount)
+    return fillBuckets(points, rangeStartMs, rangeEndMs, bucketCount, span / bucketCount)
+}
+
+const MINUTE_MS = 60_000
+const HOUR_MS = 60 * MINUTE_MS
+const DAY_MS = 24 * HOUR_MS
+
+const DENSITY_LEVELS = [
+    {granularityMs: MINUTE_MS, chunkMs: 3 * HOUR_MS, alignMs: HOUR_MS},
+    {granularityMs: HOUR_MS, chunkMs: 23 * HOUR_MS, alignMs: HOUR_MS},
+    {granularityMs: DAY_MS, chunkMs: 90 * DAY_MS, alignMs: DAY_MS},
+    {granularityMs: 7 * DAY_MS, chunkMs: 182 * DAY_MS, alignMs: DAY_MS},
+]
+const MIN_DENSITY_BUCKETS = 24
+export const MAX_DENSITY_REQUESTS = 8
+
+export interface DensityRequest {
+    startMs: number;
+    endMs: number;
+    lookAheadEndMs: number | undefined;
+}
+
+export interface DensityPlan {
+    granularityMs: number;
+    requests: DensityRequest[];
+}
+
+export function planDensityRequests(rangeStartMs: number, rangeEndMs: number, nowMs: number = Date.now()): DensityPlan {
+    const span = Math.max(rangeEndMs - rangeStartMs, 1)
+    const affordable = DENSITY_LEVELS.filter(level => Math.ceil(span / level.chunkMs) + 1 <= MAX_DENSITY_REQUESTS)
+    const detailed = affordable.filter(level => span / level.granularityMs >= MIN_DENSITY_BUCKETS)
+    const level = detailed.at(-1) ?? affordable[0] ?? DENSITY_LEVELS[DENSITY_LEVELS.length - 1]
+    const endsAtNow = nowMs - rangeEndMs < MINUTE_MS
+
+    const requests: DensityRequest[] = []
+    const alignedOriginMs = Math.floor(rangeStartMs / level.alignMs) * level.alignMs
+    let startMs = rangeStartMs
+    for (let boundary = alignedOriginMs + level.chunkMs; startMs < rangeEndMs; boundary += level.chunkMs) {
+        const endMs = Math.min(boundary, rangeEndMs)
+        const isLast = endMs >= rangeEndMs
+        requests.push({
+            startMs,
+            endMs,
+            lookAheadEndMs: isLast && endsAtNow ? undefined : Math.min(endMs + level.chunkMs, Math.max(nowMs, endMs)),
+        })
+        startMs = endMs
+    }
+
+    return {granularityMs: level.granularityMs, requests}
 }
 
 export interface StateCount {
@@ -209,10 +271,8 @@ export interface AxisTick {
     isNow: boolean;
 }
 
-const DAY_MS = 86_400_000
-
 export function axisTickFormat(rangeSpanMs: number, tickCount: number): string {
-    if (rangeSpanMs / tickCount < 60_000) return "LTS"
+    if (rangeSpanMs / tickCount < MINUTE_MS) return "LTS"
     if (rangeSpanMs < DAY_MS) return "LT"
     if (rangeSpanMs < 7 * DAY_MS) return "MMM D, LT"
     return "MMM D"
@@ -238,4 +298,13 @@ export function buildAxisTicks(rangeStartMs: number, rangeEndMs: number, tickCou
         ms: rangeStartMs + (span * i) / tickCount,
         isNow: i === tickCount && isPinnedToNow,
     }))
+}
+
+const CHART_TOKEN_BY_STATE: Record<string, string> = {
+    SUBMITTED: "created",
+    RESUBMITTED: "restarted",
+}
+
+export function stateChartColor(state: string): string {
+    return `var(--ks-chart-${CHART_TOKEN_BY_STATE[state] ?? state.toLowerCase()})`
 }

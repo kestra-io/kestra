@@ -31,6 +31,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
@@ -283,6 +284,7 @@ public final class ExecutorTestHarness {
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
                 executionOutputService,
+                Mockito.mock(CheckpointRepositoryInterface.class),
                 executionCommandQueue,
                 killQueue,
                 loopExecutionEventQueue,
@@ -361,6 +363,7 @@ public final class ExecutorTestHarness {
         this.executionCommandMessageHandler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
             taskOutputService,
             executionOutputService,

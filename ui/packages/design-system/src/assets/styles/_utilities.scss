@@ -6,10 +6,6 @@
  * @see https://github.com/kestra-io/kestra/issues/20834, the "Remove Bootstrap from the frontend" epic tracking the migration
  */
 
-.align-middle {
-    vertical-align: middle !important;
-}
-
 .overflow-hidden {
     overflow: hidden !important;
 }
@@ -32,10 +28,6 @@
 
 .position-absolute {
     position: absolute !important;
-}
-
-.border-0 {
-    border: 0 !important;
 }
 
 .w-100 {
@@ -78,10 +70,6 @@
     justify-content: center !important;
 }
 
-.justify-content-between {
-    justify-content: space-between !important;
-}
-
 .align-items-center {
     align-items: center !important;
 }
@@ -116,11 +104,6 @@
     margin-left: 1rem !important;
 }
 
-.my-3 {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
-}
-
 .my-4 {
     margin-top: 1.5rem !important;
     margin-bottom: 1.5rem !important;
@@ -136,10 +119,6 @@
 
 .mt-3 {
     margin-top: 1rem !important;
-}
-
-.mt-4 {
-    margin-top: 1.5rem !important;
 }
 
 .me-0 {
@@ -178,10 +157,6 @@
     margin-bottom: 1.5rem !important;
 }
 
-.ms-1 {
-    margin-left: 0.25rem !important;
-}
-
 .ms-2 {
     margin-left: 0.5rem !important;
 }
@@ -196,10 +171,6 @@
 
 .p-3 {
     padding: 1rem !important;
-}
-
-.p-4 {
-    padding: 1.5rem !important;
 }
 
 .px-2 {
@@ -245,16 +216,8 @@
     gap: 1.5rem !important;
 }
 
-.fs-5 {
-    font-size: 1.09375rem !important;
-}
-
 .fs-6 {
     font-size: 0.875rem !important;
-}
-
-.fw-light {
-    font-weight: 300 !important;
 }
 
 .fw-normal {
@@ -282,10 +245,6 @@
     word-break: break-word !important;
 }
 
-.text-secondary {
-    color: inherit !important;
-}
-
 .text-success {
     color: inherit !important;
 }
@@ -302,10 +261,6 @@
     color: inherit !important;
 }
 
-.bg-transparent {
-    background-color: transparent !important;
-}
-
 .pe-none {
     pointer-events: none !important;
 }
@@ -314,26 +269,9 @@
     z-index: 3 !important;
 }
 
-@media (min-width: 576px) {
-    .d-sm-block {
-        display: block !important;
-    }
-
-    .d-sm-flex {
-        display: flex !important;
-    }
-
-}
 
 @media (min-width: 768px) {
     .d-md-inline-block {
-        display: inline-block !important;
-    }
-
-}
-
-@media (min-width: 992px) {
-    .d-lg-inline-block {
         display: inline-block !important;
     }
 

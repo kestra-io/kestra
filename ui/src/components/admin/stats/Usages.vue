@@ -163,7 +163,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .usages {
         .header {
             display: flex;

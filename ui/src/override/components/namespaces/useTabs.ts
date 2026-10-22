@@ -39,6 +39,11 @@ export function useTabs() {
                 title: t("secret.names"),
             },
             {
+                ...lockedProps("credentials"),
+                name: "credentials",
+                title: t("demos.credentials.label"),
+            },
+            {
                 ...lockedProps("assets"),
                 name: "assets",
                 title: t("assets.title"),
@@ -59,6 +64,11 @@ export function useTabs() {
                 component: KVTable,
                 props: {namespace},
                 fullContainer: true,
+            },
+            {
+                ...lockedProps("reusable-inputs"),
+                name: "reusable-inputs",
+                title: t("demos.namespace.reusable-inputs.label"),
             },
             {
                 ...lockedProps("history"),

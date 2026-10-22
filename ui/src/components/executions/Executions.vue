@@ -108,6 +108,7 @@
                     v-model:drillNamespace="timelineDrillNamespace"
                     v-model:drillFlowId="timelineDrillFlowId"
                     v-model:expanded="timelineExpanded"
+                    @reset-filters="resetFiltersToDefaults"
                 />
             </template>
 
@@ -511,7 +512,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels, FILTER_FIELD_PATTERN} from "./utils"
+    import {filterValidLabels, FILTER_FIELD_PATTERN, resetQueryToDefaults} from "./utils"
     import {
         FALLBACK_TIME_RANGE,
         queryHasAbsoluteDateFilter,
@@ -1008,7 +1009,21 @@
         labels: props.labels,
         childFilter: props.childFilter,
     }))
-    const {dropUnsupportedFilters, loadQuery} = useExecutionsQueryScope(activeFilterConfiguration, executionsQueryScope)
+    const {loadQuery} = useExecutionsQueryScope(activeFilterConfiguration, executionsQueryScope)
+
+    const defaultFilterOptions = computed(() => {
+        const keys = activeFilterConfiguration.value.keys ?? []
+        return {
+            namespace: keys.some(key => key.key === "namespace") ? undefined : null,
+            includeScope: props.defaultScopeFilter ?? keys.some(key => key.key === "scope"),
+            includeTimeRange: keys.some(key => key.key === "timeRange"),
+            defaultDuration: chartDefaultDuration.value,
+        }
+    })
+
+    const resetFiltersToDefaults = () => {
+        router.replace({query: resetQueryToDefaults(route.query, defaultFilterOptions.value)})
+    }
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {
         toast.confirm(
@@ -1275,9 +1290,7 @@
     })
 
     async function exportExecutionsAsStream() {
-        await executionsStore.exportExecutionsAsCSV(
-            dropUnsupportedFilters(route.query),
-        )
+        await executionsStore.exportExecutionsAsCSV(loadQuery({}))
     }
 </script>
 

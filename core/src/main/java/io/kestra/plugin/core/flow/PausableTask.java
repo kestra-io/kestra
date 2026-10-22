@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionDelay;
@@ -47,6 +48,11 @@ public interface PausableTask {
      * paused until manually resumed.
      */
     Optional<ExecutionDelay> pauseDelay(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException;
+
+    /** Called on the executor once the task run is created, before it runs; returns outputs to merge onto it. Must be idempotent, since an executor restart can replay it. */
+    default Map<String, Object> created(FlowInterface flow, Execution execution, TaskRun taskRun, RunContext runContext) throws Exception {
+        return Map.of();
+    }
 
     /** Outputs to merge onto the task run once {@link #pauseDelay} scheduled {@code delay}, written from its date so they cannot drift from it. */
     default Map<String, Object> pauseDelayOutputs(ExecutionDelay delay) {

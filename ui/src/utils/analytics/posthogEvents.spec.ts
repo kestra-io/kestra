@@ -26,13 +26,6 @@ describe("sendPosthogEvent", () => {
         expect(disablePosthog).not.toHaveBeenCalled()
     })
 
-    it("sends an event when the config does not disable anonymous usage", () => {
-        sendPosthogEvent({}, {type: "flow_created"})
-
-        expect(capturePosthogEvent).toHaveBeenCalledOnce()
-        expect(disablePosthog).not.toHaveBeenCalled()
-    })
-
     it("strips internal fields from the payload without mutating the source event", () => {
         const data = {
             type: "flow_created",

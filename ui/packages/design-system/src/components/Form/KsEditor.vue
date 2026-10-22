@@ -35,7 +35,7 @@
                         @dragover.prevent
                         @drop.prevent="onDrop"
                     />
-                    <div ref="datePickerWrapper" v-show="datePickerShown" class="date-picker-wrapper">
+                    <div ref="datePickerWrapper" v-show="datePickerShown">
                         <KsDatePicker
                             ref="datePicker"
                             type="datetime"
@@ -46,7 +46,6 @@
                             @keydown.esc.prevent="editorResolved?.focus()"
                             @keydown.enter.prevent="datePickerCallback"
                             :clearable="false"
-                            class="editor-date-picker"
                         />
                     </div>
                     <textarea
@@ -414,11 +413,6 @@
 
     .editor-wrapper {
         position: relative;
-    }
-
-    .date-picker-wrapper,
-    .editor-date-picker {
-        z-index: var(--ks-z-dropdown);
     }
 
     .bottom-right {

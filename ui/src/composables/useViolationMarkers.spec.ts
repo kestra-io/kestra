@@ -73,7 +73,7 @@ function createModel() {
     return {
         ...stub,
         // The composable only uses the methods declared in the typed stub.
-        model: stub as monaco.editor.ITextModel,
+        model: stub as unknown as monaco.editor.ITextModel,
     }
 }
 
@@ -87,7 +87,7 @@ function createEditor(model: monaco.editor.ITextModel | null) {
         getModel: vi.fn(() => model),
         createDecorationsCollection: vi.fn<
             monaco.editor.IStandaloneCodeEditor["createDecorationsCollection"]
-        >(() => collection as monaco.editor.IEditorDecorationsCollection),
+        >(() => collection as unknown as monaco.editor.IEditorDecorationsCollection),
     } satisfies Pick<
         monaco.editor.IStandaloneCodeEditor,
         "getModel" | "createDecorationsCollection"
@@ -97,7 +97,7 @@ function createEditor(model: monaco.editor.ITextModel | null) {
         ...stub,
         clear,
         // Keep the partial-editor assertion at the Monaco boundary.
-        editor: stub as monaco.editor.IStandaloneCodeEditor,
+        editor: stub  as unknown as monaco.editor.IStandaloneCodeEditor,
     }
 }
 

@@ -145,23 +145,21 @@
     })
 </script>
 
-<style lang="scss">
-    .ks-duration-picker {
-        &__fields {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
+<style>
+    .ks-duration-picker__fields {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
 
-        &__field {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 80px;
-        }
+    .ks-duration-picker__field {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 80px;
+    }
 
-        &__custom {
-            margin-top: 0.5rem;
-        }
+    .ks-duration-picker__custom {
+        margin-top: 0.5rem;
     }
 </style>

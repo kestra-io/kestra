@@ -1,6 +1,6 @@
 import {computed, ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
-import {durationUtils} from "@kestra-io/design-system"
+import {ALL_TIME_RANGE, durationUtils} from "@kestra-io/design-system"
 
 const DEFAULT_RANGE_MS = durationUtils.duration("PT24H") * 1000
 export const MIN_RANGE_MS = durationUtils.duration("PT5M") * 1000
@@ -33,6 +33,7 @@ export function useTimelineRange() {
         const raw = route.query[TIME_RANGE_QUERY_KEY]
         const value = Array.isArray(raw) ? raw[0] : raw
         if (typeof value !== "string" || value.length === 0) return undefined
+        if (value === ALL_TIME_RANGE) return MAX_RANGE_MS
         const seconds = durationUtils.duration(value)
         return seconds > 0 ? seconds * 1000 : undefined
     })

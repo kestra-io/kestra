@@ -2,7 +2,7 @@ import {afterEach, describe, expect, it, vi} from "vitest"
 import {defineComponent, h} from "vue"
 import {flushPromises, mount, VueWrapper} from "@vue/test-utils"
 import {createRouter, createMemoryHistory, type Router} from "vue-router"
-import {computeScrubberDomain, useTimelineRange} from "./useTimelineRange"
+import {computeScrubberDomain, MAX_RANGE_MS, useTimelineRange} from "./useTimelineRange"
 
 const TIME_RANGE_QUERY_KEY = "filters[timeRange][EQUALS]"
 const START_QUERY_KEY = "filters[startDate][GREATER_THAN_OR_EQUAL_TO]"
@@ -106,6 +106,16 @@ describe("relative time range", () => {
         const mounted = mountTimelineRange(router)
 
         expect(mounted.range.rangeEndMs.value - mounted.range.rangeStartMs.value).toBe(48 * HOUR_MS)
+        mounted.wrapper.unmount()
+    })
+
+    it("should open the widest window the timeline supports for an all-time interval", async () => {
+        const router = createTestRouter()
+        await router.push({name: "executions/list", params: {tenant: "main"}, query: {[TIME_RANGE_QUERY_KEY]: "ALL"}})
+
+        const mounted = mountTimelineRange(router)
+
+        expect(mounted.range.rangeEndMs.value - mounted.range.rangeStartMs.value).toBe(MAX_RANGE_MS)
         mounted.wrapper.unmount()
     })
 

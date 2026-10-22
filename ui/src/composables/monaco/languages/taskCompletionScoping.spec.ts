@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {
+    findTaskLikeAtCursor,
     taskIdentityAtCursor,
     taskTypeAtCursor,
     scopePropertySuggestionsToTaskType,
@@ -18,6 +19,79 @@ tasks:
 const PROPERTY = 9
 const VALUE = 12
 
+describe("findTaskLikeAtCursor", () => {
+    it("returns the complete top-level task enclosing the cursor", () => {
+        const cursorIndex = FLOW.indexOf("message: hi") + "message: hi".length
+
+        expect(findTaskLikeAtCursor({source: FLOW, cursorIndex})).toEqual({
+            id: "hello",
+            type: "io.kestra.plugin.core.log.Log",
+            message: "hi",
+        })
+    })
+
+    it("resolves the inner task instead of its enclosing flowable", () => {
+        const source = `id: myflow
+namespace: my.ns
+tasks:
+  - id: parent
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: child
+        type: io.kestra.plugin.core.log.Log
+        message: nested
+`
+        const cursorIndex = source.indexOf("message: nested") + "message: nested".length
+
+        expect(findTaskLikeAtCursor({source, cursorIndex})).toEqual({
+            id: "child",
+            type: "io.kestra.plugin.core.log.Log",
+            message: "nested",
+        })
+    })
+
+    it("returns no task when the cursor is on a blank line between tasks", () => {
+        const source = `${FLOW}\n  - id: second
+    type: io.kestra.plugin.core.log.Log
+    message: second
+`
+
+        expect(findTaskLikeAtCursor({source, cursorIndex: FLOW.length})).toBeUndefined()
+    })
+
+    it("keeps the task context on an indented blank line inside its body", () => {
+        const source = `${FLOW}    `
+
+        expect(findTaskLikeAtCursor({source, cursorIndex: source.length})).toEqual({
+            id: "hello",
+            type: "io.kestra.plugin.core.log.Log",
+            message: "hi",
+        })
+    })
+
+    it("resolves a task inside the flow's errors block", () => {
+        const source = `${FLOW}errors:
+  - id: on_error
+    type: io.kestra.plugin.core.log.Log
+    message: failed
+`
+        const cursorIndex = source.indexOf("message: failed") + "message: failed".length
+
+        expect(findTaskLikeAtCursor({source, cursorIndex})).toEqual({
+            id: "on_error",
+            type: "io.kestra.plugin.core.log.Log",
+            message: "failed",
+        })
+    })
+
+    it("returns undefined without throwing when YAML references an undefined alias", () => {
+        const source = `${FLOW}    invalid: *missing\n`
+        const cursorIndex = source.indexOf("*missing") + "*missing".length
+
+        expect(findTaskLikeAtCursor({source, cursorIndex})).toBeUndefined()
+    })
+})
+
 describe("taskTypeAtCursor", () => {
     it("resolves the enclosing task's type when the cursor is inside the task body", () => {
         const cursorIndex = FLOW.indexOf("message: hi") + "message: hi".length
@@ -29,6 +103,12 @@ describe("taskTypeAtCursor", () => {
     it("returns undefined when the cursor is not inside a task", () => {
         const cursorIndex = FLOW.indexOf("namespace") + 3
         expect(taskTypeAtCursor({source: FLOW, cursorIndex})).toBeUndefined()
+    })
+
+    it("does not inherit the previous task's type at the start of a new line", () => {
+        const source = `${FLOW}\n`
+
+        expect(taskTypeAtCursor({source, cursorIndex: FLOW.length})).toBeUndefined()
     })
 
     it.each(["r", "retr", "timeo", "r:"])(

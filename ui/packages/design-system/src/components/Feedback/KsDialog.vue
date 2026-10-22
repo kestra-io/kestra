@@ -160,6 +160,11 @@
             border-bottom-right-radius: var(--ks-radius-xl);
         }
 
+        /* Opt-in from content that cannot fit the default width, such as a multi-column grid input. */
+        &:has([data-dialog-wide]) {
+            width: min(1024px, 90vw);
+        }
+
         &.is-fill {
             --kel-dialog-fill-gutter: 2vh;
             display: flex;

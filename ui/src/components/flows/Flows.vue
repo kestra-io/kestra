@@ -536,7 +536,7 @@
         if (!isPlainRowActivation(column, event)) return
 
         router.push({
-            name: route.name?.toString().replace("/list", "/update"),
+            name: "flows/update",
             params: {namespace: item.namespace, id: item.id, tenant: route.params.tenant},
         })
     }

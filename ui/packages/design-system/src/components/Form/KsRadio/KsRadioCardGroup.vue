@@ -49,14 +49,14 @@
     const name = useId()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-radio-card-group {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-2);
         width: 100%;
 
-        .card {
+        & .card {
             display: flex;
             align-items: center;
             gap: var(--ks-spacing-4);
@@ -68,7 +68,7 @@
             cursor: pointer;
             transition: all 0.15s;
 
-            input[type="radio"] {
+            & input[type="radio"] {
                 appearance: none;
                 -webkit-appearance: none;
                 flex-shrink: 0;
@@ -107,7 +107,7 @@
                 }
             }
 
-            .title {
+            & .title {
                 display: inline-flex;
                 align-items: center;
                 gap: var(--ks-spacing-2);
@@ -115,11 +115,11 @@
                 color: var(--ks-text-primary);
             }
 
-            .icon {
+            & .icon {
                 flex-shrink: 0;
             }
 
-            .hint {
+            & .hint {
                 margin-left: auto;
                 font-size: var(--ks-font-size-sm);
                 color: var(--ks-text-secondary);
@@ -135,7 +135,7 @@
                 opacity: 0.4;
                 cursor: not-allowed;
 
-                input[type="radio"] {
+                & input[type="radio"] {
                     cursor: not-allowed;
                 }
             }

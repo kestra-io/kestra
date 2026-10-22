@@ -11,7 +11,7 @@
             </KsText>
             <section v-for="group in groups" :key="group.taskId" class="artifacts-group">
                 <div class="artifacts-group-header">
-                    <TaskIcon :cls="group.taskType" :icons="pluginsStore.icons" onlyIcon />
+                    <TaskIcon :cls="group.taskType" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon />
                     <KsText tag="strong">{{ group.taskId }}</KsText>
                     <KsText size="small" class="muted">{{ afterLastDot(group.taskType) }}</KsText>
                 </div>
@@ -32,7 +32,7 @@
         </nav>
         <section v-if="selected" class="artifacts-viewer" data-test="execution-artifact-viewer">
             <header class="artifacts-viewer-header">
-                <TaskIcon :cls="selected.taskType.split('/')[0]" :icons="pluginsStore.icons" onlyIcon />
+                <TaskIcon :cls="selected.taskType.split('/')[0]" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon />
                 <div>
                     <KsText tag="strong">{{ selected.title }}</KsText>
                     <KsText size="small" class="muted">{{ selected.taskId }}</KsText>
@@ -71,6 +71,7 @@
 
     const route = useRoute()
     const pluginsStore = usePluginsStore()
+    pluginsStore.fetchIcons()
     const executionsStore = useExecutionsStore()
 
     const {RemoteComponent, artifacts, tasks, subtitleResolvers} = inject(EXECUTION_ARTIFACTS_KEY)!
@@ -137,6 +138,7 @@
         gap: var(--ks-spacing-4);
         min-height: 0;
         height: 100%;
+        padding: var(--ks-spacing-2);
     }
 
     .artifacts-list {
@@ -196,6 +198,7 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);

@@ -137,3 +137,32 @@ export const WithCustomTemplate: Story = {
         `,
     }),
 }
+
+/** Mobile – on touch screens (`pointer: coarse`) the field is 44px high with 16px text */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsAutocomplete},
+        setup() {
+            const value = ref("")
+            const fetchSuggestions = (query: string, callback: (results: {value: string}[]) => void) => {
+                callback(SUGGESTIONS.filter((item) => item.includes(query)).map((item) => ({value: item})))
+            }
+            return {value, fetchSuggestions}
+        },
+        template: `
+            <div style="padding:16px">
+                <ks-autocomplete v-model="value" placeholder="Namespace" :fetch-suggestions="fetchSuggestions" trigger-on-focus />
+            </div>
+        `,
+    }),
+}

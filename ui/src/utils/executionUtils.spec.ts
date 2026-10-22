@@ -1,7 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
 import type {RouteLocationNamedRaw} from "vue-router"
-import {findTaskRunsByState, loopIterationsRoute, statePredicate, waitFor} from "./executionUtils"
+import {findFirstFailedTaskRun, findTaskRunsByState, loopIterationsRoute, statePredicate, taskRunPath, waitFor} from "./executionUtils"
 import {queryHasTimeBound} from "../components/executions/timeRangeWiden"
 import type {Execution} from "../stores/executions"
 
@@ -114,6 +114,47 @@ describe("statePredicate", () => {
         expect(statePredicate(referenceWithHistories, {state: {}})).toBe(false)
         expect(statePredicate(referenceWithoutHistories, {state: {histories: [{state: "CREATED"}]}})).toBe(true)
         expect(statePredicate(referenceWithoutHistories, {state: {}})).toBe(true)
+    })
+})
+
+describe("failed task lookup", () => {
+    const taskRun = (id: string, current: string, extra: Record<string, unknown> = {}) =>
+        ({id, taskId: id, state: {current}, ...extra})
+
+    const execution = {
+        taskRunList: [
+            taskRun("per_region", "FAILED", {value: "#3 APAC"}),
+            taskRun("fetch", "SUCCESS", {parentTaskRunId: "per_region"}),
+            taskRun("per_quarter", "FAILED", {parentTaskRunId: "per_region", value: "#3 Q3"}),
+            taskRun("reconcile", "SUCCESS"),
+        ],
+    } as unknown as Execution
+
+    it("returns the failed task run that has no failed child", () => {
+        // Given / When
+        const failed = findFirstFailedTaskRun(execution)
+
+        // Then
+        expect(failed?.id).toBe("per_quarter")
+    })
+
+    it("returns undefined when no task run failed", () => {
+        // Given
+        const healthy = {taskRunList: [taskRun("fetch", "SUCCESS")]} as unknown as Execution
+
+        // When / Then
+        expect(findFirstFailedTaskRun(healthy)).toBeUndefined()
+    })
+
+    it("lists the ancestors of a task run with their loop value", () => {
+        // Given
+        const failed = findFirstFailedTaskRun(execution)!
+
+        // When
+        const path = taskRunPath(execution, failed)
+
+        // Then
+        expect(path).toEqual(["per_region #3 APAC", "per_quarter #3 Q3"])
     })
 })
 

@@ -20,6 +20,7 @@ import {useCoreStore} from "./stores/core"
 import {useLayoutStore} from "./stores/layout"
 import {useUnsavedChangesStore} from "./stores/unsavedChanges"
 import {useMiscStore} from "override/stores/misc"
+import {baseUrl} from "override/utils/route"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import TaskIcon from "./components/plugins/TaskIcon.vue"
 import {registerServiceWorker} from "./utils/serviceWorker"
@@ -61,7 +62,7 @@ function setupAxios(router: Router) {
     }
 
 
-    httpClient = setupKestraHttp({}, {
+    httpClient = setupKestraHttp({baseUrl}, {
         coreStore,
         router,
         beforeLogout,

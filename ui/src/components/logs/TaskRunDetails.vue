@@ -1384,7 +1384,6 @@
 
   .loop-progress {
     display: flex;
-    align-items: top;
     gap: var(--ks-spacing-3);
     margin-block: var(--ks-spacing-3);
   }
@@ -1444,6 +1443,7 @@
 
     &.single-line {
       max-height: calc(100vh - 250px);
+      max-height: calc(100dvh - 250px);
     }
 
     & :deep(.line) {

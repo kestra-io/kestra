@@ -1,8 +1,16 @@
 <template>
     <template v-if="initialInputs">
         <div v-if="isWizard && current?.kind === 'form' && (current.displayName || current.description)" class="wizard-step-header">
-            <h5 v-if="current.displayName" class="wizard-step-title">{{ current.displayName }}</h5>
-            <KsMarkdown v-if="current.description" :content="current.description" class="text-description" />
+            <h5 v-if="current.displayName" class="wizard-step-title">
+                {{ current.displayName }}
+                <KsTooltip v-if="stepDescriptionAsTooltip" placement="right" enterable>
+                    <template #content>
+                        <KsMarkdown class="description-tooltip" :content="current.description!" />
+                    </template>
+                    <KsButton :icon="HelpCircleOutlineIcon" :aria-label="$t('description')" link />
+                </KsTooltip>
+            </h5>
+            <KsMarkdown v-if="current.description && !stepDescriptionAsTooltip" :content="current.description" class="text-description" />
         </div>
 
         <template v-for="input in visibleInputs" :key="input.id">
@@ -19,7 +27,7 @@
                         draggable="true"
                         @dragstart="onInputDragStart($event, input.id)"
                     >
-                        <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                        <KsMarkdown :content="inputLabel(input)" class="md-label" />
                         <KsButton
                             :icon="ContentCopyIcon"
                             :tooltip="`${$t('copy_to_clipboard')}: ${inputRefExpression(input.id)}`"
@@ -27,8 +35,20 @@
                             link
                             @click.prevent="copyInputRef(input.id)"
                         />
+                        <KsTooltip v-if="input.description && input.descriptionDisplayMode === 'TOOLTIP'" placement="right" enterable>
+                            <template #content>
+                                <KsMarkdown :data-testid="`input-description-${input.id}`" class="description-tooltip" :content="input.description" />
+                            </template>
+                            <KsButton
+                                :icon="HelpCircleOutlineIcon"
+                                :aria-label="$t('description')"
+                                link
+                                @click.prevent
+                            />
+                        </KsTooltip>
                     </span>
                 </template>
+                <KsMarkdown v-if="input.description && input.descriptionDisplayMode !== 'TOOLTIP'" :data-testid="`input-description-${input.id}`" class="text-description" :content="input.description" />
                 <KsEditor
                     v-bind="editorBindings"
                     :options="{fullHeight: false}"
@@ -139,7 +159,7 @@
                     v-if="input.type === 'BOOL'"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChangeBool(input)"
-                    class="w-100 boolean-inputs"
+                    class="boolean-inputs"
                 />
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"
@@ -179,7 +199,7 @@
                 <div
                     v-if="input.type === 'ARRAY'"
                     :data-testid="`input-form-${input.id}`"
-                    class="w-100"
+                    class="array-input"
                 >
                     <div v-if="editingArrayId !== input.id" class="preview">
                         <div class="tags">
@@ -191,7 +211,7 @@
                             </KsTag>
                         </div>
                         <KsButton
-                            class="p-3"
+                            class="array-edit-button"
                             @click="toggleArrayEdit(input.id)"
                             :icon="Pencil"
                         >
@@ -230,13 +250,13 @@
                             </div>
                         </div>
                         <KsButton
-                            class="add-new mt-1 border-0"
+                            class="add-new"
                             @click="addNewArrayItem(input)"
                             :icon="Plus"
                         >
                             {{ $t('add_new_item') }}
                         </KsButton>
-                        <div class="d-flex justify-content-end mt-2">
+                        <div class="array-edit-actions">
                             <KsButton
                                 @click="toggleArrayEdit(input.id)"
                                 type="primary"
@@ -282,7 +302,6 @@
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                 />
-                <KsMarkdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :content="input.description" />
             </KsFormItem>
         </template>
 
@@ -302,7 +321,7 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-end">
+        <div class="input-errors">
             <ValidationError v-if="inputErrors" :errors="inputErrors" />
         </div>
 
@@ -335,7 +354,7 @@
         </div>
     </template>
 
-    <KsAlert type="info" :closable="false" class="mb-3" v-else>
+    <KsAlert type="info" :closable="false" class="no-inputs-alert" v-else>
         {{ $t("no inputs") }}
     </KsAlert>
 </template>
@@ -357,6 +376,7 @@
     import PlusIcon from "vue-material-design-icons/Plus.vue"
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue"
     import ContentCopyIcon from "vue-material-design-icons/ContentCopy.vue"
+    import HelpCircleOutlineIcon from "vue-material-design-icons/HelpCircleOutline.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue"
@@ -385,7 +405,7 @@
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
-        formGroups?: Record<string, {displayName?: string; description?: string}>;
+        formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
         renderLabels?: string[];
@@ -473,6 +493,10 @@
         validateInputs,
         onRecapChange: (val) => emit("update:onRecap", val),
     })
+
+    const stepDescriptionAsTooltip = computed(() =>
+        current.value?.descriptionDisplayMode === "TOOLTIP" && !!current.value.description && !!current.value.displayName,
+    )
 
     const inputRendererExtension = useInputRendererExtension()
 
@@ -1059,6 +1083,7 @@
 
 <style scoped>
 .md-label {
+    display: inline-flex;
     height: var(--ks-font-size-lg);
 }
 
@@ -1138,6 +1163,15 @@
     }
 }
 
+.input-errors {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.no-inputs-alert {
+    margin-bottom: var(--ks-spacing-4);
+}
+
 .hint {
     font-size: var(--ks-font-size-xs);
     color: var(--ks-text-secondary);
@@ -1149,9 +1183,16 @@
     color: var(--ks-text-secondary);
 }
 
+.description-tooltip {
+    max-width: 30rem;
+    max-height: 20rem;
+    overflow-y: auto;
+}
+
 :deep(.boolean-inputs) {
     display: flex;
     align-items: center;
+    width: 100%;
 
     .kel-radio-button {
         &.is-active {
@@ -1191,6 +1232,14 @@
         padding: 0.5rem;
     }
 
+}
+
+.array-input {
+    width: 100%;
+}
+
+.array-edit-button {
+    padding: var(--ks-spacing-4);
 }
 
 .preview {
@@ -1261,7 +1310,9 @@
     }
 
     .add-new {
+        margin-top: var(--ks-spacing-1);
         padding: 5px 8px;
+        border: 0;
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
         background: none;
@@ -1269,6 +1320,12 @@
         &:hover {
             color: var(--ks-text-secondary);
         }
+    }
+
+    .array-edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--ks-spacing-2);
     }
 }
 

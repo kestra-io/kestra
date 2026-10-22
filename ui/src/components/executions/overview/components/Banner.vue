@@ -85,13 +85,7 @@
                     <span>{{ username }}</span>
                 </span>
 
-                <router-link v-if="originalLink" class="meta-item" :to="originalLink">
-                    <History />
-                    <span>
-                        {{ $t("original execution") }}:
-                        <span class="meta-item__link">{{ execution.originalId }}</span>
-                    </span>
-                </router-link>
+                <ParentExecutionLink :execution />
 
                 <component
                     :is="relation"
@@ -156,6 +150,7 @@
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
 
     import {Execution, useExecutionsStore} from "../../../../stores/executions"
+    import {useExecutionSummary} from "../../../../composables/useExecutionSummary"
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "../../../../utils/utils"
     import {useToast} from "../../../../utils/toast"
@@ -167,6 +162,7 @@
     import SetLabels from "../../SetLabels.vue"
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
+    import ParentExecutionLink from "./ParentExecutionLink.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -192,22 +188,7 @@
 
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
-    const statusLabel = computed(() => {
-        const status = props.execution.state.current
-        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    })
-
-    const matchesStatus = (type: "replay" | "replayed" | "restarted") =>
-        props.execution.labels?.some(
-            (label) => label.key === `system.${type}` && String(label.value) === "true",
-        ) ?? false
-
-    const replayed = computed(() => matchesStatus("replay") || matchesStatus("replayed"))
-    const restarted = computed(() => matchesStatus("restarted"))
-
-    const createdDate = computed(() =>
-        dayjs(props.execution.state.histories?.[0]?.date).toDate(),
-    )
+    const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)
 
     const scheduleDate = computed(() =>
         props.execution.scheduleDate ? dayjs(props.execution.scheduleDate).toDate() : undefined,
@@ -227,32 +208,12 @@
             : props.execution.labels?.find((label) => label.key === "system.username")?.value,
     )
 
-    const originalLink = computed(() => {
-        const {originalId, id} = props.execution
-        return originalId && originalId !== id
-            ? createLink("executions", props.execution, originalId)
-            : undefined
-    })
-
-    const replaysLink = computed(() => ({
-        name: "executions/list",
-        query: {
-            "filters[parentId][EQUALS]": matchesStatus("replay") ? props.execution.parentId ?? props.execution.id : props.execution.id,
-            sort: "state.endDate:desc",
-        },
-    }))
-
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>
         props.execution.taskRunList?.filter(
             (tr) => !State.isRunning(tr.state?.current ?? "CREATED"),
         ).length ?? 0,
     )
-
-    const copyId = () => {
-        Utils.copy(props.execution.id)
-        toast.success(t("copied"))
-    }
 
     const copyLogs = () => {
         executionsStore
@@ -477,10 +438,6 @@
                 color: var(--ks-text-muted);
                 display: inline-flex;
             }
-        }
-
-        .meta-item__link {
-            color: var(--ks-text-link);
         }
 
         .meta-item {

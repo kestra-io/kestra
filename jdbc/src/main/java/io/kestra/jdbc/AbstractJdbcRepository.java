@@ -10,11 +10,14 @@ import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
+import org.jooq.exception.SQLStateClass;
 import org.jooq.impl.DSL;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -75,6 +78,36 @@ public abstract class AbstractJdbcRepository<T> {
         Map<Field<Object>, Object> fields = HashMap.newHashMap(1);
         fields.put(VALUE_FIELD, MAPPER.writeValueAsString(entity));
         return fields;
+    }
+
+    /**
+     * Fetches an entity using {@code fetcher}, or inserts a default one (via {@code defaultEntity}) if absent, then re-fetches.
+     * The {@code fetcher} should use {@code FOR UPDATE} so the returned entity is locked within the caller's transaction.
+     */
+    public T getOrInsert(DSLContext dslContext, Supplier<Optional<T>> fetcher, Supplier<T> defaultEntity) {
+        // H2 doesn't support INSERT IGNORE: there we insert and ignore a constraint violation, then select again.
+        return fetcher.get().orElseGet(() ->
+        {
+            try {
+                T entity = defaultEntity.get();
+                var insert = dslContext
+                    .insertInto(this.getTable())
+                    .set(KEY_FIELD, this.key(entity))
+                    .set(this.persistFields(entity));
+                if (dslContext.configuration().dialect().supports(SQLDialect.POSTGRES) || dslContext.configuration().dialect().supports(SQLDialect.MYSQL)) {
+                    insert.onDuplicateKeyIgnore().execute();
+                } else {
+                    insert.execute();
+                }
+            } catch (DataAccessException e) {
+                // only a constraint violation is expected here, anything else (like a deadlock) must not be swallowed as the transaction would have lost its locks
+                if (e.sqlStateClass() != SQLStateClass.C23_INTEGRITY_CONSTRAINT_VIOLATION) {
+                    throw e;
+                }
+            }
+            // refetch to lock it, the record is inserted at this point
+            return fetcher.get().orElseThrow();
+        });
     }
 
     public int count(Condition condition) {

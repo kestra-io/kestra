@@ -85,4 +85,19 @@ class IndentFilterTest {
             .hasMessageContaining("cannot exceed");
     }
 
+    @Test
+    void indentWithIntegerVariable() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ \"line 1\nline 2\" | indent(spaces) }}",
+            Map.of("spaces", Integer.valueOf(4))
+        );
+        assertThat(render).isEqualTo("line 1\n    line 2");
+    }
+
+    @Test
+    void indentWithNonNumberAmount() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'x' | indent('invalid') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("expects an integer as argument 'amount'");
+    }
 }

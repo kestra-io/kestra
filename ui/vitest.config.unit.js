@@ -17,9 +17,6 @@ export default defineProject({
         // project's maxWorkers: 2) to also have a unique sequence.groupOrder.
         sequence: {groupOrder: 0},
         setupFiles: ["./tests/unit/setup.ts", "./tests/unit/leakGuard.ts"],
-        // <i18n-t> looks for an ancestor with a local i18n scope and warns when it falls back to
-        // the global one, which is where every message in Kestra lives.
-        onConsoleLog: (log) => !log.includes("[intlify] Not found parent scope. use the global scope."),
         // Keep node_modules warm in the worker instead of re-importing them per file (cumulative
         // import 285s -> 94s). The setup file's vi.resetModules() keeps modules per-file fresh.
         isolate: false,

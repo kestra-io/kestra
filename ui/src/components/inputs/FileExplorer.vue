@@ -310,7 +310,7 @@
             :title="$t('namespace files.dialog.deletion.title')"
             @keydown.enter.prevent="removeItems()"
         >
-            <i18n-t :keypath="deletionMessage.keypath" tag="span" class="py-3">
+            <i18n-t :keypath="deletionMessage.keypath" tag="span" scope="global" class="py-3">
                 <template v-for="(value, name) in deletionMessage.params" :key="name" #[name]>
                     <code>{{ value }}</code>
                 </template>

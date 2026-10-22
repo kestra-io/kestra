@@ -521,8 +521,8 @@
         if ((event.target as HTMLElement)?.closest(NON_NAVIGATING_TARGETS)) return
 
         router.push({
-            name: route.name?.toString().replace("/list", "/update"),
-            params: {...item, tenant: route.params.tenant},
+            name: "flows/update",
+            params: {namespace: item.namespace, id: item.id, tenant: route.params.tenant},
         })
     }
 

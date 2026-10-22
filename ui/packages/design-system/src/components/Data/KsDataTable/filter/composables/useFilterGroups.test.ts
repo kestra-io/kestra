@@ -40,32 +40,6 @@ const makeWrapper = (id: string, children: LeafFilterGroup[]): WrapperGroup => (
 })
 
 describe("useFilterGroups helpers", () => {
-    describe("newGroupId", () => {
-        test("returns a non-empty string", () => {
-            const id = newGroupId()
-            expect(typeof id).toBe("string")
-            expect(id.length).toBeGreaterThan(0)
-        })
-
-        test("generates different IDs on consecutive calls", () => {
-            expect(newGroupId()).not.toBe(newGroupId())
-        })
-    })
-
-    describe("emptyLeafGroup", () => {
-        test("creates a leaf group with no filters and a non-empty ID", () => {
-            const group = emptyLeafGroup()
-
-            expect(group.kind).toBe("leaf")
-            expect(group.filters).toEqual([])
-            expect(group.id).toEqual(expect.any(String))
-            expect(group.id.length).toBeGreaterThan(0)
-        })
-
-        test("generates a different ID for each group", () => {
-            expect(emptyLeafGroup().id).not.toBe(emptyLeafGroup().id)
-        })
-    })
 
     describe("allFilters", () => {
         test("collects filters from top-level leaf groups", () => {

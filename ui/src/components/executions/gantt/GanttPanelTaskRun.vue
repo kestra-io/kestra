@@ -63,6 +63,7 @@
                         <FailureUpstreamOutputs
                             :referencedTaskIds="context.referencedOutputTaskIds.value"
                             :taskRunList="context.taskRuns.value"
+                            :focusedTaskRun="node.taskRun"
                             :executionId="context.execution.value.id"
                         />
                     </section>

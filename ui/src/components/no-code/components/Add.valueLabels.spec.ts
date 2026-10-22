@@ -1,4 +1,4 @@
-import {describe, it, expect} from "vitest"
+import {afterAll, describe, it, expect} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
@@ -6,6 +6,7 @@ import Add from "./Add.vue"
 import TaskArray from "./tasks/TaskArray.vue"
 import TaskDict from "./tasks/TaskDict.vue"
 import TaskObjectField from "./tasks/TaskObjectField.vue"
+import {taskComponentsReady} from "./tasks/useBlockComponent"
 
 const messages = {
     no_code: {
@@ -33,6 +34,8 @@ const globalConfig = {
         KsIconButton: {inheritAttrs: false, template: "<button v-bind='$attrs'><slot /></button>"},
     },
 }
+
+afterAll(() => taskComponentsReady())
 
 describe("Add", () => {
     it("shows the generic label without a target", () => {

@@ -15,6 +15,7 @@ import {
 } from "../../injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {memoryRouter} from "../../../../../tests/unit/memoryRouter"
 
 const SOURCE = `
 id: qa
@@ -45,7 +46,7 @@ function mountList(root = "then") {
             root,
         },
         global: {
-            plugins: [KestraDesignSystem],
+            plugins: [KestraDesignSystem, memoryRouter()],
             provide: {
                 [FULL_SOURCE_INJECTION_KEY as symbol]: ref(SOURCE),
                 [UPDATE_YAML_FUNCTION_INJECTION_KEY as symbol]: updateYaml,

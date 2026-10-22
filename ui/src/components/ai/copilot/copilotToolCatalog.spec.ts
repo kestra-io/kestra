@@ -3,6 +3,7 @@ import {mount} from "@vue/test-utils"
 import type {AiSseFrame} from "./types"
 import type {ChatMessage} from "./useAiChat"
 import {mountGlobal} from "../../../../tests/unit/components/ai/copilot/_helpers"
+import {memoryRouter} from "../../../../tests/unit/memoryRouter"
 
 // Mock the axios client (thread create) and the SSE reader so we can drive frames
 // deterministically without a backend — same harness as useAiChat.spec.
@@ -66,7 +67,10 @@ function catalogFrames(): AiSseFrame[] {
     return frames
 }
 
-const mountMessage = (message: ChatMessage) => mount(CopilotMessage, {props: {message}, global: mountGlobal})
+const mountMessage = (message: ChatMessage) => mount(CopilotMessage, {
+    props: {message},
+    global: {...mountGlobal, plugins: [...mountGlobal.plugins, memoryRouter()]},
+})
 
 describe("AI Copilot v2 — full tool catalog", () => {
     beforeEach(() => {

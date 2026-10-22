@@ -1,4 +1,4 @@
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {createI18n} from "vue-i18n"
@@ -153,15 +153,21 @@ describe("TaskRunActions", () => {
             execution: execution3,
         })
 
+        // The resolved content is handed to a download link, whose click jsdom cannot navigate.
+        const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+
         const iter2 = wrapper.findAll("[data-test='task-run-iteration']").find(w => w.text().includes("Iter 2") || w.text().includes("iteration_number"))
         await iter2!.trigger("click")
         const downloadBtn = wrapper.find("[data-test='task-run-download-logs']")
         await downloadBtn.trigger("click")
+        await flushPromises()
 
         expect(executionsStore.downloadLogs).toHaveBeenCalledWith({
             executionId: "ex-3",
             params: {"filters[taskRunId][EQUALS]": "tr-2"},
         })
+        expect(click).toHaveBeenCalled()
+        click.mockRestore()
     })
 
     const execution4 = {...execution, id: "ex-4"}

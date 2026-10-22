@@ -23,8 +23,13 @@ const SkeletonComponent: TaskBlockComponent = Object.assign(
     {ksTaskName: ""},
 )
 
+/** Settles once the lazily imported block components are in, so a spec can await them before its file is torn down. */
+export function taskComponentsReady(): Promise<void> {
+    return loading?.then(() => undefined) ?? Promise.resolve()
+}
+
 export function useBlockComponent() {
-    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY)
+    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, undefined)
     const definitions = definitionsRef?.value ?? {}
 
     const resolve = (module: TaskComponents) =>

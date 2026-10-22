@@ -488,22 +488,27 @@
     onUpdated(initMermaid)
 </script>
 
-<style lang="scss">
-    // ─── Shiki light/dark theme switching ────────────────────────────────────
-    // `defaultColor: false` emits CSS vars (--shiki-light, --shiki-dark, etc.)
-    // on each token. The html.dark class (managed by the theme toggle) switches
-    // token colors without needing !important on the inline styles.
+<style>
+    /* ─── Shiki light/dark theme switching ──────────────────────────────────── */
+    /* `defaultColor: false` emits CSS vars (--shiki-light, --shiki-dark, etc.) */
+    /* on each token. The html.dark class (managed by the theme toggle) switches */
+    /* token colors without needing !important on the inline styles. */
+
     .ks-markdown__code-shiki {
-        .shiki {
+        & .shiki {
             margin: 0;
             padding: var(--ks-spacing-3);
             overflow-x: auto;
             border-radius: var(--kel-border-radius-base);
 
-            span { color: var(--shiki-light); }
+            & span {
+                color: var(--shiki-light);
+            }
 
             html.dark & {
-                span { color: var(--shiki-dark); }
+                & span {
+                    color: var(--shiki-dark);
+                }
             }
 
             & code .line {
@@ -516,7 +521,7 @@
         color: var(--ks-text-primary);
         line-height: var(--ks-line-height-loose);
 
-        h1, h2, h3, h4, h5, h6 {
+        & h1, & h2, & h3, & h4, & h5, & h6 {
             &.ks-markdown__heading {
                 position: relative;
                 margin: 1.25rem 0 0.5rem;
@@ -526,7 +531,7 @@
                     margin-top: 0;
                 }
 
-                .ks-markdown__heading-link {
+                & .ks-markdown__heading-link {
                     margin-left: 0.4rem;
                     opacity: 0;
                     color: var(--kel-text-color-placeholder);
@@ -535,16 +540,23 @@
                     transition: opacity 0.15s ease;
                 }
 
-                &:hover .ks-markdown__heading-link { opacity: 1; }
+                &:hover .ks-markdown__heading-link {
+                    opacity: 1;
+                }
             }
         }
 
-        p {
-            &:first-child { margin-top: 0; }
-            &:last-child { margin-bottom: 0; }
+        & p {
+            &:first-child {
+                margin-top: 0;
+            }
+
+            &:last-child {
+                margin-bottom: 0;
+            }
         }
 
-        .ks-markdown__blockquote {
+        & .ks-markdown__blockquote {
             margin: 1rem 0;
             padding: 0.5rem 1rem;
             border-left: 4px solid var(--ks-border-default);
@@ -553,14 +565,14 @@
             border-radius: var(--kel-border-radius-base);
         }
 
-        .ks-markdown__code-block {
+        & .ks-markdown__code-block {
             margin: 1rem 0;
             border: 1px solid var(--ks-border-default);
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             position: relative;
 
-            .ks-markdown__code-lang {
+            & .ks-markdown__code-lang {
                 position: absolute;
                 top: var(--ks-spacing-1);
                 right: var(--ks-spacing-1);
@@ -571,7 +583,7 @@
                 transition: opacity 0.15s ease;
             }
 
-            .ks-markdown__copy-btn {
+            & .ks-markdown__copy-btn {
                 position: absolute;
                 top: var(--ks-spacing-1);
                 right: var(--ks-spacing-1);
@@ -593,22 +605,23 @@
 
                 /* The copy glyph and the confirm check occupy the same cell; only one is
                    visible at a time (swapped via the .is-copied state), never overlaid. */
-                > * {
+
+                & > * {
                     grid-area: 1 / 1;
                     transition: opacity 0.15s ease;
                 }
 
-                .ks-markdown__copy-btn-ok {
+                & .ks-markdown__copy-btn-ok {
                     color: var(--ks-text-success);
                     opacity: 0;
                 }
 
                 &.is-copied {
-                    .ks-markdown__copy-btn-icon {
+                    & .ks-markdown__copy-btn-icon {
                         opacity: 0;
                     }
 
-                    .ks-markdown__copy-btn-ok {
+                    & .ks-markdown__copy-btn-ok {
                         opacity: 1;
                     }
                 }
@@ -616,23 +629,23 @@
 
             &:hover,
             &:focus-within {
-                .ks-markdown__code-lang {
+                & .ks-markdown__code-lang {
                     opacity: 0;
                 }
 
-                .ks-markdown__copy-btn {
+                & .ks-markdown__copy-btn {
                     opacity: 1;
                     pointer-events: auto;
                 }
             }
 
-            .ks-markdown__code-plain {
+            & .ks-markdown__code-plain {
                 margin: 0;
                 padding: 1rem;
                 overflow-x: auto;
                 background-color: var(--kel-bg-color-overlay);
 
-                code {
+                & code {
                     font-family: var(--kel-font-family-monospace), monospace;
                     font-size: var(--ks-font-size-sm);
                     background: none;
@@ -642,49 +655,53 @@
             }
         }
 
-        .ks-markdown__inline-code {
+        & .ks-markdown__inline-code {
             padding: 0.15rem 0.4rem;
             border-radius: var(--kel-border-radius-base);
             background-color: var(--kel-bg-color-overlay);
             border: 1px solid var(--ks-border-default);
         }
 
-        .ks-markdown__list {
+        & .ks-markdown__list {
             margin: 0.75rem 0;
             padding-left: 1.5rem;
 
-            li { margin: 0.25rem 0; }
+            & li {
+                margin: 0.25rem 0;
+            }
         }
 
-        .ks-markdown__table-wrapper {
+        & .ks-markdown__table-wrapper {
             margin: 1rem 0;
             overflow-x: auto;
         }
 
-        .ks-markdown__link {
+        & .ks-markdown__link {
             color: var(--ks-text-link);
             text-decoration: none;
 
-            &:hover { text-decoration: underline; }
+            &:hover {
+                text-decoration: underline;
+            }
         }
 
-        .ks-markdown__image {
+        & .ks-markdown__image {
             max-width: 100%;
             height: auto;
         }
 
-        .ks-markdown__hr {
+        & .ks-markdown__hr {
             margin: 1.5rem 0;
             border: none;
             border-top: 1px solid var(--ks-border-default);
         }
 
-        .ks-markdown__mermaid {
+        & .ks-markdown__mermaid {
             margin: 1rem 0;
             text-align: center;
         }
 
-        .ks-markdown__alert {
+        & .ks-markdown__alert {
             margin: 1rem 0;
         }
     }

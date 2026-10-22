@@ -148,10 +148,17 @@
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/select';
     @use 'element-plus/theme-chalk/src/select-dropdown';
+</style>
 
+<style>
     @keyframes kel-select-loading-rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     .kel-select {
@@ -162,27 +169,27 @@
         }
 
         &.kel-select--single-line-tags {
-            .kel-select__selection {
+            & .kel-select__selection {
                 flex-wrap: nowrap;
                 overflow: clip;
 
-                .kel-tag {
+                & .kel-tag {
                     min-width: 0;
 
-                    .kel-tag__content {
+                    & .kel-tag__content {
                         min-width: 0;
                         overflow: hidden;
                     }
 
-                    .kel-tag__close,
-                    [class*="kel-icon"],
-                    .material-design-icon {
+                    & .kel-tag__close,
+                    & [class*="kel-icon"],
+                    & .material-design-icon {
                         flex-shrink: 0;
                     }
                 }
             }
 
-            .kel-select__input-wrapper {
+            & .kel-select__input-wrapper {
                 min-width: 2rem;
                 overflow: hidden;
             }
@@ -191,30 +198,30 @@
         &.kel-select--fit {
             width: fit-content;
 
-            .kel-select__wrapper {
+            & .kel-select__wrapper {
                 width: fit-content;
             }
 
-            .kel-select__placeholder {
+            & .kel-select__placeholder {
                 position: static;
                 transform: none;
                 top: auto;
             }
 
-            .kel-select__input-wrapper {
+            & .kel-select__input-wrapper {
                 position: absolute;
             }
 
             &:focus-within:has(input:not([readonly])) {
-                .kel-select__placeholder {
+                & .kel-select__placeholder {
                     position: absolute;
                 }
 
-                .kel-select__input-wrapper {
+                & .kel-select__input-wrapper {
                     position: relative;
                 }
 
-                .kel-select__input {
+                & .kel-select__input {
                     width: fit-content;
                     min-width: 120px;
                 }
@@ -226,14 +233,14 @@
             font-size: var(--ks-font-size-xs);
         }
 
-        .kel-select__placeholder.is-transparent {
+        & .kel-select__placeholder.is-transparent {
             color: var(--ks-placeholder-color);
             font-size: var(--ks-placeholder-font-size);
             font-weight: var(--ks-placeholder-font-weight);
         }
 
-        .kel-select__wrapper {
-            .kel-tag.kel-tag--default.kel-tag--light {
+        & .kel-select__wrapper {
+            & .kel-tag.kel-tag--default.kel-tag--light {
                 --kel-tag-text-color: var(--ks-text-primary);
                 --kel-tag-bg-color: var(--ks-bg-tag);
             }
@@ -247,19 +254,19 @@
             }
         }
 
-        .kel-select__selection.is-near:has(.kel-select__selected-item) {
+        & .kel-select__selection.is-near:has(.kel-select__selected-item) {
             margin-left: 0;
         }
 
-        .kel-select__caret {
+        & .kel-select__caret {
             color: var(--kel-input-icon-color, var(--kel-text-color-placeholder));
         }
 
-        .kel-icon.is-loading svg {
+        & .kel-icon.is-loading svg {
             animation: kel-select-loading-rotate 2s linear infinite;
         }
 
-        .kel-select__wrapper {
+        & .kel-select__wrapper {
             background-color: var(--ks-bg-input);
             min-height: 30px;
             font-size: var(--ks-font-size-xs);
@@ -272,8 +279,8 @@
             &.is-disabled {
                 background-color: var(--ks-bg-inactive);
 
-                .kel-select__suffix {
-                    .kel-select__caret {
+                & .kel-select__suffix {
+                    & .kel-select__caret {
                         color: var(--ks-icon-inactive);
                     }
                 }
@@ -295,23 +302,22 @@
 
     .kel-select__popper {
         --kel-popper-border-radius: var(--ks-radius-base);
-
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-strong);
         box-shadow: 0px 8px 24px 0px var(--ks-shadow-elevated);
 
-        .kel-select-dropdown {
+        & .kel-select-dropdown {
             background: transparent;
             border: none;
             box-shadow: none;
         }
 
-        .kel-select-dropdown__header {
+        & .kel-select-dropdown__header {
             padding: var(--ks-spacing-1);
             border-bottom: 1px solid var(--ks-border-default);
         }
 
-        .kel-select-all-btn {
+        & .kel-select-all-btn {
             display: block;
             position: relative;
             width: 100%;
@@ -333,19 +339,19 @@
             }
         }
 
-        .kel-select-dropdown__list {
+        & .kel-select-dropdown__list {
             padding: var(--ks-spacing-1);
 
-            .kel-select-dropdown__item + .kel-select-dropdown__item {
+            & .kel-select-dropdown__item + .kel-select-dropdown__item {
                 margin-top: var(--ks-spacing-1);
             }
         }
 
-        .kel-select-dropdown__empty {
+        & .kel-select-dropdown__empty {
             padding: var(--ks-spacing-3) var(--ks-spacing-4);
         }
 
-        .kel-select-dropdown__item {
+        & .kel-select-dropdown__item {
             border-radius: var(--ks-radius-xs);
             position: relative;
             font-size: var(--ks-font-size-xs);
@@ -362,8 +368,8 @@
             }
         }
 
-        .kel-select-dropdown .kel-select-dropdown__item.is-selected::after,
-        .kel-select-dropdown .kel-select-all-btn[aria-checked="true"]::after {
+        & .kel-select-dropdown .kel-select-dropdown__item.is-selected::after,
+        & .kel-select-dropdown .kel-select-all-btn[aria-checked="true"]::after {
             content: "";
             position: absolute;
             right: 12px;
@@ -381,7 +387,8 @@
         font-size: var(--ks-font-size-md);
     }
 
-    // Rendered for colorMap entries, in both the closed label and the (teleported) dropdown options.
+    /* Rendered for colorMap entries, in both the closed label and the (teleported) dropdown options. */
+
     .kel-select-color-option {
         display: inline-flex;
         align-items: center;

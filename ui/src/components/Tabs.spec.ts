@@ -1,6 +1,7 @@
 import {describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createPinia} from "pinia"
+import {markRaw} from "vue"
 import {createRouter, createWebHistory} from "vue-router"
 import KestraDesignSystem from "@kestra-io/design-system"
 import Tabs from "./Tabs.vue"
@@ -52,7 +53,7 @@ describe("Tabs", () => {
         await router.isReady()
 
         const wrapper = mountTabs({
-            tabs: [{name: "details", title: "Details", component: {template: "<p data-test=\"tab-body\">body</p>"}}],
+            tabs: [{name: "details", title: "Details", component: markRaw({template: "<p data-test=\"tab-body\">body</p>"})}],
             embedActiveTab: "details",
         })
 

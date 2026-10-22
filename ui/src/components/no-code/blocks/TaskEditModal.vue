@@ -96,7 +96,7 @@
         <template v-if="!hintDismissed" #footer>
             <div class="task-edit-modal-hint" data-test="task-edit-modal-open-mode-hint">
                 <KsText size="small">
-                    <i18n-t keypath="block_editor.open_mode_hint" tag="span">
+                    <i18n-t keypath="block_editor.open_mode_hint" tag="span" scope="global">
                         <template #settings>
                             <router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>
                         </template>

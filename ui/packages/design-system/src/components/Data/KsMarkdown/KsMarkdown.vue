@@ -1,34 +1,43 @@
 <template>
-    <div ref="containerRef" class="ks-markdown">
-        <component :is="markdownContent" />
+    <div class="ks-markdown">
+        <component :is="renderContent()" />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, h, onMounted, onUpdated, ref, watch, type Component, type FunctionalComponent, type VNode} from "vue"
+    import {Fragment, computed, h, onMounted, ref, shallowRef, useId, watch, type Component, type VNode} from "vue"
+    import {useI18n} from "vue-i18n"
     import {unified} from "unified"
-    import remarkParse from "remark-parse"
+    import remarkDirective from "remark-directive"
     import remarkFrontmatter from "remark-frontmatter"
     import remarkGfm from "remark-gfm"
-    import remarkDirective from "remark-directive"
+    import remarkParse from "remark-parse"
     import type {Root, RootContent} from "mdast"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import Check from "vue-material-design-icons/Check.vue"
+    import type {ThemedTokenWithVariants} from "@shikijs/types"
     import xss, {escapeAttrValue} from "xss"
+    import Check from "vue-material-design-icons/Check.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import KsAlert from "../../Feedback/KsAlert.vue"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
-    import {getShiki, loadLanguageOnDemand} from "./shikiHighlighter"
+    import {useTheme} from "../../../composables/useTheme"
     import {copyToClipboard} from "../../../utils/clipboard"
+    import {getShiki, loadLanguageOnDemand} from "./shikiHighlighter"
+
+    type Rendered = VNode | string
+
+    interface CodeBlock {
+        lang: string
+        value: string
+    }
 
     const props = withDefaults(
         defineProps<{
-            content?: string,
-            html?: boolean;
-            xssProtection?: boolean;
-            /** Map of tag name → Vue component. Supports lowercase HTML elements (e.g. "a")
-             *  and PascalCase custom components (e.g. "ChildCard"). */
-            components?: Record<string, Component>;
+            content?: string
+            html?: boolean
+            xssProtection?: boolean
+            /** Tag name → component, for HTML elements (`a`, `img`) and PascalCase custom tags (`ChildCard`). */
+            components?: Record<string, Component>
         }>(),
         {
             content: undefined,
@@ -38,180 +47,277 @@
         },
     )
 
-    const containerRef = ref<HTMLElement | null>(null)
-    // Reactive cache: "lang::value" → Shiki-generated HTML
-    const codeHighlights = ref<Map<string, string>>(new Map())
+    const OPENING_TAG = /^<([A-Za-z][\w-]*)(\s[^>]*)?>$/
 
-    const ast = computed<Root>(() => {
-        return unified()
-            .use(remarkParse)
-            .use(remarkFrontmatter)
-            .use(remarkGfm)
-            .use(remarkDirective)
-            .parse(props.content ?? "") as Root
-    })
+    /** Raw HTML video embeds in docs are YouTube-only, so any other iframe host is dropped. */
+    const IFRAME_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com"]
 
-    function slugify(text: string): string {
-        return text
-            .toLowerCase()
-            .trim()
-            .replace(/[^\w\s-]/g, "")
-            .replace(/[\s_]+/g, "-")
-            .replace(/^-+|-+$/g, "")
+    /**
+     * Markdown links bypass the HTML whitelist, so their scheme is checked here.
+     * `data:` is excluded: a navigated `data:` document executes, unlike an image.
+     */
+    const URL_SCHEMES = ["http:", "https:", "mailto:", "tel:", "ftp:"]
+
+    /** Only base64 `image/*` data URLs, which browsers render with scripts disabled. */
+    const DATA_IMAGE = /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i
+
+    const WHITELIST = {
+        a: ["href", "title", "target", "rel", "id", "class"],
+        abbr: ["title"],
+        article: ["class", "role"],
+        b: [],
+        blockquote: ["class"],
+        br: [],
+        button: ["type", "class", "aria-label"],
+        code: ["class"],
+        dd: [],
+        del: [],
+        details: ["open", "class"],
+        div: ["class", "id", "role", "style"],
+        dl: [],
+        dt: [],
+        em: [],
+        h1: ["id", "class"],
+        h2: ["id", "class"],
+        h3: ["id", "class"],
+        h4: ["id", "class"],
+        h5: ["id", "class"],
+        h6: ["id", "class"],
+        hr: [],
+        i: [],
+        iframe: ["src", "title", "width", "height", "allow", "allowfullscreen", "referrerpolicy", "frameborder", "class"],
+        img: ["src", "alt", "title", "width", "height", "class"],
+        kbd: [],
+        li: ["class"],
+        mark: [],
+        ol: ["start", "class"],
+        p: ["class"],
+        pre: ["class", "id"],
+        s: [],
+        section: ["class"],
+        small: [],
+        source: ["src", "type"],
+        span: ["class", "style"],
+        strong: [],
+        sub: [],
+        summary: ["class"],
+        sup: [],
+        table: ["class"],
+        tbody: [],
+        td: ["class", "align"],
+        th: ["class", "align"],
+        thead: [],
+        tr: [],
+        ul: ["class"],
+        var: [],
+        video: ["src", "controls", "width", "height", "class"],
+    }
+
+    const {t} = useI18n({useScope: "global"})
+    const {isDark} = useTheme()
+    const uid = useId()
+
+    const parser = unified()
+        .use(remarkParse)
+        .use(remarkFrontmatter)
+        .use(remarkGfm)
+        .use(remarkDirective)
+
+    const ast = computed(() => parser.parse(props.content ?? "") as Root)
+    const blocks = computed(() => collectCodeBlocks(ast.value.children))
+    const highlights = shallowRef(new Map<string, ThemedTokenWithVariants[][]>())
+    const diagrams = shallowRef(new Map<string, string>())
+    const copied = ref<string>()
+    const slugs = new Map<string, number>()
+
+    function renderContent(): VNode {
+        slugs.clear()
+
+        return h(Fragment, renderNodes(ast.value.children))
+    }
+
+    function collectCodeBlocks(nodes: RootContent[], found: CodeBlock[] = []): CodeBlock[] {
+        for (const node of nodes) {
+            if (node.type === "code") {
+                found.push({lang: node.lang ?? "", value: node.value})
+            }
+
+            if ("children" in node) {
+                collectCodeBlocks(node.children, found)
+            }
+        }
+
+        return found
     }
 
     function extractText(nodes: RootContent[]): string {
-        return nodes.map((node): string => {
-            if ("children" in node) return extractText(node.children)
-            // Leaf nodes carry their text in `value` (text, inlineCode, html, …)
-            if ("value" in node) return node.value
-            return ""
-        }).join("")
+        return nodes
+            .map((node): string => {
+                if ("children" in node) {
+                    return extractText(node.children)
+                }
+
+                return "value" in node ? node.value : ""
+            })
+            .join("")
     }
 
-    function renderNodes(nodes: RootContent[]): (VNode | string)[] {
-        const result: (VNode | string)[] = []
-        for (const node of nodes) {
-            const vnode = renderNode(node)
-            if (vnode !== null) {
-                result.push(vnode)
-            }
-        }
-        return result
-    }
-
-    // Raw HTML video embeds in docs are YouTube-only; restrict `iframe src` to YouTube's
-    // own embed hosts so the shared xss whitelist below can't be used to embed arbitrary sites.
-    const IFRAME_ALLOWED_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com"]
-
-    function isAllowedIframeSrc(value: string): boolean {
-        try {
-            const url = new URL(value)
-            return url.protocol === "https:" && IFRAME_ALLOWED_HOSTS.includes(url.hostname)
-        } catch {
-            return false
-        }
-    }
-
-    // Markdown-native links and images never go through the raw-HTML `xss` whitelist below,
-    // so their URL needs its own scheme allowlist — otherwise `[x](javascript:…)` renders as a
-    // live anchor and executes in the viewer's session (stored XSS). `data:` stays out here: a
-    // navigated `<a href="data:...">` renders as a document and executes, unlike an `<img>`.
-    const ALLOWED_URL_SCHEMES = ["http:", "https:", "mailto:", "tel:", "ftp:"]
-
-    // Safe only for <img src>: browsers render an image's data: content (SVG included) in a
-    // script-disabled mode. Restricted to base64 image/* to keep out data:text/html and
-    // unencoded payloads.
-    const DATA_IMAGE_URL = /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i
-
+    /**
+     * Keeps relative URLs and allowed schemes. Whitespace and control characters are
+     * ignored while matching, so `java\tscript:` cannot slip through.
+     */
     function sanitizeUrl(url: unknown): string | undefined {
-        if (typeof url !== "string") return undefined
+        if (typeof url !== "string" || !url.trim()) {
+            return undefined
+        }
 
         const value = url.trim()
-        if (!value) return undefined
-
-        // Whitespace and control characters are dropped before the scheme is matched, so that
-        // neither "java\tscript:" nor a newline-split scheme can smuggle a rejected scheme through.
         const compacted = Array.from(value).filter((char) => char.charCodeAt(0) > 0x20).join("")
         const scheme = compacted.match(/^([a-z][a-z0-9+.-]*):/i)
-        if (!scheme) return value // relative URL, fragment or query-only link
+        if (!scheme) {
+            return value
+        }
 
-        return ALLOWED_URL_SCHEMES.includes(scheme[1].toLowerCase() + ":") ? value : undefined
+        return URL_SCHEMES.includes(`${scheme[1].toLowerCase()}:`) ? value : undefined
     }
 
     function sanitizeImageSrc(url: unknown): string | undefined {
-        if (typeof url !== "string") return undefined
-
-        const value = url.trim()
-        if (DATA_IMAGE_URL.test(value)) return value
+        if (typeof url === "string" && DATA_IMAGE.test(url.trim())) {
+            return url.trim()
+        }
 
         return sanitizeUrl(url)
     }
 
-    function htmlEscape(content: string): string {
+    function sanitizeHtml(content: string): string {
         return xss(content, {
-            whiteList: {
-                a: ["href", "title", "target", "rel", "id", "class"],
-                abbr: ["title"],
-                article: ["class", "role"],
-                b: [], i: [], em: [], strong: [], del: [], s: [],
-                blockquote: ["class"],
-                br: [],
-                code: ["class"],
-                dd: [], dl: [], dt: [],
-                details: ["open", "class"],
-                div: ["class", "id", "role", "style"],
-                h1: ["id", "class"], h2: ["id", "class"], h3: ["id", "class"],
-                h4: ["id", "class"], h5: ["id", "class"], h6: ["id", "class"],
-                hr: [],
-                iframe: ["src", "title", "width", "height", "allow", "allowfullscreen", "referrerpolicy", "frameborder", "class"],
-                img: ["src", "alt", "title", "width", "height", "class"],
-                kbd: [],
-                li: ["class"], ol: ["start", "class"], ul: ["class"],
-                mark: [],
-                p: ["class"],
-                pre: ["class", "id"],
-                section: ["class"],
-                small: [],
-                span: ["class", "style"],
-                sub: [], sup: [],
-                summary: ["class"],
-                table: ["class"], thead: [], tbody: [], tr: [], th: ["class", "align"], td: ["class", "align"],
-                var: [],
-                "router-md": ["execution", "namespace", "flowId"],
-                video: ["src", "controls", "width", "height", "class"],
-                source: ["src", "type"],
-                button: ["type", "class", "aria-label"],
-            },
+            whiteList: WHITELIST,
             stripIgnoreTag: true,
-            onTagAttr: function (tag: string, name: string, value: string) {
-                if (tag === "iframe" && name === "src" && !isAllowedIframeSrc(value)) {
+            onTagAttr: (tag: string, name: string, value: string) => {
+                if (tag !== "iframe" || name !== "src") {
+                    return undefined
+                }
+
+                try {
+                    const url = new URL(value)
+
+                    return url.protocol === "https:" && IFRAME_HOSTS.includes(url.hostname) ? undefined : ""
+                } catch {
                     return ""
                 }
-                return undefined
             },
-            onIgnoreTagAttr: function (_tag: string, name: string, value: string) {
-                if (name.startsWith("data-")) {
-                    return name + "=\"" + escapeAttrValue(value) + "\""
+            onIgnoreTagAttr: (_tag: string, name: string, value: string) => {
+                if (name.startsWith("data-") || name.startsWith("aria-")) {
+                    return `${name}="${escapeAttrValue(value)}"`
                 }
-                if (name.startsWith("aria-")) {
-                    return name + "=\"" + escapeAttrValue(value) + "\""
-                }
+
                 return undefined
             },
         })
     }
 
-    function parseHtmlAttributes(attrsStr: string): Record<string, unknown> {
-        const attrs: Record<string, unknown> = {}
-        const re = /(\w[\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g
-        let m: RegExpExecArray | null
-        while ((m = re.exec(attrsStr)) !== null) {
-            const key = m[1]
-            attrs[key] = m[2] ?? m[3] ?? m[4] ?? true
+    function parseAttributes(source: string): Record<string, string> {
+        const attributes: Record<string, string> = {}
+        for (const [, name, double, single, bare] of source.matchAll(/(\w[\w-]*)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g)) {
+            attributes[name] = double ?? single ?? bare ?? ""
         }
-        return attrs
+
+        return attributes
     }
 
-    function tryRenderCustomComponent(html: string): VNode | null {
-        if (!props.components || Object.keys(props.components).length === 0) return null
+    /** Custom components skip the HTML whitelist, so event handlers, styles and unsafe URLs are dropped here. */
+    function componentAttributes(source: string): Record<string, string | undefined> {
+        const attributes = parseAttributes(source)
+        if (!props.xssProtection) {
+            return attributes
+        }
 
-        // Match <ComponentName attrs>inner</ComponentName> or <ComponentName attrs></ComponentName>
-        const match = html.trim().match(/^<([A-Za-z][A-Za-z0-9]*)(\s[^>]*)?>(?:([\s\S]*?)<\/\1>)?$/)
-        if (!match) return null
-
-        const [, tagName, attrsStr = "", innerHtml = ""] = match
-        const component = props.components[tagName]
-        if (!component) return null
-
-        const attrs = parseHtmlAttributes(attrsStr.trim())
-        const slots = innerHtml.trim()
-            ? {default: () => [h("span", {innerHTML: props.xssProtection ? htmlEscape(innerHtml) : innerHtml})]}
-            : undefined
-        return h(component, attrs, slots)
+        return Object.fromEntries(
+            Object.entries(attributes)
+                .filter(([name]) => !/^(on|style$)/i.test(name))
+                .map(([name, value]) => {
+                    switch (name.toLowerCase()) {
+                    case "href":
+                        return [name, sanitizeUrl(value)]
+                    case "src":
+                        return [name, sanitizeImageSrc(value)]
+                    default:
+                        return [name, value]
+                    }
+                }),
+        )
     }
 
-    function renderNode(node: RootContent): VNode | string | null {
+    function renderRawHtml(html: string): VNode {
+        return h("span", {innerHTML: props.xssProtection ? sanitizeHtml(html) : html})
+    }
+
+    /** Inline HTML reaches the AST one tag per node, so an opening tag is paired with its sibling closing tag. */
+    function findClosingTag(nodes: RootContent[], start: number): number {
+        const opening = nodes[start]
+        const tag = opening.type === "html" ? opening.value.match(OPENING_TAG)?.[1] : undefined
+        if (!tag || !(props.html || props.components[tag])) {
+            return -1
+        }
+
+        const name = tag.toLowerCase()
+        let depth = 0
+        for (let index = start + 1; index < nodes.length; index++) {
+            const node = nodes[index]
+            if (node.type !== "html") {
+                continue
+            }
+
+            if (node.value.match(OPENING_TAG)?.[1].toLowerCase() === name) {
+                depth++
+            } else if (node.value.trim().toLowerCase() === `</${name}>`) {
+                if (depth === 0) {
+                    return index
+                }
+
+                depth--
+            }
+        }
+
+        return -1
+    }
+
+    function renderElement(openingTag: string, children: RootContent[]): Rendered[] {
+        const [, tag, attributes = ""] = openingTag.match(OPENING_TAG) ?? []
+        const component = props.components[tag]
+        if (component) {
+            return [h(component, componentAttributes(attributes), {default: () => renderNodes(children)})]
+        }
+
+        const allowed = (props.xssProtection ? sanitizeHtml(openingTag) : openingTag).match(OPENING_TAG)
+        if (!allowed) {
+            return renderNodes(children)
+        }
+
+        return [h(allowed[1], parseAttributes(allowed[2] ?? ""), renderNodes(children))]
+    }
+
+    function renderNodes(nodes: RootContent[]): Rendered[] {
+        const result: Rendered[] = []
+        for (let index = 0; index < nodes.length; index++) {
+            const node = nodes[index]
+            const closing = findClosingTag(nodes, index)
+            if (node.type === "html" && closing > index) {
+                result.push(...renderElement(node.value, nodes.slice(index + 1, closing)))
+                index = closing
+                continue
+            }
+
+            const vnode = renderNode(node)
+            if (vnode !== null) {
+                result.push(vnode)
+            }
+        }
+
+        return result
+    }
+
+    function renderNode(node: RootContent): Rendered | null {
         switch (node.type) {
         case "text":
             return node.value
@@ -220,136 +326,124 @@
             return h("p", renderNodes(node.children))
 
         case "heading": {
-            const text = extractText(node.children)
-            const slug = slugify(text)
-            const tag = `h${node.depth}` as const
-            return h(tag, {id: slug, class: "ks-markdown__heading"}, [
+            const base = extractText(node.children)
+                .toLowerCase()
+                .trim()
+                .replace(/[^\p{L}\p{N}\s_-]/gu, "")
+                .replace(/[\s_]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+            const count = slugs.get(base) ?? 0
+            const slug = count ? `${base}-${count}` : base
+            slugs.set(base, count + 1)
+
+            return h(`h${node.depth}`, {id: slug || undefined, class: "heading"}, [
                 ...renderNodes(node.children),
-                h("a", {
-                    href: `#${slug}`,
-                    class: "ks-markdown__heading-link",
-                    "aria-hidden": "true",
-                    tabindex: "-1",
-                }, "#"),
+                slug ? h("a", {href: `#${slug}`, class: "anchor", "aria-hidden": "true", tabindex: "-1"}, "#") : null,
             ])
         }
 
         case "blockquote":
-            return h("blockquote", {class: "ks-markdown__blockquote"}, renderNodes(node.children))
+            return h("blockquote", renderNodes(node.children))
 
         case "code": {
             const lang = node.lang ?? ""
             const value = node.value
-
             if (lang === "mermaid") {
-                return h("div", {class: "ks-markdown__mermaid mermaid"}, value)
+                const svg = diagrams.value.get(`${isDark.value}::${value}`)
+
+                return svg ? h("div", {class: "diagram", innerHTML: svg}) : h("pre", {class: "diagram"}, value)
             }
 
             const key = `${lang}::${value}`
-            const highlightedHtml = codeHighlights.value.get(key)
+            const theme = isDark.value ? "dark" : "light"
+            const label = t("ks_markdown.copy")
+            const tokens = highlights.value.get(key)?.flatMap((line, index) => [
+                ...(index ? ["\n"] : []),
+                ...line.map(({content, variants}) => h("span", {style: {color: variants[theme]?.color}}, content)),
+            ])
 
-            return h("div", {class: "ks-markdown__code-block"}, [
-                lang ? h("span", {class: "ks-markdown__code-lang"}, lang) : null,
-                h("button", {
-                    class: "ks-markdown__copy-btn",
-                    type: "button",
-                    title: "Copy to clipboard",
-                    onClick: (e: MouseEvent) => {
-                        const btn = e.currentTarget as HTMLButtonElement
-                        copyToClipboard(value).then(() => {
-                            // Swap the copy glyph for the check (not overlay it) for the confirm window.
-                            btn.classList.add("is-copied")
-                            setTimeout(() => btn.classList.remove("is-copied"), 2000)
-                        }).catch(() => { /* clipboard unavailable */ })
+            return h("div", {class: "code-block"}, [
+                lang ? h("span", {class: "lang"}, lang) : null,
+                h(
+                    "button",
+                    {
+                        class: ["copy", {copied: copied.value === key}],
+                        type: "button",
+                        title: label,
+                        "aria-label": label,
+                        onClick: () => copyToClipboard(value)
+                            .then(() => {
+                                copied.value = key
+                                setTimeout(() => {
+                                    if (copied.value === key) {
+                                        copied.value = undefined
+                                    }
+                                }, 2000)
+                            })
+                            .catch(() => undefined),
                     },
-                }, [h(Check, {class: "ks-markdown__copy-btn-ok"}), h(ContentCopy, {class: "ks-markdown__copy-btn-icon"})]),
-                highlightedHtml
-                    ? h("div", {class: "ks-markdown__code-shiki", innerHTML: highlightedHtml})
-                    : h("pre", {class: "ks-markdown__code-plain"}, [
-                        h("code", {class: lang ? `language-${lang}` : undefined}, value),
-                    ]),
+                    [h(ContentCopy), h(Check, {class: "check"})],
+                ),
+                h("pre", [h("code", tokens ?? value)]),
             ])
         }
 
         case "inlineCode":
-            return h("code", {class: "ks-markdown__inline-code"}, node.value)
+            return h("code", node.value)
 
         case "list":
-            return h(node.ordered ? "ol" : "ul", {class: "ks-markdown__list"}, renderNodes(node.children))
+            return h(node.ordered ? "ol" : "ul", {
+                start: node.ordered && node.start !== 1 ? node.start : undefined,
+            }, renderNodes(node.children))
 
-        case "listItem": {
-            const children = node.children.flatMap((child): (VNode | string)[] => {
-                if (child.type === "paragraph") return renderNodes(child.children)
-                const vnode = renderNode(child)
-                return vnode !== null ? [vnode] : []
-            })
-            return h("li", children)
-        }
+        case "listItem":
+            return h("li", node.children.flatMap((child) => {
+                return renderNodes(child.type === "paragraph" ? child.children : [child])
+            }))
 
         case "table": {
-            const align = node.align
-            const [headerRow, ...bodyRows] = node.children
+            const [header, ...rows] = node.children
+            const cells = rows.map((row) => row.children.map((cell) => renderNodes(cell.children)))
+            const columns = header.children.map((cell, column) => h(KsTableColumn, {
+                label: extractText(cell.children),
+                align: node.align?.[column] ?? undefined,
+            }, {
+                default: ({$index}: {$index: number}) => cells[$index]?.[column] ?? [],
+            }))
 
-            // Column labels extracted from the header row
-            const headers = headerRow.children.map((cell) => extractText(cell.children))
-
-            // Pre-render all cell content: cellGrid[rowIdx][colIdx] = VNodes
-            const cellGrid = bodyRows.map((row) => row.children.map((cell) => renderNodes(cell.children)))
-
-            const data = cellGrid.map((_, i) => ({_idx: i}))
-
-            const columns = headers.map((label: string, colIdx: number) => {
-                const cellAlign = align?.[colIdx] ?? null
-                return h(KsTableColumn, {
-                    label,
-                    // align is not in KsTableColumn's defineProps but is forwarded via $attrs
-                    ...(cellAlign ? {align: cellAlign} : {}),
-                }, {
-                    // oxlint-disable-next-line no-underscore-dangle
-                    default: ({row}: {row: {_idx: number}}) => cellGrid[row._idx]?.[colIdx] ?? [],
-                })
-            })
-
-            return h("div", {class: "ks-markdown__table-wrapper"}, [
-                h(KsTable, {data}, {default: () => columns}),
+            return h("div", {class: "table"}, [
+                h(KsTable, {data: cells}, {default: () => columns}),
             ])
         }
 
         case "link": {
-            const url = sanitizeUrl(node.url)
-            if (props.components?.a) {
-                return h(props.components.a, {
-                    href: url,
-                    title: node.title ?? undefined,
-                    class: "ks-markdown__link",
-                }, {default: () => renderNodes(node.children)})
+            const href = sanitizeUrl(node.url)
+            const title = node.title ?? undefined
+            if (props.components.a) {
+                return h(props.components.a, {href, title, class: "link"}, {
+                    default: () => renderNodes(node.children),
+                })
             }
 
-            const isExternal = url !== undefined && (url.startsWith("http://") || url.startsWith("https://"))
+            const external = href !== undefined && /^https?:\/\//.test(href)
+
             return h("a", {
-                href: url,
-                title: node.title ?? undefined,
-                target: isExternal ? "_blank" : undefined,
-                rel: isExternal ? "noopener noreferrer" : undefined,
-                class: "ks-markdown__link",
+                href,
+                title,
+                class: "link",
+                target: external ? "_blank" : undefined,
+                rel: external ? "noopener noreferrer" : undefined,
             }, renderNodes(node.children))
         }
 
         case "image": {
             const src = sanitizeImageSrc(node.url)
-            if (props.components?.img) {
-                return h(props.components.img, {
-                    src,
-                    alt: node.alt ?? "",
-                })
+            const alt = node.alt ?? ""
+            if (props.components.img) {
+                return h(props.components.img, {src, alt})
             }
 
-            return h("img", {
-                src,
-                alt: node.alt ?? "",
-                title: node.title ?? undefined,
-                class: "ks-markdown__image",
-            })
+            return h("img", {src, alt, title: node.title ?? undefined})
         }
 
         case "strong":
@@ -365,318 +459,187 @@
             return h("br")
 
         case "thematicBreak":
-            return h("hr", {class: "ks-markdown__hr"})
+            return h("hr")
 
         case "html": {
-            const customVNode = tryRenderCustomComponent(node.value)
-            if (customVNode) return customVNode
+            const match = node.value.trim().match(/^<([A-Za-z][A-Za-z0-9]*)(\s[^>]*)?>(?:([\s\S]*?)<\/\1>)?$/)
+            const component = match ? props.components[match[1]] : undefined
+            if (match && component) {
+                const [, , attributes = "", inner = ""] = match
 
-            if (props.html) {
-                if (props.xssProtection) {
-                    return h("span", {innerHTML: htmlEscape(node.value), class: "ks-markdown__raw-html"})
-                } else {
-                    return h("span", {innerHTML: node.value, class: "ks-markdown__raw-html"})
-                }
-            } else {
-                return h("span", {innerText: node.value, class: "ks-markdown__raw-html"})
+                return h(component, componentAttributes(attributes.trim()), inner.trim()
+                    ? {default: () => [renderRawHtml(inner)]}
+                    : undefined)
             }
+
+            return props.html ? renderRawHtml(node.value) : h("span", node.value)
         }
 
-        // remark-directive: :::name{attrs}\ncontent\n:::
-        case "containerDirective": {
-            const name = node.name
-            if (name === "alert") {
-                const type = node.attributes?.type ?? "info"
-                return h(KsAlert, {
-                    type: type as "success" | "warning" | "info" | "error",
-                    showIcon: false,
-                    class: "ks-markdown__alert",
-                }, {default: () => renderNodes(node.children)})
+        case "containerDirective":
+            if (node.name !== "alert") {
+                return h("div", {class: "directive"}, renderNodes(node.children))
             }
-            return h("div", {class: `ks-markdown__directive ks-markdown__directive--${name}`},
-                     renderNodes(node.children))
-        }
+
+            return h(KsAlert, {
+                type: (node.attributes?.type ?? "info") as "success" | "warning" | "info" | "error",
+                showIcon: false,
+                class: "alert",
+            }, {default: () => renderNodes(node.children)})
 
         case "leafDirective":
         case "textDirective":
             return null
 
         default:
-            if ("children" in node && Array.isArray(node.children)) {
-                return h("div", renderNodes(node.children))
-            }
-
-            return null
+            return "children" in node && Array.isArray(node.children) ? h("div", renderNodes(node.children)) : null
         }
     }
 
-    // Depends on both `ast` and `codeHighlights` — re-evaluates when either changes.
-    const markdownContent = computed<FunctionalComponent>(() => {
-        const children = renderNodes(ast.value.children)
-        return () => children
-    })
-
-    async function highlightAllCodeBlocks(root: Root) {
-        const blocks: {lang: string; value: string}[] = []
-
-        function collect(nodes: RootContent[]) {
-            for (const node of nodes) {
-                if (node.type === "code" && node.lang !== "mermaid") {
-                    blocks.push({lang: node.lang ?? "", value: node.value})
-                }
-                if ("children" in node) collect(node.children)
-            }
+    async function highlight(codeBlocks: CodeBlock[]) {
+        if (!codeBlocks.length) {
+            return
         }
-        collect(root.children)
-        if (!blocks.length) return
 
-        const hl = await getShiki()
-        if (!hl) return
-
-        // Fetch every missing grammar at once: awaiting them per block serialized the
-        // requests for a document mixing languages.
-        const loaded = new Set(hl.getLoadedLanguages() as string[])
-        const missing = [...new Set(blocks.map((block) => block.lang))].filter((lang) => lang && !loaded.has(lang))
+        const highlighter = await getShiki()
+        const loaded = new Set(highlighter.getLoadedLanguages() as string[])
         const unavailable = new Set<string>()
+        const missing = [...new Set(codeBlocks.map(({lang}) => lang))].filter((lang) => lang && !loaded.has(lang))
         await Promise.all(missing.map(async (lang) => {
-            if (!await loadLanguageOnDemand(hl, lang)) unavailable.add(lang)
+            if (!await loadLanguageOnDemand(highlighter, lang)) {
+                unavailable.add(lang)
+            }
         }))
 
-        // Snapshot after the awaits above, so the synchronous loop below cannot write back a
-        // map that a concurrent call has already superseded.
-        const updated = new Map(codeHighlights.value)
-
-        for (const block of blocks) {
-            const key = `${block.lang}::${block.value}`
-            if (updated.has(key)) continue
-
-            const lang = unavailable.has(block.lang) ? "" : block.lang
+        const result = new Map<string, ThemedTokenWithVariants[][]>()
+        for (const {lang, value} of codeBlocks) {
+            const key = `${lang}::${value}`
+            if (highlights.value.has(key) || result.has(key)) {
+                continue
+            }
 
             try {
-                const html = hl.codeToHtml(block.value, {
-                    lang: lang || "text",
+                result.set(key, highlighter.codeToTokensWithThemes(value, {
+                    lang: !lang || unavailable.has(lang) ? "text" : lang,
                     themes: {light: "github-light", dark: "github-dark"},
-                    defaultColor: false,
-                }) as string
-                updated.set(key, html)
+                }))
             } catch {
-                // Keep the plain-text fallback for this block
+                continue
             }
         }
 
-        codeHighlights.value = updated
-    }
-
-    // Trigger highlighting whenever the parsed AST changes (also runs on first mount)
-    watch(ast, (newAst) => { void highlightAllCodeBlocks(newAst) }, {immediate: true})
-
-    async function initMermaid() {
-        const container = containerRef.value
-        if (!container) return
-        const nodes = container.querySelectorAll<HTMLElement>(".ks-markdown__mermaid:not([data-processed])")
-        if (!nodes.length) return
-        try {
-            const {default: mermaid} = await import("mermaid")
-            mermaid.initialize({startOnLoad: false, theme: "default"})
-            await mermaid.run({nodes})
-        } catch {
-            // Mermaid not available or failed to render
+        if (result.size) {
+            highlights.value = new Map([...highlights.value, ...result])
         }
     }
 
-    onMounted(initMermaid)
-    onUpdated(initMermaid)
+    async function renderDiagrams(sources: string[]) {
+        const dark = isDark.value
+        const missing = [...new Set(sources)].filter((source) => !diagrams.value.has(`${dark}::${source}`))
+        if (!missing.length) {
+            return
+        }
+
+        const {default: mermaid} = await import("mermaid")
+        mermaid.initialize({startOnLoad: false, theme: dark ? "dark" : "default", suppressErrorRendering: true})
+
+        const result = new Map<string, string>()
+        for (const [index, source] of missing.entries()) {
+            try {
+                const {svg} = await mermaid.render(`${uid}-mermaid-${index}`, source)
+                result.set(`${dark}::${source}`, svg)
+            } catch {
+                continue
+            }
+        }
+
+        if (result.size) {
+            diagrams.value = new Map([...diagrams.value, ...result])
+        }
+    }
+
+    watch(blocks, (codeBlocks) => {
+        void highlight(codeBlocks.filter(({lang}) => lang !== "mermaid"))
+    }, {immediate: true})
+
+    /** Started once mounted, when `useTheme` has read the real theme, so a dark page renders its diagrams once. */
+    onMounted(() => {
+        watch([blocks, isDark], ([codeBlocks]) => {
+            void renderDiagrams(codeBlocks.filter(({lang}) => lang === "mermaid").map(({value}) => value))
+        }, {immediate: true})
+    })
 </script>
 
-<style>
-    /* ─── Shiki light/dark theme switching ──────────────────────────────────── */
-    /* `defaultColor: false` emits CSS vars (--shiki-light, --shiki-dark, etc.) */
-    /* on each token. The html.dark class (managed by the theme toggle) switches */
-    /* token colors without needing !important on the inline styles. */
-
-    .ks-markdown__code-shiki {
-        & .shiki {
-            margin: 0;
-            padding: var(--ks-spacing-3);
-            overflow-x: auto;
-            border-radius: var(--kel-border-radius-base);
-
-            & span {
-                color: var(--shiki-light);
-            }
-
-            html.dark & {
-                & span {
-                    color: var(--shiki-dark);
-                }
-            }
-
-            & code .line {
-                display: inline;
-            }
-        }
-    }
-
-    .ks-markdown {
+<style scoped>
+    :where(.ks-markdown) {
         color: var(--ks-text-primary);
         line-height: var(--ks-line-height-loose);
+        overflow-wrap: break-word;
+    }
 
-        & h1, & h2, & h3, & h4, & h5, & h6 {
-            &.ks-markdown__heading {
-                position: relative;
-                margin: 1.25rem 0 0.5rem;
-                scroll-margin-top: 1rem;
+    :where(.ks-markdown) > :last-child {
+        margin-bottom: 0;
+    }
 
-                &:first-child {
-                    margin-top: 0;
-                }
-
-                & .ks-markdown__heading-link {
-                    margin-left: 0.4rem;
-                    opacity: 0;
-                    color: var(--kel-text-color-placeholder);
-                    text-decoration: none;
-                    font-weight: normal;
-                    transition: opacity 0.15s ease;
-                }
-
-                &:hover .ks-markdown__heading-link {
-                    opacity: 1;
-                }
-            }
-        }
-
+    :where(.ks-markdown) {
         & p {
-            &:first-child {
-                margin-top: 0;
-            }
+            margin: 0 0 var(--ks-spacing-4);
 
             &:last-child {
                 margin-bottom: 0;
             }
         }
 
-        & .ks-markdown__blockquote {
-            margin: 1rem 0;
-            padding: 0.5rem 1rem;
-            border-left: 4px solid var(--ks-border-default);
-            color: var(--ks-text-secondary);
-            background-color: var(--kel-bg-color-overlay);
-            border-radius: var(--kel-border-radius-base);
-        }
-
-        & .ks-markdown__code-block {
-            margin: 1rem 0;
-            border: 1px solid var(--ks-border-default);
-            border-radius: var(--kel-border-radius-round);
-            overflow: hidden;
+        & .heading {
             position: relative;
+            margin: var(--ks-spacing-5) 0 var(--ks-spacing-2);
+            font-weight: var(--ks-font-weight-semibold);
+            line-height: var(--ks-line-height-tight);
+            color: var(--ks-text-primary);
+            scroll-margin-top: var(--ks-spacing-4);
 
-            & .ks-markdown__code-lang {
-                position: absolute;
-                top: var(--ks-spacing-1);
-                right: var(--ks-spacing-1);
-                padding: var(--ks-spacing-1);
-                font-size: var(--ks-font-size-xs);
-                font-family: var(--kel-font-family-monospace), monospace;
-                color: var(--kel-text-color-placeholder);
-                transition: opacity 0.15s ease;
+            &:first-child {
+                margin-top: 0;
             }
 
-            & .ks-markdown__copy-btn {
-                position: absolute;
-                top: var(--ks-spacing-1);
-                right: var(--ks-spacing-1);
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.15s ease;
-                padding: var(--ks-spacing-1);
-                border: 0;
-                border-radius: var(--kel-border-radius-base);
-                background: var(--ks-bg-base);
-                cursor: pointer;
-                color: var(--kel-text-color-placeholder);
-                display: grid;
-                place-items: center;
-
-                &:hover {
-                    color: var(--kel-text-color-primary);
-                }
-
-                /* The copy glyph and the confirm check occupy the same cell; only one is
-                   visible at a time (swapped via the .is-copied state), never overlaid. */
-
-                & > * {
-                    grid-area: 1 / 1;
-                    transition: opacity 0.15s ease;
-                }
-
-                & .ks-markdown__copy-btn-ok {
-                    color: var(--ks-text-success);
-                    opacity: 0;
-                }
-
-                &.is-copied {
-                    & .ks-markdown__copy-btn-icon {
-                        opacity: 0;
-                    }
-
-                    & .ks-markdown__copy-btn-ok {
-                        opacity: 1;
-                    }
-                }
-            }
-
-            &:hover,
-            &:focus-within {
-                & .ks-markdown__code-lang {
-                    opacity: 0;
-                }
-
-                & .ks-markdown__copy-btn {
-                    opacity: 1;
-                    pointer-events: auto;
-                }
-            }
-
-            & .ks-markdown__code-plain {
-                margin: 0;
-                padding: 1rem;
-                overflow-x: auto;
-                background-color: var(--kel-bg-color-overlay);
-
-                & code {
-                    font-family: var(--kel-font-family-monospace), monospace;
-                    font-size: var(--ks-font-size-sm);
-                    background: none;
-                    padding: 0;
-                    border: none;
-                }
+            &:hover .anchor {
+                opacity: 1;
             }
         }
 
-        & .ks-markdown__inline-code {
-            padding: 0.15rem 0.4rem;
-            border-radius: var(--kel-border-radius-base);
-            background-color: var(--kel-bg-color-overlay);
-            border: 1px solid var(--ks-border-default);
+        & h1 {
+            font-size: var(--ks-font-size-4xl);
         }
 
-        & .ks-markdown__list {
-            margin: 0.75rem 0;
-            padding-left: 1.5rem;
-
-            & li {
-                margin: 0.25rem 0;
-            }
+        & h2 {
+            font-size: var(--ks-font-size-3xl);
         }
 
-        & .ks-markdown__table-wrapper {
-            margin: 1rem 0;
-            overflow-x: auto;
+        & h3 {
+            font-size: var(--ks-font-size-2xl);
         }
 
-        & .ks-markdown__link {
+        & h4 {
+            font-size: var(--ks-font-size-xl);
+        }
+
+        & h5 {
+            font-size: var(--ks-font-size-lg);
+        }
+
+        & h6 {
+            font-size: var(--ks-font-size-base);
+        }
+
+        & .anchor {
+            margin-left: var(--ks-spacing-2);
+            opacity: 0;
+            color: var(--ks-text-dim);
+            font-weight: var(--ks-font-weight-regular);
+            text-decoration: none;
+            transition: opacity 0.15s ease;
+        }
+
+        & .link {
             color: var(--ks-text-link);
             text-decoration: none;
 
@@ -685,24 +648,146 @@
             }
         }
 
-        & .ks-markdown__image {
+        & :not(pre) > code {
+            padding: 0.125rem var(--ks-spacing-1);
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-base);
+            background-color: var(--ks-bg-elevated);
+            color: var(--ks-text-link);
+            font-size: 0.875em;
+        }
+
+        & pre {
+            margin: 0;
+            padding: var(--ks-spacing-3);
+            overflow-x: auto;
+            background: none;
+            font-size: var(--ks-font-size-sm);
+        }
+
+        & ul,
+        & ol {
+            margin: 0 0 var(--ks-spacing-4);
+            padding-left: var(--ks-spacing-5);
+
+            & ul,
+            & ol {
+                margin: 0;
+            }
+        }
+
+        & li {
+            margin: var(--ks-spacing-1) 0;
+        }
+
+        & blockquote {
+            margin: 0 0 var(--ks-spacing-4);
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            border-left: 4px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-base);
+            background-color: var(--ks-bg-elevated);
+            color: var(--ks-text-secondary);
+        }
+
+        & .code-block {
+            position: relative;
+            margin: 0 0 var(--ks-spacing-4);
+            border: 1px solid var(--ks-border-default);
+            border-radius: var(--ks-radius-lg);
+            background-color: var(--ks-bg-input);
+            overflow: hidden;
+
+            &:hover,
+            &:focus-within {
+                & .lang {
+                    opacity: 0;
+                }
+
+                & .copy {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+            }
+        }
+
+        & .lang {
+            position: absolute;
+            top: var(--ks-spacing-1);
+            right: var(--ks-spacing-1);
+            padding: var(--ks-spacing-1);
+            font-family: var(--ks-font-family-mono);
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-dim);
+            transition: opacity 0.15s ease;
+        }
+
+        & .copy {
+            position: absolute;
+            top: var(--ks-spacing-1);
+            right: var(--ks-spacing-1);
+            display: grid;
+            place-items: center;
+            padding: var(--ks-spacing-1);
+            border: 0;
+            border-radius: var(--ks-radius-base);
+            background: var(--ks-bg-base);
+            color: var(--ks-text-dim);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+
+            &:hover {
+                color: var(--ks-text-primary);
+            }
+
+            & > * {
+                grid-area: 1 / 1;
+                transition: opacity 0.15s ease;
+            }
+
+            & .check {
+                color: var(--ks-text-success);
+                opacity: 0;
+            }
+
+            &.copied {
+                & > * {
+                    opacity: 0;
+                }
+
+                & .check {
+                    opacity: 1;
+                }
+            }
+        }
+
+        & .table {
+            margin: 0 0 var(--ks-spacing-4);
+            overflow-x: auto;
+        }
+
+        & img {
             max-width: 100%;
             height: auto;
         }
 
-        & .ks-markdown__hr {
-            margin: 1.5rem 0;
+        & hr {
+            margin: var(--ks-spacing-5) 0;
             border: none;
             border-top: 1px solid var(--ks-border-default);
         }
 
-        & .ks-markdown__mermaid {
-            margin: 1rem 0;
+        & .diagram {
+            margin: 0 0 var(--ks-spacing-4);
+        }
+
+        & div.diagram {
             text-align: center;
         }
 
-        & .ks-markdown__alert {
-            margin: 1rem 0;
+        & .alert {
+            margin: 0 0 var(--ks-spacing-4);
         }
     }
 </style>

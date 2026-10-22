@@ -79,6 +79,7 @@
             <TriggerFlow
                 v-else-if="shouldShowExecute"
                 type="primary"
+                compact
                 :flowId="flow?.id"
                 :namespace="flow?.namespace"
                 :flowSource="flow?.source"
@@ -108,13 +109,14 @@
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
     import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
+    import {useDashboardSelection} from "../../../components/dashboard/composables/useDashboardSelection"
+    import {useIsMobile} from "../../../composables/useIsMobile"
     import {routeFamily} from "../../../utils/routeFamily"
     import {useActiveTab} from "../../../composables/useActiveTab"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import {useAuthStore} from "override/stores/auth"
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
-    import {useDashboardStore} from "../../../stores/dashboard.ts"
     import {useLogsStore} from "../../../stores/logs"
     import {useToast} from "../../../utils/toast"
     import {useFlowEditorActions} from "../../../components/flows/useFlowEditorActions"
@@ -128,13 +130,14 @@
     const route = useRoute()
     const toast = useToast()
 
+    const isMobile = useIsMobile()
+
     const flow = computed(() => flowStore.flow)
     const deleted = computed(() => flow.value?.deleted || false)
     const tab = useActiveTab()
     const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
-    const dashboardStore = useDashboardStore()
 
     const {
         haveChange: editorHaveChange,
@@ -153,16 +156,10 @@
         deleteFlow: editorDeleteFlow,
     } = useFlowEditorActions()
 
-    const onSelectDashboard = (value: string) => {
-        const key = dashboardStore.getUserDashboardStorageKey(route)
-        localStorage.setItem(key, value)
-        router.replace({
-            params: {...route.params, dashboard: value},
-        })
-    }
+    const {selectDashboard: onSelectDashboard} = useDashboardSelection()
 
     const showDashboards = computed(() =>
-        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)),
+        !isMobile.value && tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)),
     )
 
     const canExecute = computed(() =>

@@ -461,7 +461,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-duration-value {
         appearance: none;
         padding: 0;

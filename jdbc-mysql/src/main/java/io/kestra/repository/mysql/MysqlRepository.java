@@ -35,6 +35,7 @@ import jakarta.inject.Inject;
 @Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
+    private static final String SEARCH_COLLATION = "utf8mb4_unicode_ci";
 
     @Inject
     public MysqlRepository(@Parameter JdbcTableConfig jdbcTableConfig,
@@ -58,7 +59,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
             Field<String> f = DSL.field(fieldName, String.class);
             // COALESCE ensures NULL fields evaluate to false rather than NULL,
             // so NOT(...LIKE...) works correctly for nullable columns like execution_id.
-            likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).like(pattern, '\\'));
+            likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).collate(SEARCH_COLLATION).like(pattern, '\\'));
         }
 
         String booleanQuery = Arrays.stream(query.split("\\p{IsPunct}|\\s+"))

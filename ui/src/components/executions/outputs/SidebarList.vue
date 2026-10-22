@@ -31,6 +31,9 @@
                         >
                             <span class="key">{{ item.label }}</span>
                             <KsTag class="card-tag" size="small">{{ item.type }}</KsTag>
+                            <KsTag v-if="item.isExpression" class="card-tag" size="small">
+                                {{ $t("variable_explorer.expression") }}
+                            </KsTag>
                             
                             <code class="preview">{{ item.preview }}</code>
                         </div>
@@ -62,6 +65,7 @@
         type: string;
         preview: string;
         expression: string;
+        isExpression?: boolean;
         taskRunId?: string;
         searchText?: string;
     }
@@ -109,7 +113,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -182,6 +186,19 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 767px) {
+    .item {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        min-height: 2.75rem;
+    }
+
+    .item .key {
+        min-width: 0;
+        white-space: nowrap;
     }
 }
 </style>

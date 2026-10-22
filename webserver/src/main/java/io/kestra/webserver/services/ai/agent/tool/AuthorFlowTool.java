@@ -8,6 +8,7 @@ import io.kestra.core.ai.agent.models.ArtefactDraft;
 import io.kestra.core.ai.agent.models.ArtefactKind;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.libs.copilot.exceptions.AiException;
@@ -58,7 +59,7 @@ public class AuthorFlowTool implements AiAuthoringTool {
 
     @Tool(
         name = "author-flow",
-        value = "Draft a Kestra flow (YAML) from a natural-language description, or revise an existing flow when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentFlowYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply — refer the user to the draft. "
+        value = "Draft a Kestra flow (YAML) from a natural-language description, or revise an existing flow when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentFlowYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply, and do not tell the user it has been created or saved — point them at the proposal card, which they apply themselves. "
             + "Returns an object { draftId, kind, valid, validationError, yaml, assumedNamespace }: `draftId` and `yaml` identify the published draft and `valid` reflects validation (`validationError` holds the constraints when invalid). When the flow was authored without a namespace, `assumedNamespace` holds the namespace it defaulted to — tell the user the flow was drafted in that namespace and that they can change it. If generation fails, the tool errors with the reason instead of returning."
     )
     public Result authorFlow(
@@ -105,8 +106,8 @@ public class AuthorFlowTool implements AiAuthoringTool {
     private String validate(final String tenant, final String yaml) {
         List<ValidateConstraintViolation> violations = flowService.validate(tenant, List.of(new FlowSource(null, yaml)));
         String constraints = violations.stream()
-            .map(ValidateConstraintViolation::getConstraints)
-            .filter(Objects::nonNull)
+            .flatMap(violation -> violation.getErrors().stream())
+            .map(ValidationError::toLine)
             .collect(Collectors.joining("; "));
         return constraints.isEmpty() ? null : constraints;
     }

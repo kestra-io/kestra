@@ -151,8 +151,8 @@
 
     type AlertType = "success" | "warning" | "info" | "error"
     
-    function toAlertType(style: string): AlertType {
-        return style.toLowerCase() as AlertType
+    function toAlertType(style: string | undefined): AlertType | undefined {
+        return style?.toLowerCase() as AlertType | undefined
     }
 
     export interface ReplaySubmitOptions {
@@ -496,7 +496,7 @@
     }, {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .flow-execution-checks-alerts {
         margin-bottom: 1rem;
     }

@@ -1,5 +1,3 @@
-import {computed} from "vue"
-import {useTheme} from "./utils"
 import {STATES, LOG_LEVELS} from "@kestra-io/design-system"
 import {cssVar} from "@kestra-io/design-system"
 
@@ -23,20 +21,4 @@ export const getSchemes = () => {
 
 export const getSchemeValue = (state: string, type: "executions" | "logs" = "executions"): string => {
     return (getSchemes() as any)[type][state] ?? "transparent"
-}
-
-/**
- * @param {"executions" | "logs"} type - what the chart will display
- * @returns Computed scheme colors for the specified type
- */
-export const useScheme = (type: "executions" | "logs" = "executions") => {
-    const theme = useTheme()
-    return computed(() => {
-        const TYPES = getSchemes()
-        if (theme.value !== undefined) {
-            return TYPES[type as keyof typeof TYPES] ?? {}
-        } else {
-            return {}
-        }
-    })
 }

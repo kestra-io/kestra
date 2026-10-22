@@ -1,10 +1,10 @@
 import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured, type Component} from "vue"
+import {useI18n} from "vue-i18n"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {KnownSlotsPropNames, ManifestsRegistry, type KnownSlotProps} from "@kestra-io/slot-contracts"
-import {PluginUiModuleWithGroup, type Task} from "@kestra-io/kestra-sdk"
-import {getCsrfToken} from "../utils/csrf"
+import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
 
 
 function wrapWithErrorBoundary(inner: Component) {
@@ -12,6 +12,7 @@ function wrapWithErrorBoundary(inner: Component) {
         name: "FederatedModuleBoundary",
         inheritAttrs: false,
         setup(_, {attrs, slots}) {
+            const {t} = useI18n()
             const error = ref<Error | null>(null)
 
             onErrorCaptured((err: Error) => {
@@ -22,7 +23,7 @@ function wrapWithErrorBoundary(inner: Component) {
 
             return () => {
                 if (error.value) {
-                    return h("div", {class: "federated-module-error"}, "A plugin component failed to load.")
+                    return h("div", {class: "federated-module-error"}, t("plugins.ui_load_error"))
                 }
                 return h(inner, attrs, slots)
             }
@@ -59,14 +60,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         try {
             // get the manifest of the all the tasks we will
             // have in the graph
-            // The generated SDK client (client.gen) uses its own axios.create() instance
-            // which does not pick up the CSRF interceptor configured in main.ts.
-            // Explicitly forward the CSRF token so this POST is not rejected by CsrfTokenFilter.
-            const csrfToken = getCsrfToken()
-            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest(
-                {body: Array.from(taskTypes)},
-                csrfToken ? {headers: {"X-CSRF-TOKEN": csrfToken}} : undefined,
-            )
+            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest({body: Array.from(taskTypes)})
             pluginTaskManifests = pluginTaskManifestsResponse?.manifest ?? {}
         } catch (error) {
             console.error("[FederatedModule] Failed to load plugin UI manifest:", error)
@@ -78,7 +72,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
             for(const manifest of pluginTaskManifests[taskTypeKey]){
                 if(manifest.uiModule === slotName){
                     if(manifest.staticInfo){
-                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo
+                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo as ManifestsRegistry[T]
                     }
                 }
             }
@@ -144,8 +138,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     const RemoteComponent = defineComponent({
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
         inheritAttrs: false,
-        setup(props: { taskType: string } & KnownSlotProps[T], {attrs}) {
-            const {taskType, ...restProps} = props
+        setup(rawProps, {attrs}) {
+            // The declared props are the slot's own propNames, so the generic slot type can't be inferred from them.
+            const {taskType, ...restProps} = rawProps as unknown as {taskType: string} & KnownSlotProps[T]
             // ponytail: read inside render so shallowReactive tracks it — loadRemote completes after manifestReady
             return () => {
                 const Comp = RemoteComponents[taskType]
@@ -159,7 +154,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     }
 
     // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
-    function componentTypeFor(task?: Pick<Task, "type"> & {taskRunner?: Pick<Task, "type">}): string {
+    function componentTypeFor(task?: {type?: string; taskRunner?: {type?: string}}): string {
         const runnerType = task?.taskRunner?.type
         return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
     }

@@ -48,7 +48,18 @@
                         @resume="unpauseBackfill(props.row as TriggerRow)"
                         @stop="deleteBackfill(props.row as TriggerRow)"
                     />
-                    <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
+                    <LogsWrapper
+                        class="trigger-logs"
+                        :filters="{
+                            'filters[namespace][EQUALS]': props.row.namespace ?? flowStore.flow?.namespace,
+                            'filters[flowId][EQUALS]': props.row.flowId ?? flowStore.flow?.id,
+                            'filters[triggerId][EQUALS]': props.row.id
+                        }"
+                        :logsStoreScope="`trigger-${props.row.namespace ?? flowStore.flow?.namespace}-${props.row.flowId ?? flowStore.flow?.id}-${props.row.id}`"
+                        :withCharts="false"
+                        :reloadLogs
+                        embed
+                    />
                 </template>
             </KsTableColumn>
             <KsTableColumn
@@ -202,7 +213,7 @@
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
-                                        <TextSearch class="mr-1" />
+                                        <TextSearch />
                                         {{ $t("details") }}
                                     </KsDropdownItem>
                                     <KsDropdownItem
@@ -210,7 +221,7 @@
                                         :disabled="!scope.row.locked"
                                         @click="restart(scope.row as TriggerRow)"
                                     >
-                                        <Restart class="mr-1" />
+                                        <Restart />
                                         {{ $t("restart") }}
                                     </KsDropdownItem>
                                     <KsDropdownItem
@@ -218,7 +229,7 @@
                                         :disabled="!scope.row.locked"
                                         @click="unlock(scope.row as TriggerRow)"
                                     >
-                                        <LockOff class="mr-1" />
+                                        <LockOff />
                                         {{ $t("unlock") }}
                                     </KsDropdownItem>
                                 </KsDropdownMenu>
@@ -229,11 +240,11 @@
             </KsTableColumn>
         </KsDataTable>
 
-        <div v-if="triggersWithType.length" class="mt-4">
+        <div v-if="triggersWithType.length" class="add-trigger">
             <KsButton
                 @click="addNewTrigger"
                 :icon="Plus"
-                class="border-0 p-3"
+                class="add-trigger-button"
             >
                 {{ $t('no_code.creation.triggers') }}
             </KsButton>
@@ -266,7 +277,7 @@
         large
     >
         <template #header>
-            <span v-html="$t('backfill executions')" />
+            <span>{{ $t("backfill executions") }}</span>
         </template>
         <KsForm :model="backfill" labelPosition="top">
             <div class="pickers">
@@ -835,9 +846,9 @@
     })
 </script>
 
-<style lang="scss" scoped>
-// The parent flow tab strips horizontal padding when a data table is present
-// (full-width-table behaviour); restore the standard gutter for this tab.
+<style scoped>
+/* The parent flow tab strips horizontal padding when a data table is present */
+/* (full-width-table behaviour); restore the standard gutter for this tab. */
 .triggers-tab {
     padding-inline: var(--ks-spacing-5);
 }
@@ -877,5 +888,18 @@
     p {
         margin-bottom: auto;
     }
+}
+
+:deep(.trigger-logs) {
+    margin: var(--ks-spacing-4);
+}
+
+.add-trigger {
+    margin-top: var(--ks-spacing-5);
+}
+
+.add-trigger-button {
+    border: 0;
+    padding: var(--ks-spacing-4);
 }
 </style>

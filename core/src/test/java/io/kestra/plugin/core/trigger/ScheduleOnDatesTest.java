@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -17,11 +19,13 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunContextInitializer;
+import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.IdUtils;
 
 import jakarta.inject.Inject;
@@ -57,6 +61,34 @@ class ScheduleOnDatesTest {
 
         // then
         assertThat(nextDate).isEqualTo(after);
+    }
+
+    @Test
+    void shouldResumeAtFirstDateHeldBackWhenBackfillReachesItsEnd() {
+        // given: a backfill on its last in-window date, created when `heldBack` was the next date to run
+        var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        var inWindow = now.minusHours(2);
+        var alreadyRan = now.minusHours(1);
+        var heldBack = now.minusMinutes(10);
+        var future = now.plusDays(1);
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .dates(Property.ofValue(List.of(inWindow, alreadyRan, heldBack, future)))
+            .build();
+        Backfill backfill = Backfill.builder()
+            .start(inWindow.minusMinutes(1))
+            .end(inWindow.plusMinutes(1))
+            .currentDate(inWindow)
+            .previousNextExecutionDate(heldBack)
+            .build();
+        TriggerContext triggerContext = TriggerContext.builder().date(inWindow).backfill(backfill).build();
+
+        // when
+        ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext(scheduleOnDates), Optional.of(triggerContext));
+
+        // then
+        assertThat(nextDate).isEqualTo(heldBack);
     }
 
     @Test
@@ -155,10 +187,53 @@ class ScheduleOnDatesTest {
         var conditionContext = conditionContext(scheduleOnDates);
 
         // when
-        ZonedDateTime previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
+        Optional<ZonedDateTime> previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
 
         // then
-        assertThat(previousDate).isEqualTo(before);
+        assertThat(previousDate).hasValue(before);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoDateIsBeforeNow() throws Exception {
+        // given
+        var now = ZonedDateTime.now();
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .dates(Property.ofValue(List.of(now.plusMinutes(1), now.plusDays(1))))
+            .build();
+        var conditionContext = conditionContext(scheduleOnDates);
+
+        // when
+        Optional<ZonedDateTime> previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
+
+        // then
+        assertThat(previousDate).isEmpty();
+    }
+
+    @Test
+    void shouldReturnPreviousDateInTimezoneFromSchedulerClockWhenPreviousEvaluationDate() throws Exception {
+        // given
+        var first = ZonedDateTime.parse("2025-01-01T10:00:00.500Z");
+        var second = ZonedDateTime.parse("2025-01-02T10:00:00Z");
+        var scheduleOnDates = ScheduleOnDates.builder()
+            .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
+            .timezone("Asia/Tokyo")
+            .dates(Property.ofValue(List.of(second, first)))
+            .build();
+        var conditionContext = conditionContext(scheduleOnDates);
+        SchedulerClock.setClock(Clock.fixed(Instant.parse("2025-01-02T00:00:00Z"), ZoneId.systemDefault()));
+
+        try {
+            // when
+            Optional<ZonedDateTime> previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
+
+            // then
+            assertThat(previousDate).hasValue(ZonedDateTime.parse("2025-01-01T19:00:00+09:00[Asia/Tokyo]"));
+        } finally {
+            SchedulerClock.setClock(Clock.systemDefaultZone());
+        }
     }
 
     private ConditionContext conditionContext(AbstractTrigger trigger) {

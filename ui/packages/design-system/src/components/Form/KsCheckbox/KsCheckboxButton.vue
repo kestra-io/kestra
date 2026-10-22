@@ -1,6 +1,6 @@
 <template>
     <ElCheckboxButton
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as CheckboxProps)"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.default" #default>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElCheckboxButton} from "element-plus"
+    import {ElCheckboxButton, type CheckboxProps, type CheckboxValueType} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -23,7 +23,7 @@
     }>()
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: CheckboxValueType]
     }>()
 
     defineSlots<{
@@ -36,7 +36,9 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/checkbox-button';
+</style>
 
+<style>
     .kel-checkbox-button:not(.is-checked):not(.is-disabled):hover .kel-checkbox-button__inner {
         color: var(--ks-text-link);
         border-color: var(--ks-text-link);

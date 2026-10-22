@@ -10,6 +10,7 @@ tasks:
       {date:"2025-12-03T12:00:00Z",title:"Histoire_des_jeux",views:438}
   - id: loop
     type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 1
     values: "{{ outputs.write.uri }}"
     outputs:
       - id: value

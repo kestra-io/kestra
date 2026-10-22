@@ -1,7 +1,7 @@
 <template>
     <div class="revision" v-if="revisions && revisions.length > 1">
-        <div class="d-flex justify-content-end">
-            <KsSelect v-model="sideBySide" class="mb-3 display-select">
+        <div class="revision-actions">
+            <KsSelect v-model="sideBySide" class="display-select">
                 <KsOption
                     v-for="item in displayTypes"
                     :key="String(item.value)"
@@ -10,11 +10,11 @@
                 />
             </KsSelect>
         </div>
-        <div class="revision-grid mb-2">
+        <div class="revision-grid">
             <div class="revision-grid-col" v-if="revisionLeft !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
-                        <KsSelect v-model="revisionLeft" @change="addQuery">
+                        <KsSelect v-model="revisionLeft" @change="addQuery" data-test="revision-left">
                             <KsOption
                                 v-for="item in leftOptions"
                                 :key="item.value"
@@ -28,6 +28,7 @@
                                         <CircleOpacity />
                                         {{ $t('draft') }}
                                     </KsTag>
+                                    <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
@@ -40,11 +41,11 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionLeft === currentRevision"
+                                :disabled="revisionLeft === currentRevision || isLoadingRevisions || revisionLeftText === undefined"
                                 @click="restoreRevision(revisionLeft, revisionLeftText)"
                                 data-testid="restore-left"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
+                                <span class="revision-restore-label">&nbsp;{{ $t("restore") }}</span>
                             </KsButton>
                         </KsButtonGroup>
                     </div>
@@ -56,7 +57,7 @@
             <div class="revision-grid-col" v-if="revisionRight !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
-                        <KsSelect v-model="revisionRight" @change="addQuery">
+                        <KsSelect v-model="revisionRight" @change="addQuery" data-test="revision-right">
                             <KsOption
                                 v-for="item in rightOptions"
                                 :key="item.value"
@@ -70,6 +71,7 @@
                                         <CircleOpacity />
                                         {{ $t('draft') }}
                                     </KsTag>
+                                    <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
@@ -82,11 +84,11 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionRight === currentRevision"
+                                :disabled="revisionRight === currentRevision || isLoadingRevisions || revisionRightText === undefined"
                                 @click="restoreRevision(revisionRight, revisionRightText)"
                                 data-testid="restore-right"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
+                                <span class="revision-restore-label">&nbsp;{{ $t("restore") }}</span>
                             </KsButton>
                         </KsButtonGroup>
                     </div>
@@ -98,8 +100,8 @@
         </div>
 
         <KsEditor
+            data-test="revision-diff"
             v-bind="editorBindings"
-            class="mt-1"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
             :options="{diffSideBySide: sideBySide}"
             @editorMounted="revealHighlight"
@@ -110,8 +112,8 @@
             :showDoc="false"
         />
 
-        <div v-if="isLoadingRevisions" class="text-center p-4">
-            <span class="ml-2">{{ $t("loading") }}</span>
+        <div v-if="isLoadingRevisions" class="revision-loading">
+            <span>{{ $t("loading") }}</span>
         </div>
     </div>
     <KsNoData
@@ -126,6 +128,7 @@
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import * as monaco from "monaco-editor/editor/editor.api"
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
@@ -137,6 +140,7 @@
 
     import {useToast} from "../../utils/toast"
     import {useFlowStore} from "../../stores/flow"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 
     const flowStore = useFlowStore()
 
@@ -147,6 +151,7 @@
         updated?: string;  // ISO datetime string
         source?: string;
         draft?: boolean;
+        updatedBy?: string;
     }
 
     const {t} = useI18n()
@@ -252,8 +257,6 @@
     }
 
     function addQuery() {
-        if (isLoadingRevisions.value) return
-
         if (props.editRouteQuery) {
             router.push({
                 query: {
@@ -268,7 +271,7 @@
     function options(excludeRevision: number | undefined) {
         return sortedRevisions.value
             .filter(rev => rev.revision !== excludeRevision)
-            .map(({revision, updated, draft}) => {
+            .map(({revision, updated, draft, updatedBy}) => {
                 const isCurrent = currentRevisionWithSource.value.revision === revision
                 return {
                     value: revision,
@@ -276,6 +279,7 @@
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
                     isDraft: draft === true,
+                    updatedBy,
                     text: formatRevisionText(revision),
                 }
             })
@@ -328,21 +332,27 @@
         })
     }
 
-    watch(revisionLeft, async (newValue) => {
+    watch([revisionLeft, revisionRight, sortedRevisions], async ([left, right], _previous, onCleanup) => {
+        let cancelled = false
+        onCleanup(() => {cancelled = true})
         isLoadingRevisions.value = true
         try {
-            revisionLeftText.value = await loadRevisionContent(newValue)
-        } finally {
-            isLoadingRevisions.value = false
-        }
-    })
+            const [leftText, rightText] = await Promise.all([
+                loadRevisionContent(left),
+                loadRevisionContent(right),
+            ])
+            if (cancelled) return
 
-    watch(revisionRight, async (newValue) => {
-        isLoadingRevisions.value = true
-        try {
-            revisionRightText.value = await loadRevisionContent(newValue)
+            revisionLeftText.value = leftText
+            revisionRightText.value = rightText
+        } catch (error: unknown) {
+            if (!cancelled) {
+                revisionLeftText.value = undefined
+                revisionRightText.value = undefined
+                if (!isReportedCentrally(error as KestraHttpError)) toast.error(asProblem(error)?.detail ?? t("error"))
+            }
         } finally {
-            isLoadingRevisions.value = false
+            if (!cancelled) isLoadingRevisions.value = false
         }
     })
 
@@ -366,8 +376,11 @@
 
     watch(
         () => sortedRevisions.value.map(r => r.revision).join(","),
-        async (newKey, oldKey) => {
+        (newKey, oldKey) => {
             if (newKey === oldKey) return
+
+            const previousLeft = revisionLeft.value
+            const previousRight = revisionRight.value
 
             if (!revisionExists(revisionLeft.value)) {
                 const rightIdx = sortedRevisions.value.findIndex(r => r.revision === revisionRight.value)
@@ -384,14 +397,7 @@
                 revisionRight.value = currentRevisionWithSource.value?.revision
             }
 
-            const [leftText, rightText] = await Promise.all([
-                loadRevisionContent(revisionLeft.value),
-                loadRevisionContent(revisionRight.value),
-            ])
-            revisionLeftText.value = leftText
-            revisionRightText.value = rightText
-
-            addQuery()
+            if (previousLeft !== revisionLeft.value || previousRight !== revisionRight.value) addQuery()
         },
     )
 
@@ -400,6 +406,10 @@
 </script>
 
 <style scoped lang="scss">
+    .revision-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
 
     .revision {
         display: flex;
@@ -409,15 +419,17 @@
 
     .ks-editor {
         flex: 1;
+        margin-top: var(--ks-spacing-1);
         padding-bottom: 1rem;
+
     }
 
     .revision-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         margin-right: var(--ks-spacing-6);
+        margin-bottom: var(--ks-spacing-2);
     }
-
     .revision-grid-col {
         min-width: 0;
     }
@@ -435,10 +447,10 @@
         align-items: center;
         flex-shrink: 0;
 
-        > div {
+        & > div {
             &:first-child {
                 min-width: 150px;
-                width: 100%
+                width: 100%;
             }
         }
     }
@@ -467,8 +479,18 @@
 
     .display-select {
         width: 10%;
+        margin-bottom: var(--ks-spacing-4);
     }
-
+    .revision-restore-label {
+        display: none;
+        @media (min-width: 992px) {
+            display: inline-block;
+        }
+    }
+    .revision-loading {
+        text-align: center;
+        padding: var(--ks-spacing-5);
+    }
     .revision-timestamp {
         color: var(--ks-text-muted);
         font-size: var(--ks-font-size-sm);

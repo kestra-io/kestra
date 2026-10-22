@@ -41,7 +41,11 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...clusterProps, ...taskActionProps}" />
+                    </template>
+                </ClusterNode>
             </template>
 
             <template #node-dot="dotProps">
@@ -126,7 +130,11 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...CollapsedProps, ...taskActionProps}" />
+                    </template>
+                </CollapsedClusterNode>
             </template>
 
             <template #edge-edge="EdgeProps">
@@ -174,10 +182,10 @@
                 </KsTooltip>
                 <ul v-if="isDropdownOpen" class="exporting">
                     <li @click="exportAsImage('jpeg')" class="item">
-                        Export as .JPEG
+                        {{ $t("export_as", {format: "JPEG"}) }}
                     </li>
                     <li @click="exportAsImage('png')" class="item">
-                        Export as .PNG
+                        {{ $t("export_as", {format: "PNG"}) }}
                     </li>
                 </ul>
             </Controls>
@@ -223,14 +231,14 @@
     import AlignVerticalCenter from "vue-material-design-icons/AlignVerticalCenter.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
-    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon} from "@kestra-io/design-system"
+    import {cssVar as cssVariable, State, KsTooltip, useTaskIcon, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX, GRAPH_BACKGROUND, MIN_ZOOM, ZOOM_LOD} from "./utils/constants"
     import {type CustomActionConfig, type ShowDetailsConfig, type LodLevel, EVENTS} from "./utils/constants"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {afterLastDot} from "./utils/utils"
     import {untilNodesMeasured, useScreenshot} from "./composables/useScreenshot"
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, LOD_INJECTION_KEY, VALIDATION_ISSUES_INJECTION_KEY, FOCUSED_TASK_INJECTION_KEY, DROP_EDGE_INJECTION_KEY, DRAGGING_NODE_INJECTION_KEY, CANVAS_HOVERED_INJECTION_KEY, LONGEST_TASK_RUN_DURATION_INJECTION_KEY} from "./injectionKeys"
-    import {computeLongestTaskRunDuration} from "./misc/durationBreakdown"
+    import {useLongestTaskRunDuration} from "./composables/useLongestTaskRunDuration"
     import BasicNode from "./nodes/BasicNode.vue"
 
     const props = withDefaults(defineProps<{
@@ -246,10 +254,10 @@
         flowDescription?: string;
         flowLabels?: [string, string][];
         expandedSubflows?: string[];
-        icons?: Record<string, unknown>;
+        icons?: PluginIconMap;
         // Per-class resolver for icons absent from `icons`, which only indexes the plugins
         // registered on this instance (kestra-io/kestra#18129).
-        loadIcon?: (cls: string) => Promise<unknown>;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
         enableSubflowInteraction?: boolean;
         execution?: VueFlowUtils.GraphExecution;
         subflowsExecutions?: Record<string, VueFlowUtils.GraphExecution>;
@@ -327,7 +335,7 @@
     provide(FOCUSED_TASK_INJECTION_KEY, computed(() => props.focusedTaskId))
     // Computed once for the whole graph rather than per node: `taskRunList` is execution-wide, so
     // every TaskNode reducing over it independently would be N× the same work.
-    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, computed(() => computeLongestTaskRunDuration(props.execution?.taskRunList ?? [])))
+    provide(LONGEST_TASK_RUN_DURATION_INJECTION_KEY, useLongestTaskRunDuration(computed(() => props.execution?.taskRunList ?? [])))
 
     const initialFitDone = ref(false)
 
@@ -414,12 +422,16 @@
         generateGraph()
     })
 
+    let expandedSubflowsAtLastGraph = props.expandedSubflows
+
     watch(() => props.flowGraph, () => {
-        generateGraph()
+        const subflowExpanded = props.expandedSubflows !== expandedSubflowsAtLastGraph
+        expandedSubflowsAtLastGraph = props.expandedSubflows
+        generateGraph(subflowExpanded)
     })
 
     watch(() => props.isHorizontal, () => {
-        generateGraph()
+        generateGraph(true)
     })
 
     watch(isRunning, () => {
@@ -445,7 +457,7 @@
         generateGraph()
     })
 
-    const generateGraph = () => {
+    const generateGraph = (shouldFit = false) => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
         removeSelectedElements(getElements.value)
@@ -480,7 +492,7 @@
 
             if (elements) {
                 setElements(elements)
-                refitOnNodesInitialized.value = true
+                if (shouldFit) refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
         })
@@ -559,7 +571,7 @@
         }
 
         if (regenerate) {
-            generateGraph()
+            generateGraph(true)
         }
     }
 
@@ -579,7 +591,7 @@
 
         collapsed.value.forEach(n => collapseCluster(CLUSTER_PREFIX + n, false))
 
-        generateGraph()
+        generateGraph(true)
     }
 
 
@@ -588,7 +600,7 @@
         hiddenNodes.value = []
         edgeReplacer.value = {}
         clusterToNode.value = []
-        generateGraph()
+        generateGraph(true)
     }
 
     const isDropdownOpen = ref(false)
@@ -612,7 +624,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     /* The graph fills what is left: the flow bar takes its own row rather than floating over the
        canvas, where it clipped the first cluster's badge at every open. */
     .topology-shell {

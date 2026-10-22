@@ -29,6 +29,18 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
     }
 
     @Override
+    public int count(TransactionContext txContext, String tenantId, String namespace, String flowId) {
+        var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
+        return dslContext
+            .fetchCount(
+                this.jdbcRepository.getTable(),
+                buildTenantCondition(tenantId)
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId))
+            );
+    }
+
+    @Override
     public void pop(TransactionContext txContext, String tenantId, String namespace, String flowId, BiConsumer<TransactionContext, Execution> consumer) {
         var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
         var select = dslContext
@@ -49,9 +61,7 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
         }
     }
 
-    /**
-     * This method should only be used for administration purpose via a command
-     */
+    @Override
     public List<ExecutionQueued> getAllForAllTenants() {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -60,7 +70,8 @@ public abstract class AbstractJdbcExecutionQueuedStateStore extends AbstractJdbc
                 var select = DSL
                     .using(configuration)
                     .select(VALUE_FIELD)
-                    .from(this.jdbcRepository.getTable());
+                    .from(this.jdbcRepository.getTable())
+                    .orderBy(field("date").asc());
 
                 return this.jdbcRepository.fetch(select);
             });

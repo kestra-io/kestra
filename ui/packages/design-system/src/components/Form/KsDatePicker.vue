@@ -1,18 +1,22 @@
 <template>
-    <ElDatePicker
-        v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        @change="emit('change', $event)"
-    />
+    <span ref="host" class="ks-picker-host">
+        <ElDatePicker
+            :modelValue="(model as DatePickerPropsPublic['modelValue'])"
+            v-bind="({...filteredProps(), ...pickerAttrs()} as DatePickerPropsPublic)"
+            @update:modelValue="(value: T) => (model = value)"
+            @change="emit('change', $event)"
+        />
+    </span>
 </template>
 
-<script setup lang="ts">
-    import {ElDatePicker} from "element-plus"
+<script setup lang="ts" generic="T">
+    import {ElDatePicker, type DatePickerPropsPublic} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import {useInputAttrs} from "../../composables/useInputAttrs"
 
     defineOptions({inheritAttrs: false})
 
-    const model = defineModel<any>()
+    const model = defineModel<T>()
 
     const props = withDefaults(defineProps<{
         type?: string
@@ -35,16 +39,23 @@
     })
 
     const emit = defineEmits<{
-        change: [value: any]
+        change: [value: T]
     }>()
 
     const filteredProps = useFilteredProps(props)
+    const {pickerAttrs} = useInputAttrs("host")
 </script>
 
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/date-picker';
     @use 'element-plus/theme-chalk/src/date-picker-panel';
+</style>
+
+<style>
+    .ks-picker-host {
+        display: contents;
+    }
 
     .kel-date-editor.kel-input {
         --kel-date-editor-width: 100%;
@@ -52,7 +63,7 @@
         --kel-input-bg-color: var(--ks-bg-base);
         --kel-input-hover-border-color: var(--ks-border-strong);
 
-        .kel-input__icon {
+        & .kel-input__icon {
             margin-right: .25rem;
         }
     }
@@ -71,7 +82,7 @@
         --kel-datepicker-border-color: var(--ks-border-default);
         --kel-datepicker-inner-border-color: var(--ks-border-default);
 
-        .kel-date-table th {
+        & .kel-date-table th {
             border-bottom-color: var(--ks-border-default);
         }
     }

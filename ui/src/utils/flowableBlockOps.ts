@@ -1,5 +1,6 @@
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
-import {splitValidationErrors} from "./validationErrors"
+
+import {fieldPathOf, pointerKeys, pointerSegments, type ValidationError} from "./validationErrors"
 
 export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterExecution"
 
@@ -308,11 +309,10 @@ export function withFreeIds(
     return rewireDependsOnInSubtree(renamed, idMap)
 }
 
-/** Collects every task id under `tasks`, walking nested Flowable lanes, for the Inputs panel and paste. */
 export function flattenTaskIds(tasks: unknown, acc: string[]): void {
     if (!Array.isArray(tasks)) return
     for (const rawTask of tasks) {
-        const task = rawTask as Record<string, unknown> | undefined
+        const task = displayTaskOf(rawTask as Record<string, unknown>) as Record<string, unknown> | undefined
         if (task?.id) acc.push(String(task.id))
         for (const key of FLOWABLE_BRANCH_KEYS) {
             if (key === "cases") continue
@@ -322,6 +322,122 @@ export function flattenTaskIds(tasks: unknown, acc: string[]): void {
             for (const branch of Object.values(task.cases as Record<string, unknown>)) flattenTaskIds(branch, acc)
         }
     }
+}
+
+type TaskMatcher = (task: Record<string, unknown>) => boolean
+
+function matcherFor(flow: Record<string, unknown>, taskId: string, taskPath?: string): TaskMatcher {
+    const located = taskPath ? getAtPath(flow, taskPath) : undefined
+    if (located && typeof located === "object" && !Array.isArray(located)) {
+        const edited = displayTaskOf(located as Record<string, unknown>)
+        return task => task === edited
+    }
+    return task => Boolean(task.id) && String(task.id) === taskId
+}
+
+export function upstreamTaskIds(
+    flow: {tasks?: unknown; errors?: unknown; finally?: unknown},
+    taskId: string,
+    taskPath?: string,
+): string[] {
+    const isTarget = matcherFor(flow, taskId, taskPath)
+    const upstream: string[] = []
+    if (collectUpstream(flow.tasks, isTarget, upstream)) return upstream
+
+    const afterMain: string[] = []
+    flattenTaskIds(flow.tasks, afterMain)
+    if (collectUpstream(flow.errors, isTarget, afterMain)) return afterMain
+
+    flattenTaskIds(flow.errors, afterMain)
+    if (collectUpstream(flow.finally, isTarget, afterMain)) return afterMain
+
+    const everyId: string[] = []
+    for (const section of [flow.tasks, flow.errors, flow.finally]) flattenTaskIds(section, everyId)
+    return everyId.filter(id => id !== taskId)
+}
+
+function isConcurrentFlowable(task: Record<string, unknown>): boolean {
+    const type = String(task.type ?? "")
+    if (type.endsWith(".Parallel") || type.endsWith(".EachParallel")) return true
+    return type.endsWith(".ForEach") && task.concurrencyLimit !== undefined && Number(task.concurrencyLimit) !== 1
+}
+
+function containsTask(list: unknown, isTarget: TaskMatcher): boolean {
+    if (!Array.isArray(list)) return false
+    return list.some(rawTask => {
+        const task = displayTaskOf(rawTask as Record<string, unknown>) as Record<string, unknown> | undefined
+        if (!task || typeof task !== "object") return false
+        if (isTarget(task)) return true
+        return FLOWABLE_BRANCH_KEYS.some(key => {
+            const branch = task[key]
+            if (key === "cases" && branch && typeof branch === "object") {
+                return Object.values(branch as Record<string, unknown>).some(caseTasks => containsTask(caseTasks, isTarget))
+            }
+            return containsTask(branch, isTarget)
+        })
+    })
+}
+
+function branchesPrecedingKey(key: string): readonly string[] {
+    if (key === "errors") return ["tasks", "then", "else", "cases", "defaults"]
+    if (key === "finally") return ["tasks", "then", "else", "cases", "defaults", "errors"]
+    return []
+}
+
+function flattenBranch(branch: unknown, acc: string[]): void {
+    if (branch && typeof branch === "object" && !Array.isArray(branch)) {
+        for (const caseTasks of Object.values(branch)) flattenTaskIds(caseTasks, acc)
+    } else {
+        flattenTaskIds(branch, acc)
+    }
+}
+
+function collectUpstream(list: unknown, isTarget: TaskMatcher, acc: string[], concurrent = false): boolean {
+    if (!Array.isArray(list)) return false
+    const items = list as Record<string, unknown>[]
+    const targetIndex = items.findIndex(item => containsTask([item], isTarget))
+    if (targetIndex < 0) return false
+
+    const isDag = items.some(isWrappedLaneItem)
+    let precedingItems: Record<string, unknown>[] = []
+    if (isDag) precedingItems = dagAncestorItems(items, items[targetIndex])
+    else if (!concurrent) precedingItems = items.slice(0, targetIndex)
+    for (const item of precedingItems) flattenTaskIds([item], acc)
+
+    const target = displayTaskOf(items[targetIndex])
+    if (isTarget(target)) return true
+    const targetConcurrent = isConcurrentFlowable(target)
+    for (const key of FLOWABLE_BRANCH_KEYS) {
+        const branch = target[key]
+        if (key === "cases" && branch && typeof branch === "object") {
+            if (Object.values(branch).some(caseTasks => collectUpstream(caseTasks, isTarget, acc))) return true
+        } else if (containsTask(branch, isTarget)) {
+            for (const earlier of branchesPrecedingKey(key)) flattenBranch(target[earlier], acc)
+            return collectUpstream(branch, isTarget, acc, key === "tasks" && targetConcurrent)
+        }
+    }
+    return true
+}
+
+function dependsOnOf(item: Record<string, unknown>): string[] {
+    return Array.isArray(item.dependsOn) ? item.dependsOn.map(String) : []
+}
+
+function dagAncestorItems(items: Record<string, unknown>[], item: Record<string, unknown>): Record<string, unknown>[] {
+    const itemById = new Map(items.map(candidate => [String(displayTaskOf(candidate)?.id), candidate]))
+    const ancestors: Record<string, unknown>[] = []
+    const visited = new Set<string>([String(displayTaskOf(item).id)])
+    const queue = [...dependsOnOf(item)]
+    while (queue.length) {
+        const id = queue.shift() as string
+        if (visited.has(id)) continue
+        visited.add(id)
+        const ancestor = itemById.get(id)
+        if (!ancestor) continue
+        ancestors.push(ancestor)
+        queue.push(...dependsOnOf(ancestor))
+    }
+    return ancestors
 }
 
 function collectAllIds(source: string): Set<string> {
@@ -701,53 +817,72 @@ export function rewireDagDependency(
     return writeItem(next, downstreamIndex, downstream)
 }
 
+/**
+ * Keeps only the errors of blocks the saved flow already has: a block added in this session is
+ * incomplete by construction, so flagging it the moment it lands reads as a mistake the user made.
+ * A save attempt reveals every error, since that is the point where they are what blocks the user.
+ */
+export function errorsToShow(
+    errors: ValidationError[] | undefined,
+    flow: Record<string, unknown> | undefined,
+    savedSource: string | undefined,
+    saveAttempted: boolean,
+): ValidationError[] {
+    if (saveAttempted) return errors ?? []
+    if (!errors?.length || !flow) return errors ?? []
+    const saved = savedSource ? collectAllIds(savedSource) : new Set<string>()
+    return errors.filter(({pointer}) => {
+        if (!pointer) return true
+        const taskId = locateTask(pointerSegments(pointer), flow).taskId
+        return taskId === undefined || saved.has(taskId)
+    })
+}
+
+function locateTask(segments: string[], flow: Record<string, unknown>): {taskId?: string; fieldStart: number} {
+    let node: unknown = flow
+    let taskId: string | undefined
+    let fieldStart = 0
+    for (const [depth, segment] of segments.entries()) {
+        const parent = node
+        node = childAt(node, segment)
+        if (node === undefined) break
+        if (!Array.isArray(parent) || !node || typeof node !== "object") continue
+        const task = displayTaskOf(node as Record<string, unknown>)
+        if (task.id == null) continue
+        taskId = String(task.id)
+        // A task inside a Dag is addressed through its wrapper, which the badge should not echo.
+        fieldStart = depth + (isWrappedLaneItem(node) && segments[depth + 1] === "task" ? 2 : 1)
+    }
+    return {taskId, fieldStart}
+}
+
+/**
+ * Groups located errors under the id of the deepest task their pointer runs through, the rest of the
+ * pointer naming the field. An error without a pointer is flow-level and stays out of the map.
+ */
 export function groupValidationIssuesByTask(
-    errors: string[] | undefined,
+    errors: ValidationError[] | undefined,
     flow?: Record<string, unknown>,
 ): Map<string, string[]> {
     const grouped = new Map<string, string[]>()
-    const add = (id: string, entry: string) => {
-        const existing = grouped.get(id) ?? []
-        existing.push(entry)
-        grouped.set(id, existing)
-    }
-    const lines = (errors ?? []).flatMap(raw => splitValidationErrors(raw))
-    for (const line of lines) {
-        const cleaned = line.replace(/^\s*validation error\s*:\s*/i, "").trim()
-        if (!cleaned) continue
-
-        const idMatch = /^([A-Za-z0-9_-]+)(?:\.([A-Za-z0-9_.[\]-]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (idMatch) {
-            const [, id, field, message] = idMatch
-            add(id, field ? `${field}: ${message.trim()}` : message.trim())
-            continue
-        }
-
-        // The field can be a path of its own (`headers.Authorization`), and a task nested in a Dag
-        // is addressed through its `task` wrapper (`...].task.flowId`), which says nothing useful.
-        const pathMatch = /^(.+?\])(?:\.([A-Za-z0-9_.]+))?\s*:\s*(.+)$/.exec(cleaned)
-        if (!pathMatch) continue
-        const [, rawPath, rawField, message] = pathMatch
-        const taskPath = rawPath.replace(/^_/, "")
-        const field = rawField?.replace(/^task\./, "")
-        const entry = field ? `${field}: ${message.trim()}` : message.trim()
-
-        // A task constraint violation comes back id-keyed (`tasks[publish].message`), so the last
-        // bracket already names the task; only a numeric path has to be resolved against the flow.
-        const lastBracket = /\[["']?([^"'\]]+)["']?\]$/.exec(taskPath)?.[1]
-        if (lastBracket && !/^\d+$/.test(lastBracket)) {
-            add(lastBracket, entry)
-            continue
-        }
-
-        if (!flow) continue
-        const item = getAtPath(flow, taskPath)
-        if (!item || typeof item !== "object") continue
-        const id = displayTaskOf(item as Record<string, unknown>).id
-        if (id == null) continue
-        add(String(id), entry)
+    if (!flow) return grouped
+    for (const {pointer, detail} of errors ?? []) {
+        if (!pointer || !detail) continue
+        const segments = pointerSegments(pointer)
+        const {taskId, fieldStart} = locateTask(segments, flow)
+        if (taskId === undefined) continue
+        const field = fieldPathOf(segments.slice(fieldStart))
+        const entry = field ? `${field}: ${detail}` : detail
+        grouped.set(taskId, [...(grouped.get(taskId) ?? []), entry])
     }
     return grouped
+}
+
+function childAt(node: unknown, segment: string): unknown {
+    if (Array.isArray(node)) return /^\d+$/.test(segment) ? node[Number(segment)] : undefined
+    if (!node || typeof node !== "object") return undefined
+    const key = pointerKeys(segment).find(candidate => !UNSAFE_KEYS.has(candidate) && candidate in node)
+    return key === undefined ? undefined : (node as Record<string, unknown>)[key]
 }
 
 export {collectAllIds}

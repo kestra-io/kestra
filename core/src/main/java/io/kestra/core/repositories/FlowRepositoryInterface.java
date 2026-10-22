@@ -30,7 +30,7 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
     /**
      * Checks whether a given namespace exists.
      * <p>
-     * A namespace is considered existing if at least one Flow is within the namespace or a parent namespace.
+     * A namespace is considered existing if at least one Flow is within the namespace or a child namespace.
      *
      * @param tenant The tenant ID
      * @param namespace The namespace - cannot be null.
@@ -42,7 +42,7 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
             .map(NamespaceInterface::asTree)
             .flatMap(Collection::stream)
             .toList();
-        return namespaces.stream().anyMatch(ns -> ns.equals(namespace) || ns.startsWith(namespace));
+        return namespaces.stream().anyMatch(namespace::equals);
     }
 
     /**

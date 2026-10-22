@@ -7,9 +7,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
+import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
+
+import io.kestra.core.plugins.PluginArtifact;
+import io.kestra.core.plugins.PluginCatalogService;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
@@ -38,21 +42,38 @@ class PluginInstallCommandTest {
     }
 
     @RetryingTest(5)
-    void shouldInstallPluginLocallyGivenLatestVersion() throws IOException {
+    void shouldInstallCompatibleVersionLocallyGivenLatestVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-notifications:LATEST" };
+            PluginArtifact latest = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-serdes:LATEST");
+            String compatibleVersion = ctx.getBean(PluginCatalogService.class).resolveVersions(List.of(latest)).getFirst().version();
+
+            String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString(), latest.toCoordinates() };
             callPicocliAndFailIfErrors(PluginInstallCommand.class, ctx, args);
 
             List<Path> files = Files.list(pluginsPath).toList();
 
-            assertThat(files.size())
-                .withFailMessage("expected one file, but got: " + files.stream().map(f -> f.getFileName().toString()).collect(Collectors.joining()))
-                .isEqualTo(1);
-            assertThat(files.getFirst().getFileName().toString()).startsWith("io_kestra_plugin__plugin-notifications__");
-            assertThat(files.getFirst().getFileName().toString()).doesNotContain("LATEST");
+            assertThat(files.stream().map(f -> f.getFileName().toString()))
+                .containsExactly("io_kestra_plugin__plugin-serdes__" + compatibleVersion.replace(".", "_") + ".jar");
+        }
+    }
+
+    @Test
+    void shouldFailWithoutInstallingGivenLatestVersionWhenKestraApiIsUnreachable() throws IOException {
+        Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
+        pluginsPath.toFile().deleteOnExit();
+
+        try (ApplicationContext ctx = ApplicationContext.run(Map.of("micronaut.http.services.api.url", "http://localhost:1"), Environment.CLI, Environment.TEST)) {
+            String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-serdes:LATEST" };
+            CommandLine commandLine = new CommandLine(PluginInstallCommand.class, new MicronautFactory(ctx));
+            commandLine.setErr(new PrintWriter(new ByteArrayOutputStream(), true));
+
+            int exitCode = commandLine.execute(args);
+
+            assertThat(exitCode).isNotZero();
+            assertThat(Files.list(pluginsPath)).isEmpty();
         }
     }
 

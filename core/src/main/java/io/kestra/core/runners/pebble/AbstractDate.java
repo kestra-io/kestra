@@ -53,10 +53,11 @@ public abstract class AbstractDate {
 
         ZoneId zoneId = zoneId(timeZone);
         ZonedDateTime date = convert(input, zoneId, existingFormat);
+        ZoneId outputZone = timeZone != null ? zoneId : date.getZone();
 
         DateTimeFormatter formatter = formatter(format)
             .withLocale(locale)
-            .withZone(zoneId);
+            .withZone(outputZone);
 
         return formatter.format(date);
     }

@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
@@ -26,8 +28,6 @@ import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
-
-import org.hibernate.validator.constraints.time.DurationMin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -317,7 +317,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     @Override
-    public ZonedDateTime previousEvaluationDate(ConditionContext conditionContext) {
+    public Optional<ZonedDateTime> previousEvaluationDate(ConditionContext conditionContext) {
         ExecutionTime executionTime = this.executionTime();
         if (hasWhenCondition()) {
             try {
@@ -328,15 +328,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 );
 
                 if (previous.isPresent()) {
-                    return previous.get().truncatedTo(ChronoUnit.SECONDS);
+                    return Optional.of(previous.get().truncatedTo(ChronoUnit.SECONDS));
                 }
             } catch (InternalException e) {
                 conditionContext.getRunContext().logger()
                     .warn("Unable to evaluate the `when` condition for the next evaluation date for trigger '{}', condition will not be evaluated", this.getId());
             }
         }
-        return computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now()))
-            .orElseThrow(this::noValidExecutionDate);
+        return Optional.of(computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now()))
+            .orElseThrow(this::noValidExecutionDate));
     }
 
     @Override

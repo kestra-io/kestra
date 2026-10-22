@@ -9,9 +9,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, h} from "vue"
-
-    import {KsMessageBox, KsCheckbox} from "@kestra-io/design-system"
+    import {computed} from "vue"
 
     import {
         Execution,
@@ -37,6 +35,7 @@
 
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
+    import {useExecutionDeletionDialog} from "../../../composables/useExecutionDeletionDialog"
 
     const props = defineProps<{ execution: Execution }>()
 
@@ -51,7 +50,9 @@
         )
     })
 
-    const deleteExecution = () => {
+    const {confirmExecutionDeletion} = useExecutionDeletionDialog()
+
+    const deleteExecution = async () => {
         if (!props.execution) return
 
         let message = t("delete confirm", {name: props.execution.id})
@@ -60,59 +61,11 @@
             message += t("delete execution running")
         }
 
-        const deleteLogs = ref(true)
-        const deleteMetrics = ref(true)
-        const deleteStorage = ref(true)
+        const options = await confirmExecutionDeletion(message)
+        if (!options) return
 
-        KsMessageBox({
-            boxType: "confirm",
-            title: t("confirmation"),
-            showCancelButton: true,
-            customStyle: {minWidth: "600px"},
-            callback: (value: string) => {
-                if (value === "confirm") {
-                    return store
-                        .deleteExecution({
-                            ...props.execution,
-                            deleteLogs: deleteLogs.value,
-                            deleteMetrics: deleteMetrics.value,
-                            deleteStorage: deleteStorage.value,
-                        })
-                        .then(() => {
-                            return router.push({
-                                name: "executions/list",
-                                params: {
-                                    tenant: route.params.tenant,
-                                },
-                            })
-                        })
-                        .then(() => {
-                            toast.deleted(props.execution.id)
-                        })
-                }
-            },
-            message: () =>
-                h("div", null, [
-                    h("p", {class: "pb-3"}, [h("span", {innerHTML: message})]),
-                    h(KsCheckbox, {
-                        modelValue: deleteLogs.value,
-                        label: t("execution_deletion.logs"),
-                        "onUpdate:modelValue": (val) =>
-                            (deleteLogs.value = Boolean(val)),
-                    }),
-                    h(KsCheckbox, {
-                        modelValue: deleteMetrics.value,
-                        label: t("execution_deletion.metrics"),
-                        "onUpdate:modelValue": (val) =>
-                            (deleteMetrics.value = Boolean(val)),
-                    }),
-                    h(KsCheckbox, {
-                        modelValue: deleteStorage.value,
-                        label: t("execution_deletion.storage"),
-                        "onUpdate:modelValue": (val) =>
-                            (deleteStorage.value = Boolean(val)),
-                    }),
-                ]),
-        })
+        await store.deleteExecution({id: props.execution.id, ...options})
+        await router.push({name: "executions/list", params: {tenant: route.params.tenant}})
+        toast.deleted(props.execution.id)
     }
 </script>

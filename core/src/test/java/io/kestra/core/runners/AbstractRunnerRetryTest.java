@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.plugin.core.flow.RetryCaseTest;
@@ -80,6 +81,21 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
+    @LoadFlows(
+        value = { "flows/valids/subflow-retry-new-execution-parent.yaml", "flows/valids/subflow-retry-new-execution-child.yaml" },
+        tenantId = "retrynewexecutionsubflowtenant"
+    )
+    void retryNewExecutionSubflowOutputs() throws TimeoutException, QueueException {
+        retryCaseTest.retryNewExecutionSubflowOutputs("retrynewexecutionsubflowtenant");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/loop-retry-new-execution.yaml" }, tenantId = "retrynewexecutionlooptenant")
+    void retryNewExecutionInLoop() throws TimeoutException, QueueException, InternalException {
+        retryCaseTest.retryNewExecutionInLoop("retrynewexecutionlooptenant");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/retry-failed-task-duration.yml")
     void retryFailedTaskDuration(Execution execution) {
         retryCaseTest.retryFailedTaskDuration(execution);
@@ -143,5 +159,29 @@ public abstract class AbstractRunnerRetryTest {
     @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
     void retryWithFlowableErrors(Execution execution) {
         retryCaseTest.retryWithFlowableErrors(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior.yaml")
+    void retryFlowableBehavior(Execution execution) {
+        retryCaseTest.retryFlowableBehavior(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-success.yaml")
+    void retryFlowableBehaviorSuccess(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorSuccess(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-allow-failure.yaml")
+    void retryFlowableBehaviorAllowFailure(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorAllowFailure(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-flowable-behavior-nested-leaf.yaml")
+    void retryFlowableBehaviorNestedLeaf(Execution execution) {
+        retryCaseTest.retryFlowableBehaviorNestedLeaf(execution);
     }
 }

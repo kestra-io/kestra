@@ -136,4 +136,36 @@ class RequestUtilsTest {
         return request;
     }
 
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "/kestra,/kestra",
+            "kestra,/kestra",
+            "/kestra/,/kestra",
+            "/a//b/,/a/b",
+            "/,''",
+        }
+    )
+    void shouldNormalizeContextPath(String contextPath, String expected) {
+        assertThat(RequestUtils.normalizeContextPath(contextPath)).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldNormalizeMissingContextPathToEmpty() {
+        assertThat(RequestUtils.normalizeContextPath(null)).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "/kestra,/kestra/api/v1/flows,/api/v1/flows",
+            "/kestra,/kestra,/",
+            "/kestra,/kestraX/api/v1,/kestraX/api/v1",
+            "/a/b,/a/b/api/v1,/api/v1",
+            "'',/api/v1/flows,/api/v1/flows",
+        }
+    )
+    void shouldStripContextPathOnSegmentBoundaryOnly(String contextPath, String path, String expected) {
+        assertThat(RequestUtils.stripContextPath(contextPath, path)).isEqualTo(expected);
+    }
 }

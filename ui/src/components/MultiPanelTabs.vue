@@ -90,11 +90,12 @@
                             >
                                 <component :is="tab.button.icon" class="tab-icon" />
                                 <span class="tab-title">{{ tab.button.label }}</span>
-                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
+                                <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" data-test="tab-dirty" />
                                 <CloseIcon
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"
                                     :title="$t('close')"
+                                    data-test="tab-close"
                                 />
                             </button>
                             <div v-else class="potential-container">
@@ -244,10 +245,11 @@
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
 
-    import {trackTabOpen, trackTabClose} from "../utils/tabTracking"
+    import {useTabTracking} from "../composables/useTabTracking"
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
 
     const {showKeyShortcuts} = useKeyShortcuts()
+    const {trackTabOpen, trackTabClose} = useTabTracking()
 
     const ComponentCache = new Map<string, Component>()
 
@@ -731,7 +733,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .panel-maximized {
         position: relative;
         background: var(--ks-bg-base);
@@ -984,13 +986,13 @@
     }
 
     .default-theme{
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             background-color: var(--ks-bg-surface);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
-        :deep(.kel-splitter__splitter){
+        & :deep(.kel-splitter__splitter){
             border-left-color: var(--ks-border-default);
             background-color: var(--ks-bg-surface);
             &:before, &:after{
@@ -998,7 +1000,7 @@
             }
         }
 
-       :deep(.kel-splitter-bar) {
+       & :deep(.kel-splitter-bar) {
            z-index: 1;
        }
     }

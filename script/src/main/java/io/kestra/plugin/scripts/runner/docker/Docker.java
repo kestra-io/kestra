@@ -621,11 +621,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 Await.await().forever().until(ended::get);
 
                 if (exitCode != 0) {
+                    TaskException failure = new TaskException(exitCode, defaultLogConsumer);
+                    if (isContainerOomKilled(dockerClient, runContainerId, logger)) {
+                        failure = new TaskException(
+                            "A process in container '%s' was killed by the out-of-memory killer (exit code %d). Increase the Docker task runner memory.memory limit (or the host's available memory), or reduce the task's memory usage."
+                                .formatted(runContainerId, exitCode),
+                            exitCode,
+                            defaultLogConsumer
+                        );
+                    }
+
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                         downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
                     }
 
-                    throw new TaskException(exitCode, defaultLogConsumer);
+                    throw failure;
                 } else if (logger.isDebugEnabled()) {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
@@ -650,6 +660,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 );
             }
             throw e;
+        }
+    }
+
+    static boolean isContainerOomKilled(InspectContainerResponse container) {
+        return container != null
+            && container.getState() != null
+            && Boolean.TRUE.equals(container.getState().getOOMKilled());
+    }
+
+    private boolean isContainerOomKilled(DockerClient dockerClient, String containerId, Logger logger) {
+        try {
+            return isContainerOomKilled(dockerClient.inspectContainerCmd(containerId).exec());
+        } catch (RuntimeException e) {
+            logger.debug("Unable to inspect container '{}' for OOM termination; preserving the original exit-code failure.", containerId, e);
+            return false;
         }
     }
 

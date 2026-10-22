@@ -58,7 +58,7 @@
     import ChartLegend from "./ChartLegend.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
-    import {useTheme} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
 
     defineOptions({inheritAttrs: false})
 
@@ -261,7 +261,7 @@
     watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .chart-wrapper {
         &.short {
             height: 40px;

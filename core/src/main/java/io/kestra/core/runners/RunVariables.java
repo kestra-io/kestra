@@ -4,11 +4,13 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionMetadata;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
@@ -19,11 +21,13 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.With;
+import org.slf4j.Logger;
 
 /**
  * Class for building {@link RunContext} variables.
@@ -59,6 +63,7 @@ public final class RunVariables {
         "vars",
         // Execution
         "execution",
+        "execution.attemptNumber",
         "execution.id",
         "execution.originalId",
         "execution.outputs",
@@ -212,29 +217,46 @@ public final class RunVariables {
     /**
      * Creates an immutable map representation of the given {@link LoopRun}.
      */
-    public static Map<String, Object> of(LoopRun loopRun) {
+    public static Map<String, Object> of(LoopRun loopRun, Logger logger) {
         Map<String, Object> loopRunMap = HashMap.newHashMap(3);
         loopRunMap.put("index", loopRun.index());
         if (loopRun.key() != null) {
             loopRunMap.put("key", loopRun.key());
         }
-        loopRunMap.put("value", loopRun.value());
+        if (loopRun.parseValues()) {
+            loopRunMap.put("value", safelyDeserialize(loopRun.value(), logger));
+        } else {
+            loopRunMap.put("value", loopRun.value());
+        }
         if (loopRun.parents() != null) {
-            loopRunMap.put("parent", of(loopRun.parents().getLast()));
+            loopRunMap.put("parent", of(loopRun.parents().getLast(), logger));
             List<Map<String, Object>> parents = new ArrayList<>();
-            loopRun.parents().forEach(parent -> parents.add(of(parent)));
+            loopRun.parents().forEach(parent -> parents.add(of(parent, logger)));
             loopRunMap.put("parents", parents);
         }
         return loopRunMap;
     }
 
-    private static Map<String, Object> of(LoopRun.Parent parent) {
+    private static Object safelyDeserialize(String value, Logger logger) {
+        try {
+            return JacksonMapper.toMap(value);
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to deserialize loop run value: {}, returning the value unparsed", value, e);
+            return value;
+        }
+    }
+
+    private static Map<String, Object> of(LoopRun.Parent parent, Logger logger) {
         Map<String, Object> parentMap = HashMap.newHashMap(3);
         parentMap.put("index", parent.index());
         if (parent.key() != null) {
             parentMap.put("key", parent.key());
         }
-        parentMap.put("value", parent.value());
+        if (parent.parseValues()) {
+            parentMap.put("value", safelyDeserialize(parent.value(), logger));
+        } else {
+            parentMap.put("value", parent.value());
+        }
         return parentMap;
     }
 
@@ -249,6 +271,10 @@ public final class RunVariables {
         if (execution.getState() != null) { // can occur in tests
             executionMap.put("state", execution.getState().getCurrent());
         }
+
+        Optional.ofNullable(execution.getMetadata())
+            .map(ExecutionMetadata::getAttemptNumber)
+            .ifPresent(attemptNumber -> executionMap.put("attemptNumber", attemptNumber));
 
         Optional.ofNullable(execution.getState()).map(State::getStartDate)
             .ifPresent(startDate -> executionMap.put("startDate", startDate));
@@ -480,7 +506,7 @@ public final class RunVariables {
 
                 // item from Loop
                 if (execution.getLoopRun() != null) {
-                    builder.put("item", RunVariables.of(execution.getLoopRun()));
+                    builder.put("item", RunVariables.of(execution.getLoopRun(), logger.logger()));
                 }
             } else if (flow != null) {
                 // if the execution is null, we should add flow labels

@@ -1,5 +1,5 @@
 <template>
-    <ElMain v-bind="($attrs as any)">
+    <ElMain v-bind="$attrs">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -19,7 +19,9 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/main';
+</style>
 
+<style>
     .kel-main {
         background: var(--ks-bg-base);
     }

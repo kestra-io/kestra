@@ -46,6 +46,7 @@
                                 <KsCheckbox
                                     v-if="replaceMode"
                                     class="result-group-checkbox"
+                                    data-test="source-search-group-checkbox"
                                     :modelValue="isGroupChecked(group)"
                                     :indeterminate="isGroupIndeterminate(group)"
                                     :disabled="!group.editable"
@@ -53,7 +54,7 @@
                                         ? $t('source_search.select_all_in_flow', {namespace: group.namespace, id: group.id})
                                         : $t('source_search.cannot_select_read_only', {namespace: group.namespace, id: group.id})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-flow', {namespace: group.namespace, id: group.id, checked})"
                                 />
                                 <span class="result-group-title">
                                     <span class="result-group-namespace">{{ group.namespace }} /</span>
@@ -111,7 +112,7 @@
                                     :disabled="!group.editable"
                                     :aria-label="$t('source_search.select_match', {line: match.line})"
                                     @click.stop
-                                    @update:modelValue="(checked: boolean) => emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
+                                    @update:modelValue="(checked: boolean | undefined) => checked !== undefined && emit('toggle-match', {namespace: group.namespace, id: group.id, line: match.line, column: match.column, checked})"
                                 />
                                 <span class="result-match-lineno">{{ match.line }}</span>
                                 <KsTag v-if="secretKey(match.snippet)" size="small" class="result-match-secret">
@@ -189,7 +190,9 @@
                     aria-busy="true"
                 >
                     <Loading class="spin" />
-                    <span>{{ searchingNamespace[0] }}<code>{{ namespaceState.namespace }}</code>{{ searchingNamespace[1] }}</span>
+                    <i18n-t keypath="source_search.searching_namespace" tag="span" scope="global">
+                        <template #namespace><code>{{ namespaceState.namespace }}</code></template>
+                    </i18n-t>
                 </div>
 
                 <div
@@ -199,7 +202,9 @@
                 >
                     <span class="type-fail-icon"><AlertCircleOutline /></span>
                     <span class="type-fail-text">
-                        <span>{{ namespaceSearchFailed[0] }}<code>{{ namespaceState.namespace }}</code>{{ namespaceSearchFailed[1] }}</span>
+                        <i18n-t keypath="source_search.namespace_search_failed" tag="span" scope="global">
+                            <template #namespace><code>{{ namespaceState.namespace }}</code></template>
+                        </i18n-t>
                         <span>{{ namespaceState.errorMessage || $t('source_search.namespace_search_failed_detail') }}</span>
                     </span>
                     <KsButton size="small" @click="emit('retry-namespace', {namespace: namespaceState.namespace})">
@@ -299,7 +304,6 @@
     import {ref, computed, watch, nextTick, type Component} from "vue"
     import {useRoute} from "vue-router"
     import {escapeHtml} from "@kestra-io/design-system"
-    import {splitTranslation} from "../../utils/splitTranslation"
     import Lock from "vue-material-design-icons/Lock.vue"
     import FindReplace from "vue-material-design-icons/FindReplace.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -356,8 +360,6 @@
     }>()
 
     const {t} = useI18n()
-    const searchingNamespace = computed(() => splitTranslation(t, "source_search.searching_namespace", "namespace"))
-    const namespaceSearchFailed = computed(() => splitTranslation(t, "source_search.namespace_search_failed", "namespace"))
     const route = useRoute()
 
     const SECRET_PATTERN = /secret\(\s*['"]([^'"]+)['"]\s*\)/
@@ -545,7 +547,7 @@
     defineExpose({collapseAll, expandAll})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-results {
     height: 100%;
     overflow-y: auto;
@@ -801,14 +803,14 @@
         overflow-wrap: anywhere;
         color: var(--ks-text-dim);
 
-        :deep(mark) {
+        & :deep(mark) {
             background-color: var(--ks-status-background-warning);
             color: var(--ks-text-primary);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-old) {
+        & :deep(.result-match-old) {
             background-color: var(--ks-status-background-failed);
             color: var(--ks-text-error);
             text-decoration: line-through;
@@ -816,14 +818,14 @@
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-new) {
+        & :deep(.result-match-new) {
             background-color: var(--ks-status-background-success);
             color: var(--ks-text-success);
             border-radius: var(--ks-radius-xs);
             padding: 0 var(--ks-spacing-1);
         }
 
-        :deep(.result-match-arrow) {
+        & :deep(.result-match-arrow) {
             color: var(--ks-text-muted);
         }
     }
@@ -858,7 +860,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -875,7 +877,7 @@
     color: var(--ks-text-primary);
     max-width: 100%;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

@@ -223,7 +223,7 @@
         }
     }
 
-    const changeField = (key: string) => {
+    const changeField = (key: string | undefined) => {
         const config = props.allKeys.find((candidate) => candidate.key === key)
         const comparator = config?.comparators?.[0]
         if (!config || !comparator) return
@@ -243,7 +243,8 @@
         return [...pairByKey.values()]
     }
 
-    const changeComparator = (op: Comparators) => {
+    const changeComparator = (op: Comparators | undefined) => {
+        if (op === undefined) return
         const wasMulti = isMulti.value
         const willBeMulti = keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op)
         const shouldNormalizeKeyValues = keyConfig.value?.valueType === "key-value"
@@ -320,8 +321,10 @@
     })
     onBeforeUnmount(() => resizeObserver?.disconnect())
 
-    const onValueChange = (value: string | string[]) =>
+    const onValueChange = (value: string | string[] | undefined) => {
+        if (value === undefined) return
         emitUpdate(value, labelFor(value))
+    }
 
     const commitMulti = () => {
         const current = Array.isArray(props.filter.value) ? props.filter.value : []
@@ -350,7 +353,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .cond-field {
     flex-shrink: 0;
     width: auto;
@@ -403,7 +406,7 @@
     cursor: pointer;
     font-family: inherit;
 
-    .label {
+    & .label {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         white-space: nowrap;
@@ -415,7 +418,7 @@
         }
     }
 
-    .chevron {
+    & .chevron {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
         font-size: var(--ks-font-size-base);
@@ -468,7 +471,7 @@
     display: inline-flex;
     align-items: center;
 
-    :deep(svg) {
+    & :deep(svg) {
         width: 14px;
         height: 14px;
     }

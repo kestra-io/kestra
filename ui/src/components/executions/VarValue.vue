@@ -3,7 +3,7 @@
         <KsButton
             type="primary"
             tag="a"
-            :href="itemUrl(value.toString())"
+            :href="itemUrl(String(value))"
             target="_blank"
             size="small"
             :icon="Download"
@@ -15,14 +15,14 @@
             v-if="Utils.isIon(value)"
             type="primary"
             tag="a"
-            :href="jsonlUrl(value.toString())"
+            :href="jsonlUrl(String(value))"
             target="_blank"
             size="small"
             rel="noopener noreferrer"
         >
             {{ $t('jsonl') }}
         </KsButton>
-        <FilePreviewDrawer v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
+        <FilePreviewDrawer v-if="Utils.isFile(value)" :value="String(value)" :executionId="execution.id" />
         <KsButton disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </KsButton>
@@ -37,12 +37,12 @@
             {{ $t('file unavailable') }}
         </KsButton>
     </KsTooltip>
-    <KsButtonGroup v-else-if="isURI(value) && !Utils.isFile(value)">
+    <KsButtonGroup v-else-if="uriHref">
         <KsButton
             type="primary"
             tag="a"
             size="small"
-            :href="value"
+            :href="uriHref"
             target="_blank"
             :icon="OpenInNew"
         >
@@ -52,6 +52,10 @@
 
     <span v-else-if="value === null">
         <em>null</em>
+    </span>
+    <!-- Only a real empty string; do not default missing values to this branch. -->
+    <span v-else-if="value === ''">
+        <em>{{ Utils.EMPTY_STRING_DISPLAY }}</em>
     </span>
     <span v-else-if="emptyContainer">
         <em>{{ emptyContainer }}</em>
@@ -91,6 +95,7 @@
 </template>
 
 <script setup lang="ts">
+    import {handledIf} from "../../utils/kestraHttp"
     import {computed, ref, watch, onMounted} from "vue"
     import Download from "vue-material-design-icons/Download.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
@@ -98,7 +103,7 @@
     import FilePreviewDrawer from "./FilePreviewDrawer.vue"
     import {KsAlert, KsEditor, copyToClipboard} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {apiUrl} from "override/utils/route"
+    import {executionFileUrl} from "../../utils/executionUtils"
     import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 
     import * as Utils from "../../utils/utils"
@@ -108,13 +113,13 @@
     }
 
     const props = withDefaults(defineProps<{
-        value?: string | object | boolean | number;
+        value?: string | object | boolean | number | null;
         execution?: Execution;
         restrictUri?: boolean;
         /** Output key this value came from, used to name the download of a truncated value. */
         name?: string;
     }>(), {
-        value: "",
+        // No default for `value`: defaulting to "" made an omitted prop look like an empty string.
         execution: () => ({id: ""}),
         restrictUri: false,
         name: "output",
@@ -143,6 +148,11 @@
             return false
         }
     }
+
+    // Narrow for the template: `value` stays optional, so v-if type guards do not satisfy vue-tsc alone.
+    const uriHref = computed(() =>
+        isURI(props.value) && !Utils.isFile(props.value) ? props.value : undefined,
+    )
 
     const isComplexValue = (value: unknown): boolean => {
         if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
@@ -227,7 +237,7 @@
     )
 
     const itemUrl = (value: string): string => {
-        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURIComponent(value)}`
+        return executionFileUrl(props.execution?.id, value)
     }
 
     const jsonlUrl = (value: string): string => {
@@ -235,20 +245,24 @@
     }
 
     const getFileSize = async (): Promise<void> => {
-        if (Utils.isFile(props.value) && props.execution?.id) {
+        const path = props.value
+        if (Utils.isFile(path) && props.execution?.id) {
             humanSize.value = ""
             fileStatus.value = "loading"
 
-            const data = await ExecutionsAPI.fileMetadatasFromExecution({
-                executionId: props.execution.id, 
-                path: props.value.toString(),
-            }, {
-                validateStatus: (status: number) => status === 200 || status === 404 || status === 422,
-            })
+            let data
+            try {
+                data = await ExecutionsAPI.fileMetadatasFromExecution({
+                    executionId: props.execution.id,
+                    path: String(path),
+                })
+            } catch (e: unknown) {
+                if (!handledIf(e, [404, 422])) throw e
+            }
             if(!data){
                 fileStatus.value = "missing"
                 return
-            }    
+            }
             humanSize.value = Utils.humanFileSize(data.size)
             fileStatus.value = "available"
         }
@@ -265,7 +279,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .complex-value-editor {
     margin-top: 0.5rem;
     border: 1px solid var(--ks-border-default);

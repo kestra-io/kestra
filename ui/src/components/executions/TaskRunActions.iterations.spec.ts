@@ -12,11 +12,11 @@ function state(current: StateType): State {
     return {current, histories: []}
 }
 
-function executionProps(id: string, namespace: string, flowId: string): Execution {
-    return {id, namespace, flowId, flowRevision: 1, originalId: id, metadata: {originalCreatedDate: ""}, state: state("RUNNING")}
+function executionProps(id: string, namespace: string, flowId: string, executionState: State = state("RUNNING")): Execution {
+    return {id, namespace, flowId, flowRevision: 1, originalId: id, metadata: {originalCreatedDate: ""}, state: executionState}
 }
 
-async function mountActions(type: string, grouped = false) {
+async function mountActions(type: string, grouped = false, executionState: State = state("RUNNING")) {
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [
@@ -31,7 +31,7 @@ async function mountActions(type: string, grouped = false) {
         props: {
             taskRun,
             taskRuns: grouped ? [taskRun, {...taskRun, id: "another-task-run"}] : undefined,
-            execution: executionProps("parent-execution", "tests", "loop-flow"),
+            execution: executionProps("parent-execution", "tests", "loop-flow", executionState),
             flow: {tasks: [{id: "parallel", type: "io.kestra.plugin.core.flow.Parallel", tasks: [{id: "loop", type}]}]},
         },
         global: {
@@ -68,6 +68,26 @@ describe("TaskRunActions", () => {
             "filters[parentId][EQUALS]": "parent-execution",
             "filters[kind][EQUALS]": "LOOP",
             "filters[taskId][EQUALS]": "loop",
+        })
+    })
+
+    it("shouldBoundIterationsToTheParentWindowSoTheDefaultTimeRangeIsNotApplied", async () => {
+        const {wrapper, router} = await mountActions("io.kestra.plugin.core.flow.Loop", false, {
+            ...state("SUCCESS"),
+            startDate: "2026-10-05T08:00:00Z",
+            endDate: "2026-10-05T08:03:00Z",
+        })
+        const iterations = wrapper.findAllComponents(KsDropdownItem).find(item => item.text() === "Iterations")
+
+        await iterations!.get("[role=\"menuitem\"]").trigger("click")
+        await flushPromises()
+
+        expect(router.currentRoute.value.query).toEqual({
+            "filters[parentId][EQUALS]": "parent-execution",
+            "filters[kind][EQUALS]": "LOOP",
+            "filters[taskId][EQUALS]": "loop",
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-10-05T08:00:00.000Z",
+            "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2026-10-05T08:03:00.000Z",
         })
     })
 

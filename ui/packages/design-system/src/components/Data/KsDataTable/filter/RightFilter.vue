@@ -18,7 +18,7 @@
             v-model:visible="isSavedFiltersVisible"
             placement="bottom-end"
             trigger="click"
-            :popperClass="'p-0 saved-filters-popper'"
+            popperClass="saved-filters-popper"
             :width="300"
             :showArrow="false"
             :disabled="filter.readOnly.value"
@@ -82,7 +82,7 @@
             placement="bottom-end"
             trigger="click"
             :width="300"
-            :popperClass="'p-0'"
+            popperClass="columns-popper"
             :showArrow="false"
             :disabled="filter.readOnly.value"
             @hide="isColumnsVisible = false"
@@ -113,7 +113,7 @@
             placement="bottom-end"
             trigger="click"
             :width="260"
-            :popperClass="'p-0'"
+            popperClass="settings-popper"
             :showArrow="false"
             @hide="isSettingsVisible = false"
         >
@@ -281,10 +281,16 @@
 
 <style lang="scss">
 .saved-filters-popper.saved-filters-popper {
+    padding: 0;
     overflow: hidden;
-    border-radius: 0.5rem;
+    border-radius: var(--ks-radius-base);
     box-shadow: 0px 8px 24px 0px var(--ks-shadow-elevated);
     background-color: var(--ks-bg-elevated);
     border: 1px solid var(--ks-border-strong);
+}
+
+.columns-popper.columns-popper,
+.settings-popper.settings-popper {
+    padding: 0;
 }
 </style>

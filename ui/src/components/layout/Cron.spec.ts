@@ -32,12 +32,11 @@ describe("Cron", () => {
     test("updates the rendered description when cronExpression prop changes", async () => {
         vi.spyOn(Utils, "getLang").mockReturnValue("en")
         const wrapper = mount(Cron, {props: {cronExpression: "* * * * *"}})
-        const initialText = wrapper.text()
+        expect(wrapper.text()).toBe(cronstrue.toString("* * * * *", {locale: "en"}))
 
         await wrapper.setProps({cronExpression: "0 0 * * *"})
 
-        expect(wrapper.text()).not.toBe(initialText)
-        expect(wrapper.text()).toContain("12:00 AM")
+        expect(wrapper.text()).toBe(cronstrue.toString("0 0 * * *", {locale: "en"}))
     })
 
     test("falls back to the raw expression when the cron expression is invalid", () => {

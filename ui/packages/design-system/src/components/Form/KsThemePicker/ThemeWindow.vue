@@ -33,21 +33,39 @@
     const clipId = `theme-window-clip-${counter++}`
 </script>
 
-<style scoped lang="scss">
-    @use "../../../assets/styles/color-palette" as palette;
-
+<style scoped>
     .theme-window {
         display: block;
         width: 100%;
         height: auto;
-        filter: drop-shadow(0 1px 2px rgba(palette.$base-gray-neutral-950, 0.1));
+        filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--ks-gray-neutral-950) 10%, transparent));
     }
 
-    .tw-sidebar { fill: var(--tp-sidebar); }
-    .tw-divider { fill: var(--tp-divider); }
-    .tw-main { fill: var(--tp-main); }
-    .tw-bar { fill: var(--tp-bar); }
-    .tw-panel { fill: var(--tp-panel); }
-    .tw-dot { fill: palette.$base-primary-300; }
-    .tw-frame { stroke: var(--tp-frame); }
+    .tw-sidebar {
+        fill: var(--tp-sidebar);
+    }
+
+    .tw-divider {
+        fill: var(--tp-divider);
+    }
+
+    .tw-main {
+        fill: var(--tp-main);
+    }
+
+    .tw-bar {
+        fill: var(--tp-bar);
+    }
+
+    .tw-panel {
+        fill: var(--tp-panel);
+    }
+
+    .tw-dot {
+        fill: var(--ks-primary-300);
+    }
+
+    .tw-frame {
+        stroke: var(--tp-frame);
+    }
 </style>

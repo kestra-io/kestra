@@ -6,7 +6,7 @@ export const propsSchema = z.object({
     assetId: z.string(),
     assetType: z.string().optional(),
     // Everything the producing task attached to the asset, e.g. the keys a plugin emits through `Asset.metadata`.
-    metadata: z.record(z.unknown()),
+    metadata: z.record(z.string(), z.unknown()),
     // Current tenant, so an artifact bundling its own SDK copy doesn't have to guess it.
     tenant: z.string().optional(),
 })

@@ -116,7 +116,7 @@
     useRouteContext(routeInfo)
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .edit-running {
         border: solid 1px transparent;
         background: none;

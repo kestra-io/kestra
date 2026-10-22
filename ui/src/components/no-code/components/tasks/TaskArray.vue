@@ -285,9 +285,8 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .disabled {
     opacity: 0.5;
     pointer-events: none;

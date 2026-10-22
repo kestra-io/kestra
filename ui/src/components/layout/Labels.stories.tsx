@@ -1,5 +1,5 @@
 import Labels from "./Labels.vue";
-import {Meta, StoryFn} from "@storybook/vue3";
+import {Meta, StoryFn} from "@storybook/vue3-vite";
 import {expect, userEvent, waitFor} from "storybook/test";
 
 export default {

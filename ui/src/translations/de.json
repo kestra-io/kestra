@@ -2867,6 +2867,9 @@
     "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
     "not started": "Nicht gestartet",
     "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
       "breadcrumb": {
         "all": "Alle",
         "total": "{count} Ausführung | {count} Ausführungen",
@@ -2885,7 +2888,8 @@
         "failedCount": "{count} fehlgeschlagen"
       },
       "bucket": {
-        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene"
+        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene",
+        "stateCount": "{state}: {count}"
       },
       "popover": {
         "openExecution": "Ausführung öffnen",
@@ -2901,10 +2905,11 @@
         "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
       },
       "truncated": {
-        "description": "Zeigt die neuesten {shown} von {total} Ausführungen – schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
+        "description": "Zeigt die neuesten {shown} von {total} Ausführungen. Schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
       },
       "scrubber": {
-        "label": "Execution-Dichte im Zeitverlauf, zum Auswählen eines Bereichs ziehen"
+        "label": "Execution-Dichte im Zeitverlauf, zum Auswählen eines Bereichs ziehen",
+        "ignoredFilters": "Die Dichteleiste wendet diese Filter nicht an: {filters}"
       }
     },
     "chart mode": {

@@ -1,11 +1,9 @@
 import {describe, expect, it} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import {defineComponent} from "vue"
 import TimelineRow from "./TimelineRow.vue"
 import type {TimelineExecution} from "../../../utils/executionsTimeline"
 
-const i18n = createI18n({legacy: false, globalInjection: true, locale: "en", messages: {en: {}}})
 
 const stubs = {
     KsIconButton: defineComponent({name: "KsIconButton", template: "<button type=\"button\"><slot /></button>"}),
@@ -17,7 +15,7 @@ const executions: TimelineExecution[] = [
 ]
 
 function mountRow() {
-    return mount(TimelineRow, {
+    return i18nMount(TimelineRow, {
         props: {
             label: "company.team",
             executions,
@@ -27,7 +25,7 @@ function mountRow() {
             packLanes: false,
             dimmedStates: new Set<string>(),
         },
-        global: {plugins: [i18n], stubs},
+        global: {stubs},
     })
 }
 
@@ -55,7 +53,7 @@ describe("TimelineRow", () => {
     })
 
     it("should show a persistent drill affordance when the row is drillable", () => {
-        const wrapper = mount(TimelineRow, {
+        const wrapper = i18nMount(TimelineRow, {
             props: {
                 label: "company.team",
                 executions,
@@ -66,7 +64,7 @@ describe("TimelineRow", () => {
                 dimmedStates: new Set<string>(),
                 drillable: true,
             },
-            global: {plugins: [i18n], stubs},
+            global: {stubs},
         })
 
         expect(wrapper.find("[data-test=drill-chevron]").exists()).toBe(true)
@@ -82,7 +80,7 @@ describe("TimelineRow", () => {
             endMs: i * 4 + 200,
         }))
 
-        const wrapper = mount(TimelineRow, {
+        const wrapper = i18nMount(TimelineRow, {
             props: {
                 label: "flow",
                 executions: overlapping,
@@ -92,7 +90,7 @@ describe("TimelineRow", () => {
                 packLanes: true,
                 dimmedStates: new Set<string>(),
             },
-            global: {plugins: [i18n], stubs},
+            global: {stubs},
         })
 
         expect(wrapper.findAll(".timeline-lane")).toHaveLength(1)
@@ -108,7 +106,7 @@ describe("TimelineRow", () => {
             endMs: i * 400 + 1000,
         }))
 
-        const wrapper = mount(TimelineRow, {
+        const wrapper = i18nMount(TimelineRow, {
             props: {
                 label: "flow",
                 executions: overlapping,
@@ -118,14 +116,14 @@ describe("TimelineRow", () => {
                 packLanes: true,
                 dimmedStates: new Set<string>(),
             },
-            global: {plugins: [i18n], stubs},
+            global: {stubs},
         })
 
         expect(wrapper.findAll(".timeline-lane")).toHaveLength(3)
     })
 
     it("should keep a run that outlasts the window inside the lane instead of overflowing it", () => {
-        const wrapper = mount(TimelineRow, {
+        const wrapper = i18nMount(TimelineRow, {
             props: {
                 label: "company.team",
                 executions: [{id: "long", namespace: "company.team", flowId: "flow", state: "RUNNING", startMs: 8_000, endMs: 30_000}],
@@ -135,7 +133,7 @@ describe("TimelineRow", () => {
                 packLanes: false,
                 dimmedStates: new Set<string>(),
             },
-            global: {plugins: [i18n], stubs},
+            global: {stubs},
         })
 
         const bar = wrapper.getComponent({name: "TimelineBar"})

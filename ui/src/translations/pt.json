@@ -2867,6 +2867,9 @@
     "delete_log_iteration": "Tem certeza de que deseja excluir o log de {iteration}?",
     "not started": "Não iniciado",
     "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
       "breadcrumb": {
         "all": "Todos",
         "total": "{count} execução | {count} execuções",
@@ -2885,7 +2888,8 @@
         "failedCount": "{count} falhadas"
       },
       "bucket": {
-        "hint": "Agregado: aumente o zoom para ver o detalhe de cada execução"
+        "hint": "Agregado: aumente o zoom para ver o detalhe de cada execução",
+        "stateCount": "{state}: {count}"
       },
       "popover": {
         "openExecution": "Abrir execução",
@@ -2901,10 +2905,11 @@
         "description": "Ocorreu um erro ao carregar as execuções deste período."
       },
       "truncated": {
-        "description": "A mostrar as últimas {shown} de {total} execuções — reduza o período ou os filtros para ver todas."
+        "description": "A mostrar as últimas {shown} de {total} execuções. Reduza o período ou os filtros para ver todas."
       },
       "scrubber": {
-        "label": "Densidade de Execution ao longo do tempo, arraste para selecionar um intervalo"
+        "label": "Densidade de Execution ao longo do tempo, arraste para selecionar um intervalo",
+        "ignoredFilters": "A barra de densidade não aplica estes filtros: {filters}"
       }
     },
     "chart mode": {

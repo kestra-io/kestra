@@ -2867,6 +2867,9 @@
     "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?",
     "not started": "시작되지 않음",
     "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
       "breadcrumb": {
         "all": "전체",
         "total": "실행 {count}개 | 실행 {count}개",
@@ -2885,7 +2888,8 @@
         "failedCount": "{count}개 실패"
       },
       "bucket": {
-        "hint": "집계됨: 확대하면 실행 단위 상세 정보가 표시됩니다"
+        "hint": "집계됨: 확대하면 실행 단위 상세 정보가 표시됩니다",
+        "stateCount": "{state}: {count}"
       },
       "popover": {
         "openExecution": "실행 열기",
@@ -2901,10 +2905,11 @@
         "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
       },
       "truncated": {
-        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다 — 모두 보려면 기간이나 필터를 좁혀 보세요."
+        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다. 모두 보려면 기간이나 필터를 좁혀 보세요."
       },
       "scrubber": {
-        "label": "시간 경과에 따른 Execution 밀도, 범위를 선택하려면 드래그하세요."
+        "label": "시간 경과에 따른 Execution 밀도, 범위를 선택하려면 드래그하세요.",
+        "ignoredFilters": "밀도 막대에는 다음 필터가 적용되지 않습니다: {filters}"
       }
     },
     "chart mode": {

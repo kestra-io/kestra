@@ -2867,6 +2867,9 @@
     "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
     "not started": "Nierozpoczęte",
     "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
       "breadcrumb": {
         "all": "Wszystkie",
         "total": "{count} wykonanie | {count} wykonania | {count} wykonań",
@@ -2885,7 +2888,8 @@
         "failedCount": "{count} nieudanych"
       },
       "bucket": {
-        "hint": "Zagregowane: przybliż, aby zobaczyć szczegóły wykonania"
+        "hint": "Zagregowane: przybliż, aby zobaczyć szczegóły wykonania",
+        "stateCount": "{state}: {count}"
       },
       "popover": {
         "openExecution": "Otwórz wykonanie",
@@ -2901,10 +2905,11 @@
         "description": "Wystąpił błąd podczas ładowania wykonań dla tego zakresu."
       },
       "truncated": {
-        "description": "Wyświetlane są najnowsze {shown} z {total} wykonań — zawęź zakres czasu lub filtry, aby zobaczyć wszystkie."
+        "description": "Wyświetlane są najnowsze {shown} z {total} wykonań. Zawęź zakres czasu lub filtry, aby zobaczyć wszystkie."
       },
       "scrubber": {
-        "label": "Gęstość egzekucji w czasie, przeciągnij, aby wybrać zakres"
+        "label": "Gęstość egzekucji w czasie, przeciągnij, aby wybrać zakres",
+        "ignoredFilters": "Pasek gęstości nie stosuje tych filtrów: {filters}"
       }
     },
     "chart mode": {

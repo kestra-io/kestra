@@ -2867,6 +2867,9 @@
     "delete_log_iteration": "क्या आप वाकई {iteration} के लिए लॉग हटाना चाहते हैं?",
     "not started": "शुरू नहीं हुआ",
     "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
       "breadcrumb": {
         "all": "सभी",
         "total": "{count} execution | {count} executions",
@@ -2885,7 +2888,8 @@
         "failedCount": "{count} विफल"
       },
       "bucket": {
-        "hint": "एकत्रित: execution-स्तर का विवरण देखने के लिए ज़ूम इन करें"
+        "hint": "एकत्रित: execution-स्तर का विवरण देखने के लिए ज़ूम इन करें",
+        "stateCount": "{state}: {count}"
       },
       "popover": {
         "openExecution": "execution खोलें",
@@ -2901,10 +2905,11 @@
         "description": "इस सीमा के लिए execution लोड करते समय कुछ गड़बड़ हुई।"
       },
       "truncated": {
-        "description": "नवीनतम {shown} में से {total} executions दिखाए जा रहे हैं — सभी देखने के लिए समय सीमा या फ़िल्टर संकुचित करें।"
+        "description": "नवीनतम {shown} में से {total} executions दिखाए जा रहे हैं। सभी देखने के लिए समय सीमा या फ़िल्टर संकुचित करें।"
       },
       "scrubber": {
-        "label": "समय के साथ Execution घनत्व, एक सीमा का चयन करने के लिए खींचें"
+        "label": "समय के साथ Execution घनत्व, एक सीमा का चयन करने के लिए खींचें",
+        "ignoredFilters": "घनत्व पट्टी ये फ़िल्टर लागू नहीं करती: {filters}"
       }
     },
     "chart mode": {

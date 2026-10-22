@@ -16,7 +16,7 @@
                     :class="{dimmed}"
                     :data-state="execution.state"
                     :style="barStyle"
-                    :aria-label="`${execution.flowId} — ${execution.state}`"
+                    :aria-label="$t('executionsTimeline.bar.label', {flow: execution.flowId, state: categoryLabel(execution.state)})"
                     @mouseenter="tooltipVisible = true"
                     @mouseleave="tooltipVisible = false"
                     @focus="tooltipVisible = true"
@@ -80,8 +80,10 @@
     <KsTooltip v-else-if="bucket" placement="top" :rawContent="true">
         <template #content>
             <div class="timeline-bar-tooltip">
-                <strong>{{ bucket.total }} {{ $t("executions") }}</strong>
-                <span v-for="[state, count] in Object.entries(bucket.byState)" :key="state">{{ state }}: {{ count }}</span>
+                <strong>{{ $t("executionsTimeline.row.runsCount", {count: bucket.total}) }}</strong>
+                <span v-for="[state, count] in Object.entries(bucket.byState)" :key="state">
+                    {{ $t("executionsTimeline.bucket.stateCount", {state: categoryLabel(state), count}) }}
+                </span>
                 <span class="hint">{{ $t("executionsTimeline.bucket.hint") }}</span>
             </div>
         </template>
@@ -97,8 +99,8 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRouter} from "vue-router"
-    import {dateUtils, durationUtils} from "@kestra-io/design-system"
-    import type {StateBucket, TimelineExecution} from "../../../utils/executionsTimeline"
+    import {categoryLabel, dateUtils, durationUtils} from "@kestra-io/design-system"
+    import {stateChartColor, type StateBucket, type TimelineExecution} from "../../../utils/executionsTimeline"
 
     const props = defineProps<{
         execution?: TimelineExecution;
@@ -138,7 +140,7 @@
 
     const bucketStyle = computed(() => {
         if (!props.bucket) return barStyle.value
-        const tint = `var(--ks-chart-${props.bucket.dominantState.toLowerCase()})`
+        const tint = stateChartColor(props.bucket.dominantState)
         const mixPercent = 30 + Math.round((props.intensity ?? 1) * 70)
         return {
             ...barStyle.value,
@@ -244,6 +246,14 @@
 
 .timeline-bar[data-state="RETRYING"] {
     background: var(--ks-chart-retrying);
+}
+
+.timeline-bar[data-state="BREAKPOINT"] {
+    background: var(--ks-chart-breakpoint);
+}
+
+.timeline-bar[data-state="SUBMITTED"] {
+    background: var(--ks-chart-created);
 }
 
 .timeline-bar[data-state="QUEUED"] {

@@ -1,16 +1,18 @@
 import {describe, expect, it, test, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import {defineComponent} from "vue"
 import TimelineBar from "./TimelineBar.vue"
 import type {StateBucket, TimelineExecution} from "../../../utils/executionsTimeline"
 
-vi.mock("@kestra-io/design-system", () => ({
-    dateUtils: {dateFilter: (iso: string) => iso},
-    durationUtils: {humanDuration: (seconds: number) => `${seconds}s`},
-}))
+vi.mock("@kestra-io/design-system", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@kestra-io/design-system")>()
+    return {
+        ...actual,
+        dateUtils: {...actual.dateUtils, dateFilter: (iso: string) => iso},
+        durationUtils: {...actual.durationUtils, humanDuration: (seconds: number) => `${seconds}s`},
+    }
+})
 
-const i18n = createI18n({legacy: false, globalInjection: true, locale: "en", messages: {en: {}}})
 
 const passthroughStub = (name: string, slots: string[] = ["default"]) => defineComponent({
     name,
@@ -87,9 +89,9 @@ interface BarProps {
 }
 
 function mountBar(props: BarProps) {
-    return mount(TimelineBar, {
+    return i18nMount(TimelineBar, {
         props: {leftPercent: 0, widthPercent: 10, dimmed: false, ...props},
-        global: {plugins: [i18n], stubs},
+        global: {stubs},
     })
 }
 
@@ -133,17 +135,40 @@ describe("TimelineBar", () => {
 
     test("opens the execution detail popover when the bar is clicked", async () => {
         const clickedExecution: TimelineExecution = {...execution, id: "execution-id", flowId: "my-flow"}
-        const wrapper = mount(TimelineBar, {
+        const wrapper = i18nMount(TimelineBar, {
             props: {leftPercent: 0, widthPercent: 10, dimmed: false, execution: clickedExecution},
-            global: {plugins: [i18n], stubs: popoverAwareStubs},
+            global: {stubs: {KsTooltip: true, KsDateAgo: true}},
+            attachTo: document.body,
         })
-        expect(wrapper.find("[data-test=\"popover-body\"]").exists()).toBe(false)
+        expect(document.querySelector(".timeline-bar-popover")).toBeNull()
 
         await wrapper.get(".timeline-bar").trigger("click")
+        await vi.waitFor(() => expect(document.querySelector(".timeline-bar-popover")).not.toBeNull())
 
-        expect(wrapper.find("[data-test=\"popover-body\"]").exists()).toBe(true)
-        expect(wrapper.text()).toContain("execution-id")
-        expect(wrapper.text()).toContain("my-flow")
+        const popover = document.querySelector(".timeline-bar-popover")
+        expect(popover).not.toBeNull()
+        expect(popover!.textContent).toContain("my-flow")
+        wrapper.unmount()
+        document.body.innerHTML = ""
+    })
+
+    test("labels the bar with its flow and readable state", () => {
+        const wrapper = mountBar({execution: {...execution, state: "KILLED"}})
+
+        expect(wrapper.get(".timeline-bar").attributes("aria-label")).toBe("executionsTimeline.bar.label")
+    })
+
+    test("lists a bucket's states by their readable names", () => {
+        const wrapper = i18nMount(TimelineBar, {
+            messages: {executionsTimeline: {bucket: {stateCount: "{state}: {count}", hint: "hint"}, row: {runsCount: "{count} run | {count} runs"}}},
+            props: {leftPercent: 0, widthPercent: 10, dimmed: false, bucket},
+            global: {stubs},
+        })
+
+        expect(wrapper.text()).toContain("10 runs")
+        expect(wrapper.text()).toContain("Success: 8")
+        expect(wrapper.text()).toContain("Failed: 2")
+        expect(wrapper.text()).not.toContain("SUCCESS")
     })
 
     test("flips the popover to bottom when the bar is near the top of the timeline card", async () => {
@@ -151,9 +176,9 @@ describe("TimelineBar", () => {
         card.className = "executions-timeline"
         document.body.appendChild(card)
 
-        const wrapper = mount(TimelineBar, {
+        const wrapper = i18nMount(TimelineBar, {
             props: {leftPercent: 0, widthPercent: 10, dimmed: false, execution},
-            global: {plugins: [i18n], stubs: placementAwareStubs},
+            global: {stubs: placementAwareStubs},
             attachTo: card,
         })
 
@@ -169,9 +194,9 @@ describe("TimelineBar", () => {
         card.className = "executions-timeline"
         document.body.appendChild(card)
 
-        const wrapper = mount(TimelineBar, {
+        const wrapper = i18nMount(TimelineBar, {
             props: {leftPercent: 0, widthPercent: 10, dimmed: false, execution},
-            global: {plugins: [i18n], stubs: placementAwareStubs},
+            global: {stubs: placementAwareStubs},
             attachTo: card,
         })
 

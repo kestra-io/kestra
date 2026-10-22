@@ -4,7 +4,7 @@ import {defineComponent, h} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import {i18nShallowMount} from "../../../tests/unit/i18nMount"
 
-type Node = {data: {id: string; leaf?: boolean}; parent?: Node}
+type Node = {data: {id: string; fileName?: string; leaf?: boolean}; parent?: Node}
 
 const {moveFileDirectory, store} = vi.hoisted(() => ({
     moveFileDirectory: vi.fn(),
@@ -40,13 +40,13 @@ vi.mock("../../stores/fileExplorer", async (importOriginal) => ({
     }),
 }))
 
-import FileExplorer from "./FileExplorer.vue"
+import FileExplorer, {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "./FileExplorer.vue"
 
 const root: Node = {data: {id: "root"}}
 const docs: Node = {data: {id: "docs"}, parent: root}
-const readme: Node = {data: {id: "readme", leaf: true}, parent: root}
-const changelog: Node = {data: {id: "changelog", leaf: true}, parent: root}
-const contributing: Node = {data: {id: "contributing", leaf: true}, parent: docs}
+const readme: Node = {data: {id: "readme", fileName: "README.md", leaf: true}, parent: root}
+const changelog: Node = {data: {id: "changelog", fileName: "CHANGELOG.md", leaf: true}, parent: root}
+const contributing: Node = {data: {id: "contributing", fileName: "CONTRIBUTING.md", leaf: true}, parent: docs}
 
 let rows: Node[] = []
 
@@ -62,7 +62,11 @@ const KsTree = defineComponent({
 
 function mountExplorer() {
     return i18nShallowMount(FileExplorer, {
-        global: {plugins: [createPinia()], stubs: {KsTree, KsDropdown: {template: "<div><slot /></div>"}}},
+        global: {
+            plugins: [createPinia()],
+            provide: {[FILES_OPEN_TAB_INJECTION_KEY as symbol]: vi.fn(), [FILES_CLOSE_TAB_INJECTION_KEY as symbol]: vi.fn(() => true)},
+            stubs: {KsTree, KsDropdown: {template: "<div><slot /></div>"}},
+        },
     })
 }
 

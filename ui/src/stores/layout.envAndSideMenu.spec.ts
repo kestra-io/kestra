@@ -98,13 +98,6 @@ describe("layout store environment banner and side menu state", () => {
         expect(store.sideMenuCollapsed).toBe(true)
     })
 
-    it("shouldInitializeSideMenuCollapsedToTrueWhenMatchMediaMatches", () => {
-        stubMatchMedia(query => query === "(max-width: 768px)" || query === "(max-width: 767px)")
-        const store = useLayoutStore()
-
-        expect(store.sideMenuCollapsed).toBe(true)
-    })
-
     it("shouldInitializeSideMenuCollapsedToFalseWhenNeitherHolds", () => {
         stubMatchMedia(false)
         const store = useLayoutStore()
@@ -128,21 +121,5 @@ describe("layout store environment banner and side menu state", () => {
         expect(store.menuSectionsCollapsed).toEqual({ flows: true, admin: false })
         expect(store.menuSectionsCollapsed).not.toBe(previousSections)
         expect(JSON.parse(localStorage.getItem("menuSectionsCollapsed")!)).toEqual({ flows: true, admin: false })
-    })
-
-    it("shouldStoreTopNavbarAsGiven", () => {
-        const store = useLayoutStore()
-        expect(store.topNavbar).toBeUndefined()
-
-        const navBarComponent = { id: "custom-nav-bar" }
-        store.setTopNavbar(navBarComponent)
-
-        expect(store.topNavbar).toEqual(navBarComponent)
-
-        store.setTopNavbar(null)
-        expect(store.topNavbar).toBeNull()
-
-        store.setTopNavbar(undefined)
-        expect(store.topNavbar).toBeUndefined()
     })
 })

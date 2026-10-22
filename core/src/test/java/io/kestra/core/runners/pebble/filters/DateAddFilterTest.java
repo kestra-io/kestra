@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -90,6 +91,35 @@ public class DateAddFilterTest {
         return Stream.of(
             new InputWrapper(null),
             new InputWrapper("invalidString")
+        );
+    }
+    @ParameterizedTest
+    @ValueSource(strings = {"DAYS", "days", "Days"})
+    void should_accept_case_insensitive_units(String unit) throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, \"" + unit + "\") | date(\"yyyy-MM-dd\") }}"
+        );
+
+        assertThat(render).isEqualTo("2024-01-02");
+    }
+
+    @Test
+    void should_fail_with_null_unit() {
+        assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> variableRenderer.render(
+                "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, null) }}"
+            )
+        );
+    }
+
+    @Test
+    void should_fail_with_invalid_unit() {
+        assertThrows(
+            IllegalVariableEvaluationException.class,
+            () -> variableRenderer.render(
+                "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, \"fortnights\") }}"
+            )
         );
     }
 

@@ -1,14 +1,11 @@
 import {describe, expect, it, vi} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import FailureStructuralImpact from "./FailureStructuralImpact.vue"
 import en from "../../../translations/en.json"
 
 vi.mock("../../../stores/plugins", () => ({
     usePluginsStore: () => ({loadIcon: vi.fn().mockResolvedValue(undefined)}),
 }))
-
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en: en.en}})
 
 function node(id: string, taskId: string, relation: "focused" | "parent" | "sibling" | "child") {
     return {
@@ -18,10 +15,10 @@ function node(id: string, taskId: string, relation: "focused" | "parent" | "sibl
 }
 
 function mountImpact(nodes: ReturnType<typeof node>[], rawBlocks: Record<string, string | undefined> = {}) {
-    return mount(FailureStructuralImpact, {
+    return i18nMount(FailureStructuralImpact, {
+        locales: {en: en.en},
         props: {nodes: nodes as never, focusedId: "tr-focused", rawBlocks},
         global: {
-            plugins: [i18n],
             stubs: {KsMarkdown: {template: "<pre>{{ content }}</pre>", props: ["content"]}},
         },
     })

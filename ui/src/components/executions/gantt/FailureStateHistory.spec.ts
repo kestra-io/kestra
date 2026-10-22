@@ -1,17 +1,15 @@
 import {describe, expect, it} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import FailureStateHistory from "./FailureStateHistory.vue"
 import en from "../../../translations/en.json"
-
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en: en.en}})
 
 function history(state: string, date: string) {
     return {state, date}
 }
 
 function mountHistory(histories: ReturnType<typeof history>[]) {
-    return mount(FailureStateHistory, {
+    return i18nMount(FailureStateHistory, {
+        locales: {en: en.en},
         props: {
             taskRun: {
                 id: "tr-1",
@@ -19,7 +17,7 @@ function mountHistory(histories: ReturnType<typeof history>[]) {
                 state: {current: "FAILED", histories},
             } as never,
         },
-        global: {plugins: [i18n]},
+        global: {},
     })
 }
 

@@ -11,12 +11,17 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,6 +67,8 @@ import io.kestra.core.http.KestraMediaTypes;
 import io.kestra.core.http.client.apache.*;
 import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.models.tasks.retrys.Random;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -556,6 +563,57 @@ public class HttpClient implements Closeable {
         return statusCode < 400;
     }
 
+    // Capped by the policy's maximum interval (or maximum duration) so a server can't stall the task with a long delay.
+    private Optional<Duration> retryAfter(HttpResponse<?> response) {
+        var retry = configuration.getRetry();
+        Duration cap;
+        if (retry instanceof Exponential exponential) {
+            cap = exponential.getMaxInterval();
+        } else if (retry instanceof Random random) {
+            cap = random.getMaxInterval();
+        } else {
+            cap = retry != null ? retry.getMaxDuration() : null;
+        }
+        if (cap == null || response.getHeaders() == null) {
+            return Optional.empty();
+        }
+
+        return response.getHeaders().firstValue(HttpHeaders.RETRY_AFTER)
+            .flatMap(HttpClient::parseRetryAfter)
+            .filter(Duration::isPositive)
+            .map(delay -> delay.compareTo(cap) > 0 ? cap : delay);
+    }
+
+    private static Optional<Duration> parseRetryAfter(String value) {
+        var trimmed = value.trim();
+        try {
+            if (!trimmed.isEmpty() && trimmed.chars().allMatch(Character::isDigit)) {
+                return Optional.of(Duration.ofSeconds(Long.parseLong(trimmed)));
+            }
+            var date = ZonedDateTime.parse(trimmed, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant();
+            return Optional.of(Duration.between(Instant.now(), date));
+        } catch (NumberFormatException | DateTimeParseException e) {
+            return Optional.empty();
+        }
+    }
+
+    // The retry policy has already waited its own delay, so this only waits the rest of what the server asked for.
+    private static void waitUntil(@Nullable Instant notBefore, HttpRequest request) throws HttpClientRequestException {
+        if (notBefore == null) {
+            return;
+        }
+        var remaining = Duration.between(Instant.now(), notBefore);
+        if (!remaining.isPositive()) {
+            return;
+        }
+        try {
+            Thread.sleep(remaining);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new HttpClientRequestException("The request was interrupted while waiting for the delay asked by the Retry-After header.", request, e);
+        }
+    }
+
     private <T> HttpResponse<T> request(
         HttpRequest request,
         HttpClientContext httpClientContext,
@@ -565,6 +623,7 @@ public class HttpClient implements Closeable {
         String method = request.getMethod();
         List<Integer> retryableCodes = resolveRetryableStatusCodes(method);
         boolean retryTransportFailures = isMethodEligibleForTransportRetry(method);
+        AtomicReference<Instant> retryNotBefore = new AtomicReference<>();
 
         return RetryUtils.<HttpResponse<T>, HttpClientException> of(
             configuration.getRetry(),
@@ -583,15 +642,19 @@ public class HttpClient implements Closeable {
             (res, throwable) ->
             {
                 if (throwable instanceof HttpClientResponseException ex) {
-                    return retryableCodes.contains(
+                    boolean retryable = retryableCodes.contains(
                         ex.getResponse().getStatus().getCode()
                     );
+                    if (retryable) {
+                        retryNotBefore.set(retryAfter(ex.getResponse()).map(Instant.now()::plus).orElse(null));
+                    }
+                    return retryable;
                 }
 
                 if (throwable instanceof HttpClientRequestException httpEx) {
                     // ConnectException means the request never reached the server, so any method is safe to retry.
                     Throwable cause = httpEx.getCause();
-                    if (cause instanceof SSLHandshakeException) {
+                    if (cause instanceof SSLHandshakeException || cause instanceof InterruptedException) {
                         return false;
                     }
                     return cause instanceof ConnectException || retryTransportFailures;
@@ -601,6 +664,7 @@ public class HttpClient implements Closeable {
             },
             () ->
             {
+                waitUntil(retryNotBefore.getAndSet(null), request);
                 try {
                     return this.client.execute(
                         request.to(runContext),

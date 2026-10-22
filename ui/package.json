@@ -29,7 +29,7 @@
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
         "test:unit:shuffle": "vitest run --project=unit --sequence.shuffle.files",
-        "test:storybook": "node -v; head -2 /etc/os-release; ls ~/.cache/ms-playwright; echo === RUN1 vite:time; DEBUG=vite:time vitest run --project=storybook || true; echo === RUN2 maxWorkers=1; vitest run --project=storybook --maxWorkers=1 || true",
+        "test:storybook": "echo === RUN1; vitest run --project=storybook || true; echo === RUN2; vitest run --project=storybook --maxWorkers=1 || true",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "node ./scripts/translations/check-translations.mjs --scope oss && node --experimental-strip-types ./scripts/translations/check.ts",

@@ -13,3 +13,20 @@ console.warn = (...args) => {
     if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
     origWarn(...args)
 }
+
+// NAVDEBUG (throwaway branch): name the story that navigates or reloads its iframe mid-run.
+import {beforeEach, expect} from "vitest"
+let navDebugTest = "(no test yet)"
+beforeEach(() => {
+    navDebugTest = `${expect.getState().testPath} > ${expect.getState().currentTestName}`
+})
+const navDebug = (kind, extra) => {
+    const payload = {kind, test: navDebugTest, href: window.location.href, ...extra, stack: new Error().stack}
+    console.error("[NAVDEBUG]", JSON.stringify(payload))
+}
+window.navigation?.addEventListener("navigate", (event) => {
+    if (event.destination?.sameDocument && event.navigationType !== "reload") return
+    navDebug("navigate", {type: event.navigationType, to: event.destination?.url, userInitiated: event.userInitiated})
+})
+window.addEventListener("beforeunload", () => navDebug("beforeunload"))
+document.addEventListener("submit", (event) => navDebug("submit", {action: event.target?.action}), true)

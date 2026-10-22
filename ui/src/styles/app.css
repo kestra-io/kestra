@@ -244,3 +244,25 @@ body{
     left: 0;
     z-index: var(--ks-z-top);
 }
+
+/* Overrides nprogress's own sheet, so it has to load after vendor.css, which a design-system chunk cannot. */
+#nprogress {
+    & .bar {
+        background: var(--ks-primary-500);
+        z-index: var(--ks-z-top);
+    }
+
+    & .spinner {
+        top: 8px;
+        right: 8px;
+    }
+
+    & .peg {
+        box-shadow: 0 0 10px var(--ks-primary-500), 0 0 5px var(--ks-primary-500);
+    }
+
+    & .spinner-icon {
+        border-top-color: var(--ks-primary-500);
+        border-left-color: var(--ks-primary-500);
+    }
+}

@@ -69,7 +69,16 @@
         dirtyMessage: undefined,
     })
 
-    const resolvedWidth = computed(() => props.width ?? (props.large ? "min(750px, 90vw)" : "min(500px, 90vw)"))
+    const VIEWPORT_WIDTH_CAP = "92vw"
+
+    const INTRINSIC_WIDTHS = ["auto", "fit-content", "max-content", "min-content"]
+
+    const toCssLength = (width: string | number) => (typeof width === "number" || /^\d+(\.\d+)?$/.test(width) ? `${width}px` : width)
+
+    const resolvedWidth = computed(() => {
+        const width = toCssLength(props.width ?? (props.large ? "750px" : "500px"))
+        return INTRINSIC_WIDTHS.includes(width) ? width : `min(${width}, ${VIEWPORT_WIDTH_CAP})`
+    })
 
     const emit = defineEmits<{
         close: []
@@ -95,6 +104,10 @@
         --kel-dialog-bg-color: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-xl);
+
+        &:not(.is-fullscreen) {
+            max-width: 92vw;
+        }
 
         .kel-form-item__label {
             font-size: var(--ks-font-size-md);
@@ -143,6 +156,11 @@
             background-color: var(--ks-bg-base);
             border-bottom-left-radius: var(--ks-radius-xl);
             border-bottom-right-radius: var(--ks-radius-xl);
+        }
+
+        /* Opt-in from content that cannot fit the default width, such as a multi-column grid input. */
+        &:has([data-dialog-wide]) {
+            width: min(1024px, 90vw);
         }
 
         &.is-fill {

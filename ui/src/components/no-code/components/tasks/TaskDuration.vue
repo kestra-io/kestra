@@ -194,7 +194,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .task-duration {
     display: flex;
     flex-direction: column;

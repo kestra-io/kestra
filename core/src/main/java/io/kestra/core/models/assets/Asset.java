@@ -6,15 +6,18 @@ import java.util.*;
 import org.apache.commons.lang3.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.kestra.core.models.FieldCondition;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TenantId;
 
@@ -22,6 +25,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -42,6 +46,10 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     public static final String TTL_METADATA_KEY = SYSTEM_METADATA_PREFIX + "ttl";
 
     public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
+
+    public static final Set<String> CONDITION_FIELDS = Set.of("namespace", "id", "type", "displayName", "description", "status", "ttl", "owner");
+
+    public static final String METADATA_PREFIX = "metadata.";
 
     /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
@@ -261,6 +269,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     public Asset withNamespace(String namespace) {
         this.namespace = namespace;
         return this;
+    }
+
+    @AssertTrue(message = "a condition field must be an asset field or metadata.<key>")
+    @JsonIgnore
+    public boolean isEveryConditionFieldReadable() {
+        return ListUtils.emptyOnNull(assetActions).stream()
+            .flatMap(action -> ListUtils.emptyOnNull(action.when()).stream())
+            .map(FieldCondition::field)
+            .allMatch(field -> field == null || CONDITION_FIELDS.contains(field)
+                || (field.startsWith(METADATA_PREFIX) && field.length() > METADATA_PREFIX.length()));
     }
 
     public Asset withAssetActions(List<FlowAction> assetActions) {

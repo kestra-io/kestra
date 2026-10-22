@@ -173,11 +173,17 @@ export const useFlowStore = defineStore("flow", () => {
 
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value)
 
+    const saveAttempted = ref(false)
+    watch(flowYamlOrigin, () => {
+        saveAttempted.value = false
+    })
+
     watch(haveChange, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
+        saveAttempted.value = true
         const isDraft = draft ?? flow.value?.draft ?? false
 
         if (!haveChange.value && !isCreating.value) {
@@ -463,17 +469,22 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
+    let latestFlowSearch = 0
+
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findFlows(options: FlowSearchOptions & { onlyTotal: true }): Promise<number>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow | number> {
+        const search = options.commit === false ? undefined : ++latestFlowSearch
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
             }
 
             else {
-                if (options.commit !== false) {
+                if (options.commit !== false && search === latestFlowSearch) {
                     flows.value = response.results as unknown as Flow[]
                     total.value = response.total ?? 0
                 }
@@ -1074,6 +1085,7 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        saveAttempted,
         previewSource,
         declinePreview,
         haveChange,

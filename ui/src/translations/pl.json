@@ -5,6 +5,12 @@
       "cta": "Zobacz, co się zmieniło"
     },
     "loading": "Ładowanie...",
+    "namespace_files_tip": {
+      "title": "Zarządzaj skryptami jako plikami namespace'u",
+      "description": "Zamiast pisać skrypt inline, otwórz panel Pliki, dodaj go jako plik (np. main.py) i uruchom go ze swojego flow:",
+      "open_files": "Otwórz pliki",
+      "dont_show_again": "Nie pokazuj ponownie"
+    },
     "more actions": "Więcej akcji",
     "recipe": {
       "create_flow": "Utwórz Flow",
@@ -236,6 +242,7 @@
       "last7days": "Ostatnie 7 dni",
       "last30days": "Ostatnie 30 dni",
       "last365days": "Ostatnie 365 dni",
+      "allTime": "Cały czas",
       "next5minutes": "Następne 5 minut",
       "next15minutes": "Następne 15 minut",
       "next1hour": "Następna godzina",
@@ -517,8 +524,25 @@
       "attempts": "{count} próba | {count} próby | {count} prób",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Nieudany task",
+      "view_task_logs": "Zobacz logi taska",
+      "revision_short": "rew. {revision}",
+      "more_labels": "+{count} label | +{count} labele | +{count} labeli",
+      "fewer_labels": "Pokaż mniej labeli",
+      "jump_to_first_failure": "Przejdź do pierwszego błędu",
+      "open_logs": "Otwórz logi"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Po zalogowaniu",
+      "execution_tab": "Wykonanie {id} · karta {tab}",
+      "execution": "Wykonanie {id}",
+      "tab": "Karta {tab}"
+    },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
+    "workspace": "Obszar roboczy",
+    "resources": "Zasoby",
     "usage": "Użycie",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -687,6 +711,7 @@
       "nav_properties": "Właściwości",
       "non_dynamic": "niedynamiczny",
       "format": "Format",
+      "internal_storage_uri_hint": "Wyrażenie Pebble odwołujące się do URI pamięci masowej wewnętrznej, np. {example}.",
       "max_items": "Maksymalna liczba elementów",
       "max_length": "Maksymalna długość",
       "maximum": "Maksimum",
@@ -1373,6 +1398,12 @@
           "third": "Uruchom ponownie instancję Kestra, aby sekret został wczytany."
         }
       },
+      "credentials": {
+        "label": "Poświadczenia",
+        "header": "Poświadczenia",
+        "title": "Uwierzytelnij się raz, używaj w każdym Tasku",
+        "message": "W Kestra Enterprise Edition uwierzytelnianie serwer–serwer można skonfigurować raz jako poświadczenie, dzięki czemu Access Tokeny są pobierane i odświeżane w czasie działania, zamiast być zapisane na stałe w Twoich Flowach. Poświadczenia można tworzyć na poziomie Tenanta lub namespace'u i używać ich w dowolnym Tasku."
+      },
       "apps": {
         "title": "Twórz własne Apps w Kestrze",
         "message": "Apps w Kestra Enterprise Edition pozwalają tworzyć własne interfejsy, które współpracują z workflowami Kestry spoza platformy. Dzięki temu możesz używać swoich workflowów jako backendu dla własnych aplikacji, a osoby nietechniczne mogą wprowadzać dane przez formularze lub wznawiać wstrzymane workflowy oczekujące na zatwierdzenie.",
@@ -1451,6 +1482,10 @@
           "title": "Zarządzaj sekretami w bezpieczny sposób",
           "message": "W Kestra Enterprise Edition możesz przechowywać i kontrolować sekrety na poziomie namespace'u, minimalizując ryzyko i zapewniając izolację poświadczeń każdego zespołu. Dzięki zagnieżdżonej hierarchii możesz też skonfigurować poświadczenia w nadrzędnym namespace'ie, a odziedziczą je wszystkie podrzędne namespace'y. Obsługa dedykowanych menedżerów sekretów i szczegółowe uprawnienia na poziomie namespace'u dodatkowo wzmacniają bezpieczeństwo i zgodność."
         },
+        "credentials": {
+          "title": "Ogranicz poświadczenia do tego namespace'u",
+          "message": "W Kestra Enterprise Edition możesz konfigurować poświadczenia na poziomie namespace'u, dzięki czemu Taski w tym namespace'ie i jego podrzędnych namespace'ach pobierają i odświeżają Access Tokeny w czasie działania, zamiast przechowywać je we Flowach. Poświadczenie zdefiniowane w nadrzędnym namespace'ie dziedziczą wszystkie podrzędne namespace'y."
+        },
         "assets": {
           "title": "Centralizuj zarządzanie Assetami",
           "message": "W Kestra Enterprise Edition Assets prowadzi bieżący inwentarz zasobów, z którymi współpracują Twoje workflowy. Mogą to być tabele baz danych, maszyny wirtualne, pliki lub dowolny zewnętrzny system, z którego korzystasz."
@@ -1462,6 +1497,11 @@
         "policies": {
           "title": "Wymuszaj reguły zarządzania w tym namespace'ie",
           "message": "W Kestra Enterprise Edition polityki pozwalają definiować reguły obowiązujące każdy Flow w tym namespace'ie i w jego namespace'ach podrzędnych: wstrzykiwać wspólne wartości domyślne, ograniczać wartości właściwości, blokować pluginy i wymagać etykiet zgodności, przy czym każda zmiana jest w pełni widoczna dla autorów Flowów."
+        },
+        "reusable-inputs": {
+          "label": "Reusable Inputy",
+          "title": "Zdefiniuj Inputy raz, używaj ich wszędzie",
+          "message": "W Kestra Enterprise Edition Reusable Inputy pozwalają raz zdefiniować nazwaną grupę typowanych Inputów na poziomie namespace'u i odwoływać się do niej w dowolnym Flow. Zestaw z nadrzędnego namespace'u jest dostępny w podrzędnych namespace'ach, dzięki czemu zespoły współdzielą te same definicje Inputów zamiast powtarzać je w każdym Flow."
         },
         "history": {
           "title": "Zarządzaj historią wersji w jednym miejscu",
@@ -1779,6 +1819,14 @@
     "item": "element",
     "items": "elementy",
     "iterations": "Iteracje",
+    "load_10_more": "Załaduj 10 więcej",
+    "show_all_executions": "Pokaż wszystkie wykonania",
+    "failed_iterations_only": "Tylko nieudane iteracje",
+    "loop_iterations_shown": "Pokazano {shown} z {total}",
+    "loop_iterations_load_error": "Nie udało się załadować iteracji",
+    "retry": "Ponów",
+    "no_iterations": "Brak iteracji",
+    "no_failed_iterations": "Brak nieudanych iteracji",
     "loop_iterations_notice": {
       "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",
       "outputs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich outputy nie są tutaj wyświetlane.",
@@ -2290,7 +2338,8 @@
           "title": {
             "flow": "Proponowany Flow",
             "dashboard": "Proponowany Dashboard",
-            "app": "Proponowana App"
+            "app": "Proponowana App",
+            "test_suite": "Proponowany test jednostkowy"
           },
           "valid": "Prawidłowy",
           "invalid": "Wymaga zmian"
@@ -2347,18 +2396,7 @@
           "issues": "{n} stałych",
           "failed": "{n} niepowodzenie",
           "last_run": "ostatnie uruchomienie {ago}",
-          "unknown": "{n} nieśledzonych",
-          "tests_failed": "{n} z nieudanymi testami"
-        },
-        "tests": {
-          "pass": "{count} test | {count} testy | {count} testów",
-          "warn": "{count} test · ostrzeżenie | {count} testy · ostrzeżenia | {count} testów · ostrzeżeń",
-          "fail": "{failed}/{total} niepowodzeń",
-          "tooltip": {
-            "pass": "{count} test dbt przeszedł | Wszystkie {count} testy dbt przeszły",
-            "warn": "{count} test dbt zakończony z ostrzeżeniami | {count} testy dbt zakończone z ostrzeżeniami | {count} testów dbt zakończonych z ostrzeżeniami",
-            "fail": "Test dbt nie powiódł się | {failed} z {total} testów dbt nie powiodło się | {failed} z {total} testów dbt nie powiodło się"
-          }
+          "unknown": "{n} nieśledzonych"
         },
         "recent_runs": "Ostatnie uruchomienia",
         "group_by": "Grupuj według",

@@ -61,7 +61,7 @@ class ClassPluginDocumentationTest {
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("description")).contains("of this input");
 
             // definitions
-            assertThat(doc.getDefs().size()).isEqualTo(10);
+            assertThat(doc.getDefs().size()).isEqualTo(11);
 
             // enum
             Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs()
@@ -115,7 +115,7 @@ class ClassPluginDocumentationTest {
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
             // the assets declaration of the trigger base counts the custom asset, the free-form branch of assets.outputs
-            assertThat(doc.getDefs().size()).isEqualTo(6);
+            assertThat(doc.getDefs().size()).isEqualTo(7);
             assertThat(doc.getDocLicense()).isNull();
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerSelector")).get("type")).isEqualTo("object");
@@ -156,7 +156,7 @@ class ClassPluginDocumentationTest {
             ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), true);
 
             assertThat(doc.getCls()).isEqualTo("io.kestra.core.models.property.DynamicPropertyExampleTask");
-            assertThat(doc.getDefs()).hasSize(11);
+            assertThat(doc.getDefs()).hasSize(12);
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
             assertThat(properties).hasSize(23);
 

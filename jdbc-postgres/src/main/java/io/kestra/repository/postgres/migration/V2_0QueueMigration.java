@@ -19,7 +19,7 @@ import jakarta.inject.Singleton;
  * PostgreSQL queue type. Active independently of the repository backend.
  */
 @Singleton
-@Requires(property = "kestra.queue.type", value = "postgres")
+@Requires(property = "kestra.queue.type", pattern = "(?i)postgres")
 public class V2_0QueueMigration extends AbstractSQLMigrationScript {
 
     private static final String SCRIPT_ID = "0-init-queue";

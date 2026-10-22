@@ -31,7 +31,7 @@ describe("useRestoreUrl", () => {
     const mockRoute = {
         name: "home",
         params: {tenant: "main"},
-        query: {}
+        query: {},
     } as unknown as RouteLocation
 
     beforeEach(() => {

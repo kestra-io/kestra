@@ -101,6 +101,7 @@ public class MetricUsage {
         private final Double resumeCount;
         private final Double resumeFromBreakpointCount;
         private final Double forceRunCount;
+        private final Double rescheduleCount;
         private final Double killCount;
         private final Double changeStatusCount;
         private final Double updateLabelsCount;
@@ -115,6 +116,7 @@ public class MetricUsage {
                 .resumeCount(fromCounter(metricRegistry, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL))
                 .resumeFromBreakpointCount(fromCounter(metricRegistry, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL))
                 .forceRunCount(fromCounter(metricRegistry, MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL))
+                .rescheduleCount(fromCounter(metricRegistry, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL))
                 .killCount(fromCounter(metricRegistry, MetricRegistry.METRIC_WEBSERVER_EXECUTION_KILL_TOTAL))
                 .changeStatusCount(fromCounter(metricRegistry, MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL))
                 .updateLabelsCount(fromCounter(metricRegistry, MetricRegistry.METRIC_WEBSERVER_EXECUTION_UPDATE_LABELS_TOTAL))

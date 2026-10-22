@@ -445,7 +445,7 @@ export function getDateGrouping(startDate: Dayjs | string | undefined, endDate: 
     if (duration.asDays() > 365) {
         return {format: "YYYY-MM", unit: "month"}
     } else if (duration.asDays() > 180) {
-        return {format: "YYYY-[W]ww", unit: "week"}
+        return {format: "GGGG-[W]WW", unit: "week"}
     } else if (duration.asDays() > 1) {
         return {format: "YYYY-MM-DD", unit: "day"}
     } else if (duration.asHours() > 1) {

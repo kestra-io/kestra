@@ -276,6 +276,7 @@
     const classes = computed(() => ({
         "execution-no-taskrun":
             Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0),
+        "node-core--error": validationIssues.value.length > 0,
     }))
 
     const statusStyle = computed(() => getStatusStyle(state.value))
@@ -353,7 +354,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .playground-button {
     position: absolute;
     bottom: 0;

@@ -34,7 +34,7 @@
                 </button>
             </section>
         </nav>
-        <section v-if="selected" class="artifacts-viewer" data-test="execution-artifact-viewer">
+        <section v-if="selected" ref="viewer" class="artifacts-viewer" data-test="execution-artifact-viewer">
             <header class="artifacts-viewer-header">
                 <span class="artifacts-task-icon artifacts-task-icon-large"><TaskIcon :cls="selected.taskType.split('/')[0]" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
                 <div>
@@ -49,6 +49,14 @@
                     @update:modelValue="selectedKey = String($event)"
                     :options="siblings.map((a) => ({label: a.title, value: a.key}))"
                 />
+                <KsIconButton
+                    :tooltip="$t(`multi_panel_editor.${isFullscreen ? 'exit_fullscreen' : 'fullscreen'}`)"
+                    filled
+                    data-test="execution-artifact-fullscreen"
+                    @click="toggleFullscreen"
+                >
+                    <OpenInNew />
+                </KsIconButton>
             </header>
             <div class="artifacts-viewer-body">
                 <RemoteComponent
@@ -68,12 +76,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref, watch} from "vue"
+    import {computed, inject, onBeforeUnmount, onMounted, ref, useTemplateRef, watch} from "vue"
     import {useRoute} from "vue-router"
     import type {Execution, PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-    import {KsEmpty, KsIcon, KsSegmented, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import {KsEmpty, KsIcon, KsIconButton, KsSegmented, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
@@ -101,6 +110,15 @@
         }
         return [...byTask.values()]
     })
+
+    const viewer = useTemplateRef<HTMLElement>("viewer")
+    const isFullscreen = ref(false)
+    const syncFullscreen = () => {
+        isFullscreen.value = document.fullscreenElement === viewer.value
+    }
+    const toggleFullscreen = () => isFullscreen.value ? document.exitFullscreen() : viewer.value?.requestFullscreen()
+    onMounted(() => document.addEventListener("fullscreenchange", syncFullscreen))
+    onBeforeUnmount(() => document.removeEventListener("fullscreenchange", syncFullscreen))
 
     const selectedKey = ref<string>()
     const selected = computed(() => artifacts.value.find((a) => a.key === selectedKey.value) ?? artifacts.value[0])
@@ -263,6 +281,10 @@
         background: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
+    }
+
+    .artifacts-viewer:fullscreen {
+        background: var(--ks-bg-surface);
     }
 
     .artifacts-viewer-header {

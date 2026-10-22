@@ -22,7 +22,9 @@
             <span class="lane-state-text">{{ aggregateState }}</span>
         </span>
         <span class="lane-actions">
-            <NodeMenu :actions="actions" />
+            <slot name="taskActions" :task="taskNode?.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRuns" :taskRun="taskRuns[0]">
+                <NodeMenu :actions="actions" />
+            </slot>
         </span>
     </div>
 </template>

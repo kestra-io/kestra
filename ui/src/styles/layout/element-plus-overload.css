@@ -1,40 +1,35 @@
-/* stylelint-disable custom-property-pattern */
-/* stylelint-disable color-no-hex */
-@use 'sass:math';
-@use "sass:map";
-
-// FIXME: create a new component for this
+/* FIXME: create a new component for this */
 .kel-input-file.custom-upload {
     font-size: var(--ks-font-size-base);
     border-radius: var(--kel-border-radius-base);
     border: 1px solid var(--ks-border-default);
     white-space: nowrap;
 
-    form {
+    & form {
         line-height: 27px;
     }
 
-    .kel-input__wrapper {
+    & .kel-input__wrapper {
         background-color: transparent;
         box-shadow: none;
     }
 
-    label {
+    & label {
         display: flex;
         cursor: pointer;
         margin-left: 10px;
         gap: .5rem;
     }
 
-    input[type="file"] {
+    & input[type="file"] {
         display: none;
     }
 
-    ::-webkit-file-upload-button {
+    & ::-webkit-file-upload-button {
         display: none;
     }
 
-    ::file-selector-button {
+    & ::file-selector-button {
         display: none;
     }
 
@@ -45,7 +40,7 @@
     }
 
     &.kel-input--large {
-        label {
+        & label {
             margin-left: 19px;
             line-height: 38px;
             margin-right: 10px;
@@ -54,17 +49,17 @@
     }
 }
 
-// FIXME: create a new component for this (same than the one above but without the custom-upload class)
+/* FIXME: create a new component for this (same than the one above but without the custom-upload class) */
 .kel-input-file {
-    .kel-input__wrapper {
+    & .kel-input__wrapper {
         padding-left: 0;
 
-        input {
+        & input {
             line-height: 1.5;
         }
     }
 
-    .kel-input__inner::file-selector-button {
+    & .kel-input__inner::file-selector-button {
         background: var(--ks-btn-primary-bg-default);
         color: var(--ks-btn-primary-text);
         border: 0;
@@ -78,26 +73,26 @@
         border: 1px solid var(--ks-border-default);
         white-space: nowrap;
 
-        .kel-input__wrapper {
+        & .kel-input__wrapper {
             background-color: transparent;
         }
 
-        label {
+        & label {
             display: flex;
             cursor: pointer;
             margin-left: 10px;
             gap: .5rem;
         }
 
-        input[type="file"] {
+        & input[type="file"] {
             display: none;
         }
 
-        ::-webkit-file-upload-button {
+        & ::-webkit-file-upload-button {
             display: none;
         }
 
-        ::file-selector-button {
+        & ::file-selector-button {
             display: none;
         }
 
@@ -108,7 +103,7 @@
         }
 
         &.kel-input--large {
-            label {
+            & label {
                 margin-left: 19px;
                 line-height: 38px;
                 margin-right: 10px;

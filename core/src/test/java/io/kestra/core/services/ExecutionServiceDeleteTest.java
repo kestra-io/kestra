@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import java.util.Optional;
 
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -56,6 +57,7 @@ class ExecutionServiceDeleteTest {
             mock(FlowParsingService.class),
             mock(TaskOutputService.class),
             mock(ExecutionOutputService.class),
+            mock(CheckpointRepositoryInterface.class),
             mock(DispatchQueueInterface.class),
             mock(BroadcastQueueInterface.class),
             mock(DispatchQueueInterface.class),

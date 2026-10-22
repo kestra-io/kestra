@@ -2,7 +2,7 @@
     <KsEmpty v-if="rows.length === 0" :description="$t('gantt_panel.no_attempts')" :imageSize="80" />
     <ul v-else class="failure-attempts">
         <li v-for="row in rows" :key="row.index" class="failure-attempts__row">
-            <span class="failure-attempts__label">{{ $t("attempt") }} {{ row.index + 1 }}</span>
+            <span class="failure-attempts__label">{{ $t("state_history.attempt_n", {index: row.index + 1}) }}</span>
             <KsExecutionStatus size="small" :status="row.state" />
             <span class="failure-attempts__meta">{{ row.startedAt }}</span>
             <span v-if="row.duration" class="failure-attempts__meta">{{ row.duration }}</span>

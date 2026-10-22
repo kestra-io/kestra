@@ -21,4 +21,11 @@ public interface ExecutionDelayStateStore {
      * Save an execution delay.
      */
     void save(ExecutionDelay executionDelay);
+
+    /**
+     * Save an execution delay, unless {@link #processExpired(Instant, Consumer)} is consuming that same delay right now.
+     *
+     * @return {@code false} when nothing was written because the delay is being processed.
+     */
+    boolean saveUnlessProcessing(ExecutionDelay executionDelay);
 }

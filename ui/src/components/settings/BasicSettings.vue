@@ -796,7 +796,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .flow-template {
     display: flex;
     flex-direction: column;

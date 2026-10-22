@@ -34,6 +34,7 @@
                     </div>
                 </KsAlert>
             </div>
+            <NamespaceFilesTip v-if="flow && previewSource === undefined && !flowStore.isReadOnly" />
             <KsEditor
                 v-bind="editorBindings"
                 id="flowFileEditorTab"
@@ -117,6 +118,7 @@
     import {humanFileSize} from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
+    import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
     import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
 
@@ -447,7 +449,7 @@
     } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .editor-tab {
         height: 100%;
         display: flex;

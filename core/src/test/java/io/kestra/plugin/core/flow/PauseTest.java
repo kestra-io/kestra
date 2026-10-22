@@ -18,10 +18,12 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.StorageInterface;
@@ -53,6 +55,26 @@ public class PauseTest {
     @LoadFlows({ "flows/valids/pause-test.yaml" })
     void run() throws Exception {
         suite.run(runnerUtils);
+    }
+
+    @Test
+    void shouldStillAcceptOnResumeWhenItIsUsedInsteadOfInputs() {
+        Flow flow = YamlParser.parse("""
+            id: legacy
+            namespace: io.kestra.tests
+            tasks:
+              - id: pause
+                type: io.kestra.plugin.core.flow.Pause
+                onResume:
+                  - id: reason
+                    type: STRING
+            """, Flow.class);
+        Pause pause = (Pause) flow.getTasks().getFirst();
+
+        assertThat(pause.resumeInputs()).extracting(Input::getId).containsExactly("reason");
+        assertThat(pause.resumeOutputs(Map.of("reason", "ok"), Pause.Resumed.now()))
+            .containsEntry("inputs", Map.of("reason", "ok"))
+            .containsEntry("onResume", Map.of("reason", "ok"));
     }
 
     @Test

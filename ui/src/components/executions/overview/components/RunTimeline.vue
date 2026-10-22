@@ -68,7 +68,7 @@
     const formatDate = (date: string) => dateFilter(date, "iso")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .see-timeline {
         gap: var(--ks-spacing-1);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
@@ -93,60 +93,60 @@
     .run-timeline {
         display: flex;
         flex-direction: column;
+    }
 
-        &__header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--ks-spacing-5) var(--ks-spacing-4);
-            padding-bottom: 0;
+    .run-timeline__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--ks-spacing-5) var(--ks-spacing-4);
+        padding-bottom: 0;
+    }
+
+    .run-timeline__title {
+        font-weight: 600;
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-lg);
+    }
+
+    .run-timeline__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-5);
+        padding: var(--ks-spacing-5) var(--ks-spacing-4);
+        padding-left: 2rem;
+        max-height: 24rem;
+        overflow-y: auto;
+    }
+
+    .run-timeline__item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-4);
+
+        &:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            left: calc(var(--ks-spacing-1) / 2);
+            transform: translateX(-50%);
+            top: calc(100% + var(--ks-spacing-1));
+            height: var(--ks-spacing-4);
+            border-left: 1px dashed var(--ks-text-primary);
         }
+    }
 
-        &__title {
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-lg);
-        }
+    .run-timeline__dot {
+        flex-shrink: 0;
+        width: var(--ks-spacing-1);
+        height: var(--ks-spacing-1);
+        border-radius: 50%;
+        background: var(--ks-text-primary);
+    }
 
-        &__body {
-            display: flex;
-            flex-direction: column;
-            gap: var(--ks-spacing-5);
-            padding: var(--ks-spacing-5) var(--ks-spacing-4);
-            padding-left: 2rem;
-            max-height: 24rem;
-            overflow-y: auto;
-        }
-
-        &__item {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-4);
-
-            &:not(:last-child)::after {
-                content: "";
-                position: absolute;
-                left: calc(var(--ks-spacing-1) / 2);
-                transform: translateX(-50%);
-                top: calc(100% + var(--ks-spacing-1));
-                height: var(--ks-spacing-4);
-                border-left: 1px dashed var(--ks-text-primary);
-            }
-        }
-
-        &__dot {
-            flex-shrink: 0;
-            width: var(--ks-spacing-1);
-            height: var(--ks-spacing-1);
-            border-radius: 50%;
-            background: var(--ks-text-primary);
-        }
-
-        &__date {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-            font-variant-numeric: tabular-nums;
-        }
+    .run-timeline__date {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+        font-variant-numeric: tabular-nums;
     }
 </style>

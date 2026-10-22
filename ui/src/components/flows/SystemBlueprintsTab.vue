@@ -75,7 +75,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .system-blueprints-tab {
         display: flex;
         flex-direction: column;

@@ -1,6 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {defineComponent, h} from "vue"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 vi.mock("@kestra-io/design-system", () => ({
     KsMessageBox: {confirm: vi.fn(() => Promise.resolve())},
@@ -38,7 +39,7 @@ const mountLink = (title: string) => {
     setActivePinia(createPinia())
     wrapper = mount(BookmarkLink, {
         props: {href: "/flows", title},
-        global: {stubs: {RouterLink: RouterLinkStub, KsInput}, mocks: {$t: (k: string) => k}},
+        global: {plugins: [memoryRouter()], stubs: {RouterLink: RouterLinkStub, KsInput}, mocks: {$t: (k: string) => k}},
     })
     return wrapper
 }

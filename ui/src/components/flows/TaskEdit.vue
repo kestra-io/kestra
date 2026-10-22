@@ -18,7 +18,7 @@
             </template>
             <template #footer>
                 <div v-ks-loading="isLoading">
-                    <ValidationError class="me-2" link :errors="errors" />
+                    <ValidationError class="task-edit-validation-error" link :errors="errors" />
 
                     <KsButton
                         :icon="ContentSave"
@@ -31,7 +31,7 @@
                     </KsButton>
                     <KsAlert
                         :closable="false"
-                        class="mb-0 mt-3"
+                        class="task-edit-revision-alert"
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
@@ -87,6 +87,7 @@
 
         <div class="task-edit-panel-body">
             <TaskEditData
+                v-if="!outsideFlow"
                 class="task-edit-col task-edit-col-inputs"
                 :class="{'task-edit-col--collapsed': inputsCollapsed}"
                 kind="inputs"
@@ -198,7 +199,7 @@
     import {usePlaygroundRun} from "../../composables/playground/usePlaygroundRun"
     import {CHIP_DRAG_MIME, CHIP_SECTION_DRAG_MIME, isArmableField, insertAtCaret} from "./chipInsertion"
     import {resolveDeclaredOutputProperties, hasDeclaredOutputs as computeHasDeclaredOutputs} from "./taskOutputSchema"
-    import {flattenTaskIds} from "../../utils/flowableBlockOps"
+    import {upstreamTaskIds} from "../../utils/flowableBlockOps"
     import {useContextSections} from "../../composables/useContextSections"
     import type {DataSection} from "./contextSections/types"
     import {trackChipInserted, trackChipCopied} from "../../utils/analytics/taskEditorEvents"
@@ -221,7 +222,9 @@
         size?: string;
         presentation?: "drawer" | "panel";
         hideTabstrip?: boolean;
+        outsideFlow?: boolean;
         editorKey?: string;
+        taskPath?: string;
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -239,7 +242,9 @@
         size: undefined,
         presentation: "drawer",
         hideTabstrip: false,
+        outsideFlow: false,
         editorKey: undefined,
+        taskPath: undefined,
     })
 
     const emit = defineEmits<{
@@ -283,14 +288,12 @@
     provide(NAVIGATE_TO_REQUIRED_FIELD_INJECTION_KEY, navigateToRequiredField)
 
     async function jumpToFirstUnsetRequired() {
-        const first = unsetRequiredFields.value[0]
-        if (!first) return
-
-        const selector = `[data-required-path="${first.path}"]`
-        let el = panelRef.value?.querySelector<HTMLElement>(selector)
-        if (!el && navigateToRequiredField.value?.(first.path)) {
+        let el = panelRef.value?.querySelector<HTMLElement>("[data-required-path]")
+        if (!el) {
+            const first = unsetRequiredFields.value[0]
+            if (!first || !navigateToRequiredField.value?.(first.path)) return
             await nextTick()
-            el = panelRef.value?.querySelector<HTMLElement>(selector)
+            el = panelRef.value?.querySelector<HTMLElement>(`[data-required-path="${first.path}"]`)
         }
         if (!el) return
 
@@ -405,7 +408,7 @@
     })
 
     const flowStore = useFlowStore()
-    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly ? undefined : props.namespace))
+    const {sections: contextDataSections} = useContextSections(computed(() => props.readOnly || props.outsideFlow ? undefined : props.namespace))
     const localTaskErrors = ref<ApiValidationError[] | undefined>()
     const errors = computed(() => {
         const split = validationErrorLines(localTaskErrors.value)
@@ -434,11 +437,7 @@
             })})
         }
 
-        const ids: string[] = []
-        flattenTaskIds(flow.tasks, ids)
-        flattenTaskIds(flow.errors, ids)
-        flattenTaskIds(flow.finally, ids)
-        const upstream = [...new Set(ids)].filter(id => id && id !== currentTaskId.value)
+        const upstream = upstreamTaskIds(flow, currentTaskId.value, props.taskPath)
         if (upstream.length) {
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
@@ -479,7 +478,7 @@
 
     const outputSections = computed(() => {
         const properties = declaredOutputProperties.value
-        if (!properties) return []
+        if (!properties || props.outsideFlow) return []
         const names = Object.keys(properties)
         if (!names.length) return []
         const chips = names.map(name => ({
@@ -569,10 +568,10 @@
             taskYaml.value = YAML_UTILS.stringify(props.task)
         }
         taskBaseline.value = taskYaml.value
-        if (propTaskType.value) {
+        if (propTaskType.value && !props.outsideFlow) {
             pluginsStore.load({cls: propTaskType.value}).catch(() => {})
         }
-        if (taskYaml.value) {
+        if (taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
                 .then((result) => { localTaskErrors.value = result?.errors })
@@ -583,7 +582,7 @@
     }
 
     const commitEdit = () => {
-        if (lastValidatedValue.value !== taskYaml.value) {
+        if (lastValidatedValue.value !== taskYaml.value && !props.outsideFlow) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({
                 task: taskYaml.value,
@@ -640,7 +639,7 @@
             taskBaseline.value = incoming
         }
         const incomingType = newTask?.type ?? YAML_UTILS.parse<Partial<Task>>(incoming)?.type
-        if (typeof incomingType === "string" && incomingType) {
+        if (typeof incomingType === "string" && incomingType && !props.outsideFlow) {
             await pluginsStore.load({cls: incomingType}).catch(() => {})
         }
     }, {immediate: true})
@@ -649,7 +648,7 @@
     watch(taskYaml, () => {
         const task = YAML_UTILS.parse<Partial<Task>>(taskYaml.value)
         const parsedType = task?.type
-        if (parsedType && parsedType !== type.value) {
+        if (parsedType && parsedType !== type.value && !props.outsideFlow) {
             type.value = parsedType
             clearTimeout(typeLoadTimer.value)
             typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: parsedType}).catch(() => {}), 500)
@@ -673,7 +672,7 @@
     defineExpose({open: onShow, flushPendingEdit})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-edit-panel {
         display: flex;
         flex-direction: column;
@@ -752,39 +751,35 @@
         flex-direction: column;
     }
 
-    @mixin task-edit-stacked {
-        flex-direction: column;
-
-        .task-edit-col {
-            flex: none;
-            width: 100%;
-            height: auto;
-            border: none;
-            border-bottom: 1px solid var(--ks-border-subtle);
-        }
-
-        .task-edit-col-inputs,
-        .task-edit-col-output {
-            max-height: 30%;
-        }
-
-        .task-edit-col-params {
-            order: -1;
-            flex: 1 1 auto;
-            min-height: 55%;
-        }
-
-        .task-edit-col-inputs.task-edit-col--collapsed,
-        .task-edit-col-output.task-edit-col--collapsed {
-            flex: none;
-            width: 100%;
-            max-height: none;
-        }
-    }
-
     @container (max-width: 760px) {
         .task-edit-panel-body {
-            @include task-edit-stacked;
+            flex-direction: column;
+
+            .task-edit-col {
+                flex: none;
+                width: 100%;
+                height: auto;
+                border: none;
+                border-bottom: 1px solid var(--ks-border-subtle);
+            }
+
+            .task-edit-col-inputs,
+            .task-edit-col-output {
+                max-height: 30%;
+            }
+
+            .task-edit-col-params {
+                order: -1;
+                flex: 1 1 auto;
+                min-height: 55%;
+            }
+
+            .task-edit-col-inputs.task-edit-col--collapsed,
+            .task-edit-col-output.task-edit-col--collapsed {
+                flex: none;
+                width: 100%;
+                max-height: none;
+            }
         }
     }
 
@@ -821,6 +816,15 @@
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-top: 1px solid var(--ks-border-subtle);
         background: var(--ks-bg-surface);
+    }
+
+    .task-edit-validation-error {
+        margin-inline-end: var(--ks-spacing-2);
+    }
+
+    .task-edit-revision-alert {
+        margin-bottom: 0;
+        margin-top: var(--ks-spacing-4);
     }
 
     .task-edit-validation-status {

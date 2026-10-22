@@ -31,6 +31,7 @@ import {useApiStore} from "./api"
 import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 import type {KestraHttpError} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
+import {confirmOutdatedSave} from "../utils/confirmOutdatedSave"
 
 const textYamlHeader = {
     headers: {
@@ -173,11 +174,17 @@ export const useFlowStore = defineStore("flow", () => {
 
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value)
 
+    const saveAttempted = ref(false)
+    watch(flowYamlOrigin, () => {
+        saveAttempted.value = false
+    })
+
     watch(haveChange, (newValue) => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
+        saveAttempted.value = true
         const isDraft = draft ?? flow.value?.draft ?? false
 
         if (!haveChange.value && !isCreating.value) {
@@ -187,7 +194,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (!flow.value) return "blocked"
         const source = flowYaml.value
         const validation = await onEdit({source})
-        if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+        if (validation?.outdated && !isCreating.value && !(await confirmFlowOutdatedSave())) {
             return "no_op"
         }
         const outcome = await saveWithoutRevisionGuard(isDraft)
@@ -197,19 +204,9 @@ export const useFlowStore = defineStore("flow", () => {
         return outcome
     }
 
-    function confirmOutdatedSave(): Promise<boolean> {
+    function confirmFlowOutdatedSave(): Promise<boolean> {
         const key = "outdated revision save confirmation.update"
-        return KsMessageBox({
-            title: t(`${key}.title`),
-            message: () => h("div", null, [
-                h("p", null, `${t(`${key}.description`)} ${t(`${key}.details`)}`),
-            ]),
-            showCancelButton: true,
-            confirmButtonText: t("ok"),
-            cancelButtonText: t("cancel"),
-            center: false,
-            showClose: false,
-        }).then(() => true).catch(() => false)
+        return confirmOutdatedSave(t, `${t(`${key}.description`)} ${t(`${key}.details`)}`)
     }
 
     async function saveAsDraft(): Promise<FlowSaveOutcome> {
@@ -227,7 +224,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (source) {
             const validation = await onEdit({source})
-            if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+            if (validation?.outdated && !isCreating.value && !(await confirmFlowOutdatedSave())) {
                 return "no_op"
             }
             const outcome = await saveWithoutRevisionGuard(draft)
@@ -463,17 +460,22 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
+    let latestFlowSearch = 0
+
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findFlows(options: FlowSearchOptions & { onlyTotal: true }): Promise<number>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow>
     function findFlows(options: FlowSearchOptions): Promise<PagedResultsFlow | number> {
+        const search = options.commit === false ? undefined : ++latestFlowSearch
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
             }
 
             else {
-                if (options.commit !== false) {
+                if (options.commit !== false && search === latestFlowSearch) {
                     flows.value = response.results as unknown as Flow[]
                     total.value = response.total ?? 0
                 }
@@ -1074,6 +1076,7 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        saveAttempted,
         previewSource,
         declinePreview,
         haveChange,

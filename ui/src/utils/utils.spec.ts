@@ -20,12 +20,15 @@ describe("downloadUrl()", () => {
     // https://github.com/kestra-io/kestra/issues/17322
     it("does not set a target attribute", () => {
         const createElementSpy = vi.spyOn(document, "createElement")
+        // jsdom cannot navigate, which is what a real click on the link would do.
+        const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
 
         downloadUrl("blob:http://localhost/fake", "flow.yaml")
 
         const link = createElementSpy.mock.results[0]?.value as HTMLAnchorElement
         expect(link.getAttribute("download")).toBe("flow.yaml")
         expect(link.getAttribute("target")).toBeNull()
+        expect(click).toHaveBeenCalledOnce()
     })
 })
 
@@ -147,7 +150,7 @@ describe("getDateGrouping()", () => {
     })
 
     it("returns a week grouping for ranges over 180 days", () => {
-        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "YYYY-[W]ww", unit: "week"})
+        expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "GGGG-[W]WW", unit: "week"})
     })
 
     it("returns a day grouping for ranges over a day", () => {

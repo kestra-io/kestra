@@ -31,11 +31,11 @@
     const activeTab = useActiveTab()
     const secondaryAction = computed(() => activeTab.value ? secondaryActionComponents[activeTab.value] : undefined)
 
-    useRouteContext(routeInfo as any, false)
+    useRouteContext(routeInfo, false)
 
     setupLifecycle()
 </script>
-<style scoped lang="scss">
+<style scoped>
     .full-space {
         flex: 1 1 auto;
     }

@@ -139,7 +139,7 @@
 
                 <div class="source-search__spacer" />
 
-                <i18n-t v-if="!showLoadingState" keypath="source_search.summary_cross" tag="span" class="source-search__summary">
+                <i18n-t v-if="!showLoadingState" keypath="source_search.summary_cross" tag="span" scope="global" class="source-search__summary">
                     <template #matches><strong>{{ $t("source_search.match_count", summaryMatchCount) }}</strong></template>
                     <template #resources><strong>{{ $t("source_search.count_resources", summaryResourceCount) }}</strong></template>
                     <template #types><strong>{{ $t("source_search.count_types", summaryActiveTypeCount) }}</strong></template>
@@ -248,7 +248,7 @@
                         {{ hiddenTypeHint }}
                     </KsText>
 
-                    <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p">
+                    <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p" scope="global">
                         <template #suggestion>
                             <KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
                         </template>
@@ -787,7 +787,7 @@
     fetchResults()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search {
     display: flex;
     flex-direction: column;

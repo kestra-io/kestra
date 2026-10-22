@@ -194,7 +194,7 @@
     watch(() => route.params.filters, () => refresh(), {deep: true, immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .table-root {
         display: flex;
         flex-direction: column;

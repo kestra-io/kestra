@@ -151,7 +151,7 @@
         }
     }
 
-    /* The CSS reset (_reboot.scss) puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties
+    /* The CSS reset (_reboot.css) puts `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties
        with this scoped block's `.ks-execution-status[data-v-hash]` at (0,2,0) and wins on source
        order — so the badge advertised a click it does not handle. The extra `:not()` breaks the
        tie. `inherit` rather than `default`: a badge is often the target inside a clickable row,

@@ -562,6 +562,13 @@
     "inputs": "Входные данные",
     "input": "Ввод",
     "variables": "Переменные",
+    "execution_artifacts": {
+      "title": "Артефакты",
+      "empty": "Ни одна Task этого Flow не предоставляет артефакт.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "нет артефактов | {count} артефакт | {count} артефакта | {count} артефактов",
+      "tasks": "нет Task'ов | {count} Task | {count} Task'а | {count} Task'ов"
+    },
     "variable_explorer": {
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",

@@ -562,6 +562,13 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "変数",
+    "execution_artifacts": {
+      "title": "成果物",
+      "empty": "このFlowのTaskはartifactを提供していません。",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "アーティファクトなし | {count} アーティファクト | {count} アーティファクト",
+      "tasks": "タスクなし | {count} タスク | {count} タスク"
+    },
     "variable_explorer": {
       "title": "入力/出力",
       "search_placeholder": "Key または value を検索...",

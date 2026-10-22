@@ -562,6 +562,13 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variablen",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Kein Task dieses Flows stellt ein Artefakt bereit.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "keine Artefakte | {count} Artefakt | {count} Artefakte",
+      "tasks": "keine Tasks | {count} Task | {count} Tasks"
+    },
     "variable_explorer": {
       "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder Value suchen…",

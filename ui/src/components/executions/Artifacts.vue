@@ -7,13 +7,14 @@
     <div v-else class="artifacts-layout">
         <nav class="artifacts-list" :aria-label="$t('execution_artifacts.title')">
             <KsText size="small" class="artifacts-count muted">
-                {{ $t("execution_artifacts.count", {artifacts: artifacts.length, tasks: groups.length}, artifacts.length) }}
+                {{ $t("execution_artifacts.count", {artifacts: $t("execution_artifacts.artifacts", {count: artifacts.length}, artifacts.length), tasks: $t("execution_artifacts.tasks", {count: groups.length}, groups.length)}) }}
             </KsText>
             <section v-for="group in groups" :key="group.taskId" class="artifacts-group">
                 <div class="artifacts-group-header">
-                    <TaskIcon :cls="group.taskType" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon />
+                    <span class="artifacts-task-icon"><TaskIcon :cls="group.taskType" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
                     <KsText tag="strong">{{ group.taskId }}</KsText>
                     <KsText size="small" class="muted">{{ afterLastDot(group.taskType) }}</KsText>
+                    <KsText v-if="durations[group.taskId]" size="small" class="artifacts-duration">{{ durations[group.taskId] }}</KsText>
                 </div>
                 <button
                     v-for="artifact in group.artifacts"
@@ -25,18 +26,29 @@
                     :data-test="`execution-artifact-${artifact.key}`"
                     @click="selectedKey = artifact.key"
                 >
-                    <KsText>{{ artifact.title }}</KsText>
-                    <KsText v-if="subtitles[artifact.key] ?? artifact.description" size="small" class="muted">{{ subtitles[artifact.key] ?? artifact.description }}</KsText>
+                    <KsIcon class="artifacts-item-icon"><FileDocumentOutline /></KsIcon>
+                    <span class="artifacts-item-text">
+                        <KsText>{{ artifact.title }}</KsText>
+                        <KsText v-if="subtitles[artifact.key] ?? artifact.description" size="small" class="muted">{{ subtitles[artifact.key] ?? artifact.description }}</KsText>
+                    </span>
                 </button>
             </section>
         </nav>
         <section v-if="selected" class="artifacts-viewer" data-test="execution-artifact-viewer">
             <header class="artifacts-viewer-header">
-                <TaskIcon :cls="selected.taskType.split('/')[0]" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon />
+                <span class="artifacts-task-icon artifacts-task-icon-large"><TaskIcon :cls="selected.taskType.split('/')[0]" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
                 <div>
                     <KsText tag="strong">{{ selected.title }}</KsText>
                     <KsText size="small" class="muted">{{ selected.taskId }}</KsText>
                 </div>
+                <KsSegmented
+                    v-if="siblings.length > 1"
+                    :modelValue="selected.key"
+                    class="artifacts-switch"
+                    @update:modelValue="selectedKey = String($event)"
+                    size="small"
+                    :options="siblings.map((a) => ({label: a.title, value: a.key}))"
+                />
             </header>
             <div class="artifacts-viewer-body">
                 <RemoteComponent
@@ -60,7 +72,8 @@
     import {useRoute} from "vue-router"
     import type {Execution, PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-    import {KsEmpty, KsText, stringUtils} from "@kestra-io/design-system"
+    import {KsEmpty, KsIcon, KsSegmented, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
@@ -91,7 +104,13 @@
 
     const selectedKey = ref<string>()
     const selected = computed(() => artifacts.value.find((a) => a.key === selectedKey.value) ?? artifacts.value[0])
+    const siblings = computed(() => artifacts.value.filter((a) => a.taskId === selected.value?.taskId))
     const selectedTask = computed(() => tasks.value.find((task) => task.id === selected.value?.taskId))
+
+    const durations = computed(() => Object.fromEntries(groups.value.flatMap(({taskId}) => {
+        const duration = execution.value?.taskRunList?.filter((run) => run.taskId === taskId).at(-1)?.state?.duration
+        return duration ? [[taskId, durationUtils.humanDuration(duration as unknown as string)]] : []
+    })))
 
     const currentTaskRunId = (taskId: string) =>
         execution.value?.taskRunList?.filter((run) => run.taskId === taskId).at(-1)?.id
@@ -153,6 +172,42 @@
         border-radius: var(--ks-radius-base);
     }
 
+    .artifacts-task-icon {
+        flex: 0 0 auto;
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .artifacts-task-icon-large {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+
+    .artifacts-duration {
+        margin-left: auto;
+        color: var(--ks-text-success);
+    }
+
+    .artifacts-switch {
+        margin-left: auto;
+    }
+
+    .artifacts-item-icon {
+        color: var(--ks-icon-muted);
+    }
+
+    .artifacts-item-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-width: 0;
+        text-align: left;
+
+        & > * {
+            align-self: flex-start;
+        }
+    }
+
     .muted {
         color: var(--ks-text-secondary);
     }
@@ -171,8 +226,9 @@
 
     .artifacts-item {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        justify-content: flex-start;
+        gap: var(--ks-spacing-2);
         width: calc(100% - var(--ks-spacing-4));
         margin-left: var(--ks-spacing-4);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
@@ -188,6 +244,10 @@
         }
 
         &.selected {
+            & .artifacts-item-icon {
+                color: var(--ks-icon-active);
+            }
+
             background: var(--ks-bg-active);
             border-color: var(--ks-border-focus);
         }
@@ -214,6 +274,10 @@
         & > div {
             display: flex;
             flex-direction: column;
+
+            & > * {
+                align-self: flex-start;
+            }
         }
     }
 

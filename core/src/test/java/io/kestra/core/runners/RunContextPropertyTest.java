@@ -97,6 +97,23 @@ class RunContextPropertyTest {
     }
 
     @Test
+    void shouldRenderAgainWhenSamePropertyIsRenderedByAnotherRunContext() throws IllegalVariableEvaluationException {
+        Property<String> stringProperty = Property.<String> builder().expression("{{ variable }}").build();
+        Property<List<String>> listProperty = Property.<List<String>> builder().expression("{{ list }}").build();
+        Property<Map<String, String>> mapProperty = Property.<Map<String, String>> builder().expression("{{ map }}").build();
+        var firstRunContext = runContextFactory.of(Map.of("variable", "value1", "list", List.of("value1"), "map", Map.of("key", "value1")));
+        var secondRunContext = runContextFactory.of(Map.of("variable", "value2", "list", List.of("value2"), "map", Map.of("key", "value2")));
+
+        assertThat(firstRunContext.render(stringProperty).as(String.class)).contains("value1");
+        assertThat(firstRunContext.render(listProperty).asList(String.class)).containsExactly("value1");
+        assertThat(firstRunContext.render(mapProperty).asMap(String.class, String.class)).containsEntry("key", "value1");
+
+        assertThat(secondRunContext.render(stringProperty).as(String.class)).contains("value2");
+        assertThat(secondRunContext.render(listProperty).asList(String.class)).containsExactly("value2");
+        assertThat(secondRunContext.render(mapProperty).asMap(String.class, String.class)).containsEntry("key", "value2");
+    }
+
+    @Test
     void asShouldNotReturnCachedRenderedPropertyWithSkipCache() throws IllegalVariableEvaluationException {
         var runContext = runContextFactory.of();
 
@@ -107,6 +124,15 @@ class RunContextPropertyTest {
         assertThat(skippedCache.as(String.class, Map.of("variable", "value2"))).isEqualTo(Optional.of("value2"));
         // assure skipCache is preserved across calls
         assertThat(skippedCache.as(String.class, Map.of("variable", "value3"))).isEqualTo(Optional.of("value3"));
+    }
+
+    @Test
+    void shouldReturnValueWhenOfValuePropertySkipsCache() throws IllegalVariableEvaluationException {
+        var runContext = runContextFactory.of(Map.of("variable", "rendered"));
+
+        var runContextProperty = new RunContextProperty<>(Property.ofValue("{{ variable }}"), runContext).skipCache();
+
+        assertThat(runContextProperty.as(String.class)).contains("{{ variable }}");
     }
 
     @Test

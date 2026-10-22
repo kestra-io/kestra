@@ -56,7 +56,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
     .onboarding-resource-list {
         overflow: hidden;

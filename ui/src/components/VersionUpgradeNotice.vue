@@ -47,9 +47,9 @@
     })
 </script>
 
-<style lang="scss" scoped>
-    // Spans the viewport above the app shell, so the card treatment of a standard alert is dropped.
-    // Matches the announcement, kill-switch and maintenance banners in the EE shell.
+<style scoped>
+    /* Spans the viewport above the app shell, so the card treatment of a standard alert is dropped. */
+    /* Matches the announcement, kill-switch and maintenance banners in the EE shell. */
     .banner {
         border-left: none;
         border-right: none;
@@ -65,7 +65,7 @@
         flex-wrap: wrap;
     }
 
-    // Darker than the alert's own info tint, which was too low-contrast to read at a glance.
+    /* Darker than the alert's own info tint, which was too low-contrast to read at a glance. */
     .banner-message {
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-base);

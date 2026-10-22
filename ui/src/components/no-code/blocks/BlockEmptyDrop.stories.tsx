@@ -58,3 +58,16 @@ export const ForbiddenDropTarget: Story = {
         await expect(button.className).toContain("block-empty-drop--drop-forbidden")
     },
 }
+
+/** A limit reached, such as a TABLE input at `maxRows`: the button stays visible but cannot add. */
+export const Disabled: Story = {
+    render: () => ({
+        components: {BlockEmptyDrop},
+        template: `<BlockEmptyDrop variant="empty" label="a row" disabled dataTest="add" />`,
+    }),
+    play: async ({canvasElement}) => {
+        const button = canvasElement.querySelector("[data-test='add']") as HTMLButtonElement
+        await expect(button).toBeDisabled()
+        await expect(within(canvasElement).getByText("Click to add a row")).toBeVisible()
+    },
+}

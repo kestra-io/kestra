@@ -6,12 +6,10 @@ import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 import Banner from "./Banner.vue"
 import type {Execution} from "../../../../stores/executions"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
-import {memoryRouter} from "../../../../../tests/unit/memoryRouter"
 
 const triggerScope = reactive({visible: false, enabled: false})
 
 const globalConfig = {
-    plugins: [memoryRouter()],
     stubs: {
         RouterLink: {props: ["to"], template: "<a><slot /></a>"},
         KsTooltip: {template: "<div><slot /></div>"},

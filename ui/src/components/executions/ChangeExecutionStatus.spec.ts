@@ -4,7 +4,6 @@ import {createPinia, setActivePinia} from "pinia"
 import ChangeExecutionStatus from "./ChangeExecutionStatus.vue"
 import type {Execution} from "../../stores/executions"
 import {i18nMount} from "../../../tests/unit/i18nMount"
-import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 const isAllowedMock = vi.fn().mockReturnValue(true)
 
@@ -27,7 +26,6 @@ const messages = {
 }
 
 const globalConfig = {
-    plugins: [memoryRouter()],
     stubs: {
         KsPopover: {
             props: ["visible", "disabled"],

@@ -1,6 +1,7 @@
 import {mount, shallowMount, type ComponentMountingOptions} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {isRouter, memoryRouter} from "./memoryRouter"
 
 type MessageValue = string | MessageValue[] | {[key: string]: MessageValue}
 type Messages = {[key: string]: MessageValue}
@@ -27,7 +28,13 @@ function withApp<T>({messages = {}, locales, global: globalOptions = {}, ...moun
             ...globalOptions,
             // The app registers the design system at bootstrap, so a mount without it resolves no
             // Ks component and warns once per mount, with the offending props in every trace.
-            plugins: [i18n, ...(installsDesignSystem ? [] : [KestraDesignSystem]), ...callerPlugins],
+            plugins: [
+                i18n,
+                ...(installsDesignSystem ? [] : [KestraDesignSystem]),
+                // The app always has a router; a spec that asserts on navigation passes its own.
+                ...(callerPlugins.some(isRouter) ? [] : [memoryRouter()]),
+                ...callerPlugins,
+            ],
         },
     } as ComponentMountingOptions<T>
 }

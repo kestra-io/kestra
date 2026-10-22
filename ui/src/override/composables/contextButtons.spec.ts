@@ -21,7 +21,6 @@ vi.mock("@vueuse/core", async (importOriginal) => {
 
 import {useContextButtons} from "./contextButtons"
 import {i18nMount} from "../../../tests/unit/i18nMount"
-import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 function mountButtons() {
     let api: ReturnType<typeof useContextButtons>
@@ -31,10 +30,7 @@ function mountButtons() {
             return () => null
         },
     })
-    i18nMount(Comp, {
-        messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star", notifications: "Notifications"}},
-        global: {plugins: [memoryRouter()]},
-    })
+    i18nMount(Comp, {messages: {contextBar: {news: "News", docs: "Docs", help: "Help", issue: "Issue", demo: "Demo", star: "Star", notifications: "Notifications"}}})
     return api!
 }
 

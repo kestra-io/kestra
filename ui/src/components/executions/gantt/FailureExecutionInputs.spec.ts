@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import FailureExecutionInputs from "./FailureExecutionInputs.vue"
 import en from "../../../translations/en.json"
 
@@ -12,13 +12,11 @@ vi.mock("@kestra-io/kestra-sdk/expressions", () => ({
     renderExpressions: mocks.renderExpressions,
 }))
 
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en: en.en}})
-
 function mountInputs(inputIds: string[]) {
-    return mount(FailureExecutionInputs, {
+    return i18nMount(FailureExecutionInputs, {
+        locales: {en: en.en},
         props: {inputIds, executionId: "exec-1"},
         global: {
-            plugins: [i18n],
             stubs: {Vars: {template: "<pre>{{ JSON.stringify(data) }}</pre>", props: ["data"]}},
         },
     })

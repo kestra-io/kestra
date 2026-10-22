@@ -45,28 +45,6 @@
     }
 }
 
-// nprogress
-#nprogress {
-    .bar {
-        background: palette.$base-primary-500;
-        z-index: var(--ks-z-top);
-    }
-
-    .spinner {
-        top: 8px;
-        right: 8px;
-    }
-
-    .peg {
-        box-shadow: 0 0 10px palette.$base-primary-500, 0 0 5px palette.$base-primary-500;
-    }
-
-    .spinner-icon {
-        border-top-color: palette.$base-primary-500;
-        border-left-color: palette.$base-primary-500;
-    }
-}
-
 // global
 html, body {
     height: 100%;

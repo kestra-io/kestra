@@ -16,11 +16,15 @@ The rule reports those as you type. There is no separate command to remember.
 
 | | linter | covers |
 |---|---|---|
-| `stylelintPlugin.mjs` | stylelint, `ks/no-undeclared-custom-property` | `<style>` blocks in `.vue`, plus `.scss` and `.css` |
+| `eslintPlugin.mjs` | eslint + `@eslint/css`, `kestra-tokens/no-undeclared-css-token` | `.css`, plain `<style>` blocks and static `style="…"` attributes in `.vue` |
 | `eslintPlugin.mjs` | eslint, `kestra-tokens/no-undeclared-ks-token` | `cssVar("--ks-…")` and `var(--ks-…)` written inside a string |
+| `stylelintPlugin.mjs` | stylelint, `ks/no-undeclared-custom-property` | `.scss` and `<style lang="scss">`, which `@eslint/css` cannot parse, plus plain CSS until CI fails on eslint errors (kestra-io/actions#342) |
 
-Both read the same `knownTokens.mjs`, so they agree on what exists and phrase the report the same
-way. `npm run lint` and `npm run test:lint` run both.
+All three read the same `knownTokens.mjs`, so they agree on what exists and phrase the report the same
+way. `npm run lint` and `npm run test:lint` run them all. `../css-lint/vueStyleProcessor.mjs` hands
+eslint one copy of each SFC per plain `<style>` block or `style` attribute, everything else blanked,
+so each is its own stylesheet and positions need no mapping.
+Stylelint goes once the design system's SCSS does.
 
 `stylelint.config.mjs` and a `ks/custom-property-pattern-usage` plugin existed here from #6645 until
 #19084 deleted them, dormant the whole time because stylelint itself was never a dependency. This
@@ -30,16 +34,10 @@ real debt, but enforcing them is a separate job with a separate cleanup.
 
 ## In your editor
 
-ESLint needs nothing. Stylelint needs the
+ESLint covers `.vue` and `.js`/`.ts` with no setting. For `.css`, add it to the ESLint extension's
+`"eslint.validate"` list. Only design-system SCSS still needs the
 [Stylelint extension](https://marketplace.visualstudio.com/items?itemName=stylelint.vscode-stylelint),
-which finds `ui/stylelint.config.mjs` on its own for `.css` and `.scss`. To have it lint `<style>`
-blocks in `.vue` too, add to your workspace settings:
-
-```json
-{
-    "stylelint.validate": ["css", "scss", "vue"]
-}
-```
+with `"stylelint.validate": ["scss", "vue"]`.
 
 WebStorm ships stylelint support: enable it under Languages & Frameworks → Style Sheets → Stylelint.
 
@@ -63,19 +61,19 @@ Most of what is known comes from that scan rather than from the palette, so the 
 **complete** checkout: a sparse or partial `ui/src` and `ui/packages` under-reports what is declared
 and turns live tokens into findings.
 
-EE sets `KS_TOKEN_ROOTS=/path/to/ui-ee/src` in `ui-ee/stylelint.config.mjs` so its own declarations
-count too — `--ks-sidebar-item-title-color`, for one. `ui-ee/eslint.config.js` spreads this config,
-so the eslint half goes live there as soon as this lands.
+EE sets `KS_TOKEN_ROOTS=/path/to/ui-ee/src` in `ui-ee/eslint.config.js` so its own declarations
+count too — `--ks-sidebar-item-title-color`, for one. That config spreads this one, so every rule
+here applies there.
 
 ## Known gaps
 
 - `var(--ks-…)` inside a template expression (`:style="{color: 'var(--ks-…)'}"`) is seen by neither
-  half: stylelint reads `<style>` blocks, and the eslint rule walks the script, not the
-  `vue-eslint-parser` template body. A static `style="…"` attribute is covered, through
-  `postcss-html`. Count the gap with `grep` over `.vue` template bodies rather than trusting a
+  rule: the CSS rules read `<style>` blocks, and the script rule walks the script, not the
+  `vue-eslint-parser` template body. A static `style="…"` attribute is covered, through the
+  processor. Count the gap with `grep` over `.vue` template bodies rather than trusting a
   figure here; every one of them resolves today.
-- `.jsx` and `.tsx` are covered by the eslint half only, since stylelint cannot read a style written
-  as a JSX attribute.
+- `.jsx` and `.tsx` are covered by the script rule only, since a style written as a JSX attribute
+  is not a stylesheet.
 - `tests/` is linted but is not a declaration root, so a token declared in one test file and used in
   another is reported. That is deliberate: this rule's own fixtures declare names no stylesheet has,
   and a root covering them would let a fixture vouch for itself.

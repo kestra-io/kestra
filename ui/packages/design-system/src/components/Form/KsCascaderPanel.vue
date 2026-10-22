@@ -46,11 +46,11 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/cascader-panel';
+</style>
 
+<style>
     .kel-cascader-panel {
-
-
-        .kel-cascader-node.in-active-path, .kel-cascader-node.is-selectable.in-checked-path, .kel-cascader-node.is-active {
+        & .kel-cascader-node.in-active-path, & .kel-cascader-node.is-selectable.in-checked-path, & .kel-cascader-node.is-active {
             font-weight: normal;
         }
     }

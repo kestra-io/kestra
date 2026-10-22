@@ -137,22 +137,22 @@
                         :data-testid="`input-form-${input.id}`"
                         :modelValue="numberInputValue(input.id)"
                         @update:model-value="setInputValue(input.id, $event, input)"
-                        :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :min="numberMin(input)"
+                        :max="numberMax(input)"
                         :step="1"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="hasLimit(input.min) || hasLimit(input.max)" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <span v-if="input.type === 'FLOAT'">
                     <KsInputNumber
                         :data-testid="`input-form-${input.id}`"
                         :modelValue="numberInputValue(input.id)"
                         @update:model-value="setInputValue(input.id, $event, input)"
-                        :min="input.min"
-                        :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
+                        :min="numberMin(input)"
+                        :max="numberMax(input)"
                         :step="0.001"
                     />
-                    <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
+                    <div v-if="hasLimit(input.min) || hasLimit(input.max)" class="hint">{{ numberHint(input) }}</div>
                 </span>
                 <KsSwitch
                     :data-testid="`input-form-${input.id}`"
@@ -406,7 +406,7 @@
         execution?: Execution;
         selectedTrigger?: SelectedTrigger;
         mode?: "flat" | "wizard";
-        formGroups?: Record<string, {displayName?: string; description?: string}>;
+        formGroups?: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>;
         // Labels the execution will be created with, as `key:value`. Inputs are rendered against them,
         // so an expression or a default can read a label the caller already knows.
         renderLabels?: string[];
@@ -566,9 +566,7 @@
         return inputsMetaData.value.find((it) => it.id === id)?.errors ?? []
     }
 
-    // The form stores every value as `unknown`, while each control only accepts
-    // its own shape. These narrow one branch each so a mistyped value renders
-    // empty instead of reaching a control that cannot handle it.
+    // Each control only accepts its own shape, so a mistyped value renders empty instead of reaching it.
     function textInputValue(id: string): string | undefined {
         const value = inputsValues[id]
         return typeof value === "string" ? value : undefined
@@ -761,15 +759,28 @@
         }, {})
     })
 
+    function hasLimit(value: unknown): value is number {
+        return typeof value === "number"
+    }
+
+    function numberMin(input: InputMetaData): number {
+        return hasLimit(input.min) ? input.min : -Infinity
+    }
+
+    function numberMax(input: InputMetaData): number {
+        if (!hasLimit(input.max)) return Infinity
+        return hasLimit(input.min) && input.min > input.max ? Infinity : input.max
+    }
+
     function numberHint(input: InputMetaData): string | false {
         const {min, max} = input
 
-        if (min !== undefined && max !== undefined) {
+        if (hasLimit(min) && hasLimit(max)) {
             if (min > max) return `Minimum value ${min} is larger than maximum value ${max}, so we've removed the upper limit.`
             return `Minimum value is ${min}, maximum value is ${max}.`
-        } else if (min !== undefined) {
+        } else if (hasLimit(min)) {
             return `Minimum value is ${min}.`
-        } else if (max !== undefined) {
+        } else if (hasLimit(max)) {
             return `Maximum value is ${max}.`
         }
         return false

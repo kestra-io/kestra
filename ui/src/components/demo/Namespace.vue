@@ -1,6 +1,6 @@
 <template>
     <Empty
-        type="namespace"
+        :type="emptyType"
         demoCta
         :title="$t(`demos.namespace.${props.tab}.title`)"
     >
@@ -11,6 +11,7 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import Empty from "../layout/empty/Empty.vue"
     import {useDocStore} from "../../stores/doc"
 
@@ -21,4 +22,13 @@
     const props = defineProps<{
         tab: string;
     }>()
+
+    const EMPTY_TYPES: Record<string, string> = {
+        edit: "namespace",
+        history: "namespace",
+        "audit-logs": "auditlogs",
+        "reusable-inputs": "reusableInputs",
+    }
+
+    const emptyType = computed(() => EMPTY_TYPES[props.tab] ?? props.tab)
 </script>

@@ -305,7 +305,7 @@
         </template>
 
         <template #default>
-            <i18n-t keypath="bulk change state" tag="p">
+            <i18n-t keypath="bulk change state" tag="p" scope="global">
                 <template #executionCount><code>{{ bulkActionCount }}</code></template>
             </i18n-t>
 
@@ -320,7 +320,7 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="item.code" />
-                        <i18n-t keypath="mark as" tag="span">
+                        <i18n-t keypath="mark as" tag="span" scope="global">
                             <template #status><code>{{ item.code }}</code></template>
                         </i18n-t>
                     </template>
@@ -347,7 +347,7 @@
         </template>
 
         <template #default>
-            <i18n-t keypath="unqueue title multiple" tag="p">
+            <i18n-t keypath="unqueue title multiple" tag="p" scope="global">
                 <template #count><code>{{ bulkActionCount }}</code></template>
             </i18n-t>
             <p>{{ $t("unqueue multiple note") }}</p>
@@ -363,7 +363,7 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="false" class="status-indicator" :status="state" />
-                        <i18n-t keypath="unqueue as" tag="span">
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>
                     </template>
@@ -390,7 +390,7 @@
         </template>
 
         <template #default>
-            <i18n-t keypath="bulk replay" tag="p">
+            <i18n-t keypath="bulk replay" tag="p" scope="global">
                 <template #executionCount><code>{{ bulkActionCount }}</code></template>
             </i18n-t>
         </template>
@@ -417,7 +417,7 @@
         </template>
 
         <template #default>
-            <i18n-t keypath="bulk restart" tag="p">
+            <i18n-t keypath="bulk restart" tag="p" scope="global">
                 <template #executionCount><code>{{ bulkActionCount }}</code></template>
             </i18n-t>
         </template>

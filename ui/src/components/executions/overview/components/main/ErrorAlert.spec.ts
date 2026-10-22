@@ -1,9 +1,10 @@
 import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
 import {flushPromises} from "@vue/test-utils"
 import ErrorAlert from "./ErrorAlert.vue"
 import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
 import {i18nMount} from "../../../../../../tests/unit/i18nMount"
+import {routedPinia} from "../../../../../../tests/unit/memoryRouter"
 
 const messages = {
     execution_failed: "Execution failed!",
@@ -35,7 +36,7 @@ const mountAlert = () => i18nMount(ErrorAlert, {
 
 describe("ErrorAlert", () => {
     beforeEach(() => {
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
         vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue(errorLogs as never)
     })
 

@@ -17,7 +17,7 @@
                                 <span class="scope-prefix">{{ scopePrefix }}</span>
                             </template>
                             <template v-if="!query" #suffix>
-                                <span class="d-none d-sm-block">
+                                <span class="search-hint">
                                     <kbd>ESC</kbd> {{ $t("to close") }}
                                 </span>
                             </template>
@@ -39,11 +39,11 @@
                                         <component
                                             :is="item.kind === 'link' ? 'router-link' : 'button'"
                                             v-bind="item.kind === 'link' ? {to: item.href} : {type: 'button'}"
-                                            class="result-link d-flex gap-2"
+                                            class="result-link"
                                             @click="onItemClick(item)"
                                         >
-                                            <div class="result-title d-flex gap-2 nav-item-title">
-                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" />
+                                            <div class="result-title nav-item-title">
+                                                <component v-if="item.icon?.element" :is="{...item.icon.element}" />
                                                 <span v-if="item.parentTitle" class="result-parent">
                                                     {{ item.parentTitle }}
                                                 </span>
@@ -52,7 +52,7 @@
                                             </div>
                                             <span
                                                 v-if="index === activeIndex"
-                                                class="result-hint d-none d-sm-flex align-items-center"
+                                                class="result-hint"
                                             >
                                                 <span>{{ $t("jump to") }}</span>
                                             </span>
@@ -364,12 +364,12 @@
                 background: var(--ks-bg-surface);
                 border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base)) var(--kel-input-border-radius, var(--kel-border-radius-base)) 0 0;
 
-                input {
+                & input {
                     color: var(--ks-text-primary);
                     background: transparent;
                 }
 
-                input::placeholder {
+                & input::placeholder {
                     color: var(--ks-placeholder-color);
                     font-size: var(--ks-placeholder-font-size);
                     font-weight: var(--ks-placeholder-font-weight);
@@ -389,6 +389,14 @@
                 margin-right: 0.25rem;
                 color: var(--ks-text-secondary);
                 white-space: nowrap;
+            }
+
+            .search-hint {
+                display: none;
+
+                @media (min-width: 576px) {
+                    display: block;
+                }
             }
         }
 
@@ -416,7 +424,9 @@
             border-radius: 6px;
             color: var(--ks-text-primary);
             text-decoration: none;
+            display: flex;
             align-items: center;
+            gap: var(--ks-spacing-2);
             transition: none;
             width: 100%;
             border: 0;
@@ -427,6 +437,9 @@
         }
 
         .result-title {
+            display: flex;
+            align-items: center;
+            gap: var(--ks-spacing-2);
             flex: 0 1 auto;
             min-width: 0;
         }
@@ -450,11 +463,17 @@
         }
 
         .result-hint {
+            display: none;
+            align-items: center;
             margin-left: auto;
             color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
+
+            @media (min-width: 576px) {
+                display: flex;
+            }
         }
 
         .empty {

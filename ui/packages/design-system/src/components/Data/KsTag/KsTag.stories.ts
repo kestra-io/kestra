@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {expect, waitFor, within} from "storybook/test"
 import {ref} from "vue"
-import KsTag from "./KsTag.vue"
+import KsTag, {KS_TAG_TONES} from "./KsTag.vue"
 
 const meta: Meta<typeof KsTag> = {
     title: "Components/Data/KsTag",
@@ -68,6 +68,23 @@ export const Types: Story = {
             </table>
         `,
     }),
+    async play({canvasElement}) {
+        const resolved = (property: "color" | "backgroundColor", value: string) => {
+            const probe = document.createElement("span")
+            probe.style[property] = value
+            canvasElement.append(probe)
+            const result = getComputedStyle(probe)[property]
+            probe.remove()
+            return result
+        }
+
+        const plainRow = [...canvasElement.querySelectorAll("tr")].at(-1) as HTMLElement
+        for (const [label, type] of [["Primary", "primary"], ["Success", "success"], ["Info", "info"], ["Warning", "warning"], ["Danger", "danger"]] as const) {
+            const styles = getComputedStyle(within(plainRow).getByText(label).closest(".kel-tag") as Element)
+            await expect(styles.color).toBe(resolved("color", KS_TAG_TONES[type]!.text))
+            await expect(styles.backgroundColor).toBe(resolved("backgroundColor", KS_TAG_TONES[type]!.bg))
+        }
+    },
 }
 
 export const Effects: Story = {

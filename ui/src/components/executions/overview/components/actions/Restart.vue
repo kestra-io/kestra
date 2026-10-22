@@ -56,7 +56,7 @@
         </template>
 
         <div class="p-3 pt-0">
-            <i18n-t keypath="restart confirm" tag="p" class="mb-0">
+            <i18n-t keypath="restart confirm" tag="p" scope="global" class="mb-0">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
             <KsAlert
@@ -67,7 +67,7 @@
                 class="mt-3"
                 data-test="restart-subflow-warning"
             >
-                <i18n-t keypath="restart subflow warning" tag="span">
+                <i18n-t keypath="restart subflow warning" tag="span" scope="global">
                     <template #parent>
                         <router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>
                     </template>
@@ -233,7 +233,7 @@
         scrollable
     >
         <template #header>
-            <i18n-t keypath="replay the execution" tag="span">
+            <i18n-t keypath="replay the execution" tag="span" scope="global">
                 <template #executionId><code>{{ execution.id }}</code></template>
                 <template #flowId><code>{{ execution.flowId }}</code></template>
             </i18n-t>

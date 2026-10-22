@@ -2,16 +2,11 @@ package io.kestra.worker.stores;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.protobuf.ByteString;
 
 import io.kestra.controller.grpc.KVKeyRequest;
 import io.kestra.controller.grpc.KVPutEntry;
@@ -21,7 +16,8 @@ import io.kestra.controller.grpc.KVStoreServiceGrpc;
 import io.kestra.controller.grpc.NamespaceRequest;
 import io.kestra.controller.grpc.RequestOrResponseHeader;
 import io.kestra.controller.grpc.StreamChunk;
-import io.kestra.controller.grpc.streaming.ChunkedStreamWriter;
+import io.kestra.controller.grpc.streaming.ChunkedStreamReader;
+import io.kestra.controller.grpc.streaming.ChunkedStreamUpload;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
@@ -34,10 +30,7 @@ import io.kestra.core.storages.kv.KVStoreException;
 import io.kestra.core.storages.kv.StorageKVBackend;
 import io.kestra.core.worker.models.WorkerInfo;
 
-import io.grpc.Context;
 import io.grpc.StatusRuntimeException;
-import io.grpc.stub.ClientCallStreamObserver;
-import io.grpc.stub.ClientResponseObserver;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.annotation.Nullable;
@@ -74,53 +67,24 @@ public class GrpcKVBackend implements KVBackend {
 
     @Override
     public void put(String tenant, String namespace, String key, @Nullable KVMetadata metadata, InputStream value, boolean overwrite) throws IOException {
-        PutCall call = new PutCall();
-        kvStoreStub.put(call);
-
         try (value) {
-            if (call.awaitReady()) {
-                call.requests.onNext(putRequest(tenant).setEntry(entry(namespace, key, metadata, overwrite)).build());
-            }
-            byte[] buffer = new byte[ChunkedStreamWriter.DEFAULT_CHUNK_SIZE];
-            int read;
-            while (call.awaitReady() && (read = value.readNBytes(buffer, 0, buffer.length)) > 0) {
-                call.requests.onNext(
-                    putRequest(tenant)
-                        .setChunk(StreamChunk.newBuilder().setHeader(header()).setContent(ByteString.copyFrom(buffer, 0, read)))
-                        .build()
-                );
-            }
-            if (!call.completion.isDone()) {
-                call.requests.onCompleted();
-            }
-            call.completion.get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            call.requests.cancel("The worker was interrupted.", e);
-            throw new InterruptedIOException("Interrupted while putting the key '%s' of namespace '%s' through the controller.".formatted(key, namespace));
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof StatusRuntimeException statusException) {
-                throw translate(statusException, namespace, key);
-            }
-            throw new IOException("Cannot put the key '%s' of namespace '%s' through the controller.".formatted(key, namespace), e.getCause());
-        } catch (IOException | RuntimeException e) {
-            call.requests.cancel("The worker failed to read the value to put.", e);
-            throw e;
+            ChunkedStreamUpload.<KVPutRequest, KVPutResponse>upload(
+                kvStoreStub::put,
+                putRequest(tenant).setEntry(entry(namespace, key, metadata, overwrite)).build(),
+                value,
+                chunk -> putRequest(tenant).setChunk(StreamChunk.newBuilder().setHeader(header()).setContent(chunk)).build()
+            );
+        } catch (StatusRuntimeException e) {
+            throw translate(e, namespace, key);
         }
     }
 
     @Override
     public Optional<InputStream> getRawValue(String tenant, String namespace, String key) throws ResourceExpiredException {
-        // The call is bound to this context so that closing the stream before its end cancels it, rather than leaking it.
-        Context.CancellableContext context = Context.current().withCancellation();
-        Context previous = context.attach();
+        KVKeyRequest request = keyRequest(tenant, namespace, key);
         try {
-            Iterator<StreamChunk> chunks = kvStoreBlockingStub.getRawValue(keyRequest(tenant, namespace, key));
-            // A missing or expired value is reported as the status of the call, which surfaces on the first read.
-            chunks.hasNext();
-            return Optional.of(new ChunkInputStream(chunks, context));
+            return Optional.of(ChunkedStreamReader.open(() -> kvStoreBlockingStub.getRawValue(request)));
         } catch (StatusRuntimeException e) {
-            context.cancel(null);
             switch (e.getStatus().getCode()) {
                 case NOT_FOUND -> {
                     return Optional.empty();
@@ -128,8 +92,6 @@ public class GrpcKVBackend implements KVBackend {
                 case FAILED_PRECONDITION -> throw new ResourceExpiredException(e.getStatus().getDescription(), e);
                 default -> throw translate(e, namespace, key);
             }
-        } finally {
-            context.detach(previous);
         }
     }
 
@@ -171,7 +133,7 @@ public class GrpcKVBackend implements KVBackend {
             case UNIMPLEMENTED -> new KestraRuntimeException(
                 ("Cannot access the KV store of namespace '%s' through the controller, which serves no KV store entries. "
                     + "Upgrade the controller, or set '%s' to STORAGE so this worker reads the KV store from internal storage.")
-                    .formatted(namespace, KVWorkerAccess.CONFIG_KEY),
+                    .formatted(namespace, KVStoreFromControllerCondition.CONFIG_KEY),
                 e
             );
             default -> e;
@@ -209,106 +171,5 @@ public class GrpcKVBackend implements KVBackend {
 
     private RequestOrResponseHeader header() {
         return RequestOrResponseHeaderFactory.create(workerInfo.getWorkerId());
-    }
-
-    /**
-     * A client-streaming put that only sends while the transport is ready, so that a slow controller does not make
-     * the worker buffer a second copy of the value, and that stops sending once the controller ended the call.
-     */
-    private static final class PutCall implements ClientResponseObserver<KVPutRequest, KVPutResponse> {
-        private final CompletableFuture<Void> completion = new CompletableFuture<>();
-        private final Object readiness = new Object();
-        private ClientCallStreamObserver<KVPutRequest> requests;
-
-        @Override
-        public void beforeStart(ClientCallStreamObserver<KVPutRequest> requests) {
-            this.requests = requests;
-            requests.setOnReadyHandler(this::signal);
-        }
-
-        @Override
-        public void onNext(KVPutResponse response) {
-        }
-
-        @Override
-        public void onError(Throwable t) {
-            completion.completeExceptionally(t);
-            signal();
-        }
-
-        @Override
-        public void onCompleted() {
-            completion.complete(null);
-            signal();
-        }
-
-        /**
-         * @return {@code true} once the next message can be sent, {@code false} if the call already ended.
-         */
-        boolean awaitReady() throws InterruptedException {
-            synchronized (readiness) {
-                while (!requests.isReady() && !completion.isDone()) {
-                    readiness.wait();
-                }
-            }
-            return !completion.isDone();
-        }
-
-        private void signal() {
-            synchronized (readiness) {
-                readiness.notifyAll();
-            }
-        }
-    }
-
-    /**
-     * The chunks of a value, read from the call as the stream is read. Closing it cancels the call.
-     */
-    private static final class ChunkInputStream extends InputStream {
-        private final Iterator<StreamChunk> chunks;
-        private final Context.CancellableContext context;
-        private InputStream current = InputStream.nullInputStream();
-
-        private ChunkInputStream(Iterator<StreamChunk> chunks, Context.CancellableContext context) {
-            this.chunks = chunks;
-            this.context = context;
-        }
-
-        @Override
-        public int read() throws IOException {
-            byte[] single = new byte[1];
-            return read(single, 0, 1) == -1 ? -1 : single[0] & 0xFF;
-        }
-
-        @Override
-        public int read(byte[] buffer, int offset, int length) throws IOException {
-            if (length == 0) {
-                return 0;
-            }
-            int read;
-            while ((read = current.read(buffer, offset, length)) == -1) {
-                if (!nextChunk()) {
-                    return -1;
-                }
-            }
-            return read;
-        }
-
-        @Override
-        public void close() {
-            context.cancel(null);
-        }
-
-        private boolean nextChunk() throws IOException {
-            try {
-                if (!chunks.hasNext()) {
-                    return false;
-                }
-                current = chunks.next().getContent().newInput();
-                return true;
-            } catch (StatusRuntimeException e) {
-                throw new IOException("Cannot read a KV value through the controller.", e);
-            }
-        }
     }
 }

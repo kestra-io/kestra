@@ -1,6 +1,6 @@
 <template>
     <ElTabPane
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as TabPaneProps)"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElTabPane} from "element-plus"
+    import {ElTabPane, type TabPaneProps} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

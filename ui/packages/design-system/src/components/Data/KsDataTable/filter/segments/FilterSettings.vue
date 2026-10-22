@@ -12,7 +12,7 @@
             </div>
             <div class="row">
                 <KsTooltip :content="refreshTooltip" placement="top">
-                    <span class="label">{{ $t("filter.periodic refresh") }}</span>
+                    <span class="label">{{ $t("filter.auto refresh") }}</span>
                 </KsTooltip>
                 <KsSwitch v-model="periodicRefreshEnabled" />
             </div>
@@ -32,17 +32,10 @@
 
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
 
-    const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip, toggleRefresh} = usePeriodicRefresh()
+    const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip} = usePeriodicRefresh()
 
     const chartShown = computed(() => filter.tableOptions.value?.chart?.shown !== false)
     const localChartVisible = ref(filter.chartVisible.value)
-
-    const refreshCallback = () => {
-        if (filter.tableOptions.value?.refresh?.callback) {
-            filter.tableOptions.value.refresh.callback()
-        }
-        filter.refreshData()
-    }
 
     watch(() => filter.chartVisible.value, (value) => {
         localChartVisible.value = value ?? true
@@ -51,10 +44,6 @@
     watch(localChartVisible, (value) => {
         filter.updateChart(value)
     })
-
-    watch(periodicRefreshEnabled, (value) => {
-        toggleRefresh(value, refreshCallback)
-    }, {immediate: true})
 </script>
 
 <style lang="scss" scoped>

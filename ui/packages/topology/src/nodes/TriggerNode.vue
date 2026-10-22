@@ -4,9 +4,13 @@
         :id="id"
         :data="formattedData"
         :color="color"
+        :class="{'node-core--error': validationIssues.length > 0}"
         :icons="icons"
         :loadIcon="loadIcon"
     >
+        <template #title-status>
+            <ValidationBadge :issues="validationIssues" />
+        </template>
         <template #title-actions>
             <NodeMenu :actions="actions" />
         </template>
@@ -15,15 +19,21 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {SECTIONS} from "@kestra-io/design-system"
+    import {
+        SECTIONS,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import BasicNode, {type BasicNodeData} from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
+    import ValidationBadge from "./ValidationBadge.vue"
+    import {VALIDATION_ISSUES_INJECTION_KEY} from "../injectionKeys"
     import {EVENTS} from "../utils/constants"
     import * as Utils from "../utils/utils"
 
@@ -43,8 +53,8 @@
         sourcePosition?: Position;
         targetPosition?: Position;
         id: string;
-        icons?: Record<string, unknown>;
-        loadIcon?: (cls: string) => Promise<unknown>;
+        icons?: PluginIconMap;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
     }>()
 
     const emit = defineEmits([EVENTS.DELETE, EVENTS.EDIT, EVENTS.SHOW_DESCRIPTION, EVENTS.EXPAND])
@@ -53,6 +63,8 @@
 
     const color = computed(() => data.color ?? "primary")
     const triggerId = computed(() => Utils.afterLastDot(id))
+    const validationIssuesByTask = inject(VALIDATION_ISSUES_INJECTION_KEY, undefined)
+    const validationIssues = computed<string[]>(() => validationIssuesByTask?.value?.get(triggerId.value ?? "") ?? [])
     const formattedData = computed(() => ({
         ...data,
         unused: data.node?.triggerDeclaration?.disabled || data.node?.trigger?.disabled,

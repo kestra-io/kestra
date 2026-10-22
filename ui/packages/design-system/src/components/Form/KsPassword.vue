@@ -1,9 +1,9 @@
 <template>
-    <div class="ks-password w-100">
+    <div class="ks-password">
         <KsInput
             v-model="model"
             :class="hidden || disabled ? 'ks-password--masked' : ''"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
+            v-bind="({...filteredProps(), ...$attrs} as KsInputProps)"
             @change="emit('change', $event)"
             autosize
             resize="none"
@@ -26,10 +26,13 @@
 <script setup lang="ts">
     import {ref, watch} from "vue"
     import {useFilteredProps} from "../../utils/filteredProps"
+    import type KsInputComponent from "./KsInput.vue"
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue"
     import EyeOffOutline from "vue-material-design-icons/EyeOffOutline.vue"
 
     defineOptions({inheritAttrs: false})
+
+    type KsInputProps = InstanceType<typeof KsInputComponent>["$props"]
 
     const model = defineModel<string | number>()
 
@@ -72,6 +75,7 @@
 
     .ks-password {
         position: relative;
+        width: 100%;
 
         .hide {
             top: 5px;

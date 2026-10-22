@@ -1,0 +1,191 @@
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {effectScope, nextTick} from "vue"
+import type {Flow} from "../../../stores/flow"
+
+interface MockRoute {
+    params: {namespace: string; id: string}
+    query: Record<string, string | undefined>
+    meta: {tab?: string}
+    name: string
+}
+
+const routerReplace = vi.fn()
+const currentRoute: MockRoute = {
+    params: {namespace: "company.team", id: "myflow"},
+    query: {},
+    meta: {tab: "edit"},
+    name: "flows/update/edit",
+}
+
+vi.mock("vue-router", () => ({
+    useRoute: () => currentRoute,
+    useRouter: () => ({replace: routerReplace}),
+}))
+
+vi.mock("vue-i18n", () => ({
+    useI18n: () => ({t: (key: string) => key}),
+}))
+
+vi.mock("../../../stores/flow", async () => {
+    const {reactive} = await import("vue")
+    const flowStore = reactive({
+        flow: undefined,
+        dependenciesCount: undefined,
+        loadDependencies: vi.fn(),
+        loadFlow: vi.fn(),
+        loadGraph: vi.fn(),
+        isCreating: false,
+    })
+
+    return {useFlowStore: () => flowStore}
+})
+
+const routeTabsMock = vi.hoisted(() => ({setTabs: vi.fn()}))
+
+vi.mock("../../../stores/routeTabs", () => ({
+    useRouteTabsStore: () => ({
+        setTabs: routeTabsMock.setTabs,
+    }),
+}))
+
+vi.mock("override/stores/auth", () => ({
+    useAuthStore: () => ({
+        user: {
+            hasAny: () => true,
+            isAllowed: () => true,
+        },
+    }),
+}))
+
+vi.mock("override/stores/misc", () => ({
+    useMiscStore: () => ({configs: {chartDefaultDuration: "PT24H"}}),
+}))
+
+import {useFlowStore} from "../../../stores/flow"
+import {useFlowRoot} from "./useFlowRoot"
+
+describe("useFlowRoot", () => {
+    const flowStore = useFlowStore()
+    const loadDependencies = vi.mocked(flowStore.loadDependencies)
+    const loadFlow = vi.mocked(flowStore.loadFlow)
+
+    const makeFlow = (id: string): Flow => ({id, namespace: "company.team", source: ""})
+
+    beforeEach(() => {
+        vi.useFakeTimers()
+        currentRoute.meta = {tab: "edit"}
+        currentRoute.name = "flows/update/edit"
+        currentRoute.query = {}
+        routerReplace.mockReset()
+        flowStore.flow = undefined
+        flowStore.dependenciesCount = undefined
+        loadDependencies.mockReset()
+        loadFlow.mockReset()
+        // useFlowRoot ignores what loadFlow resolves with, so the stub does not build a whole flow.
+        loadFlow.mockResolvedValue(undefined as unknown as Awaited<ReturnType<typeof flowStore.loadFlow>>)
+        vi.mocked(flowStore.loadGraph).mockReset()
+        routeTabsMock.setTabs.mockReset()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it("does not register flow tabs in the app header selector", () => {
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot())
+
+        expect(routeTabsMock.setTabs).not.toHaveBeenCalled()
+
+        scope.stop()
+    })
+
+    it("keeps the dependencies tab enabled when the store reports one dependency", async () => {
+        loadDependencies.mockImplementation(async () => {
+            flowStore.dependenciesCount = 1
+            return {count: 1}
+        })
+        const scope = effectScope()
+        const flowRoot = scope.run(() => useFlowRoot())!
+
+        flowStore.flow = makeFlow("myflow")
+        await nextTick()
+        await vi.advanceTimersByTimeAsync(1000)
+        await nextTick()
+
+        expect(loadDependencies).toHaveBeenCalledWith({
+            subtype: "FLOW",
+            namespace: "company.team",
+            id: "myflow",
+        }, true)
+        expect(flowRoot.dependenciesCount.value).toBe(1)
+        expect(flowRoot.tabs.value.find(tab => tab.name === "dependencies")).toMatchObject({
+            count: 1,
+            disabled: false,
+        })
+
+        scope.stop()
+    })
+
+    it("reuses the flow the route guard loaded, instead of fetching it a second time", async () => {
+        flowStore.flow = makeFlow("myflow")
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot().setupLifecycle())
+        await nextTick()
+
+        expect(loadFlow).not.toHaveBeenCalled()
+        expect(flowStore.loadGraph).toHaveBeenCalledWith({flow: flowStore.flow})
+
+        scope.stop()
+    })
+
+    it("fetches the flow when the store holds another one", async () => {
+        flowStore.flow = makeFlow("otherflow")
+        const scope = effectScope()
+
+        scope.run(() => useFlowRoot().setupLifecycle())
+        await nextTick()
+
+        expect(loadFlow).toHaveBeenCalledWith(expect.objectContaining({
+            namespace: "company.team",
+            id: "myflow",
+            allowDeleted: true,
+        }))
+
+        scope.stop()
+    })
+
+    it("does not reinsert PT24H when activeTab is executions with no time filter in query", async () => {
+        currentRoute.meta = {tab: "executions"}
+        currentRoute.name = "flows/update/executions"
+        currentRoute.query = {}
+        routerReplace.mockReset()
+
+        const scope = effectScope()
+        scope.run(() => useFlowRoot())
+        await nextTick()
+
+        expect(routerReplace).not.toHaveBeenCalled()
+        scope.stop()
+    })
+
+    it("injects default duration when activeTab is overview with no time filter in query", async () => {
+        currentRoute.meta = {tab: "overview"}
+        currentRoute.name = "flows/update/overview"
+        currentRoute.query = {}
+        routerReplace.mockReset()
+
+        const scope = effectScope()
+        scope.run(() => useFlowRoot())
+        await nextTick()
+
+        expect(routerReplace).toHaveBeenCalledWith({
+            name: "flows/update/overview",
+            params: {namespace: "company.team", id: "myflow"},
+            query: {"filters[timeRange][EQUALS]": "PT24H"},
+        })
+        scope.stop()
+    })
+})

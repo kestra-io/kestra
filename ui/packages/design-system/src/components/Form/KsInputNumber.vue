@@ -1,13 +1,13 @@
 <template>
     <ElInputNumber
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as InputNumberProps)"
         @change="emit('change', $event, undefined)"
     />
 </template>
 
 <script setup lang="ts">
-    import {ElInputNumber} from "element-plus"
+    import {ElInputNumber, type InputNumberProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})

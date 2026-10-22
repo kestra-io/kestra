@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, nextTick} from "vue"
+    import {computed, ref, watch, nextTick, onBeforeUnmount} from "vue"
     import {rowKey, debounce} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {DeleteOutline} from "../../utils/icons"
@@ -152,6 +152,9 @@
         emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)))
     }, 200)
 
+    // A debounced update still pending when the panel closes would be dropped, losing the user's last edit
+    onBeforeUnmount(() => emitUpdate.flush())
+
     const emit = defineEmits(["update:modelValue"])
 
     function getKey(key: string) {
@@ -191,9 +194,8 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .task-container{
     margin-bottom: 1rem;
 }

@@ -47,7 +47,7 @@ public final class ExecutableUtils {
                 (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED
                     || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
-            State.Type finalState = (allowedFailure && execution.getState().isFailed()) ? State.Type.WARNING : execution.getState().getCurrent();
+            State.Type finalState = (allowedFailure && (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED)) ? State.Type.WARNING : execution.getState().getCurrent();
             return finalState.equals(State.Type.WARNING) && allowWarning ? State.Type.SUCCESS : finalState;
         } else {
             return State.Type.SUCCESS;
@@ -304,7 +304,7 @@ public final class ExecutableUtils {
 
     private static List<Label> systemLabels(Execution execution) {
         return Streams.of(execution.getLabels())
-            .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
+            .filter(label -> Label.isSystem(label.key()))
             .toList();
     }
 

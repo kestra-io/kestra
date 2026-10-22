@@ -34,6 +34,6 @@ RUN if [ "$WITH_PYTHON" = "true" ]; then \
         apt-get install -y --no-install-recommends python3 python-is-python3 python3-pip && \
         apt-get clean && \
         rm -rf /var/lib/apt/lists/* && \
-        uv venv /app/.venv && \
+        uv venv --seed /app/.venv && \
         PURE_PYTHON=1 uv pip install --python /app/.venv/bin/python kestra; \
     fi

@@ -33,6 +33,9 @@
                 </KsTooltip>
             </span>
         </template>
+        <template #taskActions="taskActionProps">
+            <slot name="taskActions" v-bind="taskActionProps" />
+        </template>
     </LaneHeader>
     <div v-else class="collapsed-cluster-node">
         <span
@@ -59,7 +62,11 @@
     import {computed} from "vue"
     import {Handle, Position} from "@vue-flow/core"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
     import * as Utils from "../utils/utils"
     import LaneHeader, {type LaneTaskNode} from "./LaneHeader.vue"
@@ -81,8 +88,8 @@
         sourcePosition?: Position;
         targetPosition?: Position;
         data: CollapsedClusterData;
-        icons?: Record<string, unknown>;
-        loadIcon?: (cls: string) => Promise<unknown>;
+        icons?: PluginIconMap;
+        loadIcon?: (cls: string) => Promise<PluginIconData | undefined>;
     }>()
 
     const emit = defineEmits([
@@ -109,7 +116,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .collapsed-lane {
         width: 100%;
         height: 100%;

@@ -1,6 +1,6 @@
 <template>
     <ElDropdownItem
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as ExtractPublicPropTypes<typeof dropdownItemProps>)"
         :class="{'is-danger': danger}"
     >
         <template v-if="$slots.default" #default>
@@ -10,7 +10,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdownItem} from "element-plus"
+    import {ElDropdownItem, dropdownItemProps} from "element-plus"
+    import type {Component, ExtractPublicPropTypes} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -19,7 +20,7 @@
         command?: string | number | object
         disabled?: boolean
         divided?: boolean
-        icon?: any
+        icon?: string | Component
         danger?: boolean
     }>()
 

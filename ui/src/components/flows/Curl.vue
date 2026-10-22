@@ -1,10 +1,10 @@
 <template>
-    <div class="position-relative">
+    <div class="curl-wrapper">
         <pre><code>{{ curlCommand }}</code></pre>
 
         <CopyToClipboard :text="curlCommand" />
 
-        <KsAlert class="mt-3" type="info" :closable="false">
+        <KsAlert class="curl-alert" type="info" :closable="false">
             {{ $t('curl.note') }}
         </KsAlert>
     </div>
@@ -121,7 +121,15 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .curl-wrapper {
+        position: relative;
+    }
+
+    .curl-alert {
+        margin-top: var(--ks-spacing-4);
+    }
+
     pre {
         border-radius: var(--kel-border-radius-base);
         padding-right: var(--ks-spacing-8);

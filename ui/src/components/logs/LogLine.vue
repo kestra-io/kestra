@@ -2,7 +2,7 @@
     <div
         v-if="filtered"
         class="line"
-        :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor}]"
+        :class="[`log-row-${levelLower}`, `density-${logsDensity}`, {selected: cursor, dimmed}]"
         :style="rowStyle"
     >
         <KsIcon v-if="cursor" class="icon_container" :style="{color: iconColor}" size="xl">
@@ -21,7 +21,9 @@
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <time v-if="log.timestamp" class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
+                <time v-if="log.timestamp" class="log-time" :title="timestamp.full">
+                    <span class="log-date">{{ `${timestamp.date} ` }}</span>{{ timestamp.clock }}
+                </time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>
@@ -57,13 +59,14 @@
     import {LevelKey, parseStructured} from "../../utils/logs"
     import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault, DENSITY_PADDING} from "../../composables/useLogDisplay"
     import {Log} from "../../stores/logs"
-    import {useRouter} from "vue-router"
+    import {useRouter, type RouteLocationRaw} from "vue-router"
     import * as Filters from "../../utils/filters"
 
 
     // Props
     const props = defineProps<{
         cursor?: boolean,
+        dimmed?: boolean,
         log: Partial<Log>,
         filter?: string,
         level?: LevelKey,
@@ -101,8 +104,14 @@
         }
     })
 
+    type LogMeta = {
+        key: keyof Log
+        value: unknown
+        router?: RouteLocationRaw
+    }
+
     const metaWithValue = computed(() => {
-        const result: any[] = []
+        const result: LogMeta[] = []
         const excludes:(keyof Log)[] = [
             "message",
             "timestamp",
@@ -117,7 +126,7 @@
         for (const keyString in props.log) {
             const key = keyString as keyof Log
             if (props.log[key] && !excludes.includes(key)) {
-                let meta: any = {key, value: props.log[key]}
+                const meta: LogMeta = {key, value: props.log[key]}
                 if (key === "executionId") {
                     meta["router"] = {
                         name: "executions/update",
@@ -141,6 +150,12 @@
             }
         }
         return result
+    })
+
+    const timestamp = computed(() => {
+        const full = props.log.timestamp ? Filters.date(props.log.timestamp, "iso") : ""
+        const [date, ...clock] = full.split(" ")
+        return {full, date, clock: clock.join(" ")}
     })
 
     const levelLabel = computed(() => {
@@ -197,7 +212,7 @@
         })
     }, {immediate: true})
 </script>
-<style scoped lang="scss">
+<style scoped>
 div.line {
     position: relative;
     display: flex;
@@ -215,6 +230,10 @@ div.line {
 
     &.selected {
         background: var(--ks-bg-tag-hover);
+    }
+
+    &.dimmed {
+        opacity: 0.4;
     }
 
     &[class*="-0"] {
@@ -238,14 +257,14 @@ div.line {
         text-transform: uppercase;
         line-height: 1.6;
         user-select: none;
+    }
 
-        &--clickable {
-            cursor: pointer;
-            border-radius: var(--ks-radius-xs);
+    .log-level--clickable {
+        cursor: pointer;
+        border-radius: var(--ks-radius-xs);
 
-            &:hover {
-                background: var(--ks-bg-hover);
-            }
+        &:hover {
+            background: var(--ks-bg-hover);
         }
     }
 
@@ -326,12 +345,12 @@ div.line {
         word-break: break-word;
     }
 
-    :deep(.log-message p) {
+    & :deep(.log-message p) {
         display: inline;
         margin-bottom: 0;
     }
 
-    :deep(.log-highlight) {
+    & :deep(.log-highlight) {
         background: var(--ks-bg-tag-active);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);
@@ -343,7 +362,7 @@ div.line {
         margin-top: 2px;
     }
 
-    :deep(.clipboard) {
+    & :deep(.clipboard) {
         position: static;
         flex: none;
         opacity: 0;
@@ -354,6 +373,62 @@ div.line {
     &:hover :deep(.clipboard) {
         opacity: 1;
         pointer-events: auto;
+    }
+
+    @media (hover: none) {
+        .log-copy {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    div.line {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "level header copy"
+            "message message message";
+        align-items: center;
+        gap: var(--ks-spacing-1) var(--ks-spacing-2);
+
+        .log-content {
+            display: contents;
+        }
+
+        .log-level {
+            grid-area: level;
+            width: auto;
+            padding: 0 var(--ks-spacing-1);
+            border: 1px solid currentColor;
+            border-radius: var(--ks-radius-xs);
+            font-size: var(--ks-font-size-2xs);
+            line-height: 1.4;
+        }
+
+        .log-header {
+            grid-area: header;
+        }
+
+        .log-copy {
+            grid-area: copy;
+        }
+
+        .log-message,
+        .log-json {
+            grid-area: message;
+        }
+
+        .log-date {
+            display: none;
+        }
+
+        &.density-compact .log-message {
+            white-space: pre-wrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
     }
 }
 </style>

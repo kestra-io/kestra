@@ -22,7 +22,17 @@
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="mb-4" />
+                    <Sections
+                        ref="dashboard"
+                        :charts
+                        :dashboard="DEFAULT_DASHBOARD"
+                        showDefault
+                        class="logs-chart"
+                        selectableChartId="logs_timeseries"
+                        :brushStart="brushRange?.startDate"
+                        :brushEnd="brushRange?.endDate"
+                        @chart-select="onChartSelect"
+                    />
                 </template>
 
                 <template #table>
@@ -118,8 +128,9 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
-    import {useRoute, useRouter} from "vue-router"
+    import {ref, computed, nextTick, watch, useTemplateRef, onBeforeUnmount} from "vue"
+    import {getActivePinia} from "pinia"
+    import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
     import {useLogFilter} from "../filter/configurations/logFilter"
@@ -152,7 +163,7 @@
     import type {LevelFilterValue} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
-    import {useLogsStore} from "../../stores/logs"
+    import {useLogsStore, useScopedLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
@@ -162,16 +173,18 @@
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
+    import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, type BrushRange} from "../../utils/logsBrushMappers"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
         embed?: boolean;
         showFilters?: boolean;
-        filters?: Record<string, any>;
+        filters?: LocationQueryRaw;
         reloadLogs?: number;
         namespace?: string | null;
         restoreurl?: boolean;
         withCharts?: boolean;
+        logsStoreScope?: string;
     }>(), {
         embed: false,
         showFilters: false,
@@ -181,6 +194,7 @@
         namespace: undefined,
         restoreurl: undefined,
         withCharts: true,
+        logsStoreScope: undefined,
     })
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"])
 
@@ -188,7 +202,14 @@
     const router = useRouter()
     const {t} = useI18n()
     const toast = useToast()
-    const logsStore = useLogsStore()
+    const logsStore = props.logsStoreScope ? useScopedLogsStore(props.logsStoreScope) : useLogsStore()
+    if (props.logsStoreScope) {
+        const pinia = getActivePinia()
+        onBeforeUnmount(() => {
+            logsStore.$dispose()
+            if (pinia) delete pinia.state.value[logsStore.$id]
+        })
+    }
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
     const quickIntervals = computed(() => [
@@ -216,7 +237,7 @@
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
-            ? localStorage.getItem("defaultLogLevel") || "INFO"
+            ? localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL) || "INFO"
             : "INFO",
     )
     const {
@@ -268,6 +289,16 @@
 
         return rawValue as string | undefined
     })
+    const brushRange = computed(() => readBrushRange(route.query))
+
+    function onChartSelect(range: BrushRange | null) {
+        router.push({
+            query: range
+                ? buildBrushTimeRangeQuery(route.query, range, pageKey)
+                : buildBrushClearQuery(route.query, pageKey),
+        })
+    }
+
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
     const charts = computed(() => {
@@ -275,7 +306,7 @@
         return chart ? [{...chart, content: YAML_CHART}] : []
     })
 
-    const loadQuery = (base: any) => {
+    const loadQuery = (base: Record<string, unknown>) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
 
@@ -350,7 +381,7 @@
             page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls,
             level: _l, startDate: _sd, endDate: _ed, ...routeFilters
         } = route.query
-        const params: Record<string, any> = props.filters ? {...props.filters} : {...routeFilters}
+        const params: Record<string, unknown> = props.filters ? {...props.filters} : {...routeFilters}
 
         if (isFlowEdit.value) {
             params["filters[namespace][EQUALS]"] = routeNamespace.value
@@ -420,7 +451,7 @@
     }
 
     const selectLevel = (level: string) => {
-        const query: Record<string, any> = {...route.query}
+        const query: LocationQueryRaw = {...route.query}
         Object.keys(query)
             .filter((key) => key.startsWith("filters[level]"))
             .forEach((key) => delete query[key])
@@ -436,7 +467,7 @@
 
     const copyAllLogs = () => {
         const text = (logsStore.logs ?? [])
-            .map((l: any) => `${(l.level ?? "").padEnd(5)} ${l.timestamp} ${(l.message ?? "").replace(/\s+$/, "")}`)
+            .map((l) => `${(l.level ?? "").padEnd(5)} ${l.timestamp} ${(l.message ?? "").replace(/\s+$/, "")}`)
             .join("\n")
         Utils.copy(text)
         toast.success(t("logs_copied"))
@@ -522,7 +553,11 @@
         if (newValue) refresh()
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
+
+    .logs-chart {
+        margin-bottom: var(--ks-spacing-5);
+    }
 
     .download-hint {
         margin: 0 0 var(--ks-spacing-3);
@@ -552,28 +587,30 @@
         margin: 0 var(--ks-spacing-6) var(--ks-spacing-3);
         padding: var(--ks-spacing-2) 0;
         background: var(--ks-bg-base);
+    }
 
-        &__left {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__left {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__actions {
-            display: flex;
-            align-items: center;
-            margin-left: auto;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        gap: var(--ks-spacing-2);
+    }
 
-        :deep(.kel-button) {
+    .logs-toolbar {
+        & :deep(.kel-button) {
             margin: 0;
         }
     }
 
     .log-panel {
-        > div.log-content {
+        & > div.log-content {
             margin-bottom: 1rem;
             .navbar {
                 border: 1px solid var(--ks-border-default);
@@ -598,7 +635,7 @@
                 background-color: var(--ks-bg-sidebar);
             }
 
-            > * + * {
+            & > * + * {
                 border-top: 1px solid var(--ks-border-default);
             }
         }

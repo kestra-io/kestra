@@ -1,6 +1,7 @@
 <template>
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
+    <ServerUnreachableBanner />
     <component :is="SdkDriftBanner" v-if="SdkDriftBanner" />
     <VersionUpgradeNotice v-if="loaded && route?.name && !route.meta?.anonymous" />
     <div id="app-shell">
@@ -10,9 +11,11 @@
                 <router-view />
             </component>
         </div>
+        <div id="bottom-actions-slot" />
     </div>
     <TourOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
+    <ReauthDialog />
     <DrillDownDrawer />
     <PwaInstallPrompt v-if="loaded && route?.name && !route.meta?.anonymous" />
 </template>
@@ -34,16 +37,20 @@
     import {initPosthogIfEnabled} from "./utils/posthog"
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
+    import ServerUnreachableBanner from "./components/ServerUnreachableBanner.vue"
     import TourOverlay from "./components/onboarding/tour/TourOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
+    import ReauthDialog from "./components/ReauthDialog.vue"
     import VersionUpgradeNotice from "./components/VersionUpgradeNotice.vue"
     import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
     import {revealApp} from "./utils/loaderReveal"
+    import {setDocumentTitle} from "./utils/documentTitle"
+    import {storageKeys} from "./utils/constants"
 
     // Dev-only, dynamically imported so the component is entirely absent from production bundles:
     // `import.meta.env.DEV` is statically replaced with `false` by Vite in prod builds, so this
@@ -77,9 +84,9 @@
 
     async function loadGeneralResources() {
         const config = await miscStore.loadConfigs()
-        const uid = localStorage.getItem("uid") || (() => {
+        const uid = localStorage.getItem(storageKeys.UID) || (() => {
             const newUid = Utils.uid()
-            localStorage.setItem("uid", newUid)
+            localStorage.setItem(storageKeys.UID, newUid)
             return newUid
         })()
 
@@ -87,13 +94,17 @@
             return null
         }
 
-        await docStore.initResourceUrlTemplate(config.version)
+        if (config.version) {
+            await docStore.initResourceUrlTemplate(config.version)
 
-        apiStore.loadFeeds({
-            version: config.version,
-            iid: config.uuid,
-            uid: uid,
-        })
+            if (config.uuid) {
+                apiStore.loadFeeds({
+                    version: config.version,
+                    iid: config.uuid,
+                    uid: uid,
+                })
+            }
+        }
 
         void initPosthogIfEnabled(config)
 
@@ -108,7 +119,9 @@
     }
 
     watch(() => route?.meta?.anonymous, async (anonymous) => {
-        if (!anonymous && BasicAuth.isLoggedIn()) {
+        if (anonymous) {
+            setDocumentTitle()
+        } else if (BasicAuth.isLoggedIn()) {
             try {
                 await loadGeneralResources()
             } catch (error) {

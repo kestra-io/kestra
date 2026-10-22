@@ -23,8 +23,8 @@ import io.kestra.core.models.dashboards.filters.StartsWith;
 import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class QueryFilterTest {
 
@@ -55,6 +55,25 @@ public class QueryFilterTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenOperationOutcomeIsFilteredWithoutOperationId() {
+        QueryFilter filter = QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value("FAILED").build();
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("OPERATION_OUTCOME", "OPERATION_ID");
+    }
+
+    @Test
+    void shouldNotThrowWhenOperationOutcomeIsFilteredWithOperationId() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(Field.OPERATION_ID).operation(Op.EQUALS).value("op-1").build(),
+            QueryFilter.builder().field(Field.OPERATION_OUTCOME).operation(Op.EQUALS).value("FAILED").build()
+        );
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(filters, Resource.EXECUTION));
+    }
+
+    @Test
     void shouldThrowExceptionWhenFieldIsNotSupportedForPromotionTargets() {
         QueryFilter filter = QueryFilter.builder().field(Field.NAMESPACE).operation(Op.EQUALS).value("io.kestra").build();
         InvalidQueryFiltersException e = assertThrows(
@@ -62,6 +81,12 @@ public class QueryFilterTest {
             () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.PROMOTION_TARGETS)
         );
         assertThat(e.getMessage()).contains("NAMESPACE", "PROMOTION_TARGETS");
+    }
+
+    @Test
+    void shouldSupportPrefixOpsOnFlowNamespaceAndParentIdOnAsset() {
+        assertThat(QueryFilter.Field.FLOW_NAMESPACE.supportedOp()).contains(QueryFilter.Op.STARTS_WITH, QueryFilter.Op.PREFIX);
+        assertThat(QueryFilter.Resource.ASSET.supportedField()).contains(QueryFilter.Field.PARENT_ID);
     }
 
     static Stream<Arguments> validOperationFilters() {
@@ -231,6 +256,17 @@ public class QueryFilterTest {
                     Op.NOT_EQUALS
                 )
             ),
+
+            buildQueryFiltersForOperations(
+                Field.OPERATION_ID, Resource.EXECUTION,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            // OPERATION_OUTCOME is intentionally not exercised here: a standalone OPERATION_OUTCOME
+            // filter always fails validation (it requires a sibling OPERATION_ID leaf), so it cannot
+            // be tested through this single-field harness — see shouldNotThrowWhenOperationOutcomeIsFilteredWithOperationId.
 
             buildQueryFiltersForOperations(
                 Field.WORKER_ID, Resource.TRIGGER,
@@ -1152,6 +1188,42 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.CHILD_FILTER, Resource.EXECUTION,
                 Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.OPERATION_ID, Resource.EXECUTION,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.OPERATION_OUTCOME, Resource.EXECUTION,
+                Set.of(
+                    Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,

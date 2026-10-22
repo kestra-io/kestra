@@ -95,8 +95,14 @@
 
     // Markdown-native links and images never go through the raw-HTML `xss` whitelist below,
     // so their URL needs its own scheme allowlist — otherwise `[x](javascript:…)` renders as a
-    // live anchor and executes in the viewer's session (stored XSS).
+    // live anchor and executes in the viewer's session (stored XSS). `data:` stays out here: a
+    // navigated `<a href="data:...">` renders as a document and executes, unlike an `<img>`.
     const ALLOWED_URL_SCHEMES = ["http:", "https:", "mailto:", "tel:", "ftp:"]
+
+    // Safe only for <img src>: browsers render an image's data: content (SVG included) in a
+    // script-disabled mode. Restricted to base64 image/* to keep out data:text/html and
+    // unencoded payloads.
+    const DATA_IMAGE_URL = /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i
 
     function sanitizeUrl(url: unknown): string | undefined {
         if (typeof url !== "string") return undefined
@@ -111,6 +117,15 @@
         if (!scheme) return value // relative URL, fragment or query-only link
 
         return ALLOWED_URL_SCHEMES.includes(scheme[1].toLowerCase() + ":") ? value : undefined
+    }
+
+    function sanitizeImageSrc(url: unknown): string | undefined {
+        if (typeof url !== "string") return undefined
+
+        const value = url.trim()
+        if (DATA_IMAGE_URL.test(value)) return value
+
+        return sanitizeUrl(url)
     }
 
     function htmlEscape(content: string): string {
@@ -321,7 +336,7 @@
         }
 
         case "image": {
-            const src = sanitizeUrl(node.url)
+            const src = sanitizeImageSrc(node.url)
             if (props.components?.img) {
                 return h(props.components.img, {
                     src,

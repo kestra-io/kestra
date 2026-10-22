@@ -14,17 +14,19 @@ import jakarta.inject.Singleton;
 public class NamespaceFactory {
 
     private final NamespaceFileMetadataStateStore namespaceFileMetadataStateStore;
+    private final NamespaceFileBackend backend;
 
     @Inject
-    public NamespaceFactory(NamespaceFileMetadataStateStore namespaceFileMetadataStateStore) {
+    public NamespaceFactory(NamespaceFileMetadataStateStore namespaceFileMetadataStateStore, NamespaceFileBackend backend) {
         this.namespaceFileMetadataStateStore = namespaceFileMetadataStateStore;
+        this.backend = backend;
     }
 
-    public Namespace of(String tenantId, String namespace, StorageInterface storageInterface) {
-        return new InternalNamespace(tenantId, namespace, storageInterface, namespaceFileMetadataStateStore);
+    public Namespace of(String tenantId, String namespace) {
+        return new InternalNamespace(tenantId, namespace, backend, namespaceFileMetadataStateStore);
     }
 
-    public Namespace of(Logger logger, String tenantId, String namespace, StorageInterface storageInterface) {
-        return new InternalNamespace(logger, tenantId, namespace, storageInterface, namespaceFileMetadataStateStore);
+    public Namespace of(Logger logger, String tenantId, String namespace) {
+        return new InternalNamespace(logger, tenantId, namespace, backend, namespaceFileMetadataStateStore);
     }
 }

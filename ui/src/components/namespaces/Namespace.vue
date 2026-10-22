@@ -18,7 +18,10 @@
     import TopNavBar from "../layout/TopNavBar.vue"
     import Actions from "override/components/namespaces/Actions.vue"
     import {useMiscStore} from "override/stores/misc"
+    import {provideNamespacePageState} from "override/composables/namespacePageState"
     import Tabs from "../Tabs.vue"
+
+    provideNamespacePageState()
     const {tabs} = useTabs()
     const {details} = useHelpers()
 
@@ -44,7 +47,7 @@
     watch(namespace, loadNamespace)
 
     watch(activeTabName, (newTab) => {
-        if (newTab === "overview" || newTab === "executions") {
+        if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
 
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {

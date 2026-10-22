@@ -33,7 +33,7 @@
 
     import {Chart, getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor} from "../composables/charts"
-    import {useTheme} from "../../../utils/utils"
+    import {useTheme} from "../../../composables/useTheme"
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
@@ -72,7 +72,7 @@
     watch(() => route.params.filters, refresh, {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .kpi {
         display: flex;
         flex-direction: column;
@@ -102,7 +102,7 @@
             width: 100%;
             margin-top: var(--ks-spacing-3);
 
-            :deep(.kel-progress-bar__outer) {
+            & :deep(.kel-progress-bar__outer) {
                 background-color: var(--ks-bg-base);
             }
         }

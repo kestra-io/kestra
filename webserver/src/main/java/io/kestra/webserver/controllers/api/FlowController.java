@@ -21,6 +21,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
@@ -28,6 +29,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.security.SecurityConfiguration;
@@ -54,6 +56,11 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.SourceSearchService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemType;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.exceptions.BulkValidationException;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
@@ -88,6 +95,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/{tenant}/flows")
 @Slf4j
 public class FlowController {
+
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -434,12 +442,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @RequestBody(description = "A list of flows source code") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete) throws Exception {
-        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
-
-        List<GenericFlow> genericFlows = sources
-            .stream()
-            .map(source -> parseFlowSource(source.trim()))
-            .toList();
+        List<GenericFlow> genericFlows = parseMultiFlowSource(flows);
 
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
     }
@@ -506,7 +509,7 @@ public class FlowController {
                 .stream()
                 .filter(
                     flow -> flow.getNamespace() == null
-                        || (!flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
+                        || (!flow.getNamespace().equals(namespace) && (!NamespaceInterface.isDescendantOrSelf(namespace, flow.getNamespace()) || !allowNamespaceChild))
                 )
                 .map(
                     flow -> ManualConstraintViolation.of(
@@ -621,10 +624,7 @@ public class FlowController {
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete,
         @Parameter(description = "The namespace where to update flows") @QueryValue @Nullable String namespace,
         @Parameter(description = "If namespace child should are allowed to be updated") @QueryValue(defaultValue = "false") Boolean allowNamespaceChild) throws Exception {
-        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
-        List<GenericFlow> genericFlows = sources.stream()
-            .map(source -> GenericFlow.fromYaml(tenantService.resolveTenant(), source))
-            .toList();
+        List<GenericFlow> genericFlows = parseMultiFlowSource(flows);
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, allowNamespaceChild);
     }
 
@@ -738,7 +738,8 @@ public class FlowController {
         } else {
             // Fallback to YAML body
             String content = (body == null ? "" : body).trim();
-            List<FlowSource> flowSources = Arrays.stream(content.split("\\n+---\\n*?"))
+            List<FlowSource> flowSources = YamlParser.splitDocuments(content)
+                .stream()
                 .map(flow -> new FlowSource(null, flow))
                 .toList();
 
@@ -758,13 +759,13 @@ public class FlowController {
             var parsedTask = parseTaskTrigger(task, Task.class);
             modelValidator.validate(parsedTask);
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the task", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the task: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the task: " + re.getMessage())));
         }
 
         return validateConstraintViolationBuilder.build();
@@ -782,13 +783,13 @@ public class FlowController {
             var parsedTrigger = parseTaskTrigger(trigger, AbstractTrigger.class);
             modelValidator.validate(parsedTrigger);
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the trigger", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the trigger: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the trigger: " + re.getMessage())));
         }
         return validateConstraintViolationBuilder.build();
     }
@@ -811,13 +812,13 @@ public class FlowController {
                 modelValidator.validate(taskParse);
             }
         } catch (ConstraintViolationException e) {
-            validateConstraintViolationBuilder.constraints(e.getMessage());
+            validateConstraintViolationBuilder.errors(ValidationError.ofException(e));
         } catch (RuntimeException re) {
             // In case of any error, we add a validation violation so the error is displayed in the UI.
             // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
             // in dev like incompatible plugin versions.
             log.error("Unable to validate the flow", re);
-            validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + re.getMessage());
+            validateConstraintViolationBuilder.errors(List.of(ValidationError.of("Unable to validate the flow: " + re.getMessage())));
         }
         return validateConstraintViolationBuilder.build();
     }
@@ -881,16 +882,28 @@ public class FlowController {
         summary = "Delete flows by their IDs."
     )
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
+    @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public HttpResponse<BulkResponse> deleteFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws QueueException {
-        List<Flow> list = ids
-            .stream()
-            .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
-            .peek(throwConsumer(flow -> flowService.delete(flow)))
-            .collect(Collectors.toList());
+            List<FlowWithSource> flows = new ArrayList<>();
+            List<ProblemError> invalids = new ArrayList<>();
 
-        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
-    }
+            for (IdWithNamespace id : ids) {
+                Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId());
+                if (flow.isPresent()) {
+                    flows.add(flow.get());
+                } else {
+                    invalids.add(flowProblem(id, "flow not found", ProblemTypes.NOT_FOUND));
+                }
+            }
+            if (!invalids.isEmpty()) {
+                throw new BulkValidationException("One or more flows could not be deleted.", invalids);
+            }
+
+            flows.forEach(throwConsumer(flow -> flowService.delete(flow)));
+
+            return HttpResponse.ok(BulkResponse.builder().count(flows.size()).build());
+        }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/disable/by-query")
@@ -1028,6 +1041,13 @@ public class FlowController {
         return Set.of();
     }
 
+    protected List<GenericFlow> parseMultiFlowSource(@Nullable String flows) {
+        return YamlParser.splitDocuments(flows)
+            .stream()
+            .map(this::parseFlowSource)
+            .toList();
+    }
+
     protected GenericFlow parseFlowSource(final String source) {
         return GenericFlow.fromYaml(tenantService.resolveTenant(), source);
     }
@@ -1100,5 +1120,9 @@ public class FlowController {
         String flowId,
         Integer revision,
         List<FlowService.TaskDeprecation> deprecatedTasks) {
+    }
+
+        private static ProblemError flowProblem(IdWithNamespace id, String detail, ProblemType type) {
+        return ProblemError.ofItem(detail, "flows[" + id.getNamespace() + "." + id.getId() + "]", type);
     }
 }

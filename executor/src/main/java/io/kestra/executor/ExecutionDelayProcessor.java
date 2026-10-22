@@ -103,6 +103,12 @@ public class ExecutionDelayProcessor {
                         && execution.getState().getCurrent() != State.Type.KILLING
                 ) {
                     if (executionDelay.getTaskRunId() == null) {
+                        // a scheduled start must not revive an execution that already left CREATED (force run, reschedule)
+                        if (!execution.getState().isCreated()) {
+                            log.warn("Skipping the expired scheduled start of the execution '{}': it is no longer CREATED.", execution.getId());
+                            return null;
+                        }
+
                         // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                         Execution markAsExecution = execution.withState(executionDelay.getState());
                         executor = executor.withExecution(markAsExecution, "pausedRestart");
@@ -165,10 +171,25 @@ public class ExecutionDelayProcessor {
                     Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null, Optional.empty());
                     executor = executor.withExecution(newExecution, "retryFailedFlow");
                 }
-                // Handle WaitFor
-                else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
+                // Handle WaitFor — skip if the execution is over (killed while it waited): it must never be revived
+                else if (
+                    executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)
+                        && !execution.getState().isTerminated()
+                ) {
                     Execution newExecution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                     executor = executor.withExecution(newExecution, "continueLoop");
+                }
+                // Handle flowable retries (RETRY_FLOWABLE): wipe the flowable's children and run it again
+                // Skip if the execution is being killed so the retry does not race the kill
+                else if (
+                    executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FLOWABLE)
+                        && execution.getState().getCurrent() != State.Type.KILLING
+                ) {
+                    Execution newAttempt = executionService.retryFlowable(
+                        executor.getExecution(),
+                        executionDelay.getTaskRunId()
+                    );
+                    executor = executor.withExecution(newAttempt, "retryFlowable");
                 }
             } catch (Exception e) {
                 executor = executorService.handleFailedExecutionFromExecutor(executor, e);

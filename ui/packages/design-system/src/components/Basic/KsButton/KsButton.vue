@@ -6,8 +6,8 @@
     >
         <ElButton
             :aria-label="tooltip"
-            v-bind="({...filteredProps(), ...$attrs} as any)"
-            :class="{'is-square': square}"
+            v-bind="({...filteredProps(), ...$attrs})"
+            :class="{'is-square': square, 'is-block': block}"
             @click="emit('click', $event)"
             plain
         >
@@ -24,8 +24,8 @@
     </KsTooltip>
     <ElButton
         v-else
-        v-bind="({...filteredProps(), ...$attrs} as any)"
-        :class="{'is-square': square}"
+        v-bind="({...filteredProps(), ...$attrs})"
+        :class="{'is-square': square, 'is-block': block}"
         @click="emit('click', $event)"
         plain
     >
@@ -69,6 +69,7 @@
         round?: boolean
         circle?: boolean
         square?: boolean
+        block?: boolean
         color?: string
         tag?: string | Component
         tooltip?: string
@@ -85,7 +86,7 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square"])
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square", "block"])
 </script>
 
 <style lang="scss">
@@ -130,8 +131,17 @@
             margin-left: var(--ks-spacing-2);
         }
 
+        > span {
+            width: var(--ks-button-content-width, auto);
+        }
+
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);
+        }
+
+        &.is-block {
+            display: flex;
+            width: 100%;
         }
 
         &.is-square {
@@ -202,6 +212,12 @@
             --kel-button-text-color: var(--ks-text-secondary);
             --kel-button-hover-link-text-color: var(--ks-text-primary);
             --kel-button-active-color: var(--ks-text-primary);
+
+            &.kel-button--primary.is-plain:not(.is-text) {
+                --kel-button-text-color: var(--ks-text-link);
+                --kel-button-hover-link-text-color: var(--ks-text-link);
+                --kel-button-active-color: var(--ks-text-link);
+            }
         }
 
         &.is-text {

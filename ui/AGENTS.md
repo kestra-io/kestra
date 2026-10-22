@@ -38,6 +38,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 
     Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
+13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.scss` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
 
 ## Best practices for keeping the design system healthy
 
@@ -52,7 +53,8 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### While you write code
 
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
-- Keep the style **inside** the SFC. `<style scoped src="./x.scss">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Keep the style **inside** the SFC. `<style scoped src="./x.css">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Write styles as plain CSS: no `lang="scss"` and no new `.scss` file outside `packages/design-system/` (kestra-io/kestra#21346). Native nesting works with `scoped`, but start a nested selector with `&` (`& :deep(.x)`, `& > *`), or Vue puts `[data-v-*]` on the nested part instead of the parent.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
 - Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
@@ -95,10 +97,10 @@ Reject (or ask to fix) anything that:
 
 - No hardcoded user-facing strings. Always go through i18n.
 - **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
-- Pass plurals and interpolation as named arguments to `$t(...)`, never string-concatenate. `<i18n-t>` is not used, and `tests/unit/i18n/i18nGuard.spec.ts` fails on it.
-- A string that embeds a component (`router-link`, `KsId`) renders through `splitTranslation(t, key, slot)` from `src/utils/splitTranslation`, which returns the text on each side of the placeholder. Keep the two halves and the component on one physical line: Vue turns a line break between an interpolation and an element into a space.
-- A string that embeds static markup (a `<code>` fragment) passes the markup as a named argument and renders with `v-html`.
-- Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
+- Pass plurals and interpolation as named arguments to `$t(...)`, never string-concatenate.
+- A string that embeds markup or a component (`<code>`, `router-link`, `KsId`) renders through `<i18n-t keypath="..." tag="span">` (vue-i18n's component interpolation, registered globally, so there is nothing to import), with one named slot per placeholder: `Mark as {status}` becomes `<template #status><code>{{ item.code }}</code></template>`. Keep the markup out of the translation, so no `v-html` and no `escapeHtml` are needed, and translators can reorder the placeholders.
+- `splitTranslation(t, key, slot)` and markup passed as a named argument to `v-html` are older patterns for the same job. Don't add new uses; move a string to `<i18n-t>` when you touch it.
+- Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly. `tests/unit/dateFormatGuard.spec.ts` (and its `ui-ee` twin) fails on `dayjs(...).format(`, `toLocaleString()` on a `Date`, and `Intl.DateTimeFormat` in `src/`; a file that serializes a date rather than displaying it goes in its `ALLOWED` list with the reason.
 - Date arithmetic goes through the `dayjs` re-exported by the design system. `dayjs` objects are **immutable**, so `d.add(1, "day")` returns a new instance and mutating idioms (`cursor.add(...)` in a loop) silently no-op — reassign instead. Parse untrusted input with `dateUtils.parseIso()`: bare `dayjs()` happily reads an epoch number or a bare year as a date.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
 
@@ -205,6 +207,10 @@ Guards are wired through `initApp`, and three things about that are easy to get 
 
 **There is one `beforeEach` slot.** OSS spends it on `tenantGuard` and can only do so because its auth guard is a `beforeResolve`; EE spends it on `authGuard`. A second `beforeEach` has to be composed into the existing one, or `initApp` has to grow to accept a list, rather than being registered afterwards, since "afterwards" is exactly the case that misses the first navigation.
 
+### Session loss and an unreachable server
+
+A 401 on a logged-out session opens `ReauthDialog` through `requestReauth(signIn)` and replays the failed request once the user signs in, so the page and its unsaved state survive; the edition supplies its own `signIn` from `onUnauthorized`. A request that fails without a response (or behind a 502/503/504) raises `ServerUnreachableBanner`, which clears on the next response. Don't add per-page handling for either, and don't clear `unsavedChange` before the user has chosen to leave. The native basic-auth dialog is suppressed for fetch and XHR only: `EventSource` cannot set headers and relies on `Sec-Fetch-Dest`, which browsers send only over HTTPS or localhost, so on plain HTTP its streams can still open the dialog.
+
 ### Unsaved input in modals (discard guard)
 
 Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. `KsDialog` and `KsDrawer` take a `dirty` prop and ask for confirmation themselves; never reimplement the confirm-before-discard logic per modal.
@@ -274,8 +280,8 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 
 ### Testing UI
 
-- Unit tests with **Vitest** + `@vue/test-utils`, colocated next to the component.
-- Mount through `i18nMount` or `i18nShallowMount` rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Missing-key warnings are off in both helpers, so a spec asserting on raw keys stays quiet. Two copies exist and behave the same: specs under `tests/unit/` and `packages/topology/tests/` import `tests/unit/i18nMount.ts`, and specs under `packages/design-system/tests/units/` import the one next to them. Both install the design system, as the app does at bootstrap, so a mounted `Ks*` component resolves instead of warning; a spec that mocks `@kestra-io/design-system` away has to keep a `default` export for that install, such as `default: {install: () => {}}`. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
+- Unit tests with **Vitest** + `@vue/test-utils`, and Storybook stories, live next to the file they cover: `src/components/logs/Foo.vue` has `Foo.spec.ts` and `Foo.stories.ts` beside it. A spec or story about one aspect of a file is named `<file>.<focus>` (`Foo.download.spec.ts`, `flow.draftSave.spec.ts`) so it sorts next to its subject; one that exercises several modules together keeps a descriptive name in their folder (`entityLoadRace.spec.ts`). `tests/unit/` keeps only the setup, the shared helpers (`i18nMount.ts`) and the repo-wide guards; `tests/storybook/` keeps only shared fixtures and the stories with no single source file. The `design-system` and `topology` packages follow the same rule with `*.test.ts`, their `tests/` keeping only setup and helpers. `tests/unit/specLocationGuard.spec.ts` fails on a spec or story left in any of these `tests/` folders for a file that exists in `src/`. Playwright specs stay in the `e2e/` package: they exercise the running app, not one source file.
+- Mount through `i18nMount` or `i18nShallowMount` rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Missing-key warnings are off in both helpers, so a spec asserting on raw keys stays quiet. Two copies exist and behave the same: specs under `src/`, `tests/unit/` and `packages/topology/src/` import `tests/unit/i18nMount.ts`, and design-system specs import `packages/design-system/tests/units/i18nMount.ts`. Both install the design system, as the app does at bootstrap, so a mounted `Ks*` component resolves instead of warning; a spec that mocks `@kestra-io/design-system` away has to keep a `default` export for that install, such as `default: {install: () => {}}`. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.
@@ -291,7 +297,7 @@ npm run check:types && npm run test:unit && npm run lint
 
 `npm run check:ts-any` compares the explicit `any` per file against `scripts/explicit-any/baseline.json`. It fails when a file gains one, so type it instead of raising the number. It also fails when a file loses one, because the baseline has to come down with the code: run `npm run check:ts-any -- --write` and commit the smaller numbers, or install the repo's git hooks (`.github/.hooks/setup_hooks.sh`) and the pre-commit hook does it for you. `--write` only ever lowers; it refuses to raise a count.
 
-Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
+Colour is gated automatically. `tests/unit/designSystem/colorGuard.spec.ts` fails on any hex, `rgb()`, `hsl()`, `oklch()`, `--el-*`, `--bs-*`, SCSS colour variable or bare keyword colour reaching a colour property anywhere under `ui/src` and `ui/packages/topology/src`, skipping `*.spec.ts`, `*.test.ts` and `*.stories.ts`, and prints `path:line (colours)` for every offending line. It runs with `npm run test:unit` and on every PR. Replace what it reports with a `--ks-*` token, a `Ks*` prop, or a change in the design system.
 
 Two escape hatches exist, each taking a reason, for the case the guard cannot judge: artwork whose colours **are** the asset (a brand mark, a third-party logo) rather than a themed surface. Nothing else qualifies, and a hardcoded colour that a token could carry is a bug whether or not the guard is silenced. There is deliberately no whole-file opt-out, and a `-start` with no `-end` is reported instead of muting the rest of the file.
 
@@ -341,14 +347,14 @@ When retiring a `Ks*` component, prop, or token:
 <template>
     <KsButton type="primary">{{ t("save") }}</KsButton>
 </template>
-<style lang="scss" scoped>
+<style scoped>
     /* Almost always: no custom CSS is needed at all. */
 </style>
 ```
 
 If your `<style>` block needs to exist:
 
-```scss
+```css
 /* Right: --ks-* tokens, no SCSS vars in feature code, no :deep */
 .my-feature {
     background: var(--ks-bg-surface);
@@ -363,7 +369,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
@@ -377,7 +383,7 @@ If your `<style>` block needs to exist:
 | Component | Purpose |
 |-----------|---------|
 | `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
-| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close |
+| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
@@ -398,9 +404,9 @@ If your `<style>` block needs to exist:
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
 | `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
-| `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model` |
+| `KsThemePicker` | Theme chooser, one miniature of the app per theme painted in that theme's own colours; options-driven via `:options` + `v-model`. A `#preview="{option}"` slot replaces the built-in miniature, `columns` lays the options out as a grid, `ariaLabel` names the radiogroup |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
-| `KsColorPicker` | Color picker |
+| `KsColorPicker` | Color picker; `alphaOnSurface` shows translucent colours over the page surface instead of a checkerboard |
 | `KsDurationPicker` | ISO 8601 duration picker |
 | `KsCascaderPanel` | Cascading hierarchical selector |
 | `KsUpload` | File upload |
@@ -412,9 +418,9 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
-| `KsBadge` | Small indicator badge |
+| `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
 | `KsAvatar` | Avatar with fallback |
@@ -430,7 +436,7 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
-| `KsExecutionStatus` | Execution / task status badge with icon and color |
+| `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
 | `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
 

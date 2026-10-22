@@ -7,7 +7,7 @@
         :size="resizable ? drawerSize : ''"
         :appendToBody="true"
         :beforeClose="guardedBeforeClose"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
         :class="{'full-screen': fullScreen && !resizable}"
         @resize-end="onResizeEnd"
         @before-close="emit('before-close', $event)"
@@ -128,6 +128,8 @@
             width: 70%;
             @include res(xs) {
                 width: 95%;
+                min-width: 0;
+                max-width: 92vw;
             }
 
             @include res(md) {
@@ -181,6 +183,7 @@
 
         &.full-screen {
             width: 99% !important;
+            max-width: none;
         }
 
         .kel-drawer__header {

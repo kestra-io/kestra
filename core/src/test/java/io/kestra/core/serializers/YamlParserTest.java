@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -203,7 +204,7 @@ class YamlParserTest {
         assertThat(exception.getMessage()).startsWith("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable");
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString())
-            .isEqualTo("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]");
+            .isEqualTo("tasks[0].invalid");
     }
 
     @Test
@@ -267,7 +268,30 @@ class YamlParserTest {
         FlowWithSource parse = YamlParser.parse(mapFlow, FlowWithSource.class, false);
 
         assertThat(parse.getLabels().size()).isEqualTo(1);
-        ;
+    }
+
+    @Test
+    void splitDocuments() {
+        assertThat(YamlParser.splitDocuments(null)).isEmpty();
+        assertThat(YamlParser.splitDocuments("")).isEmpty();
+        assertThat(YamlParser.splitDocuments("   \n\t  ")).isEmpty();
+
+        String single = "id: test\nnamespace: io.kestra";
+        assertThat(YamlParser.splitDocuments(single)).containsExactly(single);
+
+        String multipleWithLeadingAndComments = """
+            --- # first
+            id: flow1
+            description: a --- b
+            --- # second
+            id: flow2
+            ---
+            """;
+        List<String> docs = YamlParser.splitDocuments(multipleWithLeadingAndComments);
+        assertThat(docs).containsExactly(
+            "id: flow1\ndescription: a --- b",
+            "id: flow2"
+        );
     }
 
     private Flow parse(String path) {

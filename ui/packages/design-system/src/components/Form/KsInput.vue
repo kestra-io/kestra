@@ -2,7 +2,7 @@
     <ElInput
         ref="elInputRef"
         v-model="model"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="({...filteredProps(), ...$attrs} as InputProps)"
         :class="reserveClearSpace ? 'ks-input--reserve-clear' : undefined"
         @change="emit('change', $event)"
     >
@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
-    import {ElInput} from "element-plus"
+    import {type Component, computed, ref} from "vue"
+    import {ElInput, type InputProps} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -43,7 +43,7 @@
         placeholder?: string
         disabled?: boolean
         showPassword?: boolean
-        suffixIcon?: any
+        suffixIcon?: Component | string
         clearable?: boolean
         size?: "large" | "default" | "small"
         name?: string
@@ -82,6 +82,23 @@
 
     .kel-input__inner, .kel-textarea__inner {
         font-variant-ligatures: none;
+    }
+
+    @media (pointer: coarse) {
+        .kel-input,
+        .kel-input.kel-input--small,
+        .kel-input.kel-input--large {
+            --kel-input-height: 2.75rem;
+        }
+
+        .kel-input__inner,
+        .kel-textarea__inner {
+            font-size: 1rem;
+        }
+
+        .kel-textarea__inner {
+            min-height: 2.75rem;
+        }
     }
 
     .kel-textarea__inner {

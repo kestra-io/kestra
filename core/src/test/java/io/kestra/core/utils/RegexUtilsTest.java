@@ -107,6 +107,22 @@ class RegexUtilsTest {
             Arguments.of("(a|a)+$"),
             // Bounded-but-large nested quantifier ("Zalgo" shape) — no unbounded quantifier character at all
             Arguments.of("(a?){25}b"),
+            Arguments.of("(a{1,3}){10}"),
+            // Exempted groups multiply when stacked, and large inner bounds are not "small"
+            Arguments.of("(a?){5}(a?){5}(a?){5}(a?){5}b"),
+            Arguments.of("(a|a){3}b"),
+            Arguments.of("(a{1,1000}){5}b"),
+            // A separator that the repeated part can also match does not delimit the iterations
+            Arguments.of("(A[a-z]+)*"),
+            Arguments.of("(-[a-z\\-]+)*"),
+            Arguments.of("(-.*)*"),
+            Arguments.of("(\\w+\\s?)+"),
+            // Adjacent quantified parts in an exempted group make every iteration ambiguous
+            Arguments.of("^(-[a-z]+[a-z]+)*$"),
+            Arguments.of("(\\.a*a*)*b"),
+            Arguments.of("^(a{0,5}a{0,5}a{0,5}){5}b"),
+            Arguments.of("^(-)(\\1+-)*$"),
+            Arguments.of("^(?<s>-)(\\k<s>+-)*$"),
             Arguments.of("a".repeat(RegexUtils.MAX_USER_REGEX_LENGTH + 1))
         );
     }
@@ -130,6 +146,18 @@ class RegexUtilsTest {
             // A single quantifier on an escaped literal '+' — no ambiguity, must not be mistaken for
             // a nested unbounded quantifier
             Arguments.of("(a\\+)+"),
+            // Repeated at most once, or a small bounded count around bounded quantifiers
+            Arguments.of("^(?:[A-Z]{2})?\\d+$"),
+            Arguments.of("^(\\d{1,3}\\.){3}\\d{1,3}$"),
+            Arguments.of("(jpg|png)?"),
+            // Each iteration is delimited by a literal that the quantified part cannot match
+            Arguments.of("^([a-z0-9]+\\.)*[a-z0-9]+$"),
+            Arguments.of("^[a-z]+(-[a-z]+)*$"),
+            Arguments.of("io\\.kestra\\.plugin\\.(aws|gcp|azure)(\\..+)?"),
+            Arguments.of("registry\\.company\\.com/([a-z0-9-]+/)+[a-z0-9-]+(:[\\w.-]+)?"),
+            Arguments.of("(vm|node)-[a-z]+(-[0-9]+)+"),
+            Arguments.of("v?\\d+(\\.\\d+)*"),
+            Arguments.of("[a-z][0-9]+[a-z]*\\.(nano|micro|small)?"),
             Arguments.of("")
         );
     }

@@ -139,7 +139,11 @@
 
                 <div class="source-search__spacer" />
 
-                <span v-if="!showLoadingState" class="source-search__summary" v-html="summaryCross" />
+                <i18n-t v-if="!showLoadingState" keypath="source_search.summary_cross" tag="span" class="source-search__summary">
+                    <template #matches><strong>{{ $t("source_search.match_count", summaryMatchCount) }}</strong></template>
+                    <template #resources><strong>{{ $t("source_search.count_resources", summaryResourceCount) }}</strong></template>
+                    <template #types><strong>{{ $t("source_search.count_types", summaryActiveTypeCount) }}</strong></template>
+                </i18n-t>
 
                 <div v-if="!showLoadingState" class="source-search__match-nav">
                     <KsIconButton
@@ -226,7 +230,7 @@
         </div>
 
         <div v-else-if="showLoadingState" class="source-search__states">
-            <div class="source-search__skeleton-rows">
+            <div data-test="source-search-loading" class="source-search__skeleton-rows">
                 <KsSkeleton v-for="n in 4" :key="n" animated :rows="1" class="source-search__skeleton-row" />
             </div>
         </div>
@@ -244,7 +248,11 @@
                         {{ hiddenTypeHint }}
                     </KsText>
 
-                    <p v-if="suggestedQuery">{{ didYouMeanTranslation[0] }}<KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>{{ didYouMeanTranslation[1] }}</p>
+                    <i18n-t v-if="suggestedQuery" keypath="source_search.did_you_mean" tag="p">
+                        <template #suggestion>
+                            <KsButton type="text" size="small" @click="query = suggestedQuery">{{ suggestedQuery }}</KsButton>
+                        </template>
+                    </i18n-t>
                 </template>
                 <div class="source-search__examples">
                     <KsButton v-if="hiddenTypeCounts.length > 0" type="primary" @click="selectAllTypes">
@@ -316,7 +324,7 @@
     import {ref, computed, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter, type LocationQuery} from "vue-router"
-    import {debounce, escapeHtml} from "@kestra-io/design-system"
+    import {debounce} from "@kestra-io/design-system"
     import TopNavBar from "../layout/TopNavBar.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
     import SourceSearchResults from "./SourceSearchResults.vue"
@@ -339,7 +347,6 @@
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
-    import {splitTranslation} from "../../utils/splitTranslation"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
     import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
     import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
@@ -352,9 +359,8 @@
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
-    const didYouMeanTranslation = computed(() => splitTranslation(t, "source_search.did_you_mean", "suggestion"))
     const crossResourceSearchStore = useCrossResourceSearchStore()
-
+    const suggestedQuery = computed(() => crossResourceSearchStore.suggestedQuery)
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
     const selection = ref<CrossSearchSelection | null>(null)
@@ -479,9 +485,6 @@
             }
         })
     }
-
-    const suggestedQuery = ref<string | null>(null)
-
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
@@ -499,12 +502,6 @@
     const summaryMatchCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.countFor(type), 0))
     const summaryResourceCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.resourceCountFor(type), 0))
     const summaryActiveTypeCount = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.countFor(type) > 0).length)
-    const strong = (value: string) => `<strong>${escapeHtml(value)}</strong>`
-    const summaryCross = computed(() => t("source_search.summary_cross", {
-        matches: strong(t("source_search.match_count", summaryMatchCount.value)),
-        resources: strong(t("source_search.count_resources", summaryResourceCount.value)),
-        types: strong(t("source_search.count_types", summaryActiveTypeCount.value)),
-    }))
 
     const anyCountingSelected = computed(() => selectedTypes.value.some((type) => crossResourceSearchStore.statusFor(type) === "counting"))
     const failedSelectedTypes = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.statusFor(type) === "failed"))
@@ -664,6 +661,7 @@
             toast.warning(t("source_search.replace_apply_skipped", {count: response.skipped.length, reasons}))
         }
         previewResponse.value = null
+        startSearch()
         return fetchResults()
     }
 
@@ -707,17 +705,27 @@
         return applyReplace(flowsToApply)
     }
 
+    let searchPendingToken = 0
+
+    function startSearch() {
+        searchPendingToken++
+        searchPending.value = Boolean(query.value)
+    }
+
     async function fetchResults() {
         if (!loadInit.value) return
+
+        const currentSearchPendingToken = searchPendingToken
+
         if (!query.value) {
             searchPending.value = false
             crossResourceSearchStore.reset()
             return
         }
+
         const currentQuery = query.value
 
         previewResponse.value = null
-        suggestedQuery.value = null
 
         try {
             const gen = await crossResourceSearchStore.search({
@@ -732,18 +740,16 @@
                 !anyCountingSelected.value &&
                 summaryMatchCount.value === 0
             ) {
-                const suggestion = await crossResourceSearchStore.searchFlowSuggestion({
+                await crossResourceSearchStore.searchFlowSuggestion({
                     query: currentQuery,
                     namespace: namespaceFilter.value,
                     ...searchFilters.value,
                 }, gen)
-
-                if (suggestion !== undefined) {
-                    suggestedQuery.value = suggestion
-                }
             }
         } finally {
-            searchPending.value = false
+            if (currentSearchPendingToken === searchPendingToken) {
+                searchPending.value = false
+            }
         }
     }
 
@@ -753,7 +759,7 @@
         () => [query.value, namespaceFilter.value, JSON.stringify(searchFilters.value)].join("|"),
         () => {
             // Synchronous, so the debounce window is already covered by the loading state.
-            searchPending.value = Boolean(query.value)
+            startSearch()
             debouncedFetch()
         },
     )
@@ -776,11 +782,12 @@
             selection.value = list.length > 0 ? {...list[0]} : null
         }
     })
-
+    
+    startSearch()
     fetchResults()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search {
     display: flex;
     flex-direction: column;

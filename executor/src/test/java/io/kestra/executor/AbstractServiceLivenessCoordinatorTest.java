@@ -68,9 +68,11 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.core.worker.models.WorkerInfo;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.worker.WorkerAgent;
+import io.kestra.worker.WorkerConfig;
 import io.kestra.worker.WorkerJobExecutor;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.GrpcWorkerIOSender;
@@ -194,7 +196,9 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             ),
             applicationContext.getBean(MaintenanceService.class),
             applicationContext.getBean(MetricRegistry.class),
-            applicationContext.getBean(ServerConfig.class)
+            applicationContext.getBean(ServerConfig.class),
+            applicationContext.getBean(WorkerConfig.class),
+            new WorkerInfo()
         );
     }
 
@@ -276,6 +280,14 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
         assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        // The coordinator can only handle a worker whose service instance is already registered.
+        Await.until(
+            () -> serviceInstanceRepository.findById(worker.getId())
+                .filter(instance -> instance.is(Service.ServiceState.RUNNING))
+                .isPresent(),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(30)
+        );
         // WHEN - stop first worker.
         worker.stopNow(); // simulate a non-graceful stop (hard shutdown, crash, etc.).
 
@@ -312,6 +324,42 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             () ->
             {
                 jdbcServiceLivenessHandler.handleAllWorkersForUncleanShutdown(Instant.now().plus(Duration.ofMinutes(1)));
+                return !leasesHeldBy(deadWorker.uid()).contains(workerTask.uid());
+            },
+            Duration.ofMillis(200),
+            Duration.ofSeconds(30)
+        );
+
+        // Then
+        assertThat(resubmitted).doesNotContain(workerTask.uid());
+    }
+
+    @Test
+    void shouldDiscardInsteadOfResubmittingTaskRunOfExecutionThatAlreadyEnded() throws Exception {
+        // Given an execution killed by an SLA while its task run was still held by a worker that then
+        // died: the kill only reaches live workers, so the task run is still RUNNING in the execution
+        // and only the execution itself carries a terminal state (kestra-io/kestra#19722).
+        Log task = Log.builder().id("log").type(Log.class.getName()).message("test").build();
+        Execution execution = TestsUtils.mockExecution(flowForTask(task), ImmutableMap.of()).toBuilder().tenantId(TenantService.MAIN_TENANT).build();
+        TaskRun taskRun = TaskRun.of(execution, ResolvedTask.of(task));
+        executionRepository.save(execution.toBuilder().taskRunList(List.of(taskRun.withState(State.Type.RUNNING))).build().withState(State.Type.KILLED));
+
+        ServiceInstance deadWorker = saveWorkerInstance(Service.ServiceState.DISCONNECTED);
+        WorkerTask workerTask = WorkerTask.builder()
+            .data(WorkerTaskData.from(runContextFactory.of(ImmutableMap.of("key", "value"))))
+            .task(task)
+            .taskRun(taskRun)
+            .build();
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, WorkerTaskRunning.of(workerTask, new WorkerInstance(deadWorker.uid(), null)));
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+
+        // When
+        Await.until(
+            () ->
+            {
+                jdbcServiceLivenessHandler.handleAllWorkersForUncleanShutdown(afterTerminationGracePeriod());
                 return !leasesHeldBy(deadWorker.uid()).contains(workerTask.uid());
             },
             Duration.ofMillis(200),

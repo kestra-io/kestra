@@ -1,5 +1,5 @@
 <template>
-    <div class="h-100 d-flex flex-column">
+    <div class="editor-tab">
         <img
             v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
             :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
@@ -34,11 +34,11 @@
                     </div>
                 </KsAlert>
             </div>
+            <NamespaceFilesTip v-if="flow && previewSource === undefined && !flowStore.isReadOnly" />
             <KsEditor
                 v-bind="editorBindings"
                 id="flowFileEditorTab"
                 ref="editorRefElement"
-                class="flex-1"
                 :modelValue="previewSource ?? source"
                 :original="previewSource ? source : undefined"
                 :schemaType="flow ? 'flow': undefined"
@@ -62,7 +62,7 @@
                 @mouse-leave="() => highlightHoveredTask(-1)"
             >
                 <template #absolute>
-                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
+                    <ContentSave v-if="!flow" data-test="file-save" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -107,6 +107,7 @@
     import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
     import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
+    import {useViolationMarkers} from "../../composables/useViolationMarkers"
 
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsEditor} from "@kestra-io/design-system"
@@ -117,6 +118,7 @@
     import {humanFileSize} from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
+    import NamespaceFilesTip from "../flows/NamespaceFilesTip.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
     import {authoringSurfaceAnswersKeyFor} from "../no-code/blocks/useAuthoringSurface"
 
@@ -295,6 +297,11 @@
         && !flowStore.isReadOnly
         && previewSource.value === undefined)
 
+    useViolationMarkers({
+        editor: monacoEditor,
+        errors: computed(() => props.flow && previewSource.value === undefined ? flowStore.flowValidation?.errors : undefined),
+    })
+
     useReadOnlyYamlKeys({
         editor: monacoEditor,
         expected: computed(() => props.flow
@@ -396,15 +403,26 @@
         await save()
     }
 
+    // The tab stays dirty until the request returns, so without this a click during a slow save sends the file again.
+    const sendingContent = ref<string>()
+
     const saveFileContent = async () => {
         clearTimeout(timeout.value)
-        if(!namespace.value || !props.path || props.flow) return
-        await namespacesStore.saveOrCreateFile({
-            namespace: namespace.value,
-            path: props.path,
-            content: editorContent.value || "",
-        })
-        savedSourceNS.value = source.value
+        const content = source.value
+        if(!namespace.value || !props.path || props.flow || content === sendingContent.value) return
+        sendingContent.value = content
+        try {
+            await namespacesStore.saveOrCreateFile({
+                namespace: namespace.value,
+                path: props.path,
+                content: content || "",
+            })
+            savedSourceNS.value = content
+        } finally {
+            if (sendingContent.value === content) {
+                sendingContent.value = undefined
+            }
+        }
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {
@@ -431,7 +449,13 @@
     } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .editor-tab {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
     .image-preview {
         margin: 2rem;
     }

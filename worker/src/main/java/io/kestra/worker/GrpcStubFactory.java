@@ -88,6 +88,18 @@ public class GrpcStubFactory {
 
     @Bean
     @Singleton
+    public NamespaceFileContentServiceGrpc.NamespaceFileContentServiceStub namespaceFileContentServiceStub(GrpcChannelManager manager) {
+        return NamespaceFileContentServiceGrpc.newStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
+    public NamespaceFileContentServiceGrpc.NamespaceFileContentServiceBlockingStub namespaceFileContentServiceBlockingStub(GrpcChannelManager manager) {
+        return NamespaceFileContentServiceGrpc.newBlockingStub(manager.getDefaultChannel());
+    }
+
+    @Bean
+    @Singleton
     public ExecutionLogsServiceGrpc.ExecutionLogsServiceBlockingStub executionLogMetaStore(GrpcChannelManager manager) {
         return ExecutionLogsServiceGrpc.newBlockingStub(manager.getDefaultChannel());
     }

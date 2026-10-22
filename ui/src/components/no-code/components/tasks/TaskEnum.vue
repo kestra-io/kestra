@@ -44,12 +44,12 @@
         "update:modelValue": [value: ModelValue | undefined]
     }>()
 
-    function onInput(value: ModelValue) {
+    function onInput(value: ModelValue | undefined) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 :deep(.kel-select__suffix) {
     display: flex !important;
 }

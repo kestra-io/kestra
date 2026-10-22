@@ -106,11 +106,8 @@ micronaut:
       retry:
         enabled: true
       netty:
-        # Must stay off on Micronaut 5: this binder replaces the stock NIO event-loop factory with an
-        # instrumented one that drops its 'nio' qualifier, and Micronaut 5 looks transports up by qualifier, so
-        # enabling it fails startup with "No matching transport was found".
         queues:
-          enabled: false
+          enabled: true
         bytebuf-allocators:
           enabled: true
         channels:

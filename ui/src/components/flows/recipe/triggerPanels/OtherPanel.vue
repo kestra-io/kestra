@@ -98,7 +98,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .other-panel {
         display: flex;
         flex-direction: column;

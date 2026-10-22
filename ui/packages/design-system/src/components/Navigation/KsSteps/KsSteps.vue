@@ -5,7 +5,7 @@
     <ElSteps
         v-else
         :class="{'kel-steps--small': size === 'small'}"
-        v-bind="({...filteredProps(), ...$attrs} as any)"
+        v-bind="{...filteredProps(), ...$attrs}"
     >
         <template v-if="$slots.default" #default>
             <slot />
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ElSteps} from "element-plus"
+    import {ElSteps, type StepsProps} from "element-plus"
     import {provide, toRef} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
@@ -24,8 +24,8 @@
         active?: number
         direction?: "horizontal" | "vertical"
         space?: string | number
-        finishStatus?: string
-        processStatus?: string
+        finishStatus?: StepsProps["finishStatus"]
+        processStatus?: StepsProps["processStatus"]
         simple?: boolean
         alignCenter?: boolean
         size?: "default" | "small"

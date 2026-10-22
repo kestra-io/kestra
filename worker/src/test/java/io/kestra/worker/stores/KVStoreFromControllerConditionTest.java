@@ -45,7 +45,7 @@ class KVStoreFromControllerConditionTest {
     private static ConditionContext<?> context(String serverType, String workerAccess) {
         ConditionContext<?> context = mock(ConditionContext.class);
         when(context.get("kestra.server-type", String.class)).thenReturn(Optional.ofNullable(serverType));
-        when(context.get(KVWorkerAccess.CONFIG_KEY, String.class)).thenReturn(Optional.ofNullable(workerAccess));
+        when(context.get(KVStoreFromControllerCondition.CONFIG_KEY, String.class)).thenReturn(Optional.ofNullable(workerAccess));
         return context;
     }
 }

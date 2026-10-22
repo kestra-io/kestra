@@ -20,6 +20,7 @@
                         :dragOver="dragOverIndex === elementIndex"
                         :runnable="playgroundStore.enabled && hasId(element)"
                         :showDuplicate="hasId(element)"
+                        :showIcon="!isInputs"
                         :icons="pluginsStore.icons"
                         @select="onSelect(elementIndex)"
                         @open-split="onSelect(elementIndex, true)"
@@ -93,7 +94,7 @@
     })
 
     interface Task {
-        id: string;
+        id?: string;
         type: string;
         [key: string]: unknown;
     }
@@ -166,9 +167,11 @@
     const {runTask, playgroundStore} = usePlaygroundRun()
     const {dragOverIndex, handleDragStart, handleDragOver, handleDrop, handleDragEnd} = useDragAndDrop()
 
-    const hasId = (element: Record<string, any>) => displayTaskOf(element).id != null
+    const isInputs = computed(() => props.root === "inputs")
 
-    const cardLabel = (element: Record<string, any>) => {
+    const hasId = (element: Task) => displayTaskOf(element).id != null
+
+    const cardLabel = (element: Task) => {
         const task = displayTaskOf(element)
         if (task.id != null) return String(task.id)
         const typeValue = task[typeFieldSchema.value]
@@ -187,7 +190,7 @@
         updateYaml(duplicateBlockAtPath(flow.value, `${parentPathComplete.value}[${index}]`))
     }
 
-    const onRun = (element: Record<string, any>) => {
+    const onRun = (element: Task) => {
         const id = displayTaskOf(element).id
         if (id != null) runTask(String(id))
     }
@@ -198,14 +201,14 @@
         })
     }
 
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, unknown>>({}))
 
     const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {})
 
     const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .tasks-wrapper {
     width: 100%;
 }

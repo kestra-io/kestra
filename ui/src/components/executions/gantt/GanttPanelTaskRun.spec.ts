@@ -179,6 +179,38 @@ describe("GanttPanelTaskRun", () => {
         expect(wrapper.getComponent({name: "FailureExecutionInputs"}).props("inputIds")).toEqual(["region"])
     })
 
+    it("shouldFindTheTaskBlockOfATaskDeclaredInTheErrorsSection", async () => {
+        mocks.flow.mockResolvedValue({
+            source: FLOW_SOURCE + "errors:\n  - id: alert_on_call\n    type: io.kestra.plugin.core.log.Log\n    message: paging\n",
+            inputs: [],
+        })
+        const {wrapper} = mountPanel(rootNode(taskRun("root-alert", "alert_on_call", "FAILED", "2024-01-01T00:00:06Z")))
+
+        await openTab(wrapper, "configuration")
+
+        expect(wrapper.getComponent({name: "FailureResolvedConfig"}).props("rawBlock")).toContain("message: paging")
+    })
+
+    it("shouldListEveryOutputsReferenceOfTheTaskIncludingStatementBlocks", async () => {
+        mocks.flow.mockResolvedValue({
+            source: [
+                "id: monthly_close",
+                "namespace: company.finance",
+                "tasks:",
+                "  - id: reconcile",
+                "    type: io.kestra.plugin.core.log.Log",
+                "    message: \"{% if outputs.check.code == 0 %}{{ outputs.a.x ~ outputs['b'].y }}{% endif %}\"",
+                "",
+            ].join("\n"),
+            inputs: [],
+        })
+        const {wrapper} = mountPanel(rootNode(taskRun("root-reconcile", "reconcile", "FAILED", "2024-01-01T00:00:05Z")))
+
+        await openTab(wrapper, "inputs-outputs")
+
+        expect(wrapper.getComponent({name: "FailureUpstreamOutputs"}).props("referencedTaskIds")).toEqual(["check", "a", "b"])
+    })
+
     it("shouldOnlyOfferTaskRunsOfTheOwningExecutionInTheStructureTab", async () => {
         const {wrapper} = mountPanel(iterationNode(iterationTaskRuns[1]))
 

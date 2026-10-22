@@ -3,6 +3,7 @@ import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {flow as fetchFlow} from "@kestra-io/kestra-sdk/flows"
 import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import type {ExecutionTaskRun} from "../executionTaskRun"
+import {TASK_SECTIONS} from "../../no-code/blocks/blockSections"
 import type {StructuralNode} from "./types"
 import {
     createTaskRunNode,
@@ -15,7 +16,7 @@ import {
 } from "./ganttTree"
 
 const MAX_STRUCTURAL_NEIGHBORS = 6
-const OUTPUT_REFERENCE = /\{\{[^}]*\boutputs(?:\[['"]|\.)([A-Za-z0-9_-]+)/g
+const OUTPUT_REFERENCE = /\boutputs(?:\[['"]|\.)([A-Za-z0-9_-]+)/g
 
 type FlowWithSource = Awaited<ReturnType<typeof fetchFlow>>
 
@@ -82,7 +83,12 @@ export function useTaskRunContext(node: () => TaskRunNode, flowEnabled: Ref<bool
 
     const rawBlock = (taskId: string): string | undefined => {
         const source = flow.value?.source
-        return source ? YAML_UTILS.extractBlock({source, section: "tasks", key: taskId}) : undefined
+        if (!source) return undefined
+        for (const section of TASK_SECTIONS) {
+            const block = YAML_UTILS.extractBlock({source, section, key: taskId})
+            if (block) return block
+        }
+        return undefined
     }
 
     const rawTaskBlock = computed(() => rawBlock(node().taskRun.taskId))

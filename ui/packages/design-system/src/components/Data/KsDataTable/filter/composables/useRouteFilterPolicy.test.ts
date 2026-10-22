@@ -98,9 +98,8 @@ describe("useRouteFilterPolicy", () => {
             expect(routerStub.replace).not.toHaveBeenCalled()
         })
 
-        // effectiveValue prefers the route value over the explicit one. The issue's second bullet
-        // states the reverse, but the code (and its consumer in Logs.vue) treats the URL as the
-        // most specific source, so the precedence is pinned as implemented: kestra-io/kestra#21308
+        // The issue's bullet says the explicit value wins; the code treats the URL as the most
+        // specific source, so the precedence is pinned as implemented: kestra-io/kestra#21308
         test("shouldPreferTheRouteValueOverTheExplicitValueWhenBothAreSet", () => {
             setQuery({"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"})
             const policy = startPolicy(() =>
@@ -182,8 +181,6 @@ describe("useRouteFilterPolicy", () => {
     })
 
     describe("setRouteValue synchronization", () => {
-        // isSameValue must compare by content: a freshly-built object equal to the route's own
-        // value is no change, and only a re-encoded or new value may fire a router.replace.
         test("shouldNotReplaceTheRouteAgainForStructurallyEqualObjectValuesButForAChangedOne", () => {
             const policy = startPolicy(() =>
                 useRouteFilterPolicy<LevelFilterValue>({...resolverOptions}))
@@ -209,7 +206,6 @@ describe("useRouteFilterPolicy", () => {
             expect(replacedQuery(0)).toEqual({"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"})
             expect(routerStub.replace).toHaveBeenCalledTimes(1)
 
-            // once the route carries the supported encoding, an equal value settles without a write
             policy.setRouteValue(minLevel("ERROR"))
             expect(routerStub.replace).toHaveBeenCalledTimes(1)
         })
@@ -261,7 +257,6 @@ describe("useRouteFilterPolicy", () => {
 
     describe("scope disposal", () => {
         test("shouldTearDownTheSettleTimeoutWhenTheScopeIsDisposed", () => {
-            // navigation never lands, so the settle grace period stays armed after the default write
             routerStub.autoApply = false
             const scope = effectScope()
             scopes.push(scope)

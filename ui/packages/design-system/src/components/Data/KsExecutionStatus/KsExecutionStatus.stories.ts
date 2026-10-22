@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, within} from "storybook/test"
 import KsExecutionStatus from "./KsExecutionStatus.vue"
 
 const statuses = [
@@ -46,6 +47,25 @@ export const AllStatuses: Story = {
             </div>
         `,
     }),
+    play: async ({canvasElement}) => {
+        const resolved = (property: "color" | "backgroundColor", value: string) => {
+            const probe = document.createElement("span")
+            probe.style[property] = value
+            canvasElement.append(probe)
+            const result = getComputedStyle(probe)[property]
+            probe.remove()
+            return result
+        }
+
+        const badges = within(canvasElement).getAllByRole("button")
+        statuses.forEach((status, index) => {
+            const style = getComputedStyle(badges[index])
+            const name = status.toLowerCase()
+            expect(style.color).toBe(resolved("color", `var(--ks-status-${name})`))
+            expect(style.backgroundColor).toBe(resolved("backgroundColor", `var(--ks-status-background-${name})`))
+            expect(style.backgroundColor).not.toBe("rgba(0, 0, 0, 0)")
+        })
+    },
 }
 
 export const WithIcons: Story = {
@@ -95,7 +115,7 @@ export const CustomTitle: Story = {
 }
 
 /**
- * Hover both badges: only the opted-in one shows a pointer. The CSS reset (_reboot.scss) puts
+ * Hover both badges: only the opted-in one shows a pointer. The CSS reset (_reboot.css) puts
  * `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties with the component's own
  * scoped rule and wins on source order, so the non-clickable badge used to advertise a click it
  * never handled. It now inherits instead, so a badge inside a clickable row still shows the

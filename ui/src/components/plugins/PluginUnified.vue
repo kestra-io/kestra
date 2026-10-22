@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="p-4">
+        <div class="plugin-header">
             <h1>
                 <TaskIcon
                     class="icon"
@@ -180,6 +180,10 @@
 </script>
 
 <style scoped>
+    .plugin-header {
+        padding: var(--ks-spacing-5);
+    }
+
     .section {
         h2 {
             color: var(--ks-text-primary);

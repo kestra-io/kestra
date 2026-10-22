@@ -1,6 +1,14 @@
 import {describe, it, expect, vi, afterEach, beforeEach} from "vitest"
 import {defineComponent, h} from "vue"
 import {flushPromises, type VueWrapper} from "@vue/test-utils"
+import {createPinia} from "pinia"
+
+const searchLogs = vi.hoisted(() => vi.fn())
+
+vi.mock("@kestra-io/kestra-sdk/logs", () => ({
+    searchLogs,
+    deleteLogsFromFlow: vi.fn(),
+}))
 
 // The component watches the route, so the stub has to be reactive - a plain object
 // makes Vue warn about an invalid watch source on every mount.
@@ -83,7 +91,7 @@ function mountTriggersTab() {
         props: {embed: true},
         // TestEventDialog pulls editor bindings (real Pinia stores) even while
         // closed; it is irrelevant to the executions link.
-        global: {stubs: {RouterLink: RouterLinkStub, TestEventDialog: true}},
+        global: {plugins: [createPinia()], stubs: {RouterLink: RouterLinkStub, TestEventDialog: true}},
     })
     mounted.push(wrapper)
     return wrapper
@@ -95,11 +103,14 @@ const mounted: VueWrapper[] = []
 beforeEach(() => {
     vi.useFakeTimers()
     localStorage.clear()
+    sessionStorage.clear()
+    searchLogs.mockReset().mockResolvedValue({results: [], total: 0})
     permissions.isAllowed = (resource: string, action: string) => resource === "EXECUTION" && action === "VIEW"
 })
 afterEach(() => {
     while (mounted.length) mounted.pop()?.unmount()
     localStorage.clear()
+    sessionStorage.clear()
     vi.useRealTimers()
 })
 
@@ -164,4 +175,69 @@ describe("FlowTriggers - executions link", () => {
 
         expect(executionsLinks(wrapper)).toHaveLength(0)
     })
+})
+
+it("filters expanded logs by trigger even before a scheduler state exists", async () => {
+    const wrapper = mountTriggersTab()
+    await flushPromises()
+
+    const expanders = wrapper.findAll(".kel-table__expand-icon")
+    expect(expanders).toHaveLength(2)
+    await expanders[0].trigger("click")
+    await expanders[1].trigger("click")
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    const requests = searchLogs.mock.calls.map(([params]) => params)
+        .filter(params => params.size !== 1)
+    expect(requests).toHaveLength(2)
+    for (const [index, request] of requests.entries()) {
+        expect(request.filters).toEqual(expect.arrayContaining([
+            {field: "namespace", operation: "EQUALS", value: "company.team"},
+            {field: "flowId", operation: "EQUALS", value: "my-flow"},
+            {field: "triggerId", operation: "EQUALS", value: index === 0 ? "trigger-a" : "trigger-b"},
+        ]))
+    }
+})
+
+it("keeps each expanded trigger's logs in its own panel when responses arrive out of order", async () => {
+    const releaseFirst: (() => void)[] = []
+    searchLogs.mockImplementation((params: {size?: number; filters?: {field: string; value?: unknown}[]}) => {
+        if (params.size === 1) return Promise.resolve({results: [], total: 0})
+        const triggerId = params.filters?.find(filter => filter.field === "triggerId")?.value as string
+        const response = {
+            total: 1,
+            results: [{
+                namespace: "company.team",
+                flowId: "my-flow",
+                triggerId,
+                level: "INFO",
+                timestamp: "2026-06-02T08:00:00Z",
+                thread: "thread",
+                message: `${triggerId} evaluated`,
+            }],
+        }
+        // The first trigger answers last, which used to let it overwrite the other panel's rows.
+        return triggerId === "trigger-a"
+            ? new Promise(resolve => releaseFirst.push(() => resolve(response)))
+            : Promise.resolve(response)
+    })
+    const wrapper = mountTriggersTab()
+    await flushPromises()
+
+    const expanders = wrapper.findAll(".kel-table__expand-icon")
+    await expanders[0].trigger("click")
+    await expanders[1].trigger("click")
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(200)
+    releaseFirst.forEach(release => release())
+    await flushPromises()
+
+    const panels = wrapper.findAll(".log-panel")
+    expect(panels).toHaveLength(2)
+    expect(panels[0].text()).toContain("trigger-a evaluated")
+    expect(panels[0].text()).not.toContain("trigger-b evaluated")
+    expect(panels[1].text()).toContain("trigger-b evaluated")
+    expect(panels[1].text()).not.toContain("trigger-a evaluated")
 })

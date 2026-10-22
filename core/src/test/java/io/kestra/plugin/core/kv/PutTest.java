@@ -209,13 +209,13 @@ class PutTest {
     }
 
     @Test
-    void shouldNotRenderValueTwice() throws Exception {
-        String namespaceId = "io.kestra." + IdUtils.create();
-        RunContext runContext = this.runContextFactory.of(
+    void shouldKeepPebbleExpressionWhenRenderedValueContainsOne() throws Exception {
+        var namespaceId = "io.kestra." + IdUtils.create();
+        var runContext = this.runContextFactory.of(
             namespaceId, Map.of("inputs", Map.of("payload", "{{ 1 + 1 }}"))
         );
 
-        Put put = Put.builder()
+        var put = Put.builder()
             .id(Put.class.getSimpleName())
             .type(Put.class.getName())
             .namespace(Property.ofValue(namespaceId))

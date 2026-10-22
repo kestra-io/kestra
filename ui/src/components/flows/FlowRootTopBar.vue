@@ -49,8 +49,8 @@
     )
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .deleted-label {
-        margin-inline-end: 0.25rem;
+        margin-inline-end: var(--ks-spacing-1);
     }
 </style>

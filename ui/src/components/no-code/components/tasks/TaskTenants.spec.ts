@@ -1,6 +1,6 @@
 
 import {describe, expect, test} from "vitest"
-import {mount} from "@vue/test-utils"
+import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import {computed} from "vue"
 import TaskTenants from "./TaskTenants.vue"
 import {TENANTS_INJECTION_KEY} from "../../injectionKeys"
@@ -17,12 +17,9 @@ function mountTaskTenants(
     props: Record<string, unknown> = {},
     provideTenants = false,
 ) {
-    return mount(TaskTenants, {
+    return i18nMount(TaskTenants, {
         props,
         global: {
-            mocks: {
-                $t: (key: string) => key,
-            },
             provide: provideTenants
                 ? {
                     [TENANTS_INJECTION_KEY]: computed(() => tenants),

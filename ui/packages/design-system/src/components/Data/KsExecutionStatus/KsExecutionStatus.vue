@@ -62,6 +62,10 @@
         return props.title ?? (props.status.charAt(0).toUpperCase() + props.status.slice(1).toLowerCase())
     })
 
+    // Built from the status name, so the token lint cannot see them: KsExecutionStatus.test.ts checks both exist.
+    const statusColor = computed(() => `var(--ks-status-${props.status.toLowerCase()})`)
+    const statusBackground = computed(() => `var(--ks-status-background-${props.status.toLowerCase()})`)
+
     const forwardedAttrs = computed(() => ({
         ...(props.dot ? {"aria-label": displayText.value} : {}),
         ...Object.fromEntries(Object.entries(attrs).filter(([, value]) => value !== undefined)),
@@ -96,6 +100,8 @@
     border: none;
     border-radius: var(--ks-radius-sm);
     background: var(--ks-bg-badge);
+    color: v-bind(statusColor);
+    background-color: v-bind(statusBackground);
     font-family: inherit;
     height: 2rem;
     padding: 0.5rem 0.9375rem;
@@ -163,117 +169,15 @@
             box-shadow: inset 0 0 0 1px currentColor;
         }
     }
-}
-
-.ks-execution-status--created {
-    --status-color: var(--ks-status-created);
-    --status-background: var(--ks-status-background-created);
-}
-
-.ks-execution-status--submitted {
-    --status-color: var(--ks-status-submitted);
-    --status-background: var(--ks-status-background-submitted);
-}
-
-.ks-execution-status--restarted {
-    --status-color: var(--ks-status-restarted);
-    --status-background: var(--ks-status-background-restarted);
-}
-
-.ks-execution-status--success {
-    --status-color: var(--ks-status-success);
-    --status-background: var(--ks-status-background-success);
-}
-
-.ks-execution-status--running {
-    --status-color: var(--ks-status-running);
-    --status-background: var(--ks-status-background-running);
-}
-
-.ks-execution-status--killing {
-    --status-color: var(--ks-status-killing);
-    --status-background: var(--ks-status-background-killing);
-}
-
-.ks-execution-status--killed {
-    --status-color: var(--ks-status-killed);
-    --status-background: var(--ks-status-background-killed);
-}
-
-.ks-execution-status--warning {
-    --status-color: var(--ks-status-warning);
-    --status-background: var(--ks-status-background-warning);
-}
-
-.ks-execution-status--failed {
-    --status-color: var(--ks-status-failed);
-    --status-background: var(--ks-status-background-failed);
-}
-
-.ks-execution-status--paused {
-    --status-color: var(--ks-status-paused);
-    --status-background: var(--ks-status-background-paused);
-}
-
-.ks-execution-status--cancelled {
-    --status-color: var(--ks-status-cancelled);
-    --status-background: var(--ks-status-background-cancelled);
-}
-
-.ks-execution-status--skipped {
-    --status-color: var(--ks-status-skipped);
-    --status-background: var(--ks-status-background-skipped);
-}
-
-.ks-execution-status--queued {
-    --status-color: var(--ks-status-queued);
-    --status-background: var(--ks-status-background-queued);
-}
-
-.ks-execution-status--retrying {
-    --status-color: var(--ks-status-retrying);
-    --status-background: var(--ks-status-background-retrying);
-}
-
-.ks-execution-status--retried {
-    --status-color: var(--ks-status-retried);
-    --status-background: var(--ks-status-background-retried);
-}
-
-.ks-execution-status--breakpoint {
-    --status-color: var(--ks-status-breakpoint);
-    --status-background: var(--ks-status-background-breakpoint);
-}
-
-:is(
-    .ks-execution-status--created,
-.ks-execution-status--submitted,
-.ks-execution-status--restarted,
-.ks-execution-status--success,
-.ks-execution-status--running,
-.ks-execution-status--killing,
-.ks-execution-status--killed,
-.ks-execution-status--warning,
-.ks-execution-status--failed,
-.ks-execution-status--paused,
-.ks-execution-status--cancelled,
-.ks-execution-status--skipped,
-.ks-execution-status--queued,
-.ks-execution-status--retrying,
-.ks-execution-status--retried,
-.ks-execution-status--breakpoint
-) {
-    color: var(--status-color);
-    background-color: var(--status-background);
 
     &.ks-execution-status--glow {
-        box-shadow: 0 9.85px 29.54px 0 var(--status-background);
+        box-shadow: 0 9.85px 29.54px 0 v-bind(statusBackground);
     }
 
     &.ks-execution-status--glow.ks-execution-status--clickable {
         &:hover,
         &:focus-visible {
-            box-shadow: inset 0 0 0 1px currentColor, 0 9.85px 29.54px 0 var(--status-background);
+            box-shadow: inset 0 0 0 1px currentColor, 0 9.85px 29.54px 0 v-bind(statusBackground);
         }
     }
 }

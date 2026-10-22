@@ -4,7 +4,7 @@
         v-bind="({...filteredProps(), ...$attrs} as TagProps)"
         :type="(elType as TagProps['type'])"
         :size="elSize"
-        :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error', 'kel-tag--xs': size === 'xs', 'kel-tag--truncate': truncate}"
+        :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error', 'kel-tag--xs': size === 'xs', 'kel-tag--truncate': truncate, 'kel-tag--toned': tone}"
         @close="emit('close')"
     >
         <template #default>
@@ -20,6 +20,21 @@
 
 <script lang="ts">
     export type KsTagType = "" | "success" | "info" | "warning" | "danger" | "error" | "primary"
+
+    interface KsTagTone {
+        bg: string
+        border: string
+        text: string
+    }
+
+    export const KS_TAG_TONES: Partial<Record<KsTagType, KsTagTone>> = {
+        primary: {bg: "var(--ks-status-background-paused)", border: "var(--ks-status-border-paused)", text: "var(--ks-status-paused)"},
+        success: {bg: "var(--ks-bg-success)", border: "transparent", text: "var(--ks-status-success)"},
+        warning: {bg: "var(--ks-bg-warning)", border: "transparent", text: "var(--ks-status-warning)"},
+        danger: {bg: "var(--ks-bg-error)", border: "transparent", text: "var(--ks-status-error)"},
+        error: {bg: "var(--ks-bg-error)", border: "transparent", text: "var(--ks-text-error)"},
+        info: {bg: "var(--ks-bg-info)", border: "transparent", text: "var(--ks-status-info)"},
+    }
 </script>
 
 <script setup lang="ts">
@@ -57,6 +72,8 @@
     const elType = computed(() => (props.type === "error" ? undefined : props.type))
 
     const elSize = computed(() => (props.size === "xs" ? "small" : props.size))
+
+    const tone = computed(() => (props.type ? KS_TAG_TONES[props.type] : undefined))
 
     const filteredProps = useFilteredProps(props, ["icon", "label", "plain", "size", "type", "truncate"])
 </script>
@@ -142,69 +159,14 @@
             --kel-tag-hover-color: var(--ks-bg-tag);
         }
 
-        &.kel-tag--plain.kel-tag--primary {
-            --kel-tag-bg-color: var(--ks-status-background-paused);
-            --kel-tag-text-color: var(--ks-status-paused);
-            --kel-tag-border-color: var(--ks-status-border-paused);
-            --kel-tag-hover-color: var(--ks-status-paused);
+        &.kel-tag--plain.kel-tag--toned {
+            --kel-tag-bg-color: v-bind("tone?.bg");
+            --kel-tag-text-color: v-bind("tone?.text");
+            --kel-tag-border-color: v-bind("tone?.border");
+            --kel-tag-hover-color: v-bind("tone?.text");
 
             & a {
-                color: var(--ks-status-paused);
-            }
-        }
-
-        &.kel-tag--plain.kel-tag--success {
-            --kel-tag-bg-color: var(--ks-bg-success);
-            --kel-tag-text-color: var(--ks-status-success);
-            --kel-tag-border-color: transparent;
-            --kel-tag-hover-color: var(--ks-status-success);
-
-            & a {
-                color: var(--ks-status-success);
-            }
-        }
-
-        &.kel-tag--plain.kel-tag--warning {
-            --kel-tag-bg-color: var(--ks-bg-warning);
-            --kel-tag-text-color: var(--ks-status-warning);
-            --kel-tag-border-color: transparent;
-            --kel-tag-hover-color: var(--ks-status-warning);
-
-            & a {
-                color: var(--ks-status-warning);
-            }
-        }
-
-        &.kel-tag--plain.kel-tag--danger {
-            --kel-tag-bg-color: var(--ks-bg-error);
-            --kel-tag-text-color: var(--ks-status-error);
-            --kel-tag-border-color: transparent;
-            --kel-tag-hover-color: var(--ks-status-error);
-
-            & a {
-                color: var(--ks-status-error);
-            }
-        }
-
-        &.kel-tag--plain.kel-tag--error {
-            --kel-tag-bg-color: var(--ks-bg-error);
-            --kel-tag-text-color: var(--ks-text-error);
-            --kel-tag-border-color: transparent;
-            --kel-tag-hover-color: var(--ks-text-error);
-
-            & a {
-                color: var(--ks-text-error);
-            }
-        }
-
-        &.kel-tag--plain.kel-tag--info {
-            --kel-tag-bg-color: var(--ks-bg-info);
-            --kel-tag-text-color: var(--ks-status-info);
-            --kel-tag-border-color: transparent;
-            --kel-tag-hover-color: var(--ks-status-info);
-
-            & a {
-                color: var(--ks-status-info);
+                color: v-bind("tone?.text");
             }
         }
 

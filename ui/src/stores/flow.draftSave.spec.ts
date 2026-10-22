@@ -20,6 +20,9 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
 }))
 
+// The store reads the route at setup, and here it is created outside any component.
+vi.mock("vue-router", () => ({useRoute: () => ({query: {}})}))
+
 // saveFlow()/createFlow() and validateFlow() go through the SDK's flows submodule, not
 // useClient()'s axios instance
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({

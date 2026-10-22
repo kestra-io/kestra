@@ -6,6 +6,7 @@ import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
 import {defineConfig, globalIgnores} from "eslint/config"
 import kestraTokens from "./scripts/tokens/eslintPlugin.mjs"
+import kestraI18n from "./scripts/translations/eslintPlugin.mjs"
 import {vueWithStyles} from "./scripts/css-lint/vueStyleProcessor.mjs"
 
 export default defineConfig([
@@ -62,6 +63,7 @@ export default defineConfig([
     },
     {
         files: ["**/*.vue"],
+        plugins: {"kestra-i18n": kestraI18n},
         languageOptions: {parserOptions: {
             parser: tsParser,
             extraFileExtensions: [".vue"],
@@ -87,6 +89,7 @@ export default defineConfig([
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],
             "vue/component-name-in-template-casing": ["error", "PascalCase", {"registeredComponentsOnly": true}],
             "vue/attribute-hyphenation": ["error", "never"],
+            "kestra-i18n/i18n-t-scope": "error",
         },
     },
     {

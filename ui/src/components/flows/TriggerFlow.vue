@@ -30,7 +30,7 @@
             large
         >
             <template #header>
-                <i18n-t keypath="execute the flow" tag="span">
+                <i18n-t keypath="execute the flow" tag="span" scope="global">
                     <template #id><code>{{ flowId }}</code></template>
                 </i18n-t>
             </template>

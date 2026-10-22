@@ -1,6 +1,7 @@
 package io.kestra.executor.handler;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -167,6 +168,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             // create an SLA monitor if needed, we skip LOOP executions
                             if (!ListUtils.isEmpty(flow.getSla()) && execution.getKind() != ExecutionKind.LOOP) {
                                 try {
+                                    Instant slaStartDate = execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(execution.getState().getStartDate())
+                                        ? execution.getScheduleDate()
+                                        : execution.getState().getStartDate();
                                     List<SLAMonitor> monitors = new ArrayList<>();
                                     for (SLA sla : flow.getSla()) {
                                         if (sla instanceof ExecutionMonitoringSLA monitoringSla) {
@@ -174,7 +178,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 SLAMonitor.builder()
                                                     .executionId(execution.getId())
                                                     .slaId(sla.getId())
-                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), monitoringSla.getDuration()))
+                                                    .deadline(DateUtils.plusOrThrow(slaStartDate, monitoringSla.getDuration()))
                                                     .build()
                                             );
                                         }

@@ -232,6 +232,8 @@ public class ApprovalTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getHistories().stream().map(State.History::getState))
             .doesNotContain(State.Type.PAUSING, State.Type.PAUSED);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getHistories().stream().map(State.History::getState))
+            .doesNotContain(State.Type.PAUSING, State.Type.PAUSED);
         assertThat(execution.findTaskRunsByTaskId("notify")).isEmpty();
         assertThat(execution.findTaskRunsByTaskId("approved")).hasSize(1);
         assertThat(execution.findTaskRunsByTaskId("denied")).isEmpty();
@@ -350,9 +352,11 @@ public class ApprovalTest {
             String executionId = execution.getId();
             Flow flow = flowRepository.findByExecution(execution);
 
-            // Then — the execution was PAUSING while onWait ran, then PAUSED once it finished
+            // Then — the Approval and its execution were PAUSING while onWait ran, then PAUSED once it finished
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
             assertThat(execution.getState().getHistories().stream().map(State.History::getState)).contains(State.Type.PAUSING);
+            assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getHistories().stream().map(State.History::getState))
+                .containsSubsequence(State.Type.RUNNING, State.Type.PAUSING, State.Type.PAUSED);
             assertThat(execution.findTaskRunsByTaskId("notify")).hasSize(1);
             assertThat(execution.findTaskRunsByTaskId("notify").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 

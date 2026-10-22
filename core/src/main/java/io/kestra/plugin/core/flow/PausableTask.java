@@ -1,9 +1,7 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.runners.RunContext;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,14 +33,6 @@ public interface PausableTask {
      */
     default State.Type resumedTaskRunState(State.Type newState) {
         return State.Type.RUNNING;
-    }
-
-    /**
-     * Whether the task run is still preparing its pause (e.g. Approval's {@code onWait}), keeping the execution PAUSING rather than PAUSED.
-     * Only asked of a RUNNING task run that has never been PAUSED.
-     */
-    default boolean isPausing(RunContext runContext, TaskRun taskRun) {
-        return false;
     }
 
     record Resumed(@Nullable String by, LocalDateTime on, State.Type to) {

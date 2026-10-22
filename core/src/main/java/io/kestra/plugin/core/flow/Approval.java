@@ -165,26 +165,20 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        // decision is checked before isWaiting so autoApprove (a decision recorded at creation, on a task
-        // run that never pauses) goes straight to its branch instead of running onWait.
+        // autoApprove records its decision at creation, so it goes straight to its branch instead of running onWait.
         Decision.Type decision = this.decisionType(runContext);
-        if (decision != null) {
-            if (decision == Decision.Type.EXPIRED) {
-                return Collections.emptyList();
-            }
-            return FlowableUtils.resolveTasks(decision == Decision.Type.APPROVED ? this.onApprove : this.onDeny, parentTaskRun);
-        }
-
-        if (this.isWaiting(parentTaskRun)) {
+        if (decision == null) {
             return FlowableUtils.resolveTasks(this.onWait, parentTaskRun);
         }
-
-        return Collections.emptyList();
+        if (decision == Decision.Type.EXPIRED) {
+            return Collections.emptyList();
+        }
+        return FlowableUtils.resolveTasks(decision == Decision.Type.APPROVED ? this.onApprove : this.onDeny, parentTaskRun);
     }
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.decisionType(runContext) == null && this.isWaiting(parentTaskRun)) {
+        if (this.decisionType(runContext) == null) {
             // 'finally' is only scheduled here when onWait just terminated in error, since the Branch
             // phase (which schedules it otherwise) is never reached in that case.
             Optional<State.Type> waitState = this.resolveWaitState(runContext, execution, parentTaskRun);
@@ -210,7 +204,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.decisionType(runContext) == null && this.isWaiting(parentTaskRun)) {
+        if (this.decisionType(runContext) == null) {
             return this.resolveWaitState(runContext, execution, parentTaskRun);
         }
 
@@ -233,7 +227,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         );
     }
 
-    /** Empty while onWait runs, its error state if onWait just failed, PAUSED otherwise (immediately, when onWait is empty). */
+    /** PAUSING while onWait runs, its error state if onWait failed, PAUSED once it succeeded (immediately, when onWait is empty). */
     private Optional<State.Type> resolveWaitState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> onWaitTasks = FlowableUtils.resolveTasks(this.onWait, parentTaskRun);
         if (ListUtils.isEmpty(onWaitTasks)) {
@@ -252,25 +246,10 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         );
 
         if (waitResult.isEmpty()) {
-            return Optional.empty();
+            return parentTaskRun.getState().getCurrent() == State.Type.PAUSING ? Optional.empty() : Optional.of(State.Type.PAUSING);
         }
 
         return waitResult.get().isTerminatedInError() ? waitResult : Optional.of(State.Type.PAUSED);
-    }
-
-    /**
-     * True while the task run is running its {@code onWait} tasks and has never yet reached PAUSED,
-     * mirroring {@link Pause}'s own {@code needPause} check.
-     */
-    public boolean isWaiting(TaskRun taskRun) {
-        return taskRun.getState().getCurrent() == State.Type.RUNNING &&
-            taskRun.getState().getHistories().stream().noneMatch(history -> history.getState() == State.Type.PAUSED);
-    }
-
-    /** Excludes an autoApprove task run: {@link #isWaiting(TaskRun)} alone can't see that a decision was already recorded at creation. */
-    @Override
-    public boolean isPausing(RunContext runContext, TaskRun taskRun) {
-        return this.isWaiting(taskRun) && this.decisionType(runContext) == null;
     }
 
     @SuppressWarnings("unchecked")

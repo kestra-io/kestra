@@ -30,8 +30,7 @@ public final class RenderLimits {
     }
 
     /**
-     * Overload for sizes that may not fit in a {@code long}. Comparing as {@link BigInteger} means
-     * the requested size can never overflow and wrap around to a small or negative value.
+     * Overload for sizes that may exceed {@code long}, so overflow cannot bypass the check.
      *
      * @throws RenderLimitExceededException if {@code requested > max}
      */

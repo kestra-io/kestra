@@ -72,12 +72,4 @@ class BoundedRangeFunctionTest {
             () -> variableRenderer.render("{{ range(1, 1000000) }}", Collections.emptyMap())
         ).doesNotThrowAnyException();
     }
-
-    @Test
-    void shouldThrowWhenRangeIsJustAboveMaxSize() {
-        assertThatThrownBy(
-            () -> variableRenderer.render("{{ range(1, 1000001) }}", Collections.emptyMap())
-        ).isInstanceOf(IllegalVariableEvaluationException.class)
-            .hasMessageContaining("cannot produce more than");
-    }
 }

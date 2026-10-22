@@ -37,6 +37,13 @@ class ScriptServiceTest {
     private TestRunContextFactory runContextFactory;
 
     @Test
+    void shouldReplaceInvalidCharactersWhenBuildingCheckpointEnvName() {
+        assertThat(ScriptService.checkpointEnvName("loop")).isEqualTo("CHECKPOINTS_LOOP");
+        assertThat(ScriptService.checkpointEnvName("my-cursor")).isEqualTo("CHECKPOINTS_MY_CURSOR");
+        assertThat(ScriptService.checkpointEnvName("a.b c/d")).isEqualTo("CHECKPOINTS_A_B_C_D");
+    }
+
+    @Test
     void replaceInternalStorage() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);

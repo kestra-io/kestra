@@ -541,6 +541,8 @@
     },
     "concurrency limits": "Concurrency-Limits",
     "system overview": "Systemübersicht",
+    "workspace": "Arbeitsbereich",
+    "resources": "Ressourcen",
     "usage": "Verwendung",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -1396,6 +1398,12 @@
           "third": "Starte deine Kestra-Instanz neu, damit das Secret geladen wird."
         }
       },
+      "credentials": {
+        "label": "Credentials",
+        "header": "Credentials",
+        "title": "Einmal authentifizieren, in jedem Task wiederverwenden",
+        "message": "In der Kestra Enterprise Edition lässt sich Server-zu-Server-Authentifizierung einmal als Credential konfigurieren, sodass Access Tokens zur Laufzeit angefordert und erneuert werden, statt fest in deinen Flows zu stehen. Credentials können auf Tenant- oder Namespace-Ebene erstellt und von jedem Task referenziert werden."
+      },
       "apps": {
         "title": "Eigene Apps mit Kestra erstellen",
         "message": "Mit Apps in der Kestra Enterprise Edition kannst du eigene UIs erstellen, die von außerhalb der Plattform mit Kestra-Workflows interagieren. Damit lassen sich deine Workflows als Backend für eigene Anwendungen nutzen, sodass auch nicht-technische Nutzer Daten über Formulare eingeben oder pausierte Workflows freigeben können, die auf eine Genehmigung warten.",
@@ -1474,6 +1482,10 @@
           "title": "Secrets sicher verwalten",
           "message": "In der Kestra Enterprise Edition kannst du Secrets auf Namespace-Ebene speichern und kontrollieren. Das minimiert das Risiko und sorgt dafür, dass die Zugangsdaten jedes Teams isoliert bleiben. Dank der verschachtelten Hierarchie kannst du Zugangsdaten auch in einem übergeordneten Namespace konfigurieren, von wo aus sie an alle untergeordneten Namespaces vererbt werden. Die Unterstützung für dedizierte Secrets Manager und feingranulare Berechtigungen auf Namespace-Ebene stärkt Sicherheit und Compliance zusätzlich."
         },
+        "credentials": {
+          "title": "Credentials auf diesen Namespace beschränken",
+          "message": "In der Kestra Enterprise Edition kannst du Credentials auf Namespace-Ebene konfigurieren, sodass Tasks in diesem Namespace und seinen untergeordneten Namespaces Access Tokens zur Laufzeit anfordern und erneuern, statt sie in Flows zu speichern. Ein Credential aus einem übergeordneten Namespace wird von allen untergeordneten Namespaces geerbt."
+        },
         "assets": {
           "title": "Asset-Management zentralisieren",
           "message": "In der Kestra Enterprise Edition führt Assets ein Live-Inventar der Ressourcen, mit denen deine Workflows interagieren. Das können Datenbanktabellen, virtuelle Maschinen, Dateien oder beliebige externe Systeme sein, mit denen du arbeitest."
@@ -1485,6 +1497,11 @@
         "policies": {
           "title": "Governance-Regeln in diesem Namespace durchsetzen",
           "message": "In der Kestra Enterprise Edition kannst du mit Policies Regeln definieren, die für jeden Flow in diesem Namespace und seinen untergeordneten Namespaces gelten: gemeinsame Standardwerte injizieren, Eigenschaftswerte einschränken, Plugins blockieren und Compliance-Labels vorschreiben, wobei jede Änderung für Flow-Autoren vollständig sichtbar bleibt."
+        },
+        "reusable-inputs": {
+          "label": "Wiederverwendbare Inputs",
+          "title": "Inputs einmal definieren, überall wiederverwenden",
+          "message": "In der Kestra Enterprise Edition kannst du mit wiederverwendbaren Inputs eine benannte Gruppe typisierter Inputs einmal auf Namespace-Ebene definieren und in jedem Flow referenzieren. Ein Satz in einem übergeordneten Namespace steht untergeordneten Namespaces zur Verfügung, sodass Teams dieselben Input-Definitionen teilen, statt sie in jedem Flow zu wiederholen."
         },
         "history": {
           "title": "Revisionsverlauf an einem Ort verwalten",

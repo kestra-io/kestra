@@ -6,10 +6,6 @@
  * @see https://github.com/kestra-io/kestra/issues/20834, the "Remove Bootstrap from the frontend" epic tracking the migration
  */
 
-.align-middle {
-    vertical-align: middle !important;
-}
-
 .overflow-hidden {
     overflow: hidden !important;
 }
@@ -32,10 +28,6 @@
 
 .position-absolute {
     position: absolute !important;
-}
-
-.border-0 {
-    border: 0 !important;
 }
 
 .w-100 {
@@ -129,10 +121,6 @@
     margin-top: 1rem !important;
 }
 
-.mt-4 {
-    margin-top: 1.5rem !important;
-}
-
 .me-0 {
     margin-right: 0 !important;
 }
@@ -167,10 +155,6 @@
 
 .mb-4 {
     margin-bottom: 1.5rem !important;
-}
-
-.ms-1 {
-    margin-left: 0.25rem !important;
 }
 
 .ms-2 {
@@ -236,10 +220,6 @@
     gap: 1.5rem !important;
 }
 
-.fs-5 {
-    font-size: 1.09375rem !important;
-}
-
 .fs-6 {
     font-size: 0.875rem !important;
 }
@@ -285,10 +265,6 @@
     color: inherit !important;
 }
 
-.bg-transparent {
-    background-color: transparent !important;
-}
-
 .pe-none {
     pointer-events: none !important;
 }
@@ -297,16 +273,6 @@
     z-index: 3 !important;
 }
 
-@media (min-width: 576px) {
-    .d-sm-block {
-        display: block !important;
-    }
-
-    .d-sm-flex {
-        display: flex !important;
-    }
-
-}
 
 @media (min-width: 768px) {
     .d-md-inline-block {

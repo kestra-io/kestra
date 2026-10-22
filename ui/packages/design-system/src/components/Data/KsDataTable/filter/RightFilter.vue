@@ -187,10 +187,9 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filter-container {
     --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
-
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -202,22 +201,23 @@
         flex-shrink: 0;
     }
 
-    .saved-btn {
+    & .saved-btn {
         box-shadow: none;
         margin: 0;
         font-size: var(--ks-font-size-sm);
         box-shadow: var(--ks-box-shadow);
         background-color: var(--ks-bg-input);
 
-        .saved-content {
+        & .saved-content {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .saved-count {
+        & .saved-count {
             margin-left: 0.375rem;
             background-color: var(--ks-bg-tag);
+
             &:hover {
                 background-color: var(--ks-bg-tag-hover);
             }
@@ -228,19 +228,19 @@
         }
     }
 
-    .icon-btn {
+    & .icon-btn {
         box-shadow: var(--ks-box-shadow);
         margin: 0;
         padding: 0.5rem;
         border-radius: var(--ks-radius-base);
         font-size: var(--ks-font-size-base);
 
-        :deep(svg) {
+        & :deep(svg) {
             color: var(--ks-text-dim) !important;
         }
     }
 
-    .refresh-button {
+    & .refresh-button {
         background-color: transparent;
         border: none;
         box-shadow: none;
@@ -248,7 +248,7 @@
         padding: 0.25rem 0.5rem;
         font-size: var(--ks-font-size-sm);
 
-        :deep(svg) {
+        & :deep(svg) {
             color: var(--ks-text-dim);
         }
 
@@ -262,12 +262,12 @@
     display: flex;
     flex-direction: column;
 
-    .save-current-wrapper {
+    & .save-current-wrapper {
         padding: var(--ks-spacing-3);
         border-bottom: 1px solid var(--ks-border-default);
     }
 
-    .save-current-btn {
+    & .save-current-btn {
         width: 100%;
         margin: 0;
         justify-content: center;
@@ -279,7 +279,7 @@
 }
 </style>
 
-<style lang="scss">
+<style>
 .saved-filters-popper.saved-filters-popper {
     padding: 0;
     overflow: hidden;

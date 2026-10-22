@@ -76,7 +76,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/pagination';
+</style>
 
+<style>
     .kel-pagination {
         --kel-pagination-bg-color: var(--ks-btn-secondary-bg-default);
         --kel-pagination-text-color: var(--ks-text-primary);
@@ -84,31 +86,32 @@
         --kel-pagination-hover-color: var(--ks-text-link);
         --kel-pagination-item-gap: 0;
         --kel-pagination-font-size-small: var(--ks-font-size-xs);
-
         flex-wrap: wrap;
         gap: 8px;
 
-        li, button, .btn-prev, .btn-next {
+        & li, & button, & .btn-prev, & .btn-next {
             border-radius: 4px;
         }
 
-        .kel-pager {
+        & .kel-pager {
             gap: 8px;
         }
 
-        .kel-pagination__sizes {
-            .kel-select {
+        & .kel-pagination__sizes {
+            & .kel-select {
                 width: auto;
                 min-width: 130px;
             }
         }
+    }
 
-        &__total {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-2xs);
-        }
+    .kel-pagination__total {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-2xs);
+    }
 
-        .kel-pager li {
+    .kel-pagination {
+        & .kel-pager li {
             border: 1px solid var(--ks-border-subtle);
             margin: 0;
             color: var(--ks-text-primary);

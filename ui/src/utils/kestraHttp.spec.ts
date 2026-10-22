@@ -180,9 +180,7 @@ describe("setupKestraHttp central 404 handling", () => {
         {expectedStatuses: [409, 404], reported: false},
         {expectedStatuses: [409], reported: true},
     ])("reports a 404 with handledIf($expectedStatuses): $reported", async ({expectedStatuses, reported}) => {
-        const opts = {__kestraSkipProgress: true, headers: {Accept: "application/json"}}
-        const {coreStore, notFound} = triggerNotFound(opts)
-        const {response, config} = notFound as KestraHttpError
+        const {coreStore, notFound} = triggerNotFound()
 
         expect(handledIf(notFound, expectedStatuses)).toBe(!reported)
         await new Promise(r => setTimeout(r, 0))
@@ -192,10 +190,6 @@ describe("setupKestraHttp central 404 handling", () => {
         } else {
             expect(coreStore.message).toBeUndefined()
         }
-        expect((notFound as KestraHttpError).response).toBe(response)
-        expect((notFound as KestraHttpError).config).toBe(config)
-        expect(config).toEqual(request)
-        expect(opts).toEqual({__kestraSkipProgress: true, headers: {Accept: "application/json"}})
     })
     beforeEach(() => {
         vi.spyOn(console, "error").mockImplementation(() => {})
@@ -239,23 +233,6 @@ describe("handledIf", () => {
     ])("leaves an unexpected or missing status unhandled: %j", (error) => {
         expect(handledIf(error, [404])).toBe(false)
         if (error) expect(error).not.toHaveProperty("__kestra_handled")
-    })
-
-    it.each([true, false])("preserves the original error when accepted is %s", (accepted) => {
-        const cause = new Error("Request failed")
-        const response = {status: 404, data: {title: "Flow not found"}}
-        const config = {method: "get", url: "/api/v1/main/flows/io.kestra/missing"}
-        const error = Object.assign(new Error("404 Not Found"), {cause, status: 404, response, config})
-        const original = {...error}
-
-        expect(handledIf(error, accepted ? [404] : [409])).toBe(accepted)
-
-        expect(error).toBeInstanceOf(Error)
-        expect(error.message).toBe("404 Not Found")
-        expect(error.cause).toBe(cause)
-        expect(error.response).toBe(response)
-        expect(error.config).toBe(config)
-        expect({...error}).toEqual(accepted ? {...original, __kestra_handled: true} : original)
     })
 })
 

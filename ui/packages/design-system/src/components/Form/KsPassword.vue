@@ -67,7 +67,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     @font-face {
         font-family: 'DiscFont';
         src: url('../../assets/fonts/obscure-disc.woff2') format('woff2');
@@ -77,7 +77,7 @@
         position: relative;
         width: 100%;
 
-        .hide {
+        & .hide {
             top: 5px;
             right: 5px;
             position: absolute;

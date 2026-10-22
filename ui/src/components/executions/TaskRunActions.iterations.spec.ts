@@ -1,12 +1,12 @@
 import {describe, expect, it} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
 import {createPinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import {createMemoryHistory, createRouter} from "vue-router"
-import {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu} from "@kestra-io/design-system"
+import {KsDropdownItem} from "@kestra-io/design-system"
 import type {State, StateType} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../../stores/executions"
 import TaskRunActions from "./TaskRunActions.vue"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 
 function state(current: StateType): State {
     return {current, histories: []}
@@ -26,7 +26,8 @@ async function mountActions(type: string, grouped = false, executionState: State
     })
     await router.push({name: "topology", params: {tenant: "test-tenant", id: "parent-execution"}})
     const taskRun = {id: "task-run", taskId: "loop", state: state("RUNNING")}
-    const wrapper = mount(TaskRunActions, {
+    const wrapper = i18nMount(TaskRunActions, {
+        messages: {actions: "Actions", iterations: "Iterations"},
         attachTo: document.body,
         props: {
             taskRun,
@@ -35,8 +36,7 @@ async function mountActions(type: string, grouped = false, executionState: State
             flow: {tasks: [{id: "parallel", type: "io.kestra.plugin.core.flow.Parallel", tasks: [{id: "loop", type}]}]},
         },
         global: {
-            plugins: [createPinia(), router, createI18n({legacy: false, locale: "en", messages: {en: {actions: "Actions", iterations: "Iterations"}}})],
-            components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
+            plugins: [createPinia(), router],
             stubs: {
                 Metrics: true,
                 Outputs: true,

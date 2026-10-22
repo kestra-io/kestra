@@ -55,7 +55,7 @@ export function formChildName(id: string, formIds: string[]): string {
  */
 export function unflattenToForms(
     leaves: InputMetaData[] | undefined,
-    formGroups: Record<string, {displayName?: string; description?: string}> | undefined,
+    formGroups: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: InputMetaData["descriptionDisplayMode"]}> | undefined,
 ): InputMetaData[] {
     if (!leaves) return []
     const formIds = Object.keys(formGroups ?? {})
@@ -76,6 +76,7 @@ export function unflattenToForms(
                 type: "FORM",
                 displayName: formGroups?.[owner]?.displayName,
                 description: formGroups?.[owner]?.description,
+                descriptionDisplayMode: formGroups?.[owner]?.descriptionDisplayMode,
                 inputs: [],
             }
             nodes.set(owner, node)

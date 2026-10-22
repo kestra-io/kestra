@@ -3,6 +3,7 @@ import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {nextTick, reactive} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 const store = vi.hoisted(() => ({
     executions: {} as {
@@ -49,7 +50,7 @@ const logsFor = (id: string) => [{level: "INFO", taskRunId: "tr-1", message: `lo
 function mountDetails(props: {targetExecutionId?: string} = {}) {
     return mount(TaskRunDetails, {
         props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}, ...props},
-        global: {plugins: [i18n, KestraDesignSystem]},
+        global: {plugins: [i18n, KestraDesignSystem, memoryRouter()]},
     })
 }
 

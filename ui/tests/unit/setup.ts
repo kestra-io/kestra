@@ -52,7 +52,8 @@ config.global.stubs = {
 // missingWarn/fallbackWarn to false so that expected gap doesn't spam
 // "[intlify] Not found '<key>' key in '<locale>' locale messages." — tests that
 // explicitly want to assert missing-key warnings can still pass their own
-// missingWarn/fallbackWarn to override this default.
+// missingWarn/fallbackWarn to override this default. warnHtmlMessage is off as in the app
+// (src/utils/init.ts): en.json carries <code> markup in a few messages on purpose.
 vi.mock("vue-i18n", async (importOriginal) => {
     const actual = await importOriginal<typeof import("vue-i18n")>()
     return {
@@ -60,6 +61,7 @@ vi.mock("vue-i18n", async (importOriginal) => {
         createI18n: (options: Record<string, unknown> = {}) => actual.createI18n({
             missingWarn: false,
             fallbackWarn: false,
+            warnHtmlMessage: false,
             ...options,
         }),
     }

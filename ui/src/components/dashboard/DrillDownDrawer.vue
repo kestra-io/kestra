@@ -25,7 +25,7 @@
                     v-for="column in tablePreview.columns"
                     :key="column.prop"
                     :prop="column.prop"
-                    :label="column.label"
+                    :label="$t(column.label)"
                 >
                     <template #default="{row}">
                         <KsExecutionStatus v-if="column.type === 'status'" :status="getPath<string>(row, column.prop)!" size="small" />

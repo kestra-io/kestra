@@ -10,7 +10,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .empty-template {
         margin-top: -1.5rem;
         padding: 3rem 0;

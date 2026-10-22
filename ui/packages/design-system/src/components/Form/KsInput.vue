@@ -73,7 +73,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/input';
+</style>
 
+<style>
     .kel-textarea, .kel-input {
         --kel-input-border-color: var(--ks-border-strong);
         --kel-input-hover-border-color: var(--ks-border-strong);
@@ -102,8 +104,8 @@
     }
 
     .kel-textarea__inner {
-        // A full-width textarea has nothing to gain from horizontal resizing, and both it and a
-        // long unbroken word were producing a horizontal scrollbar under the field.
+        /* A full-width textarea has nothing to gain from horizontal resizing, and both it and a */
+        /* long unbroken word were producing a horizontal scrollbar under the field. */
         resize: vertical;
         overflow-x: hidden;
         overflow-wrap: break-word;
@@ -111,22 +113,23 @@
 
     .kel-input {
         width: 100%;
+
         &.kel-input--small {
-            .kel-input__wrapper {
+            & .kel-input__wrapper {
                 border-radius: var(--ks-radius-sm);
             }
         }
 
-        .kel-input-group__append, .kel-input-group__prepend {
+        & .kel-input-group__append, & .kel-input-group__prepend {
             color: var(--ks-text-dim);
         }
 
         &.ks-input--reserve-clear {
-            .kel-input__inner {
+            & .kel-input__inner {
                 padding-inline-end: var(--ks-spacing-5);
             }
 
-            .kel-input__suffix {
+            & .kel-input__suffix {
                 position: absolute;
                 inset-block: 0;
                 inset-inline-end: var(--ks-spacing-3);

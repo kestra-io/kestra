@@ -100,6 +100,33 @@ export const Large: Story = {
     }),
 }
 
+/** Wide content – an element carrying `data-dialog-wide` widens the dialog past `large`, for content such as a multi-column grid input */
+export const WideContent: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open wide-content dialog</ks-button>
+                <ks-dialog v-model="visible" title="Wide Content" large destroy-on-close>
+                    <div data-dialog-wide>A multi-column grid that does not fit the default width.</div>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.click(canvas.getByRole("button", {name: "Open wide-content dialog"}))
+        await waitFor(() => expect(document.querySelector("[data-dialog-wide]")).toBeTruthy())
+        const dialog = document.querySelector<HTMLElement>(".kel-dialog")!
+        const expected = Math.min(1024, window.innerWidth * 0.9)
+        await expect(Math.abs(dialog.getBoundingClientRect().width - expected)).toBeLessThan(1)
+    },
+}
+
 /** Form layout – `formLayout` gives a form inside the dialog consistent padding, column flow and gap */
 export const FormLayout: Story = {
     render: () => ({

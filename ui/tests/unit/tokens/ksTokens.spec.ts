@@ -83,11 +83,13 @@ describe("the stylelint rule, ks/no-undeclared-custom-property", () => {
         expect(warningsFor(".x { --ks-Just-Typed: red; color: var(--ks-Just-Typed); }")).toEqual([])
     })
 
-    it("reads the scss block of a single-file component and leaves plain css to eslint", () => {
+    it("reads both the scss and the plain css blocks of a single-file component", () => {
         const sfc = "<template><i /></template>\n<style scoped lang=\"scss\">\n.x { color: var(--ks-nowhere); }\n</style>\n"
             + "<style scoped>\n.y { color: var(--ks-elsewhere); }\n</style>\n"
-        expect(warningsFor(sfc, "probe.vue"))
-            .toEqual([expect.stringContaining("\"--ks-nowhere\" is not declared")])
+        expect(warningsFor(sfc, "probe.vue")).toEqual([
+            expect.stringContaining("\"--ks-nowhere\" is not declared"),
+            expect.stringContaining("\"--ks-elsewhere\" is not declared"),
+        ])
     })
 })
 
@@ -119,6 +121,16 @@ describe("the stylesheet rule, kestra-tokens/no-undeclared-css-token", () => {
             .map(({line, column, message}) => [line, column, message.slice(0, message.indexOf("\" "))]))
             .toEqual([[2, 26, "\"--ks-in-attribute"], [8, 44, "\"--ks-in-block"]])
         expect(result.messages.filter(m => m.ruleId?.startsWith("css/"))).toEqual([])
+    })
+
+    it("lints each style block and style attribute as its own stylesheet", async () => {
+        const sfc = "<template>\n    <i style=\"color: red\" />\n</template>\n"
+            + "<style>\n@import \"./a.css\";\n.x { color: red; }\n</style>\n"
+            + "<style scoped>\n@import \"./a.css\";\n.y { color: red; }\n</style>\n"
+        const [result] = await new ESLint({fix: true}).lintText(sfc, {filePath: "src/probe.vue"})
+
+        expect(result.messages.filter(m => m.ruleId?.startsWith("css/"))).toEqual([])
+        expect(result.output ?? sfc).toBe(sfc)
     })
 })
 

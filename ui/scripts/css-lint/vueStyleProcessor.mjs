@@ -18,9 +18,14 @@ const staticStyleAttributes = (node, found = []) => {
     return found
 }
 
+const maskRange = (text, {start, open, end}) => blank(text.slice(0, start))
+    // `style="…"` becomes `x{     …}`, so the value parses as a rule body at the same offsets.
+    + (open === undefined ? maskVBind(text.slice(start, end)) : `x{${blank(text.slice(start + 2, open))}${text.slice(open, end - 1)}}`)
+    + blank(text.slice(end))
+
 /**
- * The SFC with everything but plain-CSS `<style>` contents and static `style="…"` values blanked,
- * so offsets match the original and reports and fixes need no remapping.
+ * One copy of the SFC per plain-CSS `<style>` block or static `style="…"` value, everything else
+ * blanked, so offsets match the original and each is linted as its own stylesheet.
  */
 export const maskVueStyles = (text) => {
     const {descriptor} = parse(text, {sourceMap: false, ignoreEmpty: false})
@@ -33,34 +38,21 @@ export const maskVueStyles = (text) => {
         if (!/["']/.test(text[quote]) || !attribute.value.content.trim()) continue
         kept.push({start: attribute.loc.start.offset, open: quote + 1, end: attribute.loc.end.offset})
     }
-    if (kept.length === 0) return null
-
-    let masked = ""
-    let cursor = 0
-    for (const {start, open, end} of kept.sort((a, b) => a.start - b.start)) {
-        masked += blank(text.slice(cursor, start))
-        // `style="…"` becomes `x{     …}`, so the value parses as a rule body at the same offsets.
-        masked += open === undefined
-            ? maskVBind(text.slice(start, end))
-            : `x{${blank(text.slice(start + 2, open))}${text.slice(open, end - 1)}}`
-        cursor = end
-    }
-    return masked + blank(text.slice(cursor))
+    return kept.sort((a, b) => a.start - b.start).map((range) => maskRange(text, range))
 }
 
 /**
- * Wraps eslint-plugin-vue's processor and adds a second, CSS-only block for `@eslint/css`.
+ * Wraps eslint-plugin-vue's processor and adds one CSS-only block per stylesheet for `@eslint/css`.
  * Block 0 keeps the vue processor's handling of template `eslint-disable` comments.
  */
 export const vueWithStyles = (vueProcessor) => ({
     meta: {name: "vue-with-styles"},
     supportsAutofix: true,
     preprocess(text, filename) {
-        const blocks = vueProcessor.preprocess(text, filename)
-        const masked = maskVueStyles(text)
-        return masked === null ? blocks : [...blocks, {text: masked, filename: "style.css"}]
+        const styles = maskVueStyles(text).map((masked, index) => ({text: masked, filename: `style-${index}.css`}))
+        return [...vueProcessor.preprocess(text, filename), ...styles]
     },
-    postprocess([templateMessages, styleMessages = []], filename) {
-        return [...vueProcessor.postprocess([templateMessages], filename), ...styleMessages]
+    postprocess([templateMessages, ...styleMessages], filename) {
+        return [...vueProcessor.postprocess([templateMessages], filename), ...styleMessages.flat()]
     },
 })

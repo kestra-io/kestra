@@ -18,11 +18,12 @@ The rule reports those as you type. There is no separate command to remember.
 |---|---|---|
 | `eslintPlugin.mjs` | eslint + `@eslint/css`, `kestra-tokens/no-undeclared-css-token` | `.css`, plain `<style>` blocks and static `style="…"` attributes in `.vue` |
 | `eslintPlugin.mjs` | eslint, `kestra-tokens/no-undeclared-ks-token` | `cssVar("--ks-…")` and `var(--ks-…)` written inside a string |
-| `stylelintPlugin.mjs` | stylelint, `ks/no-undeclared-custom-property` | `.scss` and `<style lang="scss">`, which `@eslint/css` cannot parse; it skips plain CSS |
+| `stylelintPlugin.mjs` | stylelint, `ks/no-undeclared-custom-property` | `.scss` and `<style lang="scss">`, which `@eslint/css` cannot parse, plus plain CSS until CI fails on eslint errors (kestra-io/actions#342) |
 
 All three read the same `knownTokens.mjs`, so they agree on what exists and phrase the report the same
 way. `npm run lint` and `npm run test:lint` run them all. `../css-lint/vueStyleProcessor.mjs` hands
-eslint each SFC a second time with everything but its plain CSS blanked, so positions need no mapping.
+eslint one copy of each SFC per plain `<style>` block or `style` attribute, everything else blanked,
+so each is its own stylesheet and positions need no mapping.
 Stylelint goes once the design system's SCSS does.
 
 `stylelint.config.mjs` and a `ks/custom-property-pattern-usage` plugin existed here from #6645 until

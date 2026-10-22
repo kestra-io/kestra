@@ -25,7 +25,7 @@ const SkeletonComponent: TaskBlockComponent = Object.assign(
 
 /** Settles once the lazily imported block components are in, so a spec can await them before its file is torn down. */
 export function taskComponentsReady(): Promise<void> {
-    return loading?.then(() => undefined) ?? Promise.resolve()
+    return loading?.then(() => undefined, () => undefined) ?? Promise.resolve()
 }
 
 export function useBlockComponent() {

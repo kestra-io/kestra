@@ -13,5 +13,8 @@ export const memoryRouter = (): Router => createRouter({
     routes: [{path: "/:pathMatch(.*)*", component: {render: () => null}}],
 })
 
-export const isRouter = (plugin: unknown): boolean =>
-    typeof plugin === "object" && plugin !== null && "currentRoute" in plugin && "install" in plugin
+/** True for a router passed to `global.plugins` on its own or as a `[router, ...options]` tuple. */
+export const isRouter = (plugin: unknown): boolean => {
+    const candidate = Array.isArray(plugin) ? plugin[0] : plugin
+    return typeof candidate === "object" && candidate !== null && "currentRoute" in candidate && "install" in candidate
+}

@@ -14,7 +14,7 @@
         :appendToBody="true"
     >
         <template #header>
-            <i18n-t keypath="force run title" tag="span">
+            <i18n-t keypath="force run title" tag="span" scope="global">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
         </template>

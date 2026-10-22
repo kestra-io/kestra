@@ -16,6 +16,11 @@ function isMap(value: unknown): value is TaskLike {
 }
 
 function probeIndexes(source: string, cursorIndex: number): number[] {
+    // A column-one cursor has no task indentation, so probing backwards would borrow the previous task.
+    if (cursorIndex <= 0 || source.charAt(cursorIndex - 1) === "\n") {
+        return []
+    }
+
     const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
     const indexes = [safeCursorIndex]
     let previousNonWhitespace = safeCursorIndex

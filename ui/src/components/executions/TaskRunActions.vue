@@ -44,8 +44,8 @@
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
-                    <span class="d-inline-flex align-items-center">
-                        <AiIcon class="me-1" />
+                    <span class="fix-with-ai">
+                        <AiIcon />
                         <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
@@ -171,7 +171,6 @@
 
     import * as Utils from "../../utils/utils"
     import {findTaskById, LOOP_TASK_TYPE} from "../../utils/flowUtils"
-    import {loopIterationsRoute} from "../../utils/executionUtils"
     import {useToast} from "../../utils/toast"
     import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
@@ -191,6 +190,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const props = withDefaults(defineProps<{
         taskRun: ExecutionTaskRun
@@ -284,7 +284,7 @@
     )
 
     function openIterations() {
-        router.push(loopIterationsRoute(props.execution.id, props.taskRun.taskId))
+        router.push(loopIterationsRoute(props.execution, props.taskRun.taskId))
     }
 
     function downloadNameFor(currentTaskRunId: string): string {
@@ -366,7 +366,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-run-buttons {
         padding: 0 .5rem;
         border: none;
@@ -377,7 +377,13 @@
         }
     }
 
-        .iteration-selector {
+    .fix-with-ai {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    .iteration-selector {
         border-bottom: var(--ks-border-block-primary);
         padding: var(--ks-spacing-2);
 

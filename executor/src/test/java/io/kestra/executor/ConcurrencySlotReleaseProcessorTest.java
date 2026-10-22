@@ -1,7 +1,6 @@
 package io.kestra.executor;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -180,7 +179,7 @@ class ConcurrencySlotReleaseProcessorTest {
         Execution execution = created().withState(State.Type.RUNNING).withState(State.Type.SUCCESS);
 
         // When
-        Optional<Execution> popped = unlimited.release(cycle(created().withState(State.Type.RUNNING), execution), true);
+        List<Execution> popped = unlimited.release(cycle(created().withState(State.Type.RUNNING), execution), true);
 
         // Then
         assertThat(popped).isEmpty();

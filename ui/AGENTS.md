@@ -63,6 +63,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 
 ### When extending the design system
 
+- Component styles are plain CSS. A component that needs Element Plus's base styles keeps them in a `<style lang="scss">` block holding only the `el-ns` and `theme-chalk` `@use` lines, placed before the plain `<style>` with its own rules, so each published component entry still ships its chalk CSS. Palette colours are `var(--ks-<family>-<step>)`, not `palette.$base-*`.
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
@@ -383,7 +384,7 @@ If your `<style>` block needs to exist:
 | Component | Purpose |
 |-----------|---------|
 | `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
-| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close |
+| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |

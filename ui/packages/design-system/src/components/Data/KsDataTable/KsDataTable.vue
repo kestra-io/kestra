@@ -512,9 +512,10 @@
     })
 </script>
 
-<style lang="scss">
-    // Registered rather than declared on the wrapper: a plain declaration there would shadow a value
-    // an ancestor sets, which is the opposite of the override hook this is meant to be.
+<style>
+    /* Registered rather than declared on the wrapper: a plain declaration there would shadow a value */
+    /* an ancestor sets, which is the opposite of the override hook this is meant to be. */
+
     @property --ks-data-table-navbar-padding-block-start {
         syntax: "<length>";
         inherits: true;
@@ -529,7 +530,7 @@
         gap: var(--ks-spacing-2);
         text-align: center;
 
-        strong {
+        & strong {
             color: var(--ks-text-primary);
             font-size: var(--ks-font-size-md);
             font-weight: var(--ks-font-weight-bold);
@@ -542,33 +543,26 @@
         color: var(--ks-icon-error);
     }
 
-    @mixin first-column-gutter {
-        .kel-table th.kel-table__cell:first-child > .cell,
-        .kel-table td.kel-table__cell:first-child > .cell {
-            padding-left: var(--ks-spacing-5);
-        }
-    }
-
     .ks-data-table-wrapper {
         --ks-data-table-gutter: 2rem;
         height: 100%;
         display: flex;
         flex-direction: column;
 
-        > .ks-data-table-navbar,
-        .ks-data-table-top {
+        & > .ks-data-table-navbar,
+        & .ks-data-table-top {
             padding-inline: var(--ks-data-table-gutter);
         }
 
-        > .ks-data-table-navbar {
+        & > .ks-data-table-navbar {
             padding-block-start: var(--ks-data-table-navbar-padding-block-start);
         }
 
-        .kel-pagination {
+        & .kel-pagination {
             display: flex;
             padding-inline: var(--ks-data-table-gutter);
 
-            .kel-pagination__sizes {
+            & .kel-pagination__sizes {
                 display: flex;
                 flex: 1;
             }
@@ -579,14 +573,14 @@
         }
 
         &.no-gutter {
-            > .ks-data-table-navbar,
-            .ks-data-table-top,
-            .kel-pagination {
+            & > .ks-data-table-navbar,
+            & .ks-data-table-top,
+            & .kel-pagination {
                 padding-inline: 0;
             }
         }
 
-        .kel-checkbox__inner {
+        & .kel-checkbox__inner {
             width: 16px;
             height: 16px;
             border-radius: 4.8px;
@@ -594,7 +588,7 @@
             border: 0.8px solid var(--ks-border-strong);
         }
 
-        .kel-scrollbar__view {
+        & .kel-scrollbar__view {
             height: 100%;
         }
     }
@@ -603,41 +597,47 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+    }
 
-        &--fit {
+    .ks-data-table-body--fit {
+        min-height: 0;
+
+        & .ks-data-table-content {
+            flex: 1 1 0;
             min-height: 0;
+            overflow: hidden;
+        }
 
-            .ks-data-table-content {
-                flex: 1 1 0;
-                min-height: 0;
-                overflow: hidden;
+        & .ks-data-table-content--slot {
+            overflow: auto;
+        }
 
-                &--slot {
-                    overflow: auto;
-                }
-            }
-
-            .kel-pagination {
-                margin-top: auto;
-            }
+        & .kel-pagination {
+            margin-top: auto;
         }
     }
 
     .ks-data-table-content {
         position: relative;
-        height:100%;
+        height: 100%;
 
         &.no-selection-gutter:not(.ks-data-table-content--cards) {
-            @include first-column-gutter;
+            & .kel-table th.kel-table__cell:first-child > .cell,
+            & .kel-table td.kel-table__cell:first-child > .cell {
+                padding-left: var(--ks-spacing-5);
+            }
         }
 
         @media (min-width: 768px) {
             &.no-selection-gutter.ks-data-table-content--cards {
-                @include first-column-gutter;
+                & .kel-table th.kel-table__cell:first-child > .cell,
+                & .kel-table td.kel-table__cell:first-child > .cell {
+                    padding-left: var(--ks-spacing-5);
+                }
             }
         }
 
-        .bulk-select-header {
+        & .bulk-select-header {
             z-index: 1;
             position: absolute;
             height: calc(var(--table-header-height) - 1px);
@@ -651,7 +651,7 @@
             }
         }
 
-        .kel-table__empty-text {
+        & .kel-table__empty-text {
             @media (max-width: 500px) {
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -659,14 +659,15 @@
             }
         }
 
-        // element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own
-        // height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any
-        // empty-state layout). Subtract the header height we already track for the bulk-select overlay above.
-        .kel-table__empty-block {
+        /* element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own */
+        /* height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any */
+        /* empty-state layout). Subtract the header height we already track for the bulk-select overlay above. */
+
+        & .kel-table__empty-block {
             height: calc(100% - var(--table-header-height, 0px)) !important;
         }
 
-        .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
+        & .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
             visibility: hidden;
             pointer-events: none;
         }
@@ -684,28 +685,28 @@
         .ks-data-table-content--cards {
             --ks-data-table-leading-width: 0.625rem;
 
-            .kel-table {
+            & .kel-table {
                 --kel-table-bg-color: transparent;
                 --kel-table-tr-bg-color: transparent;
             }
 
-            .kel-table__header-wrapper,
-            .kel-table__body colgroup,
-            .kel-table__body thead {
+            & .kel-table__header-wrapper,
+            & .kel-table__body colgroup,
+            & .kel-table__body thead {
                 display: none;
             }
 
-            .kel-scrollbar__view {
+            & .kel-scrollbar__view {
                 max-width: 100%;
             }
 
-            .kel-table__body,
-            .kel-table__body tbody {
+            & .kel-table__body,
+            & .kel-table__body tbody {
                 display: block;
                 max-width: 100%;
             }
 
-            .kel-table__row {
+            & .kel-table__row {
                 display: flex;
                 flex-wrap: wrap;
                 align-items: center;
@@ -724,13 +725,13 @@
                 }
             }
 
-            .kel-table__cell {
+            & .kel-table__cell {
                 min-width: 0;
                 padding: 0;
                 border: 0;
                 background: transparent;
 
-                > .cell {
+                & > .cell {
                     padding: 0;
                     line-height: var(--ks-line-height-base);
                     word-break: normal;
@@ -738,69 +739,69 @@
                 }
             }
 
-            .ks-mobile-hidden {
+            & .ks-mobile-hidden {
                 display: none;
             }
 
-            .ks-mobile-leading {
+            & .ks-mobile-leading {
                 order: 1;
                 flex: none;
                 width: var(--ks-data-table-leading-width);
             }
 
-            .ks-mobile-title {
+            & .ks-mobile-title {
                 order: 2;
                 flex: 1 1 0;
                 color: var(--ks-text-primary);
 
-                > .cell,
-                .ks-entity-link {
+                & > .cell,
+                & .ks-entity-link {
                     font-weight: var(--ks-font-weight-bold);
                 }
             }
 
-            .ks-mobile-actions {
+            & .ks-mobile-actions {
                 order: 3;
             }
 
-            .ks-mobile-title-aside {
+            & .ks-mobile-title-aside {
                 order: 3;
                 color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-sm);
             }
 
-            .ks-mobile-meta,
-            .ks-mobile-meta-aside {
+            & .ks-mobile-meta,
+            & .ks-mobile-meta-aside {
                 margin-top: var(--ks-spacing-1);
                 color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-sm);
             }
 
-            .ks-mobile-meta {
+            & .ks-mobile-meta {
                 order: calc(10 + var(--ks-mobile-order, 0));
             }
 
-            .ks-mobile-meta-first {
+            & .ks-mobile-meta-first {
                 margin-inline-start: var(--ks-data-table-leading-offset, 0);
             }
 
-            .ks-mobile-meta:not(.ks-mobile-meta-first) > .cell::before {
+            & .ks-mobile-meta:not(.ks-mobile-meta-first) > .cell::before {
                 content: "·";
                 margin-inline-end: var(--ks-spacing-2);
             }
 
-            .ks-mobile-meta-aside {
+            & .ks-mobile-meta-aside {
                 order: 20;
                 margin-left: auto;
             }
 
-            .kel-table__cell .ks-entity-link {
+            & .kel-table__cell .ks-entity-link {
                 padding: 0;
                 background: transparent;
                 color: inherit;
                 font-weight: inherit;
 
-                .ks-entity-link__icon {
+                & .ks-entity-link__icon {
                     display: none;
                 }
             }
@@ -808,7 +809,7 @@
     }
 </style>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-data-table-wrapper :deep(.pagination) {
         margin-block: var(--ks-spacing-4);
     }

@@ -74,7 +74,12 @@
                     <LogsWrapper
                         v-if="hasLogsContent(props.row as TriggerRow)"
                         class="m-3"
-                        :filters="props.row"
+                        :filters="{
+                            'filters[namespace][EQUALS]': props.row.namespace,
+                            'filters[flowId][EQUALS]': props.row.flowId,
+                            'filters[triggerId][EQUALS]': props.row.triggerId ?? props.row.id
+                        }"
+                        :logsStoreScope="`trigger-admin-${props.row.namespace}-${props.row.flowId}-${props.row.triggerId ?? props.row.id}`"
                         :withCharts="false"
                         embed
                     />

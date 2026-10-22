@@ -567,7 +567,9 @@
       "empty": "Nessun Task di questo Flow fornisce un artifact.",
       "count": "{artifacts} · {tasks}",
       "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
-      "tasks": "nessun Task | {count} Task | {count} Task"
+      "tasks": "nessun Task | {count} Task | {count} Task",
+      "fullscreen": "Schermo intero",
+      "exit_fullscreen": "Esci dalla modalità a schermo intero"
     },
     "variable_explorer": {
       "title": "Input/Output",

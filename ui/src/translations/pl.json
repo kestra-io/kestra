@@ -567,7 +567,9 @@
       "empty": "Żaden Task tego Flow nie dostarcza artefaktu.",
       "count": "{artifacts} · {tasks}",
       "artifacts": "brak artefaktów | {count} artefakt | {count} artefakty | {count} artefaktów",
-      "tasks": "brak Tasków | {count} Task | {count} Taski | {count} Tasków"
+      "tasks": "brak Tasków | {count} Task | {count} Taski | {count} Tasków",
+      "fullscreen": "Pełny ekran",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
     },
     "variable_explorer": {
       "title": "Input/Output",

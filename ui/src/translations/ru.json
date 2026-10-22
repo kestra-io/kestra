@@ -567,7 +567,9 @@
       "empty": "Ни одна Task этого Flow не предоставляет артефакт.",
       "count": "{artifacts} · {tasks}",
       "artifacts": "нет артефактов | {count} артефакт | {count} артефакта | {count} артефактов",
-      "tasks": "нет Task'ов | {count} Task | {count} Task'а | {count} Task'ов"
+      "tasks": "нет Task'ов | {count} Task | {count} Task'а | {count} Task'ов",
+      "fullscreen": "На весь экран",
+      "exit_fullscreen": "Выйти из полноэкранного режима"
     },
     "variable_explorer": {
       "title": "Ввод/Вывод",

@@ -567,7 +567,9 @@
       "empty": "Kein Task dieses Flows stellt ein Artefakt bereit.",
       "count": "{artifacts} · {tasks}",
       "artifacts": "keine Artefakte | {count} Artefakt | {count} Artefakte",
-      "tasks": "keine Tasks | {count} Task | {count} Tasks"
+      "tasks": "keine Tasks | {count} Task | {count} Tasks",
+      "fullscreen": "Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
     },
     "variable_explorer": {
       "title": "Eingabe/Ausgabe",

@@ -811,6 +811,8 @@
   "execution_artifacts|artifacts": "d83e917c984d",
   "execution_artifacts|count": "bf6fc4845bac",
   "execution_artifacts|empty": "2c7a7fbc4a4a",
+  "execution_artifacts|exit_fullscreen": "37fd4e355ba3",
+  "execution_artifacts|fullscreen": "c461dbb2bab7",
   "execution_artifacts|tasks": "6958451d42ac",
   "execution_banner|attempts": "6a5277decf3a",
   "execution_banner|revision": "60c9d7aa7419",

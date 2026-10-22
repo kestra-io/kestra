@@ -567,7 +567,9 @@
       "empty": "Aucune Task de ce Flow ne fournit d'artifact.",
       "count": "{artifacts} · {tasks}",
       "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
-      "tasks": "aucune Task | {count} Task | {count} Tasks"
+      "tasks": "aucune Task | {count} Task | {count} Tasks",
+      "fullscreen": "Plein écran",
+      "exit_fullscreen": "Quitter le mode plein écran"
     },
     "variable_explorer": {
       "title": "Entrée/Sortie",

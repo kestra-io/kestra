@@ -567,7 +567,9 @@
       "empty": "Nenhuma task deste flow fornece um artifact.",
       "count": "{artifacts} · {tasks}",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
-      "tasks": "nenhuma task | {count} task | {count} tasks"
+      "tasks": "nenhuma task | {count} task | {count} tasks",
+      "fullscreen": "Ecrã inteiro",
+      "exit_fullscreen": "Sair do modo de tela cheia"
     },
     "variable_explorer": {
       "title": "Entrada/Saída",

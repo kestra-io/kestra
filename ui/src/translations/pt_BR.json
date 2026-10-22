@@ -563,11 +563,13 @@
     "input": "Input",
     "variables": "Variáveis",
     "execution_artifacts": {
-      "title": "Artifacts",
+      "title": "Artefatos",
       "empty": "Nenhuma Task deste flow fornece um artifact.",
       "count": "{artifacts} · {tasks}",
       "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
-      "tasks": "nenhuma task | {count} task | {count} tasks"
+      "tasks": "nenhuma task | {count} task | {count} tasks",
+      "fullscreen": "Tela cheia",
+      "exit_fullscreen": "Sair da tela cheia"
     },
     "variable_explorer": {
       "title": "Entrada/Saída",

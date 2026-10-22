@@ -567,7 +567,9 @@
       "empty": "इस Flow का कोई भी Task एक आर्टिफैक्ट प्रदान नहीं करता है।",
       "count": "{artifacts} · {tasks}",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
-      "tasks": "कोई task नहीं | {count} task | {count} task"
+      "tasks": "कोई task नहीं | {count} task | {count} task",
+      "fullscreen": "फ़ुलस्क्रीन",
+      "exit_fullscreen": "पूर्णस्क्रीन से बाहर निकलें"
     },
     "variable_explorer": {
       "title": "इनपुट/आउटपुट",

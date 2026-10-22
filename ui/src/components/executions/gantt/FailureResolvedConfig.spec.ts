@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, it, vi} from "vitest"
-import {flushPromises, mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {flushPromises} from "@vue/test-utils"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import FailureResolvedConfig from "./FailureResolvedConfig.vue"
 import en from "../../../translations/en.json"
 
@@ -12,12 +12,11 @@ vi.mock("@kestra-io/kestra-sdk/expressions", () => ({
     renderExpressions: mocks.renderExpressions,
 }))
 
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en: en.en}})
-
 const RAW_BLOCK = "id: load_warehouse\ntype: io.kestra.plugin.jdbc.snowflake.Query\nurl: \"{{ secret('SNOWFLAKE_URL') }}\"\nsql: SELECT 1\n"
 
 function mountConfig(props: Partial<{rawBlock: string | undefined; flowLoading: boolean; flowError: boolean}> = {}) {
-    return mount(FailureResolvedConfig, {
+    return i18nMount(FailureResolvedConfig, {
+        locales: {en: en.en},
         props: {
             rawBlock: RAW_BLOCK,
             flowLoading: false,
@@ -27,7 +26,6 @@ function mountConfig(props: Partial<{rawBlock: string | undefined; flowLoading: 
             ...props,
         },
         global: {
-            plugins: [i18n],
             stubs: {KsMarkdown: {template: "<pre>{{ content }}</pre>", props: ["content"]}},
         },
     })

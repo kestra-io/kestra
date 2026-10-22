@@ -5,6 +5,7 @@ import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
 import {defineConfig, globalIgnores} from "eslint/config"
 import kestraTokens from "./scripts/tokens/eslintPlugin.mjs"
+import kestraI18n from "./scripts/translations/eslintPlugin.mjs"
 
 export default defineConfig([
     globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "**/storybook-static/*", "packages/kestra-sdk/src/openapi/*"]),
@@ -56,6 +57,7 @@ export default defineConfig([
     },
     {
         files: ["**/*.vue"],
+        plugins: {"kestra-i18n": kestraI18n},
         languageOptions: {parserOptions: {
             parser: tsParser,
             extraFileExtensions: [".vue"],
@@ -81,12 +83,7 @@ export default defineConfig([
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],
             "vue/component-name-in-template-casing": ["error", "PascalCase", {"registeredComponentsOnly": true}],
             "vue/attribute-hyphenation": ["error", "never"],
-            // vue-i18n defaults <i18n-t> to the parent scope and warns on every render when it falls
-            // back to the global one, the only scope Kestra's messages live in.
-            "vue/no-restricted-syntax": ["error", {
-                selector: "VElement[rawName=/^(i18n-t|I18nT)$/]:not(:has(VAttribute[key.name='scope']))",
-                message: "Set scope=\"global\" on <i18n-t>.",
-            }],
+            "kestra-i18n/i18n-t-scope": "error",
         },
     },
     {

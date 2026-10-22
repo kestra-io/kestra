@@ -22,7 +22,9 @@ export function useExecutionArtifacts() {
 
     const taskTypes = computed(() => [...new Set(tasks.value.map((task) => task.type))].sort())
 
-    watch(taskTypes, (types) => resolveRemoteComponent(types.map((cls) => ({cls, version: undefined}))), {immediate: true})
+    watch(taskTypes, (types) => {
+        if (executionsStore.flow) resolveRemoteComponent(types.map((cls) => ({cls, version: undefined})))
+    }, {immediate: true})
 
     const artifacts = computed<ExecutionArtifact[]>(() => tasks.value.flatMap((task) =>
         Object.entries(taskAdditionalInfoRemote.value)

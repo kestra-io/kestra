@@ -124,7 +124,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .docs-not-found {
         display: flex;
         flex-direction: column;

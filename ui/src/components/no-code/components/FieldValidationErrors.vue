@@ -18,7 +18,7 @@
     withDefaults(defineProps<{errors: string[], dataTest?: string}>(), {dataTest: "field-validation-error"})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .field-error {
     display: flex;
     align-items: center;

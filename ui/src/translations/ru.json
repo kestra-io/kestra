@@ -242,6 +242,7 @@
       "last7days": "Последние 7 дней",
       "last30days": "Последние 30 дней",
       "last365days": "Последние 365 дней",
+      "allTime": "Все время",
       "next5minutes": "Следующие 5 мин",
       "next15minutes": "Следующие 15 минут",
       "next1hour": "Следующий 1 час",
@@ -523,8 +524,25 @@
       "attempts": "{count} попытка | {count} попытки | {count} попыток",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Упавшая task",
+      "view_task_logs": "Открыть логи task",
+      "revision_short": "рев. {revision}",
+      "more_labels": "+{count} метка | +{count} метки | +{count} меток",
+      "fewer_labels": "Показать меньше меток",
+      "jump_to_first_failure": "Перейти к первой ошибке",
+      "open_logs": "Открыть логи"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "После входа",
+      "execution_tab": "Выполнение {id} · вкладка {tab}",
+      "execution": "Выполнение {id}",
+      "tab": "Вкладка {tab}"
+    },
     "concurrency limits": "Ограничения на параллелизм",
     "system overview": "Обзор системы",
+    "workspace": "Рабочее пространство",
+    "resources": "Ресурсы",
     "usage": "Использование",
     "namespaces": "Namespaces",
     "tasks": "Задачи",

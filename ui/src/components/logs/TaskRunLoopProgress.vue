@@ -129,12 +129,12 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
   .progress-bar {
     margin-block: .3rem;
     flex: 1;
 
-    :deep(.kel-progress__text) {
+    & :deep(.kel-progress__text) {
       font-size: var(--ks-font-size-sm) !important;
       color: var(--ks-text-secondary);
     }

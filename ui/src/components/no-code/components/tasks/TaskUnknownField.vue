@@ -36,7 +36,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .unknown-head {
     width: 100%;
     display: flex;

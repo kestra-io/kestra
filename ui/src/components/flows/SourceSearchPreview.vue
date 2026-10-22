@@ -354,7 +354,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .source-search-preview {
     height: 100%;
     display: flex;
@@ -549,7 +549,7 @@
     font-weight: 600;
     overflow-wrap: anywhere;
 
-    :deep(mark) {
+    & :deep(mark) {
         background-color: var(--ks-status-background-warning);
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-xs);

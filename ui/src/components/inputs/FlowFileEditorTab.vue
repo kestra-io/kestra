@@ -449,7 +449,7 @@
     } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .editor-tab {
         height: 100%;
         display: flex;

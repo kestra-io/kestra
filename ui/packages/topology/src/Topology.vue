@@ -41,7 +41,11 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...clusterProps, ...taskActionProps}" />
+                    </template>
+                </ClusterNode>
             </template>
 
             <template #node-dot="dotProps">
@@ -126,7 +130,11 @@
                     @show-outputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
                     @replay-task="emit(EVENTS.REPLAY_TASK, $event)"
                     @add-error="emit('on-add-flowable-error', $event)"
-                />
+                >
+                    <template #taskActions="taskActionProps">
+                        <slot name="taskActions" v-bind="{...CollapsedProps, ...taskActionProps}" />
+                    </template>
+                </CollapsedClusterNode>
             </template>
 
             <template #edge-edge="EdgeProps">
@@ -616,7 +624,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     /* The graph fills what is left: the flow bar takes its own row rather than floating over the
        canvas, where it clipped the first cluster's badge at every open. */
     .topology-shell {

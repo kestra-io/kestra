@@ -52,7 +52,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .node-action--danger {
         color: var(--ks-text-error);
     }

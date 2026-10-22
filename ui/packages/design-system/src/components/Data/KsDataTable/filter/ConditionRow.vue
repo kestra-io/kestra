@@ -353,7 +353,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .cond-field {
     flex-shrink: 0;
     width: auto;
@@ -406,7 +406,7 @@
     cursor: pointer;
     font-family: inherit;
 
-    .label {
+    & .label {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         white-space: nowrap;
@@ -418,7 +418,7 @@
         }
     }
 
-    .chevron {
+    & .chevron {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
         font-size: var(--ks-font-size-base);
@@ -471,7 +471,7 @@
     display: inline-flex;
     align-items: center;
 
-    :deep(svg) {
+    & :deep(svg) {
         width: 14px;
         height: 14px;
     }

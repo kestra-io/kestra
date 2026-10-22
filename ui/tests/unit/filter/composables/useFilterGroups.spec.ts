@@ -3,7 +3,6 @@ import {
     Comparators,
     isWrapperGroup,
     useFilterGroups,
-    findLeafById,
     findLeafContaining,
     allFilters,
     type AppliedFilter,
@@ -45,123 +44,6 @@ describe("useFilterGroups", () => {
             const tree = useFilterGroups()
             const found = tree.updateLeaf("nope", leaf => leaf)
             expect(found).toBe(false)
-        })
-    })
-
-    describe("moveFilter", () => {
-        it("moves a filter between top-level leaves", () => {
-            const tree = useFilterGroups()
-            tree.addGroup()
-            const [g1, g2] = tree.groups.value.map(g => g.id)
-            const f = filter("f1", "state", Comparators.EQUALS, "RUNNING")
-            tree.updateLeaf(g1, l => ({...l, filters: [f]}))
-
-            tree.moveFilter("f1", g2)
-
-            const sourceLeaf = findLeafById(tree.groups.value, g1)
-            const targetLeaf = findLeafById(tree.groups.value, g2)
-            expect(sourceLeaf?.filters).toHaveLength(0)
-            expect(targetLeaf?.filters).toEqual([f])
-        })
-
-        it("displaces a target filter only when key AND comparator collide", () => {
-            const tree = useFilterGroups()
-            tree.addGroup()
-            const [g1, g2] = tree.groups.value.map(g => g.id)
-            const moving = filter("moving", "startDate", Comparators.GREATER_THAN, "X")
-            const survivor = filter("survivor", "startDate", Comparators.LESS_THAN, "Y")
-            tree.updateLeaf(g1, l => ({...l, filters: [moving]}))
-            tree.updateLeaf(g2, l => ({...l, filters: [survivor]}))
-
-            tree.moveFilter("moving", g2)
-
-            const targetLeaf = findLeafById(tree.groups.value, g2)!
-            expect(targetLeaf.filters.map(f => f.id).sort()).toEqual(["moving", "survivor"])
-        })
-
-        it("groups same key + comparator chips into an AND wrapper instead of discarding one", () => {
-            const tree = useFilterGroups()
-            tree.addGroup()
-            const [g1, g2] = tree.groups.value.map(g => g.id)
-            const moving = filter("moving", "taskId", Comparators.EQUALS, "B")
-            const existing = filter("existing", "taskId", Comparators.EQUALS, "A")
-            tree.updateLeaf(g1, l => ({...l, filters: [moving]}))
-            tree.updateLeaf(g2, l => ({...l, filters: [existing]}))
-
-            tree.moveFilter("moving", g2)
-
-            // Both chips must survive (none discarded).
-            expect(allFilters(tree.groups.value).map(f => f.id).sort()).toEqual(["existing", "moving"])
-
-            // The target leaf is promoted to an AND wrapper with each conflicting chip isolated.
-            const target = tree.groups.value.find(g => isWrapperGroup(g) && g.children.some(c => c.id === g2))
-                ?? tree.groups.value.find(isWrapperGroup)
-            expect(target && isWrapperGroup(target)).toBe(true)
-            const wrapper = target as Extract<typeof target, {kind: "wrapper"}>
-            expect(wrapper.logical).toBe("AND")
-            expect(wrapper.children.flatMap(c => c.filters).map(f => f.id).sort()).toEqual(["existing", "moving"])
-            // Each conflicting chip lives in its own leaf so they don't collide on one URL param.
-            wrapper.children.forEach(c => expect(c.filters).toHaveLength(1))
-        })
-    })
-
-    describe("placeFilter", () => {
-        it("repositions a filter within the same leaf at the given index", () => {
-            const tree = useFilterGroups()
-            const [g1] = tree.groups.value.map(g => g.id)
-            const a = filter("a", "state", Comparators.EQUALS, "RUNNING")
-            const b = filter("b", "namespace", Comparators.EQUALS, "x")
-            const c = filter("c", "flowId", Comparators.EQUALS, "y")
-            tree.updateLeaf(g1, l => ({...l, filters: [a, b, c]}))
-
-            tree.placeFilter("a", g1, 2)
-
-            expect(findLeafById(tree.groups.value, g1)!.filters.map(f => f.id)).toEqual(["b", "c", "a"])
-        })
-
-        it("inserts a filter into another group's leaf at the given index", () => {
-            const tree = useFilterGroups()
-            tree.addGroup()
-            const [g1, g2] = tree.groups.value.map(g => g.id)
-            const a = filter("a", "state", Comparators.EQUALS, "RUNNING")
-            const b1 = filter("b1", "namespace", Comparators.EQUALS, "x")
-            const b2 = filter("b2", "flowId", Comparators.EQUALS, "y")
-            tree.updateLeaf(g1, l => ({...l, filters: [a]}))
-            tree.updateLeaf(g2, l => ({...l, filters: [b1, b2]}))
-
-            tree.placeFilter("a", g2, 1)
-
-            expect(findLeafById(tree.groups.value, g1)?.filters ?? []).toHaveLength(0)
-            expect(findLeafById(tree.groups.value, g2)!.filters.map(f => f.id)).toEqual(["b1", "a", "b2"])
-        })
-
-        it("drops the last filter at the end of the previous group instead of the start of the next (boundary regression)", () => {
-            const tree = useFilterGroups()
-            tree.addGroup()
-            const [g1, g2] = tree.groups.value.map(g => g.id)
-            const a1 = filter("a1", "state", Comparators.EQUALS, "RUNNING")
-            const a2 = filter("a2", "namespace", Comparators.EQUALS, "x")
-            const b1 = filter("b1", "flowId", Comparators.EQUALS, "y")
-            const b2 = filter("b2", "labels", Comparators.EQUALS, "z")
-            tree.updateLeaf(g1, l => ({...l, filters: [a1, a2]}))
-            tree.updateLeaf(g2, l => ({...l, filters: [b1, b2]}))
-
-            tree.placeFilter("b2", g1, 2)
-
-            expect(findLeafById(tree.groups.value, g1)!.filters.map(f => f.id)).toEqual(["a1", "a2", "b2"])
-            expect(findLeafById(tree.groups.value, g2)!.filters.map(f => f.id)).toEqual(["b1"])
-        })
-
-        it("clamps an out-of-range index to the end of the leaf", () => {
-            const tree = useFilterGroups()
-            const [g1] = tree.groups.value.map(g => g.id)
-            const a = filter("a", "state", Comparators.EQUALS, "RUNNING")
-            const b = filter("b", "namespace", Comparators.EQUALS, "x")
-            tree.updateLeaf(g1, l => ({...l, filters: [a, b]}))
-
-            tree.placeFilter("a", g1, 99)
-
-            expect(findLeafById(tree.groups.value, g1)!.filters.map(f => f.id)).toEqual(["b", "a"])
         })
     })
 

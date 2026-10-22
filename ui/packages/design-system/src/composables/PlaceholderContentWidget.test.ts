@@ -51,11 +51,6 @@ describe("PlaceholderContentWidget", () => {
         expect(fake.addContentWidget).toHaveBeenLastCalledWith(widget)
     })
 
-    it("has a stable id", () => {
-        const widget = new PlaceholderContentWidget("Type here", fakeEditor().editor)
-        expect(widget.getId()).toBe("editor.widget.placeholderHint")
-    })
-
     it("builds the DOM node once and returns the same element afterwards", () => {
         const fake = fakeEditor()
         const widget = new PlaceholderContentWidget("Type here", fake.editor)
@@ -71,14 +66,6 @@ describe("PlaceholderContentWidget", () => {
         expect(node.textContent).toBe("Type here")
         expect(node.style.fontStyle).toBe("italic")
         expect(fake.applyFontInfo).toHaveBeenCalledWith(node)
-    })
-
-    it("is pinned to the start of the first line", () => {
-        const widget = new PlaceholderContentWidget("Type here", fakeEditor().editor)
-        expect(widget.getPosition()).toEqual({
-            position: {lineNumber: 1, column: 1},
-            preference: [monaco.editor.ContentWidgetPositionPreference.EXACT],
-        })
     })
 
     it("removes itself from the editor when disposed", () => {

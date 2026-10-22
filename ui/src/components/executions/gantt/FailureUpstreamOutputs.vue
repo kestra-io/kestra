@@ -17,12 +17,21 @@
     const props = defineProps<{
         referencedTaskIds: string[]
         taskRunList: ExecutionTaskRun[]
+        focusedTaskRun: ExecutionTaskRun
         executionId: string
     }>()
 
     const loading = ref(false)
     const error = ref(false)
     const values = ref<Record<string, unknown>>({})
+
+    function runInFocusedContext(taskId: string): ExecutionTaskRun | undefined {
+        const candidates = props.taskRunList.filter((run) => run.taskId === taskId)
+        const focused = props.focusedTaskRun
+        return candidates.find((run) => focused.value !== undefined && run.value === focused.value)
+            ?? candidates.find((run) => run.parentTaskRunId === focused.parentTaskRunId)
+            ?? candidates[0]
+    }
 
     let latestLoad = 0
     async function load() {
@@ -38,7 +47,7 @@
         try {
             const merged: Record<string, unknown> = {}
             for (const taskId of props.referencedTaskIds) {
-                const taskRun = props.taskRunList.find((run) => run.taskId === taskId)
+                const taskRun = runInFocusedContext(taskId)
                 if (!taskRun) continue
 
                 const outputs = await loadTaskRunOutputs(props.executionId, taskRun.id)

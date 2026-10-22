@@ -15,7 +15,11 @@
     }>()
 
     const humanReadableCron = computed(() => {
-        return cronstrue.toString(props.cronExpression, {locale: Utils.getLang()})
+        try {
+            return cronstrue.toString(props.cronExpression, {locale: Utils.getLang()})
+        } catch {
+            return props.cronExpression
+        }
     })
 
 </script>

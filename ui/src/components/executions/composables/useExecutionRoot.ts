@@ -74,8 +74,9 @@ export function useExecutionRoot() {
     const getBaseTabs = () => {
         const namespace = executionsStore.execution?.namespace
         return EXECUTION_TAB_ROUTES
-            .filter((tabRoute) => isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace}))
-            .filter((tabRoute) => tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0)
+            .filter((tabRoute) =>
+                isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})
+                && (tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0))
             .map((tabRoute) => {
                 const meta = tabRoute.meta ?? {}
                 const name = meta.tab as string

@@ -1,11 +1,11 @@
-import {flushPromises, mount} from "@vue/test-utils"
+import {flushPromises} from "@vue/test-utils"
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {createI18n} from "vue-i18n"
 import type {State, StateType} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../../stores/executions"
 import {useExecutionsStore} from "../../stores/executions"
 import TaskRunActions from "./TaskRunActions.vue"
+import {i18nMount} from "../../../tests/unit/i18nMount"
 
 function state(current: StateType): State {
     return {current, histories: []}
@@ -28,26 +28,14 @@ vi.mock("../../utils/toast", () => ({
     })),
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    missingWarn: false,
-    fallbackWarn: false,
-    messages: {
-        en: {
-            iteration_number: "iteration_number",
-            delete_log_iteration: "delete_log_iteration",
-        },
-    },
-})
 
 type TaskRunActionsProps = InstanceType<typeof TaskRunActions>["$props"]
 
 function mountActions(propsData: Partial<TaskRunActionsProps>) {
-    return mount(TaskRunActions, {
+    return i18nMount(TaskRunActions, {
+        messages: {iteration_number: "iteration_number", delete_log_iteration: "delete_log_iteration"},
         props: propsData as TaskRunActionsProps,
         global: {
-            plugins: [i18n],
             stubs: {
                 KsDropdown: {
                     template: "<div><slot name=\"dropdown\" /></div>",

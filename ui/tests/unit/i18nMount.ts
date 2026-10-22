@@ -1,4 +1,4 @@
-import {mount, shallowMount, type ComponentMountingOptions} from "@vue/test-utils"
+import {config, mount, shallowMount, type ComponentMountingOptions} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
 import {isRouter, memoryRouter} from "./memoryRouter"
@@ -31,8 +31,9 @@ function withApp<T>({messages = {}, locales, global: globalOptions = {}, ...moun
             plugins: [
                 i18n,
                 ...(installsDesignSystem ? [] : [KestraDesignSystem]),
-                // The app always has a router; a spec that asserts on navigation passes its own.
-                ...(callerPlugins.some(isRouter) ? [] : [memoryRouter()]),
+                // The app always has a router; a spec that asserts on navigation passes its own, and a
+                // suite whose setup installs one globally (ui-ee) keeps it, or RouterLink registers twice.
+                ...([...(config.global.plugins ?? []), ...callerPlugins].some(isRouter) ? [] : [memoryRouter()]),
                 ...callerPlugins,
             ],
         },

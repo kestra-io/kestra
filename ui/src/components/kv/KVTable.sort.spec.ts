@@ -30,7 +30,8 @@ async function mountKvList(query: LocationQueryRaw = {}) {
     const wrapper = i18nMount(KVTable, {
         global: {
             plugins: [createPinia(), router, KestraDesignSystem],
-            stubs: {KsFilter: true},
+            // A bare stub forwards `prefix` to the DOM element, where it is a read-only property.
+            stubs: {KsFilter: {name: "KsFilter", props: ["prefix"], template: "<div />"}},
         },
     })
     await flushPromises()

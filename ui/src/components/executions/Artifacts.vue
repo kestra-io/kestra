@@ -107,7 +107,7 @@
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
-    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {EXECUTION_ARTIFACTS_KEY, type ExecutionArtifact} from "./composables/useExecutionArtifacts"
 
     const {afterLastDot} = stringUtils
@@ -183,10 +183,18 @@
         })
     }
 
+    const fetchEndpoint = (task: {id: string, type: string}) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
+        const executionId = execution.value?.id
+        const runId = taskRunId ?? runsOf(task.id).at(-1)?.id
+        if (!executionId || !runId) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
+        return callTaskRunEndpoint(task.type, name, executionId, runId, params)
+    }
+
     // Built once per selection: a plugin watching these props must not reload on every execution update.
     const selectedFetchers = computed(() => selected.value && {
         fetchOutputs: fetchOutputs(selected.value.taskId),
         fetchMetrics: fetchMetrics(selected.value.taskId),
+        fetchEndpoint: fetchEndpoint({id: selected.value.taskId, type: selected.value.cls}),
     })
 
     const subtitles = ref<Record<string, string | undefined>>({})
@@ -209,7 +217,7 @@
             if (!resolve || !task) continue
             const sequence = (subtitleSequences.get(artifact.key) ?? 0) + 1
             subtitleSequences.set(artifact.key, sequence)
-            Promise.resolve(resolve({task, execution: execution.value, fetchOutputs: sharedFetchOutputs(task.id), fetchMetrics: fetchMetrics(task.id)}))
+            Promise.resolve(resolve({task, execution: execution.value, fetchOutputs: sharedFetchOutputs(task.id), fetchMetrics: fetchMetrics(task.id), fetchEndpoint: fetchEndpoint(task)}))
                 .then((subtitle) => {
                     if (subtitleSequences.get(artifact.key) !== sequence) return
                     subtitles.value = {...subtitles.value, [artifact.key]: typeof subtitle === "string" ? subtitle : undefined}

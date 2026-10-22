@@ -115,6 +115,7 @@ const routes: KestraRouteRecord[] = [
     {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue")},
     {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue")},
     {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue")},
+    {name: "credentials/list", path: "/:tenant?/credentials", component: () => import("../components/demo/Credentials.vue")},
     {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue")},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue")},
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue")},

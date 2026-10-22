@@ -5,6 +5,12 @@
       "cta": "Voir les modifications"
     },
     "loading": "Chargement...",
+    "namespace_files_tip": {
+      "title": "Gérez vos scripts comme fichiers du namespace",
+      "description": "Au lieu d'écrire votre script en ligne, ouvrez le panneau Fichiers, ajoutez-le comme fichier (par ex. main.py) et exécutez-le depuis votre flow :",
+      "open_files": "Ouvrir les fichiers",
+      "dont_show_again": "Ne plus afficher"
+    },
     "more actions": "Plus d'actions",
     "recipe": {
       "create_flow": "Créer un flow",
@@ -236,6 +242,7 @@
       "last7days": "7 derniers jours",
       "last30days": "30 derniers jours",
       "last365days": "365 derniers jours",
+      "allTime": "Tout le temps",
       "next5minutes": "Les 5 prochaines minutes",
       "next15minutes": "Prochaines 15 minutes",
       "next1hour": "Prochaine 1 heure",
@@ -517,8 +524,25 @@
       "attempts": "{count} tentative | {count} tentatives",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Task en échec",
+      "view_task_logs": "Voir les logs de la task",
+      "revision_short": "rév. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Afficher moins de labels",
+      "jump_to_first_failure": "Aller au premier échec",
+      "open_logs": "Ouvrir les logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Après la connexion",
+      "execution_tab": "Exécution {id} · onglet {tab}",
+      "execution": "Exécution {id}",
+      "tab": "Onglet {tab}"
+    },
     "concurrency limits": "Limites de Concurrence",
     "system overview": "Vue d'ensemble du système",
+    "workspace": "Espace de travail",
+    "resources": "Ressources",
     "usage": "Utilisation",
     "namespaces": "Espaces de nom",
     "tasks": "Tâches",
@@ -687,6 +711,7 @@
       "nav_properties": "Propriétés",
       "non_dynamic": "non dynamique",
       "format": "Format",
+      "internal_storage_uri_hint": "Expression Pebble faisant référence à un URI de stockage interne, par exemple {example}.",
       "max_items": "Nombre max. d'éléments",
       "max_length": "Longueur max",
       "maximum": "Maximum",
@@ -1373,6 +1398,12 @@
           "third": "Redémarrez votre instance Kestra pour que le secret soit chargé."
         }
       },
+      "credentials": {
+        "label": "Identifiants",
+        "header": "Identifiants",
+        "title": "Authentifiez-vous une fois, réutilisez-la dans chaque task",
+        "message": "Dans Kestra Enterprise Edition, l'authentification de serveur à serveur peut être configurée une fois comme une credential, de sorte que les jetons d'accès sont demandés et actualisés au moment de l'exécution au lieu d'être codés en dur dans vos flows. Les credentials peuvent être créées au niveau du tenant ou du namespace et référencées depuis n'importe quelle task."
+      },
       "apps": {
         "title": "Créez des applications personnalisées avec Kestra",
         "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation.",
@@ -1451,6 +1482,10 @@
           "title": "Gérer les secrets de manière sécurisée",
           "message": "Dans Kestra Enterprise Edition, vous pouvez stocker et contrôler les secrets au niveau du namespace, minimisant les risques et garantissant que les identifiants de chaque équipe restent isolés. Grâce à la hiérarchie imbriquée, vous pouvez également configurer les identifiants dans un namespace parent, et ils seront hérités par tous les namespaces enfants. La prise en charge de gestionnaires de secrets dédiés et de paramètres d'autorisation granulaires au niveau du namespace renforce davantage la sécurité et la conformité."
         },
+        "credentials": {
+          "title": "Limitez les credentials à ce namespace",
+          "message": "Dans Kestra Enterprise Edition, vous pouvez configurer des credentials au niveau du namespace, afin que les tasks de ce namespace et de ses enfants demandent et actualisent les jetons d'accès au moment de l'exécution au lieu de les stocker dans les flows. Une credential définie dans un namespace parent est héritée par tous les namespaces enfants."
+        },
         "assets": {
           "title": "Centraliser la gestion des actifs",
           "message": "Dans Kestra Enterprise Edition, Assets maintient un inventaire en temps réel des ressources avec lesquelles vos workflows interagissent. Ces ressources peuvent être des tables de base de données, des machines virtuelles, des fichiers ou tout système externe avec lequel vous travaillez."
@@ -1462,6 +1497,11 @@
         "policies": {
           "title": "Appliquer les règles de gouvernance dans ce namespace",
           "message": "Dans Kestra Enterprise Edition, les politiques vous permettent de définir des règles qui s'appliquent à chaque flow dans ce namespace et ses enfants — injecter des valeurs par défaut partagées, restreindre les valeurs de propriété, bloquer les plugins et exiger des labels de conformité, avec chaque modification entièrement visible pour les auteurs de flow."
+        },
+        "reusable-inputs": {
+          "label": "Inputs réutilisables",
+          "title": "Définissez vos inputs une fois, réutilisez-les partout",
+          "message": "Dans Kestra Enterprise Edition, les inputs réutilisables vous permettent de définir une seule fois un groupe nommé d'inputs typés au niveau du namespace et de le référencer dans n'importe quel flow. Un ensemble défini dans un namespace parent est disponible pour les namespaces enfants, ce qui permet aux équipes de partager les mêmes définitions d'inputs au lieu de les répéter dans chaque flow."
         },
         "history": {
           "title": "Gérer l'historique des révisions en un seul endroit",
@@ -1779,6 +1819,14 @@
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
+    "load_10_more": "Charger 10 de plus",
+    "show_all_executions": "Afficher toutes les exécutions",
+    "failed_iterations_only": "Itérations échouées uniquement",
+    "loop_iterations_shown": "{shown} sur {total} affichés",
+    "loop_iterations_load_error": "Échec du chargement des itérations",
+    "retry": "Réessayer",
+    "no_iterations": "Pas encore d'itérations",
+    "no_failed_iterations": "Aucune itération échouée",
     "loop_iterations_notice": {
       "logs": "Les itérations de boucle s'exécutent comme des sous-exécutions distinctes, leurs logs ne sont donc pas affichés ici.",
       "outputs": "Les itérations de boucle s'exécutent en tant que sous-exécutions distinctes, leurs outputs ne sont donc pas affichés ici.",
@@ -2290,7 +2338,8 @@
           "title": {
             "flow": "flow proposé",
             "dashboard": "Tableau de bord proposé",
-            "app": "Application proposée"
+            "app": "Application proposée",
+            "test_suite": "Test unitaire proposé"
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"

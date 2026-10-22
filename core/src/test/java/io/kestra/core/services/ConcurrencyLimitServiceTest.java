@@ -26,6 +26,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
@@ -81,7 +82,7 @@ class ConcurrencyLimitServiceTest {
     }
 
     @Test
-    @ExecuteFlow(value = "flows/valids/flow-concurrency-queue.yml", tenantId = "concurrency_limit_service_test_find_by_id_tenant")
+    @ExecuteFlow(value = "flows/valids/minimal-concurrency.yaml", tenantId = "concurrency_limit_service_test_find_by_id_tenant")
     void findById(Execution execution) {
         Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
 
@@ -92,8 +93,15 @@ class ConcurrencyLimitServiceTest {
     }
 
     @Test
-    @ExecuteFlow(value = "flows/valids/flow-concurrency-queue.yml", tenantId = "concurrency_limit_service_test_update_tenant")
+    @ExecuteFlow(value = "flows/valids/minimal-concurrency.yaml", tenantId = "concurrency_limit_service_test_update_tenant")
     void update(Execution execution) {
+        // Wait for the executor to release its slot before changing the counter.
+        Await.await().atMost(Duration.ofSeconds(10)).untilAsserted(
+            () -> assertThat(
+                concurrencyLimitRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId()).orElseThrow().getRunning()
+            ).isZero()
+        );
+
         Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
 
         assertThat(limit).isNotEmpty();
@@ -106,7 +114,7 @@ class ConcurrencyLimitServiceTest {
     }
 
     @Test
-    @ExecuteFlow(value = "flows/valids/flow-concurrency-queue.yml", tenantId = "concurrency_limit_service_test_list_tenant")
+    @ExecuteFlow(value = "flows/valids/minimal-concurrency.yaml", tenantId = "concurrency_limit_service_test_list_tenant")
     void list(Execution execution) {
         List<ConcurrencyLimit> list = concurrencyLimitRepository.find(execution.getTenantId());
 

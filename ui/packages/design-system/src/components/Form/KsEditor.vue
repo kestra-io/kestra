@@ -163,13 +163,14 @@
     })
 </script>
 
-<style lang="scss">
+<style>
     .highlight-lines {
         background-color: color-mix(in srgb, var(--ks-status-info) 20%, transparent);
     }
 
     /* Lines a consumer has locked via useReadOnlyYamlKeys. Styled here because the
        selector reaches into Monaco's own DOM, which a scoped feature style cannot. */
+
     .ks-readonly-yaml-line {
         background-color: var(--ks-bg-inactive);
     }
@@ -179,7 +180,7 @@
         align-items: center;
         justify-content: center;
 
-        .kel-button-group {
+        & .kel-button-group {
             display: inline-flex;
         }
     }
@@ -203,7 +204,7 @@
         display: flex;
         overflow: hidden;
 
-        .top-nav {
+        & .top-nav {
             background-color: var(--ks-bg-surface);
             padding: 0.5rem;
             border-radius: var(--kel-border-radius-round);
@@ -211,7 +212,7 @@
             border-bottom-right-radius: 0;
         }
 
-        .editor-absolute-container {
+        & .editor-absolute-container {
             position: absolute;
             top: 8px;
             right: var(--ks-font-size-lg);
@@ -220,11 +221,11 @@
             cursor: pointer;
         }
 
-        .editor-absolute-container > * {
+        & .editor-absolute-container > * {
             pointer-events: auto;
         }
 
-        .editor-container {
+        & .editor-container {
             display: flex;
             flex-grow: 1;
 
@@ -245,7 +246,7 @@
                 }
             }
 
-            .placeholder {
+            & .placeholder {
                 position: absolute;
                 top: -3px;
                 overflow: hidden;
@@ -256,18 +257,18 @@
                 color: var(--ks-placeholder-color);
             }
 
-            .editor-wrapper {
+            & .editor-wrapper {
                 min-width: 75%;
                 width: 100%;
 
-                .monaco-hover-content {
-                    h4 {
+                & .monaco-hover-content {
+                    & h4 {
                         font-size: var(--ks-font-size-base);
                         font-weight: bold;
                         line-height: var(--ks-line-height-base);
                     }
 
-                    p {
+                    & p {
                         margin-bottom: 0.5rem;
 
                         &:last-child {
@@ -275,17 +276,17 @@
                         }
                     }
 
-                    *:nth-last-child(2n) {
+                    & *:nth-last-child(2n) {
                         margin-bottom: 0;
                     }
                 }
             }
 
-            .bottom-right {
+            & .bottom-right {
                 bottom: 0px;
                 right: 0px;
 
-                ul {
+                & ul {
                     display: flex;
                     list-style: none;
                     padding: 0;
@@ -293,7 +294,7 @@
                 }
             }
 
-            .editor-footer-row {
+            & .editor-footer-row {
                 position: absolute;
                 left: 0;
                 right: 0;
@@ -303,7 +304,7 @@
                 display: flex;
                 justify-content: center;
 
-                > * {
+                & > * {
                     pointer-events: auto;
                     width: 100%;
                 }
@@ -312,8 +313,8 @@
     }
 
     .custom-dark-vs-theme {
-        .monaco-editor,
-        .monaco-editor-background {
+        & .monaco-editor,
+        & .monaco-editor-background {
             outline: none;
             background-color: var(--ks-bg-input);
             --vscode-editor-background: var(--ks-bg-input);
@@ -323,7 +324,7 @@
             --vscode-editorStickyScroll-background: var(--ks-bg-input);
         }
 
-        .monaco-editor .margin {
+        & .monaco-editor .margin {
             background-color: var(--ks-bg-input);
             --vscode-editorGutter-background: var(--ks-bg-input);
             --vscode-editorLineNumber-activeForeground: var(--ks-text-secondary);
@@ -376,9 +377,9 @@
     }
 
     .monaco-editor {
-        .monaco-scrollable-element {
-            > .scrollbar {
-                .slider {
+        & .monaco-scrollable-element {
+            & > .scrollbar {
+                & .slider {
                     width: 13px !important;
                     background: var(--ks-border-default) !important;
                     border-radius: 8px !important;
@@ -386,13 +387,16 @@
                 }
             }
 
-            .monaco-list-row[aria-label^="_DATE_PICKER_"] {
+            & .monaco-list-row[aria-label^="_DATE_PICKER_"] {
                 display: none;
             }
         }
     }
 
     .kestra-icon-wrapper {
+        display: flex;
+        align-items: center;
+        margin-right: var(--ks-spacing-1);
         flex-shrink: 0;
         width: 1em;
         height: 1em;

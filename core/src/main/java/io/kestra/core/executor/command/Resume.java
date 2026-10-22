@@ -6,7 +6,7 @@ import java.util.Map;
 import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.flow.PausableTask;
 
 import jakarta.annotation.Nullable;
 
@@ -16,11 +16,11 @@ public record Resume(String tenantId,
     String executionId,
     Instant timestamp,
     EventId eventId,
-    Pause.Resumed resumed,
+    PausableTask.Resumed resumed,
     @Nullable Map<String, Object> resumeInputs,
     @Nullable String operationId,
     @Nullable Actor actor) implements ExecutionCommand {
-    public static Resume from(Execution execution, Pause.Resumed resumed) {
+    public static Resume from(Execution execution, PausableTask.Resumed resumed) {
         return new Resume(
             execution.getTenantId(),
             execution.getNamespace(),
@@ -35,7 +35,7 @@ public record Resume(String tenantId,
         );
     }
 
-    public static Resume from(Execution execution, Pause.Resumed resumed, @Nullable Map<String, Object> resumeInputs) {
+    public static Resume from(Execution execution, PausableTask.Resumed resumed, @Nullable Map<String, Object> resumeInputs) {
         return new Resume(
             execution.getTenantId(),
             execution.getNamespace(),

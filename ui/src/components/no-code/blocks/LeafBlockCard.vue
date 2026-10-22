@@ -23,6 +23,7 @@
         />
 
         <TaskIcon
+            v-if="showIcon"
             class="leaf-block-card-ico"
             :cls="String(displayBlock.type ?? '')"
             :icons="icons"
@@ -122,10 +123,12 @@
         runnable?: boolean
         showOpenSplit?: boolean
         showDuplicate?: boolean
+        showIcon?: boolean
         icons?: Record<string, PluginIconData>
     }>(), {
         showOpenSplit: true,
         showDuplicate: true,
+        showIcon: true,
     })
 
     const emit = defineEmits<{

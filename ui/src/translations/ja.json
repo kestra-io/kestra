@@ -242,6 +242,7 @@
       "last7days": "過去7日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
+      "allTime": "すべての期間",
       "next5minutes": "次の5分",
       "next15minutes": "次の15分",
       "next1hour": "次の1時間",
@@ -523,8 +524,25 @@
       "attempts": "{count} 回の試行 | {count} 回の試行",
       "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
     },
+    "execution_mobile": {
+      "failed_task": "失敗した task",
+      "view_task_logs": "task の logs を表示",
+      "revision_short": "リビジョン {revision}",
+      "more_labels": "+{count} 件の label | +{count} 件の label",
+      "fewer_labels": "label の表示を減らす",
+      "jump_to_first_failure": "最初の失敗へ移動",
+      "open_logs": "logs を開く"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "サインイン後",
+      "execution_tab": "実行 {id} · {tab} タブ",
+      "execution": "実行 {id}",
+      "tab": "{tab} タブ"
+    },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
+    "workspace": "ワークスペース",
+    "resources": "リソース",
     "usage": "使用",
     "namespaces": "Namespaces",
     "tasks": "Tasks",

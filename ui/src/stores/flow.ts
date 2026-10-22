@@ -1,20 +1,20 @@
-import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
-import {routeQueryToQueryFilters} from "../utils/queryFilters"
+import { computed, h, ref, watch } from "vue"
+import { KsMarkdown, KsMessageBox } from "@kestra-io/design-system"
+import { routeQueryToQueryFilters } from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
-import {useCoreStore} from "./core"
-import {useUnsavedChangesStore} from "./unsavedChanges"
-import {defineStore} from "pinia"
-import type {FlowGraph} from "@kestra-io/topology/vue-flow-utils"
-import {handled, handledIf} from "../utils/kestraHttp"
-import {makeToast} from "../utils/toast"
-import {InputType} from "../utils/inputs"
-import {globalI18n} from "../translations/i18n"
-import {transformResponse} from "../components/dependencies/utils/transform"
-import {useAuthStore} from "override/stores/auth"
-import {useRoute} from "vue-router"
+import { useCoreStore } from "./core"
+import { useUnsavedChangesStore } from "./unsavedChanges"
+import { defineStore } from "pinia"
+import type { FlowGraph } from "@kestra-io/topology/vue-flow-utils"
+import { handled, handledIf } from "../utils/kestraHttp"
+import { makeToast } from "../utils/toast"
+import { InputType } from "../utils/inputs"
+import { globalI18n } from "../translations/i18n"
+import { transformResponse } from "../components/dependencies/utils/transform"
+import { useAuthStore } from "override/stores/auth"
+import { useRoute } from "vue-router"
 import type {
     AbstractTrigger,
     FlowWithSource,
@@ -23,14 +23,14 @@ import type {
     SourceSearchScope,
     Task as SdkTask,
 } from "@kestra-io/kestra-sdk"
-import {asProblem, isProblemType, ProblemTypes} from "@kestra-io/kestra-sdk"
+import { asProblem, isProblemType, ProblemTypes } from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-import {defaultNamespace} from "../composables/useNamespaces"
-import {useApiStore} from "./api"
-import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
-import type {KestraHttpError} from "../utils/kestraHttp"
-import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
+import { defaultNamespace } from "../composables/useNamespaces"
+import { useApiStore } from "./api"
+import { flowTaskStats, isExampleFlow, primaryTriggerType } from "../utils/analytics/activation"
+import type { KestraHttpError } from "../utils/kestraHttp"
+import { validationErrorLines, type ValidationError } from "../utils/validationErrors"
 
 const textYamlHeader = {
     headers: {
@@ -115,10 +115,10 @@ type SourceSearchOptions = {
  * A flow revision as `listFlowRevisions` returns it: same shape as any flow, except that `revision`
  * is always filled - it is what the list is keyed on - where `FlowWithSource` leaves it optional.
  */
-export type FlowRevision = FlowWithSource & {revision: number}
+export type FlowRevision = FlowWithSource & { revision: number }
 
 /** `subflows` lists the subflow paths whose own graph is expanded inline. */
-type GraphSubflows = {params?: {subflows?: string | string[]}}
+type GraphSubflows = { params?: { subflows?: string | string[] } }
 
 export type FlowSaveOutcome =
     | "saved"
@@ -163,6 +163,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
+    const ksEditorWarnings = ref<string[]>([])
 
     const t = (key: string, values?: Record<string, unknown>) => {
         if (!globalI18n.value) {
@@ -192,7 +193,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!flow.value) return "blocked"
         const source = flowYaml.value
-        const validation = await onEdit({source})
+        const validation = await onEdit({ source })
         if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
             return "no_op"
         }
@@ -232,7 +233,7 @@ export const useFlowStore = defineStore("flow", () => {
         const source = flowYaml.value
 
         if (source) {
-            const validation = await onEdit({source})
+            const validation = await onEdit({ source })
             if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
                 return "no_op"
             }
@@ -249,9 +250,9 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function publishDraft(target?: Flow): Promise<FlowSaveOutcome> {
         if (target) {
-            const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
+            const data = await loadFlow({ namespace: target.namespace, id: target.id, store: false })
             if (!data?.source) return "blocked"
-            await saveFlow({flow: data.source, draft: false})
+            await saveFlow({ flow: data.source, draft: false })
             notifySaved(data.id, false)
             return "saved"
         }
@@ -261,7 +262,7 @@ export const useFlowStore = defineStore("flow", () => {
         return save(false)
     }
 
-    async function onEdit({source, topologyVisible, metadataGuarded}: {
+    async function onEdit({ source, topologyVisible, metadataGuarded }: {
         source: string,
         editorViewType?: string,
         topologyVisible?: boolean,
@@ -277,15 +278,15 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!source.trim()?.length) {
             flowValidation.value = {
-                errors: [{detail: t("flow must not be empty")}],
+                errors: [{ detail: t("flow must not be empty") }],
             }
             return
         }
         if (!isCreating.value) {
-            try{
+            try {
                 if (flowBeforeEdit && flowOnValidation &&
-                        (flowOnValidation.id !== flowBeforeEdit.id ||
-                            flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
+                    (flowOnValidation.id !== flowBeforeEdit.id ||
+                        flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
                     if (!metadataGuarded && !readonlyToastShown.value) {
                         readonlyToastShown.value = true
@@ -301,7 +302,7 @@ export const useFlowStore = defineStore("flow", () => {
                         flowBeforeEdit.namespace,
                     )
                 }
-            } catch{
+            } catch {
             }
         }
 
@@ -326,7 +327,7 @@ export const useFlowStore = defineStore("flow", () => {
     function notifySaved(name: string, draft: boolean) {
         if (draft) {
             toast.success(
-                t("saved as draft done", {name}),
+                t("saved as draft done", { name }),
                 t("saved as draft"),
             )
         } else {
@@ -389,7 +390,7 @@ export const useFlowStore = defineStore("flow", () => {
         const isCreatingBackup = isCreating.value
         if (isCreating.value && !overrideFlow) {
             try {
-                const response = await createFlow({flow: flowSource ?? "", draft})
+                const response = await createFlow({ flow: flowSource ?? "", draft })
                 notifySaved(response.id, draft)
                 isCreating.value = false
             } catch (error: unknown) {
@@ -399,11 +400,11 @@ export const useFlowStore = defineStore("flow", () => {
                     handled(error)
                     const shouldRedirect = await KsMessageBox({
                         title: t("confirmation"),
-                        message: () => h(KsMarkdown, {content: t("flow already exists message", {id: flowParsed.value?.id ?? "", namespace: flowParsed.value?.namespace ?? ""})}),
+                        message: () => h(KsMarkdown, { content: t("flow already exists message", { id: flowParsed.value?.id ?? "", namespace: flowParsed.value?.namespace ?? "" }) }),
                         type: "warning",
                         showCancelButton: true,
                     }).then(async () => {
-                        const response = await saveFlow({flow: flowSource, draft})
+                        const response = await saveFlow({ flow: flowSource, draft })
                         notifySaved(response.id, draft)
                         isCreating.value = false
                         return true
@@ -414,13 +415,13 @@ export const useFlowStore = defineStore("flow", () => {
 
                 const problem = asProblem(error)
                 if (problem) {
-                    coreStore.message = {variant: "error", problem, status: problem.status}
+                    coreStore.message = { variant: "error", problem, status: problem.status }
                 }
 
                 throw error
             }
         } else {
-            await saveFlow({flow: flowSource, draft})
+            await saveFlow({ flow: flowSource, draft })
                 .then((response: Flow) => {
                     notifySaved(response.id, draft)
                 })
@@ -450,14 +451,14 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function initYamlSource() {
         if (!flow.value) return
-        const {source} = flow.value
+        const { source } = flow.value
         flowYaml.value = source
         flowYamlOrigin.value = source
         if (flowHaveTasks.value) {
             fetchGraph()
         }
 
-        return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
+        return validateFlow({ flow: isCreating.value ? source : yamlWithNextRevision.value })
     }
 
     function toFlowSearchParams(options: FlowSearchOptions) {
@@ -494,8 +495,8 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
     function searchFlows(options: SourceSearchOptions) {
-        const {sort, ...rest} = options
-        return FlowsAPI.searchFlowsBySourceCode({...rest, sort: sort ? [sort] : undefined}).then(response => {
+        const { sort, ...rest } = options
+        return FlowsAPI.searchFlowsBySourceCode({ ...rest, sort: sort ? [sort] : undefined }).then(response => {
             search.value = response.results
             total.value = response.total ?? 0
 
@@ -504,7 +505,7 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function flowsByNamespace(namespace: string) {
-        return FlowsAPI.listFlowsByNamespace({namespace}).then(response => {
+        return FlowsAPI.listFlowsByNamespace({ namespace }).then(response => {
             return response
         })
     }
@@ -521,7 +522,7 @@ export const useFlowStore = defineStore("flow", () => {
         if (options.store !== false) {
             latestFlowLoadKey = key
         }
-        let data: Flow & {exception?: string}
+        let data: Flow & { exception?: string }
         try {
             data = await FlowsAPI.flow({
                 namespace: options.namespace,
@@ -529,12 +530,12 @@ export const useFlowStore = defineStore("flow", () => {
                 revision: options.revision ? Number(options.revision) : undefined,
                 allowDeleted: options.allowDeleted,
                 source: true,
-            }) as Flow & {exception?: string}
+            }) as Flow & { exception?: string }
         } catch (e) {
             // A deleted flow answers 404 with a problem document rather than the flow, and the one
             // caller (subflow-input autocompletion) only reads `inputs`, so an empty flow stands in.
             if (options.deleted && (e as KestraHttpError).status === 404) {
-                return {} as Flow & {exception?: string}
+                return {} as Flow & { exception?: string }
             }
             throw e
         }
@@ -556,7 +557,7 @@ export const useFlowStore = defineStore("flow", () => {
             }
 
             flowValidation.value = {
-                errors: [{detail: data.exception}],
+                errors: [{ detail: data.exception }],
                 outdated: false,
                 infos: [],
             }
@@ -639,7 +640,7 @@ export const useFlowStore = defineStore("flow", () => {
     // restoreFlow() also goes through createFlow(), on a flow_id that already reported a creation -
     // flagged rather than dropped so activation can exclude it downstream.
     function trackFlowCreated(created: Flow, isRestore: boolean, isDraft: boolean) {
-        const {taskCount, pluginCount} = flowTaskStats(created.tasks)
+        const { taskCount, pluginCount } = flowTaskStats(created.tasks)
 
         useApiStore().posthogEvents({
             type: "FLOW_CREATED",
@@ -658,12 +659,12 @@ export const useFlowStore = defineStore("flow", () => {
     const inFlightDependencyCounts = new Map<string, ReturnType<typeof requestDependencies>>()
 
     function requestDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount: boolean) {
-        return FlowsAPI.flowDependencies({namespace: options.namespace, id: options.id, expandAll: !onlyCount}).then(data => {
-            const totalNodes = data.nodes ? new Set(data.nodes.map((r:{uid:string}) => r.uid)).size : 0
+        return FlowsAPI.flowDependencies({ namespace: options.namespace, id: options.id, expandAll: !onlyCount }).then(data => {
+            const totalNodes = data.nodes ? new Set(data.nodes.map((r: { uid: string }) => r.uid)).size : 0
             const count = Math.max(0, totalNodes - 1)
             dependenciesCount.value = count
             return {
-                ...(!onlyCount ? {data: transformResponse(data, options.subtype)} : {}),
+                ...(!onlyCount ? { data: transformResponse(data, options.subtype) } : {}),
                 count,
             }
         })
@@ -693,56 +694,56 @@ export const useFlowStore = defineStore("flow", () => {
         return request
     }
 
-function deleteFlowAndDependencies() {
-    const metadataForDelete = flowYamlMetadata.value
+    function deleteFlowAndDependencies() {
+        const metadataForDelete = flowYamlMetadata.value
 
-    return FlowsAPI.flowDependencies({namespace: metadataForDelete.namespace ?? "", id: metadataForDelete.id ?? "", destinationOnly: true})
-        .then((data) => {
-            let warning = ""
-            if (data && data.nodes) {
-                const deps = data.nodes
-                    .filter(
-                        (n) =>
-                            !(
-                                n.namespace === metadataForDelete.namespace &&
-                                n.id === metadataForDelete.id
-                            ),
-                    )
-                    .map(
-                        (n) =>
-                            "<li>" +
-                            n.namespace +
-                            ".<code>" +
-                            n.id +
-                            "</code></li>",
-                    )
-                    .join("\n")
+        return FlowsAPI.flowDependencies({ namespace: metadataForDelete.namespace ?? "", id: metadataForDelete.id ?? "", destinationOnly: true })
+            .then((data) => {
+                let warning = ""
+                if (data && data.nodes) {
+                    const deps = data.nodes
+                        .filter(
+                            (n) =>
+                                !(
+                                    n.namespace === metadataForDelete.namespace &&
+                                    n.id === metadataForDelete.id
+                                ),
+                        )
+                        .map(
+                            (n) =>
+                                "<li>" +
+                                n.namespace +
+                                ".<code>" +
+                                n.id +
+                                "</code></li>",
+                        )
+                        .join("\n")
 
-                if (deps.length) {
-                    warning =
-                        "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
-                        "<p style=\"margin: 0;\">\n" +
-                        t("dependencies delete flow") +
-                        "<ul>\n" +
-                        deps +
-                        "</ul>\n" +
-                        "</p>\n" +
-                        "</div>"
+                    if (deps.length) {
+                        warning =
+                            "<div style=\"margin-top: var(--ks-spacing-3); padding: var(--ks-spacing-2) var(--ks-spacing-4); border-radius: var(--ks-radius-base); background: var(--ks-bg-warning); border: 1px solid var(--ks-border-warning); color: var(--ks-text-warning);\" role=\"alert\">\n" +
+                            "<p style=\"margin: 0;\">\n" +
+                            t("dependencies delete flow") +
+                            "<ul>\n" +
+                            deps +
+                            "</ul>\n" +
+                            "</p>\n" +
+                            "</div>"
+                    }
                 }
-            }
-            return t("delete confirm", {name: metadataForDelete.id}) + warning
-        })
-        .then((message) => {
-            return new Promise((resolve, reject) => {
-                toast.confirm(message, () => {
-                    return deleteFlow({namespace: metadataForDelete.namespace ?? "", id: metadataForDelete.id ?? ""}).then(resolve).catch(reject)
-                }, "warning")
+                return t("delete confirm", { name: metadataForDelete.id }) + warning
             })
-        })
-        .catch(error => {
-            return Promise.reject(error)
-        })
-}
+            .then((message) => {
+                return new Promise((resolve, reject) => {
+                    toast.confirm(message, () => {
+                        return deleteFlow({ namespace: metadataForDelete.namespace ?? "", id: metadataForDelete.id ?? "" }).then(resolve).catch(reject)
+                    }, "warning")
+                })
+            })
+            .catch(error => {
+                return Promise.reject(error)
+            })
+    }
 
     function deleteFlow(options: { namespace: string, id: string }) {
         return FlowsAPI.deleteFlow(options).then(() => {
@@ -773,10 +774,10 @@ function deleteFlowAndDependencies() {
         const flowParsed = YAML_UTILS.parse<ParsedFlow>(options.flow)
         let flowSource = options.flow
         if (!flowParsed?.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+            flowSource = YAML_UTILS.updateMetadata(flowSource, { id: "default", namespace: "default" })
         }
         return FlowsAPI.generateFlowGraphFromSource(
-            {subflows, body: flowSource},
+            { subflows, body: flowSource },
         )
             .then(data => {
                 invalidGraph.value = false
@@ -822,13 +823,13 @@ function deleteFlowAndDependencies() {
         const flowParsed = YAML_UTILS.parse<ParsedFlow>(options.flow)
         let flowSource = options.flow
         if (!flowParsed?.id || !flowParsed.namespace) {
-            flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
+            flowSource = YAML_UTILS.updateMetadata(flowSource, { id: "default", namespace: "default" })
         }
-        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
+        return FlowsAPI.generateFlowGraphFromSource({ subflows, body: flowSource })
     }
 
     function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<FlowRevision[]> {
-        return FlowsAPI.listFlowRevisions({namespace: options.namespace, id: options.id}).then(data => {
+        return FlowsAPI.listFlowRevisions({ namespace: options.namespace, id: options.id }).then(data => {
             const flowRevisions = data as FlowRevision[]
             if (options.store !== false) {
                 revisions.value = flowRevisions
@@ -840,8 +841,8 @@ function deleteFlowAndDependencies() {
 
     function loadFlowStats(options: { namespace: string, id: string }) {
         return Promise.allSettled([
-            loadRevisions({namespace: options.namespace, id: options.id, store: false}),
-            loadDependencies({namespace: options.namespace, id: options.id, subtype: "FLOW"}, true),
+            loadRevisions({ namespace: options.namespace, id: options.id, store: false }),
+            loadDependencies({ namespace: options.namespace, id: options.id, subtype: "FLOW" }, true),
         ])
     }
 
@@ -855,22 +856,22 @@ function deleteFlowAndDependencies() {
     function validateFlow(options: { flow: string }) {
         const validation = ++latestValidation
         let creationDenied: string | undefined
-        if(isCreating.value) {
-            const {namespace} = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
-            if(authStore.user && !authStore.user?.isAllowed(
+        if (isCreating.value) {
+            const { namespace } = YAML_UTILS.getMetadata<ParsedFlow>(options.flow)
+            if (authStore.user && !authStore.user?.isAllowed(
                 resource.FLOW,
                 action.CREATE,
                 namespace,
             )) {
-                creationDenied = t("flow creation denied in namespace", {namespace})
+                creationDenied = t("flow creation denied in namespace", { namespace })
             }
         }
 
-        return FlowsAPI.validateFlows({body: options.flow}, {withCredentials: true})
+        return FlowsAPI.validateFlows({ body: options.flow }, { withCredentials: true })
             .then(results => {
                 const validResults: FlowValidations = results[0] ?? {}
                 if (creationDenied) {
-                    validResults.errors = [...(validResults.errors ?? []), {detail: creationDenied}]
+                    validResults.errors = [...(validResults.errors ?? []), { detail: creationDenied }]
                 }
 
                 // A response overtaken by a newer validation describes a source the editor no longer holds.
@@ -889,47 +890,47 @@ function deleteFlowAndDependencies() {
                 // body type - an object schema - cannot express.
                 body: options.task as unknown as Parameters<typeof FlowsAPI.validateTask>[0]["body"],
             },
-            {withCredentials: true, headers: textYamlHeader.headers},
+            { withCredentials: true, headers: textYamlHeader.headers },
         ).then(result => {
             taskErrors.value = result.errors
             return result
         })
     }
     function loadFlowMetrics(options: { namespace: string, id: string }) {
-        return MetricsAPI.listFlowMetrics({namespace: options.namespace, flowId: options.id})
+        return MetricsAPI.listFlowMetrics({ namespace: options.namespace, flowId: options.id })
             .then(data => {
                 metrics.value = data
                 return data
             })
     }
     function loadTaskMetrics(options: { namespace: string, id: string, taskId: string }) {
-        return MetricsAPI.listTaskMetrics({namespace: options.namespace, flowId: options.id, taskId: options.taskId})
+        return MetricsAPI.listTaskMetrics({ namespace: options.namespace, flowId: options.id, taskId: options.taskId })
             .then(data => {
                 metrics.value = data
                 return data
             })
     }
     function loadTasksWithMetrics(options: { namespace: string, id: string }) {
-        return MetricsAPI.listTasksWithMetrics({namespace: options.namespace, flowId: options.id})
+        return MetricsAPI.listTasksWithMetrics({ namespace: options.namespace, flowId: options.id })
             .then(data => {
                 tasksWithMetrics.value = data
                 return data
             })
     }
     function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
-        return MetricsAPI.aggregateMetricsFromFlow({namespace: options.namespace, flowId: options.id, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate})
+        return MetricsAPI.aggregateMetricsFromFlow({ namespace: options.namespace, flowId: options.id, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate })
             .then(data => {
                 return data
             })
     }
     function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
-        return MetricsAPI.aggregateMetricsFromTask({namespace: options.namespace, flowId: options.id, taskId: options.taskId, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate})
+        return MetricsAPI.aggregateMetricsFromTask({ namespace: options.namespace, flowId: options.id, taskId: options.taskId, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate })
             .then(data => {
                 return data
             })
     }
 
-    function setTrigger({index, trigger}: { index: number, trigger: Trigger }) {
+    function setTrigger({ index, trigger }: { index: number, trigger: Trigger }) {
         const flowVar = flow.value ?? {} as Flow
 
         if (flowVar.triggers === undefined) {
@@ -938,14 +939,14 @@ function deleteFlowAndDependencies() {
 
         flowVar.triggers[index] = trigger
 
-        flow.value = {...flowVar}
+        flow.value = { ...flowVar }
     }
 
     function removeTrigger(index: number) {
         const flowVar = flow.value ?? {} as Flow
         flowVar.triggers?.splice(index, 1)
 
-        flow.value = {...flowVar}
+        flow.value = { ...flowVar }
     }
 
     function setExecuteFlow(value: boolean) {
@@ -967,11 +968,11 @@ function deleteFlowAndDependencies() {
 
         flowVar.triggers.push(trigger)
 
-        flow.value = {...flowVar}
+        flow.value = { ...flowVar }
     }
 
     function deleteRevision(options: { namespace: string, id: string, revision: string }) {
-        return FlowsAPI.deleteRevisions({namespace: options.namespace, id: options.id, revisions: [Number(options.revision)]})
+        return FlowsAPI.deleteRevisions({ namespace: options.namespace, id: options.id, revisions: [Number(options.revision)] })
     }
 
     const authStore = useAuthStore()
@@ -982,11 +983,11 @@ function deleteFlowAndDependencies() {
         }
 
         return (isCreating.value && authStore.user?.hasAnyAction(resource.FLOW, action.UPDATE))
-         || authStore.user?.isAllowed(
-            resource.FLOW,
-            action.UPDATE,
-            flow.value?.namespace,
-        )
+            || authStore.user?.isAllowed(
+                resource.FLOW,
+                action.UPDATE,
+                flow.value?.namespace,
+            )
     })
 
     const readOnlySystemLabel = computed(() => {
@@ -994,7 +995,7 @@ function deleteFlowAndDependencies() {
             return false
         }
 
-        const labelsArray = Array.isArray(flow.value.labels) ? flow.value.labels : Object.entries(flow.value.labels).map(([key, value]) => ({key, value}))
+        const labelsArray = Array.isArray(flow.value.labels) ? flow.value.labels : Object.entries(flow.value.labels).map(([key, value]) => ({ key, value }))
 
         return labelsArray.some(label => label.key === "system.readOnly" && label.value === "true")
     })
@@ -1126,5 +1127,6 @@ function deleteFlowAndDependencies() {
         loadTasksWithMetrics,
         getNamespace,
         deleteRevision,
+        ksEditorWarnings,
     }
 })

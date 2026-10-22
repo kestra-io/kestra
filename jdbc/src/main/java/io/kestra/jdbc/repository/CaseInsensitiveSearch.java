@@ -10,7 +10,7 @@ import org.jooq.impl.SQLDataType;
  * collation so that two identifiers differing only by case stay distinct. Other dialects are rendered unchanged.
  */
 public final class CaseInsensitiveSearch {
-    private static final String MYSQL_COLLATION = "utf8mb4_unicode_ci";
+    public static final String MYSQL_COLLATION = "utf8mb4_unicode_ci";
 
     private CaseInsensitiveSearch() {
     }

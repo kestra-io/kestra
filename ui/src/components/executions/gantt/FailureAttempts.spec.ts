@@ -1,10 +1,7 @@
 import {describe, expect, it} from "vitest"
-import {mount} from "@vue/test-utils"
-import {createI18n} from "vue-i18n"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import FailureAttempts from "./FailureAttempts.vue"
 import en from "../../../translations/en.json"
-
-const i18n = createI18n({legacy: false, locale: "en", fallbackWarn: false, missingWarn: false, messages: {en: en.en}})
 
 function attempt(current: string, start: string, end: string, workerId?: string) {
     return {
@@ -13,8 +10,9 @@ function attempt(current: string, start: string, end: string, workerId?: string)
     }
 }
 
-function mountAttempts(attempts: ReturnType<typeof attempt>[]) {
-    return mount(FailureAttempts, {
+function mountAttempts(attempts: ReturnType<typeof attempt>[], locales: {[locale: string]: object} = {en: en.en}) {
+    return i18nMount(FailureAttempts, {
+        locales: locales as never,
         props: {
             taskRun: {
                 id: "tr-1",
@@ -23,7 +21,7 @@ function mountAttempts(attempts: ReturnType<typeof attempt>[]) {
                 state: {current: "FAILED", histories: []},
             } as never,
         },
-        global: {plugins: [i18n], stubs: {KsExecutionStatus: true}},
+        global: {stubs: {KsExecutionStatus: true}},
     })
 }
 
@@ -86,5 +84,14 @@ describe("FailureAttempts", () => {
 
         expect(wrapper.find(".failure-attempts__row").exists()).toBe(false)
         expect(wrapper.text()).toContain("No attempt was recorded")
+    })
+
+    it("should label each attempt through one translatable message, so a locale can place the number itself", () => {
+        const wrapper = mountAttempts(
+            [attempt("FAILED", "2024-01-01T00:00:00.000Z", "2024-01-01T00:00:02.000Z")],
+            {en: {...en.en, attempt: "Attempt", state_history: {...en.en.state_history, attempt_n: "No. {index} try"}}},
+        )
+
+        expect(wrapper.get(".failure-attempts__label").text()).toBe("No. 1 try")
     })
 })

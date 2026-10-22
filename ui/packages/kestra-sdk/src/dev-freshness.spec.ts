@@ -4,6 +4,7 @@ describe("warnIfSdkStale", () => {
     beforeEach(() => {
         vi.resetModules()
         vi.restoreAllMocks()
+        vi.spyOn(console, "warn").mockImplementation(() => {})
     })
 
     afterAll(() => vi.unstubAllGlobals())
@@ -27,7 +28,6 @@ describe("warnIfSdkStale", () => {
 
     it("does not warn when the request was redirected (e.g. unauthenticated, redirected to login)", async () => {
         const dispatchSpy = vi.spyOn(window, "dispatchEvent")
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             redirected: true,
@@ -37,7 +37,7 @@ describe("warnIfSdkStale", () => {
         const {warnIfSdkStale} = await import("./dev-freshness")
         await warnIfSdkStale("abcdef0123456789", "http://backend/swagger/kestra.yml")
 
-        expect(warnSpy).not.toHaveBeenCalled()
+        expect(console.warn).not.toHaveBeenCalled()
         expect(dispatchSpy).not.toHaveBeenCalled()
     })
 

@@ -56,7 +56,7 @@
         </template>
 
         <div class="p-3 pt-0">
-            <i18n-t keypath="restart confirm" tag="p" class="mb-0">
+            <i18n-t keypath="restart confirm" tag="p" scope="global" class="mb-0">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
             <KsAlert
@@ -67,7 +67,7 @@
                 class="mt-3"
                 data-test="restart-subflow-warning"
             >
-                <i18n-t keypath="restart subflow warning" tag="span">
+                <i18n-t keypath="restart subflow warning" tag="span" scope="global">
                     <template #parent>
                         <router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>
                     </template>
@@ -233,7 +233,7 @@
         scrollable
     >
         <template #header>
-            <i18n-t keypath="replay the execution" tag="span">
+            <i18n-t keypath="replay the execution" tag="span" scope="global">
                 <template #executionId><code>{{ execution.id }}</code></template>
                 <template #flowId><code>{{ execution.flowId }}</code></template>
             </i18n-t>
@@ -555,7 +555,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 :global(.ks-restart-tooltip--no-pointer) {
     pointer-events: none;
 }
@@ -591,7 +591,7 @@
 }
 
 .radio-item {
-    :deep(.kel-radio__input) {
+    & :deep(.kel-radio__input) {
         .kel-radio__inner {
             width: 18px;
             height: 18px;
@@ -604,7 +604,7 @@
         }
     }
 
-    :deep(.kel-radio__label) {
+    & :deep(.kel-radio__label) {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         padding-left: 8px;
@@ -612,7 +612,7 @@
 
 
     &.is-checked {
-        :deep(.kel-radio__input) {
+        & :deep(.kel-radio__input) {
             .kel-radio__inner {
                 border-color: var(--ks-btn-primary-bg-default);
                 background-color: var(--ks-btn-primary-bg-default);
@@ -623,7 +623,7 @@
             }
         }
 
-        :deep(.kel-radio__label) {
+        & :deep(.kel-radio__label) {
             color: var(--ks-text-primary) !important;
         }
     }

@@ -157,4 +157,14 @@ describe("KsButton", () => {
         })
         expect(wrapper.find(".kel-button").attributes("aria-label")).toBe("Custom label")
     })
+
+    test("adds the block class when block is set", () => {
+        const wrapper = mount(KsButton, {
+            props: {block: true},
+            slots: {default: "x"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button").classes()).toContain("is-block")
+        expect(wrapper.find(".kel-button").attributes("block")).toBeUndefined()
+    })
 })

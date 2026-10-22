@@ -60,7 +60,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .plugin-toc-elements {
         list-style: none;
         padding: 0;
@@ -90,12 +90,12 @@
             background-color: var(--ks-bg-tag);
             color: var(--ks-text-primary);
         }
+    }
 
-        &--active {
-            background-color: var(--ks-bg-active);
-            color: var(--ks-text-primary);
-            font-weight: 600;
-        }
+    .plugin-toc-elements__link--active {
+        background-color: var(--ks-bg-active);
+        color: var(--ks-text-primary);
+        font-weight: 600;
     }
 
     .plugin-toc-elements__icon {

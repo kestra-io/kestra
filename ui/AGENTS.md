@@ -36,7 +36,7 @@ These rules are what keep the UI maintainable as it grows. Treat any deviation a
 10. **i18n keys live with the design system component**, not inside feature code, when they belong to the component (e.g. `KsEmpty`, `KsDurationPicker`). Register them via `registerDesignSystemI18n`.
 11. **Check that a token exists before using it.** With an invalid `var(--ks-…)` and no fallback, the property is silently inherited instead, so the mistake remains invisible until the computed style is measured. The cases feature was released using `--ks-font-size-medium`, `--ks-font-size-small`, `--ks-radius-2` and `--ks-border-active`, none of which are declared anywhere, and the interval filter's Apply-to row shipped with no visible selection for the same reason (kestra-io/kestra#18777).
 
-    Your editor underlines it: `ks/no-undeclared-custom-property` (stylelint) covers `<style>` blocks and `.scss`, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and both propose a replacement. `npm run lint` runs both. See [scripts/tokens/README.md](scripts/tokens/README.md), which also has the one setting the Stylelint extension needs for `.vue` files.
+    Your editor underlines it: `kestra-tokens/no-undeclared-css-token` (eslint, `@eslint/css`) covers `.css` and plain `<style>` blocks, `kestra-tokens/no-undeclared-ks-token` (eslint) covers `cssVar("--ks-…")` and tokens written inside strings, and `ks/no-undeclared-custom-property` (stylelint) covers the design system's remaining SCSS. All three propose a replacement, and `npm run lint` runs them all. See [scripts/tokens/README.md](scripts/tokens/README.md).
 12. **Copying an existing rule is not proof that it is correct.** Several hundred `:deep()` selectors, some hex codes and some raw pixel values are older than these rules and are being removed over time. Treat them as debt rather than as precedent: don't add more, and clean up the ones in the component you are already editing.
 13. **Bootstrap is gone; don't use its utility classes.** The `d-flex`, `mb-3` and similar classes still in the templates are kept alive by `packages/design-system/src/assets/styles/_utilities.scss` until their migration issues land, and that file only shrinks: replace a utility with scoped CSS on `--ks-*` tokens and delete its rule once the last use is gone. `tests/unit/designSystem/bootstrapGuard.spec.ts` fails on a utility the file does not define and on any `--kbs-*` variable.
 
@@ -53,7 +53,8 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### While you write code
 
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
-- Keep the style **inside** the SFC. `<style scoped src="./x.scss">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Keep the style **inside** the SFC. `<style scoped src="./x.css">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
+- Write styles as plain CSS: no `lang="scss"` and no new `.scss` file outside `packages/design-system/` (kestra-io/kestra#21346). Native nesting works with `scoped`, but start a nested selector with `&` (`& :deep(.x)`, `& > *`), or Vue puts `[data-v-*]` on the nested part instead of the parent.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
 - Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
@@ -62,6 +63,8 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 
 ### When extending the design system
 
+- Component styles are plain CSS. A component that needs Element Plus's base styles keeps them in a `<style lang="scss">` block holding only the `el-ns` and `theme-chalk` `@use` lines, placed before the plain `<style>` with its own rules, so each published component entry still ships its chalk CSS. Palette colours are `var(--ks-<family>-<step>)`, not `palette.$base-*`.
+- Don't write one rule per variant. When the tokens follow the variant's name (`--ks-status-<status>`), bind them with `v-bind()` and add a test that every name has its token, since the token lint cannot see a built name (`KsExecutionStatus`, `KsAlert`). When they don't, keep a typed table of `var(--ks-*)` strings in the component's `<script>`, where `kestra-tokens/no-undeclared-ks-token` still checks them, and bind that (`KsTag`, `KsButton`).
 - Only expose props that are actually used somewhere in the codebase. Speculative props rot.
 - Mirror Element Plus prop names where possible — predictability is a feature.
 - Pass `v-bind="$attrs"` and forward slots so wrappers don't trap consumer extension points.
@@ -97,7 +100,7 @@ Reject (or ask to fix) anything that:
 - No hardcoded user-facing strings. Always go through i18n.
 - **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
 - Pass plurals and interpolation as named arguments to `$t(...)`, never string-concatenate.
-- A string that embeds markup or a component (`<code>`, `router-link`, `KsId`) renders through `<i18n-t keypath="..." tag="span">` (vue-i18n's component interpolation, registered globally, so there is nothing to import), with one named slot per placeholder: `Mark as {status}` becomes `<template #status><code>{{ item.code }}</code></template>`. Keep the markup out of the translation, so no `v-html` and no `escapeHtml` are needed, and translators can reorder the placeholders.
+- A string that embeds markup or a component (`<code>`, `router-link`, `KsId`) renders through `<i18n-t keypath="..." tag="span" scope="global">` (vue-i18n's component interpolation, registered globally, so there is nothing to import; `scope="global"` names the scope every message lives in, or the component looks for a local one up the tree and warns; `kestra-i18n/i18n-t-scope` fails a tag without it and `npm run lint` adds it), with one named slot per placeholder: `Mark as {status}` becomes `<template #status><code>{{ item.code }}</code></template>`. Keep the markup out of the translation, so no `v-html` and no `escapeHtml` are needed, and translators can reorder the placeholders.
 - `splitTranslation(t, key, slot)` and markup passed as a named argument to `v-html` are older patterns for the same job. Don't add new uses; move a string to `<i18n-t>` when you touch it.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly. `tests/unit/dateFormatGuard.spec.ts` (and its `ui-ee` twin) fails on `dayjs(...).format(`, `toLocaleString()` on a `Date`, and `Intl.DateTimeFormat` in `src/`; a file that serializes a date rather than displaying it goes in its `ALLOWED` list with the reason.
 - Date arithmetic goes through the `dayjs` re-exported by the design system. `dayjs` objects are **immutable**, so `d.add(1, "day")` returns a new instance and mutating idioms (`cursor.add(...)` in a loop) silently no-op — reassign instead. Parse untrusted input with `dateUtils.parseIso()`: bare `dayjs()` happily reads an epoch number or a bare year as a date.
@@ -281,6 +284,11 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 
 - Unit tests with **Vitest** + `@vue/test-utils`, and Storybook stories, live next to the file they cover: `src/components/logs/Foo.vue` has `Foo.spec.ts` and `Foo.stories.ts` beside it. A spec or story about one aspect of a file is named `<file>.<focus>` (`Foo.download.spec.ts`, `flow.draftSave.spec.ts`) so it sorts next to its subject; one that exercises several modules together keeps a descriptive name in their folder (`entityLoadRace.spec.ts`). `tests/unit/` keeps only the setup, the shared helpers (`i18nMount.ts`) and the repo-wide guards; `tests/storybook/` keeps only shared fixtures and the stories with no single source file. The `design-system` and `topology` packages follow the same rule with `*.test.ts`, their `tests/` keeping only setup and helpers. `tests/unit/specLocationGuard.spec.ts` fails on a spec or story left in any of these `tests/` folders for a file that exists in `src/`. Playwright specs stay in the `e2e/` package: they exercise the running app, not one source file.
 - Mount through `i18nMount` or `i18nShallowMount` rather than calling `mount` with your own `createI18n`. Pass `messages` for the keys the spec asserts on, or `locales: en` when it needs the real `en.json`; with neither, `t("key")` renders the key. Missing-key warnings are off in both helpers, so a spec asserting on raw keys stays quiet. Two copies exist and behave the same: specs under `src/`, `tests/unit/` and `packages/topology/src/` import `tests/unit/i18nMount.ts`, and design-system specs import `packages/design-system/tests/units/i18nMount.ts`. Both install the design system, as the app does at bootstrap, so a mounted `Ks*` component resolves instead of warning; a spec that mocks `@kestra-io/design-system` away has to keep a `default` export for that install, such as `default: {install: () => {}}`. Only a spec that never mounts anything, such as one testing pluralisation on the instance itself, builds its own i18n.
+- `i18nMount` also installs a fresh `memoryRouter()` (`tests/unit/memoryRouter.ts`), so `useRoute()` / `useRouter()` resolve instead of warning; a spec that asserts on navigation passes its own router in `global.plugins`, which replaces the default, or mocks `vue-router`. A router already in test-utils' global `config.global.plugins` (ui-ee's setup installs one) also replaces it. A spec mounting with plain `mount` passes `memoryRouter()` itself. A spec that creates a store outside a component activates `routedPinia()` from the same file instead of a bare `createPinia()`, so a store calling `useRoute()` at setup resolves it there too.
+- A spec that mounts a no-code field (`TaskObject`, `TaskObjectField`, `TaskArray`, `Add`, `TaskEdit`) ends with `afterAll(() => taskComponentsReady())` from `useBlockComponent.ts`: the block components are imported on mount, and with `isolate: false` an import still in flight when the file ends is reported as an `EnvironmentTeardownError` for the whole run.
+- A component passed inside `props` (a tab's `component`, an `icon`) is wrapped in `markRaw`: test-utils makes the props object reactive, and Vue warns about a component that was made reactive on every render.
+- Check a spec's console with `npx vitest run --project=unit --silent=false <file>`. Vitest picks a minimal reporter in agent and non-interactive shells that hides the output of passing tests, so a warning CI prints can be invisible locally.
+- A test that exercises a failure path the code reports with `console.error` stubs it (`vi.spyOn(console, "error").mockImplementation(() => {})`) and restores it, and ideally asserts on the call; output from a passing test is noise that hides the warning worth reading.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.
@@ -346,14 +354,14 @@ When retiring a `Ks*` component, prop, or token:
 <template>
     <KsButton type="primary">{{ t("save") }}</KsButton>
 </template>
-<style lang="scss" scoped>
+<style scoped>
     /* Almost always: no custom CSS is needed at all. */
 </style>
 ```
 
 If your `<style>` block needs to exist:
 
-```scss
+```css
 /* Right: --ks-* tokens, no SCSS vars in feature code, no :deep */
 .my-feature {
     background: var(--ks-bg-surface);
@@ -368,7 +376,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`) |
+| `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
 | `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
@@ -382,7 +390,7 @@ If your `<style>` block needs to exist:
 | Component | Purpose |
 |-----------|---------|
 | `KsAlert` | Alert banner for messages and status feedback. Pass `banner` for a full-width system bar (licence, impersonation): square, bottom rule only, body text in `--ks-text-primary` so it reads at AA on the tint |
-| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close |
+| `KsDialog` | Modal dialog (handles focus trap + Escape); `dirty` asks before an accidental close; content that cannot fit the default width widens it to 1024px with a `data-dialog-wide` attribute on an element inside it, so a step that renders it is wide and the others are not |
 | `KsDrawer` | Side drawer / panel; `dirty` asks before an accidental close |
 | `KsTooltip` | Hover tooltip |
 | `KsPopover` | Popover for contextual content |
@@ -417,7 +425,7 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
 | `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
@@ -435,7 +443,7 @@ If your `<style>` block needs to exist:
 | `KsTree` | Hierarchical tree view |
 | `KsJsonTree` | Read-only JSON tree viewer; leaves holding a storage URI render through `KsFileTag` |
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
-| `KsExecutionStatus` | Execution / task status badge with icon and color |
+| `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
 | `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
 

@@ -90,7 +90,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .trigger {
         max-width: 180px;
         display: flex;

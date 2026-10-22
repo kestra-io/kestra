@@ -48,7 +48,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .ks-sidebar-item {
     display: flex;
     align-items: center;

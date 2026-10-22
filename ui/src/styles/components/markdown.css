@@ -1,15 +1,9 @@
 .markdown {
     h2 {
-        font-weight: 600;
         border-top: 1px solid var(--ks-border-default);
         margin-bottom: var(--ks-spacing-3);
         margin-top: var(--ks-spacing-6);
         padding-top: var(--ks-spacing-4);
-
-        > a {
-            font-size: var(--ks-font-size-lg);
-            padding-left: .6rem;
-        }
     }
 
     h3 {
@@ -38,46 +32,12 @@
         }
     }
 
-    code {
-        white-space: break-spaces;
-
-        &:not(.shiki code) {
-            font-weight: 700;
-            background: var(--ks-bg-base);
-            color: var(--ks-text-primary);
-            border: 1px solid var(--border-killing);
-        }
-    }
-
-    p > a {
-        text-decoration: underline;
-    }
-
-    blockquote {
-        border-left: 4px solid var(--ks-border-strong);
-        font-size: var(--ks-font-size-base);
-        padding-left: 1rem;
-
-        > p {
-            color: var(--ks-text-primary);
-        }
-    }
-
     .card-group {
         justify-content: space-around;
 
         > a {
             color: var(--ks-text-primary);
         }
-    }
-
-    h2 > a,
-    h3 > a {
-        color: var(--ks-text-primary);
-    }
-
-    li > a {
-        text-decoration: none !important;
     }
 
     .video-container {

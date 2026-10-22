@@ -5,15 +5,21 @@ import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.TimeWindow;
@@ -242,6 +248,44 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(tenant);
         assertThat(expired.size()).isZero();
+    }
+
+    @Test
+    void shouldProcessConcurrentlyWithoutLosingUpdates() throws Exception {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Pair<Flow, MultipleCondition> pair = mockFlow(tenant, TimeWindow.builder().build());
+        List<String> conditions = List.of("flow-a", "flow-b");
+        AtomicInteger triggered = new AtomicInteger();
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(8)) {
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < 8; i++) {
+                String condition = conditions.get(i % 2);
+                futures.add(executor.submit(() -> multipleConditionStorage.process(
+                    pair.getKey(),
+                    List.of(pair.getRight()),
+                    Collections.emptyMap(),
+                    (txStorage, windows) ->
+                    {
+                        MultipleConditionWindow updated = windows.getFirst().with(ImmutableMap.of(condition, true));
+                        txStorage.save(List.of(updated));
+                        // only the evaluation that completes the window may trigger
+                        if (updated.getResults().size() == 2 && windows.getFirst().getResults().size() == 1) {
+                            triggered.incrementAndGet();
+                            return Execution.builder().id("triggered").build();
+                        }
+                        return null;
+                    }
+                )));
+            }
+            for (Future<?> future : futures) {
+                future.get();
+            }
+        }
+
+        assertThat(triggered.get()).isEqualTo(1);
+        assertThat(multipleConditionStorage.get(pair.getKey(), pair.getRight().getId()).orElseThrow().getResults()).hasSize(2);
     }
 
     private static Pair<Flow, MultipleCondition> mockFlow(String tenantId, TimeWindow sla) {

@@ -39,10 +39,11 @@ public class DateAddFilter extends AbstractDate implements Filter {
         if (unit == null || unit.isBlank()) {
             throw new PebbleException(
                 null,
-                "The 'unit' argument cannot be null or blank. Valid units are: "
-                    + Arrays.stream(ChronoUnit.values())
+                "The 'unit' argument cannot be null or blank. Valid units are: %s".formatted(
+                    Arrays.stream(ChronoUnit.values())
                         .map(ChronoUnit::name)
-                        .collect(Collectors.joining(", ")),
+                        .collect(Collectors.joining(", "))
+                ),
                 lineNumber,
                 self != null ? self.getName() : "Unknown"
             );

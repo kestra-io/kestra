@@ -97,7 +97,8 @@ public class DateAddFilterTest {
     @ValueSource(strings = {"DAYS", "days", "Days"})
     void should_accept_case_insensitive_units(String unit) throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
-            "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, \"" + unit + "\") | date(\"yyyy-MM-dd\") }}"
+            "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, \"" + unit + "\") | date(\"yyyy-MM-dd\") }}",
+            Map.of()
         );
 
         assertThat(render).isEqualTo("2024-01-02");
@@ -105,22 +106,28 @@ public class DateAddFilterTest {
 
     @Test
     void should_fail_with_null_unit() {
-        assertThrows(
+        IllegalVariableEvaluationException e = assertThrows(
             IllegalVariableEvaluationException.class,
             () -> variableRenderer.render(
-                "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, null) }}"
+                "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, null) }}",
+                Map.of()
             )
         );
+        assertThat(e.getMessage()).contains("Valid units are:");
     }
 
     @Test
     void should_fail_with_invalid_unit() {
-        assertThrows(
+        IllegalVariableEvaluationException e = assertThrows(
             IllegalVariableEvaluationException.class,
             () -> variableRenderer.render(
-                "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, \"fortnights\") }}"
+                "{{ \"2024-01-01T00:00:00Z\" | dateAdd(1, \"fortnights\") }}",
+                Map.of()
             )
         );
+        assertThat(e.getMessage())
+        .contains("fortnights")
+        .contains("Valid units are:");
     }
 
     //Parametrized test doesn't like Object as method parameter

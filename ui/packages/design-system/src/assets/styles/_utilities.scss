@@ -173,10 +173,6 @@
     padding: 1rem !important;
 }
 
-.p-4 {
-    padding: 1.5rem !important;
-}
-
 .px-2 {
     padding-right: 0.5rem !important;
     padding-left: 0.5rem !important;
@@ -276,13 +272,6 @@
 
 @media (min-width: 768px) {
     .d-md-inline-block {
-        display: inline-block !important;
-    }
-
-}
-
-@media (min-width: 992px) {
-    .d-lg-inline-block {
         display: inline-block !important;
     }
 

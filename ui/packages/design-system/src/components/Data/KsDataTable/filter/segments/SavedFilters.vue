@@ -95,13 +95,13 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .saved-filters-panel {
     max-height: 327px;
     display: flex;
     flex-direction: column;
 
-    .saved-filters-list {
+    & .saved-filters-list {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
@@ -111,7 +111,7 @@
             scrollbar-color: var(--ks-border-subtle) transparent;
         }
 
-        .saved-filter-item {
+        & .saved-filter-item {
             display: flex;
             align-items: flex-start;
             gap: var(--ks-spacing-2);
@@ -125,29 +125,29 @@
                 background-color: var(--ks-bg-hover);
             }
 
-            .bookmark-icon {
+            & .bookmark-icon {
                 flex-shrink: 0;
                 color: var(--ks-icon-active);
                 font-size: var(--ks-font-size-base);
             }
 
-            .saved-filter-info {
+            & .saved-filter-info {
                 flex: 1;
                 min-width: 0;
 
-                .saved-filter-title {
+                & .saved-filter-title {
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-2);
                 }
 
-                .saved-filter-name {
+                & .saved-filter-name {
                     font-size: var(--ks-font-size-sm);
                     font-weight: 600;
                     color: var(--ks-text-primary);
                 }
 
-                .saved-filter-description {
+                & .saved-filter-description {
                     display: block;
                     font-size: var(--ks-font-size-xs);
                     color: var(--ks-text-dim);
@@ -157,7 +157,7 @@
                 }
             }
 
-            .action-buttons {
+            & .action-buttons {
                 display: flex;
                 align-self: center;
                 gap: var(--ks-spacing-2);
@@ -165,17 +165,17 @@
                 opacity: 0;
                 transition: opacity 0.2s ease;
 
-                :deep(.kel-button) {
+                & :deep(.kel-button) {
                     color: var(--ks-text-dim);
                     margin: 0;
                     padding: 0;
                 }
 
-                :deep(.edit-button:hover) {
+                & :deep(.edit-button:hover) {
                     color: var(--ks-status-running);
                 }
 
-                :deep(.delete-button:hover) {
+                & :deep(.delete-button:hover) {
                     color: var(--ks-text-error);
                 }
             }
@@ -186,14 +186,14 @@
             }
 
             @media (hover: none) {
-                .action-buttons {
+                & .action-buttons {
                     opacity: 1;
                 }
             }
         }
     }
 
-    .saved-filters-empty {
+    & .saved-filters-empty {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -202,19 +202,19 @@
         gap: var(--ks-spacing-1);
         padding: var(--ks-spacing-6) var(--ks-spacing-4);
 
-        .empty-icon {
+        & .empty-icon {
             margin-bottom: var(--ks-spacing-1);
             color: var(--ks-text-dim);
             font-size: var(--ks-font-size-4xl);
         }
 
-        .empty-title {
+        & .empty-title {
             font-size: var(--ks-font-size-sm);
             font-weight: 600;
             color: var(--ks-text-primary);
         }
 
-        .empty-subtitle {
+        & .empty-subtitle {
             font-size: var(--ks-font-size-xs);
             color: var(--ks-text-dim);
         }

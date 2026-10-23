@@ -6,6 +6,7 @@ vi.mock("override/stores/misc", () => ({
 
 import {buildFullQuery, chartDrillDownTarget, registerDrillDown} from "../../../src/components/dashboard/composables/chartDrillDown"
 import {DEFAULT_BAR_CATEGORY_LIMIT, MAX_FILLED_TIME_BUCKETS, fillTimeBucketLabels, rankStackedBars} from "../../../src/components/dashboard/composables/charts"
+import {getDateGrouping} from "../../../src/utils/utils"
 
 const EXEC = "io.kestra.plugin.core.dashboard.data.Executions"
 const LOGS = "io.kestra.plugin.core.dashboard.data.Logs"
@@ -382,6 +383,22 @@ describe("fillTimeBucketLabels", () => {
             {format: "yyyy-MM-DD", unit: "day"},
         )
         expect(labels).toEqual(["2026-08-30", "2026-08-31", "2026-09-01", "2026-09-02"])
+    })
+
+    it("labels the backend's Monday buckets once per ISO week over the last year", () => {
+        const labels = fillTimeBucketLabels(
+            ["2026-08-31 00:00:00", "2026-09-14 00:00:00"],
+            getDateGrouping(undefined, undefined, "PT8760H"),
+        )
+        expect(labels).toEqual(["2026-W36", "2026-W37", "2026-W38"])
+    })
+
+    it("keeps weeks in time order across New Year", () => {
+        const labels = fillTimeBucketLabels(
+            ["2025-12-15 00:00:00", "2025-12-22 00:00:00", "2025-12-29 00:00:00", "2026-01-05 00:00:00"],
+            getDateGrouping(undefined, undefined, "PT8760H"),
+        )
+        expect(labels).toEqual(["2025-W51", "2025-W52", "2026-W01", "2026-W02"])
     })
 
     it("keeps values that are not valid dates as labels verbatim", () => {

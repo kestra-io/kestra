@@ -496,8 +496,8 @@ public class ExecutorCore {
     /**
      * A realtime trigger's lock spans the trigger's whole lifetime on the worker, not a single execution.
      * Terminations of the executions it emits must not send {@link TriggerExecutionTerminated}, otherwise the
-     * scheduler would unlock and resubmit a trigger that is still running. The trigger-creation failure path
-     * (FAILED execution with no task run) bypasses this check and remains the termination signal.
+     * scheduler would unlock and resubmit a trigger that is still running. A realtime trigger is unlocked by
+     * the worker controller instead, from the worker's terminal result, which carries the dispatch epoch.
      */
     static boolean isRealtimeTriggerExecution(FlowWithSource flow, Execution execution) {
         if (flow == null || flow.getTriggers() == null) {

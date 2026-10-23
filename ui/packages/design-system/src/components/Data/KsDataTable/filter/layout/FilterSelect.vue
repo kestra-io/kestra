@@ -62,7 +62,7 @@
                     class="date-filter-option"
                     :class="{active: local.dateFilterMode === opt.value}"
                     type="button"
-                    @click="local.dateFilterMode = opt.value"
+                    @click.stop="local.dateFilterMode = opt.value"
                 >
                     {{ opt.label }}
                 </button>
@@ -138,17 +138,17 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .select-panel {
-    .section {
+    & .section {
         padding: 1rem;
 
-        .date-field {
+        & .date-field {
             &:not(:last-child) {
                 margin-bottom: 0.5rem;
             }
 
-            .form-label {
+            & .form-label {
                 display: block;
                 color: var(--ks-text-secondary);
                 font-size: var(--ks-font-size-xs);
@@ -158,11 +158,11 @@
         }
     }
 
-    .date-filter-section {
+    & .date-filter-section {
         border-top: 1px solid var(--ks-border-default);
         padding-top: 0.75rem;
 
-        .form-label {
+        & .form-label {
             display: block;
             color: var(--ks-text-secondary);
             font-size: var(--ks-font-size-xs);
@@ -170,13 +170,13 @@
             margin-bottom: 0.5rem;
         }
 
-        .date-filter-options {
+        & .date-filter-options {
             display: flex;
             gap: 0.25rem;
             flex-wrap: wrap;
         }
 
-        .date-filter-option {
+        & .date-filter-option {
             background: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);
             border-radius: var(--ks-radius-sm);
@@ -201,7 +201,7 @@
 }
 
 :deep(.kel-date-editor) {
-    .kel-input__prefix .kel-input__icon {
+    & .kel-input__prefix .kel-input__icon {
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);
     }
@@ -216,7 +216,7 @@
     align-items: center;
     gap: 0.5rem;
 
-    .color-dot {
+    & .color-dot {
         display: inline-block;
         width: 10px;
         height: 10px;

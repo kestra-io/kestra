@@ -142,7 +142,7 @@ public class DocumentationGenerator {
         return plugin.allClassGrouped()
             .entrySet()
             .stream()
-            .filter(r -> !r.getKey().equals("controllers") && !r.getKey().equals("storages"))
+            .filter(r -> !r.getKey().equals("controllers") && !r.getKey().equals("storages") && !r.getKey().equals(RegisteredPlugin.QUEUE_FACTORIES_GROUP_NAME))
             .flatMap(
                 entry -> entry.getValue()
                     .stream()

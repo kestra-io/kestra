@@ -33,7 +33,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -66,7 +65,6 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.WorkingDirectory;
-import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micrometer.core.instrument.Timer;
 import jakarta.inject.Inject;
@@ -333,12 +331,11 @@ public class ExecutorCore {
                 Execution executionAtEntry = executor.getTerminalExecutionAtEntry();
                 boolean terminatedByThisCycle = executionAtEntry == null
                     || !executionService.isTerminated(executor.getFlow(), executionAtEntry);
-                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle);
-                if (popped.isPresent()) {
-                    executionQueue.emit(popped.get());
+                for (Execution popped : concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle)) {
+                    executionQueue.emit(popped);
 
                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(executor.getFlow(), popped.get());
+                    processFlowTriggers(executor.getFlow(), popped);
                 }
 
                 if (terminatedByThisCycle) {
@@ -496,15 +493,7 @@ public class ExecutorCore {
     }
 
     private void sendTriggerExecutionTerminated(Execution execution) {
-        // The scheduler didn't manage states for the WebHook and the Flow trigger
-        if (
-            !execution.getTrigger().getType().equals(Webhook.class.getName()) &&
-                !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
-                !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
-        ) {
-            TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
-            triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
-        }
+        TriggerExecutionTerminated.of(execution).ifPresent(triggerEventQueue::send);
     }
 
     /**

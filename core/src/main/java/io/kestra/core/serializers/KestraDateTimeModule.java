@@ -3,6 +3,7 @@ package io.kestra.core.serializers;
 import java.io.IOException;
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -73,8 +74,99 @@ public final class KestraDateTimeModule extends SimpleModule {
     private static class InstantSerializer extends JsonSerializer<Instant> {
         @Override
         public void serialize(Instant value, JsonGenerator generator, SerializerProvider provider) throws IOException {
-            generator.writeString(INSTANT_WRITER.format(value));
+            char[] formatted = formatInstantFast(value);
+            if (formatted != null) {
+                generator.writeString(formatted, 0, formatted.length);
+            } else {
+                generator.writeString(INSTANT_WRITER.format(value));
+            }
         }
+    }
+
+    private static char[] formatInstantFast(Instant value) {
+        LocalDateTime dateTime = LocalDateTime.ofEpochSecond(value.getEpochSecond(), value.getNano(), ZoneOffset.UTC);
+        if (dateTime.getYear() < 0 || dateTime.getYear() > 9999) {
+            return null;
+        }
+
+        char[] out = new char[27];
+        put(out, 0, dateTime.getYear(), 4);
+        out[4] = '-';
+        put(out, 5, dateTime.getMonthValue(), 2);
+        out[7] = '-';
+        put(out, 8, dateTime.getDayOfMonth(), 2);
+        out[10] = 'T';
+        put(out, 11, dateTime.getHour(), 2);
+        out[13] = ':';
+        put(out, 14, dateTime.getMinute(), 2);
+        out[16] = ':';
+        put(out, 17, dateTime.getSecond(), 2);
+        out[19] = '.';
+        put(out, 20, dateTime.getNano() / 1_000, 6);
+        out[26] = 'Z';
+        return out;
+    }
+
+    private static void put(char[] out, int offset, int value, int width) {
+        for (int i = offset + width - 1; i >= offset; i--) {
+            out[i] = (char) ('0' + value % 10);
+            value /= 10;
+        }
+    }
+
+    /**
+     * Parses {@code uuuu-MM-ddTHH:mm:ss[.f{1,9}]Z} without allocating, or returns {@code null} for any
+     * other shape or an out-of-range field so that the caller can defer to the strict formatter.
+     */
+    private static Instant parseInstantFast(char[] text, int offset, int length) {
+        if (length < 20 || text[offset + length - 1] != 'Z' || text[offset + 4] != '-' || text[offset + 7] != '-'
+            || text[offset + 10] != 'T' || text[offset + 13] != ':' || text[offset + 16] != ':') {
+            return null;
+        }
+
+        int year = digits(text, offset, 4);
+        int month = digits(text, offset + 5, 2);
+        int day = digits(text, offset + 8, 2);
+        int hour = digits(text, offset + 11, 2);
+        int minute = digits(text, offset + 14, 2);
+        int second = digits(text, offset + 17, 2);
+        if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || second < 0) {
+            return null;
+        }
+
+        int nano = 0;
+        if (length > 20) {
+            int fractionDigits = length - 21;
+            if (text[offset + 19] != '.' || fractionDigits < 1 || fractionDigits > 9) {
+                return null;
+            }
+            int fraction = digits(text, offset + 20, fractionDigits);
+            if (fraction < 0) {
+                return null;
+            }
+            nano = fraction;
+            for (int i = fractionDigits; i < 9; i++) {
+                nano *= 10;
+            }
+        }
+
+        try {
+            return LocalDateTime.of(year, month, day, hour, minute, second, nano).toInstant(ZoneOffset.UTC);
+        } catch (DateTimeException e) {
+            return null;
+        }
+    }
+
+    private static int digits(char[] text, int offset, int count) {
+        int result = 0;
+        for (int i = offset; i < offset + count; i++) {
+            int digit = text[i] - '0';
+            if (digit < 0 || digit > 9) {
+                return -1;
+            }
+            result = result * 10 + digit;
+        }
+        return result;
     }
 
     /**
@@ -102,7 +194,11 @@ public final class KestraDateTimeModule extends SimpleModule {
             if (parser.currentToken() == JsonToken.VALUE_STRING) {
                 try {
                     // fast-path: reduce allocation with respect to the default more lenient Jackson InstantDeserializer
-                    return INSTANT_READER.parse(parser.getText(), Instant::from);
+                    char[] chars = parser.getTextCharacters();
+                    int offset = parser.getTextOffset();
+                    int length = parser.getTextLength();
+                    Instant fast = parseInstantFast(chars, offset, length);
+                    return fast != null ? fast : INSTANT_READER.parse(new String(chars, offset, length), Instant::from);
                 } catch (DateTimeException | ArithmeticException ignored) {
                     // Not one of our shapes; Jackson accepts forms the fast path does not.
                 }

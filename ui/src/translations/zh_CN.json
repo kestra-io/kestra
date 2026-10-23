@@ -5,6 +5,12 @@
       "cta": "查看更改"
     },
     "loading": "加载中...",
+    "namespace_files_tip": {
+      "title": "将脚本作为 namespace 文件管理",
+      "description": "无需内联编写脚本，打开文件面板，将其添加为文件（例如 main.py），然后从您的 flow 中运行：",
+      "open_files": "打开文件",
+      "dont_show_again": "不再显示"
+    },
     "more actions": "更多操作",
     "recipe": {
       "create_flow": "创建 flow",
@@ -236,6 +242,7 @@
       "last7days": "最近7天",
       "last30days": "最近30天",
       "last365days": "最近365天",
+      "allTime": "所有时间",
       "next5minutes": "接下来的5分钟",
       "next15minutes": "接下来的15分钟",
       "next1hour": "接下来1小时",
@@ -369,7 +376,7 @@
     "restart": "重新开始",
     "restart tooltip": "从 <code>{state}</code> 任务重新开始执行",
     "restarted": "执行已重启",
-    "restart confirm": "您确定要重启执行 <code>{id}</code> 吗？",
+    "restart confirm": "您确定要重启执行 {id} 吗？",
     "restart subflow warning": "此执行由父执行创建，应从父执行处重新启动。单独重新启动此执行将使父执行处于 FAILED 状态，并且其后续任务将不会运行。请前往 {parent} 重新启动。",
     "restart subflow warning link": "父级 Execution",
     "replay": "重放",
@@ -377,7 +384,7 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
     "replayed": "执行已重放",
-    "replay the execution": "重放 flow <code>{flowId}</code> 的执行 <code>{executionId}</code>",
+    "replay the execution": "重放 flow {flowId} 的执行 {executionId}",
     "prefill inputs": "预填",
     "current": "当前",
     "change state": "更改状态",
@@ -387,9 +394,11 @@
     "yes": "是",
     "no": "否",
     "change state done": "任务状态已更新",
-    "change state confirm": "您确定要更改执行 <code>{id}</code> 中 <code>{task}</code> task 的运行状态吗？<br/>它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
+    "change state confirm": "您确定要更改执行 {id} 中 {task} task 的运行状态吗？",
+    "change state confirm restart": "它将从下一个 task 重新启动执行，如果存在父执行，也将重新启动父执行。",
     "interrupt": "中断",
-    "interrupt confirm": "您确定要中断执行 <code>{id}</code> 中 <code>{task}</code> Task 的 Task Run 吗？<br/>它将终止 Worker 中正在运行的 Task 并设置其状态。",
+    "interrupt confirm": "您确定要中断执行 {id} 中 {task} Task 的 Task Run 吗？",
+    "interrupt note": "它将终止 Worker 中正在运行的 Task 并设置其状态。",
     "interrupt done": "Task 运行已被中断",
     "interrupt target state": "目标状态",
     "change state current state": "当前状态是：",
@@ -426,31 +435,48 @@
     "modify inputs": "修改inputs",
     "replay inputs new required": "此修订版有inputs。系统将提示您填写它们。",
     "replay select taskrun": "选择要重放的task运行：",
+    "replayCheck": {
+      "checking": "正在检查修订版本 {revision} 是否可以从 Task {taskId} 重放。",
+      "valid_title": "版本 {revision} 可以从 Task {taskId} 重放。",
+      "valid_description": "它之前的 Task 未更改，因此它们的 output 被重用。在另一个 revision 上 Replay 永远不是完全确定性的：Secret、文件 input 和调用外部系统的表达式可能会返回与原始运行不同的内容。",
+      "refused_title": "修订版本 {revision} 无法从 Task {taskId} 重放。",
+      "refused_description": "此版本中，将要重用的 Task、input 或变量的结果定义不同。",
+      "error_title": "无法检查版本 {revision} 是否可以从 Task {taskId} 重放。",
+      "error_description": "您仍然可以重放。服务器在重放开始时应用相同的规则，如果版本不兼容则拒绝重放。",
+      "whole_action": "改为重放整个 execution",
+      "whole_title": "版本 {revision} 可以作为整个执行进行重放。",
+      "whole_description": "没有重用早期结果，因此每个 Task 都会在版本 {revision} 上再次运行。原始 Execution 将被保留并链接。",
+      "confirm_from_task": "从 Task 重放",
+      "confirm_whole": "重放整个 Execution"
+    },
     "change execution state done": "执行状态已更新",
-    "mark as": "标记为 <code>{status}</code>",
-    "unqueue as": "取消排队为<code>{status}</code>",
+    "mark as": "标记为 {status}",
+    "unqueue as": "取消排队为{status}",
     "kill": "终止",
     "kill parents and subflow": "终止当前和subflows",
     "kill only parents": "仅终止当前",
     "killed confirm": "您确定要终止执行 <code>{id}</code> 吗？",
     "killed done": "执行已排队终止",
     "resume": "恢复",
-    "resumed title": "恢复执行 <code>{id}</code>",
+    "resumed title": "恢复执行 {id}",
     "resumed confirm": "您确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
-    "resume from breakpoint title": "从断点恢复执行 `{id}`",
+    "resume from breakpoint title": "从断点恢复执行 {id}",
     "resume from breakpoint done": "执行已从断点恢复",
     "breakpoints": "断点",
     "pause": "暂停",
-    "pause title": "暂停执行 <code>{id}</code>。<br/>请注意，当前正在运行的 task 仍将继续处理，并且执行必须手动恢复。",
+    "pause title": "暂停执行 {id}。",
+    "pause note": "请注意，当前正在运行的 task 仍将继续处理，并且执行必须手动恢复。",
     "pause confirm": "您确定要暂停执行 <code>{id}</code> 吗？",
     "pause done": "执行已PAUSED",
     "unqueue": "出队列",
-    "unqueue title": "您确定要取消执行 <code>{id}</code> 的排队吗？<br/><br/>请注意，它将不遵守 flow 并发限制，因此运行的执行数可能会超过允许的限制。",
-    "unqueue title multiple": "您确定要取消排队 <code>{count}</code> 个执行吗？<br/><br/>请注意，这将不遵循flow的并发限制，因此可能会有超过允许限制的执行正在运行。",
+    "unqueue title": "您确定要取消执行 {id} 的排队吗？",
+    "unqueue note": "请注意，它将不遵守 flow 并发限制，因此运行的执行数可能会超过允许的限制。",
+    "unqueue title multiple": "您确定要取消排队 {count} 个执行吗？",
+    "unqueue multiple note": "请注意，这将不遵循flow的并发限制，因此可能会有超过允许限制的执行正在运行。",
     "unqueue done": "执行已出队列",
     "force run": "强制运行",
-    "force run title": "强制运行执行 <code>{id}</code>。",
+    "force run title": "强制运行执行 {id}。",
     "force run confirm": "您确定要强制运行执行 `{id}` 吗？\n\n警告：强制运行执行不保证成功，并可能创建重复的 Task 运行。\n\n将进行以下转换：\n\n- CREATED Task 将移至 RUNNING 状态。\n- RUNNING Task 将重新提交。\n- QUEUED Task 将取消排队。\n- PAUSED Task 将恢复。",
     "force run done": "强制执行",
     "metrics": "指标",
@@ -498,8 +524,25 @@
       "attempts": "{count} 次尝试 | {count} 次尝试",
       "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
     },
+    "execution_mobile": {
+      "failed_task": "失败的 task",
+      "view_task_logs": "查看 task 日志",
+      "revision_short": "版本 {revision}",
+      "more_labels": "+{count} 个标签 | +{count} 个标签",
+      "fewer_labels": "收起标签",
+      "jump_to_first_failure": "跳转到第一个失败",
+      "open_logs": "打开日志"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "登录后",
+      "execution_tab": "执行 {id} · {tab} 标签页",
+      "execution": "执行 {id}",
+      "tab": "{tab} 标签页"
+    },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
+    "workspace": "工作区",
+    "resources": "资源",
     "usage": "使用情况",
     "namespaces": "命名空间",
     "tasks": "任务",
@@ -519,6 +562,15 @@
     "inputs": "输入",
     "input": "输入",
     "variables": "变量",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "此 Flow 没有 Task 提供 artifact。",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "无 artifact | {count} 个 artifact",
+      "tasks": "没有 task | {count} 个 task | {count} 个 task",
+      "fullscreen": "全屏",
+      "exit_fullscreen": "退出全屏"
+    },
     "variable_explorer": {
       "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",
@@ -668,6 +720,7 @@
       "nav_properties": "属性",
       "non_dynamic": "非动态",
       "format": "格式",
+      "internal_storage_uri_hint": "Pebble 表达式引用内部 Storage URI，例如 {example}。",
       "max_items": "最大项目数",
       "max_length": "最大长度",
       "maximum": "最大值",
@@ -745,7 +798,7 @@
     "execute flow behaviour": "执行流程",
     "open in same tab": "在同一标签页打开",
     "open in new tab": "在新标签页打开",
-    "execute the flow": "执行流程 <code>{id}</code>",
+    "execute the flow": "执行流程 {id}",
     "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
     "session expired": "您的会话已过期",
@@ -917,12 +970,12 @@
     "restore": "恢复",
     "restore confirm": "您确定要恢复修订版 <code>{revision}</code> 吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
-    "bulk replay": "确定要重放 <code>{executionCount}</code> 个执行吗？",
-    "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
+    "bulk replay": "确定要重放 {executionCount} 个执行吗？",
+    "bulk change state": "您确定要更改{executionCount}次执行的状态吗？",
     "bulk resume": "确定要恢复 <code>{executionCount}</code> 个执行吗？",
     "bulk pause": "您确定要暂停 <code>{executionCount}</code> 次执行吗？",
     "bulk force run": "您确定要强制运行 `{executionCount}` 个执行吗？\n\n警告：强制运行执行不保证成功，并可能创建重复的 Task 执行。\n\n将进行以下转换：\n\n- CREATED Task 将移至 RUNNING 状态。\n- RUNNING Task 将重新提交。\n- QUEUED Task 将取消排队。\n- PAUSED Task 将恢复。",
-    "bulk restart": "确定要重新开始 <code>{executionCount}</code> 个执行吗？",
+    "bulk restart": "确定要重新开始 {executionCount} 个执行吗？",
     "bulk kill": "确定要终止 <code>{executionCount}</code> 个执行吗？",
     "cancel": "取消",
     "errorLogs": "错误 logs",
@@ -1131,11 +1184,11 @@
         "deletion": {
           "confirm": "确认",
           "title": "确认删除内容",
-          "files": "您确定要删除 <code>{count}</code> 个文件吗？",
-          "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
-          "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
-          "file_single": "您确定要删除文件<code>{name}</code>吗？",
-          "folder_single": "您确定要删除文件夹<code>{name}</code>及其所有内容吗？"
+          "files": "您确定要删除 {count} 个文件吗？",
+          "folders": "您确定要删除 {count} 个文件夹及其所有内容吗？",
+          "mixed": "您确定要删除 {folders} 个文件夹和 {files} 个文件吗？",
+          "file_single": "您确定要删除文件{name}吗？",
+          "folder_single": "您确定要删除文件夹{name}及其所有内容吗？"
         }
       },
       "revisions": {
@@ -1164,7 +1217,7 @@
     "backfill": "回填",
     "Set labels": "设置标签",
     "manage labels": "管理labels",
-    "Set labels to execution": "为执行 <code>{id}</code> 添加或更新标签",
+    "Set labels to execution": "为执行 {id} 添加或更新标签",
     "Set labels done": "标签设置成功",
     "bulk set labels": "您确定要为 <code>{executionCount}</code> 个执行设置 label 吗？",
     "true": "真",
@@ -1354,6 +1407,12 @@
           "third": "请重启您的 Kestra 实例以加载 secret。"
         }
       },
+      "credentials": {
+        "label": "凭证",
+        "header": "凭证",
+        "title": "一次认证，在每个 task 中复用",
+        "message": "在 Kestra 企业版中，服务器到服务器的身份验证可以一次配置为凭据，因此访问 token 会在运行时请求和刷新，而不是硬编码在您的 flows 中。凭据可以在 tenant 或 namespace 级别创建，并从任何 task 中引用。"
+      },
       "apps": {
         "title": "使用 Kestra 构建自定义应用程序",
         "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
@@ -1432,6 +1491,10 @@
           "title": "以安全方式管理Secrets",
           "message": "在 Kestra Enterprise Edition 中，您可以在 namespace 级别存储和控制 secrets，从而最大限度地降低风险并确保每个团队的凭据保持隔离。得益于嵌套层次结构，您还可以在父 namespace 中配置凭据，所有子 namespace 都将继承这些凭据。对专用 secrets 管理器和细粒度 namespace 级别权限设置的支持进一步增强了安全性和合规性。"
         },
+        "credentials": {
+          "title": "将凭据限定在此 namespace",
+          "message": "在 Kestra 企业版中，您可以在 namespace 级别配置凭据，使此 namespace 及其子 namespace 中的 task 在运行时请求和刷新访问 token，而不是将其存储在 flow 中。在父 namespace 中定义的凭据会被所有子 namespace 继承。"
+        },
         "assets": {
           "title": "集中资产管理",
           "message": "在 Kestra 企业版中，Assets 保持着与您的工作流交互的资源的实时清单。这些资源可以是数据库表、虚拟机、文件或您使用的任何外部系统。"
@@ -1443,6 +1506,11 @@
         "policies": {
           "title": "在此 namespace 中强制执行治理规则",
           "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则 — 注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
+        },
+        "reusable-inputs": {
+          "label": "可复用输入",
+          "title": "一次定义 input，随处复用",
+          "message": "在 Kestra 企业版中，可复用 input 让您在 namespace 级别一次定义一组带类型的命名 input，并在任何 flow 中引用。父 namespace 中的集合可供子 namespace 使用，团队因此共享同一套 input 定义，而无需在每个 flow 中重复。"
         },
         "history": {
           "title": "在一个地方管理修订历史",
@@ -1760,6 +1828,14 @@
     "item": "项目",
     "items": "项目",
     "iterations": "迭代次数",
+    "load_10_more": "加载更多10项",
+    "show_all_executions": "显示所有执行",
+    "failed_iterations_only": "仅显示失败的迭代",
+    "loop_iterations_shown": "已显示 {shown} / {total}",
+    "loop_iterations_load_error": "加载迭代失败",
+    "retry": "重试",
+    "no_iterations": "暂无迭代",
+    "no_failed_iterations": "没有失败的迭代",
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",
       "outputs": "循环迭代作为单独的子 Execution 运行，因此它们的 output 不在此处显示。",
@@ -1770,6 +1846,8 @@
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",
     "last error was": "上次错误是",
+    "execution_paused": "执行已暂停",
+    "execution_paused_description": "此执行正在等待验证和恢复。",
     "active": "活动",
     "flows imported": "Flow已导入",
     "flows not imported": "未导入的Flows",
@@ -2067,6 +2145,7 @@
         "csv": "导出为 CSV",
         "ion": "导出到 ION"
       },
+      "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
       "show_all_statuses": "显示所有状态",
       "quick_filters": {
         "all": "全部",
@@ -2268,7 +2347,8 @@
           "title": {
             "flow": "建议的 flow",
             "dashboard": "建议的仪表盘",
-            "app": "拟议应用"
+            "app": "拟议应用",
+            "test_suite": "建议的单元测试"
           },
           "valid": "有效",
           "invalid": "需要修改"
@@ -2313,30 +2393,35 @@
           "failed": "失败",
           "unknown": "未跟踪"
         },
+        "kind": {
+          "produces": "生成",
+          "consumed_by": "被消耗",
+          "upstream_of": "上游",
+          "part_of": "部分",
+          "related": "相关"
+        },
         "summary": {
           "fresh": "所有 {n} 个 Asset 都是最新的",
           "issues": "{n} 过时",
           "failed": "{n} 失败",
           "last_run": "上次运行 {ago}",
-          "unknown": "{n} 未追踪",
-          "tests_failed": "{n} 个测试失败"
-        },
-        "tests": {
-          "pass": "{count} 个测试",
-          "warn": "{count} 测试 · 警告",
-          "fail": "{failed}/{total} 失败",
-          "tooltip": {
-            "pass": "{count} 个 dbt 测试通过 | 所有 {count} 个 dbt 测试通过",
-            "warn": "{count} 个 dbt 测试通过，部分带有警告",
-            "fail": "dbt 测试失败 | {total} 个 dbt 测试中有 {failed} 个失败"
-          }
+          "unknown": "{n} 未追踪"
         },
         "recent_runs": "最近运行",
         "group_by": "分组依据",
-        "groups": "分组（{n}）",
+        "groups": "组",
         "group_none": "无分组",
         "group_dataset": "数据集",
-        "ungrouped": "未分组"
+        "group_consumer": "消费者",
+        "no_consumer": "无消费者",
+        "hidden_consumer": "隐藏 Flow",
+        "ungrouped": "未分组",
+        "hub": {
+          "notice": "此节点有 {count} 个关联 — 仅显示最新的关联以保持图表可读。",
+          "expand": "加载更多关联",
+          "expand_failed": "无法加载更多关联。请重试。"
+        },
+        "truncated": "此图过大，无法完整显示；部分关系已省略。"
       },
       "search": {
         "placeholders": {

@@ -24,6 +24,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Deprecated(since = "2.1.0", forRemoval = true)
 public class FlowExportCommand extends AbstractApiCommand {
     private static final String DEFAULT_FILE_NAME = "flows.zip";
 
@@ -38,6 +39,7 @@ public class FlowExportCommand extends AbstractApiCommand {
 
     @Override
     public Integer call() throws Exception {
+        emitReplacedByKestractl();
         super.call();
 
         try (DefaultHttpClient client = client()) {

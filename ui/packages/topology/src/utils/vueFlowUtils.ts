@@ -2,7 +2,16 @@ import {MarkerType, Position, useVueFlow} from "@vue-flow/core"
 import type {GraphNode, GraphEdge, Elements} from "@vue-flow/core"
 import * as dagre from "dagre"
 import * as Utils from "./utils"
-import {CLUSTER_PREFIX, DAGRE_NODE_SEP, DAGRE_RANK_SEP, NODE_SIZES, SMOOTH_STEP_OFFSET} from "./constants"
+import {
+    CLUSTER_PREFIX,
+    DAGRE_NODE_SEP,
+    DAGRE_RANK_SEP,
+    LOOP_RETURN_HEAD_GAP,
+    LOOP_RETURN_INSET,
+    NODE_SIZES,
+    SMOOTH_STEP_OFFSET,
+    SMOOTH_STEP_RADIUS,
+} from "./constants"
 import {isDeepEqual} from "@kestra-io/design-system"
 
 const TRIGGERS_NODE_UID = "root.Triggers"
@@ -102,10 +111,14 @@ export type NodeDimensionsFn = (
     heightFn: (node: MinimalNode) => number,
 ) => {width: number; height: number}
 
+// A loop's return edge closes a cycle, so these walks follow the flow's own direction only.
+function forwardEdges(vueFlowId: string): GraphEdge[] {
+    return useVueFlow(vueFlowId).getEdges.value.filter((edge) => !edge.data?.loopReturn)
+}
+
 export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId)
     const nodes = []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.target === nodeUid) {
             nodes.push(edge)
             const recursiveEdge = predecessorsEdge(vueFlowId, edge.source)
@@ -118,9 +131,8 @@ export function predecessorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[
 }
 
 export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] {
-    const {getEdges} = useVueFlow(vueFlowId)
     const nodes = []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.source === nodeUid) {
             nodes.push(edge)
             const recursiveEdge = successorsEdge(vueFlowId, edge.target)
@@ -133,10 +145,10 @@ export function successorsEdge(vueFlowId: string, nodeUid: string): GraphEdge[] 
 }
 
 export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge | GraphNode)[] {
-    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const {findNode} = useVueFlow(vueFlowId)
     const foundNode = findNode(nodeUid)
     const nodes: (GraphEdge | GraphNode)[] = foundNode ? [foundNode] : []
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.target === nodeUid) {
             nodes.push(edge.sourceNode)
             const recursiveEdge = predecessorsNode(vueFlowId, edge.source)
@@ -149,9 +161,9 @@ export function predecessorsNode(vueFlowId: string, nodeUid: string): (GraphEdge
 }
 
 export function successorsNode(vueFlowId: string, nodeUid: string) {
-    const {getEdges, findNode} = useVueFlow(vueFlowId)
+    const {findNode} = useVueFlow(vueFlowId)
     const nodes = [findNode(nodeUid)]
-    for (const edge of getEdges.value) {
+    for (const edge of forwardEdges(vueFlowId)) {
         if (edge.source === nodeUid) {
             nodes.push(edge.targetNode)
             const recursiveEdge = successorsNode(vueFlowId, edge.target)
@@ -213,7 +225,13 @@ export function generateDagreGraph(
         const absorbedByParent = edgeReplacer[cluster.cluster.uid] && edgeReplacer[cluster.cluster.uid] !== nodeUid
 
         if (collapsed.has(nodeUid) && !absorbedByParent) {
-            const node = {uid: nodeUid, type: "collapsedcluster", isFlowableLane: isTrueFlowableCluster(cluster.cluster)}
+            const flowableNode = flowGraph.nodes.find((n) => n.uid === nodeUid)
+            const node = {
+                uid: nodeUid,
+                type: "collapsedcluster",
+                isFlowableLane: isTrueFlowableCluster(cluster.cluster),
+                executionId: flowableNode?.executionId,
+            }
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
             clusterToNode.push(node)
@@ -460,6 +478,10 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     return "default"
 }
 
+function isLoopTask(type?: string): boolean {
+    return Boolean(type?.endsWith(".LoopUntil") || type?.endsWith(".Loop"))
+}
+
 /** A flowable's own gate node (e.g. the `Parallel` task itself) is a real graph node — edges fan
  *  out of it or chain through it — but it must render once, as its cluster's lane header, not
  *  again as a duplicate task box inside that same cluster (kestra-io/kestra#19666). Excludes
@@ -697,6 +719,43 @@ export function edgeTurnPosition(
  *  own marker and the split — rather than on the drop into whichever branch happens to carry it. */
 export function fanOutSplitPosition(from: number, to: number, turn?: number): number {
     return (from + (turn ?? (from + to) / 2)) / 2
+}
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+export interface LoopReturnBounds {
+    right: number;
+    bottom: number;
+    entry: Point;
+}
+
+/** A loop lane's return run: out of its end marker, along the lane's borders, and back to its
+ *  start marker, `entry`, across the flow so its head clears the edge coming into that marker. */
+export function loopReturnPath(source: Point, {right, bottom, entry}: LoopReturnBounds, isHorizontal: boolean): string {
+    const points = isHorizontal
+        ? [source, {x: right, y: source.y}, {x: right, y: bottom}, {x: entry.x, y: bottom}, {x: entry.x, y: entry.y + LOOP_RETURN_HEAD_GAP}]
+        : [source, {x: source.x, y: bottom}, {x: right, y: bottom}, {x: right, y: entry.y}, {x: entry.x + LOOP_RETURN_HEAD_GAP, y: entry.y}]
+    return roundedPolyline(points, SMOOTH_STEP_RADIUS)
+}
+
+function roundedPolyline(points: Point[], radius: number): string {
+    const length = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+    let d = `M${points[0].x},${points[0].y}`
+    for (let i = 1; i < points.length - 1; i++) {
+        const [before, corner, after] = [points[i - 1], points[i], points[i + 1]]
+        const r = Math.min(radius, length(before, corner) / 2, length(corner, after) / 2)
+        const towards = (p: Point) => ({
+            x: corner.x + Math.sign(p.x - corner.x) * r,
+            y: corner.y + Math.sign(p.y - corner.y) * r,
+        })
+        const [start, end] = [towards(before), towards(after)]
+        d += ` L${start.x},${start.y} Q${corner.x},${corner.y} ${end.x},${end.y}`
+    }
+    const last = points[points.length - 1]
+    return `${d} L${last.x},${last.y}`
 }
 
 export function getEdgeColorToken(edgeColor: string | null): string {
@@ -1060,6 +1119,51 @@ export function generateGraph(
                 animated: animated,
             })
         }
+    }
+
+    for (const cluster of clusters) {
+        const clusterUid = cluster.cluster.uid
+        const taskNode = cluster.cluster.taskNode
+        if (
+            !isLoopTask(taskNode?.task?.type) ||
+            edgeReplacer[clusterUid] ||
+            collapsed.has(clusterUid.replace(CLUSTER_PREFIX, "")) ||
+            hiddenOrAliased.includes(cluster.start) ||
+            hiddenOrAliased.includes(cluster.end) ||
+            !nodeByUid[cluster.start] ||
+            !nodeByUid[cluster.end]
+        ) {
+            continue
+        }
+
+        const dagreNode = dagreGraph.node(clusterUid)
+        const startNode = dagreGraph.node(cluster.start)
+        if (!dagreNode || !startNode) continue
+
+        elements.push({
+            id: `loop-return|${cluster.end}|${cluster.start}`,
+            source: cluster.end,
+            target: cluster.start,
+            type: "edge",
+            markerEnd: {
+                id: "marker-custom",
+                type: MarkerType.ArrowClosed,
+                color: getEdgeColorToken(null),
+            },
+            data: {
+                loopReturn: {
+                    right: dagreNode.x + dagreNode.width / 2 - LOOP_RETURN_INSET,
+                    bottom: dagreNode.y + dagreNode.height / 2 - LOOP_RETURN_INSET,
+                    // A vertical lane start sits at the bottom of a dagre box one header taller than it.
+                    entry: {
+                        x: startNode.x,
+                        y: startNode.y + (!isHorizontal && laneStartUids.has(cluster.start) ? NODE_SIZES.LANE_HEADER_HEIGHT / 2 : 0),
+                    },
+                },
+            },
+            style: {zIndex: 10},
+            animated: false,
+        })
     }
 
     return elements

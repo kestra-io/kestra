@@ -123,7 +123,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .drawerSplitter {
         position: absolute;
         top: 0;
@@ -132,20 +132,20 @@
         height: 100%;
         flex-shrink: 0;
 
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             min-width: 0;
         }
 
-        :deep(.drawerSpacerPanel) {
+        & :deep(.drawerSpacerPanel) {
             overflow: hidden;
             pointer-events: none;
         }
 
-        :deep(.kel-splitter-bar) {
+        & :deep(.kel-splitter-bar) {
             background-color: transparent;
         }
 
-        :deep(.kel-splitter__splitter) {
+        & :deep(.kel-splitter__splitter) {
             width: 5px;
             background-color: transparent;
             transition: background-color 0.1s;
@@ -201,10 +201,10 @@
             align-items: center;
             gap: 0.25rem;
             position: relative;
+        }
 
-            &--active .tab-icon {
-                color: var(--ks-icon-active);
-            }
+        .tab-label--active .tab-icon {
+            color: var(--ks-icon-active);
         }
 
         .open-in-new {

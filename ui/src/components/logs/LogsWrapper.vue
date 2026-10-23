@@ -37,6 +37,24 @@
 
                 <template #table>
                     <div v-ks-loading="isLoading">
+                        <div
+                            v-if="(selection.length > 0 || queryBulkAction) && logsStore.logs && logsStore.logs.length > 0"
+                            class="logs-bulk-actions"
+                            data-test="logs-bulk-actions"
+                        >
+                            <KsBulkSelect
+                                :selectAll="queryBulkAction"
+                                :selectionCount="selection.length"
+                                :total="logsStore.total"
+                                @toggle-all="toggleAllSelection"
+                                @unselect="toggleAllUnselected"
+                            >
+                                <KsButton :icon="Delete" data-test="logs-bulk-delete" @click="confirmDeleteLogs">
+                                    {{ $t("delete") }}
+                                </KsButton>
+                            </KsBulkSelect>
+                        </div>
+
                         <div class="logs-toolbar">
                             <div class="logs-toolbar__left">
                                 <LogLevelNavigator
@@ -55,19 +73,32 @@
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
-                            <LogLine
+                            <div
                                 v-for="(log, i) in logsStore.logs"
-                                :key="`${log.taskRunId}-${i}`"
-                                level="TRACE"
-                                filter=""
-                                :highlight="searchTerm"
-                                :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
-                                :log="log"
-                                :class="{'log-0': i === 0}"
-                                clickableLevel
-                                @filter="onValueFilter"
-                                @filter-level="selectLevel"
-                            />
+                                :key="log.id ?? `${log.taskRunId}-${i}`"
+                                class="log-row"
+                                :class="{'log-0': i === 0, 'log-row--selected': log.id && selection.includes(log.id)}"
+                            >
+                                <KsCheckbox
+                                    v-if="log.id"
+                                    class="log-row__checkbox"
+                                    data-test="log-row-checkbox"
+                                    :aria-label="$t('select')"
+                                    :modelValue="selection.includes(log.id)"
+                                    @change="(value: string | number | boolean) => toggleRow(log.id!, Boolean(value))"
+                                />
+                                <LogLine
+                                    class="log-row__content"
+                                    level="TRACE"
+                                    filter=""
+                                    :highlight="searchTerm"
+                                    :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                                    :log="log"
+                                    clickableLevel
+                                    @filter="onValueFilter"
+                                    @filter-level="selectLevel"
+                                />
+                            </div>
                         </div>
 
                         <div v-else-if="!isLoading">
@@ -133,11 +164,12 @@
     import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import {useLogFilter} from "../filter/configurations/logFilter"
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {dateUtils, dayjs, KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, KsFilter as KSFilter, KsMessageBox, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -221,6 +253,62 @@
     ])
     const dataTable = useTemplateRef("dataTable")
     const ready = ref(false)
+
+    const selection = ref<string[]>([])
+    const queryBulkAction = ref(false)
+
+    const toggleRow = (id: string, checked: boolean) => {
+        if (checked) {
+            if (!selection.value.includes(id)) {
+                selection.value.push(id)
+            }
+        } else {
+            selection.value = selection.value.filter(s => s !== id)
+            queryBulkAction.value = false
+        }
+    }
+
+    const toggleAllSelection = () => {
+        queryBulkAction.value = true
+        const visibleIds = (logsStore.logs ?? [])
+            .map(l => l.id)
+            .filter((id): id is string => Boolean(id))
+        selection.value = Array.from(new Set([...selection.value, ...visibleIds]))
+    }
+
+    const toggleAllUnselected = () => {
+        selection.value = []
+        queryBulkAction.value = false
+    }
+
+    const confirmDeleteLogs = () => {
+        const count = queryBulkAction.value ? logsStore.total : selection.value.length
+        if (count === 0) {
+            return
+        }
+
+        KsMessageBox.confirm(
+            t("bulk delete logs", {count}),
+            t("confirmation"),
+            {
+                confirmButtonText: t("delete"),
+                cancelButtonText: t("cancel"),
+                type: "warning",
+                dangerouslyUseHTMLString: true,
+            },
+        ).then(() => {
+            const promise = queryBulkAction.value
+                ? logsStore.queryDeleteLogs(loadQuery({minLevel: props.filters ? null : effectiveLogLevel.value}))
+                : logsStore.bulkDeleteLogs(selection.value)
+
+            return promise.then(() => {
+                toast.deleted(t("logs"))
+                toggleAllUnselected()
+                lastCountedKey = ""
+                refresh()
+            })
+        }).catch(() => {})
+    }
 
     const routeInfo = computed(() => ({
         title: t("logs"),
@@ -509,6 +597,7 @@
         return JSON.stringify(filters)
     })
     watch(filterQueryKey, () => {
+        toggleAllUnselected()
         dataTable.value?.resetAndReload()
     })
 
@@ -551,6 +640,14 @@
 
     watch(() => props.reloadLogs, (newValue) => {
         if (newValue) refresh()
+    })
+
+    watch(() => logsStore.logs, (logs) => {
+        const listedIds = new Set((logs ?? []).map(log => log.id))
+        selection.value = selection.value.filter(id => listedIds.has(id))
+        if (selection.value.length === 0) {
+            queryBulkAction.value = false
+        }
     })
 </script>
 <style scoped>
@@ -638,6 +735,30 @@
             & > * + * {
                 border-top: 1px solid var(--ks-border-default);
             }
+
+            .log-row {
+                display: flex;
+                align-items: flex-start;
+                gap: var(--ks-spacing-2);
+
+                &.log-row--selected {
+                    background-color: var(--ks-bg-active);
+                }
+
+                & .log-row__checkbox {
+                    flex: 0 0 auto;
+                    padding-top: var(--ks-spacing-2);
+                }
+
+                & .log-row__content {
+                    flex: 1 1 auto;
+                    min-width: 0;
+                }
+            }
+        }
+
+        .logs-bulk-actions {
+            margin-bottom: var(--ks-spacing-3);
         }
     }
 </style>

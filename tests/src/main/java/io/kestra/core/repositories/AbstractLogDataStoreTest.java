@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
@@ -850,6 +851,112 @@ public abstract class AbstractLogDataStoreTest {
 
         logDataStore.deleteByFilters(tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "delfilter-exec")));
         assertRemaining(tenant, "delfilter-exec", 1);
+    }
+
+    @Test
+    void deleteByFiltersAndCount_returnsTheDeletedCount() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "delcount-exec").tenantId(tenant).build(),
+                log(Level.WARN, "delcount-exec").tenantId(tenant).build()
+            )
+        );
+        awaitVisible(tenant, "delcount-exec");
+
+        OptionalInt deleted = logDataStore.deleteByFiltersAndCount(tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "delcount-exec")));
+
+        assertThat(deleted).hasValue(logDataStore.canPurge() ? 2 : 0);
+        assertRemaining(tenant, "delcount-exec", 2);
+    }
+
+    @Test
+    void deleteByFilters_keepsNonNormalKindsUnlessAKindFilterIsGiven() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "delkind-null").flowId("delkind-flow").tenantId(tenant).build(),
+                log(Level.INFO, "delkind-normal").flowId("delkind-flow").executionKind(ExecutionKind.NORMAL).tenantId(tenant).build(),
+                log(Level.INFO, "delkind-loop").flowId("delkind-flow").executionKind(ExecutionKind.LOOP).tenantId(tenant).build(),
+                log(Level.INFO, "delkind-playground").flowId("delkind-flow").executionKind(ExecutionKind.PLAYGROUND).tenantId(tenant).build()
+            )
+        );
+        List.of("delkind-null", "delkind-normal", "delkind-loop", "delkind-playground").forEach(executionId -> awaitVisible(tenant, executionId));
+
+        logDataStore.deleteByFilters(tenant, List.of(cond(Field.FLOW_ID, Op.EQUALS, "delkind-flow")));
+
+        assertRemaining(tenant, "delkind-null", 1);
+        assertRemaining(tenant, "delkind-normal", 1);
+        assertThat(logDataStore.findByExecutionId(tenant, "delkind-loop", null)).hasSize(1);
+        assertThat(logDataStore.findByExecutionId(tenant, "delkind-playground", null)).hasSize(1);
+
+        logDataStore.deleteByFilters(
+            tenant,
+            List.of(cond(Field.FLOW_ID, Op.EQUALS, "delkind-flow"), cond(Field.KIND, Op.EQUALS, ExecutionKind.LOOP.name()))
+        );
+
+        assertRemaining(tenant, "delkind-loop", 1);
+        assertThat(logDataStore.findByExecutionId(tenant, "delkind-playground", null)).hasSize(1);
+    }
+
+    private List<String> idsOf(String tenant, String executionId) {
+        return logDataStore.find(Pageable.UNPAGED, tenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, executionId)))
+            .getContent().stream().map(LogEntry::getId).toList();
+    }
+
+    @Test
+    void deleteByIds_removesOnlyTheGivenIds() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "delids-exec").tenantId(tenant).build(),
+                log(Level.WARN, "delids-exec").tenantId(tenant).build(),
+                log(Level.ERROR, "delids-exec").tenantId(tenant).build()
+            )
+        );
+        awaitVisible(tenant, "delids-exec");
+
+        List<String> allIds = idsOf(tenant, "delids-exec");
+        assertThat(allIds).hasSize(3);
+        assertThat(allIds).allSatisfy(id -> assertThat(id).isNotBlank());
+
+        List<String> idsToDelete = allIds.stream().limit(2).toList();
+        int deleted = logDataStore.deleteByIds(tenant, idsToDelete);
+
+        if (logDataStore.canPurge()) {
+            assertThat(deleted).isEqualTo(2);
+            assertThat(logDataStore.findByExecutionId(tenant, "delids-exec", null)).hasSize(1);
+        } else {
+            assertThat(deleted).isZero();
+            assertThat(logDataStore.findByExecutionId(tenant, "delids-exec", null)).hasSize(3);
+        }
+    }
+
+    @Test
+    void deleteByIds_isTenantScoped() {
+        String tenantA = randomTenant();
+        String tenantB = randomTenant();
+        logDataStore.save(log(Level.INFO, "delids-tenant-a").tenantId(tenantA).build());
+        logDataStore.save(log(Level.INFO, "delids-tenant-b").tenantId(tenantB).build());
+        awaitVisible(tenantA, "delids-tenant-a");
+        awaitVisible(tenantB, "delids-tenant-b");
+
+        List<String> tenantAIds = idsOf(tenantA, "delids-tenant-a");
+
+        int deleted = logDataStore.deleteByIds(tenantB, tenantAIds);
+        assertThat(deleted).isZero();
+        assertThat(logDataStore.findByExecutionId(tenantA, "delids-tenant-a", null)).hasSize(1);
+    }
+
+    @Test
+    void deleteByIds_noOpsOnEmptyOrNullIds() {
+        String tenant = randomTenant();
+        logDataStore.save(log(Level.INFO, "delids-empty").tenantId(tenant).build());
+        awaitVisible(tenant, "delids-empty");
+
+        assertThat(logDataStore.deleteByIds(tenant, List.of())).isZero();
+        assertThat(logDataStore.deleteByIds(tenant, null)).isZero();
+        assertThat(logDataStore.findByExecutionId(tenant, "delids-empty", null)).hasSize(1);
     }
 
     private void assertRemaining(String tenant, String executionId, int savedCount) {

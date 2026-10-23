@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.OptionalInt;
 
 import org.slf4j.event.Level;
 
@@ -155,6 +156,20 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
     void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);
 
     void deleteByFilters(String tenantId, List<QueryFilter> filters);
+
+    /**
+     * Same as {@link #deleteByFilters}, reporting the number of deleted logs when the store knows it.
+     *
+     * @return the deleted count, or empty when the store cannot report it
+     */
+    default OptionalInt deleteByFiltersAndCount(String tenantId, List<QueryFilter> filters) {
+        deleteByFilters(tenantId, filters);
+        return OptionalInt.empty();
+    }
+
+    default int deleteByIds(String tenantId, List<String> ids) {
+        return 0;
+    }
 
     int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate, boolean purgeExecutionLogs,
         boolean purgeNonExecutionLogs, Integer batchSize);

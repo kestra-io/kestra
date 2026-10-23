@@ -1351,7 +1351,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "yes", "1", "maybe", "xyz" })
+    @ValueSource(strings = {"yes", "1", "maybe", "xyz"})
     void shouldRejectInvalidBooleanInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1377,7 +1377,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "true", "false", "TRUE", "False" })
+    @ValueSource(strings = {"true", "false", "TRUE", "False"})
     void shouldAcceptValidBooleanStringInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1400,7 +1400,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { true, false })
+    @ValueSource(booleans = {true, false})
     void shouldAcceptBooleanInput(boolean value) {
         // Given
         BoolInput input = BoolInput.builder()

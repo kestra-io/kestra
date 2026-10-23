@@ -893,7 +893,7 @@ class ExecutionServiceTest {
 
         Execution execution = Execution.newExecution(flow, Collections.emptyList())
             .withState(State.Type.RETRYING);
-
+    
         Execution result = executionService.retryFlowable(execution, "unknown");
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.RUNNING);

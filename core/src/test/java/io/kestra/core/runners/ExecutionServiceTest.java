@@ -28,6 +28,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
@@ -662,6 +663,17 @@ class ExecutionServiceTest {
         TaskRun loopTaskRun = execution.getTaskRunList().stream()
             .filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
         assertThat(loopTaskRun.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/loop-pause-resume-inputs.yaml" })
+    void shouldReturnPauseInputsWhenValidatingResumeOfLoopParent() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "loop-pause-resume-inputs");
+        Flow flow = flowRepository.findByExecution(execution);
+
+        List<InputAndValue> inputs = executionService.validateForResume(execution, flow).block();
+
+        assertThat(inputs).extracting(input -> input.input().getId()).containsExactly("approved");
     }
 
     @Test

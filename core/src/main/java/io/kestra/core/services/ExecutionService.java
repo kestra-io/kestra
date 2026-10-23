@@ -922,8 +922,8 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task ->
             {
-                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
+                if (task.isPresent() && task.get().task() instanceof Pause pauseTask) {
+                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, task.get().execution(), Map.of()));
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -944,8 +944,8 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task ->
             {
-                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
+                if (task.isPresent() && task.get().task() instanceof Pause pauseTask) {
+                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, task.get().execution(), inputs);
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -965,8 +965,8 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task ->
             {
-                if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
+                if (task.isPresent() && task.get().task() instanceof Pause pauseTask) {
+                    return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), flow, task.get().execution(), inputs);
                 } else {
                     return Mono.just(Collections.<String, Object> emptyMap());
                 }
@@ -981,19 +981,36 @@ public class ExecutionService {
             });
     }
 
-    private Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, FlowInterface flow) {
+    private Mono<Optional<PausedTask>> getFirstPausedTaskOr(Execution execution, FlowInterface flow) {
         return Mono.create(sink ->
         {
             try {
                 final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
-                var runningTaskRun = execution
-                    .findFirstByState(State.Type.PAUSED)
-                    .map(throwFunction(task -> flowWithSource.findTaskByTaskId(task.getTaskId())));
-                sink.success(runningTaskRun);
+                sink.success(findPausedTask(execution, flowWithSource));
             } catch (InternalException | FlowProcessingException e) {
                 sink.error(e);
             }
         });
+    }
+
+    private Optional<PausedTask> findPausedTask(Execution execution, FlowWithSource flow) throws InternalException {
+        var pausedTaskRun = execution.findFirstByState(State.Type.PAUSED);
+        if (pausedTaskRun.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Task task = flow.findTaskByTaskId(pausedTaskRun.get().getTaskId());
+        if (task instanceof Loop) {
+            var subExecution = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), task.getId())
+                .stream()
+                .filter(e -> e.getState().isPaused())
+                .findFirst();
+            return subExecution.isPresent() ? findPausedTask(subExecution.get(), flow) : Optional.empty();
+        }
+        return Optional.of(new PausedTask(execution, task));
+    }
+
+    private record PausedTask(Execution execution, Task task) {
     }
 
     /**

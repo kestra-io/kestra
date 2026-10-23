@@ -13,10 +13,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import com.cronutils.model.time.ExecutionTime;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -190,6 +192,57 @@ class ScheduleTest {
         assertThat(evaluate.get().labels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().labels()).contains(new Label("trigger-label-2", "trigger-label-2"));
         assertThat(evaluate.get().labels()).doesNotContain(new Label("trigger-label-3", ""));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "date", "next", "previous" })
+    void shouldRenderScheduleInputsWithTriggerDates(String field) throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("* * * * *")
+            .timezone("America/New_York")
+            .inputs(Map.of("input1", "{{ trigger." + field + " }}"))
+            .build();
+        ZonedDateTime date = ZonedDateTime.parse("2025-01-15T08:00:00-05:00[America/New_York]");
+
+        Optional<TriggerEvaluationResult> result = trigger.eval(conditionContext(trigger), triggerContext(date, trigger));
+
+        assertThat(result).isPresent();
+        ZonedDateTime expected = switch (field) {
+            case "next" -> date.plusMinutes(1);
+            case "previous" -> date.minusMinutes(1);
+            default -> date;
+        };
+        assertThat(dateFromVars((String) result.get().inputs().get("input1"), date)).isEqualTo(expected);
+        assertThat(result.get().inputs()).containsEntry("input2", "default");
+    }
+
+    @Test
+    void shouldRenderBackfillInputsWithHistoricalTriggerDatesAndOverrideScheduleInputs() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("* * * * *")
+            .timezone("America/New_York")
+            .inputs(Map.of("input1", "{{ trigger.date }}", "input2", "schedule value"))
+            .build();
+        ZonedDateTime date = ZonedDateTime.parse("2025-01-15T08:00:00-05:00[America/New_York]");
+        TriggerContext context = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+            .backfill(
+                Backfill.builder()
+                    .currentDate(date)
+                    .end(date.plusHours(1))
+                    .inputs(Map.of("input2", "{{ trigger.previous }}"))
+                    .build()
+            )
+            .build();
+
+        Optional<TriggerEvaluationResult> result = trigger.eval(conditionContext(trigger), context);
+
+        assertThat(result).isPresent();
+        assertThat(dateFromVars((String) result.get().inputs().get("input1"), date)).isEqualTo(date);
+        assertThat(dateFromVars((String) result.get().inputs().get("input2"), date)).isEqualTo(date.minusMinutes(1));
     }
 
     @Test

@@ -8,6 +8,7 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.Restart;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -21,7 +22,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class RestartExecutionTool implements AiPlatformTool {
+public class RestartExecutionTool implements McpPlatformTool {
     private final ExecutionRepositoryInterface executionRepository;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final AsyncOperationWaiter asyncOperationWaiter;
@@ -47,6 +48,11 @@ public class RestartExecutionTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.CONFIRM;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.DESTRUCTIVE;
     }
 
     @Tool(

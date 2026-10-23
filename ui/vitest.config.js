@@ -75,13 +75,6 @@ export default defineConfig({
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.ts"],
-                    reporters: [
-                        ["default"],
-                        ["junit"],
-                    ],
-                    outputFile: {
-                        junit: "./test-report.storybook.junit.xml",
-                    },
                     // Each worker drives its own headless Chromium instance; letting
                     // this scale with CPU count (the default) spins up enough
                     // concurrent browsers to exhaust CI memory, which kills a

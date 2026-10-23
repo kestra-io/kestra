@@ -105,10 +105,13 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The current page, enables pagination when set") @Nullable @QueryValue @Min(1) Integer page,
         @Parameter(description = "The current page size, enables pagination when set (defaults to 10)") @Nullable @QueryValue @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) Integer size,
+        @Parameter(description = "The sort of the page, defaults to `timestamp:asc`", examples = {
+            @ExampleObject(name = "Sort by timestamp in descending order", value = "timestamp:desc")
+        }) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
         if (page != null || size != null) {
             return logRepository.find(
-                PageableUtils.from(page == null ? 1 : page, size == null ? 10 : size, List.of("timestamp:asc")),
+                PageableUtils.from(page == null ? 1 : page, size == null ? 10 : size, sort == null ? List.of("timestamp:asc") : sort),
                 tenantService.resolveTenant(),
                 buildExecutionFilters(executionId, filters)
             ).getContent();

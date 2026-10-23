@@ -99,14 +99,14 @@
         </template>
 
         <template v-else>
-            <KsRow
-                v-for="(element, index) in items"
-                :key="'array-' + index"
-                :gutter="10"
-                align="top"
-                class="w-100"
-            >
-                <KsCol :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
+        <KsRow
+            v-for="(element, index) in items"
+            :key="'array-' + index"
+            :gutter="10"
+            align="top"
+            class="custom-row"
+        >
+                <KsCol :span="2" class="custom-col reorder" v-if="items.length > 1">
                     <KsIconButton
                         :disabled="index === 0"
                         :tooltip="$t('block_editor.move_up')"
@@ -122,7 +122,7 @@
                         <ChevronDown />
                     </KsIconButton>
                 </KsCol>
-                <KsCol :span="items.length > 1 ? 20 : 22" class="pe-2 array-value-col">
+                <KsCol :span="items.length > 1 ? 20 : 22" class="array-value-col">
                     <Wrapper merge>
                         <template #tasks>
                             <component
@@ -293,11 +293,6 @@
     cursor: not-allowed;
 }
 
-.array-value-col {
-    flex: 1;
-    max-width: none;
-}
-
 .task-collection--cards {
     gap: var(--ks-spacing-3);
 }
@@ -352,5 +347,19 @@
 
 .task-array-item-body {
     padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
+}
+
+.custom-row {
+    width: 100%;
+}
+
+.custom-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.array-value-col {
+    padding-right: var(--ks-spacing-2);
 }
 </style>

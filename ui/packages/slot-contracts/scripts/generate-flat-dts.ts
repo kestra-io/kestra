@@ -50,7 +50,9 @@ export const splitTopLevelMembers = (raw: string): string[] => {
 }
 
 // Single line `{ a: T; b: U; }` -> multi-line.
-const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+export const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+    // zod 4 prints an empty object schema as `Record<string, never>`, which has no members to split.
+    if (!raw.trim().startsWith("{")) return raw
     const members = splitTopLevelMembers(raw)
     if (members.length === 0) return "{}"
 

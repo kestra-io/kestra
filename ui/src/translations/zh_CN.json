@@ -562,15 +562,6 @@
     "inputs": "输入",
     "input": "输入",
     "variables": "变量",
-    "execution_artifacts": {
-      "title": "产物",
-      "empty": "此 Flow 没有 Task 提供 artifact。",
-      "count": "{artifacts} · {tasks}",
-      "artifacts": "无 artifact | {count} 个 artifact | {count} 个 artifact",
-      "tasks": "无 Task | {count} 个 Task | {count} 个 Task",
-      "fullscreen": "全屏",
-      "exit_fullscreen": "退出全屏"
-    },
     "variable_explorer": {
       "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",

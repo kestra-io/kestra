@@ -194,6 +194,7 @@ public class ExecutorService {
             executor = this.handleEnd(executor);
             // if killing: kill the task runs no worker will ever answer for — created (not yet started)
             // and retrying (waiting on the executor's own retry delay, which a kill must not fire)
+            // and paused (a kill only resumes the first paused task run, the others would never end)
             executor = this.handleNeverRunnedKilling(executor);
             //then set the execution to killed
             executor = this.handleKilling(executor);
@@ -1210,7 +1211,7 @@ public class ExecutorService {
         List<WorkerTaskResult> workerTaskResults = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() || taskRun.getState().getCurrent() == State.Type.RETRYING)
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() || taskRun.getState().getCurrent() == State.Type.RETRYING || taskRun.getState().getCurrent() == State.Type.PAUSED)
             .map(
                 t -> childWorkerTaskTypeToWorkerTask(
                     Optional.of(State.Type.KILLED),

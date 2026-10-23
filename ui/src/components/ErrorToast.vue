@@ -65,28 +65,33 @@
         close()
     })
 
+    const isErrorVariant = computed(() =>
+        props.message.variant === undefined || props.message.variant === "error")
+
     const showNotification = () => {
         close()
 
-        const error: ErrorEvent = {
-            type: "ERROR",
-            error: {
-                message: title.value,
-                problemType: props.message.problem?.type,
-                errors: items.value,
-            },
-            page: pageFromRoute(route),
-        }
+        if (isErrorVariant.value) {
+            const error: ErrorEvent = {
+                type: "ERROR",
+                error: {
+                    message: title.value,
+                    problemType: props.message.problem?.type,
+                    errors: items.value,
+                },
+                page: pageFromRoute(route),
+            }
 
-        const status = props.message.status ?? props.message.problem?.status
-        if (status !== undefined) {
-            error.error.response = {status}
-        }
-        if (props.message.request) {
-            error.error.request = props.message.request
-        }
+            const status = props.message.status ?? props.message.problem?.status
+            if (status !== undefined) {
+                error.error.response = {status}
+            }
+            if (props.message.request) {
+                error.error.request = props.message.request
+            }
 
-        apiStore.events(error)
+            apiStore.events(error)
+        }
 
         notifications.value = KsNotification({
             title: title.value,

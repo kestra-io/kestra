@@ -170,6 +170,9 @@ public class KVController {
         String description = httpHeaders.get("description");
         String ttl = httpHeaders.get("ttl");
         KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
+        if (value != null && value.stripLeading().startsWith("\"")) {
+            metadata = metadata.withType(KVType.STRING);
+        }
         try {
             try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {
                 JsonNode jsonNode = JacksonMapper.ofIon().readTree(parser);

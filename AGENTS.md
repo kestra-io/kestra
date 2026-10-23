@@ -164,6 +164,7 @@ See [Comments](#comments) for when a Javadoc block is worth writing at all. Once
 - A DTO used by a single controller belongs as an inner record of that controller. Promote it to `io.kestra.webserver.models.api` only once a second caller exists, and name it with the `Api` prefix there (`ApiExecution`, `ApiTriggerState`, `ApiPluginArtifact`)
 - Import a class rather than writing its fully-qualified name, as soon as it is used more than once in the same file
 - Unit tests must assert that a user can only access a given API if authorized to do so, and that access is denied otherwise
+- Render input descriptions with a non-decrypting run context and preserve their raw text when Pebble evaluation fails.
 - APIs must be documented with OpenAPI annotations
 - Use DTOs for requests/responses
 - A dashboard chart export must use the chart's declared columns for its header, in declaration order, whether or not there are rows

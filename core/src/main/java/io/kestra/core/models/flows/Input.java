@@ -109,6 +109,13 @@ public abstract class Input<T> implements Data {
 
     public abstract void validate(T input) throws ConstraintViolationException;
 
+    /** Returns a copy with a different description, preserving the concrete input type. */
+    public Input<?> withDescription(String description) {
+        Map<String, Object> map = JacksonMapper.toMap(this);
+        map.put("description", description);
+        return JacksonMapper.toMap(map, Input.class);
+    }
+
     /**
      * Expands every {@link io.kestra.core.models.flows.input.FormInput} into copies of its children whose id is
      * rewritten to the dotted path ({@code environment} + {@code .} + {@code region} -> {@code environment.region}).

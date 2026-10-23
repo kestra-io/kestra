@@ -1,10 +1,11 @@
-import {describe, test, expect, vi} from "vitest"
+import {afterAll, describe, test, expect, vi} from "vitest"
 import {nextTick, ref} from "vue"
 import {flushPromises} from "@vue/test-utils"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObject from "./TaskObject.vue"
 import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {taskComponentsReady} from "./useBlockComponent"
 
 function mountForm(schema: Record<string, unknown>, modelValue: Record<string, unknown>) {
     return i18nMount(TaskObject, {
@@ -15,6 +16,8 @@ function mountForm(schema: Record<string, unknown>, modelValue: Record<string, u
         },
     })
 }
+
+afterAll(() => taskComponentsReady())
 
 describe("TaskObject opening a form", () => {
     test.each([

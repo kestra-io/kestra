@@ -10,7 +10,7 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true" scrollable>
         <template #header>
-            <i18n-t keypath="resumed title" tag="span">
+            <i18n-t keypath="resumed title" tag="span" scope="global">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
         </template>

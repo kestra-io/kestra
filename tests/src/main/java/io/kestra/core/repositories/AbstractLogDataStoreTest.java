@@ -773,6 +773,28 @@ public abstract class AbstractLogDataStoreTest {
     }
 
     @Test
+    void deleteByQuery_shouldKeepLogsOfNamespaceDifferingOnlyByCase() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "del-lower").tenantId(tenant).namespace("company.a").build(),
+                log(Level.INFO, "del-upper").tenantId(tenant).namespace("company.A").build()
+            )
+        );
+        awaitVisible(tenant, "del-upper");
+
+        int deleted = logDataStore.deleteByQuery(tenant, "company.a", null, null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, null);
+
+        if (logDataStore.canPurge()) {
+            assertThat(deleted).isEqualTo(1);
+            assertThat(logDataStore.findByExecutionId(tenant, "del-lower", null)).isEmpty();
+            assertThat(logDataStore.findByExecutionId(tenant, "del-upper", null)).hasSize(1);
+        } else {
+            assertThat(deleted).isZero();
+        }
+    }
+
+    @Test
     void deleteByQuery_retentionByBatchSize() {
         String tenant = randomTenant();
         List<LogEntry> batch = new ArrayList<>();

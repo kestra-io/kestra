@@ -742,6 +742,17 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    void shouldNotFindExecutionsOfOtherNamespaceWhenNamespacesDifferOnlyByCase() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, FLOW, "company.a").build());
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, FLOW, "company.A").build());
+
+        ArrayListTotal<Execution> found = executionRepository.findByFlowId(tenant, "company.a", FLOW, Pageable.from(1, 10));
+
+        assertThat(found).extracting(Execution::getNamespace).containsExactly("company.a");
+    }
+
+    @Test
     void shouldFindLatestExecutionGivenState() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution earliest = buildWithCreatedDate(tenant, Instant.now().minus(Duration.ofMinutes(10)));

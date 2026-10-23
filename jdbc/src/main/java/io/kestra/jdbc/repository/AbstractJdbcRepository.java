@@ -122,8 +122,8 @@ public abstract class AbstractJdbcRepository {
             case NAMESPACES -> {
                 List<Condition> ors = new ArrayList<>(scope.namespaces().size() * 2);
                 for (String namespace : scope.namespaces()) {
-                    ors.add(column.eq(namespace));
-                    ors.add(column.startsWith(namespace + "."));
+                    ors.add(CaseSensitiveMatch.eq(column, namespace));
+                    ors.add(CaseSensitiveMatch.startsWith(column, namespace + "."));
                 }
                 yield DSL.or(ors);
             }

@@ -61,7 +61,13 @@
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
     import {Handle, Position} from "@vue-flow/core"
-    import {KsTooltip, SECTIONS, dayjs, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {
+        KsTooltip,
+        SECTIONS,
+        dayjs,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
@@ -270,6 +276,7 @@
     const classes = computed(() => ({
         "execution-no-taskrun":
             Boolean(taskExecution.value && taskRuns.value && taskRuns.value.length === 0),
+        "node-core--error": validationIssues.value.length > 0,
     }))
 
     const statusStyle = computed(() => getStatusStyle(state.value))
@@ -347,7 +354,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .playground-button {
     position: absolute;
     bottom: 0;

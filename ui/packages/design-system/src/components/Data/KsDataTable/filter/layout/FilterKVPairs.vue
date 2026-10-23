@@ -125,30 +125,30 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .active-pairs {
     padding: 1rem;
     border-bottom: 1px solid var(--ks-border-default);
 
-    .section-title {
+    & .section-title {
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-xs);
         font-weight: 500;
         margin-bottom: 8px;
     }
 
-    .empty-state {
+    & .empty-state {
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-sm);
         font-style: italic;
     }
 
-    .pairs-container {
+    & .pairs-container {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
 
-        .detail-tag {
+        & .detail-tag {
             display: inline-flex;
             align-items: center;
             max-width: 270px;
@@ -159,7 +159,7 @@
             color: var(--ks-text-info);
             font-size: var(--ks-font-size-xs);
 
-            :deep(.kel-tag__content) {
+            & :deep(.kel-tag__content) {
                 display: flex;
                 align-items: center;
                 overflow: hidden;
@@ -168,18 +168,18 @@
             }
         }
 
-        :deep(.kel-tag__close) {
+        & :deep(.kel-tag__close) {
             color: var(--ks-text-info);
             background: transparent;
         }
 
-        .detail-key {
+        & .detail-key {
             flex-shrink: 0;
             font-weight: 600;
             margin-right: 5px;
         }
 
-        .detail-value {
+        & .detail-value {
             flex: 1;
             min-width: 0;
             overflow: hidden;
@@ -192,14 +192,14 @@
 .add-pair {
     padding: 1rem;
 
-    .input-group {
+    & .input-group {
         margin-bottom: 12px;
 
         &:last-child {
             margin-bottom: 0;
         }
 
-        .input-label {
+        & .input-label {
             display: block;
             margin-bottom: 6px;
             font-size: var(--ks-font-size-xs);
@@ -208,7 +208,7 @@
         }
     }
 
-    .add-btn {
+    & .add-btn {
         width: 100%;
         margin-top: 12px;
     }

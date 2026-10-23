@@ -73,10 +73,7 @@ describe("useTaskRunOutputs", () => {
         const outputs = await loadTaskRunOutputs("exec-1", "tr-1")
 
         expect(outputs).toEqual({body: {id: 1}})
-        expect(taskRunOutputsMock).toHaveBeenCalledWith(
-            {executionId: "exec-1", taskRunId: "tr-1"},
-            expect.objectContaining({validateStatus: expect.any(Function)}),
-        )
+        expect(taskRunOutputsMock).toHaveBeenCalledWith({executionId: "exec-1", taskRunId: "tr-1"})
     })
 
     test("loadTaskRunOutputs returns an empty object when there are none", async () => {
@@ -93,10 +90,7 @@ describe("useTaskRunOutputs", () => {
         const outputs = await loadExecutionOutputs("exec-1")
 
         expect(outputs).toEqual({key: "value"})
-        expect(executionOutputsMock).toHaveBeenCalledWith(
-            {executionId: "exec-1"},
-            expect.objectContaining({validateStatus: expect.any(Function)}),
-        )
+        expect(executionOutputsMock).toHaveBeenCalledWith({executionId: "exec-1"})
     })
 
     test("loadExecutionOutputs returns an empty object when there are none", async () => {

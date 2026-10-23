@@ -98,9 +98,7 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            :allowDrop="
-                (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
-            "
+            :allowDrop="allowDrop"
             :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
@@ -307,10 +305,14 @@
 
         <KsDialog
             v-model="confirmation.visible"
-            :title="confirmationLabels.title"
+            :title="$t('namespace files.dialog.deletion.title')"
             @keydown.enter.prevent="removeItems()"
         >
-            <span class="py-3" v-html="confirmationLabels.message" />
+            <i18n-t :keypath="deletionMessage.keypath" tag="span" scope="global" class="py-3">
+                <template v-for="(value, name) in deletionMessage.params" :key="name" #[name]>
+                    <code>{{ value }}</code>
+                </template>
+            </i18n-t>
             <template #footer>
                 <div>
                     <KsButton @click="confirmation.visible = false">
@@ -378,6 +380,7 @@
     import {apiUrl} from "override/utils/route"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {safePath} from "../../composables/useBaseNamespaces"
+    import {handled} from "../../utils/kestraHttp"
     import * as Utils from "../../utils/utils"
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg"
     import Magnify from "vue-material-design-icons/Magnify.vue"
@@ -386,7 +389,6 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
-    import {escapeHtml} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
     import {useRestrictDropTo} from "../../composables/useRestrictDropTo"
     import {useToast} from "../../utils/toast"
@@ -507,18 +509,14 @@
 
     const multiSelected = computed(() => selectedNodes.value.length > 1)
 
-    const confirmationLabels = computed(() => {
-        const files = confirmation.value.nodes?.filter(n => n.type === "File")
-        const filesCount = files?.length ?? 0
-        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory")
-        const foldersCount = folders?.length ?? 0
-        const labels = {title: t("namespace files.dialog.deletion.title"), message: ""}
-        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: escapeHtml(folders?.[0].fileName)})
-        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: escapeHtml(files?.[0].fileName)})
-        else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount})
-        else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount})
-        else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount})
-        return labels
+    const deletionMessage = computed((): {keypath: string, params: Record<string, string | number>} => {
+        const files = confirmation.value.nodes?.filter(n => n.type === "File") ?? []
+        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory") ?? []
+        if (folders.length === 1) return {keypath: "namespace files.dialog.deletion.folder_single", params: {name: folders[0].fileName}}
+        if (files.length === 1) return {keypath: "namespace files.dialog.deletion.file_single", params: {name: files[0].fileName}}
+        if (folders.length > 0 && files.length > 0) return {keypath: "namespace files.dialog.deletion.mixed", params: {folders: folders.length, files: files.length}}
+        if (folders.length > 0) return {keypath: "namespace files.dialog.deletion.folders", params: {count: folders.length}}
+        return {keypath: "namespace files.dialog.deletion.files", params: {count: files.length}}
     })
 
     function nodeClass(data: any) {
@@ -829,6 +827,7 @@
                 new: newPath,
             })
         } catch (error) {
+            handled(error)
             // The tree is left untouched on purpose: it used to be renamed before the response
             // arrived, so a refused rename (an existing name answers 500) still looked applied.
             console.error(`Failed to rename ${oldPath} to ${newPath}`, error)
@@ -885,6 +884,14 @@
             .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
+    function allowDrop(draggingNode: ElTreeNode, dropNode: ElTreeNode, dropType: string) {
+        if (dropType === "inner" && dropNode.data?.leaf) {
+            return false
+        }
+        const targetFolder = dropType === "inner" ? dropNode : dropNode.parent
+        return targetFolder !== draggingNode.parent || Boolean(bulkDragSiblings.value?.length)
+    }
+
     async function nodeMoved(draggedNode: any) {
         // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
         if (!canManageFiles.value) {
@@ -892,34 +899,40 @@
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             return
         }
+        const oldPath = nodeBeforeDrag.value?.path ?? ""
         const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
 
-        try {
-            await namespacesStore.moveFileDirectory({
-                namespace: namespaceId.value,
-                old: nodeBeforeDrag.value?.path ?? "",
-                new: newPath,
-            })
-        } catch {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
-            bulkDragSiblings.value = undefined
-            return
+        if (newPath !== oldPath) {
+            try {
+                await namespacesStore.moveFileDirectory({
+                    namespace: namespaceId.value,
+                    old: oldPath,
+                    new: newPath,
+                })
+            } catch {
+                tree.value.remove(draggedNode.data.id)
+                tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+                bulkDragSiblings.value = undefined
+                return
+            }
         }
 
         const siblings = bulkDragSiblings.value
         bulkDragSiblings.value = undefined
-        if (!siblings?.length) {
-            return
-        }
 
         // handle siblings move
         const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
-        const results = await Promise.allSettled(siblings.map((sibling) =>
+        const moves = (siblings ?? [])
+            .map((sibling) => ({old: sibling.path, new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName}))
+            .filter((move) => move.old !== move.new)
+        if (!moves.length) {
+            return
+        }
+
+        const results = await Promise.allSettled(moves.map((move) =>
             namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
-                old: sibling.path,
-                new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName,
+                ...move,
             }),
         ))
 
@@ -1109,10 +1122,10 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .revision-history-dialog-body {
-    // We subtract the dialog margins and title height (78px)
+    /* We subtract the dialog margins and title height (78px) */
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 
@@ -1124,7 +1137,7 @@
     width: 20%;
 
     .filter{
-        :deep(.kel-select__wrapper) {
+        & :deep(.kel-select__wrapper) {
             min-height: 32px;
             height: 32px;
             padding-right: 0px;
@@ -1153,7 +1166,7 @@
         }
     }
 
-    :deep(.kel-button):not(.kel-dialog .kel-button) {
+    & :deep(.kel-button):not(.kel-dialog .kel-button) {
         border: 0;
         background: none;
         outline: none;
@@ -1195,7 +1208,7 @@
         }
     }
 
-    :deep(.kel-tree) {
+    & :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-bg-surface);
@@ -1251,7 +1264,7 @@
         }
     }
 
-    :deep(.tree-node-hitbox) {
+    & :deep(.tree-node-hitbox) {
         width: 100%;
         flex: 1;
         display: flex;

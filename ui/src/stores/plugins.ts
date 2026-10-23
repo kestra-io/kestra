@@ -9,6 +9,7 @@ import {isEntryAPluginElementPredicate, type Plugin, type PluginElement, type Pl
 import type {JSONSchema} from "../components/plugins/schema/utils/schemaUtils"
 import {useClient, type PluginArtifact, type PluginInstallJob} from "@kestra-io/kestra-sdk"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
+import {handledIf} from "../utils/kestraHttp"
 
 export type {PluginArtifact, PluginInstallJob, PluginInstallJobArtifactProgress as ArtifactProgress} from "@kestra-io/kestra-sdk"
 
@@ -380,13 +381,15 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc
         }
 
-        // A 404 is a normal outcome here (e.g. as-you-type documentation for a not-yet-installed
-        // catalog type) — every caller handles it locally, so it must not raise the shared HTTP
-        // client's error toast.
-        const requestOptions = {ignoreNotFound: true} as Parameters<typeof PluginsAPI.pluginDocumentation>[1]
-        const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, requestOptions)
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, requestOptions)) as PluginComponent
+        let data: PluginComponent
+        try {
+            data = (options.version
+                ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
+                : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
+        } catch (e: unknown) {
+            handledIf(e, [404])
+            throw e
+        }
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data
@@ -546,37 +549,42 @@ export const usePluginsStore = defineStore("plugins", () => {
         return subgroups.length > 1 ? subgroups : sameGroup.filter(p => !p.subGroup)
     }
 
-    // Auto-install requests are best-effort and handled locally by their callers: a 403 (feature
-    // disabled) or a 404 (job evicted while the install toast is still polling) must never stack the
-    // shared HTTP client's own error toast on top of it.
-    const silentRequest = {ignoreNotFound: true, showMessageOnError: false}
-
     async function detectMissingPlugins(flowYaml: string): Promise<PluginAutoInstallDetectResult> {
-        const response = await axios.post<PluginAutoInstallDetectResult>(
-            `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
-            flowYaml,
-            {headers: {"Content-Type": "text/plain"}, ...silentRequest},
-        )
-        return response.data
+        try {
+            const response = await axios.post<PluginAutoInstallDetectResult>(
+                `${apiUrlWithoutTenants()}/plugins/auto-install/detect`,
+                flowYaml,
+                {headers: {"Content-Type": "text/plain"}},
+            )
+            return response.data
+        } catch (e: unknown) {
+            handledIf(e, [403, 404])
+            throw e
+        }
     }
 
     async function startInstall(artifacts: PluginArtifact[]): Promise<PluginInstallJob> {
-        const response = await axios.post<PluginInstallJob>(
-            `${apiUrlWithoutTenants()}/plugins/install`,
-            artifacts,
-            silentRequest,
-        )
-        return response.data
+        try {
+            const response = await axios.post<PluginInstallJob>(
+                `${apiUrlWithoutTenants()}/plugins/install`,
+                artifacts,
+            )
+            return response.data
+        } catch (e: unknown) {
+            handledIf(e, [403, 404])
+            throw e
+        }
     }
 
     async function getInstallJob(jobId: string): Promise<PluginInstallJob | null> {
         try {
             const response = await axios.get<PluginInstallJob>(
                 `${apiUrlWithoutTenants()}/plugins/install/${jobId}`,
-                silentRequest,
             )
             return response.data
-        } catch {
+        } catch (error: unknown) {
+            // The install toast counts a null as one failed poll and gives up after a few.
+            handledIf(error, [403, 404])
             return null
         }
     }

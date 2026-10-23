@@ -33,7 +33,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -66,7 +65,6 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 import io.kestra.plugin.core.flow.Loop;
 import io.kestra.plugin.core.flow.WorkingDirectory;
-import io.kestra.plugin.core.trigger.Webhook;
 
 import io.micrometer.core.instrument.Timer;
 import jakarta.inject.Inject;
@@ -333,12 +331,11 @@ public class ExecutorCore {
                 Execution executionAtEntry = executor.getTerminalExecutionAtEntry();
                 boolean terminatedByThisCycle = executionAtEntry == null
                     || !executionService.isTerminated(executor.getFlow(), executionAtEntry);
-                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle);
-                if (popped.isPresent()) {
-                    executionQueue.emit(popped.get());
+                for (Execution popped : concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle)) {
+                    executionQueue.emit(popped);
 
                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(executor.getFlow(), popped.get());
+                    processFlowTriggers(executor.getFlow(), popped);
                 }
 
                 if (terminatedByThisCycle) {
@@ -356,8 +353,9 @@ public class ExecutorCore {
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
                 }
 
-                // if it was a loop execution, we send a terminated loop execution message to the parent execution
-                if (executor.getExecution().getKind() == ExecutionKind.LOOP) {
+                // Send a terminated loop execution message to the parent execution.
+                // Exclude RETRIED executions as they are replaced by a new one, which will report to the parent itself.
+                if (State.Type.RETRIED != execution.getState().getCurrent() && executor.getExecution().getKind() == ExecutionKind.LOOP) {
                     var loop = (Loop) executor.getFlow().findTaskByTaskId(executor.getExecution().getLoopRun().taskId());
                     Map<String, Object> outputs = null;
                     if (!ListUtils.isEmpty(loop.getOutputs())) {
@@ -495,15 +493,7 @@ public class ExecutorCore {
     }
 
     private void sendTriggerExecutionTerminated(Execution execution) {
-        // The scheduler didn't manage states for the WebHook and the Flow trigger
-        if (
-            !execution.getTrigger().getType().equals(Webhook.class.getName()) &&
-                !execution.getTrigger().getType().equals(io.kestra.plugin.core.trigger.Flow.class.getName()) &&
-                !execution.getTrigger().getType().equals(io.kestra.plugin.core.flow.Subflow.class.getName())
-        ) {
-            TriggerId triggerId = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getTrigger().getId());
-            triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
-        }
+        TriggerExecutionTerminated.of(execution).ifPresent(triggerEventQueue::send);
     }
 
     /**
@@ -531,21 +521,23 @@ public class ExecutorCore {
             boolean shouldRetry = shouldRetry(flow, execution);
 
             // directly process simple conditions
-            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+            List<Execution> executions = flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> ListUtils.isEmpty(f.getTrigger().getDependsOn()))
                 .filter(f -> !f.getTrigger().isWaitForAllRetries() || !shouldRetry) // filter out triggers that wait for all retries for executions that should retry
                 .map(f -> f.getFlow())
                 .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
                 .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
-                .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
+                .toList();
+            executionQueue.emit(executions);
 
             // send multiple conditions to the multiple condition queue for later processing
-            flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+            List<MultipleConditionEvent> multipleConditionEvents = flowTriggerService.withFlowTriggersOnly(allFlows.stream())
                 .filter(f -> !ListUtils.isEmpty(f.getTrigger().getDependsOn()))
                 .filter(f -> !f.getTrigger().isWaitForAllRetries() || !shouldRetry) // filter out triggers that wait for all retries for executions that should retry
                 .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
                 .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
-                .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
+                .toList();
+            multipleConditionEventQueue.emit(multipleConditionEvents);
         }));
     }
 

@@ -41,6 +41,15 @@ describe("KsBadge", () => {
         expect(inline.find(".kel-badge--inline").exists()).toBe(true)
     })
 
+    test("applies the small class only when size is small", () => {
+        const regular = mount(KsBadge, {props: {value: 1}, global: globalConfig})
+        expect(regular.find(".kel-badge--small").exists()).toBe(false)
+
+        const small = mount(KsBadge, {props: {value: 1, size: "small"}, global: globalConfig})
+        expect(small.find(".kel-badge--small").exists()).toBe(true)
+        expect(small.find(".kel-badge").attributes("size")).toBeUndefined()
+    })
+
     test("does not forward inline to the underlying element", () => {
         const wrapper = mount(KsBadge, {
             props: {value: 1, inline: true},

@@ -33,7 +33,7 @@
     defineProps<{issues: string[]}>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-validation-badge {
         display: inline-flex;
         align-items: center;

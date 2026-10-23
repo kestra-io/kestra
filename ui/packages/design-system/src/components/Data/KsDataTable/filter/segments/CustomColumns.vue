@@ -80,7 +80,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .customize-columns-panel {
     height: fit-content;
     max-height: 500px;
@@ -88,12 +88,12 @@
     flex-direction: column;
     border-radius: 0.5rem;
 
-    small {
+    & small {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-dim);
     }
 
-    .header {
+    & .header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
@@ -105,15 +105,15 @@
         top: 0;
         z-index: 1;
 
-        .title {
-            h6 {
+        & .title {
+            & h6 {
                 margin: 0;
                 font-size: var(--ks-font-size-sm);
                 font-weight: 700;
             }
         }
 
-        :deep(.close-icon) {
+        & :deep(.close-icon) {
             color: var(--ks-text-dim);
             font-size: var(--ks-font-size-base);
             cursor: pointer;
@@ -125,14 +125,14 @@
         }
     }
 
-    .search {
+    & .search {
         padding: var(--ks-spacing-2) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
         background-color: var(--ks-bg-surface);
         flex-shrink: 0;
     }
 
-    .list {
+    & .list {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
@@ -143,7 +143,7 @@
         }
     }
 
-    .footer {
+    & .footer {
         border-top: 1px solid var(--ks-border-default);
         background-color: var(--ks-bg-surface);
         flex-shrink: 0;

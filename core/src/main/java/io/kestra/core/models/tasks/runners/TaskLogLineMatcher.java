@@ -135,12 +135,16 @@ public class TaskLogLineMatcher {
             }
         }
 
+        if (match.checkpoints() != null) {
+            match.checkpoints().forEach((key, value) -> runContext.checkpoints().set(key, value));
+        }
+
         if (match.otlp() != null && !match.otlp().isEmpty()) {
             Map<String, Object> otlpOutputs = forwardOtlp(logger, runContext, instant, match.otlp(), logData, true);
             if (!otlpOutputs.isEmpty()) {
                 Map<String, Object> outputs = new HashMap<>(match.outputs());
                 outputs.putAll(otlpOutputs);
-                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp());
+                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp(), match.checkpoints());
             }
         }
 
@@ -394,7 +398,8 @@ public class TaskLogLineMatcher {
         List<AbstractMetricEntry<?>> metrics,
         List<LogLine> logs,
         AssetEmit assets,
-        OtlpRecord otlp) {
+        OtlpRecord otlp,
+        Map<String, String> checkpoints) {
         @Override
         public Map<String, Object> outputs() {
             return Optional.ofNullable(outputs).orElse(Map.of());

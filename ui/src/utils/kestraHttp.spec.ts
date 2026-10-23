@@ -31,7 +31,7 @@ vi.mock("nprogress", () => ({
 }))
 
 import type {Router} from "vue-router"
-import {isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
+import {handled, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
 import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY, useServerReachability} from "../composables/useServerReachability"
 import {isReauthOpen, requestReauth, resolveReauth} from "../composables/useReauthDialog"
 
@@ -148,15 +148,40 @@ describe("setupKestraHttp central 404 handling", () => {
         })
         onErrorInterceptor(notFound, notFoundResponse, request, opts)
 
-        return coreStore
+        return {coreStore, notFound}
     }
 
+    it("does not report to the global store if handled(error) is called by the local catch block", async () => {
+        const {coreStore, notFound} = triggerNotFound()
+        handled(notFound) // The caller's synchronous catch block executes and flags it
+        
+        await new Promise(r => setTimeout(r, 0))
+        expect(coreStore.message).toBeUndefined()
+    })
+
+    it("does not report when handled(error) is called after the rejection crosses an async wrapper", async () => {
+        const {coreStore, notFound} = triggerNotFound()
+        const call = async () => { throw notFound }
+
+        await (async () => await call())().catch((e) => handled(e))
+        await new Promise((r) => setTimeout(r))
+
+        expect(coreStore.message).toBeUndefined()
+    })
+
+    it("reports to the global store if handled(error) is NOT called", async () => {
+        const {coreStore} = triggerNotFound()
+        
+        await new Promise(r => setTimeout(r, 0))
+        expect(coreStore.message).not.toBeUndefined()
+    })
     beforeEach(() => {
         vi.spyOn(console, "error").mockImplementation(() => {})
     })
 
-    it("shows the failed request as a toast and logs it, instead of swapping the page for the not-found screen", () => {
-        const coreStore = triggerNotFound()
+    it("shows the failed request as a toast and logs it, instead of swapping the page for the not-found screen", async () => {
+        const {coreStore} = triggerNotFound()
+        await new Promise(r => setTimeout(r, 0))
 
         expect(coreStore.message).toMatchObject({
             variant: "error",
@@ -172,10 +197,6 @@ describe("setupKestraHttp central 404 handling", () => {
         )
     })
 
-    it("stays silent for callers that opted out with ignoreNotFound or showMessageOnError", () => {
-        expect(triggerNotFound({ignoreNotFound: true}).message).toBeUndefined()
-        expect(triggerNotFound({showMessageOnError: false}).message).toBeUndefined()
-    })
 })
 
 describe("isReportedCentrally", () => {
@@ -193,8 +214,6 @@ describe("isReportedCentrally", () => {
 
         expect(isReportedCentrally(failure(400))).toBe(false)
         expect(isReportedCentrally(failure(401))).toBe(false)
-        expect(isReportedCentrally(failure(404, {ignoreNotFound: true}))).toBe(false)
-        expect(isReportedCentrally(failure(500, {showMessageOnError: false}))).toBe(false)
         expect(isReportedCentrally({status: 0} as KestraHttpError)).toBe(false)
     })
 })
@@ -307,6 +326,22 @@ describe("setupKestraHttp 401 retry", () => {
         await expect(fakeAxiosClient.get("/executions")).resolves.toEqual({data: "ok"})
         expect(onUnauthorized).not.toHaveBeenCalled()
         expect(get).toHaveBeenCalledTimes(2)
+    })
+
+    it("leaves a 401 from another origin alone instead of treating it as a lost session", async () => {
+        const unauthorized = Object.assign(new Error("401"), {status: 401})
+        const get = vi.fn().mockRejectedValue(unauthorized)
+        fakeAxiosClient.get = get
+        const onUnauthorized = vi.fn().mockResolvedValue(true)
+
+        setupKestraHttp({}, {isLoggedIn: () => false, onUnauthorized})
+        const onError = fakeClient.interceptors.error.use.mock.calls.at(-1)![0]
+        const catalog = "https://api.kestra.io/v1/blueprints"
+        onError(unauthorized, {status: 401, statusText: "Unauthorized", url: catalog, headers: {forEach: () => {}}}, new Request(catalog), {})
+
+        await expect(fakeAxiosClient.get(catalog)).rejects.toBe(unauthorized)
+        expect(onUnauthorized).not.toHaveBeenCalled()
+        expect(get).toHaveBeenCalledTimes(1)
     })
 
     it("does not replay a 401 for a session that was already signed in when the request left", async () => {

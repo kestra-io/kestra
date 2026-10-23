@@ -487,6 +487,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/waitfor-max-iterations-from-input.yaml" }, tenantId = "waitformaxiterationsfrominput")
+    void waitforMaxIterationsFromInput() throws Exception {
+        loopUntilTestCaseTest.waitforMaxIterationsFromInput("waitformaxiterationsfrominput");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/waitfor-max-duration.yaml" }, tenantId = "waitformaxduration")
     void waitforMaxDuration() throws Exception {
         loopUntilTestCaseTest.waitforMaxDuration("waitformaxduration");
@@ -719,6 +725,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml" })
     void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-flow-trigger-source.yaml", "flows/valids/sla-flow-trigger-listener.yaml" })
+    void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws Exception {
+        slaTestCase.shouldNotKillFlowTriggeredExecutionWhenSLAFails();
     }
 
     @Test

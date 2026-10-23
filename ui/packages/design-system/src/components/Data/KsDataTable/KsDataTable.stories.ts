@@ -6,6 +6,7 @@ import KsTableColumn from "../KsTable/KsTableColumn.vue"
 import KsTag from "../KsTag/KsTag.vue"
 import KsButton from "../../Basic/KsButton/KsButton.vue"
 import KsInput from "../../Form/KsInput.vue"
+import KsExecutionStatus from "../KsExecutionStatus/KsExecutionStatus.vue"
 
 const SAMPLE_DATA = Array.from({length: 30}, (_, i) => ({
     id: `flow-${String(i + 1).padStart(3, "0")}`,
@@ -467,4 +468,52 @@ export const FitHeightEmptyBounded: Story = {
         await expect(body).toBeTruthy()
         await waitFor(() => expect(body.scrollHeight).toBeLessThanOrEqual(body.clientHeight + 1))
     },
+}
+
+const MOBILE_CARD_DATA = [
+    {id: "2qncB78e", flowId: "monthly_close", namespace: "company.finance", status: "FAILED", startDate: "3 days ago", duration: "6.11 s"},
+    {id: "6m097hBN", flowId: "bulk_fail", namespace: "company.finance", status: "SUCCESS", startDate: "3 days ago", duration: "1.02 s"},
+    {id: "xwUmQvrt", flowId: "regional_sync_with_a_very_long_flow_name_that_must_not_overflow", namespace: "company.finance", status: "RUNNING", startDate: "3 days ago", duration: "2.40 s"},
+]
+
+/**
+ * Below 768px, `mobileColumns` turns each row into a card: the `leading` column (status dot), the bold `title`,
+ * a `titleAside` on the right, then a second line with the `meta` columns joined by a dot and a `metaAside` on the right.
+ * Columns that are not listed are hidden; the regular table comes back from 768px.
+ */
+export const MobileCards: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsDataTable, KsTableColumn, KsExecutionStatus},
+        setup: () => ({data: MOBILE_CARD_DATA}),
+        template: `
+            <div style="padding: 0">
+                <ks-data-table
+                    :data="data"
+                    :total="data.length"
+                    :mobile-columns="{leading: 'status', title: 'flowId', titleAside: 'startDate', meta: ['namespace', 'id'], metaAside: 'duration'}"
+                >
+                    <ks-table-column prop="id" label="Id" />
+                    <ks-table-column prop="status" label="State">
+                        <template #default="{row}">
+                            <ks-execution-status :status="row.status" size="small" dot />
+                        </template>
+                    </ks-table-column>
+                    <ks-table-column prop="flowId" label="Flow" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                    <ks-table-column prop="startDate" label="Start date" />
+                    <ks-table-column prop="duration" label="Duration" />
+                </ks-data-table>
+            </div>
+        `,
+    }),
 }

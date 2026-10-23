@@ -432,6 +432,9 @@ public class FlowInputOutput {
                 RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
                 try {
                     value = resolveDefaultValue(input, runContextForDefault);
+                    if (input instanceof TableInput table && value instanceof List<?> rows) {
+                        value = table.matchingRows(rows);
+                    }
                 } catch (Exception e) {
                     resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                     return resolvable.get();
@@ -510,7 +513,7 @@ public class FlowInputOutput {
      * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
      * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
      */
-    private static boolean isTextType(Type type) {
+    public static boolean isTextType(Type type) {
         return type == Type.STRING || type == Type.SELECT
             || type == Type.EMAIL || type == Type.SECRET;
     }

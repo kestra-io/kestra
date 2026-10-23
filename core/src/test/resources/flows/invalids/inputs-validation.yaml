@@ -74,6 +74,10 @@ inputs:
     columns:
       - id: size
         type: INT
+    filters:
+      - column: region
+        operation: EQUALS
+        value: eu
 
 tasks:
   - id: hello

@@ -102,7 +102,7 @@
     import TaskUnknownField from "./TaskUnknownField.vue"
     import {unknownPropertiesOf} from "./unknownProperties"
     import {collapseEmptyValues} from "./MixinTask"
-    import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
+    import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
     import {hasErrorUnder} from "../../../../utils/validationErrors"
 
     defineOptions({
@@ -236,11 +236,13 @@
         })
     }
 
+    const blockComponentOverride = inject(BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY, undefined)
+
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties)
         return propertiesProc
             ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
-                return value && !(props.filterType && key === "type") && !Array.isArray(value)
+                return value && !(props.filterType && key === "type") && !Array.isArray(value) && blockComponentOverride?.(key, props.modelValue) !== null
             })
             : []
     })

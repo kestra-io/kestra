@@ -8,8 +8,6 @@ import java.util.Set;
 
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
-import io.kestra.core.models.flows.input.MultiselectInput;
-import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.TableInputValidation;
@@ -23,10 +21,12 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class TableInputValidator implements ConstraintValidator<TableInputValidation, TableInput> {
-    static final Set<Type> ALLOWED_COLUMN_TYPES = EnumSet.of(
+    public static final Set<Type> ALLOWED_COLUMN_TYPES = EnumSet.of(
         Type.STRING, Type.INT, Type.FLOAT, Type.BOOL, Type.DATE, Type.DATETIME, Type.TIME, Type.DURATION,
         Type.EMAIL, Type.URI, Type.SELECT, Type.MULTISELECT
     );
+
+    public static final Set<String> FORBIDDEN_COLUMN_PROPERTIES = Set.of("defaults", "dependsOn");
 
     @Override
     public boolean isValid(@Nullable TableInput value, @NonNull AnnotationValue<TableInputValidation> annotationMetadata, @NonNull ConstraintValidatorContext context) {
@@ -35,6 +35,10 @@ public class TableInputValidator implements ConstraintValidator<TableInputValida
         }
 
         List<String> violations = fieldViolations("columns", value.getColumns());
+        Set<String> columnIds = new HashSet<>(ListUtils.emptyOnNull(value.getColumns()).stream().map(Input::getId).toList());
+        ListUtils.emptyOnNull(value.getFilters()).stream()
+            .filter(filter -> filter.column() != null && !columnIds.contains(filter.column()))
+            .forEach(filter -> violations.add("filter on `" + filter.column() + "` is not about a declared column"));
         if (value.getMinRows() != null && value.getMaxRows() != null && value.getMinRows() > value.getMaxRows()) {
             violations.add("`minRows` cannot be greater than `maxRows`");
         }
@@ -77,13 +81,6 @@ public class TableInputValidator implements ConstraintValidator<TableInputValida
             }
             if (field.getDefaults() != null) {
                 violations.add("field `" + id + "` cannot declare `defaults`");
-            }
-            if (field.getPrefill() != null) {
-                violations.add("field `" + id + "` cannot declare `prefill`");
-            }
-            if (field instanceof SelectInput select && select.getExpression() != null
-                || field instanceof MultiselectInput multiselect && multiselect.getExpression() != null) {
-                violations.add("field `" + id + "` cannot declare an `expression`");
             }
         }
         return violations;

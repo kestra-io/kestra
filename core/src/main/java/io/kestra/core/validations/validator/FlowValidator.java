@@ -17,11 +17,13 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.PebbleUtil;
@@ -426,12 +428,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     /**
      * @return the constraint message when {@code rawValue} — a literal default or a value a trigger supplies — cannot
      * satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
-     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
+     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types). A
+     * {@code TABLE} is checked cell by cell against its columns, with each message prefixed by its row and column.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
         if (rawValue == null) {
             return Optional.empty();
+        }
+
+        if (input instanceof TableInput table) {
+            return tableLiteralValueViolation(table, rawValue);
         }
 
         String asString = rawValue.toString();
@@ -460,6 +467,81 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         return Optional.empty();
+    }
+
+    private static Optional<String> tableLiteralValueViolation(TableInput table, Object rawValue) {
+        List<String> messages = tableLiteralValueViolations(table, rawValue).stream()
+            .map(TableCellViolation::toString)
+            .toList();
+        return messages.isEmpty() ? Optional.empty() : Optional.of(String.join(", ", messages));
+    }
+
+    /**
+     * @return every reason a literal {@code TABLE} value cannot satisfy the table and its columns, each one located on
+     * the row and column it is about, or on the whole table when both are null.
+     */
+    public static List<TableCellViolation> tableLiteralValueViolations(TableInput table, Object rawValue) {
+        List<?> rows;
+        try {
+            rows = rawValue instanceof List<?> list ? list : JacksonMapper.toList(rawValue.toString());
+        } catch (Exception e) {
+            return PebbleUtil.containsOpeningBlockDelimiter(rawValue.toString())
+                ? List.of()
+                : List.of(new TableCellViolation(null, null, "`%s` is not a valid TABLE value".formatted(rawValue)));
+        }
+
+        List<TableCellViolation> violations = new ArrayList<>();
+        try {
+            table.validate(rows);
+        } catch (ConstraintViolationException e) {
+            e.getConstraintViolations().forEach(violation -> violations.add(new TableCellViolation(null, null, violation.getMessage())));
+        }
+
+        List<Input<?>> columns = ListUtils.emptyOnNull(table.getColumns());
+        Set<String> declared = columns.stream().map(Input::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        for (int row = 0; row < rows.size(); row++) {
+            if (!(rows.get(row) instanceof Map<?, ?> cells)) {
+                violations.add(new TableCellViolation(row, null, "expected an object"));
+                continue;
+            }
+
+            int index = row;
+            cells.keySet().stream()
+                .map(String::valueOf)
+                .filter(key -> !declared.contains(key))
+                .forEach(key -> violations.add(new TableCellViolation(index, key, "it is not declared")));
+
+            for (Input<?> column : columns) {
+                Object value = cells.get(column.getId());
+                if (value instanceof String s && s.isEmpty() && !FlowInputOutput.isTextType(column.getType())) {
+                    value = null;
+                }
+                if (value == null) {
+                    if (Boolean.TRUE.equals(column.getRequired())) {
+                        violations.add(new TableCellViolation(row, column.getId(), "missing required value"));
+                    }
+                    continue;
+                }
+                literalValueViolation(column, value).ifPresent(message -> violations.add(new TableCellViolation(index, column.getId(), message)));
+            }
+        }
+        return violations;
+    }
+
+    /**
+     * @param row the 0-based row index, or null when the violation is about the whole table
+     * @param column the column id, or null when the violation is about the whole row or table
+     */
+    public record TableCellViolation(@Nullable Integer row, @Nullable String column, String message) {
+        @Override
+        public String toString() {
+            if (row == null) {
+                return message;
+            }
+            return column == null
+                ? "row %d: %s".formatted(row + 1, message)
+                : "row %d, column `%s`: %s".formatted(row + 1, column, message);
+        }
     }
 
     /**

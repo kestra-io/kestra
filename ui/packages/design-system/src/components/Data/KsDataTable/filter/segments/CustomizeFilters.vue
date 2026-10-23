@@ -157,7 +157,7 @@
         align-items: center;
         padding: var(--ks-spacing-2) var(--ks-spacing-4);
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: background-color var(--ks-duration-fast) var(--ks-ease-standard);
         border-bottom: 1px solid var(--ks-border-default);
 
         &:hover {

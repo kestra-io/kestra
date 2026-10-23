@@ -92,7 +92,7 @@
     box-sizing: border-box;
     outline: none;
     margin: 0;
-    transition: 0.1s;
+    transition: background-color var(--ks-duration-fast) var(--ks-ease-standard), color var(--ks-duration-fast) var(--ks-ease-standard), box-shadow var(--ks-duration-fast) var(--ks-ease-standard);
     font-weight: 500;
     user-select: none;
     vertical-align: middle;

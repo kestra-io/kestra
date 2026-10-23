@@ -161,6 +161,15 @@ export const GlowClickable: Story = {
             </div>
         `,
     }),
+    play: async ({canvasElement}) => {
+        const badges = Array.from(canvasElement.querySelectorAll<HTMLElement>(".ks-execution-status"))
+        await expect(badges.length).toBeGreaterThan(0)
+        for (const badge of badges) {
+            await expect(getComputedStyle(badge).transitionProperty.split(", ")).toEqual(
+                expect.arrayContaining(["background-color", "color", "box-shadow"]),
+            )
+        }
+    },
 }
 
 export const Disabled: Story = {

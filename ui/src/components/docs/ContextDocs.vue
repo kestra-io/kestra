@@ -225,7 +225,7 @@
         border-radius: 8px;
         width: 30px;
         height: 32px;
-        transition: all 0.2s ease;
+        transition: background-color var(--ks-duration-fast) var(--ks-ease-standard), border-color var(--ks-duration-fast) var(--ks-ease-standard), color var(--ks-duration-fast) var(--ks-ease-standard);
         padding: 4px 8px;
         flex-shrink: 0;
 

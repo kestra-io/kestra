@@ -170,6 +170,21 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldServeEveryChartOfDefaultDashboardAfterValidation() {
+        DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "/_default"),
+            DashboardController.DashboardResponse.class
+        );
+
+        for (var chart : defaultDashboard.getCharts()) {
+            var response = client.toBlocking().exchange(
+                POST(DASHBOARD_PATH + "/_default/charts/" + chart.getId() + "/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build())
+            );
+            assertThat(response.getStatus().getCode()).as(chart.getId()).isEqualTo(200);
+        }
+    }
+
+    @Test
     void shouldTreatNullFiltersAsNoFiltersOnChartData() {
         // Raw JSON body with an explicit "filters":null, matching the reported repro exactly -
         // going through ChartFiltersOverrides' builder would drop the null key (NON_NULL inclusion)

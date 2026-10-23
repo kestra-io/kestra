@@ -228,6 +228,24 @@ class PutTest {
         assertThat(runContext.namespaceKv(namespaceId).getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo("{{ 1 + 1 }}");
     }
 
+    @Test
+    void shouldNotEvaluateRawBlockContentWhenRenderingValue() throws Exception {
+        var namespaceId = "io.kestra." + IdUtils.create();
+        var runContext = this.runContextFactory.of(namespaceId, Map.of());
+
+        var put = Put.builder()
+            .id(Put.class.getSimpleName())
+            .type(Put.class.getName())
+            .namespace(Property.ofValue(namespaceId))
+            .key(Property.ofValue(TEST_KV_KEY))
+            .value(Property.ofExpression("{% raw %}{{ 1 + 1 }}{% endraw %}"))
+            .build();
+
+        put.run(runContext);
+
+        assertThat(runContext.namespaceKv(namespaceId).getValue(TEST_KV_KEY).orElseThrow().value()).isEqualTo("{{ 1 + 1 }}");
+    }
+
     private Put newPutTask(String namespaceId, Object value) {
         return Put.builder()
             .id(Put.class.getSimpleName())

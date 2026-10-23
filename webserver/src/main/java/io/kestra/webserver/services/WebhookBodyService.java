@@ -1,27 +1,40 @@
 package io.kestra.webserver.services;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.apache.commons.io.FilenameUtils;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest.MultipartFormDataRequestBody;
 import io.kestra.core.http.HttpRequest.RequestBody;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger.FetchType;
+import io.kestra.plugin.core.trigger.Webhook;
 
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.multipart.MultipartBody;
@@ -75,17 +88,90 @@ public class WebhookBodyService {
             return new Body(MicronautHttpService.from(request).getBody(), null);
         }
 
-        return switch (fetchType) {
-            case NONE -> {
-                drain(byteBody);
-                yield Body.EMPTY;
+        try (InputStream content = byteBody.toInputStream()) {
+            return read(request, flow, executionId, fetchType, content);
+        }
+    }
+
+    /**
+     * Verify configured signatures over the original bytes before returning a body for execution creation.
+     * Stored content is deleted if verification or ingestion fails.
+     */
+    public Body read(io.micronaut.http.HttpRequest<?> request, Flow flow, String executionId,
+        AbstractWebhookTrigger trigger, RunContext runContext) throws IOException, IllegalVariableEvaluationException {
+        if (!(trigger instanceof Webhook webhook) || webhook.getSignature() == null) {
+            return read(request, flow, executionId, trigger.getFetchType());
+        }
+
+        Webhook.Signature signature = webhook.getSignature();
+        var headers = request.getHeaders().getAll(signature.getHeader());
+        if (headers.size() != 1 || !(request instanceof ServerHttpRequest<?> serverRequest)) {
+            throw invalidSignature();
+        }
+        String value = headers.getFirst();
+        String prefix = signature.getPrefix();
+        if (prefix != null) {
+            if (!value.startsWith(prefix)) {
+                throw invalidSignature();
             }
-            case STORE -> store(byteBody, flow, executionId);
-            case FETCH -> new Body(
-                MicronautHttpService.byteArrayRequestBody(request.getContentType().orElse(null), readFully(byteBody)),
-                null
-            );
-        };
+            value = value.substring(prefix.length());
+        }
+
+        Mac mac;
+        try {
+            mac = Mac.getInstance(signature.getAlgorithm().getJcaName());
+            String secret = runContext.render(signature.getSecret()).as(String.class).orElseThrow();
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), mac.getAlgorithm()));
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Unable to initialize webhook signature verification.", e);
+        }
+        if (value.length() != mac.getMacLength() * 2) {
+            throw invalidSignature();
+        }
+        byte[] expected;
+        try {
+            expected = HexFormat.of().parseHex(value);
+        } catch (IllegalArgumentException e) {
+            throw invalidSignature();
+        }
+
+        try (InputStream content = new FilterInputStream(serverRequest.byteBody().toInputStream()) {
+            @Override
+            public int read() throws IOException {
+                int value = in.read();
+                if (value != -1) {
+                    mac.update((byte) value);
+                }
+                return value;
+            }
+
+            @Override
+            public int read(byte[] bytes, int offset, int length) throws IOException {
+                int count = in.read(bytes, offset, length);
+                if (count > 0) {
+                    mac.update(bytes, offset, count);
+                }
+                return count;
+            }
+        }) {
+            Body body = read(request, flow, executionId, trigger.getFetchType(), content);
+            if (!MessageDigest.isEqual(mac.doFinal(), expected)) {
+                throw invalidSignature();
+            }
+            return body;
+        } catch (IOException | RuntimeException e) {
+            if (FetchType.STORE == trigger.getFetchType()) {
+                deleteStored(flow, executionId);
+            }
+            throw e;
+        }
+    }
+
+    /** Reject signed multipart requests whose raw bytes have already been consumed by the multipart parser. */
+    public void validateMultipartSignature(AbstractWebhookTrigger trigger) {
+        if (trigger instanceof Webhook webhook && webhook.getSignature() != null) {
+            throw invalidSignature();
+        }
     }
 
     /**
@@ -146,11 +232,30 @@ public class WebhookBodyService {
         }
     }
 
+    private static HttpStatusException invalidSignature() {
+        return new HttpStatusException(HttpStatus.UNAUTHORIZED, "Invalid webhook signature.");
+    }
+
+    private Body read(io.micronaut.http.HttpRequest<?> request, Flow flow, String executionId,
+        FetchType fetchType, InputStream content) throws IOException {
+        return switch (fetchType) {
+            case NONE -> {
+                content.transferTo(OutputStream.nullOutputStream());
+                yield Body.EMPTY;
+            }
+            case STORE -> store(content, flow, executionId);
+            case FETCH -> new Body(
+                MicronautHttpService.byteArrayRequestBody(request.getContentType().orElse(null), content.readAllBytes()),
+                null
+            );
+        };
+    }
+
     /**
      * Stream the body into the internal storage, under the execution the request will create.
      */
-    private Body store(ByteBody byteBody, Flow flow, String executionId) throws IOException {
-        try (PushbackInputStream content = new PushbackInputStream(byteBody.toInputStream())) {
+    private Body store(InputStream input, Flow flow, String executionId) throws IOException {
+        try (PushbackInputStream content = new PushbackInputStream(input)) {
             int first = content.read();
             if (-1 == first) {
                 // A request without a body has nothing to store, and must not leave an empty file behind.
@@ -162,25 +267,6 @@ public class WebhookBodyService {
                 null,
                 storageInterface.put(flow.getTenantId(), flow.getNamespace(), bodyStorageUri(flow, executionId), content)
             );
-        }
-    }
-
-    /**
-     * Read the whole body into memory, as a trigger fetching it carries it in the execution anyway.
-     */
-    private static byte[] readFully(ByteBody byteBody) throws IOException {
-        try (InputStream content = byteBody.toInputStream()) {
-            return content.readAllBytes();
-        }
-    }
-
-    /**
-     * Read the body off the connection and drop it. It is read rather than left unclaimed so that the caller gets
-     * its response over a connection that was not cut short mid-upload; no byte of it is ever held.
-     */
-    private static void drain(ByteBody byteBody) throws IOException {
-        try (InputStream content = byteBody.toInputStream()) {
-            content.transferTo(OutputStream.nullOutputStream());
         }
     }
 

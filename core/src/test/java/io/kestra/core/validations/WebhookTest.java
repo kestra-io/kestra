@@ -77,4 +77,37 @@ public class WebhookTest {
         assertThat(webhook.getFetchType()).isEqualTo(AbstractWebhookTrigger.FetchType.FETCH);
         assertThat(modelValidator.isValid(webhook)).isEmpty();
     }
+
+    @Test
+    void shouldRejectIncompleteSignatureConfiguration() throws JsonProcessingException {
+        Webhook webhook = JacksonMapper.ofYaml().readValue(
+            """
+                id: webhook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: a-secret-key
+                signature:
+                  prefix: sha256=
+                """,
+            Webhook.class
+        );
+        assertThat(modelValidator.isValid(webhook)).isPresent();
+    }
+
+    @Test
+    void shouldDefaultSignatureAlgorithmWhenOmittedFromYaml() throws JsonProcessingException {
+        Webhook webhook = JacksonMapper.ofYaml().readValue(
+            """
+                id: webhook
+                type: io.kestra.plugin.core.trigger.Webhook
+                key: a-secret-key
+                signature:
+                  header: X-Hub-Signature-256
+                  secret: test-secret
+                """,
+            Webhook.class
+        );
+        assertThat(webhook.getSignature().getAlgorithm()).isEqualTo(Webhook.SignatureAlgorithm.HMAC_SHA256);
+        assertThat(modelValidator.isValid(webhook)).isEmpty();
+    }
+
 }

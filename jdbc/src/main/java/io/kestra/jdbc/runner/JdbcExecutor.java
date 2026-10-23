@@ -671,6 +671,8 @@ public class JdbcExecutor implements ExecutorInterface {
                                 return Pair.of(computed, concurrencyLimit);
                             });
 
+                            executor.withExecutionRunning(processed);
+
                             // if the execution is queued or terminated due to concurrency limit, we stop here
                             if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
                                 return Pair.of(
@@ -1314,9 +1316,13 @@ public class JdbcExecutor implements ExecutorInterface {
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
                         && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
                         && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
-                    // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
-                    boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
-                        && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
+                    // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
+                    // when the gate ran in this very pass we know its decision, otherwise we have to guess it from the state history
+                    boolean concurrencyShortCircuitState = executor.getExecutionRunning() != null
+                        ? executor.getExecutionRunning().getConcurrencyState() == ExecutionRunning.ConcurrencyState.FAILED
+                            || executor.getExecutionRunning().getConcurrencyState() == ExecutionRunning.ConcurrencyState.CANCELLED
+                        : Concurrency.possibleTransitions(execution.getState().getCurrent())
+                            && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
                     // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
                     if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {

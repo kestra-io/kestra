@@ -33,6 +33,6 @@
         font-size: var(--ks-font-size-xs);
         line-height: 1.5;
         white-space: pre-wrap;
-        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 </style>

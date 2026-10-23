@@ -43,10 +43,10 @@ describe("useFilters", () => {
             expect(getSavedItems()).toEqual([])
         })
 
-        it("throws when storage contains invalid JSON", () => {
+        it("returns an empty array when storage contains invalid JSON", () => {
             localStorage.setItem("saved__flows", "not-json{{{")
             const {getSavedItems} = useFilters("flows")
-            expect(() => getSavedItems()).toThrow()
+            expect(getSavedItems()).toEqual([])
         })
 
         it("returns string-valued items unchanged", () => {

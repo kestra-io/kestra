@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
@@ -37,6 +38,7 @@ import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.flows.input.TableInput;
 import io.kestra.core.models.flows.input.URIInput;
+import io.kestra.core.models.flows.input.ValueOption;
 import io.kestra.core.models.flows.input.YamlInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -1370,6 +1372,91 @@ class FlowInputOutputTest {
         // Then
         assertThat(values).hasSize(1);
         assertThat(values.getFirst().exceptions()).isNull();
+    }
+
+    static Stream<Arguments> multiselectItemTypes() {
+        return Stream.of(
+            Arguments.of(Type.INT, List.of("1", "2", "3"), "[\"1\",\"2\"]", List.of(1, 2)),
+            Arguments.of(Type.FLOAT, List.of("1.5", "2.5"), "[\"1.5\"]", List.of(1.5F)),
+            Arguments.of(Type.BOOL, List.of("true", "false"), "[\"true\"]", List.of(true)),
+            // the allowed values are compared once converted, not by their spelling
+            Arguments.of(Type.FLOAT, List.of("1.50", "2.5"), "[\"1.5\"]", List.of(1.5F)),
+            Arguments.of(Type.BOOL, List.of("True", "False"), "[\"true\"]", List.of(true))
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("multiselectItemTypes")
+    void shouldAcceptMultiselectValuesOfNonStringItemType(Type itemType, List<String> allowed, String submitted, List<?> expected) {
+        // Given
+        MultiselectInput input = MultiselectInput.builder()
+            .id("items")
+            .type(Type.MULTISELECT)
+            .itemType(itemType)
+            .values(allowed.stream().map(ValueOption::from).toList())
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("items", submitted)
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions()).isNull();
+        assertThat(values.getFirst().value()).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldRejectMultiselectValueOfNonStringItemTypeNotInValues() {
+        // Given
+        MultiselectInput input = MultiselectInput.builder()
+            .id("items")
+            .type(Type.MULTISELECT)
+            .itemType(Type.INT)
+            .values(Stream.of("1", "2", "3").map(ValueOption::from).toList())
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("items", "[\"9\"]")
+        );
+
+        // Then
+        assertThat(values).hasSize(1);
+        assertThat(values.getFirst().exceptions()).isNotNull().isNotEmpty();
+        assertThat(values.getFirst().exceptions().stream().map(InputOutputValidationException::getMessage))
+            .anySatisfy(msg -> assertThat(msg).contains("value `9` doesn't match the values `[1, 2, 3]`"));
+    }
+
+    @Test
+    void shouldApplyDefaultsOfMultiselectWithNonStringItemType() {
+        // Given
+        MultiselectInput withDefaults = MultiselectInput.builder()
+            .id("withDefaults")
+            .type(Type.MULTISELECT)
+            .itemType(Type.INT)
+            .values(Stream.of("1", "2", "3").map(ValueOption::from).toList())
+            .defaults(Property.ofValue(List.of("2", "3")))
+            .build();
+        MultiselectInput autoSelectFirst = MultiselectInput.builder()
+            .id("autoSelectFirst")
+            .type(Type.MULTISELECT)
+            .itemType(Type.INT)
+            .values(Stream.of("1", "2", "3").map(ValueOption::from).toList())
+            .autoSelectFirst(true)
+            .build();
+
+        // When
+        List<InputAndValue> values = flowInputOutput.resolveInputs(
+            List.of(withDefaults, autoSelectFirst), null, DEFAULT_TEST_EXECUTION, Map.of()
+        );
+
+        // Then
+        assertThat(values).hasSize(2);
+        assertThat(values).allSatisfy(value -> assertThat(value.exceptions()).isNull());
+        assertThat(values.get(0).value()).isEqualTo(List.of(2, 3));
+        assertThat(values.get(1).value()).isEqualTo(List.of(1));
     }
 
     private static List<Input<?>> diskFields() {

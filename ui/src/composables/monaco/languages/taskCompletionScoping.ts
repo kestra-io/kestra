@@ -15,12 +15,13 @@ function isMap(value: unknown): value is TaskLike {
     return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
-function probeIndexes(source: string, cursorIndex: number): number[] {
-    // A column-one cursor has no task indentation, so probing backwards would borrow the previous task.
-    if (cursorIndex <= 0 || source.charAt(cursorIndex - 1) === "\n") {
-        return []
-    }
+function isAtRootLevel(source: string, cursorIndex: number): boolean {
+    const lineStart = source.lastIndexOf("\n", Math.max(0, cursorIndex - 1)) + 1
+    const line = source.slice(lineStart, cursorIndex)
+    return !/^[ \t]/.test(line) && !line.startsWith("- ")
+}
 
+function probeIndexes(source: string, cursorIndex: number): number[] {
     const safeCursorIndex = Math.max(0, Math.min(cursorIndex - 1, source.length - 1))
     const indexes = [safeCursorIndex]
     let previousNonWhitespace = safeCursorIndex
@@ -86,7 +87,7 @@ function blankLineAtCursor(source: string, cursorIndex: number): string {
  * cursor and walking its ancestry outwards to the nearest node that has both an `id` and a `type`.
  */
 export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cursorIndex: number}): TaskLike | undefined {
-    if (!source.length) {
+    if (!source.length || isAtRootLevel(source, cursorIndex)) {
         return undefined
     }
 
@@ -108,7 +109,7 @@ export function findTaskLikeAtCursor({source, cursorIndex}: {source: string; cur
 export function taskIdentityAtCursor(
     {source, cursorIndex}: {source: string; cursorIndex: number},
 ): {type: string; version?: string} | undefined {
-    if (!source.length) {
+    if (!source.length || isAtRootLevel(source, cursorIndex)) {
         return undefined
     }
 

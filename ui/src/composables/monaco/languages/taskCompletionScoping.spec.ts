@@ -69,6 +69,40 @@ tasks:
         })
     })
 
+    it.each(["t", "trig"])("does not borrow a task while the root key %j is half typed", (partialKey) => {
+        const source = `${FLOW}${partialKey}`
+        const params = {source, cursorIndex: source.length}
+
+        expect(findTaskLikeAtCursor(params)).toBeUndefined()
+        expect(taskIdentityAtCursor(params)).toBeUndefined()
+    })
+
+    it("does not borrow either sibling task while a root key is half typed between them", () => {
+        const source = `${FLOW}trig
+  - id: second
+    type: io.kestra.plugin.core.log.Log
+    message: second
+`
+        const params = {source, cursorIndex: FLOW.length + "trig".length}
+
+        expect(findTaskLikeAtCursor(params)).toBeUndefined()
+        expect(taskIdentityAtCursor(params)).toBeUndefined()
+    })
+
+    it("keeps the task context in an unindented task list", () => {
+        const source = `id: myflow
+namespace: my.ns
+tasks:
+- id: hello
+  type: io.kestra.plugin.core.log.Log
+  message: hi
+`
+        const params = {source, cursorIndex: source.indexOf("message: hi") + "message: hi".length}
+
+        expect(findTaskLikeAtCursor(params)?.id).toBe("hello")
+        expect(taskTypeAtCursor(params)).toBe("io.kestra.plugin.core.log.Log")
+    })
+
     it("resolves a task inside the flow's errors block", () => {
         const source = `${FLOW}errors:
   - id: on_error

@@ -24,14 +24,14 @@
                 type="button"
                 role="option"
                 class="implementation-picker-option"
-                :aria-checked="option.branch.ref === current"
-                :aria-selected="option.branch.ref === current"
+                :aria-checked="option.branch.type === current"
+                :aria-selected="option.branch.type === current"
                 data-test="plugin-implementation-picker-option"
                 @click="select(option.branch)"
             >
                 <TaskIcon
                     class="implementation-picker-option-icon"
-                    :cls="option.branch.ref"
+                    :cls="option.branch.type"
                     :icons="pluginsStore.icons"
                     :loadIcon="pluginsStore.loadIcon"
                     :onlyIcon="true"
@@ -40,7 +40,7 @@
                     <span class="implementation-picker-option-name">{{ option.name }}</span>
                     <span v-if="option.description" class="implementation-picker-option-description">{{ option.description }}</span>
                 </span>
-                <Check v-if="option.branch.ref === current" class="implementation-picker-option-check" />
+                <Check v-if="option.branch.type === current" class="implementation-picker-option-check" />
             </button>
         </div>
         <KsEmpty v-else data-test="plugin-implementation-picker-empty">
@@ -59,7 +59,7 @@
     import Check from "vue-material-design-icons/Check.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
-    import {humanizeClassName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
+    import {branchDisplayName, simpleClassName, type ImplementationBranch} from "./discriminatedUnion"
 
     const props = defineProps<{
         title: string
@@ -93,7 +93,7 @@
 
     const options = computed(() => props.branches.map((branch) => ({
         branch,
-        name: humanizeClassName(simpleClassName(branch.ref)),
+        name: branchDisplayName(branch, props.branches),
         description: leadSentence(
             branch.definition.title ?? branch.definition.description ?? branch.definition.markdownDescription,
         ),
@@ -104,7 +104,7 @@
         if (!query) return options.value
         return options.value.filter((option) =>
             option.name.toLowerCase().includes(query)
-            || simpleClassName(option.branch.ref).toLowerCase().includes(query)
+            || simpleClassName(option.branch.type).toLowerCase().includes(query)
             || option.description.toLowerCase().includes(query),
         )
     })

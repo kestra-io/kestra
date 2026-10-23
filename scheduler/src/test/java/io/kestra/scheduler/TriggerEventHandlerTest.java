@@ -558,9 +558,13 @@ class TriggerEventHandlerTest {
                 .updateForNextEvaluationDate(CLOCK, futureDate)
                 .disabled(CLOCK, true)
         );
-        handler = newTriggerEventHandler(List.of(Fixtures.flowWithScheduleOnDate(
-            "UTC", List.of(futureDate), builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.LAST).build()
-        )));
+        handler = newTriggerEventHandler(
+            List.of(
+                Fixtures.flowWithScheduleOnDate(
+                    "UTC", List.of(futureDate), builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.LAST).build()
+                )
+            )
+        );
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
 
         // WHEN
@@ -980,6 +984,25 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isTrue();
         assertThat(updated.get().getWorkerId()).isEqualTo("worker-2");
+    }
+
+    @Test
+    void shouldNotRestartTriggerWhenWorkerLostAfterTriggerDeleted() throws QueueException {
+        // GIVEN — a realtime trigger held by worker-1, whose flow is then deleted
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, 0)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        handler.handle(CLOCK, TEST_VNODE, new TriggerDeleted(triggerId));
+
+        // WHEN — the worker that held it is reported lost, as after a restart
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", realtimeState.getDispatchEpoch());
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — nothing brought the trigger back, so it cannot be resubmitted
+        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId)).isEmpty();
     }
 
     @Test

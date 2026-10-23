@@ -1246,11 +1246,7 @@ public class ExecutionController {
             return null;
         }
 
-        String prefix = StorageContext
-            .forExecution(execution)
-            .getExecutionStorageURI().getPath();
-
-        if (path.getPath().startsWith(prefix)) {
+        if (StorageContext.isInExecutionStorage(execution, path)) {
             return null;
         }
 
@@ -1264,7 +1260,7 @@ public class ExecutionController {
 
         // maybe state
         StorageContext context = StorageContext.forFlow(flow.get());
-        prefix = context.getStateStorePrefix(null, false, null);
+        String prefix = context.getStateStorePrefix(null, false, null);
         if (path.getPath().startsWith(prefix)) {
             return null;
         }

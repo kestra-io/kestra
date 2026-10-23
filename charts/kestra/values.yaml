@@ -230,6 +230,11 @@ deployments:
     # -- Enable webserver in distributed mode.
     # @section -- kestra deployments
     enabled: false
+    # -- Enable the webserver's embedded gRPC worker controller. Set to `false` (adds
+    # `--no-controller`) when also running a dedicated `deployments.controller` Deployment, to
+    # avoid running two controllers for the same release.
+    # @section -- kestra deployments
+    controller: true
     # -- Extra arguments to pass to the container.
     # @section -- kestra deployments
     extraArgs: []

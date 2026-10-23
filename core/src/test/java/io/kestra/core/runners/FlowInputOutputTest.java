@@ -379,6 +379,56 @@ class FlowInputOutputTest {
         Assertions.assertEquals("******", results.getFirst().value());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void shouldObfuscateSecretsInResumeDescriptions(boolean decryptSecrets) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description("Secret: {{ secret('???') }}")
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of(), decryptSecrets, true);
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo("Secret: ******");
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(input.getDescription()).isEqualTo("Secret: {{ secret('???') }}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Use `{{ trigger.date }}`", "{{ thisFunctionDoesNotExist() }}" })
+    void shouldPreserveResumeDescriptionsWhenRenderingFails(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty(), true).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{{ 1 + 1 }}", "Use `{{ trigger.date }}`" })
+    void shouldKeepRegularFlowInputDescriptionsLiteral(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()).containsEntry("input", null);
+    }
+
     @Test
     void shouldNotObfuscateSecretsInSelectWhenValidatingInputs() {
         // Given
@@ -552,15 +602,8 @@ class FlowInputOutputTest {
             .required(true)
             .build();
 
-        StringInput brokenDescription = StringInput.builder()
-            .id("brokenDescription")
-            .type(Type.STRING)
-            .description("{{ thisFunctionDoesNotExist() }}")
-            .required(false)
-            .build();
-
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(brokenExpression, brokenDefault, requiredMissing, brokenDescription), null, DEFAULT_TEST_EXECUTION, Map.of()
+            List.of(brokenExpression, brokenDefault, requiredMissing), null, DEFAULT_TEST_EXECUTION, Map.of()
         );
 
         assertThat(values.get(0).exceptions())
@@ -575,10 +618,6 @@ class FlowInputOutputTest {
             .as("a required-but-empty input is a value error, not a render error")
             .isNotEmpty()
             .noneMatch(InputOutputValidationException::isRenderError);
-        assertThat(values.get(3).exceptions())
-            .as("description render failure is a render error")
-            .isNotEmpty()
-            .allMatch(InputOutputValidationException::isRenderError);
     }
 
     @Test

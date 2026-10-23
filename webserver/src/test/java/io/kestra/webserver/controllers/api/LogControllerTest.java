@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,6 +28,7 @@ import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -263,6 +266,64 @@ class LogControllerTest {
         );
         assertThat(logs).contains("john doe");
         assertThat(logs).contains("another message");
+    }
+
+    @Test
+    void shouldDownloadEveryLineInOrderWhenLogsSpanSeveralFetches() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        seedExecution(tenant, executionId);
+        // more lines than one database fetch
+        Instant start = Instant.now().truncatedTo(ChronoUnit.MILLIS).minus(1, ChronoUnit.HOURS);
+        List<LogEntry> logs = IntStream.range(0, 250)
+            .mapToObj(
+                i -> logEntry(tenant, Level.INFO, start.plusMillis(i)).toBuilder()
+                    .executionId(executionId)
+                    .message("line " + i)
+                    .build()
+            )
+            .toList();
+        logs.forEach(logRepository::save);
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"),
+            String.class
+        );
+
+        assertThat(response.getBody()).contains(
+            logs.stream().map(LogEntry::toPrettyString).collect(Collectors.joining("\n"))
+        );
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("private, max-age=86400");
+        assertThat(response.getHeaders().get(HttpHeaders.CONTENT_TYPE)).isEqualTo("text/plain");
+        assertThat(response.getHeaders().get(HttpHeaders.CONTENT_DISPOSITION))
+            .isEqualTo("attachment; filename=\"" + executionId + ".log\"; filename*=utf-8''" + executionId + ".log");
+    }
+
+    @Test
+    void shouldDownloadAnEmptyUncachedFileWhileTheExecutionIsRunningWithoutLogs() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        executionRepository.save(
+            Execution.builder()
+                .id(executionId)
+                .namespace("io.kestra.unittest")
+                .tenantId(tenant)
+                .flowId("full")
+                .flowRevision(1)
+                .state(new State().withState(State.Type.RUNNING))
+                .build()
+        );
+
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/" + tenant + "/logs/" + executionId + "/download"),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getBody().orElse("")).isEmpty();
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
     }
 
     @SuppressWarnings("unchecked")

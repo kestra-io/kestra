@@ -1858,7 +1858,32 @@
       "filter_failed": "失败 {count}",
       "filter_success": "成功 {count}",
       "search_value": "按精确值搜索",
-      "range": "{from}–{to} / {total}"
+      "range": "{from}–{to} / {total}",
+      "tabs": {
+        "attempts": "尝试",
+        "configuration": "配置",
+        "inputs_outputs": "Input 与 output",
+        "structure": "结构"
+      },
+      "no_error": "此 Task 运行未记录任何错误消息。",
+      "no_attempts": "此 Task 运行未记录任何尝试。",
+      "elapsed": "+{duration}",
+      "configuration_empty": "在此执行所使用的 flow 修订版本中找不到此 task 的定义。",
+      "configuration_error": "无法解析此 task 的配置。请从“编辑流程”重试。",
+      "execution_inputs": "执行的 input",
+      "no_inputs": "此 flow 未声明任何 input。",
+      "inputs_error": "无法解析执行的 input。",
+      "consumed_outputs": "引用的 output",
+      "no_consumed_outputs": "此 task 的配置未引用任何其他 task 的 output。",
+      "consumed_outputs_error": "无法加载所引用 task 的 output。",
+      "view_definition": "查看 task 定义",
+      "hide_definition": "隐藏 task 定义",
+      "relation": {
+        "focused": "此 task",
+        "parent": "父级 task",
+        "sibling": "同级 task",
+        "child": "子级 task"
+      }
     },
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",

@@ -1858,7 +1858,32 @@
       "filter_failed": "विफल {count}",
       "filter_success": "सफल {count}",
       "search_value": "सटीक value से खोजें",
-      "range": "{total} में से {from}–{to}"
+      "range": "{total} में से {from}–{to}",
+      "tabs": {
+        "attempts": "प्रयास",
+        "configuration": "कॉन्फ़िगरेशन",
+        "inputs_outputs": "Input और output",
+        "structure": "संरचना"
+      },
+      "no_error": "इस Task रन के लिए कोई त्रुटि संदेश दर्ज नहीं किया गया।",
+      "no_attempts": "इस Task रन के लिए कोई प्रयास दर्ज नहीं किया गया।",
+      "elapsed": "+{duration}",
+      "configuration_empty": "इस task की परिभाषा उस flow संशोधन में नहीं मिली जिस पर यह निष्पादन चला था।",
+      "configuration_error": "इस task का कॉन्फ़िगरेशन हल नहीं किया जा सका। Flow संपादित करें से फिर से प्रयास करें।",
+      "execution_inputs": "निष्पादन के input",
+      "no_inputs": "यह flow कोई input घोषित नहीं करता।",
+      "inputs_error": "निष्पादन के input हल नहीं किए जा सके।",
+      "consumed_outputs": "उपयोग किए गए output",
+      "no_consumed_outputs": "इस task का कॉन्फ़िगरेशन किसी अन्य task के output का संदर्भ नहीं देता।",
+      "consumed_outputs_error": "संदर्भित tasks के output लोड नहीं किए जा सके।",
+      "view_definition": "Task की परिभाषा देखें",
+      "hide_definition": "Task की परिभाषा छिपाएँ",
+      "relation": {
+        "focused": "यह task",
+        "parent": "पैरेंट task",
+        "sibling": "समकक्ष task",
+        "child": "चाइल्ड task"
+      }
     },
     "loop_iterations_notice": {
       "logs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके logs यहाँ प्रदर्शित नहीं होते हैं।",

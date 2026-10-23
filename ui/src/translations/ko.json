@@ -1858,7 +1858,32 @@
       "filter_failed": "실패 {count}",
       "filter_success": "성공 {count}",
       "search_value": "정확한 value로 검색",
-      "range": "{total}개 중 {from}–{to}"
+      "range": "{total}개 중 {from}–{to}",
+      "tabs": {
+        "attempts": "시도",
+        "configuration": "구성",
+        "inputs_outputs": "Input 및 output",
+        "structure": "구조"
+      },
+      "no_error": "이 Task 실행에 기록된 오류 메시지가 없습니다.",
+      "no_attempts": "이 Task 실행에 기록된 시도가 없습니다.",
+      "elapsed": "+{duration}",
+      "configuration_empty": "이 실행이 사용한 flow 리비전에서 이 task의 정의를 찾을 수 없습니다.",
+      "configuration_error": "이 task의 구성을 확인할 수 없습니다. Flow 편집에서 다시 시도하세요.",
+      "execution_inputs": "실행 input",
+      "no_inputs": "이 flow는 input을 선언하지 않습니다.",
+      "inputs_error": "실행의 input을 확인할 수 없습니다.",
+      "consumed_outputs": "참조하는 output",
+      "no_consumed_outputs": "이 task의 구성은 다른 task의 output을 참조하지 않습니다.",
+      "consumed_outputs_error": "참조된 task의 output을 불러올 수 없습니다.",
+      "view_definition": "Task 정의 보기",
+      "hide_definition": "Task 정의 숨기기",
+      "relation": {
+        "focused": "이 task",
+        "parent": "상위 task",
+        "sibling": "형제 task",
+        "child": "하위 task"
+      }
     },
     "loop_iterations_notice": {
       "logs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 로그는 여기에 표시되지 않습니다.",

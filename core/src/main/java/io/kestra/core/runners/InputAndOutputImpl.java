@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ class InputAndOutputImpl implements InputAndOutput {
         for (io.kestra.core.models.flows.Output output : outputs) {
             if (Boolean.FALSE.equals(output.getRequired())) {
                 try {
-                    outputsById.putAll(runContext.render(Map.of(output.getId(), output.getValue())));
+                    outputsById.putAll(runContext.render(Collections.singletonMap(output.getId(), output.getValue())));
                 } catch (Exception e) {
                     runContext.logger().warn("Failed to render optional flow output '{}'. Output is ignored.", output.getId(), e);
                     outputsById.put(output.getId(), null);

@@ -158,10 +158,12 @@ public class ExecutionService {
      * and return the execution in the running state
      **/
     public Execution retryTask(Execution execution, Flow flow, String taskRunId) throws InternalException {
-        TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId).withState(State.Type.CREATED);
+        TaskRun retried = execution.findTaskRunByTaskRunId(taskRunId);
+        boolean workingDirectory = flow.findTaskByTaskId(retried.getTaskId()) instanceof WorkingDirectory;
+        TaskRun taskRun = (workingDirectory ? endLastAttempt(retried) : retried).withState(State.Type.CREATED);
         List<TaskRun> taskRunList = new ArrayList<>(execution.getTaskRunList());
 
-        if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof WorkingDirectory) {
+        if (workingDirectory) {
             // a retried WorkingDirectory runs all its children again, under new task runs
             taskRunList.removeIf(child -> taskRun.getId().equals(child.getParentTaskRunId()));
         }
@@ -205,6 +207,19 @@ public class ExecutionService {
         }
 
         return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
+    }
+
+    // the subtasks of a WorkingDirectory count its previous runs from its attempts, and a resubmission only adds an
+    // attempt after a terminated one, so the run being retried must end its attempt
+    private static TaskRun endLastAttempt(TaskRun workingDirectory) {
+        TaskRunAttempt lastAttempt = workingDirectory.lastAttempt();
+        if (lastAttempt == null || lastAttempt.getState().isTerminated()) {
+            return workingDirectory;
+        }
+
+        List<TaskRunAttempt> attempts = new ArrayList<>(workingDirectory.getAttempts());
+        attempts.set(attempts.size() - 1, lastAttempt.withState(State.Type.FAILED));
+        return workingDirectory.withAttempts(attempts);
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {

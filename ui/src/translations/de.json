@@ -511,7 +511,63 @@
       "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
       "add-task": "Task hinzufügen",
       "add-trigger": "Trigger hinzufügen",
-      "child-count": "{count} Task | {count} Tasks"
+      "child-count": "{count} Task | {count} Tasks",
+      "loop": {
+        "not-run": "Nicht ausgeführt",
+        "pick-first": "Zuerst {loop} wählen",
+        "picker-label": "Iteration von {loop}",
+        "search-by-index": "Nach Index suchen",
+        "all-iterations": "Alle Iterationen",
+        "iteration-index": "Index {index}",
+        "iteration-value-index": "{value} · Index {index}",
+        "previous-iteration": "Vorherige Iteration",
+        "next-iteration": "Nächste Iteration",
+        "previous-page": "Vorherige Seite",
+        "next-page": "Nächste Seite",
+        "failed-group": "Fehlgeschlagen · {count}",
+        "other-group": "Weitere Iterationen",
+        "matching": "Treffer",
+        "failure-forbidden": "Sie haben keinen Zugriff auf diese Iteration.",
+        "failure-not-found": "Diese Iteration existiert nicht mehr.",
+        "failure-unknown": "Die Iterationen konnten nicht geladen werden.",
+        "scope": "Bereich",
+        "whole-execution": "Gesamte Ausführung",
+        "clear-scopes": "Bereiche zurücksetzen",
+        "jump-to-first-failure": "Zum ersten Fehler springen",
+        "loops-with-failures": "Schleifen mit Fehlern",
+        "task-runs": "{runs} Lauf | {runs} Läufe",
+        "task-runs-failed": "{runs} Lauf · {failed} fehlgeschlagen | {runs} Läufe · {failed} fehlgeschlagen",
+        "retry": "Wiederholen",
+        "load-more": "Mehr laden",
+        "retry-loading": "Laden der Iterationen wiederholen"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} von {total} fehlgeschlagen",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} fehlgeschlagen · {notStarted} nicht gestartet von {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} von {total} abgeschlossen",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} von {total} abgeschlossen · {failed} fehlgeschlagen",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} Iteration | {total} Iterationen",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -1768,7 +1824,18 @@
       "compact": "Standardansicht",
       "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
       "fullscreen": "Logs im Vollbild",
-      "exit_fullscreen": "Vollbild verlassen"
+      "exit_fullscreen": "Vollbild verlassen",
+      "loop": {
+        "this-execution": "Diese Ausführung",
+        "with-iterations": "Mit Loop-Iterationen",
+        "batch-range": "Fehlgeschlagene Iterationen {from}–{to} von {total}",
+        "empty-title": "Keine passenden Logs",
+        "empty-description": "Kein Log entspricht der gewählten Stufe in dieser Ausführung oder ihren fehlgeschlagenen Loop-Iterationen. Senke die Stufe, um mehr zu sehen.",
+        "scope-to": "Graph und Logs auf {scope} eingrenzen",
+        "show-in-overview": "In der Übersicht anzeigen",
+        "show-in-overview-for": "{scope} in der Übersicht anzeigen",
+        "mode-label": "Log-Quelle"
+      }
     },
     "execution_deletion": {
       "logs": "Logs löschen",

@@ -319,7 +319,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
     @Override
     public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable) {
-        var condition = field("namespace").eq(namespace).and(field("flow_id").eq(id));
+        var condition = CaseSensitiveMatch.eq(NAMESPACE_FIELD, namespace).and(field("flow_id").eq(id));
         return findPage(pageable, tenantId, condition);
     }
 
@@ -348,9 +348,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
         if (namespace != null) {
             if (flowId != null) {
-                select = select.and(field("namespace").eq(namespace));
+                select = select.and(CaseSensitiveMatch.eq(NAMESPACE_FIELD, namespace));
             } else {
-                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").startsWith(namespace + ".")));
+                select = select.and(DSL.or(CaseSensitiveMatch.eq(NAMESPACE_FIELD, namespace), CaseSensitiveMatch.startsWith(NAMESPACE_FIELD, namespace + ".")));
             }
         }
 

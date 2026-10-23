@@ -923,7 +923,7 @@ public class ExecutionService {
             .flatMap(task ->
             {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
+                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of(), false, true));
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -945,7 +945,7 @@ public class ExecutionService {
             .flatMap(task ->
             {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
+                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs, true);
                 } else {
                     return Mono.just(Collections.emptyList());
                 }

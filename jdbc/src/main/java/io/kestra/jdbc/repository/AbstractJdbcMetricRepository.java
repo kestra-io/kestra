@@ -108,7 +108,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
-                .and(field("namespace").eq(namespace))
+                .and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace))
                 .and(NORMAL_KIND_CONDITION),
             "metric_name"
         );
@@ -123,7 +123,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
-                .and(field("namespace").eq(namespace))
+                .and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace))
                 .and(field("task_id").eq(taskId))
                 .and(NORMAL_KIND_CONDITION),
             "metric_name"
@@ -138,7 +138,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
-                .and(field("namespace").eq(namespace))
+                .and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace))
                 .and(NORMAL_KIND_CONDITION),
             "task_id"
         );
@@ -155,7 +155,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         ZonedDateTime endDate,
         String aggregation) {
         Condition conditions = field("flow_id").eq(flowId)
-            .and(field("namespace").eq(namespace))
+            .and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace))
             .and(field("metric_name").eq(metric))
             .and(NORMAL_KIND_CONDITION);
         if (taskId != null) {

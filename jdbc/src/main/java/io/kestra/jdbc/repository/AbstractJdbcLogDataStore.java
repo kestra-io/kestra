@@ -398,7 +398,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         {
             DSLContext context = DSL.using(configuration);
 
-            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId)).and(field("namespace").eq(namespace)).and(field("flow_id").eq(flowId));
+            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId)).and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace)).and(field("flow_id").eq(flowId));
 
             if (triggerId != null) {
                 delete = delete.and(field("trigger_id").eq(triggerId));
@@ -448,9 +448,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             // its descendants, consistent with the documented behavior and PurgeExecutions. With a
             // flowId, it targets that flow's exact namespace.
             if (flowId != null) {
-                condition = condition.and(field("namespace").eq(namespace));
+                condition = condition.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
             } else {
-                condition = condition.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+                condition = condition.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace).or(CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + ".")));
             }
         }
         if (flowId != null) {
@@ -606,8 +606,8 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             case NAMESPACES -> {
                 List<Condition> ors = new ArrayList<>();
                 for (String namespace : scope.namespaces()) {
-                    ors.add(field("namespace").eq(namespace));
-                    ors.add(field("namespace").startsWith(namespace + "."));
+                    ors.add(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
+                    ors.add(CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + "."));
                 }
                 yield DSL.or(ors);
             }

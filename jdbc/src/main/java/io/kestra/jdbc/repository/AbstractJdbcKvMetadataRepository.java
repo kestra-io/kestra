@@ -67,7 +67,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
 
     @Override
     public Optional<PersistedKvMetadata> findByName(String tenantId, String namespace, String name) {
-        var condition = field("namespace").eq(namespace)
+        var condition = CaseSensitiveMatch.eq(field("namespace", String.class), namespace)
             .and(field("name").eq(name))
             .and(lastCondition());
         return findOne(tenantId, condition, true);
@@ -124,7 +124,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
                 {
                     DeleteConditionStep<Record> deleteCondition = context.delete(this.jdbcRepository.getTable())
                         .where(this.defaultFilter(e.getKey().tenantId(), true))
-                        .and(field("namespace").eq(e.getKey().namespace()))
+                        .and(CaseSensitiveMatch.eq(field("namespace", String.class), e.getKey().namespace()))
                         .and(field("last").in(true, false));
                     if (e.getValue().getFirst().getRevision() == null) {
                         deleteCondition = deleteCondition.and(field("name").in(persistedKvsMetadata.stream().map(PersistedKvMetadata::getName).toList()));

@@ -132,10 +132,6 @@
     margin-bottom: 1rem !important;
 }
 
-.mb-4 {
-    margin-bottom: 1.5rem !important;
-}
-
 .ms-2 {
     margin-left: 0.5rem !important;
 }
@@ -228,15 +224,9 @@
     color: inherit !important;
 }
 
-.text-warning {
-    color: inherit !important;
-}
+
 
 .text-danger {
-    color: inherit !important;
-}
-
-.text-white {
     color: inherit !important;
 }
 

@@ -617,6 +617,22 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldSendFailedExecutionWhenScheduleInputsFailToRender() {
+        // GIVEN
+        FlowWithSource flow = Fixtures.defaultFlow(builder -> builder.inputs(Map.of("date", "{{ now()) | date('yyyy-MM-dd') }}")).build());
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(flow));
+        scheduler.onStart(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // WHEN
+        SchedulerClock.offset(Duration.ofMinutes(15));
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN
+        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
+        assertThat(triggerExecutionPublisher.executions().getFirst().evaluation().stateType()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     void shouldNotScheduleScheduleTriggerWithDisabledTrue() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ);

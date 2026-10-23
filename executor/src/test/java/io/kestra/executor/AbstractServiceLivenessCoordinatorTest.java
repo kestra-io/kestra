@@ -426,6 +426,55 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     }
 
     @Test
+    void shouldPurgeRunningEntryOfInactiveWorkerThatMustNotBeRestartedOnceTheGracePeriodElapsed() {
+        // Given an inactive worker that must not have its tasks restarted, a job it still holds,
+        // a job that has since moved to a running worker under the same key, and a job that worker owns.
+        ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE, WorkerTaskRestartStrategy.NEVER);
+        ServiceInstance running = saveWorkerInstance(Service.ServiceState.RUNNING);
+
+        WorkerTaskRunning stale = workerTaskRunning(inactive.uid());
+        WorkerTaskRunning reassigned = workerTaskRunning(inactive.uid());
+        WorkerTaskRunning stillOwned = workerTaskRunning(running.uid());
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, stale);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, reassigned);
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, stillOwned);
+        WorkerTaskRunning moved = WorkerTaskRunning.builder()
+            .workerInstance(new WorkerInstance(running.uid(), ORPHAN_WORKER_QUEUE_ID))
+            .taskRun(reassigned.getTaskRun())
+            .task(reassigned.getTask())
+            .data(reassigned.getData())
+            .build();
+        workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, moved);
+
+        List<String> resubmitted = Collections.synchronizedList(new ArrayList<>());
+        workerJobEventQueue.addListener(event -> resubmitted.add(event.job().uid()));
+        List<String> triggersLost = Collections.synchronizedList(new ArrayList<>());
+        triggerEventQueue.addListener(event ->
+        {
+            if (event instanceof TriggerWorkerLost triggerWorkerLost && inactive.uid().equals(triggerWorkerLost.workerUid())) {
+                triggersLost.add(triggerWorkerLost.workerUid());
+            }
+        });
+
+        // When the grace period since the worker became INACTIVE has not elapsed
+        jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(inactive.updatedAt());
+
+        // Then the stale entry is kept, and nothing is restarted
+        assertThat(leasesHeldBy(inactive.uid())).contains(stale.uid());
+        assertThat(resubmitted).doesNotContain(stale.uid(), reassigned.uid(), stillOwned.uid());
+        assertThat(triggersLost).isEmpty();
+
+        // When the grace period has elapsed
+        jdbcServiceLivenessHandler.handleAllOrphanedWorkerJobs(afterTerminationGracePeriod());
+
+        // Then only the entry still held by the inactive worker is removed
+        assertThat(leasesHeldBy(inactive.uid())).isEmpty();
+        assertThat(leasesHeldBy(running.uid())).contains(moved.uid(), stillOwned.uid());
+        assertThat(resubmitted).doesNotContain(stale.uid(), reassigned.uid(), stillOwned.uid());
+        assertThat(triggersLost).isEmpty();
+    }
+
+    @Test
     void shouldReclaimOrphanedWorkerJobOnlyOnceTheTerminationGracePeriodElapsed() throws Exception {
         // Given a worker that has just become INACTIVE, whose last results the executor may not have applied yet
         ServiceInstance inactive = saveWorkerInstance(Service.ServiceState.INACTIVE);

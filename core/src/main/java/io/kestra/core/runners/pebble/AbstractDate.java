@@ -104,6 +104,11 @@ public abstract class AbstractDate {
             return zonedDateTimeValue;
         }
 
+        // an INT input or a small JSON number is an Integer, not a Long
+        if (value instanceof Integer || value instanceof Short || value instanceof Byte) {
+            return convert(((Number) value).longValue(), zoneId, existingFormat);
+        }
+
         if (value instanceof Long longValue) {
             if (digitCount(longValue) == 13) {
                 return Instant.ofEpochMilli(longValue).atZone(zoneId);

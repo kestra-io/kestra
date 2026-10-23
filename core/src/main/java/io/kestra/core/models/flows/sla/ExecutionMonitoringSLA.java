@@ -1,6 +1,8 @@
 package io.kestra.core.models.flows.sla;
 
+import io.kestra.core.runners.RunContext;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * Marker interface to denote an SLA as evaluating using an {@link SLAMonitor}.
@@ -8,5 +10,5 @@ import java.time.Duration;
  * the monitor is created when the execution is created.
  */
 public interface ExecutionMonitoringSLA {
-    Duration getDuration();
+    Optional<Duration> computeDuration(RunContext runContext);
 }

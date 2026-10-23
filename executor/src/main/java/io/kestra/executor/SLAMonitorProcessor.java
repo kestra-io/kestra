@@ -112,7 +112,7 @@ public class SLAMonitorProcessor {
             ExecutorContext executor = new ExecutorContext(execution, flow);
             try {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
+                Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get(), slaMonitor.getDuration());
                 if (violation.isPresent()) { // should always be true
                     log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
                     executor = executorService.processViolation(runContext, executor, violation.get());

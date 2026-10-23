@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows.sla;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.sla.types.AvgDurationSLA;
 import io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.runners.RunContext;
@@ -35,10 +37,13 @@ import lombok.experimental.SuperBuilder;
 @JsonSubTypes(
     {
         @JsonSubTypes.Type(value = MaxDurationSLA.class, name = "MAX_DURATION"),
+        @JsonSubTypes.Type(value = AvgDurationSLA.class, name = "AVG_DURATION"),
         @JsonSubTypes.Type(value = ExecutionAssertionSLA.class, name = "EXECUTION_ASSERTION"),
     }
 )
 public abstract class SLA {
+    public static final String SLA_DURATION_ATTRIBUTE = "slaDuration";
+
     @NotNull
     @NotEmpty
     private String id;
@@ -60,10 +65,19 @@ public abstract class SLA {
      * Evaluate a flow SLA on an execution.
      * In case the SLA is exceeded, a violation will be returned.
      */
-    public abstract Optional<Violation> evaluate(RunContext runContext, Execution execution) throws InternalException;
+    public Optional<Violation> evaluate(RunContext runContext, Execution execution) throws InternalException {
+        return evaluate(runContext, execution, Collections.emptyMap());
+    };
+
+    /**
+     * Evaluate a flow SLA on an execution.
+     * In case the SLA is exceeded, a violation will be returned.
+     */
+    public abstract Optional<Violation> evaluate(RunContext runContext, Execution execution, Map<String, Object> additionalParameters) throws InternalException;
 
     public enum Type {
         MAX_DURATION,
+        AVG_DURATION,
         EXECUTION_ASSERTION,
     }
 

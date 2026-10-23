@@ -1,6 +1,8 @@
 package io.kestra.executor;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import io.kestra.core.models.executions.Execution;
@@ -43,9 +45,9 @@ public class SLAService {
      * Evaluate a single SLA for an execution.
      * Each violated SLA will be logged.
      */
-    public Optional<Violation> evaluateExecutionMonitoringSLA(RunContext runContext, Execution execution, SLA sla) {
+    public Optional<Violation> evaluateExecutionMonitoringSLA(RunContext runContext, Execution execution, SLA sla, Duration duration) {
         try {
-            Optional<Violation> maybeViolation = sla.evaluate(runContext, execution);
+            Optional<Violation> maybeViolation = sla.evaluate(runContext, execution, Map.of(SLA.SLA_DURATION_ATTRIBUTE, duration));
             maybeViolation.ifPresent(violation -> runContext.logger().warn("SLA '{}' violated: {}", violation.slaId(), violation.reason()));
             return maybeViolation;
         } catch (Exception e) {

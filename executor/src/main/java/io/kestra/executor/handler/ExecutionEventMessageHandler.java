@@ -67,6 +67,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     private final DispatchQueueInterface<Execution> executionQueue;
+    private final RunContextFactory runContextFactory;
     private final RunContextLoggerFactory runContextLoggerFactory;
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
@@ -88,6 +89,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue,
         DispatchQueueInterface<Execution> executionQueue,
+        RunContextFactory runContextFactory,
         RunContextLoggerFactory runContextLoggerFactory,
         KillSwitchService killSwitchService,
         KillSwitchActionService killSwitchActionService,
@@ -108,6 +110,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         this.workerJobEventQueue = workerJobEventQueue;
         this.subflowExecutionResultQueue = subflowExecutionResultQueue;
         this.executionQueue = executionQueue;
+        this.runContextFactory = runContextFactory;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.killSwitchService = killSwitchService;
         this.killSwitchActionService = killSwitchActionService;
@@ -170,11 +173,17 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     List<SLAMonitor> monitors = new ArrayList<>();
                                     for (SLA sla : flow.getSla()) {
                                         if (sla instanceof ExecutionMonitoringSLA monitoringSla) {
+                                            var runContext = runContextFactory.of(flow, execution); // FIXME avoid building it for each SLA monitor
+                                            var duration =  monitoringSla.computeDuration(runContext);
+                                            if (duration.isEmpty()) {
+                                                continue;
+                                            }
                                             monitors.add(
                                                 SLAMonitor.builder()
                                                     .executionId(execution.getId())
                                                     .slaId(sla.getId())
-                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), monitoringSla.getDuration()))
+                                                    .deadline(DateUtils.plusOrThrow(execution.getState().getStartDate(), duration.get()))
+                                                    .duration(duration.get())
                                                     .build()
                                             );
                                         }

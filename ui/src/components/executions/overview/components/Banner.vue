@@ -85,13 +85,7 @@
                     <span>{{ username }}</span>
                 </span>
 
-                <router-link v-if="originalLink" class="meta-item" :to="originalLink">
-                    <History />
-                    <span>
-                        {{ $t("original execution") }}:
-                        <span class="meta-item__link">{{ execution.originalId }}</span>
-                    </span>
-                </router-link>
+                <ParentExecutionLink :execution />
 
                 <component
                     :is="relation"
@@ -168,6 +162,7 @@
     import SetLabels from "../../SetLabels.vue"
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
+    import ParentExecutionLink from "./ParentExecutionLink.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -213,13 +208,6 @@
             : props.execution.labels?.find((label) => label.key === "system.username")?.value,
     )
 
-    const originalLink = computed(() => {
-        const {originalId, id} = props.execution
-        return originalId && originalId !== id
-            ? createLink("executions", props.execution, originalId)
-            : undefined
-    })
-
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>
         props.execution.taskRunList?.filter(
@@ -236,12 +224,17 @@
             })
     }
 
+    // The prompt only needs the first errors, so an execution with thousands of them is not downloaded whole.
+    const FIX_WITH_AI_LOG_LIMIT = 100
+
     const fixErrorWithAi = async () => {
         const logs = await executionsStore
             .loadLogs({
                 store: false,
                 executionId: props.execution.id,
                 params: {minLevel: "ERROR"},
+                page: 1,
+                size: FIX_WITH_AI_LOG_LIMIT,
             })
             .catch((e: unknown) => {
                 handledIf(e, [403, 404])
@@ -450,10 +443,6 @@
                 color: var(--ks-text-muted);
                 display: inline-flex;
             }
-        }
-
-        .meta-item__link {
-            color: var(--ks-text-link);
         }
 
         .meta-item {

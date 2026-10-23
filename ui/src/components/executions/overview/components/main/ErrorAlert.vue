@@ -89,7 +89,7 @@
                     "filters[kind][IN]": props.execution.kind,
                 },
                 size: MAX_PREVIEW_LOGS,
-                sort: "timestamp:desc",
+                sort: ["timestamp:desc"],
             })
 
             if (response.length) logs.value = [...response].reverse()

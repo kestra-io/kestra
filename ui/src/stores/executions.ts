@@ -573,21 +573,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; page?: number; size?: number; sort?: string; store?: boolean }) => {
-        const request = options.page !== undefined || options.size !== undefined || options.sort !== undefined
-            // The SDK does not map page/size/sort for this endpoint yet, so paginated calls go through the API directly.
-            ? axios.get<LogEntry[]>(`${apiUrl()}/logs/${options.executionId}`, {
-                params: {
-                    ...options.params,
-                    ...(options.page !== undefined ? {page: options.page} : {}),
-                    ...(options.size !== undefined ? {size: options.size} : {}),
-                    ...(options.sort !== undefined ? {sort: options.sort} : {}),
-                },
-            }).then(response => response.data)
-            : LogsAPI.listLogsFromExecution(
-                {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
-            )
-        return request.then(data => {
+    // `page` and `size` turn on the endpoint's optional pagination; without them every matching log is returned.
+    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
+        return LogsAPI.listLogsFromExecution({
+            executionId: options.executionId,
+            filters: routeQueryToQueryFilters(options.params ?? {}),
+            ...(options.page !== undefined ? {page: options.page} : {}),
+            ...(options.size !== undefined ? {size: options.size} : {}),
+            ...(options.sort !== undefined ? {sort: options.sort} : {}),
+        }).then(data => {
             if (options.store === false) {
                 return data
             }

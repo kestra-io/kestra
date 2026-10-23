@@ -291,7 +291,7 @@
             large
         >
             <template #header>
-                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span" scope="global">
                     <template #id><code>{{ selectedFlow.id }}</code></template>
                 </i18n-t>
             </template>
@@ -536,7 +536,7 @@
         if (!isPlainRowActivation(column, event)) return
 
         router.push({
-            name: route.name?.toString().replace("/list", "/update"),
+            name: "flows/update",
             params: {namespace: item.namespace, id: item.id, tenant: route.params.tenant},
         })
     }

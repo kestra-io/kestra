@@ -56,7 +56,7 @@
         </template>
 
         <div class="p-3 pt-0">
-            <i18n-t keypath="restart confirm" tag="p" class="mb-0">
+            <i18n-t keypath="restart confirm" tag="p" scope="global" class="mb-0">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
             <KsAlert
@@ -67,7 +67,7 @@
                 class="mt-3"
                 data-test="restart-subflow-warning"
             >
-                <i18n-t keypath="restart subflow warning" tag="span">
+                <i18n-t keypath="restart subflow warning" tag="span" scope="global">
                     <template #parent>
                         <router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>
                     </template>
@@ -233,7 +233,7 @@
         scrollable
     >
         <template #header>
-            <i18n-t keypath="replay the execution" tag="span">
+            <i18n-t keypath="replay the execution" tag="span" scope="global">
                 <template #executionId><code>{{ execution.id }}</code></template>
                 <template #flowId><code>{{ execution.flowId }}</code></template>
             </i18n-t>
@@ -257,7 +257,7 @@
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
-    import {asProblem} from "@kestra-io/kestra-sdk"
+    import {asProblem, type FlowForExecution} from "@kestra-io/kestra-sdk"
     import {handled} from "../../../../../utils/kestraHttp"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
@@ -319,7 +319,7 @@
         }
     })
 
-    const currentFlow = ref<any | undefined>(undefined)
+    const currentFlow = ref<FlowForExecution | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
     const hasOriginalInputs = computed(() => {
         const inputs = props.execution.inputs
@@ -472,12 +472,13 @@
     }
 
     const restart = async () => {
-        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
-        const response = await (executionsStore[method] as any)({
-            executionId: props.execution.id,
-            taskRunId: replayTaskRun.value?.id,
-            revision: props.isReplay ? revisionsSelected.value : undefined,
-        })
+        const response = props.isReplay
+            ? await executionsStore.replayExecution({
+                executionId: props.execution.id,
+                taskRunId: replayTaskRun.value?.id,
+                revision: revisionsSelected.value,
+            })
+            : await executionsStore.restartExecution({executionId: props.execution.id})
 
         const newExecution = response
 

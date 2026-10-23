@@ -48,7 +48,8 @@ public class Property<T> {
     // By default, durations are stored as numbers.
     // We cannot change that globally, as in JDBC/Elastic 'execution.state.duration' must be a number to be able to aggregate them.
     // So we only change it here to be used for Property.of().
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson()
+    // The null-keeping form is required, as a map or list property is stored as its serialized expression.
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJsonWithNullValues()
         .copy()
         .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
 

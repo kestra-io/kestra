@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.property.DynamicPropertyExampleTask;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
@@ -268,6 +270,19 @@ class YamlParserTest {
         FlowWithSource parse = YamlParser.parse(mapFlow, FlowWithSource.class, false);
 
         assertThat(parse.getLabels().size()).isEqualTo(1);
+    }
+
+    @Test
+    void parseMapKeepsNullEntriesInProperty() {
+        var properties = new LinkedHashMap<String, Object>();
+        properties.put("deletedAt", null);
+        properties.put("status", "open");
+        var input = new LinkedHashMap<String, Object>();
+        input.put("properties", properties);
+
+        var task = YamlParser.parse(input, DynamicPropertyExampleTask.class, false);
+
+        assertThat(task.getProperties().toString()).contains("\"deletedAt\":null");
     }
 
     @Test

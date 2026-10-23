@@ -3195,6 +3195,7 @@ export const _06C136Fdf = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
     page?: number | null;
     size?: number | null;
+    sort?: Array<string> | null;
     filters?: Array<QueryFilter> | null;
 }, options?: Options<never, ThrowOnError>): RequestResult<ListLogsFromExecutionResponses, ListLogsFromExecutionErrors, ThrowOnError> => {
     const params = buildClientParams([parameters], [{ args: [
@@ -3202,6 +3203,7 @@ export const _06C136Fdf = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'page' },
                 { in: 'query', key: 'size' },
+                { in: 'query', key: 'sort' },
                 { in: 'query', key: 'filters' }
             ] }]);
     return (options?.client ?? client).get<ListLogsFromExecutionResponses, ListLogsFromExecutionErrors, ThrowOnError>({

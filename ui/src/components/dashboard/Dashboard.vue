@@ -51,7 +51,8 @@
     } from "../filter/configurations/dashboardFilters"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
-    useRestoreUrl()
+    const restoreScope = ref<string>()
+    const {goToRestoreUrl} = useRestoreUrl({scope: restoreScope})
 
     const isMobile = useIsMobile()
     const canSelectDashboard = computed(() => ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)))
@@ -143,6 +144,8 @@
         // When the backend cannot serve custom dashboards, ignore any requested id
         // (URL, localStorage, tenant default) and render the bundled default directly.
         if (miscStore.configs?.isCustomDashboardsEnabled === false) {
+            restoreScope.value = "default"
+            await goToRestoreUrl()
             await useDefaultDashboardBundledInUI()
             await loadCharts(dashboard.value.charts)
             isRouteSettled.value = true
@@ -167,6 +170,9 @@
                 })
             }
         }
+
+        restoreScope.value = id
+        await goToRestoreUrl()
 
         // Unmount the charts before anything about the dashboard changes: a chart reads its dashboard id once, on
         // setup, so one left mounted across the swap keeps requesting the previous dashboard's charts, now routed as
@@ -211,6 +217,7 @@
 
     watch([() => route.params.dashboard, () => route.params.tenant], async () => {
         if(route.params.tenant){
+            restoreScope.value = undefined
             // at initial load after login tenant is not yet immediately available
             const dashboardId = await dashboardStore.getDashboardId(route)
             await load(dashboardId)

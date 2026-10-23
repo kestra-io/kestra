@@ -135,7 +135,7 @@ describe("useDismissedKeys", () => {
         expect(hasDismissedDefaultVisibleKeys.value).toBe(false)
     })
 
-    test("dismissedKeys is replaced rather than mutated, so a computed reading it re-evaluates", () => {
+    test("a computed reading dismissedKeys re-evaluates on every change", () => {
         const configuration = makeConfiguration([
             makeKey("default1", true),
             makeKey("default2", true),

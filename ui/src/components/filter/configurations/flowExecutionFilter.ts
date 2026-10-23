@@ -103,6 +103,19 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                 },
                 {
+                    key: "outputs",
+                    label: t("filter.outputs.label"),
+                    description: t("filter.outputs.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
+                    valueType: "key-value",
+                    showComparatorSelection: true,
+                },
+                {
                     key: "triggerExecutionId",
                     label: t("filter.triggerExecutionId.label"),
                     description: t("filter.triggerExecutionId.description"),

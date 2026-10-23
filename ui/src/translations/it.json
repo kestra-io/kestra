@@ -522,7 +522,9 @@
     "execution_banner": {
       "revision": "Revisione {revision}",
       "attempts": "{count} tentativo | {count} tentativi",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "Valori ricercabili",
+      "more_searchable_values": "+{count} altri valori ricercabili"
     },
     "execution_mobile": {
       "failed_task": "Task non riuscita",
@@ -576,6 +578,7 @@
       "search_placeholder": "Cerca Key o value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Espressione",
+      "searchable": "Cercabile",
       "tree": "Albero",
       "raw_json": "JSON grezzo",
       "select_prompt": "Seleziona una variabile per ispezionarne la value.",

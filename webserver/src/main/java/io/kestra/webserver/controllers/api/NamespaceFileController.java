@@ -340,7 +340,9 @@ public class NamespaceFileController {
         encodedPath = toFileUri(path);
         ensureWritableNamespaceFile(encodedPath);
 
-        String pathWithoutScheme = encodedPath.getPath();
+        // Normalize so dot segments (e.g. "/./folder/file" from the terraform provider) resolve before the
+        // zombie-parent walk below; otherwise the walk compares unnormalized parents and can climb to the root.
+        String pathWithoutScheme = encodedPath.normalize().getPath();
 
         String tenantId = tenantService.resolveTenant();
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace);

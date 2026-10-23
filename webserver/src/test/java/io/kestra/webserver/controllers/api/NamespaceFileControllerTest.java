@@ -577,6 +577,22 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldDeleteFileWithoutDeletingNamespaceRootWhenPathContainsDotSegment() throws IOException, URISyntaxException {
+        // Given: a file whose delete path contains a leading "." segment, as sent by the terraform provider (#13099)
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/folder/hello.sh"), new ByteArrayInputStream("echo hi".getBytes()));
+
+        // When: deleting the file through the unnormalized path
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/./folder/hello.sh", null));
+
+        // Then: the file and its emptied parent folder are gone, but the namespace root survives
+        assertThat(namespaceStorage.exists(Path.of("/folder/hello.sh"))).isFalse();
+        assertThat(namespaceStorage.exists(Path.of("/folder"))).isFalse();
+        assertThat(namespaceStorage.exists(null)).isTrue();
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void shouldNotCollideSpaceAndPlusInFileName() throws IOException {
         // Given: two distinct filenames — one with a space, one with a literal '+'

@@ -86,6 +86,7 @@ export const storageKeys = {
     BASIC_AUTH_SETUP_COMPLETED_AT: "basicAuthSetupCompletedAt",
     BASIC_AUTH_USER_CREATED: "basicAuthUserCreated",
     BASIC_AUTH_SURVEY_DATA: "basicAuthSurveyData",
+    BASIC_AUTH_USERNAME: "basicAuthUsername",
     SETUP_START_TIME: "setupStartTime",
     SHOW_SURVEY_DIALOG_AFTER_LOGIN: "showSurveyDialogAfterLogin",
     SESSION_ACTIVE: "sessionActive",

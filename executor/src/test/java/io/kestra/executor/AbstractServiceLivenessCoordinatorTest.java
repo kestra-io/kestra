@@ -49,6 +49,7 @@ import io.kestra.core.runners.WorkerTaskRunning;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerWorkerLost;
 import io.kestra.core.scheduler.model.TriggerState;
@@ -63,6 +64,7 @@ import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.tasks.test.SleepTrigger;
+import io.kestra.core.tasks.test.StoppableRealtimeTrigger;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.CountDownLatchTask;
@@ -298,6 +300,40 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         // THEN - the scheduler is notified instead of the job being re-emitted to a worker.
         assertThat(lostLatch.await(30, TimeUnit.SECONDS)).isTrue();
         newWorker.close();
+    }
+
+    @Test
+    void shouldReleaseRealtimeTriggerWhenWorkerStopsGracefully() throws Exception {
+        // Given
+        WorkerAgent worker = (WorkerAgent) newWorker();
+        worker.start(1);
+
+        WorkerTrigger workerTrigger = realtimeWorkerTrigger();
+
+        CountDownLatch receivedLatch = new CountDownLatch(1);
+        CountDownLatch releasedLatch = new CountDownLatch(1);
+        triggerEventQueue.addListener(event ->
+        {
+            if (!event.uid().equals(workerTrigger.uid())) {
+                return;
+            }
+            if (event instanceof TriggerReceived) {
+                receivedLatch.countDown();
+            }
+            if (event instanceof TriggerExecutionTerminated terminated && State.Type.FAILED == terminated.executionState()) {
+                releasedLatch.countDown();
+            }
+        });
+
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
+        assertThat(receivedLatch.await(30, TimeUnit.SECONDS)).isTrue();
+        Await.until(() -> !worker.getRunningJobs().isEmpty(), Duration.ofMillis(50), Duration.ofSeconds(30));
+
+        // When
+        worker.close();
+
+        // Then - released by the worker itself, without waiting for the liveness coordinator to declare it lost.
+        assertThat(releasedLatch.await(30, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
@@ -578,6 +614,20 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .id("unit-test")
             .duration(sleep.toMillis())
             .workerSelector(workerQueueId != null ? new io.kestra.core.models.tasks.WorkerSelector(java.util.List.of(workerQueueId), null) : null)
+            .build();
+
+        Map.Entry<ConditionContext, TriggerState> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
+
+        return WorkerTrigger.builder()
+            .trigger(trigger)
+            .data(WorkerTriggerData.from(mockedTrigger.getKey(), mockedTrigger.getValue().context()))
+            .build();
+    }
+
+    private WorkerTrigger realtimeWorkerTrigger() {
+        StoppableRealtimeTrigger trigger = StoppableRealtimeTrigger.builder()
+            .type(StoppableRealtimeTrigger.class.getName())
+            .id("unit-test-realtime")
             .build();
 
         Map.Entry<ConditionContext, TriggerState> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);

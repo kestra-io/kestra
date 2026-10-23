@@ -145,6 +145,7 @@
     "update": "Update",
     "confirmation": "Confirmation",
     "toast confirm": "Are you sure?",
+    "toast_message_column": "Message",
     "common": {
       "back": "Back",
       "openInNewTab": "Open in new tab"
@@ -509,6 +510,7 @@
       "invalid": "Graph error",
       "invalid_description": "An error occurred while loading the graph. Please check the source code for errors.",
       "load_error": "Could not load the topology graph. Please try again.",
+      "expand_subflow_error": "Couldn't expand subflow",
       "add-task": "Add task",
       "add-trigger": "Add a trigger",
       "child-count": "{count} task | {count} tasks"

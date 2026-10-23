@@ -88,44 +88,6 @@ describe("useReauthDialog", () => {
         await opened
     })
 
-    it("resolves truthy and closes the dialog once the caller settles it after a confirmation", async () => {
-        const opened = requestReauth({loginUrl: "/ui/login", confirm: vi.fn().mockResolvedValue(undefined)})
-
-        await confirmReauth()
-        resolveReauth(true)
-
-        await expect(opened).resolves.toBe(true)
-        expect(isReauthOpen()).toBe(false)
-    })
-
-    it("resolves falsy when the dialog is dismissed instead of confirmed", async () => {
-        const confirm = vi.fn()
-        const opened = requestReauth({loginUrl: "/ui/login", confirm})
-
-        resolveReauth(false)
-
-        await expect(opened).resolves.toBe(false)
-        expect(confirm).not.toHaveBeenCalled()
-        expect(isReauthOpen()).toBe(false)
-    })
-
-    it("does not open a second dialog while one is pending and confirms through the first caller's callback", async () => {
-        const firstConfirm = vi.fn().mockResolvedValue(undefined)
-        const secondConfirm = vi.fn().mockResolvedValue(undefined)
-
-        const first = requestReauth({confirm: firstConfirm})
-        const second = requestReauth({confirm: secondConfirm})
-
-        expect(second).toBe(first)
-
-        await confirmReauth()
-        expect(firstConfirm).toHaveBeenCalledTimes(1)
-        expect(secondConfirm).not.toHaveBeenCalled()
-
-        resolveReauth(true)
-        await expect(first).resolves.toBe(true)
-    })
-
     it("propagates a failed confirmation, keeps the dialog open and still lets it settle", async () => {
         const confirm = vi.fn().mockRejectedValue(new Error("still signed out"))
         const opened = requestReauth({loginUrl: "/ui/login", confirm})

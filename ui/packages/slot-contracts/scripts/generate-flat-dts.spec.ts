@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {splitTopLevelMembers} from "./generate-flat-dts"
+import {prettyTypeLiteral, splitTopLevelMembers} from "./generate-flat-dts"
 
 describe("splitTopLevelMembers", () => {
     it("should keep a function-typed member separate from the members after it", () => {
@@ -19,5 +19,11 @@ describe("splitTopLevelMembers", () => {
             "progress: { step: string; taskRunId: string; }[]",
             "taskType: string",
         ])
+    })
+})
+
+describe("prettyTypeLiteral", () => {
+    it("should keep a non-literal type such as an empty zod object's Record as is", () => {
+        expect(prettyTypeLiteral("Record<string, never>", "    ")).toBe("Record<string, never>")
     })
 })

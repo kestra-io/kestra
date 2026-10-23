@@ -49,8 +49,10 @@ export const splitTopLevelMembers = (raw: string): string[] => {
     return members
 }
 
-// Single line `{ a: T; b: U; }` -> multi-line.
-const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+// Single line `{ a: T; b: U; }` -> multi-line. zod 4 prints `z.object({})` as `Record<string, never>`, kept as is.
+export const prettyTypeLiteral = (raw: string, baseIndent: string): string => {
+    if (!raw.trim().startsWith("{")) return raw
+
     const members = splitTopLevelMembers(raw)
     if (members.length === 0) return "{}"
 

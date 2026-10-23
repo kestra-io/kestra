@@ -1,5 +1,5 @@
 import type {Meta, StoryFn} from "@storybook/vue3-vite";
-import {shallowRef} from "vue";
+import {markRaw} from "vue";
 import {expect, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import HomeIcon from "vue-material-design-icons/Home.vue";
@@ -47,100 +47,99 @@ export default {
   ]
 } as Meta<typeof SideBar>;
 
+// Icon components are cyclic, so the menu stays out of args to keep them serializable.
+const menu = [
+  {
+    title: "Home",
+    href: "/",
+    icon: {
+      element: markRaw(HomeIcon),
+      class: "menu-icon"
+      },
+  },
+  {
+      title: "Flows",
+      href: "/flows",
+      icon: {
+        element: markRaw(ContentCopy),
+        class: "menu-icon"
+      },
+  },
+  {
+      title: "Executions",
+      href: "/executions",
+      icon: {
+        element: markRaw(PlayOutline),
+        class: "menu-icon"
+      },
+  },
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: {
+      element: markRaw(ChartLineVariant),
+      class: "menu-icon"
+    },
+    child: [
+      {
+        id: "dashboard-submenu1",
+        title: "Submenu 1",
+        href: "/dashboard/submenu1",
+        icon: {
+          element: markRaw(ShieldCheckOutline),
+          class: "menu-icon"
+        },
+      },
+      {
+        id: "dashboard-submenu2",
+        title: "Submenu 2",
+        href: "/dashboard/submenu2",
+        icon: {
+          element: markRaw(ChartBoxOutline),
+          class: "menu-icon"
+        },
+      },
+    ],
+  },
+  {
+    title: "Settings",
+    href: "/settings",
+    icon: {
+      element: markRaw(CogOutline),
+      class: "menu-icon"
+    },
+    child: [
+      {
+        id: "settings-submenu1",
+        title: "Submenu 1",
+        href: "/settings/submenu1",
+        icon: {
+          element: markRaw(ShieldLockOutline),
+          class: "menu-icon"
+        },
+      },
+      {
+        id: "settings-submenu2",
+        title: "Submenu 2",
+        href: "/settings/submenu2",
+        icon: {
+          element: markRaw(ServerOutline),
+          class: "menu-icon"
+        },
+      },
+    ]
+  },
+];
+
 const Template: StoryFn<typeof SideBar> = (args) => ({
   setup() {
-    return () => <SideBar {...args} />;
+    return () => <SideBar {...args} menu={menu} />;
   },
 });
 
 export const Default = Template.bind({});
-Default.args = {
-  menu: [
-    {
-      title: "Home",
-      href: "/",
-      icon: {
-        element: shallowRef(HomeIcon),
-        class: "menu-icon"
-        },
-    },
-    {
-        title: "Flows",
-        href: "/flows",
-        icon: {
-          element: shallowRef(ContentCopy),
-          class: "menu-icon"
-        },
-    },
-    {
-        title: "Executions",
-        href: "/executions",
-        icon: {
-          element: shallowRef(PlayOutline),
-          class: "menu-icon"
-        },
-    },
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-      icon: {
-        element: shallowRef(ChartLineVariant),
-        class: "menu-icon"
-      },
-      child: [
-        {
-          id: "dashboard-submenu1",
-          title: "Submenu 1",
-          href: "/dashboard/submenu1",
-          icon: {
-            element: shallowRef(ShieldCheckOutline),
-            class: "menu-icon"
-          },
-        },
-        {
-          id: "dashboard-submenu2",
-          title: "Submenu 2",
-          href: "/dashboard/submenu2",
-          icon: {
-            element: shallowRef(ChartBoxOutline),
-            class: "menu-icon"
-          },
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      href: "/settings",
-      icon: {
-        element: shallowRef(CogOutline),
-        class: "menu-icon"
-      },
-      child: [
-        {
-          id: "settings-submenu1",
-          title: "Submenu 1",
-          href: "/settings/submenu1",
-          icon: {
-            element: shallowRef(ShieldLockOutline),
-            class: "menu-icon"
-          },
-        },
-        {
-          id: "settings-submenu2",
-          title: "Submenu 2",
-          href: "/settings/submenu2",
-          icon: {
-            element: shallowRef(ServerOutline),
-            class: "menu-icon"
-          },
-        },
-      ]
-    },
-  ]
-};
 
 export const ContextMenuOnLink = Template.bind({});
-ContextMenuOnLink.args = Default.args;
 ContextMenuOnLink.play = async ({canvasElement}) => {
   const link = within(canvasElement).getByRole("link", {name: /Flows/});
 
@@ -152,7 +151,6 @@ ContextMenuOnLink.play = async ({canvasElement}) => {
 };
 
 export const ContextMenuOnSectionTitle = Template.bind({});
-ContextMenuOnSectionTitle.args = Default.args;
 ContextMenuOnSectionTitle.play = async ({canvasElement}) => {
   const sectionTitle = within(canvasElement).getByRole("button", {name: /Dashboard/});
 

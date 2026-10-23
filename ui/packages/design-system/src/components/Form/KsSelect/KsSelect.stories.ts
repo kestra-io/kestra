@@ -482,3 +482,29 @@ export const WithLabelSlot: Story = {
     }),
     args: {size: "small", placeholder: "Version"},
 }
+
+/** Mobile – on touch screens (`pointer: coarse`) the select is 44px high with 16px text */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsSelect, ElOption},
+        setup() { return {value: ref("failed")} },
+        template: `
+            <div style="padding:16px">
+                <ks-select v-model="value" placeholder="State">
+                    <el-option label="Failed" value="failed" />
+                    <el-option label="Success" value="success" />
+                </ks-select>
+            </div>
+        `,
+    }),
+}

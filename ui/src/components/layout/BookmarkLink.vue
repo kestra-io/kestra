@@ -136,6 +136,13 @@
     visibility: visible;
 }
 
+@media (hover: none) {
+    .bookmark-link:not(.editing) .buttons {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
 .bookmark-title {
     flex: 1 1 auto;
     min-width: 0;

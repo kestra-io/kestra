@@ -159,7 +159,7 @@
     } = props.picker
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-editor-picker-overlay {
         position: fixed;
         inset: 0;
@@ -250,10 +250,10 @@
         min-height: 0;
         max-height: 320px;
         overflow-y: auto;
+    }
 
-        &--loading {
-            min-height: var(--ks-spacing-10);
-        }
+    .block-editor-picker-list--loading {
+        min-height: var(--ks-spacing-10);
     }
 
     .block-editor-picker-row {
@@ -268,10 +268,13 @@
         text-align: left;
         transition: background-color 0.15s;
 
-        &:hover,
-        &--focused {
+        &:hover {
             background: var(--ks-bg-hover);
         }
+    }
+
+    .block-editor-picker-row--focused {
+        background: var(--ks-bg-hover);
     }
 
     .block-editor-picker-icon {

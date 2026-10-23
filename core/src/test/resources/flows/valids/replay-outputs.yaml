@@ -1,0 +1,23 @@
+id: replay-outputs
+namespace: io.kestra.tests
+
+tasks:
+  - id: kept
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      carried: "yes"
+  - id: boom
+    type: io.kestra.plugin.core.execution.Fail
+    errorMessage: "boom failed"
+
+errors:
+  - id: on_error
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      stale: "yes"
+
+finally:
+  - id: fin
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      stale: "yes"

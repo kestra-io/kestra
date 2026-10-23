@@ -82,7 +82,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .fix-with-ai-icon {
         margin-inline-end: var(--ks-spacing-1);
     }

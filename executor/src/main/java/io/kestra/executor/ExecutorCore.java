@@ -284,6 +284,10 @@ public class ExecutorCore {
                         ListUtils.isEmpty(execution.getTaskRunList())
                 ) {
                     sendTriggerExecutionTerminated(execution);
+                    FlowWithSource flow = executor.getFlow() != null
+                        ? executor.getFlow()
+                        : flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                    processFlowTriggers(flow, execution);
                     this.followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.TERMINATED));
                     emitExecutionStatistic(execution);
                     notifyExecutionTerminated(execution);

@@ -167,3 +167,28 @@ export const WithDescriptionArea: Story = {
         `,
     }),
 }
+
+/** Mobile – the breadcrumb keeps the entity name and the bookmark star is hidden; the app offers the bookmark in the actions menu */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsTopNavBar},
+        template: `
+            <ks-top-nav-bar
+                title="monthly_close"
+                :breadcrumb="[{label: 'Executions', onClick: () => {}}, {label: 'company.finance', onClick: () => {}}]"
+                sidebar-collapsed
+                show-dock-toggle
+            />
+        `,
+    }),
+}

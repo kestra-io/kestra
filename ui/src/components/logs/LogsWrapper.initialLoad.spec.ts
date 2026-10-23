@@ -106,9 +106,7 @@ describe("LogsWrapper initial load", () => {
         await router.isReady()
         // Stands in for anything that keeps the default out of the URL for good — a route guard
         // rejecting the navigation, or one that supersedes it and drops the level again.
-        router.beforeEach((to, _from, next) => {
-            next(!to.query["filters[level][GREATER_THAN_OR_EQUAL_TO]"])
-        })
+        router.beforeEach((to) => !to.query["filters[level][GREATER_THAN_OR_EQUAL_TO]"])
 
         const wrapper = mountLogsWrapper(router)
         await settle()

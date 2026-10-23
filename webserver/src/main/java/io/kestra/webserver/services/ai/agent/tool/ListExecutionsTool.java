@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -21,7 +22,7 @@ import jakarta.inject.Singleton;
  * one compact line per execution.
  */
 @Singleton
-public class ListExecutionsTool implements AiPlatformTool {
+public class ListExecutionsTool implements McpPlatformTool {
     private static final int MAX_RESULTS = 50;
 
     private final ExecutionRepositoryInterface executionRepository;
@@ -39,6 +40,11 @@ public class ListExecutionsTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

@@ -7,25 +7,27 @@
  * URL has no query but a saved state exists. Exposes `loadInit` so consumers can
  * gate their initial data fetch and avoid racing the in-flight restore navigation.
  */
-import {computed, onMounted, ref, watch} from "vue"
+import {computed, onMounted, ref, Ref, watch} from "vue"
 import {isNavigationFailure, NavigationFailureType, RouteLocation, Router, useRoute, useRouter} from "vue-router"
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
+    /** The entity the page shows when its route does not name it: nothing is saved while it is unset, and the page restores with `goToRestoreUrl()` once it is. */
+    scope?: Ref<string | undefined>;
 }
 
-function getLocalStorageName(route: RouteLocation): string {
-    const scope = (["tab", "namespace", "id", "kind", "tenant"] as const)
+function getLocalStorageName(route: RouteLocation, scope?: string): string {
+    const routeScope = (["tab", "namespace", "id", "kind", "tenant"] as const)
         .map((key) => route.params[key])
         .filter((value) => value)
         .map((value) => "_" + value)
         .join("")
 
-    return `${route.name?.toString().replace("/", "_")}${scope}_restore_url`
+    return `${route.name?.toString().replace("/", "_")}${scope ? "_" + scope : ""}${routeScope}_restore_url`
 }
 
-function getRestoredUrlValue(route: RouteLocation) {
-    const raw = window.sessionStorage.getItem(getLocalStorageName(route))
+function getRestoredUrlValue(route: RouteLocation, scope?: string) {
+    const raw = window.sessionStorage.getItem(getLocalStorageName(route, scope))
     if (!raw) return null
 
     try {
@@ -36,8 +38,8 @@ function getRestoredUrlValue(route: RouteLocation) {
     }
 }
 
-export function getRestoredQuery(route: RouteLocation) {
-    const localStorageValue = getRestoredUrlValue(route)
+export function getRestoredQuery(route: RouteLocation, scope?: string) {
+    const localStorageValue = getRestoredUrlValue(route, scope)
     if (localStorageValue === null) {
         return {query: route.query, change: false, localStorageValue}
     }
@@ -76,14 +78,15 @@ function navigationSettled(router: Router): Promise<void> {
 }
 
 export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
-    const {restoreUrl = true} = options
+    const {restoreUrl = true, scope} = options
 
     const route = useRoute()
     const router = useRouter()
 
     const loadInit = ref(true)
 
-    const localStorageName = computed(() => getLocalStorageName(route))
+    const isScopePending = computed(() => scope !== undefined && !scope.value)
+    const localStorageName = computed(() => getLocalStorageName(route, scope?.value))
 
     const localStorageValue = computed(() => {
         const raw = window.sessionStorage.getItem(localStorageName.value)
@@ -93,7 +96,7 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
     let restoring = false
 
     const saveRestoreUrl = () => {
-        if (restoring) return
+        if (restoring || isScopePending.value) return
         if (!restoreUrl || route.query.noRestore) return
         if (Object.keys(route.query).length === 0) {
             window.sessionStorage.removeItem(localStorageName.value)
@@ -107,15 +110,15 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         // fires before router.replace's .then, and that reload must see loadInit=true.
         loadInit.value = true
 
-        if (restoring) return
+        if (restoring || isScopePending.value) return
 
-        // A page that rewrites its own URL on mount (e.g. the dashboard appending its
-        // id param) cancels our replace and the restored filters are lost, so re-assert
+        // A page that rewrites its own URL on mount (e.g. a tab writing its default
+        // filter) cancels our replace and the restored filters are lost, so re-assert
         // them once that navigation has settled.
         restoring = true
         try {
             for (let attempt = 0; attempt < 2; attempt++) {
-                const {query, change} = getRestoredQuery(route)
+                const {query, change} = getRestoredQuery(route, scope?.value)
                 if (!change) return
 
                 const failure = await router.replace({query})
@@ -130,7 +133,7 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
 
     // Settle loadInit in setup so children can gate their first load and avoid
     // racing the in-flight restore navigation.
-    if (restoreUrl && localStorageValue.value && Object.keys(route.query).length === 0) {
+    if (restoreUrl && !scope && localStorageValue.value && Object.keys(route.query).length === 0) {
         const {change} = getRestoredQuery(route)
         if (change) {
             loadInit.value = false

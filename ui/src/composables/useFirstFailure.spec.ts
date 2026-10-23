@@ -1,8 +1,9 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
-import {createPinia, setActivePinia} from "pinia"
+import {setActivePinia} from "pinia"
 import {effectScope, nextTick, ref} from "vue"
 import {useFirstFailure} from "./useFirstFailure"
 import {useExecutionsStore, type Execution} from "../stores/executions"
+import {routedPinia} from "../../tests/unit/memoryRouter"
 
 const failedExecution = (id: string, taskRunId = "tr-1"): Execution => ({
     id,
@@ -20,7 +21,7 @@ const flush = async () => {
 
 describe("useFirstFailure", () => {
     beforeEach(() => {
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
     })
 
     it("asks for the error logs of the failed task run only", async () => {

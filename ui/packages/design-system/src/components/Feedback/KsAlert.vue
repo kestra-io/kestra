@@ -16,7 +16,12 @@
     </ElAlert>
 </template>
 
+<script lang="ts">
+    export const KS_ALERT_TYPES = ["success", "warning", "info", "error"] as const
+    export type KsAlertType = typeof KS_ALERT_TYPES[number]
+</script>
 <script setup lang="ts">
+    import {computed} from "vue"
     import {ElAlert} from "element-plus"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -28,7 +33,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        type?: "success" | "warning" | "info" | "error"
+        type?: KsAlertType
         title?: string
         description?: string
         closable?: boolean
@@ -41,6 +46,13 @@
     })
 
     const filteredProps = useFilteredProps(props, ["banner"])
+
+    // Element Plus renders an untyped alert as info. KsAlert.test.ts checks these tokens exist.
+    const alertType = computed(() => props.type ?? "info")
+    const borderColor = computed(() => `var(--ks-border-${alertType.value})`)
+    const backgroundColor = computed(() => `var(--ks-bg-${alertType.value})`)
+    const textColor = computed(() => `var(--ks-text-${alertType.value})`)
+    const iconColor = computed(() => `var(--ks-icon-${alertType.value})`)
 
     defineSlots<{
         default?(): unknown
@@ -108,67 +120,23 @@
             font-weight: bold;
         }
 
-        &.kel-alert--success.is-light {
-            border: 1px solid var(--ks-border-success);
-            background-color: var(--ks-bg-success);
-            --kel-color-success: var(--ks-text-success);
+        &.is-light {
+            border: 1px solid v-bind(borderColor);
+            background-color: v-bind(backgroundColor);
+            color: v-bind(textColor);
+
+            & .kel-alert__description {
+                color: inherit;
+            }
+
+            & .kel-alert__icon {
+                color: v-bind(iconColor);
+            }
 
             &.is-banner {
                 border-width: 0 0 1px;
                 border-radius: 0;
-                --kel-color-success: var(--ks-text-primary);
-            }
-
-            & .kel-alert__icon {
-                color: var(--ks-icon-success);
-            }
-        }
-
-        &.kel-alert--info.is-light {
-            border: 1px solid var(--ks-border-info);
-            background-color: var(--ks-bg-info);
-            --kel-color-info: var(--ks-text-info);
-
-            &.is-banner {
-                border-width: 0 0 1px;
-                border-radius: 0;
-                --kel-color-info: var(--ks-text-primary);
-            }
-
-            & .kel-alert__icon {
-                color: var(--ks-icon-info);
-            }
-        }
-
-        &.kel-alert--warning.is-light {
-            border: 1px solid var(--ks-border-warning);
-            background-color: var(--ks-bg-warning);
-            --kel-color-warning: var(--ks-text-warning);
-
-            &.is-banner {
-                border-width: 0 0 1px;
-                border-radius: 0;
-                --kel-color-warning: var(--ks-text-primary);
-            }
-
-            & .kel-alert__icon {
-                color: var(--ks-icon-warning);
-            }
-        }
-
-        &.kel-alert--error.is-light {
-            border: 1px solid var(--ks-border-error);
-            background-color: var(--ks-bg-error);
-            --kel-color-error: var(--ks-text-error);
-
-            &.is-banner {
-                border-width: 0 0 1px;
-                border-radius: 0;
-                --kel-color-error: var(--ks-text-primary);
-            }
-
-            & .kel-alert__icon {
-                color: var(--ks-icon-error);
+                color: var(--ks-text-primary);
             }
         }
     }

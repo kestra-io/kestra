@@ -509,7 +509,7 @@ If you must write a translation by hand:
 
 1. Identify gaps by running `npm run translations:check`.
 2. Follow these translation rules (mirroring `ui/scripts/translations/generateTranslations.ts`, the generator shared by OSS and EE):
-   - **Reserved English terms — never translate:** `kv store`, `namespace`, `tenant`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
+   - **Reserved English terms — never translate:** `kv store`, `namespace`, `tenant`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `artifact`, `min`, `max`.
    - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
    - **Preserve `{placeholder}` variables** exactly — vue-i18n uses a **single** pair of braces. Do not translate the name inside the braces, do not rename it, and never write `{{placeholder}}`: double braces are a compile error (`Not allowed nest placeholder`) and make `t()` throw at render time. Each translation must carry exactly the same placeholders as the English source — no invented ones, none dropped.
    - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).

@@ -291,7 +291,7 @@
             large
         >
             <template #header>
-                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span" scope="global">
                     <template #id><code>{{ selectedFlow.id }}</code></template>
                 </i18n-t>
             </template>

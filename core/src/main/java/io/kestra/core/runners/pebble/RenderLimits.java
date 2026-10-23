@@ -1,5 +1,7 @@
 package io.kestra.core.runners.pebble;
 
+import java.math.BigInteger;
+
 /**
  * Shared helpers for enforcing Pebble rendering resource limits.
  * <p>
@@ -23,6 +25,17 @@ public final class RenderLimits {
      */
     public static void ensureAtMost(final long requested, final long max, final String messageFormat) {
         if (requested > max) {
+            throw new RenderLimitExceededException(messageFormat.formatted(max, requested));
+        }
+    }
+
+    /**
+     * Overload for sizes that may exceed {@code long}, so overflow cannot bypass the check.
+     *
+     * @throws RenderLimitExceededException if {@code requested > max}
+     */
+    public static void ensureAtMost(final BigInteger requested, final long max, final String messageFormat) {
+        if (requested.compareTo(BigInteger.valueOf(max)) > 0) {
             throw new RenderLimitExceededException(messageFormat.formatted(max, requested));
         }
     }

@@ -251,7 +251,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         this.jdbcRepository.getDslContextWrapper().transaction(configuration -> {
             DSLContext context = DSL.using(configuration);
 
-            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId)).and(field("namespace").eq(namespace)).and(field("flow_id").eq(flowId));
+            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId)).and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace)).and(field("flow_id").eq(flowId));
 
             if (triggerId != null) {
                 delete = delete.and(field("trigger_id").eq(triggerId));
@@ -277,9 +277,9 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 // its descendants, consistent with the documented behavior and PurgeExecutions. With a
                 // flowId, it targets that flow's exact namespace.
                 if (flowId != null) {
-                    delete = delete.and(field("namespace").eq(namespace));
+                    delete = delete.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace));
                 } else {
-                    delete = delete.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+                    delete = delete.and(CaseSensitiveMatch.eq(field("namespace", String.class), namespace).or(CaseSensitiveMatch.startsWith(field("namespace", String.class), namespace + ".")));
                 }
             }
 

@@ -1456,11 +1456,16 @@ public class ExecutorService {
                     }
                 ).toList();
                 Execution newExecution = executor.getExecution().withTaskRunList(newTaskRuns).withState(State.Type.BREAKPOINT);
+                // the Playground replays from a breakpoint and never resumes it, so a suspended run would only hold its concurrency slot
+                boolean endsAtBreakpoint = ExecutionKind.PLAYGROUND == newExecution.getKind();
+                if (endsAtBreakpoint) {
+                    newExecution = executionService.kill(newExecution, executor.getFlow());
+                }
                 executorToReturn = executorToReturn.withExecution(newExecution, "handleBreakpoint");
                 Logs.logExecution(
                     newExecution,
                     Level.INFO,
-                    "Flow is suspended at a breakpoint."
+                    endsAtBreakpoint ? "Playground execution ended at a breakpoint." : "Flow is suspended at a breakpoint."
                 );
             }
         }
@@ -1478,7 +1483,8 @@ public class ExecutorService {
 
         // Send other TaskRun to the worker (create worker tasks)
         List<ExecutorContext.ExecutorWorkerTask> processingTasks = workerTasks.get(false);
-        if (processingTasks != null && !processingTasks.isEmpty() && !executor.getExecution().getState().isBreakpoint()) {
+        if (processingTasks != null && !processingTasks.isEmpty() && !executor.getExecution().getState().isBreakpoint()
+            && State.Type.KILLING != executorToReturn.getExecution().getState().getCurrent()) {
             executorToReturn = executorToReturn.withWorkerTasks(processingTasks, "handleWorkerTasks");
 
             metricRegistry

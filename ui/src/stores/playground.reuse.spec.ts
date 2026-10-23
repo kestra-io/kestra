@@ -85,4 +85,15 @@ describe("playground reuse of earlier task results", () => {
         expect(executionsStore.replayExecution).not.toHaveBeenCalled()
         expect(executionsStore.triggerExecution).toHaveBeenCalledTimes(2)
     })
+
+    it("starts a fresh execution when the run to replay was purged", async () => {
+        const playground = await playgroundAfterFirstRun()
+        executionsStore.replayExecution.mockRejectedValueOnce({response: {status: 404}})
+
+        flowStore.flow = flowAt(2, "hello")
+        await playground.runUntilTask("b")
+
+        expect(executionsStore.replayExecution).toHaveBeenCalledTimes(1)
+        expect(executionsStore.triggerExecution).toHaveBeenCalledTimes(2)
+    })
 })

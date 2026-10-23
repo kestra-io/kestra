@@ -1,0 +1,19 @@
+id: retry-working-directory-child
+namespace: io.kestra.tests
+
+tasks:
+  - id: working_directory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: always_fails
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: This task always fails
+        retry:
+          type: constant
+          interval: PT1S
+          maxAttempts: 2
+
+errors:
+  - id: error_handler
+    type: io.kestra.plugin.core.log.Log
+    message: The errors branch ran

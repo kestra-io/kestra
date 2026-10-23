@@ -182,6 +182,18 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(1).attemptNumber()).isEqualTo(3);
     }
 
+    public void retryWorkingDirectoryChild(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        // the child's two attempts are two runs of the WorkingDirectory, each under a fresh child task run
+        assertThat(execution.findTaskRunsByTaskId("working_directory")).singleElement()
+            .satisfies(workingDirectory -> assertThat(workingDirectory.getAttempts()).hasSize(2));
+        assertThat(execution.findTaskRunsByTaskId("always_fails")).singleElement()
+            .satisfies(child -> assertThat(child.getAttempts()).hasSize(1));
+        assertThat(execution.findTaskRunsByTaskId("error_handler")).singleElement()
+            .extracting(handler -> handler.getState().getCurrent())
+            .isEqualTo(State.Type.SUCCESS);
+    }
+
     public void retryFlowableNestedChild(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().get(2).attemptNumber()).isEqualTo(3);

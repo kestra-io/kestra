@@ -10,6 +10,7 @@ import io.micronaut.context.annotation.Context;
  * Provides information about the current worker.
  */
 @Context
+@io.micronaut.context.annotation.Requires(beans = Worker.class)
 public class WorkerInfo {
 
     private final String workerId = IdUtils.create();

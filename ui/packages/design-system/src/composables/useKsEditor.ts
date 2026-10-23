@@ -29,6 +29,7 @@ import {useFlowYamlEditor} from "./useFlowYamlEditor"
 import {useSuggestWidgetIcons} from "./useSuggestWidgetIcons"
 import {registerEditorActions} from "./useEditorActions"
 import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "../utils/editorTypes"
+import {editorFontFamily} from "../utils/editorFont"
 type ICodeEditor = monacoEditorNs.ICodeEditor
 
 registerMonacoThemes()
@@ -251,7 +252,7 @@ export function useKsEditor(
             // text input; that surface isn't a real <textarea>/[contenteditable], which breaks Playwright's
             // .fill() and other tooling that expects the old input model. Opt back into it explicitly.
             editContext: false,
-            fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
+            fontFamily: editorFontFamily(),
             fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,

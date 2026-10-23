@@ -562,15 +562,6 @@
     "inputs": "इनपुट्स",
     "input": "इनपुट",
     "variables": "वेरिएबल्स",
-    "execution_artifacts": {
-      "title": "आर्टिफैक्ट्स",
-      "empty": "इस Flow का कोई भी Task एक artifact प्रदान नहीं करता है।",
-      "count": "{artifacts} · {tasks}",
-      "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
-      "tasks": "कोई Task नहीं | {count} Task | {count} Task",
-      "fullscreen": "फ़ुलस्क्रीन",
-      "exit_fullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
-    },
     "variable_explorer": {
       "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",

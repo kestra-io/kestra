@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -221,10 +222,25 @@ public class TaskOutputService extends AbstractOutputService {
         return this.outputRepository.purgeByExecutionIds(executions.stream().map(Execution::getId).toList());
     }
 
+    /**
+     * Copy outputs into the new task run, giving private offloaded maps their own storage lifetime.
+     * A failed blob copy is propagated before the destination output record is saved.
+     */
     public void copyOutputs(TaskRun originalTaskRun, TaskRun newTaskRun) {
         var previousOutput = outputRepository.findById(originalTaskRun.getTenantId(), originalTaskRun.getId());
         if (previousOutput.isPresent()) {
-            var newOutput = new TaskOutput(newTaskRun.getId(), newTaskRun.getTenantId(), newTaskRun.getExecutionId(), previousOutput.get().value(), previousOutput.get().uri());
+            var originalOutput = previousOutput.get();
+            String uri = originalOutput.uri();
+            if (originalOutput.value() == null && uri != null) {
+                try {
+                    uri = copyInInternalStorage(StorageContext.forTask(originalTaskRun), StorageContext.forTask(newTaskRun), URI.create(uri)).toString();
+                } catch (InternalException e) {
+                    throw new KestraRuntimeException(
+                        "Cannot copy outputs from task run '%s' to task run '%s'.".formatted(originalTaskRun.getId(), newTaskRun.getId()), e
+                    );
+                }
+            }
+            var newOutput = new TaskOutput(newTaskRun.getId(), newTaskRun.getTenantId(), newTaskRun.getExecutionId(), originalOutput.value(), uri);
             outputRepository.save(newOutput);
         }
     }

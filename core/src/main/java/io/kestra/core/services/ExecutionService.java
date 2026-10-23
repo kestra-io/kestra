@@ -409,7 +409,7 @@ public class ExecutionService {
                 throwFunction(
                     originalTaskRun ->
                     {
-                        TaskRun newTaskRun = this.mapTaskRun(
+                        return this.mapTaskRun(
                             flow,
                             originalTaskRun,
                             mappingTaskRunId,
@@ -417,10 +417,6 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
-                        if (revision != null) {
-                            taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
-                        }
-                        return newTaskRun;
                     }
                 )
             )
@@ -446,6 +442,10 @@ public class ExecutionService {
         ListUtils.emptyOnNull(flow.getAfterExecution())
             .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
 
+        if (revision != null) {
+            this.copyTaskOutputs(execution, newTaskRuns, mappingTaskRunId);
+        }
+
         // Build and launch new execution
         Execution newExecution = execution
             .childExecution(
@@ -466,6 +466,16 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private void copyTaskOutputs(Execution execution, List<TaskRun> newTaskRuns, Map<String, String> mappingTaskRunId) {
+        Map<String, TaskRun> byId = newTaskRuns.stream().collect(Collectors.toMap(TaskRun::getId, taskRun -> taskRun));
+        for (TaskRun originalTaskRun : execution.getTaskRunList()) {
+            TaskRun newTaskRun = byId.get(mappingTaskRunId.get(originalTaskRun.getId()));
+            if (newTaskRun != null) {
+                taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+            }
+        }
     }
 
     // Non-terminated task runs (e.g., running in parallel) will never complete in the source execution, so they must be
@@ -564,7 +574,7 @@ public class ExecutionService {
                     .stream()
                     .map(throwFunction(originalTaskRun ->
                     {
-                        TaskRun newTaskRun = this.mapTaskRun(
+                        return this.mapTaskRun(
                             flow,
                             originalTaskRun,
                             mappingTaskRunId,
@@ -572,8 +582,6 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
-                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
-                        return newTaskRun;
                     }))
                     .toList()
             );
@@ -604,6 +612,7 @@ public class ExecutionService {
             // Worker task, we need to remove all child in order to be restarted
             this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
                 .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
+            this.copyTaskOutputs(execution, newTaskRuns, mappingTaskRunId);
         }
 
         // Build and launch new execution

@@ -115,4 +115,25 @@ public class NanoIDFuntionTest {
             .hasMessageContaining("'length' must be greater than: 0");
     }
 
+    @Test
+    void checkIntegerLength() throws Exception {
+        // Given an Integer variable (e.g., INT input or list size)
+        String rendered = variableRenderer.render(
+            "{{ nanoId(length) }}", Map.of("length", Integer.valueOf(8))
+        );
+        assertThat(!rendered.isEmpty()).as(rendered).isTrue();
+        assertThat(rendered.length()).isEqualTo(8);
+    }
+
+    @Test
+    void shouldThrowWhenLengthIsNotANumber() {
+        // Given a non-numeric length
+        // When rendering
+        // Then it fails with a descriptive error instead of silently falling back to default 21
+        assertThatThrownBy(() -> variableRenderer.render(
+            "{{ nanoId(length='invalid') }}", Collections.emptyMap()
+        )).isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("'length' must be a number");
+    }
+
 }

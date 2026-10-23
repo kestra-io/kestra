@@ -67,6 +67,33 @@ describe("KsFilter", () => {
         // FilterOptions is hidden by default (showOptions starts false)
         expect(wrapper.find(".expand-panel").exists()).toBe(false)
     })
+
+    test("returnsTheRefreshCallbackPromiseAndInvokesItOnce", async () => {
+        let context: FilterContext | undefined
+        const Harness = defineComponent({
+            setup() {
+                context = inject(FILTER_CONTEXT_INJECTION_KEY)
+                return () => h("div")
+            },
+        })
+        const refreshPromise = Promise.resolve("refreshed")
+        const callback = vi.fn(() => refreshPromise)
+        const wrapper = i18nMount(KsFilter, {
+            props: {
+                configuration: {title: "", keys: []},
+                tableOptions: {refresh: {shown: true, callback}},
+            },
+            slots: {extra: () => h(Harness)},
+            global: globalConfig,
+        })
+
+        const result = context!.refreshData()
+
+        expect(result).toBe(refreshPromise)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(wrapper.emitted("refresh")).toHaveLength(1)
+        await result
+    })
 })
 
 describe("KsFilter saved-filter analytics", () => {

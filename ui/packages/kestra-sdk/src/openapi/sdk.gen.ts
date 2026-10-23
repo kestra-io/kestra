@@ -939,6 +939,7 @@ export const _72929E1b = <ThrowOnError extends boolean = true>(parameters: {
     deleteLogs?: boolean;
     deleteMetrics?: boolean;
     deleteStorage?: boolean;
+    async?: boolean;
     body: Array<string>;
 }, options?: Options<never, ThrowOnError>): RequestResult<DeleteExecutionsByIdsResponses, DeleteExecutionsByIdsErrors, ThrowOnError> => {
     const params = buildClientParams([parameters], [{ args: [
@@ -947,6 +948,7 @@ export const _72929E1b = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'deleteLogs' },
                 { in: 'query', key: 'deleteMetrics' },
                 { in: 'query', key: 'deleteStorage' },
+                { in: 'query', key: 'async' },
                 { key: 'body', map: 'body' }
             ] }]);
     return (options?.client ?? client).delete<DeleteExecutionsByIdsResponses, DeleteExecutionsByIdsErrors, ThrowOnError>({
@@ -971,6 +973,7 @@ export const _18Dbd36b = <ThrowOnError extends boolean = true>(parameters: {
     deleteLogs?: boolean;
     deleteMetrics?: boolean;
     deleteStorage?: boolean;
+    async?: boolean;
 }, options?: Options<never, ThrowOnError>): RequestResult<DeleteExecutionsByQueryResponses, DeleteExecutionsByQueryErrors, ThrowOnError> => {
     const params = buildClientParams([parameters], [{ args: [
                 { in: 'path', key: 'tenant' },
@@ -978,7 +981,8 @@ export const _18Dbd36b = <ThrowOnError extends boolean = true>(parameters: {
                 { in: 'query', key: 'includeNonTerminated' },
                 { in: 'query', key: 'deleteLogs' },
                 { in: 'query', key: 'deleteMetrics' },
-                { in: 'query', key: 'deleteStorage' }
+                { in: 'query', key: 'deleteStorage' },
+                { in: 'query', key: 'async' }
             ] }]);
     return (options?.client ?? client).delete<DeleteExecutionsByQueryResponses, DeleteExecutionsByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/by-query',

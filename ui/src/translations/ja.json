@@ -306,6 +306,7 @@
       "ongoing": "進行中",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "{count} 件の実行を削除中",
           "EXECUTION_KILL": "{count} 件の実行をキル中",
           "EXECUTION_PAUSE": "{count} 件の実行を一時停止中",
           "EXECUTION_RESUME": "{count} 件の実行を再開中",
@@ -322,6 +323,25 @@
           "BACKFILL_PAUSE": "{count} 件の backfill を一時停止中",
           "BACKFILL_RESUME": "{count} 件の backfill を再開中",
           "BACKFILL_DELETE": "{count} 件の backfill を削除中"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "{count} 件の実行の削除がリクエストされました",
+          "EXECUTION_KILL": "{count} 件の実行に対して停止がリクエストされました",
+          "EXECUTION_PAUSE": "{count} 件の実行に一時停止がリクエストされました",
+          "EXECUTION_RESUME": "{count} 件の実行の再開がリクエストされました",
+          "EXECUTION_RESTART": "{count} 件の実行の再起動がリクエストされました",
+          "EXECUTION_REPLAY": "{count} 件の実行でリプレイがリクエストされました",
+          "EXECUTION_FORCE_RUN": "{count} 件の実行に対して強制実行がリクエストされました",
+          "EXECUTION_UNQUEUE": "{count} 件の実行のキュー解除がリクエストされました",
+          "EXECUTION_CHANGE_STATUS": "{count} 件の実行のステータス変更がリクエストされました",
+          "EXECUTION_SET_LABELS": "{count} 件の実行のラベル更新をリクエストしました",
+          "TRIGGER_UNLOCK": "{count} 個のトリガーのロック解除がリクエストされました",
+          "TRIGGER_DELETE": "{count}個のトリガーの削除がリクエストされました",
+          "TRIGGER_DISABLE": "{count} 個のトリガーに対して無効化がリクエストされました",
+          "TRIGGER_ENABLE": "{count} 個のトリガーに対して有効化がリクエストされました",
+          "BACKFILL_PAUSE": "{count} 件のバックフィルに一時停止がリクエストされました",
+          "BACKFILL_RESUME": "{count} 件のバックフィル再開がリクエストされました",
+          "BACKFILL_DELETE": "{count} 件のバックフィルの削除がリクエストされました"
         },
         "processed": "{count} 件処理済み",
         "rejected": "{count} 件拒否",

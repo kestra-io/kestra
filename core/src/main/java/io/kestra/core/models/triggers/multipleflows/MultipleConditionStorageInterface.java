@@ -3,13 +3,16 @@ package io.kestra.core.models.triggers.multipleflows;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TimeWindow;
 
@@ -20,7 +23,28 @@ public interface MultipleConditionStorageInterface {
 
     List<MultipleConditionWindow> expired(String tenantId);
 
+    /**
+     * Locks the windows of the given multiple conditions inside a transaction, creating the missing ones, then calls the consumer.
+     * The consumer must use the storage it receives, which is bound to the transaction, instead of this one.
+     * Concurrent calls for the same multiple conditions are serialized.
+     * <p>
+     * The default implementation is not transactional, it is only safe for storages whose evaluations are already serialized (like the Kafka one).
+     */
+    default Execution process(FlowId flow, List<MultipleCondition> multipleConditions, Map<String, Object> outputs, BiFunction<MultipleConditionStorageInterface, List<MultipleConditionWindow>, Execution> consumer) {
+        List<MultipleConditionWindow> windows = multipleConditions.stream()
+            .sorted(Comparator.comparing(MultipleCondition::getId))
+            .map(multipleCondition -> getOrCreate(flow, multipleCondition, outputs))
+            .toList();
+        return consumer.apply(this, windows);
+    }
+
     default MultipleConditionWindow getOrCreate(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
+        return this.get(flow, multipleCondition.getId())
+            .filter(m -> m.isValid(ZonedDateTime.now()))
+            .orElseGet(() -> create(flow, multipleCondition, outputs));
+    }
+
+    default MultipleConditionWindow create(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
         TimeWindow timeWindow = multipleCondition.getTimeWindow() != null ? multipleCondition.getTimeWindow() : TimeWindow.builder().build();
 
@@ -62,20 +86,16 @@ public interface MultipleConditionStorageInterface {
             );
         };
 
-        return this.get(flow, multipleCondition.getId())
-            .filter(m -> m.isValid(ZonedDateTime.now()))
-            .orElseGet(
-                () -> MultipleConditionWindow.builder()
-                    .namespace(flow.getNamespace())
-                    .flowId(flow.getId())
-                    .tenantId(flow.getTenantId())
-                    .conditionId(multipleCondition.getId())
-                    .start(startAndEnd.getLeft())
-                    .end(startAndEnd.getRight())
-                    .results(new HashMap<>())
-                    .outputs(outputs)
-                    .build()
-            );
+        return MultipleConditionWindow.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
+            .conditionId(multipleCondition.getId())
+            .start(startAndEnd.getLeft())
+            .end(startAndEnd.getRight())
+            .results(new HashMap<>())
+            .outputs(outputs)
+            .build();
     }
 
     void save(List<MultipleConditionWindow> multipleConditionWindows);

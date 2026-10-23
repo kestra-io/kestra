@@ -85,4 +85,19 @@ class NindentFilterTest {
             .hasMessageContaining("cannot exceed");
     }
 
+    @Test
+    void nindentWithIntegerVariable() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ \"line 1\nline 2\" | nindent(spaces) }}",
+            Map.of("spaces", Integer.valueOf(4))
+        );
+        assertThat(render).isEqualTo("\n    line 1\n    line 2");
+    }
+
+    @Test
+    void nindentWithNonNumberAmount() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'x' | nindent('invalid') }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("expects an integer as argument 'amount'");
+    }
 }

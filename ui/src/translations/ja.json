@@ -522,7 +522,9 @@
     "execution_banner": {
       "revision": "リビジョン {revision}",
       "attempts": "{count} 回の試行 | {count} 回の試行",
-      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
+      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個",
+      "searchable_values": "検索可能な値",
+      "more_searchable_values": "+{count} 件の検索可能な値"
     },
     "execution_mobile": {
       "failed_task": "失敗した task",
@@ -576,6 +578,7 @@
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",
       "expression": "式",
+      "searchable": "検索可能",
       "tree": "ツリー",
       "raw_json": "生JSON",
       "select_prompt": "value を確認する変数を選択してください。",

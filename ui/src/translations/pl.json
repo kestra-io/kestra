@@ -522,7 +522,9 @@
     "execution_banner": {
       "revision": "Wersja {revision}",
       "attempts": "{count} próba | {count} próby | {count} prób",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks",
+      "searchable_values": "Wartości do wyszukania",
+      "more_searchable_values": "+{count} więcej wartości do wyszukania"
     },
     "execution_mobile": {
       "failed_task": "Nieudany task",
@@ -576,6 +578,7 @@
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",
       "expression": "Wyrażenie",
+      "searchable": "Możliwe do wyszukania",
       "tree": "Drzewo",
       "raw_json": "Surowy JSON",
       "select_prompt": "Wybierz zmienną, aby sprawdzić jej Value.",

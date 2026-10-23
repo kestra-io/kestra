@@ -586,7 +586,9 @@
     "execution_banner": {
       "revision": "संशोधन {revision}",
       "attempts": "{count} प्रयास | {count} प्रयास",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "खोजने योग्य मान",
+      "more_searchable_values": "+{count} और खोजने योग्य मान"
     },
     "execution_mobile": {
       "failed_task": "विफल task",
@@ -642,6 +644,7 @@
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
       "expression": "एक्सप्रेशन",
+      "searchable": "खोजने योग्य",
       "tree": "ट्री",
       "raw_json": "रॉ JSON",
       "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",

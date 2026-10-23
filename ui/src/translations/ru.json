@@ -586,7 +586,9 @@
     "execution_banner": {
       "revision": "Редакция {revision}",
       "attempts": "{count} попытка | {count} попытки | {count} попыток",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks",
+      "searchable_values": "Значения для поиска",
+      "more_searchable_values": "+{count} других значений для поиска"
     },
     "execution_mobile": {
       "failed_task": "Упавшая task",
@@ -642,6 +644,7 @@
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Выражение",
+      "searchable": "С возможностью поиска",
       "tree": "Дерево",
       "raw_json": "Необработанный JSON",
       "select_prompt": "Выберите переменную, чтобы просмотреть её value.",

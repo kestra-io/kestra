@@ -586,7 +586,9 @@
     "execution_banner": {
       "revision": "Revision {revision}",
       "attempts": "{count} Versuch | {count} Versuche",
-      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
+      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks",
+      "searchable_values": "Durchsuchbare Werte",
+      "more_searchable_values": "+{count} weitere durchsuchbare Werte"
     },
     "execution_mobile": {
       "failed_task": "Fehlgeschlagene Task",
@@ -642,6 +644,7 @@
       "search_placeholder": "Key oder Value suchen…",
       "tasks_outputs": "Task-Outputs",
       "expression": "Expression",
+      "searchable": "Durchsuchbar",
       "tree": "Baum",
       "raw_json": "Rohes JSON",
       "select_prompt": "Wähle eine Variable aus, um ihren Wert anzuzeigen.",

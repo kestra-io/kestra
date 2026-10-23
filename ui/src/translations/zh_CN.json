@@ -586,7 +586,9 @@
     "execution_banner": {
       "revision": "修订版 {revision}",
       "attempts": "{count} 次尝试 | {count} 次尝试",
-      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task",
+      "searchable_values": "可搜索的值",
+      "more_searchable_values": "+{count} 个更多可搜索值"
     },
     "execution_mobile": {
       "failed_task": "失败的 task",
@@ -642,6 +644,7 @@
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "表达式",
+      "searchable": "可搜索的",
       "tree": "树",
       "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",

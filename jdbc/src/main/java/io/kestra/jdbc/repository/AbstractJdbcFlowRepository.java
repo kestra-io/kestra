@@ -544,7 +544,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .using(configuration)
                     .select(field("value"), field("namespace"), field("tenant_id"))
                     .from(fromLastRevision(true))
-                    .where(NAMESPACE_FIELD.eq(namespacePrefix).or(NAMESPACE_FIELD.startsWith(namespacePrefix + ".")))
+                    .where(CaseSensitiveMatch.eq(NAMESPACE_FIELD, namespacePrefix).or(CaseSensitiveMatch.startsWith(NAMESPACE_FIELD, namespacePrefix + ".")))
             );
     }
 
@@ -590,7 +590,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
-                    .where(DSL.or(NAMESPACE_FIELD.eq(namespacePrefix), NAMESPACE_FIELD.startsWith(namespacePrefix + ".")))
+                    .where(DSL.or(CaseSensitiveMatch.eq(NAMESPACE_FIELD, namespacePrefix), CaseSensitiveMatch.startsWith(NAMESPACE_FIELD, namespacePrefix + ".")))
                     .and(this.defaultFilter(tenantId));
 
                 return select.fetch().map(
@@ -717,7 +717,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 }
 
                 if (namespace != null) {
-                    select = select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
+                    select = select.and(DSL.or(CaseSensitiveMatch.eq(NAMESPACE_FIELD, namespace), CaseSensitiveMatch.startsWith(NAMESPACE_FIELD, namespace + ".")));
                 }
 
                 return (ArrayListTotal) this.jdbcRepository.fetchPage(

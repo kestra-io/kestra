@@ -574,12 +574,13 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // `page` and `size` turn on the endpoint's optional pagination; without them every matching log is returned.
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; page?: number; size?: number }) => {
+    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
         return LogsAPI.listLogsFromExecution({
             executionId: options.executionId,
             filters: routeQueryToQueryFilters(options.params ?? {}),
             ...(options.page !== undefined ? {page: options.page} : {}),
             ...(options.size !== undefined ? {size: options.size} : {}),
+            ...(options.sort !== undefined ? {sort: options.sort} : {}),
         }).then(data => {
             if (options.store === false) {
                 return data

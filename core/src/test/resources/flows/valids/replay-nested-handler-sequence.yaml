@@ -1,0 +1,25 @@
+id: replay-nested-handler-sequence
+namespace: io.kestra.tests
+
+tasks:
+  - id: boom
+    type: io.kestra.plugin.core.execution.Fail
+    errorMessage: "boom failed"
+
+errors:
+  - id: handler_group
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: first_error
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          carried: "yes"
+
+      - id: second_error
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ outputs.first_error.values.carried }}"
+
+finally:
+  - id: fin
+    type: io.kestra.plugin.core.debug.Return
+    format: "finally"

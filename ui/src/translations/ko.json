@@ -618,6 +618,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "변수",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "이 Flow의 Task는 artifact를 제공하지 않습니다.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
+      "tasks": "Task 없음 | Task {count}개 | Task {count}개",
+      "fullscreen": "전체 화면",
+      "exit_fullscreen": "전체 화면 종료"
+    },
     "variable_explorer": {
       "title": "입력/출력",
       "search_placeholder": "Key 또는 value 검색...",

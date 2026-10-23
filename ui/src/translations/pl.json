@@ -618,6 +618,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Zmienne",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Żaden Task tego Flow nie dostarcza Artifactu.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
+      "tasks": "brak Tasków | {count} Task | {count} Taski | {count} Tasków",
+      "fullscreen": "Pełny ekran",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",

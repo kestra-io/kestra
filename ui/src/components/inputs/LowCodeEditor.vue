@@ -64,6 +64,7 @@
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
                         :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
                         :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
+                        :fetchEndpoint="fetchTaskEndpoint(taskProps.data.node?.task)"
                     />
                 </slot>
             </template>
@@ -284,6 +285,7 @@
                     :progress="taskProgress(selectedTask?.id)"
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
                     :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
+                    :fetchEndpoint="fetchTaskEndpoint(selectedTask)"
                     displayMode="full"
                     class="detail"
                 />
@@ -335,7 +337,7 @@
     import LoopScopeBar from "../executions/LoopScopeBar.vue"
     import {useLoopScoping} from "../../composables/useLoopScoping"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {BlockType} from "../no-code/utils/types"
@@ -593,6 +595,13 @@
         const runId = taskRunId ?? currentTaskRunId(taskId)
         if (!executionId || !runId) return Promise.resolve({})
         return loadTaskRunOutputs(executionId, runId)
+    }
+
+    const fetchTaskEndpoint = (task: FlowTask | undefined) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
+        const executionId = exec.value?.id
+        const runId = taskRunId ?? currentTaskRunId(task?.id)
+        if (!executionId || !runId || !task?.type) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
+        return callTaskRunEndpoint(task.type, name, executionId, runId, params)
     }
 
     const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
@@ -1445,6 +1454,7 @@
                 progress: taskProgress(fullTask.id),
                 fetchOutputs: fetchTaskOutputs(fullTask.id),
                 fetchMetrics: fetchTaskMetrics(fullTask.id),
+                fetchEndpoint: fetchTaskEndpoint(fullTask),
             }
             isTaskModalOpen.value = true
             return

@@ -91,11 +91,11 @@
     import type {Schema} from "./getTaskComponent"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {
+        branchDisplayName,
         findBranchByType,
         getImplementationBranches,
-        humanizeClassName,
+        newImplementation,
         resolveImplementationLabel,
-        simpleClassName,
         type ImplementationBranch,
     } from "./discriminatedUnion"
 
@@ -139,15 +139,16 @@
         return typeof type === "string" ? type : undefined
     }
 
-    function branchName(type: string | undefined): string {
-        const branch = type ? findBranchByType(branches.value, type) : undefined
-        return branch ? humanizeClassName(simpleClassName(branch.ref)) : (type ?? "")
+    function branchName(item: Implementation): string {
+        const type = typeOf(item)
+        const branch = type ? findBranchByType(branches.value, type, item) : undefined
+        return branch ? branchDisplayName(branch, branches.value) : (type ?? "")
     }
 
     const singleRemoveLabel = computed(() => t("block_editor.plugin_implementation.remove", {label: label.value}))
 
     function itemRemoveLabel(item: Implementation): string {
-        return t("block_editor.plugin_implementation.remove_from", {name: branchName(typeOf(item)), field: label.value})
+        return t("block_editor.plugin_implementation.remove_from", {name: branchName(item), field: label.value})
     }
 
     const pickerVisible = ref(false)
@@ -175,7 +176,7 @@
     function openPicker(index: number | undefined, currentType: string | undefined) {
         if (branches.value.length <= 1) {
             if (branches.value.length === 1) {
-                commit({type: branches.value[0].ref}, index)
+                commit(newImplementation(branches.value[0], branches.value), index)
             }
             return
         }
@@ -185,7 +186,7 @@
     }
 
     function onPickerSelect(branch: ImplementationBranch) {
-        commit({type: branch.ref}, pickerTargetIndex.value)
+        commit(newImplementation(branch, branches.value), pickerTargetIndex.value)
         pickerVisible.value = false
     }
 

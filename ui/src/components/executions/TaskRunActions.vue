@@ -41,7 +41,7 @@
                 </template>
 
                 <KsDropdownItem
-                    v-if="selectedAttempt?.state.current === 'FAILED'"
+                    v-if="aiEnabled && selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
                     <span class="fix-with-ai">
@@ -189,6 +189,7 @@
     import TaskEdit from "../flows/TaskEdit.vue"
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
+    import {useAiEnabled} from "../../composables/useAiEnabled"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
     import {loopIterationsRoute} from "../../utils/executionUtils"
 
@@ -220,6 +221,7 @@
     const router = useRouter()
     const toast = useToast()
     const miscStore = useMiscStore()
+    const aiEnabled = useAiEnabled()
     const coreStore = useCoreStore()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()

@@ -1,5 +1,5 @@
 <template>
-    <span class="d-none" />
+    <span class="error-toast" />
 </template>
 
 <script setup lang="ts">
@@ -109,7 +109,11 @@
     onUnmounted(() => close())
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+    .error-toast {
+        display: none;
+    }
+
     .error-notification {
         max-height: 90svh;
 

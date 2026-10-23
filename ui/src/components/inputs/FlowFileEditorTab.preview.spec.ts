@@ -86,7 +86,7 @@ vi.mock("vue-router", () => ({
 }))
 
 import {useFlowStore} from "../../stores/flow"
-import FlowFileEditorTab from "./FlowFileEditorTab.vue"
+import FlowFileEditorTab, {FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
 
 const BUFFER = "id: flow_1\nnamespace: company.team\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n"
 const MUTATED = `${BUFFER}labels:\n  managed-by: governance\n`
@@ -94,6 +94,12 @@ const MUTATED = `${BUFFER}labels:\n  managed-by: governance\n`
 function mountTab(flow = true) {
     return i18nMount(FlowFileEditorTab, {
         props: {name: "Flow.yaml", extension: "yaml", path: "Flow.yaml", flow, dirty: false},
+        global: {
+            provide: {
+                [FILES_SET_DIRTY_INJECTION_KEY as symbol]: vi.fn(),
+                [FILES_UPDATE_CONTENT_INJECTION_KEY as symbol]: vi.fn(),
+            },
+        },
     })
 }
 

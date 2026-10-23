@@ -379,7 +379,7 @@ class ExecutionTest {
     }
 
     @Test
-    void shouldGuessCancelledWhenTaskRunCancelled() {
+    void shouldComputeCancelledWhenTaskRunCancelled() {
         // Given a flow whose single task run ended CANCELLED (e.g. workerSelector fallback: CANCEL)
         Flow flow = flowWithTask("will-cancel");
         Execution execution = executionWithTaskRun("will-cancel", State.Type.CANCELLED);
@@ -387,11 +387,11 @@ class ExecutionTest {
         // When guessing the final state
 
         // Then the execution must not be silently reported as SUCCESS
-        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.computeFinalState(flow)).isEqualTo(State.Type.CANCELLED);
     }
 
     @Test
-    void shouldGuessFailedWhenTaskRunFailedTakesPrecedenceOverCancelled() {
+    void shouldComputeFailedWhenTaskRunFailedTakesPrecedenceOverCancelled() {
         // Given one FAILED and one CANCELLED task run
         Return failed = Return.builder().id("failed").type(Return.class.getName()).build();
         Return cancelled = Return.builder().id("cancelled").type(Return.class.getName()).build();
@@ -402,6 +402,7 @@ class ExecutionTest {
             .build();
         Execution execution = Execution.builder()
             .id(IdUtils.create())
+            .state(new State(State.Type.RUNNING, new State()))
             .taskRunList(
                 List.of(
                     TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
@@ -413,7 +414,7 @@ class ExecutionTest {
         // When guessing the final state
 
         // Then FAILED takes precedence over CANCELLED
-        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.FAILED);
+        assertThat(execution.computeFinalState(flow)).isEqualTo(State.Type.FAILED);
     }
 
     private static Flow flowWithTask(String taskId) {
@@ -427,6 +428,7 @@ class ExecutionTest {
     private static Execution executionWithTaskRun(String taskId, State.Type state) {
         return Execution.builder()
             .id(IdUtils.create())
+            .state(new State(State.Type.RUNNING, new State()))
             .taskRunList(
                 List.of(
                     TaskRun.builder()

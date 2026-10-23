@@ -63,6 +63,7 @@
     "test-results/**",
     "coverage/**",
     "**/dist/**",
+    "**/storybook-static/**",
     "packages/kestra-sdk/src/openapi/**"
   ]
 }

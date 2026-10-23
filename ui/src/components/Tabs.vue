@@ -9,7 +9,7 @@
     </section>
 
     <template v-else>
-        <KsTabs class="ks-tabs-bar" :class="{top}" v-model="activeName" type="box">
+        <KsTabs class="ks-tabs-bar" :class="{top}" v-model="activeName" type="box" @tab-change="handleTabChange">
             <KsTabPane
                 v-for="tab in visibleTabs"
                 :key="tab.name ?? 'default'"
@@ -21,7 +21,6 @@
                     <component
                         :is="isEmbedded || tab.disabled ? 'a' : 'router-link'"
                         :to="isEmbedded ? undefined : toRoute(tab)"
-                        @click="handleTabClick(tab)"
                     >
                         <KsTooltip
                             v-if="tab.disabled && (tab as Tab).props?.showTooltip"
@@ -33,7 +32,7 @@
                         <EnterpriseBadge :enable="(tab as Tab).locked">
                             <span class="tab-label-wrapper">
                                 {{ tab.title }}
-                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" type="primary" inline />
+                                <KsBadge v-if="tab.count !== undefined" :value="tab.count" :max="tab.max" type="primary" inline />
                             </span>
                         </EnterpriseBadge>
                     </component>
@@ -174,7 +173,7 @@
     }
 
     const containerClass = computed(() => {
-        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"px-0": true, "full-container": true}
+        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"full-container": true}
         return {"container": true, "tabs-flush-top": true}
     })
 
@@ -185,8 +184,9 @@
         activeName.value = activeTab.value?.name ?? "default"
     }
 
-    const handleTabClick = (tab: Tab) => {
-        if (isEmbedded.value) {
+    const handleTabChange = (name: string | number) => {
+        const tab = visibleTabs.value.find(t => (t.name ?? "default") === name)
+        if (isEmbedded.value && tab) {
             emit("changed", tab)
         }
     }
@@ -291,7 +291,12 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+    .full-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     section.maximized {
         margin: 0 !important;
         padding: 0;
@@ -307,7 +312,7 @@
     .editor-splitter {
         height: 100%;
 
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             display: flex;
             flex-direction: column;
         }
@@ -326,7 +331,7 @@
     }
 
     .ks-tabs-bar {
-        :deep(.kel-tabs__item.is-disabled) {
+        & :deep(.kel-tabs__item.is-disabled) {
             &:after {
                 top: 0;
                 content: "";
@@ -342,8 +347,8 @@
             }
         }
 
-        :deep(.kel-tabs__nav-next.is-disabled),
-        :deep(.kel-tabs__nav-prev.is-disabled) {
+        & :deep(.kel-tabs__nav-next.is-disabled),
+        & :deep(.kel-tabs__nav-prev.is-disabled) {
             display: none;
         }
     }

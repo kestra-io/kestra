@@ -21,17 +21,14 @@ const EXPECTED = [
     "getTypeAtPosition",
     "getVersionAtPosition",
     "insertBlockWithPath",
-    "isParentChildrenRelation",
     "joinPath",
     "localizeElementAtIndex",
-    "pairsToMap",
     "parse",
     "parsePath",
     "pruneEmptySequences",
     "replaceBlockWithPath",
     "replaceIdAndNamespace",
     "stringify",
-    "swapBlocks",
     "updateMetadata",
 ]
 

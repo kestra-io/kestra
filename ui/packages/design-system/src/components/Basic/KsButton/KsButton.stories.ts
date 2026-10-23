@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {within, userEvent, expect, waitFor} from "storybook/test"
 import {markRaw, ref} from "vue"
-import KsButton from "./KsButton.vue"
+import KsButton, {KS_BUTTON_TONES} from "./KsButton.vue"
 
 // Inline SVG icons as components to avoid external dependencies
 const DownloadIcon = markRaw({
@@ -25,6 +25,7 @@ const meta: Meta<typeof KsButton> = {
         round: {control: "boolean"},
         circle: {control: "boolean"},
         square: {control: "boolean"},
+        block: {control: "boolean"},
         text: {control: "boolean"},
         link: {control: "boolean"},
         bg: {control: "boolean"},
@@ -76,6 +77,7 @@ export const Types: Story = {
                 <ks-button :icon="DownloadIcon" type="danger">Danger</ks-button>
                 <ks-button :icon="DownloadIcon" type="info">Info</ks-button>
                 <ks-button :icon="DownloadIcon" text>Text</ks-button>
+                <ks-button :icon="DownloadIcon" type="success" tooltip="Download" />
             </div>
 
             <div style="padding:24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
@@ -89,6 +91,24 @@ export const Types: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const resolved = (value: string) => {
+            const probe = document.createElement("span")
+            probe.style.color = value
+            canvasElement.append(probe)
+            const color = getComputedStyle(probe).color
+            probe.remove()
+            return color
+        }
+
+        for (const [label, type] of [["Primary", "primary"], ["Success", "success"], ["Warning", "warning"], ["Danger", "danger"], ["Info", "info"]] as const) {
+            const button = canvas.getAllByRole("button", {name: label}).find(element => !element.hasAttribute("disabled"))
+            await expect(getComputedStyle(button as Element).color).toBe(resolved(KS_BUTTON_TONES[type]!.text))
+        }
+        await expect(getComputedStyle(canvas.getByRole("button", {name: "Download"})).color)
+            .toBe(resolved(KS_BUTTON_TONES.success!.text))
+    },
 }
 
 /** All sizes */
@@ -338,5 +358,42 @@ export const ClickEvent: Story = {
         await userEvent.click(btn)
         await userEvent.click(btn)
         await expect(canvas.getByText(/Clicks: 2/)).toBeTruthy()
+    },
+}
+
+/** Block – `block` stretches the button to the width of its container, for bottom action bars on mobile */
+export const Block: Story = {
+    render: () => ({
+        components: {KsButton},
+        template: `
+            <div style="width: 320px; display: flex; flex-direction: column; gap: 8px; padding: 16px;">
+                <ks-button block type="primary">Execute</ks-button>
+                <ks-button block>Restart</ks-button>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        await expect(canvasElement.querySelector(".kel-button.is-block")).toBeTruthy()
+    },
+}
+
+/** Link primary – a link button of type primary takes the link colour */
+export const LinkPrimary: Story = {
+    render: () => ({
+        components: {KsButton},
+        template: `
+            <div style="display: flex; gap: 16px; padding: 16px;">
+                <ks-button link type="primary">Jump to first failure</ks-button>
+                <ks-button link>Plain link</ks-button>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}) => {
+        const primary = canvasElement.querySelector(".kel-button.is-link.kel-button--primary") as HTMLElement
+        const linkColor = document.createElement("span")
+        linkColor.style.color = "var(--ks-text-link)"
+        canvasElement.appendChild(linkColor)
+        await expect(getComputedStyle(primary).color).toBe(getComputedStyle(linkColor).color)
+        linkColor.remove()
     },
 }

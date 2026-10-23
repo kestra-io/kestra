@@ -7,11 +7,11 @@
 
             <div v-if="logs.length">
                 <p v-if="!expanded" class="error-preview">
-                    {{ $t('last error was') }}: {{ stripBackticks(logs.at(-1)?.message ?? '') }}
+                    {{ $t('last error was') }}: {{ stripBackticks(linkTagsAsText(logs.at(-1)?.message ?? '')) }}
                 </p>
 
                 <div v-else class="logs">
-                    <div v-for="(log, index) in logs.slice(0, MAX_PREVIEW_LOGS)" :key="index">
+                    <div v-for="(log, index) in logs.slice(-MAX_PREVIEW_LOGS)" :key="index">
                         <LogLine
                             :level="log.level"
                             :log="{...log, message: stripBackticks(log.message ?? '')}"
@@ -27,7 +27,13 @@
             </div>
         </KsAlert>
 
-        <button class="expand-btn" @click="expanded = !expanded">
+        <button
+            class="expand-btn"
+            data-test="error-alert-toggle"
+            :aria-label="expanded ? $t('collapse') : $t('expand')"
+            :aria-expanded="expanded"
+            @click="expanded = !expanded"
+        >
             <ChevronUp v-if="expanded" />
             <ChevronDown v-else />
         </button>
@@ -42,11 +48,13 @@
 
     import {Execution, useExecutionsStore} from "../../../../../stores/executions"
     import {Log} from "../../../../../stores/logs"
+    import {handledIf} from "../../../../../utils/kestraHttp"
     import LogLine from "../../../../logs/LogLine.vue"
+    import {stripBackticks} from "../../../../../utils/logs"
+    import {linkTagsAsText} from "../../../../logs/linkify"
 
     const MAX_PREVIEW_LOGS = 4
     const EXCLUDED_METAS: (keyof Log)[] = ["namespace", "flowId", "executionId"]
-    const BACKTICKS_REGEX = /`([^`]*)`/g
 
     const props = defineProps<{execution: Execution}>()
 
@@ -69,10 +77,6 @@
         },
     }
 
-    function stripBackticks(message: string): string {
-        return message.replace(BACKTICKS_REGEX, "$1")
-    }
-
     onMounted(async () => {
         try {
             const response = await store.loadLogs({
@@ -82,17 +86,17 @@
                     "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
                     "filters[kind][IN]": props.execution.kind,
                 },
-                showMessageOnError: false,
             })
 
             if (response.length) logs.value = response
-        } catch {
-            // User may not have ACCESS_LOGS permission — silently skip
+        } catch (e: unknown) {
+            // The user may lack ACCESS_LOGS; anything else is left to the global toast.
+            handledIf(e, [403, 404])
         }
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .error-wrapper {
         position: relative;
         min-width: 0;
@@ -131,7 +135,7 @@
         min-width: 0;
         overflow: hidden;
 
-        :deep(.kel-alert__content) {
+        & :deep(.kel-alert__content) {
             min-width: 0;
             width: 100%;
             gap: 0;
@@ -155,7 +159,7 @@
                 .logs {
                     padding-top: var(--ks-spacing-5);
 
-                    > div {
+                    & > div {
                         width: 100%;
                     }
 

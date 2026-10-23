@@ -7,7 +7,7 @@ import {
     useClient,
     type Check,
     type Execution as SDKExecution,
-    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as ApiInputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
@@ -27,13 +27,15 @@ import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
-import type {KestraRequestOptions} from "../utils/kestraHttp"
 import {useCoreStore} from "./core"
 import {useApiStore} from "./api"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
+export type {Check} from "@kestra-io/kestra-sdk"
+
+// `path` is added to `ApiInputError` on this branch, and the generated SDK only picks it up once `develop` regenerates it.
+export type InputError = ApiInputError & {path?: string}
 
 export interface ValidationResponse {
     checks?: Check[];
@@ -59,6 +61,7 @@ export interface InputMetaData {
     type: InputType
     displayName?: string;
     description?: string;
+    descriptionDisplayMode?: "TEXT" | "TOOLTIP";
     required?: boolean;
     defaults?: unknown;
     value?: unknown;
@@ -78,6 +81,10 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
+    /** Set on a TABLE input only: one input definition per column, each evaluated once per row. */
+    columns?: InputMetaData[];
+    minRows?: number;
+    maxRows?: number;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */
@@ -213,6 +220,10 @@ export const useExecutionsStore = defineStore("executions", () => {
         }) as unknown as Promise<Execution>
     }
 
+    const validateReplay = (options: { executionId: string; taskRunId?: string; revision?: number }) => {
+        return ExecutionsAPI.validateReplayExecution(options)
+    }
+
     /** Multipart with file inputs, so it stays on the raw client. Never set Content-Type: the browser adds the boundary. */
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post<Execution>(
@@ -301,9 +312,9 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     /** A superseded load is dropped, as in `stores/logs.ts`, and cancels the pending throttled update so a
      *  trailing event from the previous execution's stream cannot land on top of this one. */
-    const loadExecution = (options: { id: string }, requestOptions?: KestraRequestOptions) => {
+    const loadExecution = (options: { id: string }) => {
         const load = ++latestExecutionLoad
-        return ExecutionsAPI.execution({executionId: options.id}, requestOptions).then(data => {
+        return ExecutionsAPI.execution({executionId: options.id}).then(data => {
             if (load !== latestExecutionLoad) return data
 
             throttledExecutionUpdate.cancel()
@@ -321,12 +332,17 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
+    let latestExecutionsSearch = 0
+
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findExecutions(options: ExecutionSearchOptions & { onlyTotal: true }): Promise<number>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution | number> {
+        const search = options.commit === false ? undefined : ++latestExecutionsSearch
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
-            if (options.commit !== false) {
+            if (options.commit !== false && search === latestExecutionsSearch) {
                 executions.value = response.results as unknown as Execution[]
                 total.value = response.total ?? 0
             }
@@ -557,11 +573,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; showMessageOnError?: boolean }) => {
-        const requestOptions: KestraRequestOptions | undefined = options.showMessageOnError === false ? {showMessageOnError: false} : undefined
+    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean }) => {
         return LogsAPI.listLogsFromExecution(
             {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
-            requestOptions,
         ).then(data => {
             if (options.store === false) {
                 return data
@@ -827,6 +841,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         queryReplayExecution,
         queryChangeExecutionStatus,
         replayExecution,
+        validateReplay,
         replayExecutionWithInputs,
         changeExecutionStatus,
         changeStatus,

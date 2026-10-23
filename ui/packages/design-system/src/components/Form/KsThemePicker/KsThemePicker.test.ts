@@ -3,6 +3,7 @@ import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../index"
 import KsThemePicker from "./KsThemePicker.vue"
 import source from "./KsThemePicker.vue?raw"
+import themeTokens from "../../../../tests/storybook/Basic/Color-variables.json"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -42,7 +43,33 @@ describe("KsThemePicker", () => {
         expect(previews[3].findAll(".theme-window")).toHaveLength(2)
     })
 
-    test("emits the chosen value", async () => {
+    test("draws the preview slot instead of the built-in miniature", () => {
+        const wrapper = mount(KsThemePicker, {
+            props: {options: [{value: "ocean", label: "Ocean"}]},
+            slots: {preview: "<span class=\"custom-preview\">{{ params.option.value }}</span>"},
+            global: globalConfig,
+        })
+        const preview = wrapper.find(".theme-picker__preview")
+        expect(preview.find(".custom-preview").text()).toBe("ocean")
+        expect(preview.find(".theme-window").exists()).toBe(false)
+    })
+
+    test("rings only a slot preview, since the built-in miniature shows its selection on its own frame", () => {
+        const builtIn = mount(KsThemePicker, {
+            props: {modelValue: "light", options: OPTIONS},
+            global: globalConfig,
+        })
+        expect(builtIn.find(".theme-picker__preview--custom").exists()).toBe(false)
+
+        const custom = mount(KsThemePicker, {
+            props: {modelValue: "ocean", options: [{value: "ocean", label: "Ocean"}]},
+            slots: {preview: "<span />"},
+            global: globalConfig,
+        })
+        expect(custom.find(".theme-picker__option--selected .theme-picker__preview--custom").exists()).toBe(true)
+    })
+
+        test("emits the chosen value", async () => {
         const wrapper = mount(KsThemePicker, {
             props: {modelValue: "light", options: OPTIONS},
             global: globalConfig,
@@ -52,12 +79,12 @@ describe("KsThemePicker", () => {
     })
 
     test("paints each preview from the palette, so it keeps its colours whatever theme the page is in", () => {
-        const previews = source.match(/&--(?:light|dark|dark-2) \{(?:[^{}]|\{[^}]*\})*\}/g) ?? []
+        const previews = source.match(/\.theme-picker__window--(?:light|dark|dark-2) \{[^}]*\}/g) ?? []
         expect(previews).toHaveLength(3)
         for (const preview of previews) {
-            const values = [...preview.matchAll(/--tp-[a-z]+:\s*([^;]+);/g)].map(([, value]) => value)
+            const values = [...preview.matchAll(/--tp-[a-z]+:\s*var\((--ks-[\w-]+)\);/g)].map(([, name]) => name)
             expect(values).toHaveLength(6)
-            expect(values.every((value) => value.startsWith("#{palette.$"))).toBe(true)
+            expect(values.filter((name) => themeTokens.includes(name) || !/^--ks-(?:white|black|[a-z-]+-\d+)$/.test(name))).toEqual([])
         }
     })
 })

@@ -45,17 +45,21 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/dropdown';
+</style>
 
+<style>
     .kel-dropdown {
-        // Element Plus draws the split-button divider as the border colour at half opacity,
-        // which vanishes against every Kestra button fill; use the strong border token instead
-        .kel-dropdown__caret-button.kel-button::before {
+        /* Element Plus draws the split-button divider as the border colour at half opacity, */
+        /* which vanishes against every Kestra button fill; use the strong border token instead */
+
+        & .kel-dropdown__caret-button.kel-button::before {
             background: var(--ks-border-strong);
             opacity: 1;
         }
 
-        // a primary button is filled, so use the lighter button-group divide colour instead
-        .kel-dropdown__caret-button.kel-button--primary:not(.is-disabled)::before {
+        /* a primary button is filled, so use the lighter button-group divide colour instead */
+
+        & .kel-dropdown__caret-button.kel-button--primary:not(.is-disabled)::before {
             background: var(--kel-button-divide-border-color);
         }
     }
@@ -64,7 +68,6 @@
         --kel-popper-border-radius: var(--ks-radius-base);
         --kel-dropdown-menuItem-hover-fill: var(--ks-bg-hover-elevated);
         --kel-dropdown-menuItem-hover-color: var(--ks-text-primary);
-
         background: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-strong);
         box-shadow: 0 8px 24px 0 var(--ks-shadow-elevated);
@@ -74,30 +77,30 @@
             margin: 0;
         }
 
-        .m-dropdown-menu {
+        & .m-dropdown-menu {
             display: flex;
             flex-direction: column;
             width: 20rem;
             padding: 0;
         }
 
-        .kel-dropdown-menu {
+        & .kel-dropdown-menu {
             background: transparent;
             border: 0;
             box-shadow: none;
             padding: var(--ks-spacing-1);
 
-            .kel-dropdown-menu__item + .kel-dropdown-menu__item {
+            & .kel-dropdown-menu__item + .kel-dropdown-menu__item {
                 margin-top: var(--ks-spacing-1);
             }
         }
 
-        .kel-dropdown-menu__item {
+        & .kel-dropdown-menu__item {
             border-radius: var(--ks-radius-xs);
             display: flex;
             gap: var(--ks-spacing-2);
 
-            i {
+            & i {
                 margin-right: 0;
             }
 
@@ -117,13 +120,13 @@
                 background-color: var(--ks-bg-error);
                 color: var(--ks-text-error);
 
-                i {
+                & i {
                     color: var(--ks-icon-error);
                 }
             }
 
-            > a,
-            > button {
+            & > a,
+            & > button {
                 color: inherit;
                 text-decoration: none;
                 background: transparent;

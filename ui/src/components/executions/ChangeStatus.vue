@@ -13,10 +13,17 @@
             </template>
 
             <template #default>
-                <p v-html="$t('change state confirm', {id: escapeHtml(execution.id), task: escapeHtml(taskRun.taskId)})" />
+                <p>
+                    <i18n-t keypath="change state confirm" tag="span" scope="global">
+                        <template #task><code>{{ taskRun?.taskId ?? '' }}</code></template>
+                        <template #id><code>{{ execution.id }}</code></template>
+                    </i18n-t>
+                    <br>
+                    {{ $t('change state confirm restart') }}
+                </p>
 
                 <p>
-                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun?.state?.current ?? ''" />
                 </p>
 
                 <KsSelect
@@ -31,7 +38,9 @@
                     >
                         <template #default>
                             <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <span v-html="item.label" />
+                            <i18n-t keypath="mark as" tag="span" scope="global">
+                                <template #status><code>{{ item.code }}</code></template>
+                            </i18n-t>
                         </template>
                     </KsOption>
                 </KsSelect>
@@ -52,7 +61,7 @@
                 <KsButton
                     type="primary"
                     @click="changeStatus()"
-                    :disabled="selectedStatus === taskRun.state.current || selectedStatus === null"
+                    :disabled="selectedStatus === taskRun?.state?.current || selectedStatus === null"
                 >
                     {{ $t('ok') }}
                 </KsButton>
@@ -65,18 +74,18 @@
     import StateMachine from "vue-material-design-icons/StateMachine.vue"
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {type Execution, useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../utils/toast"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
+    import type {TaskRun} from "@kestra-io/kestra-sdk"
 
-    // FIXME: any - execution/taskRun are untyped domain objects
     const props = withDefaults(defineProps<{
         component?: string
-        execution: any // FIXME: any
-        taskRun?: any // FIXME: any
+        execution: Execution
+        taskRun?: TaskRun
         attemptIndex?: number
     }>(), {
         component: "KsButton",
@@ -93,30 +102,30 @@
     const selectedStatus = ref<string | undefined>(undefined)
 
     const uuid = computed(() =>
-        "changestatus-" + (props.execution as {id: string}).id + (props.taskRun ? "-" + (props.taskRun as {id: string}).id : ""),
+        "changestatus-" + props.execution.id + (props.taskRun ? "-" + props.taskRun.id : ""),
     )
 
-    // FIXME: any - execution/taskRun are untyped domain objects
     const states = computed(() => {
-        const taskRun = props.taskRun as any // FIXME: any
+        const taskRun = props.taskRun
+        if (!taskRun?.state?.current) {
+            return []
+        }
         return [
             State.FAILED,
             State.SUCCESS,
             State.WARNING,
         ]
             .filter((value: string) => value !== taskRun.state.current)
-            .map((value: string) => {
-                return {
-                    code: value,
-                    label: t("mark as", {status: value}),
-                    disabled: value === taskRun.state.current,
-                }
-            })
+            .map((value: string) => ({code: value, disabled: value === taskRun.state.current}))
     })
 
     const enabled = computed(() => {
-        const execution = props.execution as any // FIXME: any
-        const taskRun = props.taskRun as any // FIXME: any
+        const execution = props.execution
+        const taskRun = props.taskRun
+
+        if (!execution?.namespace || !taskRun?.state?.current) {
+            return false
+        }
 
         if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, execution.namespace))) {
             return false
@@ -132,27 +141,30 @@
     function changeStatus() {
         visible.value = false
 
-        const taskRun = props.taskRun as any // FIXME: any
+        const taskRun = props.taskRun
+        if (!taskRun || !selectedStatus.value) {
+            return
+        }
+
         executionsStore
             .changeStatus({
-                executionId: (props.execution as {id: string}).id,
+                executionId: props.execution.id,
                 taskRunId: taskRun.id,
-                state: selectedStatus.value as string,
+                state: selectedStatus.value,
             })
-            .then(() => executionsStore.waitForStateChange(props.execution as any)) // FIXME: any
-            .then((execution: unknown) => {
-                // FIXME: any
-                ;(executionsStore as any).execution = execution // FIXME: any
+            .then(() => executionsStore.waitForStateChange(props.execution))
+            .then((execution: Execution) => {
+                executionsStore.execution = execution
                 // Re-subscribe to the execution SSE stream directly via the store
                 // instead of bubbling a `follow` event up to the route component.
-                executionsStore.followExecution({id: (props.execution as {id: string}).id}, t)
+                executionsStore.followExecution({id: props.execution.id}, t)
 
                 toast.success(t("change state done"))
             })
     }
 </script>
 
-<style lang="scss">
+<style scoped>
     .alert-status-change {
         ul {
             margin-bottom: 0;

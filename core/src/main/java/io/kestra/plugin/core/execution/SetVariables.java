@@ -68,8 +68,8 @@ public class SetVariables extends Task implements ExecutionUpdatableTask {
     public Execution update(Execution execution, RunContext runContext) throws Exception {
         // the executor reuses the task instance of its cached flow for every execution of the flow,
         // so the rendering cache of the properties must be skipped to render with the current execution context
-        Map<String, Object> renderedVars = runContext.render(this.variables.skipCache()).asMap(String.class, Object.class);
-        boolean renderedOverwrite = runContext.render(this.overwrite.skipCache()).as(Boolean.class).orElseThrow();
+        Map<String, Object> renderedVars = runContext.render(this.variables).asMap(String.class, Object.class);
+        boolean renderedOverwrite = runContext.render(this.overwrite).as(Boolean.class).orElseThrow();
 
         Map<String, Object> currentVariables = execution.getVariables() == null ? Collections.emptyMap() : execution.getVariables();
 

@@ -42,6 +42,28 @@ export const Types: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const resolved = (token: string) => {
+            const probe = document.createElement("span")
+            probe.style.color = `var(${token})`
+            canvasElement.append(probe)
+            const color = getComputedStyle(probe).color
+            probe.remove()
+            return color
+        }
+
+        const alerts = [...canvasElement.querySelectorAll(".kel-alert")]
+        await expect(alerts).toHaveLength(4)
+
+        for (const [index, type] of ["success", "info", "warning", "error"].entries()) {
+            const styles = getComputedStyle(alerts[index])
+            await expect(styles.backgroundColor).toBe(resolved(`--ks-bg-${type}`))
+            await expect(styles.borderTopColor).toBe(resolved(`--ks-border-${type}`))
+            await expect(styles.color).toBe(resolved(`--ks-text-${type}`))
+            await expect(getComputedStyle(alerts[index].querySelector(".kel-alert__icon") as Element).color)
+                .toBe(resolved(`--ks-icon-${type}`))
+        }
+    },
 }
 
 export const WithDescription: Story = {

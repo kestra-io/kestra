@@ -22,14 +22,21 @@
             <span class="lane-state-text">{{ aggregateState }}</span>
         </span>
         <span class="lane-actions">
-            <NodeMenu :actions="actions" />
+            <slot name="taskActions" :task="taskNode?.task" :actions="actions" :execution="taskExecution" :taskRuns="taskRuns" :taskRun="taskRuns[0]">
+                <NodeMenu :actions="actions" />
+            </slot>
         </span>
     </div>
 </template>
 <script setup lang="ts">
     import {computed, inject} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useTaskIcon, SECTIONS, type PluginIconData, type PluginIconMap} from "@kestra-io/design-system"
+    import {
+        useTaskIcon,
+        SECTIONS,
+        type PluginIconData,
+        type PluginIconMap,
+    } from "@kestra-io/design-system"
     import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
     import * as Utils from "../utils/utils"
     import {getStatusStyle, computeAggregateState} from "../utils/status"
@@ -161,7 +168,7 @@
         }, {id: taskId.value, type: task?.type ?? ""})
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .lane-header {
         pointer-events: auto;
         display: flex;
@@ -174,8 +181,8 @@
         overflow: hidden;
     }
 
-    // A lane bar spans its whole cluster; the collapsed card is a task node's width instead, and
-    // only fits the same row on the tighter gap.
+    /* A lane bar spans its whole cluster; the collapsed card is a task node's width instead, and */
+    /* only fits the same row on the tighter gap. */
     .lane-header--card {
         gap: var(--ks-spacing-1);
     }

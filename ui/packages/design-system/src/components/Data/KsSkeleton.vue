@@ -42,3 +42,6 @@
     @use 'element-plus/theme-chalk/src/skeleton';
     @use 'element-plus/theme-chalk/src/skeleton-item';
 </style>
+
+<style>
+</style>

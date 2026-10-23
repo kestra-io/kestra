@@ -1,15 +1,15 @@
 import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import type {RouteLocation} from "vue-router"
-import {useClient, type AxiosLikeConfig, type ChartFiltersOverrides, type ExportFormat} from "@kestra-io/kestra-sdk"
+import {useClient, type ChartFiltersOverrides, type ExportFormat} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
 import {apiUrl, apiUrlWithoutTenants, basePath} from "override/utils/route"
 import {useMiscStore} from "override/stores/misc"
 import * as Utils from "../utils/utils"
+import {handledIf} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
-import type {KestraHttpError} from "../utils/kestraHttp"
 import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
@@ -119,10 +119,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
         try {
-            const dashboard = await DashboardsAPI.dashboard({id}, {ignoreNotFound: true} as Parameters<typeof DashboardsAPI.dashboard>[1]) as Dashboard
+            const dashboard = await DashboardsAPI.dashboard({id}) as Dashboard
             return dashboard.charts ?? []
         } catch (e: unknown) {
-            if ((e as KestraHttpError).status === 404) return []
+            if (handledIf(e, [404])) return []
             throw e
         }
     }
@@ -214,13 +214,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
-    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
-
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
-        } catch {
+            data = await DashboardsAPI.dashboard({id}) as Dashboard
+        } catch (e: unknown) {
+            // The page falls back to the bundled default on any failure; only the 404 is its own report.
+            handledIf(e, [404])
             return undefined
         }
 
@@ -285,10 +285,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {showMessageOnError: false} as AxiosLikeConfig)
+            const {data} = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters)
             return data
         } catch (e: unknown) {
-            if ((e as KestraHttpError).status === 404) return undefined
+            if (handledIf(e, [404])) return undefined
             throw e
         }
     }

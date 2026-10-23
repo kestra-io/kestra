@@ -4,6 +4,7 @@ import {
     TOUR_SCENES,
     sceneIdsOf,
     stepGroupsOf,
+    workingLabelKey,
     type TourScene,
 } from "./tourScenes"
 import {
@@ -221,5 +222,16 @@ describe("product tour flows", () => {
 
     it("prefills a valid JSON payload for the test event", () => {
         expect(() => JSON.parse(TOUR_TEST_EVENT_PAYLOAD)).not.toThrow()
+    })
+})
+
+describe("working label", () => {
+    it("uses the scene's own label when it has one", () => {
+        expect(workingLabelKey("scenes.a.working", "actions.running", (key) => key === "scenes.a.working"))
+            .toBe("scenes.a.working")
+    })
+
+    it("falls back to the generic label otherwise", () => {
+        expect(workingLabelKey("scenes.a.working", "actions.running", () => false)).toBe("actions.running")
     })
 })

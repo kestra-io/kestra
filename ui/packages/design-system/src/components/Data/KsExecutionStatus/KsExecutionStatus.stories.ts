@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import {expect, within} from "storybook/test"
 import KsExecutionStatus from "./KsExecutionStatus.vue"
 
 const statuses = [
@@ -18,6 +19,7 @@ const meta: Meta<typeof KsExecutionStatus> = {
         title: {control: "text"},
         clickable: {control: "boolean"},
         disabled: {control: "boolean"},
+        dot: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsExecutionStatus displays an execution status badge with optional icon, color-coded by status."}},
@@ -45,6 +47,25 @@ export const AllStatuses: Story = {
             </div>
         `,
     }),
+    play: async ({canvasElement}) => {
+        const resolved = (property: "color" | "backgroundColor", value: string) => {
+            const probe = document.createElement("span")
+            probe.style[property] = value
+            canvasElement.append(probe)
+            const result = getComputedStyle(probe)[property]
+            probe.remove()
+            return result
+        }
+
+        const badges = within(canvasElement).getAllByRole("button")
+        statuses.forEach((status, index) => {
+            const style = getComputedStyle(badges[index])
+            const name = status.toLowerCase()
+            expect(style.color).toBe(resolved("color", `var(--ks-status-${name})`))
+            expect(style.backgroundColor).toBe(resolved("backgroundColor", `var(--ks-status-background-${name})`))
+            expect(style.backgroundColor).not.toBe("rgba(0, 0, 0, 0)")
+        })
+    },
 }
 
 export const WithIcons: Story = {
@@ -94,7 +115,7 @@ export const CustomTitle: Story = {
 }
 
 /**
- * Hover both badges: only the opted-in one shows a pointer. Bootstrap's reboot puts
+ * Hover both badges: only the opted-in one shows a pointer. The CSS reset (_reboot.css) puts
  * `cursor: pointer` on `[type="button"]:not(:disabled)`, which ties with the component's own
  * scoped rule and wins on source order, so the non-clickable badge used to advertise a click it
  * never handled. It now inherits instead, so a badge inside a clickable row still shows the
@@ -149,6 +170,29 @@ export const Disabled: Story = {
         template: `
             <div style="padding:24px;display:flex;flex-wrap:wrap;gap:8px">
                 <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon glow clickable disabled />
+            </div>
+        `,
+    }),
+}
+
+/** Dot – collapses the badge to a coloured dot for dense layouts such as mobile cards; the label stays available to screen readers */
+export const Dot: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup: () => ({statuses}),
+        template: `
+            <div style="display: flex; gap: 12px; padding: 16px; align-items: center; flex-wrap: wrap;">
+                <KsExecutionStatus v-for="status in statuses" :key="status" :status="status" dot />
             </div>
         `,
     }),

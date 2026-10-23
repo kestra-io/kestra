@@ -35,10 +35,10 @@
                     </KsIconButton>
                 </span>
 
-                <span v-if="replayed" class="execution-banner__replay">
+                <router-link v-if="replayed" class="execution-banner__replay" :to="replaysLink">
                     <Replay />
                     {{ $t("replayed") }}
-                </span>
+                </router-link>
 
                 <span v-if="restarted" class="execution-banner__restart">
                     <Restart />
@@ -85,13 +85,7 @@
                     <span>{{ username }}</span>
                 </span>
 
-                <router-link v-if="originalLink" class="meta-item" :to="originalLink">
-                    <History />
-                    <span>
-                        {{ $t("original execution") }}:
-                        <span class="meta-item__link">{{ execution.originalId }}</span>
-                    </span>
-                </router-link>
+                <ParentExecutionLink :execution />
 
                 <component
                     :is="relation"
@@ -156,9 +150,11 @@
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
 
     import {Execution, useExecutionsStore} from "../../../../stores/executions"
+    import {useExecutionSummary} from "../../../../composables/useExecutionSummary"
     import {useMiscStore} from "override/stores/misc"
     import * as Utils from "../../../../utils/utils"
     import {useToast} from "../../../../utils/toast"
+    import {handledIf} from "../../../../utils/kestraHttp"
     import {createLink} from "../utils/links"
     import {executionBannerRelations} from "override/components/executions/overview/OverviewExtensions"
 
@@ -166,6 +162,7 @@
     import SetLabels from "../../SetLabels.vue"
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
+    import ParentExecutionLink from "./ParentExecutionLink.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -191,22 +188,7 @@
 
     const isFailed = computed(() => State.isFailed(props.execution.state.current))
 
-    const statusLabel = computed(() => {
-        const status = props.execution.state.current
-        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    })
-
-    const matchesStatus = (type: "replay" | "replayed" | "restarted") =>
-        props.execution.labels?.some(
-            (label) => label.key === `system.${type}` && String(label.value) === "true",
-        ) ?? false
-
-    const replayed = computed(() => matchesStatus("replay") || matchesStatus("replayed"))
-    const restarted = computed(() => matchesStatus("restarted"))
-
-    const createdDate = computed(() =>
-        dayjs(props.execution.state.histories?.[0]?.date).toDate(),
-    )
+    const {statusLabel, replayed, restarted, createdDate, replaysLink, copyId} = useExecutionSummary(() => props.execution)
 
     const scheduleDate = computed(() =>
         props.execution.scheduleDate ? dayjs(props.execution.scheduleDate).toDate() : undefined,
@@ -226,24 +208,12 @@
             : props.execution.labels?.find((label) => label.key === "system.username")?.value,
     )
 
-    const originalLink = computed(() => {
-        const {originalId, id} = props.execution
-        return originalId && originalId !== id
-            ? createLink("executions", props.execution, originalId)
-            : undefined
-    })
-
     const taskCount = computed(() => props.execution.taskRunList?.length ?? 0)
     const completedTaskCount = computed(() =>
         props.execution.taskRunList?.filter(
             (tr) => !State.isRunning(tr.state?.current ?? "CREATED"),
         ).length ?? 0,
     )
-
-    const copyId = () => {
-        Utils.copy(props.execution.id)
-        toast.success(t("copied"))
-    }
 
     const copyLogs = () => {
         executionsStore
@@ -260,9 +230,11 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {minLevel: "ERROR"},
-                showMessageOnError: false,
             })
-            .catch(() => [])
+            .catch((e: unknown) => {
+                handledIf(e, [403, 404])
+                return []
+            })
 
         const errorLines = (logs ?? [])
             .map((l: {message?: string}) => l.message)
@@ -276,205 +248,207 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .execution-banner {
         display: flex;
         flex-direction: column;
         height: 100%;
         container-type: inline-size;
+    }
 
-        &__content {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr) auto;
-            align-items: center;
-            align-content: center;
-            column-gap: var(--ks-spacing-4);
-            row-gap: var(--ks-spacing-2);
-            flex: 1;
-            padding: 1rem var(--ks-spacing-5);
-            border-bottom: 1px solid var(--ks-border-default);
-        }
+    .execution-banner__content {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        align-content: center;
+        column-gap: var(--ks-spacing-4);
+        row-gap: var(--ks-spacing-2);
+        flex: 1;
+        padding: 1rem var(--ks-spacing-5);
+        border-bottom: 1px solid var(--ks-border-default);
+    }
 
-        &__footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--ks-spacing-4);
-            padding: var(--ks-spacing-4) var(--ks-spacing-5);
+    .execution-banner__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-4) var(--ks-spacing-5);
+        flex-shrink: 0;
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+    }
+
+    .execution-banner__labels {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--ks-spacing-2);
+        min-width: 0;
+
+        .icon {
+            color: var(--ks-text-muted);
             flex-shrink: 0;
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
+            margin-top: 0.125rem;
         }
 
-        &__labels {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--ks-spacing-2);
-            min-width: 0;
-
-            .icon {
-                color: var(--ks-text-muted);
-                flex-shrink: 0;
-                margin-top: 0.125rem;
-            }
-
-            .list {
-                display: flex;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: var(--ks-spacing-2);
-                min-width: 0;
-            }
-        }
-
-        &__stats {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            flex-shrink: 0;
-            margin-right: calc(-1 * var(--ks-spacing-2));
-        }
-
-        &__state {
-            grid-column: 1;
-            grid-row: 1 / span 2;
-            align-self: center;
-        }
-
-        &__top {
-            grid-column: 2;
-            grid-row: 1;
+        .list {
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: var(--ks-spacing-2) var(--ks-spacing-4);
+            gap: var(--ks-spacing-2);
+            min-width: 0;
         }
+    }
 
-        &__status {
-            .status-label {
-                display: inline-flex;
-                align-items: center;
-                gap: var(--ks-spacing-1);
-                font-weight: 600;
-            }
+    .execution-banner__stats {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        flex-shrink: 0;
+        margin-right: calc(-1 * var(--ks-spacing-2));
+    }
+
+    .execution-banner__state {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        align-self: center;
+    }
+
+    .execution-banner__top {
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2) var(--ks-spacing-4);
+    }
+
+    .execution-banner__status {
+        .status-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--ks-spacing-1);
+            font-weight: 600;
         }
+    }
 
-        &__flow {
-            font-weight: 700;
-            font-size: var(--ks-font-size-xl);
+    .execution-banner__flow {
+        font-weight: 700;
+        font-size: var(--ks-font-size-xl);
+        color: var(--ks-text-primary);
+        text-decoration: none;
+
+        &:hover {
+            color: var(--ks-text-link);
+            text-decoration: underline;
+        }
+    }
+
+    .execution-banner__id {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        min-width: 0;
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-secondary);
+
+        code {
             color: var(--ks-text-primary);
-            text-decoration: none;
+            overflow-wrap: anywhere;
+        }
+
+        & :deep(.kel-button) {
+            color: var(--ks-text-secondary);
 
             &:hover {
-                color: var(--ks-text-link);
-                text-decoration: underline;
-            }
-        }
-
-        &__id {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-1);
-            min-width: 0;
-            font-size: var(--ks-font-size-sm);
-            color: var(--ks-text-secondary);
-
-            code {
                 color: var(--ks-text-primary);
-                overflow-wrap: anywhere;
             }
+        }
+    }
 
-            :deep(.kel-button) {
-                color: var(--ks-text-secondary);
+    .execution-banner__replay, .execution-banner__restart {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        font-size: var(--ks-font-size-xs);
+    }
 
-                &:hover {
-                    color: var(--ks-text-primary);
-                }
+    .execution-banner__replay {
+        color: var(--ks-status-info);
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .execution-banner__restart {
+        color: var(--ks-status-warning);
+    }
+
+    .execution-banner__actions {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+        align-self: center;
+        display: inline-flex;
+        gap: var(--ks-spacing-2);
+        flex-shrink: 0;
+
+        & :deep(.kel-button) {
+            color: var(--ks-text-secondary);
+            font-weight: 600;
+            font-size: var(--ks-font-size-sm);
+
+            &:hover {
+                color: var(--ks-text-primary);
             }
         }
 
-        &__replay,
-        &__restart {
+        & :deep(.fix-with-ai.kel-button) {
+            color: var(--ks-text-link);
+            box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
+
+            .material-design-icon {
+                color: var(--ks-text-link);
+            }
+        }
+    }
+
+    .execution-banner__meta {
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        row-gap: var(--ks-spacing-2);
+        column-gap: var(--ks-spacing-4);
+        margin-left: calc(-1 * var(--ks-spacing-2));
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+
+        .meta-item {
             display: inline-flex;
             align-items: center;
             gap: var(--ks-spacing-1);
-            font-size: var(--ks-font-size-xs);
-        }
-
-        &__replay {
-            color: var(--ks-status-info);
-        }
-
-        &__restart {
-            color: var(--ks-status-warning);
-        }
-
-        &__actions {
-            grid-column: 3;
-            grid-row: 1 / span 2;
-            align-self: center;
-            display: inline-flex;
-            gap: var(--ks-spacing-2);
-            flex-shrink: 0;
-
-            :deep(.kel-button) {
-                color: var(--ks-text-secondary);
-                font-weight: 600;
-                font-size: var(--ks-font-size-sm);
-
-                &:hover {
-                    color: var(--ks-text-primary);
-                }
-            }
-
-            :deep(.fix-with-ai.kel-button) {
-                color: var(--ks-text-link);
-                box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
-
-                .material-design-icon {
-                    color: var(--ks-text-link);
-                }
-            }
-        }
-
-        &__meta {
-            grid-column: 2;
-            grid-row: 2;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            row-gap: var(--ks-spacing-2);
-            column-gap: var(--ks-spacing-4);
-            margin-left: calc(-1 * var(--ks-spacing-2));
+            padding: var(--ks-spacing-1) var(--ks-spacing-2);
+            border-radius: var(--ks-radius-xs);
             color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
 
-            .meta-item {
+            .material-design-icon {
+                color: var(--ks-text-muted);
                 display: inline-flex;
-                align-items: center;
-                gap: var(--ks-spacing-1);
-                padding: var(--ks-spacing-1) var(--ks-spacing-2);
-                border-radius: var(--ks-radius-xs);
-                color: var(--ks-text-secondary);
-
-                .material-design-icon {
-                    color: var(--ks-text-muted);
-                    display: inline-flex;
-                }
-
-                &__link {
-                    color: var(--ks-text-link);
-                }
-
-                &:hover {
-                    background: var(--ks-bg-hover);
-                    color: var(--ks-text-primary);
-                }
             }
+        }
 
-            a.meta-item:hover span {
-                color: var(--ks-text-link);
+        .meta-item {
+            &:hover {
+                background: var(--ks-bg-hover);
+                color: var(--ks-text-primary);
             }
+        }
+
+        a.meta-item:hover span {
+            color: var(--ks-text-link);
         }
     }
 
@@ -548,15 +522,15 @@
         flex-direction: column;
         gap: var(--ks-spacing-1);
         font-size: var(--ks-font-size-2xs);
+    }
 
-        &__row {
-            display: flex;
-            align-items: center;
-            gap: var(--ks-spacing-1);
-        }
+    .date-tooltip__row {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
 
-        &__label {
-            color: var(--ks-text-secondary);
-        }
+    .date-tooltip__label {
+        color: var(--ks-text-secondary);
     }
 </style>

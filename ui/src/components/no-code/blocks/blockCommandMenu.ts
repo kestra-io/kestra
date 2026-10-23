@@ -9,6 +9,8 @@ import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
 import type {BlockCommandMenuItem} from "./BlockCommandMenu.vue"
 import {parentPathFromLaneSentinel, sectionFromSentinel} from "./blockSections"
+import {findBlockEditorBinding} from "./keymap"
+import {displayKeys} from "./shortcutHints"
 import type {PickerEntry} from "./taskPickerCatalog"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
 
@@ -38,6 +40,10 @@ export interface BlockCommandMenuContext {
     cutFocused?: () => void
     pasteRelative?: () => void
     canPaste?: boolean
+}
+
+function shortcutFor(bindingId: string): string | undefined {
+    return displayKeys(findBlockEditorBinding(bindingId)?.keys ?? [])[0]
 }
 
 function focusedSubject(ctx: BlockCommandMenuContext) {
@@ -94,7 +100,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             group: t("block_editor.command_menu.group_insert"),
             title: t("block_editor.command_menu.insert_before", {name: ctx.focusedBlockDisplayName()}),
             icon: PlusCircleOutline,
-            shortcut: "⇧A",
+            shortcut: shortcutFor("insert-before"),
             run: then(ctx.addBeforeFocused),
         })
     }
@@ -133,7 +139,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
                 group: t("block_editor.command_menu.group_block"),
                 title: t("block_editor.command_menu.copy", {name}),
                 icon: ContentCopy,
-                shortcut: "⌘C",
+                shortcut: shortcutFor("copy"),
                 run: then(ctx.copyFocused),
             })
         }
@@ -143,7 +149,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
                 group: t("block_editor.command_menu.group_block"),
                 title: t("block_editor.command_menu.cut", {name}),
                 icon: ContentCut,
-                shortcut: "⌘X",
+                shortcut: shortcutFor("cut"),
                 run: then(ctx.cutFocused),
             })
         }
@@ -163,7 +169,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             group: t("block_editor.command_menu.group_block"),
             title: t("block_editor.command_menu.paste"),
             icon: ContentPaste,
-            shortcut: "⌘V",
+            shortcut: shortcutFor("paste"),
             disabled: !ctx.canPaste,
             run: then(ctx.pasteRelative),
         })
@@ -184,7 +190,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
         group: t("block_editor.command_menu.group_flow"),
         title: t("block_editor.command_menu.save"),
         icon: ContentSave,
-        shortcut: "⌘S",
+        shortcut: shortcutFor("save"),
         run: then(ctx.saveFlow),
     })
 

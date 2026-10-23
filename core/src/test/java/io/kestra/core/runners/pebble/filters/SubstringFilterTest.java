@@ -7,10 +7,12 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+import io.pebbletemplates.pebble.error.PebbleException;
 
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class SubstringFilterTest {
@@ -42,5 +44,24 @@ class SubstringFilterTest {
     void substringAfterLast() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'a.b.c' | substringAfterLast('.') }}", Map.of());
         assertThat(render).isEqualTo("c");
+    }
+
+    @Test
+    void shouldThrowPebbleExceptionWhenSeparatorIsNotAString() {
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'a1b1c' | substringAfter(separator=1) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasRootCauseInstanceOf(PebbleException.class);
+
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'a1b1c' | substringBefore(separator=1) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasRootCauseInstanceOf(PebbleException.class);
+
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'a1b1c' | substringAfterLast(separator=1) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasRootCauseInstanceOf(PebbleException.class);
+
+        assertThatThrownBy(() -> variableRenderer.render("{{ 'a1b1c' | substringBeforeLast(separator=1) }}", Map.of()))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasRootCauseInstanceOf(PebbleException.class);
     }
 }

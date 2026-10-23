@@ -38,9 +38,11 @@ public class SubstringAfterLastFilter implements Filter {
             );
         }
 
-        String separator = (String) args.get("separator");
-        ;
+        Object separatorObj = args.get("separator");
+        if (!(separatorObj instanceof String)) {
+            throw new PebbleException(null, "The 'substringAfterLast' filter argument 'separator' must be a string. Actual type was: " + separatorObj.getClass().getName(), lineNumber, self.getName());
+        }
 
-        return StringUtils.substringAfterLast(input.toString(), separator);
+        return StringUtils.substringAfterLast(input.toString(), (String) separatorObj);
     }
 }

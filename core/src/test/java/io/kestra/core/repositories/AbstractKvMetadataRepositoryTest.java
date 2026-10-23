@@ -7,6 +7,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +30,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
 public abstract class AbstractKvMetadataRepositoryTest {
@@ -279,6 +285,68 @@ public abstract class AbstractKvMetadataRepositoryTest {
 
         assertThat(namespaces).containsExactlyInAnyOrder(namespace1, namespace2);
         assertThat(namespaces).doesNotContain(deletedNamespace);
+    }
+
+    @Test
+    void concurrentSaveSameKey() throws Exception {
+        int threadCount = 8;
+        String tenantId = TestsUtils.randomTenant();
+        String namespace = TestsUtils.randomNamespace();
+        String key = "concurrent-key";
+
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(threadCount);
+        List<Throwable> errors = new CopyOnWriteArrayList<>();
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        try {
+            for (int i = 0; i < threadCount; i++) {
+                final int index = i;
+                executorService.submit(() -> {
+                    try {
+                        startLatch.await();
+                        PersistedKvMetadata metadata = PersistedKvMetadata.builder()
+                            .tenantId(tenantId)
+                            .namespace(namespace)
+                            .name(key)
+                            .description("description-" + index)
+                            .build();
+                        kvMetadataRepositoryInterface.save(metadata);
+                    } catch (Throwable t) {
+                        errors.add(t);
+                    } finally {
+                        doneLatch.countDown();
+                    }
+                });
+            }
+
+            startLatch.countDown();
+            boolean completed = doneLatch.await(30, TimeUnit.SECONDS);
+            assertThat(completed).isTrue();
+            assertThat(errors).isEmpty();
+        } finally {
+            executorService.shutdownNow();
+        }
+
+        Optional<PersistedKvMetadata> finalMetadata = kvMetadataRepositoryInterface.findByName(tenantId, namespace, key);
+        assertThat(finalMetadata).isPresent();
+        List<String> validDescriptions = java.util.stream.IntStream.range(0, threadCount)
+            .mapToObj(i -> "description-" + i)
+            .toList();
+        assertThat(finalMetadata.get().getDescription()).isIn(validDescriptions);
+    }
+
+
+    @Test
+    void shouldThrowWhenDatabaseConstraintViolated() {
+        PersistedKvMetadata invalid = PersistedKvMetadata.builder()
+            .tenantId(TestsUtils.randomTenant())
+            .namespace(null)
+            .name("null-namespace-key")
+            .build();
+
+        assertThatThrownBy(() -> kvMetadataRepositoryInterface.save(invalid))
+            .isInstanceOf(Exception.class);
     }
 
     protected static PersistedKvMetadata buildTestKvDescription(String tenantId, String namespace, String key) {

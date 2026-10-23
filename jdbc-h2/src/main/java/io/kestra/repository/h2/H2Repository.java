@@ -1,9 +1,11 @@
 package io.kestra.repository.h2;
 
+import java.sql.SQLException;
 import java.util.*;
 
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
 
 import io.kestra.core.repositories.ArrayListTotal;
@@ -41,22 +43,66 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         this.persistInternal(entity, context, finalFields);
     }
 
-    private int persistInternal(T entity, DSLContext context, Map<Field<Object>, Object> fields) {
-        int affectedRows = context
-            .update(table)
-            .set(fields)
-            .where(KEY_FIELD.eq(key(entity)))
-            .execute();
+    private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
+    private static final int MAX_PERSIST_ATTEMPTS = 5;
 
-        if (affectedRows == 0) {
-            return context
-                .insertInto(table)
-                .set(KEY_FIELD, key(entity))
+    private int persistInternal(T entity, DSLContext context, Map<Field<Object>, Object> fields) {
+        IntegrityConstraintViolationException lastConflict = null;
+        for (int attempt = 0; attempt < MAX_PERSIST_ATTEMPTS; attempt++) {
+            int affectedRows = context
+                .update(table)
                 .set(fields)
+                .where(KEY_FIELD.eq(key(entity)))
                 .execute();
-        } else {
-            return affectedRows;
+
+            if (affectedRows > 0) {
+                return affectedRows;
+            }
+
+            try {
+                return context
+                    .insertInto(table)
+                    .set(KEY_FIELD, key(entity))
+                    .set(fields)
+                    .execute();
+            } catch (IntegrityConstraintViolationException e) {
+                if (!isUniqueConstraintViolation(e)) {
+                    throw e;
+                }
+                lastConflict = e;
+            }
         }
+
+        throw new IllegalStateException(
+            "Failed to persist entity with key '%s' after %d attempts due to concurrent conflicts.".formatted(key(entity), MAX_PERSIST_ATTEMPTS),
+            lastConflict
+        );
+    }
+
+    private static boolean isUniqueConstraintViolation(IntegrityConstraintViolationException e) {
+        if (UNIQUE_VIOLATION_SQL_STATE.equals(e.sqlState())) {
+            return true;
+        }
+
+        Throwable current = e;
+        Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        while (current != null && seen.add(current)) {
+            if (current instanceof SQLException sqlException) {
+                if (UNIQUE_VIOLATION_SQL_STATE.equals(sqlException.getSQLState())) {
+                    return true;
+                }
+                SQLException next = sqlException.getNextException();
+                while (next != null && seen.add(next)) {
+                    if (UNIQUE_VIOLATION_SQL_STATE.equals(next.getSQLState())) {
+                        return true;
+                    }
+                    next = next.getNextException();
+                }
+            }
+            current = current.getCause();
+        }
+
+        return false;
     }
 
     @Override

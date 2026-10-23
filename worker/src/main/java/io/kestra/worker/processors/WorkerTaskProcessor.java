@@ -13,6 +13,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -111,6 +113,9 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
     private void runWorkingDirectory(WorkerTask workerTask, WorkingDirectory workingDirectory) {
         DefaultRunContext runContext = runContextInitializer.forWorkingDirectory(workerTask);
         final RunContext workingDirectoryRunContext = runContext.clone();
+        // the executor ends the WorkingDirectory and reads its outputs as soon as the last subtask result is joined,
+        // so each result is held back until the next subtask starts or postExecuteTasks has written them
+        AtomicReference<WorkerTaskResult> heldBackResult = new AtomicReference<>();
 
         try {
             // preExecuteTasks
@@ -128,6 +133,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 if (Boolean.TRUE.equals(currentTask.getDisabled())) {
                     continue;
                 }
+                releaseHeldBackResult(heldBackResult);
                 WorkerTask currentWorkerTask = workingDirectory.workerTask(
                     workerTask.getTaskRun(),
                     currentTask,
@@ -143,11 +149,12 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                                 .withState(SKIPPED)
                                 .addAttempt(TaskRunAttempt.builder().workerId(workerId).state(new State().withState(SKIPPED)).build())
                         );
-                        workerTaskResultQueue.put(workerTaskResult);
+                        heldBackResult.set(workerTaskResult);
                     } else {
                         workerTaskResult = this.runTask(
                             currentWorkerTask, false,
-                            runContextInitializer.forWorkingDirectorySubtask(currentWorkerTask, runContext.workingDir())
+                            runContextInitializer.forWorkingDirectorySubtask(currentWorkerTask, runContext.workingDir()),
+                            heldBackResult::set
                         );
                     }
                 } catch (IllegalVariableEvaluationException e) {
@@ -169,19 +176,34 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
             } catch (Exception e) {
                 workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
-                workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
+                // the executor ends the WorkingDirectory from its last subtask result and drops a parent failure joined later,
+                // so that result carries the failure
+                WorkerTaskResult lastResult = heldBackResult.get();
+                if (lastResult == null) {
+                    workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
+                } else if (lastResult.getTaskRun().getState().isTerminatedNoFail()) {
+                    heldBackResult.set(lastResult.withTaskRun(lastResult.getTaskRun().withStateAndAttempt(FAILED)));
+                }
             }
             this.logTerminated(workerTask, workerTask.getTaskRun());
         } finally {
+            releaseHeldBackResult(heldBackResult);
             runContext.cleanup();
         }
     }
 
-    private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp) {
-        return runTask(workerTask, cleanUp, null);
+    private void releaseHeldBackResult(AtomicReference<WorkerTaskResult> heldBackResult) {
+        WorkerTaskResult workerTaskResult = heldBackResult.getAndSet(null);
+        if (workerTaskResult != null) {
+            workerTaskResultQueue.put(workerTaskResult);
+        }
     }
 
-    private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp, DefaultRunContext providedRunContext) {
+    private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp) {
+        return runTask(workerTask, cleanUp, null, workerTaskResultQueue::put);
+    }
+
+    private WorkerTaskResult runTask(WorkerTask workerTask, boolean cleanUp, DefaultRunContext providedRunContext, Consumer<WorkerTaskResult> resultEmitter) {
         String[] metricTags = metricRegistry.tags(workerTask, workerGroup);
 
         this.metricRegistry
@@ -206,7 +228,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     && executionKilledManager.isExecutionKilled(workerTask.getTaskRun().getExecutionId())
             ) {
                 WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.KILLED));
-                workerTaskResultQueue.put(workerTaskResult);
+                resultEmitter.accept(workerTaskResult);
                 // We cannot remove the execution ID from the killed cache in case the worker is processing
                 // multiple tasks of the execution which can happen due to parallel processing.
                 return workerTaskResult;
@@ -231,7 +253,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                     Optional<WorkerTaskResult> cachedResult = loadFromCache(runContext, workerTask, hash.get());
                     if (cachedResult.isPresent()) {
                         WorkerTaskResult workerTaskResult = cachedResult.get();
-                        workerTaskResultQueue.put(workerTaskResult);
+                        resultEmitter.accept(workerTaskResult);
                         return workerTaskResult;
                     }
                 }
@@ -339,7 +361,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 }
             }
 
-            workerTaskResultQueue.put(workerTaskResult);
+            resultEmitter.accept(workerTaskResult);
 
             this.logTerminated(workerTask, taskRun);
             return workerTaskResult;

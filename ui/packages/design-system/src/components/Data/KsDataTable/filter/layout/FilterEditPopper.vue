@@ -286,9 +286,9 @@
             return
         }
 
-        // Falling back to a blank value left the filter with nothing selected, rather than with
-        // the default the page configured (the executions view's 24h interval, for instance).
-        const defaultValue = resolveDefaultVisibleValue(props.filterKey)
+        const defaultValue = filterContext
+            ? filterContext.getDefaultValue(props.filterKey)
+            : resolveDefaultVisibleValue(props.filterKey)
 
         Object.assign(state, {
             textValue: typeof defaultValue === "string" ? defaultValue : "",

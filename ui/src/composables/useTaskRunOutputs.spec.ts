@@ -120,4 +120,15 @@ describe("useTaskRunOutputs", () => {
             {params: {uniqueId: "model.shop.orders"}},
         )
     })
+
+    test("callTaskRunEndpoint encodes the execution and task run ids", async () => {
+        clientGetMock.mockResolvedValue({data: {}})
+
+        await callTaskRunEndpoint("io.kestra.plugin.dbt.cli.DbtCLI", "compiled-sql", "exec-1", "../../users")
+
+        expect(clientGetMock).toHaveBeenCalledWith(
+            "/api/v1/main/plugins/io.kestra.plugin.dbt.cli.DbtCLI/endpoints/compiled-sql/exec-1/..%2F..%2Fusers",
+            {params: {}},
+        )
+    })
 })

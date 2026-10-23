@@ -61,7 +61,7 @@
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
                         :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
                         :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
-                        :fetchEndpoint="fetchTaskEndpoint(taskProps.data.node.task)"
+                        :fetchEndpoint="fetchTaskEndpoint(taskProps.data.node?.task)"
                     />
                 </slot>
             </template>

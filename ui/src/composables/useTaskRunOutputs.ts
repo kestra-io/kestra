@@ -92,7 +92,7 @@ export async function loadExecutionOutputs(executionId: string): Promise<Record<
 
 // `cls` only selects the plugin, so any of its classes works.
 export async function callTaskRunEndpoint(cls: string, name: string, executionId: string, taskRunId: string, params: Record<string, string> = {}): Promise<unknown> {
-    const url = `${apiUrl()}/plugins/${encodeURIComponent(cls)}/endpoints/${encodeURIComponent(name)}/${executionId}/${taskRunId}`
+    const url = `${apiUrl()}/plugins/${encodeURIComponent(cls)}/endpoints/${encodeURIComponent(name)}/${encodeURIComponent(executionId)}/${encodeURIComponent(taskRunId)}`
     const response = await useClient().get(url, {params})
     return response.data
 }

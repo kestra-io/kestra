@@ -3,7 +3,7 @@
         v-model="modelValue"
         :disabled
         :placeholder="disabled ? $t('no_code.version_oss_placeholder') : undefined"
-        class="w-100"
+        class="task-version-input"
     />
 </template>
 
@@ -23,3 +23,8 @@
         inheritAttrs: false,
     })
 </script>
+<style scoped lang="scss">
+.task-version-input {
+    width: 100%;
+}
+</style>

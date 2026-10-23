@@ -184,7 +184,7 @@ const NEVER_TRANSLATED_WORDS = new Set([
     "subflows", "task", "tasks", "log", "logs", "blueprint", "blueprints", "id", "ids", "trigger",
     "triggers", "label", "labels", "key", "keys", "value", "values", "input", "inputs", "output",
     "outputs", "port", "ports", "worker", "workers", "backfill", "backfills", "healthcheck",
-    "min", "max",
+    "artifact", "artifacts", "min", "max",
     // Terms of the same kind the model declines to translate in every locale, so an English value
     // for them is a deliberate choice rather than a skipped translation. Execution and asset are
     // Kestra entity nouns the German and Polish glossaries in the prompt already keep in English.

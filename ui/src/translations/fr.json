@@ -1204,6 +1204,7 @@
     "backfill executions": "Backfill d'exécutions",
     "execute backfill": "Exécuter le backfill",
     "relative start date": "Date de début relative",
+    "now": "Maintenant",
     "absolute": "Absolu",
     "backfill": "Backfill",
     "Set labels": "Ajouter des labels",
@@ -2864,6 +2865,56 @@
     "iteration": "Itération",
     "iteration_number": "Itération {number}",
     "delete_log_iteration": "Êtes-vous sûr de vouloir supprimer le journal pour {iteration} ?",
-    "not started": "Non démarré"
+    "not started": "Non démarré",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow} : {state}"
+      },
+      "breadcrumb": {
+        "all": "Tous",
+        "total": "{count} exécution | {count} exécutions",
+        "failed": "{count} en échec"
+      },
+      "toolbar": {
+        "panBack": "Reculer",
+        "panForward": "Avancer",
+        "zoomIn": "Zoomer",
+        "zoomOut": "Dézoomer",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Ouvrir cette page",
+        "runsCount": "{count} exécution | {count} exécutions",
+        "failedCount": "{count} en échec"
+      },
+      "bucket": {
+        "hint": "Agrégé : zoomez pour le détail au niveau de l'exécution",
+        "stateCount": "{state} : {count}"
+      },
+      "popover": {
+        "openExecution": "Ouvrir l'exécution",
+        "showOnlyFlow": "Afficher uniquement ce flow"
+      },
+      "empty": {
+        "description": "Aucune exécution dans la période et les filtres sélectionnés.",
+        "resetFilters": "Réinitialiser les filtres",
+        "widenRange": "Élargir à 7 jours"
+      },
+      "error": {
+        "title": "Impossible de charger la chronologie",
+        "description": "Une erreur s'est produite lors du chargement des exécutions pour cette période."
+      },
+      "truncated": {
+        "description": "Affichage des {shown} dernières exécutions sur {total}. Réduisez la période ou les filtres pour toutes les voir."
+      },
+      "scrubber": {
+        "label": "Densité d'Execution au fil du temps, faites glisser pour sélectionner une plage",
+        "ignoredFilters": "La barre de densité n'applique pas ces filtres : {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Décompte",
+      "timeline": "Chronologie"
+    }
   }
 }

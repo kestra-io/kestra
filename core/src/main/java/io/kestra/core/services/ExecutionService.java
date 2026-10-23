@@ -1475,7 +1475,8 @@ public class ExecutionService {
 
         Execution newExecution = execution;
         if (execution.getState().isCreated()) {
-            newExecution = execution.withState(State.Type.RUNNING);
+            // like an unqueued one, it skips the concurrency gate and claims no slot
+            newExecution = execution.withState(State.Type.RUNNING).withMetadata(execution.getMetadata().withConcurrencyScopes(List.of()));
         }
 
         if (execution.getState().getCurrent() == State.Type.QUEUED) {

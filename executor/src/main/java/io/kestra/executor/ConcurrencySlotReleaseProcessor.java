@@ -154,12 +154,10 @@ public class ConcurrencySlotReleaseProcessor {
      * claim stamp held a slot, decided from its state history.
      * Both cases below describe an execution the concurrency gate rejected, which was therefore never counted.
      * <p>
-     * Two different populations reach this fallback, and only one of them is temporary:
-     * <ul>
-     *     <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
-     *     <li>executions moved to RUNNING while bypassing the admission gate, which never
-     *     increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
-     * </ul>
+     * Only executions admitted by a pre 2.0 version, still running across an upgrade, reach this fallback, and those
+     * disappear on their own. Executions moved to RUNNING while bypassing the admission gate, by
+     * {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}, carry an empty claim instead, as they
+     * hold no slot.
      */
     private static boolean claimedASlotAccordingToHistory(Execution execution) {
         // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution

@@ -3,8 +3,11 @@ package io.kestra.core.runners;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import io.kestra.core.executor.command.ForceRun;
+import io.kestra.core.executor.command.Unqueue;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 
 import jakarta.inject.Inject;
@@ -61,6 +64,24 @@ public abstract class AbstractRunnerConcurrencyTest {
     @LoadFlows(value = { "flows/valids/flow-concurrency-fail-restarted.yml" }, tenantId = "concurrency-fail-restarted")
     void concurrencyFailRestarted() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyFailRestarted("concurrency-fail-restarted");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-forced.yml" }, tenantId = "concurrency-queue-force-run")
+    void concurrencyQueueForceRun() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueForced("concurrency-queue-force-run", ForceRun::from);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-forced.yml" }, tenantId = "concurrency-queue-unqueue-running")
+    void concurrencyQueueUnqueueRunning() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueForced("concurrency-queue-unqueue-running", e -> Unqueue.from(e, State.Type.RUNNING));
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-forced.yml" }, tenantId = "concurrency-queue-unqueue-cancelled")
+    void concurrencyQueueUnqueueCancelled() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyQueueForced("concurrency-queue-unqueue-cancelled", e -> Unqueue.from(e, State.Type.CANCELLED));
     }
 
     @Test

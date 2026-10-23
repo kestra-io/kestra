@@ -1,4 +1,4 @@
-﻿import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {compare, useFilters} from "./useFilters"
 
 beforeEach(() => {
@@ -81,6 +81,14 @@ describe("useFilters", () => {
             ]))
             const {getSavedItems} = useFilters("flows")
             expect(getSavedItems()).toEqual([{name: "not running", value: "status!=RUNNING"}])
+        })
+
+        it("converts a legacy GREATER_THAN filter to '<field>><value>'", () => {
+            localStorage.setItem("saved__flows", JSON.stringify([
+                {name: "big", value: [{field: "count", operation: "GREATER_THAN", value: "5"}]},
+            ]))
+            const {getSavedItems} = useFilters("flows")
+            expect(getSavedItems()).toEqual([{name: "big", value: "count>5"}])
         })
 
         it("wraps a legacy value containing spaces in double quotes", () => {

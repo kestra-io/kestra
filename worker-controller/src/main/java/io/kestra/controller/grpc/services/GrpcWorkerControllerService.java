@@ -1,6 +1,9 @@
 package io.kestra.controller.grpc.services;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -14,6 +17,7 @@ import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
@@ -251,8 +255,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
             switch (workerTriggerResult.type()) {
                 case POLLING -> {
-                    triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
-                    workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+                    processPollingTriggerResult(workerTriggerResult);
                 }
                 case REALTIME -> {
                     if (evaluation != null) {
@@ -282,6 +285,46 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
      */
     static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
         return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
+    }
+
+    void processPollingTriggerResult(WorkerTriggerResult workerTriggerResult) {
+        TriggerEvaluationResult evaluation = workerTriggerResult.evaluation();
+        TriggerEvaluated triggerEvaluated = new TriggerEvaluated(
+            workerTriggerResult.id(), evaluation, workerTriggerResult.dispatchEpoch(),
+            workerTriggerResult.resultId() == null ? io.kestra.core.events.EventId.create() : workerTriggerResult.resultId()
+        );
+        try {
+            triggerEventQueue.send(triggerEvaluated);
+        } catch (KestraRuntimeException e) {
+            if (evaluation == null || !isOversizedOrUnsupported(e)) {
+                throw e;
+            }
+
+            log.warn("Polling trigger result {} cannot be published as-is; publishing a bounded FAILED evaluation instead.", workerTriggerResult.id(), e);
+            TriggerEvaluationResult failed = new TriggerEvaluationResult(
+                evaluation.executionId(),
+                State.Type.FAILED,
+                null,
+                null,
+                evaluation.flowRevision(),
+                evaluation.scheduleDate(),
+                null
+            );
+            triggerEventQueue.send(new TriggerEvaluated(
+                workerTriggerResult.id(), failed, triggerEvaluated.timestamp(), triggerEvaluated.eventId(), triggerEvaluated.dispatchEpoch()
+            ));
+        }
+        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+    }
+
+    private static boolean isOversizedOrUnsupported(Throwable throwable) {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (Throwable cause = throwable; cause != null && visited.add(cause); cause = cause.getCause()) {
+            if (cause instanceof MessageTooBigException || cause instanceof UnsupportedMessageException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

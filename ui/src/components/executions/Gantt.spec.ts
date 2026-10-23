@@ -21,7 +21,7 @@ const histories = [
     {state: "SUCCESS", date: "2026-10-08T00:00:01Z"},
 ]
 
-async function mountGantt(flowTasks: Array<Record<string, unknown>>, taskRunList: Array<Record<string, unknown>>) {
+async function mountGantt(flowTasks: Array<Record<string, unknown>>, taskRunList: Array<Record<string, unknown>>, props: {showBanner?: boolean} = {}) {
     const pinia = createPinia()
     const router = createRouter({
         history: createMemoryHistory(),
@@ -40,10 +40,12 @@ async function mountGantt(flowTasks: Array<Record<string, unknown>>, taskRunList
     } as Execution
     await router.push("/")
     const wrapper = i18nMount(Gantt, {
+        props,
         global: {
             plugins: [pinia, router],
             stubs: {
                 KSFilter: true,
+                ExecutionSummaryCard: {template: "<div data-test='execution-summary-card' />"},
                 TaskRunActions: true,
                 TaskIcon: true,
                 Duration: true,
@@ -161,6 +163,24 @@ describe("Gantt subflow logs", () => {
             expect(viewers[2].props("hideTaskHeader")).toBe(true)
         } finally {
             wrapper.unmount()
+        }
+    })
+})
+
+describe("Gantt summary card", () => {
+    afterAll(() => localStorage.clear())
+
+    const taskRuns = [{id: "tr-1", taskId: "first", state: {current: "SUCCESS", histories}}]
+
+    it("shouldShowTheSummaryCardOnlyWhenShowBannerIsSet", async () => {
+        const {wrapper: withBanner} = await mountGantt([logTask("first")], taskRuns, {showBanner: true})
+        const {wrapper: embedded} = await mountGantt([logTask("first")], taskRuns)
+        try {
+            expect(withBanner.find("[data-test='execution-summary-card']").exists()).toBe(true)
+            expect(embedded.find("[data-test='execution-summary-card']").exists()).toBe(false)
+        } finally {
+            withBanner.unmount()
+            embedded.unmount()
         }
     })
 })

@@ -8,6 +8,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.repositories.*;
 import org.mockito.Mockito;
 
 import io.kestra.core.assets.AssetService;
@@ -31,10 +32,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.queues.event.Event;
-import io.kestra.core.repositories.CheckpointRepositoryInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogDataStoreInterface;
-import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
@@ -333,7 +330,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             workerQueueService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             Optional.empty(),
             killQueue,
             loopExecutionEventQueue,
@@ -362,6 +359,7 @@ public final class ExecutorTestHarness {
             runContextLoggerFactory,
             killSwitchService,
             killSwitchActionService,
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             metricRegistry,
             tracerFactory,
             clock
@@ -453,7 +451,7 @@ public final class ExecutorTestHarness {
             flowMetaStore,
             executionService,
             executorService,
-            new SLAService(),
+            new SLAService(Mockito.mock(ExecutionStatisticsRepositoryInterface.class)),
             runContextFactory,
             metricRegistry
         );

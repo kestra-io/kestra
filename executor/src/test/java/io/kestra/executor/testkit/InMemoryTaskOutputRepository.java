@@ -2,6 +2,7 @@ package io.kestra.executor.testkit;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,6 +39,20 @@ public class InMemoryTaskOutputRepository implements TaskOutputRepositoryInterfa
     public int purgeByExecutionIds(List<String> executionIds) {
         int before = outputs.size();
         outputs.values().removeIf(output -> executionIds.contains(output.executionId()));
+        return before - outputs.size();
+    }
+
+    @Override
+    public int deleteByTaskRunIds(String tenantId, String executionId, List<String> taskRunIds) {
+        if (taskRunIds == null || taskRunIds.isEmpty()) {
+            return 0;
+        }
+        int before = outputs.size();
+        outputs.values().removeIf(
+            output -> Objects.equals(tenantId, output.tenantId()) &&
+                Objects.equals(executionId, output.executionId()) &&
+                taskRunIds.contains(output.taskRunId())
+        );
         return before - outputs.size();
     }
 

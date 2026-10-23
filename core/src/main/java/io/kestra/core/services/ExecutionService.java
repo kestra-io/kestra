@@ -238,6 +238,8 @@ public class ExecutionService {
 
         ExecutionMetadata metadata = execution.getMetadata().withTaskRunStatisticPlus(TaskRunStatistic.of(discarded));
 
+        taskOutputService.deleteByTaskRun(execution, discarded);
+
         return execution.withTaskRunList(newTaskRuns).withMetadata(metadata).withState(State.Type.RUNNING);
     }
 
@@ -445,6 +447,10 @@ public class ExecutionService {
         // We need to remove afterExecution tasks
         ListUtils.emptyOnNull(flow.getAfterExecution())
             .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+        if (revision == null) {
+            cleanUpPrunedTaskRuns(execution, newTaskRuns);
+        }
 
         // Build and launch new execution
         Execution newExecution = execution
@@ -662,6 +668,8 @@ public class ExecutionService {
             // We need to remove afterExecution tasks
             ListUtils.emptyOnNull(flow.getAfterExecution())
                 .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
+
+            cleanUpPrunedTaskRuns(targetExecution, newTaskRuns);
 
             newExecution = newExecution.withTaskRunList(newTaskRuns);
         } else {
@@ -1388,6 +1396,22 @@ public class ExecutionService {
             )
             .map(TaskRun::getId)
             .collect(Collectors.toSet());
+    }
+
+    private void cleanUpPrunedTaskRuns(Execution execution, List<TaskRun> newTaskRuns) {
+        if (execution.getTaskRunList() == null || execution.getTaskRunList().isEmpty()) {
+            return;
+        }
+
+        Set<String> newTaskRunIds = newTaskRuns != null
+            ? newTaskRuns.stream().map(TaskRun::getId).collect(Collectors.toSet())
+            : Collections.emptySet();
+
+        List<TaskRun> pruned = execution.getTaskRunList().stream()
+            .filter(taskRun -> !newTaskRunIds.contains(taskRun.getId()))
+            .toList();
+
+        taskOutputService.deleteByTaskRun(execution, pruned);
     }
 
     private Map<String, String> mapTaskRunId(Execution execution, boolean keep) {

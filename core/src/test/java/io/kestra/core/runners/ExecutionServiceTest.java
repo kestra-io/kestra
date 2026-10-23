@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.executions.TaskRunAttempt;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
@@ -24,6 +23,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
@@ -31,6 +31,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
@@ -68,6 +69,9 @@ class ExecutionServiceTest {
 
     @Inject
     TaskOutputService taskOutputService;
+
+    @Inject
+    TaskOutputRepositoryInterface taskOutputRepository;
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
@@ -795,6 +799,71 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/restart_local_errors.yaml" })
+    void shouldDeletePrunedTaskRunOutputsWhenRestartingExecution() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart_local_errors");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        Flow flow = flowRepository.findByExecution(execution);
+
+        TaskRun errorTaskRun = execution.findTaskRunsByTaskId("errorHandler").getFirst();
+        taskOutputService.saveOutputs(errorTaskRun, Map.of("errorDetail", "failed"));
+        assertThat(taskOutputRepository.findById(execution.getTenantId(), errorTaskRun.getId())).isPresent();
+
+        Execution restart = executionService.restart(execution, flow, null);
+
+        assertThat(restart.findTaskRunsByTaskId("errorHandler")).isEmpty();
+        assertThat(taskOutputRepository.findById(execution.getTenantId(), errorTaskRun.getId())).isEmpty();
+    }
+
+    @Test
+    void shouldDeleteDiscardedTaskRunOutputsWhenRetryingWaitFor() throws Exception {
+        String tenantId = MAIN_TENANT;
+        String executionId = IdUtils.create();
+        String flowableId = IdUtils.create();
+        String childId = IdUtils.create();
+
+        TaskRun loopUntilTaskRun = TaskRun.builder()
+            .id(flowableId)
+            .tenantId(tenantId)
+            .executionId(executionId)
+            .namespace("io.kestra.tests")
+            .flowId("test-loop-until")
+            .taskId("loopUntil")
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        TaskRun childTaskRun = TaskRun.builder()
+            .id(childId)
+            .parentTaskRunId(flowableId)
+            .tenantId(tenantId)
+            .executionId(executionId)
+            .namespace("io.kestra.tests")
+            .flowId("test-loop-until")
+            .taskId("child")
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+
+        Execution execution = Execution.builder()
+            .id(executionId)
+            .tenantId(tenantId)
+            .namespace("io.kestra.tests")
+            .flowId("test-loop-until")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .taskRunList(List.of(loopUntilTaskRun, childTaskRun))
+            .build();
+
+        taskOutputService.saveOutputs(childTaskRun, Map.of("key", "value"));
+        assertThat(taskOutputRepository.findById(tenantId, childId)).isPresent();
+
+        Execution updated = executionService.retryWaitFor(execution, flowableId);
+
+        assertThat(updated.getTaskRunList()).hasSize(1);
+        assertThat(updated.getTaskRunList().getFirst().getId()).isEqualTo(flowableId);
+        assertThat(taskOutputRepository.findById(tenantId, childId)).isEmpty();
+    }
+
+    @Test
     @LoadFlows("flows/valids/minimal.yaml")
     void retryFlowableShouldWipeDescendantsAndStartNewAttempt() throws Exception {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
@@ -849,7 +918,7 @@ class ExecutionServiceTest {
 
         Execution execution = Execution.newExecution(flow, Collections.emptyList())
             .withState(State.Type.RETRYING);
-    
+
         Execution result = executionService.retryFlowable(execution, "unknown");
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.RUNNING);

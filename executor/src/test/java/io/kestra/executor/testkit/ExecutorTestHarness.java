@@ -3,12 +3,14 @@ package io.kestra.executor.testkit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 import org.mockito.Mockito;
+
+import com.google.common.util.concurrent.MoreExecutors;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
@@ -99,7 +101,6 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultListener;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -488,7 +489,8 @@ public final class ExecutorTestHarness {
 
         // the production DefaultExecutor over same-thread pools and hand-ticked loops
         ScheduledExecutorService scheduledExecutorService = Mockito.mock(ScheduledExecutorService.class);
-        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation ->
+        {
             loops.add(invocation.getArgument(0));
             return Mockito.mock(ScheduledFuture.class);
         });

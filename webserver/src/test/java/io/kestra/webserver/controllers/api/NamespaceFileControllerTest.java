@@ -287,23 +287,18 @@ class NamespaceFileControllerTest {
     }
 
     @Test
-    void moveFileDirectoryWithOpaqueUriFromReturns422() {
+    void shouldMoveFileWhenFromLooksLikeOpaqueUri() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class,
-            () -> client
-                .toBlocking()
-                .exchange(
-                    HttpRequest.PUT(
-                        "/api/v1/main/namespaces/" + namespace + "/files?from=a:b&to=/x.txt",
-                        null
-                    )
-                )
-        );
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/a:b"), new ByteArrayInputStream("Hello".getBytes()));
 
-        assertThat(e.getStatus().getCode())
-            .as("a non-hierarchical 'from' is a validation error, not an unhandled 500")
-            .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        client.toBlocking().exchange(HttpRequest.PUT(
+            "/api/v1/main/namespaces/" + namespace + "/files?from=a:b&to=/x.txt",
+            null
+        ));
+
+        assertThat(namespaceStorage.exists(Path.of("/a:b"))).isFalse();
+        assertThat(namespaceStorage.exists(Path.of("/x.txt"))).isTrue();
     }
 
     @Test
@@ -523,6 +518,28 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void shouldMoveFileDirectoryWhenPathContainsSpaces() throws IOException, URISyntaxException {
+        // Given: a directory holding a file, both with spaces in their name
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/Bart Pre-Approval/coc bongo.txt"), new ByteArrayInputStream("Hello".getBytes()));
+
+        // When: moving it to another folder whose name also contains a space, as the UI does — no leading
+        // slash, and '+' as the space encoding (both '+' and %20 decode to a space in a query param)
+        client.toBlocking().exchange(HttpRequest.PUT(
+            "/api/v1/main/namespaces/" + namespace + "/files?from=Bart+Pre-Approval&to=Permis%20B",
+            null
+        ));
+
+        // Then: the whole subtree moved, spaces preserved
+        assertThat(namespaceStorage.exists(Path.of("/Bart Pre-Approval"))).isFalse();
+        FileAttributes moved = namespaceStorage.getFileMetadata(Path.of("/Permis B"));
+        assertThat(moved.getFileName()).isEqualTo("Permis B");
+        assertThat(moved.getType()).isEqualTo(FileAttributes.FileType.Directory);
+        assertThat(namespaceStorage.exists(Path.of("/Permis B/coc bongo.txt"))).isTrue();
+    }
+
+    @Test
     void deleteFileDirectory() throws IOException, URISyntaxException {
         String namespace = TestsUtils.randomNamespace();
         Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
@@ -632,6 +649,9 @@ class NamespaceFileControllerTest {
         assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/_flows"), TestFileAttributes[].class));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/_flows/test&to=/foo", null)));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo&to=/_flows/test", null)));
+        // The guard must hold for relative paths too, which is what the UI sends
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=_flows/test&to=foo", null)));
+        assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=foo&to=_flows/test", null)));
         assertForbiddenErrorThrown(() -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/_flows/test.txt", null)));
     }
 

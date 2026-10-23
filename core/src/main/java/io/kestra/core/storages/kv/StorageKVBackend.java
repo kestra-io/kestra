@@ -76,7 +76,7 @@ public class StorageKVBackend implements KVBackend {
                 return Optional.empty();
             }
 
-            if (Optional.ofNullable(metadata.getExpirationDate()).map(Instant.now()::isAfter).orElse(false)) {
+            if (isExpired(metadata)) {
                 this.delete(tenant, namespace, key);
                 throw new ResourceExpiredException("The requested value has expired");
             }
@@ -93,6 +93,11 @@ public class StorageKVBackend implements KVBackend {
     public Optional<KVEntry> get(String tenant, String namespace, String key) throws IOException {
         Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(tenant, namespace, key);
         if (maybeMetadata.isEmpty() || maybeMetadata.get().isDeleted()) {
+            return Optional.empty();
+        }
+
+        if (isExpired(maybeMetadata.get())) {
+            this.delete(tenant, namespace, key);
             return Optional.empty();
         }
 
@@ -116,5 +121,9 @@ public class StorageKVBackend implements KVBackend {
 
         this.kvMetadataStateStore.delete(maybeMetadata.get());
         return true;
+    }
+
+    private boolean isExpired(PersistedKvMetadata metadata) {
+        return metadata.getExpirationDate() != null && Instant.now().isAfter(metadata.getExpirationDate());
     }
 }

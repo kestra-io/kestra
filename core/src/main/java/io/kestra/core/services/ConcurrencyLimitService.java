@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import io.kestra.core.models.executions.Execution;
@@ -37,6 +38,8 @@ public class ConcurrencyLimitService {
 
         executionQueuedStateStore.remove(execution);
 
-        return execution.withState(state);
+        // the execution bypasses the concurrency gate, so it claims no slot: an empty claim keeps its end from
+        // giving one back, as a missing claim makes the release fall back to the state history, which counts it
+        return execution.withState(state).withMetadata(execution.getMetadata().withConcurrencyScopes(List.of()));
     }
 }

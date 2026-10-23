@@ -751,7 +751,11 @@ public class ExecutionService {
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
-        Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
+        // a terminated execution already gave its slot back, but a paused one being resumed still holds it
+        ExecutionMetadata nextAttempt = execution.getMetadata().nextAttempt();
+        Execution newExecution = execution.withMetadata(
+            execution.getState().isTerminated() ? nextAttempt : nextAttempt.withConcurrencyScopes(execution.getMetadata().getConcurrencyScopes())
+        );
 
         final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
 
@@ -1515,7 +1519,8 @@ public class ExecutionService {
 
         Execution newExecution = execution;
         if (execution.getState().isCreated()) {
-            newExecution = execution.withState(State.Type.RUNNING);
+            // like an unqueued one, it skips the concurrency gate and claims no slot
+            newExecution = execution.withState(State.Type.RUNNING).withMetadata(execution.getMetadata().withConcurrencyScopes(List.of()));
         }
 
         if (execution.getState().getCurrent() == State.Type.QUEUED) {

@@ -138,11 +138,21 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
         if (logger.isDebugEnabled()) {
             logger.debug("Starting command with pid {} [{}]", pid, TaskLogLineMatcher.redactEncryptedOutputs(String.join(" ", renderedCommands)));
         }
+        LogRunnable stdOutRunnable =
+            new LogRunnable(process.getInputStream(), defaultLogConsumer, false);
 
-        LogRunnable stdOutRunnable = new LogRunnable(process.getInputStream(), defaultLogConsumer, false);
-        LogRunnable stdErrRunnable = new LogRunnable(process.getErrorStream(), defaultLogConsumer, true);
-        Thread stdOut = Thread.startVirtualThread(stdOutRunnable);
-        Thread stdErr = Thread.startVirtualThread(stdErrRunnable);
+        LogRunnable stdErrRunnable =
+            new LogRunnable(process.getErrorStream(), defaultLogConsumer, true);
+
+        Thread stdOut = Thread.ofPlatform()
+            .daemon()
+            .name("process-log-out")
+            .start(stdOutRunnable);
+
+        Thread stdErr = Thread.ofPlatform()
+            .daemon()
+            .name("process-log-err")
+            .start(stdErrRunnable);
 
         try {
             int exitCode = process.waitFor();

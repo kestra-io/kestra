@@ -62,7 +62,7 @@
         })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .card-group {
         margin-bottom: var(--ks-spacing-2);
     }

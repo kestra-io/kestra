@@ -445,7 +445,7 @@ If your `<style>` block needs to exist:
 | `KsTimeline` / `KsTimelineItem` | Timeline visualization |
 | `KsExecutionStatus` | Execution / task status badge with icon and color; `dot` collapses it to a coloured dot (label kept for screen readers) for dense layouts such as mobile cards |
 | `KsCodeStatus` | Compact validity badge with icon (`valid` / `error`) — caller supplies the label |
-| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces) |
+| `KsMarkdown` | Markdown renderer (lazy-load on heavy surfaces); `compact` scales headings down to the UI type scale for markdown inside a panel |
 
 ### Charts
 

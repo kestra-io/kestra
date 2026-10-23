@@ -1426,12 +1426,16 @@ public class ExecutionService {
             }
         }
 
-        return originalTaskRun
+        TaskRun newTaskRun = originalTaskRun
             .forChildExecution(
                 mappingTaskRunId,
                 newExecutionId,
                 toRestart ? alterState : null
             );
+
+        // A reused task run keeps pointing at the task run that recorded its logs, outputs and metrics, while a
+        // restarted one runs again and records its own.
+        return Boolean.TRUE.equals(toRestart) ? newTaskRun : newTaskRun.reusedFrom(originalTaskRun);
     }
 
     private Set<String> taskRunWithAncestors(Execution execution, List<TaskRun> taskRuns) {

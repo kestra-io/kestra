@@ -23,6 +23,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -72,22 +73,36 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, List<TaskRun> reusedTaskRuns, Pageable pageable) {
         return this.findPage(
             pageable,
             tenantId,
-            field("execution_id").eq(executionId)
+            executionCondition(executionId, reusedTaskRuns)
         );
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, List<TaskRun> reusedTaskRuns, Pageable pageable) {
         return this.findPage(
             pageable,
             tenantId,
-            field("execution_id").eq(executionId)
+            executionCondition(executionId, reusedTaskRuns)
                 .and(field("task_id").eq(taskId))
         );
+    }
+
+    /**
+     * Each reused branch is scoped by its source execution so it is served by the {@code execution_id} index, since
+     * {@code taskrun_id} has none.
+     */
+    private static Condition executionCondition(String executionId, List<TaskRun> reusedTaskRuns) {
+        Condition condition = field("execution_id").eq(executionId);
+        for (Map.Entry<String, List<String>> source : ListUtils.emptyOnNull(reusedTaskRuns).stream()
+            .collect(Collectors.groupingBy(TaskRun::getSourceExecutionId, Collectors.mapping(TaskRun::getSourceTaskRunId, Collectors.toList())))
+            .entrySet()) {
+            condition = condition.or(field("execution_id").eq(source.getKey()).and(field("taskrun_id").in(source.getValue())));
+        }
+        return condition;
     }
 
     @Override

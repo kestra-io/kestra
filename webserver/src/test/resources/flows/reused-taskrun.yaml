@@ -1,0 +1,10 @@
+id: reused-taskrun
+namespace: io.kestra.tests
+
+tasks:
+  - id: task1
+    type: io.kestra.plugin.core.debug.Return
+    format: from task1
+  - id: task2
+    type: io.kestra.plugin.core.debug.Return
+    format: from task2

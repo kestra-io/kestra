@@ -2146,7 +2146,7 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-ids")
-    @Operation(tags = { "Executions" }, summary = "Resume a list of paused executions asynchronously")
+    @Operation(tags = { "Executions" }, summary = "Resume a list of paused or breakpoint-suspended executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByIds(
@@ -2157,7 +2157,7 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-query")
-    @Operation(tags = { "Executions" }, summary = "Resume executions filter by query parameters asynchronously")
+    @Operation(tags = { "Executions" }, summary = "Resume executions filtered by query parameters asynchronously; executions in the BREAKPOINT state are resumed from their breakpoints")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = ProblemDetail.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> resumeExecutionsByQuery(
@@ -2175,9 +2175,11 @@ public class ExecutionController {
         List<ProblemError> invalids = new ArrayList<>();
 
         for (Execution execution : executions) {
-            if (!execution.getState().isPaused()) {
+            boolean resumable = execution.getState().isPaused()
+                || (execution.getState().isBreakpoint() && !ListUtils.isEmpty(execution.getBreakpoints()));
+            if (!resumable) {
                 invalids.add(
-                    executionProblem(execution.getId(), "execution not in state PAUSED", ProblemTypes.CONFLICT)
+                    executionProblem(execution.getId(), "execution not in state PAUSED or BREAKPOINT", ProblemTypes.CONFLICT)
                 );
             } else if (!validateExecutionACL(execution)) {
                 invalids.add(
@@ -2190,12 +2192,20 @@ public class ExecutionController {
             throw new BulkValidationException("One or more executions could not be resumed.", invalids);
         }
 
-        this.resumeCounter.increment(executions.size());
+        long pausedCount = executions.stream().filter(execution -> execution.getState().isPaused()).count();
+        this.resumeCounter.increment(pausedCount);
+        this.resumeFromBreakpointCounter.increment(executions.size() - pausedCount);
 
         return submitNotifiedBatchAction(
             CoreAsyncOperationType.EXECUTION_RESUME,
             executions,
-            (execution, opId, actor) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId).withActor(actor))
+            (execution, opId, actor) -> {
+                if (execution.getState().isPaused()) {
+                    executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId).withActor(actor));
+                } else {
+                    executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, Optional.empty()).withOperationId(opId).withActor(actor));
+                }
+            }
         );
     }
 

@@ -36,7 +36,7 @@
     }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .column-item {
     display: flex;
     justify-content: space-between;
@@ -60,21 +60,21 @@
         border-bottom: none;
     }
 
-    .column-info {
+    & .column-info {
         display: flex;
         align-items: center;
 
-        .drag-handle {
+        & .drag-handle {
             margin-right: var(--ks-spacing-2);
             color: var(--ks-text-dim);
             flex-shrink: 0;
         }
 
-        .column-text {
+        & .column-text {
             display: flex;
             flex-direction: column;
 
-            small {
+            & small {
                 color: var(--ks-text-dim);
                 font-size: var(--ks-font-size-xs);
                 font-weight: var(--ks-font-weight-regular);

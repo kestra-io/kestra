@@ -274,7 +274,7 @@ export const Wizard: Story = {
 // from flat dotted leaves + formGroups before handing it to InputsForm — we mirror both here. The
 // validate callback is DEFERRED into a queue the play function releases manually, so we can observe
 // the Next button reading "Loading…" mid-round-trip and prove goNext awaits it.
-const AppsWizardSut = defineComponent((props: {inputs: InputMetaData[]; formGroups: Record<string, {displayName?: string; description?: string}>}) => {
+const AppsWizardSut = defineComponent((props: {inputs: InputMetaData[]; formGroups: Record<string, {displayName?: string; description?: string; descriptionDisplayMode?: "TEXT" | "TOOLTIP"}>}) => {
     const initial = unflattenToForms(props.inputs, props.formGroups)
 
     const queue: (() => void)[] = []
@@ -324,6 +324,12 @@ export const AppsWizard: Story = {
         expect(window.__appsWizardPending()).toBe(0);
         expect(can.getByTestId("wizard-next")).not.toHaveTextContent("Loading");
 
+        // The group's TOOLTIP mode survives the formGroups round-trip: the step header shows a help icon, not a text block.
+        expect(canvasElement.querySelector(".wizard-step-title")).toHaveTextContent("Environment");
+        expect(canvasElement.querySelector(".wizard-step-header .text-description")).toBeNull();
+        await userEvent.hover(within(canvasElement.querySelector(".wizard-step-title") as HTMLElement).getByRole("button", {name: "Description"}));
+        await waitFor(() => expect(within(window.document.body).getByText("Where the workload runs")).toBeTruthy());
+
         // CHANGE: editing an input makes a validate necessary. goNext fires it and AWAITS the
         // promisified emit; held open past the 500ms threshold, the Next button shows the loading
         // label and the step does NOT advance until the round-trip is released.
@@ -352,7 +358,7 @@ export const AppsWizard: Story = {
                 {id: "name", type: "STRING", required: false, displayName: "Name"},
                 {id: "environment.region", type: "STRING", required: false, displayName: "Region"},
             ]}
-            formGroups={{environment: {displayName: "Environment"}}}
+            formGroups={{environment: {displayName: "Environment", description: "Where the workload runs", descriptionDisplayMode: "TOOLTIP"}}}
         />;
     }
 };

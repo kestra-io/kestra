@@ -190,7 +190,7 @@
                     aria-busy="true"
                 >
                     <Loading class="spin" />
-                    <i18n-t keypath="source_search.searching_namespace" tag="span">
+                    <i18n-t keypath="source_search.searching_namespace" tag="span" scope="global">
                         <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                     </i18n-t>
                 </div>
@@ -202,7 +202,7 @@
                 >
                     <span class="type-fail-icon"><AlertCircleOutline /></span>
                     <span class="type-fail-text">
-                        <i18n-t keypath="source_search.namespace_search_failed" tag="span">
+                        <i18n-t keypath="source_search.namespace_search_failed" tag="span" scope="global">
                             <template #namespace><code>{{ namespaceState.namespace }}</code></template>
                         </i18n-t>
                         <span>{{ namespaceState.errorMessage || $t('source_search.namespace_search_failed_detail') }}</span>

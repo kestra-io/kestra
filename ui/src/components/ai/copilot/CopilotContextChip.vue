@@ -12,7 +12,7 @@
             :data-test="`copilot-context-${pill.part}`"
             @close="emit('remove', pill.part)"
         >
-            <i18n-t :keypath="pill.keypath" tag="span">
+            <i18n-t :keypath="pill.keypath" tag="span" scope="global">
                 <template #[pill.slot]>
                     <KsId :value="pill.value" :shrink="false" data-test="copilot-context-id" />
                 </template>

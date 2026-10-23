@@ -2,7 +2,7 @@
     <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title" :bookmarkLabel="routeInfo.bookmarkLabel">
         <template #title>
             <template v-if="isDeleted">
-                <Alert class="text-warning me-2" />{{ $t('deleted_label') }}
+                <Alert class="text-warning me-2" /><span class="deleted-label">{{ $t('deleted_label') }}</span>
             </template>
             <Lock v-else-if="!isAllowedToEdit" class="me-2 gray-700" />
             <span :class="{'body-color': isDeleted}">
@@ -48,3 +48,9 @@
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace),
     )
 </script>
+
+<style scoped>
+    .deleted-label {
+        margin-inline-end: var(--ks-spacing-1);
+    }
+</style>

@@ -58,7 +58,7 @@
             :mobileColumns="mobileColumns"
             :selectionMapper="selectionMapper"
             @ready="ready = true"
-            :defaultSort="{prop: 'state.startDate', order: 'descending'}"
+            :defaultSort="defaultSort"
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="noDataText ?? $t('no_results.executions')"
             :rowKey="(row: Execution) => row.id"
@@ -438,6 +438,7 @@
 
 <script setup lang="ts">
     import {filterHiddenLabels} from "../../utils/labels"
+    import {sortFromQuery} from "../../utils/tableSort"
     import {useI18n} from "vue-i18n"
     import {asProblem} from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../utils/problem"
@@ -812,6 +813,7 @@
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "state.startDate", order: "descending"})
     const localPage = ref(1)
     const localSize = ref(25)
     const currentPage = computed(() => props.embed ? localPage.value : urlPage.value)

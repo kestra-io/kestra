@@ -28,7 +28,7 @@
             :total="flowStore.total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'id', order: 'ascending'}"
+            :defaultSort="defaultSort"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @ready="ready = true"
             @row-click="onRowClick"
@@ -317,6 +317,7 @@
     import {useI18n} from "vue-i18n"
     import BreakableText from "../BreakableText"
     import {filterHiddenLabels} from "../../utils/labels"
+    import {sortFromQuery} from "../../utils/tableSort"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {useFlowFilter} from "../filter/configurations/flowFilter"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -548,6 +549,7 @@
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+    const defaultSort = sortFromQuery(route.query.sort, {prop: "id", order: "ascending"})
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()

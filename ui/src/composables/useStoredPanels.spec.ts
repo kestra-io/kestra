@@ -77,6 +77,24 @@ describe("useStoredPanels", () => {
         ])
     })
 
+    it("removes a panel when all of its stored tabs no longer deserialize", () => {
+        localStorage.setItem(KEY, JSON.stringify([
+            {tabs: ["a"], activeTab: "a", size: 50},
+            {tabs: ["nocode-removed-task"], activeTab: "nocode-removed-task", size: 50},
+        ]))
+
+        const {panels, saveState} = useStoredPanels(KEY, [elementKnowing("a")])
+
+        expect(panels.value).toEqual([
+            {tabs: [makeTab("a")], activeTab: makeTab("a"), size: 50},
+        ])
+
+        saveState(KEY)
+        expect(storedLayout()).toEqual([
+            {tabs: ["a"], activeTab: "a", size: 50},
+        ])
+    })
+
     it("falls back to the first remaining tab when the active tab uid no longer exists", () => {
         localStorage.setItem(KEY, JSON.stringify([
             {tabs: ["a", "b"], activeTab: "gone", size: 100},

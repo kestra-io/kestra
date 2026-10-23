@@ -3,6 +3,7 @@ import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObject from "./TaskObject.vue"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {taskComponentsReady} from "./useBlockComponent"
 
 const schema = {
     type: "object",
@@ -20,9 +21,7 @@ function mountObject(modelValue: Record<string, unknown> | null | undefined) {
     })
 }
 
-const settleLazyTaskComponents = () => import("./getTaskComponent")
-
-afterAll(settleLazyTaskComponents)
+afterAll(() => taskComponentsReady())
 
 describe("TaskObject required-field indicator", () => {
     test("does not flag a required field inside an optional object that is not set", () => {

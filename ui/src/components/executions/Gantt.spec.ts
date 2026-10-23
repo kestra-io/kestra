@@ -1,6 +1,7 @@
 import {afterAll, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {createPinia} from "pinia"
+import {createApp} from "vue"
 import {createMemoryHistory, createRouter} from "vue-router"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 import {useExecutionsStore, type Execution} from "../../stores/executions"
@@ -22,6 +23,12 @@ const histories = [
 
 async function mountGantt(flowTasks: Array<Record<string, unknown>>, taskRunList: Array<Record<string, unknown>>, props: {showBanner?: boolean} = {}) {
     const pinia = createPinia()
+    const router = createRouter({
+        history: createMemoryHistory(),
+        routes: [{path: "/", component: {template: "<div />"}}],
+    })
+    // The store reads the route at setup, so it is created under an app that carries the router.
+    createApp({}).use(pinia).use(router)
     const store = useExecutionsStore(pinia)
     store.flow = {id: "flow", namespace: "company.team", tasks: flowTasks} as FlowForExecution
     store.execution = {
@@ -31,10 +38,6 @@ async function mountGantt(flowTasks: Array<Record<string, unknown>>, taskRunList
         state: {current: "SUCCESS", histories},
         taskRunList,
     } as Execution
-    const router = createRouter({
-        history: createMemoryHistory(),
-        routes: [{path: "/", component: {template: "<div />"}}],
-    })
     await router.push("/")
     const wrapper = i18nMount(Gantt, {
         props,

@@ -5,6 +5,7 @@ import TaskObjectField from "./TaskObjectField.vue"
 import {FIELD_VALIDATION_ERRORS_INJECTION_KEY, PLUGIN_DEFAULTS_INJECTION_KEY} from "../../injectionKeys"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {taskComponentsReady} from "./useBlockComponent"
 
 function mountField(pluginDefaults: Record<string, unknown>) {
     return i18nMount(TaskObjectField, {
@@ -24,9 +25,7 @@ function mountField(pluginDefaults: Record<string, unknown>) {
     })
 }
 
-const settleLazyTaskComponents = () => import("./getTaskComponent")
-
-afterAll(settleLazyTaskComponents)
+afterAll(() => taskComponentsReady())
 
 describe("TaskObjectField required-field indicator", () => {
     test("flags an unset required field as missing, with a locatable data-required-path", () => {

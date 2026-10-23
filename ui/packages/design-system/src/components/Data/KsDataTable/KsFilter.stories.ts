@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {provide, ref, shallowReactive} from "vue"
 import {createMemoryHistory, createRouter, routeLocationKey, routerKey, START_LOCATION} from "vue-router"
-import {expect, waitFor} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 import KsFilter from "./KsFilter.vue"
 import {SAME_ROW_TOLERANCE_PX} from "./filter/utils/constants"
 
@@ -403,6 +403,48 @@ export const WithTableOptions: Story = {
             </div>
         `,
     }),
+}
+
+const refreshLoadingRender = () => ({
+    components: {KsFilter},
+    setup() {
+        const ready = useIsolatedRouter()
+        const tableOptions = {
+            chart: {shown: false},
+            columns: {shown: false},
+            refresh: {
+                shown: true,
+                callback: () => new Promise<void>(() => undefined),
+            },
+        }
+        return {ready, configuration: SIMPLE_CONFIGURATION, tableOptions}
+    },
+    template: `
+        <div style="padding: 24px">
+            <KsFilter v-if="ready" :configuration="configuration" :tableOptions="tableOptions" />
+        </div>
+    `,
+})
+
+export const RefreshLoading: Story = {
+    render: refreshLoadingRender,
+    async play({canvasElement}) {
+        await waitFor(() => expect(within(canvasElement).getByRole("button", {name: "filter.refresh"})).toBeVisible())
+        const button = within(canvasElement).getByRole("button", {name: "filter.refresh"})
+        const width = button.getBoundingClientRect().width
+
+        await userEvent.click(button)
+        await waitFor(() => expect(button).toBeDisabled())
+
+        await expect(button).toHaveClass("is-loading")
+        await expect(canvasElement.querySelector(".refresh-button .kel-icon.is-loading")).toBeTruthy()
+        await expect(button.getBoundingClientRect().width).toBe(width)
+    },
+}
+
+export const RefreshLoadingDark: Story = {
+    ...RefreshLoading,
+    globals: {theme: "dark"},
 }
 
 const TRANSPARENT = "rgba(0, 0, 0, 0)"

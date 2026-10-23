@@ -183,7 +183,7 @@ export interface TableOptions {
     };
     refresh?: {
         shown?: boolean;
-        callback?: () => void
+        callback?: () => void | Promise<unknown>
     };
 }
 

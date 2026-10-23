@@ -48,6 +48,24 @@ public class DagTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/dag-disabled-dependency.yaml")
+    void dagWithDisabledDependency(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.findTaskRunsByTaskId("disabled1")).isEmpty();
+        assertThat(execution.findTaskRunsByTaskId("disabled2")).isEmpty();
+        assertThat(execution.findTaskRunsByTaskId("disabledRoot")).isEmpty();
+        assertThat(execution.findTaskRunsByTaskId("last").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("afterDisabledRoot").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        // a disabled task is skipped, but the order around it is kept: last still waits for first
+        assertThat(
+            execution.findTaskRunsByTaskId("last").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("first").getFirst().getState().getEndDate().orElseThrow())
+        )
+            .isTrue();
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/dag-invalid-concurrent.yaml")
     void dagWithNegativeConcurrentShouldFailExecution(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

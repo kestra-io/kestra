@@ -471,9 +471,20 @@ describe("useDependencies composable", () => {
         vi.useRealTimers()
         const mountCalls = [...chartMock.setOption.mock.calls]
         chartMock.setOption.mockClear()
-        const {selectNode, selectedNodeID} = wrapper.vm.composable as ReturnType<typeof useDependencies>
-        return {selectNode, selectedNodeID, chartMock, mountCalls}
+        const {selectNode, selectedNodeID, chartNodes, chartLayout} = wrapper.vm.composable as ReturnType<typeof useDependencies>
+        return {selectNode, selectedNodeID, chartNodes, chartLayout, chartMock, mountCalls}
     }
+
+    it("pins the settled positions in the KsGraph props so a re-applied option cannot restart the force layout", async () => {
+        const {chartNodes, chartLayout} = await mountWithChart()
+
+        expect(chartLayout.value).toBe("none")
+        expect(chartNodes.value?.map(({id, x, y}) => ({id, x, y}))).toEqual([
+            {id: "A", x: 100, y: 200},
+            {id: "B", x: 300, y: 400},
+            {id: "C", x: 200, y: 100},
+        ])
+    })
 
     it("centres on the initially selected node at zoom=1.8 on mount", async () => {
         // center = [pos.x, pos.y] — ECharts graph center is in data coordinates.

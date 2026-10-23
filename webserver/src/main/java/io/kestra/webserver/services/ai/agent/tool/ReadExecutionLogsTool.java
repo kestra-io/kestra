@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
@@ -18,7 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class ReadExecutionLogsTool implements AiPlatformTool {
+public class ReadExecutionLogsTool implements McpPlatformTool {
     private static final int MAX_LOGS = 500;
 
     private final LogDataStoreInterface logRepository;
@@ -36,6 +37,11 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

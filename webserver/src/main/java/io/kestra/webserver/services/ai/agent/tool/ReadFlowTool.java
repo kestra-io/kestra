@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
@@ -17,7 +18,7 @@ import jakarta.inject.Singleton;
  * Read-only agent tool returning the YAML source of a flow, optionally at a specific revision.
  */
 @Singleton
-public class ReadFlowTool implements AiPlatformTool {
+public class ReadFlowTool implements McpPlatformTool {
     private final FlowRepositoryInterface flowRepository;
 
     @Inject
@@ -33,6 +34,11 @@ public class ReadFlowTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

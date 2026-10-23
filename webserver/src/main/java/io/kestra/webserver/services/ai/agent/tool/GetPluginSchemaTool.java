@@ -5,6 +5,7 @@ import java.util.Map;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.mcp.models.McpToolAnnotations;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.PluginRegistry;
@@ -19,7 +20,7 @@ import jakarta.inject.Singleton;
  * {@link JsonSchemaGenerator}.
  */
 @Singleton
-public class GetPluginSchemaTool implements AiPlatformTool {
+public class GetPluginSchemaTool implements McpPlatformTool {
     private final PluginRegistry pluginRegistry;
     private final JsonSchemaGenerator jsonSchemaGenerator;
 
@@ -37,6 +38,11 @@ public class GetPluginSchemaTool implements AiPlatformTool {
     @Override
     public AgentWritePolicy writePolicy() {
         return AgentWritePolicy.AUTO;
+    }
+
+    @Override
+    public McpToolAnnotations annotations() {
+        return McpToolAnnotations.READ_ONLY;
     }
 
     @Tool(

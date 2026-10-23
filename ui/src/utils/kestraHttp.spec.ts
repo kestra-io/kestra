@@ -31,7 +31,7 @@ vi.mock("nprogress", () => ({
 }))
 
 import type {Router} from "vue-router"
-import {handled, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
+import {handled, handledIf, isReportedCentrally, setupKestraHttp, type KestraHttpError} from "./kestraHttp"
 import {markServerReachable, markServerUnreachable, UNREACHABLE_DELAY, useServerReachability} from "../composables/useServerReachability"
 import {isReauthOpen, requestReauth, resolveReauth} from "../composables/useReauthDialog"
 
@@ -175,6 +175,22 @@ describe("setupKestraHttp central 404 handling", () => {
         await new Promise(r => setTimeout(r, 0))
         expect(coreStore.message).not.toBeUndefined()
     })
+
+    it.each([
+        {expectedStatuses: [409, 404], reported: false},
+        {expectedStatuses: [409], reported: true},
+    ])("reports a 404 with handledIf($expectedStatuses): $reported", async ({expectedStatuses, reported}) => {
+        const {coreStore, notFound} = triggerNotFound()
+
+        expect(handledIf(notFound, expectedStatuses)).toBe(!reported)
+        await new Promise(r => setTimeout(r, 0))
+
+        if (reported) {
+            expect(coreStore.message).toMatchObject({status: 404, request})
+        } else {
+            expect(coreStore.message).toBeUndefined()
+        }
+    })
     beforeEach(() => {
         vi.spyOn(console, "error").mockImplementation(() => {})
     })
@@ -197,6 +213,27 @@ describe("setupKestraHttp central 404 handling", () => {
         )
     })
 
+})
+
+describe("handledIf", () => {
+    it.each([
+        {status: 404},
+        {response: {status: 404}},
+    ])("marks an accepted status as handled: %j", (error) => {
+        expect(handledIf(error, [409, 404])).toBe(true)
+        expect(error).toHaveProperty("__kestra_handled", true)
+    })
+
+    it.each([
+        {status: 500},
+        {response: {status: 500}},
+        new Error("Network Error"),
+        undefined,
+        null,
+    ])("leaves an unexpected or missing status unhandled: %j", (error) => {
+        expect(handledIf(error, [404])).toBe(false)
+        if (error) expect(error).not.toHaveProperty("__kestra_handled")
+    })
 })
 
 describe("isReportedCentrally", () => {

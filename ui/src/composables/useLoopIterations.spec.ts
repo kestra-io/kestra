@@ -1,7 +1,8 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
-import {setActivePinia, createPinia} from "pinia"
+import {setActivePinia} from "pinia"
 import {useLoopIterations, LOOP_ITERATIONS_PAGE_SIZE} from "./useLoopIterations"
 import {useExecutionsStore} from "../stores/executions"
+import {routedPinia} from "../../tests/unit/memoryRouter"
 
 function makeExecution(id: string, value: string, index: number, state = "SUCCESS") {
     return {
@@ -19,7 +20,7 @@ function makeExecution(id: string, value: string, index: number, state = "SUCCES
 
 describe("useLoopIterations", () => {
     beforeEach(() => {
-        setActivePinia(createPinia())
+        setActivePinia(routedPinia())
     })
 
     it("does not fetch until ensureLoaded is called", () => {

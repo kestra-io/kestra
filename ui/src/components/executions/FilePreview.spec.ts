@@ -210,6 +210,7 @@ describe("FilePreview — HTML path", () => {
         // caller that mounts FilePreview before path is set.
         fileMetaMock.mockRejectedValue(new Error("no path"))
 
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
         // isHtmlFile runs during render (v-if), so an unguarded props.path.toLowerCase()
         // would throw synchronously on mount here.
         const wrapper = i18nShallowMount(FilePreview, {
@@ -221,5 +222,7 @@ describe("FilePreview — HTML path", () => {
 
         expect(wrapper.find("iframe").exists()).toBe(false)
         expect(wrapper.find(".load-error").exists()).toBe(true)
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid prop: type check failed for prop \"path\""))
+        warn.mockRestore()
     })
 })

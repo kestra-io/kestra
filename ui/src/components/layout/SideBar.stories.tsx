@@ -1,5 +1,5 @@
 import type {Meta, StoryFn} from "@storybook/vue3-vite";
-import {shallowRef} from "vue";
+import {markRaw} from "vue";
 import {expect, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import HomeIcon from "vue-material-design-icons/Home.vue";
@@ -53,7 +53,7 @@ const menu = [
     title: "Home",
     href: "/",
     icon: {
-      element: shallowRef(HomeIcon),
+      element: markRaw(HomeIcon),
       class: "menu-icon"
       },
   },
@@ -61,7 +61,7 @@ const menu = [
       title: "Flows",
       href: "/flows",
       icon: {
-        element: shallowRef(ContentCopy),
+        element: markRaw(ContentCopy),
         class: "menu-icon"
       },
   },
@@ -69,7 +69,7 @@ const menu = [
       title: "Executions",
       href: "/executions",
       icon: {
-        element: shallowRef(PlayOutline),
+        element: markRaw(PlayOutline),
         class: "menu-icon"
       },
   },
@@ -77,7 +77,7 @@ const menu = [
     title: "Dashboard",
     href: "/dashboard",
     icon: {
-      element: shallowRef(ChartLineVariant),
+      element: markRaw(ChartLineVariant),
       class: "menu-icon"
     },
     child: [
@@ -86,7 +86,7 @@ const menu = [
         title: "Submenu 1",
         href: "/dashboard/submenu1",
         icon: {
-          element: shallowRef(ShieldCheckOutline),
+          element: markRaw(ShieldCheckOutline),
           class: "menu-icon"
         },
       },
@@ -95,7 +95,7 @@ const menu = [
         title: "Submenu 2",
         href: "/dashboard/submenu2",
         icon: {
-          element: shallowRef(ChartBoxOutline),
+          element: markRaw(ChartBoxOutline),
           class: "menu-icon"
         },
       },
@@ -105,7 +105,7 @@ const menu = [
     title: "Settings",
     href: "/settings",
     icon: {
-      element: shallowRef(CogOutline),
+      element: markRaw(CogOutline),
       class: "menu-icon"
     },
     child: [
@@ -114,7 +114,7 @@ const menu = [
         title: "Submenu 1",
         href: "/settings/submenu1",
         icon: {
-          element: shallowRef(ShieldLockOutline),
+          element: markRaw(ShieldLockOutline),
           class: "menu-icon"
         },
       },
@@ -123,7 +123,7 @@ const menu = [
         title: "Submenu 2",
         href: "/settings/submenu2",
         icon: {
-          element: shallowRef(ServerOutline),
+          element: markRaw(ServerOutline),
           class: "menu-icon"
         },
       },

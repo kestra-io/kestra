@@ -82,7 +82,7 @@
                     tabindex="-1"
                     @click.stop="emit('delete', path)"
                 >
-                    <DeleteOutline />
+                    <Delete />
                 </KsIconButton>
             </div>
         </div>
@@ -144,7 +144,7 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Cog from "vue-material-design-icons/CogOutline.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
     import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
 

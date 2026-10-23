@@ -116,7 +116,7 @@
                             effect="light"
                             popperClass="wide-tooltip"
                         >
-                            <InformationOutline class="header-tooltip-icon" />
+                            <Information class="header-tooltip-icon" />
                         </KsTooltip>
                     </span>
                 </template>
@@ -399,7 +399,7 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
+    import Information from "vue-material-design-icons/Information.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
 

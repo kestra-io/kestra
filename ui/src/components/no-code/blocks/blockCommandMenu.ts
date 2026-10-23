@@ -3,7 +3,7 @@ import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 import ContentCut from "vue-material-design-icons/ContentCut.vue"
 import ContentPaste from "vue-material-design-icons/ContentPaste.vue"
 import ContentSave from "vue-material-design-icons/ContentSave.vue"
-import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+import Delete from "vue-material-design-icons/Delete.vue"
 import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
@@ -157,7 +157,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             id: "delete",
             group: t("block_editor.command_menu.group_block"),
             title: t("block_editor.command_menu.delete", {name}),
-            icon: DeleteOutline,
+            icon: Delete,
             shortcut: "⌫",
             run: then(ctx.deleteFocused),
         })

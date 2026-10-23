@@ -34,7 +34,7 @@
                     data-test="plugin-implementation-remove"
                     @click.stop="emit('remove')"
                 >
-                    <DeleteOutline />
+                    <Delete />
                 </KsIconButton>
             </div>
         </div>
@@ -71,7 +71,7 @@
     import {KsAlert, KsButton, KsIconButton} from "@kestra-io/design-system"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import TaskObject from "./TaskObject.vue"
     import {usePluginsStore} from "../../../../stores/plugins"

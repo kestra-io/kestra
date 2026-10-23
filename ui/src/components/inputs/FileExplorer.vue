@@ -66,7 +66,7 @@
                 >
                     <KsDropdown :disabled="!canManageFiles">
                         <KsButton :aria-label="$t('import')" :disabled="!canManageFiles">
-                            <PlusBox />
+                            <Upload />
                         </KsButton>
                         <template #dropdown>
                             <KsDropdownMenu>
@@ -385,7 +385,7 @@
     import Magnify from "vue-material-design-icons/Magnify.vue"
     import FilePlus from "vue-material-design-icons/FilePlus.vue"
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue"
-    import PlusBox from "vue-material-design-icons/PlusBox.vue"
+    import Upload from "vue-material-design-icons/Upload.vue"
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue"
     import TypeIcon from "../utils/icons/Type.vue"
     import {useI18n} from "vue-i18n"

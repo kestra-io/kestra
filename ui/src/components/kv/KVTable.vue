@@ -135,7 +135,7 @@
                     placement="left"
                     @click="updateKvModal(scope.row)"
                 >
-                    <FileDocumentEdit />
+                    <Pencil />
                 </KsIconButton>
             </template>
         </KsTableColumn>
@@ -301,7 +301,7 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
     import Eye from "vue-material-design-icons/Eye.vue"
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, groupBy, deepMerge} from "@kestra-io/design-system"

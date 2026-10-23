@@ -140,8 +140,7 @@ import lombok.extern.slf4j.Slf4j;
                 triggers:
                   - id: schedule
                     type: io.kestra.plugin.core.trigger.Schedule
-                    cron: "0 11 * * *"
-                    when: "{{ isLastDayOfMonth(trigger.date) }}"
+                    cron: "0 11 L * *"
                 """,
             full = true
         ),

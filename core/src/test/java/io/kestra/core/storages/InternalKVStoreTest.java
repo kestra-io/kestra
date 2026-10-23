@@ -312,20 +312,19 @@ class InternalKVStoreTest {
     }
 
     @Test
-    void setWithOverwriteFalseAfterTtlExpired() throws Exception {
+    void putWithoutOverwriteShouldSucceedOnExpiredKey() throws IOException, ResourceExpiredException {
         InternalKVStore kv = kv();
-        String key = "cooldown";
         
-        // 1. First set key with short TTL and overwrite: false
-        kv.put(key, new KVValueAndMetadata(new KVMetadata("lock", Duration.ofMillis(100)), "locked"));
-        
-        // 2. Wait for TTL to pass (e.g. 200ms)
-        Thread.sleep(200);
+        // 1. Put an entry that has already expired in the past with overwrite = false
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "old"), false);
 
-        // 3. StorageKVBackend.get() should now treat the expired entry as empty, allowing new writes with overwrite: false to succeed without throwing "Key already exists"
-        Assertions.assertDoesNotThrow(() -> 
-            kv.put(key, new KVValueAndMetadata(new KVMetadata("lock", Duration.ofMinutes(5)), "locked"))
-        );
+        // 2. Assert get() and exists() treat the expired key as empty
+        assertThat(kv.get(TEST_KV_KEY)).isEmpty();
+        assertThat(kv.exists(TEST_KV_KEY)).isFalse();
+
+        // 3. Put new value with overwrite = false; should succeed without throwing "Key already exists"
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), "new"), false);
+        assertThat(kv.getValue(TEST_KV_KEY)).contains(new KVValue("new"));
     }
 
     private InternalKVStore kv() {

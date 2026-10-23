@@ -131,4 +131,14 @@ describe("useTaskRunOutputs", () => {
             {params: {}},
         )
     })
+
+    test.each([
+        ["..", "tr-1"],
+        ["compiled-sql", ".."],
+        ["compiled-sql", "."],
+    ])("callTaskRunEndpoint rejects the dot segment in name %s / task run %s", async (name, taskRunId) => {
+        await expect(callTaskRunEndpoint("io.kestra.plugin.dbt.cli.DbtCLI", name, "exec-1", taskRunId)).rejects.toThrow("Invalid plugin endpoint path segment.")
+
+        expect(clientGetMock).not.toHaveBeenCalled()
+    })
 })

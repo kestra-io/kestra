@@ -90,8 +90,14 @@ export async function loadExecutionOutputs(executionId: string): Promise<Record<
     }
 }
 
+// Encoding keeps `/` out, but `.` and `..` survive it and the URL parser resolves them as path navigation.
+const DOT_SEGMENTS = new Set([".", ".."])
+
 // `cls` only selects the plugin, so any of its classes works.
 export async function callTaskRunEndpoint(cls: string, name: string, executionId: string, taskRunId: string, params: Record<string, string> = {}): Promise<unknown> {
+    if ([name, executionId, taskRunId].some((segment) => DOT_SEGMENTS.has(segment))) {
+        throw new Error("Invalid plugin endpoint path segment.")
+    }
     const url = `${apiUrl()}/plugins/${encodeURIComponent(cls)}/endpoints/${encodeURIComponent(name)}/${encodeURIComponent(executionId)}/${encodeURIComponent(taskRunId)}`
     const response = await useClient().get(url, {params})
     return response.data

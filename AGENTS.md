@@ -154,6 +154,7 @@ See [Comments](#comments) for when a Javadoc block is worth writing at all. Once
 - Use `@param`, `@return` and `@throws` only where each adds something. `@param name the name` is noise
 - Skip a bare `{@inheritDoc}` on an override that changes nothing
 - Add a usage example only when the call site would otherwise be guessed wrong
+- For Schedule examples that select calendar month boundaries, prefer the cron day-of-month field (`1` or `L`); use Pebble date helpers for task conditions or other templates.
 
 ## Webserver Constraints
 - Put classes used by only controllers in the webserver module (not core)

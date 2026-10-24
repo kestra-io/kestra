@@ -356,6 +356,60 @@ describe("KsEchart", () => {
         vi.mocked(document.body.appendChild).mockRestore()
     })
 
+    test("exportAsImage rasterizes SVG data URL to canvas or falls back to raw data URL", () => {
+        mockGetDataURL.mockReturnValueOnce("data:image/svg+xml;utf8,<svg></svg>")
+        const wrapper = mountChart({renderer: "svg"})
+        const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+
+        const captured: {href: string; download: string}[] = []
+        const origAppend = document.body.appendChild.bind(document.body)
+        vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
+            if (node instanceof HTMLAnchorElement) captured.push({href: node.href, download: node.download})
+            return origAppend(node)
+        })
+
+        const mockCtx = {
+            fillStyle: "",
+            fillRect: vi.fn(),
+            drawImage: vi.fn(),
+        }
+        const mockToDataURL = vi.fn().mockReturnValue("data:image/png;base64,rasterized123")
+        const origCreateElement = document.createElement.bind(document)
+        vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+            if (tag === "canvas") {
+                return {
+                    width: 0,
+                    height: 0,
+                    getContext: vi.fn().mockReturnValue(mockCtx),
+                    toDataURL: mockToDataURL,
+                } as unknown as HTMLCanvasElement
+            }
+            return origCreateElement(tag)
+        })
+
+        class MockImage {
+            onload: (() => void) | null = null
+            onerror: (() => void) | null = null
+            naturalWidth = 800
+            naturalHeight = 600
+            set src(_val: string) {
+                this.onload?.()
+            }
+        }
+        vi.stubGlobal("Image", MockImage)
+
+        wrapper.vm.exportAsImage("png", "test-svg.png")
+
+        expect(captured).toHaveLength(1)
+        expect(captured[0].href).toBe("data:image/png;base64,rasterized123")
+        expect(captured[0].download).toBe("test-svg.png")
+
+        vi.unstubAllGlobals()
+        vi.mocked(document.createElement).mockRestore()
+        clickSpy.mockRestore()
+        vi.mocked(document.body.appendChild).mockRestore()
+    })
+
     // ── renderer prop ──────────────────────────────────────────────────────────
 
     test("passes renderer prop to VChart initOptions", () => {
@@ -379,9 +433,9 @@ describe("KsEchart", () => {
         return vChart.props("initOptions") as {renderer: string; devicePixelRatio?: number}
     }
 
-    test("leaves devicePixelRatio to ECharts when maxPixelRatio is not set", () => {
+    test("sets devicePixelRatio to window.devicePixelRatio when maxPixelRatio is not set", () => {
         vi.stubGlobal("devicePixelRatio", 3)
-        expect(initOptionsOf({})).not.toHaveProperty("devicePixelRatio")
+        expect(initOptionsOf({}).devicePixelRatio).toBe(3)
     })
 
     test("caps devicePixelRatio at maxPixelRatio on a high-DPI screen", () => {
@@ -397,5 +451,10 @@ describe("KsEchart", () => {
     test("falls back to a ratio of 1 when the browser reports none", () => {
         vi.stubGlobal("devicePixelRatio", undefined)
         expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1)
+    })
+
+    test("falls back to a ratio of 1 when window.devicePixelRatio is not set and maxPixelRatio is not set", () => {
+        vi.stubGlobal("devicePixelRatio", undefined)
+        expect(initOptionsOf({}).devicePixelRatio).toBe(1)
     })
 })

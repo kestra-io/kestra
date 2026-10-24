@@ -95,13 +95,44 @@
         },
     )
 
+    const currentDpr = ref(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)
+
+    function updateDpr() {
+        if (typeof window === "undefined") return
+        currentDpr.value = window.devicePixelRatio || 1
+    }
+
+    let dprMqCleanup: (() => void) | null = null
+
+    function observePixelRatio() {
+        if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
+        updateDpr()
+
+        function listen() {
+            const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`)
+            const handler = () => {
+                updateDpr()
+                listen()
+            }
+            mq.addEventListener("change", handler, {once: true})
+            dprMqCleanup = () => mq.removeEventListener("change", handler)
+        }
+
+        listen()
+    }
+
     // A canvas backing store costs width × height × pixelRatio² bytes, so capping the ratio is the cheapest way to keep
     // a page holding many charts affordable on a high-DPI screen.
+    const effectivePixelRatio = computed(() => {
+        const dpr = currentDpr.value
+        return props.maxPixelRatio === undefined
+            ? dpr
+            : Math.min(dpr, props.maxPixelRatio)
+    })
+
     const initOptions = computed(() => ({
         renderer: props.renderer,
-        ...(props.maxPixelRatio === undefined
-            ? {}
-            : {devicePixelRatio: Math.min(window.devicePixelRatio || 1, props.maxPixelRatio)}),
+        devicePixelRatio: effectivePixelRatio.value,
     }))
 
     const isDark = ref(false)
@@ -116,10 +147,12 @@
         detectDark()
         observer = new MutationObserver(detectDark)
         observer.observe(document.documentElement, {attributes: true, attributeFilter: ["class"]})
+        observePixelRatio()
     })
 
     onUnmounted(() => {
         observer?.disconnect()
+        dprMqCleanup?.()
     })
 
     const effectiveOption = computed(() => {
@@ -277,14 +310,45 @@
         getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as ECharts) ?? null,
         exportAsImage: (type: "jpeg" | "png" = "png", filename?: string): void => {
             if (!vChartRef.value) return
-            const dataUrl = vChartRef.value.getDataURL({type, pixelRatio: 2, backgroundColor: "transparent"})
-            if (!dataUrl) return
-            const link = document.createElement("a")
-            link.href = dataUrl
-            link.download = filename || `chart.${type}`
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
+            const rawDataUrl = vChartRef.value.getDataURL({type, pixelRatio: 2, backgroundColor: "transparent"})
+            if (!rawDataUrl) return
+
+            const triggerDownload = (url: string) => {
+                const link = document.createElement("a")
+                link.href = url
+                link.download = filename || `chart.${type}`
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+            }
+
+            if (rawDataUrl.startsWith("data:image/svg+xml")) {
+                const img = new Image()
+                img.onload = () => {
+                    const canvas = document.createElement("canvas")
+                    const chartInstance = vChartRef.value?.chart as ECharts | undefined
+                    const canvasWidth = (chartInstance?.getWidth?.() ?? img.naturalWidth ?? 800) * 2
+                    const canvasHeight = (chartInstance?.getHeight?.() ?? img.naturalHeight ?? 600) * 2
+                    canvas.width = canvasWidth
+                    canvas.height = canvasHeight
+                    const ctx = canvas.getContext("2d")
+                    if (ctx) {
+                        if (type === "jpeg") {
+                            ctx.fillStyle = "#ffffff"
+                            ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+                        }
+                        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight)
+                        triggerDownload(canvas.toDataURL(`image/${type}`))
+                        return
+                    }
+                    triggerDownload(rawDataUrl)
+                }
+                img.onerror = () => triggerDownload(rawDataUrl)
+                img.src = rawDataUrl
+                return
+            }
+
+            triggerDownload(rawDataUrl)
         },
     })
 </script>

@@ -186,17 +186,23 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     public GenerationResult generateFlow(UserInfo userInfo, FlowGenerationPrompt flowGenerationPrompt, String tenantId) {
         AiService.GenerationContext ctx = this.beforeGeneration(userInfo, flowGenerationPrompt.getConversationId(), "FlowGeneration");
 
-        String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
+        String generatedFlow;
+        try {
+            String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
 
-        String generatedFlow = flowAiCopilot.generateFlow(
-            this.pluginFinder(flowGenerationPrompt.getConversationId()),
-            this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
-            allPluginsMetadata(),
-            flowGenerationPrompt,
-            tenantId,
-            pebbleExpressions
-        );
+            generatedFlow = flowAiCopilot.generateFlow(
+                this.pluginFinder(flowGenerationPrompt.getConversationId()),
+                this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
+                (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
+                allPluginsMetadata(),
+                flowGenerationPrompt,
+                tenantId,
+                pebbleExpressions
+            );
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "FlowGenerationError");
+            throw e;
+        }
 
         this.afterGeneration(ctx, "FlowGenerationResult");
 
@@ -207,13 +213,19 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     public GenerationResult generateDashboard(UserInfo userInfo, DashboardGenerationPrompt dashboardGenerationPrompt) {
         AiService.GenerationContext ctx = this.beforeGeneration(userInfo, dashboardGenerationPrompt.getConversationId(), "DashboardGeneration");
 
-        String generatedDashboard = dashboardAiCopilot.generateDashboard(
-            this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
-            this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
-            allPluginsMetadata(),
-            dashboardGenerationPrompt
-        );
+        String generatedDashboard;
+        try {
+            generatedDashboard = dashboardAiCopilot.generateDashboard(
+                this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
+                this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
+                (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
+                allPluginsMetadata(),
+                dashboardGenerationPrompt
+            );
+        } catch (Exception e) {
+            this.afterGeneration(ctx, "DashboardGenerationError");
+            throw e;
+        }
 
         this.afterGeneration(ctx, "DashboardGenerationResult");
 

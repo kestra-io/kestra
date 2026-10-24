@@ -14,7 +14,7 @@ type HostHarness = {
 
 let wrappers: VueWrapper[] = []
 
-const mountHost = ({attrs = {}, inputs = 1}: {attrs?: HostAttrs, inputs?: number} = {}): HostHarness => {
+const mountHost = ({attrs = {}, inputs = 1, noRef = false}: {attrs?: HostAttrs, inputs?: number, noRef?: boolean} = {}): HostHarness => {
     let used!: ReturnType<typeof useInputAttrs>
     const Host = defineComponent({
         setup() {
@@ -22,6 +22,19 @@ const mountHost = ({attrs = {}, inputs = 1}: {attrs?: HostAttrs, inputs?: number
             return () => h("span", {ref: "host"}, Array.from({length: inputs}, () => h("input")))
         },
     })
+
+    // The template ref never renders: the guard on host.value inside apply() is what has to hold.
+    const ReflessHost = defineComponent({
+        setup() {
+            used = useInputAttrs("host")
+            return () => h("span")
+        },
+    })
+    if (noRef) {
+        const wrapper: VueWrapper = i18nMount(ReflessHost as Component, {props: {}})
+        wrappers.push(wrapper)
+        return {wrapper, used, setAttrs: async () => {}}
+    }
     const hostComponent: Component = Host
     // The host is mounted through a relay, so re-passing hostAttrs re-renders it with new fallthrough
     // attrs instead of remounting: only a re-render fires the onUpdated hook the composable relies on.
@@ -113,5 +126,9 @@ describe("useInputAttrs", () => {
         const {used} = mountHost({attrs: {"data-kestra-filter": "range", "aria-live": "polite"}, inputs: 0})
 
         expect(used.pickerAttrs()).toEqual({})
+
+        const {used: missingRefUsed} = mountHost({attrs: {"data-kestra-filter": "range", "aria-live": "polite"}, noRef: true})
+
+        expect(missingRefUsed.pickerAttrs()).toEqual({})
     })
 })

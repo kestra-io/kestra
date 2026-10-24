@@ -170,19 +170,24 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             )
         );
 
-        String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
+        try {
+            String pebbleExpressions = buildPebbleExpressions(tenantId, flowGenerationPrompt.getYaml(), flowGenerationPrompt.getNamespace());
 
-        String generatedFlow = flowAiCopilot.generateFlow(
-            this.pluginFinder(flowGenerationPrompt.getConversationId()),
-            this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
-            allPluginsMetadata(),
-            flowGenerationPrompt,
-            tenantId,
-            pebbleExpressions
-        );
+            String generatedFlow = flowAiCopilot.generateFlow(
+                this.pluginFinder(flowGenerationPrompt.getConversationId()),
+                this.flowYamlBuilder(flowGenerationPrompt.getConversationId()),
+                (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Flow.class, false, plugins, true)),
+                allPluginsMetadata(),
+                flowGenerationPrompt,
+                tenantId,
+                pebbleExpressions
+            );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
+            return GenerationResult.of(this.afterGeneration(ctx, "FlowGenerationResult", Map.of("generatedFlow", generatedFlow), generatedFlow, "generatedFlow"));
+        } catch (RuntimeException | Error failure) {
+            handleGenerationFailure(ctx, failure);
+            throw failure;
+        }
     }
 
     @Override
@@ -194,15 +199,20 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
             )
         );
 
-        String generatedDashboard = dashboardAiCopilot.generateDashboard(
-            this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
-            this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
-            (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
-            allPluginsMetadata(),
-            dashboardGenerationPrompt
-        );
+        try {
+            String generatedDashboard = dashboardAiCopilot.generateDashboard(
+                this.pluginFinder(dashboardGenerationPrompt.getConversationId()),
+                this.dashboardYamlBuilder(dashboardGenerationPrompt.getConversationId()),
+                (plugins) -> JacksonMapper.ofJson().writeValueAsString(jsonSchemaGenerator.schemas(Dashboard.class, false, plugins, true)),
+                allPluginsMetadata(),
+                dashboardGenerationPrompt
+            );
 
-        return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
+            return GenerationResult.of(this.afterGeneration(ctx, "DashboardGenerationResult", Map.of("generatedDashboard", generatedDashboard), generatedDashboard, "generatedDashboard"));
+        } catch (RuntimeException | Error failure) {
+            handleGenerationFailure(ctx, failure);
+            throw failure;
+        }
     }
 
     public String displayName() {
@@ -211,6 +221,25 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     public ExpressionContextService expressionContextService() {
         return expressionContextService;
+    }
+
+    private void handleGenerationFailure(@Nullable GenerationContext context, Throwable failure) {
+        try {
+            this.onGenerationFailure(context, failure);
+        } catch (RuntimeException | Error cleanupFailure) {
+            if (cleanupFailure != failure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+        }
+    }
+
+    private void clearConversationMetadata(@Nullable GenerationContext context) {
+        if (context != null && context.conversationId() != null) {
+            metadataByConversationId.computeIfPresent(
+                context.conversationId(),
+                (conversationId, metadata) -> Objects.equals(metadata.parentSpanId(), context.parentSpanId()) ? null : metadata
+            );
+        }
     }
 
     private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
@@ -290,7 +319,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
             return result;
         }
-        metadataByConversationId.remove(context.conversationId());
+        clearConversationMetadata(context);
         Map<String, Object> aiOutput = (outputState == null || outputState.isEmpty()) ? Map.of(outputKey, result) : outputState;
         this.postHogService.capture(
             context.uid(), "$ai_span", Map.of(
@@ -303,6 +332,11 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         );
 
         return result;
+    }
+
+    @Override
+    public void onGenerationFailure(@Nullable GenerationContext context, Throwable failure) {
+        clearConversationMetadata(context);
     }
 
     public List<PluginMetadata<ReverseOrderVersion>> allPluginsMetadata() {

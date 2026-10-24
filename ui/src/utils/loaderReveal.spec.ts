@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { revealApp } from "./loaderReveal";
-type KestraWindow = Window & {
-    __kestraLoader?: {
-        showDelay?: number;
-        timer?: number | ReturnType<typeof setTimeout>;
-    };
-};
 
 describe("revealApp", () => {
     let loaderEl: HTMLElement;
@@ -13,12 +7,12 @@ describe("revealApp", () => {
 
     beforeEach(() => {
         document["body"]["innerHTML"] = "";
-        delete (window as KestraWindow)["__kestraLoader"];
+        delete window.__kestraLoader;
     });
 
     afterEach(() => {
         document["body"]["innerHTML"] = "";
-        delete (window as KestraWindow)["__kestraLoader"];
+        delete window.__kestraLoader;
         vi["useRealTimers"]();
         vi["restoreAllMocks"]();
     });
@@ -26,9 +20,9 @@ describe("revealApp", () => {
     it("clears the pending __kestraLoader timer", () => {
         vi["useFakeTimers"]();
         const timerCallback = vi["fn"]();
-        (window as KestraWindow)["__kestraLoader"] = {
+        window.__kestraLoader = {
             showDelay: 1000,
-            timer: setTimeout(timerCallback, 1000),
+            timer: window.setTimeout(timerCallback, 1000),
         };
 
         revealApp();
@@ -92,7 +86,7 @@ describe("revealApp", () => {
     });
 
     it("does not throw when window.__kestraLoader was never set", () => {
-        delete (window as KestraWindow)["__kestraLoader"];
+        delete window.__kestraLoader;
 
         expect(() => revealApp())["not"]["toThrow"]();
     });

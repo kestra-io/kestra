@@ -5,6 +5,12 @@
       "cta": "查看更改"
     },
     "loading": "加载中...",
+    "namespace_files_tip": {
+      "title": "将脚本作为 namespace 文件管理",
+      "description": "无需内联编写脚本，打开文件面板，将其添加为文件（例如 main.py），然后从您的 flow 中运行：",
+      "open_files": "打开文件",
+      "dont_show_again": "不再显示"
+    },
     "more actions": "更多操作",
     "recipe": {
       "create_flow": "创建 flow",
@@ -236,6 +242,7 @@
       "last7days": "最近7天",
       "last30days": "最近30天",
       "last365days": "最近365天",
+      "allTime": "所有时间",
       "next5minutes": "接下来的5分钟",
       "next15minutes": "接下来的15分钟",
       "next1hour": "接下来1小时",
@@ -517,8 +524,25 @@
       "attempts": "{count} 次尝试 | {count} 次尝试",
       "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
     },
+    "execution_mobile": {
+      "failed_task": "失败的 task",
+      "view_task_logs": "查看 task 日志",
+      "revision_short": "版本 {revision}",
+      "more_labels": "+{count} 个标签 | +{count} 个标签",
+      "fewer_labels": "收起标签",
+      "jump_to_first_failure": "跳转到第一个失败",
+      "open_logs": "打开日志"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "登录后",
+      "execution_tab": "执行 {id} · {tab} 标签页",
+      "execution": "执行 {id}",
+      "tab": "{tab} 标签页"
+    },
     "concurrency limits": "并发限制",
     "system overview": "系统概览",
+    "workspace": "工作区",
+    "resources": "资源",
     "usage": "使用情况",
     "namespaces": "命名空间",
     "tasks": "任务",
@@ -538,6 +562,15 @@
     "inputs": "输入",
     "input": "输入",
     "variables": "变量",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "此 Flow 没有 Task 提供 artifact。",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "无 artifact | {count} 个 artifact",
+      "tasks": "没有 task | {count} 个 task | {count} 个 task",
+      "fullscreen": "全屏",
+      "exit_fullscreen": "退出全屏"
+    },
     "variable_explorer": {
       "title": "输入/输出",
       "search_placeholder": "搜索 Key 或 value...",
@@ -1374,6 +1407,12 @@
           "third": "请重启您的 Kestra 实例以加载 secret。"
         }
       },
+      "credentials": {
+        "label": "凭证",
+        "header": "凭证",
+        "title": "一次认证，在每个 task 中复用",
+        "message": "在 Kestra 企业版中，服务器到服务器的身份验证可以一次配置为凭据，因此访问 token 会在运行时请求和刷新，而不是硬编码在您的 flows 中。凭据可以在 tenant 或 namespace 级别创建，并从任何 task 中引用。"
+      },
       "apps": {
         "title": "使用 Kestra 构建自定义应用程序",
         "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
@@ -1452,6 +1491,10 @@
           "title": "以安全方式管理Secrets",
           "message": "在 Kestra Enterprise Edition 中，您可以在 namespace 级别存储和控制 secrets，从而最大限度地降低风险并确保每个团队的凭据保持隔离。得益于嵌套层次结构，您还可以在父 namespace 中配置凭据，所有子 namespace 都将继承这些凭据。对专用 secrets 管理器和细粒度 namespace 级别权限设置的支持进一步增强了安全性和合规性。"
         },
+        "credentials": {
+          "title": "将凭据限定在此 namespace",
+          "message": "在 Kestra 企业版中，您可以在 namespace 级别配置凭据，使此 namespace 及其子 namespace 中的 task 在运行时请求和刷新访问 token，而不是将其存储在 flow 中。在父 namespace 中定义的凭据会被所有子 namespace 继承。"
+        },
         "assets": {
           "title": "集中资产管理",
           "message": "在 Kestra 企业版中，Assets 保持着与您的工作流交互的资源的实时清单。这些资源可以是数据库表、虚拟机、文件或您使用的任何外部系统。"
@@ -1463,6 +1506,11 @@
         "policies": {
           "title": "在此 namespace 中强制执行治理规则",
           "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则 — 注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
+        },
+        "reusable-inputs": {
+          "label": "可复用输入",
+          "title": "一次定义 input，随处复用",
+          "message": "在 Kestra 企业版中，可复用 input 让您在 namespace 级别一次定义一组带类型的命名 input，并在任何 flow 中引用。父 namespace 中的集合可供子 namespace 使用，团队因此共享同一套 input 定义，而无需在每个 flow 中重复。"
         },
         "history": {
           "title": "在一个地方管理修订历史",
@@ -1780,6 +1828,14 @@
     "item": "项目",
     "items": "项目",
     "iterations": "迭代次数",
+    "load_10_more": "加载更多10项",
+    "show_all_executions": "显示所有执行",
+    "failed_iterations_only": "仅显示失败的迭代",
+    "loop_iterations_shown": "已显示 {shown} / {total}",
+    "loop_iterations_load_error": "加载迭代失败",
+    "retry": "重试",
+    "no_iterations": "暂无迭代",
+    "no_failed_iterations": "没有失败的迭代",
     "loop_iterations_notice": {
       "logs": "循环迭代作为单独的子 Execution 运行，因此其 logs 不在此处显示。",
       "outputs": "循环迭代作为单独的子 Execution 运行，因此它们的 output 不在此处显示。",

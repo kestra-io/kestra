@@ -75,6 +75,12 @@ public abstract class Input<T> implements Data {
     String description;
 
     @Schema(
+        title = "How the description of the input is displayed.",
+        description = "`TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`."
+    )
+    DescriptionDisplayMode descriptionDisplayMode;
+
+    @Schema(
         title = "The dependencies of the input."
     )
     DependsOn dependsOn;

@@ -17,6 +17,9 @@ import {ChartFiltersOverrides, QueryFilter, QueryFilterField} from "@kestra-io/k
 /** Provided by the dashboard layout, so it can warn which dashboard filters a chart's data source left out. */
 export const IGNORED_FILTERS_INJECTION_KEY = Symbol("dashboard-ignored-filters") as InjectionKey<(chartId: string, fields: QueryFilterField[]) => void>
 
+/** Lets a host that already holds a chart's rows (an app block) answer `useChartGenerator` without calling the dashboard API. */
+export const CHART_RESULTS_KEY: InjectionKey<(chartId: string, pagination?: {pageNumber: number; pageSize: number}) => ChartResults | undefined> = Symbol("chartResults")
+
 export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI"
 
 export const isMarkdownChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Markdown"
@@ -53,6 +56,7 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
     const route = useRoute()
 
     const dashboardStore = useDashboardStore()
+    const providedResults = inject(CHART_RESULTS_KEY, undefined)
 
     const {t} = useI18n({useScope: "global"})
     const EMPTY_TEXT = t("dashboards.empty")
@@ -70,6 +74,11 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [])
         const allFilters = (appendFilters?.length ? [...filters, ...appendFilters] : filters)
         const parameters: ChartFiltersOverrides = {...pagination, filters: (allFilters ?? {})}
+
+        if (providedResults) {
+            data.value = providedResults(props.chart.id, pagination)
+            return data.value
+        }
 
         loading.value = true
         try {

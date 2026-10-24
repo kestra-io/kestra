@@ -136,8 +136,8 @@ public abstract class AbstractJdbcRepository {
             case NAMESPACES -> {
                 List<Condition> ors = new ArrayList<>(scope.namespaces().size() * 2);
                 for (String namespace : scope.namespaces()) {
-                    ors.add(column.eq(namespace));
-                    ors.add(column.startsWith(namespace + "."));
+                    ors.add(CaseSensitiveMatch.eq(column, namespace));
+                    ors.add(CaseSensitiveMatch.startsWith(column, namespace + "."));
                 }
                 yield DSL.or(ors);
             }
@@ -522,6 +522,7 @@ public abstract class AbstractJdbcRepository {
         Object value,
         QueryFilter.Op operation) {
         org.jooq.Field<Object> column = getColumn(field);
+        org.jooq.Field<Object> searchColumn = field == QueryFilter.Field.TAGS ? column : CaseInsensitiveSearch.of(column);
 
         // Default handling for other fields
         return switch (operation) {
@@ -559,15 +560,15 @@ public abstract class AbstractJdbcRepository {
             }
             case STARTS_WITH -> {
                 String s = requireStringValue(value, "STARTS_WITH");
-                yield column.startsWith(s);
+                yield searchColumn.startsWith(s);
             }
             case ENDS_WITH -> {
                 String s = requireStringValue(value, "ENDS_WITH");
-                yield column.endsWith(s);
+                yield searchColumn.endsWith(s);
             }
             case CONTAINS -> {
                 String s = requireStringValue(value, "CONTAINS");
-                yield column.contains(s);
+                yield searchColumn.contains(s);
             }
             case REGEX -> {
                 String s = requireStringValue(value, "REGEX");

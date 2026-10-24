@@ -61,6 +61,7 @@
                         :progress="taskProgress(taskProps.data.node?.task?.id)"
                         :fetchOutputs="fetchTaskOutputs(taskProps.data.node?.task?.id)"
                         :fetchMetrics="fetchTaskMetrics(taskProps.data.node?.task?.id)"
+                        :fetchEndpoint="fetchTaskEndpoint(taskProps.data.node?.task)"
                     />
                 </slot>
             </template>
@@ -98,6 +99,7 @@
             :parentPath="modalTarget.parentPath"
             :refPath="modalTarget.refPath"
             :blockSchemaPath="modalTarget.blockSchemaPath"
+            :editedPath="modalPath"
             :crumbs="modalCrumbs"
             :creating="modalTarget.creating"
             @update:task="onModalTaskEdited"
@@ -144,7 +146,7 @@
                                 <SearchField
                                     :router="false"
                                     @search="onSearch"
-                                    class="me-2"
+                                    class="search"
                                 />
                             </KsFormItem>
                             <KsFormItem>
@@ -234,7 +236,7 @@
                     :navbar="false"
                     :modelValue="selectedTask.runIf"
                     lang="yaml"
-                    class="mt-3"
+                    class="detail"
                 />
             </div>
             <div v-if="isShowCustomActionOpen && customActionMeta">
@@ -245,7 +247,7 @@
                     :navbar="false"
                     :modelValue="customActionModelValue"
                     :lang="customActionMeta.lang"
-                    class="mt-3"
+                    class="detail"
                 />
                 <TaskDrawerRemote
                     v-if="isTask(selectedTask)"
@@ -259,8 +261,9 @@
                     :progress="taskProgress(selectedTask?.id)"
                     :fetchOutputs="fetchTaskOutputs(selectedTask?.id)"
                     :fetchMetrics="fetchTaskMetrics(selectedTask?.id)"
+                    :fetchEndpoint="fetchTaskEndpoint(selectedTask)"
                     displayMode="full"
-                    class="mt-3"
+                    class="detail"
                 />
             </div>
         </KsDrawer>
@@ -279,6 +282,7 @@
 
 <script setup lang="ts">
     import {nextTick, onBeforeUnmount, onMounted, ref, inject, provide, watch, computed} from "vue"
+    import {useShownValidationErrors} from "../no-code/utils/useFieldValidationErrors"
 
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
@@ -306,7 +310,8 @@
     import type {KnownSlotProps} from "@kestra-io/slot-contracts"
     import TaskRunActions from "../executions/TaskRunActions.vue"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import type {BlockType} from "../no-code/utils/types"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
@@ -404,7 +409,7 @@
     const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
-    const {fitView} = useVueFlow(vueflowId.value)
+    const {fitView, getNodes} = useVueFlow(vueflowId.value)
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
@@ -565,6 +570,13 @@
         return loadTaskRunOutputs(executionId, runId)
     }
 
+    const fetchTaskEndpoint = (task: FlowTask | undefined) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
+        const executionId = exec.value?.id
+        const runId = taskRunId ?? currentTaskRunId(task?.id)
+        if (!executionId || !runId || !task?.type) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
+        return callTaskRunEndpoint(task.type, name, executionId, runId, params)
+    }
+
     const fetchTaskMetrics = (taskId: string | undefined) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
         const executionId = exec.value?.id
         if (!executionId || !taskId) return Promise.resolve({results: [], total: 0})
@@ -616,7 +628,8 @@
     const resolveTaskTopologyDetails = async (tasks: FlowTask[] = []) => {
         const taskTypes = new Set<string>()
         const runnerTypes = new Set<string>()
-        tasks.forEach((task) => {
+        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
+        getAllTasks(tasks).forEach((task: FlowTask) => {
             if (!task?.type) {
                 return
             }
@@ -705,7 +718,7 @@
             const sourceTasks: FlowTask[] = YAML_UTILS.parse<ParsedFlow>(source)?.tasks ?? []
             const flowParsedTasks: FlowTask[] = flowStore.flowParsed?.tasks ?? []
             const hasRunner = (task: FlowTask) => Boolean(task.taskRunner?.type)
-            if (sourceTasks.some(hasRunner) && !flowParsedTasks.some(hasRunner)) {
+            if (getAllTasks(sourceTasks).some(hasRunner) && !getAllTasks(flowParsedTasks).some(hasRunner)) {
                 await resolveTaskTopologyDetails(sourceTasks)
             }
         },
@@ -745,11 +758,9 @@
     watch(() => props.horizontalDefault, (value) => {
         if (value !== undefined && value !== isHorizontal.value) {
             isHorizontal.value = value
-            fitViewOrientation()
         }
     })
     const vueFlow = ref<HTMLDivElement>()
-    const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
     const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
     const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL)))
@@ -781,8 +792,6 @@
     )
 
     onMounted(() => {
-        // Regenerate graph on window resize
-        observeWidth()
         pluginsStore.fetchIcons()
     })
 
@@ -811,24 +820,6 @@
             }
         },
     )
-
-    let resizeObserver: ResizeObserver | undefined
-
-    const observeResize = (onResize: () => void) => {
-        resizeObserver?.disconnect()
-        if (!vueFlow.value) return
-        resizeObserver = new ResizeObserver(onResize)
-        resizeObserver.observe(vueFlow.value)
-    }
-
-    const observeWidth = () => observeResize(() => {
-        clearTimeout(timer.value)
-        timer.value = setTimeout(() => {
-            nextTick(() => {
-                fitView()
-            })
-        }, 50)
-    })
 
     // Topology renders the whole graph, so every graph-originated mutation needs the graph
     // regenerated from the new YAML — unlike the No-code canvas, which never reads flowGraph.
@@ -965,8 +956,10 @@
         pushModalTarget({parentPath, blockSchemaPath, refPath})
     }
 
+    const shownValidationErrors = useShownValidationErrors()
+
     const validationIssuesByTask = computed<Map<string, string[]>>(() =>
-        groupValidationIssuesByTask(flowStore.flowValidation?.errors, flowStore.flowParsed),
+        groupValidationIssuesByTask(shownValidationErrors.value, flowStore.flowParsed),
     )
 
     const taskPicker = useTaskPicker({
@@ -1024,7 +1017,6 @@
 
     onBeforeUnmount(() => {
         window.removeEventListener("keydown", onPickerEscape)
-        resizeObserver?.disconnect()
     })
 
     const shortcutsOpen = ref(false)
@@ -1270,17 +1262,18 @@
         saveFlow: () => saveFlow(),
     })
 
-    const fitViewOrientation = () => observeResize(() => {
-        clearTimeout(timer.value)
-        nextTick(() => {
-            fitView()
-        })
-    })
+    const FOCUS_MAX_ZOOM = 1
+
+    function focusTask(taskId: string) {
+        const node = getNodes.value.find((candidate) => candidate.id.split(".").at(-1) === taskId)
+        if (node) fitView({nodes: [node.id], maxZoom: FOCUS_MAX_ZOOM, duration: 300})
+    }
+
+    defineExpose({focusTask})
 
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value
         isHorizontalLS.value = isHorizontal.value
-        fitViewOrientation()
     }
 
     const openFlow = (data: { link: { namespace: string; id: string; executionId?: string } }) => {
@@ -1413,6 +1406,7 @@
                 progress: taskProgress(fullTask.id),
                 fetchOutputs: fetchTaskOutputs(fullTask.id),
                 fetchMetrics: fetchTaskMetrics(fullTask.id),
+                fetchEndpoint: fetchTaskEndpoint(fullTask),
             }
             isTaskModalOpen.value = true
             return
@@ -1429,7 +1423,15 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
+.search {
+    margin-inline-end: var(--ks-spacing-2);
+}
+
+.detail {
+    margin-top: var(--ks-spacing-4);
+}
+
 .tab-body {
     padding-block: var(--ks-spacing-3) var(--ks-spacing-6);
 }
@@ -1440,29 +1442,27 @@
     gap: var(--ks-spacing-5);
 }
 
-.taskrun-card {
-    &__header {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        margin-bottom: var(--ks-spacing-2);
-    }
+.taskrun-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    margin-bottom: var(--ks-spacing-2);
+}
 
-    &__value {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+.taskrun-card__value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-    &__empty {
-        display: block;
-        padding: var(--ks-spacing-3);
-        border: 1px dashed var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
-    }
+.taskrun-card__empty {
+    display: block;
+    padding: var(--ks-spacing-3);
+    border: 1px dashed var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-xs);
 }
 
 .replay-picker {
@@ -1470,33 +1470,33 @@
     flex-direction: column;
     gap: var(--ks-spacing-2);
     margin-top: var(--ks-spacing-4);
+}
 
-    &__hint {
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
+.replay-picker__hint {
+    color: var(--ks-text-secondary);
+    font-size: var(--ks-font-size-xs);
+}
+
+.replay-picker__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-3);
+    padding: var(--ks-spacing-2) var(--ks-spacing-3);
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-radius-base);
+    background: var(--ks-bg-surface);
+    transition: background-color 0.1s ease;
+
+    &:hover {
+        background: var(--ks-bg-hover);
     }
+}
 
-    &__item {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        background: var(--ks-bg-surface);
-        transition: background-color 0.1s ease;
-
-        &:hover {
-            background: var(--ks-bg-hover);
-        }
-    }
-
-    &__value {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+.replay-picker__value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .vueflow {
@@ -1504,9 +1504,9 @@
     width: 100%;
     position: relative;
 
-    // Anchor the state icon (playground-button) to the node header area, not
-    // the full VueFlow node element, so it doesn't overlap plugin UI details.
-    :deep(.main-content) {
+    /* Anchor the state icon (playground-button) to the node header area, not */
+    /* the full VueFlow node element, so it doesn't overlap plugin UI details. */
+    & :deep(.main-content) {
         position: relative;
     }
 }

@@ -2,6 +2,7 @@
     <KsCard>
         <div class="vueflow">
             <LowCodeEditor
+                ref="editor"
                 :key="execution.id"
                 v-if="execution && flowGraph"
                 :flowId="execution.flowId"
@@ -23,7 +24,7 @@
     </KsCard>
 </template>
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, onUnmounted} from "vue"
+    import {ref, computed, watch, onMounted, onUnmounted, useTemplateRef} from "vue"
     import {stringUtils, State, levelToRequestParams, throttle} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
@@ -41,6 +42,10 @@
 
     const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
+
+    const editor = useTemplateRef<InstanceType<typeof LowCodeEditor>>("editor")
+
+    defineExpose({focusTask: (taskId: string) => editor.value?.focusTask(taskId)})
 
     const execution = computed(() => executionsStore.execution)
     const flowGraph = computed(() => executionsStore.flowGraph)
@@ -268,15 +273,15 @@
         }
     }
 </script>
-<style scoped lang="scss">
+<style scoped>
     .kel-card {
-        // A fixed height left most of a tall viewport unused:
-        // https://github.com/kestra-io/kestra/issues/19685.
+        /* A fixed height left most of a tall viewport unused: */
+        /* https://github.com/kestra-io/kestra/issues/19685. */
         height: 100%;
         position: relative;
         background-color: var(--ks-bg-base);
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             height: 100%;
             display: flex;
             padding: 0;

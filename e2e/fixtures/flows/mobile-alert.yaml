@@ -1,0 +1,14 @@
+id: mobile-alert
+namespace: company.team
+
+tasks:
+  - id: per_region
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: fetch
+        type: io.kestra.plugin.core.log.Log
+        message: "Fetched 1,284 ledger lines for APAC / Q3"
+
+      - id: reconcile
+        type: io.kestra.plugin.core.execution.Fail
+        errorMessage: "Ledger APAC Q3 is off by 1,204.50 EUR against the bank statement; refusing to close the period."

@@ -98,9 +98,7 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            :allowDrop="
-                (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
-            "
+            :allowDrop="allowDrop"
             :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
@@ -310,7 +308,7 @@
             :title="$t('namespace files.dialog.deletion.title')"
             @keydown.enter.prevent="removeItems()"
         >
-            <i18n-t :keypath="deletionMessage.keypath" tag="span" class="py-3">
+            <i18n-t :keypath="deletionMessage.keypath" tag="span" scope="global" class="py-3">
                 <template v-for="(value, name) in deletionMessage.params" :key="name" #[name]>
                     <code>{{ value }}</code>
                 </template>
@@ -886,6 +884,14 @@
             .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
+    function allowDrop(draggingNode: ElTreeNode, dropNode: ElTreeNode, dropType: string) {
+        if (dropType === "inner" && dropNode.data?.leaf) {
+            return false
+        }
+        const targetFolder = dropType === "inner" ? dropNode : dropNode.parent
+        return targetFolder !== draggingNode.parent || Boolean(bulkDragSiblings.value?.length)
+    }
+
     async function nodeMoved(draggedNode: any) {
         // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
         if (!canManageFiles.value) {
@@ -893,34 +899,40 @@
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             return
         }
+        const oldPath = nodeBeforeDrag.value?.path ?? ""
         const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
 
-        try {
-            await namespacesStore.moveFileDirectory({
-                namespace: namespaceId.value,
-                old: nodeBeforeDrag.value?.path ?? "",
-                new: newPath,
-            })
-        } catch {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
-            bulkDragSiblings.value = undefined
-            return
+        if (newPath !== oldPath) {
+            try {
+                await namespacesStore.moveFileDirectory({
+                    namespace: namespaceId.value,
+                    old: oldPath,
+                    new: newPath,
+                })
+            } catch {
+                tree.value.remove(draggedNode.data.id)
+                tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+                bulkDragSiblings.value = undefined
+                return
+            }
         }
 
         const siblings = bulkDragSiblings.value
         bulkDragSiblings.value = undefined
-        if (!siblings?.length) {
-            return
-        }
 
         // handle siblings move
         const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
-        const results = await Promise.allSettled(siblings.map((sibling) =>
+        const moves = (siblings ?? [])
+            .map((sibling) => ({old: sibling.path, new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName}))
+            .filter((move) => move.old !== move.new)
+        if (!moves.length) {
+            return
+        }
+
+        const results = await Promise.allSettled(moves.map((move) =>
             namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
-                old: sibling.path,
-                new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName,
+                ...move,
             }),
         ))
 
@@ -1110,10 +1122,10 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .revision-history-dialog-body {
-    // We subtract the dialog margins and title height (78px)
+    /* We subtract the dialog margins and title height (78px) */
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 
@@ -1125,7 +1137,7 @@
     width: 20%;
 
     .filter{
-        :deep(.kel-select__wrapper) {
+        & :deep(.kel-select__wrapper) {
             min-height: 32px;
             height: 32px;
             padding-right: 0px;
@@ -1154,7 +1166,7 @@
         }
     }
 
-    :deep(.kel-button):not(.kel-dialog .kel-button) {
+    & :deep(.kel-button):not(.kel-dialog .kel-button) {
         border: 0;
         background: none;
         outline: none;
@@ -1196,7 +1208,7 @@
         }
     }
 
-    :deep(.kel-tree) {
+    & :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-bg-surface);
@@ -1252,7 +1264,7 @@
         }
     }
 
-    :deep(.tree-node-hitbox) {
+    & :deep(.tree-node-hitbox) {
         width: 100%;
         flex: 1;
         display: flex;

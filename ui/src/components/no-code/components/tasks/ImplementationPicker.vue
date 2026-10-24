@@ -114,7 +114,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .implementation-picker-search {
     margin-bottom: var(--ks-spacing-3);
 }

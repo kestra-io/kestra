@@ -76,7 +76,7 @@
                         :aria-label="copied ? $t('copied') : $t('copy')"
                         @click="copySource"
                     >
-                        <CheckIcon v-if="copied" class="text-success" />
+                        <CheckIcon v-if="copied" class="success-icon" />
                         <ContentCopy v-else />
                     </KsIconButton>
                     <KsEditor
@@ -315,7 +315,7 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .header {
         .title {
             display: flex;
@@ -347,21 +347,21 @@
     }
 
     .modal-tabs {
-        :deep(.kel-tabs__header) {
+        & :deep(.kel-tabs__header) {
             margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
         }
     }
 
     .form {
-        :deep(.kel-form-item):first-of-type {
+        & :deep(.kel-form-item):first-of-type {
             margin-top: 0;
         }
 
-        :deep(.kel-form-item__label) {
+        & :deep(.kel-form-item__label) {
             font-weight: var(--ks-font-weight-semibold);
         }
 
-        :deep(.id-input .kel-input__inner) {
+        & :deep(.id-input .kel-input__inner) {
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
         }
@@ -382,6 +382,10 @@
             right: var(--ks-spacing-2);
             z-index: 2;
         }
+    }
+
+    .success-icon {
+        color: var(--ks-text-success);
     }
 
     .docs :deep(.plugin-doc) {

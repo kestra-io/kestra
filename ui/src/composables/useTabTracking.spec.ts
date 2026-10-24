@@ -25,8 +25,6 @@ vi.mock("../utils/tabTracking", () => ({
 
 const tab = (uid: string) => ({uid}) as TrackedTab
 
-// The source does `value.substring(12)`, so the JSON blob starts at index 12 of the uid:
-// "nocode-" (7 chars) + a 5 char segment, then the JSON.
 const nocodeUid = (payload: string) => `nocode-12345${payload}`
 
 describe("useTabTracking", () => {

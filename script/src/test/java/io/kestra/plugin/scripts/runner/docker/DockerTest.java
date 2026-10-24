@@ -191,6 +191,7 @@ class DockerTest extends AbstractTaskRunnerTest {
         var runContext = runContext(this.runContextFactory, Map.of("dnsServer", "192.0.2.53"));
         var docker = Docker.builder()
             .image("rockylinux:9.3-minimal")
+            .networkMode("bridge")
             .dns(List.of(" {{ dnsServer }} ", "", " 198.51.100.53 "))
             .build();
         var taskCommands = new CommandsWrapper(runContext).withCommands(

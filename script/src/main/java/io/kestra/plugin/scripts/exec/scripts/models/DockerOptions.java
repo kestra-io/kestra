@@ -66,7 +66,9 @@ public class DockerOptions {
     protected List<String> extraHosts;
 
     @Schema(
-        title = "DNS servers to use for the container."
+        title = "DNS servers to use for the container.",
+        description = "List of DNS server IP addresses (IPv4 or IPv6). Overrides the Docker daemon default for this container. " +
+            "Docker may ignore this setting in some network modes, such as `host`; user-defined networks use Docker's embedded DNS resolver, which forwards external queries to these servers."
     )
     @PluginProperty(dynamic = true)
     protected List<String> dns;

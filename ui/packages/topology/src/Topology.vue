@@ -499,6 +499,7 @@
     }
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
+    const DIRECT_HOVERED_NODE_CLASS = "topology-node-hovered-direct"
 
     function setNodeInteractionClass(node: GraphNode | GraphEdge, cls: string, add: boolean) {
         const classes = (typeof node.class === "string" ? node.class : "").split(" ").filter(Boolean)
@@ -515,6 +516,9 @@
         VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
             if (n?.type === "task") {
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
+                if (n.id === node.uid) {
+                    setNodeInteractionClass(n, DIRECT_HOVERED_NODE_CLASS, true)
+                }
             }
         })
     }
@@ -528,6 +532,7 @@
             .forEach(n => {
                 n.style = {...n.style, opacity: "1"}
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, false)
+                setNodeInteractionClass(n, DIRECT_HOVERED_NODE_CLASS, false)
             })
     }
 
@@ -622,6 +627,12 @@
             isDropdownOpen.value = false
         }
     }
+
+    defineExpose({
+        onMouseOver,
+        onMouseLeave,
+        resetNodesStyle,
+    })
 </script>
 
 <style scoped>

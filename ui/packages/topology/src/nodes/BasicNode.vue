@@ -270,6 +270,7 @@
         background-color: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-strong);
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
+        transition: background-color var(--ks-duration-fast) var(--ks-ease-standard), border-color var(--ks-duration-fast) var(--ks-ease-standard), box-shadow var(--ks-duration-fast) var(--ks-ease-standard);
     }
 
     .node-grip {
@@ -314,6 +315,7 @@
         overflow: hidden;
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
         border: 1px solid var(--ks-border-strong);
+        transition: background-color var(--ks-duration-fast) var(--ks-ease-standard), border-color var(--ks-duration-fast) var(--ks-ease-standard), box-shadow var(--ks-duration-fast) var(--ks-ease-standard);
 
         .main-content {
             display: flex;
@@ -452,6 +454,11 @@
     @media (prefers-reduced-motion: reduce) {
         .node-details-overlay-enter-active,
         .node-details-overlay-leave-active {
+            transition: none;
+        }
+
+        .node-core,
+        .node-pill {
             transition: none;
         }
     }

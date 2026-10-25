@@ -153,3 +153,29 @@ describe("Topology view refit", () => {
         expect(fitView).toHaveBeenCalledTimes(2)
     })
 })
+
+describe("Topology node hover", () => {
+    it("highlights hovered task and its dependent tasks on mouseover, and resets on mouseleave", async () => {
+        const id = `topology-hover-${Math.random()}`
+        const vueFlow = useVueFlow(id)
+        const wrapper = mountForRefit(id)
+        await settle()
+
+        ;(wrapper.vm as any).onMouseOver({uid: "1"})
+
+        const node1 = vueFlow.findNode("1")
+        expect(node1?.class).toContain("topology-node-hovered")
+        expect(node1?.class).toContain("topology-node-hovered-direct")
+
+        const node2 = vueFlow.findNode("2")
+        expect(node2?.class).toContain("topology-node-hovered")
+        expect(node2?.class).not.toContain("topology-node-hovered-direct")
+
+        ;(wrapper.vm as any).onMouseLeave()
+        expect(vueFlow.findNode("1")?.class).not.toContain("topology-node-hovered")
+        expect(vueFlow.findNode("1")?.class).not.toContain("topology-node-hovered-direct")
+        expect(vueFlow.findNode("2")?.class).not.toContain("topology-node-hovered")
+        expect(vueFlow.findNode("2")?.class).not.toContain("topology-node-hovered-direct")
+    })
+})
+

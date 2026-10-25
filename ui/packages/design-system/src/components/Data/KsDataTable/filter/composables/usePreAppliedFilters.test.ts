@@ -15,17 +15,19 @@ const makeFilter = (overrides: Partial<AppliedFilter> = {}): AppliedFilter => ({
 
 describe("usePreAppliedFilters", () => {
     test("records every filter passed to markAsPreApplied", () => {
-        const preApplied = usePreAppliedFilters()
-        const filters = [
-            makeFilter({key: "status"}),
-            makeFilter({id: "f2", key: "namespace"}),
-        ]
+    const preApplied = usePreAppliedFilters()
+    const filters = [
+        makeFilter({key: "status"}),
+        makeFilter({id: "f2", key: "namespace"}),
+        makeFilter({id: "f3", key: "flow"}),
+    ]
 
-        preApplied.markAsPreApplied(filters)
+    preApplied.markAsPreApplied(filters)
 
-        expect(preApplied.isPreApplied("status")).toBe(true)
-        expect(preApplied.isPreApplied("namespace")).toBe(true)
-        expect(preApplied.getAllPreApplied()).toEqual(filters)
+    expect(preApplied.isPreApplied("status")).toBe(true)
+    expect(preApplied.isPreApplied("namespace")).toBe(true)
+    expect(preApplied.isPreApplied("flow")).toBe(true)
+    expect(preApplied.getAllPreApplied()).toEqual(filters)
     })
 
     test("stores a copy instead of the caller's filter object", () => {
@@ -52,19 +54,6 @@ describe("usePreAppliedFilters", () => {
         const preApplied = usePreAppliedFilters()
 
         expect(preApplied.getPreApplied("unknown")).toBeUndefined()
-    })
-
-    test("returns every stored filter", () => {
-        const preApplied = usePreAppliedFilters()
-        const filters = [
-            makeFilter({key: "status"}),
-            makeFilter({id: "f2", key: "namespace"}),
-            makeFilter({id: "f3", key: "flow"}),
-        ]
-
-        preApplied.markAsPreApplied(filters)
-
-        expect(preApplied.getAllPreApplied()).toEqual(filters)
     })
 
     test("overwrites a filter when the same key is marked twice", () => {

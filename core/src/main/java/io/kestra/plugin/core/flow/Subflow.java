@@ -129,7 +129,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Builder.Default
     @Schema(
-        title = "Flag specifying whether to fail the current execution if the subflow execution fails or is killed.",
+        title = "Flag specifying whether to fail the current execution if the subflow execution fails, is killed or is cancelled.",
         description = "Note that this option works only if `wait` is set to `true`."
     )
     @PluginProperty

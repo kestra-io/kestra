@@ -15,6 +15,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.flow.Subflow;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -415,6 +416,21 @@ class ExecutionTest {
 
         // Then FAILED takes precedence over CANCELLED
         assertThat(execution.computeFinalState(flow)).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldComputeCancelledWhenTheExecutionIsCancelledWithItsSubflowTaskRun() {
+        // Given an execution cancelled along with its running Subflow task run (e.g. by an SLA with behavior CANCEL)
+        Subflow subflow = Subflow.builder().id("subflow").type(Subflow.class.getName()).namespace("io.kestra.test").flowId("child").build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.test")
+            .tasks(List.of(subflow))
+            .build();
+        Execution execution = executionWithTaskRun("subflow", State.Type.CANCELLED).withState(State.Type.CANCELLED);
+
+        // Then the cancel is not mistaken for a failure transmitted from the subflow execution
+        assertThat(execution.computeFinalState(flow)).isEqualTo(State.Type.CANCELLED);
     }
 
     private static Flow flowWithTask(String taskId) {

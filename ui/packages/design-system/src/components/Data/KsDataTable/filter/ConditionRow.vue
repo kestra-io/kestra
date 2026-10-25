@@ -65,7 +65,6 @@
         <FilterMultiSelect
             :modelValue="multiDraft"
             :options="options"
-            :searchable="keyConfig?.searchable"
             :filterKey="keyConfig?.key"
             @update:modelValue="(v: string[]) => (multiDraft = v)"
         />

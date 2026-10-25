@@ -11,7 +11,7 @@ const ALL_STATE_OPTIONS = Object.keys(STATES).map(state => ({value: state, label
 const mountStateFilter = (modelValue: string[] = [], options = ALL_STATE_OPTIONS) =>
     i18nMount(FilterMultiSelect, {
         messages,
-        props: {filterKey: "state", modelValue, options, searchable: true},
+        props: {filterKey: "state", modelValue, options},
     })
 
 const mountFlatFilter = (modelValue: string[] = []) =>
@@ -21,7 +21,6 @@ const mountFlatFilter = (modelValue: string[] = []) =>
             filterKey: "namespace",
             modelValue,
             options: [{value: "ns1", label: "ns1"}, {value: "ns2", label: "ns2"}],
-            searchable: true,
         },
     })
 
@@ -162,6 +161,30 @@ describe("FilterMultiSelect — grouped state mode", () => {
         // Then — groups still exist, no auto-expansion happens for empty query
         const groups = wrapper.findAll(".state-group")
         expect(groups.length).toBeGreaterThan(0)
+    })
+
+    test("focuses the search input on mount", async () => {
+        const wrapper = i18nMount(FilterMultiSelect, {
+            messages,
+            props: {filterKey: "namespace", modelValue: [], options: [{value: "ns1", label: "ns1"}]},
+            attachTo: document.body,
+        })
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(document.activeElement).toBe(wrapper.find("input").element)
+
+        wrapper.unmount()
+    })
+
+    test("enter in the search selects every matching value and keeps the current ones", async () => {
+        const wrapper = mountStateFilter(["SUCCESS"])
+        const input = wrapper.find("input")
+
+        await input.setValue("RUN")
+        await input.trigger("keydown", {key: "Enter"})
+
+        const emitted = wrapper.emitted("update:modelValue") as string[][][]
+        expect(emitted.at(-1)![0]).toEqual(["SUCCESS", "RUNNING"])
     })
 
     test("flat filter still emits update:modelValue on option click", async () => {

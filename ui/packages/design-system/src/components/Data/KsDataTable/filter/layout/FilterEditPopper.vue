@@ -1,6 +1,7 @@
 <template>
     <div class="edit-popper">
         <FilterHeader
+            :class="{divided: valueComponent?.component === FilterMultiSelect}"
             :label="filterKey.label"
             :description="filterKey.description"
             @close="emits('close')"
@@ -214,7 +215,6 @@
                 props: {
                     modelValue: state.keyValuePair,
                     options: state.valueOptions,
-                    searchable: props.filterKey?.searchable,
                     label: props.filterKey?.label,
                     filterKey: props.filterKey?.key,
                     serverSideSearch: supportsServerSideSearch.value,
@@ -559,3 +559,10 @@
         () => state.timeRangeMode,
     ], () => applyLive())
 </script>
+
+<style scoped>
+.filter-header.divided {
+    padding-bottom: var(--ks-spacing-3);
+    border-bottom: 1px solid var(--ks-border-default);
+}
+</style>

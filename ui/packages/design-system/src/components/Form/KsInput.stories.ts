@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
+import {expect} from "storybook/test"
 import KsInput from "./KsInput.vue"
 
 const meta: Meta<typeof KsInput> = {
@@ -88,6 +89,28 @@ export const ClearableNoReflow: Story = {
             </div>
         `,
     }),
+}
+
+/** Borderless – flush in a list row, as the search of the KsFilter "Add filters" panel */
+export const Borderless: Story = {
+    render: () => ({
+        components: {KsInput},
+        setup() { return {value: ref("")} },
+        template: `
+            <div style="padding:24px;width:300px">
+                <div style="padding:var(--ks-spacing-2) var(--ks-spacing-4);border-block:1px solid var(--ks-border-default)">
+                    <ks-input v-model="value" borderless clearable size="small" placeholder="Search..." />
+                </div>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const wrapper = canvasElement.querySelector(".kel-input__wrapper") as HTMLElement
+        const style = getComputedStyle(wrapper)
+        await expect(style.backgroundColor).toBe("rgba(0, 0, 0, 0)")
+        await expect(style.boxShadow).toMatch(/^rgba\(0, 0, 0, 0\)/)
+        await expect(style.paddingLeft).toBe("0px")
+    },
 }
 
 /** With suffix slot */

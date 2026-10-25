@@ -1,11 +1,14 @@
 <template>
     <div class="multi-select-panel">
         <div class="panel-header">
-            <div v-if="props.searchable" class="search-section">
+            <div class="search-section">
                 <KsInput
+                    ref="searchInput"
                     v-model="searchQuery"
-                    size="default"
+                    size="small"
+                    borderless
                     clearable
+                    @keydown.enter="selectVisibleOptions"
                     :placeholder="$t('filter.search options')"
                     :prefixIcon="Magnify"
                 />
@@ -189,7 +192,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, ref, watch} from "vue"
     import {Magnify, InformationOutline, ChevronDown} from "../utils/icons"
     import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue"
     import {resolveStateGroups, type ResolvedGroup} from "../utils/stateGroups"
@@ -198,7 +201,6 @@
         label?: string;
         filterKey?: string;
         modelValue: string[];
-        searchable?: boolean;
         placeholder?: string;
         options: {value: string; label: string}[];
         /** When true, emit `update:search` instead of filtering options locally — parent reloads via valueProvider. */
@@ -213,6 +215,9 @@
     }>()
 
     const searchQuery = ref("")
+    const searchInput = ref<{focus: () => void} | null>(null)
+
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
     const expandedGroups = ref<Set<string>>(new Set())
 
     watch(searchQuery, (value) => {
@@ -282,6 +287,13 @@
         emits("update:modelValue", [...values])
     }
 
+    const selectVisibleOptions = () => {
+        const visible = isStateFilter.value
+            ? visibleGroups.value.flatMap(group => group.options)
+            : filteredOptions.value
+        emits("update:modelValue", [...new Set([...props.modelValue, ...visible.map(option => option.value)])])
+    }
+
     const handleDeselectAll = () => {
         const targets = isStateFilter.value ? props.options : filteredOptions.value
         const values = new Set(props.modelValue)
@@ -339,8 +351,8 @@
         background-color: var(--ks-bg-surface);
 
         & .search-section {
-            padding: 1rem;
-            padding-bottom: 0.5rem;
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
         & .controls-section {

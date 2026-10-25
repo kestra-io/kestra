@@ -437,7 +437,7 @@ If your `<style>` block needs to exist:
 | `KsSkeleton` | Skeleton loader |
 | `KsId` | Copyable ID display |
 | `KsDateAgo` | Relative time display ("2 hours ago") |
-| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
+| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label. `variant="neutral"` swaps the primary-coloured selection for a grey one with wider segments |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
 | `KsFileTag` | Storage URI rendered as a file reference: a `KsTag` whose symbol comes from the extension, with a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
 | `KsTree` | Hierarchical tree view |

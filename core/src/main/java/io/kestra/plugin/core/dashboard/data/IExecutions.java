@@ -2,6 +2,7 @@ package io.kestra.plugin.core.dashboard.data;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,16 +47,12 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 {
                     if (f.value() instanceof Map<?, ?> m) {
                         if (QueryFilter.Op.IN.equals(f.operation())) {
-                            updatedWhere.add(
-                                Or.<Fields> builder()
-                                    .field(Fields.LABELS)
-                                    .values(
-                                        m.entrySet().stream()
-                                            .map(entry -> labelFilter(f.operation(), entry.getKey().toString(), entry.getValue()))
-                                            .toList()
-                                    )
-                                    .build()
-                            );
+                            updatedWhere.add(Or.<Fields>builder()
+                                .field(Fields.LABELS)
+                                .values(m.entrySet().stream()
+                                    .map(entry -> labelFilter(f.operation(), entry.getKey().toString(), entry.getValue()))
+                                    .toList())
+                                .build());
                         } else {
                             m.forEach((key, value) -> updatedWhere.add(labelFilter(f.operation(), key.toString(), value)));
                         }
@@ -118,14 +115,14 @@ public interface IExecutions extends IData<IExecutions.Fields> {
 
     private static AbstractFilter<Fields> labelFilter(QueryFilter.Op operation, String key, Object value) {
         return switch (operation) {
-            case EQUALS -> EqualTo.<Fields> builder().field(Fields.LABELS).key(key).value(value).build();
-            case NOT_EQUALS -> NotEqualTo.<Fields> builder().field(Fields.LABELS).key(key).value(value).build();
-            case IN -> In.<Fields> builder().field(Fields.LABELS).key(key).values(asValues(value)).build();
-            case NOT_IN -> NotIn.<Fields> builder().field(Fields.LABELS).key(key).values(asValues(value)).build();
-            case CONTAINS -> Contains.<Fields> builder().field(Fields.LABELS).key(key).value(value).build();
-            case NOT_CONTAINS -> NotContains.<Fields> builder().field(Fields.LABELS).key(key).value(value).build();
-            case IS_NULL -> IsNull.<Fields> builder().field(Fields.LABELS).key(labelKey(key, value)).build();
-            case IS_NOT_NULL -> IsNotNull.<Fields> builder().field(Fields.LABELS).key(labelKey(key, value)).build();
+            case EQUALS -> EqualTo.<Fields>builder().field(Fields.LABELS).key(key).value(value).build();
+            case NOT_EQUALS -> NotEqualTo.<Fields>builder().field(Fields.LABELS).key(key).value(value).build();
+            case IN -> In.<Fields>builder().field(Fields.LABELS).key(key).values(asValues(value)).build();
+            case NOT_IN -> NotIn.<Fields>builder().field(Fields.LABELS).key(key).values(asValues(value)).build();
+            case CONTAINS -> Contains.<Fields>builder().field(Fields.LABELS).key(key).value(value).build();
+            case NOT_CONTAINS -> NotContains.<Fields>builder().field(Fields.LABELS).key(key).value(value).build();
+            case IS_NULL -> IsNull.<Fields>builder().field(Fields.LABELS).key(labelKey(key, value)).build();
+            case IS_NOT_NULL -> IsNotNull.<Fields>builder().field(Fields.LABELS).key(labelKey(key, value)).build();
             default -> throw new UnsupportedOperationException("Unsupported dashboard label filter operation: %s.".formatted(operation));
         };
     }

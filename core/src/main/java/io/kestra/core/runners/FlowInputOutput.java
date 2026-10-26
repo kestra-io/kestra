@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Suppliers;
 
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
@@ -103,10 +104,18 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Publisher<CompletedPart> data) {
-        return validateExecutionInputs(inputs, flow, execution, data, false);
+        return validateInputs(inputs, flow, execution, data, false);
     }
 
-    public Mono<List<InputAndValue>> validateExecutionInputs(final List<Input<?>> inputs,
+    /** Validates Pause resume values and renders descriptions without exposing decrypted secrets. */
+    public Mono<List<InputAndValue>> validateResumeInputs(final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Publisher<CompletedPart> data) {
+        return validateInputs(inputs, flow, execution, data, true);
+    }
+
+    private Mono<List<InputAndValue>> validateInputs(final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
         final Publisher<CompletedPart> data,
@@ -345,7 +354,16 @@ public class FlowInputOutput {
         return resolveInputs(inputs, flow, execution, data, decryptSecrets, false);
     }
 
-    public List<InputAndValue> resolveInputs(
+    /** Resolves Pause resume form defaults and descriptions with secrets masked. */
+    public List<InputAndValue> resolveResumeInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data) {
+        return resolveInputs(inputs, flow, execution, data, false, true);
+    }
+
+    private List<InputAndValue> resolveInputs(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
@@ -428,10 +446,10 @@ public class FlowInputOutput {
                 resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                 return resolvable.get();
             }
+            final Supplier<RunContext> nonDecryptingContext = Suppliers.memoize(() -> buildRunContextForExecutionAndInputs(flow, execution, dependencies, false));
             if (renderDescriptions && input.getDescription() != null && PebbleUtil.containsOpeningBlockDelimiter(input.getDescription())) {
-                RunContext descriptionContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
                 try {
-                    input = input.withDescription(descriptionContext.render(input.getDescription()));
+                    input = input.withDescription(nonDecryptingContext.get().render(input.getDescription()));
                 } catch (IllegalVariableEvaluationException ignored) {
                     // Descriptions can contain literal Pebble examples with unavailable variables.
                 }
@@ -457,7 +475,7 @@ public class FlowInputOutput {
             // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
             // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
-                RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
+                RunContext runContextForDefault = decryptSecrets ? runContext : nonDecryptingContext.get();
                 try {
                     value = resolveDefaultValue(input, runContextForDefault);
                 } catch (Exception e) {

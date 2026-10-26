@@ -476,7 +476,7 @@ class ExecutionServiceTest {
 
     @Test
     @LoadFlows({ "flows/valids/pause-dynamic-resume-inputs.yaml" })
-    void shouldResolveResumeInputsFromThePausedExecutionWithoutChangingTheFlow() throws Exception {
+    void shouldRenderResumeDescriptionsAndDefaultsWhenExecutionIsPaused() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(
             MAIN_TENANT, "io.kestra.tests", "pause-dynamic-resume-inputs", null, (unused, _unused) -> Map.of("request", "holiday"), null
         );

@@ -381,18 +381,22 @@ class FlowInputOutputTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    void shouldObfuscateSecretsInResumeDescriptions(boolean decryptSecrets) {
+    void shouldMaskSecretsWhenRenderingResumeDescriptions(boolean validateSubmittedInputs) {
         StringInput input = StringInput.builder()
             .id("input")
             .type(Type.STRING)
             .description("Secret: {{ secret('???') }}")
+            .defaults(Property.ofValue("{{ secret('???') }}"))
             .required(false)
             .build();
 
-        var results = flowInputOutput.resolveInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of(), decryptSecrets, true);
+        var results = validateSubmittedInputs
+            ? flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()
+            : flowInputOutput.resolveResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of());
 
         assertThat(results.getFirst().input().getDescription()).isEqualTo("Secret: ******");
         assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(results.getFirst().value()).isEqualTo("******");
         assertThat(input.getDescription()).isEqualTo("Secret: {{ secret('???') }}");
     }
 
@@ -406,7 +410,7 @@ class FlowInputOutputTest {
             .required(false)
             .build();
 
-        var results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty(), true).block();
+        var results = flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
 
         assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
         assertThat(results.getFirst().exceptions()).isNull();
@@ -414,7 +418,7 @@ class FlowInputOutputTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "{{ 1 + 1 }}", "Use `{{ trigger.date }}`" })
-    void shouldKeepRegularFlowInputDescriptionsLiteral(String description) {
+    void shouldKeepDescriptionsLiteralWhenValidatingRegularFlowInputs(String description) {
         StringInput input = StringInput.builder()
             .id("input")
             .type(Type.STRING)

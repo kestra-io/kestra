@@ -10,7 +10,6 @@ const meta: Meta<typeof KsAlert> = {
         type: {control: "select", options: ["success", "warning", "info", "error"]},
         showIcon: {control: "boolean"},
         closable: {control: "boolean"},
-        effect: {control: "select", options: ["light", "dark"]},
         center: {control: "boolean"},
         banner: {control: "boolean"},
     },

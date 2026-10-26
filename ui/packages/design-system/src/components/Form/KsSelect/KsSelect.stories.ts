@@ -1,12 +1,13 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import {ElOption, ElTag} from "element-plus"
 import {within, userEvent, expect} from "storybook/test"
 import KsSelect from "./KsSelect.vue"
 
 const meta: Meta<typeof KsSelect> = {
     title: "Components/Form/KsSelect",
-    component: KsSelect,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsSelect as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         modelValue: {control: false},

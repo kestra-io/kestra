@@ -1,11 +1,12 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import {expect, userEvent, waitFor} from "storybook/test"
 import KsDatePicker from "./KsDatePicker.vue"
 
 const meta: Meta<typeof KsDatePicker> = {
     title: "Components/Form/KsDatePicker",
-    component: KsDatePicker,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsDatePicker as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         type: {control: "select", options: ["date", "datetime", "daterange", "datetimerange", "week", "month", "year"]},

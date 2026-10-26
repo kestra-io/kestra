@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import KsTable from "./KsTable.vue"
 import KsTableColumn from "./KsTableColumn.vue"
 import KsTag from "../KsTag/KsTag.vue"
@@ -15,7 +15,8 @@ const SAMPLE_DATA = [
 
 const meta: Meta<typeof KsTable> = {
     title: "Components/Data/KsTable",
-    component: KsTable,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsTable as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         size: {control: "select", options: ["large", "default", "small"]},

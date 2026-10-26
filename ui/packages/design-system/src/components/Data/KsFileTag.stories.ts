@@ -22,7 +22,7 @@ const meta: Meta<typeof KsFileTag> = {
 export default meta
 type Story = StoryObj<typeof KsFileTag>
 
-const render = (args: Record<string, unknown>) => ({
+const render: Story["render"] = (args) => ({
     components: {KsFileTag},
     setup() { return {args} },
     template: "<div style=\"padding:24px\"><ks-file-tag v-bind=\"args\" /></div>",

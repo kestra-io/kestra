@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import type {ConcreteComponent} from "vue"
 import KsTree from "./KsTree.vue"
 
 const TREE_DATA = [
@@ -24,7 +25,8 @@ const TREE_DATA = [
 
 const meta: Meta<typeof KsTree> = {
     title: "Components/Data/KsTree",
-    component: KsTree,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsTree as ConcreteComponent,
     tags: ["autodocs"],
     parameters: {
         docs: {description: {component: "KsTree is the Kestra design-system abstraction over `ElTree` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},

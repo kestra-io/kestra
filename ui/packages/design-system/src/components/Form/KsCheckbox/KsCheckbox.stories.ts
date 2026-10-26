@@ -1,12 +1,13 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import KsCheckbox from "./KsCheckbox.vue"
 import KsCheckboxGroup from "./KsCheckboxGroup.vue"
 import KsCheckboxButton from "./KsCheckboxButton.vue"
 
 const meta: Meta<typeof KsCheckbox> = {
     title: "Components/Form/KsCheckbox",
-    component: KsCheckbox,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsCheckbox as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         disabled: {control: "boolean"},

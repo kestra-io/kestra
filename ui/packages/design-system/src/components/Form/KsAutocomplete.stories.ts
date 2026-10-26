@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import KsAutocomplete from "./KsAutocomplete.vue"
 
 const SUGGESTIONS = [
@@ -13,7 +13,8 @@ const SUGGESTIONS = [
 
 const meta: Meta<typeof KsAutocomplete> = {
     title: "Components/Form/KsAutocomplete",
-    component: KsAutocomplete,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsAutocomplete as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         disabled: {control: "boolean"},

@@ -39,6 +39,7 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
     const batchHistory = ref<number[]>([])
     let batchOffset = 0
     let page = 1
+    let pageStarts: {start: number; cursor?: string}[] = []
     let seq = 0
     let cache: ChainCache = createChainCache()
     let cacheRootId: string | undefined
@@ -58,22 +59,27 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         cursor,
     })
 
-    async function load(keepExtent = false, offset = batchOffset): Promise<boolean> {
-        const root = options.root.value
-        if (!root?.id) return false
+    function collectTargets(root: LoopRoot, offset: number) {
         if (cacheRootId !== root.id) {
             cache = createChainCache()
             cacheRootId = root.id
         }
+        const collectOptions = {reserve: logUrlReserve({levelParams: options.levelParams.value, kinds: kinds(), q: options.q?.value}), cache, offset}
+        return options.scope.value.length
+            ? collectScopedTargets(root, options.scope.value, undefined, collectOptions)
+            : collectFailedTargets(root, undefined, collectOptions)
+    }
+
+    async function load(keepExtent = false, offset = batchOffset): Promise<boolean> {
+        const root = options.root.value
+        if (!root?.id) return false
         const current = ++seq
         loading.value = true
         try {
-            const collectOptions = {reserve: logUrlReserve({levelParams: options.levelParams.value, kinds: kinds(), q: options.q?.value}), cache, offset}
-            const resolved = options.scope.value.length
-                ? await collectScopedTargets(root, options.scope.value, undefined, collectOptions)
-                : await collectFailedTargets(root, undefined, collectOptions)
+            const resolved = await collectTargets(root, offset)
 
             const pagesToLoad = keepExtent ? page : 1
+            const starts: typeof pageStarts = [{start: 0}]
             let collected: LogEntry[] = []
             let cursor: string | undefined
             let result = await search(resolved.executionIds, 1)
@@ -81,6 +87,7 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
             collected = collected.concat(result.results)
             cursor = result.nextCursor
             while (pagesLoaded < pagesToLoad && (result.cursorMode ? Boolean(cursor) : collected.length < result.total)) {
+                starts.push({start: collected.length, cursor})
                 result = await search(resolved.executionIds, pagesLoaded + 1, cursor)
                 collected = collected.concat(result.results)
                 cursor = result.nextCursor
@@ -94,6 +101,7 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
             nextCursor.value = cursor
             cursorMode.value = result.cursorMode
             page = pagesLoaded
+            pageStarts = starts
             failure.value = undefined
             return true
         } catch (error) {
@@ -107,14 +115,48 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
         }
     }
 
+    const hasSameTargets = (resolved: LoopLogTargets) => {
+        const known = new Set(targets.value?.executionIds)
+        return resolved.executionIds.length === known.size && resolved.executionIds.every((id) => known.has(id))
+    }
+
+    async function refreshTail(): Promise<boolean> {
+        const root = options.root.value
+        const tail = pageStarts[page - 1]
+        if (!root?.id || !targets.value || !tail) return load(true)
+        const current = ++seq
+        loading.value = true
+        try {
+            const resolved = await collectTargets(root, batchOffset)
+            if (current !== seq) return false
+            if (!hasSameTargets(resolved)) return load(true)
+
+            const result = await search(resolved.executionIds, page, tail.cursor)
+            if (current !== seq) return false
+            targets.value = resolved
+            lines.value = lines.value.slice(0, tail.start).concat(result.results)
+            total.value = result.total
+            nextCursor.value = result.nextCursor
+            failure.value = undefined
+            return true
+        } catch (error) {
+            if (current === seq) failure.value = error instanceof LoopIterationError ? error.failure : "unknown"
+            return false
+        } finally {
+            if (current === seq) loading.value = false
+        }
+    }
+
     async function loadMore() {
         if (!hasMore.value || loadingMore.value || loading.value || !targets.value) return
         const current = seq
         loadingMore.value = true
         try {
-            const result = await search(targets.value.executionIds, page + 1, nextCursor.value)
+            const cursor = nextCursor.value
+            const result = await search(targets.value.executionIds, page + 1, cursor)
             if (current !== seq) return
             page += 1
+            pageStarts = [...pageStarts, {start: lines.value.length, cursor}]
             lines.value = lines.value.concat(result.results)
             total.value = result.total
             nextCursor.value = result.nextCursor
@@ -145,7 +187,7 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
     }, {immediate: true})
 
     const refreshTimer = useIntervalFn(() => {
-        if (!loading.value) load(true)
+        if (!loading.value && !loadingMore.value) refreshTail()
     }, AUTO_REFRESH_MS, {immediate: false})
     let settleTimers: ReturnType<typeof setTimeout>[] = []
     const cancelSettling = () => {
@@ -155,14 +197,17 @@ export function useLoopMergedLogs(options: MergedLogsOptions) {
 
     // Logs are indexed asynchronously: the last lines of a finished execution can land after its state flips.
     const settleAfterFinish = () => {
-        load(true)
+        refreshTail()
         let elapsed = 0
-        for (const delay of POST_FINISH_REFRESH_DELAYS_MS) {
+        POST_FINISH_REFRESH_DELAYS_MS.forEach((delay, index) => {
             elapsed += delay
+            const isLast = index === POST_FINISH_REFRESH_DELAYS_MS.length - 1
             settleTimers.push(setTimeout(() => {
-                if (!loading.value) load(true)
+                if (loading.value || loadingMore.value) return
+                if (isLast) load(true)
+                else refreshTail()
             }, elapsed))
-        }
+        })
     }
 
     watch(options.running, (running, wasRunning) => {

@@ -143,17 +143,81 @@ describe("useLoopMergedLogs", () => {
         scope.stop()
     })
 
-    it("shouldKeepThePagesLoadedWithLoadMoreWhenAutoRefreshing", async () => {
+    it("shouldRefreshOnlyTheLastLoadedPageOnAnIntervalTick", async () => {
         const {logs, scope} = setup(true)
         await vi.advanceTimersByTimeAsync(0)
         await logs.loadMore()
         expect(logs.lines.value.map((line) => line.message)).toEqual(["line-1", "line-2"])
         searchMergedLogs.mockClear()
+        searchMergedLogs.mockImplementation(async ({page}) => page === 2
+            ? {results: [{message: "line-2"}, {message: "line-2-new"}], total: 201, nextCursor: undefined, cursorMode: false}
+            : pageOf(page))
+
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS)
+
+        expect(searchMergedLogs.mock.calls.map(([search]) => search.page)).toEqual([2])
+        expect(logs.lines.value.map((line) => line.message)).toEqual(["line-1", "line-2", "line-2-new"])
+        scope.stop()
+    })
+
+    it("shouldNotFetchEveryLoadedPageOnATickWhenTheUserLoadedManyPages", async () => {
+        const {logs, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        for (let loadedMore = 0; loadedMore < 9; loadedMore++) await logs.loadMore()
+        expect(logs.lines.value).toHaveLength(10)
+        searchMergedLogs.mockClear()
+        collectFailedTargets.mockClear()
+
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS)
+
+        expect(searchMergedLogs).toHaveBeenCalledTimes(1)
+        expect(collectFailedTargets).toHaveBeenCalledTimes(1)
+        expect(logs.lines.value).toHaveLength(10)
+        scope.stop()
+    })
+
+    it("shouldRefetchTheLastPageWithTheCursorThatLedToIt", async () => {
+        searchMergedLogs.mockImplementation(async ({cursor}) => {
+            if (!cursor) return {results: [{message: "a"}], total: 0, nextCursor: "c1", cursorMode: true}
+            return {results: [{message: "b"}], total: 0, nextCursor: undefined, cursorMode: true}
+        })
+        const {logs, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        await logs.loadMore()
+        searchMergedLogs.mockClear()
+
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS)
+
+        expect(searchMergedLogs.mock.calls.map(([search]) => search.cursor)).toEqual(["c1"])
+        expect(logs.lines.value.map((line) => line.message)).toEqual(["a", "b"])
+        scope.stop()
+    })
+
+    it("shouldReloadFromTheFirstPageOnATickWhenTheTargetsChanged", async () => {
+        const {logs, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        await logs.loadMore()
+        searchMergedLogs.mockClear()
+        collectFailedTargets.mockResolvedValue({...targets, executionIds: ["root", "failed-iteration"]})
 
         await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS)
 
         expect(searchMergedLogs.mock.calls.map(([search]) => search.page)).toEqual([1, 2])
-        expect(logs.lines.value.map((line) => line.message)).toEqual(["line-1", "line-2"])
+        expect(searchMergedLogs.mock.calls[0][0].executionIds).toEqual(["root", "failed-iteration"])
+        scope.stop()
+    })
+
+    it("shouldReloadEveryLoadedPageOnTheLastFinishPass", async () => {
+        const {options, logs, scope} = setup(true)
+        await vi.advanceTimersByTimeAsync(0)
+        await logs.loadMore()
+        options.running.value = false
+        await vi.advanceTimersByTimeAsync(POST_FINISH_REFRESH_DELAYS_MS.slice(0, -1).reduce((a, b) => a + b, 0))
+        searchMergedLogs.mockClear()
+
+        await vi.advanceTimersByTimeAsync(POST_FINISH_REFRESH_DELAYS_MS[POST_FINISH_REFRESH_DELAYS_MS.length - 1])
+
+        expect(searchMergedLogs.mock.calls.map(([search]) => search.page)).toEqual([1, 2])
         scope.stop()
     })
 

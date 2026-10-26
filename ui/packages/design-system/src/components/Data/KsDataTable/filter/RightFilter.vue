@@ -18,7 +18,7 @@
             v-model:visible="isSavedFiltersVisible"
             placement="bottom-end"
             trigger="click"
-            :popperClass="'p-0 saved-filters-popper'"
+            popperClass="saved-filters-popper"
             :width="300"
             :showArrow="false"
             :disabled="filter.readOnly.value"
@@ -45,7 +45,7 @@
                     <KsButton
                         type="primary"
                         class="save-current-btn"
-                        :icon="ContentSaveOutline"
+                        :icon="ContentSave"
                         :disabled="saveDisabled"
                         @click="saveFiltersRef?.open()"
                     >
@@ -82,7 +82,7 @@
             placement="bottom-end"
             trigger="click"
             :width="300"
-            :popperClass="'p-0'"
+            popperClass="columns-popper"
             :showArrow="false"
             :disabled="filter.readOnly.value"
             @hide="isColumnsVisible = false"
@@ -113,7 +113,7 @@
             placement="bottom-end"
             trigger="click"
             :width="260"
-            :popperClass="'p-0'"
+            popperClass="settings-popper"
             :showArrow="false"
             @hide="isSettingsVisible = false"
         >
@@ -140,7 +140,7 @@
 
 <script setup lang="ts">
     import {computed, ref, inject} from "vue"
-    import {BookmarkOutline, ChevronDown, CogOutline, ContentSaveOutline, Refresh} from "./utils/icons"
+    import {BookmarkOutline, ChevronDown, CogOutline, ContentSave, Refresh} from "./utils/icons"
     import Table from "vue-material-design-icons/Table.vue"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
     import type {SavedFilter} from "./utils/filterTypes"
@@ -187,10 +187,9 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .filter-container {
     --ks-box-shadow: 0 1px 2px var(--ks-shadow-surface);
-
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -202,22 +201,23 @@
         flex-shrink: 0;
     }
 
-    .saved-btn {
+    & .saved-btn {
         box-shadow: none;
         margin: 0;
         font-size: var(--ks-font-size-sm);
         box-shadow: var(--ks-box-shadow);
         background-color: var(--ks-bg-input);
 
-        .saved-content {
+        & .saved-content {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .saved-count {
+        & .saved-count {
             margin-left: 0.375rem;
             background-color: var(--ks-bg-tag);
+
             &:hover {
                 background-color: var(--ks-bg-tag-hover);
             }
@@ -228,19 +228,19 @@
         }
     }
 
-    .icon-btn {
+    & .icon-btn {
         box-shadow: var(--ks-box-shadow);
         margin: 0;
         padding: 0.5rem;
         border-radius: var(--ks-radius-base);
         font-size: var(--ks-font-size-base);
 
-        :deep(svg) {
+        & :deep(svg) {
             color: var(--ks-text-dim) !important;
         }
     }
 
-    .refresh-button {
+    & .refresh-button {
         background-color: transparent;
         border: none;
         box-shadow: none;
@@ -248,7 +248,7 @@
         padding: 0.25rem 0.5rem;
         font-size: var(--ks-font-size-sm);
 
-        :deep(svg) {
+        & :deep(svg) {
             color: var(--ks-text-dim);
         }
 
@@ -262,12 +262,12 @@
     display: flex;
     flex-direction: column;
 
-    .save-current-wrapper {
+    & .save-current-wrapper {
         padding: var(--ks-spacing-3);
         border-bottom: 1px solid var(--ks-border-default);
     }
 
-    .save-current-btn {
+    & .save-current-btn {
         width: 100%;
         margin: 0;
         justify-content: center;
@@ -279,12 +279,18 @@
 }
 </style>
 
-<style lang="scss">
+<style>
 .saved-filters-popper.saved-filters-popper {
+    padding: 0;
     overflow: hidden;
-    border-radius: 0.5rem;
+    border-radius: var(--ks-radius-base);
     box-shadow: 0px 8px 24px 0px var(--ks-shadow-elevated);
     background-color: var(--ks-bg-elevated);
     border: 1px solid var(--ks-border-strong);
+}
+
+.columns-popper.columns-popper,
+.settings-popper.settings-popper {
+    padding: 0;
 }
 </style>

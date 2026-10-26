@@ -1,0 +1,70 @@
+.collapse {
+    & * {
+        font-size: var(--ks-font-size-sm);
+    }
+
+    & :deep(*) {
+        --kel-collapse-header-bg-color: initial;
+        --kel-collapse-header-text-color: --ks-text-secondary;
+        --kel-collapse-content-bg-color: initial;
+
+        .kel-collapse-item__header,
+        .kel-collapse-item__content {
+            padding: 0.5rem 0;
+        }
+
+        .kel-collapse-item__header {
+            justify-content: space-between;
+            color: var(--ks-text-secondary);
+        }
+    }
+}
+
+.label {
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-sm);
+}
+
+.task-collection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+}
+
+.delete,
+.reorder {
+    height: 32px;
+    cursor: pointer;
+    padding-left: 0;
+    color: var(--ks-text-primary);
+    text-align: right;
+}
+
+.reorder {
+    flex: 0 0 auto;
+    max-width: none;
+    align-items: center;
+
+    /* HACK: reset Element Plus adjacent-button margin-left (horizontal-group assumption) in this vertical stack */
+    & :deep(.kel-button) {
+        margin-left: 0;
+    }
+}
+
+.wrapper {
+    & :deep(*) {
+        --kel-disabled-text-color: var(--ks-text-primary);
+
+        .kel-input__inner,
+        .kel-textarea__inner {
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-sm);
+        }
+    }
+}
+
+:deep(.is-disabled) {
+    .kel-input__inner{
+        -webkit-text-fill-color: var(--ks-text-inactive);
+    }
+}

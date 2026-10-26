@@ -851,6 +851,17 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    void shouldNotFindExecutionsOfOtherNamespaceWhenNamespacesDifferOnlyByCase() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, FLOW, "company.a").build());
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, FLOW, "company.A").build());
+
+        ArrayListTotal<Execution> found = executionRepository.findByFlowId(tenant, "company.a", FLOW, Pageable.from(1, 10));
+
+        assertThat(found).extracting(Execution::getNamespace).containsExactly("company.a");
+    }
+
+    @Test
     void shouldFindLatestExecutionGivenState() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution earliest = buildWithCreatedDate(tenant, Instant.now().minus(Duration.ofMinutes(10)));
@@ -1259,10 +1270,10 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         for (int i = 0; i < 2; i++) {
-            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i));
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i,false));
         }
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i));
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i,false));
         }
 
         // When / Then: scoping to a single loop task returns only that task's iterations
@@ -1289,7 +1300,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i));
+            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i,false));
         }
         QueryFilter parentFilter = QueryFilter.builder().field(QueryFilter.Field.PARENT_ID).operation(QueryFilter.Op.EQUALS).value(parent.getId()).build();
         QueryFilter kindFilter = QueryFilter.builder().field(QueryFilter.Field.KIND).operation(QueryFilter.Op.EQUALS).value(ExecutionKind.LOOP).build();

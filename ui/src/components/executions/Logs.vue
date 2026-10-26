@@ -188,6 +188,7 @@
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
     import {flowHasLoop} from "../../utils/loopLogScope"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {
         hasUnsupportedRouteLevelComparator,
         levelToRequestParams,
@@ -269,6 +270,7 @@
         {label: t("logs_view.loop.this-execution"), value: "execution"},
         {label: t("logs_view.loop.with-iterations"), value: "merged"},
     ])
+    const logFilters = computed(() => routeQueryToQueryFilters({...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value}))
 
     const logExecutionsFilter = useLogExecutionsFilter(() => props.playground, () => executionKind.value)
     const defaultLogLevel = computed(
@@ -562,7 +564,7 @@
         logsLoading.value = true
         executionsStore.loadLogs({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         }).finally(() => {
             logsLoading.value = false
             logsLoaded.value = true
@@ -577,14 +579,14 @@
     function downloadContent() {
         executionsStore.downloadLogsFile({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         })
     }
 
     function copyAllLogs() {
         executionsStore.downloadLogs({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         }).then((response: unknown) => {
             Utils.copy(response as string)
             toast.success(t("logs_copied"))

@@ -84,10 +84,10 @@
             const response = await store.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {
-                    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
-                    "filters[kind][IN]": props.execution.kind,
-                },
+                filters: [
+                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                    {field: "kind", operation: "IN", value: props.execution.kind},
+                ],
                 size: MAX_PREVIEW_LOGS,
                 sort: ["timestamp:desc"],
             })

@@ -15,9 +15,25 @@
             />
         </div>
 
+        <div class="search">
+            <KsInput
+                ref="searchInput"
+                v-model="search"
+                size="small"
+                borderless
+                clearable
+                :placeholder="$t('filter.search options')"
+                @keydown.enter="(event: KeyboardEvent) => !event.isComposing && addFirstMatch()"
+            >
+                <template #prefix>
+                    <Magnify :size="16" />
+                </template>
+            </KsInput>
+        </div>
+
         <div class="list">
             <div
-                v-for="key in groupableKeys"
+                v-for="key in visibleKeys"
                 :key="key.key"
                 class="item"
                 @click="addFilterForKey(key)"
@@ -36,6 +52,17 @@
                     @click.stop="addFilterForKey(key)"
                 />
             </div>
+            <KsAlert
+                v-if="visibleKeys.length === 0"
+                type="info"
+                :closable="false"
+                class="no-options"
+            >
+                {{ $t('filter.no options found') }}
+                <template #icon>
+                    <InformationOutline />
+                </template>
+            </KsAlert>
         </div>
 
         <div class="advanced" @click="$emit('open-advanced')">
@@ -57,8 +84,8 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {Close, Plus} from "../utils/icons"
+    import {computed, nextTick, onMounted, ref} from "vue"
+    import {Close, InformationOutline, Magnify, Plus} from "../utils/icons"
     import {
         type FilterConfiguration,
         type FilterKeyConfig,
@@ -82,6 +109,18 @@
         props.configuration.keys.filter((key) => key.groupable !== false),
     )
 
+    const search = ref("")
+    const searchInput = ref<{focus: () => void} | null>(null)
+
+    const visibleKeys = computed(() => {
+        const query = search.value.trim().toLowerCase()
+        if (!query) return groupableKeys.value
+        return groupableKeys.value.filter((key) =>
+            key.label.toLowerCase().includes(query) ||
+            (key.description ?? "").toLowerCase().includes(query),
+        )
+    })
+
     const selectedCount = computed(() =>
         new Set(props.appliedFilters.map(f => f.key)).size,
     )
@@ -92,6 +131,13 @@
         if (newFilter) emits("add-filter", newFilter)
     }
 
+    const addFirstMatch = () => {
+        if (!search.value.trim()) return
+        const [first] = visibleKeys.value
+        if (first) addFilterForKey(first)
+    }
+
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
 </script>
 
 <style scoped>
@@ -138,6 +184,19 @@
                 color: var(--ks-text-link);
             }
         }
+    }
+
+    & .search {
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-surface);
+        flex-shrink: 0;
+    }
+
+    & .no-options {
+        text-align: center;
+        color: var(--ks-text-dim);
+        font-size: var(--ks-font-size-sm);
     }
 
     & .list {

@@ -23,7 +23,7 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-id v-bind=\"args\" /></div>",
     }),
-    args: {value: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"},
+    args: {value: "a1b2c3d4-e5f6-7890-abcd-ef1234567890", shrink: true, size: 8, placement: "top"},
 }
 
 export const Shrink: Story = {
@@ -37,6 +37,7 @@ export const Shrink: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Clickable: Story = {
@@ -53,6 +54,7 @@ export const Clickable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const ShortValue: Story = {
@@ -64,6 +66,7 @@ export const ShortValue: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Empty: Story = {
@@ -75,4 +78,5 @@ export const Empty: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

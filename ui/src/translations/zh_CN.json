@@ -2208,11 +2208,8 @@
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
       "viewAll": "查看全部",
-      "export": "导出",
-      "exportEmpty": "此图表没有可导出的数据。",
       "exportTo": {
-        "csv": "导出为 CSV",
-        "ion": "导出到 ION"
+        "csv": "导出为 CSV"
       },
       "ignoredFilters": "{filters} 筛选器不适用于此图表。 | {filters} 筛选器不适用于此图表。",
       "show_all_statuses": "显示所有状态",

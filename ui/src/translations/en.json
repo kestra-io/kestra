@@ -2208,11 +2208,8 @@
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
       "viewAll": "View all",
-      "export": "Export",
-      "exportEmpty": "This chart has no data to export.",
       "exportTo": {
-        "csv": "Export to CSV",
-        "ion": "Export to ION"
+        "csv": "Export to CSV"
       },
       "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
       "show_all_statuses": "Show all statuses",

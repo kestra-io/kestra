@@ -153,16 +153,29 @@ describe("getDateGrouping()", () => {
         expect(getDateGrouping(undefined, undefined, "P200D")).toEqual({format: "GGGG-[W]WW", unit: "week"})
     })
 
-    it("returns a day grouping for ranges over a day", () => {
-        expect(getDateGrouping(undefined, undefined, "P7D")).toEqual({format: "YYYY-MM-DD", unit: "day"})
+    it("returns a day grouping from 2 whole days", () => {
+        expect(getDateGrouping(undefined, undefined, "P2D")).toEqual({format: "YYYY-MM-DD", unit: "day"})
     })
 
-    it("returns an hour grouping, date and hour separated with a space, for ranges over an hour", () => {
-        expect(getDateGrouping(undefined, undefined, "PT24H")).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
+    it("returns an hour grouping, date and hour separated with a space, for ranges over 6 hours", () => {
+        expect(getDateGrouping(undefined, undefined, "PT7H")).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
     })
 
-    it("returns a minute grouping, date and time separated with a space, for ranges up to an hour", () => {
+    it("returns a minute grouping, date and time separated with a space, for ranges up to 6 hours", () => {
         expect(getDateGrouping(undefined, undefined, "PT30M")).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
+    })
+
+    it.each(["PT3H", "PT6H", "PT6H59M"])("keeps a minute grouping for %s like the backend does up to 6 whole hours", (timeRange) => {
+        expect(getDateGrouping(undefined, undefined, timeRange)).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
+    })
+
+    it.each(["P1DT2H", "P1DT23H"])("keeps an hour grouping for %s since the backend only counts whole days", (timeRange) => {
+        expect(getDateGrouping(undefined, undefined, timeRange)).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
+    })
+
+    it("uses whole days for the week and month thresholds too", () => {
+        expect(getDateGrouping(undefined, undefined, "P180DT12H")).toEqual({format: "YYYY-MM-DD", unit: "day"})
+        expect(getDateGrouping(undefined, undefined, "P365DT12H")).toEqual({format: "GGGG-[W]WW", unit: "week"})
     })
 
     it("derives the duration from start and end dates when no time range is provided", () => {

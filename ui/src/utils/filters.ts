@@ -1,7 +1,8 @@
 import * as Utils from "./utils"
 import {dateUtils, durationUtils} from "@kestra-io/design-system"
+import type {Options as HumanizeDurationOptions} from "humanize-duration";
 
-export function humanizeDuration (value:number | string, options?:any) {
+export function humanizeDuration (value:number | string, options?: HumanizeDurationOptions) {
     return durationUtils.humanDuration(value, options)
 }
 export function humanizeNumber (value:number | string) {

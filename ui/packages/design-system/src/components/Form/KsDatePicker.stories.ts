@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
+import {expect, userEvent, waitFor} from "storybook/test"
 import KsDatePicker from "./KsDatePicker.vue"
 
 const meta: Meta<typeof KsDatePicker> = {
@@ -113,4 +114,29 @@ export const DateRange: Story = {
             </div>
         `,
     }),
+}
+
+/**
+ * Clearable inside a shrink-to-fit container, as in the KsFilter date popover. The clear icon only
+ * appears on hover, so the picker reserves its room: the width stays put instead of flickering.
+ */
+export const ClearableNoReflow: Story = {
+    render: () => ({
+        components: {KsDatePicker},
+        setup() { return {value: ref(new Date("2026-01-15T10:00:00Z"))} },
+        template: `
+            <div style="padding:24px;display:inline-flex;border:1px dashed var(--ks-border-default)">
+                <KsDatePicker v-model="value" type="datetime" />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const editor = canvasElement.querySelector<HTMLElement>(".kel-date-editor")!
+        const widthBefore = editor.getBoundingClientRect().width
+
+        await userEvent.hover(editor)
+        await waitFor(() => expect(canvasElement.querySelector(".clear-icon")).not.toBeNull())
+
+        await expect(editor.getBoundingClientRect().width).toBe(widthBefore)
+    },
 }

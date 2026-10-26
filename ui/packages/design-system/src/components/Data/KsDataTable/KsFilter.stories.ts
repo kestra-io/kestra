@@ -10,6 +10,7 @@ const meta: Meta<typeof KsFilter> = {
     component: KsFilter,
     tags: ["autodocs"],
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 component: "KsFilter provides a complete filter bar with search, filter chips, saved filters, and table options. Multiple top-level groups combine with OR; dragging one group onto another wraps them with an AND/OR operator.",
@@ -629,3 +630,158 @@ export const WithFullWidthSearch: Story = {
         `,
     }),
 }
+
+const STRING_KEY = {
+    key: "flowId",
+    label: "Flow ID",
+    valueType: "text",
+    comparators: ["=", "!=", "*=", "!*=", "^=", "$=", "~="],
+    showComparatorSelection: true,
+}
+
+const NAMESPACE_KEY = {
+    key: "namespace",
+    label: "Namespace",
+    valueType: "text",
+    comparators: ["*=", "^.="],
+    showComparatorSelection: true,
+}
+
+const NUMBER_KEY = {
+    key: "attempts",
+    label: "Attempts",
+    valueType: "number",
+    comparators: [">=", ">", "<=", "<", "BETWEEN"],
+    showComparatorSelection: true,
+}
+
+const DATE_KEY = {
+    key: "created",
+    label: "Created",
+    valueType: "date",
+    comparators: [">=", ">", "<=", "<"],
+    showComparatorSelection: true,
+}
+
+const DATE_RANGE_KEY = {
+    key: "lastTriggered",
+    label: "Last triggered",
+    valueType: "time-range",
+    customDateMode: "range",
+    comparators: [">=", "<="],
+    showComparatorSelection: true,
+    valueProvider: () => Promise.resolve([{label: "Last 24 hours", value: "PT24H"}]),
+}
+
+const SELECT_KEY = {
+    key: "triggerState",
+    label: "Trigger state",
+    valueType: "select",
+    comparators: ["=", "!="],
+    showComparatorSelection: true,
+    valueProvider: () => Promise.resolve([
+        {label: "Enabled", value: "ENABLED", count: 128},
+        {label: "Disabled", value: "DISABLED", count: 7},
+    ]),
+}
+
+const RADIO_KEY = {
+    key: "childFilter",
+    label: "Hierarchy",
+    valueType: "radio",
+    comparators: ["="],
+    valueProvider: () => Promise.resolve([
+        {label: "Parent", value: "MAIN", description: "Top-level executions only"},
+        {label: "Child", value: "CHILD", description: "Nested executions only"},
+    ]),
+}
+
+const MULTI_VALUE_KEY = {
+    key: "level",
+    label: "Level",
+    valueType: "multi-select",
+    comparators: ["IN", "NOT_IN", ">=", "<="],
+    comparatorLabels: {">=": "At or Above", "<=": "At or Below"},
+    showComparatorSelection: true,
+    valueProvider: () => Promise.resolve([
+        {label: "Trace", value: "TRACE", count: 18432},
+        {label: "Debug", value: "DEBUG", count: 2210},
+        {label: "Info", value: "INFO", count: 640},
+        {label: "Warn", value: "WARN", count: 12},
+        {label: "Error", value: "ERROR", count: 0},
+    ]),
+}
+
+const KEY_VALUE_KEY = {
+    key: "labels",
+    label: "Labels",
+    valueType: "key-value",
+    comparators: ["=", "!=", "IN", "NOT_IN", "*=", "!*=", "IS_NOT_NULL", "IS_NULL"],
+    showComparatorSelection: true,
+}
+
+/**
+ * A bar holding only `key`, seeded with one chip whose editor the play opens, so the value editor
+ * shows without a click. The play also checks the chip decoded its comparator and value; a `null`
+ * comparator label is for a key with a single comparator, whose chip shows none.
+ */
+const comparatorStory = (
+    key: object,
+    query: Record<string, string>,
+    comparatorLabel: string | RegExp | null,
+    valueLabel: string,
+): Story => ({
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter(query)
+            return {ready, configuration: {searchPlaceholder: "Search...", keys: [key]}}
+        },
+        template: `
+            <div style="padding: 24px; min-height: 480px">
+                <KsFilter v-if="ready" :configuration="configuration" />
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        await waitFor(() =>
+            expect(canvasElement.querySelector(".chip .value")?.textContent?.trim()).toBe(valueLabel),
+        )
+        const comparator = canvasElement.querySelector(".chip .comparator")?.textContent?.trim() ?? null
+        if (comparatorLabel instanceof RegExp) await expect(comparator).toMatch(comparatorLabel)
+        else await expect(comparator).toBe(comparatorLabel)
+
+        canvasElement.querySelector<HTMLElement>(".chip")!.click()
+        await waitFor(() => expect(canvasElement.ownerDocument.querySelector(".edit-popper")).not.toBeNull())
+    },
+})
+
+export const ComparatorString = comparatorStory(STRING_KEY, {"filters[flowId][CONTAINS]": "hello"}, "Contains", "hello")
+export const ComparatorRegex = comparatorStory(STRING_KEY, {"filters[flowId][REGEX]": "^hello-.*$"}, "Matches Pattern", "^hello-.*$")
+export const ComparatorPrefix = comparatorStory(NAMESPACE_KEY, {"filters[namespace][PREFIX]": "company.team"}, "Prefix", "company.team")
+export const ComparatorNumber = comparatorStory(NUMBER_KEY, {"filters[attempts][GREATER_THAN_OR_EQUAL_TO]": "2"}, "Greater Than or Equal", "2")
+export const ComparatorDecimal = comparatorStory(NUMBER_KEY, {
+    "filters[attempts][GREATER_THAN_OR_EQUAL_TO]": "0.5",
+    "filters[attempts][LESS_THAN_OR_EQUAL_TO]": "2.75",
+}, "Between", "0.5 - 2.75")
+export const ComparatorDate = comparatorStory(
+    DATE_KEY,
+    {"filters[created][GREATER_THAN_OR_EQUAL_TO]": "2026-01-15T10:00:00.000Z"},
+    "Greater Than or Equal",
+    new Date("2026-01-15T10:00:00.000Z").toLocaleDateString(),
+)
+export const ComparatorDateRange = comparatorStory(
+    DATE_RANGE_KEY,
+    {
+        "filters[lastTriggered][GREATER_THAN_OR_EQUAL_TO]": "2026-01-15T10:00:00.000Z",
+        "filters[lastTriggered][LESS_THAN_OR_EQUAL_TO]": "2026-01-20T18:00:00.000Z",
+    },
+    /between/i,
+    `${new Date("2026-01-15T10:00:00.000Z").toLocaleString()} - ${new Date("2026-01-20T18:00:00.000Z").toLocaleString()}`,
+)
+export const ComparatorSelect = comparatorStory(SELECT_KEY, {"filters[triggerState][NOT_EQUALS]": "DISABLED"}, "Not Equals", "DISABLED")
+export const ComparatorRadio = comparatorStory(RADIO_KEY, {"filters[childFilter][EQUALS]": "CHILD"}, null, "CHILD")
+export const ComparatorMultiValue = comparatorStory(MULTI_VALUE_KEY, {"filters[level][IN]": "WARN,ERROR"}, "In", "WARN+1")
+export const ComparatorThreshold = comparatorStory(MULTI_VALUE_KEY, {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "WARN"}, "At or Above", "WARN")
+export const ComparatorKeyValue = comparatorStory(KEY_VALUE_KEY, {"filters[labels][EQUALS][team]": "core"}, "Equals", "team:core")
+export const ComparatorNull = comparatorStory(KEY_VALUE_KEY, {"filters[labels][IS_NULL]": "team"}, "Is Not Set", "team")

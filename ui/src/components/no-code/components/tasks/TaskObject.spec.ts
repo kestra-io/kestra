@@ -1,9 +1,12 @@
-import {describe, expect, test} from "vitest"
+import {afterAll, describe, expect, test} from "vitest"
 import KestraDesignSystem from "@kestra-io/design-system"
 import TaskObject from "./TaskObject.vue"
 import {BLOCK_COMPONENT_OVERRIDE_INJECTION_KEY} from "../../injectionKeys"
+import {taskComponentsReady} from "./useBlockComponent"
 
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
+
+afterAll(() => taskComponentsReady())
 
 describe("TaskObject", () => {
     test("leaves out a field the edition hides for the edited block", () => {

@@ -165,6 +165,31 @@ describe("getDateGrouping()", () => {
         expect(getDateGrouping(undefined, undefined, "PT30M")).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
     })
 
+    it.each(["PT3H", "PT6H", "PT6H59M"])("keeps a minute grouping for %s like the backend does up to 6 whole hours", (timeRange) => {
+        expect(getDateGrouping(undefined, undefined, timeRange)).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
+    })
+
+    it("switches to an hour grouping above 6 hours", () => {
+        expect(getDateGrouping(undefined, undefined, "PT7H")).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
+    })
+
+    it.each(["P1DT2H", "P1DT23H"])("keeps an hour grouping for %s since the backend only counts whole days", (timeRange) => {
+        expect(getDateGrouping(undefined, undefined, timeRange)).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
+    })
+
+    it("switches to a day grouping from 2 whole days", () => {
+        expect(getDateGrouping(undefined, undefined, "P2D")).toEqual({format: "YYYY-MM-DD", unit: "day"})
+    })
+
+    it("uses whole days for the week and month thresholds too", () => {
+        expect(getDateGrouping(undefined, undefined, "P180DT12H")).toEqual({format: "YYYY-MM-DD", unit: "day"})
+        expect(getDateGrouping(undefined, undefined, "P365DT12H")).toEqual({format: "GGGG-[W]WW", unit: "week"})
+    })
+
+    it("applies the same thresholds to start and end dates", () => {
+        expect(getDateGrouping("2026-08-17T00:00:00Z", "2026-08-17T03:00:00Z", undefined)).toEqual({format: "YYYY-MM-DD HH:mm", unit: "minute"})
+    })
+
     it("derives the duration from start and end dates when no time range is provided", () => {
         expect(getDateGrouping("2026-08-17T00:00:00Z", "2026-08-17T12:00:00Z", undefined)).toEqual({format: "YYYY-MM-DD HH:00", unit: "hour"})
     })

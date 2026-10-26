@@ -442,13 +442,18 @@ export function getDateGrouping(startDate: Dayjs | string | undefined, endDate: 
         ? dayjs.duration(dayjs(endDate).diff(dayjs(startDate)))
         : dayjs.duration(timeRange)
 
-    if (duration.asDays() > 365) {
+    // Same thresholds as DateUtils.groupByType on the backend, which compares whole days and hours,
+    // so the labels match the buckets the API returns.
+    const days = Math.floor(duration.asDays())
+    const hours = Math.floor(duration.asHours())
+
+    if (days > 365) {
         return {format: "YYYY-MM", unit: "month"}
-    } else if (duration.asDays() > 180) {
+    } else if (days > 180) {
         return {format: "GGGG-[W]WW", unit: "week"}
-    } else if (duration.asDays() > 1) {
+    } else if (days > 1) {
         return {format: "YYYY-MM-DD", unit: "day"}
-    } else if (duration.asHours() > 1) {
+    } else if (hours > 6) {
         return {format: "YYYY-MM-DD HH:00", unit: "hour"}
     } else {
         return {format: "YYYY-MM-DD HH:mm", unit: "minute"}

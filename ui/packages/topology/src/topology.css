@@ -103,8 +103,26 @@ html.dark {
         outline: none !important;
     }
 
-    & .vue-flow__node.topology-node-hovered .node-wrapper {
-        border-color: var(--ks-border-default) !important;
+    & .vue-flow__node.topology-node-hovered .node-wrapper,
+    & .vue-flow__node.topology-node-hovered .node-core,
+    & .vue-flow__node.topology-node-hovered .node-pill {
+        border-color: var(--ks-border-focus) !important;
+    }
+
+    & .vue-flow__node.topology-node-hovered .node-core:not(.node-core--execution),
+    & .vue-flow__node.topology-node-hovered .node-pill:not(.node-core--execution) {
+        background-color: var(--ks-bg-tag-hover) !important;
+    }
+
+    & .vue-flow__node.topology-node-hovered-direct .node-core,
+    & .vue-flow__node.topology-node-hovered-direct .node-pill {
+        border-color: var(--ks-border-focus) !important;
+        box-shadow: 0 0 0 1px var(--ks-border-focus), 0 2px 8px var(--ks-shadow-surface) !important;
+    }
+
+    & .vue-flow__node.topology-node-hovered-direct .node-core:not(.node-core--execution),
+    & .vue-flow__node.topology-node-hovered-direct .node-pill:not(.node-core--execution) {
+        background-color: var(--ks-bg-tag-active) !important;
     }
 
     & .top-button-div {

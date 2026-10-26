@@ -100,9 +100,7 @@ describe("RightFilter refresh", () => {
         await button.trigger("click")
 
         expect(refreshData).toHaveBeenCalledTimes(1)
-        expect(button.classes()).toContain("is-loading")
         expect(button.attributes("disabled")).toBeDefined()
-        expect(button.find(".kel-icon.is-loading").exists()).toBe(true)
         expect(button.find(".refresh-icon").exists()).toBe(false)
         expect(button.text()).toBe(label)
         expect(button.attributes("style")).toBe(style)

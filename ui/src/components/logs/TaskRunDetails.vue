@@ -671,7 +671,7 @@
     )
 
     const filteredLogs = computed(() =>
-        rawLogs.value.filter((log) =>
+        [...executionsStore.reusedLogsOf(followedExecution.value?.id, props.levelFilter), ...rawLogs.value].filter((log) =>
             log.level !== undefined && levelOrLower.value.includes(log.level),
         ),
     )

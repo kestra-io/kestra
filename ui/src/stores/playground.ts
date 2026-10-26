@@ -29,6 +29,31 @@ const forExecution = (flow: Flow): FlowForExecution => ({
     tasks: flow.tasks ?? [],
 })
 
+type TaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+function taskRunsByPosition(execution: Execution): Map<string, TaskRun> {
+    const taskRuns = execution.taskRunList ?? []
+    const byId = new Map(taskRuns.map(taskRun => [taskRun.id, taskRun]))
+    const position = (taskRun: TaskRun): string => {
+        const parent = taskRun.parentTaskRunId ? byId.get(taskRun.parentTaskRunId) : undefined
+        return `${parent ? `${position(parent)}/` : ""}${taskRun.taskId}[${taskRun.value ?? ""}#${taskRun.iteration ?? ""}]`
+    }
+    return new Map(taskRuns.map(taskRun => [position(taskRun), taskRun]))
+}
+
+/** Maps each source task run id to its copy in the replay; a copy keeps its source's state, a restarted run does not. */
+function reusedTaskRunIds(previous: Execution, replay: Execution): Map<string, string> {
+    const previousByPosition = taskRunsByPosition(previous)
+    const pairs = new Map<string, string>()
+    for (const [position, taskRun] of taskRunsByPosition(replay)) {
+        const source = previousByPosition.get(position)
+        if (source && source.state.current === taskRun.state.current) {
+            pairs.set(source.id, taskRun.id)
+        }
+    }
+    return pairs
+}
+
 export const usePlaygroundStore = defineStore("playground", () => {
 
     const flowStore = useFlowStore()
@@ -74,6 +99,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     function clearExecutions() {
         executions.value = []
         executionsStore.execution = undefined
+        executionsStore.clearReusedLogs()
     }
 
     const executionsStore = useExecutionsStore()
@@ -319,6 +345,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
             }
         }
 
+        const previousExecution = latestExecution.value
         let execution: Execution | undefined = undefined
         try {
             execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph, customFormData)
@@ -343,6 +370,23 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         if(execution)
             addExecution(execution, graph)
+
+        if (willReplay && previousExecution && execution) {
+            await carryOverReusedLogs(previousExecution, execution)
+        }
+    }
+
+    /** A replay copies the task runs before the replayed one under new ids, but their logs stay with the run that recorded them. */
+    async function carryOverReusedLogs(previous: Execution, replay: Execution) {
+        const sourceToReused = reusedTaskRunIds(previous, replay)
+        if (!sourceToReused.size) return
+
+        const kind = previous.kind && previous.kind !== "NORMAL" ? {"filters[kind][IN]": previous.kind} : {}
+        const ownLogs = await executionsStore.loadLogs({executionId: previous.id, params: kind, store: false})
+        executionsStore.setReusedLogs(replay.id, [...executionsStore.reusedLogsOf(previous.id), ...ownLogs].flatMap(log => {
+            const taskRunId = log.taskRunId ? sourceToReused.get(log.taskRunId) : undefined
+            return taskRunId ? [{...log, executionId: replay.id, taskRunId}] : []
+        }))
     }
 
     function updateExecution(execution: ExecutionWithGraph) {

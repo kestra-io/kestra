@@ -1,6 +1,6 @@
 import {describe, expect, test} from "vitest"
 
-import {normalizeFilePreview, type FilePreview} from "./executions"
+import {matchesLevelFilter, normalizeFilePreview, type FilePreview} from "./executions"
 
 describe("executions store", () => {
     test("keeps Ion preview objects without requiring array helpers", () => {
@@ -26,5 +26,14 @@ describe("executions store", () => {
             content: "first\nsecond",
             truncated: false,
         })
+    })
+
+    test("filters held logs by level the way the backend does", () => {
+        expect(matchesLevelFilter("WARN", {value: "INFO", direction: "min"})).toBe(true)
+        expect(matchesLevelFilter("DEBUG", {value: "INFO", direction: "min"})).toBe(false)
+        expect(matchesLevelFilter("DEBUG", {value: "INFO", direction: "max"})).toBe(true)
+        expect(matchesLevelFilter("WARN", {value: "INFO", direction: "max"})).toBe(false)
+        expect(matchesLevelFilter("TRACE", {value: "ERROR,TRACE", direction: "in"})).toBe(true)
+        expect(matchesLevelFilter("TRACE", {value: "ERROR,TRACE", direction: "not_in"})).toBe(false)
     })
 })

@@ -1,6 +1,7 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
+import {createPinia} from "pinia"
 import {nextTick, reactive} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import {memoryRouter} from "../../../tests/unit/memoryRouter"
@@ -10,6 +11,7 @@ const store = vi.hoisted(() => ({
         execution: {id: string; state: {current: string}} | undefined
         logs: unknown
         loadLogs: ReturnType<typeof vi.fn>
+        reusedLogsOf: ReturnType<typeof vi.fn>
         followLogs: ReturnType<typeof vi.fn>
         loadFlowForExecution: ReturnType<typeof vi.fn>
         subscribeToExecution: ReturnType<typeof vi.fn>
@@ -27,6 +29,7 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 }))
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskRunOutputs: vi.fn().mockResolvedValue({}),
+    taskOutputsInformation: vi.fn().mockResolvedValue([]),
 }))
 
 import TaskRunDetails from "./TaskRunDetails.vue"
@@ -50,7 +53,7 @@ const logsFor = (id: string) => [{level: "INFO", taskRunId: "tr-1", message: `lo
 function mountDetails(props: {targetExecutionId?: string} = {}) {
     return mount(TaskRunDetails, {
         props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}, ...props},
-        global: {plugins: [i18n, KestraDesignSystem, memoryRouter()]},
+        global: {plugins: [i18n, KestraDesignSystem, memoryRouter(), createPinia()]},
     })
 }
 
@@ -73,6 +76,7 @@ describe("TaskRunDetails log loading across executions", () => {
             execution: undefined,
             logs: undefined,
             loadLogs: vi.fn(({executionId}: {executionId: string}) => Promise.resolve(logsFor(executionId))),
+            reusedLogsOf: vi.fn(() => []),
             followLogs: vi.fn(({id}: {id: string}) => {
                 openedStreams.push(id)
                 return Promise.resolve({close: vi.fn(), onmessage: null, onerror: null})
@@ -229,5 +233,21 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(block.text()).toContain("concurrency limit exceeded")
         expect(block.text()).not.toContain("another task run")
         expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{ERROR: ["-1/0"]}])
+    })
+
+    it("should show the logs a replay carried over for the task runs it reused", async () => {
+        store.executions.loadLogs.mockResolvedValue([])
+        store.executions.reusedLogsOf.mockImplementation((executionId: string) => executionId === "exec-2"
+            ? [{level: "INFO", taskRunId: "tr-a2", attemptNumber: 0, timestamp: "2026-01-01T00:00:00Z", message: "a ran"}]
+            : [])
+        store.executions.execution = {
+            ...execution("exec-2", "SUCCESS"),
+            taskRunList: [{id: "tr-a2", taskId: "a", state: {current: "SUCCESS"}, attempts: [{state: {current: "SUCCESS"}}]}],
+        } as ReturnType<typeof execution>
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        expect(store.executions.reusedLogsOf).toHaveBeenCalledWith("exec-2", {value: "INFO", direction: "min"})
+        expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{INFO: ["0/0"]}])
     })
 })

@@ -1,7 +1,7 @@
 import {ref, watch} from "vue"
 import {defineStore} from "pinia"
 import {useRoute, type LocationQuery} from "vue-router"
-import {CLUSTER_PREFIX, throttle} from "@kestra-io/design-system"
+import {CLUSTER_PREFIX, LOG_LEVELS, throttle, type LevelFilterValue} from "@kestra-io/design-system"
 import {
     TaskRun,
     useClient,
@@ -148,11 +148,29 @@ export function normalizeFilePreview(data: FilePreview): FilePreview {
     return {...data, type: "TEXT", content}
 }
 
+/** The level filter the backend applies to the logs it returns, for logs the store already holds. */
+export function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue | undefined): boolean {
+    if (!filter || !level) return true
+    const severity = (value: string) => (LOG_LEVELS as readonly string[]).indexOf(value)
+    switch (filter.direction) {
+    case "min":
+        return severity(level) <= severity(filter.value)
+    case "max":
+        return severity(level) >= severity(filter.value)
+    case "in":
+        return filter.value.split(",").includes(level)
+    case "not_in":
+        return !filter.value.split(",").includes(level)
+    }
+}
+
 export const useExecutionsStore = defineStore("executions", () => {
     const executions = ref<Execution[] | undefined>(undefined)
     const execution = ref<Execution | undefined>(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
+    /** Logs a playground replay carries over from the run it reused task runs of, keyed by the replay's id. */
+    const reusedLogs = ref<Record<string, LogEntry[]>>({})
     const subflowsExecutions = ref<Record<string, Execution>>({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
@@ -796,6 +814,19 @@ export const useExecutionsStore = defineStore("executions", () => {
         logs.value = []
     }
 
+    const reusedLogsOf = (executionId: string | undefined, level?: LevelFilterValue): LogEntry[] => {
+        if (!executionId) return []
+        return (reusedLogs.value[executionId] ?? []).filter(log => matchesLevelFilter(log.level, level))
+    }
+
+    const setReusedLogs = (executionId: string, entries: LogEntry[]) => {
+        reusedLogs.value = {...reusedLogs.value, [executionId]: entries}
+    }
+
+    const clearReusedLogs = () => {
+        reusedLogs.value = {}
+    }
+
     const appendLogs = (entries: LogEntry[]) => {
         logs.value = logs.value.concat(entries)
     }
@@ -900,6 +931,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         removeSubflowExecution,
         addProgressEvent,
         resetLogs,
+        reusedLogsOf,
+        setReusedLogs,
+        clearReusedLogs,
         appendLogs,
         appendFollowedLogs,
         getFlowExecutions,

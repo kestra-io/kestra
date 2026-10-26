@@ -9789,6 +9789,10 @@ export type ListLogsFromExecutionData = {
          */
         size?: number | null;
         /**
+         * The sort of the page, defaults to `timestamp:asc`
+         */
+        sort?: Array<string> | null;
+        /**
          * Filters
          */
         filters?: Array<QueryFilter> | null;

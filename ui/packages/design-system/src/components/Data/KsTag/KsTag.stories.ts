@@ -28,7 +28,16 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-tag v-bind=\"args\">My Tag <a href=\"#\">with link</a></ks-tag></div>",
     }),
-    args: {type: "primary"},
+    args: {
+        type: "primary",
+        size: "default",
+        effect: "plain",
+        label: "",
+        closable: false,
+        round: false,
+        plain: false,
+        truncate: false,
+    },
 }
 
 export const Types: Story = {
@@ -85,6 +94,7 @@ export const Types: Story = {
             await expect(styles.backgroundColor).toBe(resolved("backgroundColor", KS_TAG_TONES[type]!.bg))
         }
     },
+    parameters: {controls: {disable: true}},
 }
 
 export const Effects: Story = {
@@ -98,6 +108,7 @@ export const Effects: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** With icon slot */
@@ -114,6 +125,7 @@ export const WithIcon: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 
@@ -140,6 +152,7 @@ export const Closable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Rounded tags */
@@ -156,6 +169,7 @@ export const Rounded: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Edit dynamically – add and remove tags */
@@ -201,6 +215,7 @@ export const EditDynamically: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** `xs` sits below Element Plus's smallest size, for dense listings where a `small` pill outweighs the row label beside it. */
@@ -216,6 +231,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Without `truncate` a long label pushes the tag past its container instead of clipping. */
@@ -237,4 +253,5 @@ export const Truncated: Story = {
         expect(long.scrollWidth).toBeGreaterThan(long.clientWidth)
         expect(canvas.getByText("short").scrollWidth).toBe(canvas.getByText("short").clientWidth)
     },
+    parameters: {controls: {disable: true}},
 }

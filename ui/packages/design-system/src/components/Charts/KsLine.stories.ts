@@ -3,7 +3,7 @@ import {ref} from "vue"
 import {expect} from "storybook/test"
 import KsLine from "./KsLine.vue"
 import KsBar from "./KsBar.vue"
-import {ChartFeature, TooltipType} from "../../utils/chart"
+import {ChartFeature, ChartRenderer, TooltipType} from "../../utils/chart"
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const ALL_FEATURES: ChartFeature[] = [ChartFeature.LEGEND, ChartFeature.AXIS, ChartFeature.AXIS_SPLITLINE, ChartFeature.TOOLTIP]
@@ -16,6 +16,7 @@ const meta: Meta<typeof KsLine> = {
         loading: {control: "boolean"},
         disableFeatures: {control: "multi-select", options: ["LEGEND", "AXIS", "AXIS_SPLITLINE", "TOOLTIP"]},
         tooltipType: {control: "select", options: ["native", "external"]},
+        renderer: {control: "select", options: ["canvas", "svg"]},
     },
     parameters: {
         docs: {
@@ -45,6 +46,9 @@ export const Default: Story = {
     args: {
         data: [{name: "Executions", data: [120, 200, 150, 80, 70, 110, 130, 170, 90, 160, 220, 180]}],
         loading: false,
+        disableFeatures: [],
+        tooltipType: TooltipType.NATIVE,
+        renderer: ChartRenderer.CANVAS,
     },
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--line")).toBeTruthy()
@@ -71,6 +75,7 @@ export const MultipleSeries: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Loading state — shown while data is being fetched */
@@ -82,6 +87,7 @@ export const Loading: Story = {
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--line")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Simulates fetching then populating the chart */
@@ -117,6 +123,7 @@ export const AsyncData: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom colors via options override */
@@ -138,6 +145,7 @@ export const WithOptionsOverride: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 // ─── Compact sparkline (all features disabled) ────────────────────────────────
@@ -180,6 +188,7 @@ export const MiniMultipleSeries: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Taller sparkline */
@@ -199,6 +208,7 @@ export const MiniTall: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Mini loading state */
@@ -208,6 +218,7 @@ export const MiniLoading: Story = {
         setup() { return {ALL_FEATURES} },
         template: "<div style=\"padding:24px;width:240px;height:80px\"><ks-line :disable-features=\"ALL_FEATURES\" :data=\"null\" /></div>",
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Mini async data */
@@ -242,6 +253,7 @@ export const MiniAsyncData: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Mini line and bar charts embedded in dashboard cards */
@@ -280,4 +292,5 @@ export const MiniInCard: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

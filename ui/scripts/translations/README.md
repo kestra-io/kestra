@@ -89,7 +89,7 @@ Key points:
 
 ### Translation rules (enforced by the prompt and both checkers)
 
-- **Reserved English terms are never translated**: `flow`, `subflow`, `namespace`, `tenant`, `task`, `trigger`, `id`, `label`, `key`, `value`, `input`, `output`, `log`, `blueprint`, `kv store`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
+- **Reserved English terms are never translated**: `flow`, `subflow`, `namespace`, `tenant`, `task`, `trigger`, `id`, `label`, `key`, `value`, `input`, `output`, `log`, `blueprint`, `kv store`, `port`, `worker`, `backfill`, `healthcheck`, `artifact`, `min`, `max`.
 - **ALL-CAPS status labels stay English**: `SUCCESS`, `FAILED`, `RUNNING`, `WARNING`, `PAUSED`, ...
 - **Placeholders**: vue-i18n uses a **single** brace pair - `{name}`. Each translation must carry exactly the same placeholders as its English source. `{{name}}` is a compile error ("Not allowed nest placeholder"), an invented placeholder renders an empty gap, a dropped one loses the value. Placeholder names are never translated.
 - Natural UI terminology over literal translation (German: Execution -> Ausführung, Theme -> Modus).

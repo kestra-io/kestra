@@ -1,4 +1,3 @@
-
 import {describe, test, expect} from "vitest"
 import {
     Comparators,
@@ -8,8 +7,6 @@ import {
     type WrapperGroup,
 } from "../utils/filterTypes"
 import {
-    newGroupId,
-    emptyLeafGroup,
     allFilters,
     findLeafContaining,
     findLeafById,
@@ -40,7 +37,6 @@ const makeWrapper = (id: string, children: LeafFilterGroup[]): WrapperGroup => (
 })
 
 describe("useFilterGroups helpers", () => {
-
     describe("allFilters", () => {
         test("collects filters from top-level leaf groups", () => {
             const first = makeFilter({id: "f1"})

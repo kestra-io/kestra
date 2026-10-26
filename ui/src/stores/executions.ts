@@ -149,7 +149,7 @@ export function normalizeFilePreview(data: FilePreview): FilePreview {
 }
 
 /** The level filter the backend applies to the logs it returns, for logs the store already holds. */
-export function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue | undefined): boolean {
+function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue | undefined): boolean {
     if (!filter || !level) return true
     const severity = (value: string) => (LOG_LEVELS as readonly string[]).indexOf(value)
     switch (filter.direction) {

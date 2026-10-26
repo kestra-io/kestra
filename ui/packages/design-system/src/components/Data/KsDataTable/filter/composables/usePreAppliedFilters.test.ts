@@ -15,19 +15,19 @@ const makeFilter = (overrides: Partial<AppliedFilter> = {}): AppliedFilter => ({
 
 describe("usePreAppliedFilters", () => {
     test("records every filter passed to markAsPreApplied", () => {
-    const preApplied = usePreAppliedFilters()
-    const filters = [
-        makeFilter({key: "status"}),
-        makeFilter({id: "f2", key: "namespace"}),
-        makeFilter({id: "f3", key: "flow"}),
-    ]
+        const preApplied = usePreAppliedFilters()
+        const filters = [
+            makeFilter({key: "status"}),
+            makeFilter({id: "f2", key: "namespace"}),
+            makeFilter({id: "f3", key: "flow"}),
+        ]
 
-    preApplied.markAsPreApplied(filters)
+        preApplied.markAsPreApplied(filters)
 
-    expect(preApplied.isPreApplied("status")).toBe(true)
-    expect(preApplied.isPreApplied("namespace")).toBe(true)
-    expect(preApplied.isPreApplied("flow")).toBe(true)
-    expect(preApplied.getAllPreApplied()).toEqual(filters)
+        expect(preApplied.isPreApplied("status")).toBe(true)
+        expect(preApplied.isPreApplied("namespace")).toBe(true)
+        expect(preApplied.isPreApplied("flow")).toBe(true)
+        expect(preApplied.getAllPreApplied()).toEqual(filters)
     })
 
     test("stores a copy instead of the caller's filter object", () => {
@@ -35,9 +35,9 @@ describe("usePreAppliedFilters", () => {
         const filter = makeFilter()
 
         preApplied.markAsPreApplied([filter])
+        filter.value = "FAILED"
 
-        expect(preApplied.getPreApplied("status")).toEqual(filter)
-        expect(preApplied.getPreApplied("status")).not.toBe(filter)
+        expect(preApplied.getPreApplied("status")?.value).toBe("SUCCESS")
     })
 
     test("returns true for marked keys and false for unknown keys", () => {
@@ -48,11 +48,6 @@ describe("usePreAppliedFilters", () => {
         expect(preApplied.isPreApplied("unknown")).toBe(false)
         expect(preApplied.hasPreApplied("status")).toBe(true)
         expect(preApplied.hasPreApplied("unknown")).toBe(false)
-    })
-
-    test("returns undefined for an unknown key", () => {
-        const preApplied = usePreAppliedFilters()
-
         expect(preApplied.getPreApplied("unknown")).toBeUndefined()
     })
 

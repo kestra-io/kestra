@@ -12,6 +12,7 @@ import {useFileExplorerStore} from "./fileExplorer"
 import type {KestraHttpError} from "../utils/kestraHttp"
 
 import {storageKeys} from "../utils/constants"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 // Loaded on demand: this store is reachable from the top nav bar, and statically
 // its graph helpers put Vue Flow and dagre in the bundle every page loads.
 const graphUtils = () => import("@kestra-io/topology/vue-flow-utils")
@@ -382,7 +383,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if (!sourceToReused.size) return
 
         const kind = previous.kind && previous.kind !== "NORMAL" ? {"filters[kind][IN]": previous.kind} : {}
-        const ownLogs = await executionsStore.loadLogs({executionId: previous.id, params: kind, store: false})
+        const ownLogs = await executionsStore.loadLogs({executionId: previous.id, filters: routeQueryToQueryFilters(kind), store: false})
         executionsStore.setReusedLogs(replay.id, [...executionsStore.reusedLogsOf(previous.id), ...ownLogs].flatMap(log => {
             const taskRunId = log.taskRunId ? sourceToReused.get(log.taskRunId) : undefined
             return taskRunId ? [{...log, executionId: replay.id, taskRunId}] : []

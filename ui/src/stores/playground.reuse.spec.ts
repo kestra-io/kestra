@@ -116,7 +116,7 @@ describe("playground reuse of earlier task results", () => {
 
         await playground.runUntilTask("b")
 
-        expect(executionsStore.loadLogs).toHaveBeenCalledWith({executionId: "e1", params: {"filters[kind][IN]": "PLAYGROUND"}, store: false})
+        expect(executionsStore.loadLogs).toHaveBeenCalledWith({executionId: "e1", filters: [{field: "kind", operation: "IN", value: "PLAYGROUND"}], store: false})
         expect(reusedLogs.e2).toEqual([
             {executionId: "e2", taskRunId: "tr-a2", timestamp: "2026-01-01T00:00:00Z", message: "a ran"},
         ])

@@ -24,9 +24,9 @@ public final class ReusedTaskRunUtils {
     public record Source(String executionId, String taskRunId) {
     }
 
-    /** The task runs this execution reused from an earlier one; empty when it reused none or is unknown. */
-    public static List<TaskRun> reusedTaskRuns(@Nullable Execution execution) {
-        return execution == null ? List.of() : execution.reusedTaskRuns();
+    /** The task runs that recorded the rows of the ones this execution reused; empty when it reused none. */
+    public static List<String> sourceTaskRunIds(@Nullable Execution execution) {
+        return execution == null ? List.of() : execution.reusedTaskRuns().stream().map(TaskRun::getSourceTaskRunId).toList();
     }
 
     /** Resolves a task run of the given execution to the task run that recorded its rows. */
@@ -45,7 +45,7 @@ public final class ReusedTaskRunUtils {
      * execution itself. Filters are AND-ed by the store, so the URL path stays authoritative.
      */
     public static List<QueryFilter> executionFilters(String executionId, @Nullable Execution execution, @Nullable List<QueryFilter> userFilters) {
-        List<TaskRun> reused = reusedTaskRuns(execution);
+        List<TaskRun> reused = execution == null ? List.of() : execution.reusedTaskRuns();
 
         List<QueryFilter> merged = new ArrayList<>(ListUtils.emptyOnNull(userFilters).size() + 1);
         ListUtils.emptyOnNull(userFilters).forEach(filter -> merged.add(resolveTaskRunIds(filter, reused)));

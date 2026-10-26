@@ -1424,9 +1424,11 @@ public class ExecutionService {
                 toRestart ? alterState : null
             );
 
-        // A reused task run keeps pointing at the task run that recorded its logs, outputs and metrics, while a
-        // restarted one runs again and records its own.
-        return Boolean.TRUE.equals(toRestart) ? newTaskRun : newTaskRun.reusedFrom(originalTaskRun);
+        // A reused task run gets a new id in a new execution, so its logs, outputs and metrics stay under the
+        // task run that produced them: keep a reference to it. A restarted one runs again and records its own.
+        return Boolean.TRUE.equals(toRestart) || newTaskRun.getId().equals(originalTaskRun.getId())
+            ? newTaskRun
+            : newTaskRun.reusedFrom(originalTaskRun);
     }
 
     private Set<String> taskRunWithAncestors(Execution execution, List<TaskRun> taskRuns) {

@@ -246,19 +246,12 @@ public class TaskRun implements TenantInterface {
 
     /**
      * Point this copy at the task run that actually ran, so its logs, outputs and metrics can still be found:
-     * the original's own source when it has one or when the copy keeps its id, the original otherwise.
+     * the original's own source when the original was itself a reused copy, the original otherwise.
      */
     public TaskRun reusedFrom(TaskRun original) {
-        if (original.getSourceTaskRunId() != null || this.id.equals(original.getId())) {
-            return this.toBuilder()
-                .sourceExecutionId(original.getSourceExecutionId())
-                .sourceTaskRunId(original.getSourceTaskRunId())
-                .build();
-        }
-
         return this.toBuilder()
-            .sourceExecutionId(original.getExecutionId())
-            .sourceTaskRunId(original.getId())
+            .sourceExecutionId(original.getSourceExecutionId() != null ? original.getSourceExecutionId() : original.getExecutionId())
+            .sourceTaskRunId(original.getSourceTaskRunId() != null ? original.getSourceTaskRunId() : original.getId())
             .build();
     }
 

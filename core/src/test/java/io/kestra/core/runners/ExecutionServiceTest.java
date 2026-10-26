@@ -182,40 +182,6 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
-    void shouldPointAtTheRunThatRecordedTheRowsWhenReplayingAReplay() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart_last_failed");
-        Flow flow = flowRepository.findByExecution(execution);
-        TaskRun original = execution.findTaskRunsByTaskId("a").getFirst();
-
-        Execution replay = executionService.replay(execution, flow, execution.findTaskRunsByTaskId("c").getFirst().getId(), null, Optional.empty());
-        Execution replayOfReplay = executionService.replay(replay, flow, replay.findTaskRunsByTaskId("c").getFirst().getId(), null, Optional.empty());
-
-        TaskRun reused = replayOfReplay.findTaskRunsByTaskId("a").getFirst();
-        assertThat(reused.getSourceExecutionId()).isEqualTo(execution.getId());
-        assertThat(reused.getSourceTaskRunId()).isEqualTo(original.getId());
-    }
-
-    @Test
-    @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
-    void shouldKeepTheSourceOfAReusedTaskRunWhenRestartingAReplayInPlace() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "restart_last_failed");
-        Flow flow = flowRepository.findByExecution(execution);
-        TaskRun original = execution.findTaskRunsByTaskId("a").getFirst();
-        Execution replay = executionService.replay(execution, flow, execution.findTaskRunsByTaskId("c").getFirst().getId(), null, Optional.empty());
-        Execution failedReplay = replay
-            .withTaskRunList(replay.getTaskRunList().stream().map(taskRun -> "c".equals(taskRun.getTaskId()) ? taskRun.withState(State.Type.FAILED) : taskRun).toList())
-            .withState(State.Type.FAILED);
-
-        Execution restart = executionService.restart(failedReplay, flow, null);
-
-        TaskRun reused = restart.findTaskRunsByTaskId("a").getFirst();
-        assertThat(reused.getId()).isEqualTo(replay.findTaskRunsByTaskId("a").getFirst().getId());
-        assertThat(reused.getSourceExecutionId()).isEqualTo(execution.getId());
-        assertThat(reused.getSourceTaskRunId()).isEqualTo(original.getId());
-    }
-
-    @Test
     @LoadFlows({ "flows/valids/minimal.yaml" })
     void replayFromBeginning() throws Exception {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "minimal");

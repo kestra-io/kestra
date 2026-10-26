@@ -59,7 +59,7 @@ public class MetricController {
         if (taskId != null) {
             return PagedResults.of(
                 metricsRepository.findByExecutionIdAndTaskId(
-                    tenantService.resolveTenant(), executionId, taskId, ReusedTaskRunUtils.reusedTaskRuns(execution), pageable
+                    tenantService.resolveTenant(), executionId, taskId, ReusedTaskRunUtils.sourceTaskRunIds(execution), pageable
                 )
             );
         } else if (taskRunId != null) {
@@ -67,7 +67,7 @@ public class MetricController {
             return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), source.executionId(), source.taskRunId(), pageable));
         } else {
             return PagedResults.of(
-                metricsRepository.findByExecutionId(tenantService.resolveTenant(), executionId, ReusedTaskRunUtils.reusedTaskRuns(execution), pageable)
+                metricsRepository.findByExecutionId(tenantService.resolveTenant(), executionId, ReusedTaskRunUtils.sourceTaskRunIds(execution), pageable)
             );
         }
     }

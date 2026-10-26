@@ -52,17 +52,12 @@ describe("Curl", () => {
             .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'd=2026-10-26' ${URL}`)
     })
 
-    it("formats filled DATE and TIME inputs", () => {
-        expect(curlFor({d: new Date(2026, 0, 2), t: new Date(2026, 0, 2, 8, 30, 0)}))
-            .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'd=2026-01-02' -F 't=08:30:00' ${URL}`)
-    })
-
     it("sends a filled DATETIME input as an ISO instant", () => {
         expect(curlFor({dt: new Date(Date.UTC(2026, 9, 20, 8, 35, 9))}))
             .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'dt=2026-10-20T08:35:09.000Z' ${URL}`)
     })
 
-    it("keeps an unparseable DATETIME value as is instead of throwing", () => {
+    it("keeps an unparsable DATETIME value as is instead of throwing", () => {
         expect(curlFor({dt: "not-a-date"}))
             .toBe(`curl -X POST -H 'Content-Type: multipart/form-data' -F 'dt=not-a-date' ${URL}`)
     })

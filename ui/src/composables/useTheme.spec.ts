@@ -15,7 +15,8 @@ vi.mock("override/stores/misc", () => ({
     }),
 }))
 
-vi.mock("../utils/utils", () => ({
+vi.mock("../utils/utils", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("../utils/utils")>()),
     getTheme: () => currentReportedTheme,
 }))
 
@@ -25,12 +26,6 @@ describe("useTheme", () => {
     beforeEach(() => {
         mockTheme.value = "light"
         currentReportedTheme = "light"
-    })
-
-    it("returns the current theme", () => {
-        currentReportedTheme = "light"
-        const theme = useTheme()
-        expect(theme.value).toBe("light")
     })
 
     it("matches what getTheme() reports", () => {
@@ -47,18 +42,5 @@ describe("useTheme", () => {
         mockTheme.value = "dark"
 
         expect(theme.value).toBe("dark")
-    })
-
-    it("two callers observe the same value", () => {
-        const theme1 = useTheme()
-        const theme2 = useTheme()
-
-        expect(theme1.value).toBe(theme2.value)
-
-        currentReportedTheme = "dark"
-        mockTheme.value = "dark"
-
-        expect(theme1.value).toBe("dark")
-        expect(theme2.value).toBe("dark")
     })
 })

@@ -24,8 +24,8 @@
                 type="button"
                 role="option"
                 class="implementation-picker-option"
-                :aria-checked="option.branch.type === current"
-                :aria-selected="option.branch.type === current"
+                :aria-checked="option.branch.ref === current"
+                :aria-selected="option.branch.ref === current"
                 data-test="plugin-implementation-picker-option"
                 @click="select(option.branch)"
             >
@@ -40,7 +40,7 @@
                     <span class="implementation-picker-option-name">{{ option.name }}</span>
                     <span v-if="option.description" class="implementation-picker-option-description">{{ option.description }}</span>
                 </span>
-                <Check v-if="option.branch.type === current" class="implementation-picker-option-check" />
+                <Check v-if="option.branch.ref === current" class="implementation-picker-option-check" />
             </button>
         </div>
         <KsEmpty v-else data-test="plugin-implementation-picker-empty">

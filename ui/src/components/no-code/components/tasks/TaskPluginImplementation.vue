@@ -29,7 +29,7 @@
                     :root="`${root}[${index}]`"
                     @update:modelValue="(value) => updateItem(index, value)"
                     @remove="removeItem(index)"
-                    @change="openPicker(index, typeOf(item))"
+                    @change="openPicker(index, item)"
                 />
             </div>
             <BlockEmptyDrop
@@ -51,7 +51,7 @@
                 :root="root"
                 @update:modelValue="onSingleUpdate"
                 @remove="onRemove"
-                @change="openPicker(undefined, typeOf(modelValue as Record<string, unknown>))"
+                @change="openPicker(undefined, modelValue as Implementation)"
             />
         </template>
         <template v-else>
@@ -75,7 +75,7 @@
             v-model="pickerVisible"
             :title="pickerTitle"
             :branches="branches"
-            :current="pickerCurrentType"
+            :current="pickerCurrentRef"
             @select="onPickerSelect"
         />
     </div>
@@ -153,7 +153,7 @@
 
     const pickerVisible = ref(false)
     const pickerTargetIndex = ref<number | undefined>(undefined)
-    const pickerCurrentType = ref<string | undefined>(undefined)
+    const pickerCurrentRef = ref<string | undefined>(undefined)
 
     const pickerTitle = computed(() => t("block_editor.plugin_implementation.choose_title", {label: label.value}))
 
@@ -173,7 +173,7 @@
         modelValue.value = value
     }
 
-    function openPicker(index: number | undefined, currentType: string | undefined) {
+    function openPicker(index: number | undefined, current: Implementation | undefined) {
         if (branches.value.length <= 1) {
             if (branches.value.length === 1) {
                 commit(newImplementation(branches.value[0], branches.value), index)
@@ -181,7 +181,7 @@
             return
         }
         pickerTargetIndex.value = index
-        pickerCurrentType.value = currentType
+        pickerCurrentRef.value = findBranchByType(branches.value, typeOf(current), current)?.ref
         pickerVisible.value = true
     }
 

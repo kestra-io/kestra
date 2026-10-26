@@ -120,6 +120,16 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                     taskOutputs.add(buildIterationOutput(message));
                 }
 
+                boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated() || execution.getState().getCurrent() == State.Type.KILLING;
+                if (loopAlreadyEnded) {
+                    computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
+                    if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
+                        logLoopIterationFailure(parentTaskRun, loop, executor, message);
+                    }
+                    followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                    return null;
+                }
+
                 if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
                     // the failure happened inside an isolated loop sub-execution: log inside the parent exec
                     computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
@@ -309,7 +319,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
     // terminate the loop and its attempts
     private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state) throws InternalException {
-        State.Type finalState = state == State.Type.FAILED ? stateFailure(task) : State.Type.SUCCESS;
+        State.Type finalState = switch (state) {
+            case FAILED -> stateFailure(task);
+            case KILLED, CANCELLED -> state;
+            default -> State.Type.SUCCESS;
+        };
         // as loops can run concurrently, the state might already be set by another task run
         TaskRun newTaskRun = parentTaskRun.getState().getCurrent() == finalState ? parentTaskRun : parentTaskRun.withStateAndAttempt(finalState);
 

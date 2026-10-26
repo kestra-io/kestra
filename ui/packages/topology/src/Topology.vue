@@ -276,19 +276,23 @@
     )
 
     onMounted(() => {
-        generateGraph()
+        generateGraph(true)
     })
 
+    let expandedSubflowsAtLastGraph = props.expandedSubflows
+
     watch(() => props.flowGraph, () => {
-        generateGraph()
+        const subflowExpanded = props.expandedSubflows !== expandedSubflowsAtLastGraph
+        expandedSubflowsAtLastGraph = props.expandedSubflows
+        generateGraph(subflowExpanded)
     })
 
     watch(() => props.isHorizontal, () => {
-        generateGraph()
+        generateGraph(true)
     })
 
     watch(showExtraDetails, () => {
-        generateGraph()
+        generateGraph(true)
     })
 
     watch(isRunning, () => {
@@ -307,7 +311,7 @@
         generateGraph()
     })
 
-    const generateGraph = () => {
+    const generateGraph = (shouldFit = false) => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
         removeSelectedElements(getElements.value)
@@ -342,7 +346,7 @@
 
             if (elements) {
                 setElements(elements)
-                refitOnNodesInitialized.value = true
+                if (shouldFit) refitOnNodesInitialized.value = true
                 emit("loading", false)
             }
         })
@@ -403,7 +407,7 @@
         }
 
         if (regenerate) {
-            generateGraph()
+            generateGraph(true)
         }
     }
 
@@ -423,7 +427,7 @@
 
         collapsed.value.forEach(n => collapseCluster(n, false))
 
-        generateGraph()
+        generateGraph(true)
     }
 
 
@@ -432,7 +436,7 @@
         hiddenNodes.value = []
         edgeReplacer.value = {}
         clusterToNode.value = []
-        generateGraph()
+        generateGraph(true)
     }
 
     const isDropdownOpen = ref(false)

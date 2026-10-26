@@ -1,7 +1,7 @@
 name: Translations - Generate for a pull request
 
-# The pull request workflow generates translations only for branches of this repository: a fork has
-# no GEMINI_API_KEY, so its generate job is skipped and the gate then rejects the missing keys. An
+# The pull request workflow generates translations only for branches of this repository: a fork is
+# withheld the GCP credentials, so its generate job is skipped and the gate then rejects the missing keys. An
 # external contributor cannot get a green PR on their own. This is the maintainer's one-click
 # replacement for "check the branch out, run the generator with my key, push to the fork": pick the
 # PR number in the Actions tab and the run generates the missing and stale translations for that
@@ -11,7 +11,7 @@ name: Translations - Generate for a pull request
 # out the branch this workflow was dispatched on, which has to be the branch the pull request targets,
 # installs its dependencies without lifecycle scripts, and swaps its data files for the ones of the
 # pull request (the language JSON files, the fingerprints and the design-system `*.locale.ts` files,
-# which the generator parses without evaluating). It holds the Gemini key and a read-only token. The
+# which the generator parses without evaluating). It holds the Vertex AI access and a read-only token. The
 # `publish` job holds the write tokens and never runs anything from the pull request: it checks that
 # the patch touches only those data files, applies it and pushes.
 #
@@ -109,11 +109,17 @@ jobs:
         run: npm ci --ignore-scripts
         working-directory: ui
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Generate missing and stale translations
         run: npm run translations:generate
         working-directory: ui
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_CLOUD_PROJECT: kestra-prd
+          GOOGLE_CLOUD_LOCATION: global
 
       - name: Save what the generator changed as a patch
         id: patch

@@ -221,7 +221,6 @@
     import {useI18n} from "vue-i18n"
     import {useStorage} from "@vueuse/core"
     import {useRoute, useRouter} from "vue-router"
-    import {useVueFlow} from "@vue-flow/core"
 
     import SearchField from "../layout/SearchField.vue"
     import LogLevelSelector from "../logs/LogLevelSelector.vue"
@@ -240,6 +239,7 @@
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
 
+    import {getAllTasks} from "../../utils/flowUtils"
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import BlockTaskPicker from "../no-code/blocks/BlockTaskPicker.vue"
     import {useTaskPicker} from "../no-code/blocks/useTaskPicker"
@@ -261,7 +261,6 @@
     const route = useRoute()
 
     const vueflowId = ref(Math.random().toString())
-    const {fitView} = useVueFlow(vueflowId.value)
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref())
 
@@ -453,7 +452,8 @@
     const resolveTaskTopologyDetails = async (tasks: any[] = []) => {
         const taskTypes = new Set<string>()
         const runnerTypes = new Set<string>()
-        tasks.forEach((task: any) => {
+        // Nested tasks (WorkingDirectory, If, Parallel...) render their own nodes, so they need their UI modules too.
+        getAllTasks(tasks).forEach((task: any) => {
             if (!task?.type) {
                 return
             }
@@ -546,8 +546,8 @@
         async (source) => {
             if (!source) return
             const parsed = YAML_UTILS.parse(source)
-            const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
-            const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+            const sourceHasRunners = getAllTasks(parsed?.tasks).some((t: any) => t?.taskRunner?.type)
+            const flowParsedHasRunners = getAllTasks(flowStore.flowParsed?.tasks).some((t: any) => t?.taskRunner?.type)
             if (sourceHasRunners && !flowParsedHasRunners) {
                 await resolveTaskTopologyDetails(parsed.tasks)
             }
@@ -574,11 +574,9 @@
     watch(() => props.horizontalDefault, (value) => {
         if (value !== undefined && value !== isHorizontal.value) {
             isHorizontal.value = value
-            fitViewOrientation()
         }
     })
     const vueFlow = ref<HTMLDivElement>()
-    const timer = ref<ReturnType<typeof setTimeout>>()
     const logFilter = ref("")
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO")
     const isDrawerOpen = ref(false)
@@ -609,8 +607,6 @@
     )
 
     onMounted(() => {
-        // Regenerate graph on window resize
-        observeWidth()
         pluginsStore.fetchIcons()
     })
 
@@ -639,20 +635,6 @@
             }
         },
     )
-
-    const observeWidth = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(function () {
-                clearTimeout(timer.value)
-                timer.value = setTimeout(() => {
-                    nextTick(() => {
-                        fitView()
-                    })
-                }, 50) as any
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
-    }
 
     const onDelete = (event: any) => {
         const flowParsed = YAML_UTILS.parse(props.source)
@@ -758,22 +740,9 @@
         taskPicker.openTaskPickerAtPath(target.parentPath, target.refIndex)
     }
 
-    const fitViewOrientation = () => {
-        if(vueFlow.value){
-            const resizeObserver = new ResizeObserver(() => {
-                clearTimeout(timer.value)
-                nextTick(() => {
-                    fitView()
-                })
-            })
-            resizeObserver.observe(vueFlow.value)
-        }
-    }
-
     const toggleOrientation = () => {
         isHorizontal.value = !isHorizontal.value
         isHorizontalLS.value = isHorizontal.value
-        fitViewOrientation()
     }
 
     const openFlow = (data: any) => {

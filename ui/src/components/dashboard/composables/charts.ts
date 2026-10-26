@@ -93,7 +93,7 @@ export function fillTimeBucketLabels(rawDates: unknown[], grouping: DateGrouping
 
     if (parsed.length) {
         const max = moment.max(parsed)
-        const cursor = moment.min(parsed).clone().startOf(grouping.unit)
+        const cursor = moment.min(parsed).clone().startOf(grouping.unit === "week" ? "isoWeek" : grouping.unit)
         for (let i = 0; cursor.isSameOrBefore(max) && i < MAX_FILLED_TIME_BUCKETS; i++) {
             labels.add(cursor.format(grouping.format))
             cursor.add(1, grouping.unit)

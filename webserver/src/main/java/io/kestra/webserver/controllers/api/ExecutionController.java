@@ -24,6 +24,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
@@ -194,6 +195,9 @@ public class ExecutionController {
 
     @Inject
     protected ExecutionService executionService;
+
+    @Inject
+    private ExecutionOutputService executionOutputService;
 
     @Inject
     private ExecutionStreamingService streamingService;
@@ -1106,12 +1110,17 @@ public class ExecutionController {
                     })
                         .last()
                         .map(Event::getData)
-                        .map(
-                            execution -> ExecutionResponse.fromExecution(
-                                execution,
-                                executionUrl
-                            )
-                        )
+                        .map(execution -> {
+                            try {
+                                return ExecutionResponse.fromExecution(
+                                    execution,
+                                    executionOutputService.getOutputs(execution),
+                                    executionUrl
+                                );
+                            } catch (InternalException e) {
+                                throw Exceptions.propagate(e);
+                            }
+                        })
                         .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
                 });
@@ -1135,10 +1144,10 @@ public class ExecutionController {
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs,
-            List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
+            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
             Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
-                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, null, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
+                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
                 traceParent, fixtures, kind, breakpoints, loopRun
             );
 
@@ -1146,6 +1155,10 @@ public class ExecutionController {
         }
 
         public static ExecutionResponse fromExecution(Execution execution, URI url) {
+            return fromExecution(execution, null, url);
+        }
+
+        public static ExecutionResponse fromExecution(Execution execution, Map<String, Object> outputs, URI url) {
             return new ExecutionResponse(
                 execution.getTenantId(),
                 execution.getId(),
@@ -1154,6 +1167,7 @@ public class ExecutionController {
                 execution.getFlowRevision(),
                 execution.getTaskRunList(),
                 execution.getInputs(),
+                outputs,
                 execution.getLabels(),
                 execution.getVariables(),
                 execution.getState(),
@@ -1170,6 +1184,13 @@ public class ExecutionController {
                 execution.getLoopRun(),
                 url
             );
+        }
+
+        @Schema(implementation = Object.class, description = "Flow-level outputs of the execution when wait=true")
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        @Override
+        public Map<String, Object> getOutputs() {
+            return super.getOutputs();
         }
     }
 
@@ -1225,11 +1246,7 @@ public class ExecutionController {
             return null;
         }
 
-        String prefix = StorageContext
-            .forExecution(execution)
-            .getExecutionStorageURI().getPath();
-
-        if (path.getPath().startsWith(prefix)) {
+        if (StorageContext.isInExecutionStorage(execution, path)) {
             return null;
         }
 
@@ -1243,7 +1260,7 @@ public class ExecutionController {
 
         // maybe state
         StorageContext context = StorageContext.forFlow(flow.get());
-        prefix = context.getStateStorePrefix(null, false, null);
+        String prefix = context.getStateStorePrefix(null, false, null);
         if (path.getPath().startsWith(prefix)) {
             return null;
         }

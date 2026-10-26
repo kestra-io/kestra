@@ -451,18 +451,18 @@ public class ExecutorService {
     private ExecutorContext onEnd(ExecutorContext executor) {
         final FlowWithSource flow = executor.getFlow();
 
-        // For LOOP sub-executions, use guessFinalState(List<ResolvedTask>, TaskRun, boolean, boolean) to compute the final state from the Loop's child tasks directly.
+        // For LOOP sub-executions, use computeFinalState(List<ResolvedTask>, TaskRun, boolean, boolean) to compute the final state from the Loop's child tasks directly.
         State.Type finalState;
         if (executor.getExecution().getKind() == ExecutionKind.LOOP && executor.getExecution().getLoopRun() != null) {
             Loop loop = (Loop) flow.findTaskByTaskIdOrNull(executor.getExecution().getLoopRun().taskId());
             if (loop != null) {
                 List<ResolvedTask> childTasks = loop.getTasks().stream().map(ResolvedTask::of).toList();
-                finalState = executor.getExecution().guessFinalState(childTasks, null, false, false);
+                finalState = executor.getExecution().computeFinalState(childTasks, null, false, false);
             } else {
-                finalState = executor.getExecution().guessFinalState(flow);
+                finalState = executor.getExecution().computeFinalState(flow);
             }
         } else {
-            finalState = executor.getExecution().guessFinalState(flow);
+            finalState = executor.getExecution().computeFinalState(flow);
         }
 
         Execution newExecution = executor.getExecution()
@@ -596,7 +596,7 @@ public class ExecutorService {
             if (
                 !executor.getExecution().getState().isRetrying() &&
                     taskRun.getState().isFailed() &&
-                    (task instanceof RunnableTask<?> || task instanceof Subflow)
+                    task != null && task.shouldRetryOnFailure()
             ) {
                 Instant nextRetryDate = null;
                 AbstractRetry.Behavior behavior = null;
@@ -658,7 +658,7 @@ public class ExecutorService {
             if (task instanceof FlowableTask<?>) {
                 try {
                     switch (task) {
-                        case LoopUntil waitFor when taskRun.getState().isRunning() -> {
+                        case LoopUntil waitFor when taskRun.getState().getCurrent() == State.Type.RUNNING -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                                 Map<String, Object> previousOutput = taskOutputService.getOutputs(taskRun);
                                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(taskRun), taskRun);

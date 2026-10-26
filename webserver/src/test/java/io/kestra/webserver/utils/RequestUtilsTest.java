@@ -3,6 +3,8 @@ package io.kestra.webserver.utils;
 import java.util.List;
 import java.util.Map;
 
+import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -13,6 +15,8 @@ import io.micronaut.http.exceptions.HttpStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RequestUtilsTest {
     @ParameterizedTest
@@ -96,4 +100,72 @@ class RequestUtilsTest {
         assertTrue(exception.getMessage().contains("Invalid FlowScope value"));
     }
 
+    @Test
+    void isSecureWhenRequestItselfIsSecure() {
+        assertThat(RequestUtils.isSecure(request(true, null, null))).isTrue();
+    }
+
+    @Test
+    void isSecureWhenPlainHttpWithNoForwardedHeader() {
+        assertThat(RequestUtils.isSecure(request(false, null, null))).isFalse();
+    }
+
+    @Test
+    void isSecureWhenXForwardedProtoIsHttps() {
+        assertThat(RequestUtils.isSecure(request(false, "https", null))).isTrue();
+    }
+
+    @Test
+    void isSecureWhenXForwardedProtoIsHttp() {
+        assertThat(RequestUtils.isSecure(request(false, "http", null))).isFalse();
+    }
+
+    @Test
+    void isSecureWhenForwardedHeaderProtoIsHttps() {
+        assertThat(RequestUtils.isSecure(request(false, null, "proto=https"))).isTrue();
+    }
+
+    private static HttpRequest<?> request(boolean secure, String xForwardedProto, String forwarded) {
+        HttpRequest<?> request = mock(HttpRequest.class);
+        when(request.isSecure()).thenReturn(secure);
+        HttpHeaders headers = mock(HttpHeaders.class);
+        when(headers.contains(HttpHeaders.FORWARDED)).thenReturn(forwarded != null);
+        when(headers.getAll(HttpHeaders.FORWARDED)).thenReturn(forwarded != null ? List.of(forwarded) : List.of());
+        when(headers.get("X-Forwarded-Proto")).thenReturn(xForwardedProto);
+        when(request.getHeaders()).thenReturn(headers);
+        return request;
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "/kestra,/kestra",
+            "kestra,/kestra",
+            "/kestra/,/kestra",
+            "/a//b/,/a/b",
+            "/,''",
+        }
+    )
+    void shouldNormalizeContextPath(String contextPath, String expected) {
+        assertThat(RequestUtils.normalizeContextPath(contextPath)).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldNormalizeMissingContextPathToEmpty() {
+        assertThat(RequestUtils.normalizeContextPath(null)).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        {
+            "/kestra,/kestra/api/v1/flows,/api/v1/flows",
+            "/kestra,/kestra,/",
+            "/kestra,/kestraX/api/v1,/kestraX/api/v1",
+            "/a/b,/a/b/api/v1,/api/v1",
+            "'',/api/v1/flows,/api/v1/flows",
+        }
+    )
+    void shouldStripContextPathOnSegmentBoundaryOnly(String contextPath, String path, String expected) {
+        assertThat(RequestUtils.stripContextPath(contextPath, path)).isEqualTo(expected);
+    }
 }

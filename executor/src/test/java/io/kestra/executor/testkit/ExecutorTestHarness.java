@@ -288,6 +288,7 @@ public final class ExecutorTestHarness {
                 loopExecutionEventQueue,
                 Mockito.mock(AsyncOperationWaiter.class),
                 Mockito.mock(AsyncOperationsConfiguration.class),
+                Mockito.mock(TriggerEventQueue.class),
                 Optional.empty()
             )
         );

@@ -17,6 +17,7 @@ import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
@@ -39,6 +40,8 @@ import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
@@ -85,6 +88,7 @@ public class ExecutionService {
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
     private final AsyncOperationWaiter asyncOperationWaiter;
     private final AsyncOperationsConfiguration asyncOperationsConfiguration;
+    private final TriggerEventQueue triggerEventQueue;
     private final Optional<OpenTelemetry> openTelemetry;
 
     @Inject
@@ -104,6 +108,7 @@ public class ExecutionService {
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
         AsyncOperationWaiter asyncOperationWaiter,
         AsyncOperationsConfiguration asyncOperationsConfiguration,
+        TriggerEventQueue triggerEventQueue,
         Optional<OpenTelemetry> openTelemetry) {
         this.storageInterface = Objects.requireNonNull(storageInterface);
         this.executionRepository = Objects.requireNonNull(executionRepository);
@@ -120,6 +125,7 @@ public class ExecutionService {
         this.loopExecutionEventQueue = Objects.requireNonNull(loopExecutionEventQueue);
         this.asyncOperationWaiter = Objects.requireNonNull(asyncOperationWaiter);
         this.asyncOperationsConfiguration = Objects.requireNonNull(asyncOperationsConfiguration);
+        this.triggerEventQueue = Objects.requireNonNull(triggerEventQueue);
         this.openTelemetry = Objects.requireNonNull(openTelemetry);
     }
 
@@ -498,20 +504,39 @@ public class ExecutionService {
                 taskRun -> taskRun.getId().equals(taskRunId)
             );
 
+            TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
             GraphCluster graphCluster = GraphUtils.of(flow, execution);
             if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
-                TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
                 throw new IllegalArgumentException(
                     "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
                         .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
                 );
             }
 
+            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
+                .stream()
+                .filter(task -> task instanceof AbstractGraphTask)
+                .map(task -> ((AbstractGraphTask) task))
+                .filter(task -> task.getTaskRun() != null)
+                .map(task -> task.getTaskRun().getId())
+                .filter(id -> !taskRunToRestart.contains(id))
+                .collect(Collectors.toCollection(HashSet::new));
+
+            originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, graphCluster, taskRunToRestart));
+
+            Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
+            execution.getTaskRunList()
+                .stream()
+                .filter(taskRun -> handlerTaskIds.contains(taskRun.getTaskId()))
+                .map(TaskRun::getId)
+                .forEach(originalTaskRunToRemove::add);
+
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
             newTaskRuns.addAll(
                 execution.getTaskRunList()
                     .stream()
+                    .filter(originalTaskRun -> !originalTaskRunToRemove.contains(originalTaskRun.getId()))
                     .map(throwFunction(originalTaskRun ->
                     {
                         TaskRun newTaskRun = this.mapTaskRun(
@@ -528,32 +553,9 @@ public class ExecutionService {
                     .toList()
             );
 
-            // remove all child for replay task id
-            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
-                .stream()
-                .filter(task -> task instanceof AbstractGraphTask)
-                .map(task -> ((AbstractGraphTask) task))
-                .filter(task -> task.getTaskRun() != null)
-                .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
-                .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
-                .map(s -> s.getTaskRun().getId())
-                .collect(Collectors.toSet());
-
-            Set<String> taskRunToRemove = originalTaskRunToRemove
-                .stream()
-                .map(mappingTaskRunId::get)
-                .collect(Collectors.toSet());
-
-            taskRunToRemove
-                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
-
             Set<String> untouchedTaskRunIds = new HashSet<>(taskRunToRestart);
             untouchedTaskRunIds.addAll(originalTaskRunToRemove);
             this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
-
-            // Worker task, we need to remove all child in order to be restarted
-            this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
-                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
         }
 
         // Build and launch new execution
@@ -575,6 +577,40 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, String replayedTaskId, Set<String> taskRunToRestart) throws InternalException {
+        Set<String> staleHandlerTaskIds = new HashSet<>();
+        Set<String> flowHandlerTaskIds = handlerTaskIds(flow, flow.getErrors(), flow.getFinally(), flow.getAfterExecution());
+        if (!flowHandlerTaskIds.contains(replayedTaskId)) {
+            staleHandlerTaskIds.addAll(flowHandlerTaskIds);
+        }
+
+        Set<String> restartedTaskIds = new HashSet<>();
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            if (!taskRunToRestart.contains(taskRun.getId())) {
+                continue;
+            }
+
+            restartedTaskIds.add(taskRun.getTaskId());
+            if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof FlowableTask<?> flowableTask) {
+                Set<String> flowableHandlerTaskIds = handlerTaskIds(flow, flowableTask.getErrors(), flowableTask.getFinally(), null);
+                if (!flowableHandlerTaskIds.contains(replayedTaskId)) {
+                    staleHandlerTaskIds.addAll(flowableHandlerTaskIds);
+                }
+            }
+        }
+
+        staleHandlerTaskIds.removeAll(restartedTaskIds);
+        return staleHandlerTaskIds;
+    }
+
+    private Set<String> handlerTaskIds(Flow flow, List<Task> errors, List<Task> finallyTasks, @Nullable List<Task> afterExecution) {
+        return Stream.of(errors, finallyTasks, afterExecution)
+            .flatMap(tasks -> ListUtils.emptyOnNull(tasks).stream())
+            .flatMap(flow::allTasksWithChilds)
+            .map(Task::getId)
+            .collect(Collectors.toSet());
     }
 
     private Execution applyNewRevision(Flow flow, Execution newExecution) {
@@ -818,6 +854,16 @@ public class ExecutionService {
         boolean deleteMetrics,
         boolean deleteStorage) throws IOException {
         this.executionRepository.purge(execution);
+
+        // A deleted execution never terminates, so release the trigger lock it may still hold.
+        if (!execution.getState().isTerminated()) {
+            try {
+                TriggerExecutionDeleted.of(execution).ifPresent(triggerEventQueue::send);
+            } catch (KestraRuntimeException e) {
+                // The execution row is already purged: finish the deletion and leave the lock to a manual unlock.
+                log.error("Unable to release the trigger lock of deleted execution '{}'", execution.getId(), e);
+            }
+        }
 
         if (deleteLogs) {
             this.logRepository.purge(execution);
@@ -1269,6 +1315,13 @@ public class ExecutionService {
     }
 
     private Set<String> removeWorkerTask(Flow flow, Execution execution, Set<String> taskRunToRestart, Map<String, String> mappingTaskRunId) throws InternalException {
+        return this.workerTaskChildren(flow, execution, GraphUtils.of(flow, execution), taskRunToRestart)
+            .stream()
+            .map(mappingTaskRunId::get)
+            .collect(Collectors.toSet());
+    }
+
+    private Set<String> workerTaskChildren(Flow flow, Execution execution, GraphCluster graphCluster, Set<String> taskRunToRestart) throws InternalException {
         Set<String> workerTaskRunId = taskRunToRestart
             .stream()
             .filter(throwPredicate(s ->
@@ -1279,15 +1332,13 @@ public class ExecutionService {
             }))
             .collect(Collectors.toSet());
 
-        GraphCluster graphCluster = GraphUtils.of(flow, execution);
-
         return GraphUtils.successors(graphCluster, workerTaskRunId)
             .stream()
             .filter(task -> task instanceof AbstractGraphTask)
             .map(task -> (AbstractGraphTask) task)
             .filter(task -> task.getTaskRun() != null)
             .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
+            .map(s -> s.getTaskRun().getId())
             .collect(Collectors.toSet());
     }
 

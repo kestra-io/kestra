@@ -98,9 +98,7 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            :allowDrop="
-                (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
-            "
+            :allowDrop="allowDrop"
             :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
@@ -885,6 +883,14 @@
             .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
+    function allowDrop(draggingNode: FileExplorerNode, dropNode: FileExplorerNode, dropType: string) {
+        if (dropType === "inner" && dropNode.data?.leaf) {
+            return false
+        }
+        const targetFolder = dropType === "inner" ? dropNode : dropNode.parent
+        return targetFolder !== draggingNode.parent || Boolean(bulkDragSiblings.value?.length)
+    }
+
     async function nodeMoved(draggedNode: any) {
         // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
         if (!canManageFiles.value) {
@@ -892,34 +898,40 @@
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             return
         }
+        const oldPath = nodeBeforeDrag.value?.path ?? ""
         const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
 
-        try {
-            await namespacesStore.moveFileDirectory({
-                namespace: namespaceId.value,
-                old: nodeBeforeDrag.value?.path ?? "",
-                new: newPath,
-            })
-        } catch {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
-            bulkDragSiblings.value = undefined
-            return
+        if (newPath !== oldPath) {
+            try {
+                await namespacesStore.moveFileDirectory({
+                    namespace: namespaceId.value,
+                    old: oldPath,
+                    new: newPath,
+                })
+            } catch {
+                tree.value.remove(draggedNode.data.id)
+                tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+                bulkDragSiblings.value = undefined
+                return
+            }
         }
 
         const siblings = bulkDragSiblings.value
         bulkDragSiblings.value = undefined
-        if (!siblings?.length) {
-            return
-        }
 
         // handle siblings move
         const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
-        const results = await Promise.allSettled(siblings.map((sibling) =>
+        const moves = (siblings ?? [])
+            .map((sibling) => ({old: sibling.path, new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName}))
+            .filter((move) => move.old !== move.new)
+        if (!moves.length) {
+            return
+        }
+
+        const results = await Promise.allSettled(moves.map((move) =>
             namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
-                old: sibling.path,
-                new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName,
+                ...move,
             }),
         ))
 

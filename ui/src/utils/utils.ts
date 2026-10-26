@@ -289,7 +289,7 @@ export function getDateGrouping(startDate: moment.MomentInput, endDate: moment.M
     if (duration.asDays() > 365) {
         return {format: "yyyy-MM", unit: "month"}
     } else if (duration.asDays() > 180) {
-        return {format: "yyyy-'W'ww", unit: "week"}
+        return {format: "GGGG-[W]WW", unit: "week"}
     } else if (duration.asDays() > 1) {
         return {format: "yyyy-MM-DD", unit: "day"}
     } else if (duration.asHours() > 1) {

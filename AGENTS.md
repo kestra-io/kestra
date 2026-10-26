@@ -486,7 +486,7 @@ This is deliberate: before it existed, edited values were never propagated, and 
 
 ### Adding or regenerating translations
 
-Prefer `npm run translations:generate` (needs `GEMINI_API_KEY`); it fills missing keys and re-translates stale ones on its own, with no flag to remember. Pass `true` to force a full re-translation of everything.
+Prefer `npm run translations:generate` (needs `GOOGLE_CLOUD_PROJECT` and Application Default Credentials, since Gemini is reached through Vertex AI: run `gcloud auth application-default login` once); it fills missing keys and re-translates stale ones on its own, with no flag to remember. Pass `true` to force a full re-translation of everything.
 
 If you must write a translation by hand:
 

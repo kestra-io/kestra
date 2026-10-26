@@ -27,7 +27,7 @@ Volume per new language (as of 2026-08): **~1,900 OSS keys** (`ui/src/translatio
 ## 2. Prerequisites
 
 - OSS (`kestra/`) and EE (`kestra-ee/`) checked out side by side - the EE tooling resolves the OSS checkout at runtime.
-- `GEMINI_API_KEY` available (do not print it).
+- `GOOGLE_CLOUD_PROJECT` set and Application Default Credentials available (`gcloud auth application-default login`), since Gemini is reached through Vertex AI.
 
 ## 3. OSS steps (`kestra/`)
 
@@ -90,7 +90,7 @@ Have a native speaker review the rule block and the first generated batch - the 
 
 ```bash
 cd ui
-GEMINI_API_KEY="..." npm run translations:generate
+GOOGLE_CLOUD_PROJECT="..." npm run translations:generate
 ```
 
 Run it in the background - a full language is ~2,000 OSS keys plus every design-system `*.locale.ts` file, at one Gemini request per key. It produces:
@@ -137,7 +137,7 @@ export default _merge(tr, tr_ee)
 
 ```bash
 cd ui-ee
-GEMINI_API_KEY="..." npm run translations:generate
+GOOGLE_CLOUD_PROJECT="..." npm run translations:generate
 ```
 
 Produces `ui-ee/src/translations/ee_translations/tr.json` (~1,900 keys) and updates `ui-ee/scripts/translations/fingerprints.json`. Same rule: commit both together.

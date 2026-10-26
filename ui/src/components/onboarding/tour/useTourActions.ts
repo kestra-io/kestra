@@ -9,6 +9,7 @@ import {useProductTourStore} from "../../../stores/productTour"
 import {FLOW_PARENT_ROUTE} from "../../flows/flowTabs"
 import {EXECUTION_PARENT_ROUTE} from "../../executions/executionTabs"
 import {sendWebhookTestEvent} from "../../flows/testEvent"
+import {STORED_PANELS_RELOAD_EVENT} from "../../../composables/useStoredPanels"
 import {TourSceneError} from "./tourScenes"
 import {
     TOUR_FLOW_ID,
@@ -127,12 +128,7 @@ export function useTourActions() {
         )
 
         localStorage.setItem(editorPanelsKey(), layout)
-        // Synthetic event so an already-open editor (this same tab raises none) picks up the change.
-        window.dispatchEvent(new StorageEvent("storage", {
-            key: editorPanelsKey(),
-            newValue: layout,
-            storageArea: localStorage,
-        }))
+        window.dispatchEvent(new CustomEvent(STORED_PANELS_RELOAD_EVENT, {detail: editorPanelsKey()}))
     }
 
     const restoreEditorPanels = () => {

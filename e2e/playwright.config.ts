@@ -2,12 +2,9 @@ import dotenv from "dotenv"
 const __dirname = new URL(".", import.meta.url).pathname
 dotenv.config({path: __dirname + "/.env"})
 
-
 import type {PlaywrightTestConfig} from "@playwright/test"
 import {devices} from "@playwright/test"
 import {STORAGE_STATE} from "./fixtures/auth"
-
-
 
 
 /**
@@ -15,7 +12,6 @@ import {STORAGE_STATE} from "./fixtures/auth"
  * https://github.com/motdotla/dotenv
  */
 // require('dotenv').config();
-
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -63,8 +59,44 @@ const config: PlaywrightTestConfig = {
         /* Base URL to use in actions like `await page.goto("/")`. */
         baseURL: process.env.E2E_BASE_URL ?? "http://localhost:9011",
 
-
         /*
          * `on-first-retry` rather than `retain-on-failure`: the latter records a
          * screencast and trace snapshots for *every* test and throws them away on
          * pass, which every green test pays for.
+         */
+        trace: "on-first-retry",
+        /* Capture screenshot after each test failure */
+        screenshot: "only-on-failure",
+        video: "on-first-retry",
+    },
+
+    /* Configure projects for major browsers */
+    projects: [
+        /* Signs in once and parks the cookie jar the other projects reuse. */
+        {
+            name: "setup",
+            testMatch: /auth\.setup\.ts/,
+        },
+        {
+            name: "chromium",
+            testIgnore: /\/mobile-[^/]*\.spec\.ts$/,
+            use: {...devices["Desktop Chrome"], storageState: STORAGE_STATE},
+            dependencies: ["setup"],
+        },
+        {
+            name: "mobile-iphone",
+            testMatch: /\/mobile-[^/]*\.spec\.ts$/,
+            use: {...devices["iPhone 13"], defaultBrowserType: "chromium", storageState: STORAGE_STATE},
+            dependencies: ["setup"],
+        },
+    ],
+
+    /* Run your local dev server before starting the tests */
+    // webServer: {
+    //   command: "npm run dev",
+    //   port: 8080,
+    //   reuseExistingServer: !process.env.CI,
+    // },
+}
+
+export default config

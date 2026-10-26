@@ -8,7 +8,7 @@
         >
             <template #trailing>
                 <FilterComparatorSelect
-                    :shouldShowComparator
+                    :shouldShowComparator="isComparatorVisible"
                     :selectedComparator="state.selectedComparator"
                     :filterKey="filterKey"
                     @update:selected-comparator="changeComparator"
@@ -129,6 +129,13 @@
     const isTimeRange = computed(() =>
         props.filterKey?.key === "timeRange" || props.filterKey?.valueType === "time-range",
     )
+
+    // A custom range is always start <= value <= end, so a comparator would only mislead there.
+    const isComparatorVisible = computed(() => {
+        const isCustomRange = isTimeRange.value && state.timeRangeMode === "custom"
+            && (props.filterKey?.key === "timeRange" || props.filterKey?.customDateMode === "range")
+        return shouldShowComparator.value && !isCustomRange
+    })
 
     // Server-side search is opted into by declaring an `options` param on valueProvider.
     const supportsServerSideSearch = computed(() =>

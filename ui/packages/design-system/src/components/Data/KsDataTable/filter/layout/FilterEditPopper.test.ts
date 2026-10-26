@@ -385,3 +385,44 @@ describe("FilterEditPopper number field", () => {
         expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.BETWEEN, value: ["1", "5"], valueLabel: "1 - 5"})
     })
 })
+
+describe("FilterEditPopper comparator on a date range field", () => {
+    const lastTriggeredKey: FilterKeyConfig = {
+        key: "lastTriggered",
+        label: "Last triggered",
+        valueType: "time-range",
+        customDateMode: "range",
+        comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.LESS_THAN_OR_EQUAL_TO],
+        showComparatorSelection: true,
+        valueProvider: async () => [{label: "Last 24 hours", value: "PT24H"}],
+    }
+
+    const mountRange = async (value: AppliedFilter["value"]) => {
+        const wrapper = i18nMount(FilterEditPopper, {
+            props: {
+                filter: {id: "lt1", key: "lastTriggered", keyLabel: "Last triggered", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, comparatorLabel: "", value, valueLabel: ""},
+                filterKey: lastTriggeredKey,
+            },
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    const isComparatorShown = (wrapper: Awaited<ReturnType<typeof mountRange>>) =>
+        wrapper.findComponent(FilterComparatorSelect).props("shouldShowComparator")
+
+    test("shouldHideTheComparatorWhenOnACustomRange", async () => {
+        const wrapper = await mountRange({startDate: new Date("2026-01-15T10:00:00Z"), endDate: new Date("2026-01-20T18:00:00Z")})
+
+        expect(isComparatorShown(wrapper)).toBe(false)
+    })
+
+    test("shouldShowTheComparatorAgainWhenSwitchingBackToPredefined", async () => {
+        const wrapper = await mountRange({startDate: new Date("2026-01-15T10:00:00Z"), endDate: new Date("2026-01-20T18:00:00Z")})
+
+        wrapper.findComponent(FilterSelect).vm.$emit("update:timeRangeMode", "predefined")
+        await flushPromises()
+
+        expect(isComparatorShown(wrapper)).toBe(true)
+    })
+})

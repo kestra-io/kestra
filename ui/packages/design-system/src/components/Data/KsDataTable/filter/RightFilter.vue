@@ -45,7 +45,7 @@
                     <KsButton
                         type="primary"
                         class="save-current-btn"
-                        :icon="ContentSaveOutline"
+                        :icon="ContentSave"
                         :disabled="saveDisabled"
                         @click="saveFiltersRef?.open()"
                     >
@@ -140,7 +140,7 @@
 
 <script setup lang="ts">
     import {computed, ref, inject} from "vue"
-    import {BookmarkOutline, ChevronDown, CogOutline, ContentSaveOutline, Refresh} from "./utils/icons"
+    import {BookmarkOutline, ChevronDown, CogOutline, ContentSave, Refresh} from "./utils/icons"
     import Table from "vue-material-design-icons/Table.vue"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
     import type {SavedFilter} from "./utils/filterTypes"

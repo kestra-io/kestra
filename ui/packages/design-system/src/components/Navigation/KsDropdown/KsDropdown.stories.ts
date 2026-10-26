@@ -6,10 +6,24 @@ import KsDropdown from "./KsDropdown.vue"
 import KsDropdownItem from "./KsDropdownItem.vue"
 import KsDropdownMenu from "./KsDropdownMenu.vue"
 
-const meta: Meta<typeof KsDropdown> = {
+// KsDropdown declares no props of its own and forwards these to ElDropdown through $attrs.
+type DropdownArgs = {
+    trigger?: "hover" | "click" | "contextmenu";
+    placement?: "top" | "top-start" | "top-end" | "bottom" | "bottom-start" | "bottom-end";
+    disabled?: boolean;
+    hideOnClick?: boolean;
+}
+
+const meta: Meta<DropdownArgs> = {
     title: "Components/Navigation/KsDropdown",
     component: KsDropdown,
     tags: ["autodocs"],
+    argTypes: {
+        trigger: {control: "select", options: ["hover", "click", "contextmenu"]},
+        placement: {control: "select", options: ["top", "top-start", "top-end", "bottom", "bottom-start", "bottom-end"]},
+        disabled: {control: "boolean"},
+        hideOnClick: {control: "boolean"},
+    },
     parameters: {
         docs: {
             description: {
@@ -19,15 +33,16 @@ const meta: Meta<typeof KsDropdown> = {
     },
 }
 export default meta
-type Story = StoryObj<typeof KsDropdown>
+type Story = StoryObj<DropdownArgs>
 
 /** Basic usage – hover to unfold */
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
+        setup() { return {args} },
         template: `
             <div style="padding:48px">
-                <ks-dropdown>
+                <ks-dropdown v-bind="args">
                     <ks-button type="primary">Actions <span style="font-size:0.7em">▼</span></ks-button>
                     <template #dropdown>
                         <ks-dropdown-menu>
@@ -40,10 +55,17 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {
+        trigger: "hover",
+        placement: "bottom",
+        disabled: false,
+        hideOnClick: true,
+    },
 }
 
 /** How to trigger – hover, click, contextmenu */
 export const Triggers: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
         template: `
@@ -82,6 +104,7 @@ export const Triggers: Story = {
 
 /** Command event – items with command values */
 export const CommandEvent: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
         setup() {
@@ -111,6 +134,7 @@ export const CommandEvent: Story = {
 
 /** Disabled items */
 export const WithDisabledItems: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
         template: `
@@ -132,6 +156,7 @@ export const WithDisabledItems: Story = {
 
 /** Destructive or exit actions – `danger` swaps the hover for the error palette */
 export const DangerItem: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDropdown, KsDropdownItem, KsDropdownMenu},
         template: `
@@ -157,6 +182,7 @@ export const DangerItem: Story = {
  * secondary look that `KsButton` applies by default.
  */
 export const SplitButton: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDropdown, KsDropdownItem, KsDropdownMenu},
         template: `

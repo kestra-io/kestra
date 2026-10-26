@@ -23,7 +23,7 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-text v-bind=\"args\">Sample text content</ks-text></div>",
     }),
-    args: {type: ""},
+    args: {type: "", size: "default", truncated: false, lineClamp: "", tag: "span"},
 }
 
 export const Types: Story = {
@@ -40,6 +40,7 @@ export const Types: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Sizes: Story = {
@@ -53,6 +54,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Line clamp – multiline truncation */
@@ -67,6 +69,7 @@ export const LineClamp: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Override – render as different HTML elements */
@@ -83,6 +86,7 @@ export const Override: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Truncated: Story = {
@@ -94,4 +98,5 @@ export const Truncated: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

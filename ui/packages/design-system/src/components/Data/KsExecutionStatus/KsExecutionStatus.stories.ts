@@ -34,7 +34,15 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-execution-status v-bind=\"args\" /></div>",
     }),
-    args: {status: "SUCCESS"},
+    args: {
+        status: "SUCCESS",
+        icon: true,
+        size: "default",
+        glow: false,
+        clickable: false,
+        disabled: false,
+        dot: false,
+    },
 }
 
 export const AllStatuses: Story = {
@@ -66,6 +74,7 @@ export const AllStatuses: Story = {
             expect(style.backgroundColor).not.toBe("rgba(0, 0, 0, 0)")
         })
     },
+    parameters: {controls: {disable: true}},
 }
 
 export const WithIcons: Story = {
@@ -78,6 +87,7 @@ export const WithIcons: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Sizes: Story = {
@@ -91,6 +101,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Glow: Story = {
@@ -103,6 +114,7 @@ export const Glow: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const CustomTitle: Story = {
@@ -111,7 +123,16 @@ export const CustomTitle: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-execution-status v-bind=\"args\" /></div>",
     }),
-    args: {status: "RUNNING", title: "In Progress", icon: true},
+    args: {
+        status: "RUNNING",
+        title: "In Progress",
+        icon: true,
+        size: "default",
+        glow: false,
+        clickable: false,
+        disabled: false,
+        dot: false,
+    },
 }
 
 /**
@@ -137,6 +158,7 @@ export const CursorAffordance: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Clickable: Story = {
@@ -149,6 +171,7 @@ export const Clickable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const GlowClickable: Story = {
@@ -161,6 +184,7 @@ export const GlowClickable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Disabled: Story = {
@@ -173,11 +197,13 @@ export const Disabled: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Dot – collapses the badge to a coloured dot for dense layouts such as mobile cards; the label stays available to screen readers */
 export const Dot: Story = {
     parameters: {
+        controls: {disable: true},
         viewport: {
             options: {
                 mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},

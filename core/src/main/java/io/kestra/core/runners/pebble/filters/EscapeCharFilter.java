@@ -47,7 +47,9 @@ public class EscapeCharFilter implements Filter {
         Map<String, Object> resultMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
             Object value = entry.getValue();
-            if (value instanceof String stringValue) {
+            if (value == null) {
+                resultMap.put(entry.getKey(), null);
+            } else if (value instanceof String stringValue) {
                 resultMap.put(entry.getKey(), escapeString(stringValue, args, self, lineNumber));
             } else if (value instanceof Map) {
                 resultMap.put(entry.getKey(), processMap((Map<String, Object>) value, args, self, lineNumber));
@@ -64,7 +66,9 @@ public class EscapeCharFilter implements Filter {
     private Object processList(List<Object> inputList, Map<String, Object> args, PebbleTemplate self, int lineNumber) {
         List<Object> resultList = new ArrayList<>();
         for (Object item : inputList) {
-            if (item instanceof String stringValue) {
+            if (item == null) {
+                resultList.add(null);
+            } else if (item instanceof String stringValue) {
                 resultList.add(escapeString(stringValue, args, self, lineNumber));
             } else if (item instanceof Map) {
                 resultList.add(processMap((Map<String, Object>) item, args, self, lineNumber));
@@ -90,18 +94,24 @@ public class EscapeCharFilter implements Filter {
             throw new PebbleException(null, "The 'escapeChar' filter expects an argument '" + ARG_NAME + "'.", lineNumber, self.getName());
         }
 
-        final String type = (String) args.get(ARG_NAME);
+        if (!(args.get(ARG_NAME) instanceof String type)) {
+            throw invalidTypeException(self, lineNumber);
+        }
 
         try {
             return Enums.getForNameIgnoreCase(type, FilterType.class);
         } catch (IllegalArgumentException e) {
-            throw new PebbleException(
-                null,
-                "The 'escapeChar' filter expects the value of '" + ARG_NAME + "' to be either 'single', 'double', or 'shell'.",
-                lineNumber,
-                self.getName()
-            );
+            throw invalidTypeException(self, lineNumber);
         }
+    }
+
+    private PebbleException invalidTypeException(PebbleTemplate self, int lineNumber) {
+        return new PebbleException(
+            null,
+            "The 'escapeChar' filter expects the value of '" + ARG_NAME + "' to be either 'single', 'double', or 'shell'.",
+            lineNumber,
+            self.getName()
+        );
     }
 
     private String escape(String input, String original, String replacement) {

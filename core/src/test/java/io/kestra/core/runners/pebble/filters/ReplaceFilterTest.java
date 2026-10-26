@@ -1,6 +1,8 @@
 package io.kestra.core.runners.pebble.filters;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.RegexTestUtils;
 
 import jakarta.inject.Inject;
@@ -32,6 +35,32 @@ class ReplaceFilterTest {
         String render = variableRenderer.render("{{ 'aa1bb2cc3dd4ee5' | replace({'(\\d)': '-$1-'}, regexp=true) }}", Map.of());
 
         assertThat(render).isEqualTo("aa-1-bb-2-cc-3-dd-4-ee-5-");
+    }
+
+    @Test
+    void mapWithNullValue() throws Exception {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("name", "john");
+        payload.put("nick", null);
+
+        String render = variableRenderer.render(
+            "{{ payload | replace({'john': 'jane'}) | toJson(includeNulls=true) }}",
+            Map.of("payload", payload)
+        );
+
+        assertThat(JacksonMapper.toMap(render))
+            .containsEntry("name", "jane")
+            .containsEntry("nick", null);
+    }
+
+    @Test
+    void listWithNullItem() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ items | replace({'john': 'jane'}) | toJson }}",
+            Map.of("items", Arrays.asList("john", null, Arrays.asList("john doe", null)))
+        );
+
+        assertThat(render).isEqualTo("[\"jane\",null,[\"jane doe\",null]]");
     }
 
     @Test

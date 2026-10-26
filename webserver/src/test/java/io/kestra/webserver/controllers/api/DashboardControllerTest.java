@@ -170,6 +170,21 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldServeEveryChartOfDefaultDashboardAfterValidation() {
+        DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
+            GET(DASHBOARD_PATH + "/_default"),
+            DashboardController.DashboardResponse.class
+        );
+
+        for (var chart : defaultDashboard.getCharts()) {
+            var response = client.toBlocking().exchange(
+                POST(DASHBOARD_PATH + "/_default/charts/" + chart.getId() + "/export", ChartFiltersOverrides.builder().filters(Collections.emptyList()).build())
+            );
+            assertThat(response.getStatus().getCode()).as(chart.getId()).isEqualTo(200);
+        }
+    }
+
+    @Test
     void shouldTreatNullFiltersAsNoFiltersOnChartData() {
         // Raw JSON body with an explicit "filters":null, matching the reported repro exactly -
         // going through ChartFiltersOverrides' builder would drop the null key (NON_NULL inclusion)
@@ -343,6 +358,45 @@ class DashboardControllerTest {
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
         assertThat(httpClientResponseException.getMessage()).contains("catastrophic backtracking");
+    }
+
+    @Test
+    void shouldRejectCatastrophicRegexInGlobalFilters() {
+        var catastrophic = ChartFiltersOverrides.builder().filters(
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.NAMESPACE)
+                    .operation(QueryFilter.Op.REGEX)
+                    .value("(a+)+$")
+                    .build()
+            )
+        ).build();
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+            """;
+
+        HttpClientResponseException preview = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", new DashboardController.PreviewRequest(chartYaml, catastrophic)),
+                PagedResults.class
+            )
+        );
+        HttpClientResponseException export = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/_default/charts/logs_timeseries/export", catastrophic),
+                Argument.of(byte[].class)
+            )
+        );
+
+        assertThat(preview.getStatus().getCode()).isEqualTo(400);
+        assertThat(preview.getMessage()).contains("catastrophic backtracking");
+        assertThat(export.getStatus().getCode()).isEqualTo(400);
     }
 
     @Test

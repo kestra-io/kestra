@@ -36,7 +36,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .app-id-display-box {
     position: fixed;
     top: 0;

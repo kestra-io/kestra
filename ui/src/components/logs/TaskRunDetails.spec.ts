@@ -3,6 +3,7 @@ import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {nextTick, reactive} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 const store = vi.hoisted(() => ({
     executions: {} as {
@@ -49,7 +50,7 @@ const logsFor = (id: string) => [{level: "INFO", taskRunId: "tr-1", message: `lo
 function mountDetails(props: {targetExecutionId?: string} = {}) {
     return mount(TaskRunDetails, {
         props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}, ...props},
-        global: {plugins: [i18n, KestraDesignSystem]},
+        global: {plugins: [i18n, KestraDesignSystem, memoryRouter()]},
     })
 }
 
@@ -136,7 +137,10 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(store.executions.loadFlowForExecution).toHaveBeenCalledWith(expect.objectContaining({store: false, flowId: "simple-dag"}))
         expect(store.executions.loadLogs).toHaveBeenCalledWith({
             executionId: "child-a",
-            params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO", "filters[kind][IN]": "PLAYGROUND"},
+            filters: [
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"},
+                {field: "kind", operation: "IN", value: "PLAYGROUND"},
+            ],
         })
         const vm = wrapper.vm as unknown as {filteredLogs: unknown[]}
         expect(vm.filteredLogs).toEqual(logsFor("child-a"))

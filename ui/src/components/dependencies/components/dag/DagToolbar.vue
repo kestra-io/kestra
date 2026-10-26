@@ -41,6 +41,23 @@
         />
 
         <KsText
+            v-if="legendKinds.length"
+            size="small"
+            class="legend"
+        >
+            <span
+                v-for="kind in legendKinds"
+                :key="kind"
+                class="legend-item"
+            >
+                <span
+                    class="swatch"
+                    :style="{backgroundColor: `var(${edgeKindToken(kind)})`}"
+                />{{ $t(kindLabelKey(kind)) }}
+            </span>
+        </KsText>
+
+        <KsText
             v-if="summaryTokens.length"
             size="small"
             class="summary"
@@ -63,15 +80,17 @@
     import type {LayoutMode} from "../../composables/useDependencies"
     import type {GroupField, GroupChip} from "../../composables/useDagGrouping"
     import {normalizeStatus, compactAge} from "../../utils/assetStatus"
-    import {normalizeDbtTests} from "../../utils/dbtTests"
+    import {edgeKindToken, RELATION_KINDS} from "../../utils/relationKind"
     import {ASSET} from "../../utils/types"
-    import type {Node, DbtTestFields} from "../../utils/types"
+    import type {Node} from "../../utils/types"
 
     const props = defineProps<{
         nodes: Node[];
         groupFields: GroupField[];
         groupChips: GroupChip[];
         activeGroup?: string;
+        /** Relation kinds present in the current graph's edges; drives which legend swatches show. */
+        relationKinds?: Set<string>;
     }>()
 
     const emit = defineEmits<{
@@ -86,7 +105,11 @@
 
     const assets = computed(() => props.nodes
         .filter((node) => node.metadata.subtype === ASSET)
-        .map((node) => node.metadata as DbtTestFields & {status?: string; updated?: string}))
+        .map((node) => node.metadata as {status?: string; updated?: string}))
+
+    const legendKinds = computed(() => RELATION_KINDS.filter((kind) => props.relationKinds?.has(kind)))
+
+    const kindLabelKey = (kind: string): string => `dependency.dag.kind.${kind.toLowerCase()}`
 
     const summaryParts = computed<[key: string, value: string | number][]>(() => {
         if (!assets.value.length) {
@@ -94,26 +117,16 @@
         }
 
         const counts = {fresh: 0, stale: 0, failed: 0, unknown: 0}
-        let testsFailed = 0
-        assets.value.forEach((asset) => {
-            counts[normalizeStatus(asset.status)]++
-            if (normalizeDbtTests(asset.dbtTestStatus, asset.dbtTestsTotal, asset.dbtTestsFailed)?.state === "fail") {
-                testsFailed++
-            }
-        })
+        assets.value.forEach((asset) => counts[normalizeStatus(asset.status)]++)
 
         const updates = assets.value
             .map((asset) => Date.parse(asset.updated ?? ""))
             .filter((epoch) => !Number.isNaN(epoch))
         const lastRun = updates.length ? compactAge(new Date(Math.max(...updates)).toISOString()) : undefined
 
-        // Freshness alone would print "All n fresh" over a card whose dbt tests are failing.
         const parts: [key: string, value: string | number][] = []
         if (counts.failed) {
             parts.push(["dependency.dag.summary.failed", counts.failed])
-        }
-        if (testsFailed) {
-            parts.push(["dependency.dag.summary.tests_failed", testsFailed])
         }
         if (counts.stale) {
             parts.push(["dependency.dag.summary.issues", counts.stale])
@@ -146,7 +159,7 @@
     }))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .toolbar {
         display: flex;
         align-items: center;
@@ -161,6 +174,27 @@
         .group-select {
             flex: 0 1 11rem;
             min-width: 0;
+        }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            flex: 0 0 auto;
+            gap: var(--ks-spacing-3);
+            color: var(--ks-text-secondary);
+
+            .legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: var(--ks-spacing-1);
+            }
+
+            .swatch {
+                width: 0.625rem;
+                height: 0.625rem;
+                border-radius: var(--ks-radius-xs);
+                flex-shrink: 0;
+            }
         }
 
         .summary {

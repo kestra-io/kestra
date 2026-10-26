@@ -32,6 +32,7 @@ import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.GreaterThan;
 import io.kestra.core.models.dashboards.filters.In;
+import io.kestra.core.models.dashboards.filters.Or;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
@@ -851,6 +852,17 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    void shouldNotFindExecutionsOfOtherNamespaceWhenNamespacesDifferOnlyByCase() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, FLOW, "company.a").build());
+        executionRepository.save(builder(tenant, State.Type.SUCCESS, FLOW, "company.A").build());
+
+        ArrayListTotal<Execution> found = executionRepository.findByFlowId(tenant, "company.a", FLOW, Pageable.from(1, 10));
+
+        assertThat(found).extracting(Execution::getNamespace).containsExactly("company.a");
+    }
+
+    @Test
     void shouldFindLatestExecutionGivenState() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution earliest = buildWithCreatedDate(tenant, Instant.now().minus(Duration.ofMinutes(10)));
@@ -905,18 +917,27 @@ public abstract class AbstractExecutionRepositoryTest {
             .build();
         executionRepository.save(testExecution);
 
+        Execution playgroundExecution = executionRepository.save(
+            testExecution.toBuilder()
+                .id(IdUtils.create())
+                .kind(ExecutionKind.PLAYGROUND)
+                .build()
+        );
+
         var now = ZonedDateTime.now();
+        var dataFilter = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(
+                Map.of(
+                    "count", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                    "id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build(),
+                    "date", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.START_DATE).build(),
+                    "duration", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.DURATION).build()
+                )
+            ).build();
         ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(
-            tenantId, Executions.builder()
-                .type(Executions.class.getName())
-                .columns(
-                    Map.of(
-                        "count", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
-                        "id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build(),
-                        "date", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.START_DATE).build(),
-                        "duration", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.DURATION).build()
-                    )
-                ).build(),
+            tenantId,
+            dataFilter,
             now.minusHours(1),
             now,
             null
@@ -926,6 +947,15 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data).first().hasFieldOrProperty("count");
         assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
+
+        dataFilter.updateWhereWithGlobalFilters(
+            List.of(QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(ExecutionKind.PLAYGROUND).build()),
+            null,
+            null
+        );
+        data = executionRepository.fetchData(tenantId, dataFilter, now.minusHours(1), now, null);
+
+        assertThat(data).singleElement().hasFieldOrPropertyWithValue("id", playgroundExecution.getId());
     }
 
     @Test
@@ -1098,17 +1128,41 @@ public abstract class AbstractExecutionRepositoryTest {
             .build();
         executionRepository.save(testExecution);
 
+        executionRepository.save(
+            testExecution.toBuilder()
+                .id(IdUtils.create())
+                .kind(ExecutionKind.PLAYGROUND)
+                .build()
+        );
+        executionRepository.save(
+            testExecution.toBuilder()
+                .id(IdUtils.create())
+                .kind(ExecutionKind.PLAYGROUND)
+                .build()
+        );
+
         var now = ZonedDateTime.now();
+        var dataFilter = ExecutionsKPI.builder()
+            .type(ExecutionsKPI.class.getName())
+            .columns(ColumnDescriptor.<ExecutionsKPI.Fields> builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+            .build();
         Double value = executionRepository.fetchValue(
-            tenantId, ExecutionsKPI.builder()
-                .type(ExecutionsKPI.class.getName())
-                .columns(ColumnDescriptor.<ExecutionsKPI.Fields> builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
-                .build(),
+            tenantId,
+            dataFilter,
             now.minusHours(1),
             now,
             false
         );
         assertEquals(1.0, value);
+
+        dataFilter.updateWhereWithGlobalFilters(
+            List.of(QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(ExecutionKind.PLAYGROUND).build()),
+            null,
+            null
+        );
+        value = executionRepository.fetchValue(tenantId, dataFilter, now.minusHours(1), now, false);
+
+        assertEquals(2.0, value);
     }
 
     @Test
@@ -1259,10 +1313,10 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         for (int i = 0; i < 2; i++) {
-            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i));
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i, false));
         }
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i));
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i, false));
         }
 
         // When / Then: scoping to a single loop task returns only that task's iterations
@@ -1289,7 +1343,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i));
+            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i, false));
         }
         QueryFilter parentFilter = QueryFilter.builder().field(QueryFilter.Field.PARENT_ID).operation(QueryFilter.Op.EQUALS).value(parent.getId()).build();
         QueryFilter kindFilter = QueryFilter.builder().field(QueryFilter.Field.KIND).operation(QueryFilter.Op.EQUALS).value(ExecutionKind.LOOP).build();
@@ -1315,8 +1369,10 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<Execution> failed = executionRepository.find(
             Pageable.UNPAGED, tenant,
-            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
-                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build())
+            List.of(
+                parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
+                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build()
+            )
         );
         assertThat(failed).isEmpty();
 
@@ -2099,6 +2155,91 @@ public abstract class AbstractExecutionRepositoryTest {
 
         // Then
         assertThat(value).isEqualTo((double) testCase.expectedIds().size());
+    }
+
+    @ParameterizedTest
+    @MethodSource("kindFilterExpectedTotals")
+    protected void shouldCountTheSameExecutionsInChartAndTableForKindFilter(ExecutionKind kind, long expectedTotal) throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Stream.of(
+            Collections.nCopies(14, (ExecutionKind) null),
+            Collections.nCopies(29, ExecutionKind.PLAYGROUND),
+            Collections.nCopies(3, ExecutionKind.TEST)
+        )
+            .flatMap(List::stream)
+            .forEach(executionKind -> executionRepository.save(builder(tenantId, Type.SUCCESS, "flowA").kind(executionKind).build()));
+
+        List<QueryFilter> filters = kind == null ? List.of()
+            : List.of(QueryFilter.builder().field(Field.KIND).operation(Op.EQUALS).value(kind).build());
+        var startDate = ZonedDateTime.now().minusHours(1);
+        var endDate = ZonedDateTime.now().plusMinutes(1);
+        var chart = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(
+                Map.of(
+                    "date", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.START_DATE).build(),
+                    "state", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.STATE).build(),
+                    "total", ColumnDescriptor.<Executions.Fields> builder().agg(AggregationType.COUNT).build()
+                )
+            )
+            .build();
+        chart.updateWhereWithGlobalFilters(filters, startDate, endDate);
+
+        long tableTotal = executionRepository.find(Pageable.from(1, 1), tenantId, filters).getTotal();
+        long chartTotal = executionRepository.fetchData(tenantId, chart, startDate, endDate, null).stream()
+            .mapToLong(row -> ((Number) row.get("total")).longValue())
+            .sum();
+
+        assertThat(chartTotal).isEqualTo(tableTotal);
+        assertThat(chartTotal).isEqualTo(expectedTotal);
+    }
+
+    static Stream<Arguments> kindFilterExpectedTotals() {
+        return Stream.of(
+            Arguments.of(null, 14L),
+            // NORMAL currently matches 0 because normal executions have a null kind: https://github.com/kestra-io/kestra/issues/21536
+            Arguments.of(ExecutionKind.NORMAL, 0L),
+            Arguments.of(ExecutionKind.PLAYGROUND, 29L),
+            Arguments.of(ExecutionKind.TEST, 3L)
+        );
+    }
+
+    @Test
+    protected void shouldCountNonNormalExecutionsWhenKindFilterIsNested() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        executionRepository.save(builder(tenantId, Type.SUCCESS, "flowA").kind(ExecutionKind.PLAYGROUND).build());
+        executionRepository.save(builder(tenantId, Type.SUCCESS, "flowA").kind(ExecutionKind.TEST).build());
+
+        var nestedKindFilter = Or.<Executions.Fields> builder()
+            .field(Executions.Fields.STATE)
+            .values(
+                List.of(
+                    Or.<Executions.Fields> builder()
+                        .field(Executions.Fields.STATE)
+                        .values(List.of(EqualTo.<Executions.Fields> builder().field(Executions.Fields.KIND).value(ExecutionKind.PLAYGROUND.name()).build()))
+                        .build(),
+                    EqualTo.<Executions.Fields> builder().field(Executions.Fields.KIND).value(ExecutionKind.TEST.name()).build()
+                )
+            )
+            .build();
+        var startDate = ZonedDateTime.now().minusHours(1);
+        var endDate = ZonedDateTime.now().plusMinutes(1);
+        var chart = Executions.builder()
+            .type(Executions.class.getName())
+            .columns(Map.of("total", ColumnDescriptor.<Executions.Fields> builder().agg(AggregationType.COUNT).build()))
+            .where(List.of(nestedKindFilter))
+            .build();
+        var kpi = ExecutionsKPI.builder()
+            .type(ExecutionsKPI.class.getName())
+            .columns(ColumnDescriptor.<ExecutionsKPI.Fields> builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+            .where(List.of(nestedKindFilter))
+            .build();
+
+        assertThat(executionRepository.fetchData(tenantId, chart, startDate, endDate, null))
+            .singleElement()
+            .extracting(row -> ((Number) row.get("total")).longValue())
+            .isEqualTo(2L);
+        assertThat(executionRepository.fetchValue(tenantId, kpi, startDate, endDate, false)).isEqualTo(2.0);
     }
 
     @Test

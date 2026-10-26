@@ -1,6 +1,7 @@
 import {describe, test, expect} from "vitest"
 import {nextTick} from "vue"
 import FilterMultiSelect from "./FilterMultiSelect.vue"
+import KsBadge from "../../../KsBadge.vue"
 import {STATES} from "../../../../../utils/state"
 import {i18nMount} from "../../../../../../tests/units/i18nMount"
 
@@ -11,7 +12,7 @@ const ALL_STATE_OPTIONS = Object.keys(STATES).map(state => ({value: state, label
 const mountStateFilter = (modelValue: string[] = [], options = ALL_STATE_OPTIONS) =>
     i18nMount(FilterMultiSelect, {
         messages,
-        props: {filterKey: "state", modelValue, options, searchable: true},
+        props: {filterKey: "state", modelValue, options},
     })
 
 const mountFlatFilter = (modelValue: string[] = []) =>
@@ -21,7 +22,6 @@ const mountFlatFilter = (modelValue: string[] = []) =>
             filterKey: "namespace",
             modelValue,
             options: [{value: "ns1", label: "ns1"}, {value: "ns2", label: "ns2"}],
-            searchable: true,
         },
     })
 
@@ -164,6 +164,57 @@ describe("FilterMultiSelect — grouped state mode", () => {
         expect(groups.length).toBeGreaterThan(0)
     })
 
+    test("focuses the search input on mount", async () => {
+        const wrapper = i18nMount(FilterMultiSelect, {
+            messages,
+            props: {filterKey: "namespace", modelValue: [], options: [{value: "ns1", label: "ns1"}]},
+            attachTo: document.body,
+        })
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(document.activeElement).toBe(wrapper.find("input").element)
+
+        wrapper.unmount()
+    })
+
+    test("enter in the search selects every matching value and keeps the current ones", async () => {
+        const wrapper = mountStateFilter(["SUCCESS"])
+        const input = wrapper.find("input")
+
+        await input.setValue("RUN")
+        await input.trigger("keydown", {key: "Enter"})
+
+        const emitted = wrapper.emitted("update:modelValue") as string[][][]
+        expect(emitted.at(-1)![0]).toEqual(["SUCCESS", "RUNNING"])
+    })
+
+    test("enter on an empty search selects nothing", async () => {
+        const wrapper = mountFlatFilter([])
+
+        await wrapper.find("input").trigger("keydown", {key: "Enter"})
+
+        expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+    })
+
+    test("enter with server-side search only selects the loaded options that match the query", async () => {
+        const wrapper = i18nMount(FilterMultiSelect, {
+            messages,
+            props: {
+                filterKey: "namespace",
+                modelValue: [],
+                serverSideSearch: true,
+                options: [{value: "company.team", label: "company.team"}, {value: "other", label: "other"}],
+            },
+        })
+        const input = wrapper.find("input")
+
+        await input.setValue("team")
+        await input.trigger("keydown", {key: "Enter"})
+
+        const emitted = wrapper.emitted("update:modelValue") as string[][][]
+        expect(emitted.at(-1)![0]).toEqual(["company.team"])
+    })
+
     test("flat filter still emits update:modelValue on option click", async () => {
         // Given
         const wrapper = mountFlatFilter([])
@@ -176,5 +227,37 @@ describe("FilterMultiSelect — grouped state mode", () => {
         const emitted = wrapper.emitted("update:modelValue")
         expect(emitted).toBeTruthy()
         expect((emitted![0][0] as string[])).toContain("ns1")
+    })
+})
+
+describe("FilterMultiSelect — value counts", () => {
+    const badgeValues = (wrapper: ReturnType<typeof i18nMount>) =>
+        wrapper.findAllComponents(KsBadge).map(badge => badge.props("value"))
+
+    test("shows a compact count badge only on options that carry a count, zero included", () => {
+        const wrapper = i18nMount(FilterMultiSelect, {
+            messages,
+            props: {
+                filterKey: "namespace",
+                modelValue: [],
+                options: [
+                    {value: "ns1", label: "ns1", count: 18432},
+                    {value: "ns2", label: "ns2", count: 0},
+                    {value: "ns3", label: "ns3"},
+                ],
+            },
+        })
+
+        expect(badgeValues(wrapper)).toEqual(["18.4K", "0"])
+    })
+
+    test("totals the counts of a state group on its row", () => {
+        const wrapper = mountStateFilter([], [
+            {value: "RUNNING", label: "RUNNING", count: 3},
+            {value: "QUEUED", label: "QUEUED", count: 4},
+            {value: "SUCCESS", label: "SUCCESS"},
+        ])
+
+        expect(badgeValues(wrapper)).toEqual(["7"])
     })
 })

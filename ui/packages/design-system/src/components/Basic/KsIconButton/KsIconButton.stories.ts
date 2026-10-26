@@ -58,7 +58,7 @@ export const Default: Story = {
         },
         template: "<div style=\"padding:24px\"><ks-icon-button v-bind=\"args\"><trash-icon /></ks-icon-button></div>",
     }),
-    args: {},
+    args: {tooltip: "", placement: "left", ariaLabel: "Delete", disabled: false, replace: false, filled: false, size: "sm"},
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         const btn = canvas.getByRole("button")
@@ -92,6 +92,7 @@ export const TooltipPlacements: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Disabled state */
@@ -112,6 +113,7 @@ export const Disabled: Story = {
             await expect(btn).toHaveAttribute("disabled")
         }
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Action group – multiple icon buttons side by side as seen in table rows */
@@ -140,6 +142,7 @@ export const ActionGroup: Story = {
         await userEvent.click(buttons[0])
         await expect(canvas.getByText(/Last action: copy/)).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Filled – keeps a persistent background while staying centered */
@@ -154,6 +157,7 @@ export const Filled: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story: "`filled` keeps KsIconButton's centering but lets the button `type` background show through — default is the secondary box, `type=\"primary\"` gives the active fill. Used for persistent icon toggles such as the no-code Pebble switch.",
@@ -178,6 +182,7 @@ export const AriaLabel: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story: "When `ariaLabel` is set it takes precedence over `tooltip` for screen readers.",

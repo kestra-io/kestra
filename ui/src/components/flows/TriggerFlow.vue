@@ -4,12 +4,16 @@
             <slot name="button" :execute="runAction" :disabled="actionDisabled">
                 <KsButton
                     :id="actionId"
-                    :icon="PlayOutlineIcon"
+                    :icon="PlayIcon"
                     :type="type"
                     :disabled="actionDisabled"
+                    :square="iconOnly"
+                    :aria-label="iconOnly ? actionLabel : undefined"
                     @click="runAction()"
                 >
-                    {{ actionLabel }}
+                    <template v-if="!iconOnly">
+                        {{ actionLabel }}
+                    </template>
                 </KsButton>
             </slot>
         </span>
@@ -26,7 +30,9 @@
             large
         >
             <template #header>
-                <span v-html="$t('execute the flow', {id: flowId})" />
+                <i18n-t keypath="execute the flow" tag="span" scope="global">
+                    <template #id><code>{{ flowId }}</code></template>
+                </i18n-t>
             </template>
             <FlowRun ref="flowRunRef" :embed="true" :renderLabels="renderLabels" :replaySubmit="submit" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
             <template #footer>
@@ -99,8 +105,9 @@
     import {useFlowStore} from "../../stores/flow"
     import FlowRun, {type ReplaySubmitOptions} from "./FlowRun.vue"
     import FlowRunActions from "./FlowRunActions.vue"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
-    import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
+    import PlayIcon from "vue-material-design-icons/Play.vue"
     import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
@@ -112,6 +119,7 @@
         submit?: ((options: ReplaySubmitOptions) => void | Promise<void>) | null
         lazy?: boolean
         renderLabels?: string[]
+        compact?: boolean
     }>(), {
         disabled: false,
         type: "primary",
@@ -119,9 +127,12 @@
         submit: null,
         lazy: false,
         renderLabels: undefined,
+        compact: false,
     })
 
     const {t} = useI18n({useScope: "global"})
+    const isMobile = useIsMobile()
+    const iconOnly = computed(() => props.compact && isMobile.value)
     const toast = useToast()
     const apiStore = useApiStore()
     const executionsStore = useExecutionsStore()
@@ -289,7 +300,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .trigger-flow-wrapper {
         display: inline;
     }

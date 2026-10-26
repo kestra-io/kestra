@@ -10,13 +10,15 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true" scrollable>
         <template #header>
-            <span v-html="$t('resumed title', {id: escapeHtml(execution.id)})" />
+            <i18n-t keypath="resumed title" tag="span" scope="global">
+                <template #id><code>{{ execution.id }}</code></template>
+            </i18n-t>
         </template>
         <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
         </KsForm>
         <template #footer>
-            <KsButton :icon="PlayBox" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
+            <KsButton :icon="Play" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
                 {{ $t('resume') }}
             </KsButton>
         </template>
@@ -28,10 +30,9 @@
     import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-    import PlayBox from "vue-material-design-icons/PlayBox.vue"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
-    import {State, escapeHtml, type FormInstance} from "@kestra-io/design-system"
+    import {State, type FormInstance} from "@kestra-io/design-system"
     import * as FlowUtils from "../../../../../utils/flowUtils"
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import InputsForm from "../../../../../components/inputs/InputsForm.vue"

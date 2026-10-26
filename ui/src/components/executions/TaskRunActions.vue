@@ -44,8 +44,8 @@
                     v-if="selectedAttempt?.state.current === 'FAILED'"
                     @click="fixErrorWithAi"
                 >
-                    <span class="d-inline-flex align-items-center">
-                        <AiIcon class="me-1" />
+                    <span class="fix-with-ai">
+                        <AiIcon />
                         <span>{{ $t('fix_with_ai') }}</span>
                     </span>
                 </KsDropdownItem>
@@ -89,7 +89,7 @@
                     component="KsDropdownItem"
                     :key="`change-status-${currentTaskRun.id}-${currentAttemptIndex}-${selectedAttempt?.state.startDate}`"
                     :execution="execution"
-                    :taskRun="currentTaskRun"
+                    :taskRun="currentTaskRunWithExecution"
                     :attemptIndex="currentAttemptIndex"
                     @follow="emit('follow', $event)"
                 />
@@ -164,14 +164,13 @@
     import Check from "vue-material-design-icons/Check.vue"
 
     import {State} from "@kestra-io/design-system"
-    import type {LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
+    import type {LogEntry, TaskRun, TaskRunAttempt} from "@kestra-io/kestra-sdk"
     import type {Execution} from "../../stores/executions"
     import type {ExecutionTaskRun} from "./executionTaskRun"
     import type {Flow} from "../../stores/flow"
 
     import * as Utils from "../../utils/utils"
     import {findTaskById, LOOP_TASK_TYPE} from "../../utils/flowUtils"
-    import {loopIterationsRoute} from "../../utils/executionUtils"
     import {useToast} from "../../utils/toast"
     import {handledIf} from "../../utils/kestraHttp"
     import resource from "../../models/resource"
@@ -191,6 +190,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import AiIcon from "../ai/AiIcon.vue"
     import {NodeMenuItem, type NodeAction} from "@kestra-io/topology"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const props = withDefaults(defineProps<{
         taskRun: ExecutionTaskRun
@@ -246,6 +246,14 @@
     const currentTaskRun = computed(() => {
         return currentTaskRuns.value.find((r) => r.id === selectedTaskRunId.value) || props.taskRun
     })
+    const currentTaskRunWithExecution = computed<TaskRun>(() => {
+        return {
+            ...currentTaskRun.value, 
+            executionId: props.execution.id,
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId.toString(),
+        } satisfies TaskRun
+    })
 
     function attempts(taskRun: ExecutionTaskRun): TaskRunAttempt[] {
         if (props.execution.state.current === State.RUNNING || props.forcedAttemptNumber === undefined) {
@@ -276,7 +284,7 @@
     )
 
     function openIterations() {
-        router.push(loopIterationsRoute(props.execution.id, props.taskRun.taskId))
+        router.push(loopIterationsRoute(props.execution, props.taskRun.taskId))
     }
 
     function downloadNameFor(currentTaskRunId: string): string {
@@ -289,7 +297,7 @@
     function downloadContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: currentTaskRunId}],
         }).then((response: unknown) => {
             Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadNameFor(currentTaskRunId))
         })
@@ -298,7 +306,7 @@
     function copyContent(currentTaskRunId: string) {
         executionsStore.downloadLogs({
             executionId: props.execution.id,
-            params: {"filters[taskRunId][EQUALS]": currentTaskRunId},
+            filters: [{field: "taskRunId", operation: "EQUALS", value: currentTaskRunId}],
         }).then((response: unknown) => {
             Utils.copy(response as string).then(() => {
                 coreStore.message = {
@@ -338,7 +346,11 @@
             taskRunLogs = await executionsStore.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
+                filters: [
+                    {field: "taskRunId", operation: "EQUALS", value: currentTaskRun.value.id},
+                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                ],
+                size: 100,
             }).catch((e: unknown) => {
                 handledIf(e, [403, 404])
                 return []
@@ -358,7 +370,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-run-buttons {
         padding: 0 .5rem;
         border: none;
@@ -369,7 +381,13 @@
         }
     }
 
-        .iteration-selector {
+    .fix-with-ai {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    .iteration-selector {
         border-bottom: var(--ks-border-block-primary);
         padding: var(--ks-spacing-2);
 

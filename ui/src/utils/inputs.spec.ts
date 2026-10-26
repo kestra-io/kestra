@@ -135,6 +135,15 @@ describe("unflattenToForms", () => {
         ])
     })
 
+    it("carries descriptionDisplayMode from formGroups onto the FORM node", () => {
+        const tree = unflattenToForms(
+            [{id: "environment.region", type: "STRING"}],
+            {environment: {displayName: "Environment", description: "Pick env", descriptionDisplayMode: "TOOLTIP"}},
+        )
+        expect(tree[0].descriptionDisplayMode).toBe("TOOLTIP")
+        expect(buildWizardSteps(tree).find(s => s.kind === "form")?.descriptionDisplayMode).toBe("TOOLTIP")
+    })
+
     it("round-trips with flattenInputs (the inverse invariant)", () => {
         const leaves: InputMetaData[] = [
             {id: "environment.region", type: "STRING", displayName: "Region"},

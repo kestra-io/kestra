@@ -2,7 +2,7 @@
     <span class="icon" />
 </template>
 
-<style scoped lang="scss">
+<style scoped>
     .icon {
         height: var(--ks-font-size-lg);
         min-width: var(--ks-font-size-lg);

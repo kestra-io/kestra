@@ -15,6 +15,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -27,6 +28,8 @@ import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
+import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.Output;
@@ -646,8 +649,10 @@ public class ExecutorService {
                         AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                         if (retry != null) {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                            if (retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                            if (
+                                retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)
+                            ) {
                                 behavior = retry.getBehavior();
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
                                     : taskRun.nextRetryDate(retry);
@@ -839,9 +844,11 @@ public class ExecutorService {
     private Optional<ExecutionDelay> flowableRetryDelay(ExecutorContext executor, Task task, TaskRun taskRun, WorkerTaskResult result) {
         AbstractRetry retry = task.getRetry();
 
-        if (retry == null
-            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-            || !result.getTaskRun().getState().isTerminated()) {
+        if (
+            retry == null
+                || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                || !result.getTaskRun().getState().isTerminated()
+        ) {
             return Optional.empty();
         }
 
@@ -994,7 +1001,8 @@ public class ExecutorService {
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext)
+        throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);
@@ -1928,7 +1936,7 @@ public class ExecutorService {
 
     /**
      * Process an SLA violation on an executor:
-     * - If behavior is FAIL or CANCEL: kill the execution, then return it with the new state.
+     * - If behavior is FAIL or CANCEL: terminate queued executions directly, otherwise kill them, then return the new state.
      * - If behavior is NONE: do nothing and return an unmodified executor.
      * <p>
      * Then, if there are labels, they are added to the SLA (modifying the executor)
@@ -1961,7 +1969,39 @@ public class ExecutorService {
         return executor;
     }
 
+    /**
+     * Applies monitoring SLAs before a queued execution claims a concurrency slot or dispatches tasks.
+     */
+    public Execution handleQueuedExecutionSLA(Execution execution) throws QueueException {
+        FlowWithSource flow = flowExecutorInterface.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+        if (ListUtils.isEmpty(flow.getSla())) {
+            return execution;
+        }
+        ExecutorContext executor = new ExecutorContext(execution, flow);
+        RunContext runContext = runContextFactory.of(flow, execution);
+        for (SLA sla : ListUtils.emptyOnNull(flow.getSla())) {
+            if (sla instanceof ExecutionMonitoringSLA) {
+                Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, execution, sla);
+                if (violation.isPresent()) {
+                    executor = processViolation(runContext, executor, violation.get());
+                    metricRegistry.counter(
+                        MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION,
+                        metricRegistry.tags(execution)
+                    ).increment();
+                    if (executor.getExecution().getState().isTerminated()) {
+                        break;
+                    }
+                }
+            }
+        }
+        return executor.getExecution();
+    }
+
     private Execution markAs(Execution execution, State.Type state) throws QueueException {
+        if (execution.getState().isQueued()) {
+            return execution.withState(state);
+        }
+
         Execution newExecution = execution.findLastNotTerminated()
             .map(taskRun ->
             {

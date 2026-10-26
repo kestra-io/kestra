@@ -54,7 +54,8 @@ class ConcurrencySlotReleaseProcessorTest {
             resolver,
             Mockito.mock(ExecutionQueuedStateStore.class),
             Mockito.mock(FlowMetaStoreInterface.class),
-            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
+            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS),
+            Mockito.mock(ExecutorService.class)
         );
     }
 
@@ -151,6 +152,15 @@ class ConcurrencySlotReleaseProcessorTest {
     }
 
     @Test
+    void shouldNotReleaseWhenAnUnstampedQueuedExecutionFailedItsSLA() {
+        Execution queued = created().withState(State.Type.QUEUED);
+
+        processor.release(cycle(queued, queued.withState(State.Type.FAILED)), true);
+
+        verifyNotReleased();
+    }
+
+    @Test
     void shouldReleaseWhenAnUnstampedExecutionRanToCompletion() {
         // Given
         Execution execution = created().withState(State.Type.RUNNING).withState(State.Type.SUCCESS);
@@ -172,7 +182,8 @@ class ConcurrencySlotReleaseProcessorTest {
             noLimit,
             Mockito.mock(ExecutionQueuedStateStore.class),
             Mockito.mock(FlowMetaStoreInterface.class),
-            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
+            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS),
+            Mockito.mock(ExecutorService.class)
         );
         // an execution without the claim stamp: nothing tells the processor which scopes to give
         // back, and the flow declares none either
@@ -197,7 +208,8 @@ class ConcurrencySlotReleaseProcessorTest {
             noLimit,
             Mockito.mock(ExecutionQueuedStateStore.class),
             Mockito.mock(FlowMetaStoreInterface.class),
-            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS)
+            Mockito.mock(MetricRegistry.class, Mockito.RETURNS_DEEP_STUBS),
+            Mockito.mock(ExecutorService.class)
         );
         Execution execution = stamped(created().withState(State.Type.RUNNING).withState(State.Type.SUCCESS));
 

@@ -1,0 +1,17 @@
+id: sla-queued
+namespace: io.kestra.tests
+concurrency:
+  limit: 1
+  behavior: QUEUE
+sla:
+  - id: maxdur
+    type: MAX_DURATION
+    behavior: FAIL
+    duration: PT6S
+tasks:
+  - id: side_effect
+    type: io.kestra.plugin.core.log.Log
+    message: SIDE EFFECT
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT30S

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.ScopedConcurrencyLimit;
@@ -207,6 +208,34 @@ public abstract class ConcurrencyLimitStateStoreContract {
         // Then: the slot is released and nothing is popped
         assertThat(popped).isEmpty();
         assertThat(currentCount(flow)).isZero();
+    }
+
+    @Test
+    void shouldSkipTerminatedCandidatesWithoutClaimingSlots() {
+        Flow flow = flow(1);
+        List<ScopedConcurrencyLimit> limits = List.of(ScopedConcurrencyLimit.ofFlow(flow));
+        Execution expired = Execution.newExecution(flow, List.of()).withState(State.Type.QUEUED);
+        Execution eligible = Execution.newExecution(flow, List.of()).withState(State.Type.QUEUED);
+        Execution waiting = Execution.newExecution(flow, List.of()).withState(State.Type.QUEUED);
+        Instant now = Instant.now();
+        store().countThenProcess(flow, (txContext, limit) ->
+        {
+            queuedStore().save(txContext, queued(flow, expired, now.minusSeconds(60)));
+            queuedStore().save(txContext, queued(flow, eligible, now.minusSeconds(30)));
+            queuedStore().save(txContext, queued(flow, waiting, now));
+            return Pair.of(null, limit.withRunning(1));
+        });
+
+        List<Execution> popped = store().releaseThenPop(
+            flow, limits, queuedStore(), candidate -> limits,
+            (txContext, execution) -> execution.withState(execution.getId().equals(expired.getId()) ? State.Type.FAILED : State.Type.RUNNING)
+        );
+
+        assertThat(popped).extracting(Execution::getId).containsExactly(expired.getId(), eligible.getId());
+        assertThat(popped).extracting(e -> e.getState().getCurrent()).containsExactly(State.Type.FAILED, State.Type.RUNNING);
+        assertThat(currentCount(flow)).isEqualTo(1);
+        assertThat(queuedStore().getAllForAllTenants()).filteredOn(q -> q.getFlowId().equals(flow.getId()))
+            .extracting(q -> q.getExecution().getId()).containsExactly(waiting.getId());
     }
 
     @Test

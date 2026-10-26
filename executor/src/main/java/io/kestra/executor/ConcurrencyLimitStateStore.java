@@ -1,7 +1,7 @@
 package io.kestra.executor;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -102,13 +102,14 @@ public interface ConcurrencyLimitStateStore {
      * scopes, skipping candidates that do not fit yet. Popping continues while the widest
      * released scope still has room, so a removed limit, or a raised namespace or tenant limit, drains the queue instead of
      * releasing a single execution. The popped executions' scope counters are incremented in the
-     * same transaction and the mapped executions are returned; the caller must emit them only
-     * after this method returns, never from inside the transaction.
+     * same transaction, except when the consumer returns a terminated execution, which is removed
+     * without claiming a slot and popping continues. The mapped executions are returned; the caller
+     * must emit them only after this method returns, never from inside the transaction.
      * <p>
      * The default implementation only supports the single flow-scoped limit case (the OSS
      * semantics): for the {@link Concurrency.Behavior#QUEUE} behavior it delegates to
-     * {@link #decrementAndPop(FlowInterface, ExecutionQueuedStateStore, BiConsumer)}, which pops
-     * at most one execution, otherwise to {@link #decrement(FlowInterface)}. When the flow limit
+     * {@link #countThenProcess(FlowInterface, BiFunction)}, which admits at most one execution,
+     * otherwise to {@link #decrement(FlowInterface)}. When the flow limit
      * was removed it delegates to {@link #decrementAndPopAll}. Implementors must override it to
      * support namespace or tenant scoped limits.
      *
@@ -132,9 +133,31 @@ public interface ConcurrencyLimitStateStore {
             }
 
             if (limits.getFirst().concurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
-                AtomicReference<Execution> popped = new AtomicReference<>();
-                decrementAndPop(flow, executionQueuedStateStore, (txContext, queued) -> popped.set(consumer.apply(txContext, queued)));
-                return popped.get() == null ? List.of() : List.of(popped.get());
+                List<Execution> popped = new ArrayList<>();
+                countThenProcess(flow, (txContext, limit) ->
+                {
+                    int running = Math.max(0, (limit.getRunning() == null ? 0 : limit.getRunning()) - 1);
+                    if (running < limits.getFirst().concurrency().getLimit()) {
+                        int previousSize;
+                        do {
+                            previousSize = popped.size();
+                            executionQueuedStateStore.pop(
+                                txContext, flow.getTenantId(), flow.getNamespace(), flow.getId(),
+                                (ctx, queued) -> popped.add(consumer.apply(ctx, queued))
+                            );
+                        } while (popped.size() > previousSize && popped.getLast().getState().isTerminated());
+                        if (!popped.isEmpty() && !popped.getLast().getState().isTerminated()) {
+                            running++;
+                        }
+                    } else {
+                        LOG.error(
+                            "Concurrency limit reached for flow {}.{} after decrementing the execution running count. No new executions will be dequeued.",
+                            flow.getNamespace(), flow.getId()
+                        );
+                    }
+                    return Pair.of(null, limit.withRunning(running));
+                });
+                return popped;
             }
 
             int newLimit = decrement(flow);

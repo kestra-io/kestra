@@ -11,6 +11,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.flows.sla.Violation;
+import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -50,6 +51,7 @@ public class SLAMonitorProcessor {
     private final SLAService slaService;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
+    private final ExecutionQueuedStateStore executionQueuedStateStore;
 
     @Inject
     public SLAMonitorProcessor(
@@ -60,7 +62,8 @@ public class SLAMonitorProcessor {
         ExecutorService executorService,
         SLAService slaService,
         RunContextFactory runContextFactory,
-        MetricRegistry metricRegistry) {
+        MetricRegistry metricRegistry,
+        ExecutionQueuedStateStore executionQueuedStateStore) {
         this.slaMonitorStateStore = slaMonitorStateStore;
         this.executionStateStore = executionStateStore;
         this.flowMetaStore = flowMetaStore;
@@ -69,6 +72,7 @@ public class SLAMonitorProcessor {
         this.slaService = slaService;
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
+        this.executionQueuedStateStore = executionQueuedStateStore;
     }
 
     /**
@@ -116,6 +120,9 @@ public class SLAMonitorProcessor {
                 if (violation.isPresent()) { // should always be true
                     log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
                     executor = executorService.processViolation(runContext, executor, violation.get());
+                    if (execution.getState().isQueued() && executor.getExecution().getState().isTerminated()) {
+                        executionQueuedStateStore.remove(execution);
+                    }
 
                     metricRegistry
                         .counter(

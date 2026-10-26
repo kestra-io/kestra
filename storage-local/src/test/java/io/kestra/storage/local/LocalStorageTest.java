@@ -149,4 +149,59 @@ class LocalStorageTest extends StorageTestSuite {
             .resolve("file.txt.metadata");
         assertFalse(Files.exists(orphanMetadataPath));
     }
+
+    @Test
+    void shouldDeleteByPrefixSingleFileWithCompanionMetadata() throws URISyntaxException, IOException {
+        String tenantId = IdUtils.create();
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/single.txt"),
+            new StorageObject(Map.of("someMetadata", "someValue"), new ByteArrayInputStream("data".getBytes()))
+        );
+
+        List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/single.txt"));
+        assertThat(deleted, notNullValue());
+        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/single.txt")));
+
+        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
+        Path orphanMetadataPath = localStorage.getBasePath().toAbsolutePath()
+            .resolve(tenantId)
+            .resolve("single.txt.metadata");
+        assertFalse(Files.exists(orphanMetadataPath));
+    }
+
+    @Test
+    void shouldDeleteByPrefixDirectoryWithCompanionMetadata() throws URISyntaxException, IOException {
+        String tenantId = IdUtils.create();
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/dir/file1.txt"),
+            new StorageObject(Map.of("someMetadata", "someValue"), new ByteArrayInputStream("data".getBytes()))
+        );
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/dir/file2.txt"),
+            new StorageObject(Map.of("otherMetadata", "otherValue"), new ByteArrayInputStream("data2".getBytes()))
+        );
+
+        List<URI> deleted = storageInterface.deleteByPrefix(tenantId, null, new URI("/dir/"));
+        assertThat(deleted, notNullValue());
+        assertFalse(deleted.stream().anyMatch(uri -> uri.getPath().endsWith(".metadata")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file1.txt")));
+        assertFalse(storageInterface.exists(tenantId, null, new URI("/dir/file2.txt")));
+
+        LocalStorage localStorage = assertInstanceOf(LocalStorage.class, storageInterface);
+        Path orphanMetadata1 = localStorage.getBasePath().toAbsolutePath()
+            .resolve(tenantId)
+            .resolve("dir/file1.txt.metadata");
+        Path orphanMetadata2 = localStorage.getBasePath().toAbsolutePath()
+            .resolve(tenantId)
+            .resolve("dir/file2.txt.metadata");
+        assertFalse(Files.exists(orphanMetadata1));
+        assertFalse(Files.exists(orphanMetadata2));
+    }
 }

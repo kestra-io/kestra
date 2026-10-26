@@ -2236,7 +2236,9 @@ public abstract class AbstractExecutionRepositoryTest {
             .build();
 
         assertThat(executionRepository.fetchData(tenantId, chart, startDate, endDate, null))
-            .singleElement().extracting("total").hasToString("2");
+            .singleElement()
+            .extracting(row -> ((Number) row.get("total")).longValue())
+            .isEqualTo(2L);
         assertThat(executionRepository.fetchValue(tenantId, kpi, startDate, endDate, false)).isEqualTo(2.0);
     }
 

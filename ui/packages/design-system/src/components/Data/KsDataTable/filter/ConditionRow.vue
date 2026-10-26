@@ -90,7 +90,17 @@
         @visible-change="(v: boolean) => v && ensureOptions()"
         @update:modelValue="onValueChange"
     >
-        <KsOption v-for="opt in options" :key="opt.value" :label="opt.label" :value="opt.value" />
+        <KsOption v-for="opt in options" :key="opt.value" :label="opt.label" :value="opt.value">
+            <span class="cond-option">
+                {{ opt.label }}
+                <KsBadge
+                    v-if="opt.count !== undefined"
+                    :value="formatCount(opt.count!)"
+                    type="neutral"
+                    inline
+                />
+            </span>
+        </KsOption>
     </KsSelect>
 
     <KsPopover
@@ -144,6 +154,7 @@
         type FilterValue,
     } from "./utils/filterTypes"
     import {ChevronDown, Delete} from "./utils/icons"
+    import {formatCount} from "./utils/helpers"
     import {EXECUTION_STATUSES} from "../../KsExecutionStatus/types"
 
     const props = defineProps<{
@@ -371,6 +382,12 @@
 </script>
 
 <style scoped>
+.cond-option {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
+
 .cond-field {
     flex-shrink: 0;
     width: auto;

@@ -1,6 +1,7 @@
 import type {LocationQuery, LocationQueryRaw} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
 import {DATE_FILTER_KEY, MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import {currentLocale} from "../../../../../utils/date"
 
 /**
  * Normalizes a `filters[...]` query-param value after vue-router (or
@@ -344,3 +345,7 @@ export const parseFiltersFromString = (str: string): Record<string, string | str
 
 export const isSearchPath = (name: string) =>
     ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name)
+
+/** A value count in short form (`18K`, `2.2K`), so big counts stay distinct at a small width. */
+export const formatCount = (count: number): string =>
+    new Intl.NumberFormat(currentLocale(), {notation: "compact", maximumFractionDigits: 1}).format(count)

@@ -1,6 +1,7 @@
 import {describe, test, expect} from "vitest"
 import {nextTick} from "vue"
 import FilterMultiSelect from "./FilterMultiSelect.vue"
+import KsBadge from "../../../KsBadge.vue"
 import {STATES} from "../../../../../utils/state"
 import {i18nMount} from "../../../../../../tests/units/i18nMount"
 
@@ -199,5 +200,37 @@ describe("FilterMultiSelect — grouped state mode", () => {
         const emitted = wrapper.emitted("update:modelValue")
         expect(emitted).toBeTruthy()
         expect((emitted![0][0] as string[])).toContain("ns1")
+    })
+})
+
+describe("FilterMultiSelect — value counts", () => {
+    const badgeValues = (wrapper: ReturnType<typeof i18nMount>) =>
+        wrapper.findAllComponents(KsBadge).map(badge => badge.props("value"))
+
+    test("shows a compact count badge only on options that carry a count, zero included", () => {
+        const wrapper = i18nMount(FilterMultiSelect, {
+            messages,
+            props: {
+                filterKey: "namespace",
+                modelValue: [],
+                options: [
+                    {value: "ns1", label: "ns1", count: 18432},
+                    {value: "ns2", label: "ns2", count: 0},
+                    {value: "ns3", label: "ns3"},
+                ],
+            },
+        })
+
+        expect(badgeValues(wrapper)).toEqual(["18.4K", "0"])
+    })
+
+    test("totals the counts of a state group on its row", () => {
+        const wrapper = mountStateFilter([], [
+            {value: "RUNNING", label: "RUNNING", count: 3},
+            {value: "QUEUED", label: "QUEUED", count: 4},
+            {value: "SUCCESS", label: "SUCCESS"},
+        ])
+
+        expect(badgeValues(wrapper)).toEqual(["7"])
     })
 })

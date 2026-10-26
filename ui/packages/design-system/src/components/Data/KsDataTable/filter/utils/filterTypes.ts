@@ -107,6 +107,8 @@ export interface FilterValue {
     value: string;
     color?: string;
     description?: string;
+    /** How many rows match this value, shown as a badge next to it in the value lists. */
+    count?: number;
 }
 
 export interface AppliedFilter {

@@ -73,6 +73,12 @@
                                     @click="handleOptionChange(group.options[0].value, !modelValue.includes(group.options[0].value))"
                                 >
                                     <KsExecutionStatus :status="group.options[0].value" size="small" />
+                                    <KsBadge
+                                        v-if="group.options[0].count !== undefined"
+                                        :value="formatCount(group.options[0].count!)"
+                                        type="neutral"
+                                        inline
+                                    />
                                 </button>
                             </div>
                         </div>
@@ -109,6 +115,12 @@
                                         :style="{background: `var(${group.token})`}"
                                     />
                                     <span class="group-label-text">{{ $t(group.labelKey) }}</span>
+                                    <KsBadge
+                                        v-if="groupTotal(group) !== undefined"
+                                        :value="formatCount(groupTotal(group)!)"
+                                        type="neutral"
+                                        inline
+                                    />
                                     <span
                                         class="group-count"
                                         :class="{active: isGroupPartiallySelected(group) || isGroupFullySelected(group)}"
@@ -137,6 +149,12 @@
                                         <KsExecutionStatus
                                             :status="option.value"
                                             size="small"
+                                        />
+                                        <KsBadge
+                                            v-if="option.count !== undefined"
+                                            :value="formatCount(option.count!)"
+                                            type="neutral"
+                                            inline
                                         />
                                     </div>
                                     <KsCheckbox
@@ -169,6 +187,12 @@
                 >
                     <div class="option-content">
                         <span class="option-label">{{ option.label }}</span>
+                        <KsBadge
+                            v-if="option.count !== undefined"
+                            :value="formatCount(option.count!)"
+                            type="neutral"
+                            inline
+                        />
                     </div>
                     <KsCheckbox
                         :modelValue="modelValue.includes(option.value)"
@@ -196,13 +220,15 @@
     import {Magnify, InformationOutline, ChevronDown} from "../utils/icons"
     import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue"
     import {resolveStateGroups, type ResolvedGroup} from "../utils/stateGroups"
+    import {formatCount} from "../utils/helpers"
+    import type {FilterValue} from "../utils/filterTypes"
 
     const props = defineProps<{
         label?: string;
         filterKey?: string;
         modelValue: string[];
         placeholder?: string;
-        options: {value: string; label: string}[];
+        options: FilterValue[];
         /** When true, emit `update:search` instead of filtering options locally — parent reloads via valueProvider. */
         serverSideSearch?: boolean;
     }>()
@@ -315,6 +341,11 @@
             next.add(key)
         }
         expandedGroups.value = next
+    }
+
+    const groupTotal = (group: ResolvedGroup) => {
+        const counted = group.options.filter(o => o.count !== undefined)
+        return counted.length ? counted.reduce((sum, o) => sum + (o.count ?? 0), 0) : undefined
     }
 
     const groupSelectedCount = (group: ResolvedGroup) =>
@@ -434,6 +465,7 @@
             & .option-content {
                 display: flex;
                 align-items: center;
+                gap: var(--ks-spacing-2);
                 flex: 1;
                 min-width: 0;
 

@@ -637,8 +637,8 @@ const SELECT_KEY = {
     comparators: ["=", "!="],
     showComparatorSelection: true,
     valueProvider: () => Promise.resolve([
-        {label: "Enabled", value: "ENABLED"},
-        {label: "Disabled", value: "DISABLED"},
+        {label: "Enabled", value: "ENABLED", count: 128},
+        {label: "Disabled", value: "DISABLED", count: 7},
     ]),
 }
 
@@ -661,11 +661,11 @@ const MULTI_VALUE_KEY = {
     comparatorLabels: {">=": "At or Above", "<=": "At or Below"},
     showComparatorSelection: true,
     valueProvider: () => Promise.resolve([
-        {label: "Trace", value: "TRACE"},
-        {label: "Debug", value: "DEBUG"},
-        {label: "Info", value: "INFO"},
-        {label: "Warn", value: "WARN"},
-        {label: "Error", value: "ERROR"},
+        {label: "Trace", value: "TRACE", count: 18432},
+        {label: "Debug", value: "DEBUG", count: 2210},
+        {label: "Info", value: "INFO", count: 640},
+        {label: "Warn", value: "WARN", count: 12},
+        {label: "Error", value: "ERROR", count: 0},
     ]),
 }
 

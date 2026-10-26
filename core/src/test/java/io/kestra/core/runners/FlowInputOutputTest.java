@@ -379,6 +379,60 @@ class FlowInputOutputTest {
         Assertions.assertEquals("******", results.getFirst().value());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void shouldMaskSecretsWhenRenderingResumeDescriptions(boolean validateSubmittedInputs) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description("Secret: {{ secret('???') }}")
+            .defaults(Property.ofValue("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        var results = validateSubmittedInputs
+            ? flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()
+            : flowInputOutput.resolveResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of());
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo("Secret: ******");
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(results.getFirst().value()).isEqualTo("******");
+        assertThat(input.getDescription()).isEqualTo("Secret: {{ secret('???') }}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Use `{{ trigger.date }}`", "{{ thisFunctionDoesNotExist() }}" })
+    void shouldPreserveResumeDescriptionsWhenRenderingFails(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{{ 1 + 1 }}", "Use `{{ trigger.date }}`" })
+    void shouldKeepDescriptionsLiteralWhenValidatingRegularFlowInputs(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()).containsEntry("input", null);
+    }
+
     @Test
     void shouldNotObfuscateSecretsInSelectWhenValidatingInputs() {
         // Given

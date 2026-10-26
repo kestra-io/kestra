@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "./webhook"
+import {webhookUrl, WEBHOOK_TRIGGER_TYPE, WEBHOOK_TRIGGER_TYPES} from "./webhook"
 
 describe("webhookUrl", () => {
     it("builds an absolute webhook execution URL from namespace, id and key", () => {
@@ -17,5 +17,23 @@ describe("webhookUrl", () => {
 
     it("exposes the canonical webhook trigger type", () => {
         expect(WEBHOOK_TRIGGER_TYPE).toBe("io.kestra.plugin.core.trigger.Webhook")
+    })
+})
+
+describe("WEBHOOK_TRIGGER_TYPES", () => {
+    it("every entry is a fully qualified trigger class name", () => {
+        expect(WEBHOOK_TRIGGER_TYPES.length).toBeGreaterThan(0)
+        for (const type of WEBHOOK_TRIGGER_TYPES) {
+            expect(type).toMatch(/^io\.kestra\.plugin\.[a-z0-9_.]+\.[A-Za-z0-9]+$/)
+        }
+    })
+
+    it("the list has no duplicates", () => {
+        const unique = new Set(WEBHOOK_TRIGGER_TYPES)
+        expect(unique.size).toBe(WEBHOOK_TRIGGER_TYPES.length)
+    })
+
+    it("includes canonical WEBHOOK_TRIGGER_TYPE", () => {
+        expect(WEBHOOK_TRIGGER_TYPES).toContain(WEBHOOK_TRIGGER_TYPE)
     })
 })

@@ -289,7 +289,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
      * A job the controller dispatched but the worker never ran leaves an entry that no other step
      * reclaims: {@link #handleAllWorkersForUncleanShutdown} re-emits tasks for unclean workers only,
      * so an entry left by a worker that terminated gracefully keeps its task run {@code SUBMITTED}
-     * forever. Only {@code INACTIVE} workers are considered, so a worker that is merely disconnected
+     * or {@code ACCEPTED} forever. Only {@code INACTIVE} workers are considered, so a worker that is merely disconnected
      * keeps its jobs until the termination grace period has decided its fate, and a worker configured
      * with {@link WorkerTaskRestartStrategy#NEVER} keeps them for good.
      * <p>

@@ -6,7 +6,7 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 const EXECUTIONS = "io.kestra.plugin.core.dashboard.data.Executions"
 
 const ALL_STATES = [
-    "SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING", "KILLING",
+    "SUBMITTED", "ACCEPTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING", "KILLING",
     "PAUSED", "BREAKPOINT",
     "SUCCESS",
     "WARNING",

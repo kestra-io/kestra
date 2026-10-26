@@ -95,6 +95,7 @@ const SORT_STATUS: string[] = [
     "PAUSED",
     "QUEUED",
     "SUBMITTED",
+    "ACCEPTED",
     "RUNNING",
     "RESUBMITTED",
     "SUCCESS",

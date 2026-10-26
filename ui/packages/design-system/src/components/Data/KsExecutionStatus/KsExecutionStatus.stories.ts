@@ -3,7 +3,7 @@ import {expect, within} from "storybook/test"
 import KsExecutionStatus from "./KsExecutionStatus.vue"
 
 const statuses = [
-    "CREATED", "SUBMITTED", "RESTARTED", "FAILED", "KILLED", "SUCCESS", "RETRIED", "RUNNING", "BREAKPOINT",
+    "CREATED", "SUBMITTED", "ACCEPTED", "RESTARTED", "FAILED", "KILLED", "SUCCESS", "RETRIED", "RUNNING", "BREAKPOINT",
     "WARNING", "PAUSED", "RETRYING", "KILLING", "CANCELLED", "SKIPPED", "QUEUED",
 ] as const
 

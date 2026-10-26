@@ -10,6 +10,7 @@ import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
 import AlertOutline from "vue-material-design-icons/AlertOutline.vue"
 import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
 import TrayArrowDown from "vue-material-design-icons/TrayArrowDown.vue"
+import InboxArrowDown from "vue-material-design-icons/InboxArrowDown.vue"
 import Restore from "vue-material-design-icons/Restore.vue"
 import Cancel from "vue-material-design-icons/Cancel.vue"
 import SkipNextCircleOutline from "vue-material-design-icons/SkipNextCircleOutline.vue"
@@ -35,6 +36,13 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
     SUBMITTED: {
         name: "SUBMITTED",
         icon: TrayArrowDown,
+        isRunning: true,
+        isKillable: true,
+        isFailed: false,
+    },
+    ACCEPTED: {
+        name: "ACCEPTED",
+        icon: InboxArrowDown,
         isRunning: true,
         isKillable: true,
         isFailed: false,

@@ -285,6 +285,7 @@ public class State {
     public enum Type {
         CREATED,
         SUBMITTED,
+        ACCEPTED,
         RUNNING,
         PAUSED,
         RESTARTED,

@@ -110,7 +110,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(3);
         assertThat(restart.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(5);
+        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(6);
         assertThat(restart.getId()).isEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(2).getId()).isEqualTo(execution.getTaskRunList().get(2).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
@@ -152,7 +152,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(3);
         assertThat(restart.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(5);
+        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(6);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(2).getId()).isNotEqualTo(execution.getTaskRunList().get(2).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
@@ -235,7 +235,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(2);
         assertThat(restart.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(1).getState().getHistories()).hasSize(5);
+        assertThat(restart.getTaskRunList().get(1).getState().getHistories()).hasSize(6);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
@@ -350,7 +350,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(3);
         assertThat(restart.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(5);
+        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(6);
 
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());

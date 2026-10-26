@@ -681,6 +681,68 @@ class FlowableUtilsTest {
         assertThat(next).isEmpty();
     }
 
+    @Test
+    void resolveSequentialNexts_shouldNotDuplicateTaskRunWhenTaskIsAccepted() {
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask setup = resolvedTask("setup");
+        ResolvedTask waiting = resolvedTask("waiting");
+        ResolvedTask last = resolvedTask("last");
+
+        TaskRun setupRun = TaskRun.of(base, setup).withState(State.Type.SUCCESS);
+        TaskRun waitingRun = TaskRun.of(base, waiting).withState(State.Type.ACCEPTED);
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(setupRun, waitingRun))
+            .build();
+
+        List<NextTaskRun> next = FlowableUtils.resolveSequentialNexts(
+            execution,
+            List.of(setup, waiting, last)
+        );
+
+        assertThat(next).isEmpty();
+    }
+
+    @Test
+    void resolveWaitForNext_shouldNotDuplicateTaskRunWhenTaskIsAccepted() {
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask setup = resolvedTask("setup");
+        ResolvedTask waiting = resolvedTask("waiting");
+        ResolvedTask last = resolvedTask("last");
+
+        TaskRun parentRun = TaskRun.builder().id("parent").taskId("loop").build();
+        TaskRun setupRun = TaskRun.of(base, setup).withState(State.Type.SUCCESS).toBuilder().parentTaskRunId("parent").build();
+        TaskRun waitingRun = TaskRun.of(base, waiting).withState(State.Type.ACCEPTED).toBuilder().parentTaskRunId("parent").build();
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(setupRun, waitingRun))
+            .build();
+
+        List<NextTaskRun> next = FlowableUtils.resolveWaitForNext(
+            execution,
+            List.of(setup, waiting, last),
+            List.of(),
+            List.of(),
+            parentRun
+        );
+
+        assertThat(next).isEmpty();
+    }
+
     private static ResolvedTask resolvedTask(String id) {
         return ResolvedTask.of(
             Return.builder()

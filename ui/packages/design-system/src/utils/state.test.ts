@@ -36,6 +36,7 @@ describe("isQueued", () => {
 describe("isRunning", () => {
     test("is true for every running state", () => {
         expect(isRunning("SUBMITTED")).toBe(true)
+        expect(isRunning("ACCEPTED")).toBe(true)
         expect(isRunning("CREATED")).toBe(true)
         expect(isRunning("PAUSED")).toBe(true)
         expect(isRunning("BREAKPOINT")).toBe(true)
@@ -64,6 +65,7 @@ describe("isRunning", () => {
 describe("isKillable", () => {
     test("is true for every killable state", () => {
         expect(isKillable("SUBMITTED")).toBe(true)
+        expect(isKillable("ACCEPTED")).toBe(true)
         expect(isKillable("CREATED")).toBe(true)
         expect(isKillable("RESTARTED")).toBe(true)
         expect(isKillable("RUNNING")).toBe(true)
@@ -101,6 +103,7 @@ describe("isFailed", () => {
 
     test("is false for every non-failed state", () => {
         expect(isFailed("SUBMITTED")).toBe(false)
+        expect(isFailed("ACCEPTED")).toBe(false)
         expect(isFailed("CREATED")).toBe(false)
         expect(isFailed("RESTARTED")).toBe(false)
         expect(isFailed("SUCCESS")).toBe(false)
@@ -131,6 +134,7 @@ describe("isTerminated", () => {
 
     test("is false for every non-terminated state", () => {
         expect(isTerminated("SUBMITTED")).toBe(false)
+        expect(isTerminated("ACCEPTED")).toBe(false)
         expect(isTerminated("CREATED")).toBe(false)
         expect(isTerminated("RESTARTED")).toBe(false)
         expect(isTerminated("RUNNING")).toBe(false)

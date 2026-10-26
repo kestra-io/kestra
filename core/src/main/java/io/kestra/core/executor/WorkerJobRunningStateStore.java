@@ -85,7 +85,7 @@ public interface WorkerJobRunningStateStore {
      * A job dispatched to a worker that never ran it leaves an entry no other code path ever reads:
      * {@link #processWorkerJobsForDeadWorker} only covers workers detected as unclean, so an entry
      * left by a worker that terminated gracefully is never reclaimed and its task run stays
-     * {@code SUBMITTED} forever.
+     * {@code SUBMITTED} or {@code ACCEPTED} forever.
      *
      * @param inactiveWorkerUids the uids of the worker instances to reclaim jobs from; an empty set
      *        processes nothing.

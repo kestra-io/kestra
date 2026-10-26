@@ -7,6 +7,7 @@ import StopCircle from "vue-material-design-icons/StopCircle.vue"
 import SkipPreviousCircle from "vue-material-design-icons/SkipPreviousCircle.vue"
 import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
 import DotsVerticalCircle from "vue-material-design-icons/DotsVerticalCircle.vue"
+import InboxArrowDown from "vue-material-design-icons/InboxArrowDown.vue"
 import MotionPauseOutline from "vue-material-design-icons/MotionPauseOutline.vue"
 import Refresh from "vue-material-design-icons/Refresh.vue"
 import Cancel from "vue-material-design-icons/Cancel.vue"
@@ -26,6 +27,13 @@ export const STATES:Record<string, StateModel> = Object.freeze({
     SUBMITTED: {
         name: "SUBMITTED",
         icon: DotsVerticalCircle,
+        isRunning: true,
+        isKillable: true,
+        isFailed: false,
+    },
+    ACCEPTED: {
+        name: "ACCEPTED",
+        icon: InboxArrowDown,
         isRunning: true,
         isKillable: true,
         isFailed: false,
@@ -148,6 +156,7 @@ const mapValues = <T, U>(obj: Record<string, T>, fn: (val: T) => U): Record<stri
     Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
 
 export const SUBMITTED = "SUBMITTED" as const
+export const ACCEPTED = "ACCEPTED" as const
 export const CREATED = "CREATED" as const
 export const RESTARTED = "RESTARTED" as const
 export const SUCCESS = "SUCCESS" as const

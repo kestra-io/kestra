@@ -18,6 +18,7 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.queues.InMemoryWorkerQueue;
 import io.kestra.worker.queues.WorkerQueue;
@@ -66,8 +67,10 @@ class WorkerJobFetcherPermitsTest {
 
         WorkerContext context = new WorkerContext("worker-1", "group-1", 2, 0);
         queue = new InMemoryWorkerQueue<>(context.workerThreads());
+        WorkerQueue<WorkerTaskResult> resultQueue = new InMemoryWorkerQueue<>(context.workerThreads());
         WorkerQueueRegistry registry = mock(WorkerQueueRegistry.class);
         when(registry.getOrCreate(any(WorkerContext.class), eq(WorkerJob.class))).thenReturn(queue);
+        when(registry.getOrCreate(any(WorkerContext.class), eq(WorkerTaskResult.class))).thenReturn(resultQueue);
 
         fetcher = new WorkerJobFetcher(
             stub,
@@ -100,7 +103,7 @@ class WorkerJobFetcherPermitsTest {
         WorkerJobResponse.Builder builder = WorkerJobResponse.newBuilder();
         for (String jobId : jobIds) {
             String json = """
-                {"type":"task","taskRun":{"id":"%s"}}""".formatted(jobId);
+                {"type":"task","taskRun":{"id":"%s","state":{"current":"SUBMITTED","histories":[{"state":"SUBMITTED","date":"2024-01-01T00:00:00Z"}]}}}""".formatted(jobId);
             builder.addJobs(WorkerJobPayload.newBuilder().setJobId(jobId).setJobData(ByteString.copyFromUtf8(json)));
         }
         return builder.build();

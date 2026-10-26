@@ -24,9 +24,12 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.worker.WorkerBroadcastEvent;
 import io.kestra.core.worker.WorkerMetadataChangeHandler;
@@ -100,6 +103,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final List<WorkerMetadataChangeHandler> metadataChangeHandlers;
 
     private WorkerQueue<WorkerJob> workerJobQueue;
+    private WorkerQueue<WorkerTaskResult> workerTaskResultQueue;
     private WorkerContext workerContext;
 
     /**
@@ -208,6 +212,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      */
     public synchronized void init(final WorkerContext workerContext) {
         this.workerJobQueue = workerQueueRegistry.getOrCreate(workerContext, WorkerJob.class);
+        this.workerTaskResultQueue = workerQueueRegistry.getOrCreate(workerContext, WorkerTaskResult.class);
         this.workerContext = workerContext;
     }
 
@@ -447,6 +452,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
                 log.debug("Received job: {}", jobId);
 
+                job = this.markAcceptedIfSubmitted(job);
                 inFlightJobs.add(job.uid());
                 // Put job in local queue (blocking if full - provides local backpressure)
                 workerJobQueue.put(job);
@@ -462,6 +468,16 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         if (receivedJobs > 0) {
             sendPermitsForReceivedJobs(observer, calculatePermits(), receivedJobs);
         }
+    }
+
+    private WorkerJob markAcceptedIfSubmitted(WorkerJob job) {
+        if (!(job instanceof WorkerTask workerTask) || workerTask.getTaskRun().getState().getCurrent() != State.Type.SUBMITTED) {
+            return job;
+        }
+
+        WorkerTask accepted = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.ACCEPTED));
+        workerTaskResultQueue.put(new WorkerTaskResult(accepted.getTaskRun()));
+        return accepted;
     }
 
     /**

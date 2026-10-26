@@ -100,7 +100,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
     function clearExecutions() {
         executions.value = []
         executionsStore.execution = undefined
-        executionsStore.clearReusedLogs()
+        executionsStore.clearReusedTaskRuns()
     }
 
     const executionsStore = useExecutionsStore()
@@ -373,18 +373,18 @@ export const usePlaygroundStore = defineStore("playground", () => {
             addExecution(execution, graph)
 
         if (willReplay && previousExecution && execution) {
-            await carryOverReusedLogs(previousExecution, execution)
+            await carryOverReusedTaskRuns(previousExecution, execution)
         }
     }
 
     /** A replay copies the task runs before the replayed one under new ids, but their logs stay with the run that recorded them. */
-    async function carryOverReusedLogs(previous: Execution, replay: Execution) {
+    async function carryOverReusedTaskRuns(previous: Execution, replay: Execution) {
         const sourceToReused = reusedTaskRunIds(previous, replay)
         if (!sourceToReused.size) return
 
         const kind = previous.kind && previous.kind !== "NORMAL" ? {"filters[kind][IN]": previous.kind} : {}
         const ownLogs = await executionsStore.loadLogs({executionId: previous.id, filters: routeQueryToQueryFilters(kind), store: false})
-        executionsStore.setReusedLogs(replay.id, [...executionsStore.reusedLogsOf(previous.id), ...ownLogs].flatMap(log => {
+        executionsStore.setReusedTaskRuns(replay.id, [...sourceToReused.values()], [...executionsStore.reusedLogsOf(previous.id), ...ownLogs].flatMap(log => {
             const taskRunId = log.taskRunId ? sourceToReused.get(log.taskRunId) : undefined
             return taskRunId ? [{...log, executionId: replay.id, taskRunId}] : []
         }))

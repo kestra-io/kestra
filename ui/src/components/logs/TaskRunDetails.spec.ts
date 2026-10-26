@@ -12,6 +12,7 @@ const store = vi.hoisted(() => ({
         logs: unknown
         loadLogs: ReturnType<typeof vi.fn>
         reusedLogsOf: ReturnType<typeof vi.fn>
+        isReusedTaskRun: ReturnType<typeof vi.fn>
         followLogs: ReturnType<typeof vi.fn>
         loadFlowForExecution: ReturnType<typeof vi.fn>
         subscribeToExecution: ReturnType<typeof vi.fn>
@@ -77,6 +78,7 @@ describe("TaskRunDetails log loading across executions", () => {
             logs: undefined,
             loadLogs: vi.fn(({executionId}: {executionId: string}) => Promise.resolve(logsFor(executionId))),
             reusedLogsOf: vi.fn(() => []),
+            isReusedTaskRun: vi.fn(() => false),
             followLogs: vi.fn(({id}: {id: string}) => {
                 openedStreams.push(id)
                 return Promise.resolve({close: vi.fn(), onmessage: null, onerror: null})
@@ -238,8 +240,9 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{ERROR: ["-1/0"]}])
     })
 
-    it("should show the logs a replay carried over for the task runs it reused", async () => {
+    it("should mark the task runs a replay reused and show the logs it carried over for them", async () => {
         store.executions.loadLogs.mockResolvedValue([])
+        store.executions.isReusedTaskRun.mockImplementation((executionId: string, taskRunId: string) => executionId === "exec-2" && taskRunId === "tr-a2")
         store.executions.reusedLogsOf.mockImplementation((executionId: string) => executionId === "exec-2"
             ? [{level: "INFO", taskRunId: "tr-a2", attemptNumber: 0, timestamp: "2026-01-01T00:00:00Z", message: "a ran"}]
             : [])
@@ -252,5 +255,6 @@ describe("TaskRunDetails log loading across executions", () => {
 
         expect(store.executions.reusedLogsOf).toHaveBeenCalledWith("exec-2", {value: "INFO", direction: "min"})
         expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{INFO: ["0/0"]}])
+        expect(wrapper.find("[data-test=\"task-run-reused\"]").text()).toBe("reused_task_run.label")
     })
 })

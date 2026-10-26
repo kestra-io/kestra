@@ -8,6 +8,7 @@ const store = vi.hoisted(() => ({
         execution: unknown
         loadLogs: ReturnType<typeof vi.fn>
         reusedLogsOf: ReturnType<typeof vi.fn>
+        isReusedTaskRun: ReturnType<typeof vi.fn>
         followLogs: ReturnType<typeof vi.fn>
         loadFlowForExecution: ReturnType<typeof vi.fn>
         subscribeToExecution: ReturnType<typeof vi.fn>
@@ -73,6 +74,7 @@ describe("TaskRunDetails subflow logs", () => {
             execution: execution("SUCCESS"),
             loadLogs: vi.fn().mockResolvedValue([{level: "INFO", taskRunId: "tr-sub", attemptNumber: 0, message: "child started"}]),
             reusedLogsOf: vi.fn(() => []),
+            isReusedTaskRun: vi.fn(() => false),
             followLogs: vi.fn(() => Promise.resolve({close: vi.fn(), onmessage: null, onerror: null})),
             loadFlowForExecution: vi.fn().mockResolvedValue(undefined),
             subscribeToExecution: vi.fn(() => ({close: vi.fn()})),

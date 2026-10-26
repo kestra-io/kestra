@@ -16,7 +16,7 @@ const flowStore = reactive({
     loadFlow: vi.fn(() => Promise.resolve(previousFlow)),
 })
 
-const reusedLogs: Record<string, unknown[]> = {}
+const reused: Record<string, {taskRunIds: string[]; logs: unknown[]}> = {}
 
 const executionsStore = reactive({
     execution: undefined as Record<string, unknown> | undefined,
@@ -24,11 +24,11 @@ const executionsStore = reactive({
     triggerExecution: vi.fn(),
     replayExecution: vi.fn(),
     loadLogs: vi.fn(),
-    reusedLogsOf: vi.fn((executionId: string) => reusedLogs[executionId] ?? []),
-    setReusedLogs: vi.fn((executionId: string, entries: unknown[]) => {
-        reusedLogs[executionId] = entries
+    reusedLogsOf: vi.fn((executionId: string) => reused[executionId]?.logs ?? []),
+    setReusedTaskRuns: vi.fn((executionId: string, taskRunIds: string[], logs: unknown[]) => {
+        reused[executionId] = {taskRunIds, logs}
     }),
-    clearReusedLogs: vi.fn(),
+    clearReusedTaskRuns: vi.fn(),
 })
 
 vi.mock("vue-router", () => ({
@@ -68,7 +68,7 @@ describe("playground reuse of earlier task results", () => {
         setActivePinia(createPinia())
         vi.clearAllMocks()
         executionsStore.execution = undefined
-        Object.keys(reusedLogs).forEach(executionId => delete reusedLogs[executionId])
+        Object.keys(reused).forEach(executionId => delete reused[executionId])
     })
 
     afterEach(() => {
@@ -95,7 +95,7 @@ describe("playground reuse of earlier task results", () => {
         expect(executionsStore.triggerExecution).toHaveBeenCalledTimes(2)
     })
 
-    it("keeps the logs of the task runs a replay reuses, with their original timestamps", async () => {
+    it("marks the task runs a replay reuses and keeps their logs, with their original timestamps", async () => {
         const playground = await playgroundAfterFirstRun([
             {id: "tr-a", taskId: "a", state: {current: "SUCCESS"}},
             {id: "tr-b", taskId: "b", state: {current: "SUCCESS"}},
@@ -117,9 +117,10 @@ describe("playground reuse of earlier task results", () => {
         await playground.runUntilTask("b")
 
         expect(executionsStore.loadLogs).toHaveBeenCalledWith({executionId: "e1", filters: [{field: "kind", operation: "IN", value: "PLAYGROUND"}], store: false})
-        expect(reusedLogs.e2).toEqual([
-            {executionId: "e2", taskRunId: "tr-a2", timestamp: "2026-01-01T00:00:00Z", message: "a ran"},
-        ])
+        expect(reused.e2).toEqual({
+            taskRunIds: ["tr-a2"],
+            logs: [{executionId: "e2", taskRunId: "tr-a2", timestamp: "2026-01-01T00:00:00Z", message: "a ran"}],
+        })
     })
 
     it("keeps the logs a replay carried over when that replay is replayed in turn", async () => {
@@ -161,9 +162,12 @@ describe("playground reuse of earlier task results", () => {
         executionsStore.loadLogs.mockResolvedValueOnce([{executionId: "e2", taskRunId: "tr-b2", timestamp: "t-b", message: "b ran"}])
         await playground.runUntilTask("c")
 
-        expect(reusedLogs.e3).toEqual([
-            {executionId: "e3", taskRunId: "tr-a3", timestamp: "t-a", message: "a ran"},
-            {executionId: "e3", taskRunId: "tr-b3", timestamp: "t-b", message: "b ran"},
-        ])
+        expect(reused.e3).toEqual({
+            taskRunIds: ["tr-a3", "tr-b3"],
+            logs: [
+                {executionId: "e3", taskRunId: "tr-a3", timestamp: "t-a", message: "a ran"},
+                {executionId: "e3", taskRunId: "tr-b3", timestamp: "t-b", message: "b ran"},
+            ],
+        })
     })
 })

@@ -170,8 +170,8 @@ export const useExecutionsStore = defineStore("executions", () => {
     const execution = ref<Execution | undefined>(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
-    /** Logs a playground replay carries over from the run it reused task runs of, keyed by the replay's id. */
-    const reusedLogs = ref<Record<string, LogEntry[]>>({})
+    /** Task runs a playground replay reused rather than ran, with the logs they carry over, keyed by the replay's id. */
+    const reusedTaskRuns = ref<Record<string, {taskRunIds: string[]; logs: LogEntry[]}>>({})
     const subflowsExecutions = ref<Record<string, Execution>>({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
@@ -820,15 +820,19 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const reusedLogsOf = (executionId: string | undefined, level?: LevelFilterValue): LogEntry[] => {
         if (!executionId) return []
-        return (reusedLogs.value[executionId] ?? []).filter(log => matchesLevelFilter(log.level, level))
+        return (reusedTaskRuns.value[executionId]?.logs ?? []).filter(log => matchesLevelFilter(log.level, level))
     }
 
-    const setReusedLogs = (executionId: string, entries: LogEntry[]) => {
-        reusedLogs.value = {...reusedLogs.value, [executionId]: entries}
+    const isReusedTaskRun = (executionId: string | undefined, taskRunId: string): boolean => {
+        return !!executionId && !!reusedTaskRuns.value[executionId]?.taskRunIds.includes(taskRunId)
     }
 
-    const clearReusedLogs = () => {
-        reusedLogs.value = {}
+    const setReusedTaskRuns = (executionId: string, taskRunIds: string[], logs: LogEntry[]) => {
+        reusedTaskRuns.value = {...reusedTaskRuns.value, [executionId]: {taskRunIds, logs}}
+    }
+
+    const clearReusedTaskRuns = () => {
+        reusedTaskRuns.value = {}
     }
 
     const appendLogs = (entries: LogEntry[]) => {
@@ -936,8 +940,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         addProgressEvent,
         resetLogs,
         reusedLogsOf,
-        setReusedLogs,
-        clearReusedLogs,
+        isReusedTaskRun,
+        setReusedTaskRuns,
+        clearReusedTaskRuns,
         appendLogs,
         appendFollowedLogs,
         getFlowExecutions,

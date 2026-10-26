@@ -20,7 +20,8 @@ const routes = vi.hoisted(() => ({resolve: vi.fn(), isLinkable: vi.fn()}))
 vi.mock("../../stores/notifications", () => ({useNotificationsStore: () => store}))
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 vi.mock("../../composables/useScrollMemory", () => ({useScrollMemory: vi.fn()}))
-vi.mock("../../utils/notificationRoute", () => ({
+vi.mock("../../utils/notificationRoute", async (importOriginal) => ({
+    ...await importOriginal<typeof import("../../utils/notificationRoute")>(),
     resolveNotificationRoute: routes.resolve,
     isNotificationLinkable: routes.isLinkable,
 }))
@@ -183,6 +184,40 @@ describe("ContextNotifications", () => {
         expect(read.find("[data-test='mark-read']").exists()).toBe(false)
         expect(unread.find("[data-test='mark-read']").exists()).toBe(true)
         expect(unread.find("[data-test='mark-unread']").exists()).toBe(false)
+    })
+
+    it("opens a relative url in the same tab and marks the notification read", async () => {
+        store.notifications = [notification({url: "/main/executions/ns/flow/exec-1"})]
+
+        await mount().find(".row").trigger("click")
+        await flushPromises()
+
+        expect(store.markRead).toHaveBeenCalledWith("a")
+        expect(push).toHaveBeenCalledWith("/main/executions/ns/flow/exec-1")
+    })
+
+    it("renders an absolute url as a real link and leaves the navigation to the browser", async () => {
+        store.notifications = [notification({url: "https://kestra.io/docs"})]
+        const wrapper = mount()
+
+        expect(wrapper.find("[data-test='url']").attributes("href")).toBe("https://kestra.io/docs")
+
+        await wrapper.find(".row").trigger("click")
+        await flushPromises()
+
+        expect(store.markRead).toHaveBeenCalledWith("a")
+        expect(push).not.toHaveBeenCalled()
+    })
+
+    it("never renders a link or navigates for an unsafe url", async () => {
+        store.notifications = [notification({url: "javascript:alert(1)"})]
+        const wrapper = mount()
+
+        await wrapper.find(".row").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.find("[data-test='url']").exists()).toBe(false)
+        expect(push).not.toHaveBeenCalled()
     })
 
     it("marks a row read from its button without navigating", async () => {

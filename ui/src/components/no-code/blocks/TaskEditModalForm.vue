@@ -11,6 +11,7 @@
             presentation="panel"
             :isHidden="true"
             :hideTabstrip="true"
+            :outsideFlow="outsideFlow"
             @update:task="emit('update:task', $event)"
             @close="emit('close')"
         />
@@ -43,6 +44,7 @@
         refPath?: number
         blockSchemaPath: string
         editedPath?: string
+        outsideFlow?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -56,7 +58,7 @@
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath)
     provide(REF_PATH_INJECTION_KEY, props.refPath)
     provide(EDITING_TASK_INJECTION_KEY, true)
-    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => props.editedPath ?? blockPath(props.parentPath, props.refPath)))
+    provide(FIELD_VALIDATION_ERRORS_INJECTION_KEY, useFieldValidationErrors(() => props.outsideFlow ? undefined : props.editedPath ?? blockPath(props.parentPath, props.refPath)))
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath))
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
         emit("select-nested", parentPath, blockSchemaPath, refPath, split)

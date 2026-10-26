@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {within, userEvent, expect, waitFor} from "storybook/test"
 import {markRaw, ref} from "vue"
-import KsButton from "./KsButton.vue"
+import KsButton, {KS_BUTTON_TONES} from "./KsButton.vue"
 
 // Inline SVG icons as components to avoid external dependencies
 const DownloadIcon = markRaw({
@@ -21,7 +21,6 @@ const meta: Meta<typeof KsButton> = {
         tooltip: {control: "text"},
         disabled: {control: "boolean"},
         loading: {control: "boolean"},
-        plain: {control: "boolean"},
         round: {control: "boolean"},
         circle: {control: "boolean"},
         square: {control: "boolean"},
@@ -52,7 +51,25 @@ export const Default: Story = {
         },
         template: "<div style=\"padding:24px\"><ks-button v-bind=\"args\">Button</ks-button></div>",
     }),
-    args: {type: "default"},
+    args: {
+        type: "default",
+        size: "default",
+        disabled: false,
+        nativeType: "button",
+        loading: false,
+        text: false,
+        link: false,
+        bg: false,
+        autofocus: false,
+        round: false,
+        circle: false,
+        square: false,
+        block: false,
+        color: "",
+        tag: "button",
+        tooltip: "",
+        tooltipPlacement: "top",
+    },
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         const btn = canvas.getByRole("button")
@@ -77,6 +94,7 @@ export const Types: Story = {
                 <ks-button :icon="DownloadIcon" type="danger">Danger</ks-button>
                 <ks-button :icon="DownloadIcon" type="info">Info</ks-button>
                 <ks-button :icon="DownloadIcon" text>Text</ks-button>
+                <ks-button :icon="DownloadIcon" type="success" tooltip="Download" />
             </div>
 
             <div style="padding:24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
@@ -90,6 +108,25 @@ export const Types: Story = {
             </div>
         `,
     }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const resolved = (value: string) => {
+            const probe = document.createElement("span")
+            probe.style.color = value
+            canvasElement.append(probe)
+            const color = getComputedStyle(probe).color
+            probe.remove()
+            return color
+        }
+
+        for (const [label, type] of [["Primary", "primary"], ["Success", "success"], ["Warning", "warning"], ["Danger", "danger"], ["Info", "info"]] as const) {
+            const button = canvas.getAllByRole("button", {name: label}).find(element => !element.hasAttribute("disabled"))
+            await expect(getComputedStyle(button as Element).color).toBe(resolved(KS_BUTTON_TONES[type]!.text))
+        }
+        await expect(getComputedStyle(canvas.getByRole("button", {name: "Download"})).color)
+            .toBe(resolved(KS_BUTTON_TONES.success!.text))
+    },
+    parameters: {controls: {disable: true}},
 }
 
 /** All sizes */
@@ -104,6 +141,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Plain variant */
@@ -121,6 +159,7 @@ export const Plain: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Round and circle variants */
@@ -138,6 +177,7 @@ export const RoundAndCircle: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Square: Story = {
@@ -156,6 +196,7 @@ export const Square: Story = {
         `,
     }),
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 story: "`square` is an icon-only modifier (the counterpart of `circle`): the width tracks the button height for a true square, independent of the glyph. Don't pair it with a text label.",
@@ -190,6 +231,7 @@ export const Disabled: Story = {
             await expect(btn).toBeDisabled()
         }
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Loading state – spinner shown while an async action is in progress */
@@ -250,6 +292,7 @@ export const IconLabelSpacing: Story = {
             await expect(getComputedStyle(label).marginLeft).toBe("8px")
         }
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Text and link variants */
@@ -265,6 +308,7 @@ export const TextAndLink: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom tag – render as anchor or div instead of button */
@@ -278,6 +322,7 @@ export const CustomTag: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom color – auto-calculates hover and active states */
@@ -292,6 +337,7 @@ export const CustomColor: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Tooltip – icon-only buttons get a hover tooltip; aria-label is derived from it */
@@ -340,6 +386,7 @@ export const ClickEvent: Story = {
         await userEvent.click(btn)
         await expect(canvas.getByText(/Clicks: 2/)).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Block – `block` stretches the button to the width of its container, for bottom action bars on mobile */
@@ -356,6 +403,7 @@ export const Block: Story = {
     play: async ({canvasElement}) => {
         await expect(canvasElement.querySelector(".kel-button.is-block")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Link primary – a link button of type primary takes the link colour */
@@ -377,4 +425,5 @@ export const LinkPrimary: Story = {
         await expect(getComputedStyle(primary).color).toBe(getComputedStyle(linkColor).color)
         linkColor.remove()
     },
+    parameters: {controls: {disable: true}},
 }

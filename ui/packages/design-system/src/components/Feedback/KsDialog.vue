@@ -99,7 +99,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/dialog';
+</style>
 
+<style>
     .kel-dialog {
         --kel-dialog-bg-color: var(--ks-bg-elevated);
         border: 1px solid var(--ks-border-default);
@@ -109,21 +111,21 @@
             max-width: 92vw;
         }
 
-        .kel-form-item__label {
+        & .kel-form-item__label {
             font-size: var(--ks-font-size-md);
             font-weight: var(--ks-font-weight-semibold);
         }
 
-        .kel-dialog__header {
+        & .kel-dialog__header {
             font-size: var(--ks-font-size-base);
             font-weight: bold;
 
-            .kel-dialog__headerbtn {
+            & .kel-dialog__headerbtn {
                 height: 62px;
                 width: 62px;
             }
 
-            .kel-dialog__close {
+            & .kel-dialog__close {
                 color: var(--ks-icon-default);
 
                 &:hover {
@@ -132,20 +134,20 @@
             }
         }
 
-        .kel-dialog__body {
+        & .kel-dialog__body {
             padding-bottom: var(--kel-dialog-padding-primary);
         }
 
-        .kel-dialog__scrollable-body {
+        & .kel-dialog__scrollable-body {
             margin-right: calc(var(--kel-dialog-padding-primary) * -1);
             padding-right: var(--kel-dialog-padding-primary);
 
-            .kel-scrollbar__view {
+            & .kel-scrollbar__view {
                 overflow-x: hidden;
             }
         }
 
-        .kel-dialog__footer {
+        & .kel-dialog__footer {
             border-top: 1px solid var(--ks-border-default);
             margin-left: calc(var(--kel-dialog-padding-primary) * -1);
             margin-bottom: calc(var(--kel-dialog-padding-primary) * -1);
@@ -171,7 +173,7 @@
             margin-bottom: var(--kel-dialog-fill-gutter);
             overflow: hidden;
 
-            .kel-dialog__body {
+            & .kel-dialog__body {
                 display: flex;
                 flex-direction: column;
                 flex: 1;
@@ -187,7 +189,7 @@
             flex-direction: column;
             gap: var(--ks-spacing-4);
 
-            .kel-form-item {
+            & .kel-form-item {
                 margin-bottom: 0;
             }
         }

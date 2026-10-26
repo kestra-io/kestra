@@ -562,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variáveis",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Nenhuma task deste Flow fornece um artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "nenhum artifact | {count} artifact | {count} artifacts",
+      "tasks": "nenhuma task | {count} task | {count} tasks",
+      "fullscreen": "Tela cheia",
+      "exit_fullscreen": "Sair do modo de tela cheia"
+    },
     "variable_explorer": {
       "title": "Entrada/Saída",
       "search_placeholder": "Pesquisar Key ou value...",
@@ -2130,11 +2139,8 @@
       "no_description_hint": "Adicione uma descrição a este flow para documentar o que ele faz.<br>Markdown é suportado.",
       "others": "Outros",
       "viewAll": "Ver tudo",
-      "export": "Exportar",
-      "exportEmpty": "Este gráfico não tem dados para exportar.",
       "exportTo": {
-        "csv": "Exportar para CSV",
-        "ion": "Exportar para ION"
+        "csv": "Exportar para CSV"
       },
       "ignoredFilters": "O filtro {filters} não se aplica a este gráfico. | Os filtros {filters} não se aplicam a este gráfico.",
       "show_all_statuses": "Mostrar todos os estados",

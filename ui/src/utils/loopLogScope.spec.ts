@@ -23,14 +23,14 @@ beforeAll(() => {
 
 const root = {id: "root", namespace: "company.team", flowId: "close_lite", startDate: "2026-10-09T09:49:13.994699Z"}
 
-const iteration = (id: string, parentId: string, taskId: string, index: number, parent?: LoopIteration["loopRun"]): LoopIteration => ({
+const iteration = (id: string, parentId: string, taskId: string, index: number): LoopIteration => ({
     id,
     parentId,
     taskId,
     number: index + 1,
     value: String(index + 1),
     state: "FAILED",
-    loopRun: {taskId, index, value: String(index + 1), parent: parent?.parent},
+    loopRun: {taskId, index, value: String(index + 1)},
 })
 
 const embeddedParent = (id: string, parentId: string, taskId: string, index: number) => ({
@@ -53,10 +53,11 @@ const depsFor = (failures: LoopIteration[], parents: Record<string, unknown> = {
 
 const leafIds = (targets: {failedChains: {id: string}[][]}) => targets.failedChains.map((chain) => chain[chain.length - 1].id)
 
-const nestedFailure = (id: string, customerIndex: number) => ({
-    ...iteration(id, `customer-${customerIndex + 1}`, "per_invoice", 6),
-    loopRun: {taskId: "per_invoice", index: 6, value: "7", parent: embeddedParent(`customer-${customerIndex + 1}`, "root", "per_customer", customerIndex)},
-})
+const nestedFailure = (id: string, customerIndex: number) => iteration(id, `customer-${customerIndex + 1}`, "per_invoice", 6)
+
+const customers = (...indexes: number[]) => Object.fromEntries(
+    indexes.map((index) => [`customer-${index + 1}`, embeddedParent(`customer-${index + 1}`, "root", "per_customer", index)]),
+)
 
 describe("collectFailedTargets", () => {
     it("shouldIncludeTopLevelFailedIterationsWithTheRootOnly", async () => {
@@ -71,17 +72,17 @@ describe("collectFailedTargets", () => {
 
     it("shouldIncludeNestedFailuresUnderSuccessfulParentsWithTheirAncestors", async () => {
         const failures = [nestedFailure("f13", 12), nestedFailure("f26", 25), nestedFailure("f39", 38)]
-        const deps = depsFor(failures)
+        const deps = depsFor(failures, customers(12, 25, 38))
 
         const targets = await collectFailedTargets(root, deps)
 
         expect(targets.executionIds).toEqual(["root", "customer-13", "f13", "customer-26", "f26", "customer-39", "f39"])
         expect(targets.chains["f26"].map((node) => `${node.taskId}:${node.number}`)).toEqual(["per_customer:26", "per_invoice:7"])
         expect(leafIds(targets)).toEqual(["f13", "f26", "f39"])
-        expect(deps.fetchIteration).not.toHaveBeenCalled()
+        expect(deps.fetchIteration).toHaveBeenCalledTimes(3)
     })
 
-    it("shouldFetchAParentThatIsNotEmbeddedOnlyOnce", async () => {
+    it("shouldFetchASharedParentOnlyOnce", async () => {
         const bare = (id: string) => ({...iteration(id, "customer-13", "per_invoice", 6), loopRun: {taskId: "per_invoice", index: 6}})
         const deps = depsFor([bare("a"), bare("b")], {"customer-13": embeddedParent("customer-13", "root", "per_customer", 12)})
 
@@ -92,8 +93,12 @@ describe("collectFailedTargets", () => {
     })
 
     it("shouldDropFailuresOfAnotherExecutionOfTheSameFlow", async () => {
-        const stranger = {...iteration("s", "other-iteration", "per_invoice", 1), loopRun: {taskId: "per_invoice", index: 1, parent: {id: "other-iteration", parentId: "other-root", loopRun: {taskId: "per_customer", index: 0}}}}
-        const deps = depsFor([stranger, nestedFailure("f13", 12)], {"other-root": {id: "other-root"}})
+        const stranger = iteration("s", "other-iteration", "per_invoice", 1)
+        const deps = depsFor([stranger, nestedFailure("f13", 12)], {
+            ...customers(12),
+            "other-iteration": {id: "other-iteration", parentId: "other-root", loopRun: {taskId: "per_customer", index: 0}},
+            "other-root": {id: "other-root"},
+        })
 
         const targets = await collectFailedTargets(root, deps)
 
@@ -175,7 +180,7 @@ describe("collectFailedTargets", () => {
     })
 
     it("shouldReportTheTotalOfTheFailedSearch", async () => {
-        const deps = depsFor([], {})
+        const deps = depsFor([], customers(12))
         deps.search = vi.fn(async () => ({results: [nestedFailure("f13", 12)], total: 500}))
 
         const targets = await collectFailedTargets(root, deps)
@@ -187,14 +192,10 @@ describe("collectFailedTargets", () => {
 describe("collectScopedTargets", () => {
     const window = {startDate: "2026-10-09T09:49:14Z", endDate: "2026-10-09T09:49:16Z"}
     const customer = async (_parent: string, taskId: string, number: number) => ({id: `customer-${number}`, number, value: String(number), state: "SUCCESS", taskId, ...window})
-    const customer13 = embeddedParent("customer-13", "root", "per_customer", 12)
-    const invoiceUnder13 = (id: string, index: number) => ({
-        ...iteration(id, "customer-13", "per_invoice", index),
-        loopRun: {taskId: "per_invoice", index, value: String(index + 1), parent: customer13},
-    })
+    const invoiceUnder13 = (id: string, index: number) => iteration(id, "customer-13", "per_invoice", index)
 
     it("shouldSearchTheFailedIterationsInsideTheTimeWindowOfTheDeepestScope", async () => {
-        const deps = depsFor([invoiceUnder13("f13", 6)])
+        const deps = depsFor([invoiceUnder13("f13", 6)], customers(12))
         deps.findByNumber = vi.fn(customer)
 
         const targets = await collectScopedTargets(root, [{taskId: "per_customer", number: 13}], deps)
@@ -207,16 +208,10 @@ describe("collectScopedTargets", () => {
     })
 
     it("shouldFindAFailedIterationUnderSuccessfulIntermediateIterationsWhenScopedAboveThem", async () => {
-        const invoice = {
-            ...iteration("inv-7", "customer-13", "per_invoice", 6),
-            loopRun: {
-                taskId: "per_invoice",
-                index: 6,
-                value: "7",
-                parent: {id: "customer-13", parentId: "region-2", loopRun: {taskId: "per_customer", index: 12, value: "13", parent: embeddedParent("region-2", "root", "per_region", 1)}},
-            },
-        }
-        const deps = depsFor([invoice])
+        const deps = depsFor([iteration("inv-7", "customer-13", "per_invoice", 6)], {
+            "customer-13": {id: "customer-13", parentId: "region-2", loopRun: {taskId: "per_customer", index: 12, value: "13"}},
+            "region-2": embeddedParent("region-2", "root", "per_region", 1),
+        })
         deps.findByNumber = vi.fn(async (_parent: string, taskId: string, number: number) => ({id: `region-${number}`, number, value: String(number), state: "SUCCESS", taskId}))
 
         const targets = await collectScopedTargets(root, [{taskId: "per_region", number: 2}], deps)
@@ -226,7 +221,7 @@ describe("collectScopedTargets", () => {
     })
 
     it("shouldIgnoreWindowFailuresThatDoNotPassThroughTheScope", async () => {
-        const deps = depsFor([nestedFailure("f13", 12)])
+        const deps = depsFor([nestedFailure("f13", 12)], customers(12))
         deps.findByNumber = vi.fn(customer)
 
         const targets = await collectScopedTargets(root, [{taskId: "per_customer", number: 26}], deps)
@@ -237,7 +232,7 @@ describe("collectScopedTargets", () => {
 
     it("shouldCarryTheOffsetToTheNextBatchWhenTheBudgetCutsAScopedPage", async () => {
         const failures = Array.from({length: 30}, (_, index) => invoiceUnder13(`f${index}`, index))
-        const deps = depsFor(failures)
+        const deps = depsFor(failures, customers(12))
         deps.findByNumber = vi.fn(customer)
         const limit = executionIdsUrlLength(["root", "customer-13", ...failures.slice(0, 10).map(({id}) => id)])
         const entries = [{taskId: "per_customer", number: 13}]

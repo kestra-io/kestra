@@ -529,6 +529,8 @@
         "matching": "일치",
         "failure-forbidden": "이 반복에 대한 액세스 권한이 없습니다.",
         "failure-not-found": "이 반복은 더 이상 존재하지 않습니다.",
+        "failure-ambiguous": "이 루프는 이 실행에서 여러 번 실행되어 반복을 구분할 수 없습니다.",
+        "failure-not-located": "실패한 반복을 찾을 수 없습니다.",
         "failure-unknown": "반복을 불러오지 못했습니다.",
         "scope": "범위",
         "whole-execution": "전체 실행",

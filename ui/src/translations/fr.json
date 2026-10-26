@@ -529,6 +529,8 @@
         "matching": "Correspondance",
         "failure-forbidden": "Vous n'avez pas accès à cette itération.",
         "failure-not-found": "Cette itération n'existe plus.",
+        "failure-ambiguous": "Cette boucle s'est exécutée plusieurs fois dans cette exécution, ses itérations ne peuvent donc pas être distinguées.",
+        "failure-not-located": "L'itération en échec est introuvable.",
         "failure-unknown": "Impossible de charger les itérations.",
         "scope": "Périmètre",
         "whole-execution": "Exécution entière",

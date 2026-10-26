@@ -529,6 +529,8 @@
         "matching": "一致",
         "failure-forbidden": "このイテレーションにアクセスする権限がありません。",
         "failure-not-found": "このイテレーションは存在しません。",
+        "failure-ambiguous": "このループはこの実行内で複数回実行されたため、イテレーションを区別できません。",
+        "failure-not-located": "失敗したイテレーションを特定できませんでした。",
         "failure-unknown": "イテレーションを読み込めませんでした。",
         "scope": "スコープ",
         "whole-execution": "実行全体",

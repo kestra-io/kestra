@@ -529,6 +529,8 @@
         "matching": "Coincidencia",
         "failure-forbidden": "No tienes acceso a esta iteración.",
         "failure-not-found": "Esta iteración ya no existe.",
+        "failure-ambiguous": "Este bucle se ejecutó varias veces en esta ejecución, por lo que no se pueden distinguir sus iteraciones.",
+        "failure-not-located": "No se pudo localizar la iteración fallida.",
         "failure-unknown": "No se pudieron cargar las iteraciones.",
         "scope": "Ámbito",
         "whole-execution": "Ejecución completa",

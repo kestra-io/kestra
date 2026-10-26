@@ -529,6 +529,8 @@
         "matching": "匹配",
         "failure-forbidden": "您无权访问此迭代。",
         "failure-not-found": "此迭代已不存在。",
+        "failure-ambiguous": "此循环在本次执行中运行了多次，因此无法区分其迭代。",
+        "failure-not-located": "无法定位失败的迭代。",
         "failure-unknown": "无法加载迭代。",
         "scope": "范围",
         "whole-execution": "整个执行",

@@ -529,6 +529,8 @@
         "matching": "Correspondência",
         "failure-forbidden": "Você não tem acesso a esta iteração.",
         "failure-not-found": "Esta iteração não existe mais.",
+        "failure-ambiguous": "Este loop foi executado várias vezes nesta execução, então não é possível distinguir suas iterações.",
+        "failure-not-located": "Não foi possível localizar a iteração com falha.",
         "failure-unknown": "Não foi possível carregar as iterações.",
         "scope": "Escopo",
         "whole-execution": "Execução inteira",

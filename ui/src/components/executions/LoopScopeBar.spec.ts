@@ -43,8 +43,21 @@ describe("LoopScopeBar", () => {
     it("shouldExplainAForbiddenScopeWithoutOfferingARetry", () => {
         const wrapper = mountBar({failure: "forbidden"})
 
-        expect(wrapper.find("[data-test='loop-scope-forbidden']").text()).toContain("do not have access")
+        expect(wrapper.find("[data-test='loop-scope-failure']").text()).toContain("do not have access")
         expect(wrapper.find("[data-test='loop-scope-retry']").exists()).toBe(false)
+    })
+
+    it("shouldExplainThatTheFailureCouldNotBeLocatedWithoutOfferingARetry", () => {
+        const wrapper = mountBar({failure: "not-located", canJumpToFailure: true})
+
+        expect(wrapper.find("[data-test='loop-scope-failure']").text()).toBe("The failed iteration could not be located.")
+        expect(wrapper.find("[data-test='loop-scope-retry']").exists()).toBe(false)
+    })
+
+    it("shouldExplainThatSeveralRunsOfTheLoopCannotBeToldApart", () => {
+        const wrapper = mountBar({failure: "ambiguous"})
+
+        expect(wrapper.find("[data-test='loop-scope-failure']").text()).toContain("ran several times")
     })
 
     it("shouldReflectTheFailuresOnlyToggleInAriaPressed", () => {

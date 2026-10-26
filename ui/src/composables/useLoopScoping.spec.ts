@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 import {computed, defineComponent, ref} from "vue"
 import {flushPromises, mount} from "@vue/test-utils"
@@ -43,7 +43,8 @@ vi.mock("./useTaskRunOutputs", () => ({loadTaskRunOutputs: mocks.loadTaskRunOutp
 
 const {useRoute} = await import("vue-router")
 const {useExecutionsStore} = await import("../stores/executions")
-const {useLoopScoping, loopLaneNodes} = await import("./useLoopScoping")
+const {useLoopScoping, loopLaneNodes, SCOPED_ITERATIONS_REFRESH_MS} = await import("./useLoopScoping")
+const {AUTO_REFRESH_MS} = await import("./useLoopMergedLogs")
 const {LoopIterationError} = await import("../utils/loopIterations")
 
 const LOOP_TYPE = "io.kestra.plugin.core.flow.Loop"
@@ -61,7 +62,12 @@ const rootExecution = {
     taskRunList: [{id: "tr-loop", taskId: "per_region", state: {current: "SUCCESS"}}],
 }
 
-const iterationExecution = (id: string, state = "RUNNING") => ({id, state: {current: state}, taskRunList: [], loopRun: {value: "AMER", index: Number(id.replace("it-", "")) - 1}})
+const iterationExecution = (id: string, state = "RUNNING", taskRunId = "tr-loop") => ({
+    id,
+    state: {current: state},
+    taskRunList: [{id: "tr-quarter", taskId: "per_quarter", state: {current: "SUCCESS"}}],
+    loopRun: {value: "AMER", index: Number(id.replace("it-", "")) - 1, taskRunId},
+})
 
 const nestedGraph = {
     nodes: [],
@@ -72,15 +78,14 @@ const nestedGraph = {
     ],
 }
 
-function setup(enabled = true, flowGraph: typeof graph = graph) {
+const taskRun = (id: string, state = "SUCCESS") => ({id, taskId: "per_region", state: {current: state}})
+
+const executionWithRuns = (...taskRuns: ReturnType<typeof taskRun>[]) => ({...rootExecution, taskRunList: taskRuns})
+
+function setup(enabled = true, flowGraph: typeof graph = graph, execution: unknown = rootExecution) {
     const store = useExecutionsStore()
-    store.execution = rootExecution as never
-    const subscriptions: {executionId: string; close: ReturnType<typeof vi.fn>; emit: (e: unknown) => void}[] = []
-    store.subscribeToExecution = vi.fn((executionId: string, handlers: {onExecution: (e: never) => void}) => {
-        const subscription = {executionId, close: vi.fn(), emit: (e: unknown) => handlers.onExecution(e as never)}
-        subscriptions.push(subscription)
-        return subscription
-    }) as never
+    store.execution = execution as never
+    store.subscribeToExecution = vi.fn() as never
 
     let scoping!: ReturnType<typeof useLoopScoping>
     const enabledRef = ref(enabled)
@@ -90,10 +95,14 @@ function setup(enabled = true, flowGraph: typeof graph = graph) {
             return () => null
         },
     }))
-    return {store, scoping, subscriptions, wrapper, route: useRoute() as unknown as {query: Record<string, string>}}
+    return {store, scoping, wrapper, route: useRoute() as unknown as {query: Record<string, string>}}
 }
 
 describe("useLoopScoping", () => {
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
     beforeEach(() => {
         setActivePinia(createPinia())
         Object.values(mocks).forEach((mock) => mock.mockReset())
@@ -110,7 +119,7 @@ describe("useLoopScoping", () => {
         route.query = {loopScope: "per_region@1"}
         await flushPromises()
 
-        expect(mocks.findIterationByNumber).toHaveBeenCalledWith("root", "per_region", 2)
+        expect(mocks.findIterationByNumber).toHaveBeenCalledWith("root", "per_region", 2, "tr-loop")
         expect(store.scopedIterations.per_region.id).toBe("it-2")
         expect(store.subflowsExecutions).toEqual({})
     })
@@ -120,7 +129,7 @@ describe("useLoopScoping", () => {
         route.query = {loopScope: "per_region:2"}
         await flushPromises()
 
-        expect(mocks.findIterationByNumber).toHaveBeenCalledWith("root", "per_region", 2)
+        expect(mocks.findIterationByNumber).toHaveBeenCalledWith("root", "per_region", 2, "tr-loop")
         expect(store.scopedIterations.per_region.id).toBe("it-2")
         scoping.stepLane("per_region", 1)
         await flushPromises()
@@ -168,22 +177,6 @@ describe("useLoopScoping", () => {
 
         expect(store.scopedIterations.per_region.id).toBe("it-2")
         expect(scoping.lanes.value.per_region.scopedNumber).toBeUndefined()
-    })
-
-    it("shouldReplaceTheStreamWhenSteppingToAnotherRunningIteration", async () => {
-        mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id))
-        const {store, subscriptions, route} = setup()
-        route.query = {loopScope: "per_region@0"}
-        await flushPromises()
-        expect(subscriptions.map((s) => s.executionId)).toEqual(["it-1"])
-
-        route.query = {loopScope: "per_region@1"}
-        await flushPromises()
-
-        expect(subscriptions.map((s) => s.executionId)).toEqual(["it-1", "it-2"])
-        expect(subscriptions[0].close).toHaveBeenCalled()
-        subscriptions[0].emit({id: "it-1", state: {current: "RUNNING"}, taskRunList: [{id: "stale"}]})
-        expect(store.scopedIterations.per_region.id).toBe("it-2")
     })
 
     it("shouldStepFromTheFirstStartedIterationAndClampAtTheBounds", async () => {
@@ -239,7 +232,7 @@ describe("useLoopScoping", () => {
         await scoping.scopeFirstFailure("per_region.per_quarter")
         await flushPromises()
 
-        expect(mocks.findFirstFailedIteration).toHaveBeenCalledWith("it-1", "per_quarter")
+        expect(mocks.findFirstFailedIteration).toHaveBeenCalledWith("it-1", "per_quarter", "tr-quarter")
         expect(route.query.loopScope).toBe("per_region@1,per_quarter@2")
     })
 
@@ -277,24 +270,6 @@ describe("useLoopScoping", () => {
         wrapper.unmount()
 
         expect(store.scopedIterations).toEqual({})
-    })
-
-    it.each(["SUBMITTED", "QUEUED", "RETRYING", "BREAKPOINT"])("shouldFollowAnIterationThatIsStill%s", async (state) => {
-        mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id, state))
-        const {subscriptions, route} = setup()
-        route.query = {loopScope: "per_region@0"}
-        await flushPromises()
-
-        expect(subscriptions.map((s) => s.executionId)).toEqual(["it-1"])
-    })
-
-    it.each(["SUCCESS", "FAILED", "KILLED", "WARNING", "CANCELLED", "SKIPPED"])("shouldNotFollowAnIterationThatIs%s", async (state) => {
-        mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id, state))
-        const {subscriptions, route} = setup()
-        route.query = {loopScope: "per_region@0"}
-        await flushPromises()
-
-        expect(subscriptions).toEqual([])
     })
 
     it("shouldNotWriteTheScopeOnceUnmountedWhileTheIterationIsLoading", async () => {
@@ -347,5 +322,156 @@ describe("useLoopScoping", () => {
 
         expect(scoping.laneNodes.value).toEqual([])
         expect(mocks.loadTaskRunOutputs).not.toHaveBeenCalled()
+    })
+
+    it("shouldNotShowTheCountsOfALoopThatRanSeveralTimesInTheSameExecution", async () => {
+        const {scoping} = setup(true, graph, executionWithRuns(taskRun("tr-loop-1"), taskRun("tr-loop-2")))
+        await flushPromises()
+
+        expect(scoping.lanes.value.per_region.status).toBe("unknown")
+        expect(scoping.hostExecutionId("per_region")).toBeUndefined()
+        expect(mocks.loadTaskRunOutputs).not.toHaveBeenCalled()
+    })
+
+    it("shouldShowTheCountsOfTheScopedRunWhenTheExecutionHasSeveralRuns", async () => {
+        vi.useFakeTimers({toFake: ["setTimeout", "clearTimeout", "Date"]})
+        mocks.loadTaskRunOutputs.mockImplementation(async (_hostId: string, taskRunId: string) => taskRunId === "tr-loop-2"
+            ? {iterationCount: 7, runningIterations: 0, terminatedIterations: {FAILED: 2, SUCCESS: 5}}
+            : {iterationCount: 4, runningIterations: 0, terminatedIterations: {SUCCESS: 4}})
+        const {scoping, store} = setup(true, graph, executionWithRuns(taskRun("tr-loop-1"), taskRun("tr-loop-2")))
+        await flushPromises()
+
+        store.setScopedIterations({per_region: iterationExecution("it-3", "SUCCESS", "tr-loop-2")} as never)
+        await vi.advanceTimersByTimeAsync(1_100)
+
+        expect(mocks.loadTaskRunOutputs.mock.calls).toEqual([["root", "tr-loop-2"]])
+        expect(scoping.lanes.value.per_region).toMatchObject({status: "ready", iterationCount: 7, terminatedIterations: {FAILED: 2, SUCCESS: 5}})
+    })
+
+    it("shouldLookUpTheNextIterationInTheScopedRunWhenSteppingThroughSeveralRuns", async () => {
+        vi.useFakeTimers({toFake: ["setTimeout", "clearTimeout", "Date"]})
+        const {scoping, store, route} = setup(true, graph, executionWithRuns(taskRun("tr-loop-1"), taskRun("tr-loop-2")))
+        await flushPromises()
+        store.setScopedIterations({per_region: iterationExecution("it-3", "SUCCESS", "tr-loop-2")} as never)
+        await vi.advanceTimersByTimeAsync(1_100)
+
+        scoping.stepLane("per_region", 1)
+        await flushPromises()
+
+        expect(route.query.loopScope).toBe("per_region@0")
+        expect(mocks.findIterationByNumber).toHaveBeenLastCalledWith("root", "per_region", 1, "tr-loop-2")
+    })
+
+    it("shouldReportAnAmbiguousScopeWhenSeveralRunsOfTheLoopShareTheIteration", async () => {
+        mocks.findIterationByNumber.mockRejectedValue(new LoopIterationError("ambiguous"))
+        const {scoping, route} = setup(true, graph, executionWithRuns(taskRun("tr-loop-1"), taskRun("tr-loop-2")))
+        route.query = {loopScope: "per_region@0"}
+        await flushPromises()
+
+        expect(mocks.findIterationByNumber).toHaveBeenCalledWith("root", "per_region", 1, undefined)
+        expect(scoping.scopeFailure.value).toBe("ambiguous")
+        expect(route.query.loopScope).toBeUndefined()
+    })
+
+    it("shouldRefuseToJumpToAFailureOfALoopThatRanSeveralTimes", async () => {
+        const {scoping, route} = setup(true, graph, executionWithRuns(taskRun("tr-loop-1"), taskRun("tr-loop-2")))
+        await flushPromises()
+
+        await scoping.scopeFirstFailure("per_region")
+
+        expect(scoping.scopeFailure.value).toBe("ambiguous")
+        expect(mocks.findFirstFailedIteration).not.toHaveBeenCalled()
+        expect(mocks.findFailedIterationChain).not.toHaveBeenCalled()
+        expect(route.query.loopScope).toBeUndefined()
+    })
+
+    it("shouldReportThatTheFailureCouldNotBeLocated", async () => {
+        mocks.findFirstFailedIteration.mockResolvedValue(undefined)
+        mocks.findFailedIterationChain.mockResolvedValue(undefined)
+        const {scoping, route} = setup()
+        await flushPromises()
+
+        await scoping.scopeFirstFailure("per_region")
+
+        expect(scoping.scopeFailure.value).toBe("not-located")
+        expect(route.query.loopScope).toBeUndefined()
+
+        scoping.scopeLane("per_region", 2)
+        expect(scoping.scopeFailure.value).toBeUndefined()
+    })
+
+    it("shouldStopDescendingWhenTheFailedIterationRanTheNextLoopSeveralTimes", async () => {
+        mocks.findFirstFailedIteration.mockResolvedValue({id: "it-5", number: 5, state: "FAILED"})
+        mocks.loadIterationExecution.mockImplementation(async (id: string) => ({
+            ...iterationExecution(id, "FAILED"),
+            taskRunList: [
+                {id: "tr-quarter-1", taskId: "per_quarter", state: {current: "FAILED"}},
+                {id: "tr-quarter-2", taskId: "per_quarter", state: {current: "SUCCESS"}},
+            ],
+        }))
+        const {scoping, route} = setup(true, nestedGraph)
+        await flushPromises()
+
+        await scoping.scopeFirstFailure("per_region")
+        await flushPromises()
+
+        expect(mocks.findFirstFailedIteration).toHaveBeenCalledTimes(1)
+        expect(route.query.loopScope).toBe("per_region@4")
+    })
+
+    it("shouldNotOpenAnyStreamForARunningNestedScope", async () => {
+        mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id))
+        const {store, route} = setup(true, nestedGraph)
+        route.query = {loopScope: "per_region@0,per_quarter@1"}
+        await flushPromises()
+
+        expect(Object.keys(store.scopedIterations)).toEqual(["per_region", "per_region.per_quarter"])
+        expect(store.subscribeToExecution).not.toHaveBeenCalled()
+    })
+
+    it("shouldRefetchOnlyTheRunningScopedIterationsOnRootUpdatesAtMostOncePerWindow", async () => {
+        vi.useFakeTimers({toFake: ["setTimeout", "clearTimeout", "Date"]})
+        mocks.loadIterationExecution.mockImplementation(async (id: string) => iterationExecution(id, id === "it-1" ? "RUNNING" : "SUCCESS"))
+        const {store, route} = setup(true, nestedGraph)
+        route.query = {loopScope: "per_region@0,per_quarter@1"}
+        await flushPromises()
+        mocks.loadIterationExecution.mockClear()
+        mocks.loadIterationExecution.mockImplementation(async (id: string) => ({...iterationExecution(id, "RUNNING"), taskRunList: [{id: "tr-quarter", taskId: "per_quarter", state: {current: "RUNNING"}}, {id: "fresh", taskId: "x", state: {current: "RUNNING"}}]}))
+
+        for (let tick = 0; tick < 3; tick++) {
+            store.execution = {...rootExecution} as never
+            await vi.advanceTimersByTimeAsync(300)
+        }
+
+        expect(mocks.loadIterationExecution.mock.calls).toEqual([["it-1"]])
+        expect(store.scopedIterations.per_region.taskRunList).toHaveLength(2)
+
+        await vi.advanceTimersByTimeAsync(SCOPED_ITERATIONS_REFRESH_MS)
+
+        expect(mocks.loadIterationExecution.mock.calls).toEqual([["it-1"], ["it-1"]])
+    })
+
+    it("shouldNotRefetchTheOutputsOfARunningLoopMoreThanOncePerWindow", async () => {
+        vi.useFakeTimers({toFake: ["setTimeout", "clearTimeout", "Date"]})
+        const running = executionWithRuns(taskRun("tr-loop", "RUNNING"))
+        const {store} = setup(true, graph, running)
+        await vi.advanceTimersByTimeAsync(0)
+        expect(mocks.loadTaskRunOutputs).toHaveBeenCalledTimes(1)
+
+        for (let tick = 0; tick < 5; tick++) {
+            store.execution = {...running} as never
+            await vi.advanceTimersByTimeAsync(1_100)
+        }
+        expect(mocks.loadTaskRunOutputs).toHaveBeenCalledTimes(1)
+
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS)
+        expect(mocks.loadTaskRunOutputs).toHaveBeenCalledTimes(2)
+
+        store.execution = executionWithRuns(taskRun("tr-loop", "SUCCESS")) as never
+        await vi.advanceTimersByTimeAsync(1_100)
+        expect(mocks.loadTaskRunOutputs).toHaveBeenCalledTimes(3)
+
+        await vi.advanceTimersByTimeAsync(AUTO_REFRESH_MS * 3)
+        expect(mocks.loadTaskRunOutputs).toHaveBeenCalledTimes(3)
     })
 })

@@ -529,6 +529,8 @@
         "matching": "Dopasowanie",
         "failure-forbidden": "Nie masz dostępu do tej iteracji.",
         "failure-not-found": "Ta iteracja już nie istnieje.",
+        "failure-ambiguous": "Ta pętla została wykonana w tym wykonaniu kilka razy, więc jej iteracji nie można rozróżnić.",
+        "failure-not-located": "Nie udało się zlokalizować nieudanej iteracji.",
         "failure-unknown": "Nie udało się załadować iteracji.",
         "scope": "Zakres",
         "whole-execution": "Całe wykonanie",

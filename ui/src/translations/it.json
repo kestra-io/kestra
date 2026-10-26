@@ -529,6 +529,8 @@
         "matching": "Corrispondenza",
         "failure-forbidden": "Non hai accesso a questa iterazione.",
         "failure-not-found": "Questa iterazione non esiste più.",
+        "failure-ambiguous": "Questo ciclo è stato eseguito più volte in questa esecuzione, quindi le sue iterazioni non sono distinguibili.",
+        "failure-not-located": "Impossibile individuare l'iterazione con errore.",
         "failure-unknown": "Impossibile caricare le iterazioni.",
         "scope": "Ambito",
         "whole-execution": "Intera esecuzione",

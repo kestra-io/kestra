@@ -67,7 +67,7 @@ export const createChainCache = (): ChainCache => ({fetched: new Map(), chains: 
 
 const defaultDeps: LogTargetDeps = {
     search: searchLoopIterations,
-    fetchIteration: async (executionId) => (await loadIterationExecution(executionId)) as unknown as IterationNode,
+    fetchIteration: loadIterationExecution,
     findByNumber: findIterationByNumber,
 }
 
@@ -153,8 +153,7 @@ function chainResolver(rootId: string, fetchIteration: LogTargetDeps["fetchItera
         if (!node.parentId) return undefined
         if (node.parentId === rootId) return [own]
 
-        const embedded = node.loopRun?.parent
-        const parent = embedded?.id === node.parentId ? embedded as IterationNode : await fetchOnce(node.parentId)
+        const parent = await fetchOnce(node.parentId)
         const parentChain = parent && await chainOf(parent, depth + 1)
         return parentChain && [...parentChain, own]
     }

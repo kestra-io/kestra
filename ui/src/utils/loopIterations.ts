@@ -1,5 +1,5 @@
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
-import type {QueryFilter} from "@kestra-io/kestra-sdk"
+import type {ApiLoopRun, QueryFilter} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../stores/executions"
 import {handled, type KestraHttpError} from "./kestraHttp"
 import {iterationNumber, type LoopScopeEntry} from "./loopScope"
@@ -8,7 +8,7 @@ export const ITERATIONS_PAGE_SIZE = 50
 export const CANDIDATE_PAGE_SIZE = 10
 export const MAX_CANDIDATE_PAGES = 10
 
-export type LoopIterationFailure = "forbidden" | "not-found" | "unknown"
+export type LoopIterationFailure = "forbidden" | "not-found" | "ambiguous" | "unknown"
 
 export interface LoopIteration {
     id: string;
@@ -30,16 +30,11 @@ export interface LoopRoot {
     endDate?: string;
 }
 
-export interface IterationLoopRun {
-    taskId?: string;
-    index?: number;
-    value?: string;
-    parent?: IterationParent & {id?: string};
-}
+export type IterationLoopRun = Partial<Pick<ApiLoopRun, "taskId" | "taskRunId" | "index" | "value">>
 
 export interface IterationParent {
     parentId?: string;
-    loopRun?: IterationLoopRun;
+    loopRun?: IterationLoopRun | null;
 }
 
 export interface FailedIterationChain {
@@ -109,7 +104,7 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
 
     try {
         const response = await ExecutionsAPI.searchExecutions(
-            {page: search.page ?? 1, size: search.size ?? ITERATIONS_PAGE_SIZE, sort: [search.root ? "state.startDate:asc" : "loopRunIndex:asc"], filters},
+            {page: search.page ?? 1, size: search.size ?? ITERATIONS_PAGE_SIZE, sort: search.root ? ["state.startDate:asc"] : ["loopRunIndex:asc", "id:asc"], filters},
         )
         return {
             results: (response.results ?? []).map((item) => ({
@@ -121,7 +116,7 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
                 endDate: item.state.endDate ?? undefined,
                 parentId: item.parentId,
                 taskId: item.loopRun?.taskId,
-                loopRun: item.loopRun as IterationLoopRun | undefined,
+                loopRun: item.loopRun,
             })),
             total: response.total ?? 0,
         }
@@ -131,15 +126,29 @@ export async function searchLoopIterations(search: LoopIterationSearch): Promise
     }
 }
 
-export async function findIterationByNumber(parentId: string, taskId: string, number: number): Promise<LoopIteration | undefined> {
-    const page = Math.ceil(number / ITERATIONS_PAGE_SIZE)
-    const {results} = await searchLoopIterations({parentId, taskId, page})
-    return results.find((iteration) => iteration.number === number)
+export async function findIterationByNumber(parentId: string, taskId: string, number: number, taskRunId?: string): Promise<LoopIteration | undefined> {
+    const matches: LoopIteration[] = []
+    for (let page = Math.ceil(number / ITERATIONS_PAGE_SIZE); ; page++) {
+        const {results, total} = await searchLoopIterations({parentId, taskId, page})
+        matches.push(...results.filter((iteration) =>
+            iteration.number === number && (taskRunId === undefined || iteration.loopRun?.taskRunId === taskRunId),
+        ))
+        const exhausted = results.length < ITERATIONS_PAGE_SIZE
+            || page * ITERATIONS_PAGE_SIZE >= total
+            || results.some((iteration) => iteration.number > number)
+        if (exhausted || (taskRunId !== undefined && matches.length)) break
+    }
+    if (matches.length > 1) throw new LoopIterationError("ambiguous")
+    return matches[0]
 }
 
-export async function findFirstFailedIteration(parentId: string, taskId: string): Promise<LoopIteration | undefined> {
-    const {results} = await searchLoopIterations({parentId, taskId, state: "FAILED", size: 1})
-    return results[0]
+export async function findFirstFailedIteration(parentId: string, taskId: string, taskRunId: string): Promise<LoopIteration | undefined> {
+    for (let page = 1; ; page++) {
+        const {results, total} = await searchLoopIterations({parentId, taskId, state: "FAILED", page, size: CANDIDATE_PAGE_SIZE})
+        const match = results.find((iteration) => iteration.loopRun?.taskRunId === taskRunId)
+        if (match) return match
+        if (results.length < CANDIDATE_PAGE_SIZE || page * CANDIDATE_PAGE_SIZE >= total) return undefined
+    }
 }
 
 export async function loadIterationExecution(executionId: string): Promise<Execution> {
@@ -177,7 +186,7 @@ export interface FailedChainDeps {
 
 const defaultDeps: FailedChainDeps = {
     search: searchLoopIterations,
-    fetchParent: async (executionId) => (await loadIterationExecution(executionId)) as IterationParent,
+    fetchParent: loadIterationExecution,
 }
 
 export async function findFailedIterationChain(root: LoopRoot, taskId: string, deps: FailedChainDeps = defaultDeps): Promise<FailedIterationChain | undefined> {

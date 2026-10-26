@@ -1,7 +1,7 @@
 import {computed, onScopeDispose, ref, watch, type Ref} from "vue"
 import {useIntervalFn} from "@vueuse/core"
 import type {LogEntry} from "@kestra-io/kestra-sdk"
-import {LoopIterationError, type LoopRoot} from "../utils/loopIterations"
+import {LoopIterationError, type LoopIterationFailure, type LoopRoot} from "../utils/loopIterations"
 import {
     collectFailedTargets,
     collectScopedTargets,
@@ -16,7 +16,7 @@ import type {LoopScopeEntry} from "../utils/loopScope"
 export const AUTO_REFRESH_MS = 10_000
 export const POST_FINISH_REFRESH_DELAYS_MS = [1_000, 3_000, 6_000, 10_000, 15_000]
 
-export type MergedLogsFailure = "forbidden" | "not-found" | "unknown"
+export type MergedLogsFailure = LoopIterationFailure
 
 export interface MergedLogsOptions {
     root: Ref<(LoopRoot & {kind?: string}) | undefined>;

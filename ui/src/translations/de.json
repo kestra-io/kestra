@@ -529,6 +529,8 @@
         "matching": "Treffer",
         "failure-forbidden": "Sie haben keinen Zugriff auf diese Iteration.",
         "failure-not-found": "Diese Iteration existiert nicht mehr.",
+        "failure-ambiguous": "Diese Schleife wurde in dieser Ausführung mehrfach ausgeführt, daher lassen sich ihre Iterationen nicht unterscheiden.",
+        "failure-not-located": "Die fehlgeschlagene Iteration konnte nicht gefunden werden.",
         "failure-unknown": "Die Iterationen konnten nicht geladen werden.",
         "scope": "Bereich",
         "whole-execution": "Gesamte Ausführung",

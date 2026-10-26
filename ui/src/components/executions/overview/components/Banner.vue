@@ -232,7 +232,8 @@
             .loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {minLevel: "ERROR"},
+                // `routeQueryToQueryFilters` only keeps `filters[...]` keys, so a `minLevel` param is silently dropped
+                params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"},
                 page: 1,
                 size: FIX_WITH_AI_LOG_LIMIT,
             })

@@ -7,6 +7,7 @@ import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 import Banner from "./Banner.vue"
 import {useExecutionsStore, type Execution} from "../../../../stores/executions"
 import {useMiscStore} from "override/stores/misc"
+import {routeQueryToQueryFilters} from "../../../../utils/queryFilters"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const triggerScope = reactive({visible: false, enabled: false})
@@ -106,10 +107,13 @@ describe("Banner", () => {
         expect(loadLogs).toHaveBeenCalledWith({
             store: false,
             executionId: "execution-id",
-            params: {minLevel: "ERROR"},
+            params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"},
             page: 1,
             size: 100,
         })
+        expect(routeQueryToQueryFilters(loadLogs.mock.calls[0][0].params ?? {})).toEqual([
+            {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+        ])
         expect(promptCopilot).toHaveBeenCalledWith(
             "Fix the flow flow as it generated the following error:\nLedger EMEA is off\nLedger AMER is off",
             expect.anything(),

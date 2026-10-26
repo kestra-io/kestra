@@ -66,7 +66,7 @@
         "@types/js-yaml": "^4.0.9",
         "@types/node": "^26.6.5",
         "@vitejs/plugin-vue": "^6.0.10",
-        "sass-embedded": "^1.105.2",
+        "sass-embedded": "^1.106.1",
         "tsdown": "^0.23.1",
         "typescript": "^6",
         "unrun": "^0.3.1",

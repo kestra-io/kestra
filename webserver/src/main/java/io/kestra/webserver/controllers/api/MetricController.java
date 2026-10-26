@@ -3,15 +3,12 @@ package io.kestra.webserver.controllers.api;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
-import io.kestra.webserver.utils.ReusedTaskRunUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
@@ -37,9 +34,6 @@ public class MetricController {
     private MetricRepositoryInterface metricsRepository;
 
     @Inject
-    private ExecutionRepositoryInterface executionRepository;
-
-    @Inject
     private TenantService tenantService;
 
     @ExecuteOn(TaskExecutors.IO)
@@ -53,22 +47,12 @@ public class MetricController {
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The task id") @Nullable @QueryValue String taskId) {
         var pageable = PageableUtils.from(page, size, sort, metricsRepository.sortMapping());
-        // The metrics of a task run this execution reused from an earlier one (Playground, Replay) were recorded
-        // under the execution that ran it, so they are fetched by task run.
-        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null);
         if (taskId != null) {
-            return PagedResults.of(
-                metricsRepository.findByExecutionIdAndTaskId(
-                    tenantService.resolveTenant(), executionId, taskId, ReusedTaskRunUtils.sourceTaskRunIds(execution), pageable
-                )
-            );
+            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskId(tenantService.resolveTenant(), executionId, taskId, pageable));
         } else if (taskRunId != null) {
-            ReusedTaskRunUtils.Source source = ReusedTaskRunUtils.source(execution, executionId, taskRunId);
-            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), source.executionId(), source.taskRunId(), pageable));
+            return PagedResults.of(metricsRepository.findByExecutionIdAndTaskRunId(tenantService.resolveTenant(), executionId, taskRunId, pageable));
         } else {
-            return PagedResults.of(
-                metricsRepository.findByExecutionId(tenantService.resolveTenant(), executionId, ReusedTaskRunUtils.sourceTaskRunIds(execution), pageable)
-            );
+            return PagedResults.of(metricsRepository.findByExecutionId(tenantService.resolveTenant(), executionId, pageable));
         }
     }
 

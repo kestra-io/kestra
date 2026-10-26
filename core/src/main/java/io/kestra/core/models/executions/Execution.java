@@ -520,17 +520,6 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
-    /**
-     * Task runs this execution reused from an earlier one instead of running them again (Playground, Replay):
-     * their logs, outputs and metrics are recorded under the task run they were copied from.
-     */
-    public List<TaskRun> reusedTaskRuns() {
-        return ListUtils.emptyOnNull(this.taskRunList)
-            .stream()
-            .filter(taskRun -> taskRun.getSourceTaskRunId() != null)
-            .toList();
-    }
-
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values)
         throws InternalException {
         Optional<TaskRun> find = (this.taskRunList == null ? Collections.<TaskRun> emptyList()

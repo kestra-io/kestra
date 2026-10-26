@@ -72,31 +72,22 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, List<String> reusedTaskRunIds, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
         return this.findPage(
             pageable,
             tenantId,
-            executionCondition(executionId, reusedTaskRunIds)
+            field("execution_id").eq(executionId)
         );
     }
 
     @Override
-    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, List<String> reusedTaskRunIds, Pageable pageable) {
+    public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
         return this.findPage(
             pageable,
             tenantId,
-            executionCondition(executionId, reusedTaskRunIds)
+            field("execution_id").eq(executionId)
                 .and(field("task_id").eq(taskId))
         );
-    }
-
-    /**
-     * A reused task run recorded its metrics under the execution that ran it, and task run ids are unique, so those
-     * rows are reached by task run id alone.
-     */
-    private static Condition executionCondition(String executionId, List<String> reusedTaskRunIds) {
-        Condition own = field("execution_id").eq(executionId);
-        return ListUtils.isEmpty(reusedTaskRunIds) ? own : own.or(field("taskrun_id").in(reusedTaskRunIds));
     }
 
     @Override

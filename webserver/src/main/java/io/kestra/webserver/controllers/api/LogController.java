@@ -9,9 +9,7 @@ import org.slf4j.event.Level;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.services.ExecutionLogService;
@@ -23,7 +21,6 @@ import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
-import io.kestra.webserver.utils.ReusedTaskRunUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
@@ -64,8 +61,6 @@ public class LogController {
     private LogStreamingService logStreamingService;
     @Inject
     private ExecutionService executionService;
-    @Inject
-    private ExecutionRepositoryInterface executionRepository;
     @Inject
     private SseConnectionMetrics sseConnectionMetrics;
 
@@ -131,9 +126,8 @@ public class LogController {
     public HttpResponse<StreamedFile> downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Filters") @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters) {
-        Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, false);
         List<LogEntry> logs = logRepository
-            .findAsync(tenantService.resolveTenant(), ReusedTaskRunUtils.executionFilters(executionId, execution, filters))
+            .findAsync(tenantService.resolveTenant(), buildExecutionFilters(executionId, filters))
             .collectList()
             .block();
         InputStream inputStream = new java.io.ByteArrayInputStream(
@@ -144,7 +138,7 @@ public class LogController {
         );
 
         MutableHttpResponse<StreamedFile> response = HttpResponse.ok(new StreamedFile(inputStream, MediaType.TEXT_PLAIN_TYPE).attach(executionId + ".log"));
-        if (!execution.getState().getCurrent().isTerminated()) {
+        if (!executionService.getExecution(tenantService.resolveTenant(), executionId, false).getState().getCurrent().isTerminated()) {
             return response.header(HttpHeaders.CACHE_CONTROL, "no-cache");
         }
 
@@ -185,15 +179,25 @@ public class LogController {
     }
 
     /**
-     * The path variable stays authoritative: it is appended as an EQUALS filter, widened to the task runs this
-     * execution reused, and AND-ed by the store with the user filters, so a conflicting one narrows to nothing.
+     * Build the QueryFilter list for the per-execution endpoints. Purely additive: the
+     * path-variable {@code executionId} is always appended as an EQUALS filter, and any
+     * user-supplied filters (including a user-supplied {@code executionId} filter) are kept
+     * verbatim. The combined filter set is AND-ed by the repository, so a conflicting user
+     * filter just narrows the result to nothing — the URL path stays authoritative.
      */
-    private List<QueryFilter> buildExecutionFilters(String executionId, List<QueryFilter> userFilters) {
-        return ReusedTaskRunUtils.executionFilters(
-            executionId,
-            executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-            userFilters
+    private static List<QueryFilter> buildExecutionFilters(String executionId, List<QueryFilter> userFilters) {
+        List<QueryFilter> merged = new java.util.ArrayList<>();
+        if (userFilters != null) {
+            merged.addAll(userFilters);
+        }
+        merged.add(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.EXECUTION_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(executionId)
+                .build()
         );
+        return merged;
     }
 
     @ExecuteOn(TaskExecutors.IO)

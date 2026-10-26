@@ -51,14 +51,6 @@ public class TaskRun implements TenantInterface {
 
     String parentTaskRunId;
 
-    /** The execution that actually ran this task run, when a replay reused it instead of running it again. */
-    @Nullable
-    String sourceExecutionId;
-
-    /** The task run that actually ran, inside {@link #sourceExecutionId}; null when the task ran in this execution. */
-    @Nullable
-    String sourceTaskRunId;
-
     @With
     String value;
 
@@ -130,8 +122,6 @@ public class TaskRun implements TenantInterface {
             this.flowId,
             this.taskId,
             this.parentTaskRunId,
-            this.sourceExecutionId,
-            this.sourceTaskRunId,
             this.value,
             this.attempts,
             this.assetEmits,
@@ -161,8 +151,6 @@ public class TaskRun implements TenantInterface {
             this.flowId,
             this.taskId,
             this.parentTaskRunId,
-            this.sourceExecutionId,
-            this.sourceTaskRunId,
             this.value,
             newAttempts,
             this.assetEmits,
@@ -211,8 +199,6 @@ public class TaskRun implements TenantInterface {
             this.flowId,
             this.taskId,
             this.parentTaskRunId,
-            this.sourceExecutionId,
-            this.sourceTaskRunId,
             this.value,
             newAttempts,
             this.assetEmits,
@@ -241,17 +227,6 @@ public class TaskRun implements TenantInterface {
             .assetEmits(this.assetEmits)
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
-            .build();
-    }
-
-    /**
-     * Point this copy at the task run that actually ran, so its logs, outputs and metrics can still be found:
-     * the original's own source when the original was itself a reused copy, the original otherwise.
-     */
-    public TaskRun reusedFrom(TaskRun original) {
-        return this.toBuilder()
-            .sourceExecutionId(original.getSourceExecutionId() != null ? original.getSourceExecutionId() : original.getExecutionId())
-            .sourceTaskRunId(original.getSourceTaskRunId() != null ? original.getSourceTaskRunId() : original.getId())
             .build();
     }
 

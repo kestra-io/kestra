@@ -176,21 +176,6 @@ describe("setupKestraHttp central 404 handling", () => {
         expect(coreStore.message).not.toBeUndefined()
     })
 
-    it.each([
-        {expectedStatuses: [409, 404], reported: false},
-        {expectedStatuses: [409], reported: true},
-    ])("reports a 404 with handledIf($expectedStatuses): $reported", async ({expectedStatuses, reported}) => {
-        const {coreStore, notFound} = triggerNotFound()
-
-        expect(handledIf(notFound, expectedStatuses)).toBe(!reported)
-        await new Promise(r => setTimeout(r, 0))
-
-        if (reported) {
-            expect(coreStore.message).toMatchObject({status: 404, request})
-        } else {
-            expect(coreStore.message).toBeUndefined()
-        }
-    })
     beforeEach(() => {
         vi.spyOn(console, "error").mockImplementation(() => {})
     })

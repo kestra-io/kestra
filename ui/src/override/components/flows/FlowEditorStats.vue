@@ -67,7 +67,7 @@
             ) ?? []
 
         const otherWarnings = flowStore.flowValidation?.warnings ?? []
-        const ksEditorWarnings=flowStore.ksEditorWarnings ?? []
+        const ksEditorWarnings = flowStore.ksEditorWarnings ?? []
 
         const warnings = [
             ...outdatedWarning,

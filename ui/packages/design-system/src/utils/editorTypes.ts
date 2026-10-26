@@ -76,7 +76,7 @@ export interface KsEditorEmit {
     (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
     (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
     (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
-    (e: "editor-warnings", warnings: string[]): void
+    (e: "editor-warnings", warnings: { line: number, message: string }[]): void
 }
 
 export interface KsEditorTemplateRefs {

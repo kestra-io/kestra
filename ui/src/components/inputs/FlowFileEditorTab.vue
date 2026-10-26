@@ -60,7 +60,7 @@
                 @execute="execute"
                 @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
                 @mouse-leave="() => highlightHoveredTask(-1)"
-                @editor-warnings="(warnings)=>onKsEditorWarnings(warnings)"
+                @editor-warnings="onKsEditorWarnings"
             >
                 <template #absolute>
                     <ContentSave v-if="!flow" data-test="file-save" :class="{'save-disabled': !isDirty || source === sendingContent}" @click="isDirty && saveFileContent()" />
@@ -226,6 +226,13 @@
             setDirty?.({path: props.path, dirty: newVal})
         }
     })
+    watch(() => props.flow,
+          () => {
+              if (props.flow) {
+                  flowStore.ksEditorWarnings = []
+              }
+          },
+    )
 
     onMounted(() => {
         if(props.flow){
@@ -258,6 +265,9 @@
     })
 
     onBeforeUnmount(() => {
+        if(props.flow){
+            flowStore.ksEditorWarnings = []
+        }
         window.removeEventListener("keydown", handleGlobalSave)
         window.removeEventListener("keydown", toggleAiShortcut)
         pluginsStore.editorPlugin = undefined
@@ -392,8 +402,11 @@
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position)
         pluginsStore.updateDocumentation(cls ? {cls, version: version ?? undefined, hash: hash.value} : undefined)
     }
-    function onKsEditorWarnings(warnings : string[]){
-        flowStore.ksEditorWarnings=warnings
+    function onKsEditorWarnings(warnings: {line: number, message: string}[]) {
+        if(!props.flow) return
+        flowStore.ksEditorWarnings = warnings.map(w =>
+            t("schema warning", {line: w.line, message: w.message}),
+        )
     }
     // Delegate to the shared save action so Ctrl+S / the editor's save event go through the same
     // path as the Save button — including auto-install of missing plugins before persisting.

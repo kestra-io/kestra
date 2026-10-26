@@ -5,21 +5,21 @@ import "monaco-editor/editor/standalone/browser/quickAccess/standaloneCommandsQu
 import "monaco-editor/language/json/monaco.contribution"
 import "monaco-editor/language/typescript/monaco.contribution"
 import "monaco-editor/basic-languages/monaco.contribution"
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue"
-import { useI18n } from "vue-i18n"
-import { useStorage } from "@vueuse/core"
-import { APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode } from "../utils/fontScale"
+import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
+import {useI18n} from "vue-i18n"
+import {useStorage} from "@vueuse/core"
+import {APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode} from "../utils/fontScale"
 import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
 import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
 // @ts-expect-error tab focus path lacks types
-import { TabFocus } from "monaco-editor/editor/browser/config/tabFocus"
+import {TabFocus} from "monaco-editor/editor/browser/config/tabFocus"
 import * as monaco from "monaco-editor/editor/editor.api"
-import { editor as monacoEditorNs } from "monaco-editor/editor/editor.api"
-import { debounce } from "../utils/lang"
-import type { EditorOptions, KsEditorOptions } from "../utils/editorTypes"
-import { configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes } from "../utils/monacoSetup"
-import { useTaskIcon } from "./taskIcon"
-import { createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, isPebbleEnabled } from "../utils/pebbleBlock"
+import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
+import {debounce} from "../utils/lang"
+import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
+import {configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
+import {useTaskIcon} from "./taskIcon"
+import {createPebbleEntryTracker, cursorPebbleBlockKey, isCursorInPebbleBlock, isPebbleEnabled} from "../utils/pebbleBlock"
 import PlaceholderContentWidget from "./PlaceholderContentWidget"
 import {useEditorDecorations} from "./useEditorDecorations"
 import {useEditorContentWidget} from "./useEditorContentWidget"
@@ -53,8 +53,9 @@ export function useKsEditor(
     emit: KsEditorEmit,
     refs: KsEditorTemplateRefs,
 ) {
-    const { editorRef, container, datePickerWrapper, datePicker } = refs
-    const { t } = useI18n()
+    let markerListenerDisposable: monaco.IDisposable | undefined
+    const {editorRef, container, datePickerWrapper, datePicker} = refs
+    const {t} = useI18n()
 
     const taskIconComponent = useTaskIcon()
 
@@ -116,7 +117,7 @@ export function useKsEditor(
         picker: datePicker,
         suggestionsOnFocus: computed(() => mergedOptions.value.suggestionsOnFocus),
     })
-    const { selectedDate, shown: datePickerShown } = datePickerApi
+    const {selectedDate, shown: datePickerShown} = datePickerApi
     const nowMoment = datePickerApi.startOfToday
     const datePickerCallback = () => {
         const editor = asCodeEditorOrUndefined()
@@ -139,9 +140,9 @@ export function useKsEditor(
         codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
         modifiedEditor: () => getModifiedEditor() as monaco.editor.IStandaloneCodeEditor | undefined,
     })
-    const { highlightPebble, highlightLinesRange, clearLinesRangeHighlights, highlightInitial } = decorationsApi
+    const {highlightPebble, highlightLinesRange, clearLinesRangeHighlights, highlightInitial} = decorationsApi
 
-    const { showWidgetContent, addContentWidget, removeContentWidget } = useEditorContentWidget({
+    const {showWidgetContent, addContentWidget, removeContentWidget} = useEditorContentWidget({
         codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
         editorRoot: editorRef,
     })
@@ -211,7 +212,7 @@ export function useKsEditor(
             opts.overviewRulerLanes = 0
             opts.lineNumbersMinChars = 0
             opts.fontSize = 13
-            opts.minimap = { enabled: false }
+            opts.minimap = {enabled: false}
             opts.scrollBeyondLastColumn = 0
             opts.scrollbar = {
                 vertical: !mergedOptions.value.showScroll ? "hidden" : "visible",
@@ -222,7 +223,7 @@ export function useKsEditor(
                 verticalScrollbarSize: !mergedOptions.value.showScroll ? 0 : 5,
                 useShadows: false,
             }
-            opts.stickyScroll = { enabled: false }
+            opts.stickyScroll = {enabled: false}
             opts.find = {
                 addExtraSpaceOnTop: false,
                 autoFindInSelection: "never",
@@ -241,7 +242,7 @@ export function useKsEditor(
             opts.renderOverviewRuler = mergedOptions.value.diffOverviewBar
         }
 
-        opts.minimap = mergedOptions.value.minimap ? undefined : { enabled: false }
+        opts.minimap = mergedOptions.value.minimap ? undefined : {enabled: false}
         opts.readOnly = props.readOnly
         opts.wordWrap = mergedOptions.value.wordWrap ? "on" : "off"
         opts.automaticLayout = true
@@ -257,7 +258,7 @@ export function useKsEditor(
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
-            dropIntoEditor: { enabled: false },
+            dropIntoEditor: {enabled: false},
             quickSuggestions: {
                 other: true,
                 comments: false,
@@ -312,15 +313,17 @@ export function useKsEditor(
         destroy()
         initMonaco()
     }
+
     function editorValidationListener() {
-        monaco.editor.onDidChangeMarkers((uris) => {
+        markerListenerDisposable?.dispose()
+        markerListenerDisposable = monaco.editor.onDidChangeMarkers((uris) => {
             const model = localEditor.value?.getModel()
             if (!model) return
             if (!uris.some(uri => uri.toString() === model.uri.toString())) return
-            const markers = monaco.editor.getModelMarkers({ resource: model.uri })
+            const markers = monaco.editor.getModelMarkers({resource: model.uri})
             const warnings = markers
-                .filter(m => m.severity === monaco.MarkerSeverity.Warning || m.severity === monaco.MarkerSeverity.Error)
-                .map(m => t("schema warning", { line: m.startLineNumber, message: m.message }))
+                .filter(m => m.severity === monaco.MarkerSeverity.Warning && m.owner !== "backend-validation")
+                .map(m => ({line: m.startLineNumber, message: m.message}))
             emit("editor-warnings", warnings)
         })
     }
@@ -330,7 +333,7 @@ export function useKsEditor(
             value: props.modelValue,
             theme: props.theme,
             language: props.lang,
-            suggest: { showClasses: false, showWords: false },
+            suggest: {showClasses: false, showWords: false},
             ...flowYamlEditor.constructionOptions.value,
             ...editorOptions.value,
         }
@@ -351,7 +354,7 @@ export function useKsEditor(
                 props.lang,
                 monaco.Uri.file(prefix.value + uid() + (props.lang ? `.${props.lang}` : "")),
             )
-            localDiffEditor.value.setModel({ original: originalModel, modified: modifiedModel })
+            localDiffEditor.value.setModel({original: originalModel, modified: modifiedModel})
 
             let modifiedBackspaceTimeout: number | null = null
             const modifiedEditor = localDiffEditor.value.getModifiedEditor()
@@ -365,11 +368,11 @@ export function useKsEditor(
                 }
             })
         } else {
-            monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, command: "editor.action.triggerSuggest" })
-            monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP, command: "editor.action.quickCommand" })
-            monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.DownArrow, command: "editor.action.fontZoomOut", when: "editorFocus" })
-            monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow, command: "editor.action.fontZoomIn", when: "editorFocus" })
-            monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0, command: "editor.action.fontZoomReset", when: "editorFocus" })
+            monaco.editor.addKeybindingRule({keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, command: "editor.action.triggerSuggest"})
+            monaco.editor.addKeybindingRule({keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP, command: "editor.action.quickCommand"})
+            monaco.editor.addKeybindingRule({keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.DownArrow, command: "editor.action.fontZoomOut", when: "editorFocus"})
+            monaco.editor.addKeybindingRule({keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow, command: "editor.action.fontZoomIn", when: "editorFocus"})
+            monaco.editor.addKeybindingRule({keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0, command: "editor.action.fontZoomReset", when: "editorFocus"})
 
             if (!editorRef.value) return
             const overflowWidgetsDomNode = getOrCreateOverflowWidgetsDomNode()
@@ -385,8 +388,8 @@ export function useKsEditor(
                     (_acc, args?: { lineNumber: number, column: number }) => {
                         const ed = localEditor.value
                         if (!ed || !args?.lineNumber || !args?.column) return
-                        ed.setPosition({ lineNumber: args.lineNumber, column: args.column })
-                        ed.revealPositionInCenter({ lineNumber: args.lineNumber, column: args.column })
+                        ed.setPosition({lineNumber: args.lineNumber, column: args.column})
+                        ed.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column})
                         ed.focus()
                     },
                 )
@@ -539,7 +542,7 @@ export function useKsEditor(
                 const model = ed.getModel()
                 lastTimeout = window.setTimeout(() => {
                     if (!position || !model) return
-                    emit("cursor", { position, model })
+                    emit("cursor", {position, model})
                     scrollMemory.saveViewState(codeEditor)
                 }, 100)
                 highlightPebble()
@@ -596,6 +599,7 @@ export function useKsEditor(
     }
 
     function destroy() {
+        markerListenerDisposable?.dispose()
         suggestWidgetIcons.teardown()
         disposeCompletions.value?.()
         resizeObserver.value?.disconnect()
@@ -666,7 +670,7 @@ export function useKsEditor(
         } else {
             localEditor.value?.updateOptions(newValue ?? {})
         }
-    }, { deep: true })
+    }, {deep: true})
 
     watch(() => props.theme, (newTheme) => {
         if (editorResolved.value && typeof newTheme === "string") {

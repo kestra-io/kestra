@@ -442,8 +442,7 @@ export function getDateGrouping(startDate: Dayjs | string | undefined, endDate: 
         ? dayjs.duration(dayjs(endDate).diff(dayjs(startDate)))
         : dayjs.duration(timeRange)
 
-    // Same thresholds as DateUtils.groupByType on the backend, which compares whole days and hours,
-    // so the labels match the buckets the API returns.
+    // Mirrors DateUtils.groupByType, which compares whole days and hours, so labels match the API buckets.
     const days = Math.floor(duration.asDays())
     const hours = Math.floor(duration.asHours())
 

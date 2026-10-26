@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import com.cronutils.model.time.ExecutionTime;
 
-import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -392,7 +392,8 @@ class ScheduleTest {
             "2025-04-30T11:00:00+05:30, 2025-03-31T11:00:00+05:30, 2025-05-31T11:00:00+05:30"
         }
     )
-    void shouldEvaluateLastCalendarDaySchedulesWithoutAWeekday(String current, String previous, String next) throws Exception {
+    void shouldWalkPreviousAndNextMonthEndsWhenUsingAWhenCondition(String current, String previous, String next) throws Exception {
+        // Daily cron deliberately exercises the when condition's previous/next walk; monthly schedules use cron L.
         Schedule trigger = Schedule.builder()
             .id("schedule")
             .type(Schedule.class.getName())

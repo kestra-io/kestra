@@ -37,6 +37,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
@@ -86,6 +87,7 @@ public class ExecutionService {
     private final FlowParsingService flowParsingService;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
+    private final CheckpointRepositoryInterface checkpointRepository;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
     private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
@@ -106,6 +108,7 @@ public class ExecutionService {
         FlowParsingService flowParsingService,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
+        CheckpointRepositoryInterface checkpointRepository,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
         DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
@@ -123,6 +126,7 @@ public class ExecutionService {
         this.flowParsingService = Objects.requireNonNull(flowParsingService);
         this.taskOutputService = Objects.requireNonNull(taskOutputService);
         this.executionOutputService = Objects.requireNonNull(executionOutputService);
+        this.checkpointRepository = Objects.requireNonNull(checkpointRepository);
         this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
         this.killQueue = Objects.requireNonNull(killQueue);
         this.loopExecutionEventQueue = Objects.requireNonNull(loopExecutionEventQueue);
@@ -246,7 +250,8 @@ public class ExecutionService {
             .collect(Collectors.toMap(TaskRun::getId, t -> t));
 
         List<TaskRun> newTaskRuns = execution.getTaskRunList().stream()
-            .map(taskRun -> {
+            .map(taskRun ->
+            {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.run();
                 }
@@ -544,20 +549,39 @@ public class ExecutionService {
                 taskRun -> taskRun.getId().equals(taskRunId)
             );
 
+            TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
             GraphCluster graphCluster = GraphUtils.of(flow, execution);
             if (!GraphUtils.hasTaskRun(graphCluster, taskRunId)) {
-                TaskRun replayedTaskRun = execution.findTaskRunByTaskRunId(taskRunId);
                 throw new IllegalArgumentException(
                     "Cannot replay execution '%s' from task run '%s': task '%s' does not exist at the same position in revision %s of flow '%s'."
                         .formatted(execution.getId(), taskRunId, replayedTaskRun.getTaskId(), flow.getRevision(), flow.getId())
                 );
             }
 
+            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
+                .stream()
+                .filter(task -> task instanceof AbstractGraphTask)
+                .map(task -> ((AbstractGraphTask) task))
+                .filter(task -> task.getTaskRun() != null)
+                .map(task -> task.getTaskRun().getId())
+                .filter(id -> !taskRunToRestart.contains(id))
+                .collect(Collectors.toCollection(HashSet::new));
+
+            originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, graphCluster, taskRunToRestart));
+
+            Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
+            execution.getTaskRunList()
+                .stream()
+                .filter(taskRun -> handlerTaskIds.contains(taskRun.getTaskId()))
+                .map(TaskRun::getId)
+                .forEach(originalTaskRunToRemove::add);
+
             Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, false);
 
             newTaskRuns.addAll(
                 execution.getTaskRunList()
                     .stream()
+                    .filter(originalTaskRun -> !originalTaskRunToRemove.contains(originalTaskRun.getId()))
                     .map(throwFunction(originalTaskRun ->
                     {
                         TaskRun newTaskRun = this.mapTaskRun(
@@ -574,32 +598,9 @@ public class ExecutionService {
                     .toList()
             );
 
-            // remove all child for replay task id
-            Set<String> originalTaskRunToRemove = GraphUtils.successors(graphCluster, Set.of(taskRunId))
-                .stream()
-                .filter(task -> task instanceof AbstractGraphTask)
-                .map(task -> ((AbstractGraphTask) task))
-                .filter(task -> task.getTaskRun() != null)
-                .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
-                .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
-                .map(s -> s.getTaskRun().getId())
-                .collect(Collectors.toSet());
-
-            Set<String> taskRunToRemove = originalTaskRunToRemove
-                .stream()
-                .map(mappingTaskRunId::get)
-                .collect(Collectors.toSet());
-
-            taskRunToRemove
-                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
-
             Set<String> untouchedTaskRunIds = new HashSet<>(taskRunToRestart);
             untouchedTaskRunIds.addAll(originalTaskRunToRemove);
             this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
-
-            // Worker task, we need to remove all child in order to be restarted
-            this.removeWorkerTask(flow, execution, taskRunToRestart, mappingTaskRunId)
-                .forEach(r -> newTaskRuns.removeIf(taskRun -> taskRun.getId().equals(r)));
         }
 
         // Build and launch new execution
@@ -621,6 +622,40 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, String replayedTaskId, Set<String> taskRunToRestart) throws InternalException {
+        Set<String> staleHandlerTaskIds = new HashSet<>();
+        Set<String> flowHandlerTaskIds = handlerTaskIds(flow, flow.getErrors(), flow.getFinally(), flow.getAfterExecution());
+        if (!flowHandlerTaskIds.contains(replayedTaskId)) {
+            staleHandlerTaskIds.addAll(flowHandlerTaskIds);
+        }
+
+        Set<String> restartedTaskIds = new HashSet<>();
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            if (!taskRunToRestart.contains(taskRun.getId())) {
+                continue;
+            }
+
+            restartedTaskIds.add(taskRun.getTaskId());
+            if (flow.findTaskByTaskId(taskRun.getTaskId()) instanceof FlowableTask<?> flowableTask) {
+                Set<String> flowableHandlerTaskIds = handlerTaskIds(flow, flowableTask.getErrors(), flowableTask.getFinally(), null);
+                if (!flowableHandlerTaskIds.contains(replayedTaskId)) {
+                    staleHandlerTaskIds.addAll(flowableHandlerTaskIds);
+                }
+            }
+        }
+
+        staleHandlerTaskIds.removeAll(restartedTaskIds);
+        return staleHandlerTaskIds;
+    }
+
+    private Set<String> handlerTaskIds(Flow flow, List<Task> errors, List<Task> finallyTasks, @Nullable List<Task> afterExecution) {
+        return Stream.of(errors, finallyTasks, afterExecution)
+            .flatMap(tasks -> ListUtils.emptyOnNull(tasks).stream())
+            .flatMap(flow::allTasksWithChilds)
+            .map(Task::getId)
+            .collect(Collectors.toSet());
     }
 
     private Execution applyNewRevision(Flow flow, Execution newExecution) {
@@ -818,6 +853,7 @@ public class ExecutionService {
                     builder.executionsCount(this.executionRepository.purge(executions));
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
                     builder.executionOutputsCount(this.executionOutputService.purge(executions));
+                    builder.checkpointsCount(this.checkpointRepository.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -847,6 +883,7 @@ public class ExecutionService {
                     .metricsCount(a.getMetricsCount() + b.getMetricsCount())
                     .executionOutputsCount(a.getExecutionOutputsCount() + b.getExecutionOutputsCount())
                     .taskOutputsCount(a.getTaskOutputsCount() + b.getTaskOutputsCount())
+                    .checkpointsCount(a.getCheckpointsCount() + b.getCheckpointsCount())
                     .build()
             )
             .block();
@@ -917,7 +954,7 @@ public class ExecutionService {
             .flatMap(task ->
             {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
+                    return Mono.just(flowInputOutput.resolveResumeInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -939,7 +976,7 @@ public class ExecutionService {
             .flatMap(task ->
             {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
+                    return flowInputOutput.validateResumeInputs(pauseTask.getOnResume(), flow, execution, inputs);
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -1337,6 +1374,9 @@ public class ExecutionService {
         private int executionOutputsCount = 0;
 
         @Builder.Default
+        private int checkpointsCount = 0;
+
+        @Builder.Default
         private int logsCount = 0;
 
         @Builder.Default
@@ -1347,6 +1387,13 @@ public class ExecutionService {
     }
 
     private Set<String> removeWorkerTask(Flow flow, Execution execution, Set<String> taskRunToRestart, Map<String, String> mappingTaskRunId) throws InternalException {
+        return this.workerTaskChildren(flow, execution, GraphUtils.of(flow, execution), taskRunToRestart)
+            .stream()
+            .map(mappingTaskRunId::get)
+            .collect(Collectors.toSet());
+    }
+
+    private Set<String> workerTaskChildren(Flow flow, Execution execution, GraphCluster graphCluster, Set<String> taskRunToRestart) throws InternalException {
         Set<String> workerTaskRunId = taskRunToRestart
             .stream()
             .filter(throwPredicate(s ->
@@ -1357,15 +1404,13 @@ public class ExecutionService {
             }))
             .collect(Collectors.toSet());
 
-        GraphCluster graphCluster = GraphUtils.of(flow, execution);
-
         return GraphUtils.successors(graphCluster, workerTaskRunId)
             .stream()
             .filter(task -> task instanceof AbstractGraphTask)
             .map(task -> (AbstractGraphTask) task)
             .filter(task -> task.getTaskRun() != null)
             .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
+            .map(s -> s.getTaskRun().getId())
             .collect(Collectors.toSet());
     }
 
@@ -1485,6 +1530,20 @@ public class ExecutionService {
 
         // for all other states, we just return the same execution,
         // it will be resent to the queue and forced re-processed.
+        eventPublisher.publishEvent(CrudEvent.of(execution, newExecution));
+        return newExecution;
+    }
+
+    public boolean canBeRescheduled(Execution execution) {
+        return execution.getState().isCreated() && execution.getScheduleDate() != null;
+    }
+
+    public Execution reschedule(Execution execution, Instant scheduleDate) {
+        if (!canBeRescheduled(execution)) {
+            throw new IllegalArgumentException("Only scheduled executions that have not started can be rescheduled.");
+        }
+
+        Execution newExecution = execution.withScheduleDate(scheduleDate);
         eventPublisher.publishEvent(CrudEvent.of(execution, newExecution));
         return newExecution;
     }

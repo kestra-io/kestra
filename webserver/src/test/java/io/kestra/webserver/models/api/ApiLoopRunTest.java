@@ -1,0 +1,36 @@
+package io.kestra.webserver.models.api;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.executions.LoopRun;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class ApiLoopRunTest {
+
+    @Test
+    void ofNullLoopRun() {
+        assertThat(ApiLoopRun.of(null)).isNull();
+    }
+
+    @Test
+    void ofMapsFields() {
+        var loopRun = new LoopRun(
+            null,
+            "outer",
+            "tr1",
+            0,
+            null,
+            "EMEA",
+            List.of(new LoopRun.Parent(1, null, "Q1", true)),
+            true
+        );
+
+        var api = ApiLoopRun.of(loopRun);
+
+        assertThat(api.taskId()).isEqualTo("outer");
+        assertThat(api.parents().getFirst().value()).isEqualTo("Q1");
+    }
+}

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.AlreadyExistsException;
+import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
@@ -34,10 +36,10 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -719,7 +721,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     /**
      * @param excludeDraft when true, resolves each flow to its most recent non-draft revision
-     *                     instead of its latest revision.
+     *        instead of its latest revision.
      */
     @SuppressWarnings("unchecked")
     private <R extends Record, E> SelectConditionStep<R> fullTextSelect(String tenantId, DSLContext context, List<Field<Object>> field, boolean excludeDraft) {
@@ -887,7 +889,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return getFindFlowSelect(tenantId, filters, context, additionalFieldsToSelect, false);
     }
 
-    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect, boolean excludeDraft) {
+    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect,
+        boolean excludeDraft) {
         var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of(), excludeDraft);
         select = select.and(this.filter(filters, null, Resource.FLOW));
         return (SelectConditionStep<R>) select;
@@ -907,7 +910,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace) {
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope,
+        @Nullable String tenantId, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -928,16 +932,20 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .limit(SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES)
                     .fetch()
                     .stream()
-                    .map(record -> new SearchResult<>(
-                        (Flow) this.jdbcRepository.map(record),
-                        query == null
-                            ? List.<SourceMatch>of()
-                            : SourceSearchMatcher.findMatches(record.getValue("source_code", String.class), query, caseSensitive, wholeWord, regex, scope),
-                        true
-                    ))
+                    .map(
+                        record -> new SearchResult<>(
+                            (Flow) this.jdbcRepository.map(record),
+                            query == null
+                                ? List.<SourceMatch> of()
+                                : SourceSearchMatcher.findMatches(record.getValue("source_code", String.class), query, caseSensitive, wholeWord, regex, scope),
+                            true
+                        )
+                    )
                     .filter(result -> query == null || !result.getMatches().isEmpty())
-                    .sorted(java.util.Comparator.comparing((SearchResult<Flow> r) -> r.getModel().getNamespace())
-                        .thenComparing(r -> r.getModel().getId()))
+                    .sorted(
+                        java.util.Comparator.comparing((SearchResult<Flow> r) -> r.getModel().getNamespace())
+                            .thenComparing(r -> r.getModel().getId())
+                    )
                     .toList();
 
                 return pageable == null || pageable.getSize() == -1
@@ -989,12 +997,16 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         }
 
         // Persist
-        return this.save(flow, CrudEventType.UPDATE);
+        return this.save(flow, CrudEventType.UPDATE, previous);
+    }
+
+    @VisibleForTesting
+    public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
+        return this.save(flow, crudEventType, null);
     }
 
     @SneakyThrows(FlowProcessingException.class)
-    @VisibleForTesting
-    public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
+    private FlowWithSource save(GenericFlow flow, CrudEventType crudEventType, @Nullable FlowInterface previous) throws ConstraintViolationException {
 
         // Ensure the flow is parseable before saving.
         // For drafts with unparsable YAML, fall back to a FlowWithException so the raw source can
@@ -1017,14 +1029,25 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         // Update revision
         List<FlowWithSource> revisions = this.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId(), true);
-        final int revision = revisions.isEmpty() ? 1 : revisions.getLast().getRevision() + 1;
+        FlowWithSource last = revisions.isEmpty() ? null : revisions.getLast();
+        if (CrudEventType.CREATE == crudEventType && last != null && !last.isDeleted()) {
+            throw AlreadyExistsException.of("Flow", flow.getId(), flow.getNamespace());
+        }
+        if (previous != null && !previous.isDeleted() && last != null && last.isDeleted()) {
+            throw new ConflictException("Flow '%s' in namespace '%s' was deleted while it was being updated.".formatted(flow.getId(), flow.getNamespace()));
+        }
+        final int revision = last == null ? 1 : last.getRevision() + 1;
 
         flow = flow.toBuilder().revision(revision).updated(Instant.now()).build();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
         fields.put(field("source_code"), flow.getSource());
 
-        this.jdbcRepository.persist(flow, fields);
+        if (!this.insertRevision(flow, fields)) {
+            throw CrudEventType.CREATE == crudEventType
+                ? AlreadyExistsException.of("Flow", flow.getId(), flow.getNamespace())
+                : concurrentWrite(flow);
+        }
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
 
@@ -1042,14 +1065,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         FlowWithSource existingFlow = existing
             .orElseThrow(() -> new IllegalStateException("Flow " + flow.getId() + " doesn't exists"));
 
-        Optional<FlowWithSource> last = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId());
-        if (last.isEmpty()) {
-            throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
-        }
-
-        if (!last.get().getRevision().equals(existingFlow.getRevision())) {
-            throw new IllegalStateException("Trying to deleted old revision, wanted " + existingFlow.getRevision() + ", last revision is " + last.get().getRevision());
-        }
+        checkIsLastRevision(existingFlow, this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()));
 
         return deleteFlow(flow, existingFlow);
     }
@@ -1061,14 +1077,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         FlowWithSource existingFlow = existing
             .orElseThrow(() -> new IllegalStateException("Flow " + flow.getId() + " doesn't exists"));
 
-        Optional<FlowWithSource> last = this.findByIdWithSourceWithoutAcl(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty());
-        if (last.isEmpty()) {
-            throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
-        }
-
-        if (!last.get().getRevision().equals(existingFlow.getRevision())) {
-            throw new IllegalStateException("Trying to deleted old revision, wanted " + existingFlow.getRevision() + ", last revision is " + last.get().getRevision());
-        }
+        checkIsLastRevision(existingFlow, this.findByIdWithSourceWithoutAcl(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty()));
 
         return deleteFlow(flow, existingFlow);
     }
@@ -1105,10 +1114,59 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted.toFlow());
         fields.put(field("source_code"), deleted.getSource());
 
-        this.jdbcRepository.persist(deleted, fields);
+        if (!this.insertRevision(deleted, fields)) {
+            throw concurrentWrite(deleted);
+        }
 
         eventPublisher.publishEvent(CrudEvent.delete(flow));
         return deleted;
+    }
+
+    // Not an upsert: the revision key has to reject a concurrent writer that computed the same revision.
+    private boolean insertRevision(FlowInterface flow, Map<Field<Object>, Object> fields) {
+        String key = this.jdbcRepository.key(flow);
+        try {
+            this.jdbcRepository.getDslContextWrapper().transaction(
+                configuration -> DSL.using(configuration)
+                    .insertInto(this.jdbcRepository.getTable())
+                    .set(KEY_FIELD, key)
+                    .set(fields)
+                    .execute()
+            );
+            return true;
+        } catch (IntegrityConstraintViolationException e) {
+            // MySQL reports a duplicate key and a NOT NULL violation with the same SQL state, so check the key itself.
+            if (!this.keyExists(key)) {
+                throw e;
+            }
+            log.debug("Revision {} of flow '{}' in namespace '{}' already exists: {}", flow.getRevision(), flow.getId(), flow.getNamespace(), e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean keyExists(String key) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(
+            configuration -> DSL.using(configuration).fetchExists(this.jdbcRepository.getTable(), KEY_FIELD.eq(key))
+        );
+    }
+
+    private static ConflictException concurrentWrite(FlowInterface flow) {
+        return new ConflictException(
+            "Revision %d of flow '%s' in namespace '%s' was saved by another request at the same time. Reload the flow and try again."
+                .formatted(flow.getRevision(), flow.getId(), flow.getNamespace())
+        );
+    }
+
+    private static void checkIsLastRevision(FlowWithSource existing, Optional<FlowWithSource> last) {
+        if (last.isEmpty() || last.get().isDeleted()) {
+            throw new ConflictException("Flow '%s' in namespace '%s' was deleted by another request.".formatted(existing.getId(), existing.getNamespace()));
+        }
+        if (!last.get().getRevision().equals(existing.getRevision())) {
+            throw new ConflictException(
+                "Flow '%s' in namespace '%s' was updated to revision %d by another request. Reload the flow and try again."
+                    .formatted(existing.getId(), existing.getNamespace(), last.get().getRevision())
+            );
+        }
     }
 
     @Override

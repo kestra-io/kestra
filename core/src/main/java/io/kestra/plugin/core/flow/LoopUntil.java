@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.validator.constraints.time.DurationMin;
 import org.slf4j.Logger;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -28,8 +29,6 @@ import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.hibernate.validator.constraints.time.DurationMin;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -60,11 +59,12 @@ import lombok.experimental.SuperBuilder;
                 tasks:
                   - id: loop
                     type: io.kestra.plugin.core.flow.LoopUntil
-                    condition: "{{ outputs.return.value == '4' }}"
+                    condition: "{{ outputs.return.values.result == '4' }}"
                     tasks:
                       - id: return
-                        type: io.kestra.plugin.core.debug.Return
-                        format: "{{ outputs.loop.iterationCount }}"
+                        type: io.kestra.plugin.core.output.OutputValues
+                        values:
+                          result: "{{ outputs.loop.iterationCount }}"
                 """
         )
     },

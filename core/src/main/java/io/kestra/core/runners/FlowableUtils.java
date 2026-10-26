@@ -28,7 +28,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class FlowableUtils {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
@@ -90,7 +89,9 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
+                .anyMatch(
+                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
+                )
         ) {
             return Collections.emptyList();
         }
@@ -131,7 +132,9 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
+                .anyMatch(
+                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
+                )
         ) {
             return Collections.emptyList();
         }
@@ -227,12 +230,12 @@ public class FlowableUtils {
         } else if (!currentTasks.isEmpty()) {
             // handle nominal case, tasks or errors flow are ready to be analyzed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
+                return Optional.of(execution.computeFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
             if (execution.hasFailedNoRetry(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
+                return Optional.of(execution.computeFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         }
 

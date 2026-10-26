@@ -463,18 +463,18 @@ public class ExecutorService {
     private ExecutorContext onEnd(ExecutorContext executor) {
         final FlowWithSource flow = executor.getFlow();
 
-        // For LOOP sub-executions, use guessFinalState(List<ResolvedTask>, TaskRun, boolean, boolean) to compute the final state from the Loop's child tasks directly.
+        // For LOOP sub-executions, use computeFinalState(List<ResolvedTask>, TaskRun, boolean, boolean) to compute the final state from the Loop's child tasks directly.
         State.Type finalState;
         if (executor.getExecution().getKind() == ExecutionKind.LOOP && executor.getExecution().getLoopRun() != null) {
             Loop loop = (Loop) flow.findTaskByTaskIdOrNull(executor.getExecution().getLoopRun().taskId());
             if (loop != null) {
                 List<ResolvedTask> childTasks = loop.getTasks().stream().map(ResolvedTask::of).toList();
-                finalState = executor.getExecution().guessFinalState(childTasks, null, false, false);
+                finalState = executor.getExecution().computeFinalState(childTasks, null, false, false);
             } else {
-                finalState = executor.getExecution().guessFinalState(flow);
+                finalState = executor.getExecution().computeFinalState(flow);
             }
         } else {
-            finalState = executor.getExecution().guessFinalState(flow);
+            finalState = executor.getExecution().computeFinalState(flow);
         }
 
         Execution newExecution = executor.getExecution()
@@ -646,8 +646,10 @@ public class ExecutorService {
                         AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                         if (retry != null) {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                            if (retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                            if (
+                                retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)
+                            ) {
                                 behavior = retry.getBehavior();
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
                                     : taskRun.nextRetryDate(retry);
@@ -693,7 +695,7 @@ public class ExecutorService {
             if (task instanceof FlowableTask<?>) {
                 try {
                     switch (task) {
-                        case LoopUntil waitFor when taskRun.getState().isRunning() -> {
+                        case LoopUntil waitFor when taskRun.getState().getCurrent() == State.Type.RUNNING -> {
                             if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                                 Map<String, Object> previousOutput = taskOutputService.getOutputs(taskRun);
                                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(taskRun), taskRun);
@@ -839,9 +841,11 @@ public class ExecutorService {
     private Optional<ExecutionDelay> flowableRetryDelay(ExecutorContext executor, Task task, TaskRun taskRun, WorkerTaskResult result) {
         AbstractRetry retry = task.getRetry();
 
-        if (retry == null
-            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-            || !result.getTaskRun().getState().isTerminated()) {
+        if (
+            retry == null
+                || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                || !result.getTaskRun().getState().isTerminated()
+        ) {
             return Optional.empty();
         }
 
@@ -919,7 +923,7 @@ public class ExecutorService {
                 )
             );
             for (int i = 0; i < init.values().size(); i++) {
-                var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i));
+                var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i), loop.getParseValues());
                 executor.withLoopExecution(loopExecution, "handleLoopExecution");
             }
         } else {
@@ -938,14 +942,14 @@ public class ExecutorService {
                 if (init.values().isLeft()) {
                     List<String> values = init.values().getLeft();
                     for (int i = 0; i < init.limit(); i++) {
-                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i));
+                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i), loop.getParseValues());
                         executor.withLoopExecution(loopExecution, "handleLoopExecution");
                     }
                 } else {
                     List<Pair<String, String>> values = init.values().getRight();
                     for (int i = 0; i < init.limit(); i++) {
                         var value = values.get(i);
-                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue());
+                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue(), loop.getParseValues());
                         executor.withLoopExecution(loopExecution, "handleLoopExecution");
                     }
                 }
@@ -994,7 +998,8 @@ public class ExecutorService {
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext)
+        throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);

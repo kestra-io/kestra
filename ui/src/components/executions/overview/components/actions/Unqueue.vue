@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <i18n-t keypath="unqueue title" tag="p">
+            <i18n-t keypath="unqueue title" tag="p" scope="global">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
             <p>{{ $t("unqueue note") }}</p>
@@ -29,7 +29,7 @@
                 >
                     <template #default>
                         <KsExecutionStatus size="small" :label="true" class="unqueue-status" :status="state" />
-                        <i18n-t keypath="unqueue as" tag="span">
+                        <i18n-t keypath="unqueue as" tag="span" scope="global">
                             <template #status><code>{{ state }}</code></template>
                         </i18n-t>
                     </template>
@@ -93,7 +93,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .unqueue-status {
     margin-inline-end: var(--ks-spacing-1);
 }

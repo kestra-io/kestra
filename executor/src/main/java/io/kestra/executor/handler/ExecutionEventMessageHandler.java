@@ -31,6 +31,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.WorkerQueueService;
+import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.DateUtils;
@@ -445,6 +446,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                         Span.current().recordException(e).setStatus(StatusCode.ERROR);
                         return null;
+                    } finally {
+                        Span.current().setAttribute(TraceUtils.ATTR_STATE, execution.getState().getCurrent().name());
                     }
                 }
             )

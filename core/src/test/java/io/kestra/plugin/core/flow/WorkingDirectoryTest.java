@@ -132,13 +132,15 @@ public class WorkingDirectoryTest {
         RunContext runContext = runContextFactory.of(workingDirectory, Map.of());
 
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                parentTaskRun,
-                childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t3", State.Type.RUNNING),
-                childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
-            ))
+            .taskRunList(
+                List.of(
+                    parentTaskRun,
+                    childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
+                    childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
+                    childTaskRun(parentTaskRun, "t3", State.Type.RUNNING),
+                    childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
+                )
+            )
             .build();
 
         // When resolving the state while t3 is still RUNNING
@@ -156,13 +158,16 @@ public class WorkingDirectoryTest {
         RunContext runContext = runContextFactory.of(workingDirectory, Map.of());
 
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                parentTaskRun,
-                childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t3", State.Type.SUCCESS),
-                childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
-            ))
+            .taskRunList(
+                List.of(
+                    parentTaskRun,
+                    childTaskRun(parentTaskRun, "t1", State.Type.SUCCESS),
+                    childTaskRun(parentTaskRun, "t2", State.Type.SUCCESS),
+                    childTaskRun(parentTaskRun, "t3", State.Type.SUCCESS),
+                    childTaskRun(parentTaskRun, "t4", State.Type.FAILED)
+                )
+            )
+            .state(new State().withState(State.Type.RUNNING))
             .build();
 
         // When resolving the state now that every subtask has terminated
@@ -176,12 +181,14 @@ public class WorkingDirectoryTest {
         return WorkingDirectory.builder()
             .id("worker")
             .type(WorkingDirectory.class.getName())
-            .tasks(List.of(
-                Return.builder().id("t1").type(Return.class.getName()).format(Property.ofValue("first")).build(),
-                Return.builder().id("t2").type(Return.class.getName()).format(Property.ofValue("second")).build(),
-                Return.builder().id("t3").type(Return.class.getName()).format(Property.ofValue("third")).build(),
-                Return.builder().id("t4").type(Return.class.getName()).format(Property.ofValue("fourth")).build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder().id("t1").type(Return.class.getName()).format(Property.ofValue("first")).build(),
+                    Return.builder().id("t2").type(Return.class.getName()).format(Property.ofValue("second")).build(),
+                    Return.builder().id("t3").type(Return.class.getName()).format(Property.ofValue("third")).build(),
+                    Return.builder().id("t4").type(Return.class.getName()).format(Property.ofValue("fourth")).build()
+                )
+            )
             .build();
     }
 

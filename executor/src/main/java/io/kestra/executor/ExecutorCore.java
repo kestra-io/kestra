@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.kestra.core.models.flows.Flow;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -28,10 +27,12 @@ import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -71,7 +72,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 /**
@@ -331,12 +331,11 @@ public class ExecutorCore {
                 Execution executionAtEntry = executor.getTerminalExecutionAtEntry();
                 boolean terminatedByThisCycle = executionAtEntry == null
                     || !executionService.isTerminated(executor.getFlow(), executionAtEntry);
-                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle);
-                if (popped.isPresent()) {
-                    executionQueue.emit(popped.get());
+                for (Execution popped : concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle)) {
+                    executionQueue.emit(popped);
 
                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(executor.getFlow(), popped.get());
+                    processFlowTriggers(executor.getFlow(), popped);
                 }
 
                 if (terminatedByThisCycle) {
@@ -544,7 +543,13 @@ public class ExecutorCore {
 
     private boolean shouldRetry(Flow flow, Execution execution) {
         if (execution.getState().isFailed() && flow.getRetry() != null) {
-            return executionService.nextRetryDate(flow.getRetry(), execution) != null;
+            AbstractRetry retry = flow.getRetry();
+            if (retry.getBehavior() == AbstractRetry.Behavior.CREATE_NEW_EXECUTION) {
+                return executionService.nextRetryDate(retry, execution) != null;
+            }
+            return execution.findFirstByState(State.Type.RETRYING)
+                .map(t -> t.nextRetryDate(retry) != null)
+                .orElse(false);
         }
         return false;
     }

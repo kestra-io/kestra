@@ -17,7 +17,7 @@
     }>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .card {
         box-sizing: border-box;
         display: flex;

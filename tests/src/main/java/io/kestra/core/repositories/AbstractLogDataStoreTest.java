@@ -537,8 +537,7 @@ public abstract class AbstractLogDataStoreTest {
         Instant afterTs = T_KEYSET.minus(1, ChronoUnit.MINUTES);
         String afterKey = null;
         while (true) {
-            List<LogDataStoreInterface.KeyedLog> page =
-                logDataStore.findAfterWithoutAcl(keysetTenant, filters, afterTs, afterKey, 2);
+            List<LogDataStoreInterface.KeyedLog> page = logDataStore.findAfterWithoutAcl(keysetTenant, filters, afterTs, afterKey, 2);
             all.addAll(page);
             if (page.size() < 2) {
                 break; // a non-full page marks exhaustion
@@ -705,10 +704,12 @@ public abstract class AbstractLogDataStoreTest {
             levelsTenant,
             Logs.builder().type(Logs.class.getName())
                 .columns(Map.of("count", ColumnDescriptor.<Logs.Fields> builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build()))
-                .where(List.of(
-                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("WARN", "ERROR")).build(),
-                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("ERROR")).build()
-                ))
+                .where(
+                    List.of(
+                        In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("WARN", "ERROR")).build(),
+                        In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("ERROR")).build()
+                    )
+                )
                 .build(),
             ZonedDateTime.now().minusYears(10), ZonedDateTime.now().plusYears(10), null
         );
@@ -793,6 +794,28 @@ public abstract class AbstractLogDataStoreTest {
 
         logDataStore.deleteByQuery(tenant, "io.kestra.del", "del-flow", "del-trigger-id");
         assertRemaining(tenant, "del-trigger", 1);
+    }
+
+    @Test
+    void deleteByQuery_shouldKeepLogsOfNamespaceDifferingOnlyByCase() {
+        String tenant = randomTenant();
+        logDataStore.saveBatch(
+            List.of(
+                log(Level.INFO, "del-lower").tenantId(tenant).namespace("company.a").build(),
+                log(Level.INFO, "del-upper").tenantId(tenant).namespace("company.A").build()
+            )
+        );
+        awaitVisible(tenant, "del-upper");
+
+        int deleted = logDataStore.deleteByQuery(tenant, "company.a", null, null, null, null, ZonedDateTime.now().plusMinutes(1), true, true, null);
+
+        if (logDataStore.canPurge()) {
+            assertThat(deleted).isEqualTo(1);
+            assertThat(logDataStore.findByExecutionId(tenant, "del-lower", null)).isEmpty();
+            assertThat(logDataStore.findByExecutionId(tenant, "del-upper", null)).hasSize(1);
+        } else {
+            assertThat(deleted).isZero();
+        }
     }
 
     @Test

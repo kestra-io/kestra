@@ -10,6 +10,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -43,11 +45,14 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
+@Slf4j
 class RunVariablesTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RunVariablesTest.class);
 
     @Inject
     VariableRenderer renderer;
@@ -441,7 +446,6 @@ class RunVariablesTest {
      * Dynamic top-level keys ({@code inputs}, {@code outputs}, {@code tasks}, etc.) are noted
      * as present but their children are not walked, since their structure varies per flow/execution.
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     void contextPathsShouldMatchExplicitRegistry() {
         String parentRunId = IdUtils.create();
@@ -472,7 +476,8 @@ class RunVariablesTest {
             .withState(State.Type.SUCCESS);
         LoopRun loopRun = new LoopRun(
             parentExecution, "loop-task", IdUtils.create(), 0, "loop-key", "loop-value",
-            List.of(new LoopRun.Parent(0, null, "v0"), new LoopRun.Parent(1, "pk", "v1"))
+            List.of(new LoopRun.Parent(0, null, "v0", false), new LoopRun.Parent(1, "pk", "v1", false)),
+            false
         );
 
         Execution execution = Execution.builder()
@@ -604,5 +609,42 @@ class RunVariablesTest {
 
         // Then
         assertThat(triggerVariables).doesNotContainKey("_context");
+    }
+
+    @Test
+    void shouldParseLoopAndParentValuesFollowingTheFlagOfTheirOwnLoop() {
+        // Given
+        Execution parentExecution = Execution.builder().id("parent-exec-id").namespace("ns").flowId("flow").build();
+        String json = "{\"fqn\":\"docker01\",\"user\":\"root\"}";
+        List<LoopRun.Parent> parents = List.of(new LoopRun.Parent(0, null, json, true), new LoopRun.Parent(1, null, json, false));
+
+        // When
+        Map<String, Object> parsedChild = RunVariables.of(new LoopRun(parentExecution, "loop", "taskrun", 2, null, json, parents, true), log);
+        Map<String, Object> rawChild = RunVariables.of(new LoopRun(parentExecution, "loop", "taskrun", 2, null, json, parents, false), log);
+
+        // Then
+        Map<String, Object> expected = Map.of("fqn", "docker01", "user", "root");
+        List<?> parsedParents = (List<?>) parsedChild.get("parents");
+        assertThat(parsedChild.get("value")).isEqualTo(expected);
+        assertThat(((Map<?, ?>) parsedParents.get(0)).get("value")).isEqualTo(expected);
+        assertThat(((Map<?, ?>) parsedParents.get(1)).get("value")).isEqualTo(json);
+        assertThat(((Map<?, ?>) parsedChild.get("parent")).get("value")).isEqualTo(json);
+        assertThat(rawChild.get("value")).isEqualTo(json);
+        assertThat(((Map<?, ?>) ((List<?>) rawChild.get("parents")).get(0)).get("value")).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldKeepLoopValueAsStringWhenItCannotBeParsed() {
+        // Given
+        Execution parentExecution = Execution.builder().id("parent-exec-id").namespace("ns").flowId("flow").build();
+        LoopRun.Parent parent = new LoopRun.Parent(0, null, "not json", true);
+        LoopRun loopRun = new LoopRun(parentExecution, "loop", "taskrun", 1, null, "{invalid", List.of(parent), true);
+
+        // When
+        Map<String, Object> variables = RunVariables.of(loopRun, LOGGER);
+
+        // Then
+        assertThat(variables.get("value")).isEqualTo("{invalid");
+        assertThat(((Map<?, ?>) variables.get("parent")).get("value")).isEqualTo("not json");
     }
 }

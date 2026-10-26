@@ -241,10 +241,12 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsTerminated() {
         // Given a task run list whose last run is terminated (SUCCESS) but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+                )
+            )
             .build();
 
         // When looking for the last not terminated task run
@@ -261,10 +263,12 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsPaused() {
         // Given a task run list whose last run is paused but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                    TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
+                )
+            )
             .build();
 
         // When looking for the last not terminated task run
@@ -281,10 +285,12 @@ class ExecutionTest {
     void shouldNotFindLastNotTerminatedWhenAllTaskRunsAreTerminated() {
         // Given a task run list where every run is terminated
         Execution execution = Execution.builder()
-            .taskRunList(List.of(
-                TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
-                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
+                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+                )
+            )
             .build();
 
         // When looking for the last not terminated task run
@@ -379,7 +385,7 @@ class ExecutionTest {
     }
 
     @Test
-    void shouldGuessCancelledWhenTaskRunCancelled() {
+    void shouldComputeCancelledWhenTaskRunCancelled() {
         // Given a flow whose single task run ended CANCELLED (e.g. workerSelector fallback: CANCEL)
         Flow flow = flowWithTask("will-cancel");
         Execution execution = executionWithTaskRun("will-cancel", State.Type.CANCELLED);
@@ -387,11 +393,11 @@ class ExecutionTest {
         // When guessing the final state
 
         // Then the execution must not be silently reported as SUCCESS
-        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.CANCELLED);
+        assertThat(execution.computeFinalState(flow)).isEqualTo(State.Type.CANCELLED);
     }
 
     @Test
-    void shouldGuessFailedWhenTaskRunFailedTakesPrecedenceOverCancelled() {
+    void shouldComputeFailedWhenTaskRunFailedTakesPrecedenceOverCancelled() {
         // Given one FAILED and one CANCELLED task run
         Return failed = Return.builder().id("failed").type(Return.class.getName()).build();
         Return cancelled = Return.builder().id("cancelled").type(Return.class.getName()).build();
@@ -402,6 +408,7 @@ class ExecutionTest {
             .build();
         Execution execution = Execution.builder()
             .id(IdUtils.create())
+            .state(new State(State.Type.RUNNING, new State()))
             .taskRunList(
                 List.of(
                     TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
@@ -413,7 +420,7 @@ class ExecutionTest {
         // When guessing the final state
 
         // Then FAILED takes precedence over CANCELLED
-        assertThat(execution.guessFinalState(flow)).isEqualTo(State.Type.FAILED);
+        assertThat(execution.computeFinalState(flow)).isEqualTo(State.Type.FAILED);
     }
 
     private static Flow flowWithTask(String taskId) {
@@ -427,6 +434,7 @@ class ExecutionTest {
     private static Execution executionWithTaskRun(String taskId, State.Type state) {
         return Execution.builder()
             .id(IdUtils.create())
+            .state(new State(State.Type.RUNNING, new State()))
             .taskRunList(
                 List.of(
                     TaskRun.builder()
@@ -455,31 +463,37 @@ class ExecutionTest {
 
         // two terminated runs for task b, none for task c
         Execution withDuplicate = base
-            .taskRunList(List.of(
-                taskRun(a, State.Type.SUCCESS),
-                taskRun(b, State.Type.SUCCESS),
-                taskRun(b, State.Type.SUCCESS)
-            ))
+            .taskRunList(
+                List.of(
+                    taskRun(a, State.Type.SUCCESS),
+                    taskRun(b, State.Type.SUCCESS),
+                    taskRun(b, State.Type.SUCCESS)
+                )
+            )
             .build();
         assertThat(withDuplicate.isTerminated(List.of(a, b, c))).isFalse();
 
         // one terminated run per task: terminated
         Execution complete = base
-            .taskRunList(List.of(
-                taskRun(a, State.Type.SUCCESS),
-                taskRun(b, State.Type.SUCCESS),
-                taskRun(c, State.Type.SUCCESS)
-            ))
+            .taskRunList(
+                List.of(
+                    taskRun(a, State.Type.SUCCESS),
+                    taskRun(b, State.Type.SUCCESS),
+                    taskRun(c, State.Type.SUCCESS)
+                )
+            )
             .build();
         assertThat(complete.isTerminated(List.of(a, b, c))).isTrue();
 
         // one task still running: not terminated
         Execution inFlight = base
-            .taskRunList(List.of(
-                taskRun(a, State.Type.SUCCESS),
-                taskRun(b, State.Type.RUNNING),
-                taskRun(c, State.Type.SUCCESS)
-            ))
+            .taskRunList(
+                List.of(
+                    taskRun(a, State.Type.SUCCESS),
+                    taskRun(b, State.Type.RUNNING),
+                    taskRun(c, State.Type.SUCCESS)
+                )
+            )
             .build();
         assertThat(inFlight.isTerminated(List.of(a, b, c))).isFalse();
     }

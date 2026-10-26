@@ -19,6 +19,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.*;
@@ -32,8 +33,6 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
@@ -141,7 +140,7 @@ class NamespaceFileControllerTest {
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt", null));
 
         // Every revision the file ever held must read as gone, not just the one it was deleted at
-        for (int revision : new int[]{ 1, 2 }) {
+        for (int revision : new int[] { 1, 2 }) {
             HttpClientResponseException e = assertThrows(
                 HttpClientResponseException.class,
                 () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/test.txt&revision=" + revision))
@@ -544,6 +543,36 @@ class NamespaceFileControllerTest {
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/folderWithMultipleFiles", null));
         assertThat(namespaceStorage.exists(Path.of("/folderWithMultipleFiles/"))).isFalse();
         assertThat(namespaceStorage.exists(null)).isTrue();
+    }
+
+    @Test
+    void shouldNotDeleteRemainingSiblingWhenDeleteIsRepeated() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        namespaceStorage.putFile(Path.of("/delete-retry-check/a.txt"), new ByteArrayInputStream("a".getBytes()));
+        namespaceStorage.putFile(Path.of("/delete-retry-check/b.txt"), new ByteArrayInputStream("b".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/delete-retry-check/a.txt", null));
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check/a.txt"))).isFalse();
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check/b.txt"))).isTrue();
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/delete-retry-check/a.txt", null));
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check/b.txt"))).isTrue();
+        assertThat(namespaceStorage.exists(Path.of("/delete-retry-check"))).isTrue();
+    }
+
+    @Test
+    void shouldDeleteEmptiedFolderWhenAnotherNamespaceHasAFolderWithTheSamePath() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace);
+        Namespace otherNamespaceStorage = namespaceFactory.of(TENANT_ID, TestsUtils.randomNamespace());
+        namespaceStorage.putFile(Path.of("/shared-folder/a.txt"), new ByteArrayInputStream("a".getBytes()));
+        otherNamespaceStorage.putFile(Path.of("/shared-folder/b.txt"), new ByteArrayInputStream("b".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/shared-folder/a.txt", null));
+
+        assertThat(namespaceStorage.exists(Path.of("/shared-folder"))).isFalse();
+        assertThat(otherNamespaceStorage.exists(Path.of("/shared-folder/b.txt"))).isTrue();
     }
 
     @Test

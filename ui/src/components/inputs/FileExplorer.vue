@@ -1,11 +1,11 @@
 <template>
     <div
         ref="sidebar"
-        class="p-2 sidebar"
+        class="sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
     >
-        <div class="flex-row d-flex">
+        <div class="toolbar">
             <KsSelect
                 v-model="filter"
                 :placeholder="$t('namespace files.filter')"
@@ -25,11 +25,11 @@
                     @click.prevent.stop="chooseSearchResults(item)"
                 />
             </KsSelect>
-            <KsButtonGroup class="d-flex">
+            <KsButtonGroup class="toolbar-actions">
                 <KsTooltip
                     :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton class="px-2" :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
+                    <KsButton :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
@@ -37,7 +37,6 @@
                     :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
-                        class="px-2"
                         :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
@@ -86,7 +85,7 @@
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
-                    <KsButton class="px-2" @click="exportFiles()">
+                    <KsButton @click="exportFiles()">
                         <FolderDownloadOutline />
                     </KsButton>
                 </KsTooltip>
@@ -98,21 +97,19 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            :allowDrop="
-                (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
-            "
+            :allowDrop="allowDrop"
             :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
-            class="mt-3"
+            class="file-tree"
             :class="{'is-drop-not-allow': isDropOutsideSidebar}"
             @node-drag-start="onNodeDragStart"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
-                <div class="m-4 empty">
+                <div class="empty">
                     <img alt="" :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
@@ -123,7 +120,7 @@
                     :ref="(el: any) => dropdowns[data.id as string] = el"
                     @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
-                    class="w-100"
+                    class="tree-node-dropdown"
                 >
                     <div
                         class="tree-node-hitbox"
@@ -133,7 +130,7 @@
                         <div class="item-line">
                             <KsCheckbox
                                 v-if="selectionMode"
-                                class="me-2"
+                                class="item-prefix"
                                 :modelValue="selectedNodes.includes(data.id)"
                                 @change="checked => toggleCheckboxSelection(checked, node)"
                                 @mousedown.stop
@@ -142,7 +139,7 @@
                             <TypeIcon
                                 :name="data.fileName"
                                 :folder="!data.leaf"
-                                class="me-2"
+                                class="item-prefix"
                             />
                             <span class="filename" @click="(e) => { if(selectionMode) onRowClickWrapper(data, node, e) }">{{ data.fileName }}</span>
                         </div>
@@ -224,7 +221,7 @@
             @keydown.enter.prevent="dialog.name?.trim() ? dialogHandler() : undefined"
             @opened="focusCreationInput"
         >
-            <div class="pb-1">
+            <div class="dialog-label">
                 <span>
                     {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
@@ -233,10 +230,10 @@
                 ref="creation_name"
                 v-model="dialog.name"
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             />
 
-            <div class="py-1">
+            <div class="parent-folder-label">
                 <span>
                     {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
@@ -245,7 +242,7 @@
                 v-model="dialog.folder"
                 clearable
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             >
                 <KsOption
                     v-for="folder in filesStore.folders"
@@ -277,7 +274,7 @@
             @keydown.enter.prevent="renameItem()"
             @opened="focusRenamingInput"
         >
-            <div class="pb-1">
+            <div class="dialog-label">
                 <span>
                     {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
@@ -286,7 +283,7 @@
                 ref="renaming_name"
                 v-model="renameDialog.name"
                 size="large"
-                class="mb-3"
+                class="dialog-field"
             />
             <template #footer>
                 <div>
@@ -310,7 +307,7 @@
             :title="$t('namespace files.dialog.deletion.title')"
             @keydown.enter.prevent="removeItems()"
         >
-            <i18n-t :keypath="deletionMessage.keypath" tag="span" class="py-3">
+            <i18n-t :keypath="deletionMessage.keypath" tag="span" scope="global">
                 <template v-for="(value, name) in deletionMessage.params" :key="name" #[name]>
                     <code>{{ value }}</code>
                 </template>
@@ -886,6 +883,14 @@
             .map(path => ({path, fileName: path.split("/").pop() ?? ""}))
     }
 
+    function allowDrop(draggingNode: ElTreeNode, dropNode: ElTreeNode, dropType: string) {
+        if (dropType === "inner" && dropNode.data?.leaf) {
+            return false
+        }
+        const targetFolder = dropType === "inner" ? dropNode : dropNode.parent
+        return targetFolder !== draggingNode.parent || Boolean(bulkDragSiblings.value?.length)
+    }
+
     async function nodeMoved(draggedNode: any) {
         // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
         if (!canManageFiles.value) {
@@ -893,34 +898,40 @@
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
             return
         }
+        const oldPath = nodeBeforeDrag.value?.path ?? ""
         const newPath = filesStore.getPath(draggedNode.data.id) ?? ""
 
-        try {
-            await namespacesStore.moveFileDirectory({
-                namespace: namespaceId.value,
-                old: nodeBeforeDrag.value?.path ?? "",
-                new: newPath,
-            })
-        } catch {
-            tree.value.remove(draggedNode.data.id)
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
-            bulkDragSiblings.value = undefined
-            return
+        if (newPath !== oldPath) {
+            try {
+                await namespacesStore.moveFileDirectory({
+                    namespace: namespaceId.value,
+                    old: oldPath,
+                    new: newPath,
+                })
+            } catch {
+                tree.value.remove(draggedNode.data.id)
+                tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+                bulkDragSiblings.value = undefined
+                return
+            }
         }
 
         const siblings = bulkDragSiblings.value
         bulkDragSiblings.value = undefined
-        if (!siblings?.length) {
-            return
-        }
 
         // handle siblings move
         const targetFolder = newPath.includes("/") ? newPath.substring(0, newPath.lastIndexOf("/")) : ""
-        const results = await Promise.allSettled(siblings.map((sibling) =>
+        const moves = (siblings ?? [])
+            .map((sibling) => ({old: sibling.path, new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName}))
+            .filter((move) => move.old !== move.new)
+        if (!moves.length) {
+            return
+        }
+
+        const results = await Promise.allSettled(moves.map((move) =>
             namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
-                old: sibling.path,
-                new: targetFolder ? `${targetFolder}/${sibling.fileName}` : sibling.fileName,
+                ...move,
             }),
         ))
 
@@ -1110,22 +1121,48 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .revision-history-dialog-body {
-    // We subtract the dialog margins and title height (78px)
+    /* We subtract the dialog margins and title height (78px) */
     height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
 }
 
+.dialog-label {
+    padding-bottom: var(--ks-spacing-1);
+}
+
+.parent-folder-label {
+    padding-block: var(--ks-spacing-1);
+}
+
+.dialog-field {
+    margin-bottom: var(--ks-spacing-4);
+}
+
 .sidebar {
+    padding: var(--ks-spacing-2);
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
 
+    & .toolbar,
+    & .toolbar-actions {
+        display: flex;
+    }
+
+    & .file-tree {
+        margin-top: var(--ks-spacing-4);
+    }
+
+    & .tree-node-dropdown {
+        width: 100%;
+    }
+
     .filter{
-        :deep(.kel-select__wrapper) {
+        & :deep(.kel-select__wrapper) {
             min-height: 32px;
             height: 32px;
             padding-right: 0px;
@@ -1133,6 +1170,7 @@
     }
 
     .empty {
+        margin: var(--ks-spacing-5);
         position: relative;
         top: 100px;
         text-align: center;
@@ -1154,13 +1192,12 @@
         }
     }
 
-    :deep(.kel-button):not(.kel-dialog .kel-button) {
+    & :deep(.kel-button):not(.kel-dialog .kel-button) {
         border: 0;
         background: none;
         outline: none;
         opacity: 0.5;
-        padding-left: .5rem;
-        padding-right: .5rem;
+        padding-inline: var(--ks-spacing-2);
 
         &.kel-button--primary {
             opacity: 1;
@@ -1196,7 +1233,7 @@
         }
     }
 
-    :deep(.kel-tree) {
+    & :deep(.kel-tree) {
         height: calc(100% - 64px);
         overflow: auto;
         background: var(--ks-bg-surface);
@@ -1252,7 +1289,7 @@
         }
     }
 
-    :deep(.tree-node-hitbox) {
+    & :deep(.tree-node-hitbox) {
         width: 100%;
         flex: 1;
         display: flex;
@@ -1262,6 +1299,10 @@
     .item-line{
         display: flex;
         align-items: center;
+
+        & .item-prefix {
+            margin-right: var(--ks-spacing-2);
+        }
     }
 }
 </style>

@@ -379,6 +379,60 @@ class FlowInputOutputTest {
         Assertions.assertEquals("******", results.getFirst().value());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void shouldMaskSecretsWhenRenderingResumeDescriptions(boolean validateSubmittedInputs) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description("Secret: {{ secret('???') }}")
+            .defaults(Property.ofValue("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        var results = validateSubmittedInputs
+            ? flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()
+            : flowInputOutput.resolveResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of());
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo("Secret: ******");
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(results.getFirst().value()).isEqualTo("******");
+        assertThat(input.getDescription()).isEqualTo("Secret: {{ secret('???') }}");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Use `{{ trigger.date }}`", "{{ thisFunctionDoesNotExist() }}" })
+    void shouldPreserveResumeDescriptionsWhenRenderingFails(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateResumeInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{{ 1 + 1 }}", "Use `{{ trigger.date }}`" })
+    void shouldKeepDescriptionsLiteralWhenValidatingRegularFlowInputs(String description) {
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .description(description)
+            .required(false)
+            .build();
+
+        var results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        assertThat(results.getFirst().input().getDescription()).isEqualTo(description);
+        assertThat(results.getFirst().exceptions()).isNull();
+        assertThat(flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block()).containsEntry("input", null);
+    }
+
     @Test
     void shouldNotObfuscateSecretsInSelectWhenValidatingInputs() {
         // Given
@@ -1301,7 +1355,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"yes", "1", "maybe", "xyz"})
+    @ValueSource(strings = { "yes", "1", "maybe", "xyz" })
     void shouldRejectInvalidBooleanInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1327,7 +1381,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"true", "false", "TRUE", "False"})
+    @ValueSource(strings = { "true", "false", "TRUE", "False" })
     void shouldAcceptValidBooleanStringInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1350,7 +1404,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
+    @ValueSource(booleans = { true, false })
     void shouldAcceptBooleanInput(boolean value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1395,10 +1449,12 @@ class FlowInputOutputTest {
             Map.of("disks", "[{\"size_gb\": \"20\", \"mountpoint\": \"/data\"}, {\"size_gb\": 30, \"mountpoint\": \"/logs\"}]")
         );
 
-        assertThat(result.get("disks")).isEqualTo(List.of(
-            Map.of("size_gb", 20, "mountpoint", "/data"),
-            Map.of("size_gb", 30, "mountpoint", "/logs")
-        ));
+        assertThat(result.get("disks")).isEqualTo(
+            List.of(
+                Map.of("size_gb", 20, "mountpoint", "/data"),
+                Map.of("size_gb", 30, "mountpoint", "/logs")
+            )
+        );
     }
 
     @Test

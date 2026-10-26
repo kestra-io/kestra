@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -23,7 +24,6 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -107,6 +107,37 @@ class RunContextLoggerTest {
 
         matchingLog = TestsUtils.awaitLogs(logs, 1);
         assertThat(matchingLog.stream().findFirst().orElseThrow().getMessage()).isEmpty();
+    }
+
+    @Test
+    void shouldLogCauseClassNameWhenCauseHasNoMessage() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+
+        ConnectException connectException = new ConnectException();
+        connectException.initCause(new IllegalStateException("Connection refused by localhost:1"));
+        RuntimeException exception = new RuntimeException(connectException);
+
+        runContextLogger.logger().error(exception.getMessage(), exception);
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 3);
+        assertThat(matchingLog)
+            .filteredOn(logEntry -> logEntry.getLevel().equals(Level.ERROR))
+            .extracting(LogEntry::getMessage)
+            .containsExactly(
+                "java.net.ConnectException",
+                "java.net.ConnectException\nConnection refused by localhost:1"
+            );
     }
 
     @Test
@@ -594,8 +625,10 @@ class RunContextLoggerTest {
         runContextLogger.emitLogIfEnabled(LogEntry.of(execution).toBuilder().level(Level.WARN).message("emitted warn message").build());
 
         // Then: only the entry at the configured level reaches the queue
-        await().atMost(Duration.ofSeconds(5)).until(() -> logs.stream()
-            .anyMatch(logEntry -> "emitted warn message".equals(logEntry.getMessage())));
+        await().atMost(Duration.ofSeconds(5)).until(
+            () -> logs.stream()
+                .anyMatch(logEntry -> "emitted warn message".equals(logEntry.getMessage()))
+        );
         assertThat(logs).noneMatch(logEntry -> "suppressed info message".equals(logEntry.getMessage()));
     }
 

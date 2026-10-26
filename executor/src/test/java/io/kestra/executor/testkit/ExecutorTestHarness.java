@@ -3,12 +3,14 @@ package io.kestra.executor.testkit;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 import org.mockito.Mockito;
+
+import com.google.common.util.concurrent.MoreExecutors;
 
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.async.AsyncOperationService;
@@ -31,6 +33,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.queues.event.Event;
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
@@ -61,10 +64,10 @@ import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
@@ -98,7 +101,6 @@ import io.kestra.executor.handler.SubflowExecutionResultMessageHandler;
 import io.kestra.executor.handler.WorkerTaskResultListener;
 import io.kestra.executor.handler.WorkerTaskResultMessageHandler;
 
-import com.google.common.util.concurrent.MoreExecutors;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -283,6 +285,7 @@ public final class ExecutorTestHarness {
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
                 executionOutputService,
+                Mockito.mock(CheckpointRepositoryInterface.class),
                 executionCommandQueue,
                 killQueue,
                 loopExecutionEventQueue,
@@ -361,6 +364,7 @@ public final class ExecutorTestHarness {
         this.executionCommandMessageHandler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
             taskOutputService,
             executionOutputService,
@@ -485,7 +489,8 @@ public final class ExecutorTestHarness {
 
         // the production DefaultExecutor over same-thread pools and hand-ticked loops
         ScheduledExecutorService scheduledExecutorService = Mockito.mock(ScheduledExecutorService.class);
-        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation -> {
+        Mockito.when(scheduledExecutorService.scheduleAtFixedRate(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any())).thenAnswer(invocation ->
+        {
             loops.add(invocation.getArgument(0));
             return Mockito.mock(ScheduledFuture.class);
         });

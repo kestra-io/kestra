@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.CheckpointRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
@@ -29,8 +30,8 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -56,6 +57,7 @@ class ExecutionServiceDeleteTest {
             mock(FlowParsingService.class),
             mock(TaskOutputService.class),
             mock(ExecutionOutputService.class),
+            mock(CheckpointRepositoryInterface.class),
             mock(DispatchQueueInterface.class),
             mock(BroadcastQueueInterface.class),
             mock(DispatchQueueInterface.class),
@@ -89,7 +91,8 @@ class ExecutionServiceDeleteTest {
         // Then
         ArgumentCaptor<TriggerEvent> captor = ArgumentCaptor.forClass(TriggerEvent.class);
         verify(triggerEventQueue).send(captor.capture());
-        assertThat(captor.getValue()).isInstanceOfSatisfying(TriggerExecutionDeleted.class, event -> {
+        assertThat(captor.getValue()).isInstanceOfSatisfying(TriggerExecutionDeleted.class, event ->
+        {
             assertThat(event.id()).isEqualTo(TriggerId.of("main", "io.kestra.tests", "flow", "trigger"));
             assertThat(event.executionId()).isEqualTo("execution");
         });

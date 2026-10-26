@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.ForceRun;
 import io.kestra.core.executor.command.Pause;
 import io.kestra.core.executor.command.Replay;
+import io.kestra.core.executor.command.Reschedule;
 import io.kestra.core.executor.command.Restart;
 import io.kestra.core.executor.command.Resume;
 import io.kestra.core.executor.command.ResumeFromBreakpoint;
@@ -42,6 +44,7 @@ import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
+import io.kestra.executor.ExecutionDelayStateStore;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.KillSwitchActionService;
@@ -69,6 +72,8 @@ class ExecutionCommandMessageHandlerTest {
     @Mock
     ExecutionStateStore executionStateStore;
     @Mock
+    ExecutionDelayStateStore executionDelayStateStore;
+    @Mock
     ExecutionEventMessageHandler executionEventMessageHandler;
     @Mock
     AsyncOperationService asyncOperationService;
@@ -91,6 +96,7 @@ class ExecutionCommandMessageHandlerTest {
         handler = new ExecutionCommandMessageHandler(
             executionService,
             executionStateStore,
+            executionDelayStateStore,
             flowMetaStore,
             taskOutputService,
             executionOutputService,
@@ -659,6 +665,35 @@ class ExecutionCommandMessageHandlerTest {
         assertThat(published.get().getActor()).isEqualTo(actor);
     }
 
+    @Test
+    void shouldFailRescheduleWhenExecutionCannotBeRescheduled() {
+        var existing = lockedExecution("exec-1", State.Type.RUNNING);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = Reschedule.from(existing, Instant.now().plusSeconds(60)).withOperationId("op");
+        when(executionService.canBeRescheduled(existing)).thenReturn(false);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(executionDelayStateStore);
+        verify(asyncOperationService).emitProcessedIfAsync(eq(command), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
+    }
+
+    @Test
+    void shouldFailRescheduleWhenScheduledStartIsBeingProcessed() throws Exception {
+        var existing = lockedExecution("exec-1", State.Type.CREATED);
+        stubLock(existing, mock(FlowWithSource.class));
+        var command = Reschedule.from(existing, Instant.now().plusSeconds(60)).withOperationId("op");
+        when(executionService.canBeRescheduled(existing)).thenReturn(true);
+        when(executionDelayStateStore.saveUnlessProcessing(any())).thenReturn(false);
+
+        Optional<ExecutorContext> result = handler.handle(command);
+
+        assertThat(result).isEmpty();
+        verify(executionService, never()).reschedule(any(), any());
+        verify(asyncOperationService).emitProcessedIfAsync(eq(command), eq("tenant"), eq("exec-1"), eq(Outcome.FAILED), any());
+    }
+
     // ---- helpers ----
 
     private void stubLock(Execution existing, FlowWithSource flow) {
@@ -666,7 +701,8 @@ class ExecutionCommandMessageHandlerTest {
         if (flow != null) {
             when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         }
-        when(executionStateStore.lock(any(), any())).thenAnswer(invocation -> {
+        when(executionStateStore.lock(any(), any())).thenAnswer(invocation ->
+        {
             Function<Execution, ExecutorContext> function = invocation.getArgument(1);
             return Optional.ofNullable(function.apply(existing));
         });

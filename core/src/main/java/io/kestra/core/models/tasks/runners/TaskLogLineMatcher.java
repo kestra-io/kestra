@@ -135,12 +135,16 @@ public class TaskLogLineMatcher {
             }
         }
 
+        if (match.checkpoints() != null) {
+            match.checkpoints().forEach((key, value) -> runContext.checkpoints().set(key, value));
+        }
+
         if (match.otlp() != null && !match.otlp().isEmpty()) {
             Map<String, Object> otlpOutputs = forwardOtlp(logger, runContext, instant, match.otlp(), logData, true);
             if (!otlpOutputs.isEmpty()) {
                 Map<String, Object> outputs = new HashMap<>(match.outputs());
                 outputs.putAll(otlpOutputs);
-                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp());
+                return new TaskLogMatch(outputs, match.metrics(), match.logs(), match.assets(), match.otlp(), match.checkpoints());
             }
         }
 
@@ -347,9 +351,11 @@ public class TaskLogLineMatcher {
 
             String[] tags = otlpAttributesToTags(dataPoint.attributes());
             Instant timestamp = toInstant(dataPoint.timeUnixNano(), instant);
-            entries.add(isDeltaSum
-                ? Counter.of(metric.name(), description, value, timestamp, tags)
-                : Gauge.of(metric.name(), description, value, timestamp, tags));
+            entries.add(
+                isDeltaSum
+                    ? Counter.of(metric.name(), description, value, timestamp, tags)
+                    : Gauge.of(metric.name(), description, value, timestamp, tags)
+            );
         }
 
         return entries;
@@ -387,14 +393,15 @@ public class TaskLogLineMatcher {
      * @param logs additional log lines derived from the matched line, if any
      * @param assets assets emitted through the matched line, if any
      * @param otlp an OpenTelemetry record captured from the matched line, if any (the key spelling
-     *             follows the kotlp {@code ::{"otlp":...}::} framing)
+     *        follows the kotlp {@code ::{"otlp":...}::} framing)
      */
     public record TaskLogMatch(
         Map<String, Object> outputs,
         List<AbstractMetricEntry<?>> metrics,
         List<LogLine> logs,
         AssetEmit assets,
-        OtlpRecord otlp) {
+        OtlpRecord otlp,
+        Map<String, String> checkpoints) {
         @Override
         public Map<String, Object> outputs() {
             return Optional.ofNullable(outputs).orElse(Map.of());

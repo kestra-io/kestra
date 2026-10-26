@@ -23,7 +23,6 @@
     ],
     "sideEffects": [
         "**/*.css",
-        "**/*.scss",
         "./dist/style.css",
         "./src/index.ts"
     ],
@@ -44,8 +43,8 @@
     "dependencies": {
         "dagre": "^0.8.5",
         "html-to-image": "^1.11.13",
-        "js-yaml": "^4.3.0",
-        "vue-material-design-icons": "^5.3.1",
+        "js-yaml": "^5.5.0",
+        "vue-material-design-icons": "^5.4.0",
         "yaml": "^2"
     },
     "peerDependencies": {
@@ -62,19 +61,19 @@
         }
     },
     "devDependencies": {
-        "@tsdown/css": "^0.22.13",
-        "@types/dagre": "^0.7.52",
+        "@tsdown/css": "^0.23.1",
+        "@types/dagre": "^0.7.54",
         "@types/js-yaml": "^4.0.9",
-        "@types/node": "^25.9.1",
-        "@vitejs/plugin-vue": "^6.0.7",
-        "sass-embedded": "^1.99.0",
-        "tsdown": "^0.22.13",
-        "typescript": "^6.0.3",
+        "@types/node": "^26.6.5",
+        "@vitejs/plugin-vue": "^6.0.10",
+        "sass-embedded": "^1.105.2",
+        "tsdown": "^0.23.1",
+        "typescript": "^6",
         "unrun": "^0.3.1",
-        "vite": "^8.0.14",
-        "vitest": "^4.1.0",
-        "vue": "^3.5.0",
-        "vue-i18n": "^11.4.4",
-        "vue-tsc": "^3.2.8"
+        "vite": "^8.3.4",
+        "vitest": "^5.0.5",
+        "vue": "^3.5.44",
+        "vue-i18n": "^11.4.16",
+        "vue-tsc": "^3.3.13"
     }
 }

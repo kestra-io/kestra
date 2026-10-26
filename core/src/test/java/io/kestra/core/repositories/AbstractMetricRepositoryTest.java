@@ -195,6 +195,32 @@ public abstract class AbstractMetricRepositoryTest {
     }
 
     @Test
+    void shouldNotPurgeMetricsOfOtherNamespaceWhenNamespacesDifferOnlyByCase() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        for (String namespace : List.of("company.a", "company.A")) {
+            metricRepository.save(
+                MetricEntry.builder()
+                    .tenantId(tenant)
+                    .namespace(namespace)
+                    .flowId("flow1")
+                    .executionId("exec-" + namespace)
+                    .taskId("task1")
+                    .taskRunId(FriendlyId.createFriendlyId())
+                    .type("counter")
+                    .name("metric1")
+                    .value(1.0)
+                    .timestamp(Instant.now().minus(10, ChronoUnit.DAYS))
+                    .build()
+            );
+        }
+
+        int deleted = metricRepository.purge(tenant, "company.a", null, null, null, ZonedDateTime.now().minusDays(5), null);
+
+        assertThat(deleted).isEqualTo(1);
+        assertThat(metricRepository.findByExecutionId(tenant, "exec-company.A", Pageable.from(1, 10))).hasSize(1);
+    }
+
+    @Test
     void shouldPurgeMetricsBeforeEndDate() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);

@@ -13,6 +13,7 @@ const meta: Meta<typeof KsSegmented> = {
         disabled: {control: "boolean"},
         block: {control: "boolean"},
         size: {control: "select", options: ["small", "default", "large"]},
+        variant: {control: "select", options: ["primary", "neutral"]},
     },
     parameters: {
         docs: {description: {component: "KsSegmented is the Kestra design-system abstraction over `ElSegmented` from Element Plus."}},
@@ -141,6 +142,21 @@ export const Block: Story = {
         template: `
             <div style="padding:24px;width:300px">
                 <ks-segmented v-model="value" :options="['a', 'b', 'c']" block />
+            </div>
+        `,
+    }),
+}
+
+export const Neutral: Story = {
+    render: (args) => ({
+        components: {KsSegmented},
+        setup() {
+            const value = ref("graph")
+            return {args, value}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-segmented v-model="value" :options="['graph', 'compiled sql']" variant="neutral" v-bind="args" />
             </div>
         `,
     }),

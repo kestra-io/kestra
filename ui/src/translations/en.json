@@ -1786,6 +1786,11 @@
     "copy url": "Copy URL",
     "scheduleDate": "Schedule date",
     "scheduleDateInPast": "Schedule date must be in the future",
+    "inputs_date_range": {
+      "between": "Earliest value is {after}, latest value is {before}.",
+      "after": "Earliest value is {after}.",
+      "before": "Latest value is {before}."
+    },
     "warning": "Warning",
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "docs": "Docs",

@@ -167,14 +167,18 @@
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                     type="datetime"
+                    :disabledDate="(date: Date) => isOutsideDateRange(input, date)"
                 />
+                <div v-if="input.type === 'DATETIME' && dateHint(input)" class="hint">{{ dateHint(input) }}</div>
                 <KsDatePicker
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'DATE'"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                     type="date"
+                    :disabledDate="(date: Date) => isOutsideDateRange(input, date)"
                 />
+                <div v-if="input.type === 'DATE' && dateHint(input)" class="hint">{{ dateHint(input) }}</div>
                 <KsTimePicker
                     :data-testid="`input-form-${input.id}`"
                     v-if="input.type === 'TIME'"
@@ -360,7 +364,7 @@
 </template>
 
 <script setup lang="ts">
-    import {KsMessage, KsEditor, State, debounce, escapeHtml} from "@kestra-io/design-system"
+    import {KsMessage, KsEditor, State, debounce, escapeHtml, dateUtils, dayjs} from "@kestra-io/design-system"
     import type {FormItemRule} from "@kestra-io/design-system"
     import ValidationError from "../flows/ValidationError.vue"
     import {ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRaw, markRaw, type Component, getCurrentInstance, nextTick} from "vue"
@@ -735,6 +739,34 @@
     function numberMax(input: InputMetaData): number {
         if (!hasLimit(input.max)) return Infinity
         return hasLimit(input.min) && input.min > input.max ? Infinity : input.max
+    }
+
+    function dateLimit(value: unknown) {
+        const limit = dateUtils.parseIso(value)
+        return limit.isValid() ? limit : undefined
+    }
+
+    function isOutsideDateRange(input: InputMetaData, date: Date): boolean {
+        const day = dayjs(date)
+        const after = dateLimit(input.after)
+        const before = dateLimit(input.before)
+        return (after !== undefined && day.endOf("day").isBefore(after))
+            || (before !== undefined && day.startOf("day").isAfter(before))
+    }
+
+    function dateLimitLabel(input: InputMetaData, value?: string): string | undefined {
+        return input.type === "DATETIME" && value ? dateUtils.dateFilter(value) : value
+    }
+
+    function dateHint(input: InputMetaData): string | undefined {
+        const after = dateLimitLabel(input, input.after)
+        const before = dateLimitLabel(input, input.before)
+        const hasAfter = dateLimit(input.after) !== undefined
+        const hasBefore = dateLimit(input.before) !== undefined
+        if (hasAfter && hasBefore) return t("inputs_date_range.between", {after, before})
+        if (hasAfter) return t("inputs_date_range.after", {after})
+        if (hasBefore) return t("inputs_date_range.before", {before})
+        return undefined
     }
 
     function numberHint(input: InputMetaData): string | false {

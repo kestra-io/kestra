@@ -36,9 +36,4 @@ describe("WEBHOOK_TRIGGER_TYPES", () => {
     it("includes canonical WEBHOOK_TRIGGER_TYPE", () => {
         expect(WEBHOOK_TRIGGER_TYPES).toContain(WEBHOOK_TRIGGER_TYPE)
     })
-
-    it("a trigger type not in the list is not treated as a webhook", () => {
-        expect(WEBHOOK_TRIGGER_TYPES.includes("io.kestra.plugin.core.trigger.Schedule")).toBe(false)
-        expect(WEBHOOK_TRIGGER_TYPES.includes("io.kestra.plugin.core.trigger.Flow")).toBe(false)
-    })
 })

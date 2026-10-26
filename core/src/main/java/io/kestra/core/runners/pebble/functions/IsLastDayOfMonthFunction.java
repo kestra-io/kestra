@@ -30,7 +30,7 @@ public class IsLastDayOfMonthFunction implements KestraFunction {
         try {
             date = DateUtils.parseLocalDate(dateArg.toString());
         } catch (InternalException e) {
-            throw new PebbleException(e, "The 'isLastDayOfMonth()' function could not parse 'date': %s.".formatted(e.getMessage()), lineNumber, self.getName());
+            throw new PebbleException(e, "The 'isLastDayOfMonth()' function could not parse date '%s'.".formatted(dateArg), lineNumber, self.getName());
         }
         return date.getDayOfMonth() == date.lengthOfMonth();
     }

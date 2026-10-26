@@ -658,7 +658,7 @@
         }
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .secrets-table {
         display: flex;
         flex-direction: column;

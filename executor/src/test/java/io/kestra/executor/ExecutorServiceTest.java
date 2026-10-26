@@ -210,7 +210,7 @@ class ExecutorServiceTest {
             .build()
             .withState(State.Type.SUCCESS);
 
-        var loopExecution = parentExecution.loopExecution(loopTaskRun, 0, null, "a")
+        var loopExecution = parentExecution.loopExecution(loopTaskRun, 0, null, "a",false)
             .toBuilder()
             .taskRunList(List.of(innerTaskRun))
             .build();

@@ -100,7 +100,7 @@
     ]
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .kel-tag {
     background-color: var(--ks-bg-tag);
     color: var(--ks-text-primary);

@@ -1,8 +1,8 @@
 package io.kestra.plugin.core.log;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +28,7 @@ class LogTest {
 
     @Test
     void shouldLogNonStringMessageListElementsInsteadOfCrashing() throws Exception {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.addListener(logs::add);
 
         Log task = Log.builder()
@@ -40,7 +40,7 @@ class LogTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         task.run(runContext);
 
-        List<LogEntry> matchingLogs = TestsUtils.awaitLogs(logs, 3);
+        List<LogEntry> matchingLogs = TestsUtils.awaitLogs(logs, logEntry -> task.getId().equals(logEntry.getTaskId()), 3);
 
         assertThat(matchingLogs.stream().filter(logEntry -> logEntry.getMessage().equals("hello")).count()).isEqualTo(1L);
         assertThat(matchingLogs.stream().filter(logEntry -> logEntry.getMessage().equals("42")).count()).isEqualTo(1L);

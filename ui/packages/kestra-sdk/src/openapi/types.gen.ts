@@ -4,6 +4,11 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * How the field is compared to the value.
+ */
+export type AbstractFilterFilterType = 'CONTAINS' | 'ENDS_WITH' | 'EQUAL_TO' | 'GREATER_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'IN' | 'IS_FALSE' | 'IS_NOT_NULL' | 'IS_NULL' | 'IS_TRUE' | 'LESS_THAN' | 'LESS_THAN_OR_EQUAL_TO' | 'NOT_CONTAINS' | 'NOT_EQUAL_TO' | 'NOT_IN' | 'OR' | 'REGEX' | 'STARTS_WITH' | 'PREFIX';
+
 export type AbstractFlow = {
     id: string;
     namespace: string;
@@ -243,7 +248,7 @@ export type ApiExecution = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecution = {
@@ -259,7 +264,25 @@ export type ApiLightExecution = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRun;
+    loopRun?: ApiLoopRun;
+};
+
+/**
+ * Slim projection of LoopRun, without the parent `Execution` it carries for internal use. Used wherever a loop iteration's identity needs to reach the API or the UI, so a list of iterations doesn't each embed a copy of the execution that contains the loop.
+ */
+export type ApiLoopRun = {
+    taskId: string;
+    taskRunId: string;
+    index?: number;
+    key?: string | null;
+    value: string;
+    parents?: Array<ApiLoopRunParent>;
+};
+
+export type ApiLoopRunParent = {
+    index?: number;
+    key?: string | null;
+    value: string;
 };
 
 /**
@@ -426,6 +449,16 @@ export type Asset = {
     status?: string;
     ttl?: string;
     owner?: string;
+    /**
+     * At most one parent. Parent depth is limited by the service layer, not by this model.
+     */
+    partOf?: AssetRelationRef | null;
+    /**
+     * Assets related to this one.
+     *
+     * Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.
+     */
+    related?: Array<AssetRelationRef> | null;
     namespace?: string;
     id: string;
     type: string;
@@ -438,6 +471,8 @@ export type Asset = {
     };
     /**
      * The day-2 actions offered on this asset, each backing onto a flow.
+     *
+     * Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. When it is omitted, the stored actions are kept. It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API.
      */
     assetActions?: Array<FlowAction>;
 };
@@ -447,6 +482,24 @@ export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
 export type AssetIdentifier = {
     id: string;
     type?: string;
+};
+
+/**
+ * A reference to another asset of the same tenant.
+ */
+export type AssetRelationRef = {
+    /**
+     * The id of the referenced asset.
+     */
+    id: string;
+    /**
+     * The namespace of the referenced asset, informational: asset ids are unique per tenant.
+     */
+    namespace?: string | null;
+    /**
+     * The role this asset plays in the relation, for example primary or backup.
+     */
+    role?: string | null;
 };
 
 export type AssetsDeclaration = {
@@ -704,6 +757,8 @@ export type DependsOn = {
     condition?: string | null;
 };
 
+export type DescriptionDisplayMode = 'TEXT' | 'TOOLTIP';
+
 export type DocumentationWithSchema = {
     markdown?: string;
     schema?: PluginSchema;
@@ -806,6 +861,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputAndValu
 export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError = {
     message: string;
     renderError?: boolean;
+    path?: string;
 };
 
 export type ExecutionControllerEvalResult = {
@@ -937,6 +993,26 @@ export type ExpressionControllerRenderedExpressions = {
     };
 };
 
+/**
+ * A condition on one field of a resource.
+ */
+export type FieldCondition = {
+    /**
+     * The field this condition reads.
+     */
+    field: string;
+    /**
+     * How the field is compared to the value.
+     */
+    operator: AbstractFilterFilterType;
+    /**
+     * The value the field is compared to.
+     *
+     * A list for `IN` and `NOT_IN`, ignored by `IS_NULL` and `IS_NOT_NULL`.
+     */
+    value?: string | number | boolean | Array<unknown> | null;
+};
+
 export type FileAttributes = {
     fileName?: string;
     lastModifiedTime?: number;
@@ -1044,6 +1120,12 @@ export type FlowAction = {
      * The label displayed on this action.
      */
     label?: string | null;
+    /**
+     * The conditions under which this action is offered.
+     *
+     * All conditions must hold, and an action without conditions is always offered. A field the resource does not have reads as null, so `NOT_EQUAL_TO`, `NOT_IN` and `NOT_CONTAINS` hold on it. A field is read as `status`, `namespace` or `metadata.<key>` on an asset.
+     */
+    when?: Array<FieldCondition> | null;
 };
 
 export type FlowControllerFlowWithDeprecatedTasks = {
@@ -1321,6 +1403,12 @@ export type InputObject = {
      */
     description?: string;
     /**
+     * How the description of the input is displayed.
+     *
+     * `TEXT` renders the description as a text block between the label and the field, `TOOLTIP` renders it as a hoverable icon next to the label. Defaults to `TEXT`.
+     */
+    descriptionDisplayMode?: DescriptionDisplayMode;
+    /**
      * The dependencies of the input.
      */
     dependsOn?: DependsOn;
@@ -1413,12 +1501,14 @@ export type LoopRun = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 export type LoopRunParent = {
     index?: number;
     key?: string | null;
     value?: string;
+    parseValues?: boolean;
 };
 
 export type MapObjectObject = {
@@ -2079,7 +2169,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2456,7 +2546,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS' | 'TABLE';
 
 export type ValidateConstraintViolation = {
     errors?: Array<ValidationError>;
@@ -2553,7 +2643,7 @@ export type ApiExecutionWritable = {
     fixtures?: Array<TaskFixture>;
     kind?: ExecutionKind;
     breakpoints?: Array<Breakpoint>;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 export type ApiLightExecutionWritable = {
@@ -2569,7 +2659,7 @@ export type ApiLightExecutionWritable = {
     trigger?: ExecutionTrigger;
     scheduleDate?: string;
     kind?: ExecutionKind;
-    loopRun?: LoopRunWritable;
+    loopRun?: ApiLoopRun;
 };
 
 /**
@@ -2686,6 +2776,7 @@ export type LoopRunWritable = {
     key?: string | null;
     value?: string;
     parents?: Array<LoopRunParent>;
+    parseValues?: boolean;
 };
 
 /**
@@ -7190,6 +7281,58 @@ export type ValidateReplayExecutionResponses = {
     200: unknown;
 };
 
+export type RescheduleExecutionData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The new scheduled start date
+         */
+        scheduleDate: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/reschedule';
+};
+
+export type RescheduleExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution is not scheduled, has already started, or its scheduled start is being processed
+     */
+    409: ProblemDetail;
+    /**
+     * if the scheduleDate is not in the future
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type RescheduleExecutionError = RescheduleExecutionErrors[keyof RescheduleExecutionErrors];
+
+export type RescheduleExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type RescheduleExecutionResponse = RescheduleExecutionResponses[keyof RescheduleExecutionResponses];
+
 export type RestartExecutionData = {
     body?: never;
     path: {
@@ -9637,6 +9780,18 @@ export type ListLogsFromExecutionData = {
         tenant: string;
     };
     query?: {
+        /**
+         * The current page, enables pagination when set
+         */
+        page?: number | null;
+        /**
+         * The current page size, enables pagination when set (defaults to 10)
+         */
+        size?: number | null;
+        /**
+         * The sort of the page, defaults to `timestamp:asc`
+         */
+        sort?: Array<string> | null;
         /**
          * Filters
          */

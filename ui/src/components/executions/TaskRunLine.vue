@@ -238,7 +238,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .taskrun-header,
     .attempt-header {
         display: flex;
@@ -247,14 +247,14 @@
         padding: var(--ks-spacing-1) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
 
-        > * {
+        & > * {
             display: flex;
             align-items: center;
         }
 
         small {
             font-family: var(--kel-font-family-monospace);
-            font-size: var(--ks-font-size-xs)
+            font-size: var(--ks-font-size-xs);
         }
 
         .task-duration small {
@@ -288,6 +288,14 @@
         }
     }
 
+    @media (max-width: 767px) {
+        .taskrun-header .task-id {
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
+        }
+    }
+
     .attempt-header.attempt-header--flush {
         border-bottom: none;
         padding: 0;
@@ -299,7 +307,7 @@
             width: 115px;
             height: 32px;
 
-            :deep(.kel-select__wrapper) {
+            & :deep(.kel-select__wrapper) {
                 height: 32px;
                 min-height: 32px;
             }

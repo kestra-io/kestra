@@ -6,13 +6,13 @@
             v-for="item in navigation"
             :key="item.path"
         >
-            <div class="card h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="overflow-hidden">
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-content">
                         <h4 class="card-title">
                             {{ item.title }}
                         </h4>
-                        <p class="card-text mb-0">
+                        <p class="card-text">
                             {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
                         </p>
                     </div>
@@ -75,13 +75,23 @@
     })()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .card {
+        height: 100%;
         transition: border-color 0.2s ease;
 
         &:hover {
             border-color: var(--ks-border-strong);
         }
+    }
+
+    .card-body {
+        display: flex;
+        align-items: center;
+    }
+
+    .card-content {
+        overflow: hidden;
     }
 
     .card-title {
@@ -91,6 +101,7 @@
     }
 
     .card-text {
+        margin-bottom: 0;
         font-size: var(--ks-font-size-xs) !important;
         font-weight: 400;
         color: var(--ks-text-secondary);

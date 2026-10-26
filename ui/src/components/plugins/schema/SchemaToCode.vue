@@ -83,7 +83,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .code-block {
         position: relative;
         padding: 0.75rem;
@@ -96,13 +96,13 @@
             color: var(--ks-text-dim);
         }
 
-        :deep(pre) {
+        & :deep(pre) {
             margin-bottom: 0;
             padding: 0;
             border: 0 !important;
         }
 
-        :deep(.shiki) {
+        & :deep(.shiki) {
             background-color: transparent !important;
 
             code {
@@ -114,7 +114,7 @@
         .copy {
             color: var(--ks-text-primary);
 
-            :deep(.material-design-icon) {
+            & :deep(.material-design-icon) {
                 &, & * {
                     height: 1.125rem !important;
                     width: 1.125rem !important;

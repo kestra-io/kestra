@@ -267,6 +267,26 @@ public abstract class AbstractTriggerRepositoryTest {
     }
 
     @Test
+    void shouldKeepStatesDistinctWhenFlowIdsDifferOnlyByCase() {
+        // GIVEN
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        TriggerState upper = trigger(tenant).flowId("Flow").triggerId("trigger").build();
+        TriggerState lower = trigger(tenant).flowId("flow").triggerId("trigger").build();
+        triggerStateStore.save(upper);
+        triggerStateStore.save(lower);
+
+        // WHEN
+        Optional<TriggerState> foundUpper = triggerStateStore.findByIdWithoutAcl(upper);
+        Optional<TriggerState> foundLower = triggerStateStore.findByIdWithoutAcl(lower);
+        Optional<TriggerState> foundOtherCase = triggerStateStore.findByIdWithoutAcl(trigger(tenant).flowId("FLOW").triggerId("trigger").build());
+
+        // THEN
+        assertThat(foundUpper.map(TriggerState::getFlowId)).contains("Flow");
+        assertThat(foundLower.map(TriggerState::getFlowId)).contains("flow");
+        assertThat(foundOtherCase).isEmpty();
+    }
+
+    @Test
     void shouldUpdateStateSavingExistingState() {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

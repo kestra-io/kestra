@@ -60,7 +60,9 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tooltip';
+</style>
 
+<style>
     .kel-popper.ks-tooltip {
         &.is-light,
         &.is-dark {

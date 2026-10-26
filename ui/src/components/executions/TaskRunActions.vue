@@ -347,6 +347,7 @@
                 store: false,
                 executionId: props.execution.id,
                 params: {taskRunId: currentTaskRun.value.id, minLevel: "ERROR"},
+                size: 100,
             }).catch((e: unknown) => {
                 handledIf(e, [403, 404])
                 return []
@@ -366,7 +367,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .task-run-buttons {
         padding: 0 .5rem;
         border: none;

@@ -99,93 +99,110 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .ks-breadcrumb {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-1);
         align-self: stretch;
         font-size: var(--ks-font-size-sm);
+    }
 
-        &__leading {
-            display: inline-flex;
-            align-items: center;
-            padding: var(--ks-spacing-1) var(--ks-spacing-2);
-        }
+    .ks-breadcrumb__leading {
+        display: inline-flex;
+        align-items: center;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+    }
 
-        &__monogram {
-            width: var(--ks-icon-size-xl);
-            height: var(--ks-icon-size-xl);
-        }
+    .ks-breadcrumb__monogram {
+        width: var(--ks-icon-size-xl);
+        height: var(--ks-icon-size-xl);
+    }
 
-        &__separator {
-            font-weight: var(--ks-font-weight-semibold);
-            color: var(--ks-border-strong);
-            user-select: none;
-        }
+    .ks-breadcrumb__separator {
+        font-weight: var(--ks-font-weight-semibold);
+        color: var(--ks-border-strong);
+        user-select: none;
+    }
 
-        &__item {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            padding: var(--ks-spacing-1) var(--ks-spacing-2);
-            border-radius: var(--ks-radius-sm);
-            color: var(--ks-text-secondary);
-            transition: background-color 0.15s ease, color 0.15s ease;
+    .ks-breadcrumb__item {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        border-radius: var(--ks-radius-sm);
+        color: var(--ks-text-secondary);
+        transition: background-color 0.15s ease, color 0.15s ease;
 
-            &:has(a, button):hover {
-                background-color: var(--ks-bg-hover);
-                color: var(--ks-text-primary);
-
-                .ks-breadcrumb__icon {
-                    color: var(--ks-icon-active);
-                }
-            }
-        }
-
-        &__link {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            font-weight: var(--ks-font-weight-regular);
-            color: inherit;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        &__ellipsis {
-            font-size: inherit;
-            background: none;
-            border: 0;
-            padding: 0;
-            cursor: pointer;
-        }
-
-        &__icon {
-            display: inline-flex;
-            align-items: center;
-            font-size: var(--ks-font-size-lg);
-
-            :deep(svg) {
-                stroke-width: 1.5;
-            }
-        }
-
-        &__current {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-            margin: 0;
-            padding: var(--ks-spacing-1) var(--ks-spacing-2);
-            font-size: inherit;
-            line-height: 1.5;
-            font-weight: var(--ks-font-weight-semibold);
+        &:has(a, button):hover {
+            background-color: var(--ks-bg-hover);
             color: var(--ks-text-primary);
-            white-space: nowrap;
 
-            .ks-breadcrumb__icon {
-                color: var(--ks-text-primary);
+            & .ks-breadcrumb__icon {
+                color: var(--ks-icon-active);
             }
+        }
+    }
+
+    .ks-breadcrumb__link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        font-weight: var(--ks-font-weight-regular);
+        color: inherit;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .ks-breadcrumb__ellipsis {
+        font-size: inherit;
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .ks-breadcrumb__icon {
+        display: inline-flex;
+        align-items: center;
+        font-size: var(--ks-font-size-lg);
+
+        & :deep(svg) {
+            stroke-width: 1.5;
+        }
+    }
+
+    .ks-breadcrumb__current {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin: 0;
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        font-size: inherit;
+        line-height: 1.5;
+        font-weight: var(--ks-font-weight-semibold);
+        color: var(--ks-text-primary);
+        white-space: nowrap;
+
+        & .ks-breadcrumb__icon {
+            color: var(--ks-text-primary);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .ks-breadcrumb {
+            min-width: 0;
+        }
+
+        .ks-breadcrumb__item,
+        .ks-breadcrumb__separator {
+            display: none;
+        }
+
+        .ks-breadcrumb__current {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
 </style>

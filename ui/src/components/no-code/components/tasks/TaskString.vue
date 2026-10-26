@@ -133,7 +133,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 :deep(.placeholder) {
     top: -7px !important;
 }
@@ -148,12 +148,12 @@
     width: 100%;
     transition: border-color 0.12s ease, box-shadow 0.12s ease;
 
-    :deep(.disabled-field) {
+    & :deep(.disabled-field) {
         margin: 0!important;
         border-radius: 4px;
     }
 
-    :deep(.ks-editor){
+    & :deep(.ks-editor){
         flex: 1;
     }
 }

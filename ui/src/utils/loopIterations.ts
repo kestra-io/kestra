@@ -28,13 +28,17 @@ export interface LoopRoot {
     flowId: string;
     startDate?: string;
     endDate?: string;
+    taskRunList?: TaskRunIdentity[];
 }
+
+export type TaskRunIdentity = {taskId: string}
 
 export type IterationLoopRun = Partial<Pick<ApiLoopRun, "taskId" | "taskRunId" | "index" | "value">>
 
 export interface IterationParent {
     parentId?: string;
     loopRun?: IterationLoopRun | null;
+    taskRunList?: TaskRunIdentity[];
 }
 
 export interface FailedIterationChain {

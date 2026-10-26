@@ -196,6 +196,36 @@ describe("collectFailedTargets", () => {
     })
 })
 
+describe("multi-run loops", () => {
+    const runs = (taskId: string, count: number) => Array.from({length: count}, () => ({taskId}))
+
+    it("shouldFlagAnIterationWhoseLoopRanSeveralTimesInTheRoot", async () => {
+        const deps = depsFor([iteration("amer", "root", "per_region", 1)])
+
+        const targets = await collectFailedTargets({...root, taskRunList: runs("per_region", 2)}, deps)
+
+        expect(targets.chains["amer"][0].multiRun).toBe(true)
+    })
+
+    it("shouldFlagOnlyTheNestedIterationWhoseLoopRanSeveralTimesInItsParent", async () => {
+        const deps = depsFor([nestedFailure("f13", 12)], {
+            "customer-13": {...customers(12)["customer-13"], taskRunList: runs("per_invoice", 2)},
+        })
+
+        const targets = await collectFailedTargets({...root, taskRunList: runs("per_customer", 1)}, deps)
+
+        expect(targets.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, true])
+    })
+
+    it("shouldNotFlagALoopThatRanOnce", async () => {
+        const deps = depsFor([iteration("amer", "root", "per_region", 1)])
+
+        const targets = await collectFailedTargets({...root, taskRunList: runs("per_region", 1)}, deps)
+
+        expect(targets.chains["amer"][0]).not.toHaveProperty("multiRun")
+    })
+})
+
 describe("collectScopedTargets", () => {
     const window = {startDate: "2026-10-09T09:49:14Z", endDate: "2026-10-09T09:49:16Z"}
     const customer = async (_parent: string, taskId: string, number: number) => ({id: `customer-${number}`, number, value: String(number), state: "SUCCESS", taskId, ...window})

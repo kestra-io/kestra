@@ -138,6 +138,20 @@ describe("executions/LoopMergedLogs", () => {
         expect(state.setEntries).toHaveBeenCalledWith([{taskId: "per_customer", number: 13}, {taskId: "per_invoice", number: 7}])
     })
 
+    test("shouldNotOfferToScopeALineWhoseLoopRanSeveralTimesInItsExecution", async () => {
+        const multiRunChain = [{id: "c13", taskId: "per_customer", number: 13, value: "13", multiRun: true}]
+        state.merged.targets.value = {chains: {c13: multiRunChain}, offset: 0, end: 1, total: 1, scope: []}
+        state.merged.lines.value = [{executionId: "c13", message: "Task failure", timestamp: "2026-10-09T09:49:15Z"}]
+        const wrapper = mountMerged()
+
+        const button = wrapper.find("[data-test='loop-merged-scope-button']")
+        await button.trigger("click")
+
+        expect(button.attributes("disabled")).toBeDefined()
+        expect(wrapper.find("[data-test='loop-merged-overview-link']").exists()).toBe(false)
+        expect(state.setEntries).not.toHaveBeenCalled()
+    })
+
     test("shouldShowTheRangeOfFailedIterationsOfTheCurrentBatchWhenThereAreSeveral", () => {
         state.merged.targets.value = {chains: {}, offset: 0, end: 148, total: 12480, scope: []}
         state.merged.hasNextBatch.value = true

@@ -30,6 +30,7 @@ export interface ScopeNode {
     taskId: string;
     number: number;
     value?: string;
+    multiRun?: boolean;
 }
 
 export interface LoopLogTargets {
@@ -127,7 +128,10 @@ async function mapLimit<T, R>(items: T[], limit: number, task: (item: T) => Prom
     return results
 }
 
-function chainResolver(rootId: string, fetchIteration: LogTargetDeps["fetchIteration"], cache: ChainCache) {
+const withMultiRun = (node: ScopeNode, hostTaskRuns: IterationParent["taskRunList"]): ScopeNode =>
+    (hostTaskRuns?.filter((run) => run.taskId === node.taskId).length ?? 0) > 1 ? {...node, multiRun: true} : node
+
+function chainResolver(root: LoopRoot, fetchIteration: LogTargetDeps["fetchIteration"], cache: ChainCache) {
     const fetchOnce = (id: string) => {
         if (!cache.fetched.has(id)) {
             const pending = fetchIteration(id)
@@ -151,11 +155,11 @@ function chainResolver(rootId: string, fetchIteration: LogTargetDeps["fetchItera
         if (taskId === undefined || index === undefined || depth > MAX_CHAIN_DEPTH) return undefined
         const own: ScopeNode = {id: node.id, taskId, number: index + 1, value}
         if (!node.parentId) return undefined
-        if (node.parentId === rootId) return [own]
+        if (node.parentId === root.id) return [withMultiRun(own, root.taskRunList)]
 
         const parent = await fetchOnce(node.parentId)
         const parentChain = parent && await chainOf(parent, depth + 1)
-        return parentChain && [...parentChain, own]
+        return parentChain && [...parentChain, withMultiRun(own, parent.taskRunList)]
     }
 
     return (iteration: LoopIteration) => chainOf(
@@ -205,8 +209,8 @@ interface ChainResolution {
     deferred: boolean;
 }
 
-function resolveChains(candidates: LoopIteration[], rootId: string, deps: LogTargetDeps, cache: ChainCache): Promise<ChainResolution[]> {
-    const resolveChain = chainResolver(rootId, deps.fetchIteration, cache)
+function resolveChains(candidates: LoopIteration[], root: LoopRoot, deps: LogTargetDeps, cache: ChainCache): Promise<ChainResolution[]> {
+    const resolveChain = chainResolver(root, deps.fetchIteration, cache)
     return mapLimit(candidates, CHAIN_CONCURRENCY, (candidate) =>
         resolveChain(candidate).then(
             (chain) => ({chain, deferred: false}),
@@ -246,7 +250,7 @@ async function collectBatch(
                 break
             }
 
-            const resolutions = await resolveChains(candidates, root.id, limited, cache)
+            const resolutions = await resolveChains(candidates, root, limited, cache)
             for (const {chain, deferred} of resolutions) {
                 if (deferred) {
                     cut = true

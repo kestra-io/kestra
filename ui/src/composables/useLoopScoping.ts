@@ -75,14 +75,12 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
 
     const taskRunsIn = (host: Execution | undefined, taskId: string) => host?.taskRunList?.filter((run) => run.taskId === taskId) ?? []
 
-    function selectTaskRun(host: Execution | undefined, lane: LoopLaneNode) {
-        const runs = taskRunsIn(host, lane.taskId)
-        if (runs.length < 2) return runs[0]
-        const scopedTaskRunId = executionOf(lane.uid)?.loopRun?.taskRunId
-        return runs.find((run) => run.id === scopedTaskRunId)
+    const singleTaskRunIn = (host: Execution | undefined, taskId: string) => {
+        const runs = taskRunsIn(host, taskId)
+        return runs.length === 1 ? runs[0] : undefined
     }
 
-    const taskRunOf = (lane: LoopLaneNode) => selectTaskRun(hostOf(lane), lane)
+    const taskRunOf = (lane: LoopLaneNode) => singleTaskRunIn(hostOf(lane), lane.taskId)
 
     const hasSeveralTaskRuns = (lane: LoopLaneNode) => taskRunsIn(hostOf(lane), lane.taskId).length > 1
 
@@ -215,10 +213,13 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         {immediate: true},
     )
 
+    const isRunning = (execution: Execution) => Boolean(execution.state?.current && !State.isTerminated(execution.state.current))
+
+    let scopedRefresh: Promise<void> | undefined
+    let scopedTimer: ReturnType<typeof setTimeout> | undefined
+
     async function refreshScopedIterations() {
-        if (!ownsScopedIterations || unmounted) return
-        const running = Object.entries(executionsStore.scopedIterations)
-            .filter(([, execution]) => execution.id && execution.state?.current && !State.isTerminated(execution.state.current))
+        const running = Object.entries(executionsStore.scopedIterations).filter(([, execution]) => execution.id && isRunning(execution))
         if (!running.length) return
 
         const refreshed = await Promise.all(running.map(async ([laneUid, execution]) => ({
@@ -239,9 +240,23 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         if (changed) executionsStore.setScopedIterations(next)
     }
 
-    const throttledRefreshScopedIterations = throttle(refreshScopedIterations, SCOPED_ITERATIONS_REFRESH_MS)
+    function scheduleScopedRefresh() {
+        const hasRunning = ownsScopedIterations && !unmounted && Object.values(executionsStore.scopedIterations).some(isRunning)
+        if (!hasRunning) {
+            clearTimeout(scopedTimer)
+            scopedTimer = undefined
+            return
+        }
+        if (scopedTimer !== undefined) return
+        scopedTimer = setTimeout(async () => {
+            scopedTimer = undefined
+            scopedRefresh ??= refreshScopedIterations().finally(() => (scopedRefresh = undefined))
+            await scopedRefresh
+            scheduleScopedRefresh()
+        }, SCOPED_ITERATIONS_REFRESH_MS)
+    }
 
-    watch(() => executionsStore.execution, () => throttledRefreshScopedIterations())
+    watch(() => executionsStore.scopedIterations, scheduleScopedRefresh)
 
     let resolveSeq = 0
     async function resolveScope() {
@@ -269,7 +284,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         for (const entry of entries.value) {
             const lane = laneNodes.value.find((candidate) => candidate.taskId === entry.taskId && candidate.parentUid === parentLane?.uid)
             if (!lane) break
-            const iteration = await definitive(findIterationByNumber(host.id!, lane.taskId, entry.number, selectTaskRun(host, lane)?.id))
+            const iteration = await definitive(findIterationByNumber(host.id!, lane.taskId, entry.number, singleTaskRunIn(host, lane.taskId)?.id))
             if (seq !== resolveSeq || unmounted) return
             if (!iteration) break
             const execution = await definitive(loadIterationExecution(iteration.id))
@@ -301,7 +316,7 @@ export function useLoopScoping(flowGraph: ComputedRef<FlowGraph | undefined>, en
         unmounted = true
         clearTimeout(outputsTimer)
         throttledRefreshOutputs.cancel()
-        throttledRefreshScopedIterations.cancel()
+        clearTimeout(scopedTimer)
         if (ownsScopedIterations) executionsStore.setScopedIterations({})
     })
 

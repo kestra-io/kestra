@@ -76,13 +76,14 @@
                                         type="button"
                                         class="loop-merged-scope-button"
                                         data-test="loop-merged-scope-button"
-                                        :title="$t('logs_view.loop.scope-to', {scope: asRow(item).label})"
+                                        :disabled="!isScopable(asRow(item).chain)"
+                                        :title="isScopable(asRow(item).chain) ? $t('logs_view.loop.scope-to', {scope: asRow(item).label}) : undefined"
                                         @click="scopeTo(asRow(item).chain)"
                                     >
                                         {{ asRow(item).label }}
                                     </button>
                                     <router-link
-                                        v-if="asRow(item).chain.length"
+                                        v-if="asRow(item).chain.length && isScopable(asRow(item).chain)"
                                         class="loop-merged-overview-link"
                                         data-test="loop-merged-overview-link"
                                         :aria-label="$t('logs_view.loop.show-in-overview-for', {scope: asRow(item).label})"
@@ -157,6 +158,7 @@
             flowId: execution.flowId,
             startDate: execution.state?.startDate,
             endDate: props.running ? undefined : execution.state?.endDate ?? undefined,
+            taskRunList: execution.taskRunList,
             kind: (execution as {kind?: string}).kind,
         }
     })
@@ -200,6 +202,8 @@
     }))
 
     const asRow = (item: unknown) => item as MergedRow
+
+    const isScopable = (chain: ScopeNode[]) => !chain.some((node) => node.multiRun)
 
     const scopeTo = (chain: ScopeNode[]) => setEntries(scopeEntriesOf(chain))
 
@@ -272,6 +276,11 @@
         text-align: left;
         overflow-wrap: anywhere;
         cursor: pointer;
+    }
+
+    .loop-merged-scope-button:disabled {
+        color: var(--ks-text-secondary);
+        cursor: default;
     }
 
     .loop-merged-overview-link {

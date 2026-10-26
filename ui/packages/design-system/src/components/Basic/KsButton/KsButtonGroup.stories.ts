@@ -48,6 +48,7 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {size: "default", direction: "horizontal"},
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         const buttons = canvas.getAllByRole("button")
@@ -82,6 +83,7 @@ export const Types: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Sizes */
@@ -105,6 +107,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Vertical direction */
@@ -128,6 +131,7 @@ export const Vertical: Story = {
         const buttons = canvas.getAllByRole("button")
         await expect(buttons.length).toBe(3)
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Icon-only group – as used in PrevNext navigation */
@@ -146,4 +150,5 @@ export const IconOnly: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

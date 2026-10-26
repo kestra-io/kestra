@@ -23,7 +23,7 @@
             v-if="disabled"
             :modelValue="String(modelValue ?? '')"
             disabled
-            class="task-string-input disabled-field"
+            class="disabled-field"
         />
         <KsEditor
             v-else-if="pebble || (!schema?.format && schema?.type !== 'boolean')"
@@ -151,6 +151,7 @@
     & :deep(.disabled-field) {
         margin: 0!important;
         border-radius: 4px;
+        width: 100%;
     }
 
     & :deep(.ks-editor){
@@ -197,7 +198,4 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--ks-border-focus) 22%, transparent);
 }
 
-.wrapper :deep(.task-string-input) {
-    width: 100%;
-}
 </style>

@@ -20,6 +20,8 @@
 
     type DateInput = Parameters<typeof dayjs>[0]
 
+    const DATE_LIKE_TYPES = ["DATE", "TIME", "DATETIME"]
+
     const props = withDefaults(defineProps<{
         flow: Flow;
         inputs?: Record<string, unknown>;
@@ -47,6 +49,10 @@
         props.flow.inputs.forEach((input) => {
             let inputValue: string | undefined
             const value = props.inputs?.[input.id]
+
+            // An untouched or cleared picker holds undefined, null or "", which Execute leaves out
+            // (normalizeInputValues), and dayjs() would turn into the current date or "Invalid Date".
+            if (DATE_LIKE_TYPES.includes(input.type) && (value === undefined || value === null || value === "")) return
 
             switch (input.type) {
             case "FILE":

@@ -15,13 +15,13 @@ import jakarta.validation.ConstraintViolationException;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
-class LabelsColumnValidationTest {
+class DataChartValidationTest {
     @Inject
     private ModelValidator modelValidator;
 
     @Test
-    void shouldNameTheChartAndColumnWhenALabelsColumnIsUsedWithoutElasticsearch() {
-        var chart = YamlParser.parse(
+    void shouldRejectLabelsColumnWhenRepositoryIsNotElasticsearch() {
+        Chart<?> chart = YamlParser.parse(
             """
                 id: executions_per_country
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -45,39 +45,12 @@ class LabelsColumnValidationTest {
         Optional<ConstraintViolationException> valid = modelValidator.isValid(chart);
 
         assertThat(valid).isPresent();
-        assertThat(valid.get().getMessage()).contains(
-            "Column 'country' of chart 'executions_per_country' uses the LABELS field, which requires an Elasticsearch repository (this instance uses 'h2'). Filter on a label in `data.where` or use another field instead."
-        );
+        assertThat(valid.get().getMessage()).isEqualTo(": Invalid data chart: Column 'country' of chart 'executions_per_country' uses the LABELS field, which requires an Elasticsearch repository (this instance uses 'h2'). Filter on a label in `data.where` or use another field instead.\n");
     }
 
     @Test
-    void shouldNameTheChartWhenAKPIColumnUsesLabelsWithoutElasticsearch() {
-        var chart = YamlParser.parse(
-            """
-                id: labelled_executions
-                type: io.kestra.plugin.core.dashboard.chart.KPI
-                chartOptions:
-                  displayName: Labelled executions
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
-                  columns:
-                    field: LABELS
-                    agg: COUNT
-                """,
-            Chart.class
-        );
-
-        Optional<ConstraintViolationException> valid = modelValidator.isValid(chart);
-
-        assertThat(valid).isPresent();
-        assertThat(valid.get().getMessage()).contains(
-            "The column of chart 'labelled_executions' uses the LABELS field, which requires an Elasticsearch repository (this instance uses 'h2')."
-        );
-    }
-
-    @Test
-    void shouldAcceptALabelFilterWithoutElasticsearch() {
-        var chart = YamlParser.parse(
+    void shouldAcceptLabelFilterWhenRepositoryIsNotElasticsearch() {
+        Chart<?> chart = YamlParser.parse(
             """
                 id: executions_in_france
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries

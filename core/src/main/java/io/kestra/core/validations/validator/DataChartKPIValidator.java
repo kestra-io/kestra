@@ -34,17 +34,19 @@ public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIVa
 
         List<String> violations = new ArrayList<>();
 
-        if (dataChart.getData().getColumns() != null) {
+        if (dataChart.getData().getColumns() == null) {
+            violations.add("Column is required.");
+        } else {
             if (dataChart.getData().getColumns().getAgg() == null) {
                 violations.add("Agg on column is required.");
             }
-        }
 
-        if (Executions.Fields.LABELS.equals(dataChart.getData().getColumns().getField()) && !"elasticsearch".equals(repositoryConfiguration.type())) {
-            violations.add(
-                "The column of chart '%s' uses the LABELS field, which requires an Elasticsearch repository (this instance uses '%s'). Filter on a label in `data.where` or `data.numerator` or use another field instead."
-                    .formatted(dataChart.getId(), repositoryConfiguration.type())
-            );
+            if (Executions.Fields.LABELS.equals(dataChart.getData().getColumns().getField()) && !"elasticsearch".equals(repositoryConfiguration.type())) {
+                violations.add(
+                    "The column of chart '%s' uses the LABELS field, which requires an Elasticsearch repository (this instance uses '%s'). Filter on a label in `data.where` or `data.numerator` or use another field instead."
+                        .formatted(dataChart.getId(), repositoryConfiguration.type())
+                );
+            }
         }
 
         violations.addAll(missingFieldViolations("where", dataChart.getData().getWhere()));

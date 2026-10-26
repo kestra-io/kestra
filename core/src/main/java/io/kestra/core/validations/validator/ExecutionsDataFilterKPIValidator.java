@@ -27,7 +27,9 @@ public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<Exe
 
         List<String> violations = new ArrayList<>();
 
-        if (executionsDataFilter.getColumns().getField() == Executions.Fields.LABELS && executionsDataFilter.getColumns().getKey() == null) {
+        if (executionsDataFilter.getColumns() != null
+            && executionsDataFilter.getColumns().getField() == Executions.Fields.LABELS
+            && executionsDataFilter.getColumns().getKey() == null) {
             violations.add("Column must have a `key`.");
         }
 

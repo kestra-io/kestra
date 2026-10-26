@@ -147,9 +147,9 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .column-group {
-    .group-header {
+    & .group-header {
         display: flex;
         align-items: center;
         gap: 0.375rem;
@@ -163,7 +163,7 @@
         font-size: var(--ks-font-size-sm);
         font-weight: var(--ks-font-weight-semibold);
 
-        .chevron {
+        & .chevron {
             color: var(--ks-text-dim);
             transition: transform 0.15s ease;
 
@@ -172,12 +172,12 @@
             }
         }
 
-        .group-name {
+        & .group-name {
             flex: 1;
             text-align: left;
         }
 
-        .group-count {
+        & .group-count {
             color: var(--ks-text-dim);
             font-weight: var(--ks-font-weight-regular);
             font-size: var(--ks-font-size-xs);

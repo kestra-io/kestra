@@ -14,6 +14,35 @@ describe("Duration", () => {
 
     afterEach(() => vi.useRealTimers())
 
+    it("renders a numeric field through humanDuration inside a span", () => {
+        const wrapper = mount(Duration, {props: {field: 125, startDate: START}})
+
+        expect(wrapper.find("span").text()).toBe(durationUtils.humanDuration(125))
+        expect(wrapper.find("em").exists()).toBe(false)
+    })
+
+    it("renders the live elapsed seconds inside an em when field is missing", () => {
+        const wrapper = mount(Duration, {props: {field: undefined, startDate: START}})
+
+        expect(wrapper.find("em").text()).toBe(durationUtils.humanDuration(10))
+        expect(wrapper.find("span").exists()).toBe(false)
+    })
+
+    it("falls back to 0 when neither field nor startDate is set", () => {
+        const wrapper = mount(Duration, {props: {field: undefined}})
+
+        expect(wrapper.find("em").text()).toBe(durationUtils.humanDuration(0))
+        expect(wrapper.find("span").exists()).toBe(false)
+    })
+
+    it("treats a field of 0 as a real duration rather than a live elapsed time", () => {
+        const wrapper = mount(Duration, {props: {field: 0, startDate: START}})
+
+        // v-if="field" is falsy for 0, so the real zero still renders in the em branch.
+        expect(wrapper.find("em").text()).toBe(durationUtils.humanDuration(0))
+        expect(wrapper.find("span").exists()).toBe(false)
+    })
+
     it("keeps counting a running execution when a refresh re-renders it with the same props", async () => {
         const wrapper = mount(Duration, {props: {field: undefined, startDate: START}})
         expect(wrapper.text()).toBe(durationUtils.humanDuration(10))

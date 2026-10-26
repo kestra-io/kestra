@@ -562,6 +562,15 @@
     "inputs": "Entradas",
     "input": "Entrada",
     "variables": "Variables",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Ninguna Task de este Flow proporciona un artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
+      "tasks": "ninguna Task | {count} Task | {count} Tasks",
+      "fullscreen": "Pantalla completa",
+      "exit_fullscreen": "Salir de pantalla completa"
+    },
     "variable_explorer": {
       "title": "Entrada/Salida",
       "search_placeholder": "Buscar Key o value...",
@@ -1398,6 +1407,12 @@
           "third": "Reinicia tu instancia de Kestra para que el secret se cargue."
         }
       },
+      "credentials": {
+        "label": "Credenciales",
+        "header": "Credenciales",
+        "title": "Autentíquese una vez y reutilícelo en cada task",
+        "message": "En Kestra Enterprise Edition, la autenticación de servidor a servidor se puede configurar una vez como una credencial, de modo que los tokens de acceso se solicitan y actualizan en tiempo de ejecución en lugar de estar codificados en sus flows. Las credenciales se pueden crear a nivel de tenant o namespace y se pueden referenciar desde cualquier task."
+      },
       "apps": {
         "title": "Crea aplicaciones personalizadas con Kestra",
         "message": "Las aplicaciones en Kestra Enterprise Edition te permiten construir interfaces de usuario personalizadas que interactúan con los workflows de Kestra desde fuera de la plataforma. Esta función te permite usar tus workflows como un backend para aplicaciones personalizadas, permitiendo a usuarios no técnicos enviar datos a través de formularios o reanudar workflows PAUSED que esperan aprobación.",
@@ -1476,6 +1491,10 @@
           "title": "Gestionar Secretos de Forma Segura",
           "message": "En Kestra Enterprise Edition, puedes almacenar y controlar secrets a nivel de namespace, minimizando el riesgo y asegurando que las credenciales de cada equipo permanezcan aisladas. Gracias a la jerarquía anidada, también puedes configurar credenciales en un namespace padre, y estas serán heredadas por todos los namespaces hijos. El soporte para gestores de secrets dedicados y la configuración de permisos detallados a nivel de namespace fortalecen aún más la seguridad y el cumplimiento."
         },
+        "credentials": {
+          "title": "Limite las credenciales a este namespace",
+          "message": "En Kestra Enterprise Edition, puedes configurar credenciales a nivel de namespace, de modo que las tasks de este namespace y de sus namespaces secundarios soliciten y actualicen tokens de acceso en tiempo de ejecución en lugar de guardarlos en los flows. Una credencial definida en un namespace padre la heredan todos los namespaces secundarios."
+        },
         "assets": {
           "title": "Centralizar la Gestión de Activos",
           "message": "En Kestra Enterprise Edition, Assets mantiene un inventario en vivo de los recursos con los que interactúan tus flujos de trabajo. Estos recursos pueden ser tablas de bases de datos, máquinas virtuales, archivos o cualquier sistema externo con el que trabajes."
@@ -1487,6 +1506,11 @@
         "policies": {
           "title": "Aplicar Reglas de Gobernanza en este namespace",
           "message": "En Kestra Enterprise Edition, las Políticas te permiten definir reglas que se aplican a cada flow en este namespace y sus hijos — inyectar valores predeterminados compartidos, restringir valores de propiedad, bloquear plugins y requerir labels de cumplimiento, con cada cambio totalmente visible para los autores del flow."
+        },
+        "reusable-inputs": {
+          "label": "Inputs Reutilizables",
+          "title": "Defina Inputs Una Vez y Reutilícelos en Todas Partes",
+          "message": "En Kestra Enterprise Edition, los inputs reutilizables te permiten definir una vez un grupo con nombre de inputs tipados a nivel de namespace y hacer referencia a él en cualquier flow. Un conjunto de un namespace padre está disponible para los namespaces secundarios, así los equipos comparten las mismas definiciones de inputs en lugar de repetirlas en cada flow."
         },
         "history": {
           "title": "Gestionar el Historial de Revisiones en un Solo Lugar",
@@ -2115,11 +2139,8 @@
       "no_description_hint": "Agrega una descripción a este flow para documentar qué hace.<br>Markdown es compatible.",
       "others": "Otros",
       "viewAll": "Ver todo",
-      "export": "Exportar",
-      "exportEmpty": "Este gráfico no tiene datos para exportar.",
       "exportTo": {
-        "csv": "Exportar a CSV",
-        "ion": "Exportar a ION"
+        "csv": "Exportar a CSV"
       },
       "ignoredFilters": "El filtro {filters} no se aplica a este gráfico. | Los filtros {filters} no se aplican a este gráfico.",
       "show_all_statuses": "Mostrar todos los estados",

@@ -39,18 +39,20 @@
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/color-picker';
     @use 'element-plus/theme-chalk/src/color-picker-panel';
+</style>
 
+<style>
     .kel-color-picker {
-        .kel-color-picker__trigger {
+        & .kel-color-picker__trigger {
             border-radius: var(--kel-border-radius-base);
 
-            .kel-color-picker__color {
+            & .kel-color-picker__color {
                 border-radius: 0;
             }
         }
 
         &.kel-color-picker--small {
-            .kel-color-picker__trigger {
+            & .kel-color-picker__trigger {
                 border-radius: var(--kel-border-radius-small);
             }
         }

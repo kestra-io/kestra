@@ -27,6 +27,7 @@ import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
 import Monitor from "vue-material-design-icons/Monitor.vue"
 import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
 import LockOutline from "vue-material-design-icons/LockOutline.vue"
+import KeyOutline from "vue-material-design-icons/KeyOutline.vue"
 import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
 import Battery40 from "vue-material-design-icons/Battery40.vue"
 import Gauge from "vue-material-design-icons/Gauge.vue"
@@ -301,6 +302,20 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: LockOutline,
+                        },
+                    },
+                    {
+                        id: "credentials",
+                        title: t("demos.credentials.label"),
+                        routes: routeStartWith("credentials"),
+                        href: {
+                            name: "credentials/list",
+                        },
+                        icon: {
+                            element: KeyOutline,
+                        },
+                        attributes: {
+                            locked: true,
                         },
                     },
                     {

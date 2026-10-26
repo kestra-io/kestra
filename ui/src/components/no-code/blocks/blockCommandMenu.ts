@@ -3,9 +3,9 @@ import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
 import ContentCut from "vue-material-design-icons/ContentCut.vue"
 import ContentPaste from "vue-material-design-icons/ContentPaste.vue"
 import ContentSave from "vue-material-design-icons/ContentSave.vue"
-import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+import Delete from "vue-material-design-icons/Delete.vue"
 import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+import Plus from "vue-material-design-icons/Plus.vue"
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
 import type {BlockCommandMenuItem} from "./BlockCommandMenu.vue"
 import {parentPathFromLaneSentinel, sectionFromSentinel} from "./blockSections"
@@ -89,7 +89,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
         id: "insert",
         group: t("block_editor.command_menu.group_insert"),
         title: insertTitle,
-        icon: PlusCircleOutline,
+        icon: Plus,
         shortcut: "A",
         run: then(ctx.addAfterFocused),
     }]
@@ -99,7 +99,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             id: "insert-before",
             group: t("block_editor.command_menu.group_insert"),
             title: t("block_editor.command_menu.insert_before", {name: ctx.focusedBlockDisplayName()}),
-            icon: PlusCircleOutline,
+            icon: Plus,
             shortcut: shortcutFor("insert-before"),
             run: then(ctx.addBeforeFocused),
         })
@@ -110,7 +110,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             id: `insert-${section}`,
             group: t("block_editor.command_menu.group_insert"),
             title: t("block_editor.command_menu.insert_kind", {kind: ctx.sectionDisplayLabel(section)}),
-            icon: PlusCircleOutline,
+            icon: Plus,
             run: then(() => ctx.insertInSection(section)),
         })
     }
@@ -157,7 +157,7 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
             id: "delete",
             group: t("block_editor.command_menu.group_block"),
             title: t("block_editor.command_menu.delete", {name}),
-            icon: DeleteOutline,
+            icon: Delete,
             shortcut: "⌫",
             run: then(ctx.deleteFocused),
         })

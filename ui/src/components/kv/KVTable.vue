@@ -6,7 +6,7 @@
         :total="hasVisibleColumns ? total : 0"
         :currentPage="urlPage"
         :pageSize="urlSize"
-        :defaultSort="{prop: 'key', order: 'ascending'}"
+        :defaultSort="defaultSort"
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="hasVisibleColumns ? $t('no_results.kv_pairs') : $t('no_results.all_columns_hidden')"
@@ -121,7 +121,7 @@
                     placement="left"
                     @click="viewKvModal(scope.row)"
                 >
-                    <Eye />
+                    <TextSearch />
                 </KsIconButton>
             </template>
         </KsTableColumn>
@@ -135,7 +135,7 @@
                     placement="left"
                     @click="updateKvModal(scope.row)"
                 >
-                    <FileDocumentEdit />
+                    <Pencil />
                 </KsIconButton>
             </template>
         </KsTableColumn>
@@ -295,14 +295,14 @@
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {computed, nextTick, ref, useTemplateRef, watch} from "vue"
 
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
-    import Eye from "vue-material-design-icons/Eye.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import TextSearch from "vue-material-design-icons/TextSearch.vue"
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, groupBy, deepMerge} from "@kestra-io/design-system"
     import type {FormInstance, FormItemRule} from "@kestra-io/design-system"
@@ -408,6 +408,19 @@
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+
+    // The table reads defaultSort once, when it mounts, so it has to start from the URL sort that loadData
+    // uses: otherwise a page opened with ?sort=updateDate:desc lists rows by date under an arrow on Key, and
+    // the first click on Last modified re-applies the order it already has.
+    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
+        const parts = typeof sort === "string" ? sort.split(":") : []
+        if (parts.length !== 2 || !parts[0] || !parts[1]) {
+            return {prop: "key", order: "ascending"}
+        }
+        // Read the direction as the API does: "asc" is ascending, anything else descending.
+        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
+    }
+    const defaultSort = sortFromQuery(route.query.sort)
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query

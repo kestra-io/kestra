@@ -21,17 +21,16 @@ type Story = StoryObj<typeof KsDrawer>
 
 /** Default – right side drawer */
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsButton, KsDrawer},
         setup() {
-            const visible = ref(false)
-            return {visible}
+            const visible = ref(true)
+            return {args, visible}
         },
         template: `
             <div style="padding:24px">
                 <ks-button type="primary" @click="visible = true">Open Drawer</ks-button>
-                <ks-drawer v-model="visible" destroy-on-close>
-                    <template #header><h3>Drawer Title</h3></template>
+                <ks-drawer v-bind="args" v-model="visible" destroy-on-close>
                     <p>Drawer content goes here.</p>
                     <template #footer>
                         <ks-button @click="visible = false">Close</ks-button>
@@ -40,10 +39,19 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {
+        title: "Drawer Title",
+        isFullScreen: false,
+        withHeader: true,
+        resizable: false,
+        dirty: false,
+        dirtyMessage: "",
+    },
 }
 
 /** Different directions */
 export const Directions: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
@@ -67,6 +75,7 @@ export const Directions: Story = {
 
 /** Custom size */
 export const CustomSize: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
@@ -90,6 +99,7 @@ export const CustomSize: Story = {
 
 /** Resizable – drag the edge to resize (native Element Plus dragger); past 95% it counts as full screen */
 export const Resizable: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
@@ -110,6 +120,7 @@ export const Resizable: Story = {
 
 /** Without header */
 export const NoHeader: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
@@ -132,6 +143,7 @@ export const NoHeader: Story = {
 
 /** Confirm before close – beforeClose intercepts accidental dismissal (X / Escape / overlay) */
 export const ConfirmBeforeClose: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDrawer},
         setup() {
@@ -159,6 +171,7 @@ export const ConfirmBeforeClose: Story = {
 /** Mobile – the drawer is capped at 92vw and drops its desktop minimum width */
 export const Mobile: Story = {
     parameters: {
+        controls: {disable: true},
         viewport: {
             options: {
                 mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},

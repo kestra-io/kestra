@@ -562,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "No task of this flow provides an artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
+      "tasks": "no tasks | {count} task | {count} tasks",
+      "fullscreen": "Fullscreen",
+      "exit_fullscreen": "Exit fullscreen"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
@@ -1398,6 +1407,12 @@
           "third": "Restart your Kestra instance so the secret is loaded."
         }
       },
+      "credentials": {
+        "label": "Credentials",
+        "header": "Credentials",
+        "title": "Authenticate Once, Reuse It in Every Task",
+        "message": "In Kestra Enterprise Edition, server-to-server authentication can be configured once as a credential, so access tokens are requested and refreshed at runtime instead of being hardcoded in your flows. Credentials can be created at the tenant or namespace level and referenced from any task."
+      },
       "apps": {
         "title": "Build custom Apps with Kestra",
         "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval.",
@@ -1476,6 +1491,10 @@
           "title": "Manage Secrets in a Secure Way",
           "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace, and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
         },
+        "credentials": {
+          "title": "Scope Credentials to This Namespace",
+          "message": "In Kestra Enterprise Edition, you can configure credentials at the namespace level, so tasks in this namespace and its children request and refresh access tokens at runtime instead of storing them in flows. A credential defined in a parent namespace is inherited by all child namespaces."
+        },
         "assets": {
           "title": "Centralize Asset Management",
           "message": "In Kestra Enterprise Edition, Assets keeps a live inventory of resources that your workflows interact with. These resources can be database tables, virtual machines, files, or any external system you work with."
@@ -1487,6 +1506,11 @@
         "policies": {
           "title": "Enforce Governance Rules Across This Namespace",
           "message": "In Kestra Enterprise Edition, Policies let you define rules that apply to every flow in this namespace and its children — inject shared defaults, restrict property values, block plugins, and require compliance labels, with every change fully visible to flow authors."
+        },
+        "reusable-inputs": {
+          "label": "Reusable Inputs",
+          "title": "Define Inputs Once, Reuse Them Everywhere",
+          "message": "In Kestra Enterprise Edition, reusable inputs let you define a named group of typed inputs once at the namespace level and reference them in any flow. A set in a parent namespace is available to child namespaces, so teams share the same input definitions instead of repeating them in every flow."
         },
         "history": {
           "title": "Manage Revision History in One Place",
@@ -2115,11 +2139,8 @@
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
       "viewAll": "View all",
-      "export": "Export",
-      "exportEmpty": "This chart has no data to export.",
       "exportTo": {
-        "csv": "Export to CSV",
-        "ion": "Export to ION"
+        "csv": "Export to CSV"
       },
       "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
       "show_all_statuses": "Show all statuses",

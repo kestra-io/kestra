@@ -3,7 +3,6 @@ package io.kestra.core.runners.pebble.functions;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -43,21 +42,32 @@ class IsLastDayOfMonthFunctionTest {
             "2025-04-30T11:00:00, true"
         }
     )
-    void shouldCheckTheLocalCalendarMonthBoundary(String date, boolean expected) throws IllegalVariableEvaluationException {
+    void shouldReturnMonthEndStatusWhenGivenALocalDate(String date, boolean expected) throws IllegalVariableEvaluationException {
         assertThat(variableRenderer.renderTyped("{{ isLastDayOfMonth(date) }}", Map.of("date", date))).isEqualTo(expected);
     }
 
-    @Test
-    void shouldAcceptTheScheduleDateObject() throws IllegalVariableEvaluationException {
-        var date = ZonedDateTime.parse("2024-02-29T11:00:00+05:30[Asia/Kolkata]");
-        assertThat(variableRenderer.renderTyped("{{ isLastDayOfMonth(trigger.date) }}", Map.of("trigger", Map.of("date", date)))).isEqualTo(true);
+    @ParameterizedTest
+    @CsvSource({ "2024-02-29T11:00:00+05:30[Asia/Kolkata], true", "2025-03-01T01:00:00+05:30[Asia/Kolkata], false" })
+    void shouldUseTheLocalDateWhenGivenAScheduleDateObject(String date, boolean expected) throws IllegalVariableEvaluationException {
+        var scheduledDate = ZonedDateTime.parse(date);
+        assertThat(variableRenderer.renderTyped("{{ isLastDayOfMonth(trigger.date) }}", Map.of("trigger", Map.of("date", scheduledDate)))).isEqualTo(expected);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "{{ isLastDayOfMonth() }}", "{{ isLastDayOfMonth(null) }}", "{{ isLastDayOfMonth('not-a-date') }}", "{{ isLastDayOfMonth('2025-02-29') }}" })
-    void shouldRejectMissingOrInvalidDates(String expression) {
+    @ValueSource(strings = { "{{ isLastDayOfMonth() }}", "{{ isLastDayOfMonth(null) }}" })
+    void shouldThrowWhenDateIsMissing(String expression) {
         assertThatThrownBy(() -> variableRenderer.render(expression, Map.of()))
             .isInstanceOf(IllegalVariableEvaluationException.class)
-            .hasMessageContaining("isLastDayOfMonth()");
+            .hasMessageContaining("The 'isLastDayOfMonth()' function expects a 'date' argument.");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "not-a-date", "2025-02-29" })
+    void shouldThrowWhenDateIsInvalid(String date) {
+        assertThatThrownBy(() -> variableRenderer.render("{{ isLastDayOfMonth(date) }}", Map.of("date", date)))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("The 'isLastDayOfMonth()' function could not parse date '%s'.".formatted(date))
+            .hasMessageNotContaining("DateTimeParseException")
+            .hasMessageNotContaining("..");
     }
 }

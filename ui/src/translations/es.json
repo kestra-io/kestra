@@ -384,6 +384,10 @@
     "replay from beginning tooltip": "Crear una ejecución similar comenzando desde el principio",
     "replay latest revision": "Repetir usando la última revisión",
     "replayed": "La ejecución se está reproduciendo",
+    "reused_task_run": {
+      "label": "Reutilizado",
+      "tooltip": "No se volverá a ejecutar en esta egzekucja. Se ejecutó el {date}, y sus logs y outputs provienen de esa ejecución."
+    },
     "replay the execution": "Repetir la ejecución {executionId} para el flow {flowId}",
     "prefill inputs": "Prefill",
     "current": "actual",

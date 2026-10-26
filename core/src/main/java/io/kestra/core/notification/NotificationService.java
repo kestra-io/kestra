@@ -3,6 +3,7 @@ package io.kestra.core.notification;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,28 @@ public class NotificationService {
         Notification created = createNotification(userId, tenantId, type, null, title, referenceId, false);
         emit(NotificationEventType.CREATED, created);
         return created;
+    }
+
+    /**
+     * Creates one notification per user named in {@code usernames}, as seen from {@code tenantId}, already
+     * marked read when {@code read} is set. Throws when a username cannot be notified from that tenant.
+     */
+    public List<Notification> notifyUsers(String tenantId, List<String> usernames, String title, boolean read) {
+        return resolveUserIds(tenantId, usernames).stream()
+            .map(userId -> {
+                Notification created = createNotification(userId, tenantId, CoreNotificationType.GENERIC, null, title, null, read);
+                emit(NotificationEventType.CREATED, created);
+                return created;
+            })
+            .toList();
+    }
+
+    /**
+     * OSS has no user model, so every username maps to its single implicit user. Overridden in EE
+     * with a lookup restricted to the users who can access {@code tenantId}.
+     */
+    protected List<String> resolveUserIds(String tenantId, List<String> usernames) {
+        return Collections.singletonList(null);
     }
 
     /**

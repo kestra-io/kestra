@@ -1,9 +1,13 @@
 package io.kestra.plugin.core.trigger;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.zone.ZoneOffsetTransition;
+import java.time.zone.ZoneRules;
 import java.util.Map;
 import java.util.Optional;
 
@@ -190,6 +194,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     // synchronously. 10 years of even a daily cron (~3650 ticks) stays well under this.
     @VisibleForTesting
     static final int MAX_WHEN_CONDITION_ITERATIONS = 10_000;
+    private static final Duration MAX_DST_LOOKUP = Duration.ofDays(366);
 
     @NotNull
     @Schema(
@@ -335,8 +340,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                     .warn("Unable to evaluate the `when` condition for the next evaluation date for trigger '{}', condition will not be evaluated", this.getId());
             }
         }
-        return Optional.of(computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now()))
-            .orElseThrow(this::noValidExecutionDate));
+        return Optional.of(
+            computePreviousEvaluationDate(executionTime, convertDateTime(SchedulerClock.now()))
+                .orElseThrow(this::noValidExecutionDate)
+        );
     }
 
     @Override
@@ -436,7 +443,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             return Optional.empty();
         }
 
-        Optional<ZonedDateTime> next = executionTime.nextExecution(date.minus(Duration.ofSeconds(1)));
+        Optional<ZonedDateTime> next = nextExecution(executionTime, date.minus(Duration.ofSeconds(1)));
 
         if (next.isEmpty()) {
             return Optional.empty();
@@ -449,7 +456,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             .map(this::convertDateTime)
             .ifPresent(outputDatesBuilder::next);
 
-        executionTime.lastExecution(date)
+        lastExecution(executionTime, date)
             .map(this::convertDateTime)
             .ifPresent(outputDatesBuilder::previous);
 
@@ -490,14 +497,94 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         if (date == null) {
             return Optional.empty();
         }
-        return executionTime.nextExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
+        return nextExecution(executionTime, date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private Optional<ZonedDateTime> computePreviousEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {
         if (date == null) {
             return Optional.empty();
         }
-        return executionTime.lastExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
+        return lastExecution(executionTime, date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    /**
+     * Same contract as {@link ExecutionTime#nextExecution(ZonedDateTime)} (strictly after {@code from}), but a cron
+     * time that falls inside a daylight-saving spring-forward gap is not lost: cron-utils skips local times that do
+     * not exist, so this adds one catch-up execution per gap, at the nonexistent local time shifted forward by the
+     * length of the gap (02:00 becomes 03:00 in New York, 02:30 becomes 03:30 in Paris), as standard cron does.
+     * <p>
+     * The catch-up is merged with the regular next execution, so it never duplicates a run that already exists
+     * (e.g. {@code 0 2,3 * * *} still runs once at 03:00), and a gap with several matches yields a single catch-up.
+     * Fall-back (overlap) transitions are left to cron-utils.
+     */
+    private Optional<ZonedDateTime> nextExecution(ExecutionTime executionTime, ZonedDateTime from) {
+        Optional<ZonedDateTime> regular = executionTime.nextExecution(from);
+
+        ZoneId zone = from.getZone();
+        ZoneRules rules = zone.getRules();
+        if (rules.isFixedOffset()) {
+            return regular;
+        }
+
+        Instant bound = regular.map(ZonedDateTime::toInstant).orElseGet(() -> from.toInstant().plus(MAX_DST_LOOKUP));
+        ZonedDateTime best = regular.orElse(null);
+
+        ZoneOffsetTransition transition = rules.previousTransition(from.toInstant().plusNanos(1));
+        if (transition == null) {
+            transition = rules.nextTransition(from.toInstant());
+        }
+        while (transition != null && !transition.getInstant().isAfter(bound)) {
+            if (transition.isGap()) {
+                ZonedDateTime catchUp = gapCatchUp(executionTime, transition, zone);
+                if (catchUp != null && catchUp.isAfter(from) && (best == null || catchUp.isBefore(best))) {
+                    best = catchUp;
+                }
+            }
+            transition = rules.nextTransition(transition.getInstant());
+        }
+        return Optional.ofNullable(best);
+    }
+
+    /**
+     * Mirror of {@link #nextExecution(ExecutionTime, ZonedDateTime)} for {@link ExecutionTime#lastExecution(ZonedDateTime)}
+     * (strictly before {@code from}), so that {@code previous} stays consistent with {@code next} around a gap.
+     */
+    private Optional<ZonedDateTime> lastExecution(ExecutionTime executionTime, ZonedDateTime from) {
+        Optional<ZonedDateTime> regular = executionTime.lastExecution(from);
+
+        ZoneId zone = from.getZone();
+        ZoneRules rules = zone.getRules();
+        if (rules.isFixedOffset()) {
+            return regular;
+        }
+
+        Instant bound = regular.map(ZonedDateTime::toInstant).orElseGet(() -> from.toInstant().minus(MAX_DST_LOOKUP));
+        ZonedDateTime best = regular.orElse(null);
+
+        ZoneOffsetTransition transition = rules.previousTransition(from.toInstant());
+        while (transition != null) {
+            if (transition.isGap()) {
+                ZonedDateTime catchUp = gapCatchUp(executionTime, transition, zone);
+                if (catchUp != null && catchUp.isBefore(from) && (best == null || catchUp.isAfter(best))) {
+                    best = catchUp;
+                }
+            }
+
+            if (transition.getInstant().isBefore(bound)) {
+                break;
+            }
+            transition = rules.previousTransition(transition.getInstant());
+        }
+        return Optional.ofNullable(best);
+    }
+
+    private static ZonedDateTime gapCatchUp(ExecutionTime executionTime, ZoneOffsetTransition gap, ZoneId zone) {
+        ZonedDateTime probe = gap.getDateTimeBefore().atZone(ZoneOffset.UTC).minusSeconds(1);
+        return executionTime.nextExecution(probe)
+            .map(ZonedDateTime::toLocalDateTime)
+            .filter(local -> local.isBefore(gap.getDateTimeAfter()))
+            .map(local -> local.atZone(zone))
+            .orElse(null);
     }
 
     private Output trueOutputWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, Output output) throws InternalException {
@@ -523,7 +610,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         int upperYearBound = SchedulerClock.now().getYear() + 10;
 
         for (int iteration = 0; fromDate.getYear() < upperYearBound && iteration < MAX_WHEN_CONDITION_ITERATIONS; iteration++) {
-            Optional<ZonedDateTime> candidate = executionTime.nextExecution(fromDate);
+            Optional<ZonedDateTime> candidate = nextExecution(executionTime, fromDate);
             if (candidate.isEmpty()) {
                 return candidate;
             }
@@ -553,7 +640,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         int lowerYearBound = SchedulerClock.now().getYear() - 10;
 
         for (int iteration = 0; fromDate.getYear() > lowerYearBound && iteration < MAX_WHEN_CONDITION_ITERATIONS; iteration++) {
-            Optional<ZonedDateTime> candidate = executionTime.lastExecution(fromDate);
+            Optional<ZonedDateTime> candidate = lastExecution(executionTime, fromDate);
             if (candidate.isEmpty()) {
                 return candidate;
             }

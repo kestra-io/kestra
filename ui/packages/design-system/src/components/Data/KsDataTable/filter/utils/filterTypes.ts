@@ -56,6 +56,7 @@ export interface FilterKeyConfig {
     key: string;
     label: string;
     description?: string;
+    /** @deprecated The value lists always show their search, so this has no effect; drop it from filter configurations. */
     searchable?: boolean;
     comparators: [Comparators, ...Comparators[]];
     showComparatorSelection?: boolean;

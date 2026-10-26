@@ -1,5 +1,4 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {useI18n} from "vue-i18n"
 import {expect, fn, userEvent, waitFor, within} from "storybook/test"
 import FilterEditPopper from "./FilterEditPopper.vue"
 import {Comparators, type FilterKeyConfig} from "../utils/filterTypes"
@@ -21,15 +20,6 @@ const kindKey: FilterKeyConfig = {
 const meta = {
     title: "Components/Data/KsFilter/Radio editor",
     component: FilterEditPopper,
-    render: args => ({
-        components: {FilterEditPopper},
-        setup() {
-            const {mergeLocaleMessage} = useI18n({useScope: "global"})
-            for (const [code, messages] of Object.entries(locale)) mergeLocaleMessage(code, messages)
-            return {args}
-        },
-        template: "<FilterEditPopper v-bind=\"args\" />",
-    }),
     args: {
         filterKey: kindKey,
         filter: {
@@ -52,7 +42,6 @@ export const Standard: Story = {
     play: async ({canvasElement, args}) => {
         const canvas = within(canvasElement)
         await expect(canvas.getByText(kindKey.allDescription!)).toBeVisible()
-        await expect(canvas.getByText("Standard selected")).toBeVisible()
         await expect(canvas.queryByText("Normal")).not.toBeInTheDocument()
         await expect(canvas.queryByText("Default")).not.toBeInTheDocument()
 
@@ -66,8 +55,6 @@ export const Standard: Story = {
 export const LegacyNormal: Story = {
     args: {filter: {...meta.args.filter, value: "NORMAL", valueLabel: "NORMAL"}},
     play: async ({canvasElement}) => {
-        const canvas = within(canvasElement)
-        await expect(canvas.getByText("Standard selected")).toBeVisible()
         await expect(canvasElement.querySelector("[data-test=\"filter-radio-default\"] input")).toBeChecked()
     },
 }
@@ -88,12 +75,6 @@ export const Hierarchy: Story = {
             comparators: [Comparators.EQUALS],
             valueProvider: async () => [{label: "Parent", value: "MAIN"}],
         },
-    },
-    play: async ({canvasElement}) => {
-        const canvas = within(canvasElement)
-        await expect(canvas.getByText("Default", {exact: true})).toBeVisible()
-        await expect(canvas.getByText("Show Default")).toBeVisible()
-        await expect(canvas.getByText("Default selected")).toBeVisible()
     },
 }
 

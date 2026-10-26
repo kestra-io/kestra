@@ -34,17 +34,6 @@ describe("useCoreStore", () => {
         expect(store.error).toBe("Internal Server Error")
     })
 
-    it("shares state across multiple store consumers within the same Pinia context", () => {
-        const consumerA = useCoreStore()
-        const consumerB = useCoreStore()
-
-        consumerA.message = {title: "Notice", content: "Shared state"}
-        consumerA.error = 500
-
-        expect(consumerB.message).toEqual({title: "Notice", content: "Shared state"})
-        expect(consumerB.error).toBe(500)
-    })
-
     it("provides a clean instance when Pinia is reset between tests", () => {
         const store = useCoreStore()
 

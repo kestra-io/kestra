@@ -521,7 +521,7 @@ export default {
                 "IS_NOT_NULL": "Label-Key existiert mit beliebigem Wert",
                 "REGEX": "Erweiterte Mustererkennung mit regulären Ausdrücken",
                 "PREFIX": "Abgleich der Namespace-Hierarchie (z. B. passt 'com.example' auf 'com.example.app')",
-                "BETWEEN": "Numerischer Vergleich - Wert muss zwischen min und max liegen, beide eingeschlossen",
+                "BETWEEN": "Numerischer Vergleich – der Wert muss zwischen min und max liegen, beides inklusive",
             },
             "hierarchy": {
                 "all": "Standard",
@@ -892,8 +892,8 @@ export default {
             "remove_filter": "Eliminar filtro",
             "add_filter_for": "Añadir filtro para {label}",
             "is_between": "Está entre",
-            "number_min": "Min",
-            "number_max": "Max",
+            "number_min": "Mín",
+            "number_max": "Máx.",
             "timerange": {
                 "predefined": "Predefinido",
                 "custom": "Rango Personalizado",
@@ -930,7 +930,7 @@ export default {
                 "IS_NOT_NULL": "La clave de label existe con cualquier valor",
                 "REGEX": "Coincidencia de patrones avanzada usando expresiones regulares",
                 "PREFIX": "Coincidencia de jerarquía de namespace (por ejemplo, 'com.example' coincide con 'com.example.app')",
-                "BETWEEN": "Comparación numérica - el valor debe estar entre min y max, ambos incluidos",
+                "BETWEEN": "Comparación numérica: el valor debe estar entre min y max, ambos incluidos",
             },
             "hierarchy": {
                 "all": "Predeterminado",
@@ -1339,7 +1339,7 @@ export default {
                 "IS_NOT_NULL": "La clé de label existe avec n'importe quelle valeur",
                 "REGEX": "Correspondance avancée de motifs utilisant des expressions régulières",
                 "PREFIX": "Correspondance de la hiérarchie de namespace (par exemple, 'com.example' correspond à 'com.example.app')",
-                "BETWEEN": "Comparaison numérique - la valeur doit être comprise entre min et max, bornes incluses",
+                "BETWEEN": "Comparaison numérique - la valeur doit être comprise entre min et max, tous deux inclus",
             },
             "hierarchy": {
                 "all": "Par défaut",
@@ -1710,8 +1710,8 @@ export default {
             "remove_filter": "फ़िल्टर हटाएं",
             "add_filter_for": "{label} के लिए फ़िल्टर जोड़ें",
             "is_between": "के बीच है",
-            "number_min": "Min",
-            "number_max": "Max",
+            "number_min": "न्यूनतम",
+            "number_max": "अधिकतम",
             "timerange": {
                 "predefined": "पूर्वनिर्धारित",
                 "custom": "कस्टम रेंज",
@@ -1748,7 +1748,7 @@ export default {
                 "IS_NOT_NULL": "Label key किसी भी value के साथ मौजूद है",
                 "REGEX": "उन्नत पैटर्न मिलान नियमित अभिव्यक्तियों का उपयोग करके",
                 "PREFIX": "Namespace पदानुक्रम मिलान (उदाहरण के लिए, 'com.example' 'com.example.app' से मेल खाता है)",
-                "BETWEEN": "संख्यात्मक तुलना - मान min और max के बीच होना चाहिए, दोनों शामिल",
+                "BETWEEN": "संख्यात्मक तुलना - मान min और max के बीच होना चाहिए, दोनों शामिल हैं",
             },
             "hierarchy": {
                 "all": "डिफ़ॉल्ट",
@@ -2529,7 +2529,7 @@ export default {
             "add_filter_for": "{label} のフィルターを追加",
             "is_between": "範囲内",
             "number_min": "Min",
-            "number_max": "Max",
+            "number_max": "最大",
             "timerange": {
                 "predefined": "定義済み",
                 "custom": "カスタム範囲",
@@ -2566,7 +2566,7 @@ export default {
                 "IS_NOT_NULL": "Label key が任意の value で存在します",
                 "REGEX": "正規表現を使用した高度なパターンマッチング",
                 "PREFIX": "ネームスペース階層の一致（例: 'com.example' は 'com.example.app' に一致します）",
-                "BETWEEN": "数値比較 - 値は min 以上 max 以下である必要があります",
+                "BETWEEN": "数値比較 - 値はminとmaxの間である必要があります（両方を含む）",
             },
             "hierarchy": {
                 "all": "デフォルト",
@@ -2937,8 +2937,8 @@ export default {
             "remove_filter": "필터 제거",
             "add_filter_for": "{label} 필터 추가",
             "is_between": "사이",
-            "number_min": "Min",
-            "number_max": "Max",
+            "number_min": "최소",
+            "number_max": "최대",
             "timerange": {
                 "predefined": "사전 정의됨",
                 "custom": "사용자 정의 범위",
@@ -2975,7 +2975,7 @@ export default {
                 "IS_NOT_NULL": "Label key가 임의의 value와 함께 존재함",
                 "REGEX": "정규 표현식을 사용한 고급 패턴 매칭",
                 "PREFIX": "네임스페이스 계층 구조 일치 (예: 'com.example'은 'com.example.app'과 일치)",
-                "BETWEEN": "숫자 비교 - 값은 min 이상 max 이하여야 합니다",
+                "BETWEEN": "숫자 비교 - value는 min과 max 사이에 있어야 하며, 둘 다 포함됩니다.",
             },
             "hierarchy": {
                 "all": "기본",
@@ -3347,7 +3347,7 @@ export default {
             "add_filter_for": "Dodaj filtr dla {label}",
             "is_between": "Pomiędzy",
             "number_min": "Min",
-            "number_max": "Max",
+            "number_max": "Maks.",
             "timerange": {
                 "predefined": "Zdefiniowane z góry",
                 "custom": "Zakres niestandardowy",
@@ -3384,7 +3384,7 @@ export default {
                 "IS_NOT_NULL": "Key etykiety istnieje z dowolną wartością",
                 "REGEX": "Zaawansowane dopasowywanie wzorców za pomocą wyrażeń regularnych",
                 "PREFIX": "Hierarchia namespace pasująca (np. 'com.example' pasuje do 'com.example.app')",
-                "BETWEEN": "Porównanie liczbowe - wartość musi mieścić się między min a max, włącznie",
+                "BETWEEN": "Porównanie numeryczne - wartość musi mieścić się między min a max, włącznie z nimi",
             },
             "hierarchy": {
                 "all": "Domyślny",
@@ -3755,8 +3755,8 @@ export default {
             "remove_filter": "Remover filtro",
             "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
-            "number_min": "Min",
-            "number_max": "Max",
+            "number_min": "Mín",
+            "number_max": "Máx.",
             "timerange": {
                 "predefined": "Predefinido",
                 "custom": "Intervalo Personalizado",
@@ -4574,7 +4574,7 @@ export default {
             "add_filter_for": "Добавить фильтр для {label}",
             "is_between": "Между",
             "number_min": "Min",
-            "number_max": "Max",
+            "number_max": "Макс",
             "timerange": {
                 "predefined": "Предопределено",
                 "custom": "Пользовательский диапазон",
@@ -4611,7 +4611,7 @@ export default {
                 "IS_NOT_NULL": "Ключ label существует с любым value",
                 "REGEX": "Расширенное сопоставление шаблонов с использованием регулярных выражений",
                 "PREFIX": "Иерархия namespace, соответствующая (например, 'com.example' соответствует 'com.example.app')",
-                "BETWEEN": "Числовое сравнение - значение должно быть между min и max включительно",
+                "BETWEEN": "Числовое сравнение — значение должно быть между min и max включительно",
             },
             "hierarchy": {
                 "all": "По умолчанию",
@@ -4982,8 +4982,8 @@ export default {
             "remove_filter": "移除过滤器",
             "add_filter_for": "为 {label} 添加过滤器",
             "is_between": "介于",
-            "number_min": "Min",
-            "number_max": "Max",
+            "number_min": "最小",
+            "number_max": "最大",
             "timerange": {
                 "predefined": "预定义",
                 "custom": "自定义范围",
@@ -5020,7 +5020,7 @@ export default {
                 "IS_NOT_NULL": "Label key 存在且可为任意 value",
                 "REGEX": "使用正则表达式进行高级模式匹配",
                 "PREFIX": "命名空间层级匹配（例如，'com.example' 匹配 'com.example.app'）",
-                "BETWEEN": "数值比较 - 值必须介于 min 和 max 之间（含两端）",
+                "BETWEEN": "数字比较 - value 必须在 min 和 max 之间（包括两者）",
             },
             "hierarchy": {
                 "all": "默认",

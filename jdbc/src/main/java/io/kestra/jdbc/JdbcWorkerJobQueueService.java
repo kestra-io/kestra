@@ -29,6 +29,11 @@ public class JdbcWorkerJobQueueService implements Closeable {
     }
 
     public Runnable subscribe(JdbcQueue<WorkerJob> workerJobQueue, String workerId, String workerGroup, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
+        // The WorkerJobRunning rows are saved inside the transaction that claims the jobs, but the jobs are handed
+        // to the worker only once that transaction committed. The claiming transaction is rolled back and retried on
+        // a deadlock (e.g. two workers' consumers UPDATE under MySQL REPEATABLE READ): a job started inside it would
+        // keep running while its row becomes claimable again, so another worker (or the retry) would run it a second
+        // time, with no trace in the execution since results of an unchanged state are dropped.
         this.disposable.set(workerJobQueue.receiveTransaction(workerGroup, Worker.class, (dslContext, eithers) ->
         {
             final WorkerInstance workerInstance = new WorkerInstance(workerId, workerGroup);
@@ -65,9 +70,7 @@ public class JdbcWorkerJobQueueService implements Closeable {
                     log.trace("Sending a workerJobRunning: {}", workerJobRunning);
                 }
             });
-
-            eithers.forEach(consumer);
-        }));
+        }, eithers -> eithers.forEach(consumer)));
 
         return this.disposable.get();
     }

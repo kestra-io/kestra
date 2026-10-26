@@ -1,12 +1,18 @@
 package io.kestra.jdbc.runner;
 
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.awaitility.Awaitility;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -19,9 +25,12 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.Indexer;
+import io.kestra.core.runners.Worker;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.plugin.core.debug.Return;
 
 import jakarta.inject.Inject;
@@ -37,6 +46,9 @@ abstract public class JdbcQueueTest {
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
     protected QueueInterface<FlowInterface> flowQueue;
+
+    @Inject
+    protected JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -164,6 +176,65 @@ abstract public class JdbcQueueTest {
         } finally {
             KestraContext.setContext(original);
         }
+    }
+
+    @Test
+    void receiveTransactionShouldHandOffAfterCommitOnceWhenTheClaimingTransactionIsRetried() throws InterruptedException, QueueException {
+        // Given: a consumer whose claiming transaction is rolled back by a deadlock on its first attempt and
+        // retried (JooqDSLContextWrapper). Side effects that cannot be rolled back must happen after the commit,
+        // and only once, otherwise a worker job would be executed twice (kestra-ee#11945).
+        String namespace = "io.kestra." + IdUtils.create().toLowerCase();
+        AtomicInteger inTransactionCalls = new AtomicInteger();
+        AtomicInteger afterCommitCalls = new AtomicInteger();
+        CountDownLatch afterCommitLatch = new CountDownLatch(1);
+        AtomicBoolean claimedWhenHandedOff = new AtomicBoolean(false);
+
+        Runnable cancel = ((JdbcQueue<FlowInterface>) flowQueue).receiveTransaction(
+            null,
+            Worker.class,
+            (dslContext, eithers) -> {
+                if (eithers.stream().anyMatch(either -> either.isLeft() && either.getLeft().getNamespace().equals(namespace))) {
+                    if (inTransactionCalls.incrementAndGet() == 1) {
+                        throw new DataAccessException("simulated deadlock", new SQLException("Deadlock found when trying to get lock", "40001", 1213));
+                    }
+                }
+            },
+            eithers -> {
+                if (eithers.stream().anyMatch(either -> either.isLeft() && either.getLeft().getNamespace().equals(namespace))) {
+                    afterCommitCalls.incrementAndGet();
+                    // the claim must already be visible to other connections, i.e. committed
+                    claimedWhenHandedOff.set(isClaimed(namespace));
+                    afterCommitLatch.countDown();
+                }
+            }
+        );
+
+        try {
+            // When
+            flowQueue.emit(builder(namespace));
+
+            // Then: the message is delivered after the retried transaction committed, exactly once.
+            assertTrue(afterCommitLatch.await(10, TimeUnit.SECONDS));
+            // give a second delivery (the bug) the time to show up
+            Thread.sleep(500);
+            assertThat(inTransactionCalls.get()).isEqualTo(2);
+            assertThat(afterCommitCalls.get()).isEqualTo(1);
+            assertThat(claimedWhenHandedOff.get()).as("message handed off before its claim was committed").isTrue();
+        } finally {
+            cancel.run();
+        }
+    }
+
+    /** Whether the queue row carrying the flow of this namespace is marked consumed, read from a new transaction. */
+    private boolean isClaimed(String namespace) {
+        List<Object> consumers = dslContextWrapper.transactionResult(configuration -> DSL.using(configuration)
+            .select(AbstractJdbcRepository.field("consumers"))
+            .from(DSL.table("queues"))
+            .where(AbstractJdbcRepository.field("value").cast(String.class).like("%" + namespace + "%"))
+            .fetch()
+            .map(record -> record.get(0))
+        );
+        return !consumers.isEmpty() && consumers.stream().allMatch(Objects::nonNull);
     }
 
     private static FlowWithSource builder(String namespace) {

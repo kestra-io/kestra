@@ -21,6 +21,8 @@ const mockZr = {on: vi.fn(), off: vi.fn()}
 const mockEchartsInstance = {
     resize: vi.fn(),
     getOption: vi.fn(() => ({xAxis: [{data: ["Jan", "Feb", "Mar"]}]})),
+    setOption: vi.fn(),
+    isDisposed: vi.fn(() => false),
     convertFromPixel: vi.fn(() => [1, 0]),
     getDataURL: mockGetDataURL,
     getZr: vi.fn(() => mockZr),
@@ -356,60 +358,6 @@ describe("KsEchart", () => {
         vi.mocked(document.body.appendChild).mockRestore()
     })
 
-    test("exportAsImage rasterizes SVG data URL to canvas or falls back to raw data URL", () => {
-        mockGetDataURL.mockReturnValueOnce("data:image/svg+xml;utf8,<svg></svg>")
-        const wrapper = mountChart({renderer: "svg"})
-        const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
-
-        const captured: {href: string; download: string}[] = []
-        const origAppend = document.body.appendChild.bind(document.body)
-        vi.spyOn(document.body, "appendChild").mockImplementation((node) => {
-            if (node instanceof HTMLAnchorElement) captured.push({href: node.href, download: node.download})
-            return origAppend(node)
-        })
-
-        const mockCtx = {
-            fillStyle: "",
-            fillRect: vi.fn(),
-            drawImage: vi.fn(),
-        }
-        const mockToDataURL = vi.fn().mockReturnValue("data:image/png;base64,rasterized123")
-        const origCreateElement = document.createElement.bind(document)
-        vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
-            if (tag === "canvas") {
-                return {
-                    width: 0,
-                    height: 0,
-                    getContext: vi.fn().mockReturnValue(mockCtx),
-                    toDataURL: mockToDataURL,
-                } as unknown as HTMLCanvasElement
-            }
-            return origCreateElement(tag)
-        })
-
-        class MockImage {
-            onload: (() => void) | null = null
-            onerror: (() => void) | null = null
-            naturalWidth = 800
-            naturalHeight = 600
-            set src(_val: string) {
-                this.onload?.()
-            }
-        }
-        vi.stubGlobal("Image", MockImage)
-
-        wrapper.vm.exportAsImage("png", "test-svg.png")
-
-        expect(captured).toHaveLength(1)
-        expect(captured[0].href).toBe("data:image/png;base64,rasterized123")
-        expect(captured[0].download).toBe("test-svg.png")
-
-        vi.unstubAllGlobals()
-        vi.mocked(document.createElement).mockRestore()
-        clickSpy.mockRestore()
-        vi.mocked(document.body.appendChild).mockRestore()
-    })
-
     // ── renderer prop ──────────────────────────────────────────────────────────
 
     test("passes renderer prop to VChart initOptions", () => {
@@ -456,5 +404,72 @@ describe("KsEchart", () => {
     test("falls back to a ratio of 1 when window.devicePixelRatio is not set and maxPixelRatio is not set", () => {
         vi.stubGlobal("devicePixelRatio", undefined)
         expect(initOptionsOf({}).devicePixelRatio).toBe(1)
+    })
+
+    test("updates devicePixelRatio when resolution media query changes", async () => {
+        let changeListener: (() => void) | null = null
+        vi.stubGlobal("devicePixelRatio", 1)
+        vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
+            matches: false,
+            media: query,
+            addEventListener: vi.fn((event: string, cb: () => void) => {
+                if (event === "change") changeListener = cb
+            }),
+            removeEventListener: vi.fn(),
+        })))
+
+        const wrapper = mountChart()
+        const vChart = wrapper.findComponent({name: "VChart"})
+        expect((vChart.props("initOptions") as {devicePixelRatio?: number}).devicePixelRatio).toBe(1)
+
+        vi.stubGlobal("devicePixelRatio", 2)
+        changeListener?.()
+        await wrapper.vm.$nextTick()
+
+        expect((vChart.props("initOptions") as {devicePixelRatio?: number}).devicePixelRatio).toBe(2)
+
+        vi.unstubAllGlobals()
+    })
+
+    test("restores previous chart options on devicePixelRatio change", async () => {
+        let changeListener: (() => void) | null = null
+        vi.stubGlobal("devicePixelRatio", 1)
+        vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
+            matches: false,
+            media: query,
+            addEventListener: vi.fn((event: string, cb: () => void) => {
+                if (event === "change") changeListener = cb
+            }),
+            removeEventListener: vi.fn(),
+        })))
+
+        const setOptionSpy = vi.fn()
+        const mockOpt = {series: [{type: "graph", layout: "none", zoom: 2.5}]}
+        const mockChart = {
+            ...mockEchartsInstance,
+            getOption: vi.fn().mockReturnValue(mockOpt),
+            setOption: setOptionSpy,
+            isDisposed: vi.fn().mockReturnValue(false),
+        }
+
+        const wrapper = mountChart()
+        const vChart = wrapper.findComponent({name: "VChart"})
+        ;(vChart.vm as unknown as {chart: unknown}).chart = mockChart
+
+        vi.stubGlobal("devicePixelRatio", 2)
+        changeListener?.()
+        await wrapper.vm.$nextTick()
+
+        const newMockChart = {
+            ...mockEchartsInstance,
+            setOption: setOptionSpy,
+            isDisposed: vi.fn().mockReturnValue(false),
+        }
+        ;(vChart.vm as unknown as {chart: unknown}).chart = newMockChart
+        await wrapper.vm.$nextTick()
+
+        expect(setOptionSpy).toHaveBeenCalledWith(mockOpt, true)
+
+        vi.unstubAllGlobals()
     })
 })

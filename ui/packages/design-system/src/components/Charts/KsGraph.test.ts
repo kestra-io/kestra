@@ -43,11 +43,6 @@ describe("KsGraph — container", () => {
         const wrapper = mount(KsGraph, {props: {loading: false}})
         expect(wrapper.find(".ks-chart--graph").exists()).toBe(true)
     })
-
-    test("defaults renderer to canvas", () => {
-        const wrapper = mount(KsGraph, {props: {loading: false}})
-        expect(wrapper.findComponent({name: "KsEchart"}).props("renderer")).toBe("canvas")
-    })
 })
 
 // ─── Loading ──────────────────────────────────────────────────────────────────

@@ -97,9 +97,24 @@
 
     const currentDpr = ref(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)
 
+    let savedOption: Record<string, unknown> | null = null
+
     function updateDpr() {
         if (typeof window === "undefined") return
-        currentDpr.value = window.devicePixelRatio || 1
+        const nextDpr = window.devicePixelRatio || 1
+        if (nextDpr === currentDpr.value) return
+
+        const nextEffective = props.maxPixelRatio === undefined
+            ? nextDpr
+            : Math.min(nextDpr, props.maxPixelRatio)
+
+        if (nextEffective !== effectivePixelRatio.value) {
+            const chart = vChartRef.value?.chart as ECharts | undefined
+            if (chart && typeof chart.getOption === "function" && !chart.isDisposed()) {
+                savedOption = chart.getOption() as Record<string, unknown>
+            }
+        }
+        currentDpr.value = nextDpr
     }
 
     let dprMqCleanup: (() => void) | null = null
@@ -153,6 +168,7 @@
     onUnmounted(() => {
         observer?.disconnect()
         dprMqCleanup?.()
+        savedOption = null
     })
 
     const effectiveOption = computed(() => {
@@ -302,7 +318,17 @@
         boundZr?.on("globalout", hide)
     }
 
-    watch(() => vChartRef.value?.chart as ECharts | undefined, (chart) => bindZr(chart), {immediate: true})
+    watch(
+        () => vChartRef.value?.chart as ECharts | undefined,
+        (chart) => {
+            bindZr(chart)
+            if (chart && savedOption) {
+                chart.setOption(savedOption, true)
+                savedOption = null
+            }
+        },
+        {immediate: true},
+    )
 
     onUnmounted(() => bindZr())
 
@@ -310,45 +336,14 @@
         getEchartsInstance: (): ECharts | null => (vChartRef.value?.chart as ECharts) ?? null,
         exportAsImage: (type: "jpeg" | "png" = "png", filename?: string): void => {
             if (!vChartRef.value) return
-            const rawDataUrl = vChartRef.value.getDataURL({type, pixelRatio: 2, backgroundColor: "transparent"})
-            if (!rawDataUrl) return
-
-            const triggerDownload = (url: string) => {
-                const link = document.createElement("a")
-                link.href = url
-                link.download = filename || `chart.${type}`
-                document.body.appendChild(link)
-                link.click()
-                document.body.removeChild(link)
-            }
-
-            if (rawDataUrl.startsWith("data:image/svg+xml")) {
-                const img = new Image()
-                img.onload = () => {
-                    const canvas = document.createElement("canvas")
-                    const chartInstance = vChartRef.value?.chart as ECharts | undefined
-                    const canvasWidth = (chartInstance?.getWidth?.() ?? img.naturalWidth ?? 800) * 2
-                    const canvasHeight = (chartInstance?.getHeight?.() ?? img.naturalHeight ?? 600) * 2
-                    canvas.width = canvasWidth
-                    canvas.height = canvasHeight
-                    const ctx = canvas.getContext("2d")
-                    if (ctx) {
-                        if (type === "jpeg") {
-                            ctx.fillStyle = "#ffffff"
-                            ctx.fillRect(0, 0, canvasWidth, canvasHeight)
-                        }
-                        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight)
-                        triggerDownload(canvas.toDataURL(`image/${type}`))
-                        return
-                    }
-                    triggerDownload(rawDataUrl)
-                }
-                img.onerror = () => triggerDownload(rawDataUrl)
-                img.src = rawDataUrl
-                return
-            }
-
-            triggerDownload(rawDataUrl)
+            const dataUrl = vChartRef.value.getDataURL({type, pixelRatio: 2, backgroundColor: "transparent"})
+            if (!dataUrl) return
+            const link = document.createElement("a")
+            link.href = dataUrl
+            link.download = filename || `chart.${type}`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
         },
     })
 </script>

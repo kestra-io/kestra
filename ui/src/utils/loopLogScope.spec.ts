@@ -1,4 +1,4 @@
-import {beforeAll, beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {configureClient} from "@kestra-io/kestra-sdk"
 import {client} from "@kestra-io/kestra-sdk/client"
 import {
@@ -17,8 +17,15 @@ import {
 } from "./loopLogScope"
 import type {LoopIteration} from "./loopIterations"
 
+const initialClientConfig = client.getConfig()
+
 beforeAll(() => {
     configureClient({baseUrl: "http://localhost"})
+})
+
+afterAll(() => {
+    const {baseUrl, fetch, querySerializer} = initialClientConfig
+    client.setConfig({baseUrl, fetch, querySerializer})
 })
 
 const root = {id: "root", namespace: "company.team", flowId: "close_lite", startDate: "2026-10-09T09:49:13.994699Z"}

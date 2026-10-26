@@ -1,4 +1,5 @@
 import {ref, computed} from "vue"
+import type {Schema} from "../components/tasks/getTaskComponent"
 
 export interface Crumb {
     path: string;
@@ -6,7 +7,7 @@ export interface Crumb {
 }
 
 export interface NavFrame extends Crumb {
-    schema: any;
+    schema: Schema;
 }
 
 const SCROLL_STABLE_FRAMES = 3

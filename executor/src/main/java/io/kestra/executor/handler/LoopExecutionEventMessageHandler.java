@@ -90,6 +90,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (message.state().isPaused()) {
             return handlePaused(message);
         }
+        if (message.state().isBreakpoint()) {
+            return handleBreakpoint(message);
+        }
         if (message.state() == State.Type.RESTARTED) {
             return handleRestarted(message);
         }
@@ -258,6 +261,22 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
                 return executor.withExecution(pausedExecution, "pausedLoopIteration");
             } catch (InternalException e) {
+                return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
+            }
+        });
+    }
+
+    private Optional<ExecutorContext> handleBreakpoint(LoopExecutionEvent message) {
+        return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
+        {
+            if (!execution.getState().getCurrent().onlyRunning()) {
+                return null;
+            }
+
+            try {
+                Execution suspended = executionService.suspendAtLoopBreakpoint(execution);
+                return new ExecutorContext(execution).withExecution(suspended, "loopIterationBreakpoint");
+            } catch (QueueException e) {
                 return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
             }
         });

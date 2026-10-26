@@ -137,7 +137,10 @@ describe("TaskRunDetails log loading across executions", () => {
         expect(store.executions.loadFlowForExecution).toHaveBeenCalledWith(expect.objectContaining({store: false, flowId: "simple-dag"}))
         expect(store.executions.loadLogs).toHaveBeenCalledWith({
             executionId: "child-a",
-            params: {"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO", "filters[kind][IN]": "PLAYGROUND"},
+            filters: [
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"},
+                {field: "kind", operation: "IN", value: "PLAYGROUND"},
+            ],
         })
         const vm = wrapper.vm as unknown as {filteredLogs: unknown[]}
         expect(vm.filteredLogs).toEqual(logsFor("child-a"))

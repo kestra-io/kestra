@@ -116,7 +116,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                 }
             }
         }
-        checkFlowInputsDependencyGraph(value, violations);
+        violations.addAll(inputDependencyViolations(value.getInputs()));
 
         // EE-only input types (e.g. REUSABLE_INPUTS) cannot run on the open-source edition, so reject a flow
         // declaring one at save/validation time rather than letting it fail only at execution. EE allows them.
@@ -300,15 +300,19 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             );
     }
 
-    private static void checkFlowInputsDependencyGraph(final Flow flow, final List<String> violations) {
-        if (ListUtils.isEmpty(flow.getInputs()))
-            return;
+    /**
+     * @return every input that depends on an input that doesn't exist, or on itself through other inputs
+     */
+    public static List<String> inputDependencyViolations(@Nullable List<Input<?>> inputs) {
+        List<String> violations = new ArrayList<>();
+        if (ListUtils.isEmpty(inputs))
+            return violations;
 
         Map<String, List<String>> graph = new HashMap<>();
         // Expand FORMs so children enter the graph keyed by their dotted path. A child referencing a sibling
         // must write the full dotted path (e.g. 'environment.data_center'); a bare ref resolves to no node and
         // is rejected below ("depends on a non-existent input"), so the no-auto-rewrite contract fails loudly.
-        for (Input<?> input : flow.resolvableInputs()) {
+        for (Input<?> input : Input.expandToLeaves(inputs)) {
             graph.putIfAbsent(input.getId(), new ArrayList<>());
             if (input.getDependsOn() != null && !ListUtils.isEmpty(input.getDependsOn().inputs())) {
                 graph.get(input.getId()).addAll(input.getDependsOn().inputs());
@@ -330,7 +334,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                 violations.add(String.format("Cycle dependency detected for input with id '%s': %s", key, list));
             });
         });
-
+        return violations;
     }
 
     protected static List<String> getDuplicates(List<String> taskIds) {

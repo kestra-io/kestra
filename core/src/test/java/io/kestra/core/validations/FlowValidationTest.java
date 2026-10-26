@@ -1058,6 +1058,31 @@ class FlowValidationTest {
     }
 
     @Test
+    void inputsDependingOnEachOther_failValidation() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: a
+                type: STRING
+                dependsOn:
+                  inputs: [b]
+              - id: b
+                type: STRING
+                dependsOn:
+                  inputs: [a]
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Cycle dependency detected for input with id 'a': [a, b]");
+    }
+
+    @Test
     void formInputs_nestedForm_failValidation() {
         Flow flow = YamlParser.parse("""
             id: test

@@ -97,7 +97,7 @@ describe("findIterationByNumber", () => {
         const iteration = await findIterationByNumber("host", "per_region", 30, "tr-2")
 
         expect(iteration?.id).toBe("it-59")
-        expect(vi.mocked(ExecutionsAPI.searchExecutions).mock.calls.map(([params]) => params.page)).toEqual([1, 2])
+        expect(vi.mocked(ExecutionsAPI.searchExecutions).mock.calls.map(([params]) => params?.page)).toEqual([1, 2])
     })
 
     it("shouldNotLookPastThePageHoldingTheNumberWhenASingleRunOwnsIt", async () => {

@@ -2,9 +2,9 @@
     <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title" :bookmarkLabel="routeInfo.bookmarkLabel">
         <template #title>
             <template v-if="isDeleted">
-                <Alert class="text-warning me-2" />{{ $t('deleted_label') }}
+                <Alert class="deleted-icon" />{{ $t('deleted_label') }}
             </template>
-            <Lock v-else-if="!isAllowedToEdit" class="me-2 gray-700" />
+            <Lock v-else-if="!isAllowedToEdit" class="lock-icon gray-700" />
             <span :class="{'body-color': isDeleted}">
                 {{ routeInfo.title }}
                 <Badge v-if="routeInfo.beta" :label="$t('plugins.beta')" />
@@ -48,3 +48,14 @@
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace),
     )
 </script>
+
+<style scoped>
+.deleted-icon {
+    color: var(--ks-text-warning);
+    margin-right: var(--ks-spacing-2);
+}
+
+.lock-icon {
+    margin-right: var(--ks-spacing-2);
+}
+</style>

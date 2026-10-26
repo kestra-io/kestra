@@ -7,7 +7,7 @@
             :total="total"
             :currentPage="urlPage"
             :pageSize="urlSize"
-            :defaultSort="{prop: 'flowId', order: 'ascending'}"
+            :defaultSort="defaultSort"
             fitHeight
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
@@ -377,7 +377,7 @@
         TriggerControllerApiTriggerId,
     } from "@kestra-io/kestra-sdk"
     import {problemBulkBody, problemTitle} from "../../../utils/problem"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute, useRouter, type LocationQuery} from "vue-router"
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, deepMerge} from "@kestra-io/design-system"
     import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
@@ -627,6 +627,15 @@
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+
+    const sortFromQuery = (sort: LocationQuery[string]): {prop: string; order: "ascending" | "descending"} => {
+        const parts = typeof sort === "string" ? sort.split(":") : []
+        if (parts.length !== 2 || !parts[0] || !parts[1]) {
+            return {prop: "triggerId", order: "ascending"}
+        }
+        return {prop: parts[0], order: parts[1] === "asc" ? "ascending" : "descending"}
+    }
+    const defaultSort = sortFromQuery(route.query.sort)
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...filters} = route.query

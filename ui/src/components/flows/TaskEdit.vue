@@ -641,7 +641,7 @@
         }
         const incoming = raw ?? YAML_UTILS.stringify(newTask)
         const keepLocalEdit = props.presentation === "panel"
-            ? panelHasFocus.value
+            ? normalizeYaml(incoming) === normalizeYaml(taskYaml.value) || (panelHasFocus.value && isDirty.value)
             : normalizeYaml(incoming) === normalizeYaml(taskBaseline.value)
         if (incoming !== taskYaml.value && !keepLocalEdit) {
             taskYaml.value = incoming

@@ -67,6 +67,13 @@
             case "TIME":
                 inputValue = dayjs(value as DateInput).format("HH:mm:ss")
                 break
+            case "DATETIME":
+            {
+                // The picker holds a Date, and String(date) is not a value the API can parse.
+                const date = dayjs(value as DateInput)
+                inputValue = date.isValid() ? date.toISOString() : String(value)
+                break
+            }
             default:
                 inputValue = value === undefined ? undefined : String(value)
             }

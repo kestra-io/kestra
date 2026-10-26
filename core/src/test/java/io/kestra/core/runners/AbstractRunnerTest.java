@@ -680,6 +680,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/loop-breakpoint.yaml" }, tenantId = "loop-breakpoint")
+    void loopBreakpointOnChildTask() throws Exception {
+        loopCaseTest.loopBreakpointOnChildTask("loop-breakpoint");
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-break.yaml")
     public void loopBreak(Execution execution) throws InternalException {
         loopCaseTest.loopBreak(execution);

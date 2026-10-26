@@ -106,10 +106,11 @@ describe("Banner", () => {
         expect(loadLogs).toHaveBeenCalledWith({
             store: false,
             executionId: "execution-id",
-            params: {minLevel: "ERROR"},
+            filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
             page: 1,
             size: 100,
         })
+
         expect(promptCopilot).toHaveBeenCalledWith(
             "Fix the flow flow as it generated the following error:\nLedger EMEA is off\nLedger AMER is off",
             expect.anything(),

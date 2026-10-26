@@ -562,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variabili",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Nessun task di questo flow fornisce un artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
+      "tasks": "nessun task | {count} task | {count} task",
+      "fullscreen": "Schermo intero",
+      "exit_fullscreen": "Esci dalla modalità a schermo intero"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Cerca Key o value...",

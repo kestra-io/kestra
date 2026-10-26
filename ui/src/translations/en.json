@@ -562,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "No task of this flow provides an artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
+      "tasks": "no tasks | {count} task | {count} tasks",
+      "fullscreen": "Fullscreen",
+      "exit_fullscreen": "Exit fullscreen"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",

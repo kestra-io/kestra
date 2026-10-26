@@ -562,6 +562,15 @@
     "inputs": "Entradas",
     "input": "Entrada",
     "variables": "Variables",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Ninguna Task de este Flow proporciona un artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
+      "tasks": "ninguna Task | {count} Task | {count} Tasks",
+      "fullscreen": "Pantalla completa",
+      "exit_fullscreen": "Salir de pantalla completa"
+    },
     "variable_explorer": {
       "title": "Entrada/Salida",
       "search_placeholder": "Buscar Key o value...",

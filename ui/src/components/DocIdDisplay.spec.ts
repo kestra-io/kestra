@@ -34,7 +34,6 @@ describe("DocIdDisplay", () => {
     })
 
     it("renders when showDocId is present with no value", async () => {
-        // ?showDocId with no value reaches the route as null, which still counts as present.
         const wrapper = await mountWithQuery({showDocId: null})
 
         expect(wrapper.find("button").exists()).toBe(true)

@@ -1,10 +1,24 @@
 import type {ValidationError} from "@kestra-io/kestra-sdk"
+import {globalI18n} from "../translations/i18n"
 
 export type {ValidationError}
 
+// FlowValidator builds this one in English; the editor marker shows the same message, translated
+const DUPLICATE_TASK_IDS = /^Duplicate task id with name \[(.+)\]$/
+
+function translatedDetail(detail: string): string {
+    const ids = DUPLICATE_TASK_IDS.exec(detail)?.[1]
+    if (!ids || !globalI18n.value) return detail
+    return globalI18n.value.t("ks_editor.duplicate_task_id", {ids: ids.split(", ").map(id => `"${id}"`).join(", ")})
+}
+
 /** One readable line per error, e.g. `tasks[log].message: must not be null`. */
 export function validationErrorLines(errors?: ValidationError[]): string[] {
-    return (errors ?? []).flatMap(({detail, path}) => detail ? [path ? `${path}: ${detail}` : detail] : [])
+    return (errors ?? []).flatMap(({detail, path}) => {
+        if (!detail) return []
+        const text = translatedDetail(detail)
+        return [path ? `${path}: ${text}` : text]
+    })
 }
 
 export function pointerSegments(pointer: string): string[] {

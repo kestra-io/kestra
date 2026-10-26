@@ -31,6 +31,22 @@ class TableFilterTest {
     }
 
     @Test
+    void shouldCompareNumbersAsNumbers() {
+        Map<String, Object> row = Map.of("ratio", 2, "code", "007");
+
+        assertThat(new TableFilter("ratio", EQUALS, 2.0d).matches(row)).isTrue();
+        assertThat(new TableFilter("ratio", IN, List.of(1.5d, 2.0d)).matches(row)).isTrue();
+        assertThat(new TableFilter("ratio", NOT_EQUALS, "2.0").matches(row)).isFalse();
+        assertThat(new TableFilter("code", EQUALS, "7").matches(row)).isFalse();
+    }
+
+    @Test
+    void shouldTreatAListUnderEqualsAsOneOfItsValues() {
+        assertThat(matches("type", EQUALS, List.of("linux"))).isTrue();
+        assertThat(matches("type", NOT_EQUALS, List.of("linux", "bsd"))).isFalse();
+    }
+
+    @Test
     void shouldLookAValueUpInAListCellOrAText() {
         assertThat(matches("tags", CONTAINS, "edge")).isTrue();
         assertThat(matches("tags", CONTAINS, List.of("db", "web"))).isTrue();

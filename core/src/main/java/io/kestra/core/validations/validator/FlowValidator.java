@@ -491,10 +491,12 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         List<TableCellViolation> violations = new ArrayList<>();
-        try {
-            table.validate(rows);
-        } catch (ConstraintViolationException e) {
-            e.getConstraintViolations().forEach(violation -> violations.add(new TableCellViolation(null, null, violation.getMessage())));
+        if (ListUtils.isEmpty(table.getFilters())) {
+            try {
+                table.validate(rows);
+            } catch (ConstraintViolationException e) {
+                e.getConstraintViolations().forEach(violation -> violations.add(new TableCellViolation(null, null, violation.getMessage())));
+            }
         }
 
         List<Input<?>> columns = ListUtils.emptyOnNull(table.getColumns());

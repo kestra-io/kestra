@@ -457,6 +457,48 @@ class FlowValidationTest {
     }
 
     @Test
+    void filteredTableDefaults_rowBoundsLeftToTheRowsAnExecutionGets() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: types
+                type: MULTISELECT
+                values: [linux, windows]
+              - id: components
+                type: TABLE
+                maxRows: 2
+                dependsOn:
+                  inputs: [types]
+                filters:
+                  - column: type
+                    operation: IN
+                    value: "{{ inputs.types }}"
+                columns:
+                  - id: type
+                    type: STRING
+                  - id: cpus
+                    type: INT
+                    min: 1
+                defaults:
+                  - {type: linux, cpus: 2}
+                  - {type: windows, cpus: 0}
+                  - {type: linux, cpus: 4}
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage())
+            .contains("row 2, column `cpus`: it must be more than `1`")
+            .doesNotContain("rows");
+    }
+
+    @Test
     void tableColumnsWithPrefillAndExpression_valid() {
         Flow flow = YamlParser.parse("""
             id: test

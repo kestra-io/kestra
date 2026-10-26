@@ -1,9 +1,10 @@
 package io.kestra.core.models.flows.input;
 
+import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -33,18 +34,32 @@ public record TableFilter(
 
     public boolean matches(Map<?, ?> row) {
         Object cell = row.get(column);
-        String text = cell == null ? null : String.valueOf(cell);
-        List<String> values = value instanceof Collection<?> collection
-            ? collection.stream().map(String::valueOf).toList()
-            : List.of(String.valueOf(value));
+        List<?> values = value instanceof Collection<?> collection ? collection.stream().toList() : Collections.singletonList(value);
         return switch (operation) {
-            case EQUALS -> Objects.equals(text, String.valueOf(value));
-            case NOT_EQUALS -> !Objects.equals(text, String.valueOf(value));
-            case IN -> values.contains(text);
-            case NOT_IN -> !values.contains(text);
+            case EQUALS, IN -> values.stream().anyMatch(candidate -> same(cell, candidate));
+            case NOT_EQUALS, NOT_IN -> values.stream().noneMatch(candidate -> same(cell, candidate));
             case CONTAINS -> cell instanceof Collection<?> items
-                ? items.stream().map(String::valueOf).anyMatch(values::contains)
-                : text != null && values.stream().anyMatch(text::contains);
+                ? items.stream().anyMatch(item -> values.stream().anyMatch(candidate -> same(item, candidate)))
+                : cell != null && values.stream().map(String::valueOf).anyMatch(String.valueOf(cell)::contains);
         };
+    }
+
+    private static boolean same(Object cell, Object candidate) {
+        if (cell instanceof Number || candidate instanceof Number) {
+            BigDecimal a = number(cell);
+            BigDecimal b = number(candidate);
+            if (a != null && b != null) {
+                return a.compareTo(b) == 0;
+            }
+        }
+        return cell != null && String.valueOf(cell).equals(String.valueOf(candidate));
+    }
+
+    private static BigDecimal number(Object value) {
+        try {
+            return value == null ? null : new BigDecimal(String.valueOf(value).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

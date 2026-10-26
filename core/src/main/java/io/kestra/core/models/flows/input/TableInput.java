@@ -100,7 +100,7 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
             return renderer.apply(text.trim());
         } catch (Exception e) {
             throw ManualConstraintViolation.toConstraintViolationException(
-                "Cannot render the value of the filter on `" + filter.column() + "`. Cause: " + e.getMessage(),
+                "Cannot render the value of the filter on `%s`. Cause: %s".formatted(filter.column(), e.getMessage()),
                 this,
                 TableInput.class,
                 getId(),

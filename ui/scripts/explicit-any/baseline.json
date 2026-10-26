@@ -13,8 +13,17 @@
   "src/stores/executions.bulkRestart.spec.ts": 1,
   "src/stores/logs.cursor.spec.ts": 1,
   "src/stores/logs.searchRace.spec.ts": 5,
+  "src/utils/flowTemplate.ts": 5,
+  "src/utils/flowUtils.ts": 6,
   "src/utils/flowableBlockOps.spec.ts": 8,
+  "src/utils/init.ts": 2,
+  "src/utils/kestraHttp.ts": 4,
+  "src/utils/pluginUtils.ts": 4,
   "src/utils/posthog.ts": 11,
   "src/utils/recipeToYaml.spec.ts": 14,
+  "src/utils/submitTask.ts": 7,
+  "src/utils/tabTracking.ts": 2,
+  "src/utils/toast.ts": 6,
+  "src/utils/triggers.ts": 3,
   "src/utils/utils.ts": 14
 }

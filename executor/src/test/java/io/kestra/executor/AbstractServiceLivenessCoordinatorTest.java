@@ -542,10 +542,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
                 // Liveness disabled: this instance has no process behind it, and letting the
                 // coordinator declare it non-responding would resubmit its job from the unclean
                 // path and defeat what this test asserts.
-                new ServerConfig(
-                    Duration.ofSeconds(1), restartStrategy, new ServerConfig.Liveness(false, Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ZERO, Duration.ofSeconds(1)), null, null,
-                    null
-                ),
+                new ServerConfig(Duration.ofSeconds(1), restartStrategy, new ServerConfig.Liveness(false, Duration.ofSeconds(1), Duration.ofSeconds(3), Duration.ZERO, Duration.ofSeconds(1)), null, null, null),
                 Map.of(),
                 Set.of(),
                 0L

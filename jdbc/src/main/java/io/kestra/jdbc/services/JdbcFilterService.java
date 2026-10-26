@@ -249,7 +249,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
                     Either.left(Map.of(filter.getKey(), filter.getValue())),
                     QueryFilter.Op.NOT_EQUALS
                 );
-
+                
         }
         return field(field).ne(filter.getValue());
     }

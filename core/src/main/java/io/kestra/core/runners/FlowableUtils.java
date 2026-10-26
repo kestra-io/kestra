@@ -28,6 +28,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class FlowableUtils {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
@@ -89,9 +90,7 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(
-                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
-                )
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
         ) {
             return Collections.emptyList();
         }
@@ -132,9 +131,7 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(
-                    taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying()
-                )
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
         ) {
             return Collections.emptyList();
         }

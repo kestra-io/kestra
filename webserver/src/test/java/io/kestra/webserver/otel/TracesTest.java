@@ -69,8 +69,8 @@ public class TracesTest {
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // spans are ended and exported asynchronously to the execution completion, so wait until the expected ones are visible
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(
-            () -> assertThat(spansForTenant(tenantId))
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+            assertThat(spansForTenant(tenantId))
                 .extracting(SpanData::getName)
                 .contains("EXECUTOR - %s_io.kestra.tests_trace-parent".formatted(tenantId), "WORKER - io.kestra.plugin.core.output.OutputValues")
         );

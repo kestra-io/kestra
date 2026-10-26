@@ -24,12 +24,12 @@ import io.kestra.executor.testkit.Results;
 import io.kestra.executor.testkit.ScriptedWorker;
 import io.kestra.executor.testkit.Trace;
 
-import reactor.core.publisher.Flux;
-
 import static io.kestra.executor.testkit.HarnessAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+
+import reactor.core.publisher.Flux;
 
 class KillReleasesConcurrencySlotTest {
 
@@ -68,8 +68,7 @@ class KillReleasesConcurrencySlotTest {
         Execution queued = Executions.created(flow);
         harness.step(slotHolder);
         harness.step(queued);
-        assertThat(harness).as("before the kill: the holder waits at its breakpoint, on no worker").hasExecutionInState(slotHolder, State.Type.BREAKPOINT).hasQueuedExactly(queued)
-            .hasRunning(flow, 1);
+        assertThat(harness).as("before the kill: the holder waits at its breakpoint, on no worker").hasExecutionInState(slotHolder, State.Type.BREAKPOINT).hasQueuedExactly(queued).hasRunning(flow, 1);
 
         harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
 
@@ -98,8 +97,7 @@ class KillReleasesConcurrencySlotTest {
         Execution queued = Executions.created(flow);
         harness.clock().set(T0);
         harness.run(List.of(slotHolder, queued), ScriptedWorker.failing("a", T0));
-        assertThat(harness).as("before the kill: the holder waits for its retry, on no worker").hasExecutionInState(slotHolder, State.Type.RETRYING).hasQueuedExactly(queued)
-            .hasPendingDelays(1);
+        assertThat(harness).as("before the kill: the holder waits for its retry, on no worker").hasExecutionInState(slotHolder, State.Type.RETRYING).hasQueuedExactly(queued).hasPendingDelays(1);
 
         harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
 
@@ -131,14 +129,12 @@ class KillReleasesConcurrencySlotTest {
         Execution queued = Executions.created(flow);
         harness.clock().set(T0);
         harness.run(List.of(slotHolder, queued), ScriptedWorker.succeeding(T0));
-        assertThat(harness).as("before the kill: the holder's loop waits for its next iteration, on no worker").hasExecutionInState(slotHolder, State.Type.PAUSED).hasQueuedExactly(queued)
-            .hasPendingDelays(1);
+        assertThat(harness).as("before the kill: the holder's loop waits for its next iteration, on no worker").hasExecutionInState(slotHolder, State.Type.PAUSED).hasQueuedExactly(queued).hasPendingDelays(1);
 
         harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
 
         assertThat(harness).as("the kill ended the holder").hasExecutionInState(slotHolder, State.Type.KILLED);
-        assertThat(harness.executionStateStore().findByIdWithoutAcl(slotHolder.getId()).getTaskRunList()).as("the waiting loop is killed too, nothing is left in KILLING")
-            .allMatch(t -> t.getState().isTerminated());
+        assertThat(harness.executionStateStore().findByIdWithoutAcl(slotHolder.getId()).getTaskRunList()).as("the waiting loop is killed too, nothing is left in KILLING").allMatch(t -> t.getState().isTerminated());
         assertThat(harness).as("the kill freed the slot: the queued execution was popped").hasNothingQueued();
         assertThat(harness).as("the popped execution started its loop").hasExecutionInState(queued, State.Type.PAUSED).hasRunning(flow, 1);
     }

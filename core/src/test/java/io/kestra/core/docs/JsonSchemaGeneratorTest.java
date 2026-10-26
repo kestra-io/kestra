@@ -498,8 +498,7 @@ class JsonSchemaGeneratorTest {
         assertThat((List<String>) generate.get("required"), not(hasItem("taskRunner")));
         assertThat((List<String>) generate.get("required"), hasItem("taskRunnerWithNoDefault"));
 
-        Map<String, Object> inputs = new AbstractClassDocumentation<Task>(jsonSchemaGenerator, RequiredSubtypedWithDefault.class, Task.class) {
-        }.getInputs();
+        Map<String, Object> inputs = new AbstractClassDocumentation<Task>(jsonSchemaGenerator, RequiredSubtypedWithDefault.class, Task.class) {}.getInputs();
         assertThat(((Map<String, Object>) inputs.get("taskRunner")).get("$required"), is(false));
         assertThat(((Map<String, Object>) inputs.get("taskRunnerWithNoDefault")).get("$required"), is(true));
     }
@@ -918,10 +917,10 @@ class JsonSchemaGeneratorTest {
         @TicketingField(defaultValue = "3")
         private Property<Integer> priority;
 
-        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = { @TicketingField.Mapping(from = "CRITICAL", to = "urgent"), @TicketingField.Mapping(from = "HIGH", to = "high") })
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "urgent"), @TicketingField.Mapping(from = "HIGH", to = "high")})
         private Property<String> urgency;
 
-        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = { @TicketingField.Mapping(from = "CRITICAL", to = "1"), @TicketingField.Mapping(from = "HIGH", to = "2") })
+        @TicketingField(role = TicketingField.Role.CASE_SEVERITY, valueMap = {@TicketingField.Mapping(from = "CRITICAL", to = "1"), @TicketingField.Mapping(from = "HIGH", to = "2")})
         private Property<Integer> level;
 
         private String untouched;

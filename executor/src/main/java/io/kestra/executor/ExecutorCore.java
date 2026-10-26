@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -27,12 +29,10 @@ import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.executions.statistics.TaskRunStatistic;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -72,6 +72,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 /**

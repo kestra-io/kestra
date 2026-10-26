@@ -1133,8 +1133,7 @@ public class ExecutionController {
                     })
                         .last()
                         .map(Event::getData)
-                        .map(execution ->
-                        {
+                        .map(execution -> {
                             try {
                                 return ExecutionResponse.fromExecution(
                                     execution,
@@ -1168,8 +1167,7 @@ public class ExecutionController {
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs,
-            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted,
-            ExecutionMetadata metadata,
+            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
             Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
                 tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
@@ -1966,11 +1964,9 @@ public class ExecutionController {
         }
 
         TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(stateRequest.taskRunId())
-            .orElseThrow(
-                () -> new NoSuchElementException(
-                    "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
-                )
-            );
+            .orElseThrow(() -> new NoSuchElementException(
+                "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
+            ));
 
         if (State.Type.RUNNING != taskRun.getState().getCurrent()) {
             throw new ConflictException(
@@ -2002,9 +1998,9 @@ public class ExecutionController {
      */
     private static List<String> interruptedTaskRunIds(Execution execution, TaskRun taskRun) {
         return Stream.concat(
-            Stream.of(taskRun),
-            execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
-        )
+                Stream.of(taskRun),
+                execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
+            )
             .map(TaskRun::getId)
             .toList();
     }

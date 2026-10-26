@@ -502,12 +502,10 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
      */
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
         return findTaskRunByTaskRunIdIfPresent(id)
-            .orElseThrow(
-                () -> new InternalException(
-                    "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
-                        + this.toStringState()
-                )
-            );
+            .orElseThrow(() -> new InternalException(
+                "Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' "
+                    + this.toStringState()
+            ));
     }
 
     /**
@@ -757,8 +755,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     }
 
     /**
-     * A killed executable task run (e.g. Subflow) in an execution that is not being killed is a failure transmitted from its child execution; worker task runs are excluded as a worker can
-     * kill them before the execution is KILLING.
+     * A killed executable task run (e.g. Subflow) in an execution that is not being killed is a failure transmitted from its child execution; worker task runs are excluded as a worker can kill them before the execution is KILLING.
      */
     private boolean isKilledWithoutExecutionKill(TaskRun taskRun, List<ResolvedTask> resolvedTasks) {
         if (!taskRun.getState().getCurrent().isKilled() || resolvedTasks == null) {

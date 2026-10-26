@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.kestra.core.models.property.Property;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +24,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.runners.FlowableUtils;
@@ -308,12 +308,12 @@ public class Loop extends AbstractBranch<Loop.Output> {
     @Schema(
         title = "A condition that determines whether the Loop should break its processing.",
         description = """
-            A Pebble expression evaluated after each loop iteration. The loop will break and stop processing new iteration only when the expression evaluates to a truthy value (`true`, a non-empty string, a non-zero number).
-            Special variables are available:
-            - item: the current iteration item variables
-            - iteration.executionId: the current iteration execution id
-            - iteration.state: the current iteration execution state
-            - iteration.outputs: the current iteration execution outputs"""
+    A Pebble expression evaluated after each loop iteration. The loop will break and stop processing new iteration only when the expression evaluates to a truthy value (`true`, a non-empty string, a non-zero number).
+    Special variables are available:
+    - item: the current iteration item variables
+    - iteration.executionId: the current iteration execution id
+    - iteration.state: the current iteration execution state
+    - iteration.outputs: the current iteration execution outputs"""
     )
     private Property<String> breakWhen;
 

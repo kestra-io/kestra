@@ -460,14 +460,10 @@ public class GrpcChannelManager {
      */
     private Map<String, Object> retryableMethodConfig() {
         List<Map<String, String>> names = new ArrayList<>(RETRYABLE_METHODS.size());
-        RETRYABLE_METHODS.forEach(
-            method -> names.add(
-                Map.of(
-                    "service", MethodDescriptor.extractFullServiceName(method.getFullMethodName()),
-                    "method", MethodDescriptor.extractBareMethodName(method.getFullMethodName())
-                )
-            )
-        );
+        RETRYABLE_METHODS.forEach(method -> names.add(Map.of(
+            "service", MethodDescriptor.extractFullServiceName(method.getFullMethodName()),
+            "method", MethodDescriptor.extractBareMethodName(method.getFullMethodName())
+        )));
 
         GrpcChannelConfiguration.Retry retry = grpcChannelConfiguration.retry();
         return Map.of(

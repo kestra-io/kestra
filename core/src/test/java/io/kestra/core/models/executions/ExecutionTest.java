@@ -241,12 +241,10 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsTerminated() {
         // Given a task run list whose last run is terminated (SUCCESS) but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(
-                List.of(
-                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-                )
-            )
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
             .build();
 
         // When looking for the last not terminated task run
@@ -263,12 +261,10 @@ class ExecutionTest {
     void shouldFindLastNotTerminatedWhenLastTaskRunIsPaused() {
         // Given a task run list whose last run is paused but is preceded by a running one
         Execution execution = Execution.builder()
-            .taskRunList(
-                List.of(
-                    TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
-                    TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
-                )
-            )
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
+            ))
             .build();
 
         // When looking for the last not terminated task run
@@ -285,12 +281,10 @@ class ExecutionTest {
     void shouldNotFindLastNotTerminatedWhenAllTaskRunsAreTerminated() {
         // Given a task run list where every run is terminated
         Execution execution = Execution.builder()
-            .taskRunList(
-                List.of(
-                    TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
-                    TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
-                )
-            )
+            .taskRunList(List.of(
+                TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
             .build();
 
         // When looking for the last not terminated task run
@@ -463,37 +457,31 @@ class ExecutionTest {
 
         // two terminated runs for task b, none for task c
         Execution withDuplicate = base
-            .taskRunList(
-                List.of(
-                    taskRun(a, State.Type.SUCCESS),
-                    taskRun(b, State.Type.SUCCESS),
-                    taskRun(b, State.Type.SUCCESS)
-                )
-            )
+            .taskRunList(List.of(
+                taskRun(a, State.Type.SUCCESS),
+                taskRun(b, State.Type.SUCCESS),
+                taskRun(b, State.Type.SUCCESS)
+            ))
             .build();
         assertThat(withDuplicate.isTerminated(List.of(a, b, c))).isFalse();
 
         // one terminated run per task: terminated
         Execution complete = base
-            .taskRunList(
-                List.of(
-                    taskRun(a, State.Type.SUCCESS),
-                    taskRun(b, State.Type.SUCCESS),
-                    taskRun(c, State.Type.SUCCESS)
-                )
-            )
+            .taskRunList(List.of(
+                taskRun(a, State.Type.SUCCESS),
+                taskRun(b, State.Type.SUCCESS),
+                taskRun(c, State.Type.SUCCESS)
+            ))
             .build();
         assertThat(complete.isTerminated(List.of(a, b, c))).isTrue();
 
         // one task still running: not terminated
         Execution inFlight = base
-            .taskRunList(
-                List.of(
-                    taskRun(a, State.Type.SUCCESS),
-                    taskRun(b, State.Type.RUNNING),
-                    taskRun(c, State.Type.SUCCESS)
-                )
-            )
+            .taskRunList(List.of(
+                taskRun(a, State.Type.SUCCESS),
+                taskRun(b, State.Type.RUNNING),
+                taskRun(c, State.Type.SUCCESS)
+            ))
             .build();
         assertThat(inFlight.isTerminated(List.of(a, b, c))).isFalse();
     }

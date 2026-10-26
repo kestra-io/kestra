@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Gatherers;
 
+import io.kestra.core.trace.TraceUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
@@ -31,7 +32,6 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.WorkerQueueService;
-import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.DateUtils;

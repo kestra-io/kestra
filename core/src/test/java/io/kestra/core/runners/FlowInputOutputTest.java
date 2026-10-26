@@ -1355,7 +1355,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "yes", "1", "maybe", "xyz" })
+    @ValueSource(strings = {"yes", "1", "maybe", "xyz"})
     void shouldRejectInvalidBooleanInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1381,7 +1381,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "true", "false", "TRUE", "False" })
+    @ValueSource(strings = {"true", "false", "TRUE", "False"})
     void shouldAcceptValidBooleanStringInput(String value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1404,7 +1404,7 @@ class FlowInputOutputTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { true, false })
+    @ValueSource(booleans = {true, false})
     void shouldAcceptBooleanInput(boolean value) {
         // Given
         BoolInput input = BoolInput.builder()
@@ -1449,12 +1449,10 @@ class FlowInputOutputTest {
             Map.of("disks", "[{\"size_gb\": \"20\", \"mountpoint\": \"/data\"}, {\"size_gb\": 30, \"mountpoint\": \"/logs\"}]")
         );
 
-        assertThat(result.get("disks")).isEqualTo(
-            List.of(
-                Map.of("size_gb", 20, "mountpoint", "/data"),
-                Map.of("size_gb", 30, "mountpoint", "/logs")
-            )
-        );
+        assertThat(result.get("disks")).isEqualTo(List.of(
+            Map.of("size_gb", 20, "mountpoint", "/data"),
+            Map.of("size_gb", 30, "mountpoint", "/logs")
+        ));
     }
 
     @Test

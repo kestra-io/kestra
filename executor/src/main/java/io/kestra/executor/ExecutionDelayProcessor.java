@@ -20,6 +20,7 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.ExecutionService.ExecutionWithTaskRun;
 
+import io.kestra.executor.handler.LoopExecutionEventMessageHandler;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;

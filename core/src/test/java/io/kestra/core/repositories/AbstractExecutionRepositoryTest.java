@@ -1270,10 +1270,10 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         for (int i = 0; i < 2; i++) {
-            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i, false));
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i,false));
         }
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i, false));
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i,false));
         }
 
         // When / Then: scoping to a single loop task returns only that task's iterations
@@ -1300,7 +1300,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         for (int i = 0; i < 3; i++) {
-            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i, false));
+            executionRepository.save(parent.loopExecution(loopTaskRun, i, null, "CUST-" + i,false));
         }
         QueryFilter parentFilter = QueryFilter.builder().field(QueryFilter.Field.PARENT_ID).operation(QueryFilter.Op.EQUALS).value(parent.getId()).build();
         QueryFilter kindFilter = QueryFilter.builder().field(QueryFilter.Field.KIND).operation(QueryFilter.Op.EQUALS).value(ExecutionKind.LOOP).build();
@@ -1326,10 +1326,8 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<Execution> failed = executionRepository.find(
             Pageable.UNPAGED, tenant,
-            List.of(
-                parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
-                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build()
-            )
+            List.of(parentFilter, kindFilter, QueryFilter.builder().field(QueryFilter.Field.LOOP_RUN_VALUE).operation(QueryFilter.Op.EQUALS).value("CUST-1").build(),
+                QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.EQUALS).value(State.Type.FAILED).build())
         );
         assertThat(failed).isEmpty();
 

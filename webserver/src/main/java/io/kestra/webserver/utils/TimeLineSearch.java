@@ -39,7 +39,7 @@ public class TimeLineSearch {
 
     /**
      * @param allowAllTime when {@code true}, a {@code timeRange} of {@value #ALL_TIME} leaves the start date unbounded;
-     *        otherwise it is ignored and the 8-day default applies.
+     *                     otherwise it is ignored and the 8-day default applies.
      */
     public static TimeLineSearch extractFrom(List<QueryFilter> filters, boolean allowAllTime) {
         ZonedDateTime startDate = null;

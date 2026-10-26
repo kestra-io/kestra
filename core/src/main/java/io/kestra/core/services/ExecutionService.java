@@ -250,8 +250,7 @@ public class ExecutionService {
             .collect(Collectors.toMap(TaskRun::getId, t -> t));
 
         List<TaskRun> newTaskRuns = execution.getTaskRunList().stream()
-            .map(taskRun ->
-            {
+            .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.run();
                 }

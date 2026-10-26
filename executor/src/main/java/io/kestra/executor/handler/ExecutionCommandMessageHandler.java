@@ -283,7 +283,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         if (evaluationType == EvaluationType.KILL) {
             log.warn("Kill switch active (KILL): killing execution {}", execution.getId());
             newExecution = execution.withState(State.Type.KILLED).addLabel(new Label(Label.KILL_SWITCH, "killed"));
-        } else if (evaluationType == EvaluationType.CANCEL) {
+        }
+        else if (evaluationType == EvaluationType.CANCEL) {
             log.warn("Kill switch active (CANCEL): cancelling execution {}", execution.getId());
             newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
         } else {

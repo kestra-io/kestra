@@ -26,7 +26,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
@@ -36,7 +35,6 @@ import io.kestra.core.storages.kv.*;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkRequest;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkResponse;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -46,6 +44,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
+import io.kestra.core.junit.assertions.Problems;
+import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
@@ -123,7 +123,7 @@ class KVControllerTest {
      * E2E suite, pinned here because it is a millisecond to check.
      */
     @ParameterizedTest
-    @ValueSource(strings = { "name", "version", "created", "updated" })
+    @ValueSource(strings = {"name", "version", "created", "updated"})
     void shouldSortAllKeysByAPropertyName(String property) throws IOException {
         // Given: two keys in one namespace
         givenTwoKeys();
@@ -379,7 +379,7 @@ class KVControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "hello world", "hello-world-123", "John Doe Smith", "a description with several words" })
+    @ValueSource(strings = {"hello world", "hello-world-123", "John Doe Smith", "a description with several words"})
     void setKeyValueShouldPreserveUnquotedPlainTextValue(String value) throws IOException, ResourceExpiredException {
         client.toBlocking()
             .exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(MediaType.TEXT_PLAIN));

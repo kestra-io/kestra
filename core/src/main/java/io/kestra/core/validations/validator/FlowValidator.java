@@ -400,18 +400,15 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .collect(Collectors.toMap(Data::getId, input -> input, (first, second) -> first));
 
         for (AbstractTrigger trigger : value.getTriggers()) {
-            inputsSuppliedBy(trigger).ifPresent(triggerInputs -> triggerInputs.supplied().forEach((inputId, suppliedValue) ->
-            {
-                Input<?> input = inputsById.get(inputId);
-                if (input != null) {
-                    literalValueViolation(input, suppliedValue)
-                        .ifPresent(
-                            message -> violations.add(
-                                "Invalid value for input '%s' supplied by %s Trigger '%s': %s".formatted(inputId, triggerInputs.kind(), trigger.getId(), message)
-                            )
-                        );
-                }
-            }));
+            inputsSuppliedBy(trigger).ifPresent(triggerInputs ->
+                triggerInputs.supplied().forEach((inputId, suppliedValue) -> {
+                    Input<?> input = inputsById.get(inputId);
+                    if (input != null) {
+                        literalValueViolation(input, suppliedValue)
+                            .ifPresent(message -> violations.add(
+                                "Invalid value for input '%s' supplied by %s Trigger '%s': %s".formatted(inputId, triggerInputs.kind(), trigger.getId(), message)));
+                    }
+                }));
         }
     }
 
@@ -428,10 +425,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
     /**
      * @return the constraint message when {@code rawValue} — a literal default or a value a trigger supplies — cannot
-     *         satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
-     *         type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
+     * satisfy the input's type or its own constraints, or empty when it is valid, is a Pebble expression, or is of a
+     * type that can only be resolved at execution time (e.g. {@code FILE}, {@code SECRET} or structured types).
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static Optional<String> literalValueViolation(Input<?> input, Object rawValue) {
         if (rawValue == null) {
             return Optional.empty();
@@ -467,7 +464,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
     /**
      * @return the constraint message when a static output literal cannot satisfy the output's declared scalar type, or
-     *         empty when it is valid, dynamic, or non-scalar.
+     * empty when it is valid, dynamic, or non-scalar.
      */
     private static Optional<String> literalOutputValueViolation(Output output) {
         Object rawValue = output.getValue();

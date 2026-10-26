@@ -701,8 +701,7 @@ class ExecutionCommandMessageHandlerTest {
         if (flow != null) {
             when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         }
-        when(executionStateStore.lock(any(), any())).thenAnswer(invocation ->
-        {
+        when(executionStateStore.lock(any(), any())).thenAnswer(invocation -> {
             Function<Execution, ExecutorContext> function = invocation.getArgument(1);
             return Optional.ofNullable(function.apply(existing));
         });

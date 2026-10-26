@@ -24,6 +24,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -625,10 +626,8 @@ class RunContextLoggerTest {
         runContextLogger.emitLogIfEnabled(LogEntry.of(execution).toBuilder().level(Level.WARN).message("emitted warn message").build());
 
         // Then: only the entry at the configured level reaches the queue
-        await().atMost(Duration.ofSeconds(5)).until(
-            () -> logs.stream()
-                .anyMatch(logEntry -> "emitted warn message".equals(logEntry.getMessage()))
-        );
+        await().atMost(Duration.ofSeconds(5)).until(() -> logs.stream()
+            .anyMatch(logEntry -> "emitted warn message".equals(logEntry.getMessage())));
         assertThat(logs).noneMatch(logEntry -> "suppressed info message".equals(logEntry.getMessage()));
     }
 

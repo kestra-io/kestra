@@ -1,12 +1,11 @@
 package io.kestra.core.runners;
 
-import java.util.List;
-import java.util.Optional;
-
 import io.kestra.core.checkpoint.Checkpoint;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.List;
+import java.util.Optional;
 
 @Singleton
 public class RunContextCheckpointsFactory {

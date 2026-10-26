@@ -226,35 +226,31 @@ public abstract class AbstractMetricRepositoryTest {
         Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant recentTimestamp = Instant.now();
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("io.kestra.purge")
-                .flowId("flow1")
-                .executionId("exec1")
-                .taskId("task1")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("metric1")
-                .value(1.0)
-                .timestamp(oldTimestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec1")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric1")
+            .value(1.0)
+            .timestamp(oldTimestamp)
+            .build());
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("io.kestra.purge")
-                .flowId("flow1")
-                .executionId("exec2")
-                .taskId("task1")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("metric2")
-                .value(2.0)
-                .timestamp(recentTimestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec2")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric2")
+            .value(2.0)
+            .timestamp(recentTimestamp)
+            .build());
 
         int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow1", null, null, ZonedDateTime.now().minusDays(5), null);
         assertThat(deleted).isEqualTo(1);
@@ -271,50 +267,44 @@ public abstract class AbstractMetricRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant timestamp = Instant.now().minus(10, ChronoUnit.DAYS);
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("company.team")
-                .flowId("flow1")
-                .executionId("exec1")
-                .taskId("task1")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("metric1")
-                .value(1.0)
-                .timestamp(timestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("company.team")
+            .flowId("flow1")
+            .executionId("exec1")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric1")
+            .value(1.0)
+            .timestamp(timestamp)
+            .build());
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("company.team.sub")
-                .flowId("flow2")
-                .executionId("exec2")
-                .taskId("task1")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("metric2")
-                .value(2.0)
-                .timestamp(timestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("company.team.sub")
+            .flowId("flow2")
+            .executionId("exec2")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric2")
+            .value(2.0)
+            .timestamp(timestamp)
+            .build());
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("other.team")
-                .flowId("flow3")
-                .executionId("exec3")
-                .taskId("task1")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("metric3")
-                .value(3.0)
-                .timestamp(timestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("other.team")
+            .flowId("flow3")
+            .executionId("exec3")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric3")
+            .value(3.0)
+            .timestamp(timestamp)
+            .build());
 
         int deleted = metricRepository.purge(tenant, "company.team", null, null, null, ZonedDateTime.now(), null);
         assertThat(deleted).isEqualTo(2);
@@ -330,50 +320,44 @@ public abstract class AbstractMetricRepositoryTest {
         Instant t2 = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant t3 = Instant.now().minus(2, ChronoUnit.DAYS);
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("ns")
-                .flowId("flow")
-                .executionId("exec1")
-                .taskId("task")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("m1")
-                .value(1.0)
-                .timestamp(t1)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec1")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m1")
+            .value(1.0)
+            .timestamp(t1)
+            .build());
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("ns")
-                .flowId("flow")
-                .executionId("exec2")
-                .taskId("task")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("m2")
-                .value(2.0)
-                .timestamp(t2)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec2")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m2")
+            .value(2.0)
+            .timestamp(t2)
+            .build());
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("ns")
-                .flowId("flow")
-                .executionId("exec3")
-                .taskId("task")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("m3")
-                .value(3.0)
-                .timestamp(t3)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec3")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m3")
+            .value(3.0)
+            .timestamp(t3)
+            .build());
 
         int deleted = metricRepository.purge(tenant, "ns", "flow", null, ZonedDateTime.now().minusDays(12), ZonedDateTime.now().minusDays(5), null);
         assertThat(deleted).isEqualTo(1);
@@ -389,35 +373,31 @@ public abstract class AbstractMetricRepositoryTest {
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant1)
-                .namespace("ns")
-                .flowId("flow")
-                .executionId("exec1")
-                .taskId("task")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("m1")
-                .value(1.0)
-                .timestamp(oldTimestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant1)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec1")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m1")
+            .value(1.0)
+            .timestamp(oldTimestamp)
+            .build());
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant2)
-                .namespace("ns")
-                .flowId("flow")
-                .executionId("exec2")
-                .taskId("task")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("m2")
-                .value(2.0)
-                .timestamp(oldTimestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant2)
+            .namespace("ns")
+            .flowId("flow")
+            .executionId("exec2")
+            .taskId("task")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("m2")
+            .value(2.0)
+            .timestamp(oldTimestamp)
+            .build());
 
         int deleted = metricRepository.purge(tenant1, null, null, null, null, ZonedDateTime.now(), null);
         assertThat(deleted).isEqualTo(1);
@@ -438,35 +418,31 @@ public abstract class AbstractMetricRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("io.kestra.purge")
-                .flowId("flow1")
-                .executionId("exec1")
-                .taskId("task1")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("metric1")
-                .value(1.0)
-                .timestamp(oldTimestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec1")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric1")
+            .value(1.0)
+            .timestamp(oldTimestamp)
+            .build());
 
-        metricRepository.save(
-            MetricEntry.builder()
-                .tenantId(tenant)
-                .namespace("io.kestra.purge")
-                .flowId("flow1")
-                .executionId("exec2")
-                .taskId("task1")
-                .taskRunId(FriendlyId.createFriendlyId())
-                .type("counter")
-                .name("metric2")
-                .value(2.0)
-                .timestamp(oldTimestamp)
-                .build()
-        );
+        metricRepository.save(MetricEntry.builder()
+            .tenantId(tenant)
+            .namespace("io.kestra.purge")
+            .flowId("flow1")
+            .executionId("exec2")
+            .taskId("task1")
+            .taskRunId(FriendlyId.createFriendlyId())
+            .type("counter")
+            .name("metric2")
+            .value(2.0)
+            .timestamp(oldTimestamp)
+            .build());
 
         int deleted = metricRepository.purge(tenant, null, null, "exec1", null, ZonedDateTime.now(), null);
         assertThat(deleted).isEqualTo(1);
@@ -481,20 +457,18 @@ public abstract class AbstractMetricRepositoryTest {
         Instant oldTimestamp = Instant.now().minus(10, ChronoUnit.DAYS);
 
         for (int i = 0; i < 5; i++) {
-            metricRepository.save(
-                MetricEntry.builder()
-                    .tenantId(tenant)
-                    .namespace("io.kestra.purge")
-                    .flowId("flow-batch")
-                    .executionId("exec-batch-" + i)
-                    .taskId("task1")
-                    .taskRunId(FriendlyId.createFriendlyId())
-                    .type("counter")
-                    .name("metric" + i)
-                    .value((double) i)
-                    .timestamp(oldTimestamp)
-                    .build()
-            );
+            metricRepository.save(MetricEntry.builder()
+                .tenantId(tenant)
+                .namespace("io.kestra.purge")
+                .flowId("flow-batch")
+                .executionId("exec-batch-" + i)
+                .taskId("task1")
+                .taskRunId(FriendlyId.createFriendlyId())
+                .type("counter")
+                .name("metric" + i)
+                .value((double) i)
+                .timestamp(oldTimestamp)
+                .build());
         }
 
         int deleted = metricRepository.purge(tenant, "io.kestra.purge", "flow-batch", null, null, ZonedDateTime.now(), 2);

@@ -351,11 +351,9 @@ public class TaskLogLineMatcher {
 
             String[] tags = otlpAttributesToTags(dataPoint.attributes());
             Instant timestamp = toInstant(dataPoint.timeUnixNano(), instant);
-            entries.add(
-                isDeltaSum
-                    ? Counter.of(metric.name(), description, value, timestamp, tags)
-                    : Gauge.of(metric.name(), description, value, timestamp, tags)
-            );
+            entries.add(isDeltaSum
+                ? Counter.of(metric.name(), description, value, timestamp, tags)
+                : Gauge.of(metric.name(), description, value, timestamp, tags));
         }
 
         return entries;
@@ -393,7 +391,7 @@ public class TaskLogLineMatcher {
      * @param logs additional log lines derived from the matched line, if any
      * @param assets assets emitted through the matched line, if any
      * @param otlp an OpenTelemetry record captured from the matched line, if any (the key spelling
-     *        follows the kotlp {@code ::{"otlp":...}::} framing)
+     *             follows the kotlp {@code ::{"otlp":...}::} framing)
      */
     public record TaskLogMatch(
         Map<String, Object> outputs,

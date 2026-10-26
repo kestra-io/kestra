@@ -113,29 +113,27 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .set(field("key"), namespace + "_" + flowId)
                 .set(field("source_code"), sourceCode)
                 .set(
-                    field("value"), (Object) JSONB.valueOf(
-                        JacksonMapper.ofJson().writeValueAsString(
-                            Map.of(
-                                "id", flowId,
-                                "namespace", namespace,
-                                "tenantId", MAIN_TENANT,
-                                "revision", 1,
-                                "deleted", false,
-                                "disabled", false,
-                                "labels", List.of(
-                                    Map.of("key", "system.readOnly", "value", "true"),
-                                    Map.of("key", "team", "value", "platform")
-                                ),
-                                "tasks", List.of(
-                                    Map.of(
-                                        "id", "broken",
-                                        "type", "io.kestra.invalid.Unknown"
-                                    )
-                                ),
-                                "source", sourceCode
-                            )
+                    field("value"), (Object) JSONB.valueOf(JacksonMapper.ofJson().writeValueAsString(
+                        Map.of(
+                            "id", flowId,
+                            "namespace", namespace,
+                            "tenantId", MAIN_TENANT,
+                            "revision", 1,
+                            "deleted", false,
+                            "disabled", false,
+                            "labels", List.of(
+                                Map.of("key", "system.readOnly", "value", "true"),
+                                Map.of("key", "team", "value", "platform")
+                            ),
+                            "tasks", List.of(
+                                Map.of(
+                                    "id", "broken",
+                                    "type", "io.kestra.invalid.Unknown"
+                                )
+                            ),
+                            "source", sourceCode
                         )
-                    )
+                    ))
                 )
                 .execute();
         });
@@ -223,11 +221,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         FlowWithSource previous = flowRepository.create(createTestingLogFlow(tenant, flowId, "v1"));
 
         try {
-            List<Future<FlowWithSource>> updates = runConcurrently(
-                IntStream.range(0, CONCURRENT_WRITERS)
-                    .<Callable<FlowWithSource>> mapToObj(i -> () -> flowRepository.update(createTestingLogFlow(tenant, flowId, "writer-" + i), previous))
-                    .toList()
-            );
+            List<Future<FlowWithSource>> updates = runConcurrently(IntStream.range(0, CONCURRENT_WRITERS)
+                .<Callable<FlowWithSource>> mapToObj(i -> () -> flowRepository.update(createTestingLogFlow(tenant, flowId, "writer-" + i), previous))
+                .toList());
 
             List<String> saved = new ArrayList<>();
             for (Future<FlowWithSource> update : updates) {
@@ -247,11 +243,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String flowId = "concurrent-create";
 
-        List<Future<FlowWithSource>> creates = runConcurrently(
-            IntStream.range(0, CONCURRENT_WRITERS)
-                .<Callable<FlowWithSource>> mapToObj(i -> () -> flowRepository.create(createTestingLogFlow(tenant, flowId, "writer-" + i)))
-                .toList()
-        );
+        List<Future<FlowWithSource>> creates = runConcurrently(IntStream.range(0, CONCURRENT_WRITERS)
+            .<Callable<FlowWithSource>> mapToObj(i -> () -> flowRepository.create(createTestingLogFlow(tenant, flowId, "writer-" + i)))
+            .toList());
 
         List<FlowWithSource> created = new ArrayList<>();
         for (Future<FlowWithSource> create : creates) {
@@ -271,12 +265,10 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         FlowWithSource previous = flowRepository.create(createTestingLogFlow(tenant, flowId, "v1"));
 
         try {
-            List<Future<FlowWithSource>> writes = runConcurrently(
-                List.of(
-                    () -> flowRepository.delete(previous),
-                    () -> flowRepository.update(createTestingLogFlow(tenant, flowId, "v2"), previous)
-                )
-            );
+            List<Future<FlowWithSource>> writes = runConcurrently(List.of(
+                () -> flowRepository.delete(previous),
+                () -> flowRepository.update(createTestingLogFlow(tenant, flowId, "v2"), previous)
+            ));
 
             boolean deleted = outcome(writes.getFirst(), ConflictException.class).isPresent();
             outcome(writes.getLast(), ConflictException.class);
@@ -311,8 +303,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         CountDownLatch start = new CountDownLatch(1);
         try (ExecutorService executor = Executors.newFixedThreadPool(calls.size())) {
             List<Future<T>> futures = calls.stream()
-                .map(call -> executor.submit(() ->
-                {
+                .map(call -> executor.submit(() -> {
                     start.await();
                     return call.call();
                 }))

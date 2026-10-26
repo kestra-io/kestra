@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -45,7 +46,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,6 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 class RunVariablesTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RunVariablesTest.class);
+
 
     @Inject
     VariableRenderer renderer;

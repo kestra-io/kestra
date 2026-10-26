@@ -646,10 +646,8 @@ public class ExecutorService {
                         AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                         if (retry != null) {
                             // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
-                            if (
-                                retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)
-                            ) {
+                            if (retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+                                    && !isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
                                 behavior = retry.getBehavior();
                                 nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution())
                                     : taskRun.nextRetryDate(retry);
@@ -841,11 +839,9 @@ public class ExecutorService {
     private Optional<ExecutionDelay> flowableRetryDelay(ExecutorContext executor, Task task, TaskRun taskRun, WorkerTaskResult result) {
         AbstractRetry retry = task.getRetry();
 
-        if (
-            retry == null
-                || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
-                || !result.getTaskRun().getState().isTerminated()
-        ) {
+        if (retry == null
+            || retry.getBehavior() != AbstractRetry.Behavior.RETRY_FLOWABLE
+            || !result.getTaskRun().getState().isTerminated()) {
             return Optional.empty();
         }
 
@@ -998,8 +994,7 @@ public class ExecutorService {
      * Interrupts every still-running task run in the task subtree so they don't keep executing on an already-failed branch.
      * Send an {@link ExecutionKilledTaskRuns} event to the Worker to interrupt the non-terminated task runs.
      */
-    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext)
-        throws InternalException {
+    private void interruptOnChildFailure(ExecutorContext executor, OnChildFailureInterface onChildFailure, TaskRun parentTaskRun, TaskRun failedTaskRun, RunContext runContext) throws InternalException {
         OnChildFailureInterface.OnChildFailure config = runContext.render(onChildFailure.getOnChildFailure())
             .as(OnChildFailureInterface.OnChildFailure.class)
             .orElse(OnChildFailureInterface.OnChildFailure.CONTINUE);

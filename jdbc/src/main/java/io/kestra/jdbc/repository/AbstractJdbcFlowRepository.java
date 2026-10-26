@@ -36,10 +36,10 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -721,7 +721,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     /**
      * @param excludeDraft when true, resolves each flow to its most recent non-draft revision
-     *        instead of its latest revision.
+     *                     instead of its latest revision.
      */
     @SuppressWarnings("unchecked")
     private <R extends Record, E> SelectConditionStep<R> fullTextSelect(String tenantId, DSLContext context, List<Field<Object>> field, boolean excludeDraft) {
@@ -889,8 +889,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return getFindFlowSelect(tenantId, filters, context, additionalFieldsToSelect, false);
     }
 
-    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect,
-        boolean excludeDraft) {
+    private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect, boolean excludeDraft) {
         var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of(), excludeDraft);
         select = select.and(this.filter(filters, null, Resource.FLOW));
         return (SelectConditionStep<R>) select;
@@ -910,8 +909,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope,
-        @Nullable String tenantId, @Nullable String namespace) {
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -932,20 +930,16 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .limit(SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES)
                     .fetch()
                     .stream()
-                    .map(
-                        record -> new SearchResult<>(
-                            (Flow) this.jdbcRepository.map(record),
-                            query == null
-                                ? List.<SourceMatch> of()
-                                : SourceSearchMatcher.findMatches(record.getValue("source_code", String.class), query, caseSensitive, wholeWord, regex, scope),
-                            true
-                        )
-                    )
+                    .map(record -> new SearchResult<>(
+                        (Flow) this.jdbcRepository.map(record),
+                        query == null
+                            ? List.<SourceMatch>of()
+                            : SourceSearchMatcher.findMatches(record.getValue("source_code", String.class), query, caseSensitive, wholeWord, regex, scope),
+                        true
+                    ))
                     .filter(result -> query == null || !result.getMatches().isEmpty())
-                    .sorted(
-                        java.util.Comparator.comparing((SearchResult<Flow> r) -> r.getModel().getNamespace())
-                            .thenComparing(r -> r.getModel().getId())
-                    )
+                    .sorted(java.util.Comparator.comparing((SearchResult<Flow> r) -> r.getModel().getNamespace())
+                        .thenComparing(r -> r.getModel().getId()))
                     .toList();
 
                 return pageable == null || pageable.getSize() == -1
@@ -1126,12 +1120,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private boolean insertRevision(FlowInterface flow, Map<Field<Object>, Object> fields) {
         String key = this.jdbcRepository.key(flow);
         try {
-            this.jdbcRepository.getDslContextWrapper().transaction(
-                configuration -> DSL.using(configuration)
-                    .insertInto(this.jdbcRepository.getTable())
-                    .set(KEY_FIELD, key)
-                    .set(fields)
-                    .execute()
+            this.jdbcRepository.getDslContextWrapper().transaction(configuration -> DSL.using(configuration)
+                .insertInto(this.jdbcRepository.getTable())
+                .set(KEY_FIELD, key)
+                .set(fields)
+                .execute()
             );
             return true;
         } catch (IntegrityConstraintViolationException e) {
@@ -1145,8 +1138,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     private boolean keyExists(String key) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(
-            configuration -> DSL.using(configuration).fetchExists(this.jdbcRepository.getTable(), KEY_FIELD.eq(key))
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+            DSL.using(configuration).fetchExists(this.jdbcRepository.getTable(), KEY_FIELD.eq(key))
         );
     }
 

@@ -1,5 +1,7 @@
 package io.kestra.jdbc.services;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
 import java.util.Map;
 
@@ -14,8 +16,6 @@ import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.dashboards.filters.Or;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class JdbcFilterServiceTest {
     private enum Fields {
         NAMESPACE
@@ -28,16 +28,12 @@ class JdbcFilterServiceTest {
     @Test
     void shouldKeepTenantConditionOutsideOrFilter() {
         // Given
-        List<AbstractFilter<Fields>> filters = List.of(
-            Or.<Fields> builder()
-                .values(
-                    List.of(
-                        EqualTo.<Fields> builder().field(Fields.NAMESPACE).value("a").build(),
-                        EqualTo.<Fields> builder().field(Fields.NAMESPACE).value("b").build()
-                    )
-                )
-                .build()
-        );
+        List<AbstractFilter<Fields>> filters = List.of(Or.<Fields> builder()
+            .values(List.of(
+                EqualTo.<Fields> builder().field(Fields.NAMESPACE).value("a").build(),
+                EqualTo.<Fields> builder().field(Fields.NAMESPACE).value("b").build()
+            ))
+            .build());
 
         // When
         String sql = render(filters);
@@ -49,11 +45,9 @@ class JdbcFilterServiceTest {
     @Test
     void shouldMatchListedValuesForInFilterInsideOrFilter() {
         // Given
-        List<AbstractFilter<Fields>> filters = List.of(
-            Or.<Fields> builder()
-                .values(List.of(In.<Fields> builder().field(Fields.NAMESPACE).values(List.of("a", "b")).build()))
-                .build()
-        );
+        List<AbstractFilter<Fields>> filters = List.of(Or.<Fields> builder()
+            .values(List.of(In.<Fields> builder().field(Fields.NAMESPACE).values(List.of("a", "b")).build()))
+            .build());
 
         // When
         String sql = render(filters);

@@ -57,12 +57,7 @@ class TaskLogLineMatcherTest {
         var listAppender = appender(runContext);
 
         Optional<TaskLogMatch> match = matcher.matches(
-            framed(
-                logRecord(
-                    "{\"timeUnixNano\":\"" + TIME_UNIX_NANO
-                        + "\",\"severityNumber\":9,\"severityText\":\"INFO\",\"body\":{\"stringValue\":\"hello from kotlp\"},\"attributes\":[{\"key\":\"log.iostream\",\"value\":{\"stringValue\":\"stdout\"}}]}"
-                )
-            ),
+            framed(logRecord("{\"timeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"severityNumber\":9,\"severityText\":\"INFO\",\"body\":{\"stringValue\":\"hello from kotlp\"},\"attributes\":[{\"key\":\"log.iostream\",\"value\":{\"stringValue\":\"stdout\"}}]}")),
             runContext.logger(),
             runContext,
             FALLBACK_INSTANT
@@ -83,12 +78,10 @@ class TaskLogLineMatcherTest {
         var listAppender = appender(runContext);
 
         Optional<TaskLogMatch> match = matcher.matches(
-            framed(
-                logRecord(
-                    "{\"severityNumber\":9,\"body\":{\"stringValue\":\"::{\\\"outputs\\\":{\\\"myKey\\\":\\\"myValue\\\"}}::\"}}," +
-                        "{\"severityNumber\":9,\"body\":{\"stringValue\":\"plain line\"}}"
-                )
-            ),
+            framed(logRecord(
+                "{\"severityNumber\":9,\"body\":{\"stringValue\":\"::{\\\"outputs\\\":{\\\"myKey\\\":\\\"myValue\\\"}}::\"}}," +
+                    "{\"severityNumber\":9,\"body\":{\"stringValue\":\"plain line\"}}"
+            )),
             runContext.logger(),
             runContext,
             FALLBACK_INSTANT
@@ -127,8 +120,7 @@ class TaskLogLineMatcherTest {
             FALLBACK_INSTANT
         );
 
-        assertThat(runContext.metrics()).singleElement().satisfies(metric ->
-        {
+        assertThat(runContext.metrics()).singleElement().satisfies(metric -> {
             assertThat(metric.getName()).isEqualTo("rows");
             assertThat(metric.getValue()).isEqualTo(5d);
         });
@@ -183,11 +175,12 @@ class TaskLogLineMatcherTest {
             );
         }
 
-        expected.forEach((severityNumber, level) -> assertThat(listAppender.list).anySatisfy(event ->
-        {
-            assertThat(event.getFormattedMessage()).isEqualTo("m-" + severityNumber);
-            assertThat(event.getLevel()).isEqualTo(level);
-        })
+        expected.forEach((severityNumber, level) ->
+            assertThat(listAppender.list).anySatisfy(event ->
+            {
+                assertThat(event.getFormattedMessage()).isEqualTo("m-" + severityNumber);
+                assertThat(event.getLevel()).isEqualTo(level);
+            })
         );
     }
 
@@ -211,11 +204,12 @@ class TaskLogLineMatcherTest {
             );
         }
 
-        expected.forEach((severityText, level) -> assertThat(listAppender.list).anySatisfy(event ->
-        {
-            assertThat(event.getFormattedMessage()).isEqualTo("m-" + severityText);
-            assertThat(event.getLevel()).isEqualTo(level);
-        })
+        expected.forEach((severityText, level) ->
+            assertThat(listAppender.list).anySatisfy(event ->
+            {
+                assertThat(event.getFormattedMessage()).isEqualTo("m-" + severityText);
+                assertThat(event.getLevel()).isEqualTo(level);
+            })
         );
     }
 
@@ -279,12 +273,7 @@ class TaskLogLineMatcherTest {
         var runContext = runContext();
 
         matcher.matches(
-            framed(
-                metric(
-                    "{\"name\":\"process.memory.usage\",\"description\":\"Resident set size\",\"unit\":\"By\",\"gauge\":{\"dataPoints\":[{\"timeUnixNano\":\"" + TIME_UNIX_NANO
-                        + "\",\"asInt\":\"1048576\"}]}}"
-                )
-            ),
+            framed(metric("{\"name\":\"process.memory.usage\",\"description\":\"Resident set size\",\"unit\":\"By\",\"gauge\":{\"dataPoints\":[{\"timeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"asInt\":\"1048576\"}]}}")),
             runContext.logger(),
             runContext,
             FALLBACK_INSTANT
@@ -367,14 +356,10 @@ class TaskLogLineMatcherTest {
         var runContext = runContext();
 
         matcher.matches(
-            framed(
-                metric(
-                    "{\"name\":\"process.cpu.utilization\",\"gauge\":{\"dataPoints\":[" +
-                        "{\"asDouble\":0.75,\"attributes\":[{\"key\":\"cpu.mode\",\"value\":{\"stringValue\":\"user\"}}]}," +
-                        "{\"asDouble\":0.25,\"attributes\":[{\"key\":\"cpu.mode\",\"value\":{\"stringValue\":\"system\"}},{\"key\":\"cpu.count\",\"value\":{\"intValue\":\"8\"}}]}" +
-                        "]}}"
-                )
-            ),
+            framed(metric("{\"name\":\"process.cpu.utilization\",\"gauge\":{\"dataPoints\":[" +
+                "{\"asDouble\":0.75,\"attributes\":[{\"key\":\"cpu.mode\",\"value\":{\"stringValue\":\"user\"}}]}," +
+                "{\"asDouble\":0.25,\"attributes\":[{\"key\":\"cpu.mode\",\"value\":{\"stringValue\":\"system\"}},{\"key\":\"cpu.count\",\"value\":{\"intValue\":\"8\"}}]}" +
+                "]}}")),
             runContext.logger(),
             runContext,
             FALLBACK_INSTANT
@@ -400,16 +385,10 @@ class TaskLogLineMatcherTest {
         var listAppender = appender(runContext);
 
         Optional<TaskLogMatch> match = matcher.matches(
-            framed(
-                "{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"my-program\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"kotlp\",\"version\":\"0.1.0\"},\"spans\":["
-                    +
-                    "{\"traceId\":\"0af7651916cd43dd8448eb211c80319c\",\"spanId\":\"b7ad6b7169203331\",\"name\":\"exec my-program\",\"kind\":1,\"startTimeUnixNano\":\"" + TIME_UNIX_NANO
-                    + "\",\"endTimeUnixNano\":\"" + (TIME_UNIX_NANO + 2_000_000_000L)
-                    + "\",\"attributes\":[{\"key\":\"process.exit.code\",\"value\":{\"intValue\":\"3\"}}],\"status\":{\"code\":2,\"message\":\"exited with code 3\"}}," +
-                    "{\"traceId\":\"0af7651916cd43dd8448eb211c80319c\",\"spanId\":\"c8be7c8270314442\",\"parentSpanId\":\"b7ad6b7169203331\",\"name\":\"child\",\"kind\":1,\"events\":[{\"timeUnixNano\":\""
-                    + TIME_UNIX_NANO + "\",\"name\":\"started\"}]}" +
-                    "]}]}]}"
-            ),
+            framed("{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"my-program\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"kotlp\",\"version\":\"0.1.0\"},\"spans\":[" +
+                "{\"traceId\":\"0af7651916cd43dd8448eb211c80319c\",\"spanId\":\"b7ad6b7169203331\",\"name\":\"exec my-program\",\"kind\":1,\"startTimeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"endTimeUnixNano\":\"" + (TIME_UNIX_NANO + 2_000_000_000L) + "\",\"attributes\":[{\"key\":\"process.exit.code\",\"value\":{\"intValue\":\"3\"}}],\"status\":{\"code\":2,\"message\":\"exited with code 3\"}}," +
+                "{\"traceId\":\"0af7651916cd43dd8448eb211c80319c\",\"spanId\":\"c8be7c8270314442\",\"parentSpanId\":\"b7ad6b7169203331\",\"name\":\"child\",\"kind\":1,\"events\":[{\"timeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"name\":\"started\"}]}" +
+                "]}]}]}"),
             runContext.logger(),
             runContext,
             FALLBACK_INSTANT
@@ -435,12 +414,10 @@ class TaskLogLineMatcherTest {
     /**
      * The fixture is a verbatim {@code --log-dir} recording of the kotlp release this build embeds,
      * invoked as
-     * 
      * <pre>{@code
      * kotlp --log-dir . --interval 800 --service-name my-program -- \
      *   /bin/sh -c 'echo hello from file; dd if=/dev/zero of=payload.bin bs=1M count=64 2>/dev/null; sync; sleep 1; echo something went wrong >&2'
      * }</pre>
-     * 
      * with only {@code host.name} replaced, followed by three lines the parser must skip: a blank
      * one, one truncated mid-object as file rotation would leave it, and a well-formed JSON object
      * holding no OTLP section. Those three are appended rather than recorded — kotlp does not

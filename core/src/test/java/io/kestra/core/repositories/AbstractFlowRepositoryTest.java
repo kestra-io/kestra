@@ -7,6 +7,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.SearchResult;
+import io.micronaut.data.model.Sort;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,7 +48,6 @@ import io.kestra.plugin.core.debug.Return;
 
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -1612,7 +1613,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    protected void shouldFindWithCombinedNamespaceAndQueryFilter() {
+    protected void shouldFindWithCombinedNamespaceAndQueryFilter(){
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         FlowWithSource match = FlowWithSource.builder()
@@ -1630,7 +1631,7 @@ public abstract class AbstractFlowRepositoryTest {
         match = flowRepository.create(GenericFlow.of(match));
         noMatch = flowRepository.create(GenericFlow.of(noMatch));
 
-        try {
+        try{
             List<QueryFilter> filters = List.of(
                 QueryFilter.builder().field(Field.NAMESPACE).value(TEST_NAMESPACE).operation(Op.EQUALS).build(),
                 QueryFilter.builder().field(Field.QUERY).value("combined-match").operation(Op.EQUALS).build()
@@ -1639,14 +1640,15 @@ public abstract class AbstractFlowRepositoryTest {
             ArrayListTotal<Flow> results = flowRepository.find(Pageable.UNPAGED, tenant, filters);
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().getId()).isEqualTo("combined-match");
-        } finally {
+        }
+        finally {
             deleteFlow(match);
             deleteFlow(noMatch);
         }
     }
 
     @Test
-    protected void shouldFindWithNamespacePrefixFilter() {
+    protected void shouldFindWithNamespacePrefixFilter(){
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         FlowWithSource inPrefix = FlowWithSource.builder()
@@ -1669,7 +1671,8 @@ public abstract class AbstractFlowRepositoryTest {
             List<Flow> results = flowRepository.findByNamespacePrefix(tenant, TEST_NAMESPACE);
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().getId()).isEqualTo("prefix-match");
-        } finally {
+        }
+        finally {
             deleteFlow(inPrefix);
             deleteFlow(outPrefix);
         }
@@ -1681,24 +1684,24 @@ public abstract class AbstractFlowRepositoryTest {
 
         FlowWithSource inPrefix = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: prefix-match
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE + ".child"))
+            id: prefix-match
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE + ".child"))
         );
 
         FlowWithSource outPrefix = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: prefix-nomatch
-                namespace: io.kestra.other
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """)
+            id: prefix-nomatch
+            namespace: io.kestra.other
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
         );
 
         try {
@@ -1719,13 +1722,13 @@ public abstract class AbstractFlowRepositoryTest {
 
         FlowWithSource flow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: sourcecode-test
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: unique-searchable-string
-                """.formatted(TEST_NAMESPACE))
+            id: sourcecode-test
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: unique-searchable-string
+            """.formatted(TEST_NAMESPACE))
         );
 
         try {
@@ -1734,10 +1737,9 @@ public abstract class AbstractFlowRepositoryTest {
             );
 
             assertThat(results.getTotal()).isGreaterThanOrEqualTo(1);
-            assertThat(
-                results.stream()
-                    .map(r -> r.getModel().getId())
-                    .toList()
+            assertThat(results.stream()
+                .map(r -> r.getModel().getId())
+                .toList()
             ).contains("sourcecode-test");
         } finally {
             deleteFlow(flow);
@@ -1750,35 +1752,35 @@ public abstract class AbstractFlowRepositoryTest {
 
         FlowWithSource flow1 = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: distinct-ns-flow1
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: distinct-ns-flow1
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
 
         FlowWithSource flow2 = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: distinct-ns-flow2
-                namespace: io.kestra.other
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """)
+            id: distinct-ns-flow2
+            namespace: io.kestra.other
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
         );
 
         FlowWithSource flow3 = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: distinct-ns-flow3
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: distinct-ns-flow3
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
 
         try {
@@ -1798,24 +1800,24 @@ public abstract class AbstractFlowRepositoryTest {
 
         FlowWithSource flow1 = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: find-by-namespace-match
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: find-by-namespace-match
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
 
         FlowWithSource flow2 = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: find-by-namespace-nomatch
-                namespace: io.kestra.other
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """)
+            id: find-by-namespace-nomatch
+            namespace: io.kestra.other
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
         );
 
         try {
@@ -1834,36 +1836,36 @@ public abstract class AbstractFlowRepositoryTest {
 
         FlowWithSource activeFlow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: executable-active
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: executable-active
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
 
         FlowWithSource disabledFlow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: executable-disabled
-                namespace: %s
-                disabled: true
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: executable-disabled
+            namespace: %s
+            disabled: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
 
         FlowWithSource deletedFlow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: executable-deleted
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: executable-deleted
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
         flowRepository.delete(deletedFlow);
 
@@ -1894,36 +1896,36 @@ public abstract class AbstractFlowRepositoryTest {
 
         FlowWithSource activeFlow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: distinct-executable-active
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: distinct-executable-active
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
 
         FlowWithSource disabledFlow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: distinct-executable-disabled
-                namespace: io.kestra.disabled
-                disabled: true
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """)
+            id: distinct-executable-disabled
+            namespace: io.kestra.disabled
+            disabled: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
         );
 
         FlowWithSource deletedFlow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: distinct-executable-deleted
-                namespace: io.kestra.deleted
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """)
+            id: distinct-executable-deleted
+            namespace: io.kestra.deleted
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
         );
         flowRepository.delete(deletedFlow);
 
@@ -2069,13 +2071,13 @@ public abstract class AbstractFlowRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = flowRepository.create(
             GenericFlow.fromYaml(tenant, """
-                id: sourcecode-null-query
-                namespace: %s
-                tasks:
-                  - id: log
-                    type: io.kestra.plugin.core.log.Log
-                    message: hello
-                """.formatted(TEST_NAMESPACE))
+            id: sourcecode-null-query
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
         );
 
         try {
@@ -2119,10 +2121,9 @@ public abstract class AbstractFlowRepositoryTest {
             assertThat(results.stream().map(FlowWithSource::getId).toList())
                 .contains(flow1.getId(), flow2.getId());
             // verify source is populated
-            assertThat(
-                results.stream()
-                    .filter(f -> f.getId().equals(flow1.getId()) || f.getId().equals(flow2.getId()))
-                    .toList()
+            assertThat(results.stream()
+                .filter(f -> f.getId().equals(flow1.getId()) || f.getId().equals(flow2.getId()))
+                .toList()
             ).allMatch(f -> f.getSource() != null);
         } finally {
             deleteFlow(flow1);

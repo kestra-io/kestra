@@ -47,8 +47,7 @@ public final class ExecutableUtils {
                 (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED
                     || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
-            State.Type finalState = (allowedFailure && (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED)) ? State.Type.WARNING
-                : execution.getState().getCurrent();
+            State.Type finalState = (allowedFailure && (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED)) ? State.Type.WARNING : execution.getState().getCurrent();
             return finalState.equals(State.Type.WARNING) && allowWarning ? State.Type.SUCCESS : finalState;
         } else {
             return State.Type.SUCCESS;

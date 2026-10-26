@@ -7,12 +7,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import io.kestra.core.checkpoint.Checkpoint;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.KilledException;
 import io.kestra.core.models.Plugin;

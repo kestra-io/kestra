@@ -153,9 +153,9 @@ public class ConcurrencySlotReleaseProcessor {
      * <p>
      * Two different populations reach this fallback, and only one of them is temporary:
      * <ul>
-     * <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
-     * <li>executions moved to RUNNING while bypassing the admission gate, which never
-     * increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
+     *     <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
+     *     <li>executions moved to RUNNING while bypassing the admission gate, which never
+     *     increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
      * </ul>
      */
     private static boolean claimedASlotAccordingToHistory(Execution execution) {

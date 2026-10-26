@@ -4,8 +4,6 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
@@ -29,6 +27,7 @@ import io.kestra.core.utils.MapUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.With;
+import org.slf4j.Logger;
 
 /**
  * Class for building {@link RunContext} variables.

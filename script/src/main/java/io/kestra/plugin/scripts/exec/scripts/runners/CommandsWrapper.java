@@ -8,9 +8,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import io.kestra.core.checkpoint.Checkpoint;
 import org.apache.commons.lang3.SystemUtils;
 
-import io.kestra.core.checkpoint.Checkpoint;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.NamespaceFiles;

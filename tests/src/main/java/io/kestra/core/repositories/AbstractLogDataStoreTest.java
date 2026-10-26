@@ -537,7 +537,8 @@ public abstract class AbstractLogDataStoreTest {
         Instant afterTs = T_KEYSET.minus(1, ChronoUnit.MINUTES);
         String afterKey = null;
         while (true) {
-            List<LogDataStoreInterface.KeyedLog> page = logDataStore.findAfterWithoutAcl(keysetTenant, filters, afterTs, afterKey, 2);
+            List<LogDataStoreInterface.KeyedLog> page =
+                logDataStore.findAfterWithoutAcl(keysetTenant, filters, afterTs, afterKey, 2);
             all.addAll(page);
             if (page.size() < 2) {
                 break; // a non-full page marks exhaustion
@@ -704,12 +705,10 @@ public abstract class AbstractLogDataStoreTest {
             levelsTenant,
             Logs.builder().type(Logs.class.getName())
                 .columns(Map.of("count", ColumnDescriptor.<Logs.Fields> builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build()))
-                .where(
-                    List.of(
-                        In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("WARN", "ERROR")).build(),
-                        In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("ERROR")).build()
-                    )
-                )
+                .where(List.of(
+                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("WARN", "ERROR")).build(),
+                    In.<Logs.Fields> builder().field(Logs.Fields.LEVEL).values(List.of("ERROR")).build()
+                ))
                 .build(),
             ZonedDateTime.now().minusYears(10), ZonedDateTime.now().plusYears(10), null
         );

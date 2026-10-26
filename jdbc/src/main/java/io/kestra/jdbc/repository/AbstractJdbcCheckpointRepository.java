@@ -61,17 +61,15 @@ public class AbstractJdbcCheckpointRepository extends io.kestra.jdbc.repository.
     public List<Checkpoint> findByTaskRun(String tenantId, String executionId, String taskRunId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(
-                configuration -> DSL
-                    .using(configuration)
-                    .select()
-                    .from(this.jdbcRepository.getTable())
-                    .where(buildTenantCondition(tenantId))
-                    .and(EXECUTION_ID_FIELD.eq(executionId))
-                    .and(TASK_RUN_ID_FIELD.eq(taskRunId))
-                    .fetch()
-                    .map(record -> map(record))
-            );
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .select()
+                .from(this.jdbcRepository.getTable())
+                .where(buildTenantCondition(tenantId))
+                .and(EXECUTION_ID_FIELD.eq(executionId))
+                .and(TASK_RUN_ID_FIELD.eq(taskRunId))
+                .fetch()
+                .map(record -> map(record)));
     }
 
     @Override
@@ -79,13 +77,11 @@ public class AbstractJdbcCheckpointRepository extends io.kestra.jdbc.repository.
         List<String> executionIds = executions.stream().map(Execution::getId).toList();
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(
-                configuration -> DSL
-                    .using(configuration)
-                    .delete(this.jdbcRepository.getTable())
-                    .where(EXECUTION_ID_FIELD.in(executionIds))
-                    .execute()
-            );
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .delete(this.jdbcRepository.getTable())
+                .where(EXECUTION_ID_FIELD.in(executionIds))
+                .execute());
     }
 
     private static Checkpoint map(org.jooq.Record record) {

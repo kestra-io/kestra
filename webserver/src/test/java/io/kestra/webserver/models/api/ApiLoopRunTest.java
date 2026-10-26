@@ -1,10 +1,9 @@
 package io.kestra.webserver.models.api;
 
-import java.util.List;
-
+import io.kestra.core.models.executions.LoopRun;
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.models.executions.LoopRun;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

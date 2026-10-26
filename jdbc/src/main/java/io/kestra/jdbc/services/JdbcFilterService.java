@@ -125,7 +125,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> notEqualTo(SelectConditionStep<Record> query, String field, NotEqualTo<F> filter) {
-        return query.and(field(field).ne(filter.getValue()));
+        return query.and(notEqualToCondition(field, filter));
     }
 
     @Override
@@ -135,7 +135,8 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> notIn(SelectConditionStep<Record> query, String field, NotIn<F> filter) {
-        return query.and(field(field).notIn(filter.getValues()));
+        // like notEqualTo, keeps the rows where the field is NULL, which NOT IN alone leaves out
+        return query.and(field(field).notIn(filter.getValues()).or(field(field).isNull()));
     }
 
     @Override
@@ -239,7 +240,8 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition notEqualToCondition(String field, NotEqualTo<F> filter) {
-        return field(field).ne(filter.getValue());
+        // NULL <> 'x' is not true in SQL, so keep the rows where the field is NULL explicitly
+        return field(field).ne(filter.getValue()).or(field(field).isNull());
     }
 
     private <F extends Enum<F>> org.jooq.Condition notContainsCondition(String field, NotContains<F> filter) {
@@ -263,7 +265,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
                 );
         }
 
-        return field(field).notIn(filter.getValues());
+        return field(field).notIn(filter.getValues()).or(field(field).isNull());
     }
 
     private <F extends Enum<F>> org.jooq.Condition orCondition(Map<F, String> fieldsMapping, Or<F> filter) {

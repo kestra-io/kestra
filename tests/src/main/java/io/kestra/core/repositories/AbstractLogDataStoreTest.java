@@ -90,6 +90,7 @@ public abstract class AbstractLogDataStoreTest {
     protected String timeTenant;
     protected String kindTenant;
     protected String scopeTenant;
+    protected String emptyFieldsTenant;
     protected String familyTenant;
     protected String pageTenant;
     protected String keysetTenant;
@@ -100,7 +101,8 @@ public abstract class AbstractLogDataStoreTest {
         DISTINCT,
         TIME,
         KIND,
-        SCOPE
+        SCOPE,
+        EMPTY_FIELDS
     }
 
     protected String tenantOf(Group group) {
@@ -111,6 +113,7 @@ public abstract class AbstractLogDataStoreTest {
             case TIME -> timeTenant;
             case KIND -> kindTenant;
             case SCOPE -> scopeTenant;
+            case EMPTY_FIELDS -> emptyFieldsTenant;
         };
     }
 
@@ -180,6 +183,12 @@ public abstract class AbstractLogDataStoreTest {
         log(Level.INFO, "exec-system-scope").namespace("system").build()
     );
 
+    // An execution-level log (like LogEntry.of(execution)) has no task, task run, attempt or trigger.
+    private static final List<LogEntry> EMPTY_FIELDS_LOGS = List.of(
+        log(Level.INFO, "exec-task-level").build(),
+        log(Level.WARN, "exec-execution-level").taskId(null).taskRunId(null).attemptNumber(null).triggerId(null).build()
+    );
+
     // One execution, one task, one taskrun, three attempts with increasing levels — drives the whole
     // findByExecutionId* family with real min-level / attempt / namespace-flow parameters.
     static final String FAMILY_EXEC = "exec-family";
@@ -216,6 +225,7 @@ public abstract class AbstractLogDataStoreTest {
         timeTenant = randomTenant();
         kindTenant = randomTenant();
         scopeTenant = randomTenant();
+        emptyFieldsTenant = randomTenant();
         familyTenant = randomTenant();
         pageTenant = randomTenant();
         keysetTenant = randomTenant();
@@ -227,6 +237,7 @@ public abstract class AbstractLogDataStoreTest {
         logDataStore.saveBatch(withTenant(timeTenant, TIME_LOGS));
         logDataStore.saveBatch(withTenant(kindTenant, KIND_LOGS));
         logDataStore.saveBatch(withTenant(scopeTenant, SCOPE_LOGS));
+        logDataStore.saveBatch(withTenant(emptyFieldsTenant, EMPTY_FIELDS_LOGS));
         logDataStore.saveBatch(withTenant(familyTenant, FAMILY_LOGS));
         logDataStore.saveBatch(withTenant(keysetTenant, KEYSET_LOGS));
 
@@ -440,6 +451,12 @@ public abstract class AbstractLogDataStoreTest {
         leaf(Group.KIND, Field.KIND, Op.NOT_EQUALS, ExecutionKind.PLAYGROUND.name(), "exec-normal-kind", "exec-loop-kind"),
         leaf(Group.KIND, Field.KIND, Op.IN, List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()), "exec-playground-kind", "exec-loop-kind"),
         leaf(Group.KIND, Field.KIND, Op.NOT_IN, List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()), "exec-normal-kind"),
+
+        // Negated operators keep the rows where the field is empty (EMPTY_FIELDS)
+        leaf(Group.EMPTY_FIELDS, Field.TASK_ID, Op.NOT_EQUALS, "taskId", "exec-execution-level"),
+        leaf(Group.EMPTY_FIELDS, Field.TASK_ID, Op.NOT_IN, List.of("taskId"), "exec-execution-level"),
+        leaf(Group.EMPTY_FIELDS, Field.ATTEMPT_NUMBER, Op.NOT_EQUALS, 0, "exec-execution-level"),
+        leaf(Group.EMPTY_FIELDS, Field.ATTEMPT_NUMBER, Op.NOT_IN, List.of(0), "exec-execution-level"),
 
         // Composed (nested logical) — the full composition space: AND, OR, AND-of-3, OR-across-fields, nested AND(OR).
         new FilterCase(

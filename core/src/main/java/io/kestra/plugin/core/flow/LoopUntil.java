@@ -189,7 +189,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
             return Optional.of(State.Type.FAILED);
         }
 
-        return FlowableUtils.resolveState(
+        return FlowableUtils.resolveSequentialState(
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
@@ -202,7 +202,10 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
     }
 
     public boolean childTaskRunExecuted(Execution execution, TaskRun parentTaskRun) {
-        if (execution.getTaskRunList() == null) {
+        // A disabled task never gets a task run, so only the enabled ones are waited for.
+        // With every task disabled there is nothing to wait for: resolveState ends the loop, as for a Sequential.
+        long enabledTasks = tasks.stream().filter(task -> !task.getDisabled()).count();
+        if (execution.getTaskRunList() == null || enabledTasks == 0) {
             return false;
         }
         return execution
@@ -212,7 +215,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
                 t -> t.getParentTaskRunId() != null
                     && t.getParentTaskRunId().equals(parentTaskRun.getId())
                     && t.getState().isTerminatedNoFail()
-            ).count() == tasks.size();
+            ).count() == enabledTasks;
 
     }
 

@@ -470,6 +470,8 @@ If your `<style>` block needs to exist:
 
 ## Utilities (import from the design system)
 
+Radio filter configurations accept `allLabel` and `allDescription` to name and describe their default option; selecting it omits the filter from the query.
+
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants and icons. A state's colour is not a property of the state: read it with `State.getStateColor(name)`, which resolves `--ks-status-*`
 - `cssVar(name, opacity?)` — read a `--ks-*` CSS custom property at runtime (use this in JS / chart configs instead of hardcoding hex)
 - `dayjs` — the one configured dayjs instance (utc, timezone, duration, advancedFormat, calendar, isoWeek, localizedFormat, minMax, relativeTime, weekOfYear, isSameOrBefore). Never `import dayjs from "dayjs"` in feature code: plugins are registered on this instance, so a bare import silently lacks them

@@ -25,32 +25,14 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <KsTooltip
+                            <KsButton
                                 v-if="isExportableChart(chart.type)"
-                                :content="$t('dashboards.export')"
-                            >
-                                <KsDropdown
-                                    placement="bottom-end"
-                                    trigger="click"
-                                >
-                                    <KsButton
-                                        :icon="Download"
-                                        :aria-label="$t('dashboards.export')"
-                                        link
-                                        class="chart-action"
-                                    />
-                                    <template #dropdown>
-                                        <KsDropdownMenu>
-                                            <KsDropdownItem @click="exportChart(chart, 'CSV')">
-                                                {{ $t('dashboards.exportTo.csv') }}
-                                            </KsDropdownItem>
-                                            <KsDropdownItem @click="exportChart(chart, 'ION')">
-                                                {{ $t('dashboards.exportTo.ion') }}
-                                            </KsDropdownItem>
-                                        </KsDropdownMenu>
-                                    </template>
-                                </KsDropdown>
-                            </KsTooltip>
+                                :icon="Download"
+                                :tooltip="$t('dashboards.exportTo.csv')"
+                                link
+                                class="chart-action"
+                                @click="exportChart(chart)"
+                            />
 
                             <KsIcon
                                 v-if="props.dashboard?.id !== 'default'"
@@ -110,7 +92,7 @@
     import type {BrushRange} from "../../../utils/logsBrushMappers"
     const route = useRoute()
 
-    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsSkeleton, KsTooltip} from "@kestra-io/design-system"
+    import {decodeSearchParams, KsSkeleton} from "@kestra-io/design-system"
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
@@ -216,15 +198,13 @@
         return baseFilters
     })
 
-    async function exportChart(chart: Chart, format: "CSV" | "ION") {
+    async function exportChart(chart: Chart) {
         const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
 
-        const exported = await dashboardStore.export(props.dashboard, chart, {
+        await dashboardStore.export(props.dashboard, chart, {
             ...pagination,
             filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
-        }, format)
-
-        if (!exported) toast.warning(t("dashboards.exportEmpty"))
+        })
     }
 </script>
 
@@ -285,6 +265,9 @@ section#charts {
         }
 
         #charts_buttons {
+            display: flex;
+            align-items: center;
+            align-self: flex-start;
             opacity: 0;
             transition: opacity 0.2s ease;
         }

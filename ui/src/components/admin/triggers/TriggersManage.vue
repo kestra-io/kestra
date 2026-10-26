@@ -73,7 +73,7 @@
                     />
                     <LogsWrapper
                         v-if="hasLogsContent(props.row as TriggerRow)"
-                        class="m-3"
+                        class="row-logs"
                         :filters="{
                             'filters[namespace][EQUALS]': props.row.namespace,
                             'filters[flowId][EQUALS]': props.row.flowId,
@@ -93,7 +93,7 @@
                 :label="$t('id')"
             >
                 <template #default="scope">
-                    <div class="text-nowrap">
+                    <div class="trigger-id-cell">
                         {{ scope.row.id ?? scope.row.triggerId }}
                     </div>
                 </template>
@@ -243,7 +243,7 @@
                         <template #dropdown>
                             <KsDropdownMenu>
                                 <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
-                                    <TextSearch class="mr-1" />
+                                    <TextSearch class="item-icon" />
                                     {{ $t("details") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
@@ -251,7 +251,7 @@
                                     :disabled="!scope.row.locked"
                                     @click="restart(scope.row as TriggerRow)"
                                 >
-                                    <Restart class="mr-1" />
+                                    <Restart class="item-icon" />
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
@@ -259,7 +259,7 @@
                                     :disabled="!scope.row.locked"
                                     @click="unlock(scope.row as TriggerRow)"
                                 >
-                                    <LockOff class="mr-1" />
+                                    <LockOff class="item-icon" />
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
                                 <KsTooltip
@@ -268,7 +268,7 @@
                                     effect="light"
                                 >
                                     <KsDropdownItem divided class="danger" disabled>
-                                        <Delete class="mr-1" />
+                                        <Delete class="item-icon" />
                                         {{ $t("delete") }}
                                     </KsDropdownItem>
                                 </KsTooltip>
@@ -278,7 +278,7 @@
                                     class="danger"
                                     @click="confirmDeleteTrigger(scope.row as TriggerDeleteOptions)"
                                 >
-                                    <Delete class="mr-1" />
+                                    <Delete class="item-icon" />
                                     {{ $t("delete") }}
                                 </KsDropdownItem>
                             </KsDropdownMenu>
@@ -1026,6 +1026,18 @@
         & :deep(.kel-table) a {
             color: var(--ks-text-link);
         }
+    }
+
+    .row-logs {
+        margin: var(--ks-spacing-4);
+    }
+
+    .trigger-id-cell {
+        white-space: nowrap;
+    }
+
+    .item-icon {
+        margin-inline-end: var(--ks-spacing-1);
     }
 
     .backfill-tag {

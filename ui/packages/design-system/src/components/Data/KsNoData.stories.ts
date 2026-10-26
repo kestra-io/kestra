@@ -18,10 +18,12 @@ export default meta
 type Story = StoryObj<typeof KsNoData>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsNoData},
-        template: "<ks-no-data />",
+        setup() { return {args} },
+        template: "<ks-no-data v-bind=\"args\" />",
     }),
+    args: {title: "No results found", description: ""},
 }
 
 export const WithTitle: Story = {
@@ -29,4 +31,5 @@ export const WithTitle: Story = {
         components: {KsNoData},
         template: "<ks-no-data title=\"No Flows Found\" />",
     }),
+    parameters: {controls: {disable: true}},
 }

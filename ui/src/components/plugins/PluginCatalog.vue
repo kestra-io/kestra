@@ -14,7 +14,7 @@
             <div class="filter-toolbar__search">
                 <KsSearch
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: totalPlugins})"
+                    :placeholder="totalPlugins ? $t('pluginPage.search', {count: totalPlugins}) : $t('search')"
                     clearable
                 />
             </div>

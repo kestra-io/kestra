@@ -36,7 +36,7 @@
     "test": "npm run test:lint && npm run check:types && npm run test:unit && npm run test:storybook",
     "build:watch": "vite build --watch",
     "build-storybook": "storybook build",
-    "check:types": "vue-tsc --noEmit",
+    "check:types": "vue-tsc --noEmit -p tsconfig.storybook.json && vue-tsc --noEmit -p tsconfig.node.json",
     "lint": "oxlint --fix && eslint --fix",
     "test:lint": "oxlint && eslint",
     "test:unit": "vitest run --config vitest.unit.config.ts",

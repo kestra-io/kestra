@@ -22,7 +22,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions")
                         return VALUES.EXECUTION_STATES
                     },
-                    searchable: true,
                     visibleByDefault: true,
                     colored: true,
                 },
@@ -114,7 +113,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerId",
@@ -128,7 +126,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -139,7 +136,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "taskId",
@@ -150,7 +146,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
             ],
         }

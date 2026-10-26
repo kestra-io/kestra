@@ -56,6 +56,7 @@
     import FilterKVPairs from "./FilterKVPairs.vue"
     import FilterDateTime from "./FilterDateTime.vue"
     import FilterMultiSelect from "./FilterMultiSelect.vue"
+    import FilterNumber from "./FilterNumber.vue"
     import FilterComparatorSelect from "./FilterComparatorSelect.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -95,6 +96,8 @@
 
     const state = reactive({
         textValue: "",
+        numberValue: "",
+        numberRange: [] as string[],
         selectValue: "",
         radioValue: "ALL",
         dateValue: null as Date | null,
@@ -117,6 +120,10 @@
 
     const isKVPairFilter = computed(() =>
         props.filterKey?.valueType === "key-value" && !isTextOp.value,
+    )
+
+    const isNumberRange = computed(() =>
+        props.filterKey?.valueType === "number" && state.selectedComparator === Comparators.BETWEEN,
     )
 
     const isTimeRange = computed(() =>
@@ -224,6 +231,20 @@
                     "update:search": (value: string) => onSearchChange(value),
                 },
             },
+            number: {
+                component: FilterNumber,
+                props: {
+                    modelValue: isNumberRange.value ? state.numberRange : state.numberValue,
+                    range: isNumberRange.value,
+                    label: props.filterKey?.label,
+                },
+                events: {
+                    "update:modelValue": (value: string | string[]) => {
+                        if (Array.isArray(value)) state.numberRange = value
+                        else state.numberValue = value
+                    },
+                },
+            },
             date: {
                 component: FilterDateTime,
                 props: {
@@ -263,6 +284,8 @@
         switch (effectiveValueType.value) {
         case "multi-select":
             return `${state.keyValuePair.length} ${props.filterKey?.label} selected`
+        case "number":
+            return getFilterValue()?.label ?? ""
         case "select":
             if (state.selectValue) {
                 const option = state.valueOptions?.find(opt => opt.value === state.selectValue)
@@ -292,6 +315,8 @@
 
         Object.assign(state, {
             textValue: typeof defaultValue === "string" ? defaultValue : "",
+            numberValue: typeof defaultValue === "string" ? defaultValue : "",
+            numberRange: [],
             selectValue: typeof defaultValue === "string" ? defaultValue : "",
             keyValuePair: Array.isArray(defaultValue) ? [...defaultValue] : [],
             radioValue: "ALL",
@@ -317,6 +342,14 @@
         switch (effectiveValueType.value) {
         case "text":
             return {value: state.textValue, label: state.textValue}
+        case "number": {
+            if (!isNumberRange.value) return {value: state.numberValue, label: state.numberValue}
+            const [min = "", max = ""] = state.numberRange
+            // A between needs both bounds; until then it stays empty so it is not applied.
+            return min !== "" && max !== ""
+                ? {value: [min, max], label: `${min} - ${max}`}
+                : {value: [], label: ""}
+        }
         case "select":
             if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
                 const startDate = state.startDateValue ?? new Date()
@@ -463,6 +496,10 @@
             case "text":
                 state.textValue = typeof filter.value === "string" ? filter.value : ""
                 break
+            case "number":
+                state.numberValue = typeof filter.value === "string" ? filter.value : ""
+                state.numberRange = Array.isArray(filter.value) ? [...filter.value] : []
+                break
             case "multi-select":
                 state.keyValuePair = Array.isArray(filter.value) ? filter.value : []
                 break
@@ -550,6 +587,8 @@
 
     watch([
         () => state.selectValue,
+        () => state.numberValue,
+        () => state.numberRange,
         () => state.keyValuePair,
         () => state.radioValue,
         () => state.dateValue,

@@ -182,7 +182,11 @@ const writeFilter = (
             // A `time-range` field in custom range mode: encode {startDate,endDate} as a GTE/LTE pair
             // on the field's own key (works inside [and|or][N] group prefixes too). The dedicated
             // `timeRange` key keeps its own startDate/endDate encoding via the case above.
-            if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
+            if (comparator === Comparators.BETWEEN && Array.isArray(value)) {
+                const [min, max] = value
+                query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = min
+                query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = max
+            } else if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
                 const {startDate, endDate} = value as {startDate: Date; endDate: Date}
                 query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
                 query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
@@ -216,6 +220,9 @@ export const isValidFilter = (filter: Filter): boolean => {
     const {value} = filter
 
     if (value == null || value === "") return false
+    if (filter.comparator === Comparators.BETWEEN) {
+        return Array.isArray(value) && value.length === 2 && value.every(bound => bound !== "")
+    }
 
     switch (true) {
         case Array.isArray(value):

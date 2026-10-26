@@ -26,7 +26,13 @@ import {
     TIME_RANGE_KEY,
 } from "./constants"
 import {newGroupId} from "../composables/useFilterGroups"
-import {createAppliedFilter, createCustomRangeFilter, createTimeRangeFilter, processFieldValue} from "./filterChipFactory"
+import {
+    createAppliedFilter,
+    createCustomRangeFilter,
+    createNumberRangeFilter,
+    createTimeRangeFilter,
+    processFieldValue,
+} from "./filterChipFactory"
 
 /** A bag of params bucketed into one logical position in the tree. */
 type Slot = {
@@ -96,7 +102,7 @@ const buildLeafFromSlot = (
 ): LeafFilterGroup => {
     const filtersMap = new Map<string, AppliedFilter>()
 
-    // Pre-pass: a `time-range` field in range mode arrives as two buckets (GTE + LTE) because
+    // Pre-pass: a `time-range` field in range mode, or a `number` field's between, arrives as two buckets (GTE + LTE) because
     // bucketParams keys by `field|operation`. Merge them into one range chip and mark the buckets
     // consumed so the normal pass below doesn't render them as two separate `>=` / `<=` chips.
     const consumedBuckets = new Set<string>()
@@ -108,21 +114,23 @@ const buildLeafFromSlot = (
     })
     paramsByField.forEach((params, field) => {
         const config = configuration.keys?.find(k => k?.key === field)
-        if (config?.valueType !== "time-range" || config.customDateMode !== "range") return
+        const isDateRange = config?.valueType === "time-range" && config.customDateMode === "range"
+        const isNumberRange = config?.valueType === "number" && config.comparators.includes(Comparators.BETWEEN)
+        if (!config || (!isDateRange && !isNumberRange)) return
         const gte = params.find(p => p.operation === "GREATER_THAN_OR_EQUAL_TO")
         const lte = params.find(p => p.operation === "LESS_THAN_OR_EQUAL_TO")
         if (!gte || !lte) return
-        filtersMap.set(
-            `${field}|GREATER_THAN_OR_EQUAL_TO`,
-            createCustomRangeFilter(
+        const rangeFilter = isNumberRange
+            ? createNumberRangeFilter(field, config, String(gte.value), String(lte.value))
+            : createCustomRangeFilter(
                 field,
                 config,
                 new Date(gte.value as string),
                 new Date(lte.value as string),
                 Comparators.GREATER_THAN_OR_EQUAL_TO,
                 routeDateFilter && config.dateFilterOptions ? {dateFilter: routeDateFilter} : undefined,
-            ),
-        )
+            )
+        filtersMap.set(`${field}|GREATER_THAN_OR_EQUAL_TO`, rangeFilter)
         consumedBuckets.add(`${field}|GREATER_THAN_OR_EQUAL_TO`)
         consumedBuckets.add(`${field}|LESS_THAN_OR_EQUAL_TO`)
     })

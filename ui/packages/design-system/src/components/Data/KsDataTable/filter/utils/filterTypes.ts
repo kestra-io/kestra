@@ -17,6 +17,8 @@ export enum Comparators {
     IS_NOT_NULL = "IS_NOT_NULL",
     REGEX = "~=",
     PREFIX = "^.=",
+    /** Frontend only: the API has no between, so it is sent as a GREATER_THAN_OR_EQUAL_TO + LESS_THAN_OR_EQUAL_TO pair. */
+    BETWEEN = "BETWEEN",
 }
 
 export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN]
@@ -65,7 +67,7 @@ export interface FilterKeyConfig {
      * via `valueProvider.length > 0`, so avoid default-valued or rest params.
      */
     valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
-    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
+    valueType: "text" | "number" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
     /**
      * Only meaningful for {@link valueType} === "time-range". Controls the custom (non-predefined)
      * mode of the time-range picker on an arbitrary date field:
@@ -204,6 +206,7 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.IS_NOT_NULL]: "Is Set",
     [Comparators.REGEX]: "Matches Pattern",
     [Comparators.PREFIX]: "Prefix",
+    [Comparators.BETWEEN]: "Between",
 }
 
 export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
@@ -223,4 +226,5 @@ export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.IS_NOT_NULL]: "filter.comparator_descriptions.IS_NOT_NULL",
     [Comparators.REGEX]: "filter.comparator_descriptions.REGEX",
     [Comparators.PREFIX]: "filter.comparator_descriptions.PREFIX",
+    [Comparators.BETWEEN]: "filter.comparator_descriptions.BETWEEN",
 }

@@ -19,8 +19,18 @@
         <KsOption v-for="op in comparators" :key="op" :label="labelForComparator(op)" :value="op" />
     </KsSelect>
 
+    <FilterNumber
+        v-if="keyConfig?.valueType === 'number'"
+        class="cond-value-input"
+        inline
+        :modelValue="numberModel"
+        :range="filter.comparator === Comparators.BETWEEN"
+        :label="keyConfig.label"
+        @update:modelValue="onNumber"
+    />
+
     <KsInput
-        v-if="isTextValue"
+        v-else-if="isTextValue"
         class="cond-value-input"
         :modelValue="textValue"
         :placeholder="keyConfig?.label"
@@ -122,6 +132,7 @@
 
     import FilterKVPairs from "./layout/FilterKVPairs.vue"
     import FilterMultiSelect from "./layout/FilterMultiSelect.vue"
+    import FilterNumber from "./layout/FilterNumber.vue"
     import {createAppliedFilter} from "./utils/filterChipFactory"
     import {
         Comparators,
@@ -198,6 +209,8 @@
         return typeof props.filter.value === "string" ? props.filter.value : ""
     })
 
+    const numberModel = computed(() => props.filter.value as string | string[])
+
     const kvModel = computed(() => (Array.isArray(props.filter.value) ? props.filter.value : []))
 
     const labelFor = (value: string | string[]): string => {
@@ -244,8 +257,10 @@
 
     const changeComparator = (op: Comparators | undefined) => {
         if (op === undefined) return
-        const wasMulti = isMulti.value
-        const willBeMulti = keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op)
+        const isNumber = keyConfig.value?.valueType === "number"
+        const wasMulti = isMulti.value || (isNumber && props.filter.comparator === Comparators.BETWEEN)
+        const willBeMulti = (keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op))
+            || (isNumber && op === Comparators.BETWEEN)
         const shouldNormalizeKeyValues = keyConfig.value?.valueType === "key-value"
             && op !== Comparators.IN
             && op !== Comparators.NOT_IN
@@ -272,6 +287,9 @@
     }
 
     const onKeyValue = (value: string[]) => emitUpdate(value, value[0] ?? "")
+
+    const onNumber = (value: string | string[]) =>
+        emitUpdate(value, Array.isArray(value) ? value.join(" - ") : value)
 
     const multiDraft = ref<string[]>([])
 

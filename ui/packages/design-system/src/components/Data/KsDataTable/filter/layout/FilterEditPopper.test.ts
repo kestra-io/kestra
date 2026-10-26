@@ -6,6 +6,7 @@ import FilterEditPopper from "./FilterEditPopper.vue"
 import FilterSelect from "./FilterSelect.vue"
 import FilterMultiSelect from "./FilterMultiSelect.vue"
 import FilterDateTime from "./FilterDateTime.vue"
+import FilterNumber from "./FilterNumber.vue"
 import FilterComparatorSelect from "./FilterComparatorSelect.vue"
 import FilterFooter from "./FilterFooter.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../utils/filterTypes"
@@ -335,5 +336,52 @@ describe("FilterEditPopper time range", () => {
             const {startDate, endDate} = filter.value as {startDate: Date; endDate: Date}
             expect(startDate.getTime()).toBeLessThanOrEqual(endDate.getTime())
         })
+    })
+})
+
+const attemptsKey: FilterKeyConfig = {
+    key: "attempts",
+    label: "Attempts",
+    valueType: "number",
+    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.BETWEEN],
+}
+
+describe("FilterEditPopper number field", () => {
+    const mountNumber = async (comparator: Comparators) => {
+        const wrapper = i18nMount(FilterEditPopper, {
+            props: {
+                filter: {id: "f1", key: "attempts", keyLabel: "Attempts", comparator, comparatorLabel: "", value: "", valueLabel: ""},
+                filterKey: attemptsKey,
+                showComparatorSelection: true,
+            },
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    const lastUpdate = (wrapper: Awaited<ReturnType<typeof mountNumber>>) =>
+        (wrapper.emitted("update") as Array<[AppliedFilter]> | undefined)?.at(-1)?.[0]
+
+    test("shouldApplyTheNumberWhenASingleBoundIsTyped", async () => {
+        const wrapper = await mountNumber(Comparators.GREATER_THAN_OR_EQUAL_TO)
+
+        wrapper.findComponent(FilterNumber).vm.$emit("update:modelValue", "3")
+        await flushPromises()
+
+        expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: "3", valueLabel: "3"})
+    })
+
+    test("shouldApplyBetweenOnlyOnceBothBoundsAreSet", async () => {
+        const wrapper = await mountNumber(Comparators.BETWEEN)
+        const number = wrapper.findComponent(FilterNumber)
+        expect(number.props("range")).toBe(true)
+
+        number.vm.$emit("update:modelValue", ["1", ""])
+        await flushPromises()
+        expect(lastUpdate(wrapper)).toMatchObject({value: []})
+
+        number.vm.$emit("update:modelValue", ["1", "5"])
+        await flushPromises()
+        expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.BETWEEN, value: ["1", "5"], valueLabel: "1 - 5"})
     })
 })

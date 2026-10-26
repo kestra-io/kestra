@@ -50,11 +50,11 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
             const response = await store.loadLogs({
                 store: false,
                 executionId: current.id,
-                params: {
-                    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
-                    "filters[taskRunId][EQUALS]": taskRunId,
-                    "filters[kind][IN]": current.kind,
-                },
+                filters: [
+                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                    {field: "taskRunId", operation: "EQUALS", value: taskRunId},
+                    {field: "kind", operation: "IN", value: current.kind},
+                ],
             })
             if (toValue(execution)?.id === current.id && failedTaskRun.value?.id === taskRunId) errorLogs.value = response
         } catch (e: unknown) {

@@ -86,11 +86,8 @@ public abstract class StorageService {
     }
 
     private static String extensionOf(URI from) {
-        String fromPath = from.getPath();
-        if (fromPath.indexOf('.') >= 0) {
-            return fromPath.substring(fromPath.lastIndexOf('.'));
-        }
-        return ".tmp";
+        String extension = io.kestra.core.utils.FileUtils.getExtension(from);
+        return extension != null ? extension : ".tmp";
     }
 
     private static long parseBytes(RunContext runContext, StorageSplitInterface storageSplitInterface) throws IllegalVariableEvaluationException {

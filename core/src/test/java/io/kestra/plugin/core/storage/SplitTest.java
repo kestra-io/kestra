@@ -107,6 +107,31 @@ class SplitTest {
     }
 
     @Test
+    void splitFileUnderFolderWithDotAndNoExtension() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        File tempFile = File.createTempFile("unit", "");
+        Files.write(tempFile.toPath(), content(10));
+
+        URI put = storageInterface.put(
+            MAIN_TENANT,
+            null,
+            new URI("/file/storage/%s/folder.with.dot/data".formatted(IdUtils.create())),
+            new FileInputStream(tempFile)
+        );
+
+        Split result = Split.builder()
+            .from(Property.ofValue(put.toString()))
+            .rows(Property.ofValue(5))
+            .build();
+
+        Split.Output run = result.run(runContext);
+
+        assertThat(run.getUris().size()).isEqualTo(2);
+        assertThat(run.getUris().getFirst().getPath()).endsWith(".tmp");
+        assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n")).isEqualTo(10);
+    }
+
+    @Test
     void bytes() throws Exception {
         RunContext runContext = runContextFactory.of();
         URI put = storageUpload(12288);

@@ -126,7 +126,7 @@
                     data-test="flowable-add-case-btn"
                     @click="addCase"
                 >
-                    <PlusCircleOutline class="flowable-cluster-add-icon" />
+                    <Plus class="flowable-cluster-add-icon" />
                     {{ $t("block_editor.add_switch_case") }}
                 </button>
                 <span v-if="isCaseKeyTaken" class="flowable-cluster-case-taken" data-test="flowable-add-case-taken">
@@ -146,7 +146,7 @@
     import Cog from "vue-material-design-icons/CogOutline.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     import {KsTag, KsIconButton, KsInput} from "@kestra-io/design-system"
     import TaskIcon from "../../plugins/TaskIcon.vue"

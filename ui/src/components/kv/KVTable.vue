@@ -121,7 +121,7 @@
                     placement="left"
                     @click="viewKvModal(scope.row)"
                 >
-                    <Eye />
+                    <TextSearch />
                 </KsIconButton>
             </template>
         </KsTableColumn>
@@ -302,7 +302,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
-    import Eye from "vue-material-design-icons/Eye.vue"
+    import TextSearch from "vue-material-design-icons/TextSearch.vue"
 
     import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, groupBy, deepMerge} from "@kestra-io/design-system"
     import type {FormInstance, FormItemRule} from "@kestra-io/design-system"

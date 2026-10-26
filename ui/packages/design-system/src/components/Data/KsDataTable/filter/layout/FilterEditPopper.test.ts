@@ -362,26 +362,43 @@ describe("FilterEditPopper number field", () => {
     const lastUpdate = (wrapper: Awaited<ReturnType<typeof mountNumber>>) =>
         (wrapper.emitted("update") as Array<[AppliedFilter]> | undefined)?.at(-1)?.[0]
 
-    test("shouldApplyTheNumberWhenASingleBoundIsTyped", async () => {
-        const wrapper = await mountNumber(Comparators.GREATER_THAN_OR_EQUAL_TO)
+    const updates = (wrapper: Awaited<ReturnType<typeof mountNumber>>) =>
+        (wrapper.emitted("update") as Array<[AppliedFilter]> | undefined) ?? []
 
-        wrapper.findComponent(FilterNumber).vm.$emit("update:modelValue", "3")
+    // Number edits go through the same 400ms debounce as text, so a test waits it out.
+    const settle = async () => {
+        await new Promise((resolve) => setTimeout(resolve, 450))
         await flushPromises()
+    }
 
-        expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: "3", valueLabel: "3"})
+    test("shouldApplyOnlyTheLastNumberWhenTypingSeveralDigits", async () => {
+        const wrapper = await mountNumber(Comparators.GREATER_THAN_OR_EQUAL_TO)
+        const number = wrapper.findComponent(FilterNumber)
+
+        number.vm.$emit("update:modelValue", "1")
+        number.vm.$emit("update:modelValue", "12")
+        number.vm.$emit("update:modelValue", "125")
+        await settle()
+
+        expect(updates(wrapper)).toHaveLength(1)
+        expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: "125", valueLabel: "125"})
     })
 
-    test("shouldApplyBetweenOnlyOnceBothBoundsAreSet", async () => {
+    test("shouldApplyBetweenOnlyOnceBothBoundsAreSetInOrder", async () => {
         const wrapper = await mountNumber(Comparators.BETWEEN)
         const number = wrapper.findComponent(FilterNumber)
         expect(number.props("range")).toBe(true)
 
         number.vm.$emit("update:modelValue", ["1", ""])
-        await flushPromises()
+        await settle()
+        expect(lastUpdate(wrapper)).toMatchObject({value: []})
+
+        number.vm.$emit("update:modelValue", ["10", "5"])
+        await settle()
         expect(lastUpdate(wrapper)).toMatchObject({value: []})
 
         number.vm.$emit("update:modelValue", ["1", "5"])
-        await flushPromises()
+        await settle()
         expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.BETWEEN, value: ["1", "5"], valueLabel: "1 - 5"})
     })
 })

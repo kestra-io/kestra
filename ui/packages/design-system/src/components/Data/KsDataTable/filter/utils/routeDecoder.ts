@@ -94,6 +94,10 @@ const bucketParams = (params: DecodedParam[]): BucketedParams => {
     return {perTop, observedTopLogical, wrapperLogicalByTopIdx}
 }
 
+// A bound repeated in the URL arrives as an array; like processFieldValue, keep its first value.
+const firstValue = (param: DecodedParam): string =>
+    String(Array.isArray(param.value) ? param.value[0] : param.value)
+
 /** Build a single LeafFilterGroup from one bucketed Slot. */
 const buildLeafFromSlot = (
     slot: Slot,
@@ -121,7 +125,7 @@ const buildLeafFromSlot = (
         const lte = params.find(p => p.operation === "LESS_THAN_OR_EQUAL_TO")
         if (!gte || !lte) return
         const rangeFilter = isNumberRange
-            ? createNumberRangeFilter(field, config, String(gte.value), String(lte.value))
+            ? createNumberRangeFilter(field, config, firstValue(gte), firstValue(lte))
             : createCustomRangeFilter(
                 field,
                 config,

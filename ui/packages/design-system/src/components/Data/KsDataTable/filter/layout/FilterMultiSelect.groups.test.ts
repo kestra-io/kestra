@@ -188,6 +188,33 @@ describe("FilterMultiSelect — grouped state mode", () => {
         expect(emitted.at(-1)![0]).toEqual(["SUCCESS", "RUNNING"])
     })
 
+    test("enter on an empty search selects nothing", async () => {
+        const wrapper = mountFlatFilter([])
+
+        await wrapper.find("input").trigger("keydown", {key: "Enter"})
+
+        expect(wrapper.emitted("update:modelValue")).toBeUndefined()
+    })
+
+    test("enter with server-side search only selects the loaded options that match the query", async () => {
+        const wrapper = i18nMount(FilterMultiSelect, {
+            messages,
+            props: {
+                filterKey: "namespace",
+                modelValue: [],
+                serverSideSearch: true,
+                options: [{value: "company.team", label: "company.team"}, {value: "other", label: "other"}],
+            },
+        })
+        const input = wrapper.find("input")
+
+        await input.setValue("team")
+        await input.trigger("keydown", {key: "Enter"})
+
+        const emitted = wrapper.emitted("update:modelValue") as string[][][]
+        expect(emitted.at(-1)![0]).toEqual(["company.team"])
+    })
+
     test("flat filter still emits update:modelValue on option click", async () => {
         // Given
         const wrapper = mountFlatFilter([])

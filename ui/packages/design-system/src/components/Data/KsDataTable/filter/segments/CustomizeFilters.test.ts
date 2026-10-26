@@ -51,6 +51,19 @@ describe("CustomizeFilters", () => {
         wrapper.unmount()
     })
 
+    test("shouldIgnoreEnterWhenTheSearchIsEmptyOrAnImeCandidateIsConfirmed", async () => {
+        const wrapper = mountPanel()
+        const input = wrapper.find("input")
+
+        await input.trigger("keydown", {key: "Enter"})
+        await input.setValue("filter by")
+        await input.trigger("keydown", {key: "Enter", isComposing: true})
+
+        expect(wrapper.emitted("add-filter")).toBeUndefined()
+
+        wrapper.unmount()
+    })
+
     test("shouldFocusSearchWhenOpened", async () => {
         const wrapper = mountPanel()
         await new Promise((resolve) => setTimeout(resolve))

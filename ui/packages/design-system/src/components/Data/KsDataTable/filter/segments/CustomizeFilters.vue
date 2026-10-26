@@ -23,7 +23,7 @@
                 borderless
                 clearable
                 :placeholder="$t('filter.search options')"
-                @keydown.enter="addFirstMatch"
+                @keydown.enter="(event: KeyboardEvent) => !event.isComposing && addFirstMatch()"
             >
                 <template #prefix>
                     <Magnify :size="16" />
@@ -132,6 +132,7 @@
     }
 
     const addFirstMatch = () => {
+        if (!search.value.trim()) return
         const [first] = visibleKeys.value
         if (first) addFilterForKey(first)
     }

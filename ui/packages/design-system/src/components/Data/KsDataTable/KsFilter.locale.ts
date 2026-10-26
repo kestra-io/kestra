@@ -892,8 +892,8 @@ export default {
             "remove_filter": "Eliminar filtro",
             "add_filter_for": "Añadir filtro para {label}",
             "is_between": "Está entre",
-            "number_min": "Mín",
-            "number_max": "Máx.",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Predefinido",
                 "custom": "Rango Personalizado",
@@ -1710,8 +1710,8 @@ export default {
             "remove_filter": "फ़िल्टर हटाएं",
             "add_filter_for": "{label} के लिए फ़िल्टर जोड़ें",
             "is_between": "के बीच है",
-            "number_min": "न्यूनतम",
-            "number_max": "अधिकतम",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "पूर्वनिर्धारित",
                 "custom": "कस्टम रेंज",
@@ -2529,7 +2529,7 @@ export default {
             "add_filter_for": "{label} のフィルターを追加",
             "is_between": "範囲内",
             "number_min": "Min",
-            "number_max": "最大",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "定義済み",
                 "custom": "カスタム範囲",
@@ -2937,8 +2937,8 @@ export default {
             "remove_filter": "필터 제거",
             "add_filter_for": "{label} 필터 추가",
             "is_between": "사이",
-            "number_min": "최소",
-            "number_max": "최대",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "사전 정의됨",
                 "custom": "사용자 정의 범위",
@@ -3347,7 +3347,7 @@ export default {
             "add_filter_for": "Dodaj filtr dla {label}",
             "is_between": "Pomiędzy",
             "number_min": "Min",
-            "number_max": "Maks.",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Zdefiniowane z góry",
                 "custom": "Zakres niestandardowy",
@@ -3755,8 +3755,8 @@ export default {
             "remove_filter": "Remover filtro",
             "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
-            "number_min": "Mín",
-            "number_max": "Máx.",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Predefinido",
                 "custom": "Intervalo Personalizado",
@@ -4574,7 +4574,7 @@ export default {
             "add_filter_for": "Добавить фильтр для {label}",
             "is_between": "Между",
             "number_min": "Min",
-            "number_max": "Макс",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Предопределено",
                 "custom": "Пользовательский диапазон",
@@ -4982,8 +4982,8 @@ export default {
             "remove_filter": "移除过滤器",
             "add_filter_for": "为 {label} 添加过滤器",
             "is_between": "介于",
-            "number_min": "最小",
-            "number_max": "最大",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "预定义",
                 "custom": "自定义范围",

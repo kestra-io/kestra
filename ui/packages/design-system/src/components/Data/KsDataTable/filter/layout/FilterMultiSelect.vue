@@ -8,7 +8,7 @@
                     size="small"
                     borderless
                     clearable
-                    @keydown.enter="selectVisibleOptions"
+                    @keydown.enter="(event: KeyboardEvent) => !event.isComposing && selectVisibleOptions()"
                     :placeholder="$t('filter.search options')"
                     :prefixIcon="Magnify"
                 />
@@ -313,10 +313,12 @@
         emits("update:modelValue", [...values])
     }
 
+    // Matched locally even with server-side search, so Enter never acts on a list the reload has not replaced yet.
     const selectVisibleOptions = () => {
-        const visible = isStateFilter.value
-            ? visibleGroups.value.flatMap(group => group.options)
-            : filteredOptions.value
+        const query = searchQuery.value.trim().toLowerCase()
+        if (!query) return
+        const visible = (isStateFilter.value ? visibleGroups.value.flatMap(group => group.options) : props.options)
+            .filter(option => option.label.toLowerCase().includes(query) || option.value.toLowerCase().includes(query))
         emits("update:modelValue", [...new Set([...props.modelValue, ...visible.map(option => option.value)])])
     }
 

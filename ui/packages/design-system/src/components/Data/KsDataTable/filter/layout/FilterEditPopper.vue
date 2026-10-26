@@ -196,7 +196,6 @@
                 props: {
                     modelValue: state.selectValue,
                     options: state.valueOptions,
-                    searchable: props.filterKey?.searchable,
                     label: props.filterKey?.label,
                     filterKey: props.filterKey,
                     timeRangeMode: state.timeRangeMode,
@@ -352,8 +351,8 @@
         case "number": {
             if (!isNumberRange.value) return {value: state.numberValue, label: state.numberValue}
             const [min = "", max = ""] = state.numberRange
-            // A between needs both bounds; until then it stays empty so it is not applied.
-            return min !== "" && max !== ""
+            // A between needs both bounds in order; until then it stays empty so it is not applied.
+            return min !== "" && max !== "" && Number(min) <= Number(max)
                 ? {value: [min, max], label: `${min} - ${max}`}
                 : {value: [], label: ""}
         }
@@ -590,12 +589,10 @@
 
     const debouncedApplyLive = useDebounceFn(applyLive, 400)
 
-    watch(() => state.textValue, () => debouncedApplyLive())
+    watch([() => state.textValue, () => state.numberValue, () => state.numberRange], () => debouncedApplyLive())
 
     watch([
         () => state.selectValue,
-        () => state.numberValue,
-        () => state.numberRange,
         () => state.keyValuePair,
         () => state.radioValue,
         () => state.dateValue,

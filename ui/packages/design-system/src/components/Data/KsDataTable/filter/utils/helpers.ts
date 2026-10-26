@@ -156,6 +156,18 @@ export const encodeFilterGroupsToQuery = (
     return query
 }
 
+/**
+ * Chips in one group are ANDed, so a Between and a separate >= or <= on the same key share one
+ * query param; for numbers the tighter bound is the one that holds. Anything else keeps last-wins.
+ */
+const writeBound = (query: FilterQuery, param: string, value: string, tighter: (a: number, b: number) => number) => {
+    const existing = query[param]
+    const isNumber = (text: unknown) => typeof text === "string" && text.trim() !== "" && Number.isFinite(Number(text))
+    query[param] = isNumber(existing) && isNumber(value)
+        ? String(tighter(Number(existing), Number(value)))
+        : value
+}
+
 const writeFilter = (
     query: FilterQuery,
     prefix: string,
@@ -185,8 +197,12 @@ const writeFilter = (
             // `timeRange` key keeps its own startDate/endDate encoding via the case above.
             if (comparator === Comparators.BETWEEN && Array.isArray(value)) {
                 const [min, max] = value
-                query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = min
-                query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = max
+                writeBound(query, `${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`, min, Math.max)
+                writeBound(query, `${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`, max, Math.min)
+            } else if ((comparator === Comparators.GREATER_THAN_OR_EQUAL_TO || comparator === Comparators.LESS_THAN_OR_EQUAL_TO)
+                && typeof value === "string") {
+                writeBound(query, `${prefix}[${key}][${comparatorKey}]`, value,
+                    comparator === Comparators.GREATER_THAN_OR_EQUAL_TO ? Math.max : Math.min)
             } else if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
                 const {startDate, endDate} = value as {startDate: Date; endDate: Date}
                 query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
@@ -223,6 +239,7 @@ export const isValidFilter = (filter: Filter): boolean => {
     if (value == null || value === "") return false
     if (filter.comparator === Comparators.BETWEEN) {
         return Array.isArray(value) && value.length === 2 && value.every(bound => bound !== "")
+            && Number(value[0]) <= Number(value[1])
     }
 
     switch (true) {
@@ -346,6 +363,15 @@ export const parseFiltersFromString = (str: string): Record<string, string | str
 export const isSearchPath = (name: string) =>
     ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name)
 
+const countFormats = new Map<string, Intl.NumberFormat>()
+
 /** A value count in short form (`18K`, `2.2K`), so big counts stay distinct at a small width. */
-export const formatCount = (count: number): string =>
-    new Intl.NumberFormat(currentLocale(), {notation: "compact", maximumFractionDigits: 1}).format(count)
+export const formatCount = (count: number): string => {
+    const locale = currentLocale()
+    let format = countFormats.get(locale)
+    if (!format) {
+        format = new Intl.NumberFormat(locale, {notation: "compact", maximumFractionDigits: 1})
+        countFormats.set(locale, format)
+    }
+    return format.format(count)
+}

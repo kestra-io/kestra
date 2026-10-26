@@ -129,33 +129,45 @@ public final class SourceSearchMatcher {
         }
     }
 
-    public static List<SourceMatch> findMatches(String source, String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope) {
-        List<SourceMatch> matches = findMatches(source, query, caseSensitive, wholeWord, regex);
-        if (scope == null || scope == SourceSearchScope.ALL || matches.isEmpty()) {
-            return matches;
-        }
-
-        int[] range = topLevelBlockLineRange(source, scope.name().toLowerCase(Locale.ROOT));
-        if (range == null) {
-            return List.of();
-        }
-
-        return matches.stream().filter(match -> match.line() >= range[0] && match.line() <= range[1]).toList();
+    public static List<SourceMatch> findMatches(String source, String query, boolean caseSensitive, boolean wholeWord, boolean regex) {
+        return findMatches(source, query, caseSensitive, wholeWord, regex, SourceSearchScope.ALL);
     }
 
-    public static List<SourceMatch> findMatches(String source, String query, boolean caseSensitive, boolean wholeWord, boolean regex) {
+    public static List<SourceMatch> findMatches(String source, String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope) {
         if (source == null || query == null || query.isEmpty()) {
             return List.of();
         }
 
+        List<int[]> lineBounds = lineBounds(source);
+        if (lineBounds.isEmpty()) {
+            return List.of();
+        }
+
+        int startLineIndex = 0;
+        int endLineIndex = lineBounds.size() - 1;
+
+        if (scope != null && scope != SourceSearchScope.ALL) {
+            int[] range = topLevelBlockLineRange(source, scope.name().toLowerCase(Locale.ROOT));
+            if (range == null) {
+                return List.of();
+            }
+            startLineIndex = range[0] - 1;
+            endLineIndex = Math.min(range[1], lineBounds.size()) - 1;
+        }
+
+        if (startLineIndex > endLineIndex || startLineIndex < 0 || startLineIndex >= lineBounds.size()) {
+            return List.of();
+        }
+
+        int searchFrom = lineBounds.get(startLineIndex)[0];
+        int searchEnd = lineBounds.get(endLineIndex)[1];
+
         Pattern pattern = toPattern(query, caseSensitive, wholeWord, regex);
         Matcher matcher = RegexUtils.matcher(pattern, source);
-        List<int[]> lineBounds = lineBounds(source);
 
         List<SourceMatch> matches = new ArrayList<>();
-        int lineIndex = 0;
-        int searchFrom = 0;
-        while (searchFrom <= source.length() && matches.size() < MAX_MATCHES_PER_SOURCE) {
+        int lineIndex = startLineIndex;
+        while (searchFrom <= searchEnd && matches.size() < MAX_MATCHES_PER_SOURCE) {
             if (!matcher.find(searchFrom)) {
                 break;
             }
@@ -163,9 +175,17 @@ public final class SourceSearchMatcher {
             int start = matcher.start();
             int end = matcher.end();
 
+            if (start > searchEnd) {
+                break;
+            }
+
             while (lineIndex < lineBounds.size() - 1 && lineBounds.get(lineIndex)[1] < start) {
                 lineIndex++;
             }
+            if (lineIndex > endLineIndex) {
+                break;
+            }
+
             int[] bounds = lineBounds.get(lineIndex);
             int highlightEnd = Math.max(start, Math.min(end, bounds[1]));
 

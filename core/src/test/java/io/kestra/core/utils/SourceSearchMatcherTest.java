@@ -170,4 +170,29 @@ class SourceSearchMatcherTest {
         assertThat(replaced).contains("format: changed inside");
         assertThat(replaced).contains("cron: marker-trigger");
     }
+
+    @Test
+    void shouldFindScopedMatchesWhenPrecedingMatchesExceedPerSourceLimit() {
+        String flowWithManyPrecedingMatches = """
+            id: scoped_search_limit
+            namespace: company.team
+            description: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: needle
+            """.formatted("needle ".repeat(500));
+
+        List<SourceMatch> matches = SourceSearchMatcher.findMatches(
+            flowWithManyPrecedingMatches,
+            "needle",
+            false,
+            false,
+            false,
+            SourceSearchScope.TASKS
+        );
+
+        assertThat(matches).hasSize(1);
+        assertThat(matches.getFirst().snippet()).contains("message: [mark]needle[/mark]");
+    }
 }

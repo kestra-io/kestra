@@ -27,10 +27,19 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-alert v-bind=\"args\" /></div>",
     }),
-    args: {type: "info", title: "This is an info alert", showIcon: true},
+    args: {
+        type: "info",
+        title: "This is an info alert",
+        description: "",
+        closable: true,
+        showIcon: true,
+        center: false,
+        banner: false,
+    },
 }
 
 export const Types: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -67,6 +76,7 @@ export const Types: Story = {
 }
 
 export const WithDescription: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -85,6 +95,7 @@ export const WithDescription: Story = {
 
 /** With icon and description – all types */
 export const WithNoIconAndDescription: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -100,6 +111,7 @@ export const WithNoIconAndDescription: Story = {
 
 /** A one-line alert centres in its box, and a wrapped one keeps the icon on its first line */
 export const IconAlignment: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -133,6 +145,7 @@ export const IconAlignment: Story = {
 
 /** Centered text */
 export const Centered: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -147,6 +160,7 @@ export const Centered: Story = {
 
 /** Full-width system banner: square, bottom rule only, body text in the primary text colour */
 export const Banner: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `
@@ -182,6 +196,7 @@ export const Banner: Story = {
 
 /** Closable */
 export const Closable: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAlert},
         template: `

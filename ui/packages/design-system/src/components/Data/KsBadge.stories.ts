@@ -38,7 +38,16 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-badge v-bind=\"args\"><ks-button>Messages</ks-button></ks-badge></div>",
     }),
-    args: {value: 5},
+    args: {
+        value: 5,
+        type: "danger",
+        max: 99,
+        isDot: false,
+        hidden: false,
+        showZero: true,
+        inline: false,
+        size: "default",
+    },
 }
 
 export const Types: Story = {
@@ -53,6 +62,7 @@ export const Types: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /**
@@ -80,6 +90,7 @@ export const Inline: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /**
@@ -105,6 +116,7 @@ export const Neutral: Story = {
         await expect(getComputedStyle(pill).backgroundColor).toBe(getComputedStyle(reference).backgroundColor)
         reference.remove()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Small: a compact pill for icon buttons, where the default one covers half the glyph. */
@@ -119,6 +131,7 @@ export const Small: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Red dot – small dot without a number */
@@ -133,6 +146,7 @@ export const RedDot: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Hidden – badge can be hidden programmatically */
@@ -152,6 +166,7 @@ export const Hidden: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const MaxValue: Story = {
@@ -164,4 +179,5 @@ export const MaxValue: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

@@ -32,9 +32,11 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {disabled: false, checked: false, indeterminate: false},
 }
 
 export const Group: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsCheckboxGroup, KsCheckbox},
         setup() {
@@ -54,6 +56,7 @@ export const Group: Story = {
 }
 
 export const ButtonGroup: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsCheckboxGroup, KsCheckboxButton},
         setup() {
@@ -74,6 +77,7 @@ export const ButtonGroup: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsCheckbox},
         setup() { return {value: ref(true)} },
@@ -82,6 +86,7 @@ export const Disabled: Story = {
 }
 
 export const Indeterminate: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsCheckbox, KsCheckboxGroup},
         setup() {

@@ -34,11 +34,21 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {type: "date", placeholder: "Select date"},
+    args: {
+        type: "date",
+        placeholder: "Select date",
+        startPlaceholder: "Start date",
+        endPlaceholder: "End date",
+        size: "default",
+        disabled: false,
+        clearable: true,
+        unlinkPanels: false,
+    },
 }
 
 /** Week picker */
 export const WeekPicker: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -52,6 +62,7 @@ export const WeekPicker: Story = {
 
 /** Month picker */
 export const MonthPicker: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -65,6 +76,7 @@ export const MonthPicker: Story = {
 
 /** Disabled dates */
 export const DisabledDates: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() {
@@ -87,6 +99,7 @@ export const DisabledDates: Story = {
 
 /** Date + time (datetime type) */
 export const DateTime: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -99,6 +112,7 @@ export const DateTime: Story = {
 }
 
 export const DateRange: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(null)} },
@@ -121,6 +135,7 @@ export const DateRange: Story = {
  * appears on hover, so the picker reserves its room: the width stays put instead of flickering.
  */
 export const ClearableNoReflow: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDatePicker},
         setup() { return {value: ref(new Date("2026-01-15T10:00:00Z"))} },

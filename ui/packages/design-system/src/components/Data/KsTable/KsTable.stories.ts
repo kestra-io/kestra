@@ -30,6 +30,10 @@ type Story = StoryObj<typeof KsTable>
 export const Default: Story = {
     args: {
         showHeader: true,
+        size: "default",
+        tableLayout: "fixed",
+        fit: true,
+        emptyText: "No flows found",
     },
 
     render: (args) => ({
@@ -68,6 +72,7 @@ export const Sortable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Striped rows */
@@ -86,6 +91,7 @@ export const Striped: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** With border */
@@ -104,6 +110,7 @@ export const Border: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Fixed header – scrollable body */
@@ -130,6 +137,7 @@ export const FixedHeader: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Multiple selection with checkboxes */
@@ -154,6 +162,7 @@ export const MultipleSelect: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Custom column template via slot */
@@ -183,6 +192,7 @@ export const CustomColumn: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Expandable row */
@@ -210,6 +220,7 @@ export const ExpandableRow: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Links and button-styled anchors inside cells: a plain link takes the primary text color, while an anchor rendered by KsButton (tag="a") keeps its button styling. */
@@ -238,6 +249,7 @@ export const LinksAndButtonAnchors: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Empty: Story = {
@@ -252,4 +264,5 @@ export const Empty: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

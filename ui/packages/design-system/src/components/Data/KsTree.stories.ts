@@ -36,18 +36,21 @@ type Story = StoryObj<typeof KsTree>
 export const Default: Story = {
     render: (args) => ({
         components: {KsTree},
-        setup() { return {args, TREE_DATA} },
+        setup() { return {args} },
         template: `
             <div style="padding:24px">
-                <ks-tree
-                    :data="TREE_DATA"
-                    :props="{label: 'label', children: 'children'}"
-                    default-expand-all
-                    v-bind="args"
-                />
+                <ks-tree v-bind="args" />
             </div>
         `,
     }),
+    args: {
+        data: TREE_DATA,
+        props: {label: "label", children: "children"},
+        nodeKey: "label",
+        defaultExpandAll: true,
+        draggable: false,
+        lazy: false,
+    },
 }
 
 /** Default expanded and checked keys */
@@ -79,6 +82,7 @@ export const DefaultExpandedAndChecked: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Draggable tree */
@@ -98,6 +102,7 @@ export const Draggable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Empty slot – custom empty state */
@@ -116,6 +121,7 @@ export const EmptyState: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const WithCustomSlot: Story = {
@@ -137,4 +143,5 @@ export const WithCustomSlot: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

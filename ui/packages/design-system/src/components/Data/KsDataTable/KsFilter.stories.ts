@@ -10,6 +10,7 @@ const meta: Meta<typeof KsFilter> = {
     component: KsFilter,
     tags: ["autodocs"],
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 component: "KsFilter provides a complete filter bar with search, filter chips, saved filters, and table options. Multiple top-level groups combine with OR; dragging one group onto another wraps them with an AND/OR operator.",

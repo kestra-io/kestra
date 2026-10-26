@@ -30,10 +30,23 @@ export const Default: Story = {
         },
         template: "<div style=\"padding:24px;width:300px\"><ks-input v-model=\"value\" v-bind=\"args\" /></div>",
     }),
-    args: {placeholder: "Type something..."},
+    args: {
+        type: "text",
+        placeholder: "Type something...",
+        size: "default",
+        disabled: false,
+        clearable: false,
+        showPassword: false,
+        required: false,
+        borderless: false,
+        rows: 2,
+        name: "",
+        id: "",
+    },
 }
 
 export const Sizes: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() {
@@ -50,6 +63,7 @@ export const Sizes: Story = {
 }
 
 export const Password: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("")} },
@@ -58,6 +72,7 @@ export const Password: Story = {
 }
 
 export const TextArea: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("")} },
@@ -67,6 +82,7 @@ export const TextArea: Story = {
 
 /** Clearable – clear button when input has value */
 export const Clearable: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("Clear me")} },
@@ -80,6 +96,7 @@ export const Clearable: Story = {
  * KsInput reserves the icon's footprint, so the width stays stable. Hover to verify it doesn't jump.
  */
 export const ClearableNoReflow: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("Hover me – width stays fixed")} },
@@ -93,6 +110,7 @@ export const ClearableNoReflow: Story = {
 
 /** Borderless – flush in a list row, as the search of the KsFilter "Add filters" panel */
 export const Borderless: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("")} },
@@ -115,6 +133,7 @@ export const Borderless: Story = {
 
 /** With suffix slot */
 export const WithSuffix: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("")} },
@@ -130,6 +149,7 @@ export const WithSuffix: Story = {
 
 /** Mixed input – prepend and append */
 export const MixedInput: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {v1: ref(""), v2: ref("")} },
@@ -148,6 +168,7 @@ export const MixedInput: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsInput},
         setup() { return {value: ref("Disabled value")} },
@@ -158,6 +179,7 @@ export const Disabled: Story = {
 /** Mobile – on touch screens (`pointer: coarse`) the field is 44px high with 16px text, which stops iOS from zooming on focus */
 export const Mobile: Story = {
     parameters: {
+        controls: {disable: true},
         viewport: {
             options: {
                 mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},

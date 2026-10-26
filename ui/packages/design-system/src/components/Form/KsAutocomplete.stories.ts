@@ -51,11 +51,12 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {placeholder: "Search namespaces...", triggerOnFocus: true, clearable: true},
+    args: {placeholder: "Search namespaces...", disabled: false, clearable: true, triggerOnFocus: true, valueKey: "value"},
 }
 
 /** Disabled state */
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAutocomplete},
         setup() {
@@ -72,6 +73,7 @@ export const Disabled: Story = {
 
 /** Remote search – suggestions fetched asynchronously */
 export const RemoteSearch: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAutocomplete},
         setup() {
@@ -104,6 +106,7 @@ export const RemoteSearch: Story = {
 }
 
 export const WithCustomTemplate: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAutocomplete},
         setup() {
@@ -141,6 +144,7 @@ export const WithCustomTemplate: Story = {
 /** Mobile – on touch screens (`pointer: coarse`) the field is 44px high with 16px text */
 export const Mobile: Story = {
     parameters: {
+        controls: {disable: true},
         viewport: {
             options: {
                 mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},

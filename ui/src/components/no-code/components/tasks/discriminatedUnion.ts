@@ -2,6 +2,8 @@ import type {Schema} from "./getTaskComponent"
 
 export interface ImplementationBranch {
     ref: string
+    type: string
+    nested: Record<string, string>
     definition: Schema
     branchTitle?: string
 }
@@ -70,6 +72,18 @@ function isPluginDiscriminator(values: string[]): boolean {
     return values.length > 0 && values.every((value) => FQCN_DISCRIMINATOR.test(value))
 }
 
+function nestedDiscriminators(definition: Schema, definitions: Record<string, Schema>): Record<string, string> {
+    const nested: Record<string, string> = {}
+    for (const [key, property] of Object.entries(definition.properties ?? {})) {
+        if (key === "type") continue
+        const ref = refOf(property)
+        const target = ref ? resolveDefinition(ref, definitions) : undefined
+        const discriminator = target ? resolveDiscriminator(mergeDefinition(target, definitions)) : undefined
+        if (discriminator?.length === 1 && isPluginDiscriminator(discriminator)) nested[key] = discriminator[0]
+    }
+    return nested
+}
+
 function discriminatedBranch(branch: Schema, definitions: Record<string, Schema>): ImplementationBranch | undefined {
     const ref = refOf(branch)
     if (!ref) return undefined
@@ -78,7 +92,14 @@ function discriminatedBranch(branch: Schema, definitions: Record<string, Schema>
     const definition = mergeDefinition(rawDefinition, definitions)
     const discriminator = resolveDiscriminator(definition)
     if (!discriminator || !isPluginDiscriminator(discriminator)) return undefined
-    return {ref: ref.split("/").pop() ?? ref, definition, branchTitle: titleOf(branch)}
+    const key = ref.split("/").pop() ?? ref
+    return {
+        ref: key,
+        type: discriminator.includes(key) ? key : discriminator[0],
+        nested: nestedDiscriminators(definition, definitions),
+        definition,
+        branchTitle: titleOf(branch),
+    }
 }
 
 function branchesOf(property: Schema): Schema[] | undefined {
@@ -105,9 +126,41 @@ export function isImplementationPicker(property: Schema, definitions: Record<str
     return getImplementationBranches(property, definitions) !== undefined
 }
 
-export function findBranchByType(branches: ImplementationBranch[], type: unknown): ImplementationBranch | undefined {
+function nestedTypeOf(value: unknown): unknown {
+    return typeof value === "object" && value !== null ? (value as {type?: unknown}).type : undefined
+}
+
+/**
+ * The branch a stored value belongs to. A generic plugin class such as a dashboard chart yields one
+ * branch per type argument, all sharing the same `type`, so the nested implementation the value
+ * already holds (its `data` source) decides between them.
+ */
+export function findBranchByType(branches: ImplementationBranch[], type: unknown, value?: Record<string, unknown>): ImplementationBranch | undefined {
     if (typeof type !== "string") return undefined
-    return branches.find((branch) => resolveDiscriminator(branch.definition)?.includes(type))
+    const matching = branches.filter((branch) => resolveDiscriminator(branch.definition)?.includes(type))
+    if (matching.length <= 1 || !value) return matching[0]
+    return matching.find((branch) => Object.entries(branch.nested).every(([key, nestedType]) => nestedTypeOf(value[key]) === nestedType)) ?? matching[0]
+}
+
+function isAmbiguous(branch: ImplementationBranch, branches: ImplementationBranch[]): boolean {
+    return branches.some((other) => other !== branch && other.type === branch.type)
+}
+
+/** `KPI`, or `KPI (Executions KPI)` when the same class appears once per type argument. */
+export function branchDisplayName(branch: ImplementationBranch, branches: ImplementationBranch[]): string {
+    const name = humanizeClassName(simpleClassName(branch.type))
+    if (!isAmbiguous(branch, branches)) return name
+    const qualifier = Object.values(branch.nested).map((nestedType) => humanizeClassName(simpleClassName(nestedType))).join(", ")
+    return qualifier ? `${name} (${qualifier})` : name
+}
+
+/** The value a freshly picked branch starts from: its `type`, and for an ambiguous branch the nested implementation that tells it apart. */
+export function newImplementation(branch: ImplementationBranch, branches: ImplementationBranch[]): Record<string, unknown> {
+    if (!isAmbiguous(branch, branches)) return {type: branch.type}
+    return {
+        type: branch.type,
+        ...Object.fromEntries(Object.entries(branch.nested).map(([key, nestedType]) => [key, {type: nestedType}])),
+    }
 }
 
 export function simpleClassName(fqcn: string): string {

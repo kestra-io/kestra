@@ -241,6 +241,7 @@ Rules:
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
 - Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- **One icon per action, in OSS and EE alike.** Before picking an icon for an action (delete, edit, save, run, import…), follow the pattern already used for that action in the codebase: the icon most places use for it, not a variant of it.
 - **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
 ### Performance
@@ -403,7 +404,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
@@ -425,9 +426,9 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
-| `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it |
+| `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it; `type="neutral"` is a grey pill for counts next to content (the KsFilter value counts) |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
 | `KsAvatar` | Avatar with fallback |

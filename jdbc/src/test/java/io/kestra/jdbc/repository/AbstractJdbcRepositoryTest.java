@@ -67,14 +67,15 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
             assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.NOT_IN, null)).isEqualTo(
                 DSL.field(columnName).notIn(List.of(assertValue))
             );
+            org.jooq.Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.STARTS_WITH, null)).isEqualTo(
-                DSL.field(columnName).startsWith(assertValue)
+                searchColumn.startsWith(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.ENDS_WITH, null)).isEqualTo(
-                DSL.field(columnName).endsWith(assertValue)
+                searchColumn.endsWith(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.CONTAINS, null)).isEqualTo(
-                DSL.field(columnName).contains(assertValue)
+                searchColumn.contains(assertValue)
             );
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.REGEX, null)).isEqualTo(
                 DSL.field(columnName).likeRegex(assertValue)
@@ -146,18 +147,19 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         String wildcardValue = "%";
         String underscoreValue = "_";
         Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
+        org.jooq.Field<Object> searchColumn = CaseInsensitiveSearch.of(DSL.field(columnName));
 
         // When / Then — CONTAINS: metacharacter must be escaped, not treated as a wildcard
         assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.CONTAINS, null))
-            .isEqualTo(DSL.field(columnName).contains(wildcardValue));
+            .isEqualTo(searchColumn.contains(wildcardValue));
 
         // When / Then — STARTS_WITH: % in value must not produce an open-ended match
         assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.STARTS_WITH, null))
-            .isEqualTo(DSL.field(columnName).startsWith(wildcardValue));
+            .isEqualTo(searchColumn.startsWith(wildcardValue));
 
         // When / Then — ENDS_WITH: _ in value must not act as a single-char wildcard
         assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, underscoreValue, QueryFilter.Op.ENDS_WITH, null))
-            .isEqualTo(DSL.field(columnName).endsWith(underscoreValue));
+            .isEqualTo(searchColumn.endsWith(underscoreValue));
     }
 
     @Test

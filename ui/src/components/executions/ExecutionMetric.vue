@@ -6,6 +6,7 @@
         :showTask="true"
         :execution="executionsStore.execution"
         :optionalColumns="optionalColumns"
+        fitHeight
     >
         <template #navbar>
             <LoopIterationsNotice kind="metrics" />

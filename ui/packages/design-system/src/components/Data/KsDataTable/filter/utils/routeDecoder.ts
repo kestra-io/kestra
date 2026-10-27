@@ -226,8 +226,5 @@ export const parseEncodedGroups = (
     const bucketed = bucketParams(decodeSearchParams(routeQuery))
     const routeDateFilter = routeQuery[DATE_FILTER_KEY] as string | undefined
     const groups = assembleUnits(bucketed, configuration, routeDateFilter)
-    if (groups.length === 0) {
-        groups.push({id: newGroupId(), kind: "leaf", filters: []})
-    }
     return {groups, topLogical: bucketed.observedTopLogical ?? "OR"}
 }

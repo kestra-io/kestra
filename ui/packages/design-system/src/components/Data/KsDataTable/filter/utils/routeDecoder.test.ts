@@ -28,11 +28,10 @@ const configuration: FilterConfiguration = {
 const decode = (query: LocationQuery) => parseEncodedGroups(query, configuration)
 
 describe("parseEncodedGroups", () => {
-    test("returns one empty leaf for an empty query", () => {
+    test("returns no groups for an empty query", () => {
         const {groups, topLogical} = decode({})
 
-        expect(groups).toHaveLength(1)
-        expect(groups[0]).toMatchObject({kind: "leaf", filters: []})
+        expect(groups).toEqual([])
         expect(topLogical).toBe("OR")
     })
 
@@ -134,7 +133,6 @@ describe("parseEncodedGroups", () => {
             "filters[unknown][EQUALS]": "value",
         })
 
-        expect(groups).toHaveLength(1)
-        expect(groups[0]).toMatchObject({kind: "leaf", filters: []})
+        expect(groups).toEqual([])
     })
 })

@@ -111,7 +111,8 @@ export const PILL_COMPENSATION = {
     /** Whole pixels: a browser snaps a fractional border width to a device pixel anyway, so a
      *  finer step would repaint every node without changing anything that gets drawn. */
     STEP: 1,
-    /** The ring is the pill's border and grows outwards, so it can be compensated nearly fully:
+    /** The ring is the pill's border, which `box-sizing: border-box` thickens inwards inside the
+     *  pill's fixed 2.5rem box, so widening it moves nothing and can be compensated nearly fully:
      *  4 holds it at ~1 screen pixel from the pill threshold down to 0.25 zoom. */
     RING_MAX: 4,
     /** The glyph only annotates the pill, so it has to stay smaller than the pill it sits on and

@@ -1,6 +1,7 @@
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import {client} from "@kestra-io/kestra-sdk/client"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
+import {State} from "@kestra-io/design-system"
 import {isLoopTaskType} from "@kestra-io/topology"
 import {handled} from "./kestraHttp"
 import {routeQueryToQueryFilters} from "./queryFilters"
@@ -43,7 +44,12 @@ export interface LoopLogTargets {
     total: number;
 }
 
-type IterationNode = IterationParent & {id: string}
+type IterationNode = IterationParent & {id: string; state?: {current?: string}}
+
+interface HostedNode {
+    node: ScopeNode;
+    hostId: string;
+}
 
 export interface LogTargetDeps {
     search: typeof searchLoopIterations;
@@ -53,7 +59,8 @@ export interface LogTargetDeps {
 
 export interface ChainCache {
     fetched: Map<string, Promise<IterationNode | undefined>>;
-    chains: Map<string, Promise<ScopeNode[] | undefined>>;
+    running: Set<string>;
+    chains: Map<string, Promise<HostedNode[] | undefined>>;
 }
 
 export interface CollectOptions {
@@ -64,7 +71,12 @@ export interface CollectOptions {
     offset?: number;
 }
 
-export const createChainCache = (): ChainCache => ({fetched: new Map(), chains: new Map()})
+export const createChainCache = (): ChainCache => ({fetched: new Map(), running: new Set(), chains: new Map()})
+
+function forgetRunningHosts(cache: ChainCache) {
+    cache.running.forEach((id) => cache.fetched.delete(id))
+    cache.running.clear()
+}
 
 const defaultDeps: LogTargetDeps = {
     search: searchLoopIterations,
@@ -136,12 +148,17 @@ function chainResolver(root: LoopRoot, fetchIteration: LogTargetDeps["fetchItera
         if (!cache.fetched.has(id)) {
             const pending = fetchIteration(id)
             cache.fetched.set(id, pending)
-            pending.catch(() => cache.fetched.delete(id))
+            pending.then(
+                (node) => {
+                    if (node?.state?.current && !State.isTerminated(node.state.current)) cache.running.add(id)
+                },
+                () => cache.fetched.delete(id),
+            )
         }
         return cache.fetched.get(id)!
     }
 
-    function chainOf(node: IterationNode, depth: number): Promise<ScopeNode[] | undefined> {
+    function chainOf(node: IterationNode, depth: number): Promise<HostedNode[] | undefined> {
         if (!cache.chains.has(node.id)) {
             const pending = resolve(node, depth)
             cache.chains.set(node.id, pending)
@@ -150,22 +167,27 @@ function chainResolver(root: LoopRoot, fetchIteration: LogTargetDeps["fetchItera
         return cache.chains.get(node.id)!
     }
 
-    async function resolve(node: IterationNode, depth: number): Promise<ScopeNode[] | undefined> {
+    async function resolve(node: IterationNode, depth: number): Promise<HostedNode[] | undefined> {
         const {taskId, index, value} = node.loopRun ?? {}
         if (taskId === undefined || index === undefined || depth > MAX_CHAIN_DEPTH) return undefined
         const own: ScopeNode = {id: node.id, taskId, number: index + 1, value}
         if (!node.parentId) return undefined
-        if (node.parentId === root.id) return [withMultiRun(own, root.taskRunList)]
+        if (node.parentId === root.id) return [{node: own, hostId: root.id}]
 
         const parent = await fetchOnce(node.parentId)
         const parentChain = parent && await chainOf(parent, depth + 1)
-        return parentChain && [...parentChain, withMultiRun(own, parent.taskRunList)]
+        return parentChain && [...parentChain, {node: own, hostId: parent.id}]
     }
+
+    const taskRunsOf = async (hostId: string) => hostId === root.id ? root.taskRunList : (await fetchOnce(hostId))?.taskRunList
+
+    const withHostRuns = (chain: HostedNode[] | undefined) =>
+        chain && Promise.all(chain.map(async ({node, hostId}) => withMultiRun(node, await taskRunsOf(hostId))))
 
     return (iteration: LoopIteration) => chainOf(
         {id: iteration.id, parentId: iteration.parentId, loopRun: iteration.loopRun},
         0,
-    )
+    ).then(withHostRuns)
 }
 
 function fitsBudget(ids: Set<string>, chain: ScopeNode[], options: CollectOptions) {
@@ -232,6 +254,7 @@ async function collectBatch(
 ) {
     const limited = budgeted(deps, options.maxRequests ?? MAX_COLLECTION_REQUESTS)
     const cache = options.cache ?? createChainCache()
+    forgetRunningHosts(cache)
     const offset = options.offset ?? 0
     const ids = new Set(seed)
     const kept: ScopeNode[][] = []

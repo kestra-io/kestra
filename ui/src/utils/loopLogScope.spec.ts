@@ -224,6 +224,38 @@ describe("multi-run loops", () => {
 
         expect(targets.chains["amer"][0]).not.toHaveProperty("multiRun")
     })
+
+    it("shouldFlagACachedChainOnceTheRootStartsASecondRunOfItsLoop", async () => {
+        const deps = depsFor([iteration("amer", "root", "per_region", 1)])
+        const cache = createChainCache()
+
+        await collectFailedTargets({...root, taskRunList: runs("per_region", 1)}, deps, {cache})
+        const targets = await collectFailedTargets({...root, taskRunList: runs("per_region", 2)}, deps, {cache})
+
+        expect(targets.chains["amer"][0].multiRun).toBe(true)
+    })
+
+    it("shouldRefetchARunningParentSoASecondRunOfItsLoopIsFlagged", async () => {
+        const parent = (state: string, count: number) => ({
+            ...customers(12)["customer-13"],
+            state: {current: state},
+            taskRunList: runs("per_invoice", count),
+        })
+        const deps = depsFor([nestedFailure("f13", 12)])
+        deps.fetchIteration
+            .mockResolvedValueOnce(parent("RUNNING", 1))
+            .mockResolvedValueOnce(parent("SUCCESS", 2))
+        const cache = createChainCache()
+        const rootRun = {...root, taskRunList: runs("per_customer", 1)}
+
+        const first = await collectFailedTargets(rootRun, deps, {cache})
+        const second = await collectFailedTargets(rootRun, deps, {cache})
+        await collectFailedTargets(rootRun, deps, {cache})
+
+        expect(first.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, undefined])
+        expect(second.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, true])
+        expect(deps.fetchIteration).toHaveBeenCalledTimes(2)
+    })
 })
 
 describe("collectScopedTargets", () => {

@@ -1,8 +1,11 @@
 package io.kestra.mcp;
 
 import java.util.Optional;
+import java.util.Set;
 
 import io.kestra.core.mcp.models.McpServer;
+
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * Defines MCP servers from configuration rather than the repository, so users can neither list, edit nor
@@ -18,5 +21,12 @@ public interface McpServerProvider {
      */
     McpToolSource.Kind toolSource();
 
-    Optional<McpServer> get(String tenantId, String serverId);
+    Optional<McpServer> get(@Nullable String tenantId, String serverId);
+
+    /**
+     * @return the authentication methods a caller may use on a server this provider defines
+     */
+    default Set<McpServer.AuthType> authTypes(McpServer server) {
+        return Set.of(server.authType());
+    }
 }

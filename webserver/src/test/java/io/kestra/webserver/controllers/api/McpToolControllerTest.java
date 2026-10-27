@@ -105,6 +105,19 @@ class McpToolControllerTest {
     }
 
     @Test
+    void shouldReturnNotFoundWhenConnectingToPlatformServerThatIsNotEnabled() {
+        HttpClientResponseException e = Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                POST("/api/v1/mcp", "")
+                    .accept(MediaType.TEXT_EVENT_STREAM_TYPE, MediaType.APPLICATION_JSON_TYPE)
+                    .contentType(MediaType.APPLICATION_JSON)
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
     void shouldReturnServiceUnavailableWhenConnectingToDisabledServer() {
         // Given
         String serverId = saveServer(true, null);

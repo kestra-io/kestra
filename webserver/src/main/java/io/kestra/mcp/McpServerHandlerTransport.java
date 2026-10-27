@@ -16,8 +16,13 @@ import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.queues.DispatchQueueInterface;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.modelcontextprotocol.server.McpAsyncServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.spec.HttpHeaders;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -38,24 +43,50 @@ public class McpServerHandlerTransport {
     private final Map<McpToolSource.Kind, McpToolSource> toolSources;
     private final McpServerCache mcpServerCache;
     private final McpSessionService mcpSessionService;
+    private final McpSessionFactory sessionFactory;
 
     @Inject
     public McpServerHandlerTransport(
         McpErrorResponseMapper mcpErrorResponseMapper,
         List<McpToolSource> toolSources,
         McpServerCache mcpServerCache,
-        McpSessionService mcpSessionService) {
+        McpSessionService mcpSessionService,
+        McpSessionFactory sessionFactory) {
         this.mcpErrorResponseMapper = mcpErrorResponseMapper;
         this.toolSources = toolSources.stream().collect(Collectors.toMap(McpToolSource::kind, Function.identity()));
         this.mcpServerCache = mcpServerCache;
         this.mcpSessionService = mcpSessionService;
+        this.sessionFactory = sessionFactory;
     }
 
     /**
-     * @return whether a tool source is registered for this kind of server, i.e. whether it can be served
+     * Serves an MCP request to a server, responding 404 when the server does not exist or no tool source can
+     * serve it, and 503 when it is disabled.
+     *
+     * @param tenantId the tenant the server belongs to, or {@code null} for a server that belongs to none
+     * @param callerId the caller, or {@code null} when anonymous
      */
-    public boolean supports(McpToolSource.Kind kind) {
-        return toolSources.containsKey(kind);
+    public Mono<? extends HttpResponse<?>> handle(
+        @Nullable String tenantId,
+        String serverId,
+        @Nullable String callerId,
+        HttpRequest<String> request) {
+        Optional<McpServerCache.ResolvedServer> server = mcpServerCache.resolve(tenantId, serverId);
+        if (server.isEmpty()) {
+            return Mono.just(HttpResponse.notFound());
+        }
+        if (server.get().server().disabled()) {
+            return Mono.just(HttpResponse.status(HttpStatus.SERVICE_UNAVAILABLE));
+        }
+        if (!supports(server.get().toolSource())) {
+            log.warn("MCP server '{}' needs a {} tool source, but none is registered", serverId, server.get().toolSource());
+            return Mono.just(HttpResponse.notFound());
+        }
+
+        KestraMcpTransportContext context = sessionFactory.build(
+            tenantId, serverId, request.getHeaders().get(HttpHeaders.MCP_SESSION_ID), callerId
+        );
+        return getServerHandler(context).handleRequest(request, context);
     }
 
     /**
@@ -181,6 +212,13 @@ public class McpServerHandlerTransport {
         return handlers.keySet().stream()
             .filter(key -> Objects.equals(key.tenantId(), tenantId) && Objects.equals(key.serverId(), serverId))
             .toList();
+    }
+
+    /**
+     * @return whether a tool source is registered for this kind of server, i.e. whether it can be served
+     */
+    private boolean supports(McpToolSource.Kind kind) {
+        return toolSources.containsKey(kind);
     }
 
     private McpAsyncServer buildServer(

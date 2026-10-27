@@ -1,6 +1,7 @@
 package io.kestra.core.tenant;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import jakarta.inject.Singleton;
 
@@ -17,6 +18,14 @@ public class TenantService {
      */
     public String resolveTenant() {
         return MAIN_TENANT;
+    }
+
+    /**
+     * Runs the supplier as if the current request had been made in the given tenant, for work a request does on
+     * behalf of its caller in another tenant. On OSS there is only one tenant, so it simply runs the supplier.
+     */
+    public <T> T callInTenant(String tenant, Supplier<T> supplier) {
+        return supplier.get();
     }
 
     /**

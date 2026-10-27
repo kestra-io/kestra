@@ -3,6 +3,7 @@ package io.kestra.mcp;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 
@@ -102,10 +103,10 @@ public class McpServerCache {
         for (McpServerProvider provider : serverProviders) {
             Optional<McpServer> provided = provider.get(tenantId, serverId);
             if (provided.isPresent()) {
-                return Optional.of(new ResolvedServer(provided.get(), provider.toolSource()));
+                return Optional.of(new ResolvedServer(provided.get(), provider.toolSource(), provider.authTypes(provided.get())));
             }
         }
-        return stored(tenantId, serverId).map(server -> new ResolvedServer(server, McpToolSource.Kind.FLOWS));
+        return stored(tenantId, serverId).map(server -> new ResolvedServer(server, McpToolSource.Kind.FLOWS, Set.of(server.authType())));
     }
 
     /**
@@ -142,7 +143,7 @@ public class McpServerCache {
         return server;
     }
 
-    public record ResolvedServer(McpServer server, McpToolSource.Kind toolSource) {
+    public record ResolvedServer(McpServer server, McpToolSource.Kind toolSource, Set<McpServer.AuthType> authTypes) {
     }
 
     private record McpCacheKey(String tenantId, String serverId) {

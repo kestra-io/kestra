@@ -469,7 +469,7 @@
     "resume from breakpoint title": "Reanudar ejecución {id} desde el punto de interrupción",
     "approval": {
       "review": "Revisar",
-      "title": "Revisar la ejecución {id}",
+      "title": "Revisa el {task} de la ejecución {id}",
       "approve": "Aprobar",
       "deny": "Denegar",
       "comment": "Comentario",
@@ -481,10 +481,21 @@
       },
       "comment required": "Se requiere un comentario para esta decisión.",
       "inputs invalid": "Algunas entradas no son válidas: {errors}",
-      "already decided": "Ya se ha tomado una decisión sobre esta solicitud de aprobación.",
       "review done": "Tu revisión ha sido registrada",
+      "reviewed": {
+        "title": "Solicitud de aprobación de la ejecución {id}",
+        "explanation": "Esta solicitud de aprobación ya no está esperando una revisión.",
+        "decision": "Decisión",
+        "by": "Decidido por",
+        "on": "Decidido en",
+        "decisions": {
+          "approved": "Aprobado",
+          "denied": "Denegado",
+          "expired": "Caducado"
+        }
+      },
       "cancel request": "Cancelar solicitud",
-      "cancel confirm": "¿Estás seguro de que quieres cancelar la solicitud de aprobación de la ejecución <code>{id}</code>? No se ejecutará ninguna rama de decisión.",
+      "cancel confirm": "¿Estás seguro de que quieres cancelar la solicitud de aprobación de la ejecución {id}? No se ejecutará ninguna rama de decisión.",
       "cancel done": "La solicitud de aprobación ha sido cancelada",
       "banner": {
         "pausing": "Esta ejecución está preparando una solicitud de aprobación y se pausará para una revisión.",

@@ -31,6 +31,7 @@ import {InputType} from "../utils/inputs"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 import {useCoreStore} from "./core"
 import {useApiStore} from "./api"
+import {handled} from "../utils/kestraHttp"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
@@ -332,6 +333,22 @@ export const useExecutionsStore = defineStore("executions", () => {
         return axios.get<{allowed: boolean}>(`${apiUrl()}/executions/${options.id}/actions/review/allowed`, {
             params: {taskRunId: options.taskRunId},
         }).then(response => response.data.allowed)
+    }
+
+    const reviewAllowedRequests = new Map<string, Promise<boolean>>()
+
+    const isReviewAllowed = (options: { id: string; taskRunId: string }) => {
+        const key = `${options.id}/${options.taskRunId}`
+        let request = reviewAllowedRequests.get(key)
+        if (request === undefined) {
+            request = reviewAllowed(options).catch((e: unknown) => {
+                handled(e)
+                reviewAllowedRequests.delete(key)
+                return false
+            })
+            reviewAllowedRequests.set(key, request)
+        }
+        return request
     }
 
     const cancelApproval = (options: { id: string; taskRunId: string }) => {
@@ -977,6 +994,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         validateReview,
         cancelApproval,
         reviewAllowed,
+        isReviewAllowed,
         resumeFromBreakpoint,
         validateResume,
         pause,

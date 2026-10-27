@@ -4,17 +4,18 @@
         v-bind="$attrs"
         :icon="ClipboardCheckOutline"
         data-test="review-action"
-        @click="dialogOpen = true"
+        @click="open"
     >
         {{ $t("approval.review") }}
     </NavBarAction>
 
     <ReviewDialog
-        v-if="approval"
+        v-if="opened"
         v-model="dialogOpen"
         :execution="execution"
-        :taskRun="approval.taskRun"
-        :task="approval.task"
+        :taskRun="opened.taskRun"
+        :task="opened.task"
+        @closed="opened = undefined"
     />
 </template>
 
@@ -24,6 +25,7 @@
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import ReviewDialog from "../../../ReviewDialog.vue"
     import {useApprovalReviewer} from "../../../../../composables/useApprovalReviewer"
+    import type {ApprovalTask, ApprovalTaskRun} from "../../../../../utils/approval"
     import type {Execution} from "../../../../../stores/executions"
 
     defineOptions({inheritAttrs: false})
@@ -33,6 +35,12 @@
     }>()
 
     const dialogOpen = ref(false)
+    const opened = ref<{taskRun: ApprovalTaskRun; task: ApprovalTask}>()
 
     const {approval, enabled} = useApprovalReviewer(() => props.execution)
+
+    function open() {
+        opened.value = approval.value
+        dialogOpen.value = true
+    }
 </script>

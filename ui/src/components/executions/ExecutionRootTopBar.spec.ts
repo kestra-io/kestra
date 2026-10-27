@@ -4,6 +4,7 @@ import KestraDesignSystem from "@kestra-io/design-system"
 const executionState = {current: "SUCCESS"}
 const permissions = {execute: true}
 const storeState = vi.hoisted(() => ({taskRunList: [] as {taskId: string; state: {current: string}}[], flow: undefined as unknown}))
+const loadedFlow = {id: "f", namespace: "ns", revision: 1, tasks: []}
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {namespace: "ns", flowId: "f", id: "e"}, query: {}}),
@@ -13,9 +14,8 @@ vi.mock("vue-router", () => ({
 
 vi.mock("../../stores/executions", () => ({
     useExecutionsStore: () => ({
-        execution: {id: "e", namespace: "ns", flowId: "f", state: executionState, labels: [], taskRunList: storeState.taskRunList},
+        execution: {id: "e", namespace: "ns", flowId: "f", flowRevision: 1, state: executionState, labels: [], taskRunList: storeState.taskRunList},
         flow: storeState.flow,
-        loadFlowForExecutionByExecutionId: vi.fn(() => Promise.resolve()),
     }),
 }))
 
@@ -41,7 +41,7 @@ beforeEach(() => {
     executionState.current = "SUCCESS"
     permissions.execute = true
     storeState.taskRunList = []
-    storeState.flow = undefined
+    storeState.flow = loadedFlow
 })
 
 function mountTopBar() {
@@ -84,6 +84,7 @@ describe("ExecutionRootTopBar — Execute is the primary on every execution stat
         ["CREATED", "Pause"],
         ["RUNNING", "Pause"],
         ["PAUSED", "Resume"],
+        ["PAUSING", "Edit Flow"],
         ["BREAKPOINT", "Resume from breakpoint"],
         ["FAILED", "Restart"],
         ["SUCCESS", "Replay"],
@@ -155,7 +156,7 @@ describe("ExecutionRootTopBar — an Approval paused beside another pause", () =
             {taskId: "approval", state: {current: "PAUSED"}},
             {taskId: "pause", state: {current: "PAUSED"}},
         ]
-        storeState.flow = {tasks: [{id: "approval", type: "io.kestra.plugin.core.flow.Approval"}, {id: "pause", type: "io.kestra.plugin.core.flow.Pause"}]}
+        storeState.flow = {...loadedFlow, tasks: [{id: "approval", type: "io.kestra.plugin.core.flow.Approval"}, {id: "pause", type: "io.kestra.plugin.core.flow.Pause"}]}
     })
 
     async function overflowLabels(wrapper = mountTopBar()) {
@@ -175,5 +176,38 @@ describe("ExecutionRootTopBar — an Approval paused beside another pause", () =
         storeState.taskRunList = [{taskId: "approval", state: {current: "PAUSED"}}]
 
         expect(await overflowLabels()).not.toContain("Resume")
+    })
+})
+
+describe("ExecutionRootTopBar — a pause whose flow is not loaded yet", () => {
+    async function allLabels(wrapper: ReturnType<typeof mountTopBar>) {
+        await wrapper.find("button[aria-label=\"Actions\"]").trigger("click")
+        await new Promise(resolve => setTimeout(resolve))
+        return Array.from(document.querySelectorAll("button")).map(button => button.textContent?.trim())
+    }
+
+    it.each([
+        ["no flow", undefined],
+        ["another revision", {...loadedFlow, revision: 2}],
+    ])("offers neither Resume nor Review with %s in the store", async (_case, flow) => {
+        executionState.current = "PAUSED"
+        storeState.flow = flow
+
+        const labels = await allLabels(mountTopBar())
+
+        expect(labels).not.toContain("Resume")
+        expect(labels).not.toContain("Review")
+    })
+})
+
+describe("ExecutionRootTopBar — a pausing execution", () => {
+    it("offers no Pause, since it is already pausing", async () => {
+        executionState.current = "PAUSING"
+        const wrapper = mountTopBar()
+
+        await wrapper.find("button[aria-label=\"Actions\"]").trigger("click")
+        await new Promise(resolve => setTimeout(resolve))
+
+        expect(Array.from(document.querySelectorAll("button")).map(button => button.textContent?.trim())).not.toContain("Pause")
     })
 })

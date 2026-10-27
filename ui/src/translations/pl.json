@@ -562,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Zmienne",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Żaden Task tego Flow nie dostarcza Artifactu.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
+      "tasks": "brak Tasków | {count} Task | {count} Taski | {count} Tasków",
+      "fullscreen": "Pełny ekran",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
@@ -2130,11 +2139,8 @@
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
-      "export": "Eksportuj",
-      "exportEmpty": "Ten wykres nie ma danych do wyeksportowania.",
       "exportTo": {
-        "csv": "Eksportuj do CSV",
-        "ion": "Eksportuj do ION"
+        "csv": "Eksportuj do CSV"
       },
       "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
       "show_all_statuses": "Pokaż wszystkie statusy",

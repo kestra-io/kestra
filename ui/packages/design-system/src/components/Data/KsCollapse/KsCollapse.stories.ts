@@ -40,6 +40,7 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {accordion: false},
 }
 
 /** Custom title – header content via named slot */
@@ -73,6 +74,7 @@ export const CustomTitle: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Disabled item – specific panel cannot be toggled */
@@ -96,6 +98,7 @@ export const DisabledItem: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Accordion: Story = {
@@ -112,4 +115,5 @@ export const Accordion: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

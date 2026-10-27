@@ -562,6 +562,15 @@
     "inputs": "Входные данные",
     "input": "Ввод",
     "variables": "Переменные",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Ни одна task этого flow не предоставляет artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "нет Artifacts | {count} Artifact | {count} Artifacts | {count} Artifacts",
+      "tasks": "нет Task'ов | {count} Task | {count} Task'а | {count} Task'ов",
+      "fullscreen": "На весь экран",
+      "exit_fullscreen": "Выйти из полноэкранного режима"
+    },
     "variable_explorer": {
       "title": "Ввод/Вывод",
       "search_placeholder": "Поиск по Key или value...",
@@ -2130,11 +2139,8 @@
       "no_description_hint": "Добавьте описание к этому flow, чтобы задокументировать его назначение.<br>Поддерживается Markdown.",
       "others": "Другие",
       "viewAll": "Показать все",
-      "export": "Экспорт",
-      "exportEmpty": "В этой диаграмме нет данных для экспорта.",
       "exportTo": {
-        "csv": "Экспорт в CSV",
-        "ion": "Экспорт в ION"
+        "csv": "Экспорт в CSV"
       },
       "ignoredFilters": "Фильтр {filters} не применяется к этому графику. | Фильтры {filters} не применяются к этому графику.",
       "show_all_statuses": "Показать все статусы",

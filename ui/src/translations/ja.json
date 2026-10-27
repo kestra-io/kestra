@@ -562,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "変数",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "このFlowのTaskはartifactを提供していません。",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "artifactなし | {count} artifact | {count} artifacts",
+      "tasks": "タスクなし | {count} タスク | {count} タスク",
+      "fullscreen": "全画面表示",
+      "exit_fullscreen": "フルスクリーンを終了"
+    },
     "variable_explorer": {
       "title": "入力/出力",
       "search_placeholder": "Key または value を検索...",
@@ -2130,11 +2139,8 @@
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
       "viewAll": "すべて表示",
-      "export": "エクスポート",
-      "exportEmpty": "このチャートにエクスポートするデータはありません。",
       "exportTo": {
-        "csv": "CSVにエクスポート",
-        "ion": "ION にエクスポート"
+        "csv": "CSVにエクスポート"
       },
       "ignoredFilters": "{filters} フィルターはこのチャートには適用されません。 | {filters} フィルターはこのチャートには適用されません。",
       "show_all_statuses": "すべてのステータスを表示",

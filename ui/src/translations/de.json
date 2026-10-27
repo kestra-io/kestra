@@ -562,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variablen",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Kein Task dieses Flows stellt ein Artifact bereit.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "keine Artifacts | {count} Artifact | {count} Artifacts",
+      "tasks": "keine Tasks | {count} Task | {count} Tasks",
+      "fullscreen": "Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
+    },
     "variable_explorer": {
       "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder Value suchen…",
@@ -2130,11 +2139,8 @@
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
       "viewAll": "Alle anzeigen",
-      "export": "Exportieren",
-      "exportEmpty": "Dieses Diagramm hat keine Daten zum Exportieren.",
       "exportTo": {
-        "csv": "Als CSV exportieren",
-        "ion": "Als ION exportieren"
+        "csv": "Als CSV exportieren"
       },
       "ignoredFilters": "Der Filter {filters} gilt nicht für dieses Diagramm. | Die Filter {filters} gelten nicht für dieses Diagramm.",
       "show_all_statuses": "Alle Status anzeigen",

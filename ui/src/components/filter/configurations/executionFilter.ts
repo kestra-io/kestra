@@ -39,7 +39,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         ],
                         valueType: "multi-select" as const,
                         valueProvider: namespaceValueProvider(),
-                        searchable: true,
                     },
                 ] : []) as FilterConfiguration["keys"],
                 ...(routeFamily(route.name) !== "flows/update" ? [{
@@ -67,7 +66,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         })
                         return ids.map(id => ({label: id, value: id}))
                     },
-                    searchable: true,
                     showComparatorSelection: true,
                 }] : []) as FilterConfiguration["keys"],
                 {
@@ -92,7 +90,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES
                     },
                     showComparatorSelection: true,
-                    searchable: true,
                     visibleByDefault: true,
                     colored: true,
                 },
@@ -173,7 +170,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerId",
@@ -187,7 +183,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -198,7 +193,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "taskId",
@@ -209,7 +203,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     // QueryFilter.Field.OPERATION_ID supports EQUALS only, so there is no comparator to offer.
@@ -218,7 +211,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.operationId.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "text",
-                    searchable: true,
                 },
             ],
         }

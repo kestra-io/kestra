@@ -9,7 +9,7 @@ import "monaco-editor/languages/definitions/yaml/register.js"
 import {
     registerIndentedBlockScalarTokenizer,
     withIndentedBlockScalarContent,
-} from "../../../src/composables/monaco/languages/yamlBlockScalarTokenizer"
+} from "./yamlBlockScalarTokenizer"
 
 const FLOW = [
     "tasks:",
@@ -67,5 +67,43 @@ describe("YAML block scalar tokenizer", () => {
         const language = {tokenizer: {root: []}}
 
         expect(withIndentedBlockScalarContent(language)).toBe(language)
+    })
+
+    it("does not mutate the original language object", () => {
+        const originalRules = [[/original/, "original"]] as unknown as monaco.languages.IMonarchLanguageRule[]
+
+        const language = {
+            tokenizer: {
+                root: [],
+                multiStringContinued: originalRules,
+            },
+        } as unknown as monaco.languages.IMonarchLanguage
+
+        const originalTokenizer = language.tokenizer
+
+        const result = withIndentedBlockScalarContent(language)
+
+        expect(language.tokenizer).toBe(originalTokenizer)
+        expect(language.tokenizer?.multiStringContinued).toBe(originalRules)
+        expect(result.tokenizer).not.toBe(originalTokenizer)
+    })
+
+    it("preserves every other tokenizer state", () => {
+        const rootRules = [[/root/, "root"]] as unknown as monaco.languages.IMonarchLanguageRule[]
+        const commentRules = [[/comment/, "comment"]] as unknown as monaco.languages.IMonarchLanguageRule[]
+        const originalRules = [[/original/, "original"]] as unknown as monaco.languages.IMonarchLanguageRule[]
+
+        const language = {
+            tokenizer: {
+                root: rootRules,
+                comment: commentRules,
+                multiStringContinued: originalRules,
+            },
+        } as unknown as monaco.languages.IMonarchLanguage
+
+        const result = withIndentedBlockScalarContent(language)
+
+        expect(result.tokenizer?.root).toBe(rootRules)
+        expect(result.tokenizer?.comment).toBe(commentRules)
     })
 })

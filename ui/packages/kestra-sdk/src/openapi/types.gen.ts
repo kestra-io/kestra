@@ -864,6 +864,10 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError =
     path?: string;
 };
 
+export type ExecutionControllerEditedDefinition = {
+    definition?: string;
+};
+
 export type ExecutionControllerEvalResult = {
     result?: string;
     error?: string;
@@ -894,6 +898,10 @@ export type ExecutionControllerLastExecutionResponse = {
     namespace: string;
     startDate: string;
     status: StateType;
+};
+
+export type ExecutionControllerReplayWithEditedTaskRequest = {
+    definition: string;
 };
 
 export type ExecutionControllerSetLabelsByIdsRequest = {
@@ -2477,12 +2485,19 @@ export type TaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    definitionEdit?: TaskRunDefinitionEdit | null;
 };
 
 export type TaskRunAttempt = {
     state: State;
     workerId?: string | null;
     logFile?: string | null;
+};
+
+export type TaskRunDefinitionEdit = {
+    id: string;
+    editedBy?: string | null;
+    editedAt: string;
 };
 
 export type TaskRunStatistic = {
@@ -2832,6 +2847,7 @@ export type TaskRunWritable = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    definitionEdit?: TaskRunDefinitionEdit | null;
 };
 
 export type TaskRunAttemptWritable = {
@@ -7186,6 +7202,57 @@ export type ReplayExecutionResponses = {
 
 export type ReplayExecutionResponse = ReplayExecutionResponses[keyof ReplayExecutionResponses];
 
+export type ReplayExecutionWithEditedTaskData = {
+    /**
+     * The edited definition of the task, as YAML
+     */
+    body: ExecutionControllerReplayWithEditedTaskRequest;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay-with-edited-task';
+};
+
+export type ReplayExecutionWithEditedTaskErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplayExecutionWithEditedTaskError = ReplayExecutionWithEditedTaskErrors[keyof ReplayExecutionWithEditedTaskErrors];
+
+export type ReplayExecutionWithEditedTaskResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReplayExecutionWithEditedTaskResponse = ReplayExecutionWithEditedTaskResponses[keyof ReplayExecutionWithEditedTaskResponses];
+
 export type ReplayExecutionWithinputsData = {
     /**
      * The inputs (multipart map)
@@ -7946,6 +8013,49 @@ export type GetExecutionFlowGraphResponses = {
 };
 
 export type GetExecutionFlowGraphResponse = GetExecutionFlowGraphResponses[keyof GetExecutionFlowGraphResponses];
+
+export type GetTaskRunEditedDefinitionData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/taskruns/{taskRunId}/edited-definition';
+};
+
+export type GetTaskRunEditedDefinitionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetTaskRunEditedDefinitionError = GetTaskRunEditedDefinitionErrors[keyof GetTaskRunEditedDefinitionErrors];
+
+export type GetTaskRunEditedDefinitionResponses = {
+    /**
+     * getTaskRunEditedDefinition 200 response
+     */
+    200: ExecutionControllerEditedDefinition;
+};
+
+export type GetTaskRunEditedDefinitionResponse = GetTaskRunEditedDefinitionResponses[keyof GetTaskRunEditedDefinitionResponses];
 
 export type CreateExecutionData = {
     /**

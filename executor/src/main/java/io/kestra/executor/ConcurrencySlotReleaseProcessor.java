@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ScopedConcurrencyLimit;
@@ -15,6 +16,8 @@ import io.kestra.core.services.ConcurrencyLimitResolver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+
+import static io.kestra.core.utils.Rethrow.throwBiFunction;
 
 /**
  * Releases a terminated execution's concurrency slots — one per applicable scope: flow,
@@ -42,6 +45,7 @@ public class ConcurrencySlotReleaseProcessor {
     private final ExecutionQueuedStateStore executionQueuedStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final MetricRegistry metricRegistry;
+    private final ExecutorService executorService;
 
     @Inject
     public ConcurrencySlotReleaseProcessor(
@@ -49,18 +53,20 @@ public class ConcurrencySlotReleaseProcessor {
         ConcurrencyLimitResolver concurrencyLimitResolver,
         ExecutionQueuedStateStore executionQueuedStateStore,
         FlowMetaStoreInterface flowMetaStore,
-        MetricRegistry metricRegistry) {
+        MetricRegistry metricRegistry,
+        ExecutorService executorService) {
         this.concurrencyLimitStateStore = concurrencyLimitStateStore;
         this.concurrencyLimitResolver = concurrencyLimitResolver;
         this.executionQueuedStateStore = executionQueuedStateStore;
         this.flowMetaStore = flowMetaStore;
         this.metricRegistry = metricRegistry;
+        this.executorService = executorService;
     }
 
     /**
      * Releases the slots held by the terminated execution of {@code executor} in every
      * applicable concurrency scope — a no-op when no limit applies to its flow — and returns
-     * the queued executions popped by the release, already marked RUNNING. The caller must
+     * the queued executions popped by the release, marked RUNNING or terminated by an expired SLA. The caller must
      * emit the returned executions only after this method returns — never from inside the
      * state-store transaction (see the class Javadoc).
      *
@@ -116,9 +122,13 @@ public class ConcurrencySlotReleaseProcessor {
                 limits,
                 executionQueuedStateStore,
                 this::candidateLimits,
-                (txContext, queued) ->
+                throwBiFunction((txContext, queued) ->
                 {
-                    var newExecution = queued.withState(State.Type.RUNNING);
+                    var newExecution = executorService.handleQueuedExecutionSLA(queued);
+                    if (newExecution.getState().isTerminated()) {
+                        return newExecution;
+                    }
+                    newExecution = newExecution.withState(State.Type.RUNNING);
 
                     // the popped execution claimed one slot in every incremented scope: stamp
                     // them the same way the gate does for directly admitted executions
@@ -132,9 +142,9 @@ public class ConcurrencySlotReleaseProcessor {
                         metricRegistry.tags(newExecution)
                     ).increment();
                     return newExecution;
-                }
+                })
             );
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | QueueException e) {
             // The execution row has already been committed as terminated, so this release is a
             // compensating action running after the fact: it must never abort the caller's
             // terminal-notification pipeline.
@@ -153,21 +163,20 @@ public class ConcurrencySlotReleaseProcessor {
      * <p>
      * Two different populations reach this fallback, and only one of them is temporary:
      * <ul>
-     *     <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
-     *     <li>executions moved to RUNNING while bypassing the admission gate, which never
-     *     increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
+     * <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
+     * <li>executions moved to RUNNING while bypassing the admission gate, which never
+     * increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
      * </ul>
      */
     private static boolean claimedASlotAccordingToHistory(Execution execution) {
-        // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
-        boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
-            && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
+        // An execution terminated while queued never claimed a concurrency slot, regardless of its terminal state.
+        boolean queuedWithoutRunning = execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
             && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
         // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
         boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
             && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
 
-        return !queuedThenKilled && !concurrencyShortCircuitState;
+        return !queuedWithoutRunning && !concurrencyShortCircuitState;
     }
 
     private List<String> claimedScopes(Execution queued, List<ScopedConcurrencyLimit> releasedLimits, boolean flowScopedRelease) {

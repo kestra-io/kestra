@@ -141,9 +141,12 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
             List<ScopedConcurrencyLimit> candidateScopes = candidateLimits.apply(candidate.getExecution());
             boolean fits = candidateScopes.stream().allMatch(scope -> running(scope) < scope.concurrency().getLimit());
             if (fits) {
-                candidateScopes.forEach(this::increment);
+                Execution processed = consumer.apply(NoopTransactionContext.INSTANCE, candidate.getExecution());
+                if (!processed.getState().isTerminated()) {
+                    candidateScopes.forEach(this::increment);
+                }
                 executionQueuedStateStore.remove(candidate.getExecution());
-                popped.add(consumer.apply(NoopTransactionContext.INSTANCE, candidate.getExecution()));
+                popped.add(processed);
                 if (!hasRoom(widest)) {
                     break;
                 }

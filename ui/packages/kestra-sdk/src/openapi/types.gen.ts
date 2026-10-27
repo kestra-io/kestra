@@ -12780,7 +12780,12 @@ export type GetUsagesData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The rolling window, in days, the execution figures cover
+         */
+        days?: number;
+    };
     url: '/api/v1/{tenant}/usages/all';
 };
 

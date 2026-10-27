@@ -915,9 +915,24 @@
         return chart ? [{...chart, content: YAML_CHART}] : []
     })
 
-    const lockedFilters = computed<QueryFilter[]>(() =>
-        props.labels ? [{field: "labels", operation: "EQUALS", value: props.labels}] : [],
-    )
+    const lockedFilters = computed<QueryFilter[]>(() => {
+        const filters: QueryFilter[] = []
+
+        if (props.namespace) {
+            // As on the flow page: a prefix would also count a flow with the same id in a child namespace.
+            filters.push({field: "namespace", operation: props.flowId ? "EQUALS" : "PREFIX", value: props.namespace})
+        }
+
+        if (props.flowId) {
+            filters.push({field: "flowId", operation: "EQUALS", value: props.flowId})
+        }
+
+        if (props.labels) {
+            filters.push({field: "labels", operation: "EQUALS", value: props.labels})
+        }
+
+        return filters
+    })
 
     const executionParams = (row: Execution) => {
         return {

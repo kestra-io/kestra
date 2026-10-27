@@ -372,7 +372,12 @@
         downloadLevel.value = level?.direction === "min" || level?.direction === "max"
             ? level.value
             : undefined
-        downloadTimeRange.value = selectedTimeRange.value ?? undefined
+        // An embedded wrapper (e.g. the dashboard drill-down) gets its own filters, so the dialog has to
+        // start from their range and not from the host page's URL, or an untouched dialog would swap it.
+        const embeddedRange = props.filters?.["filters[timeRange][EQUALS]"]
+        downloadTimeRange.value = props.filters
+            ? (typeof embeddedRange === "string" ? embeddedRange : undefined)
+            : selectedTimeRange.value ?? undefined
         downloadOpen.value = true
     }
 

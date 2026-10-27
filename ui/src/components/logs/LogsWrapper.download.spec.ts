@@ -57,7 +57,7 @@ const settle = async () => {
     await flushPromises()
 }
 
-async function mountAtLogsList(query: Record<string, string>) {
+async function mountAtLogsList(query: Record<string, string>, props: Record<string, unknown> = {}) {
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [{name: "logs/list", path: "/:tenant?/logs", component: {template: "<div/>"}}],
@@ -65,6 +65,7 @@ async function mountAtLogsList(query: Record<string, string>) {
     await router.push({name: "logs/list", params: {tenant: "main"}, query})
     await router.isReady()
     const wrapper = i18nMount(LogsWrapper, {
+        props,
         global: {
             plugins: [createPinia(), router, KestraDesignSystem],
             stubs: {
@@ -82,12 +83,14 @@ async function mountAtLogsList(query: Record<string, string>) {
     return wrapper
 }
 
-async function downloadWithInterval(wrapper: VueWrapper, interval: string) {
+async function downloadWithInterval(wrapper: VueWrapper, interval?: string) {
     await wrapper.find("[aria-label=\"download logs\"]").trigger("click")
     await flushPromises()
     const dialog = wrapper.find("[data-test=\"download-dialog\"]")
-    dialog.findComponent(QuickFilters).vm.$emit("update:timeRange", interval)
-    await flushPromises()
+    if (interval) {
+        dialog.findComponent(QuickFilters).vm.$emit("update:timeRange", interval)
+        await flushPromises()
+    }
     searchLogs.mockClear()
     await dialog.findAll("button").find((button) => button.text() === "download")!.trigger("click")
     await settle()
@@ -176,5 +179,25 @@ describe("LogsWrapper download dialog", () => {
         await downloadWithInterval(wrapper, "PT168H")
 
         expect(timeFiltersOf(downloadRequestFilters()[0])).toEqual([{field: "timeRange", operation: "EQUALS", value: "PT168H"}])
+    })
+
+    it("keeps an embedded wrapper's own window when the dialog is left alone", async () => {
+        const startDate = new Date(Date.now() - 2 * HOUR).toISOString()
+        const endDate = new Date(Date.now() - HOUR).toISOString()
+        const wrapper = await mountAtLogsList({"filters[timeRange][EQUALS]": "PT168H"}, {
+            embed: true,
+            withCharts: false,
+            filters: {
+                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": startDate,
+                "filters[endDate][LESS_THAN_OR_EQUAL_TO]": endDate,
+            },
+        })
+
+        await downloadWithInterval(wrapper)
+
+        expect(timeFiltersOf(downloadRequestFilters()[0])).toEqual([
+            {field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: startDate},
+            {field: "endDate", operation: "LESS_THAN_OR_EQUAL_TO", value: endDate},
+        ])
     })
 })

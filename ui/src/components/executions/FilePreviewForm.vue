@@ -1,8 +1,14 @@
 <template>
-    <KsAlert v-if="truncated" type="warning" :closable="false" class="mb-2">
+    <KsAlert
+        v-if="truncated"
+        type="warning"
+        :closable="false"
+        class="file-preview-alert"
+    >
         {{ $t('file preview truncated') }}
     </KsAlert>
-    <KsForm class="ks-horizontal max-size mt-3">
+
+    <KsForm class="ks-horizontal max-size file-preview-form">
         <KsFormItem :label="$t('row count')">
             <KsSelect
                 v-model="maxRows"
@@ -18,6 +24,7 @@
                 />
             </KsSelect>
         </KsFormItem>
+
         <KsFormItem :label="$t('encoding')">
             <KsSelect
                 v-model="encoding"
@@ -33,10 +40,10 @@
                 />
             </KsSelect>
         </KsFormItem>
+
         <KsFormItem :label="($t('preview.view'))">
             <KsSwitch
                 v-model="forceEditor"
-                class="ml-3"
                 :activeText="$t('preview.force-editor')"
                 :inactiveText="$t('preview.auto-view')"
             />
@@ -58,12 +65,12 @@
         {value: "Cp1252", label: "Windows 1252"},
         {value: "UTF-16", label: "UTF-16"},
         {value: "Cp500", label: "EBCDIC IBM-500"},
-    ] as const 
+    ] as const
 
     export type EncodingOption = typeof encodingOptions[number]
 
     const configPreviewMaxRows = computed((): number => {
-        return  miscStore.configs?.preview?.max || 5000
+        return miscStore.configs?.preview?.max || 5000
     })
 
     const maxPreviewOptions = computed(() => {
@@ -80,3 +87,13 @@
         truncated?: boolean;
     }>()
 </script>
+
+<style scoped>
+    .file-preview-alert {
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .file-preview-form {
+        margin-top: var(--ks-spacing-4);
+    }
+</style>

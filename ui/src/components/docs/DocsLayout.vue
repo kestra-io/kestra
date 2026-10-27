@@ -1,12 +1,12 @@
 <template>
-    <div class="d-flex docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
+    <div class="docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
         <div
             v-if="mobileMenuOpen && $slots.menu"
             class="mobile-backdrop"
             @click="mobileMenuOpen = false"
         />
 
-        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar d-flex flex-column gap-3">
+        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar">
             <KsButton
                 v-if="isPluginsRoute"
                 :class="['mobile-close-toggle']"
@@ -70,14 +70,19 @@
 
 </script>
 
-<style scoped lang="scss">
-    @use '../../styles/responsive' as *;
+<style scoped>
+    .docs-layout-container {
+        display: flex;
+    }
 
     .docs-layout-container.full-height {
         min-height: 0;
     }
 
     .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
         background: var(--ks-bg-surface);
         padding: 2rem;
         height: 100%;
@@ -94,7 +99,7 @@
             font-size: var(--ks-font-size-xs);
         }
 
-        > div > ul > li > span:first-child {
+        & > div > ul > li > span:first-child {
             font-size: var(--ks-font-size-xs);
         }
     }
@@ -197,7 +202,7 @@
                     transform: scale(0.95);
                 }
 
-                :deep(.material-design-icon) {
+                & :deep(.material-design-icon) {
                     width: 24px;
                     height: 24px;
                 }
@@ -225,7 +230,7 @@
                 transform: scale(0.95);
             }
 
-            :deep(.material-design-icon) {
+            & :deep(.material-design-icon) {
                 width: 24px;
                 height: 24px;
             }
@@ -269,7 +274,7 @@
                 left: 0;
             }
 
-            > div {
+            & > div {
                 flex: 1;
                 overflow: hidden;
                 display: flex;
@@ -298,7 +303,7 @@
         }
     }
 
-    @include res(md) {
+    @media only screen and (min-width: 992px) {
         .mobile-menu-toggle {
             display: none;
         }
@@ -347,7 +352,7 @@
         }
     }
 
-    @include res(lg) {
+    @media only screen and (min-width: 1200px) {
         .content {
             padding: 2rem;
             padding-top: 1rem;

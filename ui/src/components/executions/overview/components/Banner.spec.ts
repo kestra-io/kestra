@@ -1,10 +1,12 @@
-import {beforeEach, describe, expect, test} from "vitest"
+import {beforeEach, describe, expect, test, vi} from "vitest"
 import {reactive} from "vue"
 import {createPinia, setActivePinia} from "pinia"
+import {flushPromises} from "@vue/test-utils"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 import Banner from "./Banner.vue"
-import type {Execution} from "../../../../stores/executions"
+import {useExecutionsStore, type Execution} from "../../../../stores/executions"
+import {useMiscStore} from "override/stores/misc"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 
 const triggerScope = reactive({visible: false, enabled: false})
@@ -27,7 +29,7 @@ const globalConfig = {
     },
 }
 
-function buildExecution(): Execution {
+function buildExecution(current = "SUCCESS"): Execution {
     return {
         id: "execution-id",
         originalId: "execution-id",
@@ -41,7 +43,7 @@ function buildExecution(): Execution {
             attemptNumber: 1,
         },
         state: {
-            current: "SUCCESS",
+            current,
             histories: [],
             getStartDate: "2026-01-01T00:00:00Z",
             getEndDate: "",
@@ -50,9 +52,9 @@ function buildExecution(): Execution {
     } as Execution
 }
 
-function mountBanner() {
+function mountBanner(execution = buildExecution()) {
     return i18nMount(Banner, {
-        props: {execution: buildExecution()},
+        props: {execution},
         global: globalConfig,
     })
 }
@@ -88,5 +90,30 @@ describe("Banner", () => {
 
         expect(wrapper.findComponent(ChevronUp).exists()).toBe(true)
         expect(wrapper.findComponent(ChevronDown).exists()).toBe(false)
+    })
+
+    test("fix with AI asks only for the first page of ERROR logs", async () => {
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([
+            {message: "Ledger EMEA is off"},
+            {message: "Ledger AMER is off"},
+        ] as never)
+        const promptCopilot = vi.spyOn(useMiscStore(), "promptCopilot").mockImplementation(() => undefined)
+        const wrapper = mountBanner(buildExecution("FAILED"))
+
+        await wrapper.find(".fix-with-ai").trigger("click")
+        await flushPromises()
+
+        expect(loadLogs).toHaveBeenCalledWith({
+            store: false,
+            executionId: "execution-id",
+            filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
+            page: 1,
+            size: 100,
+        })
+
+        expect(promptCopilot).toHaveBeenCalledWith(
+            "Fix the flow flow as it generated the following error:\nLedger EMEA is off\nLedger AMER is off",
+            expect.anything(),
+        )
     })
 })

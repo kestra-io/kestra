@@ -1,19 +1,20 @@
 import {ref, watch} from "vue"
 import {defineStore} from "pinia"
 import {useRoute, type LocationQuery} from "vue-router"
-import {CLUSTER_PREFIX, throttle} from "@kestra-io/design-system"
+import {CLUSTER_PREFIX, LOG_LEVELS, throttle, type LevelFilterValue} from "@kestra-io/design-system"
 import {
     TaskRun,
     useClient,
     type Check,
     type Execution as SDKExecution,
-    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError,
+    type ExecutionControllerApiValidateExecutionInputsResponseApiInputError as ApiInputError,
     type ExecutionRepositoryInterfaceFlowFilter,
     type FlowForExecution,
     type Label,
     type Level,
     type LogEntry,
     type PagedResultsApiLightExecution,
+    type QueryFilter,
     type StateType,
 } from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
@@ -32,7 +33,10 @@ import {useApiStore} from "./api"
 
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
-export type {Check, ExecutionControllerApiValidateExecutionInputsResponseApiInputError as InputError} from "@kestra-io/kestra-sdk"
+export type {Check} from "@kestra-io/kestra-sdk"
+
+// `path` is added to `ApiInputError` on this branch, and the generated SDK only picks it up once `develop` regenerates it.
+export type InputError = ApiInputError & {path?: string}
 
 export interface ValidationResponse {
     checks?: Check[];
@@ -58,6 +62,7 @@ export interface InputMetaData {
     type: InputType
     displayName?: string;
     description?: string;
+    descriptionDisplayMode?: "TEXT" | "TOOLTIP";
     required?: boolean;
     defaults?: unknown;
     value?: unknown;
@@ -77,6 +82,10 @@ export interface InputMetaData {
     dependsOn?: unknown;
     /** Set on a FORM input only: the children it groups, mirroring the backend `FormInput.inputs`. */
     inputs?: InputMetaData[];
+    /** Set on a TABLE input only: one input definition per column, each evaluated once per row. */
+    columns?: InputMetaData[];
+    minRows?: number;
+    maxRows?: number;
 }
 
 /** Mirrors the backend `FilePreview`: `content` is renderer-specific (text, rows, base64, ...). */
@@ -140,11 +149,29 @@ export function normalizeFilePreview(data: FilePreview): FilePreview {
     return {...data, type: "TEXT", content}
 }
 
+/** The level filter the backend applies to the logs it returns, for logs the store already holds. */
+function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue | undefined): boolean {
+    if (!filter || !level) return true
+    const severity = (value: string) => (LOG_LEVELS as readonly string[]).indexOf(value)
+    switch (filter.direction) {
+    case "min":
+        return severity(level) <= severity(filter.value)
+    case "max":
+        return severity(level) >= severity(filter.value)
+    case "in":
+        return filter.value.split(",").includes(level)
+    case "not_in":
+        return !filter.value.split(",").includes(level)
+    }
+}
+
 export const useExecutionsStore = defineStore("executions", () => {
     const executions = ref<Execution[] | undefined>(undefined)
     const execution = ref<Execution | undefined>(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
+    /** Task runs a playground replay reused rather than ran, with the logs they carry over, keyed by the replay's id. */
+    const reusedTaskRuns = ref<Record<string, {taskRunIds: string[]; logs: LogEntry[]}>>({})
     const subflowsExecutions = ref<Record<string, Execution>>({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
@@ -324,12 +351,17 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
+    let latestExecutionsSearch = 0
+
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findExecutions(options: ExecutionSearchOptions & { onlyTotal: true }): Promise<number>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution | number> {
+        const search = options.commit === false ? undefined : ++latestExecutionsSearch
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
-            if (options.commit !== false) {
+            if (options.commit !== false && search === latestExecutionsSearch) {
                 executions.value = response.results as unknown as Execution[]
                 total.value = response.total ?? 0
             }
@@ -386,19 +418,19 @@ export const useExecutionsStore = defineStore("executions", () => {
             kind: options.kind,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             revision: options.revision,
-        }, {timeout: 60 * 60 * 1000}).then(execution => {
+        }, {timeout: 60 * 60 * 1000}).then(exec => {
             useApiStore().posthogEvents({
                 type: "FLOW_EXECUTION",
                 action: "executed",
-                execution_id: execution.id,
-                namespace: execution.namespace,
-                flow_id: execution.flowId,
+                execution_id: exec.id,
+                namespace: exec.namespace,
+                flow_id: exec.flowId,
                 location: executionLocation(route.name?.toString(), options.kind),
-                is_example: isExampleFlow(execution.namespace),
-                revision: execution.flowRevision,
+                is_example: isExampleFlow(exec.namespace),
+                revision: exec.flowRevision,
             })
 
-            return execution
+            return exec
         })
     }
 
@@ -560,10 +592,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean }) => {
-        return LogsAPI.listLogsFromExecution(
-            {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
-        ).then(data => {
+    // `page` and `size` turn on the endpoint's optional pagination; without them every matching log is returned.
+    const loadLogs = (options: { executionId: string; filters?: QueryFilter[]; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
+        return LogsAPI.listLogsFromExecution({
+            executionId: options.executionId,
+            filters: options.filters ?? [],
+            ...(options.page !== undefined ? {page: options.page} : {}),
+            ...(options.size !== undefined ? {size: options.size} : {}),
+            ...(options.sort !== undefined ? {sort: options.sort} : {}),
+        }).then(data => {
             if (options.store === false) {
                 return data
             }
@@ -572,11 +609,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const downloadLogs = (options: { executionId: string; params?: FilterQuery }) => {
-        return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})}) as unknown as Promise<string>
+    const downloadLogs = (options: { executionId: string; filters?: QueryFilter[] }) => {
+        return LogsAPI.downloadLogsFromExecution({
+            executionId: options.executionId, 
+            filters: options.filters ?? [],
+        }) 
     }
 
-    const downloadLogsFile = (options: { executionId: string; params?: FilterQuery }) => {
+    const downloadLogsFile = (options: { executionId: string; filters?: QueryFilter[] }) => {
         return downloadLogs(options).then(text => {
             Utils.downloadUrl(
                 window.URL.createObjectURL(new Blob([text])),
@@ -778,6 +818,23 @@ export const useExecutionsStore = defineStore("executions", () => {
         logs.value = []
     }
 
+    const reusedLogsOf = (executionId: string | undefined, level?: LevelFilterValue): LogEntry[] => {
+        if (!executionId) return []
+        return (reusedTaskRuns.value[executionId]?.logs ?? []).filter(log => matchesLevelFilter(log.level, level))
+    }
+
+    const isReusedTaskRun = (executionId: string | undefined, taskRunId: string): boolean => {
+        return !!executionId && !!reusedTaskRuns.value[executionId]?.taskRunIds.includes(taskRunId)
+    }
+
+    const setReusedTaskRuns = (executionId: string, taskRunIds: string[], logs: LogEntry[]) => {
+        reusedTaskRuns.value = {...reusedTaskRuns.value, [executionId]: {taskRunIds, logs}}
+    }
+
+    const clearReusedTaskRuns = () => {
+        reusedTaskRuns.value = {}
+    }
+
     const appendLogs = (entries: LogEntry[]) => {
         logs.value = logs.value.concat(entries)
     }
@@ -882,6 +939,10 @@ export const useExecutionsStore = defineStore("executions", () => {
         removeSubflowExecution,
         addProgressEvent,
         resetLogs,
+        reusedLogsOf,
+        isReusedTaskRun,
+        setReusedTaskRuns,
+        clearReusedTaskRuns,
         appendLogs,
         appendFollowedLogs,
         getFlowExecutions,

@@ -113,7 +113,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -186,6 +186,19 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 767px) {
+    .item {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        min-height: 2.75rem;
+    }
+
+    .item .key {
+        min-width: 0;
+        white-space: nowrap;
     }
 }
 </style>

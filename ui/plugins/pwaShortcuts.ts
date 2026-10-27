@@ -1,4 +1,4 @@
-import en from "../src/translations/en.json"
+import en from "../src/translations/en.json" with {type: "json"}
 
 // URLs are relative to the manifest URL (<contextPath>/ui/) so sub-path deployments resolve;
 // labels come from en.json, English-only because the manifest is one static build artifact.

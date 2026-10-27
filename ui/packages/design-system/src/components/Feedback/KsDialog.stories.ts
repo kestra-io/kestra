@@ -27,7 +27,47 @@ const meta: Meta<typeof KsDialog> = {
 export default meta
 type Story = StoryObj<typeof KsDialog>
 
+export const Playground: Story = {
+    render: (args) => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(true)
+            return {args, visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open Dialog</ks-button>
+                <ks-dialog v-bind="args" v-model="visible">
+                    <p>Are you sure you want to proceed?</p>
+                    <template #footer>
+                        <ks-button @click="visible = false">Cancel</ks-button>
+                        <ks-button type="primary" @click="visible = false">Confirm</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    args: {
+        title: "Confirm Action",
+        destroyOnClose: false,
+        lockScroll: true,
+        closeOnClickModal: true,
+        closeOnPressEscape: true,
+        showClose: true,
+        appendToBody: false,
+        width: "500px",
+        large: false,
+        formLayout: false,
+        fill: false,
+        scrollable: false,
+        top: "15vh",
+        dirty: false,
+        dirtyMessage: "",
+    },
+}
+
 export const Default: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -58,6 +98,7 @@ export const Default: Story = {
 
 /** Custom width */
 export const CustomWidth: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -78,8 +119,9 @@ export const CustomWidth: Story = {
     }),
 }
 
-/** Large – widens the dialog to 756px (capped at 90vw) */
+/** Large – widens the dialog to 756px (capped at 92vw) */
 export const Large: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -100,8 +142,37 @@ export const Large: Story = {
     }),
 }
 
+/** Wide content – an element carrying `data-dialog-wide` widens the dialog past `large`, for content such as a multi-column grid input */
+export const WideContent: Story = {
+    parameters: {controls: {disable: true}},
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open wide-content dialog</ks-button>
+                <ks-dialog v-model="visible" title="Wide Content" large destroy-on-close>
+                    <div data-dialog-wide>A multi-column grid that does not fit the default width.</div>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.click(canvas.getByRole("button", {name: "Open wide-content dialog"}))
+        await waitFor(() => expect(document.querySelector("[data-dialog-wide]")).toBeTruthy())
+        const dialog = document.querySelector<HTMLElement>(".kel-dialog")!
+        const expected = Math.min(1024, window.innerWidth * 0.92)
+        await expect(Math.abs(dialog.getBoundingClientRect().width - expected)).toBeLessThan(1)
+    },
+}
+
 /** Form layout – `formLayout` gives a form inside the dialog consistent padding, column flow and gap */
 export const FormLayout: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog, KsForm, KsFormItem, KsInput},
         setup() {
@@ -141,6 +212,7 @@ export const FormLayout: Story = {
 
 /** Scrollable – caps the body at 70vh and scrolls tall content inside the dialog instead of the page */
 export const Scrollable: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -174,6 +246,7 @@ export const Scrollable: Story = {
 
 /** Destroy on close – remounts content each time */
 export const DestroyOnClose: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -199,6 +272,7 @@ export const DestroyOnClose: Story = {
 
 /** Close on click modal (backdrop) disabled */
 export const NoCloseOnBackdrop: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -220,6 +294,7 @@ export const NoCloseOnBackdrop: Story = {
 }
 
 export const WithCustomHeader: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -247,6 +322,7 @@ export const WithCustomHeader: Story = {
 
 /** Fill – `fill` caps the dialog to the viewport so its own body scrolls instead of the overlay dragging the whole dialog */
 export const Fill: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog},
         setup() {
@@ -286,6 +362,7 @@ export const Fill: Story = {
 
 /** `dirty` asks for confirmation when the dialog is dismissed with unsaved input */
 export const DirtyGuard: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsButton, KsDialog, KsInput},
         setup() {
@@ -313,4 +390,31 @@ export const DirtyGuard: Story = {
         await userEvent.keyboard("{Escape}")
         await waitFor(() => expect(document.querySelector(".kel-message-box")).toBeTruthy())
     },
+}
+
+/** Mobile – an explicit `width` is still capped at 92vw, so a 650px dialog never overflows a phone */
+export const Mobile: Story = {
+    parameters: {
+        controls: {disable: true},
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() { return {visible: ref(true)} },
+        template: `
+            <div style="padding:16px">
+                <ks-button @click="visible = true">Open</ks-button>
+                <ks-dialog v-model="visible" title="Wide dialog" :width="650">
+                    <p>The dialog shrinks to the viewport instead of scrolling horizontally.</p>
+                </ks-dialog>
+            </div>
+        `,
+    }),
 }

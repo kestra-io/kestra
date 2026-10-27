@@ -5,6 +5,12 @@
       "cta": "देखें क्या बदला"
     },
     "loading": "लोड हो रहा है...",
+    "namespace_files_tip": {
+      "title": "अपनी स्क्रिप्ट को namespace फ़ाइलों के रूप में प्रबंधित करें",
+      "description": "अपनी स्क्रिप्ट को इनलाइन लिखने के बजाय, फ़ाइलें पैनल खोलें, इसे एक फ़ाइल (जैसे main.py) के रूप में जोड़ें और अपने flow से चलाएँ:",
+      "open_files": "फ़ाइलें खोलें",
+      "dont_show_again": "फिर से न दिखाएँ"
+    },
     "more actions": "अधिक क्रियाएँ",
     "recipe": {
       "create_flow": "flow बनाएँ",
@@ -236,6 +242,7 @@
       "last7days": "पिछले 7 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
+      "allTime": "हर समय",
       "next5minutes": "अगले 5 मिनट",
       "next15minutes": "अगले 15 मिनट",
       "next1hour": "अगले 1 घंटे",
@@ -369,7 +376,7 @@
     "restart": "पुनः प्रारंभ करें",
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
     "restarted": "Execution पुनः आरंभ हो गया है",
-    "restart confirm": "क्या आप वाकई execution <code>{id}</code> को पुनरारंभ करना चाहते हैं?",
+    "restart confirm": "क्या आप वाकई execution {id} को पुनरारंभ करना चाहते हैं?",
     "restart subflow warning": "यह execution एक पैरेंट execution द्वारा बनाई गई थी और इसे वहीं से पुनरारंभ किया जाना चाहिए। इसे अकेले पुनरारंभ करने से पैरेंट execution FAILED हो जाती है और इसके अगले Task नहीं चलेंगे। इसे पुनरारंभ करने के लिए {parent} पर जाएं।",
     "restart subflow warning link": "पैरेंट execution",
     "replay": "पुनः चलाएँ",
@@ -377,7 +384,11 @@
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
     "replayed": "Execution को Replay किया गया है",
-    "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
+    "reused_task_run": {
+      "label": "पुनः उपयोग किया गया",
+      "tooltip": "इस execution में फिर से नहीं चलाया गया। यह {date} को चला था, और इसके logs और outputs उस run से आते हैं।"
+    },
+    "replay the execution": "फ्लो {flowId} के लिए निष्पादन {executionId} को पुनः चलाएं",
     "prefill inputs": "पूर्व-भरण",
     "current": "वर्तमान",
     "change state": "स्थिति बदलें",
@@ -390,7 +401,8 @@
     "change state confirm": "क्या आप execution {id} में {task} task के लिए task run state बदलना चाहते हैं?",
     "change state confirm restart": "यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
     "interrupt": "बाधित करें",
-    "interrupt confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run को बाधित करना चाहते हैं?<br/>यह worker के अंदर चल रहे task को समाप्त कर देगा और उसकी स्थिति निर्धारित करेगा।",
+    "interrupt confirm": "क्या आप execution {id} में {task} task के लिए task run को बाधित करना चाहते हैं?",
+    "interrupt note": "यह worker के अंदर चल रहे task को समाप्त कर देगा और उसकी स्थिति निर्धारित करेगा।",
     "interrupt done": "Task रन बाधित हो गया है",
     "interrupt target state": "लक्ष्य स्थिति",
     "change state current state": "वर्तमान स्थिति है:",
@@ -443,29 +455,32 @@
     },
     "change execution state done": "निष्पादन स्थिति अपडेट की गई",
     "mark as": "{status} के रूप में चिह्नित करें",
-    "unqueue as": "<code>{status}</code> के रूप में अनक्यू करें",
+    "unqueue as": "{status} के रूप में अनक्यू करें",
     "kill": "समाप्त करें",
     "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "kill only parents": "केवल वर्तमान को समाप्त करें",
     "killed confirm": "क्या आप वाकई execution <code>{id}</code> को बंद करना चाहते हैं?",
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "resume": "पुनः आरंभ करें",
-    "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
+    "resumed title": "निष्पादन {id} पुनः आरंभ करें",
     "resumed confirm": "क्या आप वाकई execution <code>{id}</code> को फिर से शुरू करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
-    "resume from breakpoint title": "ब्रेकपॉइंट से निष्पादन `<code>{id}</code>` को पुनः शुरू करें",
+    "resume from breakpoint title": "ब्रेकपॉइंट से निष्पादन {id} को पुनः शुरू करें",
     "resume from breakpoint done": "निष्पादन विराम बिंदु से फिर से शुरू किया गया है",
     "breakpoints": "ब्रेकपॉइंट्स",
     "pause": "रोकें",
-    "pause title": "एक्सेक्यूशन <code>{id}</code> को रोकें।<br/>ध्यान दें कि वर्तमान में चल रहे task अभी भी प्रोसेस किए जाएंगे, और एक्सेक्यूशन को मैन्युअल रूप से फिर से शुरू करना होगा।",
+    "pause title": "एक्सेक्यूशन {id} को रोकें।",
+    "pause note": "ध्यान दें कि वर्तमान में चल रहे task अभी भी प्रोसेस किए जाएंगे, और एक्सेक्यूशन को मैन्युअल रूप से फिर से शुरू करना होगा।",
     "pause confirm": "क्या आप वाकई execution <code>{id}</code> को रोकना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "unqueue": "अनक्यू करें",
-    "unqueue title": "क्या आप वाकई execution <code>{id}</code> को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency limit का पालन नहीं करेगा, इसलिए allowed limit से अधिक executions चल सकते हैं।",
-    "unqueue title multiple": "क्या आप वाकई <code>{count}</code> executions को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक executions चल सकती हैं।",
+    "unqueue title": "क्या आप वाकई execution {id} को Unqueue करना चाहते हैं?",
+    "unqueue note": "ध्यान दें कि यह flow concurrency limit का पालन नहीं करेगा, इसलिए allowed limit से अधिक executions चल सकते हैं।",
+    "unqueue title multiple": "क्या आप वाकई {count} executions को Unqueue करना चाहते हैं?",
+    "unqueue multiple note": "ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक executions चल सकती हैं।",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "force run": "फोर्स रन",
-    "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
+    "force run title": "{id} का निष्पादन जबरन चलाएँ।",
     "force run confirm": "क्या आप वाकई execution `{id}` को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट task run बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED tasks को running स्थिति में ले जाया जाएगा।\n- RUNNING tasks को फिर से सबमिट किया जाएगा।\n- QUEUED tasks को un-queue किया जाएगा।\n- PAUSED tasks को फिर से शुरू किया जाएगा।",
     "force run done": "Execution को जबरन चलाया गया",
     "metrics": "मेट्रिक्स",
@@ -513,13 +528,32 @@
       "attempts": "{count} प्रयास | {count} प्रयास",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "विफल task",
+      "view_task_logs": "task के logs देखें",
+      "revision_short": "रिव. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "कम labels दिखाएं",
+      "jump_to_first_failure": "पहली विफलता पर जाएं",
+      "open_logs": "Logs खोलें"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "साइन-इन के बाद",
+      "execution_tab": "निष्पादन {id} · {tab} टैब",
+      "execution": "निष्पादन {id}",
+      "tab": "{tab} टैब"
+    },
     "concurrency limits": "समानांतरता सीमाएँ",
     "system overview": "सिस्टम अवलोकन",
+    "workspace": "वर्कस्पेस",
+    "resources": "संसाधन",
     "usage": "उपयोग",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "कुल निष्पादन अवधि (मिनटों में)",
-    "last 48 hours": "पिछले 48 घंटे",
+    "task runs": "Task रन",
+    "task runs duration (in minutes)": "कुल Task रन की अवधि (मिनटों में)",
+    "last 24 hours": "पिछले 24 घंटे",
     "email": "ईमेल",
     "password": "पासवर्ड",
     "confirm password": "पासवर्ड की पुष्टि करें",
@@ -534,6 +568,15 @@
     "inputs": "इनपुट्स",
     "input": "इनपुट",
     "variables": "वेरिएबल्स",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "इस Flow के किसी भी Task में कोई Artifact नहीं है।",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
+      "tasks": "कोई Task नहीं | {count} Task | {count} Task",
+      "fullscreen": "फ़ुलस्क्रीन",
+      "exit_fullscreen": "पूर्णस्क्रीन से बाहर निकलें"
+    },
     "variable_explorer": {
       "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",
@@ -683,6 +726,7 @@
       "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
       "format": "फ़ॉर्मेट",
+      "internal_storage_uri_hint": "Pebble एक्सप्रेशन जो एक इंटरनल Storage URI को संदर्भित करता है, जैसे {example}।",
       "max_items": "अधिकतम आइटम",
       "max_length": "अधिकतम लंबाई",
       "maximum": "अधिकतम",
@@ -760,7 +804,7 @@
     "execute flow behaviour": "Flow निष्पादित करें",
     "open in same tab": "उसी टैब में",
     "open in new tab": "एक नए टैब में",
-    "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
+    "execute the flow": "Flow {id} निष्पादित करें",
     "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "unsaved changed ?": "आपके पास असहेजे गए परिवर्तन हैं, क्या आप इस पृष्ठ को छोड़ना चाहते हैं?",
     "session expired": "आपका सत्र समाप्त हो गया है",
@@ -932,12 +976,12 @@
     "restore": "पुनर्स्थापित करें",
     "restore confirm": "क्या आप वाकई रिविज़न <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
-    "bulk replay": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः चलाना चाहते हैं?",
-    "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
+    "bulk replay": "क्या आप वाकई {executionCount} निष्पादन को पुनः चलाना चाहते हैं?",
+    "bulk change state": "क्या आप सुनिश्चित हैं कि आप {executionCount} execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
     "bulk force run": "क्या आप वाकई `{executionCount}` Execution(s) को जबरन चलाना चाहते हैं?\n\nचेतावनी: किसी Execution को जबरन चलाने की गारंटी नहीं है और इससे डुप्लिकेट Task Execution बन सकते हैं।\n\nनिम्नलिखित ट्रांज़िशन किए जाएंगे:\n\n- CREATED Task को RUNNING स्थिति में ले जाया जाएगा।\n- RUNNING Task को फिर से सबमिट किया जाएगा।\n- QUEUED Task को अन-क्यू किया जाएगा।\n- PAUSED Task को फिर से शुरू किया जाएगा।",
-    "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
+    "bulk restart": "क्या आप वाकई {executionCount} निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
     "errorLogs": "त्रुटि लॉग",
@@ -1146,11 +1190,11 @@
         "deletion": {
           "confirm": "पुष्टि करें",
           "title": "सामग्री को हटाने की पुष्टि करें",
-          "files": "क्या आप वाकई <code>{count}</code> फ़ाइल(फ़ाइलें) हटाना चाहते हैं?",
-          "folders": "क्या आप वाकई <code>{count}</code> फ़ोल्डर और उसकी सभी सामग्री को हटाना चाहते हैं?",
-          "mixed": "क्या आप वाकई <code>{folders}</code> फ़ोल्डर(ओं) और <code>{files}</code> फ़ाइल(ओं) को हटाना चाहते हैं?",
-          "file_single": "क्या आप वाकई <code>{name}</code> फ़ाइल को हटाना चाहते हैं?",
-          "folder_single": "क्या आप वाकई <code>{name}</code> फ़ोल्डर और इसकी सभी सामग्री को हटाना चाहते हैं?"
+          "files": "क्या आप वाकई {count} फ़ाइल(फ़ाइलें) हटाना चाहते हैं?",
+          "folders": "क्या आप वाकई {count} फ़ोल्डर और उसकी सभी सामग्री को हटाना चाहते हैं?",
+          "mixed": "क्या आप वाकई {folders} फ़ोल्डर(ओं) और {files} फ़ाइल(ओं) को हटाना चाहते हैं?",
+          "file_single": "क्या आप वाकई {name} फ़ाइल को हटाना चाहते हैं?",
+          "folder_single": "क्या आप वाकई {name} फ़ोल्डर और इसकी सभी सामग्री को हटाना चाहते हैं?"
         }
       },
       "revisions": {
@@ -1179,7 +1223,7 @@
     "backfill": "Backfill",
     "Set labels": "लेबल्स सेट करें",
     "manage labels": "labels प्रबंधित करें",
-    "Set labels to execution": "निष्पादन <code>{id}</code> के लेबल्स जोड़ें या अपडेट करें",
+    "Set labels to execution": "निष्पादन {id} के लेबल्स जोड़ें या अपडेट करें",
     "Set labels done": "निष्पादन के लेबल्स सफलतापूर्वक सेट किए गए",
     "bulk set labels": "क्या आप वाकई <code>{executionCount}</code> execution(s) पर label सेट करना चाहते हैं?",
     "true": "सत्य",
@@ -1369,6 +1413,12 @@
           "third": "अपने Kestra इंस्टेंस को रीस्टार्ट करें ताकि secret लोड हो जाए।"
         }
       },
+      "credentials": {
+        "label": "प्रमाण-पत्र",
+        "header": "प्रमाण-पत्र",
+        "title": "एक बार प्रमाणित करें, हर task में दोबारा उपयोग करें",
+        "message": "Kestra Enterprise Edition में, सर्वर-से-सर्वर प्रमाणीकरण को एक बार क्रेडेंशियल के रूप में कॉन्फ़िगर किया जा सकता है, ताकि एक्सेस टोकन को आपके flows में हार्डकोड करने के बजाय रनटाइम पर अनुरोध और रीफ़्रेश किया जा सके। क्रेडेंशियल tenant या namespace स्तर पर बनाए जा सकते हैं और किसी भी task से संदर्भित किए जा सकते हैं।"
+      },
       "apps": {
         "title": "Kestra के साथ कस्टम ऐप्स बनाएं",
         "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।",
@@ -1447,6 +1497,10 @@
           "title": "सुरक्षित तरीके से Secrets प्रबंधित करें",
           "message": "Kestra Enterprise Edition में, आप namespace स्तर पर secrets को स्टोर और कंट्रोल कर सकते हैं, जिससे जोखिम कम होता है और यह सुनिश्चित होता है कि प्रत्येक टीम के क्रेडेंशियल अलग-थलग रहें। नेस्टेड पदानुक्रम के कारण, आप पैरेंट namespace में भी क्रेडेंशियल कॉन्फ़िगर कर सकते हैं, और वे सभी चाइल्ड namespaces द्वारा इनहेरिट किए जाएंगे। समर्पित secrets managers और फाइन-ग्रेन्ड namespace-स्तर की अनुमति सेटिंग्स के लिए समर्थन सुरक्षा और अनुपालन को और मजबूत करता है।"
         },
+        "credentials": {
+          "title": "क्रेडेंशियल को इस namespace तक सीमित करें",
+          "message": "Kestra Enterprise Edition में, आप namespace स्तर पर क्रेडेंशियल कॉन्फ़िगर कर सकते हैं, ताकि इस namespace और इसके चाइल्ड namespaces के tasks एक्सेस टोकन को flows में संग्रहीत करने के बजाय रनटाइम पर अनुरोध और रीफ़्रेश करें। पैरेंट namespace में परिभाषित क्रेडेंशियल सभी चाइल्ड namespaces द्वारा इनहेरिट किया जाता है।"
+        },
         "assets": {
           "title": "संपत्ति प्रबंधन को केंद्रीकृत करें",
           "message": "Kestra एंटरप्राइज एडिशन में, Assets आपके workflows के साथ इंटरैक्ट करने वाले संसाधनों की लाइव इन्वेंट्री रखता है। ये संसाधन डेटाबेस टेबल, वर्चुअल मशीन, फाइलें, या कोई भी बाहरी सिस्टम हो सकते हैं जिनके साथ आप काम करते हैं।"
@@ -1458,6 +1512,11 @@
         "policies": {
           "title": "इस namespace पर शासन नियम लागू करें",
           "message": "Kestra Enterprise Edition में, नीतियां आपको ऐसे नियम परिभाषित करने देती हैं जो इस namespace और इसके बच्चों में हर flow पर लागू होते हैं — साझा डिफ़ॉल्ट इंजेक्ट करें, प्रॉपर्टी मानों को प्रतिबंधित करें, plugins को ब्लॉक करें, और अनुपालन labels की आवश्यकता होती है, हर बदलाव flow लेखकों को पूरी तरह से दिखाई देता है।"
+        },
+        "reusable-inputs": {
+          "label": "पुनः प्रयोज्य Inputs",
+          "title": "inputs एक बार परिभाषित करें, हर जगह दोबारा उपयोग करें",
+          "message": "Kestra Enterprise Edition में, पुनः प्रयोज्य inputs की मदद से आप namespace स्तर पर टाइप किए गए inputs का एक नामित समूह एक बार परिभाषित कर सकते हैं और उसे किसी भी flow में संदर्भित कर सकते हैं। पैरेंट namespace का सेट चाइल्ड namespaces के लिए उपलब्ध होता है, इसलिए टीमें हर flow में दोहराने के बजाय एक ही input परिभाषाएँ साझा करती हैं।"
         },
         "history": {
           "title": "एक ही स्थान पर Revision History प्रबंधित करें",
@@ -1775,6 +1834,14 @@
     "item": "आइटम",
     "items": "आइटम्स",
     "iterations": "पुनरावृत्तियाँ",
+    "load_10_more": "10 और लोड करें",
+    "show_all_executions": "सभी निष्पादन दिखाएं",
+    "failed_iterations_only": "केवल विफल पुनरावृत्तियाँ",
+    "loop_iterations_shown": "{total} में से {shown} दिखाए गए",
+    "loop_iterations_load_error": "पुनरावृत्तियाँ लोड करने में विफल",
+    "retry": "पुनः प्रयास करें",
+    "no_iterations": "अभी तक कोई पुनरावृत्ति नहीं",
+    "no_failed_iterations": "कोई विफल पुनरावृत्ति नहीं",
     "loop_iterations_notice": {
       "logs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके logs यहाँ प्रदर्शित नहीं होते हैं।",
       "outputs": "लूप पुनरावृत्तियाँ अलग-अलग सब-एक्सेक्यूशन के रूप में चलती हैं, इसलिए उनके आउटपुट यहाँ प्रदर्शित नहीं होते हैं।",
@@ -2078,11 +2145,8 @@
       "no_description_hint": "इस flow में एक विवरण जोड़ें ताकि यह दस्तावेज़ किया जा सके कि यह क्या करता है।<br>Markdown समर्थित है।",
       "others": "अन्य",
       "viewAll": "सभी देखें",
-      "export": "एक्सपोर्ट करें",
-      "exportEmpty": "इस चार्ट में निर्यात करने के लिए कोई डेटा नहीं है।",
       "exportTo": {
-        "csv": "CSV में निर्यात करें",
-        "ion": "ION को निर्यात करें"
+        "csv": "CSV में निर्यात करें"
       },
       "ignoredFilters": "{filters} फ़िल्टर इस चार्ट पर लागू नहीं होता। | {filters} फ़िल्टर इस चार्ट पर लागू नहीं होते।",
       "show_all_statuses": "सभी स्थितियाँ दिखाएँ",
@@ -2286,7 +2350,8 @@
           "title": {
             "flow": "प्रस्तावित flow",
             "dashboard": "प्रस्तावित डैशबोर्ड",
-            "app": "प्रस्तावित ऐप"
+            "app": "प्रस्तावित ऐप",
+            "test_suite": "प्रस्तावित यूनिट टेस्ट"
           },
           "valid": "वैध",
           "invalid": "बदलाव की आवश्यकता है"
@@ -2331,30 +2396,35 @@
           "failed": "असफल",
           "unknown": "ट्रैक नहीं किया गया"
         },
+        "kind": {
+          "produces": "उत्पन्न करता है",
+          "consumed_by": "द्वारा उपभोग किया गया",
+          "upstream_of": "के अपस्ट्रीम",
+          "part_of": "का हिस्सा",
+          "related": "संबंधित"
+        },
         "summary": {
           "fresh": "सभी {n} एसेट नए हैं",
           "issues": "{n} बासी",
           "failed": "{n} विफल",
           "last_run": "अंतिम रन {ago}",
-          "unknown": "{n} ट्रैक नहीं किया गया",
-          "tests_failed": "{n} विफल परीक्षणों के साथ"
-        },
-        "tests": {
-          "pass": "{count} परीक्षण | {count} परीक्षण",
-          "warn": "{count} टेस्ट · चेतावनी | {count} टेस्ट · चेतावनी",
-          "fail": "{failed}/{total} विफल",
-          "tooltip": {
-            "pass": "{count} dbt टेस्ट पास हुआ | सभी {count} dbt टेस्ट पास हुए",
-            "warn": "{count} dbt test चेतावनी के साथ पास हुआ | {count} dbt tests पास हुए, कुछ चेतावनी के साथ",
-            "fail": "dbt टेस्ट विफल रहा | {total} dbt टेस्ट में से {failed} विफल रहे"
-          }
+          "unknown": "{n} ट्रैक नहीं किया गया"
         },
         "recent_runs": "हाल की रन",
         "group_by": "द्वारा समूहबद्ध करें",
-        "groups": "समूह ({n})",
+        "groups": "ग्रुप",
         "group_none": "कोई ग्रुपिंग नहीं",
         "group_dataset": "डेटासेट",
-        "ungrouped": "असमूहित"
+        "group_consumer": "उपभोक्ता",
+        "no_consumer": "कोई उपभोक्ता नहीं",
+        "hidden_consumer": "छिपा हुआ flow",
+        "ungrouped": "असमूहित",
+        "hub": {
+          "notice": "इस नोड के {count} संबंध हैं — ग्राफ़ को पठनीय रखने के लिए केवल सबसे हाल के वाले दिखाए गए हैं।",
+          "expand": "अधिक संबंध लोड करें",
+          "expand_failed": "अधिक संबंध लोड नहीं किए जा सके। कृपया पुनः प्रयास करें।"
+        },
+        "truncated": "यह ग्राफ़ पूर्ण रूप से दिखाने के लिए बहुत बड़ा था; कुछ संबंध छोड़ दिए गए थे।"
       },
       "search": {
         "placeholders": {

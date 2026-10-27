@@ -36,7 +36,7 @@
     const icon = computed(() => ENTITY_ICONS[props.entity])
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .ks-entity-link {
     display: inline-flex;
     align-items: center;

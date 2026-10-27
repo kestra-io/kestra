@@ -225,6 +225,61 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
+    void shouldRescheduleScheduledExecution() {
+        ZonedDateTime farFuture = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusHours(1);
+        String encoded = URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(farFuture), StandardCharsets.UTF_8);
+        Execution scheduled = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal?scheduleDate=" + encoded, null).contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        awaitExecution(scheduled.getId(), exec -> exec.getState().isCreated());
+
+        ZonedDateTime soon = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(2);
+        Execution rescheduled = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8), null),
+            Execution.class
+        );
+
+        assertThat(rescheduled.getScheduleDate()).isEqualTo(soon.toInstant());
+        awaitExecution(scheduled.getId(), exec -> exec.getState().isSuccess());
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
+    void shouldFailToRescheduleExecutionToThePast() {
+        ZonedDateTime farFuture = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusHours(1);
+        String encoded = URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(farFuture), StandardCharsets.UTF_8);
+        Execution scheduled = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal?scheduleDate=" + encoded, null).contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        String past = URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().minusMinutes(1)), StandardCharsets.UTF_8);
+
+        var invalid = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate=" + past, null))
+        );
+
+        assertThat(invalid.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
+    void shouldFailToRescheduleExecutionWithoutScheduleDate() {
+        Execution notScheduled = this.createExecution(MAIN_TENANT, TESTS_FLOW_NS, "minimal");
+        this.executionRepositoryInterface.save(notScheduled);
+
+        var conflict = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8), null)
+            )
+        );
+        assertThat(conflict.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/invalid-draft-flow.yaml" })
     void executingInvalidDraftIsRejected() {
         // invalid-draft-flow is a draft saved with constraint violations (empty `tasks` violates @NotEmpty);
@@ -560,6 +615,40 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/flow-with-outputs.yml" }, tenantId = "flowwithoutputswaittrue")
+    void shouldReturnOutputsWhenWaitIsTrue() {
+        String tenantId = "flowwithoutputswaittrue";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/flow-with-outputs?wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(result.getOutputs()).isNotNull();
+        assertThat(result.getOutputs().get("key")).isEqualTo("{\"value\":\"flow-with-outputs\"}");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-with-outputs.yml" }, tenantId = "flowwithoutputswaitfalse")
+    void shouldNotReturnOutputsWhenWaitIsFalse() {
+        String tenantId = "flowwithoutputswaitfalse";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        Execution result = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/flow-with-outputs?wait=false".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        assertThat(result.getOutputs()).isNull();
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/inputs-small-files.yaml" }, tenantId = "triggerexecutioninputsmall")
     void triggerExecutionInputSmall() {
         String tenantId = "triggerexecutioninputsmall";
@@ -650,11 +739,11 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "getexecution")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "getexecution")
     void getExecution() {
         String tenantId = "getexecution";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
-        Execution result = triggerExecutionInputsFlowExecution(tenantId, false);
+        Execution result = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false);
         awaitExecution(result.getId());
 
         // Get the triggered execution by execution id
@@ -2417,7 +2506,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/inputs.yaml" }, tenantId = "searchexecutions")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "searchexecutions")
     void searchExecutions() {
         String tenantId = "searchexecutions";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
@@ -2427,7 +2516,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(executions.getTotal()).isEqualTo(0L);
 
-        Execution execution = triggerExecutionInputsFlowExecution(tenantId, false);
+        Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false);
         awaitExecution(execution.getId(), exec -> exec.getState().getCurrent().isSuccess());
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
@@ -3856,11 +3945,11 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/logs.yaml" })
+    @LoadFlows({ "flows/valids/minimal.yaml" })
     void shouldReturnBadRequestWhenKillByIdsCalledOnInvalidExecutions() {
         Execution execution = client.toBlocking().retrieve(
             POST(
-                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs",
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal",
                 null
             ),
             Execution.class
@@ -3939,6 +4028,38 @@ class ExecutionControllerRunnerTest {
         Map<String, Object> outputs = response.getBody().orElseThrow();
         assertThat(outputs).hasFieldOrPropertyWithValue("status", "ok");
         assertThat(outputs).containsKey("executionId");
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-response.yaml")
+    void webhookWithCustomResponse() {
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET(
+                "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS +
+                    "/webhook-response/webhook-response?challenge=verified&token=kestra"
+            ),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.getContentType()).contains(MediaType.TEXT_PLAIN_TYPE);
+        assertThat(response.getHeaders().get("X-Webhook-Token")).isEqualTo("kestra");
+        assertThat(response.body()).isEqualTo("verified");
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-response.yaml")
+    void webhookCustomResponseDoesNotRenderRequestDataTwice() {
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET(
+                "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS +
+                    "/webhook-response/webhook-response?challenge=%7B%7B%20trigger.parameters.token%5B0%5D%20%7D%7D&token=kestra"
+            ),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isEqualTo("{{ trigger.parameters.token[0] }}");
     }
 
     @Test

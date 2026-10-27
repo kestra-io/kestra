@@ -360,7 +360,7 @@
     )
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .mcp-edit {
         max-width: 653px;
         border: 1px solid var(--ks-border-default);

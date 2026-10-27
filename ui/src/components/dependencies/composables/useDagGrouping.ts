@@ -2,7 +2,7 @@ import {ref, computed} from "vue"
 import {useI18n} from "vue-i18n"
 import {stringUtils} from "@kestra-io/design-system"
 import {ASSET} from "../utils/types"
-import type {Node} from "../utils/types"
+import type {Edge, Node} from "../utils/types"
 
 export interface GroupField {
     key: string;
@@ -69,17 +69,33 @@ const GROUP_FIELDS = [
     },
 ] as const
 
+const CONSUMER_FIELD = "consumer"
+const CONSUMED_BY = "CONSUMED_BY"
+
 const accessorFor = (field: typeof GROUP_FIELDS[number]) => (node: Node) =>
     (field.assetOnly && node.metadata.subtype !== ASSET ? NOT_APPLICABLE : field.of(node))
 
-export function useDagGrouping(getNodes: () => Node[]) {
+export function useDagGrouping(getNodes: () => Node[], getEdges: () => Edge[] = () => []) {
     const {t} = useI18n({useScope: "global"})
 
     const groupField = ref("")
 
     const nodes = computed(() => getNodes())
 
-    const groupFields = computed<GroupField[]>(() => GROUP_FIELDS
+    const consumersByAsset = computed(() => {
+        const index = new Map<string, string[]>()
+        getEdges()
+            .filter((edge) => edge.kind === CONSUMED_BY)
+            .forEach((edge) => index.set(edge.source, [...(index.get(edge.source) ?? []), edge.target]))
+        return index
+    })
+
+    const consumerField = computed<GroupField[]>(() => {
+        const groups = new Set([...consumersByAsset.value.values()].flat()).size
+        return groups > 0 ? [{key: CONSUMER_FIELD, label: t("dependency.dag.group_consumer"), groups, usable: groups > 1}] : []
+    })
+
+    const groupFields = computed<GroupField[]>(() => [...GROUP_FIELDS
         .map((field) => {
             const accessor = accessorFor(field)
             const groups = new Set(nodes.value.map(accessor).filter(Boolean)).size
@@ -92,28 +108,51 @@ export function useDagGrouping(getNodes: () => Node[]) {
                 usable: groups > 1 && groups < nodes.value.length,
             }
         })
-        .filter((field) => field.groups > 0))
+        .filter((field) => field.groups > 0), ...consumerField.value])
 
     const groupOf = computed(() => {
         const field = GROUP_FIELDS.find((candidate) => candidate.key === groupField.value)
         return field ? accessorFor(field) : undefined
     })
 
-    const groupChips = computed<GroupChip[]>(() => {
+    /** Every group a node belongs to; a consumer grouping is multi-valued, so it never feeds the lane layout. */
+    const membersOf = computed<((node: Node) => string[]) | undefined>(() => {
+        if (groupField.value === CONSUMER_FIELD) {
+            const index = consumersByAsset.value
+            return (node) => (node.metadata.subtype === ASSET ? (index.get(node.id) ?? [""]) : [node.id])
+        }
+
         const accessor = groupOf.value
-        if (!accessor) {
+        return accessor ? (node) => [accessor(node) ?? ""] : undefined
+    })
+
+    const groupChips = computed<GroupChip[]>(() => {
+        const members = membersOf.value
+        if (!members) {
             return []
         }
 
+        const isConsumer = groupField.value === CONSUMER_FIELD
         const counts = new Map<string, number>()
-        nodes.value.forEach((node) => {
-            const key = accessor(node) ?? ""
-            counts.set(key, (counts.get(key) ?? 0) + 1)
-        })
+        nodes.value
+            .filter((node) => !isConsumer || node.metadata.subtype === ASSET)
+            .forEach((node) => members(node).forEach((key) => counts.set(key, (counts.get(key) ?? 0) + 1)))
 
+        const consumers = new Map(nodes.value.map((node) => [node.id, node]))
         const rank = (key: string): number => (key === "" ? 2 : key === NOT_APPLICABLE ? 1 : 0)
-        const labelOf = (key: string): string =>
-            (key === NOT_APPLICABLE ? t("flows") : key || t("dependency.dag.ungrouped"))
+        const labelOf = (key: string): string => {
+            if (key === NOT_APPLICABLE) {
+                return t("flows")
+            }
+            if (!isConsumer) {
+                return key || t("dependency.dag.ungrouped")
+            }
+            const consumer = consumers.get(key)
+            if (key === "") {
+                return t("dependency.dag.no_consumer")
+            }
+            return consumer?.namespace ? `${consumer.namespace}.${consumer.flow}` : t("dependency.dag.hidden_consumer")
+        }
 
         return [...counts.entries()]
             .sort(([a], [b]) => (rank(a) - rank(b)) || (a < b ? -1 : 1))
@@ -131,5 +170,5 @@ export function useDagGrouping(getNodes: () => Node[]) {
         return (id: string) => byNode.get(id) ?? 0
     })
 
-    return {nodes, groupField, groupFields, groupOf, groupChips, dagPriority}
+    return {nodes, groupField, groupFields, groupOf, membersOf, groupChips, dagPriority}
 }

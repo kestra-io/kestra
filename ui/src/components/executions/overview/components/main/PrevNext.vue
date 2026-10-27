@@ -10,7 +10,7 @@
 
         <KsButton :disabled="!results.next" @click="navigate('next')">
             {{ $t("next_execution") }}
-            <KsIcon class="ms-1">
+            <KsIcon class="next-icon">
                 <ChevronRight />
             </KsIcon>
         </KsButton>
@@ -88,7 +88,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 #buttons {
     display: flex;
@@ -98,6 +98,10 @@
 
     .kel-button {
         font-size: var(--ks-font-size-sm);
+    }
+
+    .next-icon {
+        margin-inline-start: var(--ks-spacing-1);
     }
 }
 </style>

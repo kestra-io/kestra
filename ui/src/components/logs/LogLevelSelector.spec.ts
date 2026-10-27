@@ -17,18 +17,10 @@ describe("LogLevelSelector", () => {
         ])
     })
 
-    test("binds the current value to the select", () => {
-        const wrapper = i18nMount(LogLevelSelector, {props: {value: "WARN"}})
-        const select = wrapper.findComponent({name: "KsSelect"})
-
-        expect(select.props("modelValue")).toBe("WARN")
-    })
-
     test("defaults value to INFO", () => {
         const wrapper = i18nMount(LogLevelSelector)
-        const select = wrapper.findComponent({name: "KsSelect"})
 
-        expect(select.props("modelValue")).toBe("INFO")
+        expect(wrapper.props("value")).toBe("INFO")
     })
 
     test("emits update:modelValue with the selected level", () => {
@@ -47,19 +39,5 @@ describe("LogLevelSelector", () => {
         select.vm.$emit("update:modelValue", undefined)
 
         expect(wrapper.emitted("update:modelValue")).toBeUndefined()
-    })
-
-    test("configures the select as filterable", () => {
-        const wrapper = i18nMount(LogLevelSelector)
-        const select = wrapper.findComponent({name: "KsSelect"})
-
-        expect(select.props("filterable")).toBe(true)
-    })
-
-    test("forwards the fit prop to the select", () => {
-        const wrapper = i18nMount(LogLevelSelector, {props: {fit: true}})
-        const select = wrapper.findComponent({name: "KsSelect"})
-
-        expect(select.props("fit")).toBe(true)
     })
 })

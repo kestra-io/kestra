@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Gatherers;
 
-import io.kestra.core.trace.TraceUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
@@ -16,6 +15,7 @@ import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -32,6 +32,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.WorkerQueueService;
+import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.DateUtils;
@@ -234,7 +235,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 ? null
                                                 : flow.getConcurrency().getQueueLimit();
 
-                                            int queuedCount = queueLimit == null
+                                            boolean hasQueueBehavior = concurrencyLimits.stream()
+                                                .anyMatch(limit -> limit.concurrency() != null && limit.concurrency().getBehavior() == Concurrency.Behavior.QUEUE);
+
+                                            int queuedCount = (queueLimit == null && !hasQueueBehavior)
                                                 ? 0
                                                 : executionQueuedStateStore.count(
                                                     txContext,

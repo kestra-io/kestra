@@ -13,6 +13,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
@@ -47,6 +48,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final DispatchQueueInterface<ExecutionEvent> executionEventQueue;
     private final DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
+    private final BroadcastQueueInterface<FlowInterface> flowQueue;
     private final DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     private final DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
     private final DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
@@ -95,6 +97,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         DispatchQueueInterface<ExecutionEvent> executionEventQueue,
         DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
+        BroadcastQueueInterface<FlowInterface> flowQueue,
         DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue,
         DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue,
         DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue,
@@ -114,6 +117,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.executionEventQueue = executionEventQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.killQueue = killQueue;
+        this.flowQueue = flowQueue;
         this.subflowExecutionResultQueue = subflowExecutionResultQueue;
         this.subflowExecutionEndQueue = subflowExecutionEndQueue;
         this.multipleConditionEventQueue = multipleConditionEventQueue;
@@ -234,6 +238,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
         this.queueSubscribers.addFirst(this.loopExecutionEventQueue.subscriber().subscribe(this::loopExecutionEventQueue));
         this.queueSubscribers.addFirst(this.killQueue.subscriber().subscribe(this::killQueue));
+        this.queueSubscribers.addFirst(this.flowQueue.subscriber().subscribe(this::flowQueue));
 
         // Register maintenance listener
         this.receiveCancellations.add(this.maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
@@ -380,6 +385,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
         executorCore.onExecutionKilled(either.getLeft());
+    }
+
+    private void flowQueue(Either<FlowInterface, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize a flow event: {}", either.getRight().getMessage());
+            return;
+        }
+
+        FlowInterface flow = either.getLeft();
+        if (flow == null || flow.isDeleted()) {
+            return;
+        }
+
+        executorCore.drainQueuedExecutions(flow);
     }
 
     private void subflowExecutionResultQueue(Either<SubflowExecutionResult, DeserializationException> either) {

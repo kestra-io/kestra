@@ -325,6 +325,18 @@
         maximizedPanelIndex.value = maximizedPanelIndex.value === panelIndex ? null : panelIndex
     }
 
+    // Whatever activated the tab (toolbar, file tree, topology), it has to end up on screen.
+    watch(() => panels.value.map(p => p.activeTab?.uid), (uids, previous) => {
+        for (const uid of uids) {
+            if (!uid || previous?.includes(uid)) continue
+            const panelIndex = uids.indexOf(uid)
+            if (maximizedPanelIndex.value != null && maximizedPanelIndex.value !== panelIndex) {
+                maximizedPanelIndex.value = null
+            }
+            nextTick(() => ensureActiveTabVisible(panelIndex, uid))
+        }
+    })
+
     watch(() => panels.value.length, (length) => {
         if (maximizedPanelIndex.value != null && maximizedPanelIndex.value >= length) {
             maximizedPanelIndex.value = null
@@ -727,7 +739,7 @@
     }
 
     function ensureActiveTabVisible(panelIndex: number, tabId: string){
-        const container = tabContainerRefs.value[panelIndex]
+        const container = tabContainerRefs.value.find(r => r.dataset.panelIndex === panelIndex.toString())
         if(!container){
             return
         }

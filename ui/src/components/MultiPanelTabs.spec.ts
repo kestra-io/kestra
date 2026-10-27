@@ -84,6 +84,23 @@ describe("MultiPanelTabs maximize", () => {
         expect(wrapper.findAll(".content-panel").length).toBe(2)
         expect(wrapper.find("[data-test='panel-maximize'][aria-pressed='true']").exists()).toBe(false)
     })
+
+    test("activating a tab in a hidden panel exits fullscreen so the tab is shown", async () => {
+        const second = makePanel("b")
+        const other = {uid: "c", button: {label: "c", icon: IconStub}, component: PaneStub}
+        second.tabs.push(other)
+        const wrapper = i18nMount(MultiPanelTabs, {
+            global: globalConfig,
+            props: {modelValue: [makePanel("a"), second]},
+        })
+        await wrapper.findAll("[data-test='panel-maximize']")[0].trigger("click")
+
+        const vm = wrapper.vm as unknown as {panels: {activeTab: unknown}[]}
+        vm.panels[1].activeTab = other
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.findAll(".content-panel").length).toBe(2)
+    })
 })
 
 describe("MultiPanelTabs split", () => {

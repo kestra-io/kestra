@@ -259,6 +259,10 @@ describe("Duration", () => {
         const wrapper = i18nMount(Duration, {
             props: {
                 compact: true,
+                execution: {
+                    state: {current: "SUCCESS", histories: [{date: new Date(0).toISOString(), state: "CREATED"}]},
+                    taskRunList: [{id: "run", taskId: "task", state: {current: "SUCCESS", histories: [{date: new Date(4_000).toISOString(), state: "SUCCESS"}]}}],
+                },
                 histories: [
                     {date: 0, state: "RUNNING"},
                     {date: 1_000, state: "SUCCESS"},
@@ -270,22 +274,33 @@ describe("Duration", () => {
         expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(true)
     })
 
-    it("should show no compact bar for a task that never ran", () => {
+    it.each([
+        {histories: []},
+        {histories: [{date: 0, state: "SKIPPED"}]},
+        {histories: [{date: 0, state: "RUNNING"}, {date: 0, state: "SUCCESS"}]},
+        {histories: [{date: "invalid", state: "SUCCESS"}]},
+    ])("should show no compact bar without meaningful duration: $histories", ({histories}) => {
         const wrapper = i18nMount(Duration, {
             props: {
                 compact: true,
-                histories: [{date: 0, state: "SKIPPED"}],
+                execution: {
+                    state: {current: "SUCCESS", histories: [{date: new Date(0).toISOString(), state: "CREATED"}]},
+                    taskRunList: [{id: "run", taskId: "task", state: {current: "SUCCESS", histories: [{date: new Date(4_000).toISOString(), state: "SUCCESS"}]}}],
+                },
+                histories,
             },
         })
-
-        expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
+        expect(wrapper.find("[data-test='duration-compact-bar']").exists()).toBe(false)
     })
 
-    it("should scale compact segments against the provided denominator instead of its own total", () => {
+    it("should scale the compact bar against the execution timeline", () => {
         const wrapper = i18nMount(Duration, {
             props: {
                 compact: true,
-                denominator: 4_000,
+                execution: {
+                    state: {current: "SUCCESS", histories: [{date: new Date(0).toISOString(), state: "CREATED"}]},
+                    taskRunList: [{id: "run", taskId: "task", state: {current: "SUCCESS", histories: [{date: new Date(4_000).toISOString(), state: "SUCCESS"}]}}],
+                },
                 histories: [
                     {date: 0, state: "RUNNING"},
                     {date: 1_000, state: "SUCCESS"},
@@ -293,32 +308,73 @@ describe("Duration", () => {
             },
         })
 
-        const running = wrapper.find("[data-test=\"duration-segment-running\"]")
+        const running = wrapper.find("[data-test=\"duration-task-bar\"]")
         expect((running.element as HTMLElement).style.width).toBe("25%")
     })
 
-    it("should not let the segments overfill the track when a run outgrows a stale denominator", () => {
-        // The denominator is the execution's longest task run and only refreshes with the execution,
-        // while this component re-measures on its own interval — so a still-running task outgrows it.
+    it.each([["SUCCESS", "green"], ["FAILED", "red"]])("should color a short %s bar by state and keep it inside the track", (state, color) => {
+        const token = `--ks-status-${state.toLowerCase()}`
+        document.documentElement.style.setProperty(token, color)
         const wrapper = i18nMount(Duration, {
             props: {
                 compact: true,
-                denominator: 1_000,
+                execution: {
+                    state: {current: "SUCCESS", histories: [{date: new Date(0).toISOString(), state: "CREATED"}]},
+                    taskRunList: [{id: "run", taskId: "task", state: {current: state, histories: [{date: new Date(10_000).toISOString(), state}]}}],
+                },
                 histories: [
-                    {date: 0, state: "CREATED"},
-                    {date: 1_000, state: "RUNNING"},
-                    {date: 4_000, state: "SUCCESS"},
+                    {date: 9_998, state: "CREATED"},
+                    {date: 9_999, state: "RUNNING"},
+                    {date: 10_000, state},
                 ],
             },
         })
+        const bar = wrapper.get("[data-test='duration-task-bar']").element as HTMLElement
+        expect(bar.style.width).toBe("3%")
+        expect(bar.style.marginLeft).toBe("97%")
+        expect(bar.style.background).toBe(color)
+        document.documentElement.style.removeProperty(token)
+        expect(wrapper.find("[data-test='duration-segment-queued']").exists()).toBe(false)
+    })
 
-        const widthOf = (name: string) => {
-            const el = wrapper.find(`[data-test="duration-segment-${name}"]`)
-            return el.exists() ? parseFloat((el.element as HTMLElement).style.width) : 0
-        }
-        const total = widthOf("queued") + widthOf("running") + widthOf("paused")
+    it("should offset the bar past the initial queue time", () => {
+        const wrapper = i18nMount(Duration, {
+            props: {
+                compact: true,
+                execution: {
+                    state: {current: "SUCCESS", histories: [{date: new Date(0).toISOString(), state: "CREATED"}]},
+                    taskRunList: [{id: "run", taskId: "task", state: {current: "SUCCESS", histories: [{date: new Date(10_000).toISOString(), state: "SUCCESS"}]}}],
+                },
+                histories: [
+                    {date: 2_000, state: "CREATED"},
+                    {date: 3_000, state: "RUNNING"},
+                    {date: 5_000, state: "SUCCESS"},
+                ],
+            },
+        })
+        const bar = wrapper.get("[data-test='duration-task-bar']").element as HTMLElement
+        expect(bar.style.marginLeft).toBe("30%")
+        expect(bar.style.width).toBe("20%")
+    })
 
-        expect(total).toBeLessThanOrEqual(100)
+    it("should update running bars and completed bars while the execution continues", async () => {
+        vi.useFakeTimers()
+        vi.setSystemTime(10_000)
+        const execution = {state: {current: "RUNNING", histories: [{date: new Date(0).toISOString(), state: "CREATED"}]}}
+        const running = i18nMount(Duration, {
+            props: {compact: true, execution, histories: [{date: 5_000, state: "RUNNING"}]},
+        })
+        const completed = i18nMount(Duration, {
+            props: {compact: true, execution, histories: [{date: 0, state: "RUNNING"}, {date: 5_000, state: "SUCCESS"}]},
+        })
+        const width = (wrapper: typeof running) => parseFloat((wrapper.get("[data-test='duration-task-bar']").element as HTMLElement).style.width)
+        expect(width(running)).toBe(50)
+        expect(width(completed)).toBe(50)
+
+        await vi.advanceTimersByTimeAsync(10_000)
+
+        expect(width(running)).toBe(75)
+        expect(width(completed)).toBe(25)
     })
 
     it("should fall back to its own total for the tier-1 split bar when no denominator is provided", () => {

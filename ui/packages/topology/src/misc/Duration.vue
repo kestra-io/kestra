@@ -1,25 +1,7 @@
 <template>
     <template v-if="compact">
         <div v-if="showCompactBar" class="split-bar compact-bar" data-test="duration-compact-bar" aria-hidden="true">
-            <span
-                v-if="breakdown.queued > 0"
-                class="split-bar-seg split-bar-queued"
-                data-test="duration-segment-queued"
-                :style="{width: segmentWidths.queued + '%'}"
-            />
-            <span
-                v-if="breakdown.running > 0"
-                class="split-bar-seg split-bar-running"
-                data-test="duration-segment-running"
-                :class="{'split-bar-running-live': isActivelyRunning}"
-                :style="{width: segmentWidths.running + '%'}"
-            />
-            <span
-                v-if="breakdown.paused > 0"
-                class="split-bar-seg split-bar-paused"
-                data-test="duration-segment-paused"
-                :style="{width: segmentWidths.paused + '%'}"
-            />
+            <span data-test="duration-task-bar" class="compact-task-bar" :style="compactBarStyle" />
         </div>
     </template>
     <KsPopover
@@ -174,6 +156,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import * as Utils from "../utils/utils"
+    import type {GraphExecution} from "../utils/vueFlowUtils"
     import {computeDurationBreakdown} from "./durationBreakdown"
 
     const TIER1_POPPER_STYLE = {
@@ -208,9 +191,7 @@
          *  instead of the breakdown's own total, so bars across several instances are comparable.
          *  Absent or non-positive falls back to the unscaled, per-instance behavior. */
         denominator?: number;
-        /** Renders only the segmented bar, outside the popover, with no trigger button — the
-         *  always-visible comparison bar a task node's footer fills instead of the tier-1/tier-2
-         *  detail card. */
+        execution?: GraphExecution;
         compact?: boolean;
     }>(), {
         histories: undefined,
@@ -219,6 +200,7 @@
         subject: undefined,
         denominator: undefined,
         compact: false,
+        execution: undefined,
     })
 
     const {t} = useI18n()
@@ -253,7 +235,31 @@
     const isActivelyRunning = computed(() => breakdown.value.isRunning && lastState.value === State.RUNNING)
     const waitingToStart = computed(() => breakdown.value.isRunning && breakdown.value.running === 0)
     const neverRan = computed(() => hasHistory.value && !breakdown.value.isRunning && breakdown.value.total === 0)
-    const showCompactBar = computed(() => breakdown.value.total > 0)
+
+    const compactBarStyle = computed(() => {
+        const execution = props.execution
+        const executionStart = dayjs(execution?.state?.histories?.[0]?.date ?? "").valueOf()
+        const executionEnd = execution?.state?.current && State.isRunning(execution.state.current)
+            ? now.value
+            : Math.max(...(execution?.taskRunList ?? []).flatMap(run =>
+                run.state.histories?.slice(-1).map(h => dayjs(h.date).valueOf()) ?? [],
+            ))
+        const duration = executionEnd - executionStart
+        const entries = filteredHistories.value
+        const first = entries[0]
+        const last = entries.at(-1)
+        if (!first || !last || !Number.isFinite(duration) || duration <= 0 || last.state === State.SKIPPED) return undefined
+        const start = entries.find(h => h.state === State.RUNNING)?.date.valueOf() ?? first.date.valueOf()
+        const end = breakdown.value.isRunning ? now.value : last.date.valueOf()
+        if (end <= start) return undefined
+        const width = Math.min(100, Math.max(3, (end - start) / duration * 100))
+        return {
+            marginLeft: `${Math.max(0, Math.min((start - executionStart) / duration * 100, 100 - width))}%`,
+            width: `${width}%`,
+            background: State.getStateColor(last.state),
+        }
+    })
+    const showCompactBar = computed(() => compactBarStyle.value !== undefined)
 
     const derivedAttemptGroupCount = computed(() => {
         if (!hasHistory.value) return 0
@@ -292,7 +298,7 @@
 
     // Driven by the state and not by the history's first entry, so the ticker also restarts on the
     // RUNNING of a second attempt, which leaves that entry untouched.
-    watch(() => breakdown.value.isRunning, (running) => running ? paint() : cancel(), {immediate: true})
+    watch(() => breakdown.value.isRunning || Boolean(props.compact && props.execution?.state?.current && State.isRunning(props.execution.state.current)), (running) => running ? paint() : cancel(), {immediate: true})
 
     onBeforeUnmount(cancel)
 
@@ -323,10 +329,6 @@
         return formatDuration(breakdown.value.total)
     })
 
-    // Each segment is a share of `denominator`, which for a node bar is the execution's longest task
-    // run — a value that only refreshes with the execution while this component re-measures every
-    // `interval` ms. A still-running task therefore outgrows it between refreshes, so the widths are
-    // clamped as a running total: the bar fills, it never over-fills.
     const segmentWidths = computed(() => {
         const denominator = props.denominator && props.denominator > 0 ? props.denominator : breakdown.value.total
         let remaining = 100
@@ -552,6 +554,11 @@
     .compact-bar {
         width: 100%;
         height: var(--ks-spacing-1);
+    }
+
+    .compact-task-bar {
+        flex: none;
+        height: 100%;
     }
 
     .split-bar-queued {

@@ -31,7 +31,7 @@
                                     <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
-                                <TrashCanOutline
+                                <Delete
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
                                     v-if="canDelete && item.value !== undefined && currentRevision !== item.value"
@@ -74,7 +74,7 @@
                                     <span v-if="item.updatedBy" class="revision-timestamp">{{ item.updatedBy }}</span>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
-                                <TrashCanOutline
+                                <Delete
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
                                     v-if="canDelete && item.value !== undefined && currentRevision !== item.value"
@@ -132,7 +132,7 @@
     import * as monaco from "monaco-editor/editor/editor.api"
     import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
-    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"

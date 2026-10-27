@@ -170,6 +170,7 @@
     import type {LogEntry} from "@kestra-io/kestra-sdk"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {
         hasUnsupportedRouteLevelComparator,
         levelToRequestParams,
@@ -231,6 +232,8 @@
         }
         return params
     })
+
+    const logFilters = computed(() => routeQueryToQueryFilters({...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value}))
 
     const logExecutionsFilter = useLogExecutionsFilter(() => props.playground, () => executionKind.value)
     const defaultLogLevel = computed(
@@ -492,7 +495,7 @@
         logsLoading.value = true
         executionsStore.loadLogs({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         }).finally(() => {
             logsLoading.value = false
             logsLoaded.value = true
@@ -502,14 +505,14 @@
     function downloadContent() {
         executionsStore.downloadLogsFile({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         })
     }
 
     function copyAllLogs() {
         executionsStore.downloadLogs({
             executionId: executionId.value!,
-            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+            filters: logFilters.value,
         }).then((response: unknown) => {
             Utils.copy(response as string)
             toast.success(t("logs_copied"))

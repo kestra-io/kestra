@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +30,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.input.IntInput;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
@@ -43,8 +46,13 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Pause;
 
+import io.micronaut.core.io.buffer.ReadBufferFactory;
+import io.micronaut.http.multipart.CompletedAttribute;
+import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.multipart.FormFieldMetadata;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -479,6 +487,43 @@ class ExecutionServiceTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/pause-dynamic-resume-inputs.yaml" })
+    void shouldRenderResumeDescriptionsAndDefaultsWhenExecutionIsPaused() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(
+            MAIN_TENANT, "io.kestra.tests", "pause-dynamic-resume-inputs", null, (unused, _unused) -> Map.of("request", "holiday"), null
+        );
+        Flow flow = flowRepository.findByExecution(execution);
+        Pause pause = (Pause) flow.findTaskByTaskId("pause");
+
+        var values = executionService.validateForResume(execution, flow).block();
+        assertThat(values).hasSize(3);
+        assertThat(values).allSatisfy(value -> assertThat(value.exceptions()).isNull());
+        assertThat(values.getFirst().value()).isEqualTo("approve");
+        assertThat(values.getFirst().input().getDescription()).isEqualTo("Review holiday");
+        assertThat(values.get(1).value()).isEqualTo(0);
+        assertThat(values.get(1).input().getDescription()).isEqualTo("Days remaining");
+        assertThat(((IntInput) values.get(1).input()).getMax()).isEqualTo(5);
+        assertThat(values.get(2).value()).isEqualTo("Approved by reviewer");
+        assertThat(values.get(2).input().getDescription()).isEqualTo("Explain your decision");
+        assertThat(pause.getOnResume().getFirst().getDescription())
+            .isEqualTo("{{ outputs.prepare.values.description }} {{ inputs.request }}");
+
+        var submitted = Flux.<CompletedPart> just(
+            CompletedAttribute.create(
+                new FormFieldMetadata("decision", null, null),
+                ReadBufferFactory.getJdkFactory().adapt("reject".getBytes(StandardCharsets.UTF_8))
+            )
+        );
+        var overridden = executionService.validateForResume(execution, flow, submitted).block();
+        assertThat(overridden.getFirst().value()).isEqualTo("reject");
+        assertThat(overridden.getFirst().isDefault()).isFalse();
+        assertThat(overridden.getFirst().input().getDescription()).isEqualTo("Review holiday");
+
+        var defaults = executionService.readInputs(execution, flow, Flux.empty()).block();
+        assertThat(defaults).containsEntry("decision", "approve").containsEntry("count", 0);
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/pause-test.yaml" }, tenantId = TENANT_1)
     void resumePausedToKilling() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(TENANT_1, "io.kestra.tests", "pause-test");
@@ -677,7 +722,7 @@ class ExecutionServiceTest {
 
     @Test
     @LoadFlows({ "flows/valids/minimal.yaml" })
-    void shouldResumeFromBreakpoint() {
+    void shouldResumeFromBreakpoint() throws QueueException {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
         Execution execution = Execution.newExecution(flow, Collections.emptyList())
             .withBreakpoints(List.of(Breakpoint.of("date")))

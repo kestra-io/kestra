@@ -113,8 +113,8 @@
 
     const taskRunDurationMinutes = computed(() => {
         const total = dailyExecutions.value.reduce(
-            (acc, day) => acc.add(dayjs.duration(day.taskRunsDuration?.sum ?? "PT0S")),
-            dayjs.duration("PT0S"),
+            (acc, day) => acc.add(moment.duration(day.taskRunsDuration?.sum ?? "PT0S")),
+            moment.duration("PT0S"),
         )
         return Math.floor(total.asMinutes())
     })

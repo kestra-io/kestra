@@ -9,10 +9,23 @@
         @dragstart="onDragStart"
         @dragend="emit(EVENTS.TASK_DRAG_END)"
     >
-        <div v-if="lod === 'pill'" class="node-pill" :style="nodeStyle">
-            <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
-                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
-            </KsTooltip>
+        <div v-if="lod === 'pill'" class="node-pill" :style="pillStyle" data-test="topology-task-pill">
+            <span class="node-pill-icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                <KsTooltip :content="displayTitle" placement="bottom" :showAfter="600">
+                    <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                </KsTooltip>
+            </span>
+            <!-- A status tint alone is unreadable once the graph is zoomed this far out, so the state also rides along as its own glyph (kestra-io/kestra#21619). -->
+            <span
+                v-if="statusStyle"
+                class="node-pill-status"
+                :style="pillStatusStyle"
+                data-test="topology-task-pill-status"
+                role="img"
+                :aria-label="state"
+            >
+                <component :is="statusStyle.icon" :size="14" />
+            </span>
         </div>
         <template v-else>
             <div
@@ -67,10 +80,10 @@
         type PluginIconMap,
     } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import {EVENTS} from "../utils/constants"
+    import {EVENTS, PILL_COMPENSATION} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
-    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {EXECUTION_INJECTION_KEY, PILL_ZOOM_COMPENSATION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
 
     interface NodeEntity {
@@ -189,6 +202,24 @@
         }
     })
 
+    const pillCompensation = inject(PILL_ZOOM_COMPENSATION_INJECTION_KEY, computed(() => 1))
+
+    // The ring is widened instead of the pill being scaled: scaling the pill would move the
+    // footprint dagre laid out, and crossing a zoom threshold has to leave every node where it is.
+    // The factor multiplies `.node-pill`'s own 1px border, so 1 leaves it exactly as authored.
+    // Only a pill that has a state to show is compensated: without one there is nothing to make
+    // visible, and the flow editor's own state-less pills must keep the border they were drawn with.
+    const pillStyle = computed(() => {
+        const style = nodeStyle.value
+        if (!style) return undefined
+        return {...style, borderWidth: `${pillCompensation.value}px`}
+    })
+
+    const pillStatusStyle = computed(() => ({
+        color: `var(${statusStyle.value?.textVar})`,
+        transform: `scale(${Math.min(pillCompensation.value, PILL_COMPENSATION.GLYPH_MAX)})`,
+    }))
+
     const node = computed(() => {
         return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null
     })
@@ -261,6 +292,7 @@
     }
 
     .node-pill {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -270,6 +302,30 @@
         background-color: var(--ks-bg-surface);
         border: 1px solid var(--ks-border-strong);
         box-shadow: 0 2px 4px var(--ks-shadow-surface);
+    }
+
+    .node-pill-icon {
+        display: flex;
+    }
+
+    .node-pill-status {
+        position: absolute;
+        right: calc(var(--ks-spacing-1) * -1);
+        bottom: calc(var(--ks-spacing-1) * -1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        /* Opaque disc, because the glyph sits over whichever status tint the pill itself carries. */
+        background-color: var(--ks-bg-surface);
+        line-height: 1;
+        /* Grows down and right out of the pill's corner, so compensating for a low zoom never
+           walks the glyph back over the plugin icon it annotates. */
+        transform-origin: top left;
+    }
+
+    .node-pill .icon--dimmed {
+        opacity: 0.2;
     }
 
     .node-grip {

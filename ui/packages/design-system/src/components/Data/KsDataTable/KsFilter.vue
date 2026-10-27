@@ -205,8 +205,9 @@
     }
 
     const refreshData = () => {
-        tableRefreshData()
+        const result = tableRefreshData()
         emits("refresh")
+        return result
     }
 
     usePeriodicRefresh(refreshData)

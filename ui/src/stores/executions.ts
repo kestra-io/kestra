@@ -14,6 +14,7 @@ import {
     type Level,
     type LogEntry,
     type PagedResultsApiLightExecution,
+    type QueryFilter,
     type StateType,
 } from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
@@ -399,19 +400,19 @@ export const useExecutionsStore = defineStore("executions", () => {
             kind: options.kind,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             revision: options.revision,
-        }, {timeout: 60 * 60 * 1000}).then(execution => {
+        }, {timeout: 60 * 60 * 1000}).then(exec => {
             useApiStore().posthogEvents({
                 type: "FLOW_EXECUTION",
                 action: "executed",
-                execution_id: execution.id,
-                namespace: execution.namespace,
-                flow_id: execution.flowId,
+                execution_id: exec.id,
+                namespace: exec.namespace,
+                flow_id: exec.flowId,
                 location: executionLocation(route.name?.toString(), options.kind),
-                is_example: isExampleFlow(execution.namespace),
-                revision: execution.flowRevision,
+                is_example: isExampleFlow(exec.namespace),
+                revision: exec.flowRevision,
             })
 
-            return execution
+            return exec
         })
     }
 
@@ -574,10 +575,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // `page` and `size` turn on the endpoint's optional pagination; without them every matching log is returned.
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
+    const loadLogs = (options: { executionId: string; filters?: QueryFilter[]; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
         return LogsAPI.listLogsFromExecution({
             executionId: options.executionId,
-            filters: routeQueryToQueryFilters(options.params ?? {}),
+            filters: options.filters ?? [],
             ...(options.page !== undefined ? {page: options.page} : {}),
             ...(options.size !== undefined ? {size: options.size} : {}),
             ...(options.sort !== undefined ? {sort: options.sort} : {}),
@@ -590,11 +591,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const downloadLogs = (options: { executionId: string; params?: FilterQuery }) => {
-        return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})}) as unknown as Promise<string>
+    const downloadLogs = (options: { executionId: string; filters?: QueryFilter[] }) => {
+        return LogsAPI.downloadLogsFromExecution({
+            executionId: options.executionId, 
+            filters: options.filters ?? [],
+        }) 
     }
 
-    const downloadLogsFile = (options: { executionId: string; params?: FilterQuery }) => {
+    const downloadLogsFile = (options: { executionId: string; filters?: QueryFilter[] }) => {
         return downloadLogs(options).then(text => {
             Utils.downloadUrl(
                 window.URL.createObjectURL(new Blob([text])),

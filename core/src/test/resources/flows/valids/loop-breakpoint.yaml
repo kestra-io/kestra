@@ -1,0 +1,15 @@
+id: loop-breakpoint
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    concurrencyLimit: 1
+    values: ["x", "y"]
+    tasks:
+      - id: first
+        type: io.kestra.plugin.core.log.Log
+        message: "First task for {{ item.value }}"
+      - id: inner
+        type: io.kestra.plugin.core.log.Log
+        message: "item {{ item.value }}"

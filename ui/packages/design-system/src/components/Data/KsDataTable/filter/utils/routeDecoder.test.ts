@@ -127,7 +127,7 @@ describe("parseEncodedGroups", () => {
         expect(filters[0]?.value).toBe("RUNNING")
     })
 
-    test("ignores unparseable and unknown parameters", () => {
+    test("ignores unparsable and unknown parameters", () => {
         const {groups} = decode({
             invalid: "value",
             "filters[status]": "RUNNING",

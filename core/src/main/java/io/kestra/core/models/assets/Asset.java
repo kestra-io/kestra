@@ -6,15 +6,18 @@ import java.util.*;
 import org.apache.commons.lang3.ObjectUtils;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.kestra.core.models.FieldCondition;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.flows.FlowAction;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.TenantId;
 
@@ -22,6 +25,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -42,6 +46,10 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     public static final String TTL_METADATA_KEY = SYSTEM_METADATA_PREFIX + "ttl";
 
     public static final String OWNER_METADATA_KEY = SYSTEM_METADATA_PREFIX + "owner";
+
+    public static final Set<String> CONDITION_FIELDS = Set.of("namespace", "id", "type", "displayName", "description", "status", "ttl", "owner");
+
+    public static final String METADATA_PREFIX = "metadata.";
 
     /** The expiry buckets compare TTLs as text, so UTC ISO-8601 with millis is a contract, not a preference. */
     public static final String TTL_FORMAT = "(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z)?";
@@ -70,8 +78,25 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(max = 100)
-    @Schema(title = "The day-2 actions offered on this asset, each backing onto a flow.")
+    @Schema(
+        title = "The day-2 actions offered on this asset, each backing onto a flow.",
+        description = "Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. " +
+            "When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. " +
+            "When it is omitted, the stored actions are kept. " +
+            "It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API."
+    )
     private List<@Valid FlowAction> assetActions;
+
+    @Nullable
+    @Valid
+    @Schema(title = "The asset this one is part of.", description = "At most one parent. Parent depth is limited by the service layer, not by this model.")
+    private AssetRelationRef partOf;
+
+    @Nullable
+    @Size(max = 50)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(title = "Assets related to this one.", description = "Declaration only: turned into RELATED relations when the asset is written, and not persisted on the asset by the platform.")
+    private List<@Valid AssetRelationRef> related;
 
     @Nullable
     @Hidden
@@ -152,6 +177,8 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
             ? this.assetActions
             : Optional.ofNullable(previousAsset).map(Asset::getAssetActions).orElse(null);
 
+        this.partOf = Optional.ofNullable(this.partOf).or(() -> Optional.ofNullable(previousAsset).map(Asset::getPartOf)).orElse(null);
+
         return (T) this;
     }
 
@@ -221,6 +248,16 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         metadata.put(name, value);
     }
 
+    @JsonProperty("partOf")
+    public void setPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+    }
+
+    @JsonProperty("related")
+    public void setRelated(List<AssetRelationRef> related) {
+        this.related = related;
+    }
+
     @Override
     public String uid() {
         return Asset.uid(tenantId, id);
@@ -240,8 +277,28 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
         return this;
     }
 
+    @AssertTrue(message = "a condition field must be an asset field or metadata.<key>")
+    @JsonIgnore
+    public boolean isEveryConditionFieldReadable() {
+        return ListUtils.emptyOnNull(assetActions).stream()
+            .flatMap(action -> ListUtils.emptyOnNull(action.when()).stream())
+            .map(FieldCondition::field)
+            .allMatch(field -> field == null || CONDITION_FIELDS.contains(field)
+                || (field.startsWith(METADATA_PREFIX) && field.length() > METADATA_PREFIX.length()));
+    }
+
     public Asset withAssetActions(List<FlowAction> assetActions) {
         this.assetActions = assetActions;
+        return this;
+    }
+
+    public Asset withPartOf(AssetRelationRef partOf) {
+        this.partOf = partOf;
+        return this;
+    }
+
+    public Asset withRelated(List<AssetRelationRef> related) {
+        this.related = related;
         return this;
     }
 }

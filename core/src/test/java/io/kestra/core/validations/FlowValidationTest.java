@@ -2,6 +2,7 @@ package io.kestra.core.validations;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,7 @@ import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.models.validations.ValidationError;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
@@ -116,7 +118,8 @@ class FlowValidationTest {
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, invalidYaml)));
 
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("YAML parsing error").contains("at line");
+        assertThat(results.getFirst().getErrors()).singleElement()
+            .extracting(ValidationError::detail).asString().contains("YAML parsing error").contains("at line");
     }
 
     @Test
@@ -133,7 +136,7 @@ class FlowValidationTest {
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, yamlWithUndefinedVar)));
 
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).contains("Validation error");
+        assertThat(results.getFirst().getErrors()).isNotEmpty();
     }
 
     @Test
@@ -153,6 +156,7 @@ class FlowValidationTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system.label=system_key");
         assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system.id=id");
+        assertThat(validate.get().getMessage()).contains("System labels can only be set by Kestra itself, offending label: system=value");
     }
 
     @Test
@@ -554,6 +558,95 @@ class FlowValidationTest {
     };
 
     @Test
+    void shouldRejectStaticallyInvalidAssetsOnTaskAndTrigger() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+                assets:
+                  outputs:
+                    - id: "bad id with spaces!"
+                      type: TABLE
+            triggers:
+              - id: schedule
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 0 1 1 *"
+                assets:
+                  outputs:
+                    - id: "also bad"
+                      type: TABLE
+            """, Flow.class);
+
+        assertThat(assetViolations(flow)).containsExactlyInAnyOrder(
+            "Task 'hello' declares an invalid asset in `assets.outputs`: `id` must match \"^[a-zA-Z0-9][a-zA-Z0-9._:-]*\".",
+            "Trigger 'schedule' declares an invalid asset in `assets.outputs`: `id` must match \"^[a-zA-Z0-9][a-zA-Z0-9._:-]*\"."
+        );
+    }
+
+    @Test
+    void shouldRejectMalformedAssetsDeclaration() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+                assets:
+                  outputs:
+                    - just-a-string
+            """, Flow.class);
+
+        assertThat(assetViolations(flow)).singleElement().asString()
+            .startsWith("Task 'hello' declares a malformed `assets.outputs`:");
+    }
+
+    @Test
+    void shouldAcceptTemplatedAssetsDeclaration() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: items
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+                assets:
+                  inputs:
+                    - id: "{{ inputs.source }}"
+                  outputs:
+                    - id: "{{ inputs.target }}"
+                      type: "{{ inputs.kind }}"
+              - id: whole
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+                assets:
+                  outputs: "{{ inputs.assets }}"
+              - id: typed
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+                assets:
+                  outputs:
+                    - id: table
+                      type: TABLE
+                      metadata: "{{ inputs.metadata }}"
+            """, Flow.class);
+
+        assertThat(assetViolations(flow)).isEmpty();
+    }
+
+    private List<String> assetViolations(Flow flow) {
+        return modelValidator.isValid(flow).stream()
+            .flatMap(e -> e.getConstraintViolations().stream())
+            .map(ConstraintViolation::getMessage)
+            .flatMap(message -> Arrays.stream(message.split(", (?=(Task|Trigger) ')")))
+            .filter(message -> message.contains("`assets."))
+            .toList();
+    }
+
+    @Test
     void shouldNotFailValidationWhenSecretPropertyHasPlainTextValue() {
         // Given
         SecretFieldTask task = SecretFieldTask.builder()
@@ -628,6 +721,19 @@ class FlowValidationTest {
               - id: cfg
                 type: REUSABLE_INPUTS
                 ref: my_block
+              - id: disks
+                type: TABLE
+                columns:
+                  - id: size_gb
+                    type: INT
+              - id: env
+                type: FORM
+                inputs:
+                  - id: volumes
+                    type: TABLE
+                    columns:
+                      - id: size_gb
+                        type: INT
             tasks:
               - id: hello
                 type: io.kestra.plugin.core.log.Log
@@ -638,7 +744,9 @@ class FlowValidationTest {
 
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getMessage())
-            .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.");
+            .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.")
+            .contains("Input 'disks' of type TABLE is only available in Enterprise Edition.")
+            .contains("Input 'volumes' of type TABLE is only available in Enterprise Edition.");
     }
 
     @Test

@@ -487,6 +487,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/waitfor-max-iterations-from-input.yaml" }, tenantId = "waitformaxiterationsfrominput")
+    void waitforMaxIterationsFromInput() throws Exception {
+        loopUntilTestCaseTest.waitforMaxIterationsFromInput("waitformaxiterationsfrominput");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/waitfor-max-duration.yaml" }, tenantId = "waitformaxduration")
     void waitforMaxDuration() throws Exception {
         loopUntilTestCaseTest.waitforMaxDuration("waitformaxduration");
@@ -595,6 +601,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-empty-values-from-uri.yaml")
+    protected void loopEmptyValuesFromUri(Execution execution) throws Exception {
+        loopCaseTest.loopEmptyValuesFromUri(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-expression-context.yaml")
     protected void loopExecutionContext(Execution execution) throws Exception {
         loopCaseTest.loopExpressionContext(execution);
@@ -662,9 +674,22 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopNestedWithSubflow(Execution execution) {
+        loopCaseTest.loopNestedWithSubflow(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-with-pause.yaml")
     public void loopWithPause(Execution execution) {
         loopCaseTest.loopWithPause(execution);
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/loop-breakpoint.yaml" }, tenantId = "loop-breakpoint")
+    void loopBreakpointOnChildTask() throws Exception {
+        loopCaseTest.loopBreakpointOnChildTask("loop-breakpoint");
     }
 
     @Test
@@ -713,6 +738,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({ "flows/valids/sla-parent-flow.yaml", "flows/valids/sla-subflow.yaml" })
     void slaViolationOnSubflowMayEndTheParentFlow() throws Exception {
         slaTestCase.slaViolationOnSubflowMayEndTheParentFlow();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/sla-flow-trigger-source.yaml", "flows/valids/sla-flow-trigger-listener.yaml" })
+    void shouldNotKillFlowTriggeredExecutionWhenSLAFails() throws Exception {
+        slaTestCase.shouldNotKillFlowTriggeredExecutionWhenSLAFails();
     }
 
     @Test

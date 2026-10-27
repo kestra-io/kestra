@@ -19,12 +19,11 @@ import java.util.stream.Stream;
 
 import javax.annotation.CheckReturnValue;
 
-import io.kestra.core.exceptions.FlowNotFoundException;
-import io.kestra.core.serializers.JacksonMapper;
 import org.apache.commons.io.FilenameUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.SequenceWriter;
 
@@ -32,9 +31,10 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.debug.Breakpoint;
+import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
-import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.core.exceptions.ConflictException;
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
@@ -47,10 +47,6 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
-import io.kestra.webserver.errors.ProblemDetail;
-import io.kestra.webserver.errors.ProblemError;
-import io.kestra.webserver.errors.ProblemType;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -60,6 +56,8 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.notification.NotificationService;
+import io.kestra.core.notification.model.AsyncOperationType;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -73,6 +71,8 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.server.CoreAsyncOperationType;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.Namespace;
@@ -88,12 +88,19 @@ import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.annotation.AnonymousAccess;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.errors.ProblemDetail;
+import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemType;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.exceptions.BulkValidationException;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
 import io.kestra.webserver.models.api.ApiLightExecution;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.ExecutionOutputFilterService;
 import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
@@ -147,13 +154,12 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
-import tools.jackson.databind.ObjectMapper;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -169,6 +175,9 @@ public class ExecutionController {
 
     @Inject
     protected FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private ExecutionOutputFilterService executionOutputFilterService;
 
     @Inject
     private FlowService flowService;
@@ -196,6 +205,9 @@ public class ExecutionController {
 
     @Inject
     protected ExecutionService executionService;
+
+    @Inject
+    private ExecutionOutputService executionOutputService;
 
     @Inject
     private ExecutionStreamingService streamingService;
@@ -264,10 +276,16 @@ public class ExecutionController {
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
     @Inject
+    private ActorResolver actorResolver;
+
+    @Inject
     private ModelValidator modelValidator;
 
     @Inject
     private FileRendererService fileRendererService;
+
+    @Inject
+    private NotificationService notificationService;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -278,6 +296,7 @@ public class ExecutionController {
     private Counter resumeCounter;
     private Counter resumeFromBreakpointCounter;
     private Counter forceRunCounter;
+    private Counter rescheduleCounter;
     private Counter changeStatusCounter;
     private Counter changeTaskRunStateCounter;
     private Counter killCounter;
@@ -293,6 +312,8 @@ public class ExecutionController {
         resumeFromBreakpointCounter = this.metricRegistry
             .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION);
         forceRunCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION);
+        rescheduleCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL_DESCRIPTION);
         changeStatusCounter = this.metricRegistry
             .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL_DESCRIPTION);
         changeTaskRunStateCounter = this.metricRegistry
@@ -323,10 +344,11 @@ public class ExecutionController {
         @Parameter(description = "Which execution date field the time interval is applied to") @Nullable @QueryValue DateFilter dateFilter
 
     ) {
+        var tenantId = tenantService.resolveTenant();
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
-            tenantService.resolveTenant(),
-            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+            tenantId,
+            executionOutputFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
             dateFilter
         );
         var apiExecution = executions.stream()
@@ -346,16 +368,17 @@ public class ExecutionController {
         )
         @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
         @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
+        if (field == QueryFilter.Field.OUTPUTS || !QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Field " + field + " is not supported for executions"
             );
         }
+        var tenantId = tenantService.resolveTenant();
         return executionRepository.findDistinctFieldValues(
-            tenantService.resolveTenant(),
+            tenantId,
             field,
-            filters,
+            executionOutputFilterService.resolve(tenantId, filters),
             Pageable.from(0, size)
         );
     }
@@ -541,6 +564,10 @@ public class ExecutionController {
             if (!includeNonTerminated && !execution.getState().isTerminated()) {
                 invalids.add(
                     executionProblem(execution.getId(), "execution not found", ProblemTypes.NOT_FOUND)
+                );
+            } else if (!validateExecutionACL(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "user don't have the authorisation to delete this execution", ProblemTypes.FORBIDDEN)
                 );
             }
         }
@@ -927,7 +954,8 @@ public class ExecutionController {
                 }
             })
             .findFirst()
-            .orElseThrow(() -> {
+            .orElseThrow(() ->
+            {
                 log.debug("Rejected a webhook call: no trigger on flow '{}.{}' matches the given key.", flow.getNamespace(), flow.getId());
                 return webhookNotFound();
             });
@@ -999,7 +1027,8 @@ public class ExecutionController {
             if (revision.isEmpty()) {
                 flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty())
                     .filter(f -> !f.isDeleted() && f.isDraft())
-                    .ifPresent(draftFlow -> {
+                    .ifPresent(draftFlow ->
+                    {
                         throw new IllegalArgumentException(
                             "Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision."
                         );
@@ -1078,8 +1107,8 @@ public class ExecutionController {
 
                 Create finalCreateCommand = createCommand;
                 return awaitBlockingAction(
-                    executionId, "Create",
-                    operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
+                    executionId, "Create", null,
+                    (operationId, _) -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
                 ).flatMap(res ->
                 {
                     try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
@@ -1110,12 +1139,17 @@ public class ExecutionController {
                     })
                         .last()
                         .map(Event::getData)
-                        .map(
-                            execution -> ExecutionResponse.fromExecution(
-                                execution,
-                                executionUrl
-                            )
-                        )
+                        .map(execution -> {
+                            try {
+                                return ExecutionResponse.fromExecution(
+                                    execution,
+                                    executionOutputService.getOutputs(execution),
+                                    executionUrl
+                                );
+                            } catch (InternalException e) {
+                                throw Exceptions.propagate(e);
+                            }
+                        })
                         .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
                 });
@@ -1139,10 +1173,10 @@ public class ExecutionController {
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs,
-            List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
+            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
             Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
-                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, null, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
+                tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
                 traceParent, fixtures, kind, breakpoints, loopRun
             );
 
@@ -1150,6 +1184,10 @@ public class ExecutionController {
         }
 
         public static ExecutionResponse fromExecution(Execution execution, URI url) {
+            return fromExecution(execution, null, url);
+        }
+
+        public static ExecutionResponse fromExecution(Execution execution, Map<String, Object> outputs, URI url) {
             return new ExecutionResponse(
                 execution.getTenantId(),
                 execution.getId(),
@@ -1158,6 +1196,7 @@ public class ExecutionController {
                 execution.getFlowRevision(),
                 execution.getTaskRunList(),
                 execution.getInputs(),
+                outputs,
                 execution.getLabels(),
                 execution.getVariables(),
                 execution.getState(),
@@ -1174,6 +1213,13 @@ public class ExecutionController {
                 execution.getLoopRun(),
                 url
             );
+        }
+
+        @Schema(implementation = Object.class, description = "Flow-level outputs of the execution when wait=true")
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        @Override
+        public Map<String, Object> getOutputs() {
+            return super.getOutputs();
         }
     }
 
@@ -1195,7 +1241,7 @@ public class ExecutionController {
         // system.from value (scheduler/trigger/worker/…) would let a caller spoof the origin.
         Optional<Label> first = parsedLabels.stream()
             .filter(
-                label -> label.key().startsWith(SYSTEM_PREFIX)
+                label -> Label.isSystem(label.key())
                     && !label.key().equals(CORRELATION_ID)
                     && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value()))
             )
@@ -1229,11 +1275,7 @@ public class ExecutionController {
             return null;
         }
 
-        String prefix = StorageContext
-            .forExecution(execution)
-            .getExecutionStorageURI().getPath();
-
-        if (path.getPath().startsWith(prefix)) {
+        if (StorageContext.isInExecutionStorage(execution, path)) {
             return null;
         }
 
@@ -1247,7 +1289,7 @@ public class ExecutionController {
 
         // maybe state
         StorageContext context = StorageContext.forFlow(flow.get());
-        prefix = context.getStateStorePrefix(null, false, null);
+        String prefix = context.getStateStorePrefix(null, false, null);
         if (path.getPath().startsWith(prefix)) {
             return null;
         }
@@ -1337,7 +1379,7 @@ public class ExecutionController {
     }
 
     private URI nsFileToInternalStorageURI(URI path, Execution execution) throws IOException {
-        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace(), storageInterface);
+        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace());
         return namespace.get(Path.of(path.getPath())).uri();
     }
 
@@ -1401,7 +1443,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Restart",
-            operationId -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId).withActor(actor))
         );
     }
 
@@ -1444,12 +1486,14 @@ public class ExecutionController {
         List<ProblemError> invalids = new ArrayList<>();
         for (Execution execution : executions) {
             if (!execution.getState().canBeRestarted()) {
-                invalids.add(executionProblem(
-                    execution.getId(),
-                    "Execution '%s' must be terminated to be restarted, current state is '%s' !"
-                        .formatted(execution.getId(), execution.getState().getCurrent()),
-                    ProblemTypes.CONFLICT
-                ));
+                invalids.add(
+                    executionProblem(
+                        execution.getId(),
+                        "Execution '%s' must be terminated to be restarted, current state is '%s' !"
+                            .formatted(execution.getId(), execution.getState().getCurrent()),
+                        ProblemTypes.CONFLICT
+                    )
+                );
             }
         }
         if (!invalids.isEmpty()) {
@@ -1458,16 +1502,17 @@ public class ExecutionController {
 
         this.restartCounter.increment(executions.size());
 
-        return submitBatchAction(
+        return submitNotifiedBatchAction(
+            CoreAsyncOperationType.EXECUTION_RESTART,
             executions,
-            (execution, opId) ->
+            (execution, opId, actor) ->
             {
                 Integer revision = null;
                 if (Boolean.TRUE.equals(latestRevision)) {
                     Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
                     revision = flow.getRevision();
                 }
-                executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(opId));
+                executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(opId).withActor(actor));
             }
         );
     }
@@ -1537,7 +1582,10 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/replay/validate")
-    @Operation(tags = { "Executions" }, summary = "Validate that a replay is possible. If a taskRunId and a revision are set, it validate that the modification done on the flow is compatible with a relay (no structural changes before the taskRunId)")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Validate that a replay is possible. If a taskRunId and a revision are set, it validate that the modification done on the flow is compatible with a relay (no structural changes before the taskRunId)"
+    )
     @ApiResponse(responseCode = "200", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
     public HttpResponse<Void> validateReplayExecution(
@@ -1563,6 +1611,7 @@ public class ExecutionController {
         }
 
         var newExecutionId = IdUtils.create();
+        Actor actor = actorResolver.resolve();
 
         this.replayCounter.increment();
 
@@ -1577,6 +1626,7 @@ public class ExecutionController {
                         executionCommandQueue.emit(
                             Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null))
                                 .withOperationId(operationId)
+                                .withActor(actor)
                         );
 
                         // update parent exec with replayed label (fire-and-forget)
@@ -1584,7 +1634,7 @@ public class ExecutionController {
                         if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
                             newLabels.add(new Label(Label.REPLAYED, "true"));
                         }
-                        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels));
+                        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withActor(actor));
                     } catch (QueueException e) {
                         throw new RuntimeException(e);
                     }
@@ -1605,7 +1655,8 @@ public class ExecutionController {
         );
     }
 
-    private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId) throws Exception {
+    private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId, @Nullable Actor actor)
+        throws Exception {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
@@ -1614,14 +1665,14 @@ public class ExecutionController {
 
         var newExecutionId = IdUtils.create();
         // emit Replay command fire-and-forget (no operationId on the replay itself)
-        executionCommandQueue.emit(Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null)));
+        executionCommandQueue.emit(Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null)).withActor(actor));
 
         // update parent exec with replayed label; tag with operationId for batch completion tracking
         List<Label> newLabels = new ArrayList<>(execution.getLabels());
         if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
-        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId));
+        executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId).withActor(actor));
     }
 
     /**
@@ -1670,15 +1721,24 @@ public class ExecutionController {
                     .orElse(null);
 
                 if (newInput == null) {
-                    throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as input '%s' has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalInput.getId()));
+                    throw new ConflictException(
+                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' has been removed. Replay the whole execution instead."
+                            .formatted(taskRunId, revision, originalInput.getId())
+                    );
                 }
 
                 if (!originalInput.getType().equals(newInput.getType())) {
-                    throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as input '%s' type has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalInput.getId()));
+                    throw new ConflictException(
+                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' type has changed. Replay the whole execution instead."
+                            .formatted(taskRunId, revision, originalInput.getId())
+                    );
                 }
 
                 if (originalInput.getDefaults() != null && newInput.getDefaults() == null) {
-                    throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as input '%s' defaults has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalInput.getId()));
+                    throw new ConflictException(
+                        "Cannot replay from taskrun '%s' to revision '%s' as input '%s' defaults has been removed. Replay the whole execution instead."
+                            .formatted(taskRunId, revision, originalInput.getId())
+                    );
                 }
             }
 
@@ -1687,11 +1747,17 @@ public class ExecutionController {
                 Object newVar = MapUtils.emptyOnNull(newFlow.getVariables()).get(originalVar.getKey());
 
                 if (newVar == null) {
-                    throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalVar.getKey()));
+                    throw new ConflictException(
+                        "Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has been removed. Replay the whole execution instead."
+                            .formatted(taskRunId, revision, originalVar.getKey())
+                    );
                 }
 
                 if (!originalVar.getValue().equals(newVar)) {
-                    throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalVar.getKey()));
+                    throw new ConflictException(
+                        "Cannot replay from taskrun '%s' to revision '%s' as variable '%s' has changed. Replay the whole execution instead."
+                            .formatted(taskRunId, revision, originalVar.getKey())
+                    );
                 }
             }
         }
@@ -1703,24 +1769,31 @@ public class ExecutionController {
             Task originalTask = originalTasks.get(i);
             Task newTask = newTasks.size() > i ? newTasks.get(i) : null;
             if (newTask == null || !originalTask.getId().equals(newTask.getId())) {
-                throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId()));
+                throw new ConflictException(
+                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has been removed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
+                );
             }
             if (originalTask.getId().equals(targetTaskId)) {
                 return true;
             }
             if (!originalTask.getType().equals(newTask.getType())) {
-                throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as task '%s' type has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId()));
+                throw new ConflictException(
+                    "Cannot replay from taskrun '%s' to revision '%s' as task '%s' type has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
+                );
             }
 
             boolean isFlowable = originalTask.isFlowable();
             Map<String, Object> originalTaskAsMap = JacksonMapper.toMap(originalTask);
             Map<String, Object> newTaskAsMap = JacksonMapper.toMap(newTask);
-            originalTaskAsMap.forEach((key, value) -> {
+            originalTaskAsMap.forEach((key, value) ->
+            {
                 if (REPLAY_IGNORED_CHANGED_ATTRIBUTES.contains(key) || (isFlowable && containsTask(value))) {
                     return;
                 }
                 if (!Objects.equals(value, newTaskAsMap.get(key))) {
-                    throw new ConflictException("Cannot replay from taskrun '%s' to revision '%s' as task '%s' has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId()));
+                    throw new ConflictException(
+                        "Cannot replay from taskrun '%s' to revision '%s' as task '%s' has changed. Replay the whole execution instead.".formatted(taskRunId, revision, originalTask.getId())
+                    );
                 }
             });
 
@@ -1767,7 +1840,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "409", description = "if the task run state cannot be changed")
     public Mono<HttpResponse<Execution>> updateTaskRunState(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @RequestBody(description = "the taskRun id and state to apply") @Body StateRequest stateRequest) throws Exception {
+        @RequestBody(description = "the taskRun id and state to apply") @Valid @Body StateRequest stateRequest) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         if (!execution.getState().canChangeStatus()) {
@@ -1778,7 +1851,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Change task run state",
-            operationId -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId).withActor(actor))
         );
     }
 
@@ -1809,7 +1882,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Change status",
-            operationId -> executionCommandQueue.emit(UpdateStatus.from(execution, status).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(UpdateStatus.from(execution, status).withOperationId(operationId).withActor(actor))
         );
     }
 
@@ -1855,6 +1928,10 @@ public class ExecutionController {
                 invalids.add(
                     executionProblem(execution.getId(), "execution not in a terminated state or is killed", ProblemTypes.CONFLICT)
                 );
+            } else if (!validateExecutionACL(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "user don't have the authorisation to change the state of this execution", ProblemTypes.FORBIDDEN)
+                );
             }
         }
 
@@ -1864,17 +1941,81 @@ public class ExecutionController {
 
         this.changeStatusCounter.increment(executions.size());
 
-        return submitBatchAction(
+        return submitNotifiedBatchAction(
+            CoreAsyncOperationType.EXECUTION_CHANGE_STATUS,
             executions,
-            (execution, opId) -> executionCommandQueue.emit(UpdateStatus.from(execution, newStatus).withOperationId(opId))
+            (execution, opId, actor) -> executionCommandQueue.emit(UpdateStatus.from(execution, newStatus).withOperationId(opId).withActor(actor))
         );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/interrupt")
+    @Operation(tags = { "Executions" }, summary = "Interrupt a running task run")
+    @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "409", description = "if the task run cannot be interrupted")
+    @ApiResponse(responseCode = "404", description = "if the execution or the task run is not found")
+    public HttpResponse<Void> interruptTaskRun(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @RequestBody(description = "the taskRun id and the state to apply to it") @Valid @Body StateRequest stateRequest) throws QueueException {
+        if (State.Type.FAILED != stateRequest.state() && State.Type.CANCELLED != stateRequest.state()) {
+            throw new IllegalArgumentException(
+                "Cannot interrupt task run: only the FAILED and CANCELLED states are supported, but '%s' was requested.".formatted(stateRequest.state())
+            );
+        }
+
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        if (execution.getState().isTerminated()) {
+            throw new ConflictException("Cannot interrupt task run: execution '%s' is already terminated.".formatted(executionId));
+        }
+
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(stateRequest.taskRunId())
+            .orElseThrow(() -> new NoSuchElementException(
+                "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
+            ));
+
+        if (State.Type.RUNNING != taskRun.getState().getCurrent()) {
+            throw new ConflictException(
+                "Cannot interrupt task run '%s': the task run is not running, its current state is %s.".formatted(taskRun.getId(), taskRun.getState().getCurrent())
+            );
+        }
+
+        // Emitted in the EXECUTED state so it goes straight to the Workers: unlike a whole-execution kill, interrupting
+        // a task run needs no Executor-side bookkeeping, the resulting task run result drives the execution forward.
+        killQueue.emit(
+            ExecutionKilledTaskRuns
+                .builder()
+                .state(ExecutionKilled.State.EXECUTED)
+                .tenantId(tenantService.resolveTenant())
+                .executionId(execution.getId())
+                .taskRunIds(interruptedTaskRunIds(execution, taskRun))
+                .taskRunState(stateRequest.state())
+                .build()
+        );
+
+        eventPublisher.publishEvent(CrudEvent.of(execution, execution));
+
+        return HttpResponse.ok();
+    }
+
+    /**
+     * The task run to interrupt, plus every one of its descendants that has not terminated yet.
+     * Interrupting a flowable task run alone would leave the tasks it spawned running on the Workers.
+     */
+    private static List<String> interruptedTaskRunIds(Execution execution, TaskRun taskRun) {
+        return Stream.concat(
+                Stream.of(taskRun),
+                execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
+            )
+            .map(TaskRun::getId)
+            .toList();
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{executionId}/actions/kill{?isOnKillCascade}", produces = MediaType.TEXT_JSON)
     @Operation(tags = { "Executions" }, summary = "Kill an execution")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
-    @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+    @ApiResponse(responseCode = "409", description = "if the execution is already finished and has no running task or sub-execution left to kill")
     @ApiResponse(responseCode = "404", description = "if the executions is not found")
     public Mono<HttpResponse<?>> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -1893,16 +2034,15 @@ public class ExecutionController {
     }
 
     protected Mono<HttpResponse<?>> killExecution(Execution execution, Boolean isOnKillCascade) {
-        // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
-        if (execution.getState().isTerminated() && !isOnKillCascade) {
-            throw new ConflictException("Cannot kill execution: execution is already terminated.");
+        if (execution.getState().isTerminated() && !hasWorkToKill(execution, isOnKillCascade)) {
+            throw new ConflictException("Cannot kill execution: execution is already terminated and has no running task or sub-execution.");
         }
 
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
 
         return awaitBlockingAction(
             execution.getId(), "Kill",
-            operationId -> killQueue.emit(
+            (operationId, actor) -> killQueue.emit(
                 ExecutionKilledExecution
                     .builder()
                     .state(ExecutionKilled.State.REQUESTED)
@@ -1910,9 +2050,16 @@ public class ExecutionController {
                     .isOnKillCascade(isOnKillCascade)
                     .tenantId(tenantService.resolveTenant())
                     .operationId(operationId)
+                    .actor(actor)
                     .build()
             )
         ).map(r -> (HttpResponse<?>) r);
+    }
+
+    private boolean hasWorkToKill(Execution execution, boolean isOnKillCascade) {
+        return flowMetaStore.findByExecutionForRuntime(execution)
+            .map(flow -> executionService.hasWorkToKill(flow, execution, isOnKillCascade))
+            .orElse(isOnKillCascade);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1957,14 +2104,15 @@ public class ExecutionController {
 
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution, Flow flow) {
         io.kestra.plugin.core.flow.Pause.Resumed resumed = createResumed();
+        Actor actor = actorResolver.resolve();
 
         this.resumeCounter.increment();
 
         return this.executionService.readInputs(execution, flow, inputs)
             .flatMap(
                 resumeInputs -> awaitBlockingAction(
-                    execution.getId(), "Resume",
-                    operationId -> executionCommandQueue.emit(Resume.from(execution, resumed, resumeInputs).withOperationId(operationId))
+                    execution.getId(), "Resume", actor,
+                    (operationId, resumeActor) -> executionCommandQueue.emit(Resume.from(execution, resumed, resumeInputs).withOperationId(operationId).withActor(resumeActor))
                 )
             )
             .map(r -> (HttpResponse<?>) r);
@@ -1994,7 +2142,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Resume from breakpoint",
-            operationId -> executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, breakpoints).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(ResumeFromBreakpoint.from(execution, breakpoints).withOperationId(operationId).withActor(actor))
         );
     }
 
@@ -2046,9 +2194,10 @@ public class ExecutionController {
 
         this.resumeCounter.increment(executions.size());
 
-        return submitBatchAction(
+        return submitNotifiedBatchAction(
+            CoreAsyncOperationType.EXECUTION_RESUME,
             executions,
-            (execution, opId) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId))
+            (execution, opId, actor) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId).withActor(actor))
         );
     }
 
@@ -2068,7 +2217,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Pause",
-            operationId -> executionCommandQueue.emit(Pause.from(execution).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(Pause.from(execution).withOperationId(operationId).withActor(actor))
         );
     }
 
@@ -2116,9 +2265,10 @@ public class ExecutionController {
 
         this.pauseCounter.increment(executions.size());
 
-        return submitBatchAction(
+        return submitNotifiedBatchAction(
+            CoreAsyncOperationType.EXECUTION_PAUSE,
             executions,
-            (execution, opId) -> executionCommandQueue.emit(Pause.from(execution).withOperationId(opId))
+            (execution, opId, actor) -> executionCommandQueue.emit(Pause.from(execution).withOperationId(opId).withActor(actor))
         );
     }
 
@@ -2170,7 +2320,7 @@ public class ExecutionController {
 
         this.killCounter.increment(executions.size());
 
-        return submitBatchAction(executions, (execution, opId) ->
+        return submitNotifiedBatchAction(CoreAsyncOperationType.EXECUTION_KILL, executions, (execution, opId, actor) ->
         {
             eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
             killQueue.emit(
@@ -2181,6 +2331,7 @@ public class ExecutionController {
                     .isOnKillCascade(false) // Explicitly force cascade to false.
                     .tenantId(tenantService.resolveTenant())
                     .operationId(opId)
+                    .actor(actor)
                     .build()
             );
         });
@@ -2221,12 +2372,14 @@ public class ExecutionController {
         List<ProblemError> invalids = new ArrayList<>();
         for (Execution execution : executions) {
             if (!execution.getState().isTerminated()) {
-                invalids.add(executionProblem(
-                    execution.getId(),
-                    "Execution '%s' must be terminated to be replayed, current state is '%s' !"
-                        .formatted(execution.getId(), execution.getState().getCurrent()),
-                    ProblemTypes.CONFLICT
-                ));
+                invalids.add(
+                    executionProblem(
+                        execution.getId(),
+                        "Execution '%s' must be terminated to be replayed, current state is '%s' !"
+                            .formatted(execution.getId(), execution.getState().getCurrent()),
+                        ProblemTypes.CONFLICT
+                    )
+                );
             }
         }
         if (!invalids.isEmpty()) {
@@ -2235,7 +2388,7 @@ public class ExecutionController {
 
         this.replayCounter.increment(executions.size());
 
-        return submitBatchAction(executions, (execution, opId) ->
+        return submitNotifiedBatchAction(CoreAsyncOperationType.EXECUTION_REPLAY, executions, (execution, opId, actor) ->
         {
             // When latestRevision is true the replay starts as a new execution against the
             // latest non-draft revision; otherwise it stays bound to the execution's original
@@ -2244,7 +2397,7 @@ public class ExecutionController {
                 ? flowRepository.findByIdForExecution(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())
                 : flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))).orElseThrow();
             try {
-                innerReplayBatch(execution, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
+                innerReplayBatch(execution, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId, actor);
             } catch (QueueException e) {
                 throw e;
             } catch (Exception e) {
@@ -2421,7 +2574,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Set labels",
-            operationId -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabels).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabels).withOperationId(operationId).withActor(actor))
         )
             .map(r -> (HttpResponse<?>) r);
     }
@@ -2430,8 +2583,8 @@ public class ExecutionController {
         // check for system labels: none can be passed at runtime
         // as all existing labels will be passed here, we compare existing system label with the new one and fail if they are different
 
-        List<Label> existingSystemLabels = ListUtils.emptyOnNull(execution.getLabels()).stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).toList();
-        Optional<Label> first = labels.stream().filter(label -> label.key().startsWith(SYSTEM_PREFIX)).filter(label -> !existingSystemLabels.contains(label)).findAny();
+        List<Label> existingSystemLabels = ListUtils.emptyOnNull(execution.getLabels()).stream().filter(label -> Label.isSystem(label.key())).toList();
+        Optional<Label> first = labels.stream().filter(label -> Label.isSystem(label.key())).filter(label -> !existingSystemLabels.contains(label)).findAny();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
@@ -2506,11 +2659,11 @@ public class ExecutionController {
 
         this.updateLabelsCounter.increment(executions.size());
 
-        return submitBatchAction(executions, (execution, opId) ->
-            executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId))
+        return submitNotifiedBatchAction(
+            CoreAsyncOperationType.EXECUTION_SET_LABELS, executions,
+            (execution, opId, actor) -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabelsByExecutionId.get(execution.getId())).withOperationId(opId).withActor(actor))
         );
     }
-
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/unqueue")
@@ -2530,7 +2683,7 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Unqueue",
-            operationId -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(operationId).withActor(actor))
         );
     }
 
@@ -2580,9 +2733,10 @@ public class ExecutionController {
 
         this.unqueueCounter.increment(executions.size());
 
-        return submitBatchAction(
+        return submitNotifiedBatchAction(
+            CoreAsyncOperationType.EXECUTION_UNQUEUE,
             executions,
-            (execution, opId) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(opId))
+            (execution, opId, actor) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(opId).withActor(actor))
         );
     }
 
@@ -2603,7 +2757,34 @@ public class ExecutionController {
 
         return awaitBlockingAction(
             executionId, "Force run",
-            operationId -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(operationId))
+            (operationId, actor) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(operationId).withActor(actor))
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/reschedule")
+    @Operation(tags = { "Executions" }, summary = "Reschedule a scheduled execution that has not started yet")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "422", description = "if the scheduleDate is not in the future")
+    @ApiResponse(responseCode = "409", description = "if the execution is not scheduled, has already started, or its scheduled start is being processed")
+    public Mono<HttpResponse<Execution>> rescheduleExecution(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The new scheduled start date") @NotNull @QueryValue ZonedDateTime scheduleDate) {
+        if (!scheduleDate.toInstant().isAfter(Instant.now())) {
+            throw new IllegalArgumentException("The scheduleDate must be in the future.");
+        }
+
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        if (!executionService.canBeRescheduled(execution)) {
+            throw new ConflictException("Cannot reschedule execution: only scheduled executions in the CREATED state can be rescheduled.");
+        }
+
+        this.rescheduleCounter.increment();
+
+        return awaitBlockingAction(
+            executionId, "Reschedule",
+            (operationId, actor) -> executionCommandQueue.emit(Reschedule.from(execution, scheduleDate.toInstant()).withOperationId(operationId).withActor(actor))
         );
     }
 
@@ -2654,18 +2835,20 @@ public class ExecutionController {
 
         this.forceRunCounter.increment(executions.size());
 
-        return submitBatchAction(
+        return submitNotifiedBatchAction(
+            CoreAsyncOperationType.EXECUTION_FORCE_RUN,
             executions,
-            (execution, opId) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(opId))
+            (execution, opId, actor) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(opId).withActor(actor))
         );
     }
 
     private List<Execution> getExecutions(List<QueryFilter> filters) {
+        var tenantId = tenantService.resolveTenant();
         return executionRepository
             .find(
                 Pageable.UNPAGED,
-                tenantService.resolveTenant(),
-                filters
+                tenantId,
+                executionOutputFilterService.resolve(tenantId, filters)
             );
     }
 
@@ -2959,7 +3142,8 @@ public class ExecutionController {
 
         public record ApiInputError(
             @NotNull @Parameter(description = "The error message") String message,
-            @Parameter(description = "Whether this is a render/resolution failure (the field is broken) rather than a value validation error") boolean renderError) {
+            @Parameter(description = "Whether this is a render/resolution failure (the field is broken) rather than a value validation error") boolean renderError,
+            @Parameter(description = "Where the offending value sits inside a structured input, e.g. `disks[2].size_gb`. Null when the error is about the input as a whole") String path) {
         }
 
         public record ApiCheckFailure(
@@ -2986,7 +3170,7 @@ public class ExecutionController {
                         Optional.ofNullable(it.exceptions())
                             .map(
                                 exSet -> exSet.stream()
-                                    .map(e -> new ApiInputError(e.getMessage(), e.isRenderError()))
+                                    .map(e -> new ApiInputError(e.getMessage(), e.isRenderError(), e.getPath()))
                                     .toList()
                             )
                             .orElse(List.of())
@@ -3044,19 +3228,30 @@ public class ExecutionController {
     }
 
     /**
-     * Executes a single async operation on an execution.
+     * Executes a single async operation on an execution, on behalf of the actor of the current request.
      */
     private Mono<HttpResponse<Execution>> awaitBlockingAction(
         String executionId,
         String actionName,
-        ThrowingConsumer<String> emit) {
+        ThrowingBiConsumer<String, Actor> emit) {
+        return awaitBlockingAction(executionId, actionName, actorResolver.resolve(), emit);
+    }
+
+    /**
+     * Executes a single async operation on an execution, on behalf of {@code actor}.
+     */
+    private Mono<HttpResponse<Execution>> awaitBlockingAction(
+        String executionId,
+        String actionName,
+        @Nullable Actor actor,
+        ThrowingBiConsumer<String, Actor> emit) {
         String tenantId = tenantService.resolveTenant();
         return asyncOperationWaiter.submit(
             executionId,
             operationId ->
             {
                 try {
-                    emit.accept(operationId);
+                    emit.accept(operationId, actor);
                 } catch (QueueException e) {
                     // Exceptions.propagate rethrows a runtime as-is and wraps a checked one, so a MessageTooBigException
                     // stays its real type and the ErrorController handler can map it to 413.
@@ -3101,29 +3296,36 @@ public class ExecutionController {
         return ProblemError.ofItem(detail, "executions[" + executionId + "]", type);
     }
 
-    /**
-     * Submits a batch of async operations sharing a single operationId and returns
-     * an accepted response with the operationId and the total number of items.
-     */
-    private MutableHttpResponse<ApiAsyncOperationResponse> submitBatchAction(
+    private MutableHttpResponse<ApiAsyncOperationResponse> submitNotifiedBatchAction(
+        AsyncOperationType operationType,
         List<Execution> executions,
-        ThrowingBiConsumer<Execution, String> emit) throws QueueException {
+        ThrowingTriConsumer<Execution, String, Actor> emit) throws QueueException {
         String operationId = IdUtils.create();
+        Actor actor = actorResolver.resolve();
+        notificationService.notifyAsyncOperation(currentUserId(), tenantService.resolveTenant(), operationId, operationType, executions.stream().map(Execution::getId).toList());
         for (Execution execution : executions) {
-            emit.accept(execution, operationId);
+            emit.accept(execution, operationId, actor);
         }
         return HttpResponse.accepted()
             .body(new ApiAsyncOperationResponse(operationId, executions.size()));
     }
 
-    @FunctionalInterface
-    private interface ThrowingConsumer<T> {
-        void accept(T value) throws QueueException;
+    /**
+     * The authenticated user's id, or {@code null} when OSS has no real user model. Overridden in EE.
+     */
+    @Nullable
+    protected String currentUserId() {
+        return null;
     }
 
     @FunctionalInterface
     private interface ThrowingBiConsumer<T, U> {
         void accept(T first, U second) throws QueueException;
+    }
+
+    @FunctionalInterface
+    private interface ThrowingTriConsumer<T, U, V> {
+        void accept(T first, U second, V third) throws QueueException;
     }
 
     private int getPreviewInitialRows() {

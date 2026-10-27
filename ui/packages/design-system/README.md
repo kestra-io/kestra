@@ -11,7 +11,7 @@ writing feature code against this package.
 ## Peer dependencies
 
 The package ships no framework of its own: `vue`, `element-plus`, `vue-i18n`, `vue-router`,
-`vue-material-design-icons`, `echarts`, `monaco-editor`, `bootstrap`
+`vue-material-design-icons`, `echarts`, `monaco-editor`
 and `yaml` are peer dependencies, so the host app owns their versions. See `peerDependencies` in
 [`package.json`](package.json) for the supported ranges.
 
@@ -93,19 +93,18 @@ to stub or enumerate the exports.
 
 ### Styles and tokens
 
-The global stylesheet (Element Plus theme, Bootstrap reset, fonts, `--ks-*` tokens for light and
+The global stylesheet (Element Plus theme, CSS reset, fonts, `--ks-*` tokens for light and
 both dark themes) is a separate entry of the published package, imported once at bootstrap:
 
 ```ts
 import "@kestra-io/design-system/styleBase"
 ```
 
-In-repo consumers pull the SCSS source instead — this is what
-[`ui/src/styles/app.scss`](../../src/styles/app.scss) does:
+In-repo consumers pull the SCSS source instead, before the app's own stylesheet, as
+[`ui/src/App.vue`](../../src/App.vue) does:
 
-```scss
-@use "@kestra-io/design-system/src/assets/styles/variables.scss" as design;
-@use "@kestra-io/design-system/src/assets/styles/index.scss" as *;
+```ts
+import "@kestra-io/design-system/src/assets/styles/index.scss"
 ```
 
 In feature code, read colors through `var(--ks-*)` in CSS, or `cssVar("--ks-status-success")` when

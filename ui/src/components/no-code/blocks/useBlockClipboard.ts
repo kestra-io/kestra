@@ -1,6 +1,7 @@
 import {ref} from "vue"
 import * as flowYamlUtils from "@kestra-io/topology/flow-yaml-utils"
 import {withFreeIds, type BlockSection} from "../../../utils/flowableBlockOps"
+import * as Utils from "../../../utils/utils"
 
 export type ClipboardKind = "task" | "trigger"
 
@@ -17,7 +18,7 @@ const clipboard = ref<ClipboardEntry | undefined>()
 
 async function writeToSystemClipboard(block: Record<string, unknown>): Promise<void> {
     try {
-        await navigator.clipboard?.writeText(flowYamlUtils.stringify(block))
+        await Utils.copy(flowYamlUtils.stringify(block))
     } catch {
         // best-effort: some browsers require a user gesture or a permission we may not have
     }

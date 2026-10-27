@@ -1,11 +1,22 @@
 import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
+import {createPinia} from "pinia"
 import {nextTick, reactive} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {memoryRouter} from "../../../tests/unit/memoryRouter"
 
 const store = vi.hoisted(() => ({
-    executions: {} as Record<string, any>,
+    executions: {} as {
+        execution: {id: string; state: {current: string}} | undefined
+        logs: unknown
+        loadLogs: ReturnType<typeof vi.fn>
+        reusedLogsOf: ReturnType<typeof vi.fn>
+        isReusedTaskRun: ReturnType<typeof vi.fn>
+        followLogs: ReturnType<typeof vi.fn>
+        loadFlowForExecution: ReturnType<typeof vi.fn>
+        subscribeToExecution: ReturnType<typeof vi.fn>
+    },
 }))
 
 vi.mock("../../stores/executions", () => ({
@@ -19,6 +30,7 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 }))
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
     taskRunOutputs: vi.fn().mockResolvedValue({}),
+    taskOutputsInformation: vi.fn().mockResolvedValue([]),
 }))
 
 import TaskRunDetails from "./TaskRunDetails.vue"
@@ -37,12 +49,12 @@ const execution = (id: string, state: string) => ({
     taskRunList: [],
 })
 
-const logsFor = (id: string) => [{level: "INFO", message: `log of ${id}`}]
+const logsFor = (id: string) => [{level: "INFO", taskRunId: "tr-1", message: `log of ${id}`}]
 
-function mountDetails() {
+function mountDetails(props: {targetExecutionId?: string} = {}) {
     return mount(TaskRunDetails, {
-        props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}},
-        global: {plugins: [i18n, KestraDesignSystem]},
+        props: {targetFlow: {id: "simple-dag", namespace: "company.team", disabled: false, draft: false, deleted: false, tasks: []}, ...props},
+        global: {plugins: [i18n, KestraDesignSystem, memoryRouter(), createPinia()]},
     })
 }
 
@@ -62,9 +74,11 @@ describe("TaskRunDetails log loading across executions", () => {
         vi.useFakeTimers()
         openedStreams = []
         store.executions = reactive({
-            execution: undefined as any,
+            execution: undefined,
             logs: undefined,
             loadLogs: vi.fn(({executionId}: {executionId: string}) => Promise.resolve(logsFor(executionId))),
+            reusedLogsOf: vi.fn(() => []),
+            isReusedTaskRun: vi.fn(() => false),
             followLogs: vi.fn(({id}: {id: string}) => {
                 openedStreams.push(id)
                 return Promise.resolve({close: vi.fn(), onmessage: null, onerror: null})
@@ -72,6 +86,71 @@ describe("TaskRunDetails log loading across executions", () => {
             loadFlowForExecution: vi.fn().mockResolvedValue({id: "simple-dag"}),
             subscribeToExecution: vi.fn(() => ({close: vi.fn()})),
         })
+    })
+
+    it("shouldCloseChildExecutionSubscriptionWhenItsLogViewerIsUnmounted", async () => {
+        const wrapper = mountDetails({targetExecutionId: "child-a"})
+        await flushPromises()
+        expect(store.executions.subscribeToExecution).toHaveBeenCalledWith("child-a", expect.any(Object))
+        const subscription = store.executions.subscribeToExecution.mock.results[0].value
+
+        wrapper.unmount()
+
+        expect(subscription.close).toHaveBeenCalledOnce()
+        vi.runOnlyPendingTimers()
+        expect(vi.getTimerCount()).toBe(0)
+    })
+
+    it("shouldNotFollowChildLogsWhenItsFlowLoadsAfterTheViewerIsUnmounted", async () => {
+        let resolveFlow!: (flow: {id: string}) => void
+        store.executions.loadFlowForExecution.mockReturnValue(new Promise(resolve => {resolveFlow = resolve}))
+        const wrapper = mountDetails({targetExecutionId: "child-a"})
+        await wrapper.setProps({targetFlow: undefined})
+        store.executions.subscribeToExecution.mock.calls[0][1].onExecution(execution("child-a", "RUNNING"))
+        await flushPromises()
+
+        wrapper.unmount()
+        resolveFlow({id: "simple-dag"})
+        await flushPromises()
+
+        expect(store.executions.followLogs).not.toHaveBeenCalled()
+    })
+
+    it("shouldCloseALogStreamThatOpensAfterTheViewerIsUnmounted", async () => {
+        const stream = {close: vi.fn(), onmessage: null, onerror: null}
+        let resolveStream!: (value: typeof stream) => void
+        store.executions.followLogs.mockReturnValue(new Promise(resolve => {resolveStream = resolve}))
+        store.executions.execution = execution("child-a", "RUNNING")
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        wrapper.unmount()
+        resolveStream(stream)
+        await flushPromises()
+
+        expect(stream.close).toHaveBeenCalledOnce()
+    })
+
+    it("shouldLoadChildLogsWithoutParentTaskFiltersWhenFollowingASubflowExecution", async () => {
+        store.executions.execution = execution("parent", "SUCCESS")
+        const wrapper = mountDetails({targetExecutionId: "child-a"})
+        await wrapper.setProps({targetFlow: undefined})
+        const callbacks = store.executions.subscribeToExecution.mock.calls[0][1]
+
+        callbacks.onExecution(execution("child-a", "SUCCESS"))
+        await flushPromises()
+
+        expect(store.executions.loadFlowForExecution).toHaveBeenCalledWith(expect.objectContaining({store: false, flowId: "simple-dag"}))
+        expect(store.executions.loadLogs).toHaveBeenCalledWith({
+            executionId: "child-a",
+            filters: [
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"},
+                {field: "kind", operation: "IN", value: "PLAYGROUND"},
+            ],
+        })
+        const vm = wrapper.vm as unknown as {filteredLogs: unknown[]}
+        expect(vm.filteredLogs).toEqual(logsFor("child-a"))
+        wrapper.unmount()
     })
 
     /**
@@ -105,14 +184,15 @@ describe("TaskRunDetails log loading across executions", () => {
         store.executions.execution = execution("exec-1", "SUCCESS")
         const wrapper = mountDetails()
         await flushPromises()
-        expect((wrapper.vm as any).filteredLogs).toEqual([{level: "INFO", message: "log of exec-1"}])
+        const vm = wrapper.vm as unknown as {filteredLogs: unknown[]}
+        expect(vm.filteredLogs).toEqual([{level: "INFO", taskRunId: "tr-1", message: "log of exec-1"}])
 
         store.executions.loadLogs.mockReturnValue(new Promise(() => {}))
         store.executions.execution = execution("exec-2", "RESTARTED")
         await nextTick()
         await flushPromises()
 
-        expect((wrapper.vm as any).filteredLogs).toEqual([])
+        expect(vm.filteredLogs).toEqual([])
     })
 
     /**
@@ -133,5 +213,48 @@ describe("TaskRunDetails log loading across executions", () => {
         const stream = await store.executions.followLogs.mock.results[0].value
         vi.advanceTimersByTime(5000)
         expect(stream.close).not.toHaveBeenCalled()
+    })
+
+    it("should close the execution subscription when it unmounts", async () => {
+        const wrapper = mountDetails({targetExecutionId: "exec-sub"})
+        await flushPromises()
+        const subscription = store.executions.subscribeToExecution.mock.results[0].value
+
+        wrapper.unmount()
+
+        expect(subscription.close).toHaveBeenCalledOnce()
+    })
+
+    it("should show the logs of an execution that failed before any task run", async () => {
+        store.executions.loadLogs.mockResolvedValue([
+            {level: "ERROR", message: "Execution is FAILED due to concurrency limit exceeded"},
+            {level: "INFO", taskRunId: "tr-other", message: "log of another task run"},
+        ])
+        store.executions.execution = execution("exec-1", "FAILED")
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        const block = wrapper.find("[data-test=\"execution-logs\"]")
+        expect(block.text()).toContain("concurrency limit exceeded")
+        expect(block.text()).not.toContain("another task run")
+        expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{ERROR: ["-1/0"]}])
+    })
+
+    it("should mark the task runs a replay reused and show the logs it carried over for them", async () => {
+        store.executions.loadLogs.mockResolvedValue([])
+        store.executions.isReusedTaskRun.mockImplementation((executionId: string, taskRunId: string) => executionId === "exec-2" && taskRunId === "tr-a2")
+        store.executions.reusedLogsOf.mockImplementation((executionId: string) => executionId === "exec-2"
+            ? [{level: "INFO", taskRunId: "tr-a2", attemptNumber: 0, timestamp: "2026-01-01T00:00:00Z", message: "a ran"}]
+            : [])
+        store.executions.execution = {
+            ...execution("exec-2", "SUCCESS"),
+            taskRunList: [{id: "tr-a2", taskId: "a", state: {current: "SUCCESS"}, attempts: [{state: {current: "SUCCESS"}}]}],
+        } as ReturnType<typeof execution>
+        const wrapper = mountDetails()
+        await flushPromises()
+
+        expect(store.executions.reusedLogsOf).toHaveBeenCalledWith("exec-2", {value: "INFO", direction: "min"})
+        expect(wrapper.emitted("log-indices-by-level")?.at(-1)).toEqual([{INFO: ["0/0"]}])
+        expect(wrapper.find("[data-test=\"task-run-reused\"]").text()).toBe("reused_task_run.label")
     })
 })

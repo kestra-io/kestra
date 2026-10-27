@@ -1,7 +1,7 @@
 <template>
     <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb" :bookmarkLabel="routeInfo?.bookmarkLabel">
         <template #title>
-            {{ routeInfo?.title }}
+            {{ isMobile && execution ? execution.flowId : routeInfo?.title }}
             <Badge
                 v-if="isATestExecution"
                 :label="$t('test-badge-text')"
@@ -9,19 +9,51 @@
             />
         </template>
         <template #actions>
-            <NavBarActions v-if="execution">
-                <component
-                    :is="ACTIONS[key].component"
-                    v-for="key in overflowKeys"
-                    :key="key"
-                    v-bind="ACTIONS[key].props ?? {}"
-                    :execution="execution"
-                />
+            <template v-if="execution && isMobile">
+                <NavBarActionsDropdown>
+                    <component
+                        :is="item.component"
+                        v-for="item in overflowItems"
+                        :key="item.key"
+                        v-bind="item.props"
+                        :execution="execution"
+                    />
 
+                    <TriggerFlow
+                        v-if="isAllowedTrigger"
+                        :flowId="execution.flowId"
+                        :namespace="execution.namespace"
+                    >
+                        <template #button="{execute, disabled}">
+                            <NavBarAction :icon="Play" :label="$t('execute')" :disabled="disabled" @click="execute" />
+                        </template>
+                    </TriggerFlow>
+
+                    <component :is="ACTIONS.delete.component" :execution="execution" />
+                </NavBarActionsDropdown>
+
+                <BottomActionBar>
+                    <slot name="secondary">
+                        <component
+                            :is="ACTIONS[secondaryKey].component"
+                            v-bind="ACTIONS[secondaryKey].props ?? {}"
+                            :execution="execution"
+                        />
+                    </slot>
+                    <component
+                        :is="ACTIONS.replay.component"
+                        v-if="showReplayInBottomBar"
+                        v-bind="ACTIONS.replay.props ?? {}"
+                        :execution="execution"
+                    />
+                </BottomActionBar>
+            </template>
+            <NavBarActions v-else-if="execution">
                 <component
-                    :is="extra"
-                    v-for="(extra, index) in overflowActionComponents"
-                    :key="`extra-${index}`"
+                    :is="item.component"
+                    v-for="item in overflowItems"
+                    :key="item.key"
+                    v-bind="item.props"
                     :execution="execution"
                 />
 
@@ -62,11 +94,16 @@
 
 <script setup lang="ts">
     import {computed, type Component} from "vue"
-    import {State} from "@kestra-io/design-system"
+    import {useIsMobile} from "../../composables/useIsMobile"
+    import {State, type KsBreadcrumbItem} from "@kestra-io/design-system"
 
     import Badge from "../global/Badge.vue"
     import TopNavBar from "../layout/TopNavBar.vue"
+    import NavBarAction from "../layout/NavBarAction.vue"
     import NavBarActions from "../layout/NavBarActions.vue"
+    import NavBarActionsDropdown from "../layout/NavBarActionsDropdown.vue"
+    import BottomActionBar from "../layout/BottomActionBar.vue"
+    import Play from "vue-material-design-icons/Play.vue"
     import TriggerFlow from "../flows/TriggerFlow.vue"
     import Api from "./overview/components/actions/Api.vue"
     import Delete from "./overview/components/actions/Delete.vue"
@@ -85,12 +122,16 @@
     import {overflowActionComponents} from "override/components/executions/executionsExtensions"
 
     defineProps<{
-        // FIXME: any - routeInfo shape varies across usage
-        routeInfo: any // FIXME: any
+        routeInfo: {
+            title: string;
+            breadcrumb?: KsBreadcrumbItem[];
+            bookmarkLabel?: string;
+        };
     }>()
 
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
+    const isMobile = useIsMobile()
 
     const execution = computed(() => executionsStore.execution)
 
@@ -175,6 +216,15 @@
         ]
         return keys.filter((key) => key !== secondaryKey.value)
     })
+
+    const showReplayInBottomBar = computed(() => isMobile.value && secondaryKey.value === "restart")
+
+    const overflowItems = computed(() => [
+        ...overflowKeys.value
+            .filter((key) => !(key === "replay" && showReplayInBottomBar.value))
+            .map((key) => ({key, component: ACTIONS[key].component, props: ACTIONS[key].props ?? {}})),
+        ...overflowActionComponents.map((component, index) => ({key: `extra-${index}`, component, props: {}})),
+    ])
 
     const isATestExecution = computed(() =>
         execution.value?.labels?.some(

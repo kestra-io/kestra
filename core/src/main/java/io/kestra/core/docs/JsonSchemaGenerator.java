@@ -34,6 +34,8 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.ServerOwned;
+import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.assets.Custom;
@@ -101,7 +103,7 @@ public class JsonSchemaGenerator {
         this.pluginRegistry = pluginRegistry;
     }
 
-    Map<Class<?>, Object> defaultInstances = new ConcurrentHashMap<>();
+    Map<Class<?>, Optional<Object>> defaultInstances = new ConcurrentHashMap<>();
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
@@ -466,6 +468,9 @@ public class JsonSchemaGenerator {
                             Map.entry("description", Optional.empty()),
                             Map.entry("$deprecated", Optional.empty()),
                             Map.entry("$group", Optional.empty()),
+                            Map.entry("$ticketingRole", Optional.empty()),
+                            Map.entry("$ticketingDefault", Optional.empty()),
+                            Map.entry("$ticketingValueMap", Optional.empty()),
                             Map.entry("$index", Optional.empty())
                         )
                     );
@@ -569,7 +574,12 @@ public class JsonSchemaGenerator {
                     JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
                     JakartaValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                     JakartaValidationOption.INCLUDE_PATTERN_EXPRESSIONS
-                )
+                ) {
+                    @Override
+                    protected boolean isRequired(MemberScope<?, ?> member) {
+                        return super.isRequired(member) && !(member instanceof FieldScope field && builderDefault(field) != null);
+                    }
+                }
             )
             .with(new Swagger2Module() {
                 @Override
@@ -620,7 +630,7 @@ public class JsonSchemaGenerator {
 
         // default value
         builder.forFields()
-            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null)
+            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null || fieldScope.getAnnotation(ServerOwned.class) != null)
             .withDefaultResolver(this::defaults);
 
         // def name
@@ -732,6 +742,26 @@ public class JsonSchemaGenerator {
                 }
                 if (pluginPropertyAnnotation.index() != -1) {
                     memberAttributes.put("$index", pluginPropertyAnnotation.index());
+                }
+            }
+
+            TicketingField ticketingField = member.getAnnotationConsideringFieldAndGetter(TicketingField.class);
+            if (ticketingField != null) {
+                try {
+                    if (ticketingField.role() != TicketingField.Role.NONE) {
+                        memberAttributes.put("$ticketingRole", ticketingField.role().name());
+                    }
+                } catch (EnumConstantNotPresentException ignored) {
+                    // a plugin built against a newer core may name a role this core does not know
+                }
+                if (!ticketingField.defaultValue().isEmpty()) {
+                    memberAttributes.put("$ticketingDefault", ticketingField.defaultValue());
+                }
+                if (ticketingField.valueMap().length > 0) {
+                    ObjectNode valueMapNode = memberAttributes.putObject("$ticketingValueMap");
+                    for (TicketingField.Mapping mapping : ticketingField.valueMap()) {
+                        valueMapNode.put(mapping.from(), mapping.to());
+                    }
                 }
             }
 
@@ -1303,6 +1333,10 @@ public class JsonSchemaGenerator {
             return null;
         }
 
+        return builderDefault(target);
+    }
+
+    private Object builderDefault(FieldScope target) {
         // class is abstract we try with cls passed to method, we try to find a derived one, optimistic approach
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
@@ -1318,9 +1352,11 @@ public class JsonSchemaGenerator {
             }
         }
 
-        Object instance = defaultInstances.computeIfAbsent(baseCls, clazz -> buildDefaultInstance(clazz));
+        Class<?> instanceCls = baseCls;
 
-        return instance == null ? null : defaultValue(instance, baseCls, target.getName());
+        return defaultInstances.computeIfAbsent(baseCls, clazz -> Optional.ofNullable(buildDefaultInstance(clazz)))
+            .map(instance -> defaultValue(instance, instanceCls, target.getName()))
+            .orElse(null);
     }
 
     private ObjectNode extractMainRef(ObjectNode objectNode) {

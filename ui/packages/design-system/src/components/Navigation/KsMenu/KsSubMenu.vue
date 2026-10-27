@@ -1,5 +1,5 @@
 <template>
-    <ElSubMenu v-bind="({...filteredProps(), ...$attrs} as any)">
+    <ElSubMenu :index="props.index" v-bind="{...filteredProps(), ...$attrs}">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -30,5 +30,5 @@
         title?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["index"])
 </script>

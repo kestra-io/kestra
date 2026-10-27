@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +36,7 @@ import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -129,28 +130,23 @@ class SubflowRunnerTest {
 
     @Test
     @LoadFlows({ "flows/valids/subflow-parent-retry.yaml", "flows/valids/subflow-to-retry.yaml" })
-    void subflowOutputWithWait() throws QueueException, TimeoutException, InterruptedException {
-        List<Execution> childExecution = new ArrayList<>();
-        CountDownLatch countDownLatch = new CountDownLatch(4);
-        QueueSubscriber<FollowExecutionEvent> closing = executionEventQueue.subscriber().subscribe(either ->
-        {
-            if (either.isLeft() && either.getLeft().flowId().equals("subflow-to-retry") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
-                var execution = executionRepository.findById(either.getLeft().tenantId(), either.getLeft().executionId()).orElseThrow();
-                childExecution.add(execution);
-                countDownLatch.countDown();
-            }
-        });
-
+    void subflowOutputWithWait() throws QueueException, TimeoutException {
         Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-parent-retry");
         assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(parentExecution.getTaskRunList()).hasSize(5);
 
-        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        Supplier<List<Execution>> terminatedChildren = () -> executionRepository
+            .findByFlowId(MAIN_TENANT, "io.kestra.tests", "subflow-to-retry", Pageable.UNPAGED)
+            .stream()
+            .filter(e -> e.getTrigger() != null && parentExecution.getId().equals(e.getTrigger().getVariables().get("executionId")))
+            .filter(e -> e.getState().isTerminated())
+            .toList();
+        await().atMost(Duration.ofSeconds(10)).until(() -> terminatedChildren.get().size() == 4);
+
         // we should have 4 executions, two in SUCCESS and two in FAILED
-        assertThat(childExecution).hasSize(4);
+        List<Execution> childExecution = terminatedChildren.get();
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.SUCCESS).count()).isEqualTo(2);
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.FAILED).count()).isEqualTo(2);
-        closing.close();
     }
 
     @Test

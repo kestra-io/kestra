@@ -16,6 +16,7 @@ import {asProblem} from "@kestra-io/kestra-sdk"
 import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 import PluginInstallToast from "../plugins/PluginInstallToast.vue"
 
+import {storageKeys} from "../../utils/constants"
 export function useFlowEditorActions() {
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
@@ -140,7 +141,7 @@ export function useFlowEditorActions() {
             notificationHandle = KsNotification({
                 title: t("plugins.autoInstall.title", count),
                 message: h(PluginInstallToast, {
-                    jobId: job.id,
+                    jobId: job.id ?? "",
                     onSuccess: () => {
                         pluginsStore.list()
                         setTimeout(() => notificationHandle?.close(), 3000)
@@ -166,7 +167,7 @@ export function useFlowEditorActions() {
     function reportSaveError(error: unknown) {
         const httpError = error as KestraHttpError
         if (httpError?.status === 401) {
-            toast.error("401 Unauthorized", undefined, {duration: 2000})
+            toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
         } else if (!isReportedCentrally(httpError)) {
             // A validation error and a lost connection reach here unreported; anything the
             // interceptor toasted, a 404 on a flow deleted under the editor included, is on screen
@@ -201,7 +202,7 @@ export function useFlowEditorActions() {
             await flushDirtyFiles()
         } catch (error) {
             if ((error as KestraHttpError)?.status === 401) {
-                toast.error("401 Unauthorized", undefined, {duration: 2000})
+                toast.error(t("errors.401.content"), t("errors.401.title"), {duration: 2000})
             }
         }
     }
@@ -315,7 +316,7 @@ export function useFlowEditorActions() {
 
     const isPlaygroundEnabled = computed(() => playgroundStore.enabled)
     const isPlaygroundAllowed = computed(
-        () => localStorage.getItem("editorPlayground") !== "false"
+        () => localStorage.getItem(storageKeys.EDITOR_PLAYGROUND) !== "false"
             && !tourStore.isGuidedActive,
     )
 

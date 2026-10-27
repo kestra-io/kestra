@@ -1,6 +1,10 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
+    <section v-if="isMobile && isFlow && canSelectDashboard" class="dashboard-selector" data-test="mobile-dashboard-selector">
+        <Dashboards @dashboard="selectDashboard" />
+    </section>
+
     <section v-if="isRouteSettled" id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
@@ -34,6 +38,9 @@
     import {processFlowYaml} from "./composables/useDashboards"
 
     import Header from "./components/Header.vue"
+    import Dashboards from "override/components/dashboard/Selector.vue"
+    import {useDashboardSelection} from "./composables/useDashboardSelection"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import Sections from "./sections/Sections.vue"
 
@@ -44,7 +51,12 @@
     } from "../filter/configurations/dashboardFilters"
     import useRestoreUrl from "../../composables/useRestoreUrl"
 
-    useRestoreUrl()
+    const restoreScope = ref<string>()
+    const {goToRestoreUrl} = useRestoreUrl({scope: restoreScope})
+
+    const isMobile = useIsMobile()
+    const canSelectDashboard = computed(() => ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)))
+    const {selectDashboard} = useDashboardSelection()
 
     const dashboardFilter = useDashboardFilter()
     const flowDashboardFilter = useFlowDashboardFilter()
@@ -132,6 +144,8 @@
         // When the backend cannot serve custom dashboards, ignore any requested id
         // (URL, localStorage, tenant default) and render the bundled default directly.
         if (miscStore.configs?.isCustomDashboardsEnabled === false) {
+            restoreScope.value = "default"
+            await goToRestoreUrl()
             await useDefaultDashboardBundledInUI()
             await loadCharts(dashboard.value.charts)
             isRouteSettled.value = true
@@ -156,6 +170,9 @@
                 })
             }
         }
+
+        restoreScope.value = id
+        await goToRestoreUrl()
 
         // Unmount the charts before anything about the dashboard changes: a chart reads its dashboard id once, on
         // setup, so one left mounted across the swap keeps requesting the previous dashboard's charts, now routed as
@@ -200,6 +217,7 @@
 
     watch([() => route.params.dashboard, () => route.params.tenant], async () => {
         if(route.params.tenant){
+            restoreScope.value = undefined
             // at initial load after login tenant is not yet immediately available
             const dashboardId = await dashboardStore.getDashboardId(route)
             await load(dashboardId)
@@ -207,11 +225,16 @@
     }, {immediate: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .filterPadding {
     margin-top: 2rem;
     padding: 0 2rem;
+}
+
+.dashboard-selector {
+    display: flex;
+    padding: var(--ks-spacing-4) var(--ks-spacing-6) var(--ks-spacing-3);
 }
 
 .noMarginTop {

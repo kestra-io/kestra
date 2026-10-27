@@ -41,6 +41,16 @@
                     class="kind"
                 >{{ typeName }}</KsText>
             </div>
+
+            <component
+                :is="footer"
+                v-if="footer && data.producer"
+                :taskType="data.producer"
+                :assetId="id"
+                :assetType="data.assetType"
+                :metadata="data.metadata"
+                class="footer"
+            />
         </div>
 
         <Handle type="source" :position="Position.Right" />
@@ -56,7 +66,7 @@
     import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
     import {statusIconOf, statusColorOf, normalizeStatus} from "../../utils/assetStatus"
-    import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN} from "../../utils/dagConstants"
+    import {DAG_SELECTED, DAG_HOVERED, DAG_TRACED, DAG_SHOWN, DAG_CARD_FOOTER} from "../../utils/dagConstants"
 
     const props = defineProps<{
         id: string;
@@ -65,6 +75,8 @@
             iconCls?: string;
             isFlow?: boolean;
             assetType?: string;
+            producer?: string;
+            metadata?: Record<string, unknown>;
             status: string;
             updated?: string;
         };
@@ -78,6 +90,7 @@
     const hovered = inject(DAG_HOVERED)
     const traced = inject(DAG_TRACED)
     const shown = inject(DAG_SHOWN)
+    const footer = inject(DAG_CARD_FOOTER, undefined)
 
     const status = computed(() => normalizeStatus(props.data.status))
     const typeName = computed(() => (props.data.assetType ? stringUtils.afterLastDot(props.data.assetType) : undefined))
@@ -101,7 +114,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .card {
         --ks-dag-status: var(--ks-status-neutral);
 

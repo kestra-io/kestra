@@ -1,0 +1,10 @@
+id: trigger-popover
+namespace: company.team
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: hello
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: test

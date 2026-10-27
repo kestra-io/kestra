@@ -56,7 +56,23 @@
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="$t('restart confirm', {id: escapeHtml(execution.id)})" />
+            <i18n-t keypath="restart confirm" tag="p" scope="global" class="mb-0">
+                <template #id><code>{{ execution.id }}</code></template>
+            </i18n-t>
+            <KsAlert
+                v-if="parentLink"
+                type="warning"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="restart-subflow-warning"
+            >
+                <i18n-t keypath="restart subflow warning" tag="span" scope="global">
+                    <template #parent>
+                        <router-link :to="parentLink" @click="isOpen = false">{{ $t("restart subflow warning link") }}</router-link>
+                    </template>
+                </i18n-t>
+            </KsAlert>
         </div>
 
         <template #footer>
@@ -123,8 +139,63 @@
                 </KsFormItem>
             </KsForm>
 
+            <KsAlert
+                v-if="replayCheck.status === 'checking'"
+                type="info"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="replay-check-checking"
+                :title="$t('replayCheck.checking', checkParams)"
+            />
+            <KsAlert
+                v-else-if="replayCheck.status === 'error'"
+                type="warning"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="replay-check-error"
+                :title="$t('replayCheck.error_title', checkParams)"
+                :description="$t('replayCheck.error_description')"
+            />
+            <KsAlert
+                v-else-if="replayCheck.status === 'valid'"
+                type="success"
+                :closable="false"
+                showIcon
+                class="mt-3"
+                data-test="replay-check-valid"
+                :title="$t('replayCheck.valid_title', checkParams)"
+                :description="$t('replayCheck.valid_description')"
+            />
+            <template v-else-if="replayCheck.status === 'refused'">
+                <KsAlert
+                    v-if="replayWhole"
+                    type="info"
+                    :closable="false"
+                    showIcon
+                    class="mt-3"
+                    data-test="replay-check-whole"
+                    :title="$t('replayCheck.whole_title', checkParams)"
+                    :description="$t('replayCheck.whole_description', checkParams)"
+                />
+                <KsAlert
+                    v-else
+                    type="error"
+                    :closable="false"
+                    showIcon
+                    class="mt-3"
+                    data-test="replay-check-refused"
+                    :title="$t('replayCheck.refused_title', checkParams)"
+                    :description="replayCheck.detail || $t('replayCheck.refused_description')"
+                />
+                <KsButton v-if="!replayWhole" class="mt-2" data-test="replay-whole-instead" @click="replayWhole = true">
+                    {{ $t("replayCheck.whole_action") }}
+                </KsButton>
+            </template>
+
             <template v-if="hasInputs">
-                <template v-if="!taskRun">
+                <template v-if="!replayTaskRun">
                     <h4 class="section-title">
                         {{ $t("replay inputs") }}:
                     </h4>
@@ -148,8 +219,8 @@
             <KsButton @click="isOpen = false">
                 {{ $t("cancel") }}
             </KsButton>
-            <KsButton type="primary" @click="handleReplayExecute">
-                {{ $t("execute") }}
+            <KsButton type="primary" :disabled="replayBlocked" data-test="replay-confirm" @click="handleReplayExecute">
+                {{ replayTaskRun ? $t("replayCheck.confirm_from_task") : $t("replayCheck.confirm_whole") }}
             </KsButton>
         </template>
     </KsDialog>
@@ -162,17 +233,15 @@
         scrollable
     >
         <template #header>
-            <span
-                v-html="$t('replay the execution', {
-                    executionId: escapeHtml(execution.id),
-                    flowId: escapeHtml(execution.flowId)
-                })"
-            />
+            <i18n-t keypath="replay the execution" tag="span" scope="global">
+                <template #executionId><code>{{ execution.id }}</code></template>
+                <template #flowId><code>{{ execution.flowId }}</code></template>
+            </i18n-t>
         </template>
 
         <ReplayWithInputs
             :execution="execution"
-            :taskRun="taskRun"
+            :taskRun="replayTaskRun"
             :revision="revisionsSelected"
             @execution-trigger="closeReplayWithInputsModal"
         />
@@ -184,10 +253,12 @@
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
-    import {State, escapeHtml} from "@kestra-io/design-system"
+    import {State} from "@kestra-io/design-system"
     import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
     import {useExecutionsStore} from "../../../../../stores/executions"
+    import {asProblem, type FlowForExecution} from "@kestra-io/kestra-sdk"
+    import {handled} from "../../../../../utils/kestraHttp"
     import action from "../../../../../models/action"
     import resource from "../../../../../models/resource"
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
@@ -220,6 +291,8 @@
     const authStore = useAuthStore()
     const executionsStore = useExecutionsStore()
 
+    const SUBFLOW_TRIGGER_TYPE = "io.kestra.plugin.core.flow.Subflow"
+
     const isOpen = ref(false)
     const isReplayWithInputsOpen = ref(false)
     const revisionsSelected = ref<number | undefined>(undefined)
@@ -231,7 +304,22 @@
     const componentClass = computed(() => !props.isReplay ? "restart me-1" : "")
     const replayOrRestart = computed(() => props.isReplay ? "replay" : "restart")
 
-    const currentFlow = ref<any | undefined>(undefined)
+    const parentLink = computed(() => {
+        const trigger = props.execution.trigger
+        const variables = trigger?.variables
+        if (trigger?.type !== SUBFLOW_TRIGGER_TYPE || !variables?.executionId) return undefined
+
+        return {
+            name: EXECUTION_PARENT_ROUTE,
+            params: {
+                namespace: variables.namespace,
+                flowId: variables.flowId,
+                id: variables.executionId,
+            },
+        }
+    })
+
+    const currentFlow = ref<FlowForExecution | undefined>(undefined)
     const hasInputs = computed(() => (currentFlow.value?.inputs?.length ?? 0) > 0)
     const hasOriginalInputs = computed(() => {
         const inputs = props.execution.inputs
@@ -247,6 +335,24 @@
         }
         return revisionsSelected.value
     })
+
+    type ReplayCheck = {status: "idle" | "checking" | "valid" | "error"} | {status: "refused", detail?: string}
+
+    const replayCheck = ref<ReplayCheck>({status: "idle"})
+    const replayWhole = ref(false)
+    let replayCheckSequence = 0
+
+    const replayTaskRun = computed(() => props.isReplay && !replayWhole.value ? props.taskRun : undefined)
+    const needsReplayCheck = computed(() =>
+        props.isReplay
+        && !!props.taskRun
+        && effectiveRevision.value !== undefined
+        && effectiveRevision.value !== props.execution.flowRevision,
+    )
+    const replayBlocked = computed(() =>
+        replayCheck.value.status === "checking" || (replayCheck.value.status === "refused" && !replayWhole.value),
+    )
+    const checkParams = computed(() => ({revision: effectiveRevision.value, taskId: props.taskRun?.taskId}))
 
     const revisionsOptions = computed(() =>
         (flowStore.revisions || [])
@@ -348,7 +454,7 @@
     const handleReplayExecute = () => {
         isOpen.value = false
 
-        if (hasInputs.value && (!canReuseInputs.value || (!props.taskRun && inputMode.value === "modify"))) {
+        if (hasInputs.value && (!canReuseInputs.value || (!replayTaskRun.value && inputMode.value === "modify"))) {
             openReplayWithInputsDialog()
             return
         }
@@ -366,12 +472,13 @@
     }
 
     const restart = async () => {
-        const method = `${replayOrRestart.value}Execution` as keyof typeof executionsStore
-        const response = await (executionsStore[method] as any)({
-            executionId: props.execution.id,
-            taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: props.isReplay ? revisionsSelected.value : undefined,
-        })
+        const response = props.isReplay
+            ? await executionsStore.replayExecution({
+                executionId: props.execution.id,
+                taskRunId: replayTaskRun.value?.id,
+                revision: revisionsSelected.value,
+            })
+            : await executionsStore.restartExecution({executionId: props.execution.id})
 
         const newExecution = response
 
@@ -395,6 +502,37 @@
 
     watch(isOpen, (newValue) => newValue && props.isReplay && loadRevision())
 
+    watch([isOpen, needsReplayCheck, effectiveRevision], async () => {
+        const sequence = ++replayCheckSequence
+        // A new revision needs its own verdict, so the whole-execution choice is dropped with it.
+        if (isOpen.value) replayWhole.value = false
+
+        if (!isOpen.value || !needsReplayCheck.value) {
+            replayCheck.value = {status: "idle"}
+            return
+        }
+
+        replayCheck.value = {status: "checking"}
+        try {
+            await executionsStore.validateReplay({
+                executionId: props.execution.id,
+                taskRunId: props.taskRun?.id,
+                revision: effectiveRevision.value,
+            })
+            if (sequence === replayCheckSequence) replayCheck.value = {status: "valid"}
+        } catch (error) {
+            if (sequence === replayCheckSequence) {
+                const problem = asProblem(error)
+                if (problem?.status === 409) {
+                    handled(error)
+                    replayCheck.value = {status: "refused", detail: problem.detail}
+                } else {
+                    replayCheck.value = {status: "error"}
+                }
+            }
+        }
+    })
+
     watch(effectiveRevision, async (newRevision, oldRevision) => {
         if (!isOpen.value || newRevision === undefined || newRevision === oldRevision) return
         currentFlow.value = undefined
@@ -417,13 +555,11 @@
     })
 </script>
 
-<style lang="scss">
-    .ks-restart-tooltip--no-pointer {
-        pointer-events: none;
-    }
-</style>
+<style scoped>
+:global(.ks-restart-tooltip--no-pointer) {
+    pointer-events: none;
+}
 
-<style scoped lang="scss">
 .modal-header {
     .modal-title {
         font-size: var(--ks-font-size-base);
@@ -455,7 +591,7 @@
 }
 
 .radio-item {
-    :deep(.kel-radio__input) {
+    & :deep(.kel-radio__input) {
         .kel-radio__inner {
             width: 18px;
             height: 18px;
@@ -468,7 +604,7 @@
         }
     }
 
-    :deep(.kel-radio__label) {
+    & :deep(.kel-radio__label) {
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-primary);
         padding-left: 8px;
@@ -476,7 +612,7 @@
 
 
     &.is-checked {
-        :deep(.kel-radio__input) {
+        & :deep(.kel-radio__input) {
             .kel-radio__inner {
                 border-color: var(--ks-btn-primary-bg-default);
                 background-color: var(--ks-btn-primary-bg-default);
@@ -487,7 +623,7 @@
             }
         }
 
-        :deep(.kel-radio__label) {
+        & :deep(.kel-radio__label) {
             color: var(--ks-text-primary) !important;
         }
     }

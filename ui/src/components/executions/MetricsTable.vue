@@ -21,7 +21,7 @@
         <template v-for="col in displayColumns" :key="col">
             <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">
-                    <p class="m-0">
+                    <p class="task-id">
                         {{ scope.row.taskId }}
                     </p>
                 </template>
@@ -93,8 +93,9 @@
     import Counter from "vue-material-design-icons/Numeric.vue"
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue"
 
-    import type {KsChartSeriesItem} from "@kestra-io/design-system"
+    import type {ColumnConfig, KsChartSeriesItem} from "@kestra-io/design-system"
 
+    import type {MetricEntry} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 
     import type {Execution} from "../../stores/executions"
@@ -109,7 +110,7 @@
         taskRunId?: string;
         showTask?: boolean;
         execution?: Execution;
-        optionalColumns?: any[];
+        optionalColumns?: ColumnConfig[];
     }>(), {
         embed: true,
         taskRunId: undefined,
@@ -132,7 +133,7 @@
 
     const hasVisibleColumns = computed(() => displayColumns.value.length > 0)
 
-    const metrics = ref<any[] | undefined>(undefined)
+    const metrics = ref<MetricEntry[] | undefined>(undefined)
     const metricsTotal = ref<number>(0)
     const currentPage = ref(1)
     const pageSize = ref(25)
@@ -151,7 +152,7 @@
         metricsTotal.value = response.total
     }
 
-    watch(() => props.taskRunId, () => {
+    watch([() => props.execution?.id, () => props.execution?.state?.current, () => props.taskRunId], () => {
         dataTable.value?.resetAndReload()
     })
 
@@ -177,11 +178,11 @@
                 sort: ["timestamp:asc"],
             })
             const entries = (response.results ?? []).filter(
-                (entry: any) => entry.name === row.name && entry.taskId === row.taskId,
+                (entry) => entry.name === row.name && entry.taskId === row.taskId,
             )
 
             const labelOccurrences = new Map<string, number>()
-            chartCategories.value = entries.map((entry: any) => {
+            chartCategories.value = entries.map((entry) => {
                 const label = date(entry.timestamp, "HH:mm:ss.SSS")
                 const occurrence = (labelOccurrences.get(label) ?? 0) + 1
                 labelOccurrences.set(label, occurrence)
@@ -190,7 +191,7 @@
 
             chartSeries.value = [{
                 name: row.name,
-                data: entries.map((entry: any) => entry.type === "timer" ? entry.value / 1000 : entry.value),
+                data: entries.map((entry) => entry.type === "timer" ? entry.value / 1000 : entry.value),
             }]
         } finally {
             chartLoading.value = false
@@ -205,7 +206,11 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+    .task-id {
+        margin: 0;
+    }
+
     .tag {
         display: inline-flex;
         align-items: center;

@@ -2,6 +2,21 @@ import path from "path-browserify"
 import {computed, Ref} from "vue"
 import {useDocStore} from "../../stores/doc"
 
+const KESTRA_DOCS_PREFIX = /^(?:https?:\/\/(?:www\.)?kestra\.io)?\/docs(?:\/|(?=[#?]|$))/
+
+function isKestraDocsLink(href: string) {
+    return KESTRA_DOCS_PREFIX.test(href)
+}
+
+function toIntegratedDocsPath(href: string, currentPath: string) {
+    const rest = href
+        .replace(KESTRA_DOCS_PREFIX, "")
+        .replace(/[#?].*$/, "")
+        .replace(/\/$/, "")
+    const docsRoot = currentPath.replace(/(^|\/)docs(\/.*)?$/, "$1docs")
+    return path.normalize(docsRoot + "/" + rest).replace(/\/$/, "")
+}
+
 /**
  * converts markdown code links path into
  * vue-router usable route paths
@@ -16,6 +31,7 @@ function normalizeDocsPath(inputPath:string)  {
  * @returns cleaned href
  */
 function isRemoteLink(href:string) {
+    if (isKestraDocsLink(href)) return false
     return href.startsWith("/") || /https?:\/\/.*/.test(href)
 }
 
@@ -36,6 +52,9 @@ export function useDocsLink(hrefInput: Ref<string>, currentPath: Ref<string>) {
     const href = computed(() => {
         if(isRemote.value) {
             return normalizeRemoteHref(hrefInput.value)
+        }
+        if (isKestraDocsLink(hrefInput.value)) {
+            return toIntegratedDocsPath(hrefInput.value, currentPath.value)
         }
         let relativeLink = normalizeDocsPath(hrefInput.value)
         if (pageMetadata.value?.isIndex === false) {

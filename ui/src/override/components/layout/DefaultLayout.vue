@@ -24,6 +24,7 @@
     import {useCoreStore} from "../../../stores/core"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../../stores/layout"
+    import {storageKeys} from "../../../utils/constants"
 
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
@@ -38,11 +39,11 @@
     function handleSurveyDialogClose() {
         showSurveyDialog.value = false
         markSurveyDialogShown()
-        localStorage.removeItem("showSurveyDialogAfterLogin")
+        localStorage.removeItem(storageKeys.SHOW_SURVEY_DIALOG_AFTER_LOGIN)
     }
 
     function checkForSurveyDialog() {
-        const shouldShow = localStorage.getItem("showSurveyDialogAfterLogin") === "true"
+        const shouldShow = localStorage.getItem(storageKeys.SHOW_SURVEY_DIALOG_AFTER_LOGIN) === "true"
         if (shouldShow) {
             setTimeout(() => {
                 showSurveyDialog.value = true

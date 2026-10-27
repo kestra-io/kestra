@@ -1,3 +1,5 @@
+import type {FilterValue} from "./filterTypes"
+
 export interface StateGroup {
     key: string;
     labelKey: string;
@@ -22,7 +24,7 @@ export const STATE_GROUPS: StateGroup[] = [
         key: "completed",
         labelKey: "filter.state_group.completed",
         token: "--ks-status-success",
-        states: ["SUCCESS", "WARNING", "SKIPPED", "RETRIED"],
+        states: ["SUCCESS", "WARNING", "SKIPPED", "RETRIED", "RESUBMITTED"],
     },
     {
         key: "failed",
@@ -38,10 +40,10 @@ export interface ResolvedGroup {
     key: string;
     labelKey: string;
     token: string;
-    options: {value: string; label: string}[];
+    options: FilterValue[];
 }
 
-export function resolveStateGroups(options: {value: string; label: string}[]): ResolvedGroup[] {
+export function resolveStateGroups(options: FilterValue[]): ResolvedGroup[] {
     const optionMap = new Map(options.map(o => [o.value, o]))
     const assigned = new Set<string>()
 

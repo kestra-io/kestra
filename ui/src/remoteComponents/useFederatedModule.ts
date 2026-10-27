@@ -1,10 +1,10 @@
 import {ref, shallowReactive, markRaw, defineComponent, h, onErrorCaptured, type Component} from "vue"
+import {useI18n} from "vue-i18n"
 import {apiUrlWithoutTenants} from "override/utils/route"
 import {loadRemote, registerRemotes, registerShared} from "@module-federation/enhanced/runtime"
 import * as PluginsAPI from "@kestra-io/kestra-sdk/plugins"
 import {KnownSlotsPropNames, ManifestsRegistry, type KnownSlotProps} from "@kestra-io/slot-contracts"
-import {PluginUiModuleWithGroup, type Task} from "@kestra-io/kestra-sdk"
-import {getCsrfToken} from "../utils/csrf"
+import {PluginUiModuleWithGroup} from "@kestra-io/kestra-sdk"
 
 
 function wrapWithErrorBoundary(inner: Component) {
@@ -12,6 +12,7 @@ function wrapWithErrorBoundary(inner: Component) {
         name: "FederatedModuleBoundary",
         inheritAttrs: false,
         setup(_, {attrs, slots}) {
+            const {t} = useI18n()
             const error = ref<Error | null>(null)
 
             onErrorCaptured((err: Error) => {
@@ -22,7 +23,7 @@ function wrapWithErrorBoundary(inner: Component) {
 
             return () => {
                 if (error.value) {
-                    return h("div", {class: "federated-module-error"}, "A plugin component failed to load.")
+                    return h("div", {class: "federated-module-error"}, t("plugins.ui_load_error"))
                 }
                 return h(inner, attrs, slots)
             }
@@ -39,12 +40,21 @@ function addCSSLinkIfNotAlreadyPresent(href: string) {
     }
 }
 
+// A slot that hosts several modules per task type ("execution-artifact") registers each one as
+// `<slot>/<id>` in the manifest; the module is then keyed `<taskType>/<id>` here.
+function moduleKey(slotName: string, uiModule: string | undefined, taskTypeKey: string): string | undefined {
+    if (uiModule === slotName) return taskTypeKey
+    return uiModule?.startsWith(`${slotName}/`) ? `${taskTypeKey}/${uiModule.slice(slotName.length + 1)}` : undefined
+}
+
 export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(slotName: T) {
 
     const RemoteComponents = shallowReactive<Record<string, Component>>({})
+    const subtitleResolvers = shallowReactive<Record<string, (ctx: never) => unknown>>({})
     const taskAdditionalInfoRemote = ref<Record<string, ManifestsRegistry[T]>>({})
 
     const manifestReady = ref(false)
+    const failedModules = shallowReactive<Record<string, true>>({})
 
     async function resolveRemoteComponent(taskTypes: {cls: string, version: string | undefined}[]) {
         
@@ -59,14 +69,7 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         try {
             // get the manifest of the all the tasks we will
             // have in the graph
-            // The generated SDK client (client.gen) uses its own axios.create() instance
-            // which does not pick up the CSRF interceptor configured in main.ts.
-            // Explicitly forward the CSRF token so this POST is not rejected by CsrfTokenFilter.
-            const csrfToken = getCsrfToken()
-            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest(
-                {body: Array.from(taskTypes)},
-                csrfToken ? {headers: {"X-CSRF-TOKEN": csrfToken}} : undefined,
-            )
+            const pluginTaskManifestsResponse = await PluginsAPI.pluginUiManifest({body: Array.from(taskTypes)})
             pluginTaskManifests = pluginTaskManifestsResponse?.manifest ?? {}
         } catch (error) {
             console.error("[FederatedModule] Failed to load plugin UI manifest:", error)
@@ -76,9 +79,10 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
 
         for(const taskTypeKey in pluginTaskManifests){
             for(const manifest of pluginTaskManifests[taskTypeKey]){
-                if(manifest.uiModule === slotName){
+                const key = moduleKey(slotName, manifest.uiModule, taskTypeKey)
+                if(key){
                     if(manifest.staticInfo){
-                        taskAdditionalInfoRemote.value[taskTypeKey] = manifest.staticInfo
+                        taskAdditionalInfoRemote.value[key] = manifest.staticInfo as ManifestsRegistry[T]
                     }
                 }
             }
@@ -86,7 +90,8 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
 
         for(const taskTypeKey in pluginTaskManifests){
             for(const manifest of pluginTaskManifests[taskTypeKey]){
-                if(manifest.uiModule === slotName){
+                const key = moduleKey(slotName, manifest.uiModule, taskTypeKey)
+                if(key){
                     const remoteName = `remote--${taskTypeKey}`
                     const basePath = `${apiUrlWithoutTenants()}/plugins/${manifest.group}/pluginUi/`
 
@@ -120,22 +125,27 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
                     })
 
                     const taskRoot = manifest.group ? taskTypeKey.slice(manifest.group.length + 1) : []
-                    const remoteId = `${remoteName}/${taskRoot}/${slotName}`
+                    const remoteId = `${remoteName}/${taskRoot}/${manifest.uiModule}`
                     
-                    let module: {default: Component} | null = null
+                    let module: {default: Component, getSubtitle?: (ctx: never) => unknown} | null = null
                     try {
-                        module = await loadRemote<{default: Component}>(remoteId)
+                        module = await loadRemote<{default: Component, getSubtitle?: (ctx: never) => unknown}>(remoteId)
                     } catch(err) {
                         console.error(`[FederatedModule] loadRemote FAILED for "${remoteId}":`, err)
+                        failedModules[key] = true
                         continue
                     }
 
                     if(!module){
                         console.error(`[FederatedModule] loadRemote returned null for "${remoteId}"`)
+                        failedModules[key] = true
                         continue
                     }
 
-                    RemoteComponents[taskTypeKey] = markRaw(wrapWithErrorBoundary(module.default))
+                    RemoteComponents[key] = markRaw(wrapWithErrorBoundary(module.default))
+                    if(typeof module.getSubtitle === "function"){
+                        subtitleResolvers[key] = module.getSubtitle
+                    }
                 }
             }
         }
@@ -144,8 +154,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
     const RemoteComponent = defineComponent({
         props: ["taskType", ...KnownSlotsPropNames[slotName]],
         inheritAttrs: false,
-        setup(props: { taskType: string } & KnownSlotProps[T], {attrs}) {
-            const {taskType, ...restProps} = props
+        setup(rawProps, {attrs}) {
+            // The declared props are the slot's own propNames, so the generic slot type can't be inferred from them.
+            const {taskType, ...restProps} = rawProps as unknown as {taskType: string} & KnownSlotProps[T]
             // ponytail: read inside render so shallowReactive tracks it — loadRemote completes after manifestReady
             return () => {
                 const Comp = RemoteComponents[taskType]
@@ -158,8 +169,12 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         return !!RemoteComponents[taskType]
     }
 
+    function hasFailedComponent(taskType: string): boolean {
+        return !!failedModules[taskType]
+    }
+
     // A task runner's module wins only when the runner ships one, otherwise the task's own module is used.
-    function componentTypeFor(task?: Pick<Task, "type"> & {taskRunner?: Pick<Task, "type">}): string {
+    function componentTypeFor(task?: {type?: string; taskRunner?: {type?: string}}): string {
         const runnerType = task?.taskRunner?.type
         return runnerType && hasResolvedComponent(runnerType) ? runnerType : task?.type ?? ""
     }
@@ -170,7 +185,9 @@ export function useFederatedModule<T extends keyof typeof KnownSlotsPropNames>(s
         manifestReady,
         resolveRemoteComponent,
         hasResolvedComponent,
+        hasFailedComponent,
         componentTypeFor,
+        subtitleResolvers,
     }
 }
 

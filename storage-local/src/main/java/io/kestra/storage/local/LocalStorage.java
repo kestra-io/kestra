@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
 import org.apache.commons.io.FileUtils;
 
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.serializers.JacksonMapper;
@@ -319,12 +319,17 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException {
+        Path sourcePath = getLocalPath(tenantId, from);
+        Path destinationPath = getLocalPath(tenantId, to);
+
         try {
-            Files.move(
-                getLocalPath(tenantId, from),
-                getLocalPath(tenantId, to),
-                StandardCopyOption.ATOMIC_MOVE
-            );
+            Files.createDirectories(destinationPath.getParent());
+            Files.move(sourcePath, destinationPath, StandardCopyOption.ATOMIC_MOVE);
+
+            Path sourceMetadataPath = Path.of(sourcePath + ".metadata");
+            if (Files.exists(sourceMetadataPath)) {
+                Files.move(sourceMetadataPath, Path.of(destinationPath + ".metadata"), StandardCopyOption.ATOMIC_MOVE);
+            }
         } catch (NoSuchFileException e) {
             throw newFileNotFound(from, e);
         }
@@ -349,7 +354,11 @@ public class LocalStorage implements StorageInterface {
             return true;
         }
 
-        return Files.deleteIfExists(path);
+        boolean deleted = Files.deleteIfExists(path);
+        if (deleted) {
+            Files.deleteIfExists(Path.of(path + ".metadata"));
+        }
+        return deleted;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

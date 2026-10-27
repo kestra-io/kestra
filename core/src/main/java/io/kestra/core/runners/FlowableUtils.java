@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,8 +31,6 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class FlowableUtils {
-    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {
-    };
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson(true);
 
     public static List<NextTaskRun> resolveSequentialNexts(
@@ -93,7 +90,7 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
         ) {
             return Collections.emptyList();
         }
@@ -134,7 +131,7 @@ public class FlowableUtils {
         // if it has any created/submitted or running, we leave
         if (
             taskRuns.stream()
-                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning())
+                .anyMatch(taskRun -> taskRun.getState().isCreated() || taskRun.getState().getCurrent() == State.Type.SUBMITTED || taskRun.getState().isRunning() || taskRun.getState().isRetrying())
         ) {
             return Collections.emptyList();
         }
@@ -230,12 +227,12 @@ public class FlowableUtils {
         } else if (!currentTasks.isEmpty()) {
             // handle nominal case, tasks or errors flow are ready to be analyzed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
+                return Optional.of(execution.computeFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
             if (execution.hasFailedNoRetry(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
-                return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
+                return Optional.of(execution.computeFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         }
 
@@ -412,9 +409,10 @@ public class FlowableUtils {
      * - A List of Objects that will be converted to a List of String, each object being rendered then parsed as a JSON object.
      * - A Map of String to Object that will be converted to a List of pairs of String/String, each object being rendered then parsed as a JSON object.
      *
-     * @return a list of String with no duplicates if the values were a list, or a list of pairs of String/String if the values were a map.
-     * @throws IllegalVariableEvaluationException in case of JSON error, unsupported value type or duplicate values.
+     * @return a list of String if the values were a list, or a list of pairs of String/String if the values were a map.
+     * @throws IllegalVariableEvaluationException in case of JSON error or unsupported value type.
      */
+    @SuppressWarnings("unchecked")
     public static Either<List<String>, List<Pair<String, String>>> resolveValues(RunContext runContext, Object values) throws IllegalVariableEvaluationException {
         switch (values) {
             case String stringValue -> {
@@ -422,25 +420,13 @@ public class FlowableUtils {
                 try {
                     JsonNode valuesNode = MAPPER.readTree(renderValue);
                     if (valuesNode.isArray()) {
-                        List<String> resolvedValues = MAPPER.convertValue(valuesNode, TYPE_REFERENCE)
-                            .stream()
-                            .map(throwFunction(obj ->
-                            {
-                                if (obj instanceof String s) {
-                                    return s;
-                                } else if (obj == null) {
-                                    throw new IllegalVariableEvaluationException(
-                                        "Found a null value inside the iteration values=" + serializeAsString(values)
-                                    );
-                                } else {
-                                    return serializeAsString(obj);
-                                }
-                            }))
-                            .distinct()
-                            .toList();
+                        List<String> resolvedValues = new ArrayList<>(valuesNode.size());
+                        for (JsonNode element : valuesNode) {
+                            resolvedValues.add(elementAsString(element, values));
+                        }
                         return Either.left(resolvedValues);
                     } else if (valuesNode.isObject()) {
-                        List<Pair<String, String>> resolvedValues = new ArrayList<>();
+                        List<Pair<String, String>> resolvedValues = new ArrayList<>(valuesNode.size());
                         Map<String, Object> mapValues = MAPPER.convertValue(valuesNode, JacksonMapper.MAP_TYPE_REFERENCE);
                         for (var entry : mapValues.entrySet()) {
                             resolvedValues.add(Pair.of(entry.getKey(), valueAsString(runContext, values, entry.getValue())));
@@ -456,8 +442,6 @@ public class FlowableUtils {
                         "The `values` must be a list, a map, or an expression that renders to one, but got: '" + renderValue + "'.",
                         e
                     );
-                } catch (IOException e) {
-                    throw new IllegalVariableEvaluationException(e);
                 }
             }
             case List<?> listValue -> {
@@ -465,7 +449,7 @@ public class FlowableUtils {
                 for (Object obj : listValue) {
                     resolvedValues.add(valueAsString(runContext, values, obj));
                 }
-                return Either.left(resolvedValues.stream().distinct().toList());
+                return Either.left(resolvedValues);
             }
             case Map<?, ?> mapValue -> {
                 List<Pair<String, String>> resolvedValues = new ArrayList<>();
@@ -488,6 +472,19 @@ public class FlowableUtils {
             );
             default -> throw new IllegalVariableEvaluationException("Unknown value element type: " + value.getClass());
         };
+    }
+
+    private static String elementAsString(JsonNode element, Object values) throws IllegalVariableEvaluationException {
+        if (element.isTextual()) {
+            return element.textValue();
+        } else if (element.isNull()) {
+            throw new IllegalVariableEvaluationException(
+                "Found a null value inside the iteration values=" + serializeAsString(values)
+            );
+        } else if (element.isIntegralNumber() || element.isBoolean()) {
+            return element.asText();
+        }
+        return serializeAsString(MAPPER.convertValue(element, Object.class));
     }
 
     private static String serializeAsString(Object obj) throws IllegalVariableEvaluationException {
@@ -575,14 +572,7 @@ public class FlowableUtils {
     public static Pair<List<String>, Long> readLoopValuesFromUri(RunContext runContext, String uri, long offset, int count) throws IOException, IllegalVariableEvaluationException {
         try (var is = new BufferedInputStream(URIFetcher.of(uri).fetch(runContext), FileSerde.BUFFER_SIZE)) {
             List<String> result = new ArrayList<>(count);
-            long[] index = { 0 };
-            FileSerde.read(is, throwConsumer(record ->
-            {
-                if (index[0] >= offset && result.size() < count) {
-                    result.add(ionValueToString(record));
-                }
-                index[0]++;
-            }));
+            FileSerde.read(is, offset, count, throwConsumer(record -> result.add(ionValueToString(record))));
             return Pair.of(result, offset + result.size());
         }
     }

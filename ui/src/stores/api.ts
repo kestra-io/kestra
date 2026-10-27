@@ -1,14 +1,13 @@
-import axios from "axios"
 import {cloneDeep} from "@kestra-io/design-system"
 import {defineStore} from "pinia"
-import {ref} from "vue"
+import {ref, watch} from "vue"
 import {useMiscStore} from "override/stores/misc"
-import {capturePosthogEvent, disablePosthog} from "../utils/posthog"
 import {ensureUid} from "../utils/uid"
 import {PendingEventsBuffer} from "../utils/analytics/pendingEvents"
-import {resolvePosthogEventName} from "../utils/analytics/eventNaming"
+import {sendPosthogEvent} from "../utils/analytics/posthogEvents"
 import type {MiscControllerConfiguration} from "@kestra-io/kestra-sdk"
 import type {PageInfo} from "../utils/eventsRouter"
+import {publicFetch, publicFetchJson} from "../utils/publicApi"
 
 export const API_URL = "https://api.kestra.io"
 
@@ -26,6 +25,11 @@ interface Feed {
 interface FeedResponse {
     feeds: Feed[];
     version: string;
+}
+
+interface ApiConfig {
+    id: string;
+    posthog?: {token?: string; apiHost?: string};
 }
 
 interface EventData {
@@ -80,8 +84,14 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
 export const useApiStore = defineStore("api", () => {
     const feeds = ref<Feed[]>([])
 
+    const miscStore = useMiscStore()
+
+    watch(() => miscStore.configs, () => {
+        void flushQueuedEvents()
+    })
+
     async function loadFeeds(options: { iid: string; uid: string; version: string }) {
-        const response = await axios.get<FeedResponse>(`${API_URL}/v1/feeds`, {
+        const data = await publicFetchJson<FeedResponse>(`${API_URL}/v1/feeds`, {
             withCredentials: true,
             params: {
                 iid: options.iid,
@@ -90,21 +100,18 @@ export const useApiStore = defineStore("api", () => {
             },
         })
 
-        feeds.value = response.data.feeds
+        feeds.value = data.feeds
 
-        return response.data
+        return data
     }
 
     async function loadConfig() {
-        const response = await axios.get(`${API_URL}/v1/config`, {
+        return publicFetchJson<ApiConfig>(`${API_URL}/v1/config`, {
             withCredentials: true,
         })
-
-        return response.data
     }
 
     async function flushQueuedEvents() {
-        const miscStore = useMiscStore()
         const configs = miscStore.configs
 
         // Can't decide yet.
@@ -130,7 +137,6 @@ export const useApiStore = defineStore("api", () => {
     }
 
     async function events<T extends EventData>(data: T, options: EventsOptions = {}) {
-        const miscStore = useMiscStore()
         const configs = miscStore.configs
 
         // If configs aren't ready yet, buffer and replay later.
@@ -161,56 +167,14 @@ export const useApiStore = defineStore("api", () => {
             void flushQueuedEvents()
         }
 
-        return axios.post(`${API_URL}/v1/reports/events`, backendData, {
+        return publicFetch(`${API_URL}/v1/reports/events`, {
             withCredentials: true,
+            body: backendData,
         })
     }
 
     function posthogEvents<T extends EventData>(data: T & {date?: string; counter?: number}) {
-        const miscStore = useMiscStore()
-        const configs = miscStore.configs
-        if (configs?.isUiAnonymousUsageEnabled === false) {
-            disablePosthog()
-            return
-        }
-
-        const type = data.type
-        const finalData: Record<string, unknown> = {}
-        Object.assign(finalData, cloneDeep(data))
-
-        delete finalData.type
-        delete finalData.date
-        delete finalData.counter
-
-        const eventName = type === "PAGE" ? "$pageview" : resolvePosthogEventName(data.type, finalData)
-
-        if (type === "PAGE") {
-            const origin = data.page?.origin ?? window.location.origin
-            const path = data.page?.path ?? window.location.pathname
-            const host = (() => {
-                try {
-                    return new URL(origin).host
-                } catch {
-                    return window.location.host
-                }
-            })()
-            const fullPath = data.page?.fullPath
-            const currentUrl = fullPath ? `${origin}${fullPath}` : `${origin}${path}`
-
-            finalData.$current_url = currentUrl
-            finalData.$pathname = path
-            finalData.$host = host
-            finalData.$title = document.title
-        }
-
-        capturePosthogEvent(configs, eventName, finalData)
-    }
-
-    async function pluginsInformation() {
-        return axios.get<{byPlugin: Record<string, {lastReleasedAt?: string; usageCount?: number}>}>(
-            `${API_URL}/v1/plugins/pluginsInformation?icons=false`,
-            {withCredentials: true},
-        )
+        sendPosthogEvent(miscStore.configs, data)
     }
 
     return {
@@ -221,6 +185,5 @@ export const useApiStore = defineStore("api", () => {
         events,
         sendEventNow,
         posthogEvents,
-        pluginsInformation,
     }
 })

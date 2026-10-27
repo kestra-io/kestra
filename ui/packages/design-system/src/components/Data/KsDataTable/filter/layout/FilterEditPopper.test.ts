@@ -6,6 +6,7 @@ import FilterEditPopper from "./FilterEditPopper.vue"
 import FilterSelect from "./FilterSelect.vue"
 import FilterMultiSelect from "./FilterMultiSelect.vue"
 import FilterDateTime from "./FilterDateTime.vue"
+import FilterNumber from "./FilterNumber.vue"
 import FilterComparatorSelect from "./FilterComparatorSelect.vue"
 import FilterFooter from "./FilterFooter.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../utils/filterTypes"
@@ -335,5 +336,110 @@ describe("FilterEditPopper time range", () => {
             const {startDate, endDate} = filter.value as {startDate: Date; endDate: Date}
             expect(startDate.getTime()).toBeLessThanOrEqual(endDate.getTime())
         })
+    })
+})
+
+const attemptsKey: FilterKeyConfig = {
+    key: "attempts",
+    label: "Attempts",
+    valueType: "number",
+    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.BETWEEN],
+}
+
+describe("FilterEditPopper number field", () => {
+    const mountNumber = async (comparator: Comparators) => {
+        const wrapper = i18nMount(FilterEditPopper, {
+            props: {
+                filter: {id: "f1", key: "attempts", keyLabel: "Attempts", comparator, comparatorLabel: "", value: "", valueLabel: ""},
+                filterKey: attemptsKey,
+                showComparatorSelection: true,
+            },
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    const lastUpdate = (wrapper: Awaited<ReturnType<typeof mountNumber>>) =>
+        (wrapper.emitted("update") as Array<[AppliedFilter]> | undefined)?.at(-1)?.[0]
+
+    const updates = (wrapper: Awaited<ReturnType<typeof mountNumber>>) =>
+        (wrapper.emitted("update") as Array<[AppliedFilter]> | undefined) ?? []
+
+    // Number edits go through the same 400ms debounce as text, so a test waits it out.
+    const settle = async () => {
+        await new Promise((resolve) => setTimeout(resolve, 450))
+        await flushPromises()
+    }
+
+    test("shouldApplyOnlyTheLastNumberWhenTypingSeveralDigits", async () => {
+        const wrapper = await mountNumber(Comparators.GREATER_THAN_OR_EQUAL_TO)
+        const number = wrapper.findComponent(FilterNumber)
+
+        number.vm.$emit("update:modelValue", "1")
+        number.vm.$emit("update:modelValue", "12")
+        number.vm.$emit("update:modelValue", "125")
+        await settle()
+
+        expect(updates(wrapper)).toHaveLength(1)
+        expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: "125", valueLabel: "125"})
+    })
+
+    test("shouldApplyBetweenOnlyOnceBothBoundsAreSetInOrder", async () => {
+        const wrapper = await mountNumber(Comparators.BETWEEN)
+        const number = wrapper.findComponent(FilterNumber)
+        expect(number.props("range")).toBe(true)
+
+        number.vm.$emit("update:modelValue", ["1", ""])
+        await settle()
+        expect(lastUpdate(wrapper)).toMatchObject({value: []})
+
+        number.vm.$emit("update:modelValue", ["10", "5"])
+        await settle()
+        expect(lastUpdate(wrapper)).toMatchObject({value: []})
+
+        number.vm.$emit("update:modelValue", ["1", "5"])
+        await settle()
+        expect(lastUpdate(wrapper)).toMatchObject({comparator: Comparators.BETWEEN, value: ["1", "5"], valueLabel: "1 - 5"})
+    })
+})
+
+describe("FilterEditPopper comparator on a date range field", () => {
+    const lastTriggeredKey: FilterKeyConfig = {
+        key: "lastTriggered",
+        label: "Last triggered",
+        valueType: "time-range",
+        customDateMode: "range",
+        comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.LESS_THAN_OR_EQUAL_TO],
+        showComparatorSelection: true,
+        valueProvider: async () => [{label: "Last 24 hours", value: "PT24H"}],
+    }
+
+    const mountRange = async (value: AppliedFilter["value"]) => {
+        const wrapper = i18nMount(FilterEditPopper, {
+            props: {
+                filter: {id: "lt1", key: "lastTriggered", keyLabel: "Last triggered", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, comparatorLabel: "", value, valueLabel: ""},
+                filterKey: lastTriggeredKey,
+            },
+        })
+        await flushPromises()
+        return wrapper
+    }
+
+    const isComparatorShown = (wrapper: Awaited<ReturnType<typeof mountRange>>) =>
+        wrapper.findComponent(FilterComparatorSelect).props("shouldShowComparator")
+
+    test("shouldHideTheComparatorWhenOnACustomRange", async () => {
+        const wrapper = await mountRange({startDate: new Date("2026-01-15T10:00:00Z"), endDate: new Date("2026-01-20T18:00:00Z")})
+
+        expect(isComparatorShown(wrapper)).toBe(false)
+    })
+
+    test("shouldShowTheComparatorAgainWhenSwitchingBackToPredefined", async () => {
+        const wrapper = await mountRange({startDate: new Date("2026-01-15T10:00:00Z"), endDate: new Date("2026-01-20T18:00:00Z")})
+
+        wrapper.findComponent(FilterSelect).vm.$emit("update:timeRangeMode", "predefined")
+        await flushPromises()
+
+        expect(isComparatorShown(wrapper)).toBe(true)
     })
 })

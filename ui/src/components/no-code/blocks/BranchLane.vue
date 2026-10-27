@@ -109,7 +109,7 @@
                 @dragover="onTrailingDragOver"
                 @drop="onTrailingDrop"
             >
-                <PlusCircleOutline class="branch-lane-add-icon" />
+                <Plus class="branch-lane-add-icon" />
                 {{ laneDropState === 'forbidden' ? $t('block_editor.drop_forbidden') : $t('block_editor.add_to_lane', {lane: laneLabel}) }}
             </button>
         </div>
@@ -119,7 +119,7 @@
 <script setup lang="ts">
     import {computed, defineAsyncComponent, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
     import FlagOutline from "vue-material-design-icons/FlagOutline.vue"
     import CheckOutline from "vue-material-design-icons/CheckOutline.vue"

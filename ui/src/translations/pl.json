@@ -2139,11 +2139,8 @@
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
-      "export": "Eksportuj",
-      "exportEmpty": "Ten wykres nie ma danych do wyeksportowania.",
       "exportTo": {
-        "csv": "Eksportuj do CSV",
-        "ion": "Eksportuj do ION"
+        "csv": "Eksportuj do CSV"
       },
       "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
       "show_all_statuses": "Pokaż wszystkie statusy",

@@ -8,10 +8,12 @@
             <KsButton link :aria-label="$t('filter.close')" :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
         </div>
 
-        <div v-if="showSearch" class="search">
+        <div class="search">
             <KsInput
+                ref="searchInput"
                 v-model="search"
                 size="small"
+                borderless
                 clearable
                 :placeholder="$t('filter.search columns')"
             >
@@ -40,12 +42,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, ref, watch} from "vue"
     import {Close, Magnify} from "../utils/icons"
     import type {ColumnConfig} from "../composables/useTableColumns"
     import DraggableTableColumns from "../DraggableTableColumns.vue"
-
-    const SEARCH_THRESHOLD = 12
 
     const props = defineProps<{
         storageKey: string;
@@ -62,8 +62,9 @@
     // columns arrive leaves it resolving against nothing; the `v-if` above defers that.
     const currentVisibleColumns = ref<string[]>(props.visibleColumns)
     const search = ref("")
+    const searchInput = ref<{focus: () => void} | null>(null)
 
-    const showSearch = computed(() => props.columns.length > SEARCH_THRESHOLD)
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
 
     watch(() => props.visibleColumns, (columns) => {
         currentVisibleColumns.value = columns

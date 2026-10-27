@@ -547,6 +547,19 @@ public class ExecutionService {
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
         String newExecutionId) throws Exception {
+        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, newExecutionId, List.of());
+    }
+
+    /**
+     * @param overrides the values the replayed task run reads in its own properties instead of the real ones;
+     *        any override it had in the source execution is dropped
+     */
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
+        String newExecutionId, List<TaskRunOverride> overrides) throws Exception {
+        if (taskRunId == null && !overrides.isEmpty()) {
+            throw new IllegalArgumentException("Cannot replay execution '%s' with overridden values: values can only be overridden on a replay from a task run.".formatted(execution.getId()));
+        }
+
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
             Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -574,6 +587,12 @@ public class ExecutionService {
 
             originalTaskRunToRemove.addAll(this.workerTaskChildren(flow, execution, graphCluster, taskRunToRestart));
 
+            // an overridden flowable decides its children again, so the ones it chose before are not reused
+            boolean redecidesChildren = !overrides.isEmpty() && flow.findTaskByTaskId(replayedTaskRun.getTaskId()) instanceof FlowableTask<?>;
+            if (redecidesChildren) {
+                originalTaskRunToRemove.addAll(this.descendantTaskRunIds(execution, taskRunId));
+            }
+
             Set<String> handlerTaskIds = this.handlerTaskIdsToRemove(execution, flow, replayedTaskRun.getTaskId(), taskRunToRestart);
             execution.getTaskRunList()
                 .stream()
@@ -597,7 +616,9 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
-                        taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        if (!redecidesChildren || !originalTaskRun.getId().equals(taskRunId)) {
+                            taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
+                        }
                         return newTaskRun;
                     }))
                     .toList()
@@ -606,6 +627,9 @@ public class ExecutionService {
             Set<String> untouchedTaskRunIds = new HashSet<>(taskRunToRestart);
             untouchedTaskRunIds.addAll(originalTaskRunToRemove);
             this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
+
+            String replayedNewTaskRunId = mappingTaskRunId.get(taskRunId);
+            newTaskRuns.replaceAll(taskRun -> taskRun.getId().equals(replayedNewTaskRunId) ? taskRun.withOverrides(overrides.isEmpty() ? null : overrides) : taskRun);
         }
 
         // Build and launch new execution
@@ -627,6 +651,23 @@ public class ExecutionService {
             eventPublisher.publishEvent(CrudEvent.create(newExecution));
         }
         return newExecution;
+    }
+
+    private Set<String> descendantTaskRunIds(Execution execution, String taskRunId) {
+        Map<String, String> parentIds = execution.getTaskRunList().stream()
+            .filter(taskRun -> taskRun.getParentTaskRunId() != null)
+            .collect(Collectors.toMap(TaskRun::getId, TaskRun::getParentTaskRunId));
+
+        return parentIds.keySet().stream()
+            .filter(id -> {
+                for (String parentId = parentIds.get(id); parentId != null; parentId = parentIds.get(parentId)) {
+                    if (parentId.equals(taskRunId)) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .collect(Collectors.toSet());
     }
 
     private Set<String> handlerTaskIdsToRemove(Execution execution, Flow flow, String replayedTaskId, Set<String> taskRunToRestart) throws InternalException {

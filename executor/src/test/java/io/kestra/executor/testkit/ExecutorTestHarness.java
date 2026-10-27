@@ -373,7 +373,8 @@ public final class ExecutorTestHarness {
             asyncOperationService,
             executionEventMessageHandler,
             killSwitchService,
-            killSwitchActionService
+            killSwitchActionService,
+            runContextFactory
         );
         this.workerTaskResultMessageHandler = new WorkerTaskResultMessageHandler(
             executionStateStore,

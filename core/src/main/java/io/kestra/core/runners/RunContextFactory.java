@@ -15,6 +15,7 @@ import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunOverride;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
@@ -157,6 +158,9 @@ public class RunContextFactory {
             .withExecutionOutputs(executionOutputs(flow, execution))
             .withTaskRun(taskRun);
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
+        for (TaskRunOverride override : ListUtils.emptyOnNull(taskRun.getOverrides())) {
+            variables = VariablePath.parse(override.key()).set(variables, override.value());
+        }
 
         return newBuilder()
             // Logger

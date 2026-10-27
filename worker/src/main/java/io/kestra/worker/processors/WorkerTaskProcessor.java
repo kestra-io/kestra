@@ -151,7 +151,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                         );
                     }
                 } catch (IllegalVariableEvaluationException e) {
-                    RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
+                    // the subtask never runs, so it has no attempt to upload a log file with
+                    RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask.getTaskRun(), currentWorkerTask.getTask(), currentWorkerTask.getExecutionKind());
                     contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                     workerTaskResultQueue.put(new WorkerTaskResult(workerTask.fail()));
                 }
@@ -372,6 +373,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             TaskRunAttempt attempt = TaskRunAttempt.builder()
                 .state(new io.kestra.core.models.flows.State().withState(SUCCESS))
                 .workerId(this.workerId)
+                .logFile(runContext.logFileURI())
                 .build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withState(SUCCESS);

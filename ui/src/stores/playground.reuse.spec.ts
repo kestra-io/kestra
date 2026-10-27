@@ -170,4 +170,25 @@ describe("playground reuse of earlier task results", () => {
             ],
         })
     })
+
+    it("still marks the reused task runs when the logs of the run it builds on fail to load", async () => {
+        const playground = await playgroundAfterFirstRun([
+            {id: "tr-a", taskId: "a", state: {current: "SUCCESS"}},
+            {id: "tr-b", taskId: "b", state: {current: "SUCCESS"}},
+        ])
+        executionsStore.replayExecution.mockResolvedValueOnce({
+            id: "e2",
+            state: {current: "RESTARTED"},
+            taskRunList: [
+                {id: "tr-a2", taskId: "a", state: {current: "SUCCESS"}},
+                {id: "tr-b2", taskId: "b", state: {current: "RESTARTED"}},
+            ],
+        })
+        executionsStore.loadLogs.mockRejectedValueOnce(new Error("network"))
+
+        await expect(playground.runUntilTask("b")).resolves.toBeUndefined()
+
+        expect(playground.latestExecution?.id).toBe("e2")
+        expect(reused.e2).toEqual({taskRunIds: ["tr-a2"], logs: []})
+    })
 })

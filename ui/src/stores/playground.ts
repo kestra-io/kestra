@@ -383,7 +383,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
         if (!sourceToReused.size) return
 
         const kind = previous.kind && previous.kind !== "NORMAL" ? {"filters[kind][IN]": previous.kind} : {}
+        // The replay is already running, so a failed fetch only costs the carried-over logs, not the run.
         const ownLogs = await executionsStore.loadLogs({executionId: previous.id, filters: routeQueryToQueryFilters(kind), store: false})
+            .catch(() => [])
         executionsStore.setReusedTaskRuns(replay.id, [...sourceToReused.values()], [...executionsStore.reusedLogsOf(previous.id), ...ownLogs].flatMap(log => {
             const taskRunId = log.taskRunId ? sourceToReused.get(log.taskRunId) : undefined
             return taskRunId ? [{...log, executionId: replay.id, taskRunId}] : []

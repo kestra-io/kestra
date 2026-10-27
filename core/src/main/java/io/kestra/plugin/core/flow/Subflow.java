@@ -228,6 +228,10 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             String log = String
                 .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in FAILED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
             runContext.logger().error(log);
+        } else if (finalState == State.Type.CANCELLED) {
+            String log = String
+                .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in CANCELLED state", execution.getId(), execution.getFlowId(), execution.getNamespace());
+            runContext.logger().warn(log);
         } else if (finalState == State.Type.WARNING) {
             String log = String
                 .format("Subflow execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]] ends in WARNING state", execution.getId(), execution.getFlowId(), execution.getNamespace());

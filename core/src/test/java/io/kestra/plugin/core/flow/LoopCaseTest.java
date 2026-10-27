@@ -571,6 +571,27 @@ public class LoopCaseTest {
         assertThat(subflowExecution2.getTaskRunList()).hasSize(1);
     }
 
+    public void loopNestedWithSubflow(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subflowExecutions = executionRepository.find(
+            Pageable.UNPAGED,
+            execution.getTenantId(),
+            List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.FLOW_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("minimal")
+                    .build()
+            )
+        );
+        assertThat(subflowExecutions).hasSize(4);
+        assertThat(subflowExecutions).allSatisfy(e -> {
+            assertThat(e.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(ExecutionKind.isNormal(e)).isTrue();
+        });
+    }
+
     public void loopBreak(Execution execution) throws InternalException {
         // Then
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

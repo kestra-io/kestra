@@ -660,6 +660,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopNestedWithSubflow(Execution execution) {
+        loopCaseTest.loopNestedWithSubflow(execution);
+    }
+
     @ExecuteFlow("flows/valids/loop-break.yaml")
     public void loopBreak(Execution execution) throws InternalException {
         loopCaseTest.loopBreak(execution);

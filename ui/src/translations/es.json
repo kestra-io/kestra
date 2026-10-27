@@ -139,6 +139,7 @@
     "update": "Actualizar",
     "confirmation": "Confirmación",
     "toast confirm": "¿Estás seguro?",
+    "toast_message_column": "Mensaje",
     "common": {
       "back": "Atrás",
       "openInNewTab": "Abrir en nueva pestaña"
@@ -502,6 +503,7 @@
       "invalid": "Error de gráfico",
       "invalid_description": "Ocurrió un error al cargar el gráfico. Por favor, verifica el código fuente en busca de errores.",
       "load_error": "No se pudo cargar el gráfico de topología. Inténtalo de nuevo.",
+      "expand_subflow_error": "No se pudo expandir el subflow",
       "add-task": "Añadir task",
       "add-trigger": "Añadir trigger",
       "child-count": "{count} task | {count} tasks"

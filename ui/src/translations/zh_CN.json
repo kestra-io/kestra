@@ -139,6 +139,7 @@
     "update": "更新",
     "confirmation": "确认",
     "toast confirm": "您确定吗？",
+    "toast_message_column": "消息",
     "common": {
       "back": "返回",
       "openInNewTab": "在新标签页中打开"
@@ -502,6 +503,7 @@
       "invalid": "图形错误",
       "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
       "load_error": "无法加载拓扑图。请重试。",
+      "expand_subflow_error": "无法展开 subflow",
       "add-task": "添加 task",
       "add-trigger": "添加 trigger",
       "child-count": "{count} 个 task | {count} 个 task"

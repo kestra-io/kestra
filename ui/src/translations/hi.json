@@ -139,6 +139,7 @@
     "update": "अपडेट करें",
     "confirmation": "पुष्टि",
     "toast confirm": "क्या आप निश्चित हैं?",
+    "toast_message_column": "संदेश",
     "common": {
       "back": "वापस",
       "openInNewTab": "नए टैब में खोलें"
@@ -502,6 +503,7 @@
       "invalid": "ग्राफ़ त्रुटि",
       "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
       "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।",
+      "expand_subflow_error": "सबफ़्लो का विस्तार नहीं किया जा सका",
       "add-task": "Task जोड़ें",
       "add-trigger": "Trigger जोड़ें",
       "child-count": "{count} task | {count} tasks"

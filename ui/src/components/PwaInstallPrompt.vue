@@ -34,7 +34,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .pwa-install-prompt {
         position: fixed;
         bottom: var(--ks-spacing-5);

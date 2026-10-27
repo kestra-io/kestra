@@ -5,6 +5,12 @@
       "cta": "변경 사항 확인"
     },
     "loading": "로딩 중...",
+    "namespace_files_tip": {
+      "title": "스크립트를 namespace 파일로 관리하세요",
+      "description": "스크립트를 인라인으로 작성하는 대신, 파일 패널을 열어 파일(예: main.py)로 추가한 다음 flow에서 실행하세요:",
+      "open_files": "파일 열기",
+      "dont_show_again": "다시 표시하지 않기"
+    },
     "more actions": "추가 작업",
     "recipe": {
       "create_flow": "flow 생성",
@@ -236,6 +242,7 @@
       "last7days": "지난 7일",
       "last30days": "지난 30일",
       "last365days": "지난 365일",
+      "allTime": "모든 시간",
       "next5minutes": "다음 5분",
       "next15minutes": "다음 15분",
       "next1hour": "다음 1시간",
@@ -517,8 +524,25 @@
       "attempts": "{count}회 시도 | {count}회 시도",
       "tasks": "task {completed}/{count}개 | task {completed}/{count}개"
     },
+    "execution_mobile": {
+      "failed_task": "실패한 task",
+      "view_task_logs": "task logs 보기",
+      "revision_short": "리비전 {revision}",
+      "more_labels": "+{count}개 label | +{count}개 label",
+      "fewer_labels": "label 접기",
+      "jump_to_first_failure": "첫 번째 실패로 이동",
+      "open_logs": "logs 열기"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "로그인 후",
+      "execution_tab": "실행 {id} · {tab} 탭",
+      "execution": "실행 {id}",
+      "tab": "{tab} 탭"
+    },
     "concurrency limits": "동시성 제한",
     "system overview": "시스템 개요",
+    "workspace": "워크스페이스",
+    "resources": "리소스",
     "usage": "사용량",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -538,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "변수",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "이 Flow의 Task는 artifact를 제공하지 않습니다.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
+      "tasks": "Task 없음 | Task {count}개 | Task {count}개",
+      "fullscreen": "전체 화면",
+      "exit_fullscreen": "전체 화면 종료"
+    },
     "variable_explorer": {
       "title": "입력/출력",
       "search_placeholder": "Key 또는 value 검색...",
@@ -1374,6 +1407,12 @@
           "third": "비밀이 로드되도록 Kestra 인스턴스를 다시 시작하세요."
         }
       },
+      "credentials": {
+        "label": "자격 증명",
+        "header": "자격 증명",
+        "title": "한 번 인증하고 모든 task에서 재사용하세요",
+        "message": "Kestra Enterprise Edition에서는 서버 간 인증을 자격 증명으로 한 번 구성할 수 있으므로, 액세스 토큰은 flow에 하드코딩하는 대신 런타임에 요청되고 새로 고쳐집니다. 자격 증명은 tenant 또는 namespace 수준에서 생성할 수 있으며 모든 task에서 참조할 수 있습니다."
+      },
       "apps": {
         "title": "Kestra로 맞춤형 앱 만들기",
         "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다.",
@@ -1452,6 +1491,10 @@
           "title": "비밀을 안전하게 관리하기",
           "message": "Kestra Enterprise Edition에서는 namespace 수준에서 보안 비밀을 저장하고 제어하여 위험을 최소화하고 각 팀의 자격 증명이 격리되도록 할 수 있습니다. 중첩된 계층 구조 덕분에 상위 namespace에서 자격 증명을 구성할 수도 있으며, 모든 하위 namespace에서 상속됩니다. 전용 보안 비밀 관리자 및 세분화된 namespace 수준 권한 설정 지원은 보안 및 규정 준수를 더욱 강화합니다."
         },
+        "credentials": {
+          "title": "자격 증명을 이 namespace로 한정하세요",
+          "message": "Kestra Enterprise Edition에서는 namespace 수준에서 자격 증명을 구성할 수 있으므로, 이 namespace와 하위 namespace의 task는 액세스 토큰을 flow에 저장하는 대신 런타임에 요청하고 새로 고칩니다. 상위 namespace에 정의된 자격 증명은 모든 하위 namespace에 상속됩니다."
+        },
         "assets": {
           "title": "자산 관리 중앙화",
           "message": "Kestra Enterprise Edition에서 Assets는 워크플로우가 상호작용하는 리소스의 실시간 인벤토리를 유지합니다. 이러한 리소스는 데이터베이스 테이블, 가상 머신, 파일 또는 사용 중인 외부 시스템일 수 있습니다."
@@ -1463,6 +1506,11 @@
         "policies": {
           "title": "이 namespace 전체에 거버넌스 규칙 적용",
           "message": "Kestra Enterprise Edition에서, 정책을 통해 이 namespace 및 하위 namespace의 모든 flow에 적용되는 규칙을 정의할 수 있습니다 — 공유 기본값을 주입하고, 속성 값을 제한하며, plugins를 차단하고, 규정 준수 labels를 요구할 수 있으며, 모든 변경 사항은 flow 작성자에게 완전히 표시됩니다."
+        },
+        "reusable-inputs": {
+          "label": "재사용 가능한 입력",
+          "title": "inputs를 한 번 정의하고 어디서나 재사용하세요",
+          "message": "Kestra Enterprise Edition에서는 재사용 가능한 inputs로 타입이 지정된 inputs의 이름 있는 그룹을 namespace 수준에서 한 번 정의하고 어떤 flow에서든 참조할 수 있습니다. 상위 namespace의 세트는 하위 namespace에서도 사용할 수 있으므로, 팀은 flow마다 반복하는 대신 같은 input 정의를 공유합니다."
         },
         "history": {
           "title": "한 곳에서 수정 기록 관리",
@@ -1780,6 +1828,14 @@
     "item": "항목",
     "items": "항목",
     "iterations": "반복",
+    "load_10_more": "10개 더 불러오기",
+    "show_all_executions": "모든 실행 보기",
+    "failed_iterations_only": "실패한 반복만",
+    "loop_iterations_shown": "{total}개 중 {shown}개 표시됨",
+    "loop_iterations_load_error": "반복 로드 실패",
+    "retry": "다시 시도",
+    "no_iterations": "아직 반복이 없습니다",
+    "no_failed_iterations": "실패한 반복이 없습니다",
     "loop_iterations_notice": {
       "logs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 로그는 여기에 표시되지 않습니다.",
       "outputs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 출력은 여기에 표시되지 않습니다.",
@@ -2083,11 +2139,8 @@
       "no_description_hint": "이 flow에 설명을 추가하여 무엇을 하는지 문서화하세요.<br>Markdown이 지원됩니다.",
       "others": "기타",
       "viewAll": "전체 보기",
-      "export": "내보내기",
-      "exportEmpty": "이 차트에는 내보낼 데이터가 없습니다.",
       "exportTo": {
-        "csv": "CSV로 내보내기",
-        "ion": "ION으로 내보내기"
+        "csv": "CSV로 내보내기"
       },
       "ignoredFilters": "{filters} 필터는 이 차트에 적용되지 않습니다. | {filters} 필터는 이 차트에 적용되지 않습니다.",
       "show_all_statuses": "모든 상태 표시",

@@ -14,6 +14,7 @@ import {
     type Level,
     type LogEntry,
     type PagedResultsApiLightExecution,
+    type QueryFilter,
     type StateType,
 } from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
@@ -61,6 +62,7 @@ export interface InputMetaData {
     type: InputType
     displayName?: string;
     description?: string;
+    descriptionDisplayMode?: "TEXT" | "TOOLTIP";
     required?: boolean;
     defaults?: unknown;
     value?: unknown;
@@ -331,12 +333,17 @@ export const useExecutionsStore = defineStore("executions", () => {
         }
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
+    let latestExecutionsSearch = 0
+
     /** With `onlyTotal`, resolves to the number of matches instead of the page of results. */
     function findExecutions(options: ExecutionSearchOptions & { onlyTotal: true }): Promise<number>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution>
     function findExecutions(options: ExecutionSearchOptions): Promise<PagedResultsApiLightExecution | number> {
+        const search = options.commit === false ? undefined : ++latestExecutionsSearch
         return ExecutionsAPI.searchExecutions(toExecutionSearchParams(options)).then(response => {
-            if (options.commit !== false) {
+            if (options.commit !== false && search === latestExecutionsSearch) {
                 executions.value = response.results as unknown as Execution[]
                 total.value = response.total ?? 0
             }
@@ -393,19 +400,19 @@ export const useExecutionsStore = defineStore("executions", () => {
             kind: options.kind,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             revision: options.revision,
-        }, {timeout: 60 * 60 * 1000}).then(execution => {
+        }, {timeout: 60 * 60 * 1000}).then(exec => {
             useApiStore().posthogEvents({
                 type: "FLOW_EXECUTION",
                 action: "executed",
-                execution_id: execution.id,
-                namespace: execution.namespace,
-                flow_id: execution.flowId,
+                execution_id: exec.id,
+                namespace: exec.namespace,
+                flow_id: exec.flowId,
                 location: executionLocation(route.name?.toString(), options.kind),
-                is_example: isExampleFlow(execution.namespace),
-                revision: execution.flowRevision,
+                is_example: isExampleFlow(exec.namespace),
+                revision: exec.flowRevision,
             })
 
-            return execution
+            return exec
         })
     }
 
@@ -567,10 +574,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         return Promise.resolve(new EventSource(`${apiUrl()}/logs/${options.id}/follow${query ? `?${query}` : ""}`, {withCredentials: true}))
     }
 
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean }) => {
-        return LogsAPI.listLogsFromExecution(
-            {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
-        ).then(data => {
+    // `page` and `size` turn on the endpoint's optional pagination; without them every matching log is returned.
+    const loadLogs = (options: { executionId: string; filters?: QueryFilter[]; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
+        return LogsAPI.listLogsFromExecution({
+            executionId: options.executionId,
+            filters: options.filters ?? [],
+            ...(options.page !== undefined ? {page: options.page} : {}),
+            ...(options.size !== undefined ? {size: options.size} : {}),
+            ...(options.sort !== undefined ? {sort: options.sort} : {}),
+        }).then(data => {
             if (options.store === false) {
                 return data
             }
@@ -579,11 +591,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const downloadLogs = (options: { executionId: string; params?: FilterQuery }) => {
-        return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})}) as unknown as Promise<string>
+    const downloadLogs = (options: { executionId: string; filters?: QueryFilter[] }) => {
+        return LogsAPI.downloadLogsFromExecution({
+            executionId: options.executionId, 
+            filters: options.filters ?? [],
+        }) 
     }
 
-    const downloadLogsFile = (options: { executionId: string; params?: FilterQuery }) => {
+    const downloadLogsFile = (options: { executionId: string; filters?: QueryFilter[] }) => {
         return downloadLogs(options).then(text => {
             Utils.downloadUrl(
                 window.URL.createObjectURL(new Blob([text])),

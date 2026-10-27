@@ -5,6 +5,12 @@
       "cta": "See what changed"
     },
     "loading": "Loading...",
+    "namespace_files_tip": {
+      "title": "Manage your scripts as Namespace Files",
+      "description": "Instead of writing your script inline, open the Files panel, add it as a file (e.g. main.py) and run it from your flow:",
+      "open_files": "Open Files",
+      "dont_show_again": "Don't show again"
+    },
     "more actions": "More actions",
     "recipe": {
       "create_flow": "Create flow",
@@ -236,6 +242,7 @@
       "last7days": "Last 7 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
+      "allTime": "All time",
       "next5minutes": "Next 5 minutes",
       "next15minutes": "Next 15 minutes",
       "next1hour": "Next 1 hour",
@@ -517,8 +524,25 @@
       "attempts": "{count} attempt | {count} attempts",
       "tasks": "{completed}/{count} task | {completed}/{count} tasks"
     },
+    "execution_mobile": {
+      "failed_task": "Failed task",
+      "view_task_logs": "View task logs",
+      "revision_short": "rev. {revision}",
+      "more_labels": "+{count} label | +{count} labels",
+      "fewer_labels": "Show fewer labels",
+      "jump_to_first_failure": "Jump to first failure",
+      "open_logs": "Open logs"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "After sign-in",
+      "execution_tab": "Execution {id} · {tab} tab",
+      "execution": "Execution {id}",
+      "tab": "{tab} tab"
+    },
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
+    "workspace": "Workspace",
+    "resources": "Resources",
     "usage": "Usage",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
@@ -538,6 +562,15 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "No task of this flow provides an artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "no artifacts | {count} artifact | {count} artifacts",
+      "tasks": "no tasks | {count} task | {count} tasks",
+      "fullscreen": "Fullscreen",
+      "exit_fullscreen": "Exit fullscreen"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Search Key or value...",
@@ -1374,6 +1407,12 @@
           "third": "Restart your Kestra instance so the secret is loaded."
         }
       },
+      "credentials": {
+        "label": "Credentials",
+        "header": "Credentials",
+        "title": "Authenticate Once, Reuse It in Every Task",
+        "message": "In Kestra Enterprise Edition, server-to-server authentication can be configured once as a credential, so access tokens are requested and refreshed at runtime instead of being hardcoded in your flows. Credentials can be created at the tenant or namespace level and referenced from any task."
+      },
       "apps": {
         "title": "Build custom Apps with Kestra",
         "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval.",
@@ -1452,6 +1491,10 @@
           "title": "Manage Secrets in a Secure Way",
           "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace, and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
         },
+        "credentials": {
+          "title": "Scope Credentials to This Namespace",
+          "message": "In Kestra Enterprise Edition, you can configure credentials at the namespace level, so tasks in this namespace and its children request and refresh access tokens at runtime instead of storing them in flows. A credential defined in a parent namespace is inherited by all child namespaces."
+        },
         "assets": {
           "title": "Centralize Asset Management",
           "message": "In Kestra Enterprise Edition, Assets keeps a live inventory of resources that your workflows interact with. These resources can be database tables, virtual machines, files, or any external system you work with."
@@ -1463,6 +1506,11 @@
         "policies": {
           "title": "Enforce Governance Rules Across This Namespace",
           "message": "In Kestra Enterprise Edition, Policies let you define rules that apply to every flow in this namespace and its children — inject shared defaults, restrict property values, block plugins, and require compliance labels, with every change fully visible to flow authors."
+        },
+        "reusable-inputs": {
+          "label": "Reusable Inputs",
+          "title": "Define Inputs Once, Reuse Them Everywhere",
+          "message": "In Kestra Enterprise Edition, reusable inputs let you define a named group of typed inputs once at the namespace level and reference them in any flow. A set in a parent namespace is available to child namespaces, so teams share the same input definitions instead of repeating them in every flow."
         },
         "history": {
           "title": "Manage Revision History in One Place",
@@ -1780,6 +1828,14 @@
     "item": "item",
     "items": "items",
     "iterations": "Iterations",
+    "load_10_more": "Load 10 more",
+    "show_all_executions": "Show all executions",
+    "failed_iterations_only": "Failed iterations only",
+    "loop_iterations_shown": "{shown} of {total} shown",
+    "loop_iterations_load_error": "Failed to load iterations",
+    "retry": "Retry",
+    "no_iterations": "No iterations yet",
+    "no_failed_iterations": "No failed iterations",
     "loop_iterations_notice": {
         "logs": "Loop iterations run as separate sub-executions, so their logs are not displayed here.",
         "outputs": "Loop iterations run as separate sub-executions, so their outputs are not displayed here.",
@@ -2083,11 +2139,8 @@
       "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
       "others": "Others",
       "viewAll": "View all",
-      "export": "Export",
-      "exportEmpty": "This chart has no data to export.",
       "exportTo": {
-        "csv": "Export to CSV",
-        "ion": "Export to ION"
+        "csv": "Export to CSV"
       },
       "ignoredFilters": "The {filters} filter doesn't apply to this chart. | The {filters} filters don't apply to this chart.",
       "show_all_statuses": "Show all statuses",

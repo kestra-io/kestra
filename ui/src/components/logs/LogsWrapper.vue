@@ -128,7 +128,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, nextTick, watch, useTemplateRef} from "vue"
+    import {ref, computed, nextTick, watch, useTemplateRef, onBeforeUnmount} from "vue"
+    import {getActivePinia} from "pinia"
     import {useRoute, useRouter, type LocationQueryRaw} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
@@ -162,7 +163,7 @@
     import type {LevelFilterValue} from "@kestra-io/design-system"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw"
-    import {useLogsStore} from "../../stores/logs"
+    import {useLogsStore, useScopedLogsStore} from "../../stores/logs"
     import useRouteContext from "../../composables/useRouteContext"
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
@@ -183,6 +184,7 @@
         namespace?: string | null;
         restoreurl?: boolean;
         withCharts?: boolean;
+        logsStoreScope?: string;
     }>(), {
         embed: false,
         showFilters: false,
@@ -192,6 +194,7 @@
         namespace: undefined,
         restoreurl: undefined,
         withCharts: true,
+        logsStoreScope: undefined,
     })
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"])
 
@@ -199,7 +202,14 @@
     const router = useRouter()
     const {t} = useI18n()
     const toast = useToast()
-    const logsStore = useLogsStore()
+    const logsStore = props.logsStoreScope ? useScopedLogsStore(props.logsStoreScope) : useLogsStore()
+    if (props.logsStoreScope) {
+        const pinia = getActivePinia()
+        onBeforeUnmount(() => {
+            logsStore.$dispose()
+            if (pinia) delete pinia.state.value[logsStore.$id]
+        })
+    }
     const logFilter = useLogFilter()
     const {VALUES} = useValues("logs")
     const quickIntervals = computed(() => [
@@ -543,7 +553,7 @@
         if (newValue) refresh()
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
 
     .logs-chart {
         margin-bottom: var(--ks-spacing-5);
@@ -577,28 +587,30 @@
         margin: 0 var(--ks-spacing-6) var(--ks-spacing-3);
         padding: var(--ks-spacing-2) 0;
         background: var(--ks-bg-base);
+    }
 
-        &__left {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__left {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+    }
 
-        &__actions {
-            display: flex;
-            align-items: center;
-            margin-left: auto;
-            gap: var(--ks-spacing-2);
-        }
+    .logs-toolbar__actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        gap: var(--ks-spacing-2);
+    }
 
-        :deep(.kel-button) {
+    .logs-toolbar {
+        & :deep(.kel-button) {
             margin: 0;
         }
     }
 
     .log-panel {
-        > div.log-content {
+        & > div.log-content {
             margin-bottom: 1rem;
             .navbar {
                 border: 1px solid var(--ks-border-default);
@@ -623,7 +635,7 @@
                 background-color: var(--ks-bg-sidebar);
             }
 
-            > * + * {
+            & > * + * {
                 border-top: 1px solid var(--ks-border-default);
             }
         }

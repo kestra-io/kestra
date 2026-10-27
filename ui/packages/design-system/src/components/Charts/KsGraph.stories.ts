@@ -111,6 +111,7 @@ export const Default: Story = {
         loading: false,
         layout: "force",
         roam: true,
+        renderer: ChartRenderer.CANVAS,
     },
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy()
@@ -135,6 +136,7 @@ export const CircularLayout: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Loading state — shown while data is being fetched */
@@ -146,6 +148,7 @@ export const Loading: Story = {
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }
 
 /** Selected-node visual state — pre-style nodes to show which one is active */
@@ -197,6 +200,7 @@ export const WithSelection: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** SVG renderer — useful for print / high-DPI exports */
@@ -217,6 +221,7 @@ export const SvgRenderer: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Options override — custom force repulsion and edge curveness */
@@ -246,4 +251,5 @@ export const WithOptionsOverride: Story = {
     async play({canvasElement}) {
         await expect(canvasElement.querySelector(".ks-chart--graph")).toBeTruthy()
     },
+    parameters: {controls: {disable: true}},
 }

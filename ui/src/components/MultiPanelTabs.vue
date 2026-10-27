@@ -134,7 +134,7 @@
                         </button>
 
                         <KsDropdown trigger="click" placement="bottom-end">
-                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" :aria-label="$t('panel actions')" />
+                            <KsButton :icon="DotsVertical" link class="tab-icon panel-actions-button" :aria-label="$t('panel actions')" />
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem
@@ -901,6 +901,10 @@
 
     .tab-icon{
         color: var(--ks-icon-muted);
+    }
+
+    .panel-actions-button {
+        margin-inline-end: var(--ks-spacing-2);
     }
 
     .small-text {

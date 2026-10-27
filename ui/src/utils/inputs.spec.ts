@@ -42,6 +42,17 @@ describe("normalize for ION uses the structured-data editor contract", () => {
     })
 })
 
+// The multipart serializer appends each array element as its own part, so the backend only saw `{...}`.
+describe("normalize for TABLE sends the rows as one JSON array", () => {
+    it("serializes row arrays", () => {
+        expect(normalize("TABLE", [{name: "Ada"}, {name: "Bob"}])).toBe("[{\"name\":\"Ada\"},{\"name\":\"Bob\"}]")
+    })
+
+    it("preserves an already serialized value", () => {
+        expect(normalize("TABLE", "[{\"name\":\"Ada\"}]")).toBe("[{\"name\":\"Ada\"}]")
+    })
+})
+
 // Regression guard for the moment -> dayjs move: `moment.add(value, unit)` routes a string through
 // `moment.duration()`, so `add("14:30:00", "seconds")` meant 14h30m and landed on the right wall
 // clock; `dayjs.add()` coerces with `Number()` instead, so the same call is `NaN`. Do not fold the

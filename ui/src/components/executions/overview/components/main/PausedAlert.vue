@@ -18,7 +18,7 @@
     defineProps<{execution: Execution}>()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .paused-wrapper {
         position: relative;
     }
@@ -35,7 +35,7 @@
     #paused {
         overflow: hidden;
 
-        :deep(.kel-alert__content) {
+        & :deep(.kel-alert__content) {
             min-width: 0;
             width: 100%;
             gap: 0;

@@ -262,14 +262,7 @@
                 >
                     <KsButton
                         :tag="RouterLink"
-                        :to="{
-                            name: 'executions/list',
-                            query: {
-                                'filters[parentId][EQUALS]': followedExecution.id,
-                                'filters[kind][EQUALS]': 'LOOP',
-                                'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
-                            }
-                        }"
+                        :to="loopIterationsRoute(followedExecution, asTaskRun(currentTaskRun).taskId)"
                         size="small"
                     >
                         {{ $t("iterations") }}
@@ -277,7 +270,7 @@
                     <TaskRunLoopProgress
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
-                        :executionId="followedExecution.id"
+                        :execution="followedExecution"
                         :taskId="asTaskRun(currentTaskRun).taskId"
                         :loopTaskState="asTaskRun(currentTaskRun).state.current"
                     />
@@ -316,10 +309,12 @@
     import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
     import * as ExecutionsSDK from "@kestra-io/kestra-sdk/executions"
     import {handledIf} from "../../utils/kestraHttp"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
     import TaskRunLoopProgress from "./TaskRunLoopProgress.vue"
+    import {loopIterationsRoute} from "../../utils/executionUtils"
 
     const {t} = useI18n()
 
@@ -677,7 +672,7 @@
     )
 
     const filteredLogs = computed(() =>
-        rawLogs.value.filter((log) =>
+        [...executionsStore.reusedLogsOf(followedExecution.value?.id, props.levelFilter), ...rawLogs.value].filter((log) =>
             log.level !== undefined && levelOrLower.value.includes(log.level),
         ),
     )
@@ -1180,7 +1175,7 @@
         executionsStore
             .loadLogs({
                 executionId: id,
-                params: p,
+                filters: routeQueryToQueryFilters(p),
             })
             .then((logs) => {
                 // A response for an execution the view has since left would overwrite the current one's logs.
@@ -1325,7 +1320,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .log-group-more {
     display: flex;
@@ -1346,7 +1341,7 @@
         background: var(--ks-bg-hover);
     }
 
-    :deep(.material-design-icon) {
+    & :deep(.material-design-icon) {
         display: inline-flex;
         align-items: center;
         line-height: 0;
@@ -1376,7 +1371,7 @@
 }
 
 .log-wrapper {
-  :deep(
+  & :deep(
     > .vue-recycle-scroller__item-wrapper
       > .vue-recycle-scroller__item-view
       > div
@@ -1384,13 +1379,12 @@
     padding-bottom: 1rem;
   }
 
-  :deep(.line) {
+  & :deep(.line) {
     padding-left: 0;
   }
 
   .loop-progress {
     display: flex;
-    align-items: top;
     gap: var(--ks-spacing-3);
     margin-block: var(--ks-spacing-3);
   }
@@ -1410,7 +1404,7 @@
       }
     }
 
-    :deep(.kel-card__body) {
+    & :deep(.kel-card__body) {
       padding: 0;
     }
 
@@ -1444,15 +1438,16 @@
     transition: max-height 0.2s ease-out;
     max-height: 300px;
 
-    :deep(.vue-recycle-scroller__item-view > div) {
+    & :deep(.vue-recycle-scroller__item-view > div) {
       min-height: 2rem;
     }
 
     &.single-line {
       max-height: calc(100vh - 250px);
+      max-height: calc(100dvh - 250px);
     }
 
-    :deep(.line) {
+    & :deep(.line) {
       padding: var(--ks-spacing-1) var(--ks-spacing-3);
 
       &.cursor {

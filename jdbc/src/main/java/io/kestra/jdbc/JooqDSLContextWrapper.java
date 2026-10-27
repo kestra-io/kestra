@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 
 import javax.sql.DataSource;
 
+import org.jooq.Configuration;
 import org.jooq.ConnectionProvider;
 import org.jooq.DSLContext;
 import org.jooq.TransactionalCallable;
@@ -24,8 +25,11 @@ import org.jooq.impl.DefaultTransactionProvider;
 import io.kestra.core.models.tasks.retrys.Random;
 import io.kestra.core.utils.RetryUtils;
 
+import io.micronaut.data.connection.ConnectionDefinition;
+import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -42,6 +46,7 @@ public class JooqDSLContextWrapper {
 
     private final DSLContext dslContext;
     private final DataSource rawDataSource;
+    private final ConnectionOperations<Connection> connectionOperations;
 
     /**
      * @param dataSource used by {@link #requireNewTransaction(TransactionalRunnable)}, and an
@@ -49,8 +54,17 @@ public class JooqDSLContextWrapper {
      *        Without it, the @EachBean-derived DSLContext/Configuration may be destroyed
      *        together with the DataSource, leaving this wrapper with a stale DSLContext.
      */
-    @Inject
     public JooqDSLContextWrapper(DSLContext dslContext, DataSource dataSource) {
+        this(dslContext, dataSource, null);
+    }
+
+    /**
+     * @param connectionOperations used by {@link #joinTransactionIfPresent(TransactionalRunnable)}, it is {@code null} for a wrapper over a plain
+     *        pool, where jOOQ can acquire a connection without any surrounding context.
+     */
+    @Inject
+    public JooqDSLContextWrapper(DSLContext dslContext, DataSource dataSource, @Nullable ConnectionOperations<Connection> connectionOperations) {
+        this.connectionOperations = connectionOperations;
         this.dslContext = dslContext;
         // Unwrap any Micronaut Data AOP proxy: the wrapped DataSource hands back the current
         // thread's transaction-bound connection instead of a new one.
@@ -79,6 +93,52 @@ public class JooqDSLContextWrapper {
                 return null;
             }
         );
+    }
+
+    /**
+     * Runs the given work without opening a transaction of its own, so a single statement costs one round trip
+     * instead of BEGIN, the statement and COMMIT: it is committed as soon as it runs.
+     * <p>
+     * When a connection is already bound to the calling thread, the work joins it through {@link #transaction(TransactionalRunnable)},
+     * so a failure still marks the surrounding transaction as rollback-only.
+     */
+    public void joinTransactionIfPresent(TransactionalRunnable transactional) {
+        if (connectionOperations != null && connectionOperations.findConnectionStatus().isPresent()) {
+            transaction(transactional);
+            return;
+        }
+
+        DEADLOCK_RETRYER.<Void> run(
+            () ->
+            {
+                try {
+                    Configuration configuration = dslContext.configuration();
+                    if (connectionOperations == null) {
+                        runWork(transactional, configuration);
+                    } else {
+                        // Micronaut hands out a connection only inside a context, so open an autocommit one.
+                        connectionOperations.execute(ConnectionDefinition.DEFAULT, status ->
+                        {
+                            runWork(transactional, configuration);
+                            return null;
+                        });
+                    }
+                } catch (RuntimeException e) {
+                    throw connectionFailure(e);
+                }
+                return null;
+            }
+        );
+    }
+
+    private static void runWork(TransactionalRunnable transactional, Configuration configuration) {
+        try {
+            transactional.run(configuration);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new DataAccessException("Unable to run the work outside of a transaction", e);
+        }
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {

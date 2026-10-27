@@ -74,6 +74,8 @@ export default {
             "remove_filter": "Remove filter",
             "add_filter_for": "Add filter for {label}",
             "is_between": "Is Between",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Predefined",
                 "custom": "Custom Range",
@@ -110,6 +112,7 @@ export default {
                 "IS_NOT_NULL": "Label key exists with any value",
                 "REGEX": "Advanced pattern matching using regular expressions",
                 "PREFIX": "Namespace hierarchy matching (e.g., 'com.example' matches 'com.example.app')",
+                "BETWEEN": "Numeric comparison - value must be between min and max, both included",
             },
             "hierarchy": {
                 "all": "Default",
@@ -290,6 +293,10 @@ export default {
             "operationId": {
                 "label": "Operation ID",
                 "description": "Filter by async operation identifier",
+            },
+            "outputs": {
+                "label": "Searchable outputs",
+                "description": "Filter by the searchable outputs of the execution",
             },
             "taskRunId": {
                 "label": "Task Run ID",
@@ -480,6 +487,8 @@ export default {
             "remove_filter": "Filter entfernen",
             "add_filter_for": "Filter für {label} hinzufügen",
             "is_between": "Liegt zwischen",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Vordefiniert",
                 "custom": "Benutzerdefinierter Bereich",
@@ -516,6 +525,7 @@ export default {
                 "IS_NOT_NULL": "Label-Key existiert mit beliebigem Wert",
                 "REGEX": "Erweiterte Mustererkennung mit regulären Ausdrücken",
                 "PREFIX": "Abgleich der Namespace-Hierarchie (z. B. passt 'com.example' auf 'com.example.app')",
+                "BETWEEN": "Numerischer Vergleich – der Wert muss zwischen min und max liegen, beides inklusive",
             },
             "hierarchy": {
                 "all": "Standard",
@@ -696,6 +706,10 @@ export default {
             "operationId": {
                 "label": "Operations-ID",
                 "description": "Nach ID des asynchronen Vorgangs filtern",
+            },
+            "outputs": {
+                "label": "Durchsuchbare Outputs",
+                "description": "Nach den durchsuchbaren Outputs der Execution filtern",
             },
             "taskRunId": {
                 "label": "Task-Run-ID",
@@ -886,6 +900,8 @@ export default {
             "remove_filter": "Eliminar filtro",
             "add_filter_for": "Añadir filtro para {label}",
             "is_between": "Está entre",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Predefinido",
                 "custom": "Rango Personalizado",
@@ -922,6 +938,7 @@ export default {
                 "IS_NOT_NULL": "La clave de label existe con cualquier valor",
                 "REGEX": "Coincidencia de patrones avanzada usando expresiones regulares",
                 "PREFIX": "Coincidencia de jerarquía de namespace (por ejemplo, 'com.example' coincide con 'com.example.app')",
+                "BETWEEN": "Comparación numérica: el valor debe estar entre min y max, ambos incluidos",
             },
             "hierarchy": {
                 "all": "Predeterminado",
@@ -1102,6 +1119,10 @@ export default {
             "operationId": {
                 "label": "ID de operación",
                 "description": "Filtrar por identificador de operación asíncrona",
+            },
+            "outputs": {
+                "label": "Salidas buscables",
+                "description": "Filtrar por los outputs buscables de la ejecución",
             },
             "taskRunId": {
                 "label": "ID de Ejecución de Task",
@@ -1292,6 +1313,8 @@ export default {
             "remove_filter": "Retirer le filtre",
             "add_filter_for": "Ajouter un filtre pour {label}",
             "is_between": "Est entre",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Prédéfini",
                 "custom": "Plage personnalisée",
@@ -1328,6 +1351,7 @@ export default {
                 "IS_NOT_NULL": "La clé de label existe avec n'importe quelle valeur",
                 "REGEX": "Correspondance avancée de motifs utilisant des expressions régulières",
                 "PREFIX": "Correspondance de la hiérarchie de namespace (par exemple, 'com.example' correspond à 'com.example.app')",
+                "BETWEEN": "Comparaison numérique - la valeur doit être comprise entre min et max, tous deux inclus",
             },
             "hierarchy": {
                 "all": "Par défaut",
@@ -1508,6 +1532,10 @@ export default {
             "operationId": {
                 "label": "ID d'opération",
                 "description": "Filtrer par identifiant d'opération asynchrone",
+            },
+            "outputs": {
+                "label": "Sorties interrogeables",
+                "description": "Filtrer par les outputs recherchables de l'exécution",
             },
             "taskRunId": {
                 "label": "ID d'exécution de Task",
@@ -1698,6 +1726,8 @@ export default {
             "remove_filter": "फ़िल्टर हटाएं",
             "add_filter_for": "{label} के लिए फ़िल्टर जोड़ें",
             "is_between": "के बीच है",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "पूर्वनिर्धारित",
                 "custom": "कस्टम रेंज",
@@ -1734,6 +1764,7 @@ export default {
                 "IS_NOT_NULL": "Label key किसी भी value के साथ मौजूद है",
                 "REGEX": "उन्नत पैटर्न मिलान नियमित अभिव्यक्तियों का उपयोग करके",
                 "PREFIX": "Namespace पदानुक्रम मिलान (उदाहरण के लिए, 'com.example' 'com.example.app' से मेल खाता है)",
+                "BETWEEN": "संख्यात्मक तुलना - मान min और max के बीच होना चाहिए, दोनों शामिल हैं",
             },
             "hierarchy": {
                 "all": "डिफ़ॉल्ट",
@@ -1914,6 +1945,10 @@ export default {
             "operationId": {
                 "label": "ऑपरेशन ID",
                 "description": "एसिंक ऑपरेशन ID द्वारा फ़िल्टर करें",
+            },
+            "outputs": {
+                "label": "खोजने योग्य आउटपुट",
+                "description": "execution के खोज योग्य output द्वारा फ़िल्टर करें",
             },
             "taskRunId": {
                 "label": "Task रन ID",
@@ -2104,6 +2139,8 @@ export default {
             "remove_filter": "Rimuovi filtro",
             "add_filter_for": "Aggiungi filtro per {label}",
             "is_between": "È compreso tra",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Predefinito",
                 "custom": "Intervallo personalizzato",
@@ -2140,6 +2177,7 @@ export default {
                 "IS_NOT_NULL": "La chiave label esiste con qualsiasi valore",
                 "REGEX": "Corrispondenza avanzata dei pattern utilizzando le espressioni regolari",
                 "PREFIX": "Gerarchia del namespace corrispondente (ad es., 'com.example' corrisponde a 'com.example.app')",
+                "BETWEEN": "Confronto numerico - il valore deve essere compreso tra min e max, entrambi inclusi",
             },
             "hierarchy": {
                 "all": "Predefinito",
@@ -2320,6 +2358,10 @@ export default {
             "operationId": {
                 "label": "ID operazione",
                 "description": "Filtra per identificatore di operazione asincrona",
+            },
+            "outputs": {
+                "label": "Output ricercabili",
+                "description": "Filtra in base agli output ricercabili dell'Execution",
             },
             "taskRunId": {
                 "label": "ID Esecuzione Task",
@@ -2510,6 +2552,8 @@ export default {
             "remove_filter": "フィルターを削除",
             "add_filter_for": "{label} のフィルターを追加",
             "is_between": "範囲内",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "定義済み",
                 "custom": "カスタム範囲",
@@ -2546,6 +2590,7 @@ export default {
                 "IS_NOT_NULL": "Label key が任意の value で存在します",
                 "REGEX": "正規表現を使用した高度なパターンマッチング",
                 "PREFIX": "ネームスペース階層の一致（例: 'com.example' は 'com.example.app' に一致します）",
+                "BETWEEN": "数値比較 - 値はminとmaxの間である必要があります（両方を含む）",
             },
             "hierarchy": {
                 "all": "デフォルト",
@@ -2726,6 +2771,10 @@ export default {
             "operationId": {
                 "label": "オペレーション ID",
                 "description": "非同期操作IDでフィルタリング",
+            },
+            "outputs": {
+                "label": "検索可能な出力",
+                "description": "Executionの検索可能なoutputでフィルタリング",
             },
             "taskRunId": {
                 "label": "Task 実行 ID",
@@ -2916,6 +2965,8 @@ export default {
             "remove_filter": "필터 제거",
             "add_filter_for": "{label} 필터 추가",
             "is_between": "사이",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "사전 정의됨",
                 "custom": "사용자 정의 범위",
@@ -2952,6 +3003,7 @@ export default {
                 "IS_NOT_NULL": "Label key가 임의의 value와 함께 존재함",
                 "REGEX": "정규 표현식을 사용한 고급 패턴 매칭",
                 "PREFIX": "네임스페이스 계층 구조 일치 (예: 'com.example'은 'com.example.app'과 일치)",
+                "BETWEEN": "숫자 비교 - value는 min과 max 사이에 있어야 하며, 둘 다 포함됩니다.",
             },
             "hierarchy": {
                 "all": "기본",
@@ -3132,6 +3184,10 @@ export default {
             "operationId": {
                 "label": "작업 ID",
                 "description": "비동기 작업 ID로 필터링",
+            },
+            "outputs": {
+                "label": "검색 가능한 output",
+                "description": "실행의 검색 가능한 output으로 필터링",
             },
             "taskRunId": {
                 "label": "Task 실행 ID",
@@ -3322,6 +3378,8 @@ export default {
             "remove_filter": "Usuń filtr",
             "add_filter_for": "Dodaj filtr dla {label}",
             "is_between": "Pomiędzy",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Zdefiniowane z góry",
                 "custom": "Zakres niestandardowy",
@@ -3358,6 +3416,7 @@ export default {
                 "IS_NOT_NULL": "Key etykiety istnieje z dowolną wartością",
                 "REGEX": "Zaawansowane dopasowywanie wzorców za pomocą wyrażeń regularnych",
                 "PREFIX": "Hierarchia namespace pasująca (np. 'com.example' pasuje do 'com.example.app')",
+                "BETWEEN": "Porównanie numeryczne - wartość musi mieścić się między min a max, włącznie z nimi",
             },
             "hierarchy": {
                 "all": "Domyślny",
@@ -3538,6 +3597,10 @@ export default {
             "operationId": {
                 "label": "ID operacji",
                 "description": "Filtruj według ID operacji asynchronicznej",
+            },
+            "outputs": {
+                "label": "Wyjścia z możliwością wyszukiwania",
+                "description": "Filtruj według przeszukiwalnych outputów egzekucji",
             },
             "taskRunId": {
                 "label": "ID Task Runa",
@@ -3728,6 +3791,8 @@ export default {
             "remove_filter": "Remover filtro",
             "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Predefinido",
                 "custom": "Intervalo Personalizado",
@@ -3764,6 +3829,7 @@ export default {
                 "IS_NOT_NULL": "A chave label existe com qualquer value",
                 "REGEX": "Correspondência de padrões avançada usando expressões regulares",
                 "PREFIX": "Correspondência de hierarquia de namespace (por exemplo, 'com.example' corresponde a 'com.example.app')",
+                "BETWEEN": "Comparação numérica - o valor deve estar entre min e max, ambos incluídos",
             },
             "hierarchy": {
                 "all": "Padrão",
@@ -3944,6 +4010,10 @@ export default {
             "operationId": {
                 "label": "ID da Operação",
                 "description": "Filtrar por identificador de operação assíncrona",
+            },
+            "outputs": {
+                "label": "Saídas pesquisáveis",
+                "description": "Filtrar pelas saídas pesquisáveis da execução",
             },
             "taskRunId": {
                 "label": "ID da Execução da Task",
@@ -4134,6 +4204,8 @@ export default {
             "remove_filter": "Remover filtro",
             "add_filter_for": "Adicionar filtro para {label}",
             "is_between": "Está entre",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Predefinido",
                 "custom": "Intervalo Personalizado",
@@ -4170,6 +4242,7 @@ export default {
                 "IS_NOT_NULL": "A chave label existe com qualquer value",
                 "REGEX": "Correspondência de padrões avançada usando expressões regulares",
                 "PREFIX": "Correspondência de hierarquia de namespace (por exemplo, 'com.example' corresponde a 'com.example.app')",
+                "BETWEEN": "Comparação numérica - o valor deve estar entre min e max, ambos incluídos",
             },
             "hierarchy": {
                 "all": "Padrão",
@@ -4350,6 +4423,10 @@ export default {
             "operationId": {
                 "label": "ID da Operação",
                 "description": "Filtrar por identificador de operação assíncrona",
+            },
+            "outputs": {
+                "label": "Outputs pesquisáveis",
+                "description": "Filtrar pelas outputs pesquisáveis da Execution",
             },
             "taskRunId": {
                 "label": "ID da Execução da Task",
@@ -4540,6 +4617,8 @@ export default {
             "remove_filter": "Удалить фильтр",
             "add_filter_for": "Добавить фильтр для {label}",
             "is_between": "Между",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "Предопределено",
                 "custom": "Пользовательский диапазон",
@@ -4576,6 +4655,7 @@ export default {
                 "IS_NOT_NULL": "Ключ label существует с любым value",
                 "REGEX": "Расширенное сопоставление шаблонов с использованием регулярных выражений",
                 "PREFIX": "Иерархия namespace, соответствующая (например, 'com.example' соответствует 'com.example.app')",
+                "BETWEEN": "Числовое сравнение — значение должно быть между min и max включительно",
             },
             "hierarchy": {
                 "all": "По умолчанию",
@@ -4756,6 +4836,10 @@ export default {
             "operationId": {
                 "label": "ID операции",
                 "description": "Фильтровать по ID асинхронной операции",
+            },
+            "outputs": {
+                "label": "Выходные данные с возможностью поиска",
+                "description": "Фильтровать по поисковым output'ам Execution",
             },
             "taskRunId": {
                 "label": "ID запуска Task",
@@ -4946,6 +5030,8 @@ export default {
             "remove_filter": "移除过滤器",
             "add_filter_for": "为 {label} 添加过滤器",
             "is_between": "介于",
+            "number_min": "Min",
+            "number_max": "Max",
             "timerange": {
                 "predefined": "预定义",
                 "custom": "自定义范围",
@@ -4982,6 +5068,7 @@ export default {
                 "IS_NOT_NULL": "Label key 存在且可为任意 value",
                 "REGEX": "使用正则表达式进行高级模式匹配",
                 "PREFIX": "命名空间层级匹配（例如，'com.example' 匹配 'com.example.app'）",
+                "BETWEEN": "数字比较 - value 必须在 min 和 max 之间（包括两者）",
             },
             "hierarchy": {
                 "all": "默认",
@@ -5162,6 +5249,10 @@ export default {
             "operationId": {
                 "label": "操作 ID",
                 "description": "按异步操作 ID 筛选",
+            },
+            "outputs": {
+                "label": "可搜索的 output",
+                "description": "按 execution 的可搜索 output 筛选",
             },
             "taskRunId": {
                 "label": "Task 运行 ID",

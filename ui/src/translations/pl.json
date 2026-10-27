@@ -5,6 +5,12 @@
       "cta": "Zobacz, co się zmieniło"
     },
     "loading": "Ładowanie...",
+    "namespace_files_tip": {
+      "title": "Zarządzaj skryptami jako plikami namespace'u",
+      "description": "Zamiast pisać skrypt inline, otwórz panel Pliki, dodaj go jako plik (np. main.py) i uruchom go ze swojego flow:",
+      "open_files": "Otwórz pliki",
+      "dont_show_again": "Nie pokazuj ponownie"
+    },
     "more actions": "Więcej akcji",
     "recipe": {
       "create_flow": "Utwórz Flow",
@@ -139,6 +145,7 @@
     "update": "Aktualizuj",
     "confirmation": "Potwierdzenie",
     "toast confirm": "Czy na pewno?",
+    "toast_message_column": "Wiadomość",
     "common": {
       "back": "Wstecz",
       "openInNewTab": "Otwórz w nowej karcie"
@@ -236,6 +243,7 @@
       "last7days": "Ostatnie 7 dni",
       "last30days": "Ostatnie 30 dni",
       "last365days": "Ostatnie 365 dni",
+      "allTime": "Cały czas",
       "next5minutes": "Następne 5 minut",
       "next15minutes": "Następne 15 minut",
       "next1hour": "Następna godzina",
@@ -377,6 +385,10 @@
     "replay from beginning tooltip": "Utwórz podobną egzekucję, zaczynając od początku",
     "replay latest revision": "Replay z najnowszą wersją",
     "replayed": "Uruchomiono Replay egzekucji",
+    "reused_task_run": {
+      "label": "Ponownie użyte",
+      "tooltip": "Nie uruchomiono ponownie w tej egzekucji. Uruchomiono {date}, a jego logi i outputy pochodzą z tego uruchomienia."
+    },
     "replay the execution": "Replay egzekucji {executionId} dla Flow {flowId}",
     "prefill inputs": "Wypełnij",
     "current": "bieżący",
@@ -502,9 +514,68 @@
       "invalid": "Błąd grafu",
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
       "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
+      "expand_subflow_error": "Nie można rozwinąć Subflow",
       "add-task": "Dodaj task",
       "add-trigger": "Dodaj trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Nie uruchomiono",
+        "pick-first": "Najpierw wybierz {loop}",
+        "picker-label": "Iteracja pętli {loop}",
+        "search-by-index": "Szukaj według indeksu",
+        "all-iterations": "Wszystkie iteracje",
+        "iteration-index": "indeks {index}",
+        "iteration-value-index": "{value} · indeks {index}",
+        "previous-iteration": "Poprzednia iteracja",
+        "next-iteration": "Następna iteracja",
+        "previous-page": "Poprzednia strona",
+        "next-page": "Następna strona",
+        "failed-group": "Nieudane · {count}",
+        "other-group": "Pozostałe iteracje",
+        "matching": "Dopasowanie",
+        "failure-forbidden": "Nie masz dostępu do tej iteracji.",
+        "failure-not-found": "Ta iteracja już nie istnieje.",
+        "failure-ambiguous": "Ta pętla została wykonana w tym wykonaniu kilka razy, więc jej iteracji nie można rozróżnić.",
+        "failure-not-located": "Nie udało się zlokalizować nieudanej iteracji.",
+        "failure-unknown": "Nie udało się załadować iteracji.",
+        "scope": "Zakres",
+        "whole-execution": "Całe wykonanie",
+        "clear-scopes": "Wyczyść zakresy",
+        "jump-to-first-failure": "Przejdź do pierwszego błędu",
+        "loops-with-failures": "Pętle z błędami",
+        "task-runs": "{runs} uruchomienie | {runs} uruchomienia | {runs} uruchomień",
+        "task-runs-failed": "{runs} uruchomienie · {failed} nieudanych | {runs} uruchomienia · {failed} nieudanych | {runs} uruchomień · {failed} nieudanych",
+        "retry": "Ponów",
+        "load-more": "Załaduj więcej",
+        "retry-loading": "Ponów ładowanie iteracji"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} z {total} nieudanych",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} nieudanych · {notStarted} nieuruchomionych z {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} z {total} zakończonych",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} z {total} zakończonych · {failed} nieudanych",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iteracja | {total} iteracje | {total} iteracji",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",
@@ -515,15 +586,36 @@
     "execution_banner": {
       "revision": "Wersja {revision}",
       "attempts": "{count} próba | {count} próby | {count} prób",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks",
+      "searchable_values": "Wartości do wyszukania",
+      "more_searchable_values": "+{count} więcej wartości do wyszukania"
+    },
+    "execution_mobile": {
+      "failed_task": "Nieudany task",
+      "view_task_logs": "Zobacz logi taska",
+      "revision_short": "rew. {revision}",
+      "more_labels": "+{count} label | +{count} labele | +{count} labeli",
+      "fewer_labels": "Pokaż mniej labeli",
+      "jump_to_first_failure": "Przejdź do pierwszego błędu",
+      "open_logs": "Otwórz logi"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Po zalogowaniu",
+      "execution_tab": "Wykonanie {id} · karta {tab}",
+      "execution": "Wykonanie {id}",
+      "tab": "Karta {tab}"
     },
     "concurrency limits": "Limity Concurrency",
     "system overview": "Przegląd systemu",
+    "workspace": "Obszar roboczy",
+    "resources": "Zasoby",
     "usage": "Użycie",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Całkowity czas trwania egzekucji (w minutach)",
-    "last 48 hours": "ostatnie 48 godzin",
+    "task runs": "Uruchomienia Tasków",
+    "task runs duration (in minutes)": "Całkowity czas trwania Task Runów (w minutach)",
+    "last 24 hours": "ostatnie 24 godziny",
     "email": "E-mail",
     "password": "Hasło",
     "confirm password": "Potwierdź hasło",
@@ -538,11 +630,21 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Zmienne",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Żaden Task tego Flow nie dostarcza Artifactu.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
+      "tasks": "brak Tasków | {count} Task | {count} Taski | {count} Tasków",
+      "fullscreen": "Pełny ekran",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",
       "expression": "Wyrażenie",
+      "searchable": "Możliwe do wyszukania",
       "tree": "Drzewo",
       "raw_json": "Surowy JSON",
       "select_prompt": "Wybierz zmienną, aby sprawdzić jej Value.",
@@ -1374,6 +1476,12 @@
           "third": "Uruchom ponownie instancję Kestra, aby sekret został wczytany."
         }
       },
+      "credentials": {
+        "label": "Poświadczenia",
+        "header": "Poświadczenia",
+        "title": "Uwierzytelnij się raz, używaj w każdym Tasku",
+        "message": "W Kestra Enterprise Edition uwierzytelnianie serwer–serwer można skonfigurować raz jako poświadczenie, dzięki czemu Access Tokeny są pobierane i odświeżane w czasie działania, zamiast być zapisane na stałe w Twoich Flowach. Poświadczenia można tworzyć na poziomie Tenanta lub namespace'u i używać ich w dowolnym Tasku."
+      },
       "apps": {
         "title": "Twórz własne Apps w Kestrze",
         "message": "Apps w Kestra Enterprise Edition pozwalają tworzyć własne interfejsy, które współpracują z workflowami Kestry spoza platformy. Dzięki temu możesz używać swoich workflowów jako backendu dla własnych aplikacji, a osoby nietechniczne mogą wprowadzać dane przez formularze lub wznawiać wstrzymane workflowy oczekujące na zatwierdzenie.",
@@ -1452,6 +1560,10 @@
           "title": "Zarządzaj sekretami w bezpieczny sposób",
           "message": "W Kestra Enterprise Edition możesz przechowywać i kontrolować sekrety na poziomie namespace'u, minimalizując ryzyko i zapewniając izolację poświadczeń każdego zespołu. Dzięki zagnieżdżonej hierarchii możesz też skonfigurować poświadczenia w nadrzędnym namespace'ie, a odziedziczą je wszystkie podrzędne namespace'y. Obsługa dedykowanych menedżerów sekretów i szczegółowe uprawnienia na poziomie namespace'u dodatkowo wzmacniają bezpieczeństwo i zgodność."
         },
+        "credentials": {
+          "title": "Ogranicz poświadczenia do tego namespace'u",
+          "message": "W Kestra Enterprise Edition możesz konfigurować poświadczenia na poziomie namespace'u, dzięki czemu Taski w tym namespace'ie i jego podrzędnych namespace'ach pobierają i odświeżają Access Tokeny w czasie działania, zamiast przechowywać je we Flowach. Poświadczenie zdefiniowane w nadrzędnym namespace'ie dziedziczą wszystkie podrzędne namespace'y."
+        },
         "assets": {
           "title": "Centralizuj zarządzanie Assetami",
           "message": "W Kestra Enterprise Edition Assets prowadzi bieżący inwentarz zasobów, z którymi współpracują Twoje workflowy. Mogą to być tabele baz danych, maszyny wirtualne, pliki lub dowolny zewnętrzny system, z którego korzystasz."
@@ -1463,6 +1575,11 @@
         "policies": {
           "title": "Wymuszaj reguły zarządzania w tym namespace'ie",
           "message": "W Kestra Enterprise Edition polityki pozwalają definiować reguły obowiązujące każdy Flow w tym namespace'ie i w jego namespace'ach podrzędnych: wstrzykiwać wspólne wartości domyślne, ograniczać wartości właściwości, blokować pluginy i wymagać etykiet zgodności, przy czym każda zmiana jest w pełni widoczna dla autorów Flowów."
+        },
+        "reusable-inputs": {
+          "label": "Reusable Inputy",
+          "title": "Zdefiniuj Inputy raz, używaj ich wszędzie",
+          "message": "W Kestra Enterprise Edition Reusable Inputy pozwalają raz zdefiniować nazwaną grupę typowanych Inputów na poziomie namespace'u i odwoływać się do niej w dowolnym Flow. Zestaw z nadrzędnego namespace'u jest dostępny w podrzędnych namespace'ach, dzięki czemu zespoły współdzielą te same definicje Inputów zamiast powtarzać je w każdym Flow."
         },
         "history": {
           "title": "Zarządzaj historią wersji w jednym miejscu",
@@ -1720,7 +1837,18 @@
       "compact": "Widok domyślny",
       "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska",
       "fullscreen": "Logs na pełnym ekranie",
-      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
+      "loop": {
+        "this-execution": "To wykonanie",
+        "with-iterations": "Z iteracjami pętli",
+        "batch-range": "Nieudane iteracje {from}–{to} z {total}",
+        "empty-title": "Brak pasujących logów",
+        "empty-description": "Żaden log nie pasuje do wybranego poziomu w tym wykonaniu ani w jego nieudanych iteracjach pętli. Obniż poziom, aby zobaczyć więcej.",
+        "scope-to": "Ogranicz graf i logi do {scope}",
+        "show-in-overview": "Pokaż w przeglądzie",
+        "show-in-overview-for": "Pokaż {scope} w przeglądzie",
+        "mode-label": "Źródło logów"
+      }
     },
     "execution_deletion": {
       "logs": "Usuń logi",
@@ -1780,6 +1908,14 @@
     "item": "element",
     "items": "elementy",
     "iterations": "Iteracje",
+    "load_10_more": "Załaduj 10 więcej",
+    "show_all_executions": "Pokaż wszystkie wykonania",
+    "failed_iterations_only": "Tylko nieudane iteracje",
+    "loop_iterations_shown": "Pokazano {shown} z {total}",
+    "loop_iterations_load_error": "Nie udało się załadować iteracji",
+    "retry": "Ponów",
+    "no_iterations": "Brak iteracji",
+    "no_failed_iterations": "Brak nieudanych iteracji",
     "loop_iterations_notice": {
       "logs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich logi nie są tutaj wyświetlane.",
       "outputs": "Iteracje pętli są uruchamiane jako oddzielne sub-egzekucje, więc ich outputy nie są tutaj wyświetlane.",
@@ -2083,11 +2219,8 @@
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
-      "export": "Eksportuj",
-      "exportEmpty": "Ten wykres nie ma danych do wyeksportowania.",
       "exportTo": {
-        "csv": "Eksportuj do CSV",
-        "ion": "Eksportuj do ION"
+        "csv": "Eksportuj do CSV"
       },
       "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
       "show_all_statuses": "Pokaż wszystkie statusy",

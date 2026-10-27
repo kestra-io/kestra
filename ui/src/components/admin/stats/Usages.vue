@@ -32,6 +32,10 @@
             count?: number;
             sum?: string;
         };
+        taskRunsDuration?: {
+            count?: number;
+            sum?: string;
+        };
     }
 
     interface UsageData {
@@ -40,6 +44,7 @@
             count?: number;
             taskTypeCount?: Record<string, number>;
             triggerTypeCount?: Record<string, number>;
+            taskRunnerTypeCount?: Record<string, number>;
         };
         executions?: {
             dailyExecutionsCount?: DailyExecution[];
@@ -74,6 +79,7 @@
     const namespaces = computed(() => usages.value?.flows?.namespacesCount ?? 0)
     const flows = computed(() => usages.value?.flows?.count ?? 0)
     const tasks = computed(() => sumValues(usages.value?.flows?.taskTypeCount))
+    const taskRunners = computed(() => sumValues(usages.value?.flows?.taskRunnerTypeCount))
     const triggers = computed(() => sumValues(usages.value?.flows?.triggerTypeCount))
 
     const namespaceRoute = computed(() => {
@@ -98,7 +104,19 @@
             (acc, day) => acc.add(dayjs.duration(day.duration.sum ?? "PT0S")),
             dayjs.duration("PT0S"),
         )
-        return total.minutes()
+        return Math.floor(total.asMinutes())
+    })
+
+    const taskRunCount = computed(() =>
+        dailyExecutions.value.reduce((total, day) => total + (day.taskRunsDuration?.count ?? 0), 0),
+    )
+
+    const taskRunDurationMinutes = computed(() => {
+        const total = dailyExecutions.value.reduce(
+            (acc, day) => acc.add(dayjs.duration(day.taskRunsDuration?.sum ?? "PT0S")),
+            dayjs.duration("PT0S"),
+        )
+        return Math.floor(total.asMinutes())
     })
 
     const usageItems = computed<UsageItem[]>(() => [
@@ -121,6 +139,12 @@
             route: "flows/list",
         },
         {
+            key: "taskRunners",
+            labelKey: "taskRunners",
+            value: taskRunners.value,
+            route: "flows/list",
+        },
+        {
             key: "triggers",
             labelKey: "triggers",
             value: triggers.value,
@@ -130,14 +154,28 @@
             key: "executions",
             labelKey: "executions",
             value: executionCount.value,
-            subtitle: t("last 48 hours"),
+            subtitle: t("last 24 hours"),
             route: "executions/list",
         },
         {
             key: "executionsDuration",
             labelKey: "executions duration (in minutes)",
             value: executionDurationMinutes.value,
-            subtitle: t("last 48 hours"),
+            subtitle: t("last 24 hours"),
+            route: "executions/list",
+        },
+        {
+            key: "taskRuns",
+            labelKey: "task runs",
+            value: taskRunCount.value,
+            subtitle: t("last 24 hours"),
+            route: "executions/list",
+        },
+        {
+            key: "taskRunsDuration",
+            labelKey: "task runs duration (in minutes)",
+            value: taskRunDurationMinutes.value,
+            subtitle: t("last 24 hours"),
             route: "executions/list",
         },
     ])
@@ -163,7 +201,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .usages {
         .header {
             display: flex;

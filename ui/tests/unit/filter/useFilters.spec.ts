@@ -35,10 +35,15 @@ const configuration: FilterConfiguration = {
     ],
 }
 
-const setup = () => {
+const lockedConfiguration: FilterConfiguration = {
+    ...configuration,
+    keys: configuration.keys.map(key => key.key === "timeRange" ? {...key, clearedValue: "PT24H", removable: false} : key),
+}
+
+const setup = (config = configuration) => {
     let filters!: ReturnType<typeof useFilters>
     effectScope().run(() => {
-        filters = useFilters(configuration, false, false, false, false)
+        filters = useFilters(config, false, false, false, false)
     })
     return filters
 }
@@ -71,5 +76,34 @@ describe("useFilters - clearedValue", () => {
 
         expect(filters.appliedFilters.value.map(f => [f.key, f.value])).toEqual([["timeRange", ALL_TIME_RANGE]])
         expect(lastPushedQuery()).toEqual({"filters[timeRange][EQUALS]": ALL_TIME_RANGE})
+    })
+})
+
+describe("useFilters - non-removable key", () => {
+    beforeEach(() => {
+        routerPush.mockReset()
+        currentRoute.query = {
+            "filters[timeRange][EQUALS]": "PT168H",
+            "filters[state][IN]": "FAILED",
+        }
+    })
+
+    test("removeFilter leaves a non-removable chip in place", () => {
+        const filters = setup(lockedConfiguration)
+        const timeRange = filters.appliedFilters.value.find(f => f.key === "timeRange")!
+
+        filters.removeFilter(timeRange.id)
+
+        expect(filters.appliedFilters.value.find(f => f.key === "timeRange")?.value).toBe("PT168H")
+        expect(routerPush).not.toHaveBeenCalled()
+    })
+
+    test("clearFilters resets a non-removable chip to its clearedValue", () => {
+        const filters = setup(lockedConfiguration)
+
+        filters.clearFilters()
+
+        expect(filters.appliedFilters.value.map(f => [f.key, f.value])).toEqual([["timeRange", "PT24H"]])
+        expect(lastPushedQuery()).toEqual({"filters[timeRange][EQUALS]": "PT24H"})
     })
 })

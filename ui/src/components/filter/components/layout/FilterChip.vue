@@ -23,9 +23,11 @@
             @remove="emit('remove', $event)"
         />
         <el-button
+            v-if="filterKey?.removable !== false"
             link
             size="small"
             class="close"
+            data-test="filter-chip-remove"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
         />

@@ -44,8 +44,10 @@ export interface FilterKeyConfig {
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
     keyLabelProvider?: (meta?: Record<string, string>) => string;
-    /** Value the filter falls back to once the user removes it, so a reload does not reapply its default. */
+    /** Value the filter falls back to once the user removes or clears it, so a reload does not reapply its default. */
     clearedValue?: string;
+    /** When `false`, the chip has no remove action; clearing all filters puts back its {@link clearedValue}. */
+    removable?: boolean;
 }
 
 export interface FilterValue {

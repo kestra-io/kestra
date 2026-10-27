@@ -486,7 +486,7 @@ export function useFilters(
 
     const removeFilter = (filterId: string) => {
         const filter = appliedFilters.value.find(f => f?.id === filterId);
-        if (filter) {
+        if (filter && configuration.keys?.find(k => k.key === filter.key)?.removable !== false) {
             dismissDefaultVisibleKey(filter.key);
             appliedFilters.value = appliedFilters.value.filter(f => f?.key !== filter?.key);
             restoreClearedValues();

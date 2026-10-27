@@ -103,4 +103,25 @@ describe("Usages", () => {
 
         expect(loadAllUsages).toHaveBeenLastCalledWith(30)
     })
+
+    it("shouldDropAStaleResponseWhenThePeriodChangedAgainBeforeItLanded", async () => {
+        const withExecutions = (count: number) => ({executions: {dailyExecutionsCount: [{...day, duration: {count, sum: "PT1M"}}]}})
+        let resolveSlow: (value: object) => void = () => undefined
+        const wrapper = i18nMount(Usages, {messages, global: {plugins: [routedPinia()]}})
+        const loadAllUsages = vi.spyOn(useMiscStore(), "loadAllUsages")
+            .mockImplementationOnce(() => new Promise((resolve) => { resolveSlow = resolve }))
+            .mockResolvedValueOnce(withExecutions(2))
+        await flushPromises()
+
+        await wrapper.setProps({period: 30})
+        await wrapper.setProps({period: 1})
+        await flushPromises()
+        resolveSlow(withExecutions(99))
+        await flushPromises()
+
+        const values = wrapper.findAll("[data-test=usage-card-value]").map((card) => card.text())
+        expect(loadAllUsages).toHaveBeenCalledTimes(2)
+        expect(values).toContain("2")
+        expect(values).not.toContain("99")
+    })
 })

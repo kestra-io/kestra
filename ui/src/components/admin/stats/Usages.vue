@@ -253,7 +253,11 @@
     // Without usages handed in, this component loads them itself, so it also reloads them for the new window.
     watch(period, async (next) => {
         if (props.fetchedUsages === undefined) {
-            usages.value = await miscStore.loadAllUsages(next) as UsageData
+            const loaded = await miscStore.loadAllUsages(next) as UsageData
+            // A slower response for a window the user already left must not land under the current label.
+            if (period.value === next) {
+                usages.value = loaded
+            }
         }
     })
 </script>

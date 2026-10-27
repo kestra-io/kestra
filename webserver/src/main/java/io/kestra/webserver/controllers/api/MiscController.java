@@ -36,14 +36,18 @@ import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.cookie.Cookie;
 import io.micronaut.http.cookie.SameSite;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -54,6 +58,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller("/api/v1")
 public class MiscController {
+    /** The longest rolling window, in days, the usage figures can cover. */
+    public static final int MAX_USAGE_DAYS = 30;
+
     @Inject
     protected ApplicationContext applicationContext;
 
@@ -199,9 +206,10 @@ public class MiscController {
     @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Retrieve instance usage information")
-    public ApiUsage getUsages() {
+    public ApiUsage getUsages(
+        @Parameter(description = "The rolling window, in days, the execution figures cover") @QueryValue(defaultValue = "1") @Min(1) @Max(MAX_USAGE_DAYS) int days) {
         ZonedDateTime now = ZonedDateTime.now();
-        FeatureUsageReport.UsageEvent event = featureUsageReport.report(now.toInstant(), Reportable.TimeInterval.of(now.minus(Duration.ofDays(1)), now));
+        FeatureUsageReport.UsageEvent event = featureUsageReport.report(now.toInstant(), Reportable.TimeInterval.of(now.minus(Duration.ofDays(days)), now));
         return ApiUsage.builder()
             .flows(event.getFlows())
             .executions(event.getExecutions())

@@ -1,9 +1,12 @@
-import {describe, expect, it} from "vitest"
+import {describe, expect, it, vi} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 import {createMemoryHistory, createRouter} from "vue-router"
+import moment from "moment"
 import KestraDesignSystem from "@kestra-io/design-system"
+import {useMiscStore} from "override/stores/misc"
+import {date as dateFilter} from "../../../utils/filters"
 import Usages from "./Usages.vue"
 
 const day = {
@@ -12,11 +15,40 @@ const day = {
     taskRunsDuration: {count: 7, sum: "PT3H20M"},
 }
 
-async function cardValues(fetchedUsages: object) {
-    const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
+const messages = {
+    "last 24 hours": "last 24 hours",
+    "last 7 days": "last 7 days",
+    "last 30 days": "last 30 days",
+    "since {date}": "since {date}",
+}
+
+const dayStartingAgo = (days: number, count: number) => ({
+    groupBy: "day",
+    startDate: moment().subtract(days, "day").startOf("day").toISOString(),
+    duration: {count, sum: "PT1M"},
+    taskRunsDuration: {count, sum: "PT1M"},
+})
+
+function mountWithApp(props: object, messages: Record<string, string> = {}) {
+    const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: messages}})
     const router = createRouter({history: createMemoryHistory(), routes: [{path: "/:pathMatch(.*)*", component: {render: () => null}}]})
-    const wrapper = mount(Usages, {props: {fetchedUsages}, global: {plugins: [i18n, KestraDesignSystem, createPinia(), router]}})
+    const pinia = createPinia()
+    return {wrapper: mount(Usages, {props, global: {plugins: [i18n, KestraDesignSystem, pinia, router]}}), pinia}
+}
+
+async function mountUsages(props: object) {
+    const {wrapper} = mountWithApp(props, messages)
     await flushPromises()
+    return wrapper
+}
+
+async function subtitles(props: object) {
+    const wrapper = await mountUsages(props)
+    return wrapper.findAll(".subtitle").map((subtitle) => subtitle.text())
+}
+
+async function cardValues(fetchedUsages: object) {
+    const wrapper = await mountUsages({fetchedUsages})
     return Object.fromEntries(
         wrapper.findAll("[data-test=usage-card]").map((card) => [
             card.find("[data-test=usage-card-label]").text(),
@@ -41,5 +73,65 @@ describe("Usages", () => {
 
         expect(values["task runs"]).toBe("0")
         expect(values["task runs duration (in minutes)"]).toBe("0")
+    })
+
+    it("shouldNameTheWindowInTheSubtitleOfEveryExecutionCard", async () => {
+        const usagesSince = (days: number) => ({executions: {dailyExecutionsCount: [dayStartingAgo(days, 1)]}})
+
+        expect(await subtitles({fetchedUsages: usagesSince(1)})).toEqual(Array(4).fill("last 24 hours"))
+        expect(await subtitles({fetchedUsages: usagesSince(7), period: 7})).toEqual(Array(4).fill("last 7 days"))
+        expect(await subtitles({fetchedUsages: usagesSince(30), period: 30})).toEqual(Array(4).fill("last 30 days"))
+    })
+
+    it("shouldGiveTheStartDateWhenTheDataDoesNotCoverTheWindow", async () => {
+        const fetchedUsages = {executions: {dailyExecutionsCount: [dayStartingAgo(12, 0), dayStartingAgo(11, 2), dayStartingAgo(1, 5)]}}
+        const since = dateFilter(moment().subtract(11, "day").startOf("day").toDate(), "D MMM")
+
+        expect(await subtitles({fetchedUsages, period: 30})).toEqual(Array(4).fill(`since ${since}`))
+    })
+
+    it("shouldKeepTheWindowNameWhenTheDataStartsWithTheWindow", async () => {
+        const fetchedUsages = {executions: {dailyExecutionsCount: [dayStartingAgo(7, 3), dayStartingAgo(2, 1)]}}
+
+        expect(await subtitles({fetchedUsages, period: 7})).toEqual(Array(4).fill("last 7 days"))
+    })
+
+    it("shouldKeepTheWindowNameWhenThereAreNoExecutionsAtAll", async () => {
+        const fetchedUsages = {executions: {dailyExecutionsCount: [dayStartingAgo(1, 0), dayStartingAgo(0, 0)]}}
+
+        expect(await subtitles({fetchedUsages, period: 30})).toEqual(Array(4).fill("last 30 days"))
+    })
+
+    it("shouldLoadTheUsagesAgainWhenThePeriodChanges", async () => {
+        const {wrapper, pinia} = mountWithApp({})
+        const loadAllUsages = vi.spyOn(useMiscStore(pinia), "loadAllUsages").mockResolvedValue({})
+        await flushPromises()
+        expect(wrapper.find("[data-test=usage-period]").exists()).toBe(true)
+
+        await wrapper.setProps({period: 30})
+        await flushPromises()
+
+        expect(loadAllUsages).toHaveBeenLastCalledWith(30)
+    })
+
+    it("shouldDropAStaleResponseWhenThePeriodChangedAgainBeforeItLanded", async () => {
+        const withExecutions = (count: number) => ({executions: {dailyExecutionsCount: [dayStartingAgo(0, count)]}})
+        let resolveSlow: (value: object) => void = () => undefined
+        const {wrapper, pinia} = mountWithApp({}, messages)
+        const loadAllUsages = vi.spyOn(useMiscStore(pinia), "loadAllUsages")
+            .mockImplementationOnce(() => new Promise((resolve) => { resolveSlow = resolve }))
+            .mockResolvedValueOnce(withExecutions(2) as never)
+        await flushPromises()
+
+        await wrapper.setProps({period: 30})
+        await wrapper.setProps({period: 1})
+        await flushPromises()
+        resolveSlow(withExecutions(99))
+        await flushPromises()
+
+        const values = wrapper.findAll("[data-test=usage-card-value]").map((card) => card.text())
+        expect(loadAllUsages).toHaveBeenCalledTimes(2)
+        expect(values).toContain("2")
+        expect(values).not.toContain("99")
     })
 })

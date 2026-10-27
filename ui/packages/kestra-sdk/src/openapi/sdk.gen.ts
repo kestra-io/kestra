@@ -4610,8 +4610,9 @@ export const _0Dd4E62c = <ThrowOnError extends boolean = true>(parameters: {
  */
 export const _334059E8 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
+    days?: number;
 }, options?: Options<never, ThrowOnError>): RequestResult<GetUsagesResponses, GetUsagesErrors, ThrowOnError> => {
-    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }] }]);
+    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'days' }] }]);
     return (options?.client ?? client).get<GetUsagesResponses, GetUsagesErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/usages/all',
         ...options,

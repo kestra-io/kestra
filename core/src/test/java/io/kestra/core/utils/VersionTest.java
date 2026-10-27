@@ -1,7 +1,6 @@
 package io.kestra.core.utils;
 
 import java.util.List;
-import java.util.HashSet;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -192,18 +191,18 @@ class VersionTest {
         assertThatObject(Version.getStable(Version.of("2"), versions)).isNull();
     }
 
-@Test
-void shouldComparePartialVersionsWithoutNpe() {
-    Assertions.assertDoesNotThrow(() -> Version.of("1").compareTo(Version.of("1.2")));
-    Assertions.assertDoesNotThrow(() -> Version.of("1.2").compareTo(Version.of("1.2.3")));
-}
+    @Test
+    void shouldComparePartialVersionsWithoutNpe() {
+        Assertions.assertDoesNotThrow(() -> Version.of("1").compareTo(Version.of("1.2")));
+        Assertions.assertDoesNotThrow(() -> Version.of("1.2").compareTo(Version.of("1.2.3")));
+    }
 
-@Test
-void shouldFindVersionInHashSetWhenQualifierDiffersOnlyByCase() {
-    Version a = Version.of("1.0.0-RC1");
-    Version b = Version.of("1.0.0-rc1");
-    Assertions.assertEquals(a, b);
-    Assertions.assertEquals(a.hashCode(), b.hashCode());
-    Assertions.assertTrue(new java.util.HashSet<>(java.util.List.of(a)).contains(b));
-}
+    @Test
+    void shouldFindVersionInHashSetWhenQualifierDiffersOnlyByCase() {
+        Version a = Version.of("1.0.0-RC1");
+        Version b = Version.of("1.0.0-rc1");
+        Assertions.assertEquals(a, b);
+        Assertions.assertEquals(a.hashCode(), b.hashCode());
+        Assertions.assertTrue(new java.util.HashSet<>(java.util.List.of(a)).contains(b));
+    }
 }

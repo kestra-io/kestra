@@ -421,7 +421,7 @@
 
     // computed
     const temporalLogs = computed(() => {
-        const logResults = executionsStore.logs
+        const logResults = [...executionsStore.reusedLogsOf(executionId.value, effectiveLevelValue.value), ...executionsStore.logs]
 
         if (!logResults.length) {
             return []

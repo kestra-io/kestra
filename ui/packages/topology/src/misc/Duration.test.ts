@@ -312,9 +312,8 @@ describe("Duration", () => {
         expect((running.element as HTMLElement).style.width).toBe("25%")
     })
 
-    it.each([["SUCCESS", "green"], ["FAILED", "red"]])("should color a short %s bar by state and keep it inside the track", (state, color) => {
+    it.each(["SUCCESS", "FAILED"])("should retain the %s color token and keep a short bar inside the track", (state) => {
         const token = `--ks-status-${state.toLowerCase()}`
-        document.documentElement.style.setProperty(token, color)
         const wrapper = i18nMount(Duration, {
             props: {
                 compact: true,
@@ -332,8 +331,7 @@ describe("Duration", () => {
         const bar = wrapper.get("[data-test='duration-task-bar']").element as HTMLElement
         expect(bar.style.width).toBe("3%")
         expect(bar.style.marginLeft).toBe("97%")
-        expect(bar.style.background).toBe(color)
-        document.documentElement.style.removeProperty(token)
+        expect(bar.style.background).toBe(`var(${token})`)
         expect(wrapper.find("[data-test='duration-segment-queued']").exists()).toBe(false)
     })
 

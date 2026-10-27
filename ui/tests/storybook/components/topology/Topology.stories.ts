@@ -461,6 +461,27 @@ DurationBarComparison.play = async ({canvasElement}) => {
         expect(Math.round(card.height)).toBe(Math.round(box.height))
         expect(Math.round(card.top)).toBe(Math.round(box.top))
     }
+
+    const root = canvasElement.ownerDocument.documentElement
+    const originalTheme = root.className
+    const taskBars = ["quick_query", "load_warehouse"].map(taskId =>
+        barOf(taskId)!.querySelector<HTMLElement>("[data-test='duration-task-bar']")!,
+    )
+    try {
+        root.classList.remove("dark", "dark-2")
+        root.classList.add("light")
+        const lightColors = taskBars.map(bar => getComputedStyle(bar).backgroundColor)
+
+        root.classList.remove("light")
+        root.classList.add("dark")
+        await waitFor(() => {
+            taskBars.forEach((bar, index) => {
+                expect(getComputedStyle(bar).backgroundColor).not.toBe(lightColors[index])
+            })
+        })
+    } finally {
+        root.className = originalTheme
+    }
 }
 
 // A running task's bar keeps updating every tick — the node's laid-out box must not move as a

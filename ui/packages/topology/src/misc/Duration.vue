@@ -256,7 +256,7 @@
         return {
             marginLeft: `${Math.max(0, Math.min((start - executionStart) / duration * 100, 100 - width))}%`,
             width: `${width}%`,
-            background: State.getStateColor(last.state),
+            background: `var(--ks-status-${last.state.toLowerCase()})`,
         }
     })
     const showCompactBar = computed(() => compactBarStyle.value !== undefined)

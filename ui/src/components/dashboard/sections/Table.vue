@@ -1,6 +1,6 @@
 <template>
     <div class="table-root">
-        <TableQuickFilter :chart="props.chart" @change="onQuickFilterChange" />
+        <TableQuickFilter :chart="props.chart" :counts="tabCounts" @change="onQuickFilterChange" />
 
         <Motion
             as="div"
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, inject, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
     import {useStorage} from "@vueuse/core"
@@ -58,9 +58,9 @@
     import {KsExecutionStatus} from "@kestra-io/design-system"
 
     import type {Chart, ChartResults, Column} from "../types.ts"
-    import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
+    import {CHART_RESULTS_KEY, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
     import TableQuickFilter from "./TableQuickFilter.vue"
-    import {stateFilterForTab} from "./quickFilters"
+    import {QUICK_FILTER_TABS, type QuickFilterTabKey, hasQuickFilters, stateFilterForTab} from "./quickFilters"
     import Date from "./table/columns/Date.vue"
     import Duration from "./table/columns/Duration.vue"
     import Link from "./table/columns/Link.vue"
@@ -149,6 +149,24 @@
 
     const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
 
+    // A host that provides the rows itself cannot answer per-tab counts, so it gets no badges.
+    const hasProvidedResults = inject(CHART_RESULTS_KEY, undefined) !== undefined
+
+    const tabCounts = ref<Partial<Record<QuickFilterTabKey, number>>>({})
+
+    // One page of a single row is enough: the API returns the total of the matching executions alongside it.
+    const getTabCounts = async () => {
+        if (hasProvidedResults || !hasQuickFilters(props.chart)) return
+
+        const entries = await Promise.all(QUICK_FILTER_TABS.map(async ({key}) => {
+            const filter = stateFilterForTab(props.chart, key)
+            const result = await generate({pageNumber: 1, pageSize: 1}, undefined, filter ? [filter] : undefined)
+            return [key, result?.total] as const
+        }))
+
+        tabCounts.value = Object.fromEntries(entries.filter(([, total]) => total !== undefined))
+    }
+
     const getData = async () => {
         const pagination = isPaginationEnabled(props.chart)
             ? {pageNumber: pageNumber.value, pageSize: pageSize.value}
@@ -179,6 +197,10 @@
     }
 
     function refresh() {
+        // the counts depend on the dashboard filters only, so paging and switching tabs do not reload them
+        getTabCounts().catch(() => {
+            tabCounts.value = {}
+        })
         return getData()
     }
 

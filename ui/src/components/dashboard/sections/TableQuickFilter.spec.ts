@@ -19,9 +19,9 @@ const executionsChart = (where?: unknown) => ({
     data: {type: EXECUTIONS, columns: {state: {field: "STATE"}}, ...(where ? {where} : {})},
 })
 
-const mountFilter = (chart: Record<string, unknown>) =>
+const mountFilter = (chart: Record<string, unknown>, counts?: Record<string, number>) =>
     i18nMount(TableQuickFilter, {
-        props: {chart: chart as never},
+        props: {chart: chart as never, counts: counts as never},
         global: {stubs: {Motion: true}},
     })
 
@@ -118,5 +118,52 @@ describe("TableQuickFilter", () => {
             {field: "state", operation: "IN", value: ["FAILED", "KILLED", "CANCELLED", "SKIPPED", "RETRIED"]},
             "failed",
         ])
+    })
+    describe("counts", () => {
+        const counts = {all: 12, running: 0, paused: 3, success: 9, warning: 0, failed: 0}
+
+        it("shows a badge with the count on every tab that has executions", () => {
+            const buttons = tabButtons(mountFilter(executionsChart(), counts))
+
+            expect(buttons[0].find(".tab-count").text()).toBe("12")
+            expect(buttons[2].find(".tab-count").text()).toBe("3")
+            expect(buttons[3].find(".tab-count").text()).toBe("9")
+        })
+
+        it("disables, and shows no badge on, the tabs without executions", () => {
+            const buttons = tabButtons(mountFilter(executionsChart(), counts))
+
+            for (const index of [1, 4, 5]) {
+                expect(buttons[index].attributes("disabled")).toBeDefined()
+                expect(buttons[index].find(".tab-count").exists()).toBe(false)
+            }
+            for (const index of [0, 2, 3]) {
+                expect(buttons[index].attributes("disabled")).toBeUndefined()
+            }
+        })
+
+        it("does not emit when clicking a disabled tab", async () => {
+            const wrapper = mountFilter(executionsChart(), counts)
+
+            await tabButtons(wrapper)[1].trigger("click")
+
+            expect(wrapper.emitted("change")).toBeUndefined()
+        })
+
+        it("keeps every tab enabled and badge-less while the counts are loading", () => {
+            const buttons = tabButtons(mountFilter(executionsChart()))
+
+            expect(buttons.every((btn) => btn.attributes("disabled") === undefined)).toBe(true)
+            expect(buttons.some((btn) => btn.find(".tab-count").exists())).toBe(false)
+        })
+
+        it("keeps the active tab enabled when a refresh empties it", async () => {
+            const wrapper = mountFilter(executionsChart(), counts)
+            await tabButtons(wrapper)[2].trigger("click")
+
+            await wrapper.setProps({counts: {...counts, paused: 0} as never})
+
+            expect(tabButtons(wrapper)[2].attributes("disabled")).toBeUndefined()
+        })
     })
 })

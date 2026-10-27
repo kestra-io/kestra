@@ -7,6 +7,7 @@ const {generate} = vi.hoisted(() => ({generate: vi.fn()}))
 vi.mock("../composables/useDashboards", () => ({
     useChartGenerator: () => ({EMPTY_TEXT: "", generate}),
     isPaginationEnabled: () => true,
+    CHART_RESULTS_KEY: Symbol("chartResults"),
 }))
 
 vi.mock("vue-router", () => ({

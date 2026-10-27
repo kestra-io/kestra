@@ -2184,7 +2184,8 @@
       "close_all_panels": "Alle Panels schließen",
       "exit_fullscreen": "Vollbild verlassen",
       "fullscreen": "Vollbild",
-      "split_panel": "Bereich teilen"
+      "split_panel": "Bereich teilen",
+      "split_panel_no_room": "Nicht genug Platz für ein weiteres Panel"
     },
     "search_docs": "Suche",
     "no_results_found": "Keine Ergebnisse gefunden",

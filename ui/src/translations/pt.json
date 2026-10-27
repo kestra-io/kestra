@@ -2184,7 +2184,8 @@
       "close_all_panels": "Fechar todos os painéis",
       "exit_fullscreen": "Sair do modo de tela cheia",
       "fullscreen": "Tela Cheia",
-      "split_panel": "Dividir painel"
+      "split_panel": "Dividir painel",
+      "split_panel_no_room": "Não há espaço suficiente para outro painel"
     },
     "search_docs": "Pesquisar",
     "no_results_found": "Nenhum resultado encontrado",

@@ -14,6 +14,9 @@ export enum Comparators {
     PREFIX = "^.=",
 }
 
+/** timeRange value for an explicitly unbounded interval, as opposed to no interval at all. */
+export const ALL_TIME_RANGE = "ALL";
+
 export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS];
 export const TEXT_COMPARATORS = [
     Comparators.CONTAINS,
@@ -41,6 +44,8 @@ export interface FilterKeyConfig {
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
     keyLabelProvider?: (meta?: Record<string, string>) => string;
+    /** Value the filter falls back to once the user removes it, so a reload does not reapply its default. */
+    clearedValue?: string;
 }
 
 export interface FilterValue {

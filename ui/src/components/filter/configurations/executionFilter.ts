@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "../utils/filterTypes";
+import {ALL_TIME_RANGE, FilterConfiguration, Comparators} from "../utils/filterTypes";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
 import {useNamespacesStore} from "override/stores/namespaces";
@@ -117,9 +117,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    clearedValue: ALL_TIME_RANGE,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
-                        return VALUES.RELATIVE_DATE;
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME;
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},

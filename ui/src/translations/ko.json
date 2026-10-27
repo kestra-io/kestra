@@ -306,6 +306,7 @@
       "ongoing": "진행 중",
       "operation": {
         "running": {
+          "EXECUTION_DELETE": "실행 {count}개 삭제 중",
           "EXECUTION_KILL": "실행 {count}개 종료 중",
           "EXECUTION_PAUSE": "실행 {count}개 일시 중지 중",
           "EXECUTION_RESUME": "실행 {count}개 재개 중",
@@ -322,6 +323,25 @@
           "BACKFILL_PAUSE": "backfill {count}개 일시 중지 중",
           "BACKFILL_RESUME": "backfill {count}개 재개 중",
           "BACKFILL_DELETE": "backfill {count}개 삭제 중"
+        },
+        "requested": {
+          "EXECUTION_DELETE": "{count}개 실행 삭제 요청됨",
+          "EXECUTION_KILL": "{count}개 실행에 대해 종료 요청됨 | {count}개 실행에 대해 종료 요청됨",
+          "EXECUTION_PAUSE": "{count}개 실행에 일시 중지 요청됨",
+          "EXECUTION_RESUME": "{count}개 실행 재개 요청됨 | {count}개 실행 재개 요청됨",
+          "EXECUTION_RESTART": "{count}개 실행 재시작 요청됨",
+          "EXECUTION_REPLAY": "{count}개 실행에 대한 Replay 요청됨",
+          "EXECUTION_FORCE_RUN": "{count}개 실행에 대해 강제 실행 요청됨 | {count}개 실행에 대해 강제 실행 요청됨",
+          "EXECUTION_UNQUEUE": "{count}개 실행에 대한 대기열 해제 요청됨",
+          "EXECUTION_CHANGE_STATUS": "{count}개 실행에 대한 상태 변경 요청됨",
+          "EXECUTION_SET_LABELS": "{count}개 실행에 대한 Label 업데이트 요청 | {count}개 실행에 대한 Label 업데이트 요청",
+          "TRIGGER_UNLOCK": "{count}개 트리거 잠금 해제 요청됨",
+          "TRIGGER_DELETE": "{count}개 트리거 삭제 요청됨",
+          "TRIGGER_DISABLE": "{count}개 트리거 비활성화 요청됨",
+          "TRIGGER_ENABLE": "{count}개 트리거에 대해 활성화 요청됨",
+          "BACKFILL_PAUSE": "{count}개의 백필에 일시 중지 요청됨 | {count}개의 백필에 일시 중지 요청됨",
+          "BACKFILL_RESUME": "{count}개의 백필 재개 요청됨 | {count}개의 백필 재개 요청됨",
+          "BACKFILL_DELETE": "{count}개의 백필 삭제 요청됨"
         },
         "processed": "{count}개 처리됨",
         "rejected": "{count}개 거부됨",

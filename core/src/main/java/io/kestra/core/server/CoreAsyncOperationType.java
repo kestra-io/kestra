@@ -3,6 +3,7 @@ package io.kestra.core.server;
 import io.kestra.core.notification.model.AsyncOperationType;
 
 public enum CoreAsyncOperationType implements AsyncOperationType {
+    EXECUTION_DELETE(ResourceType.EXECUTION),
     EXECUTION_KILL(ResourceType.EXECUTION),
     EXECUTION_PAUSE(ResourceType.EXECUTION),
     EXECUTION_RESUME(ResourceType.EXECUTION),

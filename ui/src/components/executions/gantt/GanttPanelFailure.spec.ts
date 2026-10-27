@@ -4,7 +4,6 @@ import {i18nMount} from "../../../../tests/unit/i18nMount"
 import en from "../../../translations/en.json"
 import type {Execution} from "../../../stores/executions"
 import type {ExecutionTaskRun} from "../executionTaskRun"
-import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
 import GanttPanelFailure from "./GanttPanelFailure.vue"
 import {SUBFLOW_TYPE, createTaskRunNode, type TaskRunNode} from "./ganttTree"
 
@@ -124,7 +123,7 @@ describe("GanttPanelFailure", () => {
         const loadLogs = store.executions.loadLogs as ReturnType<typeof vi.fn>
         expect(loadLogs).toHaveBeenCalledTimes(1)
         expect(loadLogs.mock.calls[0][0].executionId).toBe("iter-exec")
-        const filters = routeQueryToQueryFilters(loadLogs.mock.calls[0][0].params)
+        const filters = loadLogs.mock.calls[0][0].filters
         expect(filters).toContainEqual({field: "taskRunId", operation: "EQUALS", value: "tr-reconcile"})
         expect(filters).toContainEqual({field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"})
     })

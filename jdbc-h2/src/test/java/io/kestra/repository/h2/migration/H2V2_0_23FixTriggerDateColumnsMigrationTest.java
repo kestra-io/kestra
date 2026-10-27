@@ -41,12 +41,12 @@ class H2V2_0_23FixTriggerDateColumnsMigrationTest {
 
     /** 3 fractional digits, so LEFT(value, 26) leaves the 'Z' in place. */
     private static final String LEGACY_VALUE = """
-        {"namespace":"io.kestra.tests","flowId":"migration","triggerId":"legacy","disabled":false,\
+        {"tenantId":"test-tenant","namespace":"io.kestra.tests","flowId":"migration","triggerId":"legacy","disabled":false,\
         "nextEvaluationDate":"2024-06-01T10:00:00.000Z","lastTriggeredDate":"2024-06-01T10:00:00.000Z"}""";
 
     /** Current JdbcMapper format: 6 fractional digits. */
     private static final String CURRENT_VALUE = """
-        {"namespace":"io.kestra.tests","flowId":"migration","triggerId":"current","disabled":false,\
+        {"tenantId":"test-tenant","namespace":"io.kestra.tests","flowId":"migration","triggerId":"current","disabled":false,\
         "nextEvaluationDate":"2024-06-01T10:00:00.123456Z","lastTriggeredDate":"2024-06-01T10:00:00.123456Z"}""";
 
     /** The pre-fix expression, restored so the migration has something wrong to recompute. */

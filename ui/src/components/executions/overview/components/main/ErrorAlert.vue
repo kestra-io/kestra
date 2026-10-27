@@ -2,7 +2,7 @@
     <div class="error-wrapper">
         <KsAlert id="error" type="error" :closable="false">
             <template #title>
-                <span v-if="logs.at(-1)?.message">{{ $t('execution_failed') }}</span>
+                <span>{{ $t('execution_failed') }}</span>
             </template>
 
             <div v-if="logs.length">
@@ -28,6 +28,7 @@
         </KsAlert>
 
         <button
+            v-if="logs.length"
             class="expand-btn"
             data-test="error-alert-toggle"
             :aria-label="expanded ? $t('collapse') : $t('expand')"
@@ -48,6 +49,7 @@
 
     import {Execution, useExecutionsStore} from "../../../../../stores/executions"
     import {Log} from "../../../../../stores/logs"
+    import {logKind} from "../../../../../utils/executionUtils"
     import {handledIf} from "../../../../../utils/kestraHttp"
     import LogLine from "../../../../logs/LogLine.vue"
     import {stripBackticks} from "../../../../../utils/logs"
@@ -63,6 +65,8 @@
     const expanded = ref(false)
     const logs = ref<Log[]>([])
 
+    const kind = logKind(props.execution)
+
     const to = {
         name: "executions/update/logs",
         params: {
@@ -73,7 +77,7 @@
         },
         query: {
             "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
-            "filters[kind][IN]": props.execution.kind,
+            "filters[kind][IN]": kind,
         },
     }
 
@@ -86,7 +90,7 @@
                 executionId: props.execution.id,
                 filters: [
                     {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
-                    {field: "kind", operation: "IN", value: props.execution.kind},
+                    ...(kind ? [{field: "kind" as const, operation: "IN" as const, value: kind}] : []),
                 ],
                 size: MAX_PREVIEW_LOGS,
                 sort: ["timestamp:desc"],

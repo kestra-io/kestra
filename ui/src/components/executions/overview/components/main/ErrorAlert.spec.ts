@@ -74,6 +74,24 @@ describe("ErrorAlert", () => {
         expect(lines).toEqual(["Ledger LATAM is off", "Ledger ANZ is off", "Ledger JP is off", "Ledger APAC is off"])
     })
 
+    it.each([
+        ["NORMAL", [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}]],
+        ["PLAYGROUND", [
+            {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            {field: "kind", operation: "IN", value: "PLAYGROUND"},
+        ]],
+    ])("requests the error logs of a %s execution with the matching filters", async (kind, filters) => {
+        // Given
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue(errorLogs as never)
+
+        // When
+        i18nMount(ErrorAlert, {messages, props: {execution: {...execution, kind} as Execution}})
+        await flushPromises()
+
+        // Then
+        expect(loadLogs).toHaveBeenCalledWith(expect.objectContaining({filters}))
+    })
+
     it("names the toggle and reports whether the logs are shown", async () => {
         // Given
         const wrapper = mountAlert()

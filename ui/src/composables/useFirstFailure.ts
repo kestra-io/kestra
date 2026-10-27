@@ -3,7 +3,7 @@ import {State} from "@kestra-io/design-system"
 import {useExecutionsStore, type Execution} from "../stores/executions"
 import type {Log} from "../stores/logs"
 import {handledIf} from "../utils/kestraHttp"
-import {findFirstFailedTaskRun, taskRunPath} from "../utils/executionUtils"
+import {findFirstFailedTaskRun, logKind, taskRunPath} from "../utils/executionUtils"
 import {stripBackticks} from "../utils/logs"
 import {linkTagsAsText} from "../components/logs/linkify"
 
@@ -39,7 +39,7 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
             },
             query: {
                 "filters[taskRunId][EQUALS]": failedTaskRun.value?.id,
-                "filters[kind][IN]": current?.kind,
+                "filters[kind][IN]": current ? logKind(current) : undefined,
             },
         }
     })
@@ -47,13 +47,14 @@ export function useFirstFailure(execution: MaybeRefOrGetter<Execution | undefine
     async function loadErrorLogs(current: Execution, taskRunId: string) {
         errorLogs.value = []
         try {
+            const kind = logKind(current)
             const response = await store.loadLogs({
                 store: false,
                 executionId: current.id,
                 filters: [
                     {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
                     {field: "taskRunId", operation: "EQUALS", value: taskRunId},
-                    {field: "kind", operation: "IN", value: current.kind},
+                    ...(kind ? [{field: "kind" as const, operation: "IN" as const, value: kind}] : []),
                 ],
             })
             if (toValue(execution)?.id === current.id && failedTaskRun.value?.id === taskRunId) errorLogs.value = response

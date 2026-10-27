@@ -81,6 +81,11 @@ export function findFirstFailedTaskRun(execution: Execution): ExecutionTaskRun |
     return failed.find((taskRun) => !parentIds.has(taskRun.id))
 }
 
+/** Log entries of a NORMAL execution carry no kind, so only another kind may be passed as a log filter. */
+export function logKind(execution: Pick<Execution, "kind">): string | undefined {
+    return execution.kind && execution.kind !== "NORMAL" ? execution.kind : undefined
+}
+
 export function taskRunPath(execution: Execution, taskRun: ExecutionTaskRun): string[] {
     const byId = new Map((execution.taskRunList ?? []).map((candidate) => [candidate.id, candidate]))
     const path: string[] = []

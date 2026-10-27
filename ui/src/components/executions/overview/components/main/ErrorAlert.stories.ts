@@ -132,7 +132,11 @@ export const ExpandedLogLines: Story = {
         template: "<ErrorAlert :execution=\"execution\" />",
     }),
     async play({canvasElement}) {
-        const expandBtn = canvasElement.querySelector<HTMLElement>(".expand-btn")!
+        const expandBtn = await waitFor(() => {
+            const el = canvasElement.querySelector<HTMLElement>(".expand-btn")
+            expect(el).toBeTruthy()
+            return el!
+        })
         await userEvent.click(expandBtn)
         await expect(canvasElement.querySelector(".logs")).toBeTruthy()
         await expect(canvasElement.querySelector(".error-preview")).toBeNull()
@@ -143,7 +147,7 @@ export const ExpandedLogLines: Story = {
     },
 }
 
-/** When the execution has no error logs the component renders nothing visible. */
+/** When the execution has no error logs the banner still shows its title, without an expand toggle. */
 export const NoLogs: Story = {
     beforeEach() {
         mockStoryApiRoutes({"GET /logs/:executionId": []})
@@ -155,4 +159,9 @@ export const NoLogs: Story = {
         },
         template: "<ErrorAlert :execution=\"execution\" />",
     }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await expect(await canvas.findByText(/execution failed/i)).toBeTruthy()
+        await expect(canvasElement.querySelector(".expand-btn")).toBeNull()
+    },
 }

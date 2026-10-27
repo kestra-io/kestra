@@ -44,6 +44,22 @@ describe("useFirstFailure", () => {
         expect(message.value).toBe("boom x")
     })
 
+    it.each([
+        ["NORMAL", []],
+        ["PLAYGROUND", [{field: "kind", operation: "IN", value: "PLAYGROUND"}]],
+    ])("filters the error logs of a %s execution on its kind only when it is not NORMAL", async (kind, expected) => {
+        // Given
+        const loadLogs = vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([] as never)
+
+        // When
+        effectScope().run(() => useFirstFailure(() => ({...failedExecution("e1"), kind} as Execution)))
+        await flush()
+
+        // Then
+        const filters = loadLogs.mock.calls[0][0].filters ?? []
+        expect(filters.filter(filter => filter.field === "kind")).toEqual(expected)
+    })
+
     it("shows a sub-execution link as its execution id instead of raw link markup", async () => {
         // Given
         const store = useExecutionsStore()

@@ -403,14 +403,19 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list (same rule as `stores/logs.ts`). */
+    let latestFlowSearch = 0
+
     function findFlows(options: { [key: string]: any }): Promise<any> {
+        const search = options.commit === false || options.onlyTotal ? undefined : ++latestFlowSearch
         return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
                 return response.total
             }
 
             else {
-                if (options.commit !== false) {
+                if (options.commit !== false && search === latestFlowSearch) {
                     flows.value = response.results as unknown as Flow[]
                     total.value = response.total ?? 0
                 }

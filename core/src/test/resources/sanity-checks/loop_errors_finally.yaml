@@ -16,14 +16,9 @@ tasks:
     transmitFailed: false
     tasks:
       - id: maybe_fail
-        type: io.kestra.plugin.scripts.shell.Commands
-        commands:
-          - |
-            if [ "{{ item.value }}" = "boom" ]; then
-              echo "failing on {{ item.value }}" >&2
-              exit 1
-            fi
-            echo "ok {{ item.value }}"
+        type: io.kestra.plugin.core.execution.Fail
+        condition: "{{ item.value == 'boom' }}"
+        errorMessage: "failing on {{ item.value }}"
     errors:
       - id: handle_error
         type: io.kestra.plugin.core.log.Log

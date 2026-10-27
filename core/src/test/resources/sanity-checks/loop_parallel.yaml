@@ -18,7 +18,6 @@ tasks:
           - id: log
             type: io.kestra.plugin.core.log.Log
             message: "Processing {{ item.value }}"
-          - id: shell
-            type: io.kestra.plugin.scripts.shell.Commands
-            commands:
-              - "echo done {{ item.value }}"
+          - id: done
+            type: io.kestra.plugin.core.debug.Return
+            format: "done {{ item.value }}"

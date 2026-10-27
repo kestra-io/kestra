@@ -68,8 +68,12 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
     }
 
     const VALUES = {
+        // ACCEPTED only exists on task runs: an execution is never ACCEPTED, and the
+        // executions.state_current enum rejects it (Postgres fails the whole query).
         EXECUTION_STATES: buildFromArray(
-            State.arrayAllStates().map((state: { name: string }) => state.name),
+            State.arrayAllStates()
+                .map((state: { name: string }) => state.name)
+                .filter((name: string) => name !== State.ACCEPTED),
         ),
         SCOPES: [
             {

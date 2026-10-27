@@ -80,13 +80,13 @@ describe("FilterMultiSelect — grouped state mode", () => {
         const emitted = wrapper.emitted("update:modelValue") as string[][]
         expect(emitted).toBeTruthy()
         const lastEmit = emitted.at(-1)![0] as unknown as string[]
-        const runningStates = ["SUBMITTED", "ACCEPTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING"]
+        const runningStates = ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING"]
         runningStates.forEach(s => expect(lastEmit).toContain(s))
     })
 
     test("group toggle deselects whole bucket when fully selected", async () => {
         // Given — all Running states already selected
-        const runningStates = ["SUBMITTED", "ACCEPTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING"]
+        const runningStates = ["SUBMITTED", "CREATED", "RESTARTED", "QUEUED", "RUNNING", "RETRYING"]
         const wrapper = mountStateFilter(runningStates)
         const firstToggle = wrapper.find(".group-toggle")
 
@@ -113,12 +113,12 @@ describe("FilterMultiSelect — grouped state mode", () => {
     })
 
     test("count badge shows selected/total for a group", async () => {
-        // Given — 2 Running states selected out of 7
+        // Given — 2 Running states selected out of 6
         const wrapper = mountStateFilter(["RUNNING", "QUEUED"])
 
-        // Then — first group (Running) count shows 2/7
+        // Then — first group (Running) count shows 2/6
         const countBadge = wrapper.find(".group-count")
-        expect(countBadge.text()).toBe("2/7")
+        expect(countBadge.text()).toBe("2/6")
         expect(countBadge.classes()).toContain("active")
     })
 

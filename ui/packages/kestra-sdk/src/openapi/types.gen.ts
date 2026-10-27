@@ -896,6 +896,18 @@ export type ExecutionControllerLastExecutionResponse = {
     status: StateType;
 };
 
+export type ExecutionControllerReplayValues = {
+    values?: Array<ReplayOverrideServiceReplayValue>;
+};
+
+export type ExecutionControllerReplayWithOverridesRequest = {
+    overrides: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+};
+
 export type ExecutionControllerSetLabelsByIdsRequest = {
     executionsId: Array<string>;
     executionLabels: Array<Label>;
@@ -2204,6 +2216,17 @@ export type Relation = {
 
 export type RelationType = 'SEQUENTIAL' | 'CHOICE' | 'ERROR' | 'FINALLY' | 'AFTER_EXECUTION' | 'PARALLEL' | 'DYNAMIC';
 
+export type ReplayOverrideServiceKind = 'INPUT' | 'OUTPUT' | 'SECRET' | 'FILE' | 'FLOW_VARIABLE' | 'TRIGGER';
+
+export type ReplayOverrideServiceReplayValue = {
+    key?: string;
+    kind?: ReplayOverrideServiceKind;
+    inputType?: Type | null;
+    value?: {
+        [key: string]: unknown;
+    };
+};
+
 export type Sla = {
     id: string;
     type: SlaType;
@@ -2477,12 +2500,23 @@ export type TaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    overrides?: Array<TaskRunOverride> | null;
 };
 
 export type TaskRunAttempt = {
     state: State;
     workerId?: string | null;
     logFile?: string | null;
+};
+
+export type TaskRunOverride = {
+    key: string;
+    value?: {
+        [key: string]: unknown;
+    };
+    originalValue?: {
+        [key: string]: unknown;
+    };
 };
 
 export type TaskRunStatistic = {
@@ -2832,6 +2866,7 @@ export type TaskRunWritable = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    overrides?: Array<TaskRunOverride> | null;
 };
 
 export type TaskRunAttemptWritable = {
@@ -7245,6 +7280,57 @@ export type ReplayExecutionWithinputsResponses = {
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
 
+export type ReplayExecutionWithOverridesData = {
+    /**
+     * The values to override, by variable path
+     */
+    body: ExecutionControllerReplayWithOverridesRequest;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay-with-overrides';
+};
+
+export type ReplayExecutionWithOverridesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplayExecutionWithOverridesError = ReplayExecutionWithOverridesErrors[keyof ReplayExecutionWithOverridesErrors];
+
+export type ReplayExecutionWithOverridesResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReplayExecutionWithOverridesResponse = ReplayExecutionWithOverridesResponses[keyof ReplayExecutionWithOverridesResponses];
+
 export type ValidateReplayExecutionData = {
     body?: never;
     path: {
@@ -7946,6 +8032,49 @@ export type GetExecutionFlowGraphResponses = {
 };
 
 export type GetExecutionFlowGraphResponse = GetExecutionFlowGraphResponses[keyof GetExecutionFlowGraphResponses];
+
+export type ReplayValuesData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/taskruns/{taskRunId}/replay-values';
+};
+
+export type ReplayValuesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplayValuesError = ReplayValuesErrors[keyof ReplayValuesErrors];
+
+export type ReplayValuesResponses = {
+    /**
+     * replayValues 200 response
+     */
+    200: ExecutionControllerReplayValues;
+};
+
+export type ReplayValuesResponse = ReplayValuesResponses[keyof ReplayValuesResponses];
 
 export type CreateExecutionData = {
     /**

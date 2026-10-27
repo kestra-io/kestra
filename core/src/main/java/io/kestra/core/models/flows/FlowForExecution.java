@@ -57,6 +57,7 @@ public class FlowForExecution extends AbstractFlow {
             .namespace(flow.getNamespace())
             .revision(flow.getRevision())
             .inputs(flow.getInputs())
+            .outputs(ListUtils.emptyOnNull(flow.getOutputs()).stream().<Output>map(OutputForExecution::of).toList())
             .tasks(flow.getTasks().stream().map(TaskForExecution::of).toList())
             .errors(ListUtils.emptyOnNull(flow.getErrors()).stream().map(TaskForExecution::of).toList())
             ._finally(ListUtils.emptyOnNull(flow.getFinally()).stream().map(TaskForExecution::of).toList())

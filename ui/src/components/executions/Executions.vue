@@ -43,6 +43,7 @@
             :currentPage="currentPage"
             :pageSize="currentSize"
             @page-changed="onPageChanged"
+            @selection-change="onSelectionChange"
             @sort-change="({prop, order}: {prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: Execution) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
@@ -78,16 +79,16 @@
             </template>
 
             <template #bulk-actions>
-                <KsButton v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
+                <KsButton v-if="canUpdate" :icon="StateMachine" :disabled="bulkActionDisabled(action.UPDATE)" :tooltip="bulkActionTooltip(action.UPDATE)" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                     {{ $t("change state") }}
                 </KsButton>
-                <KsButton v-if="canRestart" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
+                <KsButton v-if="canRestart" :icon="Restart" :disabled="bulkActionDisabled(action.RESTART)" :tooltip="bulkActionTooltip(action.RESTART)" @click="isOpenRestartModal = !isOpenRestartModal">
                     {{ $t("restart") }}
                 </KsButton>
-                <KsButton v-if="canReplay" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
+                <KsButton v-if="canReplay" :icon="PlayBoxMultiple" :disabled="bulkActionDisabled(action.REPLAY)" :tooltip="bulkActionTooltip(action.REPLAY)" @click="isOpenReplayModal = !isOpenReplayModal">
                     {{ $t("replay") }}
                 </KsButton>
-                <KsButton v-if="canKill" :icon="StopCircleOutline" @click="killExecutions()">
+                <KsButton v-if="canKill" :icon="StopCircleOutline" :disabled="bulkActionDisabled(action.KILL)" :tooltip="bulkActionTooltip(action.KILL)" @click="killExecutions()">
                     {{ $t("kill") }}
                 </KsButton>
                 <KsButton v-if="canDelete" :icon="Delete" @click="deleteExecutions()">
@@ -111,19 +112,19 @@
                     </KsButton>
                     <template #dropdown>
                         <KsDropdownMenu>
-                            <KsDropdownItem v-if="canChangeLabels" :icon="LabelMultiple" @click=" isOpenLabelsModal = !isOpenLabelsModal">
+                            <KsDropdownItem v-if="canChangeLabels" :icon="LabelMultiple" :disabled="bulkActionDisabled(action.CHANGE_LABELS)" :title="bulkActionTooltip(action.CHANGE_LABELS)" @click=" isOpenLabelsModal = !isOpenLabelsModal">
                                 {{ $t("Set labels") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canResume" :icon="PlayBox" @click="resumeExecutions()">
+                            <KsDropdownItem v-if="canResume" :icon="PlayBox" :disabled="bulkActionDisabled(action.RESUME)" :title="bulkActionTooltip(action.RESUME)" @click="resumeExecutions()">
                                 {{ $t("resume") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canPause" :icon="PauseBox" @click="pauseExecutions()">
+                            <KsDropdownItem v-if="canPause" :icon="PauseBox" :disabled="bulkActionDisabled(action.PAUSE)" :title="bulkActionTooltip(action.PAUSE)" @click="pauseExecutions()">
                                 {{ $t("pause") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
+                            <KsDropdownItem v-if="canUnqueue" :icon="QueueFirstInLastOut" :disabled="bulkActionDisabled(action.UNQUEUE)" :title="bulkActionTooltip(action.UNQUEUE)" @click="unqueueDialogVisible = true">
                                 {{ $t("unqueue") }}
                             </KsDropdownItem>
-                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" @click="forceRunExecutions()">
+                            <KsDropdownItem v-if="canForceRun" :icon="RunFast" :disabled="bulkActionDisabled(action.FORCE_RUN)" :title="bulkActionTooltip(action.FORCE_RUN)" @click="forceRunExecutions()">
                                 {{ $t("force run") }}
                             </KsDropdownItem>
                         </KsDropdownMenu>
@@ -412,7 +413,7 @@
     import {problemBulkBody, problemTitle} from "../../utils/problem"
     import {useRoute, useRouter} from "vue-router"
     import {routeFamily} from "../../utils/routeFamily"
-    import {ref, computed, watch, h, useTemplateRef} from "vue"
+    import {ref, computed, watch, h, useTemplateRef, getCurrentInstance} from "vue"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox, normalizeRouteTimeRangeFilter, deepMerge} from "@kestra-io/design-system"
 
@@ -779,7 +780,20 @@
 
     const selection = computed(() => dataTable.value?.selection ?? [])
     const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
-    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
+    const selectedExecutions = ref(new Map<string, Execution>())
+
+    const onSelectionChange = (rows: Execution[]) => {
+        const currentPageIds = new Set(
+            executionsStore.executions?.map(execution => execution.id) ?? [],
+        )
+
+        currentPageIds.forEach(id => selectedExecutions.value.delete(id))
+        rows.forEach(execution => selectedExecutions.value.set(execution.id, execution))
+    }
+    const toggleAllUnselected = () => {
+        dataTable.value?.toggleAllUnselected()
+        selectedExecutions.value.clear()
+    }
 
 
     const displayButtons = computed(() => {
@@ -829,6 +843,82 @@
     const canResume = computed(() => {
         return isAllowedOnExecutions(action.RESUME)
     })
+
+    const isTerminated = (execution: Execution) => execution.state?.endDate != null
+
+    const bulkActionRules: Record<string, {
+        allowed: (execution: Execution) => boolean;
+        reason: string;
+    }> = {
+        [action.UPDATE]: {
+            allowed: execution => isTerminated(execution) && execution.state?.current !== State.KILLED,
+            reason: "not eligible for change state",
+        },
+        [action.RESTART]: {
+            allowed: execution => execution.state?.current === State.FAILED,
+            reason: `not ${State.FAILED}`,
+        },
+        [action.REPLAY]: {
+            allowed: isTerminated,
+            reason: "not terminated",
+        },
+        [action.KILL]: {
+            allowed: execution => !isTerminated(execution),
+            reason: "terminated",
+        },
+        [action.PAUSE]: {
+            allowed: execution => execution.state?.current === State.RUNNING,
+            reason: `not ${State.RUNNING}`,
+        },
+        [action.RESUME]: {
+            allowed: execution => execution.state?.current === State.PAUSED,
+            reason: `not ${State.PAUSED}`,
+        },
+        [action.UNQUEUE]: {
+            allowed: execution => execution.state?.current === State.QUEUED,
+            reason: `not ${State.QUEUED}`,
+        },
+        [action.FORCE_RUN]: {
+            allowed: execution => !isTerminated(execution),
+            reason: "terminated",
+        },
+        [action.CHANGE_LABELS]: {
+            allowed: isTerminated,
+            reason: "not terminated",
+        },
+    }
+
+    const bulkActionDisabled = (executionAction: string) => {
+        if (queryBulkAction.value) {
+            return false
+        }
+
+        const rule = bulkActionRules[executionAction]
+        if (!rule) {
+            return false
+        }
+
+        return Array.from(selectedExecutions.value.values())
+            .some(execution => !rule.allowed(execution))
+    }
+
+    const bulkActionTooltip = (executionAction: string) => {
+        if (queryBulkAction.value) {
+            return undefined
+        }
+
+        const rule = bulkActionRules[executionAction]
+        if (!rule) {
+            return undefined
+        }
+
+        const selected = Array.from(selectedExecutions.value.values())
+        const invalidCount = selected.filter(execution => !rule.allowed(execution)).length
+
+        return invalidCount > 0
+            ? `${invalidCount} of ${selected.length} selected executions are ${rule.reason}.`
+            : undefined
+    }
 
     const canCheck = computed(() => {
         return [
@@ -1117,50 +1207,91 @@
     }
 
     const deleteExecutions = () => {
+        const selected = Array.from(selectedExecutions.value.values())
+        const nonTerminatedCount = queryBulkAction.value
+            ? 0
+            : selected.filter(execution => !isTerminated(execution)).length
+        const requiresConsent = nonTerminatedCount > 0
+
         const includeNonTerminated = ref(false)
         const deleteLogs = ref(true)
         const deleteMetrics = ref(true)
         const deleteStorage = ref(true)
 
-        const message = () => h("div", null, [
-            h(
-                "p",
-                {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})},
-            ),
-            h(KsFormItem, {
-                class: "mt-3",
-                label: t("execution-include-non-terminated"),
-            }, [
-                h(KsSwitch, {
-                    modelValue: includeNonTerminated.value,
-                    "onUpdate:modelValue": (val: unknown) => {
-                        includeNonTerminated.value = Boolean(val)
-                    },
+        let boxInstance: any = null
+
+        const syncConfirmDisabled = () => {
+            if (boxInstance) {
+                boxInstance.confirmButtonDisabled = requiresConsent && !includeNonTerminated.value
+            }
+        }
+
+        const message = () => {
+            const current = getCurrentInstance()?.proxy as any
+            if (current) {
+                boxInstance = current
+                syncConfirmDisabled()
+            }
+
+            return h("div", null, [
+                h(
+                    "p",
+                    {innerHTML: t("bulk delete", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})},
+                ),
+                nonTerminatedCount > 0 ? h(KsAlert, {
+                    title: t("execution-warn-title"),
+                    description: `${nonTerminatedCount} of ${selected.length} selected execution(s) are non-terminated. ${t("execution-warn-deleting-still-running")}`,
+                    type: "warning",
+                    closable: false,
+                    class: "my-3",
+                }) : null,
+                h(KsFormItem, {
+                    class: "mt-3",
+                    label: t("execution-include-non-terminated"),
+                }, [
+                    h(KsSwitch, {
+                        modelValue: includeNonTerminated.value,
+                        "onUpdate:modelValue": (val: unknown) => {
+                            includeNonTerminated.value = Boolean(val)
+                            syncConfirmDisabled()
+                        },
+                    }),
+                ]),
+                includeNonTerminated.value && nonTerminatedCount === 0 ? h(KsAlert, {
+                    title: t("execution-warn-title"),
+                    description: t("execution-warn-deleting-still-running"),
+                    type: "warning",
+                    closable: false,
+                }) : null,
+                h(KsCheckbox, {
+                    modelValue: deleteLogs.value,
+                    label: t("execution_deletion.logs"),
+                    "onUpdate:modelValue": (val: unknown) => (deleteLogs.value = Boolean(val)),
                 }),
-            ]),
-            includeNonTerminated.value ? h(KsAlert, {
-                title: t("execution-warn-title"),
-                description: t("execution-warn-deleting-still-running"),
-                type: "warning",
-                closable: false,
-            }) : null,
-            h(KsCheckbox, {
-                modelValue: deleteLogs.value,
-                label: t("execution_deletion.logs"),
-                "onUpdate:modelValue": (val: unknown) => (deleteLogs.value = Boolean(val)),
-            }),
-            h(KsCheckbox, {
-                modelValue: deleteMetrics.value,
-                label: t("execution_deletion.metrics"),
-                "onUpdate:modelValue": (val: unknown) => (deleteMetrics.value = Boolean(val)),
-            }),
-            h(KsCheckbox, {
-                modelValue: deleteStorage.value,
-                label: t("execution_deletion.storage"),
-                "onUpdate:modelValue": (val: unknown) => (deleteStorage.value = Boolean(val)),
-            }),
-        ])
-        KsMessageBox.confirm(message, t("confirmation")).then(() => {
+                h(KsCheckbox, {
+                    modelValue: deleteMetrics.value,
+                    label: t("execution_deletion.metrics"),
+                    "onUpdate:modelValue": (val: unknown) => (deleteMetrics.value = Boolean(val)),
+                }),
+                h(KsCheckbox, {
+                    modelValue: deleteStorage.value,
+                    label: t("execution_deletion.storage"),
+                    "onUpdate:modelValue": (val: unknown) => (deleteStorage.value = Boolean(val)),
+                }),
+            ])
+        }
+
+        KsMessageBox.confirm(message, t("confirmation"), {
+            confirmButtonDisabled: requiresConsent && !includeNonTerminated.value,
+            beforeClose: (action: string, instance: any, done: () => void) => {
+                boxInstance = instance
+                if (action === "confirm" && requiresConsent && !includeNonTerminated.value) {
+                    syncConfirmDisabled()
+                    return
+                }
+                done()
+            },
+        }).then(() => {
             actionOptions.value.includeNonTerminated = includeNonTerminated.value
             actionOptions.value.deleteLogs = deleteLogs.value
             actionOptions.value.deleteMetrics = deleteMetrics.value

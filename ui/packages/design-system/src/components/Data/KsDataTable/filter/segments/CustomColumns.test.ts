@@ -56,6 +56,18 @@ describe("CustomColumns", () => {
         expect(countOf(wrapper as ReturnType<typeof mountWith>)).toBe("2 of 2 columns visible")
     })
 
+    test("shows the search with only a few columns and focuses it on open", async () => {
+        const wrapper = i18nMount(CustomColumns, {
+            props: {storageKey: "search-focus", columns: COLUMNS, visibleColumns: ["a"]},
+            attachTo: document.body,
+        })
+        await new Promise((resolve) => setTimeout(resolve))
+
+        expect(document.activeElement).toBe(wrapper.find(".search input").element)
+
+        wrapper.unmount()
+    })
+
     test("reports what was resolved without persisting it", async () => {
         const wrapper = mountWith([], "no-write-on-open")
 

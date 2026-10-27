@@ -25,12 +25,12 @@ export const Default: Story = {
     render: (args) => ({
         components: {KsSteps, KsStep},
         setup() {
-            const active = ref(1)
+            const active = ref(args.active ?? 1)
             return {args, active}
         },
         template: `
             <div style="padding:24px">
-                <ks-steps :active="active" v-bind="args">
+                <ks-steps v-bind="args" :active="active">
                     <ks-step title="Step 1" description="First step" />
                     <ks-step title="Step 2" description="Second step" />
                     <ks-step title="Step 3" description="Third step" />
@@ -42,10 +42,22 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {
+        active: 1,
+        direction: "horizontal",
+        space: "",
+        finishStatus: "finish",
+        processStatus: "process",
+        simple: false,
+        alignCenter: false,
+        size: "default",
+        variant: "steps",
+    },
 }
 
 /** With finish status – shows completion state */
 export const WithStatus: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSteps, KsStep},
         template: `
@@ -63,6 +75,7 @@ export const WithStatus: Story = {
 
 /** Center aligned titles */
 export const AlignCenter: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSteps, KsStep},
         template: `
@@ -79,6 +92,7 @@ export const AlignCenter: Story = {
 
 /** Simple step bar */
 export const Simple: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSteps, KsStep},
         setup() { return {active: ref(1)} },
@@ -100,6 +114,7 @@ export const Simple: Story = {
 
 /** Horizontal with align-center — connector line spans the gap between step heads */
 export const HorizontalWithConnector: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSteps, KsStep},
         setup() { return {active: ref(1)} },
@@ -121,6 +136,7 @@ export const HorizontalWithConnector: Story = {
 }
 
 export const Vertical: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSteps, KsStep},
         setup() { return {active: ref(1), space: ref(60)} },
@@ -141,6 +157,7 @@ export const Vertical: Story = {
 }
 
 export const VerticalWithIcon: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSteps, KsStep},
         setup() {
@@ -163,6 +180,7 @@ export const VerticalWithIcon: Story = {
 }
 
 export const SmallWithIcon: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsSteps, KsStep},
         setup() {

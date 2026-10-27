@@ -41,6 +41,7 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {disabled: false},
     async play({canvasElement}) {
         const canvas = within(canvasElement)
         const customInput = canvas.getByRole("textbox")
@@ -50,6 +51,7 @@ export const Default: Story = {
 
 /** Pre-filled with an existing duration */
 export const WithValue: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDurationPicker},
         setup() {
@@ -76,6 +78,7 @@ export const WithValue: Story = {
 
 /** Time-only duration (no date parts) */
 export const TimeOnly: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDurationPicker},
         setup() {
@@ -97,6 +100,7 @@ export const TimeOnly: Story = {
 
 /** Date-only duration (no time parts) */
 export const DateOnly: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDurationPicker},
         setup() {
@@ -117,6 +121,7 @@ export const DateOnly: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDurationPicker},
         setup() {
@@ -146,6 +151,7 @@ export const Disabled: Story = {
 
 /** Interactive – shows live binding with a form */
 export const InForm: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDurationPicker},
         setup() {

@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {dayjs} from "@kestra-io/design-system"
+import {dateUtils, dayjs} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 import {routedPinia} from "../../../../tests/unit/memoryRouter"
@@ -75,7 +75,7 @@ describe("Usages", () => {
 
     it("shouldGiveTheStartDateWhenTheDataDoesNotCoverTheWindow", async () => {
         const fetchedUsages = {executions: {dailyExecutionsCount: [dayStartingAgo(12, 0), dayStartingAgo(11, 2), dayStartingAgo(1, 5)]}}
-        const since = dayjs().subtract(11, "day").startOf("day").toDate().toLocaleDateString("en-GB", {day: "numeric", month: "short"})
+        const since = dateUtils.dateFilter(dayjs().subtract(11, "day").startOf("day").toDate(), "D MMM")
 
         expect(await subtitles({fetchedUsages, period: 30})).toEqual(Array(4).fill(`since ${since}`))
     })

@@ -40,7 +40,7 @@
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import UsageCard from "./UsageCard.vue"
-    import {dayjs, KsOption, KsSelect} from "@kestra-io/design-system"
+    import {dateUtils, dayjs, KsOption, KsSelect} from "@kestra-io/design-system"
 
     type UsagePeriod = 1 | 7 | 30
 
@@ -91,7 +91,7 @@
     const router = useRouter()
     const route = useRoute()
     const miscStore = useMiscStore()
-    const {t, locale} = useI18n()
+    const {t} = useI18n()
 
     const usages = ref<UsageData>()
 
@@ -142,9 +142,7 @@
             return periodLabel.value
         }
 
-        const intlLocale = locale.value === "en" ? "en-GB" : locale.value.replace("_", "-")
-        const date = dataStart.value.toDate().toLocaleDateString(intlLocale, {day: "numeric", month: "short"})
-        return t("since {date}", {date})
+        return t("since {date}", {date: dateUtils.dateFilter(dataStart.value.toDate(), "D MMM")})
     })
 
     const executionCount = computed(() =>

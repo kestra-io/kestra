@@ -426,6 +426,32 @@ class FlowInputOutputTest {
     }
 
     @Test
+    void shouldObfuscateSecretsWhenValidatingInputsDeclaredAfterTheirDependent() {
+        // Given: the dependent input is declared first, so its dependency is resolved through the dependency path
+        StringInput dependent = StringInput.builder()
+            .id("dependent")
+            .type(Type.STRING)
+            .dependsOn(new DependsOn(List.of("dependency"), null))
+            .required(false)
+            .build();
+        StringInput dependency = StringInput.builder()
+            .id("dependency")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(dependent, dependency), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+
+        // Then
+        assertThat(results).filteredOn(it -> it.input().getId().equals("dependency"))
+            .singleElement()
+            .extracting(InputAndValue::value)
+            .isEqualTo("******");
+    }
+
+    @Test
     void shouldNotObfuscateSecretsInSelectWhenValidatingInputs() {
         // Given
         MultiselectInput input = MultiselectInput.builder()

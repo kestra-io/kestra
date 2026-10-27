@@ -1797,11 +1797,7 @@ public class ExecutionService {
     }
 
     /**
-     * Checks whether an execution can be resumed from a breakpoint: it must be suspended
-     * in the BREAKPOINT state and have at least one breakpoint recorded.
-     *
-     * @param execution the execution to check
-     * @return true if the execution is resumable from a breakpoint
+     * Checks whether an execution is suspended in the BREAKPOINT state with at least one breakpoint recorded.
      */
     public static boolean isResumableFromBreakpoint(Execution execution) {
         return execution.getState().isBreakpoint() && !ListUtils.isEmpty(execution.getBreakpoints());

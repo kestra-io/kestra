@@ -145,6 +145,7 @@
     "update": "Mettre à jour",
     "confirmation": "Confirmation",
     "toast confirm": "Êtes-vous sûr ?",
+    "toast_message_column": "Message",
     "common": {
       "back": "Retour",
       "openInNewTab": "Ouvrir dans un nouvel onglet"
@@ -513,6 +514,7 @@
       "invalid": "Erreur de graphe",
       "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
       "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
+      "expand_subflow_error": "Impossible d'étendre le subflow",
       "add-task": "Ajouter une task",
       "add-trigger": "Ajouter un trigger",
       "child-count": "{count} task | {count} tasks"

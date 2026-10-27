@@ -145,6 +145,7 @@
     "update": "업데이트",
     "confirmation": "확인",
     "toast confirm": "확실합니까?",
+    "toast_message_column": "메시지",
     "common": {
       "back": "뒤로",
       "openInNewTab": "새 탭에서 열기"
@@ -513,6 +514,7 @@
       "invalid": "그래프 오류",
       "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
       "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요.",
+      "expand_subflow_error": "subflow를 확장할 수 없습니다.",
       "add-task": "Task 추가",
       "add-trigger": "Trigger 추가",
       "child-count": "task {count}개 | task {count}개"

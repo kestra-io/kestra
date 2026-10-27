@@ -145,6 +145,7 @@
     "update": "Aktualizuj",
     "confirmation": "Potwierdzenie",
     "toast confirm": "Czy na pewno?",
+    "toast_message_column": "Wiadomość",
     "common": {
       "back": "Wstecz",
       "openInNewTab": "Otwórz w nowej karcie"
@@ -513,6 +514,7 @@
       "invalid": "Błąd grafu",
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
       "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
+      "expand_subflow_error": "Nie można rozwinąć Subflow",
       "add-task": "Dodaj task",
       "add-trigger": "Dodaj trigger",
       "child-count": "{count} task | {count} tasks"

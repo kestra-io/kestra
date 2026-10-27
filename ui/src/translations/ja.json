@@ -145,6 +145,7 @@
     "update": "更新",
     "confirmation": "確認",
     "toast confirm": "よろしいですか？",
+    "toast_message_column": "メッセージ",
     "common": {
       "back": "戻る",
       "openInNewTab": "新しいタブで開く"
@@ -513,6 +514,7 @@
       "invalid": "グラフエラー",
       "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。",
+      "expand_subflow_error": "サブFlowを展開できませんでした",
       "add-task": "Taskを追加",
       "add-trigger": "Triggerを追加",
       "child-count": "task {count}個 | task {count}個"

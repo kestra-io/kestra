@@ -97,7 +97,7 @@ tasks:
   type: io.kestra.plugin.core.log.Log
   message: hi
 `
-        const params = {source, cursorIndex: source.indexOf("message: hi") + "message: hi".length}
+        const params = {source, cursorIndex: source.indexOf("id: hello") + "id: hello".length}
 
         expect(findTaskLikeAtCursor(params)?.id).toBe("hello")
         expect(taskTypeAtCursor(params)).toBe("io.kestra.plugin.core.log.Log")

@@ -364,10 +364,10 @@ export const LevelOfDetailPillDeepZoom: StoryObj<typeof Topology> = {
 
         await waitFor(() => expect(pills().length).toBeGreaterThan(0))
 
-        // The ring grows outwards from a 2.5rem pill, so even capped it has to stay inside the
-        // footprint dagre reserved — otherwise a pill would start touching its neighbour.
-        expect(pills()[0].getBoundingClientRect().height)
-            .toBeLessThan(NODE_SIZES.TASK_HEIGHT * DEEP_ZOOM)
+        // `box-sizing: border-box` holds the pill's 2.5rem box fixed, so the ring thickens inwards
+        // and the bounding box is identical at every zoom: the cap can only be read off the border
+        // width itself. 4px is PILL_COMPENSATION.RING_MAX, which 0.1 zoom is far enough out to hit.
+        expect(getComputedStyle(pills()[0]).borderTopWidth).toBe("4px")
     },
 }
 

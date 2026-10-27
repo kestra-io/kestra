@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.ServerOwned;
 import io.kestra.core.models.annotations.TicketingField;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetExporter;
@@ -629,7 +630,7 @@ public class JsonSchemaGenerator {
 
         // default value
         builder.forFields()
-            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null)
+            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null || fieldScope.getAnnotation(ServerOwned.class) != null)
             .withDefaultResolver(this::defaults);
 
         // def name

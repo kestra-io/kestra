@@ -29,6 +29,10 @@ public final class Results {
      * {@code lastAttemptEnd} and the previous ones one minute apart — for retry-exhaustion cases.
      */
     public static WorkerTaskResult failedAttempts(ExecutorContext.ExecutorWorkerTask emitted, int attemptCount, Instant lastAttemptEnd) {
+        return failedAttempts(emitted.workerTask(), attemptCount, lastAttemptEnd);
+    }
+
+    public static WorkerTaskResult failedAttempts(WorkerTask workerTask, int attemptCount, Instant lastAttemptEnd) {
         List<TaskRunAttempt> attempts = new java.util.ArrayList<>(attemptCount);
         for (int i = attemptCount - 1; i >= 0; i--) {
             Instant end = lastAttemptEnd.minusSeconds(60L * i);
@@ -46,7 +50,7 @@ public final class Results {
             );
         }
 
-        TaskRun taskRun = emitted.workerTask().getTaskRun()
+        TaskRun taskRun = workerTask.getTaskRun()
             .withAttempts(attempts)
             .withState(State.Type.FAILED);
         return new WorkerTaskResult(taskRun);

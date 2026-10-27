@@ -2060,9 +2060,6 @@ class ExecutionControllerRunnerTest {
         assertThat(resumed.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
-
-
-
     @Test
     @LoadFlows(value = { "flows/valids/pause-test.yaml" }, tenantId = "resumeexecutionbyquery")
     void shouldReturn202WhenResumeExecutionsByQueryCalled() throws QueueException {
@@ -3421,12 +3418,16 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendingbreakpointthenresume")
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendatbreakpointthenresumewhenasked")
     void shouldSuspendAtBreakpointWhenTriggeredThenResumeWhenAsked() {
-        String tenantId = "shouldsuspendingbreakpointthenresume";
+        String tenantId = "shouldsuspendatbreakpointthenresumewhenasked";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
         Execution suspended = awaitExecution(execution.getId(), State.Type.BREAKPOINT);
+
+        // the execution must have stopped exactly where we expect before it gets resumed
+        assertThat(suspended.getTaskRunList()).hasSize(1);
+        assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
         HttpResponse<Execution> resume = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + suspended.getId() + "/actions/resume-from-breakpoint", null),
@@ -3453,10 +3454,6 @@ class ExecutionControllerRunnerTest {
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution1 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
         Execution execution2 = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");
-        assertThat(execution1).isNotNull();
-        assertThat(execution2).isNotNull();
-
-        // check that both executions are suspended at the breakpoint
         Execution suspended1 = awaitExecution(tenantId, execution1.getId(), exec -> exec.getState().isBreakpoint());
         Execution suspended2 = awaitExecution(tenantId, execution2.getId(), exec -> exec.getState().isBreakpoint());
 
@@ -3471,7 +3468,6 @@ class ExecutionControllerRunnerTest {
         assertThat(resumeResponse.body().operationId()).isNotBlank();
         assertThat(resumeResponse.body().totalItems()).isEqualTo(2);
 
-        // wait for both executions to terminate successfully
         Execution terminated1 = runnerUtils.awaitExecution(
             it -> execution1.getId().equals(it.getId()) && it.getState().isTerminated(),
             suspended1,
@@ -3485,7 +3481,6 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(terminated2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        // attempting to resume again must fail: the executions are neither PAUSED nor BREAKPOINT
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(

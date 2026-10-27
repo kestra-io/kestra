@@ -83,13 +83,13 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
         workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning);
 
         // Then
-        assertThat(existsByKey(workerTaskRunning.uid())).isTrue();
+        assertThat(workerJobRunningStateStore.existsByKey(workerTaskRunning.uid())).isTrue();
 
         // When
         workerJobRunningStateStore.deleteByKey(workerTaskRunning.uid());
 
         // Then
-        assertThat(existsByKey(workerTaskRunning.uid())).isFalse();
+        assertThat(workerJobRunningStateStore.existsByKey(workerTaskRunning.uid())).isFalse();
     }
 
     @Test

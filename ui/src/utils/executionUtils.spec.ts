@@ -23,8 +23,8 @@ describe("waitFor", () => {
 
     it("resolves with the execution once the predicate accepts it", async () => {
         const get = vi.fn()
-            .mockResolvedValueOnce({data: {id: "e", state: "RUNNING"}})
-            .mockResolvedValueOnce({data: {id: "e", state: "SUCCESS"}})
+            .mockResolvedValueOnce({data: {id: "e", state: {current: "RUNNING"}}})
+            .mockResolvedValueOnce({data: {id: "e", state: {current: "SUCCESS"}}})
         const result = waitFor(clientReturning(get), {id: "e"}, (data) => data.state.current === "SUCCESS")
 
         await vi.advanceTimersByTimeAsync(600)

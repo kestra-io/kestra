@@ -18,7 +18,10 @@ export function useTaskRunError(executionId: () => string, taskRunId: () => stri
                 .loadLogs({
                     store: false,
                     executionId: executionId(),
-                    params: {"filters[taskRunId][EQUALS]": taskRunId(), "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"},
+                    filters: [
+                        {field: "taskRunId", operation: "EQUALS", value: taskRunId()},
+                        {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+                    ],
                 })
                 .catch((e: unknown) => {
                     handled(e)

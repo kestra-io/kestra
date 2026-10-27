@@ -41,6 +41,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
@@ -85,6 +86,8 @@ class ExecutionCommandMessageHandlerTest {
     KillSwitchService killSwitchService;
     @Mock
     KillSwitchActionService killSwitchActionService;
+    @Mock
+    RunContextFactory runContextFactory;
 
     ExecutionCommandMessageHandler handler;
     Create createCommand;
@@ -103,7 +106,8 @@ class ExecutionCommandMessageHandlerTest {
             asyncOperationService,
             executionEventMessageHandler,
             killSwitchService,
-            killSwitchActionService
+            killSwitchActionService,
+            runContextFactory
         );
         createCommand = Create.of(new ExecutionId("tenant", "ns", "flow-id", "exec-1", null))
             .withOperationId("op-1");
@@ -315,7 +319,7 @@ class ExecutionCommandMessageHandlerTest {
         var context = mock(ExecutorContext.class);
         when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
-        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"), any(), any()))
             .thenReturn(newExecution);
         when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
 
@@ -359,7 +363,7 @@ class ExecutionCommandMessageHandlerTest {
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
-        when(executionService.replay(any(), any(), any(), any(), any(), eq(true), eq("new-exec-id")))
+        when(executionService.replay(any(), any(), any(), any(), any(), eq(true), eq("new-exec-id"), any(), any()))
             .thenReturn(newExecution);
         doThrow(new RuntimeException("DB unavailable")).when(executionStateStore).create(newExecution);
 
@@ -379,7 +383,7 @@ class ExecutionCommandMessageHandlerTest {
         when(newExecution.getState().getCurrent()).thenReturn(State.Type.KILLED);
         when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
-        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"), any(), any()))
             .thenReturn(newExecution);
         when(killSwitchService.evaluate(newExecution)).thenReturn(EvaluationType.KILL);
         when(newExecution.withState(State.Type.KILLED)).thenReturn(newExecution);
@@ -403,7 +407,7 @@ class ExecutionCommandMessageHandlerTest {
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
-        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"), any(), any()))
             .thenReturn(newExecution);
         when(killSwitchService.evaluate(newExecution)).thenReturn(EvaluationType.IGNORE);
 
@@ -426,7 +430,7 @@ class ExecutionCommandMessageHandlerTest {
         var context = mock(ExecutorContext.class);
         when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByIdForRuntime("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(ProcessedFlow.of(flow)));
-        when(executionService.replay(any(), eq(flow), isNull(), eq(3), any(), eq(true), eq("new-exec-id")))
+        when(executionService.replay(any(), eq(flow), isNull(), eq(3), any(), eq(true), eq("new-exec-id"), any(), any()))
             .thenReturn(newExecution);
         when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
 
@@ -654,7 +658,7 @@ class ExecutionCommandMessageHandlerTest {
         AtomicReference<CrudEvent<Execution>> published = new AtomicReference<>();
         when(executionStateStore.findByIdWithoutAcl("source-exec-id")).thenReturn(sourceExecution);
         when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
-        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"))).thenAnswer(invocation ->
+        when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id"), any(), any())).thenAnswer(invocation ->
         {
             published.set(CrudEvent.create(newExecution));
             return newExecution;
@@ -701,7 +705,8 @@ class ExecutionCommandMessageHandlerTest {
         if (flow != null) {
             when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         }
-        when(executionStateStore.lock(any(), any())).thenAnswer(invocation -> {
+        when(executionStateStore.lock(any(), any())).thenAnswer(invocation ->
+        {
             Function<Execution, ExecutorContext> function = invocation.getArgument(1);
             return Optional.ofNullable(function.apply(existing));
         });

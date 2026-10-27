@@ -14,7 +14,7 @@ import jakarta.annotation.Nullable;
 import lombok.With;
 
 /**
- * Command to replay an existing execution, optionally from a specific task run with new inputs.
+ * Command to replay an existing execution, optionally from a specific task run with new inputs, or with that task run's definition edited for this replay only.
  * The new execution is created with a pre-generated {@code executionId}, and the source execution
  * is identified by {@code sourceExecutionId}.
  */
@@ -32,6 +32,7 @@ public record Replay(
     @With @JsonProperty @Nullable Integer revision,
     @With @JsonProperty @Nullable String breakpoints,
     @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable Map<String, Object> inputs,
+    @With @Nullable String taskDefinition,
     @With @Nullable Actor actor) implements ExecutionCommand {
 
     /**
@@ -59,6 +60,7 @@ public record Replay(
             revision,
             breakpoints,
             sourceExecution.getInputs(),
+            null,
             null
         );
     }

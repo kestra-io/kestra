@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -12,8 +13,10 @@ import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -24,6 +27,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class TaskOutputService extends AbstractOutputService {
+    private static final String EDITED_DEFINITION = "definition";
+
     private final TaskOutputRepositoryInterface outputRepository;
 
     public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
@@ -219,6 +224,41 @@ public class TaskOutputService extends AbstractOutputService {
      */
     public int purge(List<Execution> executions) {
         return this.outputRepository.purgeByExecutionIds(executions.stream().map(Execution::getId).toList());
+    }
+
+    /**
+     * Saves the task definition a replay edited for a task run under its own id, so reading it is a separate call.
+     */
+    public TaskRunDefinitionEdit saveDefinitionEdit(TaskRun taskRun, String definition, @Nullable String editedBy) throws InternalException {
+        var edit = new TaskRunDefinitionEdit(IdUtils.create(), editedBy, Instant.now());
+        saveOutputs(definitionHolder(taskRun, edit), Map.of(EDITED_DEFINITION, definition));
+        return edit;
+    }
+
+    public Optional<String> getEditedDefinition(TaskRun taskRun) throws InternalException {
+        if (taskRun.getDefinitionEdit() == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable((String) getOutputs(definitionHolder(taskRun, taskRun.getDefinitionEdit())).get(EDITED_DEFINITION));
+    }
+
+    /**
+     * Copies the edited definition of a task run reused by a new execution, so it outlives the purge of the original one.
+     */
+    public TaskRun copyDefinitionEdit(TaskRun originalTaskRun, TaskRun newTaskRun) throws InternalException {
+        Optional<String> definition = getEditedDefinition(originalTaskRun);
+        if (definition.isEmpty()) {
+            return newTaskRun;
+        }
+        TaskRunDefinitionEdit original = originalTaskRun.getDefinitionEdit();
+        var copy = new TaskRunDefinitionEdit(IdUtils.create(), original.editedBy(), original.editedAt());
+        saveOutputs(definitionHolder(newTaskRun, copy), Map.of(EDITED_DEFINITION, definition.get()));
+        return newTaskRun.withDefinitionEdit(copy);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static TaskRun definitionHolder(TaskRun taskRun, TaskRunDefinitionEdit edit) {
+        return taskRun.toBuilder().id(edit.id()).outputs(null).build();
     }
 
     public void copyOutputs(TaskRun originalTaskRun, TaskRun newTaskRun) {

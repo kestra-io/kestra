@@ -20,11 +20,14 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.TaskDefinitionEditService;
+import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -339,7 +342,8 @@ class DefaultFlowMetaStoreTest {
             mock(FlowParsingService.class),
             mock(RunContextLoggerFactory.class),
             mock(BroadcastQueueInterface.class),
-            mock(FlowWithDefaultCache.class)
+            mock(FlowWithDefaultCache.class),
+            withoutEdits()
         );
 
         Optional<FlowInterface> resolved = metaStore.findByIdFromTask(
@@ -410,7 +414,7 @@ class DefaultFlowMetaStoreTest {
             .thenReturn(Optional.of(ProcessedFlow.of(processed)));
 
         DefaultFlowMetaStore metaStore = new DefaultFlowMetaStore(
-            repository, parsingService, mock(RunContextLoggerFactory.class), mock(BroadcastQueueInterface.class), withDefaultCache
+            repository, parsingService, mock(RunContextLoggerFactory.class), mock(BroadcastQueueInterface.class), withDefaultCache, withoutEdits()
         );
 
         // When
@@ -433,7 +437,11 @@ class DefaultFlowMetaStoreTest {
         // a real (fresh, per-test) cache, so a test can exercise an actual cache hit rather than a stubbed one
         FlowWithDefaultCache withDefaultCache = new FlowWithDefaultCache();
 
-        return new DefaultFlowMetaStore(repository, parsingService, loggerFactory, mock(BroadcastQueueInterface.class), withDefaultCache);
+        return new DefaultFlowMetaStore(repository, parsingService, loggerFactory, mock(BroadcastQueueInterface.class), withDefaultCache, withoutEdits());
+    }
+
+    private static TaskDefinitionEditService withoutEdits() {
+        return new TaskDefinitionEditService(mock(FlowParsingService.class), mock(TaskOutputService.class), mock(ModelValidator.class));
     }
 
     private static Execution executionOf(FlowWithSource flow) {

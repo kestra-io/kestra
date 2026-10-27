@@ -86,7 +86,7 @@ public class Gauge extends AbstractMetricEntry<Double> {
     @Override
     public void register(MetricRegistry meterRegistry, String name, String description, Map<String, String> tags) {
         meterRegistry
-            .gauge(this.metricName(name), description, this.value, this.tagsAsArray(tags));
+            .latestValueGauge(this.metricName(name), description, this.value, this.tagsAsArray(tags));
     }
 
     @Override

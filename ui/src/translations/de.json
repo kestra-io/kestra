@@ -469,7 +469,7 @@
     "resume from breakpoint title": "Execution {id} ab Breakpoint fortsetzen",
     "approval": {
       "review": "Überprüfen",
-      "title": "Execution {id} überprüfen",
+      "title": "Überprüfe {task} der Execution {id}",
       "approve": "Genehmigen",
       "deny": "Verweigern",
       "comment": "Kommentar",
@@ -481,10 +481,21 @@
       },
       "comment required": "Ein Kommentar ist für diese Entscheidung erforderlich.",
       "inputs invalid": "Einige Inputs sind ungültig: {errors}",
-      "already decided": "Für diese Genehmigungsanfrage wurde bereits eine Entscheidung getroffen.",
       "review done": "Deine Bewertung wurde aufgezeichnet",
+      "reviewed": {
+        "title": "Genehmigungsanfrage für Execution {id}",
+        "explanation": "Diese Genehmigungsanfrage wartet nicht mehr auf eine Überprüfung.",
+        "decision": "Entscheidung",
+        "by": "Entschieden durch",
+        "on": "Entschieden am",
+        "decisions": {
+          "approved": "Genehmigt",
+          "denied": "Verweigert",
+          "expired": "Abgelaufen"
+        }
+      },
       "cancel request": "Anfrage abbrechen",
-      "cancel confirm": "Möchtest du die Genehmigungsanfrage für Execution <code>{id}</code> wirklich abbrechen? Es wird kein Entscheidungszweig ausgeführt.",
+      "cancel confirm": "Möchtest du die Genehmigungsanfrage für Execution {id} wirklich abbrechen? Es wird kein Entscheidungszweig ausgeführt.",
       "cancel done": "Die Genehmigungsanfrage wurde abgebrochen",
       "banner": {
         "pausing": "Diese Execution bereitet eine Genehmigungsanfrage vor und wird für eine Überprüfung pausieren.",

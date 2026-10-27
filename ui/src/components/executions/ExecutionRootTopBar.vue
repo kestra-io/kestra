@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch, type Component} from "vue"
+    import {computed, type Component} from "vue"
     import {useIsMobile} from "../../composables/useIsMobile"
     import {State, type KsBreadcrumbItem} from "@kestra-io/design-system"
 
@@ -176,16 +176,11 @@
         delete: {component: Delete},
     }
 
-    watch(
-        () => [execution.value?.id, execution.value?.flowRevision, execution.value?.state?.current] as const,
-        ([id, revision, current]) => {
-            const loaded = executionsStore.flow
-            if (id && current === "PAUSED" && (loaded?.id !== execution.value?.flowId || loaded?.namespace !== execution.value?.namespace || loaded?.revision !== revision)) {
-                executionsStore.loadFlowForExecutionByExecutionId({id}).catch(() => undefined)
-            }
-        },
-        {immediate: true},
-    )
+    const executionFlowLoaded = computed(() => {
+        const flow = executionsStore.flow
+        return execution.value !== undefined && flow !== undefined
+            && flow.id === execution.value.flowId && flow.namespace === execution.value.namespace && flow.revision === execution.value.flowRevision
+    })
 
     const pausedOnApproval = computed(() =>
         execution.value !== undefined && findApprovalTaskRun(execution.value, executionsStore.flow, "PAUSED") !== undefined,
@@ -213,7 +208,14 @@
         }
 
         if (State.isPaused(current)) {
+            if (!executionFlowLoaded.value) {
+                return "editFlow"
+            }
             return pausedOnApproval.value ? "review" : "resume"
+        }
+
+        if ((current as string) === State.PAUSING) {
+            return "editFlow"
         }
 
         if (State.isRunning(current)) {
@@ -231,13 +233,29 @@
         return "editFlow"
     })
 
+    function pauseKeys(): ActionKey[] {
+        const current = execution.value?.state?.current
+        if ((current as string) === State.PAUSING) {
+            return []
+        }
+        if (current !== "PAUSED") {
+            return ["pause"]
+        }
+        if (!executionFlowLoaded.value) {
+            return []
+        }
+        if (!pausedOnApproval.value) {
+            return ["resume"]
+        }
+        return ["review", "cancelApproval", ...(pausedBesideApproval.value ? ["resume" as const] : [])]
+    }
+
     const overflowKeys = computed<ActionKey[]>(() => {
-        const isPaused = execution.value?.state?.current === "PAUSED"
         const keys: ActionKey[] = [
             "restart",
             "replay",
             "kill",
-            ...(pausedOnApproval.value ? ["review" as const, "cancelApproval" as const, ...(pausedBesideApproval.value ? ["resume" as const] : [])] : [isPaused ? "resume" as const : "pause" as const]),
+            ...pauseKeys(),
             "resumeFromBreakpoint",
             "unqueue",
             "forceRun",

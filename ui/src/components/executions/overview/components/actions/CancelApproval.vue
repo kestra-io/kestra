@@ -11,7 +11,8 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
+    import {h} from "vue"
+    import {I18nT, useI18n} from "vue-i18n"
     import CancelIcon from "vue-material-design-icons/Cancel.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
     import {useApprovalReviewer} from "../../../../../composables/useApprovalReviewer"
@@ -36,7 +37,10 @@
             return
         }
 
-        toast.confirm(t("approval.cancel confirm", {id: props.execution.id}), async () => {
+        const message = () => h(I18nT, {keypath: "approval.cancel confirm", tag: "span", scope: "global"}, {
+            id: () => h("code", props.execution.id),
+        })
+        toast.confirm(message, async () => {
             await executionsStore.cancelApproval({id: props.execution.id, taskRunId})
             toast.success(t("approval.cancel done"))
         })

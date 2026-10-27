@@ -160,7 +160,6 @@
 
         <KsAlert
             v-if="approvalBanner"
-            class="execution-banner__approval"
             type="info"
             :title="$t(approvalBanner)"
             :closable="false"

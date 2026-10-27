@@ -171,3 +171,8 @@ export function normalize(type: InputType | undefined, value: any) {
     }
     return res
 }
+
+export function hasMissingRequiredInputs(flowInputs: ({id?: string; required?: boolean} | undefined)[] | undefined, values: Record<string, unknown> | null | undefined): boolean {
+    const requiredIds = (flowInputs ?? []).filter(input => input?.required !== false).map(input => input?.id)
+    return requiredIds.some(id => id === undefined || values?.[id] === null || values?.[id] === undefined)
+}

@@ -24,7 +24,8 @@
             <slot name="details" />
         </template>
         <template v-if="execution" #footer>
-            <Duration compact :histories="histories" :execution="taskExecution" />
+            <span v-if="loopRunsLabel" class="loop-runs" data-test="loop-task-runs">{{ loopRunsLabel }}</span>
+            <Duration v-else compact :histories="histories" :execution="taskExecution" />
         </template>
         <template #content>
             <button
@@ -84,7 +85,9 @@
         VALIDATION_ISSUES_INJECTION_KEY,
         FOCUSED_TASK_INJECTION_KEY,
         DRAGGING_NODE_INJECTION_KEY,
+        LOOP_LANES_INJECTION_KEY,
     } from "../injectionKeys"
+    import {loopTaskContext} from "../utils/loopOutcome"
 
     import PlayIcon from "vue-material-design-icons/Play.vue"
 
@@ -191,6 +194,7 @@
     const subflowsExecutions = inject(SUBFLOWS_EXECUTIONS_INJECTION_KEY)
     const lod = inject(LOD_INJECTION_KEY, computed(() => "default"))
     const isDraggingNode = inject(DRAGGING_NODE_INJECTION_KEY, undefined)
+    const loopLanes = inject(LOOP_LANES_INJECTION_KEY, undefined)
 
     function onCardClick() {
         const task = props.data.node.task
@@ -269,6 +273,18 @@
 
         const allStates = taskRuns.value.map((t) => t.state.current)
         return pickWorstState(allStates) ?? allStates[0]
+    })
+
+    const loopContext = computed(() =>
+        loopLanes ? loopTaskContext(props.data.node.uid, Utils.afterLastDot(props.data.node.uid) ?? "", loopLanes.value) : undefined,
+    )
+
+    const loopRunsLabel = computed(() => {
+        const summary = loopContext.value?.summary
+        if (!summary) return ""
+        return summary.failed > 0
+            ? t("topology-graph.loop.task-runs-failed", {runs: summary.runs, failed: summary.failed}, summary.runs)
+            : t("topology-graph.loop.task-runs", {runs: summary.runs}, summary.runs)
     })
 
     const classes = computed(() => ({
@@ -386,6 +402,14 @@ button.playground-button {
 .status-tag__text {
     font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
+}
+
+.loop-runs {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--ks-font-size-2xs);
+    color: var(--ks-text-secondary);
 }
 
 .type-label {

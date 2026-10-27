@@ -152,7 +152,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
         if (value !== undefined) {
             settleNow()
         }
-    }, {flush: "sync", immediate: true})
+    }, {flush: "sync"})
 
     const isRouteSettled = computed(() => !normalizationPending.value)
 

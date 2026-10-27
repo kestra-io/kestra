@@ -69,6 +69,7 @@
                     }"
                     @update-properties="updateDisplayColumns"
                     :defaultScope="defaultScopeFilter"
+                    :defaultDuration="miscStore.configs?.chartDefaultDuration"
                 />
             </template>
 

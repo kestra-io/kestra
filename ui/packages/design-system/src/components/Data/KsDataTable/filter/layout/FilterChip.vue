@@ -27,9 +27,11 @@
             @remove="emit('remove', $event)"
         />
         <KsButton
+            v-if="isRemovable"
             link
             size="small"
             class="close"
+            data-test="filter-chip-remove"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
         />
@@ -84,8 +86,10 @@
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>()
 
+    const isRemovable = computed(() => props.filterKey?.removable !== false)
+
     const onAuxClick = (event: MouseEvent) => {
-        if (event.button !== 1) return
+        if (event.button !== 1 || !isRemovable.value) return
         event.preventDefault()
         event.stopPropagation()
         emit("remove", props.filter.id)

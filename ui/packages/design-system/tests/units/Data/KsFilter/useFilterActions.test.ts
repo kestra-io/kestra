@@ -141,3 +141,34 @@ describe("useFilterActions - clearedValue", () => {
         expect(timeRangeValues(tree)).toEqual(["ALL"])
     })
 })
+
+describe("useFilterActions - non-removable key", () => {
+    const lockedTimeRangeKey = {
+        key: "timeRange",
+        label: "Interval",
+        valueType: "select" as const,
+        comparators: [Comparators.EQUALS] as [Comparators],
+        clearedValue: "PT24H",
+        removable: false,
+    }
+    const timeRangeValues = (tree: ReturnType<typeof setup>["tree"]) =>
+        tree.groups.value.flatMap(g => g.kind === "wrapper" ? [] : g.filters).filter(f => f.key === "timeRange").map(f => f.value)
+
+    test("removeFilter leaves a non-removable chip in place", () => {
+        const {tree, actions} = setup([lockedTimeRangeKey])
+        actions.addFilter(makeFilter({id: "tr", key: "timeRange", comparator: Comparators.EQUALS, value: "PT168H"}))
+
+        actions.removeFilter("tr")
+
+        expect(timeRangeValues(tree)).toEqual(["PT168H"])
+    })
+
+    test("clearFilters resets a non-removable chip to its clearedValue", () => {
+        const {tree, actions} = setup([lockedTimeRangeKey])
+        actions.addFilter(makeFilter({id: "tr", key: "timeRange", comparator: Comparators.EQUALS, value: "PT168H"}))
+
+        actions.clearFilters()
+
+        expect(timeRangeValues(tree)).toEqual(["PT24H"])
+    })
+})

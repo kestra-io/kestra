@@ -1625,7 +1625,7 @@ public class ExecutionService {
      */
     public Execution suspendAtLoopBreakpoint(Execution execution) throws QueueException {
         if (execution.getKind() == ExecutionKind.LOOP) {
-            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.BREAKPOINT, null, null));
+            loopExecutionEventQueue.emit(new LoopExecutionEvent(execution.getLoopRun(), execution.getId(), State.Type.BREAKPOINT, null, null, null, null));
         }
         return execution.withState(State.Type.BREAKPOINT);
     }

@@ -1465,7 +1465,7 @@ public class ExecutorService {
 
                 if (newExecution.getKind() == ExecutionKind.LOOP) {
                     loopExecutionEventQueue.emit(
-                        new LoopExecutionEvent(newExecution.getLoopRun(), newExecution.getId(), State.Type.BREAKPOINT, null, null)
+                        new LoopExecutionEvent(newExecution.getLoopRun(), newExecution.getId(), State.Type.BREAKPOINT, null, null, null, null)
                     );
                 }
             }

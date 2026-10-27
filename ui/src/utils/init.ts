@@ -15,6 +15,8 @@ import createEventsRouter from "./eventsRouter"
 import "./global"
 import {documentationGuard} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
+import {createPosthogVueErrorHandler} from "./posthog"
+import {useMiscStore} from "override/stores/misc"
 
 
 import RouterMd from "../components/utils/RouterMd.vue"
@@ -43,6 +45,7 @@ export default async (
 
     const piniaStore = createPinia()
     app.use(piniaStore)
+    app.config.errorHandler ??= createPosthogVueErrorHandler(() => useMiscStore().configs)
 
     router.beforeEach(documentationGuard)
 

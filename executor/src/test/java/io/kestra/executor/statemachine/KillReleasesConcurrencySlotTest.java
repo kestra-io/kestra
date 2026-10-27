@@ -11,11 +11,14 @@ import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.executor.testkit.Executions;
 import io.kestra.executor.testkit.ExecutorTestHarness;
@@ -23,6 +26,7 @@ import io.kestra.executor.testkit.Flows;
 import io.kestra.executor.testkit.Results;
 import io.kestra.executor.testkit.ScriptedWorker;
 import io.kestra.executor.testkit.Trace;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import static io.kestra.executor.testkit.HarnessAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +46,59 @@ class KillReleasesConcurrencySlotTest {
     void noChildExecutionsToCascadeTheKillTo() {
         doReturn(Flux.empty()).when(harness.executionService()).killSubflowExecutions(any(), any());
         doReturn(List.of()).when(harness.executionService()).killLoopSubExecutions(any(), any());
+    }
+
+    @Test
+    void shouldKeepWorkingDirectoryChildRunningWhileParentLeaseExists() {
+        var child = Flows.log("child");
+        var directory = WorkingDirectory.builder().id("directory").type(WorkingDirectory.class.getName()).tasks(List.of(child)).build();
+        FlowWithSource flow = Flows.of(directory);
+        Execution execution = Executions.created(flow).withState(State.Type.RUNNING).withState(State.Type.KILLING);
+        TaskRun parentRun = TaskRun.of(execution, ResolvedTask.of(directory)).withState(State.Type.RUNNING);
+        TaskRun childRun = TaskRun.of(execution, ResolvedTask.builder().task(child).parentId(parentRun.getId()).build()).withState(State.Type.RUNNING);
+        doReturn(false).when(harness.workerJobRunningStateStore()).existsByKey(childRun.getId());
+
+        var result = harness.process(flow, execution.withTaskRunList(List.of(parentRun, childRun)));
+
+        assertThat(result.getException()).isNull();
+        assertThat(result.getExecution().getState().getCurrent()).isEqualTo(State.Type.KILLING);
+        assertThat(result.getExecution().getTaskRunList())
+            .allMatch(taskRun -> !taskRun.getState().isTerminated());
+    }
+
+    @Test
+    void shouldReleaseSlotAndStartQueuedExecutionWhenKillingRunningTaskWithoutLease() {
+        FlowWithSource flow = singleSlotFlow();
+        Execution slotHolder = Executions.created(flow);
+        Execution queued = Executions.created(flow);
+        harness.run(List.of(slotHolder, queued), task -> new WorkerTaskResult(task.getTaskRun().withState(State.Type.RUNNING)));
+        WorkerTask task = taskDispatchedFor(slotHolder);
+        doReturn(false).when(harness.workerJobRunningStateStore()).existsByKey(task.getTaskRun().getId());
+        assertThat(harness).hasExecutionInState(slotHolder, State.Type.RUNNING).hasQueuedExactly(queued).hasRunning(flow, 1);
+
+        harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
+
+        assertThat(harness.executionStateStore().findByIdWithoutAcl(slotHolder.getId()).getTaskRunList())
+            .allMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.KILLED);
+        assertKilledAndQueueDrained(flow, slotHolder, queued);
+    }
+
+    @Test
+    void shouldWaitForWorkerResultWhenKillingRunningTaskWithLease() {
+        FlowWithSource flow = singleSlotFlow();
+        Execution slotHolder = Executions.created(flow);
+        Execution queued = Executions.created(flow);
+        harness.run(List.of(slotHolder, queued), task -> new WorkerTaskResult(task.getTaskRun().withState(State.Type.RUNNING)));
+
+        harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
+
+        assertThat(harness).hasExecutionInState(slotHolder, State.Type.KILLING).hasQueuedExactly(queued).hasRunning(flow, 1);
+        assertThat(harness.executionStateStore().findByIdWithoutAcl(slotHolder.getId()).getTaskRunList())
+            .allMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING);
+
+        harness.run(List.of(Results.killed(taskDispatchedFor(slotHolder), T0)), ScriptedWorker.succeeding(T0));
+
+        assertKilledAndQueueDrained(flow, slotHolder, queued);
     }
 
     @Test

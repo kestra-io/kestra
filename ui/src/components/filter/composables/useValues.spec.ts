@@ -7,7 +7,8 @@ vi.mock("override/stores/misc", () => ({
 import {useValues} from "./useValues"
 
 describe("useValues EXECUTION_STATES", () => {
-    const {VALUES} = useValues("executions", ((key: string) => key) as any)
+    const t = ((key: string) => key) as unknown as Parameters<typeof useValues>[1]
+    const {VALUES} = useValues("executions", t)
     const states = VALUES.EXECUTION_STATES.map((option: {value: unknown}) => option.value)
 
     it("does not offer ACCEPTED, which only exists on task runs and is rejected by the executions state column", () => {

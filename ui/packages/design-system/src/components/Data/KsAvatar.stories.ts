@@ -23,7 +23,13 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px\"><ks-avatar v-bind=\"args\" /></div>",
     }),
-    args: {src: "https://cube.elemecdn.com/3/7c/3ea0eb2965f53f9570b3a1a9891c3png.png"},
+    args: {
+        src: "https://cube.elemecdn.com/3/7c/3ea0eb2965f53f9570b3a1a9891c3png.png",
+        alt: "User avatar",
+        size: "default",
+        shape: "circle",
+        fit: "cover",
+    },
 }
 
 export const Shapes: Story = {
@@ -36,6 +42,7 @@ export const Shapes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const Sizes: Story = {
@@ -49,6 +56,7 @@ export const Sizes: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Fit container – controls how image fills the avatar area */
@@ -69,6 +77,7 @@ export const FitOptions: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Types – icon, image, and text avatars */
@@ -83,6 +92,7 @@ export const Types: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const WithFallback: Story = {
@@ -94,4 +104,5 @@ export const WithFallback: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

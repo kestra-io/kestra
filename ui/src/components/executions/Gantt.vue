@@ -26,7 +26,7 @@
                     :tableOptions="{
                         chart: {shown: false},
                         columns: {shown: false},
-                        refresh: {shown: true, callback: compute}
+                        refresh: {shown: true, callback: refresh}
                     }"
                     @search="search = $event"
                     @filter="onFilterChange"
@@ -226,6 +226,7 @@
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     import {Duration} from "@kestra-io/topology"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import {
         State,
         Comparators,
@@ -256,6 +257,8 @@
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
     import {useFirstFailure} from "../../composables/useFirstFailure"
     import LoopIterationTree from "./LoopIterationTree.vue"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
+    import {useToast} from "../../utils/toast"
 
     import {storageKeys} from "../../utils/constants"
     type TaskRun = ExecutionTaskRun
@@ -292,6 +295,7 @@
     })
 
     const {t} = useI18n()
+    const toast = useToast()
     const route = useRoute()
     const executionsStore = useExecutionsStore()
     const pluginsStore = usePluginsStore()
@@ -513,6 +517,21 @@
 
     function compute(): void {
         computeSeries()
+    }
+
+    async function refresh(): Promise<void> {
+        const executionId = execution.value?.id
+        if (!executionId) return
+
+        try {
+            await executionsStore.loadExecution({id: executionId})
+            compute()
+        } catch (error) {
+            const httpError = error as KestraHttpError
+            if (httpError.response && httpError.status !== 401 && !isReportedCentrally(httpError)) {
+                toast.error(asProblem(error)?.detail ?? t("error"))
+            }
+        }
     }
 
     function computeSeries(): void {

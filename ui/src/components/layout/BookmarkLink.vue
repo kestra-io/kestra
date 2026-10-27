@@ -18,11 +18,11 @@
             >
                 <span class="bookmark-title">{{ title }}</span>
                 <div class="buttons">
-                    <PencilOutline
+                    <Pencil
                         @click.stop.prevent="startEditBookmark"
                         :title="$t('edit')"
                     />
-                    <DeleteOutline
+                    <Delete
                         @click.prevent="deleteBookmark"
                         :title="$t('delete')"
                     />
@@ -35,8 +35,8 @@
 <script setup lang="ts">
     import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
     import {KsMessageBox} from "@kestra-io/design-system"
     import {useBookmarksStore} from "../../stores/bookmarks"

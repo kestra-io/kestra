@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {dayjs} from "@kestra-io/design-system"
-import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "./inputs"
+import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize, hasMissingRequiredInputs} from "./inputs"
 import {inputsToFormData} from "./submitTask"
 import type {InputMetaData} from "../stores/executions"
 
@@ -295,5 +295,26 @@ describe("inputsToFormData over flattened FORM inputs (submit contract)", () => 
 
         expect(formData?.get("environment.region")).toBe("EU")
         expect(formData?.get("environment.data_center")).toBeNull()
+    })
+})
+
+// https://github.com/kestra-io/kestra/issues/21483: the backfill button stayed disabled whenever an optional input had a value
+describe("hasMissingRequiredInputs", () => {
+    const flowInputs = [{id: "region"}, {id: "batchSize", required: false}]
+
+    it("ignores optional inputs, filled or not", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {region: "EU", batchSize: 100})).toBe(false)
+        expect(hasMissingRequiredInputs(flowInputs, {region: "EU"})).toBe(false)
+    })
+
+    it("reports a required input without a value", () => {
+        expect(hasMissingRequiredInputs(flowInputs, {batchSize: 100})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, {region: null, batchSize: 100})).toBe(true)
+        expect(hasMissingRequiredInputs(flowInputs, null)).toBe(true)
+    })
+
+    it("needs nothing when the flow has no required input", () => {
+        expect(hasMissingRequiredInputs([{id: "batchSize", required: false}], null)).toBe(false)
+        expect(hasMissingRequiredInputs(undefined, null)).toBe(false)
     })
 })

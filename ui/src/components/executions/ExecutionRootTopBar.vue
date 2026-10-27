@@ -25,7 +25,7 @@
                         :namespace="execution.namespace"
                     >
                         <template #button="{execute, disabled}">
-                            <NavBarAction :icon="PlayOutline" :label="$t('execute')" :disabled="disabled" @click="execute" />
+                            <NavBarAction :icon="Play" :label="$t('execute')" :disabled="disabled" @click="execute" />
                         </template>
                     </TriggerFlow>
 
@@ -103,7 +103,7 @@
     import NavBarActions from "../layout/NavBarActions.vue"
     import NavBarActionsDropdown from "../layout/NavBarActionsDropdown.vue"
     import BottomActionBar from "../layout/BottomActionBar.vue"
-    import PlayOutline from "vue-material-design-icons/PlayOutline.vue"
+    import Play from "vue-material-design-icons/Play.vue"
     import TriggerFlow from "../flows/TriggerFlow.vue"
     import Api from "./overview/components/actions/Api.vue"
     import Delete from "./overview/components/actions/Delete.vue"

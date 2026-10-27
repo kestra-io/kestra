@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.annotations.ServerOwned;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.Jackson3ListOrMapOfLabelSerializer;
@@ -42,9 +43,11 @@ public abstract class AbstractFlow implements FlowInterface {
     String namespace;
 
     @Min(value = 1)
+    @ServerOwned
     Integer revision;
 
     @Schema(description = "The timestamp when this revision was created or last updated.")
+    @ServerOwned
     Instant updated;
 
     String description;
@@ -69,6 +72,7 @@ public abstract class AbstractFlow implements FlowInterface {
     @Getter
     @NotNull
     @Builder.Default
+    @ServerOwned
     boolean deleted = false;
 
     @NotNull
@@ -76,6 +80,7 @@ public abstract class AbstractFlow implements FlowInterface {
     @Schema(
         description = "Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly."
     )
+    @ServerOwned
     boolean draft = false;
 
     @Hidden

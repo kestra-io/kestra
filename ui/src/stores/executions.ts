@@ -1,7 +1,7 @@
-import {ref, watch} from "vue"
+import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 import {useRoute, type LocationQuery} from "vue-router"
-import {CLUSTER_PREFIX, throttle} from "@kestra-io/design-system"
+import {CLUSTER_PREFIX, LOG_LEVELS, isDeepEqual, throttle, type LevelFilterValue} from "@kestra-io/design-system"
 import {
     TaskRun,
     useClient,
@@ -14,6 +14,7 @@ import {
     type Level,
     type LogEntry,
     type PagedResultsApiLightExecution,
+    type QueryFilter,
     type StateType,
 } from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
@@ -24,6 +25,7 @@ import * as Utils from "../utils/utils"
 import {Optional} from "../utils/utils"
 import * as ExecutionUtils from "../utils/executionUtils"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
+import {scopedExecutionId} from "../utils/loopScope"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
 import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
@@ -148,12 +150,31 @@ export function normalizeFilePreview(data: FilePreview): FilePreview {
     return {...data, type: "TEXT", content}
 }
 
+/** The level filter the backend applies to the logs it returns, for logs the store already holds. */
+function matchesLevelFilter(level: Level | undefined, filter: LevelFilterValue | undefined): boolean {
+    if (!filter || !level) return true
+    const severity = (value: string) => (LOG_LEVELS as readonly string[]).indexOf(value)
+    switch (filter.direction) {
+    case "min":
+        return severity(level) <= severity(filter.value)
+    case "max":
+        return severity(level) >= severity(filter.value)
+    case "in":
+        return filter.value.split(",").includes(level)
+    case "not_in":
+        return !filter.value.split(",").includes(level)
+    }
+}
+
 export const useExecutionsStore = defineStore("executions", () => {
     const executions = ref<Execution[] | undefined>(undefined)
     const execution = ref<Execution | undefined>(undefined)
     const total = ref<number>(0)
     const logs = ref<LogEntry[]>([])
+    /** Task runs a playground replay reused rather than ran, with the logs they carry over, keyed by the replay's id. */
+    const reusedTaskRuns = ref<Record<string, {taskRunIds: string[]; logs: LogEntry[]}>>({})
     const subflowsExecutions = ref<Record<string, Execution>>({})
+    const scopedIterations = ref<Record<string, Execution>>({})
     /** Lifecycle-step progress plugins report mid-run, read off the follow-logs stream.
      *  Never reset across navigations: a taskRunId is globally unique. */
     const progressEvents = ref<{taskId: string; taskRunId: string; step: string; timestamp: string}[]>([])
@@ -167,6 +188,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         if(!newExecution){
             flowGraph.value = undefined
             flow.value = undefined
+            scopedIterations.value = {}
             taskRunSelections.value.clear()
         }
     })
@@ -399,19 +421,19 @@ export const useExecutionsStore = defineStore("executions", () => {
             kind: options.kind,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             revision: options.revision,
-        }, {timeout: 60 * 60 * 1000}).then(execution => {
+        }, {timeout: 60 * 60 * 1000}).then(exec => {
             useApiStore().posthogEvents({
                 type: "FLOW_EXECUTION",
                 action: "executed",
-                execution_id: execution.id,
-                namespace: execution.namespace,
-                flow_id: execution.flowId,
+                execution_id: exec.id,
+                namespace: exec.namespace,
+                flow_id: exec.flowId,
                 location: executionLocation(route.name?.toString(), options.kind),
-                is_example: isExampleFlow(execution.namespace),
-                revision: execution.flowRevision,
+                is_example: isExampleFlow(exec.namespace),
+                revision: exec.flowRevision,
             })
 
-            return execution
+            return exec
         })
     }
 
@@ -574,10 +596,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // `page` and `size` turn on the endpoint's optional pagination; without them every matching log is returned.
-    const loadLogs = (options: { executionId: string; params?: FilterQuery; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
+    const loadLogs = (options: { executionId: string; filters?: QueryFilter[]; store?: boolean; page?: number; size?: number; sort?: string[] }) => {
         return LogsAPI.listLogsFromExecution({
             executionId: options.executionId,
-            filters: routeQueryToQueryFilters(options.params ?? {}),
+            filters: options.filters ?? [],
             ...(options.page !== undefined ? {page: options.page} : {}),
             ...(options.size !== undefined ? {size: options.size} : {}),
             ...(options.sort !== undefined ? {sort: options.sort} : {}),
@@ -590,11 +612,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
-    const downloadLogs = (options: { executionId: string; params?: FilterQuery }) => {
-        return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})}) as unknown as Promise<string>
+    const downloadLogs = (options: { executionId: string; filters?: QueryFilter[] }) => {
+        return LogsAPI.downloadLogsFromExecution({
+            executionId: options.executionId, 
+            filters: options.filters ?? [],
+        }) 
     }
 
-    const downloadLogsFile = (options: { executionId: string; params?: FilterQuery }) => {
+    const downloadLogsFile = (options: { executionId: string; filters?: QueryFilter[] }) => {
         return downloadLogs(options).then(text => {
             Utils.downloadUrl(
                 window.URL.createObjectURL(new Blob([text])),
@@ -683,6 +708,14 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    const ranTaskIds = computed<Record<string, string[]>>((previous) => {
+        const next: Record<string, string[]> = {}
+        for (const exec of [execution.value, ...Object.values(subflowsExecutions.value), ...Object.values(scopedIterations.value)]) {
+            if (exec?.id) next[exec.id] = [...new Set((exec.taskRunList ?? []).map(taskRun => taskRun.taskId))].sort()
+        }
+        return previous && isDeepEqual(previous, next) ? previous : next
+    })
+
     function isUnused(nodeByUid: Record<string, FlowGraphNode>, nodeUid: string): boolean {
         const nodeToCheck = nodeByUid[nodeUid]
 
@@ -700,26 +733,23 @@ export const useExecutionsStore = defineStore("executions", () => {
             return true
         }
 
-        const nodeExecution = nodeToCheck.executionId === execution.value?.id ? execution.value
-            : Object.values(subflowsExecutions.value).filter(exec => exec.id === nodeToCheck.executionId)?.[0]
-
-        if (!nodeExecution) {
-            return true
-        }
-
-        return !nodeExecution.taskRunList?.some(taskRun => taskRun.taskId === nodeToCheck.task?.id)
+        return !ranTaskIds.value[nodeToCheck.executionId]?.some(taskId => taskId === nodeToCheck.task?.id)
     }
+
+    const subflowPathsOf = (graph: FlowGraph) => graph.clusters
+        ?.map(c => c.cluster)
+        ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
+        ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
+        ?? []
+
+    const insideSubflow = (subflowPaths: string[], nodeUid: string) => subflowPaths.some(subflowPath => nodeUid.startsWith(subflowPath + "."))
 
     /** Visits nodes shallowest first, so a parent is in `nodeByUid` before a child checks whether it is unused. */
     const loadAugmentedGraph = async (options: GraphOptions) => {
         const params = options.params ? options.params : {}
         const graph = await fetchGraph({id: options.id, params})
 
-        const subflowPaths = graph.clusters
-            ?.map(c => c.cluster)
-            ?.filter(cluster => cluster.type.endsWith("SubflowGraphCluster"))
-            ?.map(cluster => cluster.uid.replace(CLUSTER_PREFIX, ""))
-            ?? []
+        const subflowPaths = subflowPathsOf(graph)
         const nodeByUid: Record<string, FlowGraphNode> = {}
 
         graph.nodes
@@ -753,6 +783,44 @@ export const useExecutionsStore = defineStore("executions", () => {
         flowGraph.value = Object.assign({}, graph)
 
         return graph
+    }
+
+    const scopedIterationIds = computed<Record<string, {id: string}>>((previous) => {
+        const next = Object.fromEntries(
+            Object.entries(scopedIterations.value).flatMap(([lane, iteration]) => iteration.id ? [[lane, {id: iteration.id}]] : []),
+        )
+        return previous && isDeepEqual(previous, next) ? previous : next
+    })
+
+    const scopedFlowGraph = computed<FlowGraph | undefined>(() => {
+        const graph = flowGraph.value
+        if (!graph || !Object.keys(scopedIterationIds.value).length) return graph
+
+        const subflowPaths = subflowPathsOf(graph)
+        const nodes = graph.nodes.map(node => {
+            const executionId = scopedExecutionId(node.uid, scopedIterationIds.value, subflowPaths)
+            return executionId ? {...node, executionId} : node
+        })
+        const nodeByUid: Record<string, FlowGraphNode> = Object.fromEntries(nodes.map(node => [node.uid, node]))
+
+        return {
+            ...graph,
+            nodes: nodes.map(node => insideSubflow(subflowPaths, node.uid) || node.task
+                ? node
+                : {...node, unused: isUnused(nodeByUid, node.uid)}),
+            edges: graph.edges.map(edge => ({...edge, unused: isUnused(nodeByUid, edge.target) || isUnused(nodeByUid, edge.source)})),
+        }
+    })
+
+    const graphExecutions = computed<Record<string, Execution>>(() =>
+        Object.fromEntries(
+            [...Object.values(subflowsExecutions.value), ...Object.values(scopedIterations.value)]
+                .flatMap(exec => exec.id ? [[exec.id, exec]] : []),
+        ),
+    )
+
+    const setScopedIterations = (iterations: Record<string, Execution>) => {
+        scopedIterations.value = iterations
     }
 
     const loadNamespaces = () => {
@@ -796,6 +864,23 @@ export const useExecutionsStore = defineStore("executions", () => {
         logs.value = []
     }
 
+    const reusedLogsOf = (executionId: string | undefined, level?: LevelFilterValue): LogEntry[] => {
+        if (!executionId) return []
+        return (reusedTaskRuns.value[executionId]?.logs ?? []).filter(log => matchesLevelFilter(log.level, level))
+    }
+
+    const isReusedTaskRun = (executionId: string | undefined, taskRunId: string): boolean => {
+        return !!executionId && !!reusedTaskRuns.value[executionId]?.taskRunIds.includes(taskRunId)
+    }
+
+    const setReusedTaskRuns = (executionId: string, taskRunIds: string[], logs: LogEntry[]) => {
+        reusedTaskRuns.value = {...reusedTaskRuns.value, [executionId]: {taskRunIds, logs}}
+    }
+
+    const clearReusedTaskRuns = () => {
+        reusedTaskRuns.value = {}
+    }
+
     const appendLogs = (entries: LogEntry[]) => {
         logs.value = logs.value.concat(entries)
     }
@@ -831,6 +916,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         total,
         logs,
         subflowsExecutions,
+        scopedIterations,
+        scopedFlowGraph,
+        graphExecutions,
         progressEvents,
         flow,
         flowGraph,
@@ -898,8 +986,13 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadLatestExecutions,
         addSubflowExecution,
         removeSubflowExecution,
+        setScopedIterations,
         addProgressEvent,
         resetLogs,
+        reusedLogsOf,
+        isReusedTaskRun,
+        setReusedTaskRuns,
+        clearReusedTaskRuns,
         appendLogs,
         appendFollowedLogs,
         getFlowExecutions,

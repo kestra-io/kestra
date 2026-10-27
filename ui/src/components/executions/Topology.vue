@@ -26,8 +26,10 @@
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, onUnmounted, useTemplateRef} from "vue"
     import {stringUtils, State, levelToRequestParams, throttle} from "@kestra-io/design-system"
+    import {isLoopTaskType} from "@kestra-io/topology"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
+    import {deepestEnclosingPath} from "../../utils/loopScope"
     import {useFlowStore} from "../../stores/flow"
 
     withDefaults(defineProps<{
@@ -48,7 +50,7 @@
     defineExpose({focusTask: (taskId: string) => editor.value?.focusTask(taskId)})
 
     const execution = computed(() => executionsStore.execution)
-    const flowGraph = computed(() => executionsStore.flowGraph)
+    const flowGraph = computed(() => executionsStore.scopedFlowGraph)
 
     const loading = ref(true)
     const previousExecutionId = ref<string | undefined>(undefined)
@@ -222,14 +224,18 @@
             return
         }
 
-        let parentExecution: Execution | undefined = execution.value
+        const parentPath = deepestEnclosingPath(subflow, [
+            ...expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + ".")),
+            ...loopUids.value,
+        ])
 
-        const parentSubflows = expandedSubflows.value.filter(expandedSubflow => subflow.includes(expandedSubflow + "."))
-            .sort((s1, s2) => s2.length - s1.length)
-
-        if (parentSubflows.length > 0) {
-            parentExecution = executionsStore.subflowsExecutions[parentSubflows[0]]
+        if (parentPath && loopUids.value.includes(parentPath) && !executionsStore.scopedIterations[parentPath]) {
+            return
         }
+
+        const parentExecution: Execution | undefined = !parentPath
+            ? execution.value
+            : executionsStore.subflowsExecutions[parentPath] ?? executionsStore.scopedIterations[parentPath]
 
         if (!parentExecution) {
             delaySSE(!!generateGraphOnWaiting, subflow)
@@ -264,6 +270,30 @@
             },
         })
     }
+
+    const loopUids = computed(() => (executionsStore.flowGraph?.clusters ?? [])
+        .map(({cluster}) => cluster.taskNode)
+        .filter((taskNode) => taskNode && isLoopTaskType(taskNode.task.type))
+        .map((taskNode) => taskNode!.uid))
+
+    const scopedIterationsKey = computed(() => Object.entries(executionsStore.scopedIterations)
+        .map(([lane, iteration]) => `${lane}=${iteration.id}`)
+        .sort()
+        .join("|"))
+
+    watch(scopedIterationsKey, () => {
+        const subflowsInLoops = expandedSubflows.value.filter(subflow => loopUids.value.some(uid => subflow.startsWith(uid + ".")))
+        if (!subflowsInLoops.length) return
+
+        subflowsInLoops.forEach(subflow => {
+            clearTimeout(sseRetries.get(subflow))
+            sseRetries.delete(subflow)
+            closeSubExecutionSSE(subflow)
+            executionsStore.removeSubflowExecution(subflow)
+        })
+        loadGraph(true)
+        subflowsInLoops.forEach(subflow => addSSE(subflow))
+    })
 
     function closeSubExecutionSSE(subflow: string) {
         const sse = sseBySubflow.value[subflow]

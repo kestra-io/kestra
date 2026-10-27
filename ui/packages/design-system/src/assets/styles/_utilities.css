@@ -42,10 +42,6 @@
     max-height: 100% !important;
 }
 
-.flex-row {
-    flex-direction: row !important;
-}
-
 .flex-column {
     flex-direction: column !important;
 }
@@ -84,10 +80,6 @@
 
 .m-3 {
     margin: 1rem !important;
-}
-
-.m-4 {
-    margin: 1.5rem !important;
 }
 
 .mx-2 {
@@ -149,10 +141,6 @@
     margin-bottom: 1rem !important;
 }
 
-.mb-4 {
-    margin-bottom: 1.5rem !important;
-}
-
 .ms-2 {
     margin-left: 0.5rem !important;
 }
@@ -169,16 +157,6 @@
     padding: 1rem !important;
 }
 
-.px-2 {
-    padding-right: 0.5rem !important;
-    padding-left: 0.5rem !important;
-}
-
-.py-1 {
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
-}
-
 .py-3 {
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
@@ -190,10 +168,6 @@
 
 .pe-2 {
     padding-right: 0.5rem !important;
-}
-
-.pb-1 {
-    padding-bottom: 0.25rem !important;
 }
 
 .gap-1 {
@@ -245,15 +219,9 @@
     color: inherit !important;
 }
 
-.text-warning {
-    color: inherit !important;
-}
+
 
 .text-danger {
-    color: inherit !important;
-}
-
-.text-white {
     color: inherit !important;
 }
 

@@ -41,7 +41,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                             :tooltip="$t('block_editor.delete')"
                             @click.stop="removeItem(index)"
                         >
-                            <DeleteOutline />
+                            <Delete />
                         </KsIconButton>
                     </div>
                 </div>
@@ -142,7 +142,7 @@
                         :tooltip="$t('block_editor.delete')"
                         @click.stop="removeItem(index)"
                     >
-                        <DeleteOutline />
+                        <Delete />
                     </KsIconButton>
                 </KsCol>
             </KsRow>
@@ -155,7 +155,7 @@
 <script setup lang="ts">
     import {computed, inject, provide, ref, watch} from "vue"
 
-    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons"
+    import {Delete, ChevronUp, ChevronDown} from "../../utils/icons"
 
     import {useI18n} from "vue-i18n"
     import Add from "../Add.vue"

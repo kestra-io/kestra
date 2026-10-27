@@ -12,7 +12,7 @@
                 <ChevronRight class="implementation-card-chevron" :class="{'implementation-card-chevron--open': expanded}" />
                 <span class="implementation-card-glyph">
                     <AlertCircleOutline v-if="unresolved" />
-                    <TaskIcon v-else :cls="branch?.ref ?? ''" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" :onlyIcon="true" />
+                    <TaskIcon v-else :cls="branch?.type ?? ''" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" :onlyIcon="true" />
                 </span>
                 <span class="implementation-card-main">
                     <span class="implementation-card-name" data-test="plugin-implementation-item-name">{{ name }}</span>
@@ -34,7 +34,7 @@
                     data-test="plugin-implementation-remove"
                     @click.stop="emit('remove')"
                 >
-                    <DeleteOutline />
+                    <Delete />
                 </KsIconButton>
             </div>
         </div>
@@ -51,7 +51,7 @@
                 <pre class="implementation-card-raw" data-test="plugin-implementation-raw">{{ rawValue }}</pre>
             </template>
             <template v-else-if="branch">
-                <span class="implementation-card-type" data-test="plugin-implementation-type">{{ branch.ref }}</span>
+                <span class="implementation-card-type" data-test="plugin-implementation-type">{{ branch.type }}</span>
                 <TaskObject
                     :schema="branch.definition"
                     :modelValue="modelValue"
@@ -71,15 +71,14 @@
     import {KsAlert, KsButton, KsIconButton} from "@kestra-io/design-system"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import AlertCircleOutline from "vue-material-design-icons/AlertCircleOutline.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import TaskObject from "./TaskObject.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
     import {
+        branchDisplayName,
         findBranchByType,
-        humanizeClassName,
         humanizePropertyKey,
-        simpleClassName,
         summarizeImplementationValue,
         type ImplementationBranch,
     } from "./discriminatedUnion"
@@ -110,14 +109,14 @@
         return typeof type === "string" ? type : undefined
     })
 
-    const branch = computed(() => storedType.value ? findBranchByType(props.branches, storedType.value) : undefined)
+    const branch = computed(() => storedType.value ? findBranchByType(props.branches, storedType.value, props.modelValue) : undefined)
 
     const unresolved = computed(() => storedType.value !== undefined && branch.value === undefined)
 
     const expanded = ref(unresolved.value)
 
     const name = computed(() => branch.value
-        ? humanizeClassName(simpleClassName(branch.value.ref))
+        ? branchDisplayName(branch.value, props.branches)
         : t("block_editor.plugin_implementation.unresolved_name"))
 
     const summaryText = computed(() => {

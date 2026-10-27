@@ -145,6 +145,7 @@
     "update": "Aktualisieren",
     "confirmation": "Bestätigung",
     "toast confirm": "Bist du sicher?",
+    "toast_message_column": "Nachricht",
     "common": {
       "back": "Zurück",
       "openInNewTab": "In neuem Tab öffnen"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "Eine ähnliche Execution von Anfang an erstellen",
     "replay latest revision": "Replay mit neuester Revision",
     "replayed": "Replay der Execution wurde gestartet",
+    "reused_task_run": {
+      "label": "Wiederverwendet",
+      "tooltip": "In dieser Execution nicht erneut ausgeführt. Sie wurde am {date} ausgeführt, und ihre Logs und Outputs stammen von diesem Run."
+    },
     "replay the execution": "Replay der Execution {executionId} für den Flow {flowId}",
     "prefill inputs": "Vorausfüllen",
     "current": "aktuell",
@@ -509,9 +514,68 @@
       "invalid": "Graph-Fehler",
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
       "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
+      "expand_subflow_error": "Subflow konnte nicht erweitert werden",
       "add-task": "Task hinzufügen",
       "add-trigger": "Trigger hinzufügen",
-      "child-count": "{count} Task | {count} Tasks"
+      "child-count": "{count} Task | {count} Tasks",
+      "loop": {
+        "not-run": "Nicht ausgeführt",
+        "pick-first": "Zuerst {loop} wählen",
+        "picker-label": "Iteration von {loop}",
+        "search-by-index": "Nach Index suchen",
+        "all-iterations": "Alle Iterationen",
+        "iteration-index": "Index {index}",
+        "iteration-value-index": "{value} · Index {index}",
+        "previous-iteration": "Vorherige Iteration",
+        "next-iteration": "Nächste Iteration",
+        "previous-page": "Vorherige Seite",
+        "next-page": "Nächste Seite",
+        "failed-group": "Fehlgeschlagen · {count}",
+        "other-group": "Weitere Iterationen",
+        "matching": "Treffer",
+        "failure-forbidden": "Sie haben keinen Zugriff auf diese Iteration.",
+        "failure-not-found": "Diese Iteration existiert nicht mehr.",
+        "failure-ambiguous": "Diese Schleife wurde in dieser Ausführung mehrfach ausgeführt, daher lassen sich ihre Iterationen nicht unterscheiden.",
+        "failure-not-located": "Die fehlgeschlagene Iteration konnte nicht gefunden werden.",
+        "failure-unknown": "Die Iterationen konnten nicht geladen werden.",
+        "scope": "Bereich",
+        "whole-execution": "Gesamte Ausführung",
+        "clear-scopes": "Bereiche zurücksetzen",
+        "jump-to-first-failure": "Zum ersten Fehler springen",
+        "loops-with-failures": "Schleifen mit Fehlern",
+        "task-runs": "{runs} Lauf | {runs} Läufe",
+        "task-runs-failed": "{runs} Lauf · {failed} fehlgeschlagen | {runs} Läufe · {failed} fehlgeschlagen",
+        "retry": "Wiederholen",
+        "load-more": "Mehr laden",
+        "retry-loading": "Laden der Iterationen wiederholen"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} von {total} fehlgeschlagen",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} fehlgeschlagen · {notStarted} nicht gestartet von {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} von {total} abgeschlossen",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} von {total} abgeschlossen · {failed} fehlgeschlagen",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} Iteration | {total} Iterationen",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "Revision {revision}",
       "attempts": "{count} Versuch | {count} Versuche",
-      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
+      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks",
+      "searchable_values": "Durchsuchbare Werte",
+      "more_searchable_values": "+{count} weitere durchsuchbare Werte"
     },
     "execution_mobile": {
       "failed_task": "Fehlgeschlagene Task",
@@ -547,7 +613,9 @@
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Gesamte Execution-Dauer (in Minuten)",
-    "last 48 hours": "letzte 48 Stunden",
+    "task runs": "Task Runs",
+    "task runs duration (in minutes)": "Gesamtdauer der Task Runs (in Minuten)",
+    "last 24 hours": "letzte 24 Stunden",
     "email": "E-Mail",
     "password": "Passwort",
     "confirm password": "Passwort bestätigen",
@@ -562,11 +630,21 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variablen",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Kein Task dieses Flows stellt ein Artifact bereit.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "keine Artifacts | {count} Artifact | {count} Artifacts",
+      "tasks": "keine Tasks | {count} Task | {count} Tasks",
+      "fullscreen": "Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
+    },
     "variable_explorer": {
       "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder Value suchen…",
       "tasks_outputs": "Task-Outputs",
       "expression": "Expression",
+      "searchable": "Durchsuchbar",
       "tree": "Baum",
       "raw_json": "Rohes JSON",
       "select_prompt": "Wähle eine Variable aus, um ihren Wert anzuzeigen.",
@@ -1759,7 +1837,18 @@
       "compact": "Standardansicht",
       "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
       "fullscreen": "Logs im Vollbild",
-      "exit_fullscreen": "Vollbild verlassen"
+      "exit_fullscreen": "Vollbild verlassen",
+      "loop": {
+        "this-execution": "Diese Ausführung",
+        "with-iterations": "Mit Loop-Iterationen",
+        "batch-range": "Fehlgeschlagene Iterationen {from}–{to} von {total}",
+        "empty-title": "Keine passenden Logs",
+        "empty-description": "Kein Log entspricht der gewählten Stufe in dieser Ausführung oder ihren fehlgeschlagenen Loop-Iterationen. Senke die Stufe, um mehr zu sehen.",
+        "scope-to": "Graph und Logs auf {scope} eingrenzen",
+        "show-in-overview": "In der Übersicht anzeigen",
+        "show-in-overview-for": "{scope} in der Übersicht anzeigen",
+        "mode-label": "Log-Quelle"
+      }
     },
     "execution_deletion": {
       "logs": "Logs löschen",
@@ -2130,11 +2219,8 @@
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
       "viewAll": "Alle anzeigen",
-      "export": "Exportieren",
-      "exportEmpty": "Dieses Diagramm hat keine Daten zum Exportieren.",
       "exportTo": {
-        "csv": "Als CSV exportieren",
-        "ion": "Als ION exportieren"
+        "csv": "Als CSV exportieren"
       },
       "ignoredFilters": "Der Filter {filters} gilt nicht für dieses Diagramm. | Die Filter {filters} gelten nicht für dieses Diagramm.",
       "show_all_statuses": "Alle Status anzeigen",

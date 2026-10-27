@@ -68,4 +68,11 @@ describe("KsBadge", () => {
         expect(root.classes()).toContain("count")
         expect(root.classes()).toContain("kel-badge--inline")
     })
+
+    test("renders neutral with its own class instead of passing the type to Element Plus", () => {
+        const wrapper = mount(KsBadge, {props: {value: "12", type: "neutral", inline: true}, global: globalConfig})
+
+        expect(wrapper.find(".kel-badge").classes()).toContain("ks-badge--neutral")
+        expect(wrapper.find(".kel-badge__content--neutral").exists()).toBe(false)
+    })
 })

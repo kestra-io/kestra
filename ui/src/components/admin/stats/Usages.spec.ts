@@ -105,12 +105,12 @@ describe("Usages", () => {
     })
 
     it("shouldDropAStaleResponseWhenThePeriodChangedAgainBeforeItLanded", async () => {
-        const withExecutions = (count: number) => ({executions: {dailyExecutionsCount: [{...day, duration: {count, sum: "PT1M"}}]}})
+        const withExecutions = (count: number) => ({executions: {dailyExecutionsCount: [dayStartingAgo(0, count)]}})
         let resolveSlow: (value: object) => void = () => undefined
         const wrapper = i18nMount(Usages, {messages, global: {plugins: [routedPinia()]}})
         const loadAllUsages = vi.spyOn(useMiscStore(), "loadAllUsages")
             .mockImplementationOnce(() => new Promise((resolve) => { resolveSlow = resolve }))
-            .mockResolvedValueOnce(withExecutions(2))
+            .mockResolvedValueOnce(withExecutions(2) as never)
         await flushPromises()
 
         await wrapper.setProps({period: 30})

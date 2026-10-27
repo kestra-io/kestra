@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import java.util.Locale;
 
 /**
  * A version class which supports the following pattern :
@@ -271,12 +272,12 @@ public class Version implements Comparable<Version> {
             return compareMajor;
         }
 
-        int compareMinor = Integer.compare(that.minorVersion, this.minorVersion);
+        int compareMinor = Integer.compare(that.minorVersion(), this.minorVersion());
         if (compareMinor != 0) {
             return compareMinor;
         }
 
-        int compareIncremental = Integer.compare(that.patchVersion, this.patchVersion);
+        int compareIncremental = Integer.compare(that.patchVersion(), this.patchVersion());
         if (compareIncremental != 0) {
             return compareIncremental;
         }
@@ -365,7 +366,7 @@ public class Version implements Comparable<Version> {
          */
         @Override
         public int hashCode() {
-            return Objects.hash(qualifier);
+            return Objects.hash(qualifier.toLowerCase(Locale.ROOT));
         }
 
         /**

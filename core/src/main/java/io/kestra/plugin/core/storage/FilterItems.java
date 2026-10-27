@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -208,9 +207,10 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
 
         /** {@inheritDoc} */
         @Override
+        @SuppressWarnings("unchecked")
         public Boolean apply(String data) throws Exception {
             try {
-                String rendered = extract(MAPPER.readTree(data));
+                String rendered = extract(MAPPER.readValue(data, Map.class));
                 return rendered == null ? null : TruthUtils.isTruthy(rendered.trim());
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
@@ -228,10 +228,8 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
             this.expression = expression;
         }
 
-        public String extract(final JsonNode jsonNode) throws Exception {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = MAPPER.convertValue(jsonNode, Map.class);
-            return runContext.render(expression, map);
+        public String extract(final Map<String, Object> item) throws Exception {
+            return runContext.render(expression, item);
         }
     }
 

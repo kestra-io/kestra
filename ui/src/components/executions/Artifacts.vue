@@ -25,7 +25,7 @@
                     :selected="artifact.key === selected?.key"
                     inset
                     :data-test="`execution-artifact-${artifact.key}`"
-                    @click="selectedKey = artifact.key"
+                    @click="selectArtifact(artifact.key)"
                 >
                     <template #leading><KsIcon><FileDocumentOutline /></KsIcon></template>
                 </KsSelectableListItem>
@@ -45,10 +45,27 @@
             <section class="artifacts-viewer" data-test="execution-artifact-viewer">
                 <header class="artifacts-viewer-header">
                     <span class="artifacts-task-icon artifacts-task-icon-large"><TaskIcon :cls="selected.cls" :icons="pluginsStore.icons" :loadIcon="pluginsStore.loadIcon" onlyIcon /></span>
-                    <div>
+                    <div class="artifacts-viewer-title">
                         <KsText tag="strong">{{ selected.title }}</KsText>
                         <KsText size="small" class="muted">{{ selected.taskId }}</KsText>
                     </div>
+                    <KsSelect
+                        v-if="selectedRuns.length > 1"
+                        :modelValue="selectedRun?.id"
+                        size="small"
+                        class="artifacts-iteration-select"
+                        data-test="execution-artifact-iteration-select"
+                        :aria-label="$t('iteration')"
+                        @update:modelValue="onSelectIteration(String($event))"
+                    >
+                        <KsOption
+                            v-for="opt in iterationOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                            :label="opt.label"
+                            :data-test="`execution-artifact-iteration-${opt.value}`"
+                        />
+                    </KsSelect>
                     <KsSegmented
                         v-if="siblings.length > 1"
                         :modelValue="selected.key"
@@ -71,7 +88,7 @@
                 <div class="artifacts-viewer-body">
                     <RemoteComponent
                         v-if="hasResolvedComponent(selected.taskType)"
-                        :key="selected.key"
+                        :key="`${selected.key}:${selectedRun?.id ?? ''}`"
                         :taskType="selected.taskType"
                         :task="selectedTask"
                         :execution="execution"
@@ -96,7 +113,7 @@
     import {useI18n} from "vue-i18n"
     import type {PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-    import {KsAlert, KsDialog, KsEmpty, KsIcon, KsIconButton, KsSegmented, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import {KsAlert, KsDialog, KsEmpty, KsIcon, KsIconButton, KsOption, KsSegmented, KsSelect, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
@@ -105,6 +122,7 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
     import {EXECUTION_ARTIFACTS_KEY, type ExecutionArtifact} from "./composables/useExecutionArtifacts"
+    import {capForDisplay} from "../../utils/utils"
 
     const {afterLastDot} = stringUtils
 
@@ -143,9 +161,20 @@
         : inlineViewerTarget.value)
     const fullscreenLabel = computed(() => t(fullscreenOpen.value ? "execution_artifacts.exit_fullscreen" : "execution_artifacts.fullscreen"))
 
+    const selectArtifact = (key: string) => {
+        const target = artifacts.value.find((a) => a.key === key)
+        const nextQuery: Record<string, string | undefined> = {...route.query, artifact: key}
+        if (target && target.taskId !== selected.value?.taskId) {
+            delete nextQuery.iteration
+        }
+        router.replace({query: nextQuery})
+    }
+
     const selectedKey = computed({
         get: () => typeof route.query.artifact === "string" ? route.query.artifact : undefined,
-        set: (key) => router.replace({query: {...route.query, artifact: key}}),
+        set: (key) => {
+            if (key) selectArtifact(key)
+        },
     })
     const selected = computed(() => artifacts.value.find((a) => a.key === selectedKey.value) ?? artifacts.value[0])
     const siblings = computed(() => artifacts.value.filter((a) => a.taskId === selected.value?.taskId))
@@ -153,6 +182,41 @@
     const selectedTask = computed(() => tasks.value.find((task) => task.id === selected.value?.taskId))
 
     const runsOf = (taskId: string) => execution.value?.taskRunList?.filter((run) => run.taskId === taskId) ?? []
+
+    const selectedRuns = computed(() => selected.value ? runsOf(selected.value.taskId) : [])
+
+    const selectedRun = computed(() => {
+        const runs = selectedRuns.value
+        if (!runs.length) return undefined
+        const param = typeof route.query.iteration === "string" ? route.query.iteration : undefined
+        if (param) {
+            const match = runs.find((r, idx) =>
+                r.id === param ||
+                (r.iteration !== undefined && String(r.iteration) === param) ||
+                String(idx + 1) === param ||
+                (r.value !== undefined && String(r.value) === param),
+            )
+            if (match) return match
+        }
+        return runs.at(-1)
+    })
+
+    const onSelectIteration = (taskRunId: string) => {
+        router.replace({query: {...route.query, iteration: taskRunId}})
+    }
+
+    const iterationLabel = (run: {id?: string; value?: unknown; iteration?: number}, index: number) => {
+        if (run.value !== undefined && run.value !== null && String(run.value).trim() !== "") {
+            return capForDisplay(String(run.value))
+        }
+        const num = run.iteration !== undefined ? run.iteration : index + 1
+        return t("iteration_number", {number: num})
+    }
+
+    const iterationOptions = computed(() => selectedRuns.value.map((run, index) => ({
+        label: iterationLabel(run, index),
+        value: run.id,
+    })))
 
     // A task inside a loop runs once per iteration: the header shows the total, the viewer reads the latest run.
     const durations = computed(() => Object.fromEntries(groups.value.flatMap(({taskId}) => {
@@ -162,17 +226,18 @@
 
     // Resolved when called, so an artifact opened on a still-running execution reads the latest run.
     const fetchOutputs = (taskId: string) => ({taskRunId}: {taskRunId?: string} = {}) => {
-        const runId = taskRunId ?? runsOf(taskId).at(-1)?.id
+        const runId = taskRunId ?? (selected.value?.taskId === taskId ? selectedRun.value?.id : undefined) ?? runsOf(taskId).at(-1)?.id
         return execution.value?.id && runId ? loadTaskRunOutputs(execution.value.id, runId) : Promise.resolve({})
     }
 
     const fetchMetrics = (taskId: string) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
         const executionId = execution.value?.id
         if (!executionId) return Promise.resolve({results: [], total: 0})
+        const runId = taskRunId ?? (selected.value?.taskId === taskId ? selectedRun.value?.id : undefined) ?? runsOf(taskId).at(-1)?.id
         return MetricsAPI.searchByExecution({
             executionId,
             taskId,
-            taskRunId,
+            taskRunId: runId,
             page,
             size,
             sort: sort ? [sort] : undefined,
@@ -181,16 +246,19 @@
 
     const fetchEndpoint = (task: {id: string, type: string}) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
         const executionId = execution.value?.id
-        const runId = taskRunId ?? runsOf(task.id).at(-1)?.id
+        const runId = taskRunId ?? (selected.value?.taskId === task.id ? selectedRun.value?.id : undefined) ?? runsOf(task.id).at(-1)?.id
         if (!executionId || !runId) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
         return callTaskRunEndpoint(task.type, name, executionId, runId, params)
     }
 
     // Built once per selection: a plugin watching these props must not reload on every execution update.
-    const selectedFetchers = computed(() => selected.value && {
-        fetchOutputs: fetchOutputs(selected.value.taskId),
-        fetchMetrics: fetchMetrics(selected.value.taskId),
-        fetchEndpoint: fetchEndpoint({id: selected.value.taskId, type: selected.value.cls}),
+    const selectedFetchers = computed(() => {
+        if (!selected.value) return undefined
+        return {
+            fetchOutputs: fetchOutputs(selected.value.taskId),
+            fetchMetrics: fetchMetrics(selected.value.taskId),
+            fetchEndpoint: fetchEndpoint({id: selected.value.taskId, type: selected.value.cls}),
+        }
     })
 
     const subtitles = ref<Record<string, string | undefined>>({})
@@ -209,7 +277,7 @@
 
         for (const artifact of artifacts.value) {
             const resolve = subtitleResolvers[artifact.taskType] as ((ctx: unknown) => unknown) | undefined
-            const task = tasks.value.find((t) => t.id === artifact.taskId)
+            const task = tasks.value.find((candidate) => candidate.id === artifact.taskId)
             if (!resolve || !task) continue
             const sequence = (subtitleSequences.get(artifact.key) ?? 0) + 1
             subtitleSequences.set(artifact.key, sequence)
@@ -259,10 +327,6 @@
         margin-left: auto;
     }
 
-    .artifacts-switch {
-        margin-left: auto;
-    }
-
     .muted {
         color: var(--ks-text-secondary);
     }
@@ -308,11 +372,17 @@
         gap: var(--ks-spacing-3);
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
+    }
 
-        & > div {
-            display: flex;
-            flex-direction: column;
-        }
+    .artifacts-viewer-title {
+        display: flex;
+        flex-direction: column;
+        margin-right: auto;
+    }
+
+    .artifacts-iteration-select {
+        min-width: 9rem;
+        max-width: 14rem;
     }
 
     .artifacts-viewer-body {

@@ -227,11 +227,21 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
         // With a key, seek strictly after the (timestamp, key) row; without one (first run or a legacy date-only
         // offset), fall back to a strict timestamp lower bound (which matches the previous START_DATE behaviour).
+        // The row's timestamp is read back from the table: the column can be less precise than the log's own
+        // timestamp (milliseconds on H2), and seeking from the log's would skip the rest of that millisecond.
         Field<OffsetDateTime> dateField = field(DATE_COLUMN, OffsetDateTime.class);
         OffsetDateTime after = afterTimestamp.atOffset(ZoneOffset.UTC);
         Condition seek = afterKey == null
             ? dateField.gt(after)
-            : DSL.row(dateField, KEY_FIELD).gt(DSL.row(DSL.val(after), DSL.val(afterKey)));
+            : DSL.row(dateField, KEY_FIELD).gt(
+                DSL.row(
+                    DSL.coalesce(
+                        DSL.field(DSL.select(dateField).from(this.jdbcRepository.getTable()).where(KEY_FIELD.eq(afterKey))),
+                        DSL.val(after)
+                    ),
+                    DSL.val(afterKey)
+                )
+            );
 
         final Condition finalCondition = condition;
         return this.jdbcRepository.getDslContextWrapper().transactionResult(

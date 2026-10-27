@@ -1,7 +1,7 @@
 import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import {useMiscStore} from "override/stores/misc"
-import {FALLBACK_TIME_RANGE} from "../../executions/timeRangeWiden"
+import {defaultTimeRange} from "../../executions/timeRangeWiden"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {labelComparatorLabels} from "./labelComparatorLabels"
@@ -71,7 +71,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueType: "select",
                     groupable: false,
                     removable: false,
-                    clearedValue: miscStore.configs?.chartDefaultDuration ?? FALLBACK_TIME_RANGE,
+                    clearedValue: defaultTimeRange(miscStore.configs?.chartDefaultDuration),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions")
                         return VALUES.RELATIVE_DATE_OR_ALL_TIME

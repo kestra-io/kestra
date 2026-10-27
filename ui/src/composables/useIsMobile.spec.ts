@@ -1,4 +1,3 @@
-
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {MOBILE_QUERY, useIsMobile} from "./useIsMobile"
 

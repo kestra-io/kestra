@@ -64,6 +64,17 @@
             </KsTooltip>
         </div>
 
+        <TaskRunEditedDefinition
+            v-if="currentTaskRun.definitionEdit"
+            :executionId="followedExecution.id"
+            :namespace="followedExecution.namespace"
+            :flowId="followedExecution.flowId"
+            :revision="followedExecution.flowRevision"
+            :taskRunId="currentTaskRun.id"
+            :taskId="currentTaskRun.taskId"
+            :edit="currentTaskRun.definitionEdit"
+        />
+
         <div class="task-status">
             <KsExecutionStatus
                 size="small"
@@ -125,6 +136,7 @@
     import {State, KsExecutionStatus, groupBy} from "@kestra-io/design-system"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import TaskRunActions from "./TaskRunActions.vue"
+    import TaskRunEditedDefinition from "./TaskRunEditedDefinition.vue"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import Clock from "vue-material-design-icons/Clock.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"

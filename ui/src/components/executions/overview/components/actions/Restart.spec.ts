@@ -114,6 +114,7 @@ describe("Restart (replay revision check)", () => {
         executionsStore.loadFlowForExecution = vi.fn().mockResolvedValue({inputs: []})
         executionsStore.validateReplay = vi.fn(validateReplay) as typeof executionsStore.validateReplay
         executionsStore.replayExecution = vi.fn().mockResolvedValue({id: "replayed", namespace: "tests", flowId: "flow1"}) as typeof executionsStore.replayExecution
+        flowStore.loadFlow = vi.fn().mockResolvedValue({source: ""}) as typeof flowStore.loadFlow
 
         const wrapper = mount(Restart, {
             props: {
@@ -182,5 +183,70 @@ describe("Restart (replay revision check)", () => {
         expect(executionsStore.validateReplay).not.toHaveBeenCalled()
         expect(wrapper.find("[data-test='replay-check-valid']").exists()).toBe(false)
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
+    })
+})
+
+describe("Restart (replay on an edited task definition)", () => {
+    const taskRun = {id: "tr1", taskId: "adjust", attempts: [{}]}
+    const source = "id: flow1\nnamespace: tests\ntasks:\n  - id: adjust\n    type: io.kestra.plugin.core.log.Log\n    message: before\n"
+    const KsEditorStub = {
+        props: ["modelValue"],
+        emits: ["update:modelValue"],
+        template: "<textarea :value='modelValue' @input=\"$emit('update:modelValue', $event.target.value)\" />",
+    }
+
+    async function openReplayDialog() {
+        setActivePinia(createPinia())
+        const executionsStore = useExecutionsStore()
+        const flowStore = useFlowStore()
+        flowStore.revisions = [{revision: 1}, {revision: 2}] as typeof flowStore.revisions
+        flowStore.loadRevisions = vi.fn()
+        flowStore.loadFlow = vi.fn().mockResolvedValue({source}) as typeof flowStore.loadFlow
+        executionsStore.loadFlowForExecution = vi.fn().mockResolvedValue({inputs: []})
+        executionsStore.validateReplay = vi.fn().mockResolvedValue(undefined) as typeof executionsStore.validateReplay
+        executionsStore.replayExecutionWithEditedTask = vi.fn().mockResolvedValue({id: "replayed", namespace: "tests", flowId: "flow1"}) as typeof executionsStore.replayExecutionWithEditedTask
+
+        const wrapper = mount(Restart, {
+            props: {
+                isReplay: true,
+                taskRun,
+                attemptIndex: 0,
+                execution: {id: "exec1", namespace: "tests", flowId: "flow1", flowRevision: 1, state: {current: "FAILED"}},
+            },
+            global: {
+                plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: en}), KestraDesignSystem],
+                stubs: {KsDialog: {template: "<div><slot /><slot name='footer' /></div>"}, KsEditor: KsEditorStub},
+            },
+        })
+        mounted.push(wrapper)
+
+        await wrapper.find("button").trigger("click")
+        await vi.waitFor(() => expect(flowStore.loadFlow).toHaveBeenCalled())
+        await nextTick()
+        await wrapper.find("[data-test='replay-task-editor-toggle'] input").setValue(true)
+
+        return {wrapper, executionsStore}
+    }
+
+    it("shouldReplayOnTheEditedDefinitionOfTheTask", async () => {
+        const {wrapper, executionsStore} = await openReplayDialog()
+        const edited = "id: adjust\ntype: io.kestra.plugin.core.log.Log\nmessage: after\n"
+
+        expect(wrapper.find("[data-test='replay-task-editor-yaml']").element).toHaveProperty("value", expect.stringContaining("message: before"))
+        await wrapper.find("[data-test='replay-task-editor-yaml']").setValue(edited)
+
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay on edited definition")
+        await wrapper.find("[data-test='replay-confirm']").trigger("click")
+
+        expect(executionsStore.replayExecutionWithEditedTask).toHaveBeenCalledWith({executionId: "exec1", taskRunId: "tr1", definition: edited})
+    })
+
+    it("shouldBlockTheReplayWhenTheEditChangesTheTaskType", async () => {
+        const {wrapper} = await openReplayDialog()
+
+        await wrapper.find("[data-test='replay-task-editor-yaml']").setValue("id: adjust\ntype: io.kestra.plugin.core.debug.Return\n")
+
+        expect(wrapper.find("[data-test='replay-task-editor-invalid']").text()).toBe("Keep the id and the type of the task.")
+        expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeDefined()
     })
 })

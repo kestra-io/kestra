@@ -454,6 +454,22 @@
         "confirm_from_task": "Replay from task",
         "confirm_whole": "Replay whole execution"
     },
+    "replayEditedTask": {
+        "toggle": "Edit the definition of {taskId} for this replay",
+        "description": "Only this replay runs on it: the flow keeps its revision, and the id, the type and the nested tasks cannot change.",
+        "load_error": "Could not load the definition of task {taskId} from this revision.",
+        "confirm": "Replay on edited definition",
+        "other_revision": "A definition can only be edited on the original flow revision.",
+        "error": {
+            "yaml": "Enter valid YAML.",
+            "identity": "Keep the id and the type of the task."
+        },
+        "recorded": "Edited definition",
+        "recorded_title": "Definition of {taskId} edited for this replay",
+        "recorded_by": "Edited by {user} on {date}",
+        "recorded_on": "Edited on {date}",
+        "recorded_hidden": "Reading the edited definition takes the permission to view the flow."
+    },
     "change execution state done": "Execution state updated",
     "mark as": "Mark as {status}",
     "unqueue as": "Unqueue as {status}",

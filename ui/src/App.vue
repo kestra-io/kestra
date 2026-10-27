@@ -21,8 +21,9 @@
 </template>
 
 <script lang="ts" setup>
-    import "./styles/vendor.scss"
-    import "./styles/app.scss"
+    import "./styles/vendor.css"
+    import "@kestra-io/design-system/src/assets/styles/index.scss"
+    import "./styles/app.css"
 
     import {ref, computed, watch, onMounted, provide, defineAsyncComponent} from "vue"
     import {useRoute} from "vue-router"

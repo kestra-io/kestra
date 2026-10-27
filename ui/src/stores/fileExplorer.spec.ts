@@ -103,6 +103,7 @@ describe("fileExplorer store", () => {
 
     it("should finish the root load and not reject when the directory read fails", async () => {
         const filesStore = store()
+        const error = vi.spyOn(console, "error").mockImplementation(() => {})
         readDirectory.mockRejectedValueOnce(Object.assign(new Error("Directory not found"), {status: 404}))
 
         // Must not reject: loadNodes is called fire-and-forget, so a throw becomes an unhandled rejection.
@@ -110,6 +111,8 @@ describe("fileExplorer store", () => {
 
         // rootLoaded must flip true, otherwise NamespaceFilesEditorView spins forever over the whole browser.
         expect(filesStore.rootLoaded).toBe(true)
+        expect(error).toHaveBeenCalledOnce()
+        error.mockRestore()
     })
 
     it("should clear the tree when the root load fails so a stale namespace's files are not shown", async () => {
@@ -121,9 +124,11 @@ describe("fileExplorer store", () => {
         // The store is a singleton across navigation: a failed load must not leave the previous
         // namespace's files rendered as the new one's.
         readDirectory.mockRejectedValueOnce(Object.assign(new Error("boom"), {status: 500}))
+        const error = vi.spyOn(console, "error").mockImplementation(() => {})
         await filesStore.loadNodes()
 
         expect(filesStore.fileTree).toEqual([])
+        error.mockRestore()
     })
 
     it("should resolve a failed sub-folder expansion as empty rather than leaving it stuck loading", async () => {

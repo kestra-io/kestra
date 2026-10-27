@@ -224,12 +224,17 @@
             })
     }
 
+    // The prompt only needs the first errors, so an execution with thousands of them is not downloaded whole.
+    const FIX_WITH_AI_LOG_LIMIT = 100
+
     const fixErrorWithAi = async () => {
         const logs = await executionsStore
             .loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {minLevel: "ERROR"},
+                filters: [{field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"}],
+                page: 1,
+                size: FIX_WITH_AI_LOG_LIMIT,
             })
             .catch((e: unknown) => {
                 handledIf(e, [403, 404])

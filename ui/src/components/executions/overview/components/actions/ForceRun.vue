@@ -14,13 +14,13 @@
         :appendToBody="true"
     >
         <template #header>
-            <i18n-t keypath="force run title" tag="span">
+            <i18n-t keypath="force run title" tag="span" scope="global">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
         </template>
         <template #footer>
             <KsButton
-                :icon="QueueFirstInLastOut"
+                :icon="RunFast"
                 type="primary"
                 @click="forceRun()"
                 nativeType="submit"
@@ -44,7 +44,6 @@
 
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
 
     const props = defineProps<{
         execution: Execution;

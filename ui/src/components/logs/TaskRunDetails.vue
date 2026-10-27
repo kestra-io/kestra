@@ -309,6 +309,7 @@
     import type {FlowForExecution, LogEntry, TaskRunAttempt} from "@kestra-io/kestra-sdk"
     import * as ExecutionsSDK from "@kestra-io/kestra-sdk/executions"
     import {handledIf} from "../../utils/kestraHttp"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
 
     // Recursive component - self reference
     import TaskRunDetails from "./TaskRunDetails.vue"
@@ -1174,7 +1175,7 @@
         executionsStore
             .loadLogs({
                 executionId: id,
-                params: p,
+                filters: routeQueryToQueryFilters(p),
             })
             .then((logs) => {
                 // A response for an execution the view has since left would overwrite the current one's logs.
@@ -1384,7 +1385,6 @@
 
   .loop-progress {
     display: flex;
-    align-items: top;
     gap: var(--ks-spacing-3);
     margin-block: var(--ks-spacing-3);
   }

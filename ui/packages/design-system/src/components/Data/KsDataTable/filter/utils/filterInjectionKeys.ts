@@ -27,7 +27,7 @@ export interface FilterContext {
         tableOptions?: {shown?: boolean};
     }>;
 
-    refreshData: () => void;
+    refreshData: () => void | Promise<unknown>;
     closeEditFilter: () => void;
     removeFilter: (id: string) => void;
     updateChart: (value: boolean) => void;

@@ -380,7 +380,7 @@ If your `<style>` block needs to exist:
 | `KsButton` / `KsButtonGroup` | Primary action button and grouped buttons; `--ks-button-content-width` stretches the content (default `auto`); `block` stretches the button to its container's width |
 | `KsIcon` / `KsIconButton` | Material Design icon display; icon-only button (always with `aria-label`) |
 | `KsLink` | Styled hyperlink |
-| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text |
+| `KsText` | Typography wrapper — preferred over raw `<span>` / `<p>` for theme-aware text; `type="secondary"` for muted text |
 | `KsScrollbar` | Custom-styled scrollbar wrapper |
 | `KsContainer` / `KsHeader` / `KsMain` | Page layout shell |
 | `KsRow` / `KsCol` | Responsive grid |

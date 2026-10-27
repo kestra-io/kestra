@@ -145,6 +145,7 @@
     "update": "Aggiorna",
     "confirmation": "Conferma",
     "toast confirm": "Sei sicuro?",
+    "toast_message_column": "Messaggio",
     "common": {
       "back": "Indietro",
       "openInNewTab": "Apri in una nuova scheda"
@@ -513,9 +514,68 @@
       "invalid": "Errore del grafico",
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
       "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
+      "expand_subflow_error": "Impossibile espandere il subflow",
       "add-task": "Aggiungi task",
       "add-trigger": "Aggiungi trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Non eseguito",
+        "pick-first": "Scegli prima {loop}",
+        "picker-label": "Iterazione di {loop}",
+        "search-by-index": "Cerca per indice",
+        "all-iterations": "Tutte le iterazioni",
+        "iteration-index": "indice {index}",
+        "iteration-value-index": "{value} · indice {index}",
+        "previous-iteration": "Iterazione precedente",
+        "next-iteration": "Iterazione successiva",
+        "previous-page": "Pagina precedente",
+        "next-page": "Pagina successiva",
+        "failed-group": "Fallite · {count}",
+        "other-group": "Altre iterazioni",
+        "matching": "Corrispondenza",
+        "failure-forbidden": "Non hai accesso a questa iterazione.",
+        "failure-not-found": "Questa iterazione non esiste più.",
+        "failure-ambiguous": "Questo ciclo è stato eseguito più volte in questa esecuzione, quindi le sue iterazioni non sono distinguibili.",
+        "failure-not-located": "Impossibile individuare l'iterazione con errore.",
+        "failure-unknown": "Impossibile caricare le iterazioni.",
+        "scope": "Ambito",
+        "whole-execution": "Intera esecuzione",
+        "clear-scopes": "Cancella ambiti",
+        "jump-to-first-failure": "Vai al primo errore",
+        "loops-with-failures": "Cicli con errori",
+        "task-runs": "{runs} esecuzione | {runs} esecuzioni",
+        "task-runs-failed": "{runs} esecuzione · {failed} fallite | {runs} esecuzioni · {failed} fallite",
+        "retry": "Riprova",
+        "load-more": "Carica altro",
+        "retry-loading": "Riprova a caricare le iterazioni"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} di {total} fallite",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} fallite · {notStarted} non avviate su {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} di {total} completate",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} di {total} completate · {failed} fallite",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iterazione | {total} iterazioni",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -526,7 +586,9 @@
     "execution_banner": {
       "revision": "Revisione {revision}",
       "attempts": "{count} tentativo | {count} tentativi",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "Valori ricercabili",
+      "more_searchable_values": "+{count} altri valori ricercabili"
     },
     "execution_mobile": {
       "failed_task": "Task non riuscita",
@@ -551,7 +613,13 @@
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Durata totale delle esecuzioni (in minuti)",
-    "last 48 hours": "ultime 48 ore",
+    "task runs": "Esecuzioni Task",
+    "task runs duration (in minutes)": "Durata totale dei Task Run (in minuti)",
+    "last 24 hours": "ultime 24 ore",
+    "last 7 days": "ultimi 7 giorni",
+    "last 30 days": "ultimi 30 giorni",
+    "since {date}": "dal {date}",
+    "usage period": "Periodo di utilizzo",
     "email": "Email",
     "password": "Password",
     "confirm password": "Conferma password",
@@ -580,6 +648,7 @@
       "search_placeholder": "Cerca Key o value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Espressione",
+      "searchable": "Cercabile",
       "tree": "Albero",
       "raw_json": "JSON grezzo",
       "select_prompt": "Seleziona una variabile per ispezionarne la value.",
@@ -1772,7 +1841,18 @@
       "compact": "Vista predefinita",
       "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task",
       "fullscreen": "Logs a schermo intero",
-      "exit_fullscreen": "Esci dalla modalità a schermo intero"
+      "exit_fullscreen": "Esci dalla modalità a schermo intero",
+      "loop": {
+        "this-execution": "Questa esecuzione",
+        "with-iterations": "Con le iterazioni del loop",
+        "batch-range": "Iterazioni fallite {from}–{to} di {total}",
+        "empty-title": "Nessun log corrispondente",
+        "empty-description": "Nessun log corrisponde al livello selezionato in questa esecuzione o nelle sue iterazioni del loop fallite. Abbassa il livello per vederne di più.",
+        "scope-to": "Limita il grafo e i log a {scope}",
+        "show-in-overview": "Mostra nella panoramica",
+        "show-in-overview-for": "Mostra {scope} nella panoramica",
+        "mode-label": "Origine dei log"
+      }
     },
     "execution_deletion": {
       "logs": "Elimina logs",

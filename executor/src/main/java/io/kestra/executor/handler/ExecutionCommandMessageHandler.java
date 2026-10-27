@@ -13,6 +13,7 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionDelay;
@@ -128,7 +129,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                return newExecution != null ? executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
+                return newExecution != null ? executorContext.withExecution(migrateOutputs(flow, newExecution), "ExecutionCommandMessageHandler") : null;
             } catch (Exception e) {
                 log.error("Unable to process event for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
                 outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
@@ -301,9 +302,9 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
      * uniformly with the modern storage.
      */
     @SuppressWarnings("deprecation")
-    private Execution migrateOutputs(Execution execution) throws InternalException {
+    private Execution migrateOutputs(Flow flow, Execution execution) throws InternalException {
         if (execution.getOutputs() != null) {
-            executionOutputService.saveOutputs(execution, execution.getOutputs());
+            executionOutputService.saveOutputs(log, flow, execution, execution.getOutputs());
             execution = execution.withOutputs(null);
         }
 

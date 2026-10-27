@@ -63,6 +63,7 @@ import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowParsingService;
@@ -217,6 +218,7 @@ public final class ExecutorTestHarness {
         );
         this.executionOutputService = new ExecutionOutputService(
             executionOutputRepository,
+            Mockito.mock(SearchableOutputRepositoryInterface.class),
             Mockito.mock(StorageInterface.class),
             new NamespaceFactory(Mockito.mock(NamespaceFileMetadataStateStore.class), Mockito.mock(NamespaceFileBackend.class)),
             new ExecutionOutputConfiguration(-1)
@@ -284,6 +286,7 @@ public final class ExecutorTestHarness {
                 Mockito.mock(FlowParsingService.class),
                 taskOutputService,
                 executionOutputService,
+                Mockito.mock(SearchableOutputRepositoryInterface.class),
                 Mockito.mock(CheckpointRepositoryInterface.class),
                 executionCommandQueue,
                 killQueue,

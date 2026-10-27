@@ -4,7 +4,7 @@ declare global {
     interface Window {
         __kestraLoader?: {
             showDelay: number
-            timer: ReturnType<typeof setTimeout> | null
+            timer: number | ReturnType<typeof setTimeout> | null
         }
     }
 }

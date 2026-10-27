@@ -27,7 +27,9 @@ export type Plugin = {
     aliases?: string[];
     guides?: string[];
     manifest?: Record<string, string>;
-    [pluginElement: string]: PluginElement[] | string | string[] | Record<string, string> | undefined;
+    // PluginList.vue:113 destructured elements as an array with property of `deprecated` and `cls`
+    // since string[] is one of the choices, we need to allow unknown type here
+    [pluginElement: string]: PluginElement[] | string | string[] | Record<string, string> | undefined | unknown;
 };
 
 // Element group names reach $t() as a bare variable in PluginUnified.vue, PluginCatalog.vue and EE's Plugin.vue.

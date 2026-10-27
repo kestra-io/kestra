@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Suppliers;
 
 import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.encryption.EncryptionService;
@@ -44,6 +45,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.utils.TypeConverter;
 
 import io.micronaut.core.annotation.Nullable;
@@ -102,11 +104,27 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final Execution execution,
         final Publisher<CompletedPart> data) {
+        return validateInputs(inputs, flow, execution, data, false);
+    }
+
+    /** Validates Pause resume values and renders descriptions without exposing decrypted secrets. */
+    public Mono<List<InputAndValue>> validateResumeInputs(final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Publisher<CompletedPart> data) {
+        return validateInputs(inputs, flow, execution, data, true);
+    }
+
+    private Mono<List<InputAndValue>> validateInputs(final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Publisher<CompletedPart> data,
+        final boolean renderDescriptions) {
         if (ListUtils.isEmpty(inputs))
             return Mono.just(Collections.emptyList());
 
         return readData(inputs, execution, data, false)
-            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, false));
+            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, false, renderDescriptions));
     }
 
     /**
@@ -333,6 +351,25 @@ public class FlowInputOutput {
         final Execution execution,
         final Map<String, ?> data,
         final boolean decryptSecrets) {
+        return resolveInputs(inputs, flow, execution, data, decryptSecrets, false);
+    }
+
+    /** Resolves Pause resume form defaults and descriptions with secrets masked. */
+    public List<InputAndValue> resolveResumeInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data) {
+        return resolveInputs(inputs, flow, execution, data, false, true);
+    }
+
+    private List<InputAndValue> resolveInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data,
+        final boolean decryptSecrets,
+        final boolean renderDescriptions) {
         if (inputs == null) {
             return Collections.emptyList();
         }
@@ -347,7 +384,7 @@ public class FlowInputOutput {
                 .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
         );
 
-        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets));
+        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets, renderDescriptions));
 
         return resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
     }
@@ -358,7 +395,8 @@ public class FlowInputOutput {
         final FlowInterface flow,
         final @NotNull Execution execution,
         final @NotNull Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets) {
+        final boolean decryptSecrets,
+        final boolean renderDescriptions) {
 
         // return immediately if the input is already resolved
         if (resolvable.isResolved())
@@ -368,8 +406,8 @@ public class FlowInputOutput {
 
         try {
             // Resolve all input dependencies and check whether input is enabled
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets, renderDescriptions);
             // Note: Secrets are always decrypted here because they can be part of expressions used to render inputs such as SELECT & MULTI_SELECT.
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, true);
             final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
             boolean isInputEnabled = dependencies.isEmpty() ||
@@ -408,6 +446,14 @@ public class FlowInputOutput {
                 resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
                 return resolvable.get();
             }
+            final Supplier<RunContext> nonDecryptingContext = Suppliers.memoize(() -> buildRunContextForExecutionAndInputs(flow, execution, dependencies, false));
+            if (renderDescriptions && input.getDescription() != null && PebbleUtil.containsOpeningBlockDelimiter(input.getDescription())) {
+                try {
+                    input = input.withDescription(nonDecryptingContext.get().render(input.getDescription()));
+                } catch (IllegalVariableEvaluationException ignored) {
+                    // Descriptions can contain literal Pebble examples with unavailable variables.
+                }
+            }
             resolvable.setInput(input);
 
             // Reject a file upload bound to an input that doesn't accept one.
@@ -429,7 +475,7 @@ public class FlowInputOutput {
             // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
             // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
-                RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
+                RunContext runContextForDefault = decryptSecrets ? runContext : nonDecryptingContext.get();
                 try {
                     value = resolveDefaultValue(input, runContextForDefault);
                 } catch (Exception e) {
@@ -545,7 +591,7 @@ public class FlowInputOutput {
     }
 
     private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs,
-        final boolean decryptSecrets) {
+        final boolean decryptSecrets, final boolean renderDescriptions) {
         return Optional.ofNullable(input.getDependsOn())
             .map(DependsOn::inputs)
             .stream()
@@ -553,7 +599,7 @@ public class FlowInputOutput {
             .filter(id -> !id.equals(input.getId()))
             .map(inputs::get)
             .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
-            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets))
+            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets, renderDescriptions))
             .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
     }
 

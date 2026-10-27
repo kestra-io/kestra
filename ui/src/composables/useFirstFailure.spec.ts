@@ -36,7 +36,10 @@ describe("useFirstFailure", () => {
         // Then
         expect(loadLogs).toHaveBeenCalledWith(expect.objectContaining({
             executionId: "e1",
-            params: expect.objectContaining({"filters[taskRunId][EQUALS]": "tr-1", "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR"}),
+            filters: expect.arrayContaining([
+                {field: "taskRunId", operation: "EQUALS", value: "tr-1"},
+                {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "ERROR"},
+            ]),
         }))
         expect(message.value).toBe("boom x")
     })

@@ -1725,6 +1725,12 @@ export type Output = {
     type: Type;
     displayName?: string;
     required?: boolean;
+    searchable?: boolean;
+};
+
+export type OutputControllerSearchableOutputInformation = {
+    outputId?: string;
+    value?: string;
 };
 
 export type OutputControllerTaskOutputInformation = {
@@ -1820,6 +1826,14 @@ export type PagedResultsMetricEntry = {
  */
 export type PagedResultsNamespace = {
     results: Array<NamespaceLight>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsOutputControllerSearchableOutputInformation = {
+    results: Array<OutputControllerSearchableOutputInformation>;
     total: number;
 };
 
@@ -2169,7 +2183,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'outputs' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -11529,6 +11543,54 @@ export type GetExecutionOutputsResponses = {
 
 export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
 
+export type ListSearchableOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/outputs/searchable/{executionId}';
+};
+
+export type ListSearchableOutputsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSearchableOutputsError = ListSearchableOutputsErrors[keyof ListSearchableOutputsErrors];
+
+export type ListSearchableOutputsResponses = {
+    /**
+     * listSearchableOutputs 200 response
+     */
+    200: PagedResultsOutputControllerSearchableOutputInformation;
+};
+
+export type ListSearchableOutputsResponse = ListSearchableOutputsResponses[keyof ListSearchableOutputsResponses];
+
 export type GetTaskOutputsInformationData = {
     body?: never;
     path: {
@@ -12718,7 +12780,12 @@ export type GetUsagesData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The rolling window, in days, the execution figures cover
+         */
+        days?: number;
+    };
     url: '/api/v1/{tenant}/usages/all';
 };
 

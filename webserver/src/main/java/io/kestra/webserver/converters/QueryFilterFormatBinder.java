@@ -171,7 +171,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
             }
 
             List<Object> parsedValues = nestedKey != null
-                ? List.of(Map.of(nestedKey, values.getFirst()))
+                ? List.of(Map.of(nestedKey, String.join(",", values)))
                 : parseValues(values, field, op);
 
             for (Object v : parsedValues) {

@@ -18,7 +18,7 @@
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
         </KsForm>
         <template #footer>
-            <KsButton :icon="PlayBox" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
+            <KsButton :icon="Play" type="primary" @click="resumeWithInputs(form)" nativeType="submit">
                 {{ $t('resume') }}
             </KsButton>
         </template>
@@ -30,7 +30,6 @@
     import {useI18n} from "vue-i18n"
     import Play from "vue-material-design-icons/Play.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-    import PlayBox from "vue-material-design-icons/PlayBox.vue"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
     import {State, type FormInstance} from "@kestra-io/design-system"

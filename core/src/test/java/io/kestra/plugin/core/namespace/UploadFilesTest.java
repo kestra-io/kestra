@@ -44,16 +44,18 @@ public class UploadFilesTest {
     RunContextFactory runContextFactory;
 
     @ParameterizedTest
-    @CsvSource({
-        "/reports, report.txt, /reports/report.txt",
-        "/reports/, report.txt, /reports/report.txt",
-        "/reports, /report.txt, /reports/report.txt",
-        "/reports/, /report.txt, /reports/report.txt",
-        "/reports, nested/report.txt, /reports/nested/report.txt",
-        "/reports/, nested/report.txt, /reports/nested/report.txt",
-        "/, report.txt, /report.txt",
-        ", report.txt, /report.txt"
-    })
+    @CsvSource(
+        {
+            "/reports, report.txt, reports/report.txt",
+            "/reports/, report.txt, reports/report.txt",
+            "/reports, /report.txt, reports/report.txt",
+            "/reports/, /report.txt, reports/report.txt",
+            "/reports, nested/report.txt, reports/nested/report.txt",
+            "/reports/, nested/report.txt, reports/nested/report.txt",
+            "/, report.txt, report.txt",
+            ", report.txt, report.txt"
+        }
+    )
     void shouldUploadFilesMapToDestinationGivenFilename(String destination, String filename, String expectedPath) throws Exception {
         String namespace = "io.kestra." + IdUtils.create();
         URI fileStorage = addToStorage("application-test.yml");
@@ -72,8 +74,10 @@ public class UploadFilesTest {
 
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         assertThat(namespaceStorage.all()).extracting(NamespaceFile::path).containsExactly(expectedPath);
-        try (var source = storageInterface.get(MAIN_TENANT, null, fileStorage);
-            var uploaded = namespaceStorage.getFileContent(Path.of(expectedPath))) {
+        try (
+            var source = storageInterface.get(MAIN_TENANT, null, fileStorage);
+            var uploaded = namespaceStorage.getFileContent(Path.of(expectedPath))
+        ) {
             assertThat(uploaded).hasSameContentAs(source);
         }
     }

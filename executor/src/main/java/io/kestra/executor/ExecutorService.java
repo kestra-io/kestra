@@ -1215,14 +1215,9 @@ public class ExecutorService {
             .filter(Rethrow.throwPredicate(taskRun -> taskRun.getState().getCurrent().isCreated()
                 || taskRun.getState().getCurrent() == State.Type.RETRYING
                 || isOrphanedRunningTask(taskRun, executor)))
-            .map(
-                t -> childWorkerTaskTypeToWorkerTask(
-                    Optional.of(State.Type.KILLED),
-                    t
-                )
-            )
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .map(taskRun -> new WorkerTaskResult(taskRun.getState().isRunning()
+                ? taskRun.withStateAndAttempt(State.Type.KILLED)
+                : taskRun.withState(State.Type.KILLED)))
             .toList();
 
         this.addWorkerTaskResults(executor, workerTaskResults);

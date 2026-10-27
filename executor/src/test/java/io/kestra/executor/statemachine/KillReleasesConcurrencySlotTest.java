@@ -71,7 +71,7 @@ class KillReleasesConcurrencySlotTest {
         FlowWithSource flow = singleSlotFlow();
         Execution slotHolder = Executions.created(flow);
         Execution queued = Executions.created(flow);
-        harness.run(List.of(slotHolder, queued), task -> new WorkerTaskResult(task.getTaskRun().withState(State.Type.RUNNING)));
+        harness.run(List.of(slotHolder, queued), task -> new WorkerTaskResult(task.getTaskRun().run()));
         WorkerTask task = taskDispatchedFor(slotHolder);
         doReturn(false).when(harness.workerJobRunningStateStore()).existsByKey(task.getTaskRun().getId());
         assertThat(harness).hasExecutionInState(slotHolder, State.Type.RUNNING).hasQueuedExactly(queued).hasRunning(flow, 1);
@@ -79,7 +79,10 @@ class KillReleasesConcurrencySlotTest {
         harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
 
         assertThat(harness.executionStateStore().findByIdWithoutAcl(slotHolder.getId()).getTaskRunList())
-            .allMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.KILLED);
+            .allSatisfy(taskRun -> {
+                assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+                assertThat(taskRun.lastAttempt().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+            });
         assertKilledAndQueueDrained(flow, slotHolder, queued);
     }
 
@@ -88,7 +91,7 @@ class KillReleasesConcurrencySlotTest {
         FlowWithSource flow = singleSlotFlow();
         Execution slotHolder = Executions.created(flow);
         Execution queued = Executions.created(flow);
-        harness.run(List.of(slotHolder, queued), task -> new WorkerTaskResult(task.getTaskRun().withState(State.Type.RUNNING)));
+        harness.run(List.of(slotHolder, queued), task -> new WorkerTaskResult(task.getTaskRun().run()));
 
         harness.run(List.of(killRequest(slotHolder)), ScriptedWorker.succeeding(T0));
 

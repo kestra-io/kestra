@@ -1,7 +1,9 @@
 import {describe, expect, it} from "vitest"
-import {flushPromises} from "@vue/test-utils"
-import {i18nMount} from "../../../../tests/unit/i18nMount"
-import {routedPinia} from "../../../../tests/unit/memoryRouter"
+import {flushPromises, mount} from "@vue/test-utils"
+import {createI18n} from "vue-i18n"
+import {createPinia} from "pinia"
+import {createMemoryHistory, createRouter} from "vue-router"
+import KestraDesignSystem from "@kestra-io/design-system"
 import Usages from "./Usages.vue"
 
 const day = {
@@ -11,7 +13,9 @@ const day = {
 }
 
 async function cardValues(fetchedUsages: object) {
-    const wrapper = i18nMount(Usages, {props: {fetchedUsages}, global: {plugins: [routedPinia()]}})
+    const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
+    const router = createRouter({history: createMemoryHistory(), routes: [{path: "/:pathMatch(.*)*", component: {render: () => null}}]})
+    const wrapper = mount(Usages, {props: {fetchedUsages}, global: {plugins: [i18n, KestraDesignSystem, createPinia(), router]}})
     await flushPromises()
     return Object.fromEntries(
         wrapper.findAll("[data-test=usage-card]").map((card) => [

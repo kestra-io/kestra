@@ -1,5 +1,5 @@
 <template>
-    <KsSplitter class="default-theme" v-bind="$attrs" @resize-end="onResize">
+    <KsSplitter ref="splitter" class="default-theme" v-bind="$attrs" @resize-end="onResize">
         <div v-if="!panels.length" class="empty-panels">
             <KsNoData
                 :icon="ViewArrayOutline"
@@ -120,8 +120,10 @@
                             v-if="panel.tabs.filter(t => !t.potential).length > 1"
                             @click="splitPanel(panelIndex)"
                             class="split_right"
-                            :title="$t('multi_panel_editor.split_panel')"
+                            :disabled="!canAddPanel"
+                            :title="canAddPanel ? $t('multi_panel_editor.split_panel') : $t('multi_panel_editor.split_panel_no_room')"
                             :aria-label="$t('multi_panel_editor.split_panel')"
+                            data-test="panel-split"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -228,10 +230,11 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, type Component} from "vue"
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount, useTemplateRef, type Component} from "vue"
 
     import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
+    import {useElementSize} from "@vueuse/core"
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -358,7 +361,8 @@
     const showDropZones = computed(() =>
         realDragging.value &&
         movedTabInfo.value &&
-        !draggingPanel.value,
+        !draggingPanel.value &&
+        canAddPanel.value,
     )
 
     function onResize(_index: number, sizes: number[]) {
@@ -532,6 +536,17 @@
 
     const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length))
 
+    const MIN_PANEL_WIDTH = 360
+    const {width: splitterWidth} = useElementSize(useTemplateRef("splitter"))
+
+    // A new panel takes the average share, so every panel shrinks by the same ratio.
+    const canAddPanel = computed(() => {
+        const sizes = panels.value.map(p => p.size)
+        const total = sizes.reduce((a, b) => a + b, 0)
+        const smallest = Math.min(defaultSize.value, ...sizes)
+        return smallest * splitterWidth.value / (total + defaultSize.value) >= MIN_PANEL_WIDTH
+    })
+
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return
 
@@ -610,6 +625,7 @@
     }, {deep: true})
 
     function splitPanel(panelIndex: number){
+        if(!canAddPanel.value) return
         const panel = panels.value[panelIndex]
         const newPanel = {
             tabs: [panel.activeTab],
@@ -849,8 +865,12 @@
                 height: 16px;
                 width: 16px;
             }
-            &:hover {
+            &:hover:not(:disabled) {
                 color: var(--ks-text-primary);
+            }
+            &:disabled {
+                color: var(--ks-icon-inactive);
+                cursor: not-allowed;
             }
         }
         .buttons-container{

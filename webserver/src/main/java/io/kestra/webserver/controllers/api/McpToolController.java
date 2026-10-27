@@ -1,44 +1,30 @@
 package io.kestra.webserver.controllers.api;
 
-import java.util.Optional;
-
 import io.kestra.core.tenant.TenantService;
-import io.kestra.mcp.McpServerCache;
 import io.kestra.mcp.McpServerHandlerTransport;
-import io.kestra.mcp.McpSessionFactory;
 import io.kestra.mcp.McpToolAccessControl;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
-import io.modelcontextprotocol.spec.HttpHeaders;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-@Slf4j
 @Controller("/api/v1/{tenant}/mcp")
 public class McpToolController {
     private final McpServerHandlerTransport handlerRegistry;
     private final TenantService tenantService;
-    private final McpSessionFactory sessionFactory;
-    private final McpServerCache mcpServerCache;
     private final McpToolAccessControl accessControl;
 
     @Inject
     public McpToolController(
         McpServerHandlerTransport handlerRegistry,
         TenantService tenantService,
-        McpSessionFactory sessionFactory,
-        McpServerCache mcpServerCache,
         McpToolAccessControl accessControl) {
         this.handlerRegistry = handlerRegistry;
         this.tenantService = tenantService;
-        this.sessionFactory = sessionFactory;
-        this.mcpServerCache = mcpServerCache;
         this.accessControl = accessControl;
     }
 
@@ -69,25 +55,6 @@ public class McpToolController {
         @NotNull String tenant,
         @PathVariable String id,
         HttpRequest<String> request) {
-
-        String tenantId = tenantService.resolveTenant();
-
-        Optional<McpServerCache.ResolvedServer> mcpServer = mcpServerCache.resolve(tenantId, id);
-        if (mcpServer.isEmpty()) {
-            return Mono.just(HttpResponse.notFound());
-        }
-        if (mcpServer.get().server().disabled()) {
-            return Mono.just(HttpResponse.status(HttpStatus.SERVICE_UNAVAILABLE));
-        }
-        if (!handlerRegistry.supports(mcpServer.get().toolSource())) {
-            log.warn("MCP server '{}' needs a {} tool source, but none is registered", id, mcpServer.get().toolSource());
-            return Mono.just(HttpResponse.notFound());
-        }
-
-        var transportContext = sessionFactory.build(
-            tenantId, id, request.getHeaders().get(HttpHeaders.MCP_SESSION_ID), accessControl.callerId(request).orElse(null)
-        );
-
-        return handlerRegistry.getServerHandler(transportContext).handleRequest(request, transportContext);
+        return handlerRegistry.handle(tenantService.resolveTenant(), id, accessControl.callerId(request).orElse(null), request);
     }
 }

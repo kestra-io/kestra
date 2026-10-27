@@ -384,6 +384,10 @@
     "replay from beginning tooltip": "Создать аналогичное выполнение, начиная с начала",
     "replay latest revision": "Повтор с использованием последней редакции",
     "replayed": "Выполнение перезапущено",
+    "reused_task_run": {
+      "label": "Повторно использовано",
+      "tooltip": "Не запускать повторно в этой Execution. Она была запущена {date}, и ее logs и outputs получены из этого запуска."
+    },
     "replay the execution": "Повторить выполнение {executionId} для flow {flowId}",
     "prefill inputs": "Предзаполнение",
     "current": "текущий",

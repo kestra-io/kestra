@@ -384,6 +384,10 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replayed": "実行がリプレイされました",
+    "reused_task_run": {
+      "label": "再利用",
+      "tooltip": "このExecutionでは再度実行されません。{date}に実行され、そのlogとoutputはその実行からのものです。"
+    },
     "replay the execution": "フロー{flowId}の実行{executionId}を再実行する",
     "prefill inputs": "自動入力",
     "current": "現在",

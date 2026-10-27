@@ -384,6 +384,10 @@
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
     "replayed": "Execution को Replay किया गया है",
+    "reused_task_run": {
+      "label": "पुनः उपयोग किया गया",
+      "tooltip": "इस execution में फिर से नहीं चलाया गया। यह {date} को चला था, और इसके logs और outputs उस run से आते हैं।"
+    },
     "replay the execution": "फ्लो {flowId} के लिए निष्पादन {executionId} को पुनः चलाएं",
     "prefill inputs": "पूर्व-भरण",
     "current": "वर्तमान",

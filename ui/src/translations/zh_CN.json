@@ -384,6 +384,10 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
     "replayed": "执行已重放",
+    "reused_task_run": {
+      "label": "已复用",
+      "tooltip": "此 execution 不会再次运行。它已于 {date} 运行，其 logs 和 outputs 来自该次运行。"
+    },
     "replay the execution": "重放 flow {flowId} 的执行 {executionId}",
     "prefill inputs": "预填",
     "current": "当前",

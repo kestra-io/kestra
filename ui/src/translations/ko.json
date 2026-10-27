@@ -384,6 +384,10 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replayed": "실행이 다시 재생됩니다.",
+    "reused_task_run": {
+      "label": "재사용됨",
+      "tooltip": "이 Execution에서 다시 실행되지 않습니다. {date}에 실행되었으며, 해당 Log 및 Output은 해당 실행에서 가져옵니다."
+    },
     "replay the execution": "flow {flowId}의 실행 {executionId}을(를) 다시 실행합니다.",
     "prefill inputs": "미리 채우기",
     "current": "현재",

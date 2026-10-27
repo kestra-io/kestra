@@ -237,7 +237,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     Optional.ofNullable(command.breakpoints()),
                     true,
                     command.executionId(),
-                    ListUtils.emptyOnNull(command.overrides())
+                    ListUtils.emptyOnNull(command.overrides()),
+                    command.actor() == null ? null : command.actor().userId()
                 );
             }
 
@@ -274,7 +275,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     // a flowable keeps its decision in its outputs (e.g. If's evaluationResult), which must follow the overridden values
     private void saveOverriddenFlowableOutputs(FlowWithSource flow, Execution execution) throws InternalException {
         for (TaskRun taskRun : execution.getTaskRunList()) {
-            Task task = ListUtils.isEmpty(taskRun.getOverrides()) ? null : flow.findTaskByTaskId(taskRun.getTaskId());
+            Task task = taskRun.getOverrides() == null ? null : flow.findTaskByTaskId(taskRun.getTaskId());
             if (task instanceof FlowableTask<?> flowable) {
                 RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
                 try {
@@ -311,8 +312,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         if (evaluationType == EvaluationType.KILL) {
             log.warn("Kill switch active (KILL): killing execution {}", execution.getId());
             newExecution = execution.withState(State.Type.KILLED).addLabel(new Label(Label.KILL_SWITCH, "killed"));
-        }
-        else if (evaluationType == EvaluationType.CANCEL) {
+        } else if (evaluationType == EvaluationType.CANCEL) {
             log.warn("Kill switch active (CANCEL): cancelling execution {}", execution.getId());
             newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
         } else {

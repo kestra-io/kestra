@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -158,7 +159,7 @@ public class RunContextFactory {
             .withExecutionOutputs(executionOutputs(flow, execution))
             .withTaskRun(taskRun);
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
-        for (TaskRunOverride override : ListUtils.emptyOnNull(taskRun.getOverrides())) {
+        for (TaskRunOverride override : overrides(taskRun)) {
             variables = VariablePath.parse(override.key()).set(variables, override.value());
         }
 
@@ -260,6 +261,14 @@ public class RunContextFactory {
      *
      * @return the execution outputs or null if no outputs are defined in the flow or already computed in the execution
      */
+    private List<TaskRunOverride> overrides(TaskRun taskRun) {
+        try {
+            return taskOutputServiceProvider.get().getOverrides(taskRun);
+        } catch (InternalException e) {
+            throw new KestraRuntimeException("Unable to read the values overridden for task run '%s'.".formatted(taskRun.getId()), e);
+        }
+    }
+
     private Map<String, Object> executionOutputs(FlowInterface flow, Execution execution) {
         // fast path for no outputs defined in the flow
         if (flow != null && ListUtils.isEmpty(flow.getOutputs())) {

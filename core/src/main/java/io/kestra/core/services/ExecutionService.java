@@ -10,7 +10,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.async.AsyncOperationsConfiguration;
@@ -49,6 +48,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.scheduler.events.TriggerExecutionDeleted;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
+import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
@@ -256,7 +256,8 @@ public class ExecutionService {
             .collect(Collectors.toMap(TaskRun::getId, t -> t));
 
         List<TaskRun> newTaskRuns = execution.getTaskRunList().stream()
-            .map(taskRun -> {
+            .map(taskRun ->
+            {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.run();
                 }
@@ -547,15 +548,16 @@ public class ExecutionService {
 
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
         String newExecutionId) throws Exception {
-        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, newExecutionId, List.of());
+        return replay(execution, flow, taskRunId, revision, breakpoints, emitEvent, newExecutionId, List.of(), null);
     }
 
     /**
      * @param overrides the values the replayed task run reads in its own properties instead of the real ones;
      *        any override it had in the source execution is dropped
+     * @param editedBy the user who requested the overrides, recorded with them
      */
     public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent,
-        String newExecutionId, List<TaskRunOverride> overrides) throws Exception {
+        String newExecutionId, List<TaskRunOverride> overrides, @Nullable String editedBy) throws Exception {
         if (taskRunId == null && !overrides.isEmpty()) {
             throw new IllegalArgumentException("Cannot replay execution '%s' with overridden values: values can only be overridden on a replay from a task run.".formatted(execution.getId()));
         }
@@ -616,6 +618,11 @@ public class ExecutionService {
                             State.Type.RESTARTED,
                             taskRunToRestart.contains(originalTaskRun.getId())
                         );
+                        if (originalTaskRun.getId().equals(taskRunId)) {
+                            newTaskRun = newTaskRun.withOverrides(overrides.isEmpty() ? null : taskOutputService.saveOverrides(newTaskRun, overrides, editedBy));
+                        } else {
+                            newTaskRun = taskOutputService.copyOverrides(originalTaskRun, newTaskRun);
+                        }
                         if (!redecidesChildren || !originalTaskRun.getId().equals(taskRunId)) {
                             taskOutputService.copyOutputs(originalTaskRun, newTaskRun);
                         }
@@ -628,8 +635,6 @@ public class ExecutionService {
             untouchedTaskRunIds.addAll(originalTaskRunToRemove);
             this.restartNonTerminatedTaskRuns(flow, execution, newTaskRuns, untouchedTaskRunIds, mappingTaskRunId, newExecutionId);
 
-            String replayedNewTaskRunId = mappingTaskRunId.get(taskRunId);
-            newTaskRuns.replaceAll(taskRun -> taskRun.getId().equals(replayedNewTaskRunId) ? taskRun.withOverrides(overrides.isEmpty() ? null : overrides) : taskRun);
         }
 
         // Build and launch new execution
@@ -659,7 +664,8 @@ public class ExecutionService {
             .collect(Collectors.toMap(TaskRun::getId, TaskRun::getParentTaskRunId));
 
         return parentIds.keySet().stream()
-            .filter(id -> {
+            .filter(id ->
+            {
                 for (String parentId = parentIds.get(id); parentId != null; parentId = parentIds.get(parentId)) {
                     if (parentId.equals(taskRunId)) {
                         return true;

@@ -486,7 +486,9 @@
         "recorded": "{count} overridden value | {count} overridden values",
         "recorded_title": "Values set on replay",
         "recorded_original": "Original",
-        "recorded_value": "Replayed with"
+        "recorded_value": "Replayed with",
+        "recorded_by": "Set by {user} on {date}",
+        "recorded_hidden": "Reading the values takes the permission to read outputs."
     },
     "change execution state done": "Execution state updated",
     "mark as": "Mark as {status}",

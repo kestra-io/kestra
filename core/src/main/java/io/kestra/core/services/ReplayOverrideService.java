@@ -88,9 +88,11 @@ public class ReplayOverrideService {
      * overrides from an earlier replay are left out. The tasks nested in a flowable task are not part of its own properties.
      */
     public List<ReplayValue> values(Flow flow, Execution execution, String taskRunId) throws InternalException {
-        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(() -> new IllegalArgumentException(
-            "Task run '%s' does not exist in execution '%s'.".formatted(taskRunId, execution.getId())
-        ));
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(
+            () -> new IllegalArgumentException(
+                "Task run '%s' does not exist in execution '%s'.".formatted(taskRunId, execution.getId())
+            )
+        );
         Task task = flow.findTaskByTaskId(taskRun.getTaskId());
         Map<String, Object> variables = runContextFactory.of(flow, task, execution, taskRun.withOverrides(null), false).getVariables();
         List<Input<?>> inputs = flow.resolvableInputs();
@@ -239,7 +241,8 @@ public class ReplayOverrideService {
                     }
                 }
                 case IfNode condition -> {
-                    condition.getConditionsWithBodies().forEach(pair -> {
+                    condition.getConditionsWithBodies().forEach(pair ->
+                    {
                         visit(pair.getLeft());
                         visit(pair.getRight());
                     });
@@ -269,8 +272,10 @@ public class ReplayOverrideService {
                     visit(attribute.getArgumentsNode());
                 }
                 case FunctionOrMacroInvocationExpression function -> {
-                    if (SecretFunction.NAME.equals(function.getFunctionName()) && !function.getArguments().getPositionalArgs().isEmpty()
-                        && function.getArguments().getPositionalArgs().getFirst().getValueExpression() instanceof LiteralStringExpression secret) {
+                    if (
+                        SecretFunction.NAME.equals(function.getFunctionName()) && !function.getArguments().getPositionalArgs().isEmpty()
+                            && function.getArguments().getPositionalArgs().getFirst().getValueExpression() instanceof LiteralStringExpression secret
+                    ) {
                         String key = "secret('%s')".formatted(secret.getValue());
                         references.putIfAbsent(key, key);
                     }
@@ -288,7 +293,8 @@ public class ReplayOverrideService {
                     visit(ternary.getExpression3());
                 }
                 case ArrayExpression array -> array.getValues().forEach(this::visit);
-                case MapExpression map -> map.getEntries().forEach((key, value) -> {
+                case MapExpression map -> map.getEntries().forEach((key, value) ->
+                {
                     visit(key);
                     visit(value);
                 });
@@ -317,7 +323,8 @@ public class ReplayOverrideService {
                     default -> null;
                 };
                 if (segment != null) {
-                    return staticPath(attribute.getNode()).map(parent -> {
+                    return staticPath(attribute.getNode()).map(parent ->
+                    {
                         List<Object> path = new ArrayList<>(parent);
                         path.add(segment);
                         return path;

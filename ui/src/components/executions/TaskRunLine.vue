@@ -64,7 +64,12 @@
             </KsTooltip>
         </div>
 
-        <TaskRunOverrides v-if="currentTaskRun.overrides?.length" :overrides="currentTaskRun.overrides" />
+        <TaskRunOverrides
+            v-if="currentTaskRun.overrides"
+            :executionId="followedExecution.id"
+            :taskRunId="currentTaskRun.id"
+            :overrides="currentTaskRun.overrides"
+        />
 
         <div class="task-status">
             <KsExecutionStatus

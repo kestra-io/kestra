@@ -250,6 +250,10 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.replayValues(options).then(response => response.values ?? [])
     }
 
+    const loadTaskRunOverrides = (options: { executionId: string; taskRunId: string }) => {
+        return ExecutionsAPI.taskRunOverrides(options).then(response => response.values ?? [])
+    }
+
     const replayExecutionWithOverrides = (options: { executionId: string; taskRunId: string; overrides: Record<string, unknown> }) => {
         return ExecutionsAPI.replayExecutionWithOverrides({
             executionId: options.executionId,
@@ -948,6 +952,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         replayExecution,
         validateReplay,
         loadReplayValues,
+        loadTaskRunOverrides,
         replayExecutionWithOverrides,
         replayExecutionWithInputs,
         changeExecutionStatus,

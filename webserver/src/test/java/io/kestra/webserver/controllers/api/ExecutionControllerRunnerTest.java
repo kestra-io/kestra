@@ -42,6 +42,7 @@ import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -76,9 +77,10 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
@@ -91,8 +93,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
@@ -239,7 +239,11 @@ class ExecutionControllerRunnerTest {
 
         ZonedDateTime soon = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(2);
         Execution rescheduled = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8), null),
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate="
+                    + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8),
+                null
+            ),
             Execution.class
         );
 
@@ -275,7 +279,11 @@ class ExecutionControllerRunnerTest {
         var conflict = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                HttpRequest.POST("/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8), null)
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate="
+                        + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8),
+                    null
+                )
             )
         );
         assertThat(conflict.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
@@ -1146,10 +1154,42 @@ class ExecutionControllerRunnerTest {
         Execution replay = awaitReplayOverrides(failed);
 
         assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
-        assertThat(replay.findTaskRunsByTaskId("adjust").getFirst().getOverrides())
-            .containsExactly(new TaskRunOverride("outputs.fetch.values.code", "KR-0412", "KR-0412 "));
+        TaskRun adjust = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(adjust.getOverrides().keys()).containsExactly("outputs.fetch.values.code");
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), adjust.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("outputs.fetch.values.code", "KR-0412", "KR-0412 "));
         assertThat(taskOutputService.getOutputs(replay.findTaskRunsByTaskId("notify").getFirst().toBuilder().tenantId(TENANT_ID).build()))
             .containsEntry("value", "adjusted KR-0412 ");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldKeepOverriddenValuesOfReusedTaskRunWhenReplayingFromLaterTask() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+        replayWithOverrides(failed, "adjust", Map.of("outputs.fetch.values.code", "KR-0412"));
+        Execution overridden = awaitReplayOverrides(failed);
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/%s/actions/replay?taskRunId=%s".formatted(overridden.getId(), overridden.findTaskRunsByTaskId("notify").getFirst().getId()),
+                null
+            ),
+            Execution.class
+        );
+        Execution replay = awaitReplayOverrides(overridden);
+
+        TaskRun reused = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(reused.getOverrides().id()).isNotEqualTo(overridden.findTaskRunsByTaskId("adjust").getFirst().getOverrides().id());
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), reused.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("outputs.fetch.values.code", "KR-0412", "KR-0412 "));
     }
 
     @Test

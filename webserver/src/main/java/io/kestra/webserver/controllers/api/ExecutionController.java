@@ -282,6 +282,9 @@ public class ExecutionController {
     private ReplayOverrideService replayOverrideService;
 
     @Inject
+    private TaskOutputService taskOutputService;
+
+    @Inject
     private ModelValidator modelValidator;
 
     @Inject
@@ -1142,7 +1145,8 @@ public class ExecutionController {
                     })
                         .last()
                         .map(Event::getData)
-                        .map(execution -> {
+                        .map(execution ->
+                        {
                             try {
                                 return ExecutionResponse.fromExecution(
                                     execution,
@@ -1176,7 +1180,8 @@ public class ExecutionController {
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs,
-            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
+            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted,
+            ExecutionMetadata metadata,
             Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
                 tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
@@ -1598,6 +1603,21 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/taskruns/{taskRunId}/overrides")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Get the values a replay overrode for a task run, next to the values they replaced. They are read with the same permission as outputs."
+    )
+    public OverriddenValues getTaskRunOverrides(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(NotFoundException::new);
+
+        return new OverriddenValues(taskOutputService.getOverrides(taskRun));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/replay-with-overrides")
     @Operation(
         tags = { "Executions" },
@@ -1621,6 +1641,9 @@ public class ExecutionController {
     }
 
     public record ReplayValues(List<ReplayOverrideService.ReplayValue> values) {
+    }
+
+    public record OverriddenValues(List<TaskRunOverride> values) {
     }
 
     public record ReplayWithOverridesRequest(@NotNull Map<String, Object> overrides) {
@@ -2022,9 +2045,11 @@ public class ExecutionController {
         }
 
         TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(stateRequest.taskRunId())
-            .orElseThrow(() -> new NoSuchElementException(
-                "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
-            ));
+            .orElseThrow(
+                () -> new NoSuchElementException(
+                    "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
+                )
+            );
 
         if (State.Type.RUNNING != taskRun.getState().getCurrent()) {
             throw new ConflictException(
@@ -2056,9 +2081,9 @@ public class ExecutionController {
      */
     private static List<String> interruptedTaskRunIds(Execution execution, TaskRun taskRun) {
         return Stream.concat(
-                Stream.of(taskRun),
-                execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
-            )
+            Stream.of(taskRun),
+            execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
+        )
             .map(TaskRun::getId)
             .toList();
     }

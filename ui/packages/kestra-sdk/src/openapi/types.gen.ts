@@ -896,6 +896,10 @@ export type ExecutionControllerLastExecutionResponse = {
     status: StateType;
 };
 
+export type ExecutionControllerOverriddenValues = {
+    values?: Array<TaskRunOverride>;
+};
+
 export type ExecutionControllerReplayValues = {
     values?: Array<ReplayOverrideServiceReplayValue>;
 };
@@ -2500,7 +2504,7 @@ export type TaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
-    overrides?: Array<TaskRunOverride> | null;
+    overrides?: TaskRunOverrides | null;
 };
 
 export type TaskRunAttempt = {
@@ -2517,6 +2521,13 @@ export type TaskRunOverride = {
     originalValue?: {
         [key: string]: unknown;
     };
+};
+
+export type TaskRunOverrides = {
+    id: string;
+    keys: Array<string>;
+    editedBy?: string | null;
+    editedAt: string;
 };
 
 export type TaskRunStatistic = {
@@ -2866,7 +2877,7 @@ export type TaskRunWritable = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
-    overrides?: Array<TaskRunOverride> | null;
+    overrides?: TaskRunOverrides | null;
 };
 
 export type TaskRunAttemptWritable = {
@@ -8032,6 +8043,49 @@ export type GetExecutionFlowGraphResponses = {
 };
 
 export type GetExecutionFlowGraphResponse = GetExecutionFlowGraphResponses[keyof GetExecutionFlowGraphResponses];
+
+export type GetTaskRunOverridesData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/taskruns/{taskRunId}/overrides';
+};
+
+export type GetTaskRunOverridesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetTaskRunOverridesError = GetTaskRunOverridesErrors[keyof GetTaskRunOverridesErrors];
+
+export type GetTaskRunOverridesResponses = {
+    /**
+     * getTaskRunOverrides 200 response
+     */
+    200: ExecutionControllerOverriddenValues;
+};
+
+export type GetTaskRunOverridesResponse = GetTaskRunOverridesResponses[keyof GetTaskRunOverridesResponses];
 
 export type ReplayValuesData = {
     body?: never;

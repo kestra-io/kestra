@@ -1,5 +1,7 @@
 import {computed, ComputedRef} from "vue"
-import {ALL_TIME_RANGE, FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {useMiscStore} from "override/stores/misc"
+import {FALLBACK_TIME_RANGE} from "../../executions/timeRangeWiden"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
@@ -19,6 +21,7 @@ const FLOW_ID_NARROWING_FIELDS = ["namespace", "scope"]
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
+    const miscStore = useMiscStore()
     const route = useRoute()
 
     return computed(() => {
@@ -126,7 +129,8 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
-                    clearedValue: ALL_TIME_RANGE,
+                    removable: false,
+                    clearedValue: miscStore.configs?.chartDefaultDuration ?? FALLBACK_TIME_RANGE,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
                         return VALUES.RELATIVE_DATE_OR_ALL_TIME

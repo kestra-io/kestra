@@ -42,7 +42,6 @@ vi.mock("../../../../src/stores/plugins", () => ({
     }),
 }))
 
-vi.mock("../../../../src/stores/doc", () => ({useDocStore: () => ({docId: ""})}))
 vi.mock("../../../../src/stores/productTour", () => ({useProductTourStore: () => ({isGuidedActive: false})}))
 vi.mock("../../../../src/stores/executions", () => ({
     useExecutionsStore: () => ({triggerExecution: vi.fn(), execution: undefined}),

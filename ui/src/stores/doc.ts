@@ -101,7 +101,9 @@ export const useDocStore = defineStore("doc", () => {
             metadata = JSON.parse(metadata)
         }
 
-        docPath.value = metadata.parsedUrl
+        if (id === docId.value) {
+            docPath.value = metadata.parsedUrl
+        }
 
         return {
             content: response.data,

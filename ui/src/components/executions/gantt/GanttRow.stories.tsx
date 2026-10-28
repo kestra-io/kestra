@@ -105,3 +105,44 @@ export const ChevronsKeepTheirIndent: Story = {
         }
     },
 };
+
+export const GuidesSpanARowWithAFooter: Story = {
+    render: () => ({
+        components: {GanttRow},
+        setup: () => ({rows: ROWS}),
+        template: `
+            <div role="grid">
+                <GanttRow
+                    v-for="row in rows"
+                    :key="row.key"
+                    :nodeKey="row.key"
+                    :label="row.label"
+                    :ancestors="row.ancestors"
+                    offset="0s"
+                    :barStyle="{}"
+                    state="SUCCESS"
+                    :selected="false"
+                    :expandable="row.key !== 'tr:grandchild'"
+                    expanded
+                >
+                    <template #label><code>{{ row.label }}</code></template>
+                    <template v-if="row.key === 'tr:child'" #label-footer><div data-test="row-footer" /></template>
+                </GanttRow>
+            </div>
+        `,
+    }),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+        await waitFor(() => expect(canvas.getAllByRole("row")).toHaveLength(ROWS.length));
+
+        const child = canvasElement.querySelector(`[data-row-key="${CHILD.key}"]`) as HTMLElement;
+        const grandchild = canvasElement.querySelector("[data-row-key='tr:grandchild']") as HTMLElement;
+        expect(child.classList.contains("has-label-footer")).toBe(true);
+
+        const childGuides = rect(child.querySelector(".guides") as HTMLElement);
+        const grandchildGuides = rect(grandchild.querySelector(".guides") as HTMLElement);
+
+        expect(childGuides.bottom).toBeGreaterThanOrEqual(rect(child).bottom - GUIDE_TOLERANCE_PX);
+        expect(grandchildGuides.top - childGuides.bottom).toBeLessThanOrEqual(GUIDE_TOLERANCE_PX);
+    },
+};

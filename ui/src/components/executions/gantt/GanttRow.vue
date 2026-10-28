@@ -122,6 +122,10 @@
         &.has-label-footer {
             min-height: calc(2.75rem + var(--ks-spacing-3));
             padding-bottom: var(--ks-spacing-3);
+
+            .guides {
+                margin-bottom: calc(-1 * (var(--ks-border-width-thin) + var(--ks-spacing-3)));
+            }
         }
 
         &.is-selected {

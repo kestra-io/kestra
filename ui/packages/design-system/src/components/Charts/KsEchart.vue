@@ -95,59 +95,13 @@
         },
     )
 
-    const currentDpr = ref(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)
-
-    let savedOption: Record<string, unknown> | null = null
-
-    function updateDpr() {
-        if (typeof window === "undefined") return
-        const nextDpr = window.devicePixelRatio || 1
-        if (nextDpr === currentDpr.value) return
-
-        const nextEffective = props.maxPixelRatio === undefined
-            ? nextDpr
-            : Math.min(nextDpr, props.maxPixelRatio)
-
-        if (nextEffective !== effectivePixelRatio.value) {
-            const chart = vChartRef.value?.chart as ECharts | undefined
-            if (chart && typeof chart.getOption === "function" && !chart.isDisposed()) {
-                savedOption = chart.getOption() as Record<string, unknown>
-            }
-        }
-        currentDpr.value = nextDpr
-    }
-
-    let dprMqCleanup: (() => void) | null = null
-
-    function observePixelRatio() {
-        if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
-        updateDpr()
-
-        function listen() {
-            const mq = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`)
-            const handler = () => {
-                updateDpr()
-                listen()
-            }
-            mq.addEventListener("change", handler, {once: true})
-            dprMqCleanup = () => mq.removeEventListener("change", handler)
-        }
-
-        listen()
-    }
-
     // A canvas backing store costs width × height × pixelRatio² bytes, so capping the ratio is the cheapest way to keep
     // a page holding many charts affordable on a high-DPI screen.
-    const effectivePixelRatio = computed(() => {
-        const dpr = currentDpr.value
-        return props.maxPixelRatio === undefined
-            ? dpr
-            : Math.min(dpr, props.maxPixelRatio)
-    })
-
     const initOptions = computed(() => ({
         renderer: props.renderer,
-        devicePixelRatio: effectivePixelRatio.value,
+        ...(props.maxPixelRatio === undefined
+            ? {}
+            : {devicePixelRatio: Math.min(window.devicePixelRatio || 1, props.maxPixelRatio)}),
     }))
 
     const isDark = ref(false)
@@ -162,13 +116,10 @@
         detectDark()
         observer = new MutationObserver(detectDark)
         observer.observe(document.documentElement, {attributes: true, attributeFilter: ["class"]})
-        observePixelRatio()
     })
 
     onUnmounted(() => {
         observer?.disconnect()
-        dprMqCleanup?.()
-        savedOption = null
     })
 
     const effectiveOption = computed(() => {
@@ -318,17 +269,7 @@
         boundZr?.on("globalout", hide)
     }
 
-    watch(
-        () => vChartRef.value?.chart as ECharts | undefined,
-        (chart) => {
-            bindZr(chart)
-            if (chart && savedOption) {
-                chart.setOption(savedOption, true)
-                savedOption = null
-            }
-        },
-        {immediate: true},
-    )
+    watch(() => vChartRef.value?.chart as ECharts | undefined, (chart) => bindZr(chart), {immediate: true})
 
     onUnmounted(() => bindZr())
 

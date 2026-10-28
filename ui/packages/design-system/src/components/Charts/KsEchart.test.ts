@@ -21,8 +21,6 @@ const mockZr = {on: vi.fn(), off: vi.fn()}
 const mockEchartsInstance = {
     resize: vi.fn(),
     getOption: vi.fn(() => ({xAxis: [{data: ["Jan", "Feb", "Mar"]}]})),
-    setOption: vi.fn(),
-    isDisposed: vi.fn(() => false),
     convertFromPixel: vi.fn(() => [1, 0]),
     getDataURL: mockGetDataURL,
     getZr: vi.fn(() => mockZr),
@@ -381,9 +379,9 @@ describe("KsEchart", () => {
         return vChart.props("initOptions") as {renderer: string; devicePixelRatio?: number}
     }
 
-    test("sets devicePixelRatio to window.devicePixelRatio when maxPixelRatio is not set", () => {
+    test("leaves devicePixelRatio to ECharts when maxPixelRatio is not set", () => {
         vi.stubGlobal("devicePixelRatio", 3)
-        expect(initOptionsOf({}).devicePixelRatio).toBe(3)
+        expect(initOptionsOf({})).not.toHaveProperty("devicePixelRatio")
     })
 
     test("caps devicePixelRatio at maxPixelRatio on a high-DPI screen", () => {
@@ -399,77 +397,5 @@ describe("KsEchart", () => {
     test("falls back to a ratio of 1 when the browser reports none", () => {
         vi.stubGlobal("devicePixelRatio", undefined)
         expect(initOptionsOf({maxPixelRatio: 1.5}).devicePixelRatio).toBe(1)
-    })
-
-    test("falls back to a ratio of 1 when window.devicePixelRatio is not set and maxPixelRatio is not set", () => {
-        vi.stubGlobal("devicePixelRatio", undefined)
-        expect(initOptionsOf({}).devicePixelRatio).toBe(1)
-    })
-
-    test("updates devicePixelRatio when resolution media query changes", async () => {
-        let changeListener: (() => void) | null = null
-        vi.stubGlobal("devicePixelRatio", 1)
-        vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
-            matches: false,
-            media: query,
-            addEventListener: vi.fn((event: string, cb: () => void) => {
-                if (event === "change") changeListener = cb
-            }),
-            removeEventListener: vi.fn(),
-        })))
-
-        const wrapper = mountChart()
-        const vChart = wrapper.findComponent({name: "VChart"})
-        expect((vChart.props("initOptions") as {devicePixelRatio?: number}).devicePixelRatio).toBe(1)
-
-        vi.stubGlobal("devicePixelRatio", 2)
-        changeListener?.()
-        await wrapper.vm.$nextTick()
-
-        expect((vChart.props("initOptions") as {devicePixelRatio?: number}).devicePixelRatio).toBe(2)
-
-        vi.unstubAllGlobals()
-    })
-
-    test("restores previous chart options on devicePixelRatio change", async () => {
-        let changeListener: (() => void) | null = null
-        vi.stubGlobal("devicePixelRatio", 1)
-        vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
-            matches: false,
-            media: query,
-            addEventListener: vi.fn((event: string, cb: () => void) => {
-                if (event === "change") changeListener = cb
-            }),
-            removeEventListener: vi.fn(),
-        })))
-
-        const setOptionSpy = vi.fn()
-        const mockOpt = {series: [{type: "graph", layout: "none", zoom: 2.5}]}
-        const mockChart = {
-            ...mockEchartsInstance,
-            getOption: vi.fn().mockReturnValue(mockOpt),
-            setOption: setOptionSpy,
-            isDisposed: vi.fn().mockReturnValue(false),
-        }
-
-        const wrapper = mountChart()
-        const vChart = wrapper.findComponent({name: "VChart"})
-        ;(vChart.vm as unknown as {chart: unknown}).chart = mockChart
-
-        vi.stubGlobal("devicePixelRatio", 2)
-        changeListener?.()
-        await wrapper.vm.$nextTick()
-
-        const newMockChart = {
-            ...mockEchartsInstance,
-            setOption: setOptionSpy,
-            isDisposed: vi.fn().mockReturnValue(false),
-        }
-        ;(vChart.vm as unknown as {chart: unknown}).chart = newMockChart
-        await wrapper.vm.$nextTick()
-
-        expect(setOptionSpy).toHaveBeenCalledWith(mockOpt, true)
-
-        vi.unstubAllGlobals()
     })
 })

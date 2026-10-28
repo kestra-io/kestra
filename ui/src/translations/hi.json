@@ -145,6 +145,7 @@
     "update": "अपडेट करें",
     "confirmation": "पुष्टि",
     "toast confirm": "क्या आप निश्चित हैं?",
+    "toast_message_column": "संदेश",
     "common": {
       "back": "वापस",
       "openInNewTab": "नए टैब में खोलें"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
     "replayed": "Execution को Replay किया गया है",
+    "reused_task_run": {
+      "label": "पुनः उपयोग किया गया",
+      "tooltip": "इस execution में फिर से नहीं चलाया गया। यह {date} को चला था, और इसके logs और outputs उस run से आते हैं।"
+    },
     "replay the execution": "फ्लो {flowId} के लिए निष्पादन {executionId} को पुनः चलाएं",
     "prefill inputs": "पूर्व-भरण",
     "current": "वर्तमान",
@@ -509,9 +514,68 @@
       "invalid": "ग्राफ़ त्रुटि",
       "invalid_description": "ग्राफ़ लोड करते समय एक त्रुटि हुई। कृपया त्रुटियों के लिए स्रोत कोड की जाँच करें।",
       "load_error": "टोपोलॉजी ग्राफ़ लोड नहीं किया जा सका। कृपया पुनः प्रयास करें।",
+      "expand_subflow_error": "सबफ़्लो का विस्तार नहीं किया जा सका",
       "add-task": "Task जोड़ें",
       "add-trigger": "Trigger जोड़ें",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "चलाया नहीं गया",
+        "pick-first": "पहले {loop} चुनें",
+        "picker-label": "{loop} का इटरेशन",
+        "search-by-index": "इंडेक्स से खोजें",
+        "all-iterations": "सभी इटरेशन",
+        "iteration-index": "इंडेक्स {index}",
+        "iteration-value-index": "{value} · इंडेक्स {index}",
+        "previous-iteration": "पिछला इटरेशन",
+        "next-iteration": "अगला इटरेशन",
+        "previous-page": "पिछला पृष्ठ",
+        "next-page": "अगला पृष्ठ",
+        "failed-group": "विफल · {count}",
+        "other-group": "अन्य इटरेशन",
+        "matching": "मिलान",
+        "failure-forbidden": "आपके पास इस इटरेशन की पहुँच नहीं है।",
+        "failure-not-found": "यह इटरेशन अब मौजूद नहीं है।",
+        "failure-ambiguous": "यह लूप इस निष्पादन में कई बार चला, इसलिए इसके इटरेशन में अंतर नहीं किया जा सकता।",
+        "failure-not-located": "विफल इटरेशन का पता नहीं लगाया जा सका।",
+        "failure-unknown": "इटरेशन लोड नहीं हो सके।",
+        "scope": "दायरा",
+        "whole-execution": "पूरा निष्पादन",
+        "clear-scopes": "दायरे हटाएँ",
+        "jump-to-first-failure": "पहली विफलता पर जाएँ",
+        "loops-with-failures": "विफलताओं वाले लूप",
+        "task-runs": "{runs} रन | {runs} रन",
+        "task-runs-failed": "{runs} रन · {failed} विफल | {runs} रन · {failed} विफल",
+        "retry": "पुनः प्रयास करें",
+        "load-more": "और लोड करें",
+        "retry-loading": "इटरेशन लोड करना पुनः प्रयास करें"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} में से {failed} विफल",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} विफल · {total} में से {notStarted} शुरू नहीं हुए",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} में से {done} पूर्ण",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} में से {done} पूर्ण · {failed} विफल",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} इटरेशन | {total} इटरेशन",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task Logs दिखाएं",
     "show task condition": "कार्य की स्थिति दिखाएं",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "संशोधन {revision}",
       "attempts": "{count} प्रयास | {count} प्रयास",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "खोजने योग्य मान",
+      "more_searchable_values": "+{count} और खोजने योग्य मान"
     },
     "execution_mobile": {
       "failed_task": "विफल task",
@@ -547,7 +613,13 @@
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "कुल निष्पादन अवधि (मिनटों में)",
-    "last 48 hours": "पिछले 48 घंटे",
+    "task runs": "Task रन",
+    "task runs duration (in minutes)": "कुल Task रन की अवधि (मिनटों में)",
+    "last 24 hours": "पिछले 24 घंटे",
+    "last 7 days": "पिछले 7 दिन",
+    "last 30 days": "पिछले 30 दिन",
+    "since {date}": "{date} से",
+    "usage period": "उपयोग अवधि",
     "email": "ईमेल",
     "password": "पासवर्ड",
     "confirm password": "पासवर्ड की पुष्टि करें",
@@ -576,6 +648,7 @@
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
       "expression": "एक्सप्रेशन",
+      "searchable": "खोजने योग्य",
       "tree": "ट्री",
       "raw_json": "रॉ JSON",
       "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
@@ -1767,7 +1840,18 @@
       "compact": "पूर्व-निर्धारित दृश्य",
       "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं",
       "fullscreen": "Logs पूर्ण स्क्रीन में",
-      "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें"
+      "exit_fullscreen": "फ़ुलस्क्रीन से बाहर निकलें",
+      "loop": {
+        "this-execution": "यह निष्पादन",
+        "with-iterations": "Loop इटरेशन के साथ",
+        "batch-range": "विफल पुनरावृत्तियाँ {from}–{to} कुल {total} में से",
+        "empty-title": "कोई मेल खाते logs नहीं",
+        "empty-description": "इस निष्पादन या इसके विफल Loop इटरेशन में चयनित स्तर से कोई log मेल नहीं खाता। अधिक देखने के लिए स्तर घटाएँ।",
+        "scope-to": "ग्राफ़ और logs को {scope} तक सीमित करें",
+        "show-in-overview": "अवलोकन में दिखाएँ",
+        "show-in-overview-for": "{scope} को अवलोकन में दिखाएँ",
+        "mode-label": "Logs का स्रोत"
+      }
     },
     "execution_deletion": {
       "logs": "Logs हटाएं",

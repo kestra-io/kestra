@@ -145,6 +145,7 @@
     "update": "Mettre à jour",
     "confirmation": "Confirmation",
     "toast confirm": "Êtes-vous sûr ?",
+    "toast_message_column": "Message",
     "common": {
       "back": "Retour",
       "openInNewTab": "Ouvrir dans un nouvel onglet"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replayed": "L'exécution est rejouée",
+    "reused_task_run": {
+      "label": "Réutilisé",
+      "tooltip": "Non exécuté à nouveau dans cette execution. Il a été exécuté le {date}, et ses logs et outputs proviennent de cette exécution."
+    },
     "replay the execution": "Rejouer l'exécution {executionId} pour le flow {flowId}",
     "prefill inputs": "Pré-remplir",
     "current": "actuel",
@@ -509,9 +514,68 @@
       "invalid": "Erreur de graphe",
       "invalid_description": "Une erreur s'est produite lors du chargement du graphique. Veuillez vérifier le code source pour les erreurs.",
       "load_error": "Impossible de charger le graphe de topologie. Veuillez réessayer.",
+      "expand_subflow_error": "Impossible d'étendre le subflow",
       "add-task": "Ajouter une task",
       "add-trigger": "Ajouter un trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Non exécuté",
+        "pick-first": "Choisissez d'abord {loop}",
+        "picker-label": "Itération de {loop}",
+        "search-by-index": "Rechercher par index",
+        "all-iterations": "Toutes les itérations",
+        "iteration-index": "index {index}",
+        "iteration-value-index": "{value} · index {index}",
+        "previous-iteration": "Itération précédente",
+        "next-iteration": "Itération suivante",
+        "previous-page": "Page précédente",
+        "next-page": "Page suivante",
+        "failed-group": "Échouées · {count}",
+        "other-group": "Autres itérations",
+        "matching": "Correspondance",
+        "failure-forbidden": "Vous n'avez pas accès à cette itération.",
+        "failure-not-found": "Cette itération n'existe plus.",
+        "failure-ambiguous": "Cette boucle s'est exécutée plusieurs fois dans cette exécution, ses itérations ne peuvent donc pas être distinguées.",
+        "failure-not-located": "L'itération en échec est introuvable.",
+        "failure-unknown": "Impossible de charger les itérations.",
+        "scope": "Périmètre",
+        "whole-execution": "Exécution entière",
+        "clear-scopes": "Effacer les périmètres",
+        "jump-to-first-failure": "Aller au premier échec",
+        "loops-with-failures": "Boucles en échec",
+        "task-runs": "{runs} exécution | {runs} exécutions",
+        "task-runs-failed": "{runs} exécution · {failed} en échec | {runs} exécutions · {failed} en échec",
+        "retry": "Réessayer",
+        "load-more": "Charger plus",
+        "retry-loading": "Réessayer de charger les itérations"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} sur {total} en échec",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} en échec · {notStarted} non démarrées sur {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} sur {total} terminées",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} sur {total} terminées · {failed} en échec",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} itération | {total} itérations",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Afficher les journaux de la tâche",
     "show task condition": "Afficher la condition de la task",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "Révision {revision}",
       "attempts": "{count} tentative | {count} tentatives",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "Valeurs recherchables",
+      "more_searchable_values": "+{count} valeurs supplémentaires consultables"
     },
     "execution_mobile": {
       "failed_task": "Task en échec",
@@ -547,7 +613,13 @@
     "namespaces": "Espaces de nom",
     "tasks": "Tâches",
     "executions duration (in minutes)": "Durée totale d'exécutions (en minutes)",
-    "last 48 hours": "dernières 48 heures",
+    "task runs": "Exécutions de Task",
+    "task runs duration (in minutes)": "Durée totale des exécutions de Task (en minutes)",
+    "last 24 hours": "dernières 24 heures",
+    "last 7 days": "7 derniers jours",
+    "last 30 days": "les 30 derniers jours",
+    "since {date}": "depuis le {date}",
+    "usage period": "Période d'utilisation",
     "email": "E-mail",
     "password": "Mot de passe",
     "confirm password": "Confirmer le mot de passe",
@@ -576,6 +648,7 @@
       "search_placeholder": "Rechercher une Key ou une value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Expression",
+      "searchable": "Recherchable",
       "tree": "Arborescence",
       "raw_json": "JSON brut",
       "select_prompt": "Sélectionnez une variable pour inspecter sa value.",
@@ -1767,7 +1840,18 @@
       "compact": "Vue par défaut",
       "compact_details": "Affiche les logs dans un format compacte regroupé par tâche",
       "fullscreen": "Logs en plein écran",
-      "exit_fullscreen": "Quitter le mode plein écran"
+      "exit_fullscreen": "Quitter le mode plein écran",
+      "loop": {
+        "this-execution": "Cette exécution",
+        "with-iterations": "Avec les itérations du loop",
+        "batch-range": "Itérations échouées {from}–{to} sur {total}",
+        "empty-title": "Aucun log correspondant",
+        "empty-description": "Aucun log ne correspond au niveau sélectionné dans cette exécution ni dans ses itérations de loop en échec. Abaissez le niveau pour en voir plus.",
+        "scope-to": "Limiter le graphe et les logs à {scope}",
+        "show-in-overview": "Afficher dans la vue générale",
+        "show-in-overview-for": "Afficher {scope} dans la vue générale",
+        "mode-label": "Source des logs"
+      }
     },
     "execution_deletion": {
       "logs": "Supprimer les journaux",

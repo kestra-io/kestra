@@ -1,5 +1,6 @@
 import {describe, expect, it, vi} from "vitest"
 import {ref} from "vue"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 
 const executionsStore = vi.hoisted(() => ({flow: null as unknown, execution: null as unknown}))
 const flowStore = vi.hoisted(() => ({loadFlow: vi.fn()}))
@@ -102,6 +103,22 @@ describe("useExecutionArtifacts", () => {
 
         // Then
         expect(flowStore.loadFlow).toHaveBeenCalledWith({namespace: "ns", id: "f", revision: "3", store: false, optional: true})
+        expect(artifacts.value).toHaveLength(1)
+    })
+
+    it("shouldLoadTheSourceOfTheGivenFlowRatherThanOfTheExecutionOnScreen", async () => {
+        // Given
+        executionsStore.flow = null
+        executionsStore.execution = {id: "other", flowId: "other", namespace: "elsewhere", flowRevision: 1}
+        flowStore.loadFlow.mockResolvedValue({source: sourceOf(RUNNER)})
+        federated.taskAdditionalInfoRemote.value = {[`${RUNNER}/details`]: {}}
+
+        // When
+        const {artifacts} = useExecutionArtifacts(() => ({...strippedFlow, revision: 3}) as unknown as FlowForExecution)
+        await flush()
+
+        // Then
+        expect(flowStore.loadFlow).toHaveBeenLastCalledWith({namespace: "ns", id: "f", revision: "3", store: false, optional: true})
         expect(artifacts.value).toHaveLength(1)
     })
 })

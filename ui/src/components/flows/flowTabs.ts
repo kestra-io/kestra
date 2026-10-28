@@ -60,7 +60,7 @@ const OSS_FLOW_TAB_ROUTES: RouteRecordRaw[] = [
         path: "executions",
         component: () => import("./FlowExecutions.vue"),
         props: {embed: true},
-        meta: {tab: "executions", title: "executions"},
+        meta: {tab: "executions", title: "executions", fullContainer: true},
     },
     {
         name: `${FLOW_PARENT_ROUTE}/edit`,

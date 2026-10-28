@@ -17,10 +17,10 @@ dependencies {
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "2.22.1"
     def jsonschemaVersion = "4.38.0"
-    def kafkaVersion = "4.3.2"
+    def kafkaVersion = "4.4.0"
     def opensearchVersion = "3.9.0"
     def opensearchRestVersion = "3.9.0"
-    def flyingSaucerVersion = "10.6.0"
+    def flyingSaucerVersion = "10.7.0"
     def jacksonVersion = "2.22.4"
     def jacksonAnnotationsVersion = "2.22"
     def jugVersion = "5.2.0"
@@ -38,7 +38,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.90.0')
     api platform("com.azure:azure-sdk-bom:1.3.9")
-    api platform('software.amazon.awssdk:bom:2.56.0')
+    api platform('software.amazon.awssdk:bom:2.57.3')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
     api platform("io.qameta.allure:allure-bom:2.35.5")
@@ -103,7 +103,7 @@ dependencies {
         api "org.apache.maven.resolver:maven-resolver-connector-basic:$mavenResolverVersion"
         api "org.apache.maven.resolver:maven-resolver-transport-file:$mavenResolverVersion"
         api "org.apache.maven.resolver:maven-resolver-transport-apache:$mavenResolverVersion"
-        api 'com.github.oshi:oshi-core:7.7.1'
+        api 'com.github.oshi:oshi-core:7.7.2'
         api 'io.pebbletemplates:pebble:4.1.2'
         api "co.elastic.logging:logback-ecs-encoder:1.8.0"
         api "de.focus-shift:jollyday-core:$jollydayVersion"
@@ -117,7 +117,7 @@ dependencies {
         api "com.github.victools:jsonschema-module-swagger-2:$jsonschemaVersion"
         api "com.networknt:json-schema-validator:3.0.8"
         api 'com.h2database:h2:2.5.252'
-        api 'com.mysql:mysql-connector-j:26.7.0'
+        api 'com.mysql:mysql-connector-j:26.10.0'
         api 'org.postgresql:postgresql:42.7.14'
         api 'com.github.docker-java:docker-java:3.7.1'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.7.1'
@@ -157,7 +157,7 @@ dependencies {
         api "org.exparity:hamcrest-date:2.0.8"
         api "org.wiremock:wiremock-jetty12:3.13.2"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
-        api "com.microsoft.playwright:playwright:1.61.0"
+        api "com.microsoft.playwright:playwright:1.64.0"
         api "org.awaitility:awaitility:4.3.0"
         api "com.tngtech.archunit:archunit-junit5:1.5.1"
 

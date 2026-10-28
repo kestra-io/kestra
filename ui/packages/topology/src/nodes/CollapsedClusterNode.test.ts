@@ -3,6 +3,7 @@ import {computed} from "vue"
 import CollapsedClusterNode from "./CollapsedClusterNode.vue"
 import NodeMenu from "./NodeMenu.vue"
 import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY} from "../injectionKeys"
+import {NODE_SIZES} from "../utils/constants"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 const TASK_NODE = {
@@ -10,7 +11,7 @@ const TASK_NODE = {
     task: {id: "per_region", type: "io.kestra.plugin.core.flow.Loop"},
 }
 
-function mountCollapsedLane(slots?: Record<string, string>) {
+function mountCollapsedLane(slots?: Record<string, string>, withExecution = true) {
     return i18nMount(CollapsedClusterNode, {
         slots,
         props: {
@@ -26,10 +27,10 @@ function mountCollapsedLane(slots?: Record<string, string>) {
         global: {
             stubs: {NodeMenu: true, Handle: true},
             provide: {
-                [EXECUTION_INJECTION_KEY as symbol]: computed(() => ({
+                [EXECUTION_INJECTION_KEY as symbol]: computed(() => withExecution ? {
                     id: "execution-id",
                     taskRunList: [{taskId: "per_region", state: {current: "FAILED"}}],
-                })),
+                } : undefined),
                 [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
             },
         },
@@ -50,5 +51,20 @@ describe("CollapsedClusterNode taskActions slot", () => {
         const wrapper = mountCollapsedLane()
 
         expect(wrapper.findComponent(NodeMenu).exists()).toBe(true)
+    })
+})
+
+describe("CollapsedClusterNode status row reservation", () => {
+    it("should stop the lane card above the row the node footprint reserves in an execution", () => {
+        const wrapper = mountCollapsedLane()
+
+        expect((wrapper.find(".collapsed-lane").element as HTMLElement).style.height)
+            .toBe(`calc(100% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px)`)
+    })
+
+    it("should fill its whole footprint outside of an execution", () => {
+        const wrapper = mountCollapsedLane(undefined, false)
+
+        expect((wrapper.find(".collapsed-lane").element as HTMLElement).style.height).toBe("")
     })
 })

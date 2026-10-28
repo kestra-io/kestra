@@ -541,6 +541,8 @@
     "refresh": "Rafraîchir",
     "filter by status": "Filtrer les exécutions par statut {status}",
     "topology-graph": {
+      "retried": "Cette task a été relancée",
+      "artifacts": "aucun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientation du graph",
       "zoom-in": "Zoomer",
       "zoom-out": "Dézoomer",
@@ -669,6 +671,14 @@
     "inputs": "Entrées",
     "input": "Entré",
     "variables": "Variables",
+    "task_run_popup": {
+      "open": "Détails de la task",
+      "count_error": "Impossible de charger le compteur",
+      "load_error": "Impossible de charger cette vue.",
+      "retry": "Réessayer",
+      "no_logs": "Aucun log enregistré pour cette exécution de task.",
+      "no_artifacts": "Cette task ne fournit pas d'artifact."
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Aucune task de ce flow ne fournit d'artifact.",
@@ -679,6 +689,7 @@
       "exit_fullscreen": "Quitter le mode plein écran"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "Entrée/Sortie",
       "search_placeholder": "Rechercher une Key ou une value...",
       "tasks_outputs": "Tasks outputs",

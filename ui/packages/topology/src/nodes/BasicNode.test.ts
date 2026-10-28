@@ -2,6 +2,7 @@ import {describe, expect, it, vi} from "vitest"
 import {defineComponent, h} from "vue"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import BasicNode from "./BasicNode.vue"
+import {NODE_SIZES} from "../utils/constants"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
 const CLS = "io.kestra.plugin.core.log.Log"
@@ -96,6 +97,44 @@ describe("BasicNode layout", () => {
 
         expect(wrapper.find(".node-footer").exists()).toBe(false)
         expect(wrapper.find(".node-core").classes()).not.toContain("node-core--with-footer")
+    })
+})
+
+describe("BasicNode status row", () => {
+    const slots = {"status-row": "<span class='row-marker'>chip</span>", footer: "<div class='footer-marker'>bar</div>"}
+
+    it("should render the status row below the card, outside of it", () => {
+        const wrapper = mountBasicNode({}, slots)
+
+        expect(wrapper.find(".node-wrapper > .node-core + .node-status-row > .row-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-core .row-marker").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).toContain("node-wrapper--with-status-row")
+    })
+
+    it("should give the row its reserved height", () => {
+        const wrapper = mountBasicNode({}, slots)
+
+        expect((wrapper.find(".node-status-row").element as HTMLElement).style.height).toBe(`${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`)
+    })
+
+    it("should render no row below the pill threshold", () => {
+        const wrapper = mountBasicNode({lod: "pill"}, slots)
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+        expect(wrapper.find(".node-wrapper").classes()).not.toContain("node-wrapper--with-status-row")
+    })
+
+    it("should render no row when no status row is given", () => {
+        const wrapper = mountBasicNode({}, {footer: slots.footer})
+
+        expect(wrapper.find(".node-status-row").exists()).toBe(false)
+    })
+
+    it("should place the retry badge on the task icon and the runner above the title", () => {
+        const wrapper = mountBasicNode({}, {"icon-badge": "<i class='badge-marker' />", runner: "<b class='runner-marker' />"})
+
+        expect(wrapper.find(".icon > .badge-marker").exists()).toBe(true)
+        expect(wrapper.find(".node-content > .node-runner + .node-title").exists()).toBe(true)
     })
 })
 

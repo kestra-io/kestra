@@ -541,6 +541,8 @@
     "refresh": "새로 고침",
     "filter by status": "{status} 상태로 실행 필터링",
     "topology-graph": {
+      "retried": "이 Task는 재시도되었습니다",
+      "artifacts": "artifact 없음 | artifact {count}개 | artifact {count}개",
       "graph-orientation": "그래프 방향",
       "zoom-in": "확대",
       "zoom-out": "축소",
@@ -669,6 +671,14 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "변수",
+    "task_run_popup": {
+      "open": "Task 상세 정보",
+      "count_error": "개수를 불러오지 못했습니다",
+      "load_error": "이 보기를 불러오지 못했습니다.",
+      "retry": "다시 시도",
+      "no_logs": "이 task 실행에 기록된 log가 없습니다.",
+      "no_artifacts": "이 Task는 artifact를 제공하지 않습니다."
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "이 Flow의 Task는 artifact를 제공하지 않습니다.",
@@ -679,6 +689,7 @@
       "exit_fullscreen": "전체 화면 종료"
     },
     "variable_explorer": {
+      "task_outputs": "Task outputs",
       "title": "입력/출력",
       "search_placeholder": "Key 또는 value 검색...",
       "tasks_outputs": "Tasks outputs",

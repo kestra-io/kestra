@@ -541,6 +541,8 @@
     "refresh": "Odśwież",
     "filter by status": "Filtruj egzekucje według statusu {status}",
     "topology-graph": {
+      "retried": "Ten Task został ponowiony",
+      "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
       "graph-orientation": "Orientacja grafu",
       "zoom-in": "Powiększ",
       "zoom-out": "Pomniejsz",
@@ -669,6 +671,14 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Zmienne",
+    "task_run_popup": {
+      "open": "Szczegóły Taska",
+      "count_error": "Nie udało się załadować liczby",
+      "load_error": "Nie udało się załadować tego widoku.",
+      "retry": "Spróbuj ponownie",
+      "no_logs": "Brak Logów zarejestrowanych dla tego Task Runa.",
+      "no_artifacts": "Ten Task nie dostarcza Artifactu."
+    },
     "execution_artifacts": {
       "title": "Artifacts",
       "empty": "Żaden Task tego Flow nie dostarcza Artifactu.",
@@ -679,6 +689,7 @@
       "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
     },
     "variable_explorer": {
+      "task_outputs": "Outputy Taska",
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",

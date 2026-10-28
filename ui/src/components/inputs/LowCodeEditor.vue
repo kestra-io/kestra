@@ -27,6 +27,7 @@
             :validationIssuesByTask="validationIssuesByTask"
             :focusedTaskId="focusedTaskId"
             :loopLanes="loopLanes"
+            :artifactCounts="artifactCounts"
             @loop-step="({uid, delta}) => loopScoping.stepLane(uid, delta)"
             @loop-scope-failed="({uid}) => loopScoping.scopeFirstFailure(uid)"
             @toggle-orientation="toggleOrientation"
@@ -40,6 +41,7 @@
             @open-link="openFlow"
             @show-logs="showLogs"
             @show-outputs="showOutputs"
+            @show-artifacts="onShowArtifacts"
             @replay-task="onReplayTask"
             @show-description="showDescription"
             @show-condition="showCondition"
@@ -91,8 +93,17 @@
             </template>
             <template #taskActions="taskProps">
                 <template v-for="context in [taskActionsContext(taskProps.execution?.id, taskProps.taskRun?.id, taskProps.taskRuns.map(run => run.id))]" :key="taskProps.taskRun?.id">
+                    <KsIconButton
+                        v-if="isReadOnly && context && taskProps.variant === 'task'"
+                        class="node-action-button"
+                        :aria-label="$t('task_run_popup.open')"
+                        data-test="task-run-popup-trigger"
+                        @click.stop="openTaskPopup({execution: context.execution, taskId: taskProps.task?.id, task: taskProps.task, actions: taskProps.actions})"
+                    >
+                        <InformationOutline />
+                    </KsIconButton>
                     <TaskRunActions
-                        v-if="isReadOnly && context"
+                        v-else-if="isReadOnly && context"
                         class="node-action-button"
                         :taskRun="context.taskRun"
                         :taskType="taskProps.task?.type"
@@ -165,34 +176,9 @@
             <KsTabs v-if="isInspectOpen" v-model="inspectTab" type="box" class="inspect-tabs">
                 <KsTabPane :label="$t('logs')" name="logs">
                     <div class="tab-body">
-                        <Collapse>
-                            <KsFormItem>
-                                <SearchField
-                                    :router="false"
-                                    @search="onSearch"
-                                    class="search"
-                                />
-                            </KsFormItem>
-                            <KsFormItem>
-                                <LogLevelSelector
-                                    :value="logLevel"
-                                    @update:model-value="onLevelChange"
-                                />
-                            </KsFormItem>
-                        </Collapse>
-                        <TaskRunDetails
-                            v-for="taskRun in selectedTask.taskRuns"
-                            :key="taskRun.id"
-                            :targetExecutionId="selectedTask.execution?.id"
-                            :taskRunId="taskRun.id"
-                            :filter="logFilter"
-                            :excludeMetas="[
-                                'namespace',
-                                'flowId',
-                                'taskId',
-                                'executionId',
-                            ]"
-                            :level="logLevel"
+                        <TaskRunLogs
+                            :executionId="selectedTask.execution?.id"
+                            :taskRunIds="(selectedTask.taskRuns ?? []).map(taskRun => taskRun.id)"
                             @follow="emit('follow', $event)"
                         />
                     </div>
@@ -292,6 +278,19 @@
             </div>
         </KsDrawer>
 
+        <TaskRunPopup
+            v-if="taskPopup && taskPopupExecution?.taskRunList?.some(run => run.taskId === taskPopup?.taskId)"
+            v-model="isTaskPopupOpen"
+            :execution="taskPopupExecution"
+            :taskId="taskPopup.taskId"
+            :taskType="taskPopup.task?.type"
+            :description="taskPopup.task ? taskWithSource(taskPopup.task).description : undefined"
+            :flow="flowStore.flow"
+            :nodeActions="taskPopup.actions"
+            :initialTab="taskPopup.tab"
+            @follow="emit('follow', $event)"
+        />
+
         <Restart
             v-if="replayExecution && replayTaskRun"
             ref="replayRef"
@@ -314,25 +313,24 @@
     import {storageKeys, topologyOrientations} from "../../utils/constants"
     import {useVueFlow} from "@vue-flow/core"
 
-    import SearchField from "../layout/SearchField.vue"
-    import LogLevelSelector from "../logs/LogLevelSelector.vue"
-    import TaskRunDetails from "../logs/TaskRunDetails.vue"
-    import Collapse from "../layout/Collapse.vue"
+    import TaskRunLogs from "../executions/TaskRunLogs.vue"
     import Vars from "../executions/Vars.vue"
     import MetricsTable from "../executions/MetricsTable.vue"
     import Restart from "../executions/overview/components/actions/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology, NodeMenu} from "@kestra-io/topology"
-    import type {CustomActionConfig, FlowGraph} from "@kestra-io/topology"
-    import {LOG_LEVELS, SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
-    import type {LevelKey} from "../../utils/logs"
+    import type {CustomActionConfig, FlowGraph, NodeAction} from "@kestra-io/topology"
+    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import type {Execution, TaskRun, PagedResultsMetricEntry, Task} from "@kestra-io/kestra-sdk"
     import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import type {AddTaskTarget} from "@kestra-io/topology/vue-flow-utils"
     import type {KnownSlotProps} from "@kestra-io/slot-contracts"
     import TaskRunActions from "../executions/TaskRunActions.vue"
+    import TaskRunPopup, {type TaskRunPopupTab} from "../executions/TaskRunPopup.vue"
+    import {EXECUTION_ARTIFACTS_KEY} from "../executions/composables/useExecutionArtifacts"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import LoopIterationPicker from "../executions/LoopIterationPicker.vue"
     import LoopScopeBar from "../executions/LoopScopeBar.vue"
     import {useLoopScoping} from "../../composables/useLoopScoping"
@@ -430,7 +428,16 @@
         [key: string]: unknown;
     }
 
+    interface TaskPopupTarget {
+        executionId: string;
+        taskId: string;
+        task?: FlowTask;
+        actions: NodeAction[];
+        tab: TaskRunPopupTab;
+    }
+
     const EXCLUDED_NODE_ACTIONS = ["outputs", "replay", "edit"]
+    const POPUP_EXCLUDED_NODE_ACTIONS = [...EXCLUDED_NODE_ACTIONS, "logs", "description"]
 
     const router = useRouter()
     const route = useRoute()
@@ -455,6 +462,46 @@
         const taskRun = execution?.taskRunList?.find(run => run.id === taskRunId)
         return execution && taskRun ? {execution, taskRun, taskRuns} : undefined
     }
+    const taskPopup = ref<TaskPopupTarget | null>(null)
+    const isTaskPopupOpen = computed({
+        get: () => taskPopup.value !== null,
+        set: (open) => {
+            if (!open) taskPopup.value = null
+        },
+    })
+    const taskPopupExecution = computed(() => {
+        const executionId = taskPopup.value?.executionId
+        if (!executionId) return undefined
+        return executionId === executionsStore.execution?.id
+            ? executionsStore.execution
+            : executionsStore.graphExecutions[executionId]
+    })
+
+    function openTaskPopup(event: {execution?: {id?: string}; taskId?: string; task?: unknown; actions: NodeAction[]; tab?: TaskRunPopupTab}) {
+        if (!event.execution?.id || !event.taskId) return
+        taskPopup.value = {
+            executionId: event.execution.id,
+            taskId: event.taskId,
+            task: isTask(event.task) ? event.task : undefined,
+            actions: event.actions
+                .filter(a => !POPUP_EXCLUDED_NODE_ACTIONS.includes(a.key))
+                .map((a, i) => i === 0 ? {...a, divided: true} : a),
+            tab: event.tab ?? "logs",
+        }
+    }
+
+    const onShowArtifacts = (event: {id?: string; task?: unknown; execution?: {id?: string}; actions: NodeAction[]}) =>
+        openTaskPopup({execution: event.execution, taskId: event.id, task: event.task, actions: event.actions, tab: "artifacts"})
+
+    const artifactsContext = inject(EXECUTION_ARTIFACTS_KEY, undefined)
+    const artifactCounts = computed(() => {
+        const counts: Record<string, number> = {}
+        for (const artifact of artifactsContext?.artifacts.value ?? []) {
+            counts[artifact.taskId] = (counts[artifact.taskId] ?? 0) + 1
+        }
+        return counts
+    })
+
     const exec = computed<Execution | undefined>(() => (executionsStore.execution ?? undefined) as unknown as Execution | undefined)
 
     const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
@@ -809,9 +856,6 @@
         }
     })
     const vueFlow = ref<HTMLDivElement>()
-    const logFilter = ref("")
-    const toLevelKey = (value: string | null): LevelKey => LOG_LEVELS.find((level) => level === value) ?? "INFO"
-    const logLevel = ref<LevelKey>(toLevelKey(localStorage.getItem(storageKeys.DEFAULT_LOG_LEVEL)))
     const isDrawerOpen = ref(false)
     const isShowDescriptionOpen = ref(false)
     const isShowConditionOpen = ref(false)
@@ -1402,14 +1446,6 @@
         isDrawerOpen.value = true
     }
 
-    const onSearch = (search: string) => {
-        logFilter.value = search
-    }
-
-    const onLevelChange = (level: string) => {
-        logLevel.value = toLevelKey(level)
-    }
-
     const showDescription = (event: FlowTask) => {
         resetDrawerSections()
         selectedTask.value = event
@@ -1472,10 +1508,6 @@
 </script>
 
 <style scoped>
-.search {
-    margin-inline-end: var(--ks-spacing-2);
-}
-
 .detail {
     margin-top: var(--ks-spacing-4);
 }

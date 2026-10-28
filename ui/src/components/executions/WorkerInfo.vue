@@ -1,6 +1,6 @@
 <template>
     <component :is="component" :icon="Server" @click="visible = !visible">
-        <span v-if="component !== 'KsButton'">
+        <span v-if="labeled || component !== 'KsButton'">
             {{ $t("worker information") }}
         </span>
 
@@ -42,10 +42,14 @@
 
     import type {TaskRun} from "@kestra-io/kestra-sdk"
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         component?: string;
+        labeled?: boolean;
         taskRun: Pick<TaskRun, "id" | "attempts">;
-    }>()
+    }>(), {
+        component: undefined,
+        labeled: false,
+    })
 
     const visible = ref(false)
 

@@ -222,12 +222,20 @@
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
+    const props = defineProps<{
+        scope?: {
+            execution: Execution;
+            taskId: string;
+            outputs: Record<string, unknown>;
+        };
+    }>()
+
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
-    const execution = computed(() => executionsStore.execution)
+    const execution = computed(() => props.scope?.execution ?? executionsStore.execution)
 
     /* ----------------------------- Pebble paths ----------------------------- */
 
@@ -315,6 +323,7 @@
     watch(
         () => [execution.value?.id, execution.value?.state?.current] as const,
         async ([id], previous) => {
+            if (props.scope) return
             if (id !== previous?.[0]) {
                 tasksWithOutputs.value = undefined
                 taskOutputMetaByRunId.value = {}
@@ -431,6 +440,13 @@
 
     const sections = computed<ExplorerSection[]>(() => {
         const exec = execution.value
+        if (props.scope) {
+            return [{
+                key: "taskOutputs",
+                label: t("variable_explorer.task_outputs"),
+                items: itemsFromRecord(props.scope.outputs, `outputs${formatStep(props.scope.taskId)}`),
+            }]
+        }
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
@@ -444,6 +460,7 @@
 
     /** `?expression=trigger.body` seeds the debugger with that expression. */
     function seededExpression() {
+        if (props.scope) return ""
         const seed = route.query.expression?.toString()
         return seed ? `{{ ${seed} }}` : ""
     }
@@ -453,7 +470,7 @@
 
     function applySeededSelection(available: ExplorerSection[]) {
         const target = route.query.select?.toString()
-        if (selectionApplied || !target) {
+        if (props.scope || selectionApplied || !target) {
             return
         }
         const item = available.flatMap((section) => section.items)
@@ -634,6 +651,15 @@
     function closeDetail() {
         detailOpen.value = false
     }
+
+    watch(
+        () => props.scope?.outputs,
+        (outputs) => {
+            const [first] = sections.value.flatMap((section) => section.items)
+            if (outputs && first && !isMobile.value) void selectItem(first)
+        },
+        {immediate: true},
+    )
 </script>
 
 <style scoped>

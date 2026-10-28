@@ -1,7 +1,7 @@
 <template>
     <div
         class="node-wrapper"
-        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer}"
+        :class="{'node-wrapper--dragging': dragging, 'node-wrapper--pill': lod === 'pill', 'node-wrapper--with-footer': $slots.footer, 'node-wrapper--with-status-row': hasStatusRow}"
         :draggable="movable"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
@@ -23,12 +23,16 @@
                 <div class="main-content">
                     <DragVertical v-if="movable" class="node-grip" aria-hidden="true" />
                     <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
+                        <slot name="icon-badge" />
                         <KsTooltip v-if="shortType" :content="shortType" placement="bottom" :showAfter="600">
                             <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                         </KsTooltip>
                         <component v-else :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                     </div>
                     <div class="node-content">
+                        <div v-if="$slots.runner" class="node-runner">
+                            <slot name="runner" />
+                        </div>
                         <div class="node-title">
                             <div class="task-title">
                                 <KsTooltip v-if="extraTooltip" :content="extraTooltip">
@@ -49,6 +53,9 @@
                     <slot name="footer" />
                 </div>
             </div>
+            <div v-if="hasStatusRow" class="node-status-row" :style="{height: `${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`}" data-test="node-status-row">
+                <slot name="status-row" />
+            </div>
             <Transition name="node-details-overlay">
                 <div v-if="lod === 'expanded' && $slots.details" class="node-details-overlay" data-test="node-details-overlay">
                     <slot name="details" />
@@ -59,7 +66,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject} from "vue"
+    import {computed, inject, useSlots} from "vue"
     import {
         KsTooltip,
         useTaskIcon,
@@ -67,7 +74,7 @@
         type PluginIconMap,
     } from "@kestra-io/design-system"
     import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import {EVENTS} from "../utils/constants"
+    import {EVENTS, NODE_SIZES} from "../utils/constants"
     import type {LodLevel} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
@@ -112,6 +119,9 @@
         EVENTS.TASK_DRAG_START,
         EVENTS.TASK_DRAG_END,
     ])
+
+    const slots = useSlots()
+    const hasStatusRow = computed(() => Boolean(slots["status-row"]) && props.lod !== "pill")
 
     const movable = computed(() => Boolean(props.data?.isMovable))
 
@@ -337,6 +347,7 @@
         }
 
         .icon {
+            position: relative;
             flex-shrink: 0;
             border-radius: var(--ks-radius-lg);
             width: 40px;
@@ -367,6 +378,26 @@
         }
     }
 
+    .node-wrapper--with-status-row {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        & > .node-core--with-footer {
+            height: auto;
+            flex: 1 1 0;
+            min-height: 0;
+        }
+    }
+
+    .node-status-row {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--ks-spacing-1);
+    }
+
     .node-footer {
         flex: 1;
         display: flex;
@@ -389,6 +420,14 @@
             min-width: 0;
             gap: var(--ks-spacing-1);
         }
+    }
+
+    .node-runner {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        font-size: var(--ks-font-size-2xs);
+        line-height: 1;
     }
 
     .node-subtitle {

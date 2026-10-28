@@ -9,6 +9,8 @@ import {
     LONGEST_TASK_RUN_DURATION_INJECTION_KEY,
     VALIDATION_ISSUES_INJECTION_KEY,
     LOOP_LANES_INJECTION_KEY,
+    LOD_INJECTION_KEY,
+    ARTIFACT_COUNTS_INJECTION_KEY,
 } from "../injectionKeys"
 
 import type {LoopLaneData} from "../utils/loopOutcome"
@@ -47,14 +49,17 @@ function taskRunWithHistory(taskId: string, histories: {date: number; state: str
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map(), loopLanes, uid = "root.my-task"}: {
+function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map(), loopLanes, uid = "root.my-task", artifactCounts = {}, lod = "default", nodeExecutionId}: {
     loopLanes?: Record<string, LoopLaneData>,
+    artifactCounts?: Record<string, number>,
+    lod?: "pill" | "default" | "expanded",
+    nodeExecutionId?: string,
     uid?: string,
     execution?: Record<string, unknown>,
     validationIssues?: Map<string, string[]>,
     taskRuns?: GraphTaskRun[],
     replayEnabled?: boolean,
-    task?: typeof TASK & {errors?: unknown[]},
+    task?: typeof TASK & {errors?: unknown[], taskRunner?: {type: string}},
     isReadOnly?: boolean,
     isFlowable?: boolean,
     realBasicNode?: boolean,
@@ -70,7 +75,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                     task,
                     taskRun: taskRuns[0],
                 },
-                executionId: execution ? EXECUTION_ID : undefined,
+                executionId: nodeExecutionId ?? (execution ? EXECUTION_ID : undefined),
                 isReadOnly,
                 isFlowable,
             },
@@ -86,7 +91,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                     ? {KsTooltip: {template: "<span><slot /></span>"}}
                     : {
                         BasicNode: {
-                            template: "<div><slot name='subtitle'/><slot name='details'/><slot name='content'/><slot name='footer'/><slot name='title-status'/><slot name='title-actions'/></div>",
+                            template: "<div><slot name='runner'/><slot name='icon-badge'/><slot name='subtitle'/><slot name='details'/><slot name='content'/><slot name='footer'/><slot name='title-status'/><slot name='status-row'/><slot name='title-actions'/></div>",
                         },
                     }),
             },
@@ -98,6 +103,8 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
                 [LONGEST_TASK_RUN_DURATION_INJECTION_KEY as symbol]: computed(() => computeLongestTaskRunDuration(taskRuns)),
                 [VALIDATION_ISSUES_INJECTION_KEY as symbol]: computed(() => validationIssues),
                 [LOOP_LANES_INJECTION_KEY as symbol]: computed(() => loopLanes ?? {}),
+                [LOD_INJECTION_KEY as symbol]: computed(() => lod),
+                [ARTIFACT_COUNTS_INJECTION_KEY as symbol]: computed(() => artifactCounts),
             },
         },
     })
@@ -393,5 +400,153 @@ describe("TaskNode inside a loop", () => {
         const wrapper = mountInLoop(lane({scopedNumber: 2, taskRunStateCounts: {"my-task": {SUCCESS: 9}}}))
 
         expect(wrapper.find("[data-test='loop-task-runs']").exists()).toBe(false)
+    })
+})
+
+describe("TaskNode status chip row", () => {
+    const mountWithState = (current: string, extra: Partial<GraphTaskRun> = {}) => mountTaskNode({
+        execution: {state: {current}},
+        taskRuns: [{id: "run-1", taskId: "my-task", state: {current, histories: []}, ...extra}],
+        realBasicNode: true,
+    })
+
+    it.each(["SUCCESS", "FAILED", "KILLING", "RUNNING"])("should show a %s chip below the card, outside of it", (current) => {
+        const wrapper = mountWithState(current)
+
+        const chip = wrapper.find(".node-status-row [data-test='node-status-chip']")
+        expect(chip.exists()).toBe(true)
+        expect(chip.attributes("data-state")).toBe(current)
+        expect(wrapper.find(".node-core [data-test='node-status-chip']").exists()).toBe(false)
+    })
+
+    it("should keep the chip row but show no chip for a task that never ran", () => {
+        const wrapper = mountTaskNode({execution: {state: {current: "SUCCESS"}}, taskRuns: [], realBasicNode: true})
+
+        expect(wrapper.find("[data-test='node-status-row']").exists()).toBe(true)
+        expect(wrapper.find("[data-test='node-status-chip']").exists()).toBe(false)
+    })
+
+    it("should render no chip row outside of an execution context", () => {
+        const wrapper = mountTaskNode({realBasicNode: true})
+
+        expect(wrapper.find("[data-test='node-status-row']").exists()).toBe(false)
+    })
+
+    it("should render no chip row once zoomed out to the pill", () => {
+        const wrapper = mountTaskNode({
+            execution: {state: {current: "SUCCESS"}},
+            taskRuns: [taskRun()],
+            realBasicNode: true,
+            lod: "pill",
+        })
+
+        expect(wrapper.find("[data-test='node-status-row']").exists()).toBe(false)
+    })
+
+    it("should keep the progress bar inside the card footer", () => {
+        const wrapper = mountWithState("SUCCESS")
+
+        expect(wrapper.find(".node-core > .node-footer").exists()).toBe(true)
+    })
+})
+
+describe("TaskNode artifact badge", () => {
+    const runs = [taskRun()]
+    const mountWithArtifacts = (artifactCounts: Record<string, number>, nodeExecutionId?: string) => mountTaskNode({
+        execution: {state: {current: "SUCCESS"}},
+        taskRuns: runs,
+        artifactCounts,
+        nodeExecutionId,
+        realBasicNode: true,
+    })
+
+    it("should not show a badge for a task without artifacts", () => {
+        expect(mountWithArtifacts({}).find("[data-test='node-artifact-badge']").exists()).toBe(false)
+        expect(mountWithArtifacts({"my-task": 0}).find("[data-test='node-artifact-badge']").exists()).toBe(false)
+    })
+
+    it("should show the singular count in the chip row", () => {
+        const badge = mountWithArtifacts({"my-task": 1}).find(".node-status-row [data-test='node-artifact-badge']")
+
+        expect(badge.text()).toBe("1 artifact")
+    })
+
+    it("should show the plural count in the chip row", () => {
+        const badge = mountWithArtifacts({"my-task": 3}).find(".node-status-row [data-test='node-artifact-badge']")
+
+        expect(badge.text()).toBe("3 artifacts")
+    })
+
+    it("should emit showArtifacts with the task and its actions when clicked", async () => {
+        const wrapper = mountWithArtifacts({"my-task": 2})
+
+        await wrapper.find("[data-test='node-artifact-badge']").trigger("click")
+
+        const emitted = wrapper.emitted("showArtifacts")
+        expect(emitted).toHaveLength(1)
+        expect(emitted![0][0]).toMatchObject({id: "my-task", task: TASK, taskRuns: runs})
+        expect((emitted![0][0] as {actions: unknown[]}).actions.length).toBeGreaterThan(0)
+    })
+
+    it("should not show a badge on a task of another execution that shares the id", () => {
+        const wrapper = mountWithArtifacts({"my-task": 2}, "subflow-execution-id")
+
+        expect(wrapper.find("[data-test='node-artifact-badge']").exists()).toBe(false)
+    })
+})
+
+describe("TaskNode retry marker", () => {
+    const mountWithAttempts = (attempts: unknown[]) => mountTaskNode({
+        execution: {state: {current: "FAILED"}},
+        taskRuns: [{id: "run-1", taskId: "my-task", state: {current: "FAILED", histories: []}, attempts}],
+    })
+
+    it("should flag a task run that took more than one attempt", () => {
+        expect(mountWithAttempts([{}, {}]).find("[data-test='node-retry-marker']").exists()).toBe(true)
+    })
+
+    it("should not flag a task run that took a single attempt", () => {
+        expect(mountWithAttempts([{}]).find("[data-test='node-retry-marker']").exists()).toBe(false)
+    })
+})
+
+describe("TaskNode runner badge", () => {
+    it("should show the runner above the task id rather than beside the type", () => {
+        const wrapper = mountTaskNode({
+            task: {...TASK, taskRunner: {type: "io.kestra.plugin.scripts.runner.docker.Docker"}},
+            realBasicNode: true,
+        })
+
+        const content = wrapper.find(".node-content")
+        expect(content.element.children[0].classList.contains("node-runner")).toBe(true)
+        expect(content.find(".node-runner [data-test='node-runner-badge']").text()).toBe("SCRIPTS Docker")
+        expect(content.find(".node-subtitle").text()).not.toContain("SCRIPTS")
+    })
+})
+
+describe("TaskNode info action", () => {
+    it("should hand the slot a task variant so the host can open the task popup", () => {
+        const wrapper = i18nMount(TaskNode, {
+            props: {
+                id: "root.my-task",
+                data: {
+                    node: {uid: "root.my-task", type: "io.kestra.core.models.hierarchies.GraphTask", task: TASK},
+                    executionId: EXECUTION_ID,
+                    isReadOnly: true,
+                },
+                playgroundEnabled: false,
+                playgroundReadyToStart: false,
+            },
+            global: {
+                stubs: {Handle: true, NodeMenu: true, BasicNode: {template: "<div><slot name='title-actions'/></div>"}},
+                provide: {
+                    [EXECUTION_INJECTION_KEY as symbol]: computed(() => ({id: EXECUTION_ID, taskRunList: [taskRun()], state: {current: "SUCCESS"}})),
+                    [SUBFLOWS_EXECUTIONS_INJECTION_KEY as symbol]: computed(() => ({})),
+                },
+            },
+            slots: {taskActions: "<template #default=\"{variant}\"><i data-test=\"variant\">{{ variant }}</i></template>"},
+        })
+
+        expect(wrapper.find("[data-test='variant']").text()).toBe("task")
     })
 })

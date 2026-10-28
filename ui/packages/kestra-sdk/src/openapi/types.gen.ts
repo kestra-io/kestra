@@ -376,6 +376,7 @@ export type ApiTaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    definitionEdit?: TaskRunDefinitionEdit | null;
 };
 
 export type ApiThreadDetail = {
@@ -2745,6 +2746,7 @@ export type ApiTaskRunWritable = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    definitionEdit?: TaskRunDefinitionEdit | null;
 };
 
 export type EventExecutionStatusEventWritable = {

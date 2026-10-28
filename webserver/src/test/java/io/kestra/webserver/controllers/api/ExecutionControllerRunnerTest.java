@@ -1162,6 +1162,8 @@ class ExecutionControllerRunnerTest {
         assertThat(taskOutputService.getOutputs(replay.findTaskRunsByTaskId("notify").getFirst().toBuilder().tenantId(TENANT_ID).build()))
             .containsEntry("value", "adjusted KR-0412 ");
         TaskRun adjust = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/executions/" + replay.getId()), String.class))
+            .contains("\"definitionEdit\":{\"id\":\"" + adjust.getDefinitionEdit().id() + "\"");
         assertThat(
             client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/edited-definition".formatted(replay.getId(), adjust.getId())),

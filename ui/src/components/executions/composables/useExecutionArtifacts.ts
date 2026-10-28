@@ -1,5 +1,6 @@
 import {computed, ref, watch, type InjectionKey} from "vue"
 import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
+import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useFlowStore} from "../../../stores/flow"
 import {useFederatedModule} from "../../../remoteComponents/useFederatedModule"
@@ -16,28 +17,38 @@ export interface ExecutionArtifact {
 
 export const EXECUTION_ARTIFACTS_KEY: InjectionKey<ReturnType<typeof useExecutionArtifacts>> = Symbol("execution-artifacts")
 
-export function useExecutionArtifacts() {
+export function useExecutionArtifacts(flow?: () => FlowForExecution | undefined) {
     const executionsStore = useExecutionsStore()
+    const currentFlow = flow ?? (() => executionsStore.flow)
     const {RemoteComponent, taskAdditionalInfoRemote, manifestReady, hasResolvedComponent, hasFailedComponent, resolveRemoteComponent, subtitleResolvers} = useFederatedModule("execution-artifact")
 
     const flowStore = useFlowStore()
     const executedSource = ref<string>()
 
-    watch(() => {
+    const executedRevision = () => {
+        if (flow) {
+            const given = flow()
+            return given ? {namespace: given.namespace, id: given.id, revision: given.revision} : undefined
+        }
         const execution = executionsStore.execution
-        return execution ? `${execution.namespace}/${execution.flowId}/${execution.flowRevision}` : undefined
+        return execution ? {namespace: execution.namespace, id: execution.flowId, revision: execution.flowRevision} : undefined
+    }
+
+    watch(() => {
+        const executed = executedRevision()
+        return executed ? `${executed.namespace}/${executed.id}/${executed.revision}` : undefined
     }, async (key) => {
         executedSource.value = undefined
-        const execution = executionsStore.execution
-        if (!key || !execution) return
-        const flow = await flowStore.loadFlow({
-            namespace: execution.namespace,
-            id: execution.flowId,
-            revision: execution.flowRevision?.toString(),
+        const executed = executedRevision()
+        if (!key || !executed) return
+        const loaded = await flowStore.loadFlow({
+            namespace: executed.namespace,
+            id: executed.id,
+            revision: executed.revision?.toString(),
             store: false,
             optional: true,
         })
-        if (key === `${execution.namespace}/${execution.flowId}/${execution.flowRevision}`) executedSource.value = flow?.source
+        if (key === `${executed.namespace}/${executed.id}/${executed.revision}`) executedSource.value = loaded?.source
     }, {immediate: true})
 
     const sourceTaskById = computed(() => {
@@ -50,7 +61,7 @@ export function useExecutionArtifacts() {
         )
     })
 
-    const tasks = computed(() => getAllTasks(executionsStore.flow?.tasks).map((task) => ({...sourceTaskById.value[task.id], ...task})))
+    const tasks = computed(() => getAllTasks(currentFlow()?.tasks).map((task) => ({...sourceTaskById.value[task.id], ...task})))
 
     const ownerTypesOf = (task: {type: string, taskRunner?: {type?: string}}) =>
         [...new Set([task.type, task.taskRunner?.type].filter((type): type is string => !!type))]
@@ -58,7 +69,7 @@ export function useExecutionArtifacts() {
     const taskTypes = computed(() => [...new Set(tasks.value.flatMap(ownerTypesOf))].sort())
 
     watch(taskTypes, (types) => {
-        if (executionsStore.flow) resolveRemoteComponent(types.map((cls) => ({cls, version: undefined})))
+        if (currentFlow()) resolveRemoteComponent(types.map((cls) => ({cls, version: undefined})))
     }, {immediate: true})
 
     const artifacts = computed<ExecutionArtifact[]>(() => tasks.value.flatMap((task) =>

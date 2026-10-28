@@ -189,6 +189,14 @@ export function useFilters(
         ...(meta ? {meta} : {})
     });
 
+    const restoreClearedValues = () => {
+        const presentKeys = new Set(appliedFilters.value.map(f => f.key));
+        const cleared = (configuration.keys ?? [])
+            .filter(key => key.clearedValue !== undefined && !presentKeys.has(key.key))
+            .map(key => createAppliedFilter(key.key, key, key.comparators[0], key.clearedValue!, key.clearedValue!, "cleared"));
+        appliedFilters.value = [...appliedFilters.value, ...cleared];
+    };
+
     const createFilter = (
         key: string,
         config: any,
@@ -478,9 +486,10 @@ export function useFilters(
 
     const removeFilter = (filterId: string) => {
         const filter = appliedFilters.value.find(f => f?.id === filterId);
-        if (filter) {
+        if (filter && configuration.keys?.find(k => k.key === filter.key)?.removable !== false) {
             dismissDefaultVisibleKey(filter.key);
             appliedFilters.value = appliedFilters.value.filter(f => f?.key !== filter?.key);
+            restoreClearedValues();
             updateRoute(false);
         }
     };
@@ -500,6 +509,7 @@ export function useFilters(
     const clearFilters = () => {
         dismissAllDefaultVisibleKeys();
         appliedFilters.value = [];
+        restoreClearedValues();
         searchQuery.value = "";
         updateRoute(true);
     };

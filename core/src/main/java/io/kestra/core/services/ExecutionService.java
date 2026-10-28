@@ -665,7 +665,7 @@ public class ExecutionService {
             .flatMap(task ->
             {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
+                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of(), false));
                 } else {
                     return Mono.just(Collections.emptyList());
                 }

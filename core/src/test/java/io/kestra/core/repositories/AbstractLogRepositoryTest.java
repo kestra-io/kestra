@@ -389,6 +389,21 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void deleteByQueryShouldKeepLogsOfNamespaceDifferingOnlyByCase() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        LogEntry lower = logEntry(tenant, Level.INFO, "exec-lower").namespace("company.a").build();
+        LogEntry upper = logEntry(tenant, Level.INFO, "exec-upper").namespace("company.A").build();
+        logRepository.save(lower);
+        logRepository.save(upper);
+
+        int deleted = logRepository.deleteByQuery(tenant, "company.a", null, null, null, null, ZonedDateTime.now().plusMinutes(1));
+
+        assertThat(deleted).isEqualTo(1);
+        assertThat(logRepository.findByExecutionId(tenant, lower.getExecutionId(), null)).isEmpty();
+        assertThat(logRepository.findByExecutionId(tenant, upper.getExecutionId(), null)).hasSize(1);
+    }
+
+    @Test
     void findAllAsync() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO).build());

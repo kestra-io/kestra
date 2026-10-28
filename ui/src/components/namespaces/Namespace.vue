@@ -40,7 +40,7 @@
     });
 
     watch(() => route.params.tab, (newTab) => {
-        if (newTab === "overview" || newTab === "executions") {
+        if (newTab === "overview") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {

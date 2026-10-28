@@ -262,6 +262,7 @@ public class DashboardController {
         if (chart == null) {
             return null;
         }
+        modelValidator.validate(chart);
         var pageNumber = globalFilter.getPageNumber();
         var pageSize = globalFilter.getPageSize();
         var pageable = pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null;
@@ -297,6 +298,7 @@ public class DashboardController {
     private FetchChartDataQuery buildChartPreviewDataQuery(PreviewRequest previewRequest) {
         String tenantId = tenantService.resolveTenant();
         Chart<?> chart = YAML_PARSER.parse(previewRequest.chart(), Chart.class);
+        modelValidator.validate(chart);
         ChartFiltersOverrides globalFilter = previewRequest.globalFilter();
 
         List<QueryFilter> filters = globalFilter != null ? globalFilter.getFilters() : null;

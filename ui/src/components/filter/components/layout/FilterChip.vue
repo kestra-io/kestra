@@ -23,9 +23,11 @@
             @remove="emit('remove', $event)"
         />
         <el-button
+            v-if="filterKey?.removable !== false"
             link
             size="small"
             class="close"
+            data-test="filter-chip-remove"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
         />
@@ -37,7 +39,7 @@
     import {ElTag} from "element-plus";
     import {useValues} from "../../composables/useValues";
     import {Close} from "../../utils/icons";
-    import {AppliedFilter, FilterKeyConfig, Comparators} from "../../utils/filterTypes";
+    import {ALL_TIME_RANGE, AppliedFilter, FilterKeyConfig, Comparators} from "../../utils/filterTypes";
     import FilterEditPopover from "./FilterEditPopover.vue";
 
     type FilterValueType = string | string[] | Date | {startDate: Date; endDate: Date};
@@ -73,7 +75,7 @@
             return value.toLocaleDateString();
         case value && typeof value === "object" && "startDate" in value:
             return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`;
-        case typeof value === "string" && /^P(T?\d+[HMD]|\d+[YMDW])/.test(value):
+        case typeof value === "string" && (value === ALL_TIME_RANGE || /^P(T?\d+[HMD]|\d+[YMDW])/.test(value)):
             return getRelativeDateLabel(value);
         default:
             return String(value);

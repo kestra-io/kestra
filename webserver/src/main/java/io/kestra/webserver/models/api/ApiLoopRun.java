@@ -17,10 +17,30 @@ public record ApiLoopRun(@NotNull String taskId,
     int index,
     @Nullable String key,
     @NotNull String value,
-    List<Parent> parents) {
-    public record Parent(int index, @Nullable String key, @NotNull String value) {
+    List<Parent> parents,
+    @Nullable String rootExecutionId) {
+
+    public ApiLoopRun(@NotNull String taskId,
+        @NotNull String taskRunId,
+        int index,
+        @Nullable String key,
+        @NotNull String value,
+        List<Parent> parents) {
+        this(taskId, taskRunId, index, key, value, parents, null);
+    }
+
+    public record Parent(int index,
+        @Nullable String key,
+        @NotNull String value,
+        @Nullable String executionId,
+        @Nullable String taskId) {
+
+        public Parent(int index, @Nullable String key, @NotNull String value) {
+            this(index, key, value, null, null);
+        }
+
         public static Parent of(LoopRun.Parent parent) {
-            return new Parent(parent.index(), parent.key(), parent.value());
+            return new Parent(parent.index(), parent.key(), parent.value(), parent.executionId(), parent.taskId());
         }
     }
 
@@ -35,7 +55,8 @@ public record ApiLoopRun(@NotNull String taskId,
             loopRun.index(),
             loopRun.key(),
             loopRun.value(),
-            loopRun.parents() == null ? null : loopRun.parents().stream().map(Parent::of).toList()
+            loopRun.parents() == null ? null : loopRun.parents().stream().map(Parent::of).toList(),
+            loopRun.rootExecutionId()
         );
     }
 }

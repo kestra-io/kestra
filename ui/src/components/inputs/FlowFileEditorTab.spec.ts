@@ -27,9 +27,6 @@ vi.mock("../../stores/flow", () => ({
 vi.mock("../../stores/plugins", () => ({
     usePluginsStore: () => ({lazyLoadSchemaType: vi.fn(), editorPlugin: undefined, allTypes: [], updateDocumentation: vi.fn()}),
 }))
-vi.mock("../../stores/doc", () => ({
-    useDocStore: () => ({docId: undefined}),
-}))
 vi.mock("../../stores/productTour", () => ({
     useProductTourStore: () => ({isGuidedActive: false}),
 }))

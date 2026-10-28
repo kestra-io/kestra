@@ -151,6 +151,46 @@ class DashboardControllerTest {
     }
 
     @Test
+    void shouldCountPreviewedExecutionsByState() {
+        String namespace = TestsUtils.randomNamespace();
+        for (State.Type state : List.of(State.Type.SUCCESS, State.Type.SUCCESS, State.Type.FAILED)) {
+            executionRepository.save(
+                Execution.builder()
+                    .tenantId(MAIN_TENANT)
+                    .id(IdUtils.create())
+                    .namespace(namespace)
+                    .flowId("flow")
+                    .state(State.of(state, List.of()))
+                    .build()
+            );
+        }
+
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_state:
+                  field: STATE
+            """;
+        var namespaceFilter = QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(Op.EQUALS).value(namespace).build();
+        var failedFilter = QueryFilter.builder().field(QueryFilter.Field.STATE).operation(Op.IN).value(List.of("FAILED")).build();
+
+        DashboardController.ChartStateCounts counts = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/state-counts", new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(List.of(namespaceFilter)).build())),
+            DashboardController.ChartStateCounts.class
+        );
+        assertThat(counts.counts()).containsOnly(Map.entry("SUCCESS", 2L), Map.entry("FAILED", 1L));
+
+        DashboardController.ChartStateCounts failedOnly = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/state-counts", new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(List.of(namespaceFilter, failedFilter)).build())),
+            DashboardController.ChartStateCounts.class
+        );
+        assertThat(failedOnly.counts()).containsOnly(Map.entry("FAILED", 1L));
+    }
+
+    @Test
     void shouldExportChartFromDefaultDashboardSentinel() {
         // the "_default" id is a reserved sentinel resolving to the built-in default dashboard, not a stored one
         DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(

@@ -1,6 +1,7 @@
 import type {ComputedRef, InjectionKey} from "vue"
 import type {GraphExecution} from "./utils/vueFlowUtils"
 import type {LodLevel} from "./utils/constants"
+import type {LoopLaneData} from "./utils/loopOutcome"
 
 export const EXECUTION_INJECTION_KEY = Symbol("execution-injection-key") as InjectionKey<ComputedRef<GraphExecution | undefined>>
 export const SUBFLOWS_EXECUTIONS_INJECTION_KEY = Symbol("subflows-executions-injection-key") as InjectionKey<ComputedRef<Record<string, GraphExecution>>>
@@ -11,3 +12,5 @@ export const DROP_EDGE_INJECTION_KEY = Symbol("drop-edge-injection-key") as Inje
 export const DRAGGING_NODE_INJECTION_KEY = Symbol("dragging-node-injection-key") as InjectionKey<ComputedRef<boolean>>
 export const CANVAS_HOVERED_INJECTION_KEY = Symbol("canvas-hovered-injection-key") as InjectionKey<ComputedRef<boolean>>
 export const LONGEST_TASK_RUN_DURATION_INJECTION_KEY = Symbol("longest-task-run-duration-injection-key") as InjectionKey<ComputedRef<number>>
+export const LOOP_LANES_INJECTION_KEY = Symbol("loop-lanes-injection-key") as InjectionKey<ComputedRef<Record<string, LoopLaneData>>>
+export const SCOPED_LONGEST_DURATIONS_INJECTION_KEY = Symbol("scoped-longest-durations-injection-key") as InjectionKey<ComputedRef<Record<string, number>>>

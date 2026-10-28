@@ -279,6 +279,24 @@ public abstract class AbstractExecutionRepositoryTest {
         );
     }
 
+    @Test
+    void should_find_executions_by_id_filter() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution first = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+        Execution second = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+        Execution third = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+
+        var in = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.IN).value(List.of(first.getId(), second.getId())).build()));
+        var notIn = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.NOT_IN).value(List.of(first.getId(), second.getId())).build()));
+        var emptyIn = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.IN).value(List.of()).build()));
+        var emptyNotIn = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(Field.ID).operation(Op.NOT_IN).value(List.of()).build()));
+
+        assertThat(in).extracting(Execution::getId).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(notIn).extracting(Execution::getId).containsExactly(third.getId());
+        assertThat(emptyIn).isEmpty();
+        assertThat(emptyNotIn).hasSize(3);
+    }
+
     @ParameterizedTest
     @MethodSource("complexFilterCombinations")
     void should_find_all_with_complex_filters(String description, List<QueryFilter> filters, int expectedSize) {

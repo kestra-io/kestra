@@ -674,6 +674,13 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/loop-nested-with-subflow.yaml")
+    @LoadFlows("flows/valids/minimal.yaml")
+    public void loopNestedWithSubflow(Execution execution) {
+        loopCaseTest.loopNestedWithSubflow(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/loop-with-pause.yaml")
     public void loopWithPause(Execution execution) {
         loopCaseTest.loopWithPause(execution);

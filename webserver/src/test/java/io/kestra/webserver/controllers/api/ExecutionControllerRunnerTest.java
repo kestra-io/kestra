@@ -1237,6 +1237,26 @@ class ExecutionControllerRunnerTest {
         assertThat(variable.getResponse().getBody(String.class).orElse("")).contains("only inputs and outputs can be overridden");
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldParseInputOverrideAsItsDeclaredTypeAndRejectOneThatDoesNotFit() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        var notADate = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "adjust", Map.of("inputs.day", "12/10/2026")));
+        assertThat(notADate.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notADate.getResponse().getBody(String.class).orElse("")).contains("Cannot override 'inputs.day'");
+
+        replayWithOverrides(failed, "adjust", Map.of("inputs.day", "2026-10-13"));
+        Execution replay = awaitReplayOverrides(failed);
+        TaskRun adjust = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), adjust.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("inputs.day", "2026-10-13", "2026-10-12"));
+    }
+
     private void replayWithOverrides(Execution execution, String taskId, Map<String, Object> overrides) {
         client.toBlocking().retrieve(
             HttpRequest.POST(

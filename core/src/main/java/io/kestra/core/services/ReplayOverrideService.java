@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -20,6 +22,7 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.VariablePath;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
@@ -76,11 +79,13 @@ public class ReplayOverrideService {
 
     private final PebbleEngine pebbleEngine;
     private final RunContextFactory runContextFactory;
+    private final FlowInputOutput flowInputOutput;
 
     @Inject
-    public ReplayOverrideService(PebbleEngineFactory pebbleEngineFactory, RunContextFactory runContextFactory) {
+    public ReplayOverrideService(PebbleEngineFactory pebbleEngineFactory, RunContextFactory runContextFactory, FlowInputOutput flowInputOutput) {
         this.pebbleEngine = Objects.requireNonNull(pebbleEngineFactory).create();
         this.runContextFactory = Objects.requireNonNull(runContextFactory);
+        this.flowInputOutput = Objects.requireNonNull(flowInputOutput);
     }
 
     /**
@@ -103,7 +108,8 @@ public class ReplayOverrideService {
     }
 
     /**
-     * @throws IllegalArgumentException if a key is not an input or an output read by the task in its own properties
+     * @throws IllegalArgumentException if a key is not an input or an output read by the task in its own properties,
+     *         or if the value of a flow input does not fit its type or validation rules
      */
     public List<TaskRunOverride> overrides(Flow flow, Execution execution, String taskRunId, Map<String, Object> requested) throws InternalException {
         Map<String, ReplayValue> values = values(flow, execution, taskRunId).stream()
@@ -111,7 +117,8 @@ public class ReplayOverrideService {
 
         List<TaskRunOverride> overrides = new ArrayList<>(requested.size());
         for (Map.Entry<String, Object> entry : requested.entrySet()) {
-            String key = VariablePath.parse(entry.getKey()).toString();
+            VariablePath path = VariablePath.parse(entry.getKey());
+            String key = path.toString();
             ReplayValue value = values.get(key);
             if (value == null) {
                 throw new IllegalArgumentException(
@@ -123,11 +130,24 @@ public class ReplayOverrideService {
                     "Cannot override '%s': only inputs and outputs can be overridden, and this value is a %s.".formatted(key, value.kind().label())
                 );
             }
-            if (!Objects.equals(value.value(), entry.getValue())) {
-                overrides.add(new TaskRunOverride(key, entry.getValue(), value.value()));
+            Object override = value.inputType() == null ? entry.getValue() : inputValue(flow, execution, path, entry.getValue());
+            if (!Objects.equals(value.value(), override)) {
+                overrides.add(new TaskRunOverride(key, override, value.value()));
             }
         }
         return overrides;
+    }
+
+    private Object inputValue(Flow flow, Execution execution, VariablePath path, Object value) {
+        Input<?> input = inputOf(path, flow.resolvableInputs()).orElseThrow();
+        try {
+            // as JSON, so that it compares with and is stored like the values read from the stored execution
+            return JacksonMapper.toObject(JacksonMapper.ofJson().writeValueAsString(flowInputOutput.parseInputValue(execution, input, value)));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Cannot override '%s': %s".formatted(path, e.getMessage()), e);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Cannot override '%s': the value cannot be written as JSON.".formatted(path), e);
+        }
     }
 
     private ReplayValue valueOf(VariablePath path, Map<String, Object> variables, List<Input<?>> inputs) {

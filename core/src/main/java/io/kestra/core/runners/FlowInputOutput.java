@@ -639,6 +639,31 @@ public class FlowInputOutput {
         return JacksonMapper.toMap(results);
     }
 
+    /**
+     * Parses and validates a value for one input as an execution's inputs are, without defaults or dependencies.
+     * @throws IllegalArgumentException when the value does not fit the input's type or validation rules
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public Object parseInputValue(Execution execution, Input<?> input, @Nullable Object value) {
+        if (value == null) {
+            if (input.getRequired()) {
+                throw new IllegalArgumentException("Input '%s' is required.".formatted(input.getId()));
+            }
+            return null;
+        }
+        try {
+            Object parsed = parseData(execution, input, value).map(Map.Entry::getValue).orElse(null);
+            ((Input) input).validate(parsed);
+            return parsed;
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (ConstraintViolationException e) {
+            throw new IllegalArgumentException(e.getConstraintViolations().stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", ")), e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("The value does not fit the %s type of input '%s'.".formatted(input.getType(), input.getId()), e);
+        }
+    }
+
     private Optional<AbstractMap.SimpleEntry<String, Object>> parseData(
         final Execution execution,
         final Data data,

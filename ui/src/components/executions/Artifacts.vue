@@ -69,21 +69,7 @@
                     </KsIconButton>
                 </header>
                 <div class="artifacts-viewer-body">
-                    <RemoteComponent
-                        v-if="hasResolvedComponent(selected.taskType)"
-                        :key="selected.key"
-                        :taskType="selected.taskType"
-                        :task="selectedTask"
-                        :execution="execution"
-                        :namespace="execution?.namespace"
-                        :flowId="execution?.flowId"
-                        :tenant="tenant"
-                        v-bind="selectedFetchers"
-                    />
-                    <KsAlert v-else-if="hasFailedComponent(selected.taskType)" type="error" :closable="false" data-test="execution-artifact-error">
-                        {{ $t("plugins.ui_load_error") }}
-                    </KsAlert>
-                    <KsSkeleton v-else animated :rows="4" data-test="execution-artifact-loading" />
+                    <ExecutionArtifactView :key="selected.key" :artifact="selected" :execution="execution" />
                 </div>
             </section>
         </Teleport>
@@ -94,16 +80,15 @@
     import {computed, inject, ref, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import type {PagedResultsMetricEntry} from "@kestra-io/kestra-sdk"
-    import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
-    import {KsAlert, KsDialog, KsEmpty, KsIcon, KsIconButton, KsSegmented, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
+    import {KsDialog, KsEmpty, KsIcon, KsIconButton, KsSegmented, KsSelectableListItem, KsSkeleton, KsText, durationUtils, stringUtils} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
     import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
     import TaskIcon from "../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore, type Execution} from "../../stores/executions"
-    import {callTaskRunEndpoint, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+    import ExecutionArtifactView from "./ExecutionArtifactView.vue"
+    import {artifactFetchers} from "./composables/useArtifactFetchers"
     import {EXECUTION_ARTIFACTS_KEY, type ExecutionArtifact} from "./composables/useExecutionArtifacts"
 
     const {afterLastDot} = stringUtils
@@ -115,10 +100,10 @@
     pluginsStore.fetchIcons()
     const executionsStore = useExecutionsStore()
 
-    const {RemoteComponent, artifacts, tasks, subtitleResolvers, manifestReady, hasResolvedComponent, hasFailedComponent} = inject(EXECUTION_ARTIFACTS_KEY)!
+    const {artifacts, tasks, subtitleResolvers, manifestReady} = inject(EXECUTION_ARTIFACTS_KEY)!
 
     const execution = computed<Execution | undefined>(() => executionsStore.execution ?? undefined)
-    const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
+    const {runsOf, fetchOutputs, fetchMetrics, fetchEndpoint} = artifactFetchers(() => execution.value)
 
     const groups = computed(() => {
         const byTask = new Map<string, {taskId: string, cls: string, artifacts: ExecutionArtifact[]}>()
@@ -150,48 +135,12 @@
     const selected = computed(() => artifacts.value.find((a) => a.key === selectedKey.value) ?? artifacts.value[0])
     const siblings = computed(() => artifacts.value.filter((a) => a.taskId === selected.value?.taskId))
     const siblingOptions = computed(() => siblings.value.map((a) => ({label: a.title, value: a.key})))
-    const selectedTask = computed(() => tasks.value.find((task) => task.id === selected.value?.taskId))
-
-    const runsOf = (taskId: string) => execution.value?.taskRunList?.filter((run) => run.taskId === taskId) ?? []
 
     // A task inside a loop runs once per iteration: the header shows the total, the viewer reads the latest run.
     const durations = computed(() => Object.fromEntries(groups.value.flatMap(({taskId}) => {
         const seconds = runsOf(taskId).reduce((sum, run) => sum + (run.state?.duration ? durationUtils.duration(run.state.duration) : 0), 0)
         return seconds ? [[taskId, durationUtils.humanDuration(seconds)]] : []
     })))
-
-    // Resolved when called, so an artifact opened on a still-running execution reads the latest run.
-    const fetchOutputs = (taskId: string) => ({taskRunId}: {taskRunId?: string} = {}) => {
-        const runId = taskRunId ?? runsOf(taskId).at(-1)?.id
-        return execution.value?.id && runId ? loadTaskRunOutputs(execution.value.id, runId) : Promise.resolve({})
-    }
-
-    const fetchMetrics = (taskId: string) => ({page, size, sort, taskRunId}: {page?: number, size?: number, sort?: string, taskRunId?: string} = {}): Promise<PagedResultsMetricEntry> => {
-        const executionId = execution.value?.id
-        if (!executionId) return Promise.resolve({results: [], total: 0})
-        return MetricsAPI.searchByExecution({
-            executionId,
-            taskId,
-            taskRunId,
-            page,
-            size,
-            sort: sort ? [sort] : undefined,
-        })
-    }
-
-    const fetchEndpoint = (task: {id: string, type: string}) => (name: string, params: Record<string, string> = {}, {taskRunId}: {taskRunId?: string} = {}): Promise<unknown> => {
-        const executionId = execution.value?.id
-        const runId = taskRunId ?? runsOf(task.id).at(-1)?.id
-        if (!executionId || !runId) return Promise.reject(new Error("No task run to call the plugin endpoint for."))
-        return callTaskRunEndpoint(task.type, name, executionId, runId, params)
-    }
-
-    // Built once per selection: a plugin watching these props must not reload on every execution update.
-    const selectedFetchers = computed(() => selected.value && {
-        fetchOutputs: fetchOutputs(selected.value.taskId),
-        fetchMetrics: fetchMetrics(selected.value.taskId),
-        fetchEndpoint: fetchEndpoint({id: selected.value.taskId, type: selected.value.cls}),
-    })
 
     const subtitles = ref<Record<string, string | undefined>>({})
     const subtitleSequences = new Map<string, number>()

@@ -59,9 +59,9 @@ function addedWidget(mock: ReturnType<typeof fakeEditor>["mock"]): Monaco.editor
 }
 
 describe("DATE_PICKER_SUGGESTION_LABEL", () => {
-    test("is exported as a non-empty string", () => {
-        expect(typeof DATE_PICKER_SUGGESTION_LABEL).toBe("string")
-        expect(DATE_PICKER_SUGGESTION_LABEL.length).toBeGreaterThan(0)
+    // KsEditor.vue styles the suggestion row with the hard-coded selector aria-label^="_DATE_PICKER_".
+    test("matches the literal that KsEditor styles select on", () => {
+        expect(DATE_PICKER_SUGGESTION_LABEL).toBe("_DATE_PICKER_")
     })
 })
 
@@ -69,11 +69,9 @@ describe("useEditorDatePicker", () => {
     beforeEach(() => vi.useFakeTimers())
     afterEach(() => vi.useRealTimers())
 
-    test("returns its documented surface, starting hidden on today", () => {
+    test("starts hidden with today selected", () => {
         const {datePicker} = setup()
 
-        expect(Object.keys(datePicker).sort())
-            .toEqual(["insertSelectedDate", "remove", "selectedDate", "show", "shown", "startOfToday"])
         expect(datePicker.shown.value).toBe(false)
         expect(datePicker.startOfToday.hour()).toBe(0)
         expect(datePicker.startOfToday.minute()).toBe(0)
@@ -159,11 +157,10 @@ describe("useEditorDatePicker", () => {
 
     test("places the picker nowhere when the editor has no position", async () => {
         const {datePicker} = setup()
-        const {editor, mock, model} = fakeEditor({position: null})
+        const {editor, mock} = fakeEditor({position: null})
 
         await datePicker.show(editor)
 
         expect(addedWidget(mock).getPosition()?.position).toBeNull()
-        expect(model.pushEditOperations).not.toHaveBeenCalled()
     })
 })

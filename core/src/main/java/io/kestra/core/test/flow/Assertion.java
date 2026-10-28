@@ -46,8 +46,8 @@ public class Assertion {
     private Property<Double> greaterThanOrEqualTo;
     private Property<Double> lessThan;
     private Property<Double> lessThanOrEqualTo;
-    private Property<List<String>> in;
-    private Property<List<String>> notIn;
+    private Property<List<Object>> in;
+    private Property<List<Object>> notIn;
     private Property<Boolean> isNull;
     private Property<Boolean> isNotNull;
 
@@ -165,13 +165,13 @@ public class Assertion {
                     lessThanOrEqualTo(expectedLessThanOrEqualToValue.get(), actualValueQuery, actualValue, taskId, description, errorMessage)
                 );
             }
-            var expectedInList = runContext.render(this.getIn()).asList(String.class);
+            var expectedInList = runContext.render(this.getIn()).asList(Object.class);
             if (!expectedInList.isEmpty()) {
                 results.add(
                     in(expectedInList, actualValueQuery, actualValue, taskId, description, errorMessage)
                 );
             }
-            var notExpectedInList = runContext.render(this.getNotIn()).asList(String.class);
+            var notExpectedInList = runContext.render(this.getNotIn()).asList(Object.class);
             if (!notExpectedInList.isEmpty()) {
                 results.add(
                     notIn(notExpectedInList, actualValueQuery, actualValue, taskId, description, errorMessage)
@@ -398,8 +398,8 @@ public class Assertion {
         }
     }
 
-    private AssertionResult in(List<String> expectedInList, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
-        var isSuccess = expectedInList.stream().anyMatch(actualValue::equals);
+    private AssertionResult in(List<Object> expectedInList, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description, Optional<String> errorMessage) {
+        var isSuccess = isIn(expectedInList, actualValue);
         return new AssertionResult(
             IN.toString(),
             expectedInList,
@@ -409,15 +409,15 @@ public class Assertion {
             description.orElse(null),
             isSuccess ? null
                 : errorMessage.orElse(
-                    "expected '%s' to contain '%s' but was '%s'"
+                    "expected '%s' to be in '%s' but was '%s'"
                         .formatted(actualValueQuery, expectedInList, actualValue)
                 )
         );
     }
 
-    private AssertionResult notIn(List<String> notExpectedInList, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
+    private AssertionResult notIn(List<Object> notExpectedInList, String actualValueQuery, Object actualValue, Optional<String> taskId, Optional<String> description,
         Optional<String> errorMessage) {
-        var isSuccess = notExpectedInList.stream().noneMatch(actualValue::equals);
+        var isSuccess = !isIn(notExpectedInList, actualValue);
         return new AssertionResult(
             NOT_IN.toString(),
             notExpectedInList,
@@ -427,9 +427,14 @@ public class Assertion {
             description.orElse(null),
             isSuccess ? null
                 : errorMessage.orElse(
-                    "expected '%s' to not contain '%s' but was '%s'"
+                    "expected '%s' to not to be in '%s' but was '%s'"
                         .formatted(actualValueQuery, notExpectedInList, actualValue)
                 )
         );
+    }
+
+    private static boolean isIn(List<Object> list, Object actualValue) {
+        var actual = String.valueOf(actualValue);
+        return list.stream().anyMatch(it -> actual.equals(String.valueOf(it)));
     }
 }

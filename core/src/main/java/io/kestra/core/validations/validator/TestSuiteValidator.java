@@ -65,7 +65,7 @@ public class TestSuiteValidator implements ConstraintValidator<TestSuiteValidati
         }
 
         if (!MapUtils.isEmpty(unitTest.getFixtures().getInputs())) {
-            unitTest.getFixtures().getInputs().forEach((key, _) -> validateInput(flow, key, violations));
+            unitTest.getFixtures().getInputs().forEach((key, ignored) -> validateInput(flow, key, violations));
         }
 
         if (!ListUtils.isEmpty(unitTest.getFixtures().getTasks())) {

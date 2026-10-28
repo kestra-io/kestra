@@ -32,7 +32,7 @@ jobs:
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
-      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
       with:
         client-id: ${{ secrets.GH_BOT_APP_ID }}
         private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -66,8 +66,9 @@ jobs:
         token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-pr-openapi-check"
+        # oss_base_branch picks the client-sdk spec EE diffs against: develop -> next/v2.1, releases/v2.0.x -> main.
         client-payload: >-
-          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}","oss_base_branch":"${{ github.event.pull_request.base.ref }}"}
 
       # ------------------------------------------------------------------------
       # LEGACY (DISABLED): EE CI used to be triggered by a repository dispatch
@@ -150,8 +151,8 @@ jobs:
   # The scheduled `auto-translate-ui-keys.yml` still runs independently and remains the way to
   # translate `develop` or to force a full re-translation from a branch.
   #
-  # Branches in this repository only: a fork PR is withheld the API key and its branch cannot be
-  # pushed to with `GITHUB_TOKEN`. Those PRs still get the check below, they just have to run the
+  # Branches in this repository only: a fork PR is withheld the GCP credentials and its branch
+  # cannot be pushed to with `GITHUB_TOKEN`. Those PRs still get the check below, they just have to run the
   # generator themselves.
   translations-generate:
     name: 'Translations - Generate'
@@ -159,39 +160,52 @@ jobs:
     if: >-
       needs.file-changes.outputs.translations == 'true'
       && github.event.pull_request.head.repo.fork == false
+      && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: write
-    # The `secrets` context is not allowed in `if:`, and Dependabot PRs are not forks yet still get
-    # no secrets, so gate the steps on the key itself rather than on the actor.
+    # Gemini is reached through Vertex AI with the `GCP_SERVICE_ACCOUNT` key. The secret itself is never
+    # put in the job env, where `npm ci` would see it: only whether it is set is mirrored, so the steps
+    # can be gated on it and a repository without it skips generation instead of failing.
     env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      HAS_GCP_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           # The branch itself, not the PR's merge commit, so the generated commit can be pushed back.
           ref: ${{ github.head_ref }}
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        if: env.GEMINI_API_KEY != ''
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         with:
           node-version-file: 'ui/.nvmrc'
 
       - name: Install Node dependencies
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         run: npm ci
         working-directory: ui
 
+      - name: Authenticate to Google Cloud
+        if: env.HAS_GCP_CREDENTIALS == 'true'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
       - name: Generate missing and stale translations
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         run: npm run translations:generate
         working-directory: ui
+        # Set here and not on the job: the auth step exports `GOOGLE_CLOUD_PROJECT` (the project the key
+        # belongs to), which would override a job-level value and send the calls to the wrong project.
+        env:
+          GOOGLE_CLOUD_PROJECT: kestra-prd
+          GOOGLE_CLOUD_LOCATION: global
 
       - name: Commit them onto the pull request
-        if: env.GEMINI_API_KEY != ''
+        if: env.HAS_GCP_CREDENTIALS == 'true'
         # The branch name is chosen by whoever pushed it, so keep it out of the script itself:
         # interpolated directly, a `$(...)` in the name would run on the runner.
         env:
@@ -232,7 +246,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: 'ui/.nvmrc'
 
@@ -242,7 +256,7 @@ jobs:
       - name: Generate GitHub App token for kestra-ee
         id: ee-token
         if: github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != ''
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.GH_BOT_APP_ID }}
           private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
@@ -302,7 +316,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/translations-report"
           printf '{"pr": %s, "fork": %s, "outcome": "%s"}\n' "$PR_NUMBER" "$FORK" "$OUTCOME" > "$RUNNER_TEMP/translations-report/meta.json"
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         name: Upload the translation report
         if: always()
         with:
@@ -339,7 +353,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.x'
           cache: npm

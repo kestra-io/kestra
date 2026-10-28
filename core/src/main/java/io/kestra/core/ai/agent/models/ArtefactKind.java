@@ -7,7 +7,8 @@ import io.kestra.core.utils.Enums;
 public enum ArtefactKind {
     FLOW,
     DASHBOARD,
-    APP;
+    APP,
+    TEST_SUITE;
 
     @JsonCreator
     public static ArtefactKind fromString(final String value) {

@@ -46,6 +46,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.test.TestSuite;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
@@ -239,8 +240,28 @@ class JsonSchemaGeneratorTest {
             // anyOf branch reaching them by $ref have to go too, or a reusable-inputs input still validates, minus its
             // discriminator
             assertThat(schema, not(containsString("ReusableInputsInput")));
+            assertThat(schema, not(containsString("TableInput")));
             // sanity: ordinary input types are still present
             assertThat(schema, containsString("EMAIL"));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldOmitServerOwnedFieldsFromEditorSchemas() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) ->
+        {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            var flowDefinitions = (Map<String, Map<String, Object>>) jsonSchemaGenerator.schemas(Flow.class).get("definitions");
+            var flowProperties = properties(flowDefinitions.get(Flow.class.getName()));
+            assertThat(List.of("revision", "updated", "deleted", "draft"), everyItem(not(in(flowProperties.keySet()))));
+            assertThat(flowProperties.keySet(), hasItems("id", "namespace", "disabled"));
+
+            var testSuiteDefinitions = (Map<String, Map<String, Object>>) jsonSchemaGenerator.schemas(TestSuite.class).get("definitions");
+            var testSuiteProperties = properties(testSuiteDefinitions.get(TestSuite.class.getName()));
+            assertThat(List.of("source", "deleted"), everyItem(not(in(testSuiteProperties.keySet()))));
+            assertThat(testSuiteProperties.keySet(), hasItems("id", "flowId", "testCases"));
         });
     }
 
@@ -607,7 +628,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
         // the assets declaration of the task base counts the custom asset, the free-form branch of assets.outputs
-        assertThat(definitions.size(), is(11));
+        assertThat(definitions.size(), is(13));
     }
 
     @SuppressWarnings("unchecked")

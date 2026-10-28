@@ -5,6 +5,12 @@
       "cta": "Siehe, was sich geändert hat"
     },
     "loading": "Wird geladen...",
+    "namespace_files_tip": {
+      "title": "Verwalte deine Skripte als Namespace-Dateien",
+      "description": "Statt dein Skript inline zu schreiben, öffne das Dateien-Panel, füge es als Datei hinzu (z. B. main.py) und führe es aus deinem flow aus:",
+      "open_files": "Dateien öffnen",
+      "dont_show_again": "Nicht mehr anzeigen"
+    },
     "more actions": "Weitere Aktionen",
     "recipe": {
       "create_flow": "Flow erstellen",
@@ -139,6 +145,7 @@
     "update": "Aktualisieren",
     "confirmation": "Bestätigung",
     "toast confirm": "Bist du sicher?",
+    "toast_message_column": "Nachricht",
     "common": {
       "back": "Zurück",
       "openInNewTab": "In neuem Tab öffnen"
@@ -236,6 +243,7 @@
       "last7days": "Letzte 7 Tage",
       "last30days": "Letzte 30 Tage",
       "last365days": "Letzte 365 Tage",
+      "allTime": "Gesamte Zeit",
       "next5minutes": "Nächste 5 Minuten",
       "next15minutes": "Nächste 15 Minuten",
       "next1hour": "Nächste Stunde",
@@ -369,7 +377,7 @@
     "restart": "Neu starten",
     "restart tooltip": "Die Execution ab dem Task <code>{state}</code> neu starten",
     "restarted": "Execution wird neu gestartet",
-    "restart confirm": "Execution <code>{id}</code> wirklich neu starten?",
+    "restart confirm": "Execution {id} wirklich neu starten?",
     "restart subflow warning": "Diese Execution wurde von einer übergeordneten Execution erstellt und sollte von dort neu gestartet werden. Ein alleiniger Neustart würde die übergeordnete Execution im FAILED-Status belassen und ihre nächsten Tasks würden nicht ausgeführt. Gehe zur {parent}, um sie neu zu starten.",
     "restart subflow warning link": "übergeordnete Execution",
     "replay": "Replay",
@@ -377,7 +385,11 @@
     "replay from beginning tooltip": "Eine ähnliche Execution von Anfang an erstellen",
     "replay latest revision": "Replay mit neuester Revision",
     "replayed": "Replay der Execution wurde gestartet",
-    "replay the execution": "Replay der Execution <code>{executionId}</code> für den Flow <code>{flowId}</code>",
+    "reused_task_run": {
+      "label": "Wiederverwendet",
+      "tooltip": "In dieser Execution nicht erneut ausgeführt. Sie wurde am {date} ausgeführt, und ihre Logs und Outputs stammen von diesem Run."
+    },
+    "replay the execution": "Replay der Execution {executionId} für den Flow {flowId}",
     "prefill inputs": "Vorausfüllen",
     "current": "aktuell",
     "change state": "Status ändern",
@@ -387,9 +399,11 @@
     "yes": "Ja",
     "no": "Nein",
     "change state done": "Der Task-Status wurde aktualisiert",
-    "change state confirm": "Möchtest du den Status des Task-Runs für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich ändern?<br/>Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
+    "change state confirm": "Möchtest du den Status des Task-Runs für den Task {task} in Execution {id} wirklich ändern?",
+    "change state confirm restart": "Die Execution wird dann ab dem nächsten Task neu gestartet, und die übergeordnete Execution, falls vorhanden, ebenfalls.",
     "interrupt": "Unterbrechen",
-    "interrupt confirm": "Möchtest du den Task Run für den Task <code>{task}</code> in Execution <code>{id}</code> wirklich unterbrechen?<br/>Dadurch wird der laufende Task im Worker beendet und sein Status festgelegt.",
+    "interrupt confirm": "Möchtest du den Task Run für den Task {task} in Execution {id} wirklich unterbrechen?",
+    "interrupt note": "Dadurch wird der laufende Task im Worker beendet und sein Status festgelegt.",
     "interrupt done": "Task Run wurde unterbrochen",
     "interrupt target state": "Ziel-Status",
     "change state current state": "Aktueller Status:",
@@ -426,31 +440,48 @@
     "modify inputs": "Inputs ändern",
     "replay inputs new required": "Diese Revision hat Inputs. Du wirst aufgefordert, sie auszufüllen.",
     "replay select taskrun": "Wähle den Task-Run aus, ab dem der Replay starten soll:",
+    "replayCheck": {
+      "checking": "Prüfe, ob Revision {revision} von Task {taskId} wiedergegeben werden kann.",
+      "valid_title": "Revision {revision} kann ab Task {taskId} wiedergegeben werden.",
+      "valid_description": "Die Tasks davor sind unverändert, daher werden ihre Outputs wiederverwendet. Ein Replay auf einer anderen Revision ist niemals vollständig deterministisch: Secrets, Datei-Inputs und externe Systeme aufrufende Ausdrücke können etwas anderes als den ursprünglichen Run zurückgeben.",
+      "refused_title": "Revision {revision} kann nicht von Task {taskId} wiedergegeben werden.",
+      "refused_description": "Eine Task, ein Input oder eine Variable, deren Ergebnis wiederverwendet werden würde, ist in dieser Revision anders definiert.",
+      "error_title": "Konnte nicht prüfen, ob Revision {revision} von Task {taskId} wiedergegeben werden kann.",
+      "error_description": "Du kannst immer noch ein Replay durchführen. Der Server wendet dieselben Regeln an, wenn das Replay startet, und lehnt es ab, wenn die Revision inkompatibel ist.",
+      "whole_action": "Die gesamte Execution stattdessen wiederholen",
+      "whole_title": "Revision {revision} kann als ganze Execution wiederholt werden.",
+      "whole_description": "Es werden keine früheren Ergebnisse wiederverwendet, daher wird jeder Task bei Revision {revision} erneut ausgeführt. Die ursprüngliche Execution wird beibehalten und verknüpft.",
+      "confirm_from_task": "Replay ab Task",
+      "confirm_whole": "Ganze Execution wiederholen"
+    },
     "change execution state done": "Execution-Status aktualisiert",
-    "mark as": "Als <code>{status}</code> markieren",
-    "unqueue as": "Als <code>{status}</code> aus der Warteschlange entfernen",
+    "mark as": "Als {status} markieren",
+    "unqueue as": "Als {status} aus der Warteschlange entfernen",
     "kill": "Killen",
     "kill parents and subflow": "Aktuelle Execution und Subflows killen",
     "kill only parents": "Nur aktuelle Execution killen",
     "killed confirm": "Execution <code>{id}</code> wirklich killen?",
     "killed done": "Die Execution wurde zum Killen eingereiht",
     "resume": "Fortsetzen",
-    "resumed title": "Execution <code>{id}</code> fortsetzen",
+    "resumed title": "Execution {id} fortsetzen",
     "resumed confirm": "Execution <code>{id}</code> wirklich fortsetzen?",
     "resumed done": "Die Execution wurde fortgesetzt",
-    "resume from breakpoint title": "Execution <code>{id}</code> ab Breakpoint fortsetzen",
+    "resume from breakpoint title": "Execution {id} ab Breakpoint fortsetzen",
     "resume from breakpoint done": "Die Execution wird ab dem Breakpoint fortgesetzt",
     "breakpoints": "Breakpoints",
     "pause": "Pause",
-    "pause title": "Execution <code>{id}</code> pausieren.<br/>Beachte, dass aktuell laufende Tasks weiterhin verarbeitet werden und die Execution manuell fortgesetzt werden muss.",
+    "pause title": "Execution {id} pausieren.",
+    "pause note": "Beachte, dass aktuell laufende Tasks weiterhin verarbeitet werden und die Execution manuell fortgesetzt werden muss.",
     "pause confirm": "Execution <code>{id}</code> wirklich pausieren?",
     "pause done": "Die Execution wurde pausiert",
     "unqueue": "Aus Warteschlange entfernen",
-    "unqueue title": "Möchtest du die Execution <code>{id}</code> wirklich aus der Warteschlange entfernen?<br/><br/>Beachte, dass das Concurrency-Limit des Flows dabei nicht eingehalten wird, sodass mehr Executions laufen könnten als erlaubt.",
-    "unqueue title multiple": "Möchtest du <code>{count}</code> Executions wirklich aus der Warteschlange entfernen?<br/><br/>Beachte, dass das Concurrency-Limit des Flows dabei nicht eingehalten wird, sodass mehr Executions laufen könnten als erlaubt.",
+    "unqueue title": "Möchtest du die Execution {id} wirklich aus der Warteschlange entfernen?",
+    "unqueue note": "Beachte, dass das Concurrency-Limit des Flows dabei nicht eingehalten wird, sodass mehr Executions laufen könnten als erlaubt.",
+    "unqueue title multiple": "Möchtest du {count} Executions wirklich aus der Warteschlange entfernen?",
+    "unqueue multiple note": "Beachte, dass das Concurrency-Limit des Flows dabei nicht eingehalten wird, sodass mehr Executions laufen könnten als erlaubt.",
     "unqueue done": "Die Execution wurde aus der Warteschlange entfernt",
     "force run": "Ausführung erzwingen",
-    "force run title": "Execution <code>{id}</code> erzwingen.",
+    "force run title": "Execution {id} erzwingen.",
     "force run confirm": "Möchtest du die Execution `{id}` wirklich erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution ist nicht garantiert und kann zu doppelten Task Runs führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
     "force run done": "Die Execution wurde erzwungen",
     "metrics": "Metriken",
@@ -483,9 +514,68 @@
       "invalid": "Graph-Fehler",
       "invalid_description": "Beim Laden des Graphen ist ein Fehler aufgetreten. Bitte prüfe den Quellcode auf Fehler.",
       "load_error": "Der Topologiegraph konnte nicht geladen werden. Bitte versuche es erneut.",
+      "expand_subflow_error": "Subflow konnte nicht erweitert werden",
       "add-task": "Task hinzufügen",
       "add-trigger": "Trigger hinzufügen",
-      "child-count": "{count} Task | {count} Tasks"
+      "child-count": "{count} Task | {count} Tasks",
+      "loop": {
+        "not-run": "Nicht ausgeführt",
+        "pick-first": "Zuerst {loop} wählen",
+        "picker-label": "Iteration von {loop}",
+        "search-by-index": "Nach Index suchen",
+        "all-iterations": "Alle Iterationen",
+        "iteration-index": "Index {index}",
+        "iteration-value-index": "{value} · Index {index}",
+        "previous-iteration": "Vorherige Iteration",
+        "next-iteration": "Nächste Iteration",
+        "previous-page": "Vorherige Seite",
+        "next-page": "Nächste Seite",
+        "failed-group": "Fehlgeschlagen · {count}",
+        "other-group": "Weitere Iterationen",
+        "matching": "Treffer",
+        "failure-forbidden": "Sie haben keinen Zugriff auf diese Iteration.",
+        "failure-not-found": "Diese Iteration existiert nicht mehr.",
+        "failure-ambiguous": "Diese Schleife wurde in dieser Ausführung mehrfach ausgeführt, daher lassen sich ihre Iterationen nicht unterscheiden.",
+        "failure-not-located": "Die fehlgeschlagene Iteration konnte nicht gefunden werden.",
+        "failure-unknown": "Die Iterationen konnten nicht geladen werden.",
+        "scope": "Bereich",
+        "whole-execution": "Gesamte Ausführung",
+        "clear-scopes": "Bereiche zurücksetzen",
+        "jump-to-first-failure": "Zum ersten Fehler springen",
+        "loops-with-failures": "Schleifen mit Fehlern",
+        "task-runs": "{runs} Lauf | {runs} Läufe",
+        "task-runs-failed": "{runs} Lauf · {failed} fehlgeschlagen | {runs} Läufe · {failed} fehlgeschlagen",
+        "retry": "Wiederholen",
+        "load-more": "Mehr laden",
+        "retry-loading": "Laden der Iterationen wiederholen"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} von {total} fehlgeschlagen",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} fehlgeschlagen · {notStarted} nicht gestartet von {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} von {total} abgeschlossen",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} von {total} abgeschlossen · {failed} fehlgeschlagen",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} Iteration | {total} Iterationen",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task-Logs anzeigen",
     "show task condition": "Task-Bedingung anzeigen",
@@ -496,15 +586,40 @@
     "execution_banner": {
       "revision": "Revision {revision}",
       "attempts": "{count} Versuch | {count} Versuche",
-      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks"
+      "tasks": "{completed}/{count} Task | {completed}/{count} Tasks",
+      "searchable_values": "Durchsuchbare Werte",
+      "more_searchable_values": "+{count} weitere durchsuchbare Werte"
+    },
+    "execution_mobile": {
+      "failed_task": "Fehlgeschlagene Task",
+      "view_task_logs": "Task-Logs anzeigen",
+      "revision_short": "Rev. {revision}",
+      "more_labels": "+{count} Label | +{count} Labels",
+      "fewer_labels": "Weniger Labels anzeigen",
+      "jump_to_first_failure": "Zum ersten Fehler springen",
+      "open_logs": "Logs öffnen"
+    },
+    "login_redirect_hint": {
+      "after_sign_in": "Nach der Anmeldung",
+      "execution_tab": "Ausführung {id} · Tab {tab}",
+      "execution": "Ausführung {id}",
+      "tab": "Tab {tab}"
     },
     "concurrency limits": "Concurrency-Limits",
     "system overview": "Systemübersicht",
+    "workspace": "Arbeitsbereich",
+    "resources": "Ressourcen",
     "usage": "Verwendung",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Gesamte Execution-Dauer (in Minuten)",
-    "last 48 hours": "letzte 48 Stunden",
+    "task runs": "Task Runs",
+    "task runs duration (in minutes)": "Gesamtdauer der Task Runs (in Minuten)",
+    "last 24 hours": "letzte 24 Stunden",
+    "last 7 days": "letzte 7 Tage",
+    "last 30 days": "letzten 30 Tage",
+    "since {date}": "seit {date}",
+    "usage period": "Nutzungszeitraum",
     "email": "E-Mail",
     "password": "Passwort",
     "confirm password": "Passwort bestätigen",
@@ -519,11 +634,21 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variablen",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Kein Task dieses Flows stellt ein Artifact bereit.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "keine Artifacts | {count} Artifact | {count} Artifacts",
+      "tasks": "keine Tasks | {count} Task | {count} Tasks",
+      "fullscreen": "Vollbild",
+      "exit_fullscreen": "Vollbild verlassen"
+    },
     "variable_explorer": {
       "title": "Eingabe/Ausgabe",
       "search_placeholder": "Key oder Value suchen…",
       "tasks_outputs": "Task-Outputs",
       "expression": "Expression",
+      "searchable": "Durchsuchbar",
       "tree": "Baum",
       "raw_json": "Rohes JSON",
       "select_prompt": "Wähle eine Variable aus, um ihren Wert anzuzeigen.",
@@ -668,6 +793,7 @@
       "nav_properties": "Eigenschaften",
       "non_dynamic": "nicht dynamisch",
       "format": "Format",
+      "internal_storage_uri_hint": "Pebble-Ausdruck, der auf eine interne Storage-URI verweist, z. B. {example}.",
       "max_items": "Max. Elemente",
       "max_length": "Max. Länge",
       "maximum": "Maximum",
@@ -745,7 +871,7 @@
     "execute flow behaviour": "Den Flow ausführen",
     "open in same tab": "Im selben Tab",
     "open in new tab": "In einem neuen Tab",
-    "execute the flow": "Den Flow <code>{id}</code> ausführen",
+    "execute the flow": "Den Flow {id} ausführen",
     "discard execution confirmation": "Du hast ungespeicherte Inputs. Möchtest du diese Execution wirklich verwerfen?",
     "unsaved changed ?": "Du hast ungespeicherte Änderungen. Möchtest du diese Seite verlassen?",
     "session expired": "Deine Sitzung ist abgelaufen",
@@ -917,12 +1043,12 @@
     "restore": "Wiederherstellen",
     "restore confirm": "Möchtest du die Revision <code>{revision}</code> wirklich wiederherstellen?",
     "bulk delete": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich löschen?",
-    "bulk replay": "Möchtest du für <code>{executionCount}</code> Execution(s) wirklich einen Replay starten?",
-    "bulk change state": "Möchtest du den Status von <code>{executionCount}</code> Execution(s) wirklich ändern?",
+    "bulk replay": "Möchtest du für {executionCount} Execution(s) wirklich einen Replay starten?",
+    "bulk change state": "Möchtest du den Status von {executionCount} Execution(s) wirklich ändern?",
     "bulk resume": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich fortsetzen?",
     "bulk pause": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich pausieren?",
     "bulk force run": "Möchtest du wirklich `{executionCount}` Execution(s) erzwingen?\n\nWARNUNG: Das Erzwingen einer Execution wird nicht garantiert und kann zu doppelten Task-Executions führen.\n\nDie folgenden Übergänge werden durchgeführt:\n\n- CREATED Tasks werden in den RUNNING Status verschoben.\n- RUNNING Tasks werden erneut übermittelt.\n- QUEUED Tasks werden aus der Warteschlange entfernt.\n- PAUSED Tasks werden fortgesetzt.",
-    "bulk restart": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich neu starten?",
+    "bulk restart": "Möchtest du {executionCount} Execution(s) wirklich neu starten?",
     "bulk kill": "Möchtest du <code>{executionCount}</code> Execution(s) wirklich killen?",
     "cancel": "Abbrechen",
     "errorLogs": "Fehler-Logs",
@@ -1131,11 +1257,11 @@
         "deletion": {
           "confirm": "Bestätigen",
           "title": "Löschen des Inhalts bestätigen",
-          "files": "Möchtest du wirklich <code>{count}</code> Datei(en) löschen?",
-          "folders": "Möchtest du <code>{count}</code> Ordner und ihren gesamten Inhalt wirklich löschen?",
-          "mixed": "Möchtest du <code>{folders}</code> Ordner und <code>{files}</code> Datei(en) wirklich löschen?",
-          "file_single": "Möchtest du die Datei <code>{name}</code> wirklich löschen?",
-          "folder_single": "Möchtest du den Ordner <code>{name}</code> und seinen gesamten Inhalt wirklich löschen?"
+          "files": "Möchtest du wirklich {count} Datei(en) löschen?",
+          "folders": "Möchtest du {count} Ordner und ihren gesamten Inhalt wirklich löschen?",
+          "mixed": "Möchtest du {folders} Ordner und {files} Datei(en) wirklich löschen?",
+          "file_single": "Möchtest du die Datei {name} wirklich löschen?",
+          "folder_single": "Möchtest du den Ordner {name} und seinen gesamten Inhalt wirklich löschen?"
         }
       },
       "revisions": {
@@ -1164,7 +1290,7 @@
     "backfill": "Backfill",
     "Set labels": "Labels festlegen",
     "manage labels": "Labels verwalten",
-    "Set labels to execution": "Labels der Execution <code>{id}</code> hinzufügen oder aktualisieren",
+    "Set labels to execution": "Labels der Execution {id} hinzufügen oder aktualisieren",
     "Set labels done": "Labels der Execution erfolgreich festgelegt",
     "bulk set labels": "Möchtest du wirklich Labels für <code>{executionCount}</code> Execution(s) festlegen?",
     "true": "Wahr",
@@ -1354,6 +1480,12 @@
           "third": "Starte deine Kestra-Instanz neu, damit das Secret geladen wird."
         }
       },
+      "credentials": {
+        "label": "Credentials",
+        "header": "Credentials",
+        "title": "Einmal authentifizieren, in jedem Task wiederverwenden",
+        "message": "In der Kestra Enterprise Edition lässt sich Server-zu-Server-Authentifizierung einmal als Credential konfigurieren, sodass Access Tokens zur Laufzeit angefordert und erneuert werden, statt fest in deinen Flows zu stehen. Credentials können auf Tenant- oder Namespace-Ebene erstellt und von jedem Task referenziert werden."
+      },
       "apps": {
         "title": "Eigene Apps mit Kestra erstellen",
         "message": "Mit Apps in der Kestra Enterprise Edition kannst du eigene UIs erstellen, die von außerhalb der Plattform mit Kestra-Workflows interagieren. Damit lassen sich deine Workflows als Backend für eigene Anwendungen nutzen, sodass auch nicht-technische Nutzer Daten über Formulare eingeben oder pausierte Workflows freigeben können, die auf eine Genehmigung warten.",
@@ -1432,6 +1564,10 @@
           "title": "Secrets sicher verwalten",
           "message": "In der Kestra Enterprise Edition kannst du Secrets auf Namespace-Ebene speichern und kontrollieren. Das minimiert das Risiko und sorgt dafür, dass die Zugangsdaten jedes Teams isoliert bleiben. Dank der verschachtelten Hierarchie kannst du Zugangsdaten auch in einem übergeordneten Namespace konfigurieren, von wo aus sie an alle untergeordneten Namespaces vererbt werden. Die Unterstützung für dedizierte Secrets Manager und feingranulare Berechtigungen auf Namespace-Ebene stärkt Sicherheit und Compliance zusätzlich."
         },
+        "credentials": {
+          "title": "Credentials auf diesen Namespace beschränken",
+          "message": "In der Kestra Enterprise Edition kannst du Credentials auf Namespace-Ebene konfigurieren, sodass Tasks in diesem Namespace und seinen untergeordneten Namespaces Access Tokens zur Laufzeit anfordern und erneuern, statt sie in Flows zu speichern. Ein Credential aus einem übergeordneten Namespace wird von allen untergeordneten Namespaces geerbt."
+        },
         "assets": {
           "title": "Asset-Management zentralisieren",
           "message": "In der Kestra Enterprise Edition führt Assets ein Live-Inventar der Ressourcen, mit denen deine Workflows interagieren. Das können Datenbanktabellen, virtuelle Maschinen, Dateien oder beliebige externe Systeme sein, mit denen du arbeitest."
@@ -1443,6 +1579,11 @@
         "policies": {
           "title": "Governance-Regeln in diesem Namespace durchsetzen",
           "message": "In der Kestra Enterprise Edition kannst du mit Policies Regeln definieren, die für jeden Flow in diesem Namespace und seinen untergeordneten Namespaces gelten: gemeinsame Standardwerte injizieren, Eigenschaftswerte einschränken, Plugins blockieren und Compliance-Labels vorschreiben, wobei jede Änderung für Flow-Autoren vollständig sichtbar bleibt."
+        },
+        "reusable-inputs": {
+          "label": "Wiederverwendbare Inputs",
+          "title": "Inputs einmal definieren, überall wiederverwenden",
+          "message": "In der Kestra Enterprise Edition kannst du mit wiederverwendbaren Inputs eine benannte Gruppe typisierter Inputs einmal auf Namespace-Ebene definieren und in jedem Flow referenzieren. Ein Satz in einem übergeordneten Namespace steht untergeordneten Namespaces zur Verfügung, sodass Teams dieselben Input-Definitionen teilen, statt sie in jedem Flow zu wiederholen."
         },
         "history": {
           "title": "Revisionsverlauf an einem Ort verwalten",
@@ -1700,7 +1841,18 @@
       "compact": "Standardansicht",
       "compact_details": "Task-Logs in einer kompakten Ansicht, gruppiert nach Task, anzeigen",
       "fullscreen": "Logs im Vollbild",
-      "exit_fullscreen": "Vollbild verlassen"
+      "exit_fullscreen": "Vollbild verlassen",
+      "loop": {
+        "this-execution": "Diese Ausführung",
+        "with-iterations": "Mit Loop-Iterationen",
+        "batch-range": "Fehlgeschlagene Iterationen {from}–{to} von {total}",
+        "empty-title": "Keine passenden Logs",
+        "empty-description": "Kein Log entspricht der gewählten Stufe in dieser Ausführung oder ihren fehlgeschlagenen Loop-Iterationen. Senke die Stufe, um mehr zu sehen.",
+        "scope-to": "Graph und Logs auf {scope} eingrenzen",
+        "show-in-overview": "In der Übersicht anzeigen",
+        "show-in-overview-for": "{scope} in der Übersicht anzeigen",
+        "mode-label": "Log-Quelle"
+      }
     },
     "execution_deletion": {
       "logs": "Logs löschen",
@@ -1760,6 +1912,14 @@
     "item": "Element",
     "items": "Elemente",
     "iterations": "Iterationen",
+    "load_10_more": "10 weitere laden",
+    "show_all_executions": "Alle Ausführungen anzeigen",
+    "failed_iterations_only": "Nur fehlgeschlagene Iterationen",
+    "loop_iterations_shown": "{shown} von {total} angezeigt",
+    "loop_iterations_load_error": "Iterationen konnten nicht geladen werden",
+    "retry": "Versuche es erneut",
+    "no_iterations": "Noch keine Iterationen",
+    "no_failed_iterations": "Keine fehlgeschlagenen Iterationen",
     "loop_iterations_notice": {
       "logs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Logs hier nicht angezeigt.",
       "outputs": "Loop-Iterationen werden als separate Sub-Executions ausgeführt, daher werden ihre Outputs hier nicht angezeigt.",
@@ -2063,12 +2223,10 @@
       "no_description_hint": "Füge diesem Flow eine Beschreibung hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
       "viewAll": "Alle anzeigen",
-      "export": "Exportieren",
-      "exportEmpty": "Dieses Diagramm hat keine Daten zum Exportieren.",
       "exportTo": {
-        "csv": "Als CSV exportieren",
-        "ion": "Als ION exportieren"
+        "csv": "Als CSV exportieren"
       },
+      "ignoredFilters": "Der Filter {filters} gilt nicht für dieses Diagramm. | Die Filter {filters} gelten nicht für dieses Diagramm.",
       "show_all_statuses": "Alle Status anzeigen",
       "quick_filters": {
         "all": "Alle",
@@ -2270,7 +2428,8 @@
           "title": {
             "flow": "Vorgeschlagener Flow",
             "dashboard": "Vorgeschlagenes Dashboard",
-            "app": "Vorgeschlagene App"
+            "app": "Vorgeschlagene App",
+            "test_suite": "Vorgeschlagener Unit-Test"
           },
           "valid": "Gültig",
           "invalid": "Änderungen erforderlich"
@@ -2315,30 +2474,35 @@
           "failed": "Fehlgeschlagen",
           "unknown": "Nicht getrackt"
         },
+        "kind": {
+          "produces": "Erzeugt",
+          "consumed_by": "Verbraucht von",
+          "upstream_of": "Upstream von",
+          "part_of": "Teil von",
+          "related": "Verwandt"
+        },
         "summary": {
           "fresh": "Alle {n} Assets sind aktuell",
           "issues": "{n} veraltet",
           "failed": "{n} fehlgeschlagen",
           "last_run": "letzter Run {ago}",
-          "unknown": "{n} nicht getrackt",
-          "tests_failed": "{n} mit fehlgeschlagenen Tests"
-        },
-        "tests": {
-          "pass": "{count} Test | {count} Tests",
-          "warn": "{count} Test · Warnung | {count} Tests · Warnung",
-          "fail": "{failed}/{total} fehlgeschlagen",
-          "tooltip": {
-            "pass": "Der {count} dbt Test ist bestanden | Alle {count} dbt Tests sind bestanden",
-            "warn": "{count} dbt Test mit Warnungen bestanden | {count} dbt Tests bestanden, einige mit Warnungen",
-            "fail": "Der dbt-Test ist fehlgeschlagen | {failed} von {total} dbt-Tests sind fehlgeschlagen"
-          }
+          "unknown": "{n} nicht getrackt"
         },
         "recent_runs": "Letzte Runs",
         "group_by": "Gruppieren nach",
-        "groups": "Gruppen ({n})",
+        "groups": "Gruppen",
         "group_none": "Keine Gruppierung",
         "group_dataset": "Dataset",
-        "ungrouped": "Ungruppiert"
+        "group_consumer": "Consumer",
+        "no_consumer": "Kein Consumer",
+        "hidden_consumer": "Versteckter Flow",
+        "ungrouped": "Ungruppiert",
+        "hub": {
+          "notice": "Dieser Knoten hat {count} Relationen – nur die jüngsten werden angezeigt, um den Graphen lesbar zu halten.",
+          "expand": "Weitere Relationen laden",
+          "expand_failed": "Es konnten keine weiteren Relationen geladen werden. Bitte versuche es erneut."
+        },
+        "truncated": "Dieser Graph war zu groß, um vollständig angezeigt zu werden; einige Beziehungen wurden weggelassen."
       },
       "search": {
         "placeholders": {

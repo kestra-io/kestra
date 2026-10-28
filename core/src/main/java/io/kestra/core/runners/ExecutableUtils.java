@@ -47,7 +47,7 @@ public final class ExecutableUtils {
                 (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED
                     || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
-            State.Type finalState = (allowedFailure && execution.getState().isFailed()) ? State.Type.WARNING : execution.getState().getCurrent();
+            State.Type finalState = (allowedFailure && (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED)) ? State.Type.WARNING : execution.getState().getCurrent();
             return finalState.equals(State.Type.WARNING) && allowWarning ? State.Type.SUCCESS : finalState;
         } else {
             return State.Type.SUCCESS;
@@ -242,9 +242,12 @@ public final class ExecutableUtils {
                     variables.put("loopIndex", currentExecution.getLoopRun().index());
                 }
 
-                // Subflow executions are independent executions — never LOOP kind
-                // (LOOP is only for virtual loop-iteration executions, not subflow children)
-                ExecutionKind subflowKind = currentExecution.getKind() == ExecutionKind.LOOP ? currentExecution.getLoopRun().parent().getKind() : currentExecution.getKind();
+                // Subflow executions are never LOOP kind, and nested loops chain their iterations through loopRun.parent()
+                Execution kindSource = currentExecution;
+                while (kindSource.getKind() == ExecutionKind.LOOP) {
+                    kindSource = kindSource.getLoopRun().parent();
+                }
+                ExecutionKind subflowKind = kindSource.getKind();
                 Execution execution = Execution
                     .newExecution(
                         flow,

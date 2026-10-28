@@ -30,6 +30,7 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {shadow: "always"},
 }
 
 export const NoShadow: Story = {
@@ -43,6 +44,7 @@ export const NoShadow: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Shadow variants – always, hover, never */
@@ -66,6 +68,7 @@ export const Shadow: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Simple card – no header */
@@ -80,6 +83,7 @@ export const Simple: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const WithFooter: Story = {
@@ -100,4 +104,5 @@ export const WithFooter: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

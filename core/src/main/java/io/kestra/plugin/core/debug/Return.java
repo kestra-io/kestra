@@ -29,7 +29,7 @@ import lombok.experimental.SuperBuilder;
     description = """
         Render a templated string and return it so you can quickly inspect or reuse values during a flow.
 
-        Handy for troubleshooting (the rendered value is logged) or for generating small payloads such as headers or tokens that downstream tasks expect. Combine with template filters to control whitespace or formatting before the value is passed along."""
+        The rendered value is logged. Use only non-sensitive data when troubleshooting. For production workflows, use `io.kestra.plugin.core.log.Log` to display a message or `io.kestra.plugin.core.output.OutputValues` to pass values downstream. Inject secrets directly into the task properties that need them."""
 )
 @Plugin(
     examples = {
@@ -48,33 +48,22 @@ import lombok.experimental.SuperBuilder;
         @Example(
             full = true,
             code = """
-                id: return
+                id: debug_greeting
                 namespace: company.team
 
                 inputs:
-                  - id: token
+                  - id: name
                     type: STRING
-                    required: false
-                    displayName: "API Token"
-
-                  - id: username
-                    type: STRING
-                    displayName: "Username"
-                    required: false
-
-                  - id: password
-                    type: STRING
-                    displayName: "Password"
                     required: false
 
                 tasks:
-                  - id: compute_header
+                  - id: greeting
                     type: io.kestra.plugin.core.debug.Return
                     format: >-
-                      {%- if inputs.token is not empty -%}
-                      Bearer {{ inputs.token }}
-                      {%- elseif inputs.username is not empty and inputs.password is not empty -%}
-                      Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
+                      {%- if inputs.name is not empty -%}
+                      Hello {{ inputs.name }}
+                      {%- else -%}
+                      Hello world
                       {%- endif -%}
                 """
         )

@@ -3,9 +3,7 @@ package io.kestra.queue.jdbc.client;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -86,22 +84,19 @@ public class JdbcQueueClient {
 
     public void publish(String queue, @Nullable String routingKey, String key, String value) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration ->
+            dslContextWrapper.joinTransactionIfPresent(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
-
-                Map<Field<?>, Object> fields = LinkedHashMap.newLinkedHashMap(5); // Use a linked hash map for a predictable iteration order
-                fields.put(TYPE, queue);
-                fields.put(ROUTING_KEY, (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
-                fields.put(KEY, key);
-                fields.put(VALUE, JdbcJsonbUtils.valueOf(value));
-                fields.put(CREATED, Instant.now());
-
-                var insert = context
+                DSL.using(configuration)
                     .insertInto(queueTable)
-                    .set(fields);
-
-                insert.execute();
+                    .columns(COLUMNS)
+                    .values(
+                        queue,
+                        (routingKey == null || routingKey.isEmpty()) ? null : routingKey,
+                        key,
+                        JdbcJsonbUtils.valueOf(value),
+                        Instant.now()
+                    )
+                    .execute();
             });
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
             // Postgres refuses JSONB payloads with unsupported Unicode escape sequences such as '\0000'
@@ -138,11 +133,9 @@ public class JdbcQueueClient {
 
     public void publish(List<PublishedMessage> messages) throws QueueException {
         try {
-            dslContextWrapper.transaction(configuration ->
+            dslContextWrapper.joinTransactionIfPresent(configuration ->
             {
-                DSLContext context = DSL.using(configuration);
-
-                InsertValuesStepN<Record> insert = context
+                InsertValuesStepN<Record> insert = DSL.using(configuration)
                     .insertInto(queueTable)
                     .columns(COLUMNS);
 

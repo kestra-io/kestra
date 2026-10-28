@@ -24,7 +24,7 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .empty-state {
         display: flex;
         flex-direction: column;
@@ -33,13 +33,15 @@
         height: 100%;
         text-align: center;
         padding: var(--ks-spacing-4) 0;
-        strong{
+
+        & strong {
             color: var(--ks-text-primary);
             font-size: var(--ks-font-size-md);
             line-height: 2rem;
             font-weight: var(--ks-font-weight-bold);
         }
-        p {
+
+        & p {
             line-height: 1rem;
             margin: 0;
             max-width: 320px;
@@ -49,12 +51,13 @@
             color: var(--ks-text-secondary);
         }
 
-        .empty-icon{
+        & .empty-icon {
             height: 24px;
             width: 24px;
             margin: 8px;
             color: var(--ks-icon-muted);
-            :deep(.material-design-icon__svg) {
+
+            & :deep(.material-design-icon__svg) {
                 width: 100%;
                 height: 100%;
             }

@@ -16,6 +16,7 @@ import io.kestra.core.models.dashboards.filters.IsNull;
 import io.kestra.core.models.dashboards.filters.NotContains;
 import io.kestra.core.models.dashboards.filters.NotIn;
 import io.kestra.core.models.dashboards.filters.Or;
+import io.kestra.core.models.executions.ExecutionKind;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -110,7 +111,7 @@ class DashboardDataGlobalFiltersTest {
 
     @Test
     void shouldKeepChartFilterWhenGlobalFilterTargetsTheSameField() {
-        EqualTo<IExecutions.Fields> chartFilter = EqualTo.<IExecutions.Fields>builder()
+        EqualTo<IExecutions.Fields> chartFilter = EqualTo.<IExecutions.Fields> builder()
             .field(IExecutions.Fields.NAMESPACE)
             .value("company.a")
             .build();
@@ -129,6 +130,46 @@ class DashboardDataGlobalFiltersTest {
         assertThat(where.get(0)).isSameAs(chartFilter);
         assertThat(where.get(1)).isInstanceOf(EqualTo.class);
         assertThat(((EqualTo<?>) where.get(1)).getValue()).isEqualTo("company.b");
+    }
+
+    @Test
+    void shouldReportOnlyTheGlobalFiltersTheDataSourceCannotApply() {
+        List<QueryFilter> filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("company").build(),
+            QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.IN).value(List.of("FAILED")).build(),
+            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("team", "data")).build(),
+            QueryFilter.builder().field(QueryFilter.Field.STATE).operation(QueryFilter.Op.NOT_IN).value(List.of("KILLED")).build(),
+            QueryFilter.builder().field(QueryFilter.Field.SCOPE).operation(QueryFilter.Op.EQUALS).value("USER").build(),
+            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value("PT24H").build()
+        );
+
+        ILogs iLogs = new ILogs() {
+        };
+        IExecutions iExecutions = new IExecutions() {
+        };
+
+        assertThat(iLogs.ignoredGlobalFilterFields(filters))
+            .containsExactly(QueryFilter.Field.STATE, QueryFilter.Field.LABELS, QueryFilter.Field.SCOPE);
+        assertThat(iExecutions.ignoredGlobalFilterFields(filters)).isEmpty();
+    }
+
+    @Test
+    void shouldMapKindFilterForExecutions() {
+        QueryFilter kindFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.KIND)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(ExecutionKind.PLAYGROUND)
+            .build();
+
+        IExecutions iExecutions = new IExecutions() {
+        };
+
+        var where = iExecutions.whereWithGlobalFilters(List.of(kindFilter), null, null, null);
+
+        assertThat(where).singleElement().isInstanceOf(EqualTo.class);
+        EqualTo<?> equalTo = (EqualTo<?>) where.getFirst();
+        assertThat(equalTo.getField()).isEqualTo(IExecutions.Fields.KIND);
+        assertThat(equalTo.getValue()).isEqualTo(ExecutionKind.PLAYGROUND.name());
     }
 
     @Test

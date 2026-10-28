@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, type ConcreteComponent} from "vue"
 import KsAutocomplete from "./KsAutocomplete.vue"
 
 const SUGGESTIONS = [
@@ -13,7 +13,8 @@ const SUGGESTIONS = [
 
 const meta: Meta<typeof KsAutocomplete> = {
     title: "Components/Form/KsAutocomplete",
-    component: KsAutocomplete,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsAutocomplete as ConcreteComponent,
     tags: ["autodocs"],
     argTypes: {
         disabled: {control: "boolean"},
@@ -51,11 +52,12 @@ export const Default: Story = {
             </div>
         `,
     }),
-    args: {placeholder: "Search namespaces...", triggerOnFocus: true, clearable: true},
+    args: {placeholder: "Search namespaces...", disabled: false, clearable: true, triggerOnFocus: true, valueKey: "value"},
 }
 
 /** Disabled state */
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAutocomplete},
         setup() {
@@ -72,6 +74,7 @@ export const Disabled: Story = {
 
 /** Remote search – suggestions fetched asynchronously */
 export const RemoteSearch: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAutocomplete},
         setup() {
@@ -104,6 +107,7 @@ export const RemoteSearch: Story = {
 }
 
 export const WithCustomTemplate: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsAutocomplete},
         setup() {
@@ -133,6 +137,36 @@ export const WithCustomTemplate: Story = {
                         </span>
                     </template>
                 </ks-autocomplete>
+            </div>
+        `,
+    }),
+}
+
+/** Mobile – on touch screens (`pointer: coarse`) the field is 44px high with 16px text */
+export const Mobile: Story = {
+    parameters: {
+        controls: {disable: true},
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsAutocomplete},
+        setup() {
+            const value = ref("")
+            const fetchSuggestions = (query: string, callback: (results: {value: string}[]) => void) => {
+                callback(SUGGESTIONS.filter((item) => item.includes(query)).map((item) => ({value: item})))
+            }
+            return {value, fetchSuggestions}
+        },
+        template: `
+            <div style="padding:16px">
+                <ks-autocomplete v-model="value" placeholder="Namespace" :fetch-suggestions="fetchSuggestions" trigger-on-focus />
             </div>
         `,
     }),

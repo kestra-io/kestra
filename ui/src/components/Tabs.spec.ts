@@ -1,6 +1,7 @@
 import {describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createPinia} from "pinia"
+import {markRaw} from "vue"
 import {createRouter, createWebHistory} from "vue-router"
 import KestraDesignSystem from "@kestra-io/design-system"
 import Tabs from "./Tabs.vue"
@@ -52,10 +53,27 @@ describe("Tabs", () => {
         await router.isReady()
 
         const wrapper = mountTabs({
-            tabs: [{name: "details", title: "Details", component: {template: "<p data-test=\"tab-body\">body</p>"}}],
+            tabs: [{name: "details", title: "Details", component: markRaw({template: "<p data-test=\"tab-body\">body</p>"})}],
             embedActiveTab: "details",
         })
 
         expect(wrapper.get("section [data-test=\"tab-body\"]").text()).toBe("body")
+    })
+
+    test("emits the embedded tab picked by a click outside its label", async () => {
+        await router.push("/")
+        await router.isReady()
+
+        const wrapper = mount(Tabs, {
+            props: {
+                tabs: [{name: "edit", title: "Edit"}, {name: "revisions", title: "Revisions"}],
+                embedActiveTab: "edit",
+            },
+            global: {plugins: [router, createPinia(), KestraDesignSystem], stubs: {EnterpriseBadge: true}},
+        })
+
+        await wrapper.get("#tab-revisions").trigger("click")
+
+        expect(wrapper.emitted("changed")).toEqual([[expect.objectContaining({name: "revisions"})]])
     })
 })

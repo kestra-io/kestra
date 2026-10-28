@@ -19,6 +19,7 @@ export interface Schema {
     description?: string;
     markdownDescription?: string;
     properties?: Record<string, Schema>;
+    additionalProperties?: boolean | Schema;
     required?: string[];
     default?: unknown;
     allOf?: Schema[];
@@ -31,6 +32,9 @@ export interface Schema {
     pattern?: string;
     $language?: string;
     $secret?: boolean;
+    $deprecated?: boolean;
+    $group?: string;
+    $index?: number;
 }
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")

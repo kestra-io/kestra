@@ -66,7 +66,11 @@ export const _625Ef69 = <ThrowOnError extends boolean = true>(parameters: {
 export const _04167Ea76 = <ThrowOnError extends boolean = true>(options?: Options<never, ThrowOnError>): RequestResult<LogoutResponses, LogoutErrors, ThrowOnError> => (options?.client ?? client).post<LogoutResponses, LogoutErrors, ThrowOnError>({ url: '/api/v1/logout', ...options });
 
 /**
- * Generate or regenerate a flow based on a prompt
+ * Generate or regenerate a flow based on a prompt (deprecated)
+ *
+ * Deprecated, will be removed in 2.2.0: use the AI Copilot threads API (ai/threads) instead.
+ *
+ * @deprecated
  */
 export const _6667C843 = <ThrowOnError extends boolean = true>(parameters: {
     aiControllerFlowGenerationPrompt: AiControllerFlowGenerationPrompt;

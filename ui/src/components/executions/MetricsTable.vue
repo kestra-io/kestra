@@ -9,6 +9,7 @@
         :noDataText="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden')"
         :noDataDescription="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
+        :fitHeight
     >
         <template #navbar>
             <slot name="navbar" />
@@ -111,12 +112,14 @@
         showTask?: boolean;
         execution?: Execution;
         optionalColumns?: ColumnConfig[];
+        fitHeight?: boolean;
     }>(), {
         embed: true,
         taskRunId: undefined,
         showTask: false,
         execution: undefined,
         optionalColumns: () => [],
+        fitHeight: false,
     })
 
     const localOptionalColumns = ref([

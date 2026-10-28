@@ -1,7 +1,7 @@
 <template>
     <div
         class="gantt-row"
-        :class="{'is-selected': selected, 'is-compact': compact, 'has-label-footer': $slots['label-footer']}"
+        :class="{'is-selected': selected, 'is-compact': compact}"
         role="row"
         tabindex="0"
         :aria-level="depth + 1"
@@ -119,12 +119,16 @@
             --gantt-indent: var(--ks-spacing-4);
         }
 
-        &.has-label-footer {
+        &:has(.row-label-footer:not(:empty)) {
             min-height: calc(2.75rem + var(--ks-spacing-3));
             padding-bottom: var(--ks-spacing-3);
 
             .guides {
                 margin-bottom: calc(-1 * (var(--ks-border-width-thin) + var(--ks-spacing-3)));
+            }
+
+            .row-actions {
+                top: calc(50% - var(--ks-spacing-3) / 2);
             }
         }
 
@@ -282,9 +286,8 @@
             padding: 0;
         }
 
-        &.has-label-footer {
+        &:has(.row-label-footer:not(:empty)) {
             min-height: 0;
-            padding-bottom: var(--ks-spacing-3);
         }
 
         .row-label {
@@ -292,11 +295,11 @@
             min-width: 0;
         }
 
-        &.has-label-footer .row-label {
+        &:has(.row-label-footer:not(:empty)) .row-label {
             padding-bottom: var(--ks-spacing-3);
         }
 
-        &.has-label-footer .row-label-footer {
+        .row-label-footer {
             top: auto;
             bottom: var(--ks-spacing-1);
         }

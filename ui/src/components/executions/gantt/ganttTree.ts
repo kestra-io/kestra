@@ -69,6 +69,7 @@ export interface LoopOutputsEntry {
     outputs?: Record<string, unknown>;
     fetchedAt: number;
     terminal: boolean;
+    failed: boolean;
 }
 
 export interface GanttTree {
@@ -337,20 +338,25 @@ export function createGanttTree(options: {
         return request
     }
 
+    function needsLoopOutputs(cached: LoopOutputsEntry | undefined, terminal: boolean): boolean {
+        if (!cached) return true
+        const stale = Date.now() - cached.fetchedAt >= LOOP_OUTPUTS_REFRESH_MS
+        if (terminal) return !cached.terminal && (!cached.failed || stale)
+        return cached.terminal || stale
+    }
+
     function loadLoopOutputs(node: TaskRunNode): Promise<void> {
         const taskRunId = node.taskRun.id
         const pending = loopOutputsInFlight.get(taskRunId)
-        if (pending) return pending
+        if (pending) return pending.then(() => loadLoopOutputs(node))
 
         const terminal = State.isTerminated(node.taskRun.state.current)
         const cached = loopOutputsByTaskRun.get(taskRunId)
-        if (cached && (cached.terminal || (!terminal && Date.now() - cached.fetchedAt < LOOP_OUTPUTS_REFRESH_MS))) {
-            return Promise.resolve()
-        }
+        if (!needsLoopOutputs(cached, terminal)) return Promise.resolve()
 
         const request = loadTaskRunOutputs(node.executionId, taskRunId).then(
-            (outputs) => ({outputs, fetchedAt: Date.now(), terminal}),
-            () => ({outputs: cached?.outputs, fetchedAt: Date.now(), terminal}),
+            (outputs): LoopOutputsEntry => ({outputs, fetchedAt: Date.now(), terminal, failed: false}),
+            (): LoopOutputsEntry => ({outputs: cached?.outputs, fetchedAt: Date.now(), terminal: false, failed: true}),
         ).then((entry) => {
             loopOutputsByTaskRun.set(taskRunId, entry)
         }).finally(() => {

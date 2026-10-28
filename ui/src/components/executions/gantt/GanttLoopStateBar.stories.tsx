@@ -1,4 +1,4 @@
-import {ref} from "vue";
+import {onBeforeUnmount, ref} from "vue";
 import {expect, waitFor} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {configureClient} from "@kestra-io/kestra-sdk";
@@ -8,11 +8,10 @@ import GanttTaskLabel from "./GanttTaskLabel.vue";
 import GanttLoopChips from "./GanttLoopChips.vue";
 import GanttLoopStateBar from "./GanttLoopStateBar.vue";
 import type {ExecutionTaskRun} from "../executionTaskRun";
-import {LOOP_TYPE, createTaskRunNode, loopAncestors, loopRefOf, provideGanttTree, type TaskRunNode} from "./ganttTree";
+import {LOOP_TYPE, createTaskRunNode, loopAncestors, loopRefOf, provideGanttTree, type GanttTree, type TaskRunNode} from "./ganttTree";
 
 const outputs = {
     byTaskRun: {} as Record<string, Record<string, unknown>>,
-    requests: [] as string[],
 }
 
 const TASK_RUN_OUTPUTS_URL = /\/outputs\/tasks\/[^/]+\/([^/?]+)/
@@ -24,14 +23,16 @@ function stubTaskRunOutputs() {
             const url = input instanceof Request ? input.url : String(input)
             const taskRunId = TASK_RUN_OUTPUTS_URL.exec(url)?.[1]
             if (!taskRunId) return realFetch(input, init)
-            outputs.requests.push(taskRunId)
             return Promise.resolve(new Response(JSON.stringify(outputs.byTaskRun[taskRunId] ?? {}), {
                 status: 200,
                 headers: {"Content-Type": "application/json"},
             }))
         },
     })
+    onBeforeUnmount(() => configureClient({fetch: realFetch}))
 }
+
+let renderedTree: GanttTree | undefined
 
 const EXECUTION = {id: "root-execution", namespace: "company.team", flowId: "monthly_close"}
 
@@ -59,6 +60,7 @@ function renderRows(nodes: TaskRunNode[], compact = false) {
     return {
         setup() {
             const tree = provideGanttTree({compact: ref(compact), levelFilter: ref(undefined)})
+            renderedTree = tree
             nodes.forEach((node) => {
                 const handle = tree.loopHandle(loopRefOf(node))
                 const counts = outputs.byTaskRun[node.taskRun.id]
@@ -84,7 +86,7 @@ function renderRows(nodes: TaskRunNode[], compact = false) {
                                         <GanttLoopChips loop={loopRefOf(node)} state={node.taskRun.state.current} nodeKey={node.key} />
                                     </GanttTaskLabel>
                                 ),
-                                "label-footer": () => <GanttLoopStateBar key={node.key} node={node} />,
+                                "label-footer": () => <GanttLoopStateBar node={node} />,
                             }}
                         />
                     ))}
@@ -164,7 +166,7 @@ export const OldExecutionWithoutCounts: Story = {
         return renderRows([loopNode("loop-old", "per_customer", "SUCCESS")])
     },
     play: async ({canvasElement}) => {
-        await waitFor(() => expect(outputs.requests).toContain("loop-old"))
+        await waitFor(() => expect(renderedTree?.loopOutputs("loop-old")).toBeDefined())
 
         expect(canvasElement.querySelector("[data-test='loop-state-bar']")).toBeNull()
     },

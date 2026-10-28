@@ -1,5 +1,6 @@
 import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {useMiscStore} from "override/stores/misc"
 import resource from "../../../models/resource"
 import action from "../../../models/action"
 import {useNamespacesStore} from "override/stores/namespaces"
@@ -22,6 +23,7 @@ const FLOW_ID_NARROWING_FIELDS = ["namespace", "scope"]
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
+    const miscStore = useMiscStore()
     const route = useRoute()
 
     return computed(() => {
@@ -146,9 +148,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
+                    removable: false,
+                    clearedValue: miscStore.configs?.chartDefaultDuration ?? "PT24H",
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.RELATIVE_DATE
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},

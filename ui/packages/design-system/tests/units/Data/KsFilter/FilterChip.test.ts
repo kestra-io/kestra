@@ -35,3 +35,27 @@ describe("FilterChip relative date labels", () => {
         expect(mountChip("PT3H").text()).toContain("PT3H")
     })
 })
+
+describe("FilterChip remove action", () => {
+    const mountWithKey = (removable?: boolean) =>
+        mount(FilterChip, {
+            props: {
+                filter: timeRangeChip("PT24H"),
+                filterKey: {key: "timeRange", label: "Interval", valueType: "select", comparators: [Comparators.EQUALS], removable},
+            },
+            global: {plugins: [i18n, KestraDesignSystem]},
+        })
+
+    test("offers no way to remove a non-removable chip", async () => {
+        const wrapper = mountWithKey(false)
+
+        await wrapper.trigger("auxclick", {button: 1})
+
+        expect(wrapper.find("[data-test='filter-chip-remove']").exists()).toBe(false)
+        expect(wrapper.emitted("remove")).toBeUndefined()
+    })
+
+    test("keeps the remove button on a regular chip", () => {
+        expect(mountWithKey().find("[data-test='filter-chip-remove']").exists()).toBe(true)
+    })
+})

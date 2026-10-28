@@ -35,7 +35,7 @@ import {date as dateFilter} from "./filters"
 import createUnsavedChanged from "./unsavedChange"
 import createEventsRouter from "./eventsRouter"
 import "./global"
-import {documentationGuard} from "./documentationGuard"
+import {documentationGuard, updateDocId} from "./documentationGuard"
 import {entityNotFoundGuard} from "./routeEntityGuard"
 
 
@@ -63,6 +63,7 @@ export default async (
     app.use(piniaStore)
 
     router.beforeEach(documentationGuard)
+    router.afterEach(updateDocId)
 
     if(guards.beforeEach){
         router.beforeEach(guards.beforeEach.bind(null, router) as Parameters<typeof router.beforeEach>[0])

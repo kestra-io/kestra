@@ -2,10 +2,10 @@ import type {Task} from "@kestra-io/kestra-sdk"
 
 export function loopOver<T = Record<string, unknown>>(
     item: unknown,
-    predicate: (item: any) => boolean,
+    predicate: (item: T) => boolean,
     result: T[] = [],
 ): T[] {
-    if (predicate(item)) {
+    if (predicate(item as T)) {
         result.push(item as T)
     }
 

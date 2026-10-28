@@ -282,7 +282,7 @@ public class ExecutionController {
             executionRepository.find(
                 PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
                 tenantService.resolveTenant(),
-                QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+                QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true),
                 dateFilter
             )
         );

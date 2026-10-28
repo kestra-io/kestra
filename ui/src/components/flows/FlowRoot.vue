@@ -58,7 +58,7 @@
             "$route.params.tab": {
                 immediate: true,
                 handler: function (newTab) {
-                    if (newTab === "overview" || newTab === "executions") {
+                    if (newTab === "overview") {
                         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
                         if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {

@@ -375,7 +375,8 @@ paths:
       tags:
       - Misc
       summary: Configure basic authentication for the instance.
-      description: Sets up basic authentication credentials.
+      description: "Sets up basic authentication credentials. Once credentials already\
+        \ exist, the request must also carry the current password."
       operationId: createBasicAuth
       parameters:
       - name: tenant
@@ -8344,11 +8345,18 @@ components:
       type: object
       properties:
         enableAuto:
-          $ref: "#/components/schemas/Property_Boolean_"
+          description: Whether to auto-register assets referenced dynamically at runtime
+            that are not statically declared in inputs or outputs.
+          allOf:
+          - $ref: "#/components/schemas/Property_Boolean_"
         inputs:
-          $ref: "#/components/schemas/Property_List_AssetIdentifier__"
+          description: The assets consumed as inputs.
+          allOf:
+          - $ref: "#/components/schemas/Property_List_AssetIdentifier__"
         outputs:
-          $ref: "#/components/schemas/Property_List_Asset__"
+          description: The assets produced as outputs.
+          allOf:
+          - $ref: "#/components/schemas/Property_List_Asset__"
     AssetsInOut:
       type: object
       properties:
@@ -8403,6 +8411,8 @@ components:
         username:
           type: string
         password:
+          type: string
+        currentPassword:
           type: string
     BlueprintController.ApiBlueprintItem:
       type: object
@@ -10732,6 +10742,9 @@ components:
         taskCache:
           $ref: "#/components/schemas/Cache"
         assets:
+          description: "Assets this task consumes as inputs or produces as outputs,\
+            \ for lineage tracking and the asset graph (Enterprise Edition). A flow\
+            \ declaring this property on a task is rejected in the open-source edition."
           nullable: true
           allOf:
           - $ref: "#/components/schemas/AssetsDeclaration"

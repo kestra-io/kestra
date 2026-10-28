@@ -1,5 +1,6 @@
 import {computed, ComputedRef} from "vue";
 import {FilterConfiguration, Comparators} from "../utils/filterTypes";
+import {useMiscStore} from "override/stores/misc";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
 import {useNamespacesStore} from "override/stores/namespaces";
@@ -10,6 +11,7 @@ import {useRoute} from "vue-router";
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n();
+    const miscStore = useMiscStore();
     const route = useRoute();
 
     return computed(() => {
@@ -117,9 +119,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    removable: false,
+                    clearedValue: miscStore.configs?.chartDefaultDuration ?? "PT24H",
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions");
-                        return VALUES.RELATIVE_DATE;
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME;
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},

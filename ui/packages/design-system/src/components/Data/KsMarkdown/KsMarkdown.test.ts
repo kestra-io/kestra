@@ -301,9 +301,10 @@ describe("KsMarkdown", () => {
     test.each([
         ["https://www.youtube.com/embed/abc", "https://www.youtube.com/embed/abc"],
         ["https://www.youtube-nocookie.com/embed/abc", "https://www.youtube-nocookie.com/embed/abc"],
+        ["https://demo.arcade.software/abc?embed", "https://demo.arcade.software/abc?embed"],
         ["http://www.youtube.com/embed/abc", undefined],
         ["https://evil.example.com/phish", undefined],
-    ])("embeds only HTTPS YouTube iframes: %s", (url, src) => {
+    ])("embeds only HTTPS YouTube and Arcade iframes: %s", (url, src) => {
         const wrapper = i18nMount(KsMarkdown, {props: {content: `<iframe src="${url}"></iframe>`}})
 
         expect(wrapper.find("iframe").attributes("src")).toBe(src)

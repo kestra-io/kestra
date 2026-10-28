@@ -14,7 +14,6 @@ import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationService;
 import io.kestra.core.events.EventId;
 import io.kestra.core.exceptions.ConflictException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -24,7 +23,6 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
-import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
@@ -55,9 +53,10 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
+import io.kestra.scheduler.internals.TriggerResumer;
+import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.stores.FlowMetaStore;
 
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -253,78 +252,14 @@ public class TriggerEventHandler {
             if (wasDisabled && !event.disabled()) {
                 Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
                 if (data.getRight() != null) {
-                    state = updateForReEnabledTrigger(clock, state, data.getLeft(), data.getRight(), event.recoverMissedSchedules());
+                    TriggerEvaluationContext context = evaluationContext(data.getLeft(), data.getRight(), state);
+                    state = Boolean.TRUE.equals(event.recoverMissedSchedules())
+                        ? TriggerResumer.resume(clock, context)
+                        : TriggerResumer.skipMissed(clock, context);
                 }
             }
             triggerStateStore.save(state);
         });
-    }
-
-    /**
-     * Updates the state of a re-enabled trigger. When recovery is requested, missed schedules are recovered
-     * according to the trigger's own {@code recoverMissedSchedules} configuration; the configuration is always
-     * re-resolved (never overridden per action) so that this decision and the scheduler startup recovery
-     * ({@code TriggerScheduler#onStart}) stay consistent across restarts and vNode re-assignments.
-     * By default (no recovery requested), missed schedules are skipped by re-computing the next evaluation date.
-     */
-    private TriggerState updateForReEnabledTrigger(Clock clock, TriggerState state, Flow flow,
-        AbstractTrigger trigger, @Nullable Boolean recoverMissedSchedules) {
-        return switch (resolveRecoverMissedSchedules(flow, trigger, recoverMissedSchedules)) {
-            // Keep the frozen past nextEvaluationDate so the scheduling loop replays each missed tick.
-            case ALL -> state.getNextEvaluationDate() != null
-                ? state
-                : state.updateForNextEvaluationDate(clock, nextEvaluationDate(clock, flow, trigger, state.context()));
-            case LAST -> updateForLastMissedSchedule(clock, state, flow, trigger);
-            // Also advance evaluatedAt so the startup recovery cannot resurrect the skipped schedules.
-            case NONE -> state
-                .evaluatedAt(clock, ZonedDateTime.now(clock))
-                .updateForNextEvaluationDate(clock, nextEvaluationDateSkippingMissed(clock, state, flow, trigger));
-        };
-    }
-
-    private RecoverMissedSchedules resolveRecoverMissedSchedules(Flow flow, AbstractTrigger trigger,
-        @Nullable Boolean recoverMissedSchedules) {
-        if (!Boolean.TRUE.equals(recoverMissedSchedules) || !(trigger instanceof Schedulable schedulable)) {
-            return RecoverMissedSchedules.NONE;
-        }
-        return Optional.ofNullable(schedulable.getRecoverMissedSchedules())
-            .orElseGet(() -> schedulable.defaultRecoverMissedSchedules(runContextFactory.of(flow, trigger)));
-    }
-
-    private TriggerState updateForLastMissedSchedule(Clock clock, TriggerState state, Flow flow, AbstractTrigger trigger) {
-        // A running backfill must resume untouched: recomputing the next evaluation date would re-derive
-        // the backfill from the new date and silently drop or corrupt its remaining range.
-        if (state.getBackfill() != null) {
-            return state;
-        }
-        // Never evaluated (e.g. created disabled): there is no missed schedule to recover, and the last
-        // cron tick before now could even predate the trigger's creation.
-        if (state.getEvaluatedAt() == null) {
-            return state.updateForNextEvaluationDate(clock, nextEvaluationDateSkippingMissed(clock, state, flow, trigger));
-        }
-        RunContext runContext = runContextFactory.of(flow, trigger);
-        ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-        try {
-            Optional<ZonedDateTime> previousDate = ((Schedulable) trigger).previousEvaluationDate(conditionContext);
-            if (previousDate.isPresent() && previousDate.get().toInstant().isAfter(state.getEvaluatedAt())) {
-                return state.updateForNextEvaluationDate(clock, previousDate.get());
-            }
-            // Nothing was missed: keep the stored next evaluation date.
-            return state;
-        } catch (IllegalVariableEvaluationException e) {
-            Logs.logTrigger(state, Level.WARN, "Cannot compute the previous evaluation date, missed schedules will be skipped. Cause: {}", e.getMessage());
-            return state.updateForNextEvaluationDate(clock, nextEvaluationDateSkippingMissed(clock, state, flow, trigger));
-        }
-    }
-
-    /**
-     * Computes the next evaluation date of a re-enabled trigger so that missed schedules are skipped: the stale
-     * pre-disable evaluation date is dropped from the trigger context so the computation seeds from now, while a
-     * running backfill is preserved so it resumes from its current date.
-     */
-    private ZonedDateTime nextEvaluationDateSkippingMissed(Clock clock, TriggerState state, Flow flow, AbstractTrigger trigger) {
-        TriggerContext context = state.context().toBuilder().date(null).build();
-        return nextEvaluationDate(clock, flow, trigger, context);
     }
 
     /**
@@ -662,6 +597,11 @@ public class TriggerEventHandler {
         RunContext runContext = runContextFactory.of(flow, trigger);
         ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
         return NextEvaluationDate.get(clock, trigger, triggerContext, conditionContext);
+    }
+
+    private TriggerEvaluationContext evaluationContext(Flow flow, AbstractTrigger trigger, TriggerState state) {
+        RunContext runContext = runContextFactory.of(flow, trigger);
+        return new TriggerEvaluationContext(flow, trigger, state, conditionService.conditionContext(runContext, flow, null));
     }
 
     private boolean isDisabledInDefinition(TriggerEvent event) {

@@ -1154,6 +1154,9 @@
     "unlock trigger": {
       "success": "Trigger अनलॉक किया गया"
     },
+    "trigger blocked": "अवरुद्ध",
+    "trigger blocked policy check failed": "शासन नीतियों की जाँच नहीं की जा सकी।",
+    "trigger blocked unknown": "किसी अज्ञात कारण से ब्लॉक किया गया।",
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
     "trigger enable dialog": {
       "title": "trigger सक्षम करें",

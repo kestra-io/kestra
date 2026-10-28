@@ -487,7 +487,7 @@ public class ExecutorService {
             try {
                 Map<String, Object> outputs = inputAndOutput.renderOutputs(flow.getOutputs());
                 outputs = inputAndOutput.typedOutputs(flow, executor.getExecution(), outputs);
-                executionOutputService.saveOutputs(newExecution, outputs);
+                executionOutputService.saveOutputs(runContext.logger(), flow, newExecution, outputs);
             } catch (Exception e) {
                 Logs.logExecution(
                     executor.getExecution(),

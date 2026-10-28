@@ -120,8 +120,8 @@
         }
 
         &.has-label-footer {
-            min-height: calc(2.75rem + var(--ks-spacing-2));
-            padding-bottom: var(--ks-spacing-2);
+            min-height: calc(2.75rem + var(--ks-spacing-3));
+            padding-bottom: var(--ks-spacing-3);
         }
 
         &.is-selected {
@@ -154,9 +154,9 @@
 
     .row-label-footer {
         position: absolute;
-        bottom: var(--ks-spacing-1);
-        right: var(--ks-spacing-2);
-        left: calc(var(--gantt-indent) * (var(--gantt-depth) + 1) + var(--ks-spacing-1));
+        top: calc(100% + var(--ks-spacing-1));
+        right: var(--ks-spacing-4);
+        left: calc(var(--gantt-indent) * (var(--gantt-depth) + 1) + var(--ks-spacing-3));
     }
 
     .guides {
@@ -289,7 +289,12 @@
         }
 
         &.has-label-footer .row-label {
-            padding-bottom: var(--ks-spacing-2);
+            padding-bottom: var(--ks-spacing-3);
+        }
+
+        &.has-label-footer .row-label-footer {
+            top: auto;
+            bottom: var(--ks-spacing-1);
         }
 
         .row-duration {

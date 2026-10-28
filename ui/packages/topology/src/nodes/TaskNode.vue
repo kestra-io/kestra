@@ -420,10 +420,10 @@ button.playground-button {
 }
 
 .loop-runs-bar {
-    flex: 1;
-    align-self: center;
-    min-width: var(--ks-spacing-6);
-    margin-left: var(--ks-spacing-2);
+    position: absolute;
+    right: var(--ks-spacing-2);
+    bottom: calc(var(--ks-spacing-1) / 2);
+    left: var(--ks-spacing-2);
 }
 
 .loop-runs {

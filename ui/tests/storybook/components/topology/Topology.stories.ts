@@ -664,6 +664,9 @@ export const LoopStateProgress: StoryObj<typeof Topology> = {
             const bar = header.querySelector("[data-test='loop-state-bar']")
             if (bar) expect(header.querySelector(".lane-labels")!.getBoundingClientRect().bottom).toBeLessThanOrEqual(bar.getBoundingClientRect().top)
         }
+        const taskBarWidths = [...canvasElement.querySelectorAll(".node-footer [data-test='loop-state-bar']")].map((bar) => Math.round(bar.getBoundingClientRect().width))
+        expect(taskBarWidths).toHaveLength(2)
+        expect(taskBarWidths[0]).toBe(taskBarWidths[1])
         expect(labels()).toEqual(expect.arrayContaining([
             "2,800 success, 3 failed, 20 skipped, 12 running, 165 not started",
             "9,999 success, 1 failed, 4 running",

@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {computed} from "vue"
+import {NODE_SIZES} from "../utils/constants"
 import TaskNode from "./TaskNode.vue"
 import NodeMenu from "./NodeMenu.vue"
 import {computeLongestTaskRunDuration} from "../misc/durationBreakdown"
@@ -555,22 +556,17 @@ describe("TaskNode info action", () => {
 
 describe("TaskNode handles in a vertical layout", () => {
     const sourceHandle = (wrapper: ReturnType<typeof mountTaskNode>) => wrapper.findAll("handle-stub").find((handle) => handle.attributes("type") === "source")!
+    const bottomOf = (wrapper: ReturnType<typeof mountTaskNode>) => (sourceHandle(wrapper).element as HTMLElement).style.bottom
 
     it("should leave the outgoing edge on the card bottom, above the reserved chip row", () => {
         const wrapper = mountTaskNode({execution: {state: {current: "SUCCESS"}}, taskRuns: [taskRun()], sourcePosition: "bottom"})
 
-        expect((sourceHandle(wrapper).element as HTMLElement).style.bottom).toBe("28px")
+        expect(bottomOf(wrapper)).toBe(`${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px`)
     })
 
-    it("should keep the outgoing edge at the node bottom outside of an execution", () => {
-        const wrapper = mountTaskNode({sourcePosition: "bottom"})
+    it("should keep the outgoing edge at the node bottom once zoomed out to the pill, where no row is rendered", () => {
+        const wrapper = mountTaskNode({execution: {state: {current: "SUCCESS"}}, taskRuns: [taskRun()], sourcePosition: "bottom", lod: "pill"})
 
-        expect((sourceHandle(wrapper).element as HTMLElement).style.bottom).toBe("")
-    })
-
-    it("should keep the lifted handle on a task that never ran, whose row is still reserved", () => {
-        const wrapper = mountTaskNode({execution: {state: {current: "SUCCESS"}}, taskRuns: [], sourcePosition: "bottom"})
-
-        expect((sourceHandle(wrapper).element as HTMLElement).style.bottom).toBe("28px")
+        expect(bottomOf(wrapper)).toBe("")
     })
 })

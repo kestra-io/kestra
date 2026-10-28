@@ -676,7 +676,7 @@
       "count_error": "Nie udało się załadować liczby",
       "load_error": "Nie udało się załadować tego widoku.",
       "retry": "Spróbuj ponownie",
-      "no_logs": "Brak Logów zarejestrowanych dla tego Task Runa.",
+      "child_runs_capped": "Wyświetlane są tylko Logi pierwszych {count} podrzędnych Task Runów.",
       "no_artifacts": "Ten Task nie dostarcza Artifactu.",
       "task_source": "Źródło Taska",
       "worker_info": "Informacje o Workerze"

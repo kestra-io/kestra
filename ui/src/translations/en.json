@@ -676,7 +676,7 @@
       "count_error": "Could not load the count",
       "load_error": "Could not load this view.",
       "retry": "Retry",
-      "no_logs": "No logs recorded for this task run.",
+      "child_runs_capped": "Showing the logs of the first {count} child task runs only.",
       "no_artifacts": "This task does not provide an artifact.",
       "task_source": "Task source",
       "worker_info": "Worker info"

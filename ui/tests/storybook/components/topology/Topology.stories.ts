@@ -482,8 +482,6 @@ const NODE_STATES_EXECUTION = {
     ],
 }
 
-// The artifact badge and the chip row sit below the card; the layout reserves their row for every
-// task, so a task that never ran or has no artifact leaves the same empty footprint.
 export const NodeStatusChips: StoryObj<typeof Topology> = {
     render: () => ({
         components: {Topology},
@@ -548,7 +546,6 @@ const RUNNER_EXECUTION = {
     taskRunList: [taskRunWithAttempts("run_script", "SUCCESS", 1)],
 }
 
-// The runner badge sits above the task id and must stay inside the 56px card body.
 export const TaskRunnerAboveTheTaskId: StoryObj<typeof Topology> = {
     render: () => ({
         components: {Topology},

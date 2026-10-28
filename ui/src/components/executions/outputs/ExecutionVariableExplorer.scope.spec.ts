@@ -76,4 +76,19 @@ describe("ExecutionVariableExplorer scoped to one task", () => {
         expect(OutputsAPI.taskOutputsInformation).not.toHaveBeenCalled()
         expect(OutputsAPI.executionOutputs).not.toHaveBeenCalled()
     })
+
+    test("shouldKeepTheSelectedKeyWhenTheOutputsAreRefreshed", async () => {
+        // Given
+        const wrapper = mountScoped({runId: 1, manifest: "kestra:///manifest.json"})
+        await flushPromises()
+        await wrapper.findComponent({name: "SidebarList"}).vm.$emit("select", (wrapper.findComponent({name: "SidebarList"}).props("sections") as ExplorerSection[])[0].items[1])
+        await flushPromises()
+
+        // When
+        await wrapper.setProps({scope: {execution, taskId: "dbt", outputs: {runId: 2, manifest: "kestra:///manifest.json"}}})
+        await flushPromises()
+
+        // Then
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression")).toBe("{{ outputs.dbt.manifest }}")
+    })
 })

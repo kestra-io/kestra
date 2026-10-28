@@ -676,7 +676,7 @@
       "count_error": "件数を読み込めませんでした",
       "load_error": "このビューを読み込めませんでした。",
       "retry": "再試行",
-      "no_logs": "このタスク実行にはlogが記録されていません。",
+      "child_runs_capped": "最初の{count}件の子task実行のlogのみ表示しています。",
       "no_artifacts": "このTaskはartifactを提供していません。",
       "task_source": "Taskソース",
       "worker_info": "Worker情報"

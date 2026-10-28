@@ -100,6 +100,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.ExecutionOutputFilterService;
 import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
@@ -174,6 +175,9 @@ public class ExecutionController {
 
     @Inject
     protected FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private ExecutionOutputFilterService executionOutputFilterService;
 
     @Inject
     private FlowService flowService;
@@ -340,10 +344,11 @@ public class ExecutionController {
         @Parameter(description = "Which execution date field the time interval is applied to") @Nullable @QueryValue DateFilter dateFilter
 
     ) {
+        var tenantId = tenantService.resolveTenant();
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
-            tenantService.resolveTenant(),
-            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true),
+            tenantId,
+            executionOutputFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
             dateFilter
         );
         var apiExecution = executions.stream()
@@ -363,16 +368,17 @@ public class ExecutionController {
         )
         @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
         @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
+        if (field == QueryFilter.Field.OUTPUTS || !QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Field " + field + " is not supported for executions"
             );
         }
+        var tenantId = tenantService.resolveTenant();
         return executionRepository.findDistinctFieldValues(
-            tenantService.resolveTenant(),
+            tenantId,
             field,
-            filters,
+            executionOutputFilterService.resolve(tenantId, filters),
             Pageable.from(0, size)
         );
     }
@@ -2837,11 +2843,12 @@ public class ExecutionController {
     }
 
     private List<Execution> getExecutions(List<QueryFilter> filters) {
+        var tenantId = tenantService.resolveTenant();
         return executionRepository
             .find(
                 Pageable.UNPAGED,
-                tenantService.resolveTenant(),
-                filters
+                tenantId,
+                executionOutputFilterService.resolve(tenantId, filters)
             );
     }
 

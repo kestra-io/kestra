@@ -147,6 +147,30 @@ describe("ExecutionVariableExplorer", () => {
         setActivePinia(createPinia())
     })
 
+    test("tags the flow outputs declared searchable by the flow", async () => {
+        vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({orderIds: "ORD-1", plain: "x"})
+        useExecutionsStore().flow = {
+            id: "flow",
+            namespace: "io.kestra.tests",
+            outputs: [
+                {id: "orderIds", type: "STRING", value: "{{ outputs.x }}", searchable: true},
+                {id: "plain", type: "STRING", value: "{{ outputs.x }}"},
+            ],
+        } as FlowForExecution
+        const wrapper = mountExplorer({})
+        await flushPromises()
+
+        const items = sidebarSections(wrapper).find((section) => section.key === "flowOutputs")?.items
+        await selectVariable(wrapper, "orderIds", "flowOutputs")
+
+        expect(items?.map((item) => [item.label, item.searchable])).toEqual([["orderIds", true], ["plain", false]])
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(true)
+
+        await selectVariable(wrapper, "plain", "flowOutputs")
+
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(false)
+    })
+
     test("uses render for variables containing expressions", async () => {
         const wrapper = mountExplorer({
             greeting: "Hello {{ inputs.name }}",

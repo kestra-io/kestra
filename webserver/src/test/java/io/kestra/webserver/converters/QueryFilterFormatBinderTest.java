@@ -325,6 +325,20 @@ class QueryFilterFormatBinderTest {
     }
 
     @Test
+    void shouldKeepAllValuesOfARepeatedNestedKey() {
+        // GIVEN — the UI repeats the parameter when an IN filter holds several values for the same output id
+        Map<String, List<String>> queryParams = Map.of("filters[outputs][IN][orderIds]", List.of("ORD-1", "ORD-2"));
+
+        // WHEN
+        List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
+
+        // THEN
+        assertEquals(1, filters.size());
+        assertEquals(QueryFilter.Field.OUTPUTS, filters.getFirst().field());
+        assertEquals(Map.of("orderIds", "ORD-1,ORD-2"), filters.getFirst().value());
+    }
+
+    @Test
     void shouldRemainBackwardCompatibleWithFlatLegacyFormat() {
         // GIVEN — a real production URL using the legacy flat format (no [and]/[or] prefix)
         HttpRequest<?> request = HttpRequest.GET(

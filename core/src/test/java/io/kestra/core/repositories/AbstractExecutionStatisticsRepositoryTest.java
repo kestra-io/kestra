@@ -6,12 +6,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.devskiller.friendly_id.FriendlyId;
-
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -36,7 +35,7 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
         // at-least-once queue redelivery
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-        String executionId = FriendlyId.createFriendlyId();
+        String executionId = IdUtils.create();
         ExecutionStatistic raw = raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, executionId, 1000);
 
         // When
@@ -57,9 +56,9 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000),
-                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 2000),
-                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 3000)
+                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 1000),
+                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 2000),
+                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 3000)
             )
         );
 
@@ -87,8 +86,8 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 500),
-                rawWithoutTaskRuns(tenant, "namespace", "flow", bucket, State.Type.FAILED, FriendlyId.createFriendlyId(), 200)
+                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 500),
+                rawWithoutTaskRuns(tenant, "namespace", "flow", bucket, State.Type.FAILED, IdUtils.create(), 200)
             )
         );
 
@@ -110,8 +109,8 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                rawWithoutTaskRuns(tenant, "namespace", "flow", bucket, State.Type.FAILED, FriendlyId.createFriendlyId(), 100),
-                rawWithoutTaskRuns(tenant, "namespace", "flow", bucket, State.Type.FAILED, FriendlyId.createFriendlyId(), 200)
+                rawWithoutTaskRuns(tenant, "namespace", "flow", bucket, State.Type.FAILED, IdUtils.create(), 100),
+                rawWithoutTaskRuns(tenant, "namespace", "flow", bucket, State.Type.FAILED, IdUtils.create(), 200)
             )
         );
 
@@ -133,7 +132,7 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
         Instant bucket = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 
         ExecutionStatistic compacted = new ExecutionStatistic(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, 5, 5000, 500, 1500, 10, 5000, 100L, 900L, null);
-        ExecutionStatistic lateRaw = raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 2000);
+        ExecutionStatistic lateRaw = raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 2000);
         executionStatisticsRepository.saveBatch(List.of(compacted, lateRaw));
 
         // When
@@ -153,9 +152,9 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000),
-                raw(tenant, "namespace", "other-flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000),
-                raw(tenant, "other-namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000)
+                raw(tenant, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 1000),
+                raw(tenant, "namespace", "other-flow", bucket, State.Type.SUCCESS, IdUtils.create(), 1000),
+                raw(tenant, "other-namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 1000)
             )
         );
 
@@ -177,8 +176,8 @@ public abstract class AbstractExecutionStatisticsRepositoryTest {
 
         executionStatisticsRepository.saveBatch(
             List.of(
-                raw(tenant1, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 1000),
-                raw(tenant2, "namespace", "flow", bucket, State.Type.SUCCESS, FriendlyId.createFriendlyId(), 2000)
+                raw(tenant1, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 1000),
+                raw(tenant2, "namespace", "flow", bucket, State.Type.SUCCESS, IdUtils.create(), 2000)
             )
         );
 

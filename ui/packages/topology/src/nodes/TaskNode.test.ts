@@ -49,7 +49,8 @@ function taskRunWithHistory(taskId: string, histories: {date: number; state: str
     }
 }
 
-function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map(), loopLanes, uid = "root.my-task", artifactCounts = {}, lod = "default", nodeExecutionId}: {
+function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = TASK, isReadOnly = true, isFlowable = false, realBasicNode = false, validationIssues = new Map(), loopLanes, uid = "root.my-task", artifactCounts = {}, lod = "default", nodeExecutionId, sourcePosition}: {
+    sourcePosition?: string,
     loopLanes?: Record<string, LoopLaneData>,
     artifactCounts?: Record<string, number>,
     lod?: "pill" | "default" | "expanded",
@@ -82,6 +83,7 @@ function mountTaskNode({execution, taskRuns = [], replayEnabled = false, task = 
             playgroundEnabled: false,
             playgroundReadyToStart: false,
             replayEnabled,
+            ...(sourcePosition ? {sourcePosition} : {}),
         },
         global: {
             stubs: {
@@ -548,5 +550,27 @@ describe("TaskNode info action", () => {
         })
 
         expect(wrapper.find("[data-test='variant']").text()).toBe("task")
+    })
+})
+
+describe("TaskNode handles in a vertical layout", () => {
+    const sourceHandle = (wrapper: ReturnType<typeof mountTaskNode>) => wrapper.findAll("handle-stub").find((handle) => handle.attributes("type") === "source")!
+
+    it("should leave the outgoing edge on the card bottom, above the reserved chip row", () => {
+        const wrapper = mountTaskNode({execution: {state: {current: "SUCCESS"}}, taskRuns: [taskRun()], sourcePosition: "bottom"})
+
+        expect((sourceHandle(wrapper).element as HTMLElement).style.bottom).toBe("28px")
+    })
+
+    it("should keep the outgoing edge at the node bottom outside of an execution", () => {
+        const wrapper = mountTaskNode({sourcePosition: "bottom"})
+
+        expect((sourceHandle(wrapper).element as HTMLElement).style.bottom).toBe("")
+    })
+
+    it("should keep the lifted handle on a task that never ran, whose row is still reserved", () => {
+        const wrapper = mountTaskNode({execution: {state: {current: "SUCCESS"}}, taskRuns: [], sourcePosition: "bottom"})
+
+        expect((sourceHandle(wrapper).element as HTMLElement).style.bottom).toBe("28px")
     })
 })

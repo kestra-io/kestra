@@ -1,7 +1,7 @@
 <template>
     <component :is="component" :icon="Server" @click="visible = !visible">
         <span v-if="labeled || component !== 'KsButton'">
-            {{ $t("worker information") }}
+            {{ label ?? $t("worker information") }}
         </span>
 
         <KsDialog
@@ -45,10 +45,12 @@
     const props = withDefaults(defineProps<{
         component?: string;
         labeled?: boolean;
+        label?: string;
         taskRun: Pick<TaskRun, "id" | "attempts">;
     }>(), {
         component: undefined,
         labeled: false,
+        label: undefined,
     })
 
     const visible = ref(false)

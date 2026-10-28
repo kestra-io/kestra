@@ -3,10 +3,11 @@
         v-if="presentation !== 'panel'"
         :is="component"
         :icon="CodeTags"
+        :size="buttonSize"
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="(labeled || component !== 'KsButton') && !isHidden">{{ $t("show task source") }}</span>
+        <span v-if="(labeled || component !== 'KsButton') && !isHidden">{{ label ?? $t("show task source") }}</span>
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
@@ -209,6 +210,8 @@
     interface Props {
         component?: string;
         labeled?: boolean;
+        label?: string;
+        buttonSize?: string;
         task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
@@ -232,6 +235,8 @@
     const props = withDefaults(defineProps<Props>(), {
         component: "KsButton",
         labeled: false,
+        label: undefined,
+        buttonSize: undefined,
         task: undefined,
         taskRaw: undefined,
         taskId: undefined,

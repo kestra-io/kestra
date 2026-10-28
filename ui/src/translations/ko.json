@@ -677,7 +677,9 @@
       "load_error": "이 보기를 불러오지 못했습니다.",
       "retry": "다시 시도",
       "no_logs": "이 task 실행에 기록된 log가 없습니다.",
-      "no_artifacts": "이 Task는 artifact를 제공하지 않습니다."
+      "no_artifacts": "이 Task는 artifact를 제공하지 않습니다.",
+      "task_source": "Task 소스",
+      "worker_info": "Worker 정보"
     },
     "execution_artifacts": {
       "title": "Artifacts",

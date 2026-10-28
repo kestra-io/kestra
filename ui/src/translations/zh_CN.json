@@ -677,7 +677,9 @@
       "load_error": "无法加载此视图。",
       "retry": "重试",
       "no_logs": "此任务运行没有记录的 log。",
-      "no_artifacts": "此 Task 不提供 artifact。"
+      "no_artifacts": "此 Task 不提供 artifact。",
+      "task_source": "Task 源码",
+      "worker_info": "Worker 信息"
     },
     "execution_artifacts": {
       "title": "Artifacts",

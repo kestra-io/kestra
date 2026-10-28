@@ -677,7 +677,9 @@
       "load_error": "Не удалось загрузить это представление.",
       "retry": "Повторить",
       "no_logs": "Для этого выполнения task нет записанных log.",
-      "no_artifacts": "Эта task не предоставляет artifact."
+      "no_artifacts": "Эта task не предоставляет artifact.",
+      "task_source": "Источник task",
+      "worker_info": "Сведения о worker"
     },
     "execution_artifacts": {
       "title": "Artifacts",

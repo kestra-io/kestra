@@ -677,7 +677,9 @@
       "load_error": "Diese Ansicht konnte nicht geladen werden.",
       "retry": "Erneut versuchen",
       "no_logs": "Keine Logs für diesen Task-Run erfasst.",
-      "no_artifacts": "Dieser Task stellt kein Artifact bereit."
+      "no_artifacts": "Dieser Task stellt kein Artifact bereit.",
+      "task_source": "Task-Quelle",
+      "worker_info": "Worker-Info"
     },
     "execution_artifacts": {
       "title": "Artifacts",

@@ -368,6 +368,7 @@
     }
 
     .node-footer {
+        position: relative;
         flex: 1;
         display: flex;
         align-items: flex-end;

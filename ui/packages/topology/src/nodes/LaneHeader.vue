@@ -463,10 +463,11 @@
     }
 
     .lane-state-bar {
+        --loop-state-bar-height: calc(var(--ks-spacing-1) / 2);
         position: absolute;
-        right: 0;
-        bottom: 0;
-        left: 0;
+        right: var(--ks-spacing-2);
+        bottom: calc(var(--ks-spacing-1) / 2);
+        left: var(--ks-spacing-2);
     }
 
     .lane-loop-scope {

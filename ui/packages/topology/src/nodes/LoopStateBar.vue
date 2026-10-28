@@ -72,7 +72,7 @@
     .loop-state-bar {
         display: flex;
         width: 100%;
-        height: var(--ks-spacing-1);
+        height: var(--loop-state-bar-height, var(--ks-spacing-1));
         overflow: hidden;
         border-radius: var(--ks-radius-xs);
     }

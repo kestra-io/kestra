@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -48,6 +49,10 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
  */
 @Introspected
 public class DefaultRunContext extends RunContext {
+    // Prefix kept when shortening an over-long dynamic-taskrun id; leaves room for "-" + a 5-digit hash
+    // suffix so the result stays within Task.ID_MAX_LENGTH (250 + 1 + 5 = 256) while staying collision-safe.
+    private static final int TASK_ID_TRUNCATED_PREFIX_LENGTH = 250;
+
     // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
     private VariableRenderer variableRenderer;
@@ -485,12 +490,43 @@ public class DefaultRunContext extends RunContext {
 
     @Override
     public void dynamicWorkerResult(List<WorkerTaskResult> workerTaskResults) {
-        dynamicWorkerTaskResult.addAll(workerTaskResults);
+        workerTaskResults.forEach(result -> dynamicWorkerTaskResult.add(boundTaskId(result)));
     }
 
     @Override
     public List<WorkerTaskResult> dynamicWorkerResults() {
         return dynamicWorkerTaskResult;
+    }
+
+    /**
+     * Bounds a dynamic taskrun's task id to {@link Task#ID_MAX_LENGTH} at the single point where plugins hand
+     * dynamic taskruns to the framework. Dynamic taskruns (only dbt produces them) carry a runtime-generated
+     * task id that can exceed the fixed-width {@code task_id} DB column; bounding it here keeps every downstream
+     * consumer within the column, and logs once at debug naming the full id so the truncation is not silent
+     * (this is expected behaviour, not a problem).
+     * <p>
+     * An execution holds many task ids, so a plain front-truncation could collapse two long ids sharing a
+     * prefix into one; a stable short hash of the full id is appended to keep distinct taskruns distinct.
+     */
+    private WorkerTaskResult boundTaskId(WorkerTaskResult workerTaskResult) {
+        TaskRun taskRun = workerTaskResult.getTaskRun();
+        if (taskRun == null || taskRun.getTaskId() == null || taskRun.getTaskId().length() <= Task.ID_MAX_LENGTH) {
+            return workerTaskResult;
+        }
+
+        String fullTaskId = taskRun.getTaskId();
+        String suffix = String.format("%05d", Math.floorMod(fullTaskId.hashCode(), 100_000));
+        String boundedTaskId = fullTaskId.substring(0, TASK_ID_TRUNCATED_PREFIX_LENGTH) + "-" + suffix;
+
+        this.logger.logger().debug(
+            "Task id '{}' exceeds {} characters and was truncated to '{}' for storage.",
+            fullTaskId, Task.ID_MAX_LENGTH, boundedTaskId
+        );
+
+        return new WorkerTaskResult(
+            taskRun.toBuilder().taskId(boundedTaskId).build(),
+            workerTaskResult.getDynamicTaskRuns()
+        );
     }
 
     /**

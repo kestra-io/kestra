@@ -40,7 +40,7 @@
     import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import {ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
+    import {COPILOT_DRAFT_KEY, ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
     import {resolveFlowTemplate} from "../../utils/newFlowTemplate"
 
     const route = useRoute()
@@ -80,6 +80,9 @@
         const recipePresetFlow = route.query.recipePreset === "true"
             ? sessionStorage.getItem(RECIPE_PRESET_KEY) ?? ""
             : ""
+        const copilotDraftFlow = route.query.copilotDraft === "true"
+            ? sessionStorage.getItem(COPILOT_DRAFT_KEY) ?? ""
+            : ""
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             resource.FLOW,
             action.CREATE,
@@ -100,6 +103,9 @@
         } else if (onboardingPresetFlow) {
             flowYaml = onboardingPresetFlow
             sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
+        } else if (copilotDraftFlow) {
+            flowYaml = copilotDraftFlow
+            sessionStorage.removeItem(COPILOT_DRAFT_KEY)
         } else if (blueprintId && blueprintSourceYaml) {
             flowYaml = blueprintSourceYaml
         } else if(blueprintId && blueprintSource === "community"){

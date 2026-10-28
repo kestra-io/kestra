@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 
 // --- mocks (hoisted) ---
 const push = vi.fn()
@@ -61,10 +61,15 @@ const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
 import type {RouteLocationNormalizedLoaded} from "vue-router"
 import {useApplyDraft, isViewingFlow} from "../../../../../src/components/ai/copilot/useApplyDraft"
+import {COPILOT_DRAFT_KEY} from "../../../../../src/utils/storageKeys"
 
 const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: my-flow\nnamespace: company.team", valid: true, constraints: null, ...over})
 
 describe("useApplyDraft", () => {
+    afterEach(() => {
+        sessionStorage.removeItem(COPILOT_DRAFT_KEY)
+    })
+
     beforeEach(() => {
         vi.clearAllMocks()
         routeName = undefined
@@ -81,11 +86,12 @@ describe("useApplyDraft", () => {
 
     const dashboardDraft = (over = {}) => ({draftId: "d9", kind: "DASHBOARD" as const, yaml: "id: my-dash\ntitle: My dash", valid: true, constraints: null, ...over})
 
-    it("openInEditor pushes flows/create with the drafted YAML as blueprintSourceYaml", () => {
+    it("openInEditor hands the drafted YAML over via sessionStorage, keeping it out of the URL", () => {
         useApplyDraft().openInEditor(draft())
+        expect(sessionStorage.getItem(COPILOT_DRAFT_KEY)).toBe("id: my-flow\nnamespace: company.team")
         expect(push).toHaveBeenCalledWith(expect.objectContaining({
             name: "flows/create",
-            query: {blueprintId: "copilot-draft", blueprintSourceYaml: "id: my-flow\nnamespace: company.team"},
+            query: {copilotDraft: "true"},
             params: {tenant: "main"},
         }))
     })

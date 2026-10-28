@@ -157,16 +157,6 @@ class DockerTest extends AbstractTaskRunnerTest {
     void shouldReportOomWhenDockerConfirmsOomKill() throws Exception {
         var runContext = runContext(this.runContextFactory);
 
-        var docker = Docker.builder()
-            .image("rockylinux:9.3-minimal")
-            .memory(
-                Memory.builder()
-                    .memory(Property.ofValue("16MB"))
-                    .memorySwap(Property.ofValue("16MB"))
-                    .build()
-            )
-            .build();
-
         var taskCommands = new CommandsWrapper(runContext)
             .withCommands(
                 Property.ofValue(
@@ -180,6 +170,16 @@ class DockerTest extends AbstractTaskRunnerTest {
 
         TaskException oomException = null;
         for (int attempt = 0; attempt < 3 && oomException == null; attempt++) {
+            // A runner is marked killed by its own cleanup, so each attempt needs a fresh one.
+            var docker = Docker.builder()
+                .image("rockylinux:9.3-minimal")
+                .memory(
+                    Memory.builder()
+                        .memory(Property.ofValue("16MB"))
+                        .memorySwap(Property.ofValue("16MB"))
+                        .build()
+                )
+                .build();
             try {
                 docker.run(
                     runContext,
@@ -200,6 +200,30 @@ class DockerTest extends AbstractTaskRunnerTest {
             Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
             Assertions.assertThat(client.listContainersCmd().withShowAll(true).withLabelFilter(labels).exec()).isEmpty();
         }
+    }
+
+    @Test
+    void shouldApplyRenderedDnsServersToContainer() throws Exception {
+        var runContext = runContext(this.runContextFactory, Map.of("dnsServer", "192.0.2.53"));
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .networkMode("bridge")
+            .dns(List.of(" {{ dnsServer }} ", "", " 198.51.100.53 "))
+            .build();
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(
+                List.of(
+                    "/bin/sh", "-c",
+                    "grep -Fqx 'nameserver 192.0.2.53' /etc/resolv.conf && " +
+                        "grep -Fqx 'nameserver 198.51.100.53' /etc/resolv.conf"
+                )
+            )
+        );
+
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
     }
 
     public static void callOnKill(TaskRunner<?> taskRunner, Runnable runnable) throws Exception {

@@ -1,5 +1,5 @@
 import "./vue-flow-styles.css"
-import "./topology.scss"
+import "./topology.css"
 export {default as Topology} from "./Topology.vue"
 export {default as NodeMenu} from "./nodes/NodeMenu.vue"
 export type {NodeAction} from "./nodes/NodeMenu.vue"
@@ -11,3 +11,12 @@ export {EVENTS, GRAPH_BACKGROUND, MIN_ZOOM, NODE_SIZES, ZOOM_LOD} from "./utils/
 export type {CustomActionConfig, ShowDetailsConfig, LodLevel} from "./utils/constants"
 export {State} from "@kestra-io/design-system"
 export type {FlowGraph} from "./utils/vueFlowUtils"
+export {
+    LOOP_TYPE_SUFFIX,
+    TASK_RUN_STATE_COUNTS_KEY,
+    LOOP_ITERATION_COUNTS_KEY,
+    loopIterationCountsOf,
+    isLoopTaskType,
+    taskRunStateCountsOf,
+} from "./utils/loopOutcome"
+export type {LoopLaneData, StateCounts, TaskRunStateCounts} from "./utils/loopOutcome"

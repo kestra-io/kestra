@@ -1,10 +1,11 @@
 import {z} from "zod"
 import assetCardFooter from "./asset-card-footer"
+import executionArtifact from "./execution-artifact"
 import topologyDetails from "./topology-details"
 import topologyTaskDrawer from "./topology-task-drawer"
 import topologyTaskModal from "./topology-task-modal"
 
-const slots = [assetCardFooter, topologyDetails, topologyTaskDrawer, topologyTaskModal] as const
+const slots = [assetCardFooter, executionArtifact, topologyDetails, topologyTaskDrawer, topologyTaskModal] as const
 
 type SlotTuple = typeof slots;
 type ByKey<T extends readonly { key: string }[]> = {

@@ -100,6 +100,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.ExecutionOutputFilterService;
 import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
@@ -174,6 +175,9 @@ public class ExecutionController {
 
     @Inject
     protected FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private ExecutionOutputFilterService executionOutputFilterService;
 
     @Inject
     private FlowService flowService;
@@ -292,6 +296,7 @@ public class ExecutionController {
     private Counter resumeCounter;
     private Counter resumeFromBreakpointCounter;
     private Counter forceRunCounter;
+    private Counter rescheduleCounter;
     private Counter changeStatusCounter;
     private Counter changeTaskRunStateCounter;
     private Counter killCounter;
@@ -307,6 +312,8 @@ public class ExecutionController {
         resumeFromBreakpointCounter = this.metricRegistry
             .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION);
         forceRunCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION);
+        rescheduleCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESCHEDULE_TOTAL_DESCRIPTION);
         changeStatusCounter = this.metricRegistry
             .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL_DESCRIPTION);
         changeTaskRunStateCounter = this.metricRegistry
@@ -337,10 +344,11 @@ public class ExecutionController {
         @Parameter(description = "Which execution date field the time interval is applied to") @Nullable @QueryValue DateFilter dateFilter
 
     ) {
+        var tenantId = tenantService.resolveTenant();
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
-            tenantService.resolveTenant(),
-            QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter),
+            tenantId,
+            executionOutputFilterService.resolve(tenantId, QueryFilterUtils.replaceTimeRangeWithComputedDateFilter(filters, dateFilter, true)),
             dateFilter
         );
         var apiExecution = executions.stream()
@@ -360,16 +368,17 @@ public class ExecutionController {
         )
         @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
         @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
-        if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
+        if (field == QueryFilter.Field.OUTPUTS || !QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Field " + field + " is not supported for executions"
             );
         }
+        var tenantId = tenantService.resolveTenant();
         return executionRepository.findDistinctFieldValues(
-            tenantService.resolveTenant(),
+            tenantId,
             field,
-            filters,
+            executionOutputFilterService.resolve(tenantId, filters),
             Pageable.from(0, size)
         );
     }
@@ -1266,11 +1275,7 @@ public class ExecutionController {
             return null;
         }
 
-        String prefix = StorageContext
-            .forExecution(execution)
-            .getExecutionStorageURI().getPath();
-
-        if (path.getPath().startsWith(prefix)) {
+        if (StorageContext.isInExecutionStorage(execution, path)) {
             return null;
         }
 
@@ -1284,7 +1289,7 @@ public class ExecutionController {
 
         // maybe state
         StorageContext context = StorageContext.forFlow(flow.get());
-        prefix = context.getStateStorePrefix(null, false, null);
+        String prefix = context.getStateStorePrefix(null, false, null);
         if (path.getPath().startsWith(prefix)) {
             return null;
         }
@@ -2757,6 +2762,33 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/reschedule")
+    @Operation(tags = { "Executions" }, summary = "Reschedule a scheduled execution that has not started yet")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "422", description = "if the scheduleDate is not in the future")
+    @ApiResponse(responseCode = "409", description = "if the execution is not scheduled, has already started, or its scheduled start is being processed")
+    public Mono<HttpResponse<Execution>> rescheduleExecution(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The new scheduled start date") @NotNull @QueryValue ZonedDateTime scheduleDate) {
+        if (!scheduleDate.toInstant().isAfter(Instant.now())) {
+            throw new IllegalArgumentException("The scheduleDate must be in the future.");
+        }
+
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        if (!executionService.canBeRescheduled(execution)) {
+            throw new ConflictException("Cannot reschedule execution: only scheduled executions in the CREATED state can be rescheduled.");
+        }
+
+        this.rescheduleCounter.increment();
+
+        return awaitBlockingAction(
+            executionId, "Reschedule",
+            (operationId, actor) -> executionCommandQueue.emit(Reschedule.from(execution, scheduleDate.toInstant()).withOperationId(operationId).withActor(actor))
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/force-run/by-ids")
     @Operation(tags = { "Executions" }, summary = "Force run a list of executions asynchronously")
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
@@ -2811,11 +2843,12 @@ public class ExecutionController {
     }
 
     private List<Execution> getExecutions(List<QueryFilter> filters) {
+        var tenantId = tenantService.resolveTenant();
         return executionRepository
             .find(
                 Pageable.UNPAGED,
-                tenantService.resolveTenant(),
-                filters
+                tenantId,
+                executionOutputFilterService.resolve(tenantId, filters)
             );
     }
 

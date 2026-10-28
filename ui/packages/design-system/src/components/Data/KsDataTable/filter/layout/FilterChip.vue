@@ -12,7 +12,7 @@
             <span v-else-if="shouldShowComparatorLabel" class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <KsTooltip
                 v-if="hasValue(filter.value)"
-                :content="formatTooltipValue(filter.value)"
+                :content="isNumberRange ? filter.valueLabel : formatTooltipValue(filter.value)"
                 placement="top"
             >
                 <component :is="renderValueResult" />
@@ -48,6 +48,7 @@
         Comparators,
     } from "../utils/filterTypes"
     import {isDateRangeValue} from "../utils/filterChipFactory"
+    import {ALL_TIME_RANGE} from "../utils/constants"
     import FilterEditPopover from "./FilterEditPopover.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -62,6 +63,7 @@
         {label: t("datepicker.last7days"), value: "PT168H"},
         {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
+        {label: t("datepicker.allTime"), value: ALL_TIME_RANGE},
     ]
 
     const getRelativeDateLabel = (value: string): string => {
@@ -111,7 +113,7 @@
             return value.toLocaleDateString()
         case value && typeof value === "object" && "startDate" in value:
             return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`
-        case typeof value === "string" && /^P(T?\d+[HMD]|\d+[YMDW])/.test(value):
+        case typeof value === "string" && (value === ALL_TIME_RANGE || /^P(T?\d+[HMD]|\d+[YMDW])/.test(value)):
             return getRelativeDateLabel(value)
         default:
             return String(value)
@@ -144,8 +146,10 @@
         return props.filter.comparatorLabel
     }
 
+    const isNumberRange = computed(() => props.filter.comparator === Comparators.BETWEEN)
+
     const renderValueResult = computed(() =>
-        h("span", {class: "value"}, formatValue(props.filter.value)),
+        h("span", {class: "value"}, isNumberRange.value ? props.filter.valueLabel : formatValue(props.filter.value)),
     )
 
     const isNegative = computed(() =>
@@ -159,7 +163,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .chip {
     display: inline-flex;
     align-items: center;
@@ -182,34 +186,37 @@
         border-color: var(--ks-border-success);
     }
 
-    .content {
+    & .content {
         display: flex;
         align-items: center;
         gap: 4px;
         flex: 1;
         min-width: 0;
 
-        .key,
-        .comparator,
-        .value,
-        .in {
+        & .key,
+        & .comparator,
+        & .value,
+        & .in {
             font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);
             white-space: nowrap;
             display: flex;
             align-items: center;
         }
-        .value {
+
+        & .value {
             font-weight: 700;
             overflow: hidden;
             text-overflow: ellipsis;
             min-width: 0;
             flex-shrink: 1;
         }
-        .in {
+
+        & .in {
             color: var(--ks-text-secondary);
         }
-        .comparator {
+
+        & .comparator {
             color: var(--ks-status-success);
             text-transform: lowercase;
 
@@ -218,7 +225,8 @@
             }
         }
     }
-    .close {
+
+    & .close {
         border: none;
         background: none;
         cursor: pointer;
@@ -226,15 +234,17 @@
         margin: 0;
         color: var(--ks-text-dim);
         font-size: var(--ks-font-size-base);
+
         &:hover {
             color: var(--ks-text-secondary);
         }
-        :deep(svg) {
+
+        & :deep(svg) {
             font-size: var(--ks-font-size-base);
         }
     }
 
-    :deep(.kel-tag) {
+    & :deep(.kel-tag) {
         background-color: var(--ks-bg-tag);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-2xs);

@@ -13,7 +13,6 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -49,7 +48,7 @@ public class UploadFilesTest {
         URI fileStorage = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
         UploadFiles uploadFile = UploadFiles.builder()
@@ -173,7 +172,7 @@ public class UploadFilesTest {
         return storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/" + FriendlyId.createFriendlyId()),
+            new URI("/" + IdUtils.create()),
             new FileInputStream(file)
         );
     }

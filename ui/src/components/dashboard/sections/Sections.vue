@@ -25,32 +25,14 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <KsTooltip
+                            <KsButton
                                 v-if="isExportableChart(chart.type)"
-                                :content="$t('dashboards.export')"
-                            >
-                                <KsDropdown
-                                    placement="bottom-end"
-                                    trigger="click"
-                                >
-                                    <KsButton
-                                        :icon="Download"
-                                        :aria-label="$t('dashboards.export')"
-                                        link
-                                        class="chart-action"
-                                    />
-                                    <template #dropdown>
-                                        <KsDropdownMenu>
-                                            <KsDropdownItem @click="exportChart(chart, 'CSV')">
-                                                {{ $t('dashboards.exportTo.csv') }}
-                                            </KsDropdownItem>
-                                            <KsDropdownItem @click="exportChart(chart, 'ION')">
-                                                {{ $t('dashboards.exportTo.ion') }}
-                                            </KsDropdownItem>
-                                        </KsDropdownMenu>
-                                    </template>
-                                </KsDropdown>
-                            </KsTooltip>
+                                :icon="Download"
+                                :tooltip="$t('dashboards.exportTo.csv')"
+                                link
+                                class="chart-action"
+                                @click="exportChart(chart)"
+                            />
 
                             <KsIcon
                                 v-if="props.dashboard?.id !== 'default'"
@@ -110,7 +92,7 @@
     import type {BrushRange} from "../../../utils/logsBrushMappers"
     const route = useRoute()
 
-    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsSkeleton, KsTooltip} from "@kestra-io/design-system"
+    import {decodeSearchParams, KsSkeleton} from "@kestra-io/design-system"
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
@@ -216,35 +198,30 @@
         return baseFilters
     })
 
-    async function exportChart(chart: Chart, format: "CSV" | "ION") {
+    async function exportChart(chart: Chart) {
         const {filters: chartFilters = [], ...pagination} = chartsComponents.get(chart.id)?.exportParameters?.() ?? {}
 
-        const exported = await dashboardStore.export(props.dashboard, chart, {
+        await dashboardStore.export(props.dashboard, chart, {
             ...pagination,
             filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [], chartFilters),
-        }, format)
-
-        if (!exported) toast.warning(t("dashboards.exportEmpty"))
+        })
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 
 .dashboard-sections-container{
     container-type: inline-size;
 }
 
-$smallMobile: 375px;
-$tablet: 768px;
-
 section#charts {
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(3, 1fr);
-    @container (min-width: #{$smallMobile}) {
+    @container (min-width: 375px) {
         grid-template-columns: repeat(6, 1fr);
     }
-    @container (min-width: #{$tablet}) {
+    @container (min-width: 768px) {
         grid-template-columns: repeat(12, 1fr);
     }
     &.padding {
@@ -288,6 +265,9 @@ section#charts {
         }
 
         #charts_buttons {
+            display: flex;
+            align-items: center;
+            align-self: flex-start;
             opacity: 0;
             transition: opacity 0.2s ease;
         }
@@ -296,8 +276,14 @@ section#charts {
             opacity: 1;
         }
 
+        @media (hover: none) {
+            #charts_buttons {
+                opacity: 1;
+            }
+        }
+
         .chart-placeholder {
-            min-height: 200px; // roughly the height of a rendered chart, so activation does not shift the layout
+            min-height: 200px; /* roughly the height of a rendered chart, so activation does not shift the layout */
 
             &.is-kpi {
                 min-height: 0;
@@ -318,31 +304,79 @@ section#charts {
         }
     }
 
-    @for $i from 1 through 3 {
-        .dash-width-#{$i} {
-            grid-column: span #{$i};
+    .dash-width-1 {
+        grid-column: span 1;
+    }
+
+    .dash-width-2 {
+        grid-column: span 2;
+    }
+
+    .dash-width-3 {
+        grid-column: span 3;
+    }
+
+    .dash-width-4,
+    .dash-width-5,
+    .dash-width-6,
+    .dash-width-7,
+    .dash-width-8,
+    .dash-width-9,
+    .dash-width-10,
+    .dash-width-11,
+    .dash-width-12 {
+        grid-column: span 3;
+    }
+
+    @container (min-width: 375px) {
+        .dash-width-4,
+        .dash-width-5,
+        .dash-width-6,
+        .dash-width-7,
+        .dash-width-8,
+        .dash-width-9,
+        .dash-width-10,
+        .dash-width-11,
+        .dash-width-12 {
+            grid-column: span 6;
         }
     }
 
-    @for $i from 4 through 12 {
-        .dash-width-#{$i} {
-            grid-column: span 3;
+    @container (min-width: 768px) {
+        .dash-width-4 {
+            grid-column: span 4;
         }
-    }
 
-    @container (min-width: #{$smallMobile}) {
-        @for $i from 4 through 12 {
-            .dash-width-#{$i} {
-                grid-column: span 6;
-            }
+        .dash-width-5 {
+            grid-column: span 5;
         }
-    }
 
-    @container (min-width: #{$tablet}) {
-        @for $i from 4 through 12 {
-            .dash-width-#{$i} {
-                grid-column: span #{$i};
-            }
+        .dash-width-6 {
+            grid-column: span 6;
+        }
+
+        .dash-width-7 {
+            grid-column: span 7;
+        }
+
+        .dash-width-8 {
+            grid-column: span 8;
+        }
+
+        .dash-width-9 {
+            grid-column: span 9;
+        }
+
+        .dash-width-10 {
+            grid-column: span 10;
+        }
+
+        .dash-width-11 {
+            grid-column: span 11;
+        }
+
+        .dash-width-12 {
+            grid-column: span 12;
         }
     }
 }

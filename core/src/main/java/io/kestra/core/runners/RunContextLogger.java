@@ -160,7 +160,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                         .getCausalChain(throwable)
                         .stream()
                         .skip(1)
-                        .map(Throwable::getMessage)
+                        .map(cause -> cause.getMessage() != null ? cause.getMessage() : cause.toString())
                         .collect(Collectors.joining("\n")),
                     null,
                     logEntry

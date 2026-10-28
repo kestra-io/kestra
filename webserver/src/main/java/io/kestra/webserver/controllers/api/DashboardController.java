@@ -180,6 +180,7 @@ public class DashboardController {
         if (chart == null) {
             return null;
         }
+        modelValidator.validate(chart);
         var pageNumber = globalFilter.getPageNumber();
         var pageSize = globalFilter.getPageSize();
         var pageable = pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null;

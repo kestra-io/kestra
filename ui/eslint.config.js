@@ -1,14 +1,21 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import storybook from "eslint-plugin-storybook"
 
+import css from "@eslint/css"
 import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
 import {defineConfig, globalIgnores} from "eslint/config"
 import kestraTokens from "./scripts/tokens/eslintPlugin.mjs"
+import kestraI18n from "./scripts/translations/eslintPlugin.mjs"
+import {vueWithStyles} from "./scripts/css-lint/vueStyleProcessor.mjs"
 
 export default defineConfig([
     globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "**/storybook-static/*", "packages/kestra-sdk/src/openapi/*"]),
     ...pluginVue.configs["flat/base"],
+    {
+        files: ["**/*.vue"],
+        processor: vueWithStyles(pluginVue.processors.vue),
+    },
     // Tooling (plugins/, scripts/, lint-rules/, *.config.js) stays JS on purpose; the app, test and storybook trees do not.
     {
         files: [
@@ -28,7 +35,7 @@ export default defineConfig([
             }],
         },
     },
-    // `<style>` blocks are stylelint's half of this; here it is the tokens written in JavaScript.
+    // Here it is the tokens written in JavaScript; stylesheets get the CSS rule further down.
     // `.jsx`/`.tsx` carry no other rule in this repo, so they get the parser they need and this rule
     // alone — three Storybook stories were reaching for an undeclared token where nothing looked.
     {
@@ -56,6 +63,7 @@ export default defineConfig([
     },
     {
         files: ["**/*.vue"],
+        plugins: {"kestra-i18n": kestraI18n},
         languageOptions: {parserOptions: {
             parser: tsParser,
             extraFileExtensions: [".vue"],
@@ -80,7 +88,8 @@ export default defineConfig([
             "vue/block-order": ["error", {order: ["template", "script", "style"]}],
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],
             "vue/component-name-in-template-casing": ["error", "PascalCase", {"registeredComponentsOnly": true}],
-            "vue/attribute-hyphenation": ["error", "never"],
+            "vue/attribute-hyphenation": ["error", "never", {ignoreTags: ["rapi-doc"]}],
+            "kestra-i18n/i18n-t-scope": "error",
         },
     },
     {
@@ -93,5 +102,30 @@ export default defineConfig([
             "vue/enforce-style-attribute": "off",
         },
     },
+    {
+        files: ["src/**/*.{ts,vue}", "packages/**/*.{ts,vue}"],
+        rules: {
+            "no-restricted-imports": ["error", {paths: [{
+                name: "axios",
+                message: "Call the Kestra API through the SDK or useClient(), and api.kestra.io through src/utils/publicApi.",
+            }]}],
+        },
+    },
     ...storybook.configs["flat/recommended"],
+    // `.css` files, plus the plain `<style>` blocks and `style="…"` attributes of each SFC.
+    {
+        files: ["**/*.css"],
+        plugins: {css, "kestra-tokens": kestraTokens},
+        language: "css/css",
+        languageOptions: {tolerant: true},
+        rules: {
+            ...css.configs.recommended.rules,
+            // Existence is the token rule's job; this one cannot see a variable declared in another file.
+            "css/no-invalid-properties": ["error", {allowUnknownVariables: true}],
+            // Most of the 71 are deliberate wins over Element Plus specificity, a cleanup of its own.
+            "css/no-important": "off",
+            "css/use-baseline": "warn",
+            "kestra-tokens/no-undeclared-css-token": "error",
+        },
+    },
 ])

@@ -90,6 +90,9 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         if (message.state().isPaused()) {
             return handlePaused(message);
         }
+        if (message.state().isBreakpoint()) {
+            return handleBreakpoint(message);
+        }
         if (message.state() == State.Type.RESTARTED) {
             return handleRestarted(message);
         }
@@ -126,7 +129,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 TaskRunStatistic taskRunStatistic = TaskRunStatistic.fromMap((Map<String, Object>) outputs.get(Loop.TASK_RUN_STATISTIC_OUTPUT))
                     .plus(message.taskRunStatistic());
 
-                boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated();
+                boolean loopAlreadyEnded = parentTaskRun.getState().isTerminated() || execution.getState().getCurrent() == State.Type.KILLING;
                 if (loopAlreadyEnded) {
                     computeOutputs(parentTaskRun, outputs, taskOutputs, iterationCount, runningIteration, terminatedByState, null, taskRunStatistic);
                     if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
@@ -263,6 +266,22 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         });
     }
 
+    private Optional<ExecutorContext> handleBreakpoint(LoopExecutionEvent message) {
+        return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
+        {
+            if (!execution.getState().getCurrent().onlyRunning()) {
+                return null;
+            }
+
+            try {
+                Execution suspended = executionService.suspendAtLoopBreakpoint(execution);
+                return new ExecutorContext(execution).withExecution(suspended, "loopIterationBreakpoint");
+            } catch (QueueException e) {
+                return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
+            }
+        });
+    }
+
     private Optional<ExecutorContext> handleRestarted(LoopExecutionEvent message) {
         return executionStateStore.lock(message.loopRun().parent().getId(), execution ->
         {
@@ -330,7 +349,11 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
     // terminate the loop and its attempts
     private ExecutorContext terminateLoop(TaskRun parentTaskRun, Task task, final ExecutorContext executor, State.Type state, TaskRunStatistic taskRunStatistic) throws InternalException {
-        State.Type finalState = state == State.Type.FAILED ? stateFailure(task) : State.Type.SUCCESS;
+        State.Type finalState = switch (state) {
+            case FAILED -> stateFailure(task);
+            case KILLED, CANCELLED -> state;
+            default -> State.Type.SUCCESS;
+        };
         // as loops can run concurrently, the state might already be set by another task run
         TaskRun newTaskRun = parentTaskRun.getState().getCurrent() == finalState ? parentTaskRun : parentTaskRun.withStateAndAttempt(finalState);
 

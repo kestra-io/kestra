@@ -114,7 +114,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .task-wrapper {
     width: 100%;
 }

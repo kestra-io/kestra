@@ -238,6 +238,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     protected List<String> extraHosts;
 
     @Schema(
+        title = "DNS servers to use for the container.",
+        description = "List of DNS server IP addresses (IPv4 or IPv6). Overrides the Docker daemon default for this container. " +
+            "Docker may ignore this setting in some network modes, such as `host`; user-defined networks use Docker's embedded DNS resolver, which forwards external queries to these servers."
+    )
+    @PluginProperty(dynamic = true)
+    protected List<String> dns;
+
+    @Schema(
         title = "Docker network mode to use e.g. `host`, `none`, etc."
     )
     @PluginProperty(dynamic = true)
@@ -405,6 +413,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .user(dockerOptions.getUser())
             .entryPoint(dockerOptions.getEntryPoint())
             .extraHosts(dockerOptions.getExtraHosts())
+            .dns(dockerOptions.getDns())
             .networkMode(dockerOptions.getNetworkMode())
             .volumes(dockerOptions.getVolumes())
             .pullPolicy(dockerOptions.getPullPolicy())
@@ -962,6 +971,17 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 runContext.render(this.getExtraHosts(), additionalVars)
                     .toArray(String[]::new)
             );
+        }
+
+        if (this.getDns() != null) {
+            String[] dnsServers = runContext.render(this.getDns(), additionalVars)
+                .stream()
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toArray(String[]::new);
+            if (dnsServers.length > 0) {
+                hostConfig.withDns(dnsServers);
+            }
         }
 
         List<Bind> binds = new ArrayList<>();

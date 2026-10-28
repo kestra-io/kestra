@@ -12,6 +12,7 @@ import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions
 import {useMiscStore} from "override/stores/misc"
 import {useFlowStore} from "../../../stores/flow"
 import {routeFamily} from "../../../utils/routeFamily"
+import {COPILOT_DRAFT_KEY} from "../../../utils/storageKeys"
 import type {ArtefactDraftEvent} from "./types"
 
 /**
@@ -72,10 +73,13 @@ export function useApplyDraft() {
             router.push({name: "dashboards/create", query: {sourceYaml: draft.yaml}, params: {...tenantParam()}})
             return
         }
-        // FLOW: reuse the `blueprintSourceYaml` handoff FlowCreate.vue already understands.
+        // FLOW: hand the YAML over through sessionStorage (consumed by FlowCreate.vue) instead of the
+        // URL - a drafted flow is long and vue-router leaves characters such as `|` unencoded, which
+        // makes the server answer a refresh of that URL with a 500 (illegal character in query).
+        sessionStorage.setItem(COPILOT_DRAFT_KEY, draft.yaml)
         router.push({
             name: "flows/create",
-            query: {blueprintId: "copilot-draft", blueprintSourceYaml: draft.yaml},
+            query: {copilotDraft: "true"},
             params: {...tenantParam()},
         })
     }

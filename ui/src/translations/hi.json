@@ -616,6 +616,10 @@
     "task runs": "Task रन",
     "task runs duration (in minutes)": "कुल Task रन की अवधि (मिनटों में)",
     "last 24 hours": "पिछले 24 घंटे",
+    "last 7 days": "पिछले 7 दिन",
+    "last 30 days": "पिछले 30 दिन",
+    "since {date}": "{date} से",
+    "usage period": "उपयोग अवधि",
     "email": "ईमेल",
     "password": "पासवर्ड",
     "confirm password": "पासवर्ड की पुष्टि करें",
@@ -1014,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
-    "copy all logs": "सभी Logs कॉपी करें",
     "copy logs": "Logs कॉपी करें",
     "fix_with_ai": "AI से ठीक करें",
     "download logs": "Logs डाउनलोड करें",

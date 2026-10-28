@@ -35,12 +35,14 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/gantt`,
         path: "gantt",
         component: () => import("./Gantt.vue"),
+        props: {showBanner: true},
         meta: {tab: "gantt", title: "gantt"},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/logs`,
         path: "logs",
         component: () => import("./Logs.vue"),
+        props: {showBanner: true},
         meta: {tab: "logs", title: "logs"},
     },
     {
@@ -53,7 +55,7 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/metrics`,
         path: "metrics",
         component: () => import("./ExecutionMetric.vue"),
-        meta: {tab: "metrics", title: "metrics"},
+        meta: {tab: "metrics", title: "metrics", fullContainer: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/artifacts`,

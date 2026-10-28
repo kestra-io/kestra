@@ -616,6 +616,10 @@
     "task runs": "Task 运行",
     "task runs duration (in minutes)": "总 Task 运行持续时间（分钟）",
     "last 24 hours": "过去 24 小时",
+    "last 7 days": "过去 7 天",
+    "last 30 days": "过去 30 天",
+    "since {date}": "自 {date} 起",
+    "usage period": "使用期限",
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
@@ -1014,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "返回仪表板",
-    "copy all logs": "复制所有日志",
     "copy logs": "复制日志",
     "fix_with_ai": "使用 AI 修复",
     "download logs": "下载日志",

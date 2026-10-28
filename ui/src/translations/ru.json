@@ -616,6 +616,10 @@
     "task runs": "Запуски Task'ов",
     "task runs duration (in minutes)": "Общая длительность Task Run (в минутах)",
     "last 24 hours": "последние 24 часа",
+    "last 7 days": "последние 7 дней",
+    "last 30 days": "последние 30 дней",
+    "since {date}": "с {date}",
+    "usage period": "Период использования",
     "email": "Email",
     "password": "Пароль",
     "confirm password": "Подтвердить пароль",
@@ -1014,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "Вернуться на панель управления",
-    "copy all logs": "Скопировать все Logs",
     "copy logs": "Копировать логи",
     "fix_with_ai": "Исправить с помощью AI",
     "download logs": "Скачать логи",

@@ -616,6 +616,10 @@
     "task runs": "Task runs",
     "task runs duration (in minutes)": "Duración total de las ejecuciones de Task (en minutos)",
     "last 24 hours": "últimas 24 horas",
+    "last 7 days": "últimos 7 días",
+    "last 30 days": "últimos 30 días",
+    "since {date}": "desde {date}",
+    "usage period": "Período de uso",
     "email": "Correo electrónico",
     "password": "Contraseña",
     "confirm password": "Confirmar contraseña",
@@ -1014,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "Volver al panel de control",
-    "copy all logs": "Copiar todos los Logs",
     "copy logs": "Copiar logs",
     "fix_with_ai": "Solucionar con IA",
     "download logs": "Descargar logs",

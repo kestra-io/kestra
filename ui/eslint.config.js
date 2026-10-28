@@ -88,7 +88,7 @@ export default defineConfig([
             "vue/block-order": ["error", {order: ["template", "script", "style"]}],
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],
             "vue/component-name-in-template-casing": ["error", "PascalCase", {"registeredComponentsOnly": true}],
-            "vue/attribute-hyphenation": ["error", "never"],
+            "vue/attribute-hyphenation": ["error", "never", {ignoreTags: ["rapi-doc"]}],
             "kestra-i18n/i18n-t-scope": "error",
         },
     },

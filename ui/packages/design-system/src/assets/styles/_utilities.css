@@ -202,10 +202,6 @@
     text-align: center !important;
 }
 
-.text-nowrap {
-    white-space: nowrap !important;
-}
-
 .text-break {
     word-wrap: break-word !important;
     word-break: break-word !important;

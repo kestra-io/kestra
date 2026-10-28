@@ -662,16 +662,16 @@ export const LoopStateProgress: StoryObj<typeof Topology> = {
         await waitFor(() => expect(labels()).toHaveLength(4))
         for (const header of canvasElement.querySelectorAll("[data-test='topology-lane-header']")) {
             const bar = header.querySelector("[data-test='loop-state-bar']")
-            if (bar) expect(header.querySelector(".lane-labels")!.getBoundingClientRect().bottom).toBeLessThanOrEqual(bar.getBoundingClientRect().top)
+            if (bar) expect(header.querySelector("[data-test='lane-labels']")!.getBoundingClientRect().bottom).toBeLessThanOrEqual(bar.getBoundingClientRect().top)
         }
-        const taskBarWidths = [...canvasElement.querySelectorAll(".node-footer [data-test='loop-state-bar']")].map((bar) => Math.round(bar.getBoundingClientRect().width))
+        const taskBarWidths = [...canvasElement.querySelectorAll("[data-test='node-footer'] [data-test='loop-state-bar']")].map((bar) => Math.round(bar.getBoundingClientRect().width))
         expect(taskBarWidths).toHaveLength(2)
         expect(taskBarWidths[0]).toBe(taskBarWidths[1])
         expect(labels()).toEqual(expect.arrayContaining([
-            "2,800 success, 3 failed, 20 skipped, 12 running, 165 not started",
-            "9,999 success, 1 failed, 4 running",
-            "9,990 success, 1 failed, 9 skipped",
-            "9,000 success, 990 skipped, 10 running",
+            "2,800 SUCCESS, 3 FAILED, 20 SKIPPED, 12 RUNNING, 165 not started",
+            "9,999 SUCCESS, 1 FAILED, 4 RUNNING",
+            "9,990 SUCCESS, 1 FAILED, 9 SKIPPED",
+            "9,000 SUCCESS, 990 SKIPPED, 10 RUNNING",
         ]))
     },
 }

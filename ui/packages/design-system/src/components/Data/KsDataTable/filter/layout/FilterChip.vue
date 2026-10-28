@@ -27,9 +27,11 @@
             @remove="emit('remove', $event)"
         />
         <KsButton
+            v-if="isRemovable"
             link
             size="small"
             class="close"
+            data-test="filter-chip-remove"
             :icon="Close"
             @click.stop="emit('remove', filter.id)"
         />
@@ -47,6 +49,7 @@
         Comparators,
     } from "../utils/filterTypes"
     import {isDateRangeValue} from "../utils/filterChipFactory"
+    import {ALL_TIME_RANGE} from "../utils/constants"
     import FilterEditPopover from "./FilterEditPopover.vue"
 
     const {t} = useI18n({useScope: "global"})
@@ -61,6 +64,7 @@
         {label: t("datepicker.last7days"), value: "PT168H"},
         {label: t("datepicker.last30days"), value: "PT720H"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
+        {label: t("datepicker.allTime"), value: ALL_TIME_RANGE},
     ]
 
     const getRelativeDateLabel = (value: string): string => {
@@ -82,8 +86,10 @@
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>()
 
+    const isRemovable = computed(() => props.filterKey?.removable !== false)
+
     const onAuxClick = (event: MouseEvent) => {
-        if (event.button !== 1) return
+        if (event.button !== 1 || !isRemovable.value) return
         event.preventDefault()
         event.stopPropagation()
         emit("remove", props.filter.id)
@@ -110,7 +116,7 @@
             return value.toLocaleDateString()
         case value && typeof value === "object" && "startDate" in value:
             return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`
-        case typeof value === "string" && /^P(T?\d+[HMD]|\d+[YMDW])/.test(value):
+        case typeof value === "string" && (value === ALL_TIME_RANGE || /^P(T?\d+[HMD]|\d+[YMDW])/.test(value)):
             return getRelativeDateLabel(value)
         default:
             return String(value)

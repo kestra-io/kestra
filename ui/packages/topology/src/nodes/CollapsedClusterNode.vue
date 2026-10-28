@@ -124,7 +124,6 @@
         reservesStatusRow.value ? {height: `calc(100% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px)`} : undefined,
     )
 
-
     const badgeStyle = computed(() => {
         const status = CLUSTER_TAG_STATUS[data.color] ?? "info"
         return {

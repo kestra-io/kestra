@@ -676,7 +676,7 @@
       "count_error": "无法加载数量",
       "load_error": "无法加载此视图。",
       "retry": "重试",
-      "no_logs": "此任务运行没有记录的 log。",
+      "child_runs_capped": "仅显示前 {count} 个子 task 运行的 log。",
       "no_artifacts": "此 Task 不提供 artifact。",
       "task_source": "Task 源码",
       "worker_info": "Worker 信息"

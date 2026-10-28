@@ -192,20 +192,16 @@
                         />
                     </template>
                     <div class="tab-body">
-                        <KsEmpty
-                            v-if="logsCount.status.value === 'ready' && logsCount.value.value === 0"
-                            :imageSize="96"
-                            :description="$t('task_run_popup.no_logs')"
-                            data-test="task-run-popup-logs-empty"
-                        />
                         <TaskRunLogs
-                            v-else
                             :key="`${currentTaskRun.id}-${logsRefresh}`"
                             :executionId="execution.id"
                             :taskRunIds="logTaskRunIds"
                             hideTaskHeader
                             @follow="emit('follow', $event)"
                         />
+                        <KsText v-if="hiddenChildCount > 0" size="small" class="tab-note" data-test="task-run-popup-logs-capped">
+                            {{ $t("task_run_popup.child_runs_capped", {count: MAX_CHILD_LOG_RUNS}) }}
+                        </KsText>
                     </div>
                 </KsTabPane>
 
@@ -334,7 +330,7 @@
         follow: [event: unknown]
     }>()
 
-    const GRAPH_AFFECTING_ACTIONS = ["open", "expand"]
+    const MAX_CHILD_LOG_RUNS = 20
 
     const {t} = useI18n()
     const authStore = useAuthStore()
@@ -384,10 +380,12 @@
         iterationLabel(t, currentTaskRun.value, currentTaskRuns.value.findIndex((run) => run.id === currentTaskRun.value.id) + 1),
     )
 
-    const logTaskRunIds = computed(() => {
-        const children = (props.execution.taskRunList ?? []).filter((run) => run.parentTaskRunId === currentTaskRun.value.id)
-        return [currentTaskRun.value.id, ...children.map((run) => run.id)]
-    })
+    const childTaskRuns = computed(() =>
+        (props.execution.taskRunList ?? []).filter((run) => run.parentTaskRunId === currentTaskRun.value.id),
+    )
+    const logChildTaskRunIds = computed(() => childTaskRuns.value.slice(0, MAX_CHILD_LOG_RUNS).map((run) => run.id))
+    const hiddenChildCount = computed(() => Math.max(0, childTaskRuns.value.length - MAX_CHILD_LOG_RUNS))
+    const logTaskRunIds = computed(() => [currentTaskRun.value.id, ...logChildTaskRunIds.value])
 
     const isRootExecution = computed(() => executionsStore.execution?.id === props.execution.id)
 
@@ -408,10 +406,9 @@
         executionId: () => props.execution.id,
         taskId: () => props.taskId,
         taskRunId: () => currentTaskRun.value.id,
-        logTargets: () => logTaskRunIds.value.map((taskRunId) => ({
-            taskRunId,
-            attemptNumber: taskRunId === currentTaskRun.value.id ? attemptIndex.value : undefined,
-        })),
+        logTaskRunId: () => currentTaskRun.value.id,
+        logAttemptNumber: () => attemptIndex.value,
+        logChildTaskRunIds: () => logChildTaskRunIds.value,
         taskRunState: () => currentTaskRun.value.state.current,
     })
 
@@ -425,14 +422,13 @@
         taskArtifacts.value.find((artifact) => artifact.key === selectedArtifactKey.value) ?? taskArtifacts.value[0],
     )
 
-    const overflowActions = computed(() => props.nodeActions.map((nodeAction) =>
-        GRAPH_AFFECTING_ACTIONS.includes(nodeAction.key)
-            ? {...nodeAction, onClick: () => {
-                close()
-                nodeAction.onClick()
-            }}
-            : nodeAction,
-    ))
+    const overflowActions = computed(() => props.nodeActions.map((nodeAction) => ({
+        ...nodeAction,
+        onClick: () => {
+            close()
+            nodeAction.onClick()
+        },
+    })))
 
     function close() {
         open.value = false
@@ -541,6 +537,12 @@
     .popup-tabs {
         flex: 1;
         min-height: 0;
+    }
+
+    .tab-note {
+        display: block;
+        padding-top: var(--ks-spacing-2);
+        color: var(--ks-text-secondary);
     }
 
     .tab-empty {

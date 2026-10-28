@@ -1,4 +1,5 @@
 import {computed, ref, shallowRef, watch, type Ref} from "vue"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
@@ -44,7 +45,9 @@ interface PopupDataSource {
     executionId: () => string | undefined
     taskId: () => string
     taskRunId: () => string | undefined
-    logTargets: () => {taskRunId: string, attemptNumber?: number}[]
+    logTaskRunId: () => string
+    logAttemptNumber: () => number
+    logChildTaskRunIds: () => string[]
     taskRunState: () => string | undefined
 }
 
@@ -74,19 +77,27 @@ export function useTaskRunPopupData(source: PopupDataSource) {
     )
 
     const logsCount = useLoadable(
-        () => baseKey.value && `${baseKey.value}|${source.logTargets().map(({taskRunId, attemptNumber}) => `${taskRunId}:${attemptNumber}`).join(",")}`,
+        () => baseKey.value && `${baseKey.value}|${source.logAttemptNumber()}`,
         async () => {
-            const pages = await Promise.all(source.logTargets().map(({taskRunId, attemptNumber}) => LogsAPI.searchLogs({
+            const countLogs = (filters: QueryFilter[]) => LogsAPI.searchLogs({
                 filters: [
                     {field: "executionId", operation: "EQUALS", value: source.executionId() as string},
-                    {field: "taskRunId", operation: "EQUALS", value: taskRunId},
                     {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: defaultTaskRunLogLevel()},
-                    ...(attemptNumber === undefined ? [] : [{field: "attemptNumber" as const, operation: "EQUALS" as const, value: String(attemptNumber)}]),
+                    ...filters,
                 ],
                 page: 1,
                 size: 1,
-            })))
-            return pages.reduce((sum, page) => sum + (page.total ?? page.results.length), 0)
+            }).then((page) => page.total ?? page.results.length)
+
+            const childTaskRunIds = source.logChildTaskRunIds()
+            const counts = await Promise.all([
+                countLogs([
+                    {field: "taskRunId", operation: "EQUALS", value: source.logTaskRunId()},
+                    {field: "attemptNumber", operation: "EQUALS", value: String(source.logAttemptNumber())},
+                ]),
+                ...(childTaskRunIds.length ? [countLogs([{field: "taskRunId", operation: "IN", value: childTaskRunIds}])] : []),
+            ])
+            return counts.reduce((sum, count) => sum + count, 0)
         },
         0,
     )

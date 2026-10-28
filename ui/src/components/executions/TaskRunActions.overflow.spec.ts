@@ -1,11 +1,12 @@
-import {describe, expect, it} from "vitest"
+import {describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
-import {createPinia} from "pinia"
+import {createPinia, setActivePinia} from "pinia"
 import {createMemoryHistory, createRouter} from "vue-router"
 import {KsDropdownItem} from "@kestra-io/design-system"
 import type {State, StateType} from "@kestra-io/kestra-sdk"
 import type {Execution} from "../../stores/executions"
 import TaskRunActions from "./TaskRunActions.vue"
+import {useExecutionsStore} from "../../stores/executions"
 import {i18nMount} from "../../../tests/unit/i18nMount"
 
 function state(current: StateType): State {
@@ -15,11 +16,15 @@ function state(current: StateType): State {
 const execution = {id: "execution", namespace: "tests", flowId: "flow", flowRevision: 1, originalId: "execution", metadata: {originalCreatedDate: ""}, state: state("SUCCESS")} as Execution
 
 async function mountActions(overflow: boolean, extra: Record<string, unknown> = {}) {
+    setActivePinia(createPinia())
+    vi.spyOn(useExecutionsStore(), "loadExecution").mockResolvedValue(execution)
+    vi.spyOn(useExecutionsStore(), "loadLogs").mockResolvedValue([])
     const router = createRouter({
         history: createMemoryHistory(),
         routes: [
             {path: "/:tenant/executions/:id/topology", name: "topology", component: {template: "<div />"}},
             {path: "/:tenant/executions", name: "executions/list", component: {template: "<div />"}},
+            {path: "/:tenant/executions/:namespace/:flowId/:id/logs", name: "executions/update/logs", component: {template: "<div />"}},
         ],
     })
     await router.push({name: "topology", params: {tenant: "test-tenant", id: "execution"}})
@@ -36,7 +41,7 @@ async function mountActions(overflow: boolean, extra: Record<string, unknown> = 
             ...extra,
         },
         global: {
-            plugins: [createPinia(), router],
+            plugins: [router],
             stubs: {Metrics: true, Outputs: true, Restart: true, ChangeStatus: true, TaskEdit: true, WorkerInfo: true, Interrupt: true, NodeMenuItem: true},
         },
     })
@@ -74,6 +79,33 @@ describe("TaskRunActions overflow", () => {
 
         // When
         await wrapper.findAllComponents(KsDropdownItem).find((item) => item.text() === "Iterations")!.get("[role=\"menuitem\"]").trigger("click")
+
+        // Then
+        expect(wrapper.emitted("dismiss")).toHaveLength(1)
+        wrapper.unmount()
+    })
+
+    it("shouldAskToDismissItsHostBeforeOpeningTheSubflowExecution", async () => {
+        // Given
+        const run = {id: "run-1", taskId: "loop", state: state("SUCCESS"), outputs: {executionId: "child-execution"}}
+        const wrapper = await mountActions(true, {taskRun: run, taskRuns: [run]})
+
+        // When
+        await wrapper.findAllComponents(KsDropdownItem).find((item) => item.text() === "sub flow")!.get("[role=\"menuitem\"]").trigger("click")
+
+        // Then
+        expect(wrapper.emitted("dismiss")).toHaveLength(1)
+        wrapper.unmount()
+    })
+
+    it("shouldAskToDismissItsHostBeforeOpeningTheCopilotToFixAFailedTask", async () => {
+        // Given
+        const run = {id: "run-1", taskId: "loop", state: state("FAILED"), attempts: [{state: state("FAILED")}]}
+        const wrapper = await mountActions(true, {taskRun: run, taskRuns: [run]})
+
+        // When
+        await wrapper.findAllComponents(KsDropdownItem).find((item) => item.text().includes("fix_with_ai"))!.get("[role=\"menuitem\"]").trigger("click")
+        await flushPromises()
 
         // Then
         expect(wrapper.emitted("dismiss")).toHaveLength(1)

@@ -311,8 +311,9 @@
         isRootExecutionTask.value ? artifactCounts?.value[taskId.value ?? ""] ?? 0 : 0,
     )
 
-    const sourceHandleStyle = computed(() => statusRowHandleStyle(props.sourcePosition, Boolean(execution?.value)))
-    const targetHandleStyle = computed(() => statusRowHandleStyle(props.targetPosition, Boolean(execution?.value)))
+    const rendersStatusRow = computed(() => Boolean(execution?.value) && lod.value !== "pill")
+    const sourceHandleStyle = computed(() => statusRowHandleStyle(props.sourcePosition, rendersStatusRow.value))
+    const targetHandleStyle = computed(() => statusRowHandleStyle(props.targetPosition, rendersStatusRow.value))
 
     const state = computed(() => {
         if (!taskRuns.value?.length) {
@@ -455,6 +456,12 @@ button.playground-button {
     background-color: var(--ks-toggle-playground);
 }
 
+.status-chip,
+.artifact-badge {
+    background-color: var(--ks-bg-surface);
+    background-image: linear-gradient(var(--chip-tint), var(--chip-tint));
+}
+
 .status-chip {
     display: inline-flex;
     align-items: center;
@@ -462,8 +469,7 @@ button.playground-button {
     height: 1.25rem;
     padding: 0 var(--ks-spacing-2);
     border-radius: var(--ks-radius-base);
-    background-color: var(--ks-bg-surface);
-    background-image: linear-gradient(color-mix(in srgb, var(--chip-color) 16%, transparent), color-mix(in srgb, var(--chip-color) 16%, transparent));
+    --chip-tint: color-mix(in srgb, var(--chip-color) 16%, transparent);
     color: var(--chip-color);
     line-height: 1;
 }
@@ -482,8 +488,7 @@ button.playground-button {
     padding: 0 var(--ks-spacing-2);
     border: none;
     border-radius: var(--ks-radius-base);
-    background-color: var(--ks-bg-surface);
-    background-image: linear-gradient(color-mix(in srgb, var(--ks-text-link) 16%, transparent), color-mix(in srgb, var(--ks-text-link) 16%, transparent));
+    --chip-tint: color-mix(in srgb, var(--ks-text-link) 16%, transparent);
     color: var(--ks-text-link);
     font-size: var(--ks-font-size-2xs);
     font-weight: var(--ks-font-weight-semibold);

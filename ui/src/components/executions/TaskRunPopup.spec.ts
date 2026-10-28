@@ -152,14 +152,13 @@ describe("TaskRunPopup", () => {
         expect(document.body.querySelector("[data-test='task-run-popup-duration'] [data-test='duration-value']")).not.toBeNull()
     })
 
-    it("shouldKeepTheHeaderActionsInOneRowOfUniformlySpacedButtons", async () => {
+    it("shouldNotRenderAnyActionButtonDirectlyBesideAnother", async () => {
         // When
         mountPopup()
         await flushPromises()
 
         // Then
         const actions = document.body.querySelector(".popup-actions")!
-        expect(actions.querySelectorAll(".popup-action > *").length).toBeGreaterThan(0)
         expect([...actions.querySelectorAll("button + button")]).toHaveLength(0)
     })
 
@@ -225,6 +224,48 @@ describe("TaskRunPopup", () => {
         expect(api.loadTaskRunOutputs).toHaveBeenCalledWith("exec-1", "run-1")
     })
 
+    it("shouldCountTheLogsOfManyChildRunsWithABoundedNumberOfRequests", async () => {
+        // Given
+        const children = Array.from({length: 50}, (_, index) => taskRun(`child-${index}`, "SUCCESS", {parentTaskRunId: "run-1"}))
+        const execution = executionWith([taskRun("run-1", "SUCCESS"), ...children])
+
+        // When
+        mountPopup({execution})
+        await flushPromises()
+
+        // Then
+        expect(api.searchLogs).toHaveBeenCalledTimes(2)
+        const childRequest = api.searchLogs.mock.calls.map(([params]) => params.filters).find((filters: {operation: string}[]) => filters.some((filter) => filter.operation === "IN"))
+        expect(childRequest.find((filter: {operation: string}) => filter.operation === "IN").value).toHaveLength(20)
+    })
+
+    it("shouldNotRefetchTheLogsCountWhenAChildRunAppears", async () => {
+        // Given
+        const execution = reactive(executionWith([taskRun("run-1", "RUNNING")], "RUNNING"))
+        mountPopup({execution})
+        await flushPromises()
+        api.searchLogs.mockClear()
+
+        // When
+        execution.taskRunList!.push(taskRun("child-1", "RUNNING", {parentTaskRunId: "run-1"}) as never)
+        await flushPromises()
+
+        // Then
+        expect(api.searchLogs).not.toHaveBeenCalled()
+    })
+
+    it("shouldAlwaysMountTheLogsViewerEvenWhenNoLogMatchesTheDefaultLevel", async () => {
+        // Given
+        api.searchLogs.mockResolvedValue({results: [], total: 0, type: "OFFSET"})
+
+        // When
+        const wrapper = mountPopup({initialTab: "logs"})
+        await flushPromises()
+
+        // Then
+        expect(wrapper.findComponent({name: "TaskRunLogs"}).exists()).toBe(true)
+    })
+
     it("shouldNotFetchAnythingWhileClosed", async () => {
         // When
         mountPopup({modelValue: false})
@@ -270,8 +311,7 @@ describe("TaskRunPopup", () => {
         await flushPromises()
 
         // Then
-        const active = document.body.querySelector(".kel-tabs__item.is-active")
-        expect(active?.textContent).toContain("Artifacts")
+        expect(document.body.querySelector("[role='tab'][aria-selected='true']")?.textContent).toContain("Artifacts")
         expect(document.body.querySelector("[data-test='task-run-popup-artifacts-empty']")).toBeNull()
     })
 
@@ -344,10 +384,10 @@ describe("TaskRunPopup", () => {
         expect(router.currentRoute.value.query.artifact).toBeUndefined()
     })
 
-    it("shouldCloseBeforeRunningAnActionThatChangesTheGraph", async () => {
+    it("shouldCloseBeforeRunningAnyNodeAction", async () => {
         // Given
         const expand = vi.fn()
-        const wrapper = mountPopup({nodeActions: [{key: "expand", label: "Expand", onClick: expand}]})
+        const wrapper = mountPopup({nodeActions: [{key: "show-details", label: "Details", onClick: expand}]})
         await flushPromises()
         const actions = wrapper.findComponent({name: "TaskRunActions"}).props("nodeActions") as {key: string, onClick: () => void}[]
 

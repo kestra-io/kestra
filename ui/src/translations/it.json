@@ -676,7 +676,7 @@
       "count_error": "Impossibile caricare il conteggio",
       "load_error": "Impossibile caricare questa vista.",
       "retry": "Riprova",
-      "no_logs": "Nessun log registrato per questa esecuzione del task.",
+      "child_runs_capped": "Vengono mostrati solo i log delle prime {count} esecuzioni figlie del task.",
       "no_artifacts": "Questo task non fornisce alcun artifact.",
       "task_source": "Sorgente del task",
       "worker_info": "Info worker"

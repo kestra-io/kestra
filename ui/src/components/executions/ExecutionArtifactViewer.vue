@@ -59,12 +59,15 @@
     import {EXECUTION_ARTIFACTS_KEY, type ExecutionArtifact} from "./composables/useExecutionArtifacts"
     import {useArtifactFetchers} from "./composables/useArtifactFetchers"
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         artifact: ExecutionArtifact
         siblings: ExecutionArtifact[]
         execution?: Execution
         fullscreen?: boolean
-    }>()
+    }>(), {
+        execution: undefined,
+        fullscreen: undefined,
+    })
 
     const emit = defineEmits<{
         select: [key: string]

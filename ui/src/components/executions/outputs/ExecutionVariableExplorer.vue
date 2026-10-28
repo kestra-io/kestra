@@ -654,9 +654,11 @@
 
     watch(
         () => props.scope?.outputs,
-        (outputs) => {
-            const [first] = sections.value.flatMap((section) => section.items)
-            if (outputs && first && !isMobile.value) void selectItem(first)
+        () => {
+            if (!props.scope || isMobile.value) return
+            const items = sections.value.flatMap((section) => section.items)
+            const target = items.find((item) => item.expression === selectedBase.value) ?? items[0]
+            if (target) void selectItem(target)
         },
         {immediate: true},
     )

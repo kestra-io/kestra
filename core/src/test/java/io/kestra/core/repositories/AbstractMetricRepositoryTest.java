@@ -204,7 +204,7 @@ public abstract class AbstractMetricRepositoryTest {
                     .flowId("flow1")
                     .executionId("exec-" + namespace)
                     .taskId("task1")
-                    .taskRunId(FriendlyId.createFriendlyId())
+                    .taskRunId(IdUtils.create())
                     .type("counter")
                     .name("metric1")
                     .value(1.0)

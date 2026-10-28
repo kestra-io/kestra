@@ -17,7 +17,7 @@ dependencies {
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "2.22.1"
     def jsonschemaVersion = "4.38.0"
-    def kafkaVersion = "4.3.2"
+    def kafkaVersion = "4.4.0"
     def opensearchVersion = "3.9.0"
     def opensearchRestVersion = "3.9.0"
     def flyingSaucerVersion = "10.6.0"

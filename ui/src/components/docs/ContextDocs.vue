@@ -79,10 +79,15 @@
     import HomePageButtons from "../content/HomePageButtons.vue"
     import HomePageHeader from "../content/HomePageHeader.vue"
     import ProseImg from "../content/ProseImg.vue"
+    import ApiDoc from "../content/ApiDoc.vue"
+    import ApiDocee from "../content/ApiDocee.vue"
 
     const markdownComponents = {
         a: ContextDocsLink,
         img: ProseImg,
+        ApiDoc: ApiDoc,
+        ApiDocEE: ApiDocee,
+        ApiDocee: ApiDocee,
         BigChildCards: BigChildCards,
         CardLogos: CardLogos,
         ChildCard: ContextChildCard,

@@ -1946,7 +1946,7 @@ export const f43A000 = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Create a new execution from an old one and start it from a task run, on the original flow revision, with values set by hand for the inputs and outputs this task run reads
+ * Create a new execution from an old one and start it from a task run, on the original flow revision, with values set by hand for what some of its expressions render
  */
 export const _338C3490 = <ThrowOnError extends boolean = true>(parameters: {
     executionId: string;
@@ -2292,7 +2292,7 @@ export const _47F9Ce7e = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * Get the values a replay overrode for a task run, next to the values they replaced. They are read with the same permission as outputs.
+ * Get the expressions a replay overrode for a task run, with what they rendered before. They are read with the same permission as outputs.
  */
 export const _028Ccbe89 = <ThrowOnError extends boolean = true>(parameters: {
     executionId: string;
@@ -2312,7 +2312,7 @@ export const _028Ccbe89 = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
- * List the values a task run reads in its own properties, with their value in the execution. Inputs and outputs can be overridden on a replay from this task run.
+ * List the {{ }} expressions a task run renders in its own properties, with what they rendered in the execution. A top-level expression that reads the execution can be overridden on a replay from this task run.
  */
 export const _0723Af817 = <ThrowOnError extends boolean = true>(parameters: {
     executionId: string;

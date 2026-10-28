@@ -36,7 +36,7 @@ describe("TaskRunOverrides", () => {
     it("shows each original value next to the value the replay used", async () => {
         const wrapper = await mountOverrides(() => Promise.resolve([{key: "outputs.fetch.values.code", value: "KR-0412", originalValue: "KR-0412 "}]))
 
-        expect(wrapper.find("[data-test='task-run-overrides']").text()).toBe("1 overridden value")
+        expect(wrapper.find("[data-test='task-run-overrides']").text()).toBe("1 overridden expression")
         expect(wrapper.find("tbody").text()).toContain("\"KR-0412 \"")
         expect(wrapper.find("tbody").text()).toContain("\"KR-0412\"")
     })
@@ -45,7 +45,7 @@ describe("TaskRunOverrides", () => {
         const forbidden = Object.assign(new Error("Forbidden"), {problem: {type: "about:blank", status: 403, title: "Forbidden"}})
         const wrapper = await mountOverrides(() => Promise.reject(forbidden))
 
-        expect(wrapper.find("tbody").text()).toBe("outputs.fetch.values.code")
+        expect(wrapper.find("tbody").text()).toBe("{{ outputs.fetch.values.code }}")
         expect(wrapper.find("[data-test='task-run-overrides-hidden']").exists()).toBe(true)
     })
 })

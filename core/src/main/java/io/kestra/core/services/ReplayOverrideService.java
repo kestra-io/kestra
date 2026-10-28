@@ -2,210 +2,190 @@ package io.kestra.core.services;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunOverride;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.VariablePath;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.runners.pebble.PebbleExpressionPrinter;
+import io.kestra.core.runners.pebble.functions.FileExistsFunction;
+import io.kestra.core.runners.pebble.functions.FileSizeFunction;
+import io.kestra.core.runners.pebble.functions.FileURIFunction;
+import io.kestra.core.runners.pebble.functions.IsFileEmptyFunction;
+import io.kestra.core.runners.pebble.functions.KvFunction;
+import io.kestra.core.runners.pebble.functions.ReadFileFunction;
 import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.PebbleUtil;
 
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.AbstractNodeVisitor;
 import io.pebbletemplates.pebble.extension.ExtensionRegistry;
 import io.pebbletemplates.pebble.lexer.LexerImpl;
-import io.pebbletemplates.pebble.node.ArgumentsNode;
-import io.pebbletemplates.pebble.node.BodyNode;
-import io.pebbletemplates.pebble.node.ForNode;
-import io.pebbletemplates.pebble.node.IfNode;
-import io.pebbletemplates.pebble.node.Node;
 import io.pebbletemplates.pebble.node.PrintNode;
+import io.pebbletemplates.pebble.node.RenderableNode;
 import io.pebbletemplates.pebble.node.RootNode;
-import io.pebbletemplates.pebble.node.SetNode;
-import io.pebbletemplates.pebble.node.expression.ArrayExpression;
-import io.pebbletemplates.pebble.node.expression.BinaryExpression;
 import io.pebbletemplates.pebble.node.expression.ContextVariableExpression;
 import io.pebbletemplates.pebble.node.expression.Expression;
-import io.pebbletemplates.pebble.node.expression.FilterInvocationExpression;
 import io.pebbletemplates.pebble.node.expression.FunctionOrMacroInvocationExpression;
-import io.pebbletemplates.pebble.node.expression.GetAttributeExpression;
-import io.pebbletemplates.pebble.node.expression.LiteralIntegerExpression;
-import io.pebbletemplates.pebble.node.expression.LiteralLongExpression;
-import io.pebbletemplates.pebble.node.expression.LiteralStringExpression;
-import io.pebbletemplates.pebble.node.expression.MapExpression;
-import io.pebbletemplates.pebble.node.expression.TernaryExpression;
-import io.pebbletemplates.pebble.node.expression.UnaryExpression;
 import io.pebbletemplates.pebble.parser.ParserImpl;
 import io.pebbletemplates.pebble.parser.ParserOptions;
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Lists the values a task reads in its own properties, and turns the values a user sets on replay into
- * {@link TaskRunOverride}s. Only inputs and outputs can be overridden.
+ * Lists the {@code {{ }}} expressions a task renders in its own properties, and turns the values a user sets for them on
+ * replay into {@link TaskRunOverride}s keyed by the expression. Only a top-level expression that reads the execution can be
+ * overridden: one inside a {@code {% %}} block, a constant, or one reading a secret, the KV store or a file stays as it is.
  */
 @Slf4j
 @Singleton
 public class ReplayOverrideService {
     private static final String FILE_URI_PREFIX = "kestra://";
-    private static final Map<String, Kind> ROOT_KINDS = Map.of(
-        "inputs", Kind.INPUT,
-        "outputs", Kind.OUTPUT,
-        "vars", Kind.FLOW_VARIABLE,
-        "trigger", Kind.TRIGGER
+    private static final Set<String> NOT_RENDERED_PROPERTIES = Set.of("runIf", "description");
+    private static final Set<String> SECRET_FUNCTIONS = Set.of(SecretFunction.NAME, KvFunction.NAME);
+    private static final Set<String> FILE_FUNCTIONS = Set.of(
+        ReadFileFunction.NAME, FileURIFunction.NAME, FileExistsFunction.NAME, FileSizeFunction.NAME, IsFileEmptyFunction.NAME
     );
 
     private final PebbleEngine pebbleEngine;
+    private final PebbleExpressionPrinter printer;
     private final RunContextFactory runContextFactory;
-    private final FlowInputOutput flowInputOutput;
 
     @Inject
-    public ReplayOverrideService(PebbleEngineFactory pebbleEngineFactory, RunContextFactory runContextFactory, FlowInputOutput flowInputOutput) {
+    public ReplayOverrideService(PebbleEngineFactory pebbleEngineFactory, RunContextFactory runContextFactory) {
         this.pebbleEngine = Objects.requireNonNull(pebbleEngineFactory).create();
+        this.printer = new PebbleExpressionPrinter(pebbleEngine.getExtensionRegistry());
         this.runContextFactory = Objects.requireNonNull(runContextFactory);
-        this.flowInputOutput = Objects.requireNonNull(flowInputOutput);
     }
 
     /**
-     * The values read by the task in its own properties, in the order they first appear, with their real value in the execution:
-     * overrides from an earlier replay are left out. The tasks nested in a flowable task are not part of its own properties.
+     * The expressions of the task in its own properties, in the order they first appear, with what they rendered in the
+     * execution: overrides from an earlier replay are left out. The tasks nested in a flowable task are not part of its own properties.
      */
     public List<ReplayValue> values(Flow flow, Execution execution, String taskRunId) throws InternalException {
-        TaskRun taskRun = taskRun(execution, taskRunId);
-        return values(flow, taskRun, variables(flow, execution, taskRun));
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(
+            () -> new IllegalArgumentException(
+                "Task run '%s' does not exist in execution '%s'.".formatted(taskRunId, execution.getId())
+            )
+        );
+        Task task = flow.findTaskByTaskId(taskRun.getTaskId());
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun.withOverrides(null), false);
+
+        Map<String, Kind> kinds = new LinkedHashMap<>();
+        templates(task).forEach(template -> parse(template).ifPresent(root -> collect(root, kinds)));
+        return kinds.entrySet().stream().map(entry -> valueOf(entry.getKey(), entry.getValue(), runContext)).toList();
     }
 
     /**
-     * @throws IllegalArgumentException if a key is not an input or an output read by the task in its own properties,
-     *         or if an input with the value set no longer fits its type or validation rules
+     * @throws IllegalArgumentException if a key is not an expression the task can have overridden in its own properties
      */
     public List<TaskRunOverride> overrides(Flow flow, Execution execution, String taskRunId, Map<String, Object> requested) throws InternalException {
-        TaskRun taskRun = taskRun(execution, taskRunId);
-        Map<String, Object> variables = variables(flow, execution, taskRun);
-        Map<String, ReplayValue> values = values(flow, taskRun, variables).stream()
-            .collect(Collectors.toMap(ReplayValue::key, value -> value, (first, _) -> first));
+        Map<String, ReplayValue> values = values(flow, execution, taskRunId).stream()
+            .collect(Collectors.toMap(ReplayValue::expression, value -> value));
 
         List<TaskRunOverride> overrides = new ArrayList<>(requested.size());
         for (Map.Entry<String, Object> entry : requested.entrySet()) {
-            VariablePath path = VariablePath.parse(entry.getKey());
-            String key = path.toString();
+            String key = parse("{{ %s }}".formatted(entry.getKey()))
+                .flatMap(root -> root.getBody().getChildren().size() == 1 && root.getBody().getChildren().getFirst() instanceof PrintNode print ? printer.print(print.getExpression()) : Optional.empty())
+                .orElse(entry.getKey());
             ReplayValue value = values.get(key);
             if (value == null) {
                 throw new IllegalArgumentException(
-                    "Cannot override '%s': the task of task run '%s' does not read it in its own properties.".formatted(key, taskRunId)
+                    "Cannot override '%s': the task of task run '%s' does not render it in its own properties.".formatted(key, taskRunId)
                 );
             }
-            if (!value.kind().isOverridable()) {
+            if (value.kind() != Kind.EXPRESSION) {
                 throw new IllegalArgumentException(
-                    "Cannot override '%s': only inputs and outputs can be overridden, and this value is a %s.".formatted(key, value.kind().label())
+                    "Cannot override '%s': %s.".formatted(key, value.kind().reason())
                 );
             }
-            Object override = value.kind() == Kind.INPUT ? inputValue(flow, execution, variables, path, entry.getValue()) : entry.getValue();
-            if (!Objects.equals(value.value(), override)) {
-                overrides.add(new TaskRunOverride(key, override, value.value()));
+            if (!Objects.equals(value.value(), entry.getValue())) {
+                overrides.add(new TaskRunOverride(key, entry.getValue(), value.value()));
             }
         }
         return overrides;
     }
 
-    private List<ReplayValue> values(Flow flow, TaskRun taskRun, Map<String, Object> variables) throws InternalException {
-        List<Input<?>> inputs = flow.resolvableInputs();
-        return references(flow.findTaskByTaskId(taskRun.getTaskId())).stream()
-            .map(reference -> reference instanceof VariablePath path ? valueOf(path, variables, inputs) : new ReplayValue(reference.toString(), Kind.SECRET, null, null))
-            .toList();
-    }
-
-    private TaskRun taskRun(Execution execution, String taskRunId) {
-        return execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(
-            () -> new IllegalArgumentException(
-                "Task run '%s' does not exist in execution '%s'.".formatted(taskRunId, execution.getId())
-            )
-        );
-    }
-
-    private Map<String, Object> variables(Flow flow, Execution execution, TaskRun taskRun) throws InternalException {
-        return runContextFactory.of(flow, flow.findTaskByTaskId(taskRun.getTaskId()), execution, taskRun.withOverrides(null), false).getVariables();
-    }
-
-    private Object inputValue(Flow flow, Execution execution, Map<String, Object> variables, VariablePath path, Object value) {
-        Optional<Input<?>> declared = inputOf(path, flow.resolvableInputs());
-        if (declared.isEmpty()) {
-            return value;
+    private void collect(RootNode root, Map<String, Kind> kinds) {
+        for (RenderableNode child : root.getBody().getChildren()) {
+            if (child instanceof PrintNode print) {
+                printer.print(print.getExpression()).ifPresent(expression -> kinds.put(expression, kindOf(print.getExpression())));
+            } else {
+                child.accept(new AbstractNodeVisitor(null) {
+                    @Override
+                    public void visit(PrintNode print) {
+                        printer.print(print.getExpression()).ifPresent(expression -> kinds.putIfAbsent(expression, Kind.BLOCK));
+                    }
+                });
+            }
         }
-        Input<?> input = declared.get();
-        List<Object> inside = path.segments().subList(1 + input.getId().split("\\.").length, path.size());
-        VariablePath whole = new VariablePath(path.segments().subList(0, path.size() - inside.size()));
-        VariablePath leaf = new VariablePath(Stream.concat(Stream.of("value"), inside.stream()).toList());
+    }
+
+    private static Kind kindOf(Expression<?> expression) {
+        if (uses(expression, function -> SECRET_FUNCTIONS.contains(function.getFunctionName()))) {
+            return Kind.SECRET;
+        }
+        if (uses(expression, function -> FILE_FUNCTIONS.contains(function.getFunctionName()))) {
+            return Kind.FILE;
+        }
+        if (!readsContext(expression)) {
+            return Kind.CONSTANT;
+        }
+        return Kind.EXPRESSION;
+    }
+
+    private static boolean uses(Expression<?> expression, Predicate<FunctionOrMacroInvocationExpression> function) {
+        return expression instanceof FunctionOrMacroInvocationExpression invocation && function.test(invocation)
+            || PebbleExpressionPrinter.children(expression).stream().anyMatch(child -> uses(child, function));
+    }
+
+    private static boolean readsContext(Expression<?> expression) {
+        return expression instanceof ContextVariableExpression || expression instanceof FunctionOrMacroInvocationExpression
+            || PebbleExpressionPrinter.children(expression).stream().anyMatch(ReplayOverrideService::readsContext);
+    }
+
+    private ReplayValue valueOf(String expression, Kind kind, RunContext runContext) {
+        if (kind == Kind.SECRET || kind == Kind.BLOCK) {
+            return new ReplayValue(expression, kind, null);
+        }
+        Object value;
         try {
-            Object parsed = flowInputOutput.parseInputValue(execution, input, whole.resolve(path.set(variables, value)).orElse(null));
-            // as JSON, so that it compares with and is stored like the values read from the stored execution
-            Object normalized = JacksonMapper.toObject(JacksonMapper.ofJson().writeValueAsString(parsed));
-            return leaf.resolve(Collections.singletonMap("value", normalized)).orElse(null);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Cannot override '%s': %s".formatted(path, e.getMessage()), e);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Cannot override '%s': the value cannot be written as JSON.".formatted(path), e);
+            value = runContext.renderTyped("{{ %s }}".formatted(expression));
+        } catch (IllegalVariableEvaluationException e) {
+            // the task fails on such an expression too, which is a reason to replay it with a value
+            value = null;
         }
-    }
-
-    private ReplayValue valueOf(VariablePath path, Map<String, Object> variables, List<Input<?>> inputs) {
-        Object value = path.resolve(variables).orElse(null);
-        Kind kind = ROOT_KINDS.get(path.root());
-        Optional<Input<?>> input = kind == Kind.INPUT ? inputOf(path, inputs) : Optional.empty();
-        Type inputType = input.filter(it -> it.getId().equals(inputPath(path))).map(Input::getType).orElse(null);
-
-        if (value instanceof EncryptedString || input.filter(it -> Type.SECRET == it.getType()).isPresent()) {
-            return new ReplayValue(path.toString(), Kind.SECRET, inputType, null);
-        }
-        if ((value instanceof String string && string.startsWith(FILE_URI_PREFIX)) || input.filter(it -> Type.FILE == it.getType()).isPresent()) {
+        if (kind == Kind.EXPRESSION && value instanceof String string && string.startsWith(FILE_URI_PREFIX)) {
             kind = Kind.FILE;
         }
-        return new ReplayValue(path.toString(), kind, inputType, value);
+        return new ReplayValue(expression, kind, value);
     }
 
-    private static Optional<Input<?>> inputOf(VariablePath path, List<Input<?>> inputs) {
-        String inputPath = inputPath(path);
-        return inputs.stream()
-            .filter(input -> inputPath.equals(input.getId()) || inputPath.startsWith(input.getId() + "."))
-            .findFirst();
-    }
-
-    private static String inputPath(VariablePath path) {
-        return path.segments().stream().skip(1).map(Object::toString).collect(Collectors.joining("."));
-    }
-
-    private List<Object> references(Task task) {
+    private static List<String> templates(Task task) {
         Set<String> childTaskIds = task instanceof FlowableTask<?> flowable
             ? flowable.allChildTasks().stream().map(Task::getId).collect(Collectors.toSet())
             : Set.of();
-
-        ReferenceCollector collector = new ReferenceCollector();
-        collectTemplates(JacksonMapper.toMap(task), childTaskIds).forEach(template -> parse(template).ifPresent(collector::visit));
-        return collector.references();
+        Map<String, Object> properties = new LinkedHashMap<>(JacksonMapper.toMap(task));
+        properties.keySet().removeAll(NOT_RENDERED_PROPERTIES);
+        return collectTemplates(properties, childTaskIds);
     }
 
     private static List<String> collectTemplates(Object value, Set<String> childTaskIds) {
@@ -232,148 +212,33 @@ public class ReplayOverrideService {
             return Optional.of(parser.parse(lexer.tokenize(new StringReader(template), "replay-override")));
         } catch (PebbleException e) {
             // an invalid expression fails the task itself, it has nothing to list here
-            log.debug("Unable to parse '{}' to list the values it reads", template, e);
+            log.debug("Unable to parse '{}' to list the expressions it renders", template, e);
             return Optional.empty();
         }
     }
 
     public enum Kind {
-        INPUT,
-        OUTPUT,
-        SECRET,
-        FILE,
-        FLOW_VARIABLE,
-        TRIGGER;
+        EXPRESSION("it can be overridden"),
+        BLOCK("it is inside a {% %} block, which is part of the task's logic"),
+        CONSTANT("it reads nothing from the execution, so it is part of the task's definition"),
+        SECRET("it reads a secret or the KV store"),
+        FILE("it reads or renders a file");
 
-        public boolean isOverridable() {
-            return this == INPUT || this == OUTPUT;
+        private final String reason;
+
+        Kind(String reason) {
+            this.reason = reason;
         }
 
-        private String label() {
-            return name().toLowerCase().replace('_', ' ');
+        private String reason() {
+            return reason;
         }
     }
 
     /**
-     * @param key the variable path, or the {@code secret('KEY')} call for a secret read by the task
-     * @param inputType the declared type when the key is a flow input itself, {@code null} otherwise
-     * @param value the value in the execution, {@code null} for a secret
+     * @param expression the expression as Pebble parses it, with its spacing and quotes normalized
+     * @param value what it rendered in the execution, {@code null} for a secret, an expression inside a block, or one that failed to render
      */
-    public record ReplayValue(String key, Kind kind, @Nullable Type inputType, Object value) {
-    }
-
-    private static final class ReferenceCollector {
-        private final Map<String, Object> references = new LinkedHashMap<>();
-
-        List<Object> references() {
-            return List.copyOf(references.values());
-        }
-
-        void visit(Node node) {
-            switch (node) {
-                case RootNode root -> visit(root.getBody());
-                case BodyNode body -> body.getChildren().forEach(this::visit);
-                case PrintNode print -> visit(print.getExpression());
-                case SetNode set -> visit(set.getValue());
-                case ForNode loop -> {
-                    visit(loop.getIterable());
-                    visit(loop.getBody());
-                    if (loop.getElseBody() != null) {
-                        visit(loop.getElseBody());
-                    }
-                }
-                case IfNode condition -> {
-                    condition.getConditionsWithBodies().forEach(pair ->
-                    {
-                        visit(pair.getLeft());
-                        visit(pair.getRight());
-                    });
-                    if (condition.getElseBody() != null) {
-                        visit(condition.getElseBody());
-                    }
-                }
-                default -> {
-                }
-            }
-        }
-
-        void visit(Expression<?> expression) {
-            Optional<List<Object>> path = staticPath(expression);
-            if (path.isPresent()) {
-                if (path.get().size() > 1 && ROOT_KINDS.containsKey((String) path.get().getFirst())) {
-                    VariablePath variablePath = new VariablePath(path.get());
-                    references.putIfAbsent(variablePath.toString(), variablePath);
-                }
-                return;
-            }
-
-            switch (expression) {
-                case GetAttributeExpression attribute -> {
-                    visit(attribute.getNode());
-                    visit(attribute.getAttributeNameExpression());
-                    visit(attribute.getArgumentsNode());
-                }
-                case FunctionOrMacroInvocationExpression function -> {
-                    if (
-                        SecretFunction.NAME.equals(function.getFunctionName()) && !function.getArguments().getPositionalArgs().isEmpty()
-                            && function.getArguments().getPositionalArgs().getFirst().getValueExpression() instanceof LiteralStringExpression secret
-                    ) {
-                        String key = "secret('%s')".formatted(secret.getValue());
-                        references.putIfAbsent(key, key);
-                    }
-                    visit(function.getArguments());
-                }
-                case FilterInvocationExpression filter -> visit(filter.getArgs());
-                case BinaryExpression<?> binary -> {
-                    visit(binary.getLeftExpression());
-                    visit(binary.getRightExpression());
-                }
-                case UnaryExpression unary -> visit(unary.getChildExpression());
-                case TernaryExpression ternary -> {
-                    visit(ternary.getExpression1());
-                    visit(ternary.getExpression2());
-                    visit(ternary.getExpression3());
-                }
-                case ArrayExpression array -> array.getValues().forEach(this::visit);
-                case MapExpression map -> map.getEntries().forEach((key, value) ->
-                {
-                    visit(key);
-                    visit(value);
-                });
-                case null, default -> {
-                }
-            }
-        }
-
-        private void visit(ArgumentsNode arguments) {
-            if (arguments == null) {
-                return;
-            }
-            arguments.getPositionalArgs().forEach(argument -> visit(argument.getValueExpression()));
-            arguments.getNamedArgs().forEach(argument -> visit(argument.getValueExpression()));
-        }
-
-        private static Optional<List<Object>> staticPath(Expression<?> expression) {
-            if (expression instanceof ContextVariableExpression variable) {
-                return Optional.of(List.of(variable.getName()));
-            }
-            if (expression instanceof GetAttributeExpression attribute && attribute.getArgumentsNode() == null) {
-                Object segment = switch (attribute.getAttributeNameExpression()) {
-                    case LiteralStringExpression string -> string.getValue();
-                    case LiteralLongExpression number -> number.getValue();
-                    case LiteralIntegerExpression number -> number.getValue();
-                    default -> null;
-                };
-                if (segment != null) {
-                    return staticPath(attribute.getNode()).map(parent ->
-                    {
-                        List<Object> path = new ArrayList<>(parent);
-                        path.add(segment);
-                        return path;
-                    });
-                }
-            }
-            return Optional.empty();
-        }
+    public record ReplayValue(String expression, Kind kind, Object value) {
     }
 }

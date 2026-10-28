@@ -18,14 +18,14 @@
             <table>
                 <thead>
                     <tr>
-                        <th>{{ $t("key") }}</th>
+                        <th>{{ $t("eval.expression") }}</th>
                         <th v-if="values">{{ $t("replayOverrides.recorded_original") }}</th>
                         <th v-if="values">{{ $t("replayOverrides.recorded_value") }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="key in overrides.keys" :key="key">
-                        <td><code>{{ key }}</code></td>
+                        <td><code>{{ asExpression(key) }}</code></td>
                         <template v-if="values">
                             <td>{{ formatValue(values[key]?.originalValue) }}</td>
                             <td>{{ formatValue(values[key]?.value) }}</td>
@@ -47,7 +47,7 @@
     import {useExecutionsStore} from "../../stores/executions"
     import {handled} from "../../utils/kestraHttp"
     import {date as dateFilter} from "../../utils/filters"
-    import {formatValue} from "./replayOverrides"
+    import {asExpression, formatValue} from "./replayOverrides"
 
     const props = defineProps<{
         executionId: string

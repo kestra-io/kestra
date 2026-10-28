@@ -19,25 +19,22 @@
             {{ $t("replayOverrides.empty", {taskId}) }}
         </KsText>
 
-        <div v-for="value in values" :key="value.key" class="override-row" data-test="replay-override">
+        <div v-for="value in values" :key="value.expression" class="override-row" data-test="replay-override">
             <div class="override-label">
-                <code>{{ value.key }}</code>
-                <KsText size="small" type="info">
-                    {{ kindLabel(value) }}
+                <code>{{ asExpression(value.expression) }}</code>
+                <KsText v-if="value.kind !== 'SECRET' && value.kind !== 'BLOCK'" size="small" type="info" data-test="replay-override-rendered">
+                    {{ $t("replayOverrides.rendered", {value: formatValue(value.value)}) }}
                 </KsText>
             </div>
 
             <div v-if="isOverridable(value)" class="override-field">
                 <KsInput
-                    v-model="texts[value.key!]"
-                    :aria-label="value.key"
+                    v-model="texts[value.expression!]"
+                    :aria-label="value.expression"
                     data-test="replay-override-input"
                 />
-                <KsText v-if="parsed[value.key!]?.error" size="small" type="danger" data-test="replay-override-error">
-                    {{ $t(`replayOverrides.error.${parsed[value.key!].error}`) }}
-                </KsText>
-                <KsText v-else-if="value.key! in overrides" size="small" type="info" data-test="replay-override-original">
-                    {{ $t("replayOverrides.original", {value: formatValue(value.value)}) }}
+                <KsText v-if="parsed[value.expression!]?.error" size="small" type="danger" data-test="replay-override-error">
+                    {{ $t(`replayOverrides.error.${parsed[value.expression!].error}`) }}
                 </KsText>
             </div>
             <KsText v-else size="small" type="info" data-test="replay-override-locked">
@@ -49,10 +46,9 @@
 
 <script setup lang="ts">
     import {computed, onMounted, reactive, ref, watch} from "vue"
-    import {useI18n} from "vue-i18n"
     import {isDeepEqual} from "@kestra-io/design-system"
     import {useExecutionsStore} from "../../stores/executions"
-    import {editableText, formatValue, isOverridable, parseOverride, type ParsedOverride, type ReplayValue} from "./replayOverrides"
+    import {asExpression, editableText, formatValue, isOverridable, parseOverride, type ParsedOverride, type ReplayValue} from "./replayOverrides"
 
     const props = defineProps<{
         executionId: string
@@ -63,7 +59,6 @@
     const overridesModel = defineModel<Record<string, unknown>>("overrides", {required: true})
     const invalid = defineModel<boolean>("invalid", {default: false})
 
-    const {t} = useI18n()
     const executionsStore = useExecutionsStore()
 
     const loading = ref(true)
@@ -72,26 +67,22 @@
     const texts = reactive<Record<string, string>>({})
 
     const parsed = computed(() => Object.fromEntries(
-        values.value.filter(isOverridable).map(value => [value.key!, parseOverride(value, texts[value.key!] ?? "")]),
+        values.value.filter(isOverridable).map(value => [value.expression!, parseOverride(value, texts[value.expression!] ?? "")]),
     ) as Record<string, ParsedOverride>)
 
     const overrides = computed(() => Object.fromEntries(
         values.value
-            .filter(value => isOverridable(value) && !parsed.value[value.key!].error && !isDeepEqual(parsed.value[value.key!].value, value.value ?? null))
-            .map(value => [value.key!, parsed.value[value.key!].value]),
+            .filter(value => isOverridable(value) && !parsed.value[value.expression!].error && !isDeepEqual(parsed.value[value.expression!].value, value.value ?? null))
+            .map(value => [value.expression!, parsed.value[value.expression!].value]),
     ))
 
     watch(overrides, value => overridesModel.value = value, {immediate: true})
     watch(parsed, value => invalid.value = Object.values(value).some(it => it.error), {immediate: true})
 
-    function kindLabel(value: ReplayValue) {
-        return t(`replayOverrides.kind.${value.kind}`, {taskId: value.key?.split(".")[1]})
-    }
-
     onMounted(async () => {
         try {
             values.value = await executionsStore.loadReplayValues({executionId: props.executionId, taskRunId: props.taskRunId})
-            values.value.filter(isOverridable).forEach(value => texts[value.key!] = editableText(value.value))
+            values.value.filter(isOverridable).forEach(value => texts[value.expression!] = editableText(value.value))
         } catch {
             loadFailed.value = true
         } finally {

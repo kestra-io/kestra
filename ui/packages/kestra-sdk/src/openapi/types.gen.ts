@@ -2221,12 +2221,11 @@ export type Relation = {
 
 export type RelationType = 'SEQUENTIAL' | 'CHOICE' | 'ERROR' | 'FINALLY' | 'AFTER_EXECUTION' | 'PARALLEL' | 'DYNAMIC';
 
-export type ReplayOverrideServiceKind = 'INPUT' | 'OUTPUT' | 'SECRET' | 'FILE' | 'FLOW_VARIABLE' | 'TRIGGER';
+export type ReplayOverrideServiceKind = 'EXPRESSION' | 'BLOCK' | 'CONSTANT' | 'SECRET' | 'FILE';
 
 export type ReplayOverrideServiceReplayValue = {
-    key?: string;
+    expression?: string;
     kind?: ReplayOverrideServiceKind;
-    inputType?: Type | null;
     value?: {
         [key: string]: unknown;
     };
@@ -7295,7 +7294,7 @@ export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsRespons
 
 export type ReplayExecutionWithOverridesData = {
     /**
-     * The values to override, by variable path
+     * The values to render, by expression
      */
     body: ExecutionControllerReplayWithOverridesRequest;
     path: {

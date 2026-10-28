@@ -338,7 +338,7 @@ export const replayExecutionWithinputs = (parameters: Omit<Parameters<typeof f43
 }, options?: Omit<Parameters<typeof f43A000>[1], 'throwOnError'>) => getDataOrThrow(f43A000(addTenantToParameters(parameters), options));
 
 /**
- * Create a new execution from an old one and start it from a task run, on the original flow revision, with values set by hand for the inputs and outputs this task run reads
+ * Create a new execution from an old one and start it from a task run, on the original flow revision, with values set by hand for what some of its expressions render
  */
 export const replayExecutionWithOverrides = (parameters: Omit<Parameters<typeof _338C3490>[0], 'executionControllerReplayWithOverridesRequest' | 'tenant'> & ExecutionControllerReplayWithOverridesRequest & {
     tenant?: string;
@@ -458,14 +458,14 @@ export const executionFlowGraph = (parameters: Omit<Parameters<typeof _47F9Ce7e>
 }, options?: Omit<Parameters<typeof _47F9Ce7e>[1], 'throwOnError'>) => getDataOrThrow(_47F9Ce7e(addTenantToParameters(parameters), options));
 
 /**
- * Get the values a replay overrode for a task run, next to the values they replaced. They are read with the same permission as outputs.
+ * Get the expressions a replay overrode for a task run, with what they rendered before. They are read with the same permission as outputs.
  */
 export const taskRunOverrides = (parameters: Omit<Parameters<typeof _028Ccbe89>[0], 'tenant'> & {
     tenant?: string;
 }, options?: Omit<Parameters<typeof _028Ccbe89>[1], 'throwOnError'>) => getDataOrThrow(_028Ccbe89(addTenantToParameters(parameters), options));
 
 /**
- * List the values a task run reads in its own properties, with their value in the execution. Inputs and outputs can be overridden on a replay from this task run.
+ * List the {{ }} expressions a task run renders in its own properties, with what they rendered in the execution. A top-level expression that reads the execution can be overridden on a replay from this task run.
  */
 export const replayValues = (parameters: Omit<Parameters<typeof _0723Af817>[0], 'tenant'> & {
     tenant?: string;

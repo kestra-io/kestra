@@ -1592,7 +1592,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/taskruns/{taskRunId}/replay-values")
     @Operation(
         tags = { "Executions" },
-        summary = "List the values a task run reads in its own properties, with their value in the execution. Inputs and outputs can be overridden on a replay from this task run."
+        summary = "List the {{ }} expressions a task run renders in its own properties, with what they rendered in the execution. A top-level expression that reads the execution can be overridden on a replay from this task run."
     )
     public ReplayValues replayValues(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -1606,7 +1606,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/taskruns/{taskRunId}/overrides")
     @Operation(
         tags = { "Executions" },
-        summary = "Get the values a replay overrode for a task run, next to the values they replaced. They are read with the same permission as outputs."
+        summary = "Get the expressions a replay overrode for a task run, with what they rendered before. They are read with the same permission as outputs."
     )
     public OverriddenValues getTaskRunOverrides(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -1621,14 +1621,14 @@ public class ExecutionController {
     @Post(uri = "/{executionId}/actions/replay-with-overrides")
     @Operation(
         tags = { "Executions" },
-        summary = "Create a new execution from an old one and start it from a task run, on the original flow revision, with values set by hand for the inputs and outputs this task run reads"
+        summary = "Create a new execution from an old one and start it from a task run, on the original flow revision, with values set by hand for what some of its expressions render"
     )
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
     @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
     public HttpResponse<Execution> replayExecutionWithOverrides(
         @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @QueryValue String taskRunId,
-        @RequestBody(description = "The values to override, by variable path") @Valid @Body ReplayWithOverridesRequest request) throws Exception {
+        @RequestBody(description = "The values to render, by expression") @Valid @Body ReplayWithOverridesRequest request) throws Exception {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
 
         controlReplayable(execution, taskRunId, null);

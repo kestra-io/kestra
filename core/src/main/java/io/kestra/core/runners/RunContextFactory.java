@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.runners.pebble.OverridableExpression;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.services.NamespaceService;
@@ -159,8 +161,12 @@ public class RunContextFactory {
             .withExecutionOutputs(executionOutputs(flow, execution))
             .withTaskRun(taskRun);
         Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
-        for (TaskRunOverride override : overrides(taskRun)) {
-            variables = VariablePath.parse(override.key()).set(variables, override.value());
+        List<TaskRunOverride> overrides = overrides(taskRun);
+        if (!overrides.isEmpty()) {
+            Map<String, Object> values = new HashMap<>(overrides.size());
+            overrides.forEach(override -> values.put(override.key(), override.value()));
+            variables = new HashMap<>(variables);
+            variables.put(OverridableExpression.VARIABLE, values);
         }
 
         return newBuilder()

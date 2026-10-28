@@ -2,14 +2,14 @@ import type {ReplayOverrideServiceReplayValue} from "@kestra-io/kestra-sdk"
 
 export type ReplayValue = ReplayOverrideServiceReplayValue
 
-export type ParsedOverride = {value?: unknown, error?: "number" | "boolean" | "date" | "datetime" | "json"}
-
-const NUMBER_INPUTS = new Set(["INT", "FLOAT"])
-const BOOLEAN_INPUTS = new Set(["BOOLEAN", "BOOL"])
-const JSON_INPUTS = new Set(["JSON", "ARRAY", "MULTISELECT"])
+export type ParsedOverride = {value?: unknown, error?: "number" | "boolean" | "json"}
 
 export function isOverridable(value: ReplayValue): boolean {
-    return value.kind === "INPUT" || value.kind === "OUTPUT"
+    return value.kind === "EXPRESSION"
+}
+
+export function asExpression(expression: string | undefined): string {
+    return `{{ ${expression ?? ""} }}`
 }
 
 /** Strings are quoted so that leading or trailing spaces stay visible. */
@@ -22,29 +22,22 @@ export function editableText(value: unknown): string {
     return typeof value === "string" ? value : JSON.stringify(value)
 }
 
+/** An expression has no declared type, so the override takes the type of what it rendered. */
 export function parseOverride(replayValue: ReplayValue, text: string): ParsedOverride {
     const original: unknown = replayValue.value
-    const inputType = replayValue.inputType ?? ""
     const trimmed = text.trim()
 
     if (text === editableText(original)) {
         return {value: original ?? null}
     }
-
-    if (inputType === "DATE") {
-        return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? {value: trimmed} : {error: "date"}
-    }
-    if (inputType === "DATETIME") {
-        return Number.isNaN(Date.parse(trimmed)) ? {error: "datetime"} : {value: trimmed}
-    }
-    if (typeof original === "number" || NUMBER_INPUTS.has(inputType)) {
+    if (typeof original === "number") {
         const number = Number(trimmed)
         return trimmed === "" || !Number.isFinite(number) ? {error: "number"} : {value: number}
     }
-    if (typeof original === "boolean" || BOOLEAN_INPUTS.has(inputType)) {
+    if (typeof original === "boolean") {
         return trimmed === "true" || trimmed === "false" ? {value: trimmed === "true"} : {error: "boolean"}
     }
-    if ((original !== null && typeof original === "object") || JSON_INPUTS.has(inputType)) {
+    if (original !== null && typeof original === "object") {
         try {
             return {value: JSON.parse(trimmed)}
         } catch {

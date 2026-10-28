@@ -189,9 +189,9 @@ describe("Restart (replay revision check)", () => {
 describe("Restart (replay with overrides)", () => {
     const taskRun = {id: "tr1", taskId: "adjust", attempts: [{}]}
     const values = [
-        {key: "outputs.fetch.values.code", kind: "OUTPUT", value: "KR-0412 "},
-        {key: "outputs.fetch.values.delta", kind: "OUTPUT", value: -12},
-        {key: "vars.schema", kind: "FLOW_VARIABLE", value: "erp"},
+        {expression: "outputs.fetch.values.code != 'KR-0412'", kind: "EXPRESSION", value: true},
+        {expression: "outputs.fetch.values.code", kind: "EXPRESSION", value: "KR-0412 "},
+        {expression: "outputs.fetch.values.delta", kind: "BLOCK", value: null},
     ]
 
     async function openReplayDialog() {
@@ -230,8 +230,8 @@ describe("Restart (replay with overrides)", () => {
 
         await wrapper.find("input[aria-label='outputs.fetch.values.code']").setValue("KR-0412")
 
-        expect(wrapper.find("[data-test='replay-override-original']").text()).toBe("Original: \"KR-0412 \"")
-        expect(wrapper.find("[data-test='replay-override-locked']").text()).toContain("Flow variables are part of the flow")
+        expect(wrapper.findAll("[data-test='replay-override-rendered']")[1].text()).toBe("Rendered \"KR-0412 \"")
+        expect(wrapper.find("[data-test='replay-override-locked']").text()).toContain("Inside an if or for block")
         expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay with 1 override")
 
         await wrapper.find("[data-test='replay-confirm']").trigger("click")
@@ -243,12 +243,12 @@ describe("Restart (replay with overrides)", () => {
         })
     })
 
-    it("shouldBlockTheReplayWhileAnOverrideDoesNotMatchTheTypeOfTheOriginalValue", async () => {
+    it("shouldBlockTheReplayWhileAnOverrideDoesNotMatchTheTypeOfWhatTheExpressionRendered", async () => {
         const {wrapper} = await openReplayDialog()
 
-        await wrapper.find("input[aria-label='outputs.fetch.values.delta']").setValue("five")
+        await wrapper.find("input[aria-label=\"outputs.fetch.values.code != 'KR-0412'\"]").setValue("maybe")
 
-        expect(wrapper.find("[data-test='replay-override-error']").text()).toBe("Enter a number.")
+        expect(wrapper.find("[data-test='replay-override-error']").text()).toBe("Enter true or false.")
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeDefined()
     })
 

@@ -207,6 +207,6 @@ public class Extension extends AbstractExtension {
 
     @Override
     public List<NodeVisitorFactory> getNodeVisitors() {
-        return null;
+        return List.of(OverridableExpression.VISITOR);
     }
 }

@@ -1,5 +1,4 @@
 import {KsMarkdown, KsMessageBox, KsNotification, KsTable, KsTableColumn} from "@kestra-io/design-system"
-import type {NotificationOptions} from "element-plus"
 import {App, h} from "vue"
 import {useI18n} from "vue-i18n"
 
@@ -13,7 +12,9 @@ let savedNotificationHandles: {close: () => void}[] = []
  */
 export type ToastMessageBody = string | {message: string}[]
 
-export type ToastOptions = Partial<NotificationOptions> & {
+type KsNotificationOptions = Extract<Parameters<typeof KsNotification>[0], Record<string, unknown>>
+
+export type ToastOptions = Partial<KsNotificationOptions> & {
     multiple?: boolean
     [key: string]: unknown
 }

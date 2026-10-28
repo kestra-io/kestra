@@ -56,6 +56,7 @@ const makeCtx = (over: Partial<FilterContext> = {}): FilterContext => ({
     updateProperties: vi.fn(),
     deleteSavedFilter: vi.fn(),
     resetToDefaults: vi.fn(),
+    getDefaultValue: vi.fn(() => ""),
     hasPreApplied: vi.fn(() => false),
     getPreApplied: vi.fn(() => undefined),
     updateSavedFilter: vi.fn(),

@@ -59,7 +59,7 @@ export interface LogTargetDeps {
 
 export interface ChainCache {
     fetched: Map<string, Promise<IterationNode | undefined>>;
-    running: Set<string>;
+    unsettledHosts: Map<string, IterationNode>;
     chains: Map<string, Promise<HostedNode[] | undefined>>;
 }
 
@@ -71,11 +71,10 @@ export interface CollectOptions {
     offset?: number;
 }
 
-export const createChainCache = (): ChainCache => ({fetched: new Map(), running: new Set(), chains: new Map()})
+export const createChainCache = (): ChainCache => ({fetched: new Map(), unsettledHosts: new Map(), chains: new Map()})
 
-function forgetRunningHosts(cache: ChainCache) {
-    cache.running.forEach((id) => cache.fetched.delete(id))
-    cache.running.clear()
+function forgetUnsettledHosts(cache: ChainCache) {
+    cache.unsettledHosts.forEach((_, id) => cache.fetched.delete(id))
 }
 
 const defaultDeps: LogTargetDeps = {
@@ -146,13 +145,18 @@ const withMultiRun = (node: ScopeNode, hostTaskRuns: IterationParent["taskRunLis
 function chainResolver(root: LoopRoot, fetchIteration: LogTargetDeps["fetchIteration"], cache: ChainCache) {
     const fetchOnce = (id: string) => {
         if (!cache.fetched.has(id)) {
-            const pending = fetchIteration(id)
+            const lastKnown = cache.unsettledHosts.get(id)
+            const fetched = fetchIteration(id)
+            const pending = lastKnown ? fetched.catch(() => lastKnown) : fetched
             cache.fetched.set(id, pending)
             pending.then(
                 (node) => {
-                    if (node?.state?.current && !State.isTerminated(node.state.current)) cache.running.add(id)
+                    if (node?.state?.current && !State.isTerminated(node.state.current)) cache.unsettledHosts.set(id, node)
+                    else cache.unsettledHosts.delete(id)
                 },
-                () => cache.fetched.delete(id),
+                () => {
+                    if (cache.fetched.get(id) === pending) cache.fetched.delete(id)
+                },
             )
         }
         return cache.fetched.get(id)!
@@ -254,7 +258,7 @@ async function collectBatch(
 ) {
     const limited = budgeted(deps, options.maxRequests ?? MAX_COLLECTION_REQUESTS)
     const cache = options.cache ?? createChainCache()
-    forgetRunningHosts(cache)
+    forgetUnsettledHosts(cache)
     const offset = options.offset ?? 0
     const ids = new Set(seed)
     const kept: ScopeNode[][] = []

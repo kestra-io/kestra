@@ -256,6 +256,21 @@ describe("multi-run loops", () => {
         expect(second.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, true])
         expect(deps.fetchIteration).toHaveBeenCalledTimes(2)
     })
+
+    it("shouldKeepTheLastKnownRunsWhenARunningParentRefetchFails", async () => {
+        const deps = depsFor([nestedFailure("f13", 12)])
+        deps.fetchIteration
+            .mockResolvedValueOnce({...customers(12)["customer-13"], state: {current: "RUNNING"}, taskRunList: runs("per_invoice", 2)})
+            .mockRejectedValueOnce(new Error("Service unavailable"))
+        const cache = createChainCache()
+        const rootRun = {...root, taskRunList: runs("per_customer", 1)}
+
+        await collectFailedTargets(rootRun, deps, {cache})
+        const refreshed = await collectFailedTargets(rootRun, deps, {cache})
+
+        expect(refreshed.chains["f13"].map((node) => node.multiRun)).toEqual([undefined, true])
+        expect(deps.fetchIteration).toHaveBeenCalledTimes(2)
+    })
 })
 
 describe("collectScopedTargets", () => {

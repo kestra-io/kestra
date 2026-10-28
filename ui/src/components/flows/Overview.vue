@@ -29,7 +29,7 @@
     onMounted(() => {
         if (flow.value?.id) {
             executionsStore
-                .findExecutions({"filters[namespace][EQUALS]": flow.value.namespace, "filters[flowId][EQUALS]": flow.value.id})
+                .findExecutions({"filters[namespace][EQUALS]": flow.value.namespace, "filters[flowId][EQUALS]": flow.value.id, size: 1, commit: false})
                 .then((r) => {
                     total.value = r.total ?? 0;
                     loaded.value = true;

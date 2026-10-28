@@ -37,6 +37,7 @@
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
     import InputsForm from "../../../../../components/inputs/InputsForm.vue"
     import {inputsToFormData} from "../../../../../utils/submitTask"
+    import {flattenInputs} from "../../../../../utils/inputs"
     import {Execution, InputMetaData, useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../../../../utils/toast"
@@ -101,7 +102,7 @@
                     return
                 }
 
-                const formData = inputsToFormData(inputsList.value, inputs.value)
+                const formData = inputsToFormData(flattenInputs(inputsList.value), inputs.value)
                 resume(formData)
             })
         }

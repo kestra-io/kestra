@@ -610,6 +610,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "未开始"
       }
     },
     "show task logs": "显示任务日志",

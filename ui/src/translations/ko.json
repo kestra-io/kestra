@@ -610,6 +610,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "시작되지 않음"
       }
     },
     "show task logs": "Task Logs 보기",

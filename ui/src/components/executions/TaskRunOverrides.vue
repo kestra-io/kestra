@@ -1,7 +1,7 @@
 <template>
     <KsPopover
         trigger="hover"
-        placement="bottom"
+        placement="bottom-end"
         width="max-content"
         :title="$t('replayOverrides.recorded_title')"
         @show="load"

@@ -1156,6 +1156,8 @@ class ExecutionControllerRunnerTest {
         assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
         TaskRun adjust = replay.findTaskRunsByTaskId("adjust").getFirst();
         assertThat(adjust.getOverrides().keys()).containsExactly("outputs.fetch.values.code");
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/executions/" + replay.getId()), String.class))
+            .contains("\"keys\":[\"outputs.fetch.values.code\"]");
         assertThat(
             client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), adjust.getId())),

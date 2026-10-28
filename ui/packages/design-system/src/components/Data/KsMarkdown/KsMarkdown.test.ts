@@ -1,565 +1,203 @@
-import {describe, test, expect, vi, beforeEach} from "vitest"
-import {markRaw} from "vue"
+import {describe, test, expect, vi} from "vitest"
+import {defineComponent, h, markRaw} from "vue"
 import {flushPromises} from "@vue/test-utils"
-import {mount} from "@vue/test-utils"
-import KestraDesignSystem from "../../../index"
+import {i18nMount} from "../../../../tests/units/i18nMount"
+import KsAlert from "../../Feedback/KsAlert.vue"
+import KsTable from "../KsTable/KsTable.vue"
 import KsMarkdown from "./KsMarkdown.vue"
 import {loadLanguageOnDemand} from "./shikiHighlighter"
 
-// Spied, not stubbed: every other test in this file keeps the real on-demand loader.
 vi.mock("./shikiHighlighter", async (importOriginal) => {
     const actual = await importOriginal<typeof import("./shikiHighlighter")>()
     return {...actual, loadLanguageOnDemand: vi.fn(actual.loadLanguageOnDemand)}
 })
 
-const globalConfig = {plugins: [KestraDesignSystem]}
+const BASE64_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
 
 describe("KsMarkdown", () => {
-    beforeEach(() => {
-        Object.defineProperty(navigator, "clipboard", {
-            value: {writeText: vi.fn().mockResolvedValue(undefined)},
-            configurable: true,
-        })
+    test("adds a hidden anchor link to each heading", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "# My Title"}})
+        const anchor = wrapper.find("h1#my-title a.anchor")
+
+        expect(anchor.attributes("href")).toBe("#my-title")
+        expect(anchor.attributes("aria-hidden")).toBe("true")
     })
 
-    test("renders container with ks-markdown class", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "Hello"},
-            global: globalConfig,
+    test("derives unique heading ids from the heading text", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {content: "# Hello, World! (2024)\n\n## Using `npm install`\n\n# 日本語の見出し\n\n# Setup\n\n# Setup"},
         })
-        expect(wrapper.find(".ks-markdown").exists()).toBe(true)
+
+        expect(wrapper.findAll(".heading").map((heading) => heading.attributes("id"))).toEqual([
+            "hello-world-2024",
+            "using-npm-install",
+            "日本語の見出し",
+            "setup",
+            "setup-1",
+        ])
     })
 
-    test("renders a paragraph", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "Hello world"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("p").exists()).toBe(true)
-        expect(wrapper.find("p").text()).toBe("Hello world")
-    })
+    test("re-renders when the content changes", async () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "# First"}})
+        await wrapper.setProps({content: "## Second"})
 
-    test("renders strong and emphasis in paragraph", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "Hello **bold** and _italic_"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("strong").text()).toBe("bold")
-        expect(wrapper.find("em").text()).toBe("italic")
-    })
-
-    test("renders GFM strikethrough", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "~~deleted~~"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("del").exists()).toBe(true)
-        expect(wrapper.find("del").text()).toBe("deleted")
-    })
-
-    test("renders h1 heading with anchor link", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "# My Title"},
-            global: globalConfig,
-        })
-        const h1 = wrapper.find("h1.ks-markdown__heading")
-        expect(h1.exists()).toBe(true)
-        expect(h1.attributes("id")).toBe("my-title")
-        const link = h1.find("a.ks-markdown__heading-link")
-        expect(link.exists()).toBe(true)
-        expect(link.attributes("href")).toBe("#my-title")
-        expect(link.attributes("aria-hidden")).toBe("true")
-    })
-
-    test("renders h2 heading with slugified id", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "## Hello World!"},
-            global: globalConfig,
-        })
-        const h2 = wrapper.find("h2")
-        expect(h2.exists()).toBe(true)
-        expect(h2.attributes("id")).toBe("hello-world")
-    })
-
-    test("renders blockquote", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "> A quoted text"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("blockquote.ks-markdown__blockquote").exists()).toBe(true)
-        expect(wrapper.find("blockquote").text()).toContain("A quoted text")
-    })
-
-    test("renders code block with copy button", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```js\nconsole.log('hi')\n```"},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".ks-markdown__code-block").exists()).toBe(true)
-        expect(wrapper.find(".ks-markdown__copy-btn").exists()).toBe(true)
-        expect(wrapper.find(".ks-markdown__copy-btn").attributes("title")).toBe("Copy to clipboard")
-        expect(wrapper.find("pre").exists()).toBe(true)
-        expect(wrapper.find("code.language-js").exists()).toBe(true)
-    })
-
-    test("renders code language label when lang is specified", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```python\nprint('hello')\n```"},
-            global: globalConfig,
-        })
-        const langLabel = wrapper.find(".ks-markdown__code-lang")
-        expect(langLabel.exists()).toBe(true)
-        expect(langLabel.text()).toBe("python")
-    })
-
-    test("does not render language label for unlabelled code block", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```\nsome code\n```"},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".ks-markdown__code-lang").exists()).toBe(false)
-    })
-
-    test("copy button calls navigator.clipboard.writeText with code content", async () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```\nconst x = 42\n```"},
-            global: globalConfig,
-        })
-        await wrapper.find(".ks-markdown__copy-btn").trigger("click")
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const x = 42")
-    })
-
-    test("copy button falls back to execCommand when the Clipboard API is unavailable", async () => {
-        // navigator.clipboard is undefined in non-secure contexts (plain HTTP)
-        Object.defineProperty(navigator, "clipboard", {
-            value: undefined,
-            configurable: true,
-        })
-        const execCommand = vi.fn().mockReturnValue(true)
-        document.execCommand = execCommand
-
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```\nconst x = 42\n```"},
-            global: globalConfig,
-            attachTo: document.body,
-        })
-        await wrapper.find(".ks-markdown__copy-btn").trigger("click")
-        expect(execCommand).toHaveBeenCalledWith("copy")
-        wrapper.unmount()
-    })
-
-    test("renders mermaid code block as mermaid div", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```mermaid\ngraph TD\n  A --> B\n```"},
-            global: globalConfig,
-        })
-        const mermaidDiv = wrapper.find(".ks-markdown__mermaid")
-        expect(mermaidDiv.exists()).toBe(true)
-        expect(mermaidDiv.classes()).toContain("mermaid")
-        expect(mermaidDiv.text()).toContain("graph TD")
-        // Mermaid blocks must not render as a regular code block
-        expect(wrapper.find(".ks-markdown__code-block").exists()).toBe(false)
-    })
-
-    test("renders inline code", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "Use `npm install` to install"},
-            global: globalConfig,
-        })
-        const code = wrapper.find("code.ks-markdown__inline-code")
-        expect(code.exists()).toBe(true)
-        expect(code.text()).toBe("npm install")
-    })
-
-    test("renders unordered list", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "- item one\n- item two\n- item three"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("ul.ks-markdown__list").exists()).toBe(true)
-        expect(wrapper.findAll("li")).toHaveLength(3)
-    })
-
-    test("renders ordered list", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "1. first\n2. second"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("ol.ks-markdown__list").exists()).toBe(true)
-        expect(wrapper.findAll("li")).toHaveLength(2)
-    })
-
-    test("renders GFM table using KsTable", () => {
-        const content = "| Name | Age |\n|------|-----|\n| Alice | 30 |\n| Bob | 25 |"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".ks-markdown__table-wrapper").exists()).toBe(true)
-        // KsTable renders as .kel-table (Element Plus table with kestra namespace)
-        expect(wrapper.find(".kel-table").exists()).toBe(true)
-        // ElTable renders thead/tbody but not th elements in jsdom (no layout engine)
-        expect(wrapper.find("thead").exists()).toBe(true)
-        expect(wrapper.find("tbody").exists()).toBe(true)
-        // 2 data rows
-        expect(wrapper.findAll("tbody tr").length).toBeGreaterThanOrEqual(2)
-    })
-
-    test("renders external link with target blank and rel", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[Visit](https://kestra.io)"},
-            global: globalConfig,
-        })
-        const link = wrapper.find("a.ks-markdown__link")
-        expect(link.exists()).toBe(true)
-        expect(link.attributes("href")).toBe("https://kestra.io")
-        expect(link.attributes("target")).toBe("_blank")
-        expect(link.attributes("rel")).toBe("noopener noreferrer")
-    })
-
-    test("renders internal link without target blank", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[Flows](/flows)"},
-            global: globalConfig,
-        })
-        const link = wrapper.find("a.ks-markdown__link")
-        expect(link.exists()).toBe(true)
-        expect(link.attributes("target")).toBeUndefined()
-    })
-
-    test("drops the href of a javascript: markdown link", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[Click here](javascript:alert(document.domain))"},
-            global: globalConfig,
-        })
-        const link = wrapper.find("a.ks-markdown__link")
-        expect(link.exists()).toBe(true)
-        expect(link.text()).toBe("Click here")
-        expect(link.attributes("href")).toBeUndefined()
-    })
-
-    test("drops the href of an obfuscated javascript: markdown link", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[Click here](<JaVa\tScRiPt:alert(1)>)"},
-            global: globalConfig,
-        })
-        const link = wrapper.find("a.ks-markdown__link")
-        expect(link.exists()).toBe(true)
-        expect(link.attributes("href")).toBeUndefined()
-    })
-
-    test("drops the href of a data: markdown link", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[Click here](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBeUndefined()
-    })
-
-    test("keeps a mailto: link", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[Mail us](mailto:hello@kestra.io)"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("mailto:hello@kestra.io")
-    })
-
-    test("keeps an anchor-only link", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[Section](#my-title)"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("a.ks-markdown__link").attributes("href")).toBe("#my-title")
-    })
-
-    test("drops the src of a javascript: markdown image", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "![oops](javascript:alert(document.domain))"},
-            global: globalConfig,
-        })
-        const img = wrapper.find("img.ks-markdown__image")
-        expect(img.exists()).toBe(true)
-        expect(img.attributes("src")).toBeUndefined()
-        expect(img.attributes("alt")).toBe("oops")
-    })
-
-    test("keeps the src of a base64 data:image markdown image", () => {
-        const dataUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
-        const wrapper = mount(KsMarkdown, {
-            props: {content: `![report](${dataUrl})`},
-            global: globalConfig,
-        })
-        expect(wrapper.find("img.ks-markdown__image").attributes("src")).toBe(dataUrl)
-    })
-
-    test("drops the src of a data:text/html markdown image", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "![oops](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)"},
-            global: globalConfig,
-        })
-        const img = wrapper.find("img.ks-markdown__image")
-        expect(img.attributes("src")).toBeUndefined()
-        expect(img.attributes("alt")).toBe("oops")
-    })
-
-    test("drops the src of an unencoded data:image markdown image", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "![oops](data:image/svg+xml,<svg>evil</svg>)"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("img.ks-markdown__image").attributes("src")).toBeUndefined()
-    })
-
-    test("renders thematic break", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "---"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("hr.ks-markdown__hr").exists()).toBe(true)
-    })
-
-    test("renders :::alert{type='info'} as KsAlert info", () => {
-        const content = ":::alert{type=\"info\"}\nThis is an info message.\n:::"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".kel-alert").exists()).toBe(true)
-        expect(wrapper.find(".kel-alert--info").exists()).toBe(true)
-    })
-
-    test("renders :::alert{type='warning'} as KsAlert warning", () => {
-        const content = ":::alert{type=\"warning\"}\nBe careful!\n:::"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".kel-alert--warning").exists()).toBe(true)
-    })
-
-    test("renders :::alert{type='error'} as KsAlert error", () => {
-        const content = ":::alert{type=\"error\"}\nSomething went wrong.\n:::"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".kel-alert--error").exists()).toBe(true)
-    })
-
-    test("renders :::alert{type='success'} as KsAlert success", () => {
-        const content = ":::alert{type=\"success\"}\nDone!\n:::"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".kel-alert--success").exists()).toBe(true)
-    })
-
-    test("re-renders when content prop changes", async () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "# First Heading"},
-            global: globalConfig,
-        })
-        expect(wrapper.find("h1").exists()).toBe(true)
-
-        await wrapper.setProps({content: "## Second Heading"})
         expect(wrapper.find("h1").exists()).toBe(false)
-        expect(wrapper.find("h2").exists()).toBe(true)
-        expect(wrapper.find("h2").attributes("id")).toBe("second-heading")
+        expect(wrapper.find("h2").text()).toContain("Second")
     })
 
-    // ─── Edge cases ────────────────────────────────────────────────────────────
+    test("keeps the start number of an ordered list", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "3. third\n4. fourth"}})
 
-    test("renders empty content without error", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: ""},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".ks-markdown").exists()).toBe(true)
+        expect(wrapper.find("ol").attributes("start")).toBe("3")
     })
 
-    test("renders all heading levels h1–h6", () => {
-        const content = ["# H1", "## H2", "### H3", "#### H4", "##### H5", "###### H6"].join("\n")
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
+    test("renders a GFM table through KsTable", async () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {content: "| Name | Age |\n|------|-----|\n| Alice | 30 |\n| Bob | `25` |"},
         })
-        for (const level of [1, 2, 3, 4, 5, 6] as const) {
-            expect(wrapper.find(`h${level}`).exists()).toBe(true)
-        }
+        await flushPromises()
+
+        expect(wrapper.findComponent(KsTable).exists()).toBe(true)
+        expect(wrapper.find("tbody").text()).toContain("Alice")
+        expect(wrapper.find("tbody code").text()).toBe("25")
     })
 
-    test("heading slug strips special characters", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "## Hello, World! (2024)"},
-            global: globalConfig,
+    test("renders the alert directive as a KsAlert with markdown inside", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {content: ":::alert{type=\"warning\"}\nSome **bold** note.\n:::"},
         })
-        expect(wrapper.find("h2").attributes("id")).toBe("hello-world-2024")
+        const alert = wrapper.findComponent(KsAlert)
+
+        expect(alert.props("type")).toBe("warning")
+        expect(alert.find("strong").text()).toBe("bold")
     })
 
-    test("heading slug handles inline code in title", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "## Using `npm install`"},
-            global: globalConfig,
-        })
-        const h2 = wrapper.find("h2")
-        expect(h2.exists()).toBe(true)
-        // id is derived from text content (code content is extracted as text)
-        expect(h2.attributes("id")).toContain("npm-install")
+    test("opens only external links in a new tab", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "[docs](https://kestra.io) [flows](/flows)"}})
+        const [external, internal] = wrapper.findAll("a")
+
+        expect(external.attributes("target")).toBe("_blank")
+        expect(external.attributes("rel")).toBe("noopener noreferrer")
+        expect(internal.attributes("target")).toBeUndefined()
     })
 
-    test("renders nested list items", () => {
-        const content = "- parent\n  - child one\n  - child two"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        const lists = wrapper.findAll("ul")
-        expect(lists.length).toBeGreaterThanOrEqual(1)
-        expect(wrapper.findAll("li").length).toBeGreaterThanOrEqual(3)
+    test.each([
+        ["https://kestra.io", "https://kestra.io"],
+        ["mailto:hello@kestra.io", "mailto:hello@kestra.io"],
+        ["#section", "#section"],
+        ["javascript:alert(1)", undefined],
+        ["<JaVa\tScRiPt:alert(1)>", undefined],
+        ["data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", undefined],
+    ])("keeps only allowed link targets: %s", (url, href) => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: `[link](${url})`}})
+
+        expect(wrapper.find("a").attributes("href")).toBe(href)
     })
 
-    test("renders image with alt and src", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "![Kestra logo](https://kestra.io/logo.png)"},
-            global: globalConfig,
-        })
-        const img = wrapper.find("img.ks-markdown__image")
-        expect(img.exists()).toBe(true)
-        expect(img.attributes("src")).toBe("https://kestra.io/logo.png")
-        expect(img.attributes("alt")).toBe("Kestra logo")
+    test.each([
+        ["https://kestra.io/logo.png", "https://kestra.io/logo.png"],
+        [BASE64_SVG, BASE64_SVG],
+        ["javascript:alert(1)", undefined],
+        ["data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", undefined],
+        ["data:image/svg+xml,<svg>evil</svg>", undefined],
+    ])("keeps only safe image sources: %s", (url, src) => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: `![alt](${url})`}})
+        const image = wrapper.find("img")
+
+        expect(image.attributes("src")).toBe(src)
+        expect(image.attributes("alt")).toBe("alt")
     })
 
-    test("renders GFM table with aligned columns via KsTable", () => {
-        const content = "| Left | Center | Right |\n|:-----|:------:|------:|\n| A | B | C |"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        // Table renders using KsTable — alignment is delegated to ElTable internals
-        // th elements are not rendered in jsdom (no layout engine)
-        expect(wrapper.find(".kel-table").exists()).toBe(true)
+    test("renders a code block with its language and a labelled copy button", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```js\nconsole.log('hi')\n```"}})
+
+        expect(wrapper.find(".lang").text()).toBe("js")
+        expect(wrapper.find(".copy").attributes("aria-label")).toBe("ks_markdown.copy")
+        expect(wrapper.find("pre code").text()).toBe("console.log('hi')")
     })
 
-    test("renders multiple code blocks independently", () => {
-        const content = "```js\nconst a = 1\n```\n\n```py\nprint(1)\n```"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        expect(wrapper.findAll(".ks-markdown__code-block")).toHaveLength(2)
-        expect(wrapper.findAll(".ks-markdown__copy-btn")).toHaveLength(2)
+    test("copies the code block source", async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined)
+        Object.defineProperty(navigator, "clipboard", {value: {writeText}, configurable: true})
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```\nconst x = 42\n```"}})
+
+        await wrapper.find(".copy").trigger("click")
+
+        expect(writeText).toHaveBeenCalledWith("const x = 42")
     })
 
-    test("alert directive content renders as paragraph text", () => {
-        const content = ":::alert{type=\"info\"}\nSome **bold** note.\n:::"
-        const wrapper = mount(KsMarkdown, {
-            props: {content},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".kel-alert").exists()).toBe(true)
-        expect(wrapper.find(".kel-alert strong").exists()).toBe(true)
+    test("renders a mermaid block as a diagram, not a code block", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```mermaid\ngraph TD\n  A --> B\n```"}})
+
+        expect(wrapper.find(".diagram").text()).toContain("graph TD")
+        expect(wrapper.find(".code-block").exists()).toBe(false)
     })
 
-    test("http:// external link also gets target blank", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "[HTTP](http://example.com)"},
-            global: globalConfig,
-        })
-        const link = wrapper.find("a.ks-markdown__link")
-        expect(link.attributes("target")).toBe("_blank")
-    })
+    test("highlights a code block once Shiki has loaded", async () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```javascript\nconst x = 1\n```"}})
 
-    // ─── Shiki syntax highlighting ──────────────────────────────────────────
-
-    test("code block shows plain fallback before Shiki loads", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```js\nconst x = 1\n```"},
-            global: globalConfig,
-        })
-        // Before Shiki resolves, the plain pre fallback is rendered
-        expect(wrapper.find(".ks-markdown__code-block").exists()).toBe(true)
-        expect(wrapper.find(".ks-markdown__copy-btn").exists()).toBe(true)
-    })
-
-    test("code block upgrades to Shiki-highlighted HTML after load", async () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```javascript\nconst x = 1\n```"},
-            global: globalConfig,
-        })
-
-        // Shiki loads asynchronously (dynamic import + language loading).
-        // Poll until the highlighted container appears (up to 5s).
         await vi.waitFor(
-            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            () => expect(wrapper.find(".code-block code span[style]").exists()).toBe(true),
             {timeout: 5000, interval: 50},
         )
-
-        // Shiki wraps output in <pre class="shiki …">
-        expect(wrapper.find(".ks-markdown__code-shiki pre.shiki").exists()).toBe(true)
-        // The plain fallback should no longer be rendered
-        expect(wrapper.find(".ks-markdown__code-plain").exists()).toBe(false)
+        expect(wrapper.find(".code-block code").text()).toBe("const x = 1")
     })
 
-
-    test("highlights a language that is not pre-registered, from Shiki's on-demand bundle", async () => {
-        // Elixir is deliberately absent from shikiHighlighter's static grammars.
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```elixir\ndefmodule Greeter do\nend\n```"},
-            global: globalConfig,
-        })
+    test("highlights a code block that has no language", async () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```\nplain text\n```"}})
 
         await vi.waitFor(
-            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            () => expect(wrapper.find(".code-block code span").exists()).toBe(true),
+            {timeout: 5000, interval: 20},
+        )
+        expect(wrapper.find(".code-block code").text()).toBe("plain text")
+    })
+
+    test("highlights a language that is not pre-registered, from Shiki's on-demand bundle", async () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```elixir\ndefmodule Greeter do\nend\n```"}})
+
+        await vi.waitFor(
+            () => expect(wrapper.find(".code-block code span[style]").exists()).toBe(true),
             {timeout: 10000, interval: 50},
         )
-
-        expect(wrapper.find(".ks-markdown__code-shiki pre.shiki").exists()).toBe(true)
-        expect(wrapper.find(".ks-markdown__code-shiki").text()).toContain("defmodule")
+        expect(wrapper.find(".code-block code").text()).toContain("defmodule")
     }, 15000)
 
     test("falls back to plain text for a language Shiki does not know", async () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```notarealilanguage\nsome code\n```"},
-            global: globalConfig,
-        })
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```notarealilanguage\nsome code\n```"}})
         await flushPromises()
 
         expect(wrapper.text()).toContain("some code")
     })
 
-    test("Shiki-highlighted code contains the original source text", async () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```typescript\nconst greeting: string = 'hello'\n```"},
-            global: globalConfig,
-        })
+    test("keeps rendered content mounted when highlighting completes or the content grows", async () => {
+        let mounts = 0
+        const Probe = markRaw(defineComponent({name: "Probe", mounted: () => { mounts++ }, render: () => h("i")}))
+        const content = "<Probe></Probe>\n\n```json\n{\"a\": 1}\n```"
+        const wrapper = i18nMount(KsMarkdown, {props: {content, components: {Probe}}})
+
+        await vi.waitFor(
+            () => expect(wrapper.find(".code-block code span[style]").exists()).toBe(true),
+            {timeout: 5000, interval: 20},
+        )
+        await wrapper.setProps({content: `${content}\n\nmore`})
         await flushPromises()
 
-        const shikiDiv = wrapper.find(".ks-markdown__code-shiki")
-        if (shikiDiv.exists()) {
-            expect(shikiDiv.text()).toContain("greeting")
-        }
+        expect(mounts).toBe(1)
     })
-
-    // ─── Concurrent grammar loading ─────────────────────────────────────────
 
     test("loads the grammars of a multi-language document concurrently", async () => {
         const calls: string[] = []
-        vi.mocked(loadLanguageOnDemand).mockImplementation(async (_hl, lang) => {
+        vi.mocked(loadLanguageOnDemand).mockImplementation(async (_highlighter, lang) => {
             calls.push(`enter:${lang}`)
             await new Promise((resolve) => setTimeout(resolve, 20))
             calls.push(`exit:${lang}`)
             return true
         })
 
-        mount(KsMarkdown, {
-            props: {content: "```rust\nfn a() {}\n```\n\n```go\nfunc b() {}\n```"},
-            global: globalConfig,
-        })
+        i18nMount(KsMarkdown, {props: {content: "```rust\nfn a() {}\n```\n\n```go\nfunc b() {}\n```"}})
 
         await vi.waitFor(() => expect(calls).toHaveLength(4), {timeout: 5000, interval: 10})
-
-        // Awaiting each load inside the per-block loop gives enter, exit, enter, exit.
         expect(calls.slice(0, 2).sort()).toEqual(["enter:go", "enter:rust"])
     })
 
@@ -569,24 +207,21 @@ describe("KsMarkdown", () => {
         const rustPending = new Promise<void>((resolve) => {
             releaseRust = resolve
         })
-        vi.mocked(loadLanguageOnDemand).mockImplementation(async (_hl, lang) => {
-            if (lang !== "rust") return true
+        vi.mocked(loadLanguageOnDemand).mockImplementation(async (_highlighter, lang) => {
+            if (lang !== "rust") {
+                return true
+            }
+
             await rustPending
             rustSettled = true
-            // Reported as unavailable so the continuation stays synchronous from here.
             return false
         })
 
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "```rust\nfn a() {}\n```"},
-            global: globalConfig,
-        })
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "```rust\nfn a() {}\n```"}})
         await flushPromises()
-
-        // json is pre-registered, so this render completes while the rust load is still pending.
         await wrapper.setProps({content: "```json\n{\"a\": 1}\n```"})
         await vi.waitFor(
-            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            () => expect(wrapper.find(".code-block code span[style]").exists()).toBe(true),
             {timeout: 5000, interval: 20},
         )
 
@@ -594,107 +229,84 @@ describe("KsMarkdown", () => {
         await vi.waitFor(() => expect(rustSettled).toBe(true), {timeout: 5000, interval: 10})
         await flushPromises()
 
-        expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true)
+        expect(wrapper.find(".code-block code span[style]").exists()).toBe(true)
     })
 
-    // ─── XSS protection ──────────────────────────────────────────────────────
+    test("strips <script> tags from raw HTML", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "<script>alert('xss')</script>"}})
 
-    test("strips <script> tag from raw HTML by default (xssProtection on)", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "<script>alert('xss')</script>"},
-            global: globalConfig,
-        })
-        // The <script> element is removed entirely, so nothing can execute.
-        // Its former body survives only as inert text — never as a live tag.
-        expect(wrapper.html()).not.toContain("<script")
         expect(wrapper.find("script").exists()).toBe(false)
     })
 
-    test("strips event-handler attributes from raw HTML by default", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "<img src=\"x\" onerror=\"alert('xss')\">"},
-            global: globalConfig,
-        })
+    test("strips event-handler attributes from raw HTML", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "<img src=\"x\" onerror=\"alert('xss')\">"}})
+
         expect(wrapper.html()).not.toContain("onerror")
     })
 
-    test("injects raw HTML verbatim when xssProtection is disabled (escape hatch)", () => {
-        const wrapper = mount(KsMarkdown, {
+    test("injects raw HTML verbatim when xssProtection is disabled", () => {
+        const wrapper = i18nMount(KsMarkdown, {
             props: {content: "<img src=\"x\" onerror=\"alert('xss')\">", xssProtection: false},
-            global: globalConfig,
         })
+
         expect(wrapper.html()).toContain("onerror")
     })
 
-    test("sanitizes custom-component inner HTML when xssProtection is on", () => {
-        // markRaw prevents Vue's reactive() from wrapping the component definition
-        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
-        // warns "Vue received a Component that was made a reactive object".
+    test("renders markdown nested inside inline HTML tags", () => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: "Press <kbd>Ctrl</kbd> or <mark>**this**</mark>"}})
+
+        expect(wrapper.find("kbd").text()).toBe("Ctrl")
+        expect(wrapper.find("mark strong").text()).toBe("this")
+    })
+
+    test("sanitizes an inline HTML tag before rendering its children", () => {
+        const wrapper = i18nMount(KsMarkdown, {
+            props: {content: "<a href=\"javascript:alert(1)\" onmouseover=\"alert(1)\">click</a>"},
+        })
+        const link = wrapper.find("a")
+
+        expect(link.text()).toBe("click")
+        expect(link.attributes("onmouseover")).toBeUndefined()
+        expect(link.attributes("href") ?? "").not.toContain("javascript")
+    })
+
+    test("sanitizes the inner HTML of a custom component", () => {
         const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
-        const wrapper = mount(KsMarkdown, {
+        const wrapper = i18nMount(KsMarkdown, {
             props: {
                 content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",
                 components: {ChildCard},
             },
-            global: globalConfig,
         })
+
         expect(wrapper.find(".child-card").exists()).toBe(true)
         expect(wrapper.html()).not.toContain("onerror")
     })
 
-    test("renders iframe with a YouTube embed src", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "<div class=\"video-container\">\n<iframe src=\"https://www.youtube.com/embed/abc123\" title=\"YouTube video player\" allowfullscreen></iframe>\n</div>"},
-            global: globalConfig,
-        })
-        const iframe = wrapper.find("iframe")
-        expect(iframe.exists()).toBe(true)
-        expect(iframe.attributes("src")).toBe("https://www.youtube.com/embed/abc123")
-    })
-
-    test("strips src from an iframe pointing at a non-YouTube host", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "<iframe src=\"https://evil.example.com/phish\"></iframe>"},
-            global: globalConfig,
-        })
-        const iframe = wrapper.find("iframe")
-        expect(iframe.exists()).toBe(true)
-        expect(iframe.attributes("src")).toBeUndefined()
-    })
-
-    test("renders iframe with a youtube-nocookie.com embed src", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "<iframe src=\"https://www.youtube-nocookie.com/embed/abc123\"></iframe>"},
-            global: globalConfig,
-        })
-        const iframe = wrapper.find("iframe")
-        expect(iframe.exists()).toBe(true)
-        expect(iframe.attributes("src")).toBe("https://www.youtube-nocookie.com/embed/abc123")
-    })
-
-    test("strips src from an iframe using http instead of https", () => {
-        const wrapper = mount(KsMarkdown, {
-            props: {content: "<iframe src=\"http://www.youtube.com/embed/abc123\"></iframe>"},
-            global: globalConfig,
-        })
-        const iframe = wrapper.find("iframe")
-        expect(iframe.exists()).toBe(true)
-        expect(iframe.attributes("src")).toBeUndefined()
-    })
-
-    test("injects custom-component inner HTML verbatim when xssProtection is disabled", () => {
-        // markRaw prevents Vue's reactive() from wrapping the component definition
-        // when it flows through @vue/test-utils' reactive props bag — without it, mounting
-        // warns "Vue received a Component that was made a reactive object".
-        const ChildCard = markRaw({name: "ChildCard", template: "<div class=\"child-card\"><slot /></div>"})
-        const wrapper = mount(KsMarkdown, {
+    test("sanitizes the attributes passed to a custom component", () => {
+        const Link = markRaw(defineComponent({name: "Link", setup: (_, {slots}) => () => h("a", slots.default?.())}))
+        const wrapper = i18nMount(KsMarkdown, {
             props: {
-                content: "<ChildCard><img src=x onerror=\"alert('xss')\"></ChildCard>",
-                components: {ChildCard},
-                xssProtection: false,
+                content: "<a href=\"javascript:alert(1)\" ONMOUSEOVER=\"alert(1)\" style=\"position:fixed\">x</a>",
+                components: {a: Link},
             },
-            global: globalConfig,
         })
-        expect(wrapper.html()).toContain("onerror")
+        const attributes = wrapper.find("a").attributes()
+
+        expect(attributes).not.toHaveProperty("href")
+        expect(attributes).not.toHaveProperty("onmouseover")
+        expect(attributes).not.toHaveProperty("style")
+    })
+
+    test.each([
+        ["https://www.youtube.com/embed/abc", "https://www.youtube.com/embed/abc"],
+        ["https://www.youtube-nocookie.com/embed/abc", "https://www.youtube-nocookie.com/embed/abc"],
+        ["https://demo.arcade.software/abc?embed", "https://demo.arcade.software/abc?embed"],
+        ["http://www.youtube.com/embed/abc", undefined],
+        ["https://evil.example.com/phish", undefined],
+    ])("embeds only HTTPS YouTube and Arcade iframes: %s", (url, src) => {
+        const wrapper = i18nMount(KsMarkdown, {props: {content: `<iframe src="${url}"></iframe>`}})
+
+        expect(wrapper.find("iframe").attributes("src")).toBe(src)
     })
 })

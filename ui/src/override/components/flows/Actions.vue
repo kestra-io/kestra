@@ -27,7 +27,7 @@
         />
         <NavBarAction
             v-if="tab === 'logs' && hasLogs"
-            :icon="TrashCan"
+            :icon="Delete"
             :label="$t('delete logs')"
             @click="deleteLogs"
         />
@@ -72,7 +72,7 @@
             <NavBarAction
                 v-if="deleted"
                 type="primary"
-                :icon="BackupRestore"
+                :icon="Restore"
                 :label="$t('restore')"
                 @click="restoreFlow"
             />
@@ -95,8 +95,7 @@
     import {useFlowStore} from "../../../stores/flow"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
     import Pencil from "vue-material-design-icons/Pencil.vue"
-    import BackupRestore from "vue-material-design-icons/BackupRestore.vue"
-    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import Restore from "vue-material-design-icons/Restore.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"

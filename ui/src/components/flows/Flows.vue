@@ -65,7 +65,7 @@
                 <KsButton v-if="canRead" :icon="Download" @click="exportFlows()">
                     {{ $t("export") }}
                 </KsButton>
-                <KsButton v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
+                <KsButton v-if="canDelete" @click="deleteFlows" :icon="Delete">
                     {{ $t("delete") }}
                 </KsButton>
                 <KsButton
@@ -291,7 +291,7 @@
             large
         >
             <template #header>
-                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span">
+                <i18n-t v-if="selectedFlow?.id" keypath="execute the flow" tag="span" scope="global">
                     <template #id><code>{{ selectedFlow.id }}</code></template>
                 </i18n-t>
             </template>
@@ -326,7 +326,7 @@
     import Plus from "vue-material-design-icons/Plus.vue"
     import Upload from "vue-material-design-icons/Upload.vue"
     import Download from "vue-material-design-icons/Download.vue"
-    import TrashCan from "vue-material-design-icons/TrashCan.vue"
+    import Delete from "vue-material-design-icons/Delete.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue"
     import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
 
@@ -536,7 +536,7 @@
         if (!isPlainRowActivation(column, event)) return
 
         router.push({
-            name: route.name?.toString().replace("/list", "/update"),
+            name: "flows/update",
             params: {namespace: item.namespace, id: item.id, tenant: route.params.tenant},
         })
     }

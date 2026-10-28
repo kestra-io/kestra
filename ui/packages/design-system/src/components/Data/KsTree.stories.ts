@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
+import type {ConcreteComponent} from "vue"
 import KsTree from "./KsTree.vue"
 
 const TREE_DATA = [
@@ -24,7 +25,8 @@ const TREE_DATA = [
 
 const meta: Meta<typeof KsTree> = {
     title: "Components/Data/KsTree",
-    component: KsTree,
+    // A generic <script setup> component types as a bare function, which Storybook's component field does not accept.
+    component: KsTree as ConcreteComponent,
     tags: ["autodocs"],
     parameters: {
         docs: {description: {component: "KsTree is the Kestra design-system abstraction over `ElTree` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
@@ -36,18 +38,21 @@ type Story = StoryObj<typeof KsTree>
 export const Default: Story = {
     render: (args) => ({
         components: {KsTree},
-        setup() { return {args, TREE_DATA} },
+        setup() { return {args} },
         template: `
             <div style="padding:24px">
-                <ks-tree
-                    :data="TREE_DATA"
-                    :props="{label: 'label', children: 'children'}"
-                    default-expand-all
-                    v-bind="args"
-                />
+                <ks-tree v-bind="args" />
             </div>
         `,
     }),
+    args: {
+        data: TREE_DATA,
+        props: {label: "label", children: "children"},
+        nodeKey: "label",
+        defaultExpandAll: true,
+        draggable: false,
+        lazy: false,
+    },
 }
 
 /** Default expanded and checked keys */
@@ -79,6 +84,7 @@ export const DefaultExpandedAndChecked: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Draggable tree */
@@ -98,6 +104,7 @@ export const Draggable: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Empty slot – custom empty state */
@@ -116,6 +123,7 @@ export const EmptyState: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 export const WithCustomSlot: Story = {
@@ -137,4 +145,5 @@ export const WithCustomSlot: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

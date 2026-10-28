@@ -14,7 +14,7 @@
 
             <template #default>
                 <p>
-                    <i18n-t keypath="change state confirm" tag="span">
+                    <i18n-t keypath="change state confirm" tag="span" scope="global">
                         <template #task><code>{{ taskRun?.taskId ?? '' }}</code></template>
                         <template #id><code>{{ execution.id }}</code></template>
                     </i18n-t>
@@ -38,7 +38,7 @@
                     >
                         <template #default>
                             <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
-                            <i18n-t keypath="mark as" tag="span">
+                            <i18n-t keypath="mark as" tag="span" scope="global">
                                 <template #status><code>{{ item.code }}</code></template>
                             </i18n-t>
                         </template>

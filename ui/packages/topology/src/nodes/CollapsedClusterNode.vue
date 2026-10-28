@@ -20,6 +20,8 @@
         @showOutputs="emit(EVENTS.SHOW_OUTPUTS, $event)"
         @replayTask="emit(EVENTS.REPLAY_TASK, $event)"
         @addError="emit(EVENTS.ADD_ERROR, $event)"
+        @loopStep="emit(EVENTS.LOOP_STEP, $event)"
+        @loopScopeFailed="emit(EVENTS.LOOP_SCOPE_FAILED, $event)"
     >
         <template #lead>
             <span
@@ -32,6 +34,12 @@
                     <UnfoldMoreHorizontal class="button-icon" alt="Expand lane" />
                 </KsTooltip>
             </span>
+        </template>
+        <template #taskActions="taskActionProps">
+            <slot name="taskActions" v-bind="taskActionProps" />
+        </template>
+        <template #loopScope="loopScopeProps">
+            <slot name="loopScope" v-bind="loopScopeProps" />
         </template>
     </LaneHeader>
     <div v-else class="collapsed-cluster-node">
@@ -100,6 +108,8 @@
         EVENTS.SHOW_OUTPUTS,
         EVENTS.REPLAY_TASK,
         EVENTS.ADD_ERROR,
+        EVENTS.LOOP_STEP,
+        EVENTS.LOOP_SCOPE_FAILED,
     ])
 
     const expandable = computed(() => data?.expandable || false)

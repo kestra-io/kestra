@@ -15,18 +15,20 @@ type Story = StoryObj<typeof KsScrollbar>
 
 /** Basic usage – fixed height with vertical overflow */
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsScrollbar},
+        setup() { return {args} },
         template: `
             <div style="padding:24px">
-                <ks-scrollbar height="200px">
-                    <div v-for="i in 20" :key="i" style="padding:8px;border-bottom:1px solid #eee">
+                <ks-scrollbar v-bind="args">
+                    <div v-for="i in 20" :key="i" style="padding:8px;border-bottom:1px solid var(--ks-border-subtle)">
                         Item {{ i }}
                     </div>
                 </ks-scrollbar>
             </div>
         `,
     }),
+    args: {height: "200px", maxHeight: ""},
 }
 
 /** Horizontal scroll – content wider than container */
@@ -47,6 +49,7 @@ export const HorizontalScroll: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Max height – scrollbar only appears when content exceeds threshold */
@@ -72,6 +75,7 @@ export const MaxHeight: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }
 
 /** Manual scroll – programmatic scrollTo control */
@@ -98,4 +102,5 @@ export const ManualScroll: Story = {
             </div>
         `,
     }),
+    parameters: {controls: {disable: true}},
 }

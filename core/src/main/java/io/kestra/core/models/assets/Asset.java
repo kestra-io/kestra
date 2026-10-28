@@ -78,7 +78,13 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(max = 100)
-    @Schema(title = "The day-2 actions offered on this asset, each backing onto a flow.")
+    @Schema(
+        title = "The day-2 actions offered on this asset, each backing onto a flow.",
+        description = "Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. " +
+            "When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. " +
+            "When it is omitted, the stored actions are kept. " +
+            "It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API."
+    )
     private List<@Valid FlowAction> assetActions;
 
     @Nullable

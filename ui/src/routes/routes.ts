@@ -14,13 +14,14 @@ const routes: KestraRouteRecord[] = [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
-    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
+    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue"), meta: {docId: "ai-copilot"}},
 
     //Dashboards
     {
         name: "home",
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
+        meta: {docId: "dashboards"},
     },
 
     //Flows
@@ -30,7 +31,7 @@ const routes: KestraRouteRecord[] = [
         component: () => import("../components/flows/Flows.vue"),
     },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
-    {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
+    {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue"), meta: {docId: "flowEditor"}},
     FLOW_ROUTE,
 
     //Executions
@@ -90,11 +91,11 @@ const routes: KestraRouteRecord[] = [
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},
 
     //Settings
-    {name: "preferences", path: "/:tenant?/preferences", component: () => import("override/components/settings/Settings.vue")},
+    {name: "preferences", path: "/:tenant?/preferences", component: () => import("override/components/settings/Settings.vue"), meta: {docId: "settings"}},
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers/:tab?", component: () => import("../components/admin/triggers/Triggers.vue")},
-    {name: "admin/stats", path: "/:tenant?/admin/stats/:type?", component: () => import("override/components/admin/stats/Stats.vue")},
+    {name: "admin/stats", path: "/:tenant?/admin/stats/:type?", component: () => import("override/components/admin/stats/Stats.vue"), meta: {docId: "instance"}},
     {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
     {name: "admin/mcp-servers",        path: "/:tenant?/admin/mcp-servers",                         component: () => import("../components/admin/McpServerList.vue")},
     {name: "admin/mcp-servers/update", path: "/:tenant?/admin/mcp-servers/edit/:id/:tab?",            component: () => import("../components/admin/McpServer.vue")},
@@ -114,7 +115,8 @@ const routes: KestraRouteRecord[] = [
     {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("../components/demo/Dashboards.vue"), ossOnly: true},
     {name: "apps/list", path: "/:tenant?/apps", component: () => import("../components/demo/Apps.vue"), ossOnly: true},
     {name: "tests/list", path: "/:tenant?/tests", component: () => import("../components/demo/Tests.vue"), ossOnly: true},
-    {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue"), ossOnly: true},
+    {name: "assets/list", path: "/:tenant?/assets", component: () => import("../components/demo/Assets.vue"), meta: {docId: "asset"}, ossOnly: true},
+    {name: "credentials/list", path: "/:tenant?/credentials", component: () => import("../components/demo/Credentials.vue"), ossOnly: true},
     {name: "cases/list", path: "/:tenant?/cases", component: () => import("../components/demo/Cases.vue"), ossOnly: true},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: () => import("../components/demo/IAM.vue"), ossOnly: true},
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: () => import("../components/demo/Tenants.vue"), ossOnly: true},

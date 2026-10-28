@@ -6,6 +6,7 @@ import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useNamespaceBreadcrumb} from "../../../composables/useNamespaceBreadcrumb"
 import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../executionTabs"
+import {useExecutionArtifacts} from "./useExecutionArtifacts"
 import {isExecutionTabEnabled} from "override/components/executions/executionTabsExtension"
 
 export function useExecutionRoot() {
@@ -15,6 +16,7 @@ export function useExecutionRoot() {
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
 
+    const executionArtifacts = useExecutionArtifacts()
     const dependenciesCount = ref<number>()
     const previousExecutionId = ref<string>()
 
@@ -71,22 +73,28 @@ export function useExecutionRoot() {
     // by `<router-view>`; here we only build the bar metadata from their `meta`.
     const getBaseTabs = () => {
         const namespace = executionsStore.execution?.namespace
-        return EXECUTION_TAB_ROUTES.filter((tabRoute) => isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})).map((tabRoute) => {
-            const meta = tabRoute.meta ?? {}
-            const name = meta.tab as string
-            return {
-                name,
-                title: t(meta.title as string),
-                locked: meta.locked as boolean | undefined,
-                // Dependencies surfaces a live count and is disabled when there are none.
-                ...(name === "dependencies"
-                    ? {
-                        count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
-                        disabled: !dependenciesCount.value,
-                    }
-                    : {}),
-            }
-        })
+        return EXECUTION_TAB_ROUTES
+            .filter((tabRoute) =>
+                isExecutionTabEnabled(tabRoute.meta?.tab as string, {namespace})
+                && (tabRoute.meta?.tab !== "artifacts" || executionArtifacts.artifacts.value.length > 0))
+            .map((tabRoute) => {
+                const meta = tabRoute.meta ?? {}
+                const name = meta.tab as string
+                return {
+                    name,
+                    title: t(meta.title as string),
+                    locked: meta.locked as boolean | undefined,
+                    fullContainer: meta.fullContainer as boolean | undefined,
+                    ...(name === "artifacts" ? {count: executionArtifacts.artifacts.value.length} : {}),
+                    // Dependencies surfaces a live count and is disabled when there are none.
+                    ...(name === "dependencies"
+                        ? {
+                            count: (dependenciesCount.value ?? 0) > 0 ? dependenciesCount.value : undefined,
+                            disabled: !dependenciesCount.value,
+                        }
+                        : {}),
+                }
+            })
     }
 
     const tabs = computed(() => getBaseTabs())
@@ -127,6 +135,7 @@ export function useExecutionRoot() {
     }
 
     return {
+        executionArtifacts,
         tabs,
         ready,
         routeInfo,

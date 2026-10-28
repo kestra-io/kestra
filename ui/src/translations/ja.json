@@ -145,6 +145,7 @@
     "update": "更新",
     "confirmation": "確認",
     "toast confirm": "よろしいですか？",
+    "toast_message_column": "メッセージ",
     "common": {
       "back": "戻る",
       "openInNewTab": "新しいタブで開く"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
     "replayed": "実行がリプレイされました",
+    "reused_task_run": {
+      "label": "再利用",
+      "tooltip": "このExecutionでは再度実行されません。{date}に実行され、そのlogとoutputはその実行からのものです。"
+    },
     "replay the execution": "フロー{flowId}の実行{executionId}を再実行する",
     "prefill inputs": "自動入力",
     "current": "現在",
@@ -509,9 +514,68 @@
       "invalid": "グラフエラー",
       "invalid_description": "グラフの読み込み中にエラーが発生しました。ソースコードにエラーがないか確認してください。",
       "load_error": "トポロジーグラフを読み込めませんでした。もう一度お試しください。",
+      "expand_subflow_error": "サブFlowを展開できませんでした",
       "add-task": "Taskを追加",
       "add-trigger": "Triggerを追加",
-      "child-count": "task {count}個 | task {count}個"
+      "child-count": "task {count}個 | task {count}個",
+      "loop": {
+        "not-run": "未実行",
+        "pick-first": "先に {loop} を選択してください",
+        "picker-label": "{loop} のイテレーション",
+        "search-by-index": "インデックスで検索",
+        "all-iterations": "すべてのイテレーション",
+        "iteration-index": "インデックス {index}",
+        "iteration-value-index": "{value} · インデックス {index}",
+        "previous-iteration": "前のイテレーション",
+        "next-iteration": "次のイテレーション",
+        "previous-page": "前のページ",
+        "next-page": "次のページ",
+        "failed-group": "失敗 · {count}",
+        "other-group": "その他のイテレーション",
+        "matching": "一致",
+        "failure-forbidden": "このイテレーションにアクセスする権限がありません。",
+        "failure-not-found": "このイテレーションは存在しません。",
+        "failure-ambiguous": "このループはこの実行内で複数回実行されたため、イテレーションを区別できません。",
+        "failure-not-located": "失敗したイテレーションを特定できませんでした。",
+        "failure-unknown": "イテレーションを読み込めませんでした。",
+        "scope": "スコープ",
+        "whole-execution": "実行全体",
+        "clear-scopes": "スコープをクリア",
+        "jump-to-first-failure": "最初の失敗へ移動",
+        "loops-with-failures": "失敗のあるループ",
+        "task-runs": "{runs} 回の実行 | {runs} 回の実行",
+        "task-runs-failed": "{runs} 回の実行 · {failed} 件失敗 | {runs} 回の実行 · {failed} 件失敗",
+        "retry": "再試行",
+        "load-more": "さらに読み込む",
+        "retry-loading": "イテレーションの読み込みを再試行"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} 件中 {failed} 件が失敗",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} 件失敗 · {total} 件中 {notStarted} 件未開始",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} 件中 {done} 件完了",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} 件中 {done} 件完了 · {failed} 件失敗",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} 件のイテレーション | {total} 件のイテレーション",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task Logsを表示",
     "show task condition": "タスク条件を表示",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "リビジョン {revision}",
       "attempts": "{count} 回の試行 | {count} 回の試行",
-      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個"
+      "tasks": "task {completed}/{count} 個 | task {completed}/{count} 個",
+      "searchable_values": "検索可能な値",
+      "more_searchable_values": "+{count} 件の検索可能な値"
     },
     "execution_mobile": {
       "failed_task": "失敗した task",
@@ -541,11 +607,19 @@
     },
     "concurrency limits": "同時実行制限",
     "system overview": "システム概要",
+    "workspace": "ワークスペース",
+    "resources": "リソース",
     "usage": "使用",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "総実行時間（分単位）",
-    "last 48 hours": "過去48時間",
+    "task runs": "Task実行",
+    "task runs duration (in minutes)": "合計Task実行時間 (分)",
+    "last 24 hours": "過去24時間",
+    "last 7 days": "過去7日間",
+    "last 30 days": "過去30日間",
+    "since {date}": "{date}以降",
+    "usage period": "使用期間",
     "email": "メール",
     "password": "パスワード",
     "confirm password": "パスワードを確認",
@@ -560,11 +634,21 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "変数",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "このFlowのTaskはartifactを提供していません。",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "artifactなし | {count} artifact | {count} artifacts",
+      "tasks": "タスクなし | {count} タスク | {count} タスク",
+      "fullscreen": "全画面表示",
+      "exit_fullscreen": "フルスクリーンを終了"
+    },
     "variable_explorer": {
       "title": "入力/出力",
       "search_placeholder": "Key または value を検索...",
       "tasks_outputs": "Tasks outputs",
       "expression": "式",
+      "searchable": "検索可能",
       "tree": "ツリー",
       "raw_json": "生JSON",
       "select_prompt": "value を確認する変数を選択してください。",
@@ -934,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "ダッシュボードに戻る",
-    "copy all logs": "すべてのLogをコピー",
     "copy logs": "Logsをコピー",
     "fix_with_ai": "AIで修正",
     "download logs": "Logsをダウンロード",
@@ -1396,6 +1479,12 @@
           "third": "シークレットをロードするためにKestraインスタンスを再起動してください。"
         }
       },
+      "credentials": {
+        "label": "認証情報",
+        "header": "認証情報",
+        "title": "一度の認証を、すべてのtaskで再利用",
+        "message": "Kestra Enterprise Editionでは、サーバー間認証をクレデンシャルとして一度設定できます。これにより、アクセストークンはflowにハードコードされるのではなく、実行時に要求および更新されます。クレデンシャルはtenantまたはnamespaceレベルで作成でき、任意のtaskから参照できます。"
+      },
       "apps": {
         "title": "Kestraでカスタムアプリを構築する",
         "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
@@ -1474,6 +1563,10 @@
           "title": "秘密を安全に管理する方法",
           "message": "Kestra Enterprise Editionでは、namespaceレベルでシークレットを保存および制御できるため、リスクを最小限に抑え、各チームの認証情報が分離された状態を保てます。ネストされた階層により、親namespaceで認証情報を設定すると、すべての子namespaceに継承されます。専用のシークレットマネージャーと詳細なnamespaceレベルの権限設定のサポートにより、セキュリティとコンプライアンスがさらに強化されます。"
         },
+        "credentials": {
+          "title": "認証情報をこのnamespaceに限定する",
+          "message": "Kestra Enterprise Editionでは、namespaceレベルでクレデンシャルを設定できます。これにより、このnamespaceとその子namespaceのtaskは、アクセストークンをflowに保存するのではなく、実行時に要求および更新します。親namespaceで定義したクレデンシャルは、すべての子namespaceに継承されます。"
+        },
         "assets": {
           "title": "資産管理の集中化",
           "message": "Kestra Enterprise Editionでは、Assetsはワークフローがやり取りするリソースのライブインベントリを保持します。これらのリソースには、データベーステーブル、仮想マシン、ファイル、または使用する外部システムが含まれます。"
@@ -1485,6 +1578,11 @@
         "policies": {
           "title": "この namespace 全体にガバナンスルールを適用する",
           "message": "Kestra Enterprise Editionでは、ポリシーにより、このnamespaceとその子孫のすべてのflowに適用されるルールを定義できます。共有のデフォルト値の注入、プロパティ値の制限、プラグインのブロック、コンプライアンスlabelの要求などが可能になり、すべての変更はflowの作成者に完全に表示されます。"
+        },
+        "reusable-inputs": {
+          "label": "再利用可能な入力",
+          "title": "inputを一度定義して、どこでも再利用",
+          "message": "Kestra Enterprise Editionでは、再利用可能なinputを使うと、型付きinputの名前付きグループをnamespaceレベルで一度定義し、任意のflowから参照できます。親namespaceのセットは子namespaceでも利用できるため、チームはflowごとに繰り返すことなく同じinput定義を共有できます。"
         },
         "history": {
           "title": "一箇所でリビジョン履歴を管理",
@@ -1742,7 +1840,18 @@
       "compact": "デフォルトビュー",
       "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示",
       "fullscreen": "Logsを全画面表示",
-      "exit_fullscreen": "フルスクリーンを終了"
+      "exit_fullscreen": "フルスクリーンを終了",
+      "loop": {
+        "this-execution": "この実行",
+        "with-iterations": "ループのイテレーションを含む",
+        "batch-range": "失敗したイテレーション {total} の {from}～{to}",
+        "empty-title": "一致するログがありません",
+        "empty-description": "この実行および失敗したループのイテレーションに、選択したレベルに一致するログはありません。より多く表示するにはレベルを下げてください。",
+        "scope-to": "グラフとログを{scope}に絞り込む",
+        "show-in-overview": "概要で表示",
+        "show-in-overview-for": "{scope}を概要で表示",
+        "mode-label": "ログのソース"
+      }
     },
     "execution_deletion": {
       "logs": "ログを削除",
@@ -2113,11 +2222,8 @@
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
       "viewAll": "すべて表示",
-      "export": "エクスポート",
-      "exportEmpty": "このチャートにエクスポートするデータはありません。",
       "exportTo": {
-        "csv": "CSVにエクスポート",
-        "ion": "ION にエクスポート"
+        "csv": "CSVにエクスポート"
       },
       "ignoredFilters": "{filters} フィルターはこのチャートには適用されません。 | {filters} フィルターはこのチャートには適用されません。",
       "show_all_statuses": "すべてのステータスを表示",

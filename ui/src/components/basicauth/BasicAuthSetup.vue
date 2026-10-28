@@ -414,4 +414,4 @@
     }
 </script>
 
-<style src="./setup.scss" scoped lang="scss" />
+<style src="./setup.css" scoped />

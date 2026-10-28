@@ -33,7 +33,8 @@
             <GlobalSearch class="trigger-flow-guided-step" />
         </template>
         <template #actions>
-            <div id="topnav-actions-slot" class="d-flex gap-2 align-items-center" />
+            <div id="topnav-actions-slot" />
+            <NavBarActionsDropdown v-if="isMobile && !actionsMenuCount && bookmarkAction" standalone />
         </template>
         <template #panel-toggle>
             <KsIconButton
@@ -55,12 +56,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, onBeforeUnmount, ref, watch, watchEffect} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {KsIconButton} from "@kestra-io/design-system"
     import GlobalSearch from "./GlobalSearch.vue"
     import AiMenuIcon from "../ai/AiMenuIcon.vue"
     import NotificationBell from "./NotificationBell.vue"
+    import NavBarActionsDropdown from "./NavBarActionsDropdown.vue"
+    import {useBookmarkAction} from "../../composables/useBookmarkAction"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {useBookmarksStore} from "../../stores/bookmarks"
     import {useLayoutStore} from "../../stores/layout"
     import {useTopNavStore} from "../../stores/topNav"
@@ -190,6 +194,9 @@
             : store.title),
     )
 
+    const isMobile = useIsMobile()
+    const {bookmarkAction, actionsMenuCount} = useBookmarkAction()
+
     const onStarClick = () => {
         if (bookmarked.value) {
             bookmarksStore.remove({path: currentFavURI.value})
@@ -200,6 +207,14 @@
             })
         }
     }
+
+    watchEffect(() => {
+        bookmarkAction.value = hideBookmark.value ? undefined : {bookmarked: bookmarked.value, toggle: onStarClick}
+    })
+
+    onBeforeUnmount(() => {
+        bookmarkAction.value = undefined
+    })
 
     // Which path the store's label was last written for. The store is filled by the visited page's
     // own TopNavBar, which lands a flush after the route — and on a route that mounts none, never:
@@ -228,24 +243,30 @@
     )
 </script>
 
-<style scoped lang="scss">
-    // :deep because the tooltip wrapper renders a Fragment root, so this component's scope id
-    // reaches the nav ancestor but not the button itself.
+<style scoped>
+    /* :deep because the tooltip wrapper renders a Fragment root, so this component's scope id */
+    /* reaches the nav ancestor but not the button itself. */
     :deep(.copilot-button) {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
 
-        // :hover is covered so this matches KsIconButton's own hover rule on specificity; without it
-        // the open state is repainted while the pointer is on the button.
+        /* :hover is covered so this matches KsIconButton's own hover rule on specificity; without it */
+        /* the open state is repainted while the pointer is on the button. */
         &.is-open,
         &.is-open:hover {
             color: var(--ks-text-link);
         }
 
-        // Same breakpoint as the dock toggle it sits next to: the dock it opens is desktop-only.
+        /* Same breakpoint as the dock toggle it sits next to: the dock it opens is desktop-only. */
         @media (max-width: 767px) {
             display: none;
         }
+    }
+
+    #topnav-actions-slot {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        align-items: center;
     }
 
     .playgroundMode {

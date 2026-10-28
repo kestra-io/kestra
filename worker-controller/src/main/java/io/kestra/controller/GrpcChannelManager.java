@@ -27,6 +27,7 @@ import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.discovery.ControllerRegistration;
 import io.kestra.controller.discovery.ControllerRegistry;
+import io.kestra.controller.grpc.CheckpointServiceGrpc;
 import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
 import io.kestra.controller.grpc.KVMetadataServiceGrpc;
 import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc;
@@ -112,8 +113,8 @@ public class GrpcChannelManager {
      * deliberately dropping logs and metrics so a high-volume stream cannot back-pressure the worker; a
      * channel policy would multiply attempts inside every redrive and duplicate the dropped log lines.</li>
      * <li>{@code sendReport} — best-effort telemetry whose failures are already swallowed at debug level.</li>
-     * <li>{@code KVMetadataService.save} / {@code deleteByName}, {@code NamespaceFileMetadataService.save} —
-     * mutations.</li>
+     * <li>{@code KVMetadataService.save} / {@code deleteByName}, {@code NamespaceFileMetadataService.save},
+     * {@code CheckpointService.set} — mutations.</li>
      * <li>{@code connect} — already guarded by wait-for-ready and a per-call deadline; a replay risks a
      * duplicate registration.</li>
      * <li>{@code streamWorkerJobs} — a bidi stream, where gRPC retry only applies before the first response;
@@ -126,6 +127,8 @@ public class GrpcChannelManager {
         KVMetadataServiceGrpc.getFindByNameMethod(),
         KVMetadataServiceGrpc.getFindMethod(),
         KVMetadataServiceGrpc.getExistsByNamespaceMethod(),
+        CheckpointServiceGrpc.getListMethod(),
+        CheckpointServiceGrpc.getGetMethod(),
         NamespaceFileMetadataServiceGrpc.getFindByPathMethod(),
         NamespaceFileMetadataServiceGrpc.getFindChildrenMethod(),
         NamespaceFileMetadataServiceGrpc.getFindAllMethod(),

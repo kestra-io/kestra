@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {ALL_TIME_RANGE, FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
@@ -39,7 +39,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         ],
                         valueType: "multi-select" as const,
                         valueProvider: namespaceValueProvider(),
-                        searchable: true,
                     },
                 ] : []) as FilterConfiguration["keys"],
                 ...(routeFamily(route.name) !== "flows/update" ? [{
@@ -67,7 +66,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         })
                         return ids.map(id => ({label: id, value: id}))
                     },
-                    searchable: true,
                     showComparatorSelection: true,
                 }] : []) as FilterConfiguration["keys"],
                 {
@@ -92,7 +90,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES
                     },
                     showComparatorSelection: true,
-                    searchable: true,
                     visibleByDefault: true,
                     colored: true,
                 },
@@ -126,9 +123,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
+                    clearedValue: ALL_TIME_RANGE,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.RELATIVE_DATE
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},
@@ -161,6 +159,19 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                 },
                 {
+                    key: "outputs",
+                    label: t("filter.outputs.label"),
+                    description: t("filter.outputs.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
+                    valueType: "key-value",
+                    showComparatorSelection: true,
+                },
+                {
                     key: "triggerExecutionId",
                     label: t("filter.triggerExecutionId.label"),
                     description: t("filter.triggerExecutionId.description"),
@@ -172,7 +183,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerId",
@@ -186,7 +196,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -197,7 +206,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "taskId",
@@ -208,7 +216,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     // QueryFilter.Field.OPERATION_ID supports EQUALS only, so there is no comparator to offer.
@@ -217,7 +224,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.operationId.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "text",
-                    searchable: true,
                 },
             ],
         }

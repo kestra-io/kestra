@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, test, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 
@@ -9,7 +9,6 @@ import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import type {FlowForExecution} from "@kestra-io/kestra-sdk"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 import * as Utils from "../../../utils/utils"
-
 vi.mock("vue-router", async (importOriginal) => ({
     ...(await importOriginal<typeof import("vue-router")>()),
     useRoute: () => ({query: {}}),
@@ -146,6 +145,30 @@ async function mountLoopExplorer(outputsByTaskRunId: Record<string, Record<strin
 describe("ExecutionVariableExplorer", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
+    })
+
+    test("tags the flow outputs declared searchable by the flow", async () => {
+        vi.mocked(OutputsAPI.executionOutputs).mockResolvedValueOnce({orderIds: "ORD-1", plain: "x"})
+        useExecutionsStore().flow = {
+            id: "flow",
+            namespace: "io.kestra.tests",
+            outputs: [
+                {id: "orderIds", type: "STRING", value: "{{ outputs.x }}", searchable: true},
+                {id: "plain", type: "STRING", value: "{{ outputs.x }}"},
+            ],
+        } as FlowForExecution
+        const wrapper = mountExplorer({})
+        await flushPromises()
+
+        const items = sidebarSections(wrapper).find((section) => section.key === "flowOutputs")?.items
+        await selectVariable(wrapper, "orderIds", "flowOutputs")
+
+        expect(items?.map((item) => [item.label, item.searchable])).toEqual([["orderIds", true], ["plain", false]])
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(true)
+
+        await selectVariable(wrapper, "plain", "flowOutputs")
+
+        expect(wrapper.find("[data-test=viewer-title] [data-test=searchable-tag]").exists()).toBe(false)
     })
 
     test("uses render for variables containing expressions", async () => {
@@ -351,5 +374,68 @@ describe("ExecutionVariableExplorer", () => {
 
         await selectVariable(wrapper, "empty")
         expect(wrapper.find(".viewer__scalar").text()).toBe(Utils.EMPTY_STRING_DISPLAY)
+    })
+})
+
+describe("ExecutionVariableExplorer on a phone", () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        vi.stubGlobal("matchMedia", (query: string) => ({
+            matches: true,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+        }))
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    const listIsVisible = (wrapper: ReturnType<typeof i18nMount>) =>
+        wrapper.findComponent({name: "SidebarList"}).attributes("style") !== "display: none;"
+
+    test("starts on the full-width list without the viewer", async () => {
+        // Given / When
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(true)
+        expect(wrapper.find("[data-test=\"variable-back\"]").exists()).toBe(false)
+    })
+
+    test("opens the viewer with a breadcrumb when a variable is tapped and returns with the back button", async () => {
+        // Given
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // When
+        await selectVariable(wrapper, "greeting")
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(false)
+        expect(wrapper.find(".viewer__breadcrumb").text()).toBe("vars › greeting")
+
+        // When
+        await wrapper.find("[data-test=\"variable-back\"]").trigger("click")
+
+        // Then
+        expect(listIsVisible(wrapper)).toBe(true)
+        expect(wrapper.find("[data-test=\"variable-back\"]").exists()).toBe(false)
+    })
+
+    test("keeps the debugger prefilled when a variable is selected while it is collapsed", async () => {
+        // Given
+        const wrapper = mountExplorer({greeting: "Hello"})
+        await flushPromises()
+
+        // When
+        await selectVariable(wrapper, "greeting")
+
+        // Then
+        expect(wrapper.findComponent({name: "ExpressionDebugger"}).props("expression")).toBe("{{ vars.greeting }}")
     })
 })

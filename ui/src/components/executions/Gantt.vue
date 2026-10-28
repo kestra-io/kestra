@@ -133,7 +133,7 @@
                                                         </GanttTaskLabel>
                                                     </template>
                                                     <template v-if="nodeOf(item).kind === 'loop'" #label-footer>
-                                                        <GanttLoopStateBar :key="nodeOf(item).key" :node="nodeOf(item)" />
+                                                        <GanttLoopStateBar :node="nodeOf(item)" />
                                                     </template>
                                                     <template #duration>
                                                         <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />

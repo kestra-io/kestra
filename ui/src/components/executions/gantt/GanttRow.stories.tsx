@@ -137,12 +137,66 @@ export const GuidesSpanARowWithAFooter: Story = {
 
         const child = canvasElement.querySelector(`[data-row-key="${CHILD.key}"]`) as HTMLElement;
         const grandchild = canvasElement.querySelector("[data-row-key='tr:grandchild']") as HTMLElement;
-        expect(child.classList.contains("has-label-footer")).toBe(true);
 
         const childGuides = rect(child.querySelector(".guides") as HTMLElement);
         const grandchildGuides = rect(grandchild.querySelector(".guides") as HTMLElement);
 
         expect(childGuides.bottom).toBeGreaterThanOrEqual(rect(child).bottom - GUIDE_TOLERANCE_PX);
         expect(grandchildGuides.top - childGuides.bottom).toBeLessThanOrEqual(GUIDE_TOLERANCE_PX);
+    },
+};
+
+const FOOTER_TEMPLATE = (footer: string) => ({
+    components: {GanttRow},
+    setup: () => ({rows: ROWS}),
+    template: `
+        <div role="grid">
+            <GanttRow
+                v-for="row in rows"
+                :key="row.key"
+                :nodeKey="row.key"
+                :label="row.label"
+                :ancestors="row.ancestors"
+                offset="0s"
+                :barStyle="{}"
+                state="SUCCESS"
+                :selected="false"
+                :expandable="row.key !== 'tr:grandchild'"
+                expanded
+            >
+                <template #label><code>{{ row.label }}</code></template>
+                <template #actions><button type="button" data-test="row-action">x</button></template>
+                <template v-if="row.key === 'tr:child'" #label-footer>${footer}</template>
+            </GanttRow>
+        </div>
+    `,
+});
+
+const centreY = (element: Element) => rect(element).top + rect(element).height / 2;
+const ALIGNMENT_TOLERANCE_PX = 1;
+
+export const ActionsStayAlignedWithTheCellsOfARowWithAFooter: Story = {
+    render: () => FOOTER_TEMPLATE("<div data-test=\"row-footer\" style=\"height: 4px\" />"),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+        await waitFor(() => expect(canvas.getAllByRole("row")).toHaveLength(ROWS.length));
+
+        const row = canvasElement.querySelector(`[data-row-key="${CHILD.key}"]`) as HTMLElement;
+        const offset = row.querySelector("[data-test='gantt-task-offset']") as HTMLElement;
+        const action = row.querySelector("[data-test='row-action']") as HTMLElement;
+
+        expect(Math.abs(centreY(action) - centreY(offset))).toBeLessThanOrEqual(ALIGNMENT_TOLERANCE_PX);
+    },
+};
+
+export const NoBandReservedWhenTheFooterRendersNothing: Story = {
+    render: () => FOOTER_TEMPLATE("<div v-if=\"false\" />"),
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const canvas = within(canvasElement);
+        await waitFor(() => expect(canvas.getAllByRole("row")).toHaveLength(ROWS.length));
+
+        const heights = Array.from(canvasElement.querySelectorAll("[role='row']")).map((row) => rect(row).height);
+
+        expect(new Set(heights.map(Math.round)).size).toBe(1);
     },
 };

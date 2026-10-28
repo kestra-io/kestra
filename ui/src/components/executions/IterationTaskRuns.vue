@@ -47,7 +47,7 @@
                         </GanttTaskLabel>
                     </template>
                     <template v-if="node.kind === 'loop'" #label-footer>
-                        <GanttLoopStateBar :key="node.key" :node="node" />
+                        <GanttLoopStateBar :node="node" />
                     </template>
                     <template #duration>
                         <Duration :histories="node.taskRun.state.histories" :attemptCount="node.taskRun.attempts?.length ?? 1" :subject="node.taskRun.taskId" />

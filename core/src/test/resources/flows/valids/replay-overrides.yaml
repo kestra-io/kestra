@@ -5,6 +5,10 @@ inputs:
   - id: day
     type: DATE
     defaults: "2026-10-12"
+  - id: limits
+    type: ARRAY
+    itemType: INT
+    defaults: [10, 20]
 
 variables:
   schema: erp
@@ -15,6 +19,7 @@ tasks:
     values:
       code: "KR-0412 "
       delta: -12
+      limit: "{{ inputs.limits[0] }}"
 
   - id: check
     type: io.kestra.plugin.core.flow.If

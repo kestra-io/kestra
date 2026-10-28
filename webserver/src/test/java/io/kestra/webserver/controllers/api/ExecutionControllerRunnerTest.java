@@ -1257,6 +1257,26 @@ class ExecutionControllerRunnerTest {
         ).containsExactly(new TaskRunOverride("inputs.day", "2026-10-13", "2026-10-12"));
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldValidateWholeInputWhenOverridingValueInsideIt() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        var notAnInt = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "fetch", Map.of("inputs.limits[0]", "ten")));
+        assertThat(notAnInt.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notAnInt.getResponse().getBody(String.class).orElse("")).contains("Cannot override 'inputs.limits[0]'");
+
+        replayWithOverrides(failed, "fetch", Map.of("inputs.limits[0]", "15"));
+        Execution replay = awaitReplayOverrides(failed);
+        TaskRun fetch = replay.findTaskRunsByTaskId("fetch").getFirst();
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), fetch.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("inputs.limits[0]", 15, 10));
+    }
+
     private void replayWithOverrides(Execution execution, String taskId, Map<String, Object> overrides) {
         client.toBlocking().retrieve(
             HttpRequest.POST(

@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -93,26 +95,18 @@ public class ReplayOverrideService {
      * overrides from an earlier replay are left out. The tasks nested in a flowable task are not part of its own properties.
      */
     public List<ReplayValue> values(Flow flow, Execution execution, String taskRunId) throws InternalException {
-        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(
-            () -> new IllegalArgumentException(
-                "Task run '%s' does not exist in execution '%s'.".formatted(taskRunId, execution.getId())
-            )
-        );
-        Task task = flow.findTaskByTaskId(taskRun.getTaskId());
-        Map<String, Object> variables = runContextFactory.of(flow, task, execution, taskRun.withOverrides(null), false).getVariables();
-        List<Input<?>> inputs = flow.resolvableInputs();
-
-        return references(task).stream()
-            .map(reference -> reference instanceof VariablePath path ? valueOf(path, variables, inputs) : new ReplayValue(reference.toString(), Kind.SECRET, null, null))
-            .toList();
+        TaskRun taskRun = taskRun(execution, taskRunId);
+        return values(flow, taskRun, variables(flow, execution, taskRun));
     }
 
     /**
      * @throws IllegalArgumentException if a key is not an input or an output read by the task in its own properties,
-     *         or if the value of a flow input does not fit its type or validation rules
+     *         or if an input with the value set no longer fits its type or validation rules
      */
     public List<TaskRunOverride> overrides(Flow flow, Execution execution, String taskRunId, Map<String, Object> requested) throws InternalException {
-        Map<String, ReplayValue> values = values(flow, execution, taskRunId).stream()
+        TaskRun taskRun = taskRun(execution, taskRunId);
+        Map<String, Object> variables = variables(flow, execution, taskRun);
+        Map<String, ReplayValue> values = values(flow, taskRun, variables).stream()
             .collect(Collectors.toMap(ReplayValue::key, value -> value, (first, _) -> first));
 
         List<TaskRunOverride> overrides = new ArrayList<>(requested.size());
@@ -130,7 +124,7 @@ public class ReplayOverrideService {
                     "Cannot override '%s': only inputs and outputs can be overridden, and this value is a %s.".formatted(key, value.kind().label())
                 );
             }
-            Object override = value.inputType() == null ? entry.getValue() : inputValue(flow, execution, path, entry.getValue());
+            Object override = value.kind() == Kind.INPUT ? inputValue(flow, execution, variables, path, entry.getValue()) : entry.getValue();
             if (!Objects.equals(value.value(), override)) {
                 overrides.add(new TaskRunOverride(key, override, value.value()));
             }
@@ -138,11 +132,39 @@ public class ReplayOverrideService {
         return overrides;
     }
 
-    private Object inputValue(Flow flow, Execution execution, VariablePath path, Object value) {
-        Input<?> input = inputOf(path, flow.resolvableInputs()).orElseThrow();
+    private List<ReplayValue> values(Flow flow, TaskRun taskRun, Map<String, Object> variables) throws InternalException {
+        List<Input<?>> inputs = flow.resolvableInputs();
+        return references(flow.findTaskByTaskId(taskRun.getTaskId())).stream()
+            .map(reference -> reference instanceof VariablePath path ? valueOf(path, variables, inputs) : new ReplayValue(reference.toString(), Kind.SECRET, null, null))
+            .toList();
+    }
+
+    private TaskRun taskRun(Execution execution, String taskRunId) {
+        return execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(
+            () -> new IllegalArgumentException(
+                "Task run '%s' does not exist in execution '%s'.".formatted(taskRunId, execution.getId())
+            )
+        );
+    }
+
+    private Map<String, Object> variables(Flow flow, Execution execution, TaskRun taskRun) throws InternalException {
+        return runContextFactory.of(flow, flow.findTaskByTaskId(taskRun.getTaskId()), execution, taskRun.withOverrides(null), false).getVariables();
+    }
+
+    private Object inputValue(Flow flow, Execution execution, Map<String, Object> variables, VariablePath path, Object value) {
+        Optional<Input<?>> declared = inputOf(path, flow.resolvableInputs());
+        if (declared.isEmpty()) {
+            return value;
+        }
+        Input<?> input = declared.get();
+        List<Object> inside = path.segments().subList(1 + input.getId().split("\\.").length, path.size());
+        VariablePath whole = new VariablePath(path.segments().subList(0, path.size() - inside.size()));
+        VariablePath leaf = new VariablePath(Stream.concat(Stream.of("value"), inside.stream()).toList());
         try {
+            Object parsed = flowInputOutput.parseInputValue(execution, input, whole.resolve(path.set(variables, value)).orElse(null));
             // as JSON, so that it compares with and is stored like the values read from the stored execution
-            return JacksonMapper.toObject(JacksonMapper.ofJson().writeValueAsString(flowInputOutput.parseInputValue(execution, input, value)));
+            Object normalized = JacksonMapper.toObject(JacksonMapper.ofJson().writeValueAsString(parsed));
+            return leaf.resolve(Collections.singletonMap("value", normalized)).orElse(null);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Cannot override '%s': %s".formatted(path, e.getMessage()), e);
         } catch (JsonProcessingException e) {

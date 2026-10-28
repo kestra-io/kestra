@@ -242,24 +242,23 @@
                         />
                         <template #dropdown>
                             <KsDropdownMenu>
-                                <KsDropdownItem @click="openDetails(scope.row as TriggerRow)">
-                                    <TextSearch class="item-icon" />
+                                <KsDropdownItem :icon="TextSearch" @click="openDetails(scope.row as TriggerRow)">
                                     {{ $t("details") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.RESTART)"
                                     :disabled="!scope.row.locked"
+                                    :icon="Restart"
                                     @click="restart(scope.row as TriggerRow)"
                                 >
-                                    <Restart class="item-icon" />
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
                                     v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                     :disabled="!scope.row.locked"
+                                    :icon="LockOff"
                                     @click="unlock(scope.row as TriggerRow)"
                                 >
-                                    <LockOff class="item-icon" />
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
                                 <KsTooltip
@@ -267,8 +266,7 @@
                                     :content="$t('delete trigger still declared')"
                                     effect="light"
                                 >
-                                    <KsDropdownItem divided class="danger" disabled>
-                                        <Delete class="item-icon" />
+                                    <KsDropdownItem divided class="danger" disabled :icon="Delete">
                                         {{ $t("delete") }}
                                     </KsDropdownItem>
                                 </KsTooltip>
@@ -276,9 +274,9 @@
                                     v-else-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
                                     divided
                                     class="danger"
+                                    :icon="Delete"
                                     @click="confirmDeleteTrigger(scope.row as TriggerDeleteOptions)"
                                 >
-                                    <Delete class="item-icon" />
                                     {{ $t("delete") }}
                                 </KsDropdownItem>
                             </KsDropdownMenu>
@@ -1034,10 +1032,6 @@
 
     .trigger-id-cell {
         white-space: nowrap;
-    }
-
-    .item-icon {
-        margin-inline-end: var(--ks-spacing-1);
     }
 
     .backfill-tag {

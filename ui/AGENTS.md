@@ -465,6 +465,7 @@ If your `<style>` block needs to exist:
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
 | `KsTopNavBar` | Top navigation bar; `titleSiblings` reaches the breadcrumb's current page |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
+| `KsSelectableListItem` | Button list item with title, optional subtitle and leading slot, selected and disabled states |
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation. An item's `siblings` loader (or `children` on the first item, and the `titleSiblings` prop for the current page) adds a chevron whose hover menu lists that level, headed by the level above (its `scope` when the label is not the right name for its content); an entry with a `children` loader flies out its own content to the right, as deep as the tree goes. Level loaders run as soon as the bar renders and an empty result shows no chevron; fly-outs load on hover. Namespace and flow pages build theirs with `useNamespaceBreadcrumb` |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 

@@ -314,15 +314,11 @@ class InternalKVStoreTest {
     @Test
     void putWithoutOverwriteShouldSucceedOnExpiredKey() throws IOException, ResourceExpiredException {
         InternalKVStore kv = kv();
-        
-        // 1. Put an entry that has already expired in the past with overwrite = false
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "old"), false);
 
-        // 2. Assert get() and exists() treat the expired key as empty
         assertThat(kv.get(TEST_KV_KEY)).isEmpty();
         assertThat(kv.exists(TEST_KV_KEY)).isFalse();
 
-        // 3. Put new value with overwrite = false; should succeed without throwing "Key already exists"
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), "new"), false);
         assertThat(kv.getValue(TEST_KV_KEY)).contains(new KVValue("new"));
     }

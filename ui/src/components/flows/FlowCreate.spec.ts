@@ -4,7 +4,7 @@ import {i18nMount} from "../../../tests/unit/i18nMount"
 
 import {createPinia, setActivePinia} from "pinia"
 import {useFlowStore} from "../../stores/flow"
-import {RECIPE_PRESET_KEY} from "../../utils/storageKeys"
+import {COPILOT_DRAFT_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
 import {storageKeys} from "../../utils/constants"
 import {useMiscStore} from "../../override/stores/misc"
 
@@ -107,6 +107,36 @@ describe("FlowCreate recipe hand-off", () => {
         // Then
         expect(flowStore.flow?.source).toContain("system-flow-alert")
         expect(sessionStorage.getItem(RECIPE_PRESET_KEY)).toBeNull()
+    })
+})
+
+describe("FlowCreate copilot hand-off", () => {
+    test("consumes the copilot draft from sessionStorage exactly once", async () => {
+        // Given
+        route.query = {copilotDraft: "true"}
+        sessionStorage.setItem(COPILOT_DRAFT_KEY, "id: copilot-flow\nnamespace: company.team\n")
+
+        // When
+        mountCreate()
+        await flushPromises()
+
+        // Then
+        expect(flowStore.flow?.id).toBe("copilot-flow")
+        expect(flowStore.flow?.namespace).toBe("company.team")
+        expect(sessionStorage.getItem(COPILOT_DRAFT_KEY)).toBeNull()
+    })
+
+    test("falls back to the default template when the draft is gone after a refresh", async () => {
+        // Given
+        route.query = {copilotDraft: "true"}
+
+        // When
+        const wrapper = mountCreate()
+        await flushPromises()
+
+        // Then
+        expect(wrapper.find("[data-test='editor']").exists()).toBe(true)
+        expect(flowStore.flow?.source).toBeTruthy()
     })
 })
 

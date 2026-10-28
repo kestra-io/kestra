@@ -53,7 +53,13 @@ const OSS_EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         name: `${EXECUTION_PARENT_ROUTE}/metrics`,
         path: "metrics",
         component: () => import("./ExecutionMetric.vue"),
-        meta: {tab: "metrics", title: "metrics"},
+        meta: {tab: "metrics", title: "metrics", fullContainer: true},
+    },
+    {
+        name: `${EXECUTION_PARENT_ROUTE}/artifacts`,
+        path: "artifacts",
+        component: () => import("./Artifacts.vue"),
+        meta: {tab: "artifacts", title: "execution_artifacts.title", maximized: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/dependencies`,

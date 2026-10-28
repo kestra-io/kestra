@@ -9,6 +9,7 @@
         :noDataText="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden')"
         :noDataDescription="hasVisibleColumns ? undefined : $t('no_results.all_columns_hidden_description')"
         :defaultSort="{prop: 'name', order: 'ascending'}"
+        :fitHeight
     >
         <template #navbar>
             <slot name="navbar" />
@@ -21,7 +22,7 @@
         <template v-for="col in displayColumns" :key="col">
             <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">
-                    <p class="m-0">
+                    <p class="task-id">
                         {{ scope.row.taskId }}
                     </p>
                 </template>
@@ -111,12 +112,14 @@
         showTask?: boolean;
         execution?: Execution;
         optionalColumns?: ColumnConfig[];
+        fitHeight?: boolean;
     }>(), {
         embed: true,
         taskRunId: undefined,
         showTask: false,
         execution: undefined,
         optionalColumns: () => [],
+        fitHeight: false,
     })
 
     const localOptionalColumns = ref([
@@ -152,7 +155,7 @@
         metricsTotal.value = response.total
     }
 
-    watch(() => props.taskRunId, () => {
+    watch([() => props.execution?.id, () => props.execution?.state?.current, () => props.taskRunId], () => {
         dataTable.value?.resetAndReload()
     })
 
@@ -206,7 +209,11 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+    .task-id {
+        margin: 0;
+    }
+
     .tag {
         display: inline-flex;
         align-items: center;

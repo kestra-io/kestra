@@ -2,7 +2,7 @@ import {describe, expect, it, vi, beforeEach} from "vitest"
 import {flushPromises, mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent, ref} from "vue"
-import FlowFileEditorTab from "./FlowFileEditorTab.vue"
+import FlowFileEditorTab, {FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
 
 const fileMetadata = vi.fn()
 const readFile = vi.fn()
@@ -77,6 +77,10 @@ function mountTab() {
         props: {name: "data.txt", extension: "txt", path: "data.txt", flow: false, dirty: false},
         global: {
             plugins: [i18n],
+            provide: {
+                [FILES_SET_DIRTY_INJECTION_KEY as symbol]: vi.fn(),
+                [FILES_UPDATE_CONTENT_INJECTION_KEY as symbol]: vi.fn(),
+            },
             stubs: {
                 KsAlert: {template: "<div><slot /></div>"},
                 KsButtonGroup: {template: "<div><slot /></div>"},

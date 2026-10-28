@@ -38,7 +38,6 @@ Default.args = {
     flowGraph: allowFailureDemo as unknown as FlowGraph,
     flowId: "allow-failure-demo",
     namespace: "sanitychecks.flows.blueprints",
-    execution: {},
     isReadOnly: false,
     // Must stay flush against column 0 and match the graph fixture above: flowHaveTasks()
     // (packages/topology/src/utils/vueFlowUtils.ts) matches /^tasks\s*:/m, so an indented source

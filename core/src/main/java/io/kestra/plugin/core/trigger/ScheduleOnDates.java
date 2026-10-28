@@ -89,19 +89,20 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> triggerContext) {
         ZonedDateTime now = SchedulerClock.now();
-        return triggerContext
+        ZonedDateTime last = triggerContext
             .map(ctx -> ctx.getBackfill() != null ? ctx.getBackfill().getCurrentDate() : ctx.getDate())
             .map(this::withTimeZone)
-            .or(() -> Optional.of(now))
-            .flatMap(dt ->
-            {
-                try {
-                    return nextDate(conditionContext.getRunContext(), date -> date.isAfter(dt));
-                } catch (IllegalVariableEvaluationException e) {
-                    log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
-                    throw new InvalidTriggerConfigurationException("Failed to evaluate schedule 'dates'. Cause: " + e.getMessage());
-                }
-            }).orElseGet(() -> now.plusYears(1));
+            .orElse(now);
+        ZonedDateTime next = firstDate(conditionContext, date -> date.isAfter(last)).orElseGet(() -> now.plusYears(1));
+
+        // Past its end, a backfill resumes at the regular date it held back, so dates that already ran are not replayed and later ones still run.
+        Backfill backfill = triggerContext.map(TriggerContext::getBackfill).orElse(null);
+        if (backfill != null && next.isAfter(backfill.getEnd())) {
+            ZonedDateTime resumeFrom = Optional.ofNullable(backfill.getPreviousNextExecutionDate()).orElse(now);
+            return firstDate(conditionContext, date -> date.isAfter(backfill.getEnd()) && !date.isBefore(resumeFrom))
+                .orElseGet(() -> now.plusYears(1));
+        }
+        return next;
     }
 
     @Override
@@ -127,6 +128,15 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
             return date;
         }
         return date.withZoneSameInstant(ZoneId.of(this.timezone));
+    }
+
+    private Optional<ZonedDateTime> firstDate(ConditionContext conditionContext, Predicate<ZonedDateTime> predicate) {
+        try {
+            return nextDate(conditionContext.getRunContext(), predicate);
+        } catch (IllegalVariableEvaluationException e) {
+            log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
+            throw new InvalidTriggerConfigurationException("Failed to evaluate schedule 'dates'. Cause: " + e.getMessage());
+        }
     }
 
     private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> predicate) throws IllegalVariableEvaluationException {

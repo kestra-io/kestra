@@ -6,7 +6,6 @@ import java.util.Map;
 import io.kestra.core.contexts.configuration.RepositoryConfiguration;
 import io.kestra.core.contexts.configuration.StorageConfiguration;
 import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.PluginSchemaBundleService;
@@ -18,11 +17,7 @@ import io.kestra.core.storages.StorageInterfaceFactory;
 import io.kestra.core.utils.ExecutorsUtils;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Bean;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Primary;
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.*;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.MapFormat;
 import io.micronaut.core.naming.conventions.StringConvention;
@@ -35,23 +30,40 @@ import jakarta.validation.Validator;
 import static io.kestra.core.repositories.log.LogDataStoreInterfaceFactory.KESTRA_LOGS_TYPE_CONFIG;
 import static io.kestra.core.storages.StorageInterfaceFactory.KESTRA_STORAGE_TYPE_CONFIG;
 
+/**
+ * Beans built from configuration for everything except the queues: the plugin-backed storage and log store, and the
+ * plugin catalog. The queues, the {@link PluginRegistry} and the queue backend plugin are built by
+ * {@link KestraQueueBeansFactory}, which this factory depends on and never the other way round.
+ * <p>
+ * Bean creation is split in two factories because a Micronaut factory is instantiated, with all its injected
+ * fields, before any of its bean methods can run. The queue beans are the root of the runtime graph (the
+ * executor, the service liveness coordinator and the plugin manager all inject them), so they have to live in a
+ * factory whose own state cannot reach a queue; this one injects configuration beans and, in the Enterprise
+ * Edition, services that do. The split also lets an edition {@code @Replaces(factory = ...)} the queue set and
+ * the registry without redeclaring the beans here, since a replacement covers every bean of the replaced factory.
+ * <p>
+ * Startup sequence: the eager {@code @Context} beans inject a queue, which builds {@link KestraQueueBeansFactory}
+ * and, through it, the registry (where the {@code --plugins} directory is registered) and the queue backend; the
+ * beans of this factory are created afterwards, on first use, once the registry exists. Only then does the CLI
+ * command run and start the plugin manager.
+ */
 @Factory
 public class KestraBeansFactory {
 
     @Inject
-    Validator validator;
+    private Validator validator;
 
     @Inject
-    StorageConfig storageConfig;
+    private StorageConfig storageConfig;
 
     @Inject
-    protected StorageConfiguration storageConfiguration;
+    private StorageConfiguration storageConfiguration;
 
     @Inject
     LogsConfig logsConfig;
 
     @Inject
-    RepositoryConfiguration repositoryConfiguration;
+    private RepositoryConfiguration repositoryConfiguration;
 
     // @Primary so unqualified injections (e.g. PluginAutoInstallService) resolve to this
     // icon-less catalog rather than the webserver's @Named("withIcons") variant.
@@ -62,12 +74,6 @@ public class KestraBeansFactory {
         ExecutorsUtils executorsUtils,
         PluginSchemaBundleService schemaBundleService) {
         return new PluginCatalogService(httpClient, false, true, executorsUtils, schemaBundleService);
-    }
-
-    @Requires(missingBeans = PluginRegistry.class)
-    @Singleton
-    public PluginRegistry pluginRegistry() {
-        return DefaultPluginRegistry.getOrCreate();
     }
 
     @Singleton

@@ -174,6 +174,27 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
+        @JsonProperty("flowNamespace")
+        FLOW_NAMESPACE("flowNamespace") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
+            }
+        },
+        @JsonProperty("targetNamespace")
+        TARGET_NAMESPACE("targetNamespace") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
+            }
+        },
+        @JsonProperty("targetAssetType")
+        TARGET_ASSET_TYPE("targetAssetType") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
         @JsonProperty("kind")
         KIND("kind") {
             @Override
@@ -214,6 +235,13 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
+            }
+        },
+        @JsonProperty("outputs")
+        OUTPUTS("outputs") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
         @JsonProperty("assetExpiry")
@@ -342,6 +370,27 @@ public record QueryFilter(
         },
         @JsonProperty("parentId")
         PARENT_ID("parentId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("origin")
+        ORIGIN("origin") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("sourceId")
+        SOURCE_ID("sourceId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        @JsonProperty("targetId")
+        TARGET_ID("targetId") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
@@ -614,7 +663,7 @@ public record QueryFilter(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.TRIGGER_ID, Field.CHILD_FILTER,
                     Field.NAMESPACE, Field.KIND, Field.PARENT_ID, Field.TASK_ID, Field.LOOP_RUN_VALUE,
-                    Field.OPERATION_ID, Field.OPERATION_OUTCOME
+                    Field.OPERATION_ID, Field.OPERATION_OUTCOME, Field.ID, Field.OUTPUTS
                 );
             }
         },
@@ -757,7 +806,8 @@ public record QueryFilter(
                     Field.STATUS,
                     Field.ASSET_EXPIRY,
                     Field.UPDATED,
-                    Field.LOCKED
+                    Field.LOCKED,
+                    Field.PARENT_ID
                 );
             }
         },
@@ -777,18 +827,26 @@ public record QueryFilter(
                 );
             }
         },
-        ASSET_LINEAGE_EVENT {
+        ASSET_RELATION {
             @Override
             public List<Field> supportedField() {
-                // ASSET_ID is not supported for now as it needs complex json parsing
                 return List.of(
+                    Field.KIND,
+                    Field.ASSET_ID,
+                    Field.SOURCE_ID,
+                    Field.TARGET_ID,
+                    Field.TARGET_NAMESPACE,
+                    Field.TARGET_ASSET_TYPE,
+                    Field.ORIGIN,
                     Field.NAMESPACE,
+                    Field.FLOW_NAMESPACE,
                     Field.FLOW_ID,
-                    Field.FLOW_REVISION,
                     Field.EXECUTION_ID,
                     Field.TASK_ID,
                     Field.TASK_RUN_ID,
-                    Field.CREATED
+                    Field.CREATED,
+                    Field.START_DATE,
+                    Field.END_DATE
                 );
             }
         },
@@ -960,6 +1018,30 @@ public record QueryFilter(
                     resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))
                 )
             );
+        }
+        collectRegexErrors(filter, errors);
+    }
+
+    /**
+     * Validates only the REGEX filters, for callers whose filters do not map to a {@link Resource}.
+     *
+     * @throws InvalidQueryFiltersException when a REGEX value is unsafe or not a valid regular expression.
+     */
+    public static void validateRegexFilters(List<QueryFilter> filters) {
+        if (filters == null) {
+            return;
+        }
+        List<String> errors = new ArrayList<>();
+        filters.forEach(filter -> collectRegexErrors(filter, errors));
+        if (!errors.isEmpty()) {
+            throw new InvalidQueryFiltersException(errors);
+        }
+    }
+
+    private static void collectRegexErrors(QueryFilter filter, List<String> errors) {
+        if (filter.isNode()) {
+            filter.children().forEach(child -> collectRegexErrors(child, errors));
+            return;
         }
         if (filter.operation() == Op.REGEX && filter.value() instanceof String pattern) {
             if (!RegexUtils.isSafeUserRegex(pattern)) {

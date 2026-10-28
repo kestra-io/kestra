@@ -14,6 +14,7 @@
             <div class="task-edit-modal-header">
                 <span class="task-edit-modal-title">{{ title }}</span>
                 <KsIconButton
+                    v-if="!outsideFlow"
                     class="task-edit-modal-header-action"
                     :type="docsOpen ? 'primary' : 'default'"
                     :aria-label="$t('documentation.documentation')"
@@ -76,6 +77,8 @@
                     :parentPath="parentPath"
                     :refPath="refPath"
                     :blockSchemaPath="blockSchemaPath"
+                    :editedPath="editedPath"
+                    :outsideFlow="outsideFlow"
                     @update:task="emit('update:task', $event)"
                     @close="emit('close')"
                     @select-nested="(...args) => emit('select-nested', ...args)"
@@ -95,7 +98,11 @@
         <template v-if="!hintDismissed" #footer>
             <div class="task-edit-modal-hint" data-test="task-edit-modal-open-mode-hint">
                 <KsText size="small">
-                    {{ openModeHint[0] }}<router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>{{ openModeHint[1] }}
+                    <i18n-t keypath="block_editor.open_mode_hint" tag="span" scope="global">
+                        <template #settings>
+                            <router-link :to="{name: 'preferences'}">{{ $t("settings.label") }}</router-link>
+                        </template>
+                    </i18n-t>
                 </KsText>
                 <KsIconButton
                     class="task-edit-modal-hint-dismiss"
@@ -126,7 +133,6 @@
     import type {BlockSection} from "../../../utils/flowableBlockOps"
     import type {Crumb} from "../utils/useFieldNavigation"
     import {storageKeys} from "../../../utils/constants"
-    import {splitTranslation} from "../../../utils/splitTranslation"
 
     const props = defineProps<{
         task?: Record<string, unknown>
@@ -138,8 +144,10 @@
         parentPath: string
         refPath?: number
         blockSchemaPath: string
+        editedPath?: string
         crumbs: Crumb[]
         creating?: boolean
+        outsideFlow?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -152,7 +160,6 @@
     }>()
 
     const {t} = useI18n()
-    const openModeHint = computed(() => splitTranslation(t, "block_editor.open_mode_hint", "settings"))
     const pluginsStore = usePluginsStore()
 
     const hintDismissed = ref(localStorage.getItem(storageKeys.TASK_EDIT_MODE_HINT_DISMISSED) === "true")
@@ -191,7 +198,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .task-edit-modal-header {
         display: flex;
         align-items: center;

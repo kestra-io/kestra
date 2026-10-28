@@ -1,4 +1,4 @@
-import {describe, test, expect} from "vitest"
+import {describe, test, expect, vi} from "vitest"
 import {parseIso, timezonesWithOffset, toIsoKeepOffset} from "./date"
 import dayjs from "../date/dayjs"
 
@@ -45,6 +45,24 @@ describe("timezonesWithOffset", () => {
     test("should not duplicate a stored zone that is already canonical", () => {
         const zones = timezonesWithOffset("Asia/Tokyo")
         expect(zones.filter((z) => z.zone === "Asia/Tokyo")).toHaveLength(1)
+    })
+
+    test("should refresh another zone's offset after a DST change on the same UTC day", () => {
+        vi.useFakeTimers()
+        const localOffset = vi.spyOn(Date.prototype, "getTimezoneOffset").mockReturnValue(-330)
+
+        try {
+            vi.setSystemTime(new Date("2026-03-08T06:59:00Z"))
+            expect(timezonesWithOffset("America/New_York")
+                .find(({zone}) => zone === "America/New_York")?.formattedOffset).toBe("-05:00")
+
+            vi.setSystemTime(new Date("2026-03-08T07:01:00Z"))
+            expect(timezonesWithOffset("America/New_York")
+                .find(({zone}) => zone === "America/New_York")?.formattedOffset).toBe("-04:00")
+        } finally {
+            localOffset.mockRestore()
+            vi.useRealTimers()
+        }
     })
 })
 

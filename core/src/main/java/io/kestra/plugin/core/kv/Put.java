@@ -104,9 +104,6 @@ public class Put extends Task implements RunnableTask<VoidOutput> {
         var rNamespace = runContext.render(this.namespace).as(String.class).orElseThrow();
         var rKey = runContext.render(this.key).as(String.class).orElseThrow();
         var rValue = runContext.render(this.value).as(Object.class).orElse(null);
-        if (rValue instanceof String renderedValueAsString) {
-            rValue = runContext.renderTyped(renderedValueAsString);
-        }
 
         var kvStore = runContext.namespaceKv(rNamespace);
         var current = kvStore.findMetadataAndValue(rKey);

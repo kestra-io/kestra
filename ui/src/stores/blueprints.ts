@@ -101,10 +101,16 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return converted
     }
 
+    let latestBlueprintLoad = 0
+
     const getBlueprint = async (options: Options) => {
+        const load = ++latestBlueprintLoad
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`
             const response = await axios.get<Blueprint>(COMMUNITY)
+            if (load !== latestBlueprintLoad) {
+                return response.data
+            }
             if (response.data?.id) {
                 trackBlueprintSelection(response.data.id)
             }
@@ -114,6 +120,9 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
         const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}`)
         const blueprintData = data as unknown as Blueprint
+        if (load !== latestBlueprintLoad) {
+            return blueprintData
+        }
         if (blueprintData?.id) {
             trackBlueprintSelection(blueprintData.id)
         }

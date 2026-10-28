@@ -49,9 +49,9 @@ export const useBaseMiscStore = () => {
         return MiscAPI.basicAuthConfigErrors()
     }
 
-    async function loadAllUsages() {
+    async function loadAllUsages(days = 1) {
         if (configs.value?.isBasicAuthInitialized && BasicAuth.isLoggedIn()) {
-            return MiscAPI.usages()
+            return MiscAPI.usages({days})
         }
         return {}
     }

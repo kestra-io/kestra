@@ -35,13 +35,27 @@ export default meta
 type Story = StoryObj<typeof KsTopNavBar>
 
 export const Default: Story = {
-    render: () => ({
+    render: (args) => ({
         components: {KsTopNavBar},
-        template: "<ks-top-nav-bar title=\"Flows\" />",
+        setup() { return {args} },
+        template: "<ks-top-nav-bar v-bind=\"args\" />",
     }),
+    args: {
+        title: "Flows",
+        description: "",
+        beta: false,
+        isBookmarked: false,
+        hideBookmark: false,
+        sidebarCollapsed: false,
+        activeTab: "",
+        showDescription: false,
+        showDockToggle: false,
+        isDockOpen: false,
+    },
 }
 
 export const WithBreadcrumb: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar},
         setup() {
@@ -61,6 +75,7 @@ export const WithBreadcrumb: Story = {
 }
 
 export const WithDescriptionAndBeta: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar},
         template: `
@@ -74,6 +89,7 @@ export const WithDescriptionAndBeta: Story = {
 }
 
 export const Bookmarked: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar},
         template: "<ks-top-nav-bar title=\"Flows\" :is-bookmarked=\"true\" />",
@@ -81,6 +97,7 @@ export const Bookmarked: Story = {
 }
 
 export const WithTabs: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar},
         setup() {
@@ -105,6 +122,7 @@ export const WithTabs: Story = {
 }
 
 export const WithSidebarToggle: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar},
         template: `
@@ -118,6 +136,7 @@ export const WithSidebarToggle: Story = {
 }
 
 export const WithSearchAndActions: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar, KsButton, KsInput},
         setup() {
@@ -140,6 +159,7 @@ export const WithSearchAndActions: Story = {
 }
 
 export const CustomTitleSlot: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar},
         template: `
@@ -153,6 +173,7 @@ export const CustomTitleSlot: Story = {
 }
 
 export const WithDescriptionArea: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsTopNavBar},
         template: `
@@ -164,6 +185,32 @@ export const WithDescriptionArea: Story = {
                     Monitor execution history, inspect logs, and retry failed runs.
                 </template>
             </ks-top-nav-bar>
+        `,
+    }),
+}
+
+/** Mobile – the breadcrumb keeps the entity name and the bookmark star is hidden; the app offers the bookmark in the actions menu */
+export const Mobile: Story = {
+    parameters: {
+        controls: {disable: true},
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "390px", height: "844px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsTopNavBar},
+        template: `
+            <ks-top-nav-bar
+                title="monthly_close"
+                :breadcrumb="[{label: 'Executions', onClick: () => {}}, {label: 'company.finance', onClick: () => {}}]"
+                sidebar-collapsed
+                show-dock-toggle
+            />
         `,
     }),
 }

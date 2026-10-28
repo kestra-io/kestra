@@ -27,7 +27,10 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.searchable.SearchableOutput;
+import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTaskRuns;
 import io.kestra.core.models.executions.TaskRun;
@@ -52,6 +55,7 @@ import io.kestra.webserver.errors.ProblemTypes;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -71,6 +75,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ExecutionControllerTest {
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private SearchableOutputRepositoryInterface searchableOutputRepository;
 
     @Inject
     private BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -403,6 +410,55 @@ class ExecutionControllerTest {
     }
 
     @Test
+    void searchShouldFilterByOutputs() {
+        String tenant = MAIN_TENANT;
+        String namespace = "io.kestra.outputs-search-test";
+        seedExecutionWithFlowIdAndNamespace(tenant, "flow", namespace);
+        seedExecutionWithFlowIdAndNamespace(tenant, "flow", namespace);
+        seedExecutionWithFlowIdAndNamespace(tenant, "flow", namespace);
+        var seeded = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()));
+        searchableOutputRepository.save(new SearchableOutput(tenant, seeded.get(0).getId(), "orderIds", "ORD-8841"));
+        searchableOutputRepository.save(new SearchableOutput(tenant, seeded.get(1).getId(), "orderIds", "ORD-9000"));
+        searchableOutputRepository.save(new SearchableOutput(tenant, seeded.get(2).getId(), "other", "ORD-8841"));
+        String search = "/api/v1/main/executions/search?filters[namespace][EQUALS]=" + namespace;
+
+        PagedResults<?> equals = client.toBlocking().retrieve(GET(search + "&filters[outputs][EQUALS][orderIds]=ORD-8841"), PagedResults.class);
+        PagedResults<?> none = client.toBlocking().retrieve(GET(search + "&filters[outputs][EQUALS][orderIds]=unknown"), PagedResults.class);
+
+        PagedResults<?> notEquals = client.toBlocking().retrieve(GET(search + "&filters[outputs][NOT_EQUALS][orderIds]=ORD-8841"), PagedResults.class);
+        PagedResults<?> in = client.toBlocking().retrieve(GET(search + "&filters[outputs][IN][orderIds]=ORD-8841,ORD-9000"), PagedResults.class);
+        PagedResults<?> notIn = client.toBlocking().retrieve(GET(search + "&filters[outputs][NOT_IN][orderIds]=ORD-9000,ORD-1"), PagedResults.class);
+
+        assertThat(notEquals.getTotal()).isEqualTo(1);
+        assertThat(in.getTotal()).isEqualTo(2);
+        assertThat(notIn.getTotal()).isEqualTo(1);
+        assertThat(equals.getTotal()).isEqualTo(1);
+        assertThat(none.getTotal()).isZero();
+    }
+
+    @Test
+    void searchShouldRejectUnsupportedOutputsOperation() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/search?filters[outputs][STARTS_WITH][orderIds]=ORD-"), PagedResults.class
+            )
+        );
+
+        Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
+    }
+
+    @Test
+    void searchShouldRejectOutputsFilterWithoutOutputName() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/search?filters[outputs][EQUALS]=ORD-8841"), PagedResults.class
+            )
+        );
+
+        Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
+    }
+
+    @Test
     void badQueryFilters() {
         HttpClientResponseException exception = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
@@ -413,7 +469,7 @@ class ExecutionControllerTest {
         );
         Problems.assertProblem(exception, ProblemTypes.INVALID_QUERY_FILTERS);
         assertThat(Problems.detail(exception)).isEqualTo(
-            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID, LOOP_RUN_VALUE, OPERATION_ID, OPERATION_OUTCOME"
+            "Provided query filters are invalid: Field WORKER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, TRIGGER_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID, LOOP_RUN_VALUE, OPERATION_ID, OPERATION_OUTCOME, ID, OUTPUTS"
         );
 
         exception = assertThrows(

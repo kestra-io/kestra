@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {ALL_TIME_RANGE, FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {labelComparatorLabels} from "./labelComparatorLabels"
@@ -22,7 +22,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions")
                         return VALUES.EXECUTION_STATES
                     },
-                    searchable: true,
                     visibleByDefault: true,
                     colored: true,
                 },
@@ -67,9 +66,10 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
+                    clearedValue: ALL_TIME_RANGE,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions")
-                        return VALUES.RELATIVE_DATE
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},
@@ -102,6 +102,19 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                 },
                 {
+                    key: "outputs",
+                    label: t("filter.outputs.label"),
+                    description: t("filter.outputs.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
+                    valueType: "key-value",
+                    showComparatorSelection: true,
+                },
+                {
                     key: "triggerExecutionId",
                     label: t("filter.triggerExecutionId.label"),
                     description: t("filter.triggerExecutionId.description"),
@@ -113,7 +126,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerId",
@@ -127,7 +139,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "parentId",
@@ -138,7 +149,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "taskId",
@@ -149,7 +159,6 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
             ],
         }

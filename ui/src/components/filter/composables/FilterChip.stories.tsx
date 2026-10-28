@@ -47,7 +47,6 @@ const mockFilterKeys = {
         description: "Filter by labels",
         comparators: [Comparators.IN, Comparators.NOT_IN],
         valueType: "multi-select",
-        searchable: true,
         valueProvider: async (): Promise<FilterValue[]> => [
             {label: "Production", value: "prod"},
             {label: "Staging", value: "staging"},

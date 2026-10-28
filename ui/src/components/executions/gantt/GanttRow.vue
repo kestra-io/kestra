@@ -1,7 +1,7 @@
 <template>
     <div
         class="gantt-row"
-        :class="{'is-selected': selected, 'is-compact': compact}"
+        :class="{'is-selected': selected, 'is-compact': compact, 'has-label-footer': $slots['label-footer']}"
         role="row"
         tabindex="0"
         :aria-level="depth + 1"
@@ -39,6 +39,9 @@
             </button>
             <span v-else class="chevron-spacer" />
             <slot name="label" />
+            <div v-if="$slots['label-footer']" class="row-label-footer" :style="{'--gantt-depth': depth}">
+                <slot name="label-footer" />
+            </div>
         </div>
         <div v-if="!compact" class="row-offset" role="gridcell" data-test="gantt-task-offset">
             {{ offset }}
@@ -116,6 +119,11 @@
             --gantt-indent: var(--ks-spacing-4);
         }
 
+        &.has-label-footer {
+            min-height: calc(2.75rem + var(--ks-spacing-2));
+            padding-bottom: var(--ks-spacing-2);
+        }
+
         &.is-selected {
             background: var(--ks-bg-tag-hover);
             box-shadow: inset var(--ks-spacing-1) 0 0 var(--ks-border-focus);
@@ -130,6 +138,7 @@
     .row-label {
         --gantt-label-gap: var(--ks-spacing-2);
 
+        position: relative;
         flex: 1 1 0;
         min-width: 6rem;
         overflow-x: clip;
@@ -141,6 +150,13 @@
         code {
             color: var(--ks-text-primary);
         }
+    }
+
+    .row-label-footer {
+        position: absolute;
+        bottom: var(--ks-spacing-1);
+        right: var(--ks-spacing-2);
+        left: calc(var(--gantt-indent) * (var(--gantt-depth) + 1) + var(--ks-spacing-1));
     }
 
     .guides {
@@ -262,9 +278,18 @@
             padding: 0;
         }
 
+        &.has-label-footer {
+            min-height: 0;
+            padding-bottom: var(--ks-spacing-3);
+        }
+
         .row-label {
             grid-area: label;
             min-width: 0;
+        }
+
+        &.has-label-footer .row-label {
+            padding-bottom: var(--ks-spacing-2);
         }
 
         .row-duration {

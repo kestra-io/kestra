@@ -102,7 +102,7 @@
     "sass-embedded": "^1.106.1",
     "storybook": "^10.6.3",
     "tsdown": "^0.23.3",
-    "typescript": "^6",
+    "typescript": "^7",
     "unrun": "^0.3.1",
     "vite": "^8.3.5",
     "vite-plugin-dts": "^5.1.2",

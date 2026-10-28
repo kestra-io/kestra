@@ -80,5 +80,11 @@ describe("cleanUp", () => {
             expect(removeNullAndUndefined(task, (key) => key === "defaults"))
                 .toEqual({id: "rows", defaults: [{name: "web", cpus: null}, {name: null, cpus: null}]})
         })
+
+        it("keeps a field as it is at any depth, told apart by the object holding it", () => {
+            const form = {id: "env", type: "FORM", inputs: [{id: "rows", type: "TABLE", defaults: [{name: null}]}, {id: "notes", type: "STRING", defaults: null}]}
+            expect(removeNullAndUndefined(form, (key, parent) => key === "defaults" && parent.type === "TABLE"))
+                .toEqual({id: "env", type: "FORM", inputs: [{id: "rows", type: "TABLE", defaults: [{name: null}]}, {id: "notes", type: "STRING"}]})
+        })
     })
 })

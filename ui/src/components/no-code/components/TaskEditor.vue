@@ -439,7 +439,6 @@
 
     function onTaskInput(val: PartialNoCodeElement | undefined) {
         taskModel.value = val
-        const task = val
         if(fieldName){
             val = {
                 [fieldName]: val,
@@ -447,7 +446,7 @@
         }
 
         // A field an edition renders with its own component owns its value, empty cells included.
-        const keepAsIs = (key: string) => !fieldName && Boolean(blockComponentOverride?.(key, task))
+        const keepAsIs = (key: string, parent: Record<string, unknown>) => Boolean(blockComponentOverride?.(key, parent))
         modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val), keepAsIs))
     }
 

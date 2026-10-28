@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 
 // --- mocks (hoisted) ---
 const push = vi.fn()
@@ -82,10 +82,15 @@ vi.mock("override/components/ai/copilot/testSuiteDraftActions", () => ({
 
 import type {RouteLocationNormalizedLoaded, RouteParams} from "vue-router"
 import {useApplyDraft, isViewingFlow} from "./useApplyDraft"
+import {COPILOT_DRAFT_KEY} from "../../../utils/storageKeys"
 
 const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: my-flow\nnamespace: company.team", valid: true, constraints: null, ...over})
 
 describe("useApplyDraft", () => {
+    afterEach(() => {
+        sessionStorage.removeItem(COPILOT_DRAFT_KEY)
+    })
+
     beforeEach(() => {
         vi.clearAllMocks()
         routeName = undefined
@@ -124,11 +129,12 @@ describe("useApplyDraft", () => {
         testSuiteSupported.value = false
     })
 
-    it("openInEditor pushes flows/create with the drafted YAML as blueprintSourceYaml", () => {
+    it("openInEditor hands the drafted YAML over via sessionStorage, keeping it out of the URL", () => {
         useApplyDraft().openInEditor(draft())
+        expect(sessionStorage.getItem(COPILOT_DRAFT_KEY)).toBe("id: my-flow\nnamespace: company.team")
         expect(push).toHaveBeenCalledWith(expect.objectContaining({
             name: "flows/create",
-            query: {blueprintId: "copilot-draft", blueprintSourceYaml: "id: my-flow\nnamespace: company.team"},
+            query: {copilotDraft: "true"},
             params: {tenant: "main"},
         }))
     })

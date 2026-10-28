@@ -1,5 +1,6 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div data-component="FILENAME_PLACEHOLDER" :style="{'--execution-banner-height': `${bannerHeight}px`}">
+        <ExecutionSummaryCard v-if="props.showBanner && execution" v-model:height="bannerHeight" :execution />
         <div ref="inlineLogsTarget" />
         <KsDialog
             v-model="fullscreenModalOpen"
@@ -162,6 +163,7 @@
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations/logExecutionsFilter"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import ExecutionSummaryCard from "./components/ExecutionSummaryCard.vue"
     import LoopMergedLogs from "./LoopMergedLogs.vue"
     import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
@@ -228,11 +230,16 @@
 
     const props = withDefaults(defineProps<{
         playground?: boolean
+        showBanner?: boolean
     }>(), {
         playground: false,
+        showBanner: false,
     })
 
     const executionsStore = useExecutionsStore()
+    const execution = computed(() => executionsStore.execution)
+
+    const bannerHeight = ref(0)
 
     // The kind this execution's logs belong to, or undefined for NORMAL (the backend default).
     const executionKind = computed<string | undefined>(() => {
@@ -724,8 +731,8 @@
 
   .log-lines.temporal {
     margin-top: 0.5rem;
-    max-height: calc(100vh - 335px);
-    max-height: calc(100dvh - 335px);
+    max-height: max(15rem, calc(100vh - 335px - var(--execution-banner-height, 0px)));
+    max-height: max(15rem, calc(100dvh - 335px - var(--execution-banner-height, 0px)));
 
     &.fullscreen-logs {
       max-height: none;

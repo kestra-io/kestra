@@ -610,6 +610,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "शुरू नहीं हुआ"
       }
     },
     "show task logs": "Task Logs दिखाएं",

@@ -114,4 +114,55 @@ class UnsetVariablesTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("missingParent");
     }
+
+    @Test
+    void shouldHandleNullVariablesWhenIgnoreMissingTrue() throws Exception {
+        UnsetVariables task = JacksonMapper.ofJson().readValue(
+            """
+                {
+                  "id": "unset",
+                  "type": "io.kestra.plugin.core.execution.UnsetVariables",
+                  "ignoreMissing": true,
+                  "variables": ["nonExistent"]
+                }""",
+            UnsetVariables.class
+        );
+
+        Execution execWithNullVars = Execution.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("unset-variables")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        Execution updated = task.update(execWithNullVars, runContextFactory.of(Map.of()));
+        assertThat(updated.getVariables()).isEmpty();
+    }
+
+    @Test
+    void shouldFailWhenVariablesNullAndIgnoreMissingFalse() throws JsonProcessingException {
+        UnsetVariables task = JacksonMapper.ofJson().readValue(
+            """
+                {
+                  "id": "unset",
+                  "type": "io.kestra.plugin.core.execution.UnsetVariables",
+                  "ignoreMissing": false,
+                  "variables": ["nonExistent"]
+                }""",
+            UnsetVariables.class
+        );
+
+        Execution execWithNullVars = Execution.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("unset-variables")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        assertThatThrownBy(() -> task.update(execWithNullVars, runContextFactory.of(Map.of())))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Variable 'nonExistent' not found and `ignoreMissing` is false");
+    }
 }

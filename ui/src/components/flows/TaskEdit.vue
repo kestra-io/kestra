@@ -6,7 +6,7 @@
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'KsButton' && !isHidden">{{ $t("show task source") }}</span>
+        <span v-if="(labeled || component !== 'KsButton') && !isHidden">{{ $t("show task source") }}</span>
         <KsDrawer
             v-if="isModalOpen"
             v-model="isModalOpen"
@@ -208,6 +208,7 @@
 
     interface Props {
         component?: string;
+        labeled?: boolean;
         task?: Record<string, unknown>;
         taskRaw?: string;
         taskId?: string;
@@ -230,6 +231,7 @@
 
     const props = withDefaults(defineProps<Props>(), {
         component: "KsButton",
+        labeled: false,
         task: undefined,
         taskRaw: undefined,
         taskId: undefined,

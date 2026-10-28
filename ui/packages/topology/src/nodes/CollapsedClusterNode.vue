@@ -1,8 +1,9 @@
 <template>
-    <Handle type="source" :position="sourcePosition" />
+    <Handle type="source" :position="sourcePosition" :style="handleStyle" />
     <LaneHeader
         v-if="data.isFlowableLane"
         class="collapsed-lane"
+        :style="laneStyle"
         layout="card"
         :taskNode="data.taskNode ?? null"
         :color="data.color"
@@ -60,11 +61,11 @@
             </span>
         </div>
     </div>
-    <Handle type="target" :position="targetPosition" />
+    <Handle type="target" :position="targetPosition" :style="handleStyle" />
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, inject} from "vue"
     import {Handle, Position} from "@vue-flow/core"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import {
@@ -72,7 +73,8 @@
         type PluginIconData,
         type PluginIconMap,
     } from "@kestra-io/design-system"
-    import {EVENTS, CLUSTER_TAG_STATUS} from "../utils/constants"
+    import {EVENTS, CLUSTER_TAG_STATUS, NODE_SIZES} from "../utils/constants"
+    import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
     import * as Utils from "../utils/utils"
     import LaneHeader, {type LaneTaskNode} from "./LaneHeader.vue"
 
@@ -113,6 +115,19 @@
     ])
 
     const expandable = computed(() => data?.expandable || false)
+
+    const execution = inject(EXECUTION_INJECTION_KEY, undefined)
+    const reservesStatusRow = computed(() => Boolean(execution?.value) && Boolean(data.isFlowableLane))
+
+    const laneStyle = computed(() =>
+        reservesStatusRow.value ? {height: `calc(100% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px)`} : undefined,
+    )
+
+    const handleStyle = computed(() =>
+        reservesStatusRow.value && (sourcePosition === Position.Right || sourcePosition === Position.Left)
+            ? {top: `calc(50% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT / 2}px)`}
+            : undefined,
+    )
 
     const badgeStyle = computed(() => {
         const status = CLUSTER_TAG_STATUS[data.color] ?? "info"

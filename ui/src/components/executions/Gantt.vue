@@ -132,6 +132,9 @@
                                                             />
                                                         </GanttTaskLabel>
                                                     </template>
+                                                    <template v-if="nodeOf(item).kind === 'loop'" #label-footer>
+                                                        <GanttLoopStateBar :key="nodeOf(item).key" :node="nodeOf(item)" />
+                                                    </template>
                                                     <template #duration>
                                                         <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
                                                     </template>
@@ -240,6 +243,7 @@
     import GanttRow from "./gantt/GanttRow.vue"
     import GanttTaskLabel from "./gantt/GanttTaskLabel.vue"
     import GanttLoopChips from "./gantt/GanttLoopChips.vue"
+    import GanttLoopStateBar from "./gantt/GanttLoopStateBar.vue"
     import GanttRunPanel from "./gantt/GanttRunPanel.vue"
     import {
         createTaskRunNode,

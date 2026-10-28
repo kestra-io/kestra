@@ -46,6 +46,9 @@
                             />
                         </GanttTaskLabel>
                     </template>
+                    <template v-if="node.kind === 'loop'" #label-footer>
+                        <GanttLoopStateBar :key="node.key" :node="node" />
+                    </template>
                     <template #duration>
                         <Duration :histories="node.taskRun.state.histories" :attemptCount="node.taskRun.attempts?.length ?? 1" :subject="node.taskRun.taskId" />
                     </template>
@@ -79,6 +82,7 @@
     import GanttMessageRow from "./gantt/GanttMessageRow.vue"
     import GanttTaskLabel from "./gantt/GanttTaskLabel.vue"
     import GanttLoopChips from "./gantt/GanttLoopChips.vue"
+    import GanttLoopStateBar from "./gantt/GanttLoopStateBar.vue"
     import type {ExecutionTaskRun} from "./executionTaskRun"
     import {useExecutionsStore} from "../../stores/executions"
     import {

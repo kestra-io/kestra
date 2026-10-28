@@ -383,15 +383,23 @@ describe("TaskNode inside a loop", () => {
         expect(wrapper.find("[data-test=\"duration-compact-bar\"]").exists()).toBe(false)
     })
 
-    it("should show no number when the counts are unavailable", () => {
+    it("should draw every state of its runs next to the summary", () => {
+        const wrapper = mountInLoop(lane({taskRunStateCounts: {"my-task": {SUCCESS: 9, SKIPPED: 2, FAILED: 3}}}))
+
+        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("9 success, 3 failed, 2 skipped")
+    })
+
+    it("should show no number and no bar when the counts are unavailable", () => {
         const wrapper = mountInLoop(lane({}))
 
         expect(wrapper.find("[data-test='loop-task-runs']").exists()).toBe(false)
+        expect(wrapper.find("[data-test='loop-state-bar']").exists()).toBe(false)
     })
 
     it("should drop the summary once the loop is scoped to an iteration", () => {
         const wrapper = mountInLoop(lane({scopedNumber: 2, taskRunStateCounts: {"my-task": {SUCCESS: 9}}}))
 
         expect(wrapper.find("[data-test='loop-task-runs']").exists()).toBe(false)
+        expect(wrapper.find("[data-test='loop-state-bar']").exists()).toBe(false)
     })
 })

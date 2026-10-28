@@ -24,7 +24,10 @@
             <slot name="details" />
         </template>
         <template v-if="execution" #footer>
-            <span v-if="loopRunsLabel" class="loop-runs" data-test="loop-task-runs">{{ loopRunsLabel }}</span>
+            <template v-if="loopRunsLabel">
+                <span class="loop-runs" data-test="loop-task-runs">{{ loopRunsLabel }}</span>
+                <span class="loop-runs-bar"><LoopStateBar :counts="loopContext?.counts" /></span>
+            </template>
             <Duration v-else compact :histories="histories" :denominator="durationDenominator" />
         </template>
         <template #content>
@@ -77,6 +80,7 @@
     import type {GraphExecution, GraphTaskRun} from "../utils/vueFlowUtils"
     import BasicNode from "./BasicNode.vue"
     import NodeMenu, {type NodeAction} from "./NodeMenu.vue"
+    import LoopStateBar from "./LoopStateBar.vue"
     import ValidationBadge from "./ValidationBadge.vue"
     import {
         EXECUTION_INJECTION_KEY,
@@ -413,6 +417,13 @@ button.playground-button {
 .status-tag__text {
     font-size: var(--ks-font-size-2xs);
     white-space: nowrap;
+}
+
+.loop-runs-bar {
+    flex: 1;
+    align-self: center;
+    min-width: var(--ks-spacing-6);
+    margin-left: var(--ks-spacing-2);
 }
 
 .loop-runs {

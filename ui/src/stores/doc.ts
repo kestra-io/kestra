@@ -107,7 +107,9 @@ export const useDocStore = defineStore("doc", () => {
             ? JSON.parse(metadataHeader) as DocMetadata
             : undefined
 
-        docPath.value = metadata?.parsedUrl
+        if (id === docId.value) {
+            docPath.value = metadata?.parsedUrl
+        }
 
         return {
             content: await response.text(),

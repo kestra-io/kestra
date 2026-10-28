@@ -49,8 +49,8 @@
 
     const OPENING_TAG = /^<([A-Za-z][\w-]*)(\s[^>]*)?>$/
 
-    /** Raw HTML video embeds in docs are YouTube-only, so any other iframe host is dropped. */
-    const IFRAME_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com"]
+    /** Raw HTML embeds in docs are limited to YouTube videos and Arcade demos, so any other iframe host is dropped. */
+    const IFRAME_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com", "demo.arcade.software"]
 
     /**
      * Markdown links bypass the HTML whitelist, so their scheme is checked here.

@@ -1,11 +1,16 @@
 <template>
-    <KsTooltip v-if="segments.length" placement="bottom">
+    <KsTooltip v-if="segments.length" placement="bottom" trigger="manual" :visible="hovered || focused">
         <div
             class="loop-state-bar"
             role="img"
             tabindex="0"
             :aria-label="ariaLabel"
             data-test="loop-state-bar"
+            @mouseenter="hovered = true"
+            @mouseleave="hovered = false"
+            @focus="focused = true"
+            @blur="focused = false"
+            @keydown.esc="dismiss"
         >
             <span
                 v-for="segment in segments"
@@ -29,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {KsTooltip} from "@kestra-io/design-system"
     import type {StateCounts} from "../utils/loopOutcome"
@@ -42,6 +47,14 @@
     }>()
 
     const {t, n} = useI18n()
+
+    const hovered = ref(false)
+    const focused = ref(false)
+
+    function dismiss() {
+        hovered.value = false
+        focused.value = false
+    }
 
     const segments = computed(() => stateBarSegments(props.counts, {total: props.total, running: props.running}))
 

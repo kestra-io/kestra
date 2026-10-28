@@ -1,7 +1,7 @@
 <template>
     <div
         class="lane-header"
-        :class="{'lane-header--card': layout === 'card', 'lane-header--pill': isPill}"
+        :class="{'lane-header--card': layout === 'card', 'lane-header--pill': isPill, 'lane-header--with-bar': stateBar}"
         :style="headerStyle"
         :tabindex="loopLane ? 0 : undefined"
         :aria-keyshortcuts="loopLane ? '[ ]' : undefined"
@@ -210,7 +210,10 @@
         const lane = loopLane.value
         if (!lane) return undefined
         if (lane.status === "nested") {
-            return {counts: nestedLoopIterationCounts(lane, laneUid.value, loopLanes?.value ?? {})}
+            const lanes = loopLanes?.value ?? {}
+            return nestedLoopIterationSummary(lane, laneUid.value, lanes)
+                ? {counts: nestedLoopIterationCounts(lane, laneUid.value, lanes)}
+                : undefined
         }
         if (!outcome.value || lane.scopedNumber !== undefined) return undefined
         return {counts: lane.terminatedIterations, running: lane.runningIterations, total: lane.iterationCount}
@@ -315,6 +318,10 @@
         padding: 0 var(--ks-spacing-2);
         border-radius: var(--ks-radius-base) var(--ks-radius-base) 0 0;
         overflow: hidden;
+    }
+
+    .lane-header--with-bar {
+        padding-bottom: calc(var(--ks-spacing-1) + 2px);
     }
 
     .lane-header:focus-visible {

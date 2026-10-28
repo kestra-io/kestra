@@ -339,6 +339,37 @@ public class ApprovalTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/approval-comment-expression.yaml" })
+    void shouldExposeTheRenderedCommentRequiredWhileWaitingForADecision() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-comment-expression", null, null, Duration.ofSeconds(30));
+
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst());
+
+        assertThat(outputs.get("commentRequired")).isEqualTo("ON_DENY");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-comment-from-onwait.yaml" })
+    void shouldKeepTheOutputsAndRenderCommentRequiredAfterOnWaitWhenItReadsAnOnWaitOutput() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "approval-comment-from-onwait", null, null, Duration.ofSeconds(30));
+
+        Map<String, Object> outputs = taskOutputService.getOutputs(execution.findTaskRunsByTaskId("approval").getFirst());
+
+        assertThat((String) outputs.get("url")).contains("/executions/");
+        assertThat(outputs.get("commentRequired")).isEqualTo("ALWAYS");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/approval-comment-expression.yaml" })
+    void shouldFailTheApprovalInsteadOfPausingWhenCommentRequiredRendersAnInvalidValue() throws Exception {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "approval-comment-expression", null,
+            (flow, e) -> Map.of("commentRequired", "BOGUS"));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("approval").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/approval-inputs.yaml" })
     @SuppressWarnings("unchecked")
     void shouldStoreDecisionInputsInOutputs() throws Exception {

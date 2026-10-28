@@ -865,11 +865,16 @@ public class ExecutionService {
         return approval;
     }
 
-    private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, PausableTask.Decision decision) throws IllegalVariableEvaluationException {
+    private void validateDecisionComment(FlowInterface flow, Approval approval, Execution execution, TaskRun taskRun, PausableTask.Decision decision) {
         RunContext runContext = runContextFactory.of(flow, approval, execution, taskRun);
-        Approval.CommentRequired commentRequired = runContext.render(approval.getCommentRequired())
-            .as(Approval.CommentRequired.class)
-            .orElse(Approval.CommentRequired.NEVER);
+        Approval.CommentRequired commentRequired;
+        try {
+            commentRequired = runContext.render(approval.getCommentRequired())
+                .as(Approval.CommentRequired.class)
+                .orElse(Approval.CommentRequired.NEVER);
+        } catch (IllegalVariableEvaluationException e) {
+            throw new IllegalArgumentException("Task run '%s' has an invalid commentRequired: %s".formatted(taskRun.getId(), e.getMessage()), e);
+        }
 
         boolean required = switch (commentRequired) {
             case ALWAYS -> decision.type() != PausableTask.Decision.Type.EXPIRED;
@@ -879,7 +884,7 @@ public class ExecutionService {
         };
 
         if (required && (decision.comment() == null || decision.comment().isBlank())) {
-            throw new IllegalArgumentException("Task run '%s' requires a comment for a %s decision.".formatted(taskRun.getId(), decision.type()));
+            throw new IllegalArgumentException("Task run '%s' requires a comment when its decision is %s.".formatted(taskRun.getId(), decision.type()));
         }
         if (decision.comment() != null && decision.comment().length() > APPROVAL_COMMENT_MAX_LENGTH) {
             throw new IllegalArgumentException("The comment of a decision cannot exceed %d characters.".formatted(APPROVAL_COMMENT_MAX_LENGTH));

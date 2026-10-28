@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -350,7 +351,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     private Optional<State.Type> resolveWaitState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> onWaitTasks = FlowableUtils.resolveTasks(this.onWait, parentTaskRun);
         if (ListUtils.isEmpty(onWaitTasks)) {
-            return Optional.of(State.Type.PAUSED);
+            return this.paused(runContext);
         }
 
         Optional<State.Type> waitResult = FlowableUtils.resolveState(
@@ -368,7 +369,13 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             return parentTaskRun.getState().getCurrent() == State.Type.PAUSING ? Optional.empty() : Optional.of(State.Type.PAUSING);
         }
 
-        return waitResult.get().isTerminatedInError() ? waitResult : Optional.of(State.Type.PAUSED);
+        return waitResult.get().isTerminatedInError() ? waitResult : this.paused(runContext);
+    }
+
+    /** Renders {@code commentRequired} before pausing, so an invalid value fails the task instead of leaving a request no review can decide. */
+    private Optional<State.Type> paused(RunContext runContext) throws IllegalVariableEvaluationException {
+        runContext.render(this.commentRequired).as(CommentRequired.class);
+        return Optional.of(State.Type.PAUSED);
     }
 
     @SuppressWarnings("unchecked")
@@ -393,7 +400,11 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             if (autoApprove) {
                 return Output.builder().url(url).title(title).decision(Decision.Type.APPROVED).auto(true).build();
             }
-            return Output.builder().url(url).title(title).caseId(caseId).build();
+            return Output.builder()
+                .url(url)
+                .title(title)
+                .caseId(caseId)
+                .build();
         }
 
         return Output.builder()
@@ -403,7 +414,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .decision(decision)
             .auto(Boolean.TRUE.equals(current.get("auto")))
             .by((String) current.get("by"))
-            .on((String) current.get("on"))
+            .on(current.get("on") == null ? null : Instant.parse(current.get("on").toString()))
             .comment((String) current.get("comment"))
             .inputs((Map<String, Object>) current.get("inputs"))
             .due(current.get("due") == null ? null : Instant.parse(current.get("due").toString()))
@@ -433,7 +444,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
             .decision(decision != null ? decision.type() : null)
             .auto(false)
             .by(resumed.by())
-            .on(resumed.on().toString())
+            .on(resumed.on().atZone(ZoneId.systemDefault()).toInstant())
             .comment(decision != null ? decision.comment() : null)
             .inputs(inputs)
             .build();
@@ -493,8 +504,11 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
     }
 
     @Override
-    public Map<String, Object> pausedOutputs(RunContext runContext, Optional<ExecutionDelay> delay) {
-        return delay.<Map<String, Object>>map(d -> Map.of("due", d.getDate().toString())).orElse(Map.of());
+    public Map<String, Object> pausedOutputs(RunContext runContext, Optional<ExecutionDelay> delay) throws IllegalVariableEvaluationException {
+        Map<String, Object> outputs = new HashMap<>();
+        delay.ifPresent(d -> outputs.put("due", d.getDate().toString()));
+        outputs.put("commentRequired", runContext.render(this.commentRequired).as(CommentRequired.class).orElse(CommentRequired.NEVER).name());
+        return outputs;
     }
 
     @Override
@@ -515,7 +529,7 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
         private String by;
 
         @Schema(title = "When the decision was made.")
-        private String on;
+        private Instant on;
 
         @Schema(title = "The reviewer's comment.")
         private String comment;
@@ -534,6 +548,9 @@ public class Approval extends Task implements FlowableTask<Approval.Output>, Pau
 
         @Schema(title = "Identifier of the approval case. Enterprise Edition only.")
         private String caseId;
+
+        @Schema(title = "The rendered `commentRequired`, while the request waits for a decision.")
+        private CommentRequired commentRequired;
     }
 
     @Builder

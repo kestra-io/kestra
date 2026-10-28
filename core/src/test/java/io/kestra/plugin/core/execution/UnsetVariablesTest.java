@@ -98,6 +98,25 @@ class UnsetVariablesTest {
     }
 
     @Test
+    void shouldIgnoreMissingVariableWhenExecutionHasNoVariables() throws Exception {
+        UnsetVariables task = JacksonMapper.ofJson().readValue(
+            """
+                {
+                  "id": "unset",
+                  "type": "io.kestra.plugin.core.execution.UnsetVariables",
+                  "ignoreMissing": true,
+                  "variables": ["missing"]
+                }""",
+            UnsetVariables.class
+        );
+        Execution withoutVariables = execution().withVariables(null);
+
+        Execution execution = task.update(withoutVariables, runContextFactory.of(Map.of()));
+
+        assertThat(execution.getVariables()).isNullOrEmpty();
+    }
+
+    @Test
     void shouldFailWhenNestedParentMissingAndIgnoreMissingFalse() throws JsonProcessingException {
         UnsetVariables task = JacksonMapper.ofJson().readValue(
             """

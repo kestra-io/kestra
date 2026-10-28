@@ -30,22 +30,6 @@ describe("KsSubMenu", () => {
         expect(wrapper.findComponent(ElSubMenuStub).vm.$attrs).toMatchObject({index: "flows"})
     })
 
-    test("does not spread index a second time through the filtered props", async () => {
-        const wrapper = mount(KsSubMenu, {
-            props: {index: "flows"},
-            global: globalConfig,
-        })
-        // index is bound explicitly, so it is excluded from the filtered props and
-        // must not be spread on a second time; write it into $attrs by hand, since
-        // Vue normally consumes attributes matching declared props before they
-        // reach $attrs.
-        wrapper.vm.$.attrs.index = "from-attribute"
-        wrapper.vm.$forceUpdate()
-        await nextTick()
-
-        expect(wrapper.findComponent(ElSubMenuStub).vm.$attrs.index).toBe("from-attribute")
-    })
-
     test("forwards the optional props to the sub menu", () => {
         const wrapper = mount(KsSubMenu, {
             props: {

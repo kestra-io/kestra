@@ -42,6 +42,7 @@ import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -74,9 +75,10 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
@@ -89,8 +91,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
@@ -237,7 +237,11 @@ class ExecutionControllerRunnerTest {
 
         ZonedDateTime soon = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(2);
         Execution rescheduled = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8), null),
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate="
+                    + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8),
+                null
+            ),
             Execution.class
         );
 
@@ -273,7 +277,11 @@ class ExecutionControllerRunnerTest {
         var conflict = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                HttpRequest.POST("/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8), null)
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate="
+                        + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8),
+                    null
+                )
             )
         );
         assertThat(conflict.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
@@ -1132,6 +1140,102 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-edited-task.yaml" })
+    void shouldRunReplayedTaskOnEditedDefinitionWhileLaterTasksReadRealData() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-edited-task");
+        assertThat(failed.getState().getCurrent()).isEqualTo(Type.FAILED);
+        String definition = """
+            id: adjust
+            type: io.kestra.plugin.core.execution.Fail
+            condition: "{{ outputs.fetch.values.code | trim != 'KR-0412' }}"
+            errorMessage: "store {{ outputs.fetch.values.code }} does not exist"
+            """;
+
+        replayWithEditedTask(failed, "adjust", definition);
+        Execution replay = awaitReplayEditedTask(failed);
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(replay.getFlowRevision()).isEqualTo(failed.getFlowRevision());
+        assertThat(taskOutputService.getOutputs(replay.findTaskRunsByTaskId("notify").getFirst().toBuilder().tenantId(TENANT_ID).build()))
+            .containsEntry("value", "adjusted KR-0412 ");
+        TaskRun adjust = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/executions/" + replay.getId()), String.class))
+            .contains("\"definitionEdit\":{\"id\":\"" + adjust.getDefinitionEdit().id() + "\"");
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/edited-definition".formatted(replay.getId(), adjust.getId())),
+                ExecutionController.EditedDefinition.class
+            ).definition()
+        ).isEqualTo(definition);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-edited-task.yaml" })
+    void shouldTakeOtherBranchWhenReplayingFlowableOnEditedCondition() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-edited-task");
+
+        replayWithEditedTask(failed, "check", """
+            id: check
+            type: io.kestra.plugin.core.flow.If
+            condition: "{{ outputs.fetch.values.delta > 0 }}"
+            then:
+              - id: reserve
+                type: io.kestra.plugin.core.debug.Return
+                format: "reserve {{ outputs.fetch.values.code }}"
+            else:
+              - id: restock
+                type: io.kestra.plugin.core.debug.Return
+                format: "restock {{ outputs.fetch.values.code }}"
+            """);
+        Execution replay = awaitReplayEditedTask(failed);
+
+        assertThat(replay.findTaskRunsByTaskId("reserve")).isEmpty();
+        assertThat(replay.findTaskRunsByTaskId("restock")).hasSize(1);
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.FAILED);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-edited-task.yaml" })
+    void shouldRejectEditedDefinitionThatChangesTypeOrNestedTasks() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-edited-task");
+
+        var otherType = assertThrows(HttpClientResponseException.class, () -> replayWithEditedTask(failed, "adjust", """
+            id: adjust
+            type: io.kestra.plugin.core.log.Log
+            message: hello
+            """));
+        var nestedChanged = assertThrows(HttpClientResponseException.class, () -> replayWithEditedTask(failed, "check", """
+            id: check
+            type: io.kestra.plugin.core.flow.If
+            condition: "{{ true }}"
+            then:
+              - id: reserve
+                type: io.kestra.plugin.core.debug.Return
+                format: "changed"
+            """));
+
+        assertThat(otherType.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(otherType.getResponse().getBody(String.class).orElse("")).contains("changes its id or its type");
+        assertThat(nestedChanged.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(nestedChanged.getResponse().getBody(String.class).orElse("")).contains("changes the tasks nested in it");
+    }
+
+    private void replayWithEditedTask(Execution execution, String taskId, String definition) {
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/%s/actions/replay-with-edited-task?taskRunId=%s".formatted(execution.getId(), execution.findTaskRunsByTaskId(taskId).getFirst().getId()),
+                Map.of("definition", definition)
+            ),
+            Execution.class
+        );
+    }
+
+    private Execution awaitReplayEditedTask(Execution source) throws QueueException {
+        Flow flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "replay-edited-task").orElseThrow();
+        return runnerUtils.awaitChildExecution(flow, source, Duration.ofSeconds(15));
     }
 
     @Test

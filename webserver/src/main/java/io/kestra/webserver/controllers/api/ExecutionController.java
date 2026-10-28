@@ -147,6 +147,7 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -277,6 +278,12 @@ public class ExecutionController {
 
     @Inject
     private ActorResolver actorResolver;
+
+    @Inject
+    private TaskDefinitionEditService taskDefinitionEditService;
+
+    @Inject
+    private TaskOutputService taskOutputService;
 
     @Inject
     private ModelValidator modelValidator;
@@ -1139,7 +1146,8 @@ public class ExecutionController {
                     })
                         .last()
                         .map(Event::getData)
-                        .map(execution -> {
+                        .map(execution ->
+                        {
                             try {
                                 return ExecutionResponse.fromExecution(
                                     execution,
@@ -1173,7 +1181,8 @@ public class ExecutionController {
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
         ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs,
-            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata,
+            Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted,
+            ExecutionMetadata metadata,
             Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, LoopRun loopRun, URI url) {
             super(
                 tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate,
@@ -1581,6 +1590,50 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/replay-with-edited-task")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Create a new execution from an old one and start it from a task run, on the original flow revision, with that task's definition edited for this replay only. The id, the type and the nested tasks cannot change."
+    )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "409", description = "if the execution cannot be replayed")
+    public HttpResponse<Execution> replayExecutionWithEditedTask(
+        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @QueryValue String taskRunId,
+        @RequestBody(description = "The edited definition of the task, as YAML") @Valid @Body ReplayWithEditedTaskRequest request) throws Exception {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+
+        controlReplayable(execution, taskRunId, null);
+
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()));
+        controlDraftExecutableAs(flow, execution.getKind());
+
+        FlowWithSource source = flowRepository.findByIdWithSourceWithoutAcl(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()))
+            .orElseThrow(NotFoundException::new);
+        taskDefinitionEditService.validate(source, execution, taskRunId, request.definition());
+
+        return blockingReplay(execution, taskRunId, null, Optional.empty(), request.definition());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/taskruns/{taskRunId}/edited-definition")
+    @Operation(tags = { "Executions" }, summary = "Get the definition a replay edited for a task run, as YAML")
+    public EditedDefinition getTaskRunEditedDefinition(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @PathVariable String taskRunId) throws InternalException {
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
+        TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(taskRunId).orElseThrow(NotFoundException::new);
+
+        return new EditedDefinition(taskOutputService.getEditedDefinition(taskRun).orElseThrow(NotFoundException::new));
+    }
+
+    public record ReplayWithEditedTaskRequest(@NotBlank String definition) {
+    }
+
+    public record EditedDefinition(String definition) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/actions/replay/validate")
     @Operation(
         tags = { "Executions" },
@@ -1604,6 +1657,11 @@ public class ExecutionController {
     }
 
     private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) {
+        return blockingReplay(execution, taskRunId, revision, breakpoints, null);
+    }
+
+    private HttpResponse<Execution> blockingReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints,
+        @Nullable String taskDefinition) {
         if (taskRunId != null) {
             if (execution.getTaskRunList().stream().noneMatch(tr -> tr.getId().equals(taskRunId))) {
                 throw new IllegalArgumentException("Task run id '" + taskRunId + "' not found in execution '" + execution.getId() + "'");
@@ -1625,6 +1683,7 @@ public class ExecutionController {
                         // emit Replay command; signals completion via operationId when new execution is created
                         executionCommandQueue.emit(
                             Replay.from(execution, newExecutionId, taskRunId, revision, breakpoints.orElse(null))
+                                .withTaskDefinition(taskDefinition)
                                 .withOperationId(operationId)
                                 .withActor(actor)
                         );
@@ -1970,9 +2029,11 @@ public class ExecutionController {
         }
 
         TaskRun taskRun = execution.findTaskRunByTaskRunIdIfPresent(stateRequest.taskRunId())
-            .orElseThrow(() -> new NoSuchElementException(
-                "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
-            ));
+            .orElseThrow(
+                () -> new NoSuchElementException(
+                    "Cannot interrupt task run: no task run '%s' on execution '%s'.".formatted(stateRequest.taskRunId(), executionId)
+                )
+            );
 
         if (State.Type.RUNNING != taskRun.getState().getCurrent()) {
             throw new ConflictException(
@@ -2004,9 +2065,9 @@ public class ExecutionController {
      */
     private static List<String> interruptedTaskRunIds(Execution execution, TaskRun taskRun) {
         return Stream.concat(
-                Stream.of(taskRun),
-                execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
-            )
+            Stream.of(taskRun),
+            execution.findAllChildren(taskRun).stream().filter(child -> !child.getState().isTerminated())
+        )
             .map(TaskRun::getId)
             .toList();
     }

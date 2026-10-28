@@ -16,11 +16,15 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
@@ -49,6 +53,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     private final ExecutionEventMessageHandler executionEventMessageHandler;
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
+    private final RunContextFactory runContextFactory;
 
     @Inject
     public ExecutionCommandMessageHandler(
@@ -61,7 +66,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         AsyncOperationService asyncOperationService,
         ExecutionEventMessageHandler executionEventMessageHandler,
         KillSwitchService killSwitchService,
-        KillSwitchActionService killSwitchActionService) {
+        KillSwitchActionService killSwitchActionService,
+        RunContextFactory runContextFactory) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
@@ -72,6 +78,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         this.executionEventMessageHandler = executionEventMessageHandler;
         this.killSwitchService = killSwitchService;
         this.killSwitchActionService = killSwitchActionService;
+        this.runContextFactory = runContextFactory;
     }
 
     @Override
@@ -229,8 +236,14 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     command.revision(),
                     Optional.ofNullable(command.breakpoints()),
                     true,
-                    command.executionId()
+                    command.executionId(),
+                    command.taskDefinition(),
+                    command.actor() == null ? null : command.actor().userId()
                 );
+            }
+
+            if (command.taskDefinition() != null) {
+                saveEditedFlowableOutputs(newExecution);
             }
 
             var persisted = persistNewExecutionWithKillSwitch(newExecution);
@@ -259,6 +272,22 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         }
     }
 
+    // a flowable keeps its decision in its outputs (e.g. If's evaluationResult), which must follow the edited definition
+    private void saveEditedFlowableOutputs(Execution execution) throws InternalException {
+        FlowWithSource flow = flowMetaStore.findByExecutionForRuntime(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            Task task = taskRun.getDefinitionEdit() == null ? null : flow.findTaskByTaskId(taskRun.getTaskId());
+            if (task instanceof FlowableTask<?> flowable) {
+                RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+                try {
+                    taskOutputService.saveOutputs(taskRun, flowable.outputs(runContext));
+                } catch (Exception e) {
+                    runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
+                }
+            }
+        }
+    }
+
     /**
      * Evaluates the kill switch on a brand-new (not yet persisted) execution and writes it to the state
      * store in the appropriate terminal state if kill-switched.
@@ -284,8 +313,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         if (evaluationType == EvaluationType.KILL) {
             log.warn("Kill switch active (KILL): killing execution {}", execution.getId());
             newExecution = execution.withState(State.Type.KILLED).addLabel(new Label(Label.KILL_SWITCH, "killed"));
-        }
-        else if (evaluationType == EvaluationType.CANCEL) {
+        } else if (evaluationType == EvaluationType.CANCEL) {
             log.warn("Kill switch active (CANCEL): cancelling execution {}", execution.getId());
             newExecution = execution.withState(State.Type.CANCELLED).addLabel(new Label(Label.KILL_SWITCH, "cancelled"));
         } else {

@@ -17,6 +17,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.TaskDefinitionEditService;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -35,13 +36,15 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final ConcurrentHashMap<String, Integer> deletedRevisions = new ConcurrentHashMap<>();
     private final BroadcastQueueInterface<FlowInterface> flowQueue;
     private final FlowWithDefaultCache withDefaultCache;
+    private final TaskDefinitionEditService taskDefinitionEditService;
 
     private QueueSubscriber<FlowInterface> subscriber;
 
     public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, FlowParsingService flowParsingService,
         RunContextLoggerFactory runContextLoggerFactory, BroadcastQueueInterface<FlowInterface> flowQueue,
-        FlowWithDefaultCache withDefaultCache) {
+        FlowWithDefaultCache withDefaultCache, TaskDefinitionEditService taskDefinitionEditService) {
         this.flowRepository = flowRepository;
+        this.taskDefinitionEditService = taskDefinitionEditService;
         this.flowParsingService = flowParsingService;
         this.runContextLoggerFactory = runContextLoggerFactory;
         this.flowQueue = flowQueue;
@@ -146,11 +149,11 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
                 FlowId.uid(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()))
             );
             if (fromCache.isPresent()) {
-                return fromCache.map(ProcessedFlow::flow);
+                return fromCache.map(ProcessedFlow::flow).map(flow -> taskDefinitionEditService.applyEdits(flow, execution));
             }
         }
 
-        return findByExecution(execution).map(it -> injectDefaults(it, execution).flow());
+        return findByExecution(execution).map(it -> taskDefinitionEditService.applyEdits(injectDefaults(it, execution).flow(), execution));
     }
 
     @Override

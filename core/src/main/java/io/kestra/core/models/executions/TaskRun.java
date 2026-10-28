@@ -76,6 +76,11 @@ public class TaskRun implements TenantInterface {
     @With
     Boolean forceExecution;
 
+    // Set when a replay ran this task run on a definition edited for that replay only.
+    @With
+    @Nullable
+    TaskRunDefinitionEdit definitionEdit;
+
     /**
      * @deprecated should only be used inside the pre-2.0 compatibility layer.
      */
@@ -129,6 +134,7 @@ public class TaskRun implements TenantInterface {
             this.iteration,
             this.dynamic,
             this.forceExecution,
+            this.definitionEdit,
             this.outputs
         );
     }
@@ -158,6 +164,7 @@ public class TaskRun implements TenantInterface {
             this.iteration,
             this.dynamic,
             this.forceExecution,
+            this.definitionEdit,
             this.outputs
         );
     }
@@ -206,6 +213,7 @@ public class TaskRun implements TenantInterface {
             this.iteration,
             this.dynamic,
             this.forceExecution,
+            this.definitionEdit,
             this.outputs
         );
     }

@@ -36,7 +36,7 @@
     const iterationsRoute = computed(() => loopIterationsRoute(executionsStore.execution, props.taskId))
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .loop-iterations-notice {
         margin-bottom: var(--ks-spacing-4);
     }

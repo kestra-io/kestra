@@ -32,9 +32,11 @@ export const Default: Story = {
             </div>
         `,
     }),
+    args: {showAlpha: false, disabled: false, size: "default", alphaOnSurface: false},
 }
 
 export const WithAlpha: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() { return {value: ref("rgba(64, 158, 255, 0.5)")} },
@@ -48,6 +50,7 @@ export const WithAlpha: Story = {
 }
 
 export const WithPredefine: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() {
@@ -66,6 +69,7 @@ export const WithPredefine: Story = {
 }
 
 export const Disabled: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() { return {value: ref("#409EFF")} },
@@ -74,6 +78,7 @@ export const Disabled: Story = {
 }
 
 export const Size: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() { return {value: ref("#409EFF")} },
@@ -86,6 +91,7 @@ export const Size: Story = {
 }
 
 export const AlphaOnSurface: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsColorPicker},
         setup() {

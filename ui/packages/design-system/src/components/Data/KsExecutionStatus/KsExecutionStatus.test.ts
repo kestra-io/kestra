@@ -2,6 +2,9 @@ import {describe, test, expect} from "vitest"
 import {mount} from "@vue/test-utils"
 import KestraDesignSystem from "../../../index"
 import KsExecutionStatus from "./KsExecutionStatus.vue"
+import {EXECUTION_STATUSES} from "./types"
+// @ts-expect-error - plain .mjs module, shared with the linters
+import {knownTokens} from "../../../../../../scripts/tokens/knownTokens.mjs"
 
 const globalConfig = {plugins: [KestraDesignSystem]}
 
@@ -114,6 +117,37 @@ describe("KsExecutionStatus", () => {
         expect(wrapper.find("button").attributes("disabled")).toBeDefined()
     })
 
+    test("collapses to a non-interactive dot named for assistive technology", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "FAILED", dot: true, clickable: true},
+            global: globalConfig,
+        })
+        const dot = wrapper.find(".ks-execution-status--dot")
+        expect(dot.element.tagName).toBe("SPAN")
+        expect(dot.attributes("role")).toBe("img")
+        expect(dot.attributes("aria-label")).toBe("Failed")
+        expect(wrapper.find("button").exists()).toBe(false)
+        expect(wrapper.find(".ks-execution-status__icon").exists()).toBe(false)
+    })
+
+    test("keeps the state label on a dot when a caller passes an undefined aria-label", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "FAILED", dot: true},
+            attrs: {"aria-label": undefined},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--dot").attributes("aria-label")).toBe("Failed")
+    })
+
+    test("lets a caller name a dot explicitly", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "FAILED", dot: true},
+            attrs: {"aria-label": "Last run failed"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--dot").attributes("aria-label")).toBe("Last run failed")
+    })
+
     test("renders all status variants", () => {
         const statuses = [
             "CREATED", "SUBMITTED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",
@@ -128,5 +162,14 @@ describe("KsExecutionStatus", () => {
             })
             expect(wrapper.find(`.ks-execution-status--${status.toLowerCase()}`).exists()).toBe(true)
         }
+    })
+
+    test("declares the colour and background token of every status", () => {
+        const known: Set<string> = knownTokens()
+        const missing = Object.keys(EXECUTION_STATUSES)
+            .flatMap(status => [`--ks-status-${status.toLowerCase()}`, `--ks-status-background-${status.toLowerCase()}`])
+            .filter(token => !known.has(token))
+
+        expect(missing).toEqual([])
     })
 })

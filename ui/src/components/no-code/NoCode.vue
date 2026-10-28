@@ -1,6 +1,6 @@
 <template>
     <div class="no-code" ref="scrollContainer">
-        <div class="p-4">
+        <div class="no-code-content">
             <Task
                 v-if="creatingTask || editingTask"
             />
@@ -15,7 +15,7 @@
                     </template>
                 </Wrapper>
 
-                <hr class="my-4">
+                <hr class="separator">
 
                 <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="LIST_FIELDS.includes(v.fieldKey)">
                     <template #tasks>
@@ -224,10 +224,18 @@
 
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .no-code {
         height: 100%;
         overflow-y: auto;
+
+        .no-code-content {
+            padding: var(--ks-spacing-5);
+        }
+
+        .separator {
+            margin: var(--ks-spacing-5) 0;
+        }
 
         hr {
             margin: 0;

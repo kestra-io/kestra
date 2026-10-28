@@ -26,7 +26,7 @@
                 :tableOptions="{
                     chart: {shown: false},
                     columns: {shown: false},
-                    refresh: {shown: true, callback: compute}
+                    refresh: {shown: true, callback: refresh}
                 }"
                 @search="search = $event"
                 @filter="onFilterChange"
@@ -53,8 +53,8 @@
                                     </span>
                                 </div>
                                 <div class="actions">
-                                    <KsButton class="copy-logs" :icon="ContentCopy" link @click="copyAllLogs">
-                                        {{ $t("copy all logs") }}
+                                    <KsButton class="copy-logs" :icon="ContentCopy" link :aria-label="$t('copy all logs')" @click="copyAllLogs">
+                                        <span class="copy-logs-label">{{ $t("copy all logs") }}</span>
                                     </KsButton>
                                     <KsExecutionStatus :status="execution.state.current" />
                                 </div>
@@ -84,7 +84,7 @@
                                 >
                                     <div class="d-flex flex-column">
                                         <div
-                                            class="gantt-row d-flex cursor-icon"
+                                            class="gantt-row cursor-icon"
                                             :class="{
                                                 'is-expanded': selectedTaskRuns.includes(item.id),
                                                 'gantt-block-alt': rowBlocks.get(item.id)?.isAlt,
@@ -141,7 +141,7 @@
                                                     </span>
                                                 </KsTooltip>
                                             </div>
-                                            <div>
+                                            <div class="task-attempts">
                                                 <KsTooltip v-if="item.attempts > 1" placement="right">
                                                     <template #content>
                                                         <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
@@ -159,7 +159,7 @@
                                                     data-test="gantt-task-bar"
                                                 />
                                             </div>
-                                            <div v-if="!verticalLayout" class="task-duration">
+                                            <div class="task-duration">
                                                 <small>
                                                     <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" :subject="item.name" />
                                                 </small>
@@ -175,7 +175,30 @@
                                                     :flow="executionsStore.flow"
                                                 />
                                             </div>
+                                            <div
+                                                v-if="verticalLayout && item.id === firstFailure.failedTaskRun.value?.id"
+                                                class="task-failure"
+                                                data-test="gantt-first-failure"
+                                                @click.stop
+                                            >
+                                                <p v-if="firstFailure.message.value" class="task-failure-message">
+                                                    {{ firstFailure.message.value }}
+                                                </p>
+                                                <RouterLink class="task-failure-link" :to="firstFailure.logsRoute.value">
+                                                    {{ $t("execution_mobile.open_logs") }}
+                                                    <ArrowRight />
+                                                </RouterLink>
+                                            </div>
                                         </div>
+                                        <LoopIterationTree
+                                            v-if="taskTypeByTaskRunId[item.id] === 'io.kestra.plugin.core.flow.Loop'"
+                                            :key="`${execution!.id}-${item.task.taskId}-${item.id}`"
+                                            :executionId="execution!.id"
+                                            :taskId="item.task.taskId"
+                                            :namespace="execution!.namespace"
+                                            :flowId="execution!.flowId"
+                                            :depth="item.depth || 0"
+                                        />
                                         <Transition name="expand">
                                             <div v-if="selectedTaskRuns.includes(item.id)" class="task-details">
                                                 <div class="task-details__inner p-2">
@@ -210,18 +233,20 @@
 <script setup lang="ts">
     import {ref, computed, watch, onUnmounted} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute} from "vue-router"
+    import {RouterLink, useRoute} from "vue-router"
 
     import type {ExecutionTaskRun} from "./executionTaskRun"
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
+    import {useIsMobile} from "../../composables/useIsMobile"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Warning from "vue-material-design-icons/Alert.vue"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     import {Duration} from "@kestra-io/topology"
+    import {asProblem} from "@kestra-io/kestra-sdk"
     import {
         State,
         Comparators,
@@ -251,6 +276,9 @@
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
+    import {useFirstFailure} from "../../composables/useFirstFailure"
+    import LoopIterationTree from "./LoopIterationTree.vue"
+    import {isReportedCentrally, type KestraHttpError} from "../../utils/kestraHttp"
 
     import {storageKeys} from "../../utils/constants"
     type TaskRun = ExecutionTaskRun
@@ -289,7 +317,7 @@
     const toast = useToast()
     const executionsStore = useExecutionsStore()
     const pluginsStore = usePluginsStore()
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
+    const verticalLayout = useIsMobile()
     const ganttExecutionFilter = useGanttExecutionFilter()
 
     const TASKRUN_THRESHOLD = 50
@@ -325,6 +353,7 @@
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
+    const firstFailure = useFirstFailure(execution, verticalLayout)
 
     const taskRunsCount = computed<number>(() => execution.value?.taskRunList?.length ?? 0)
 
@@ -526,6 +555,21 @@
         computeSeries()
     }
 
+    async function refresh(): Promise<void> {
+        const executionId = execution.value?.id
+        if (!executionId) return
+
+        try {
+            await executionsStore.loadExecution({id: executionId})
+            compute()
+        } catch (error) {
+            const httpError = error as KestraHttpError
+            if (httpError.response && httpError.status !== 401 && !isReportedCentrally(httpError)) {
+                toast.error(asProblem(error)?.detail ?? t("error"))
+            }
+        }
+    }
+
     function computeSeries(): void {
         if (!execution.value) {
             return
@@ -701,7 +745,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .gantt-progress {
         margin-bottom: var(--ks-spacing-4);
     }
@@ -718,7 +762,7 @@
             --gantt-duration-width: 0rem;
         }
 
-        :deep(.kel-card__header) {
+        & :deep(.kel-card__header) {
             padding: 0;
             font-size: var(--ks-font-size-sm);
 
@@ -794,11 +838,12 @@
             }
         }
 
-        :deep(.kel-card__body) {
+        & :deep(.kel-card__body) {
             padding: 0;
 
             .vue-recycle-scroller {
                 max-height: calc(100vh - 223px);
+                max-height: calc(100dvh - 223px);
 
                 &::-webkit-scrollbar {
                     width: 5px;
@@ -817,6 +862,7 @@
             .gantt-row {
                 --gantt-band-bg: color-mix(in srgb, var(--ks-border-default) 60%, var(--ks-dropdown-bg));
 
+                display: flex;
                 align-items: center;
                 position: relative;
                 padding-right: var(--ks-spacing-8);
@@ -835,12 +881,12 @@
                     background: var(--ks-dropdown-bg-active);
                 }
 
-                * {
+                & * {
                     transition: none !important;
                     animation: none !important;
                 }
 
-                > * {
+                & > * {
                     padding: 1rem .25rem;
                 }
 
@@ -996,6 +1042,114 @@
         border: none !important;
     }
 
+    @media (max-width: 767px) {
+        #gantt .gantt-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto auto;
+            grid-template-areas:
+                "label duration state actions"
+                "bar bar bar bar"
+                "failure failure failure failure";
+            align-items: center;
+            gap: var(--ks-spacing-2) var(--ks-spacing-3);
+            padding: var(--ks-spacing-3);
+
+            > * {
+                padding: 0;
+            }
+
+            .task-label {
+                grid-area: label;
+                gap: var(--ks-spacing-2);
+            }
+
+            .task-name {
+                display: block;
+                max-width: none;
+                white-space: normal;
+                overflow: visible;
+                overflow-wrap: anywhere;
+            }
+
+            .task-attempts:empty {
+                display: none;
+            }
+
+            .task-duration {
+                grid-area: duration;
+            }
+
+            .task-state {
+                grid-area: state;
+            }
+
+            .task-actions {
+                position: static;
+                grid-area: actions;
+                transform: none;
+            }
+
+            .task-bar {
+                grid-area: bar;
+            }
+
+            .task-failure {
+                grid-area: failure;
+                padding: var(--ks-spacing-2) var(--ks-spacing-3);
+            }
+        }
+
+        #gantt .gantt-header .top {
+            flex-wrap: wrap;
+            padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        }
+
+        #gantt .gantt-header .bottom .scale {
+            flex: 1 1 auto;
+            width: auto;
+            margin: 0 calc(var(--ks-spacing-3) + var(--ks-spacing-1));
+        }
+
+        .copy-logs-label {
+            display: none;
+        }
+    }
+
+    .task-failure {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        background: var(--ks-bg-error);
+        border: 1px solid var(--ks-border-error);
+        border-radius: var(--ks-radius-base);
+        cursor: default;
+    }
+
+    .task-failure-link {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        color: var(--ks-text-error);
+        font-weight: var(--ks-font-weight-bold);
+        text-decoration: none;
+    }
+
+    .task-failure-message {
+        margin: 0;
+        max-width: 100%;
+        color: var(--ks-text-error);
+        font-family: var(--ks-font-family-mono);
+        font-size: var(--ks-font-size-xs);
+        white-space: normal;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
     .gantt-empty-status {
         display: flex;
         align-items: center;
@@ -1028,7 +1182,7 @@
             margin-bottom: 0;
         }
 
-        > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
+        & > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
             border-radius: var(--kel-border-radius-round);
         }
     }

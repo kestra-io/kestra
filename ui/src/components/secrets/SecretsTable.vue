@@ -114,7 +114,7 @@
                         placement="left"
                         @click="updateSecretModal(scope.row as NamespaceSecret)"
                     >
-                        <FileDocumentEdit />
+                        <Pencil />
                     </KsIconButton>
                 </template>
             </KsTableColumn>
@@ -229,7 +229,7 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
 
     import {KsId, KsIconButton, KsPassword, rowKey, deepMerge} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
@@ -656,7 +656,7 @@
         }
     })
 </script>
-<style scoped lang="scss">
+<style scoped>
     .secrets-table {
         display: flex;
         flex-direction: column;

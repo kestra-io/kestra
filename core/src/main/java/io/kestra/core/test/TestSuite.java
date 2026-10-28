@@ -8,6 +8,7 @@ import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.annotations.ServerOwned;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TenantId;
@@ -49,6 +50,7 @@ public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSui
     @Size(min = 1, max = 100)
     private String flowId;
 
+    @ServerOwned
     private String source;
 
     @NotNull
@@ -57,6 +59,7 @@ public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSui
     private List<UnitTest> testCases;
 
     @Builder.Default
+    @ServerOwned
     private boolean deleted = Boolean.FALSE;
 
     @Builder.Default

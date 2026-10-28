@@ -125,7 +125,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .label-input {
         display: flex;
         flex-direction: column;

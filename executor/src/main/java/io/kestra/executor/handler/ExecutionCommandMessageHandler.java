@@ -13,8 +13,10 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.FlowMetaStoreInterface;
@@ -23,6 +25,7 @@ import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.executor.ExecutionDelayStateStore;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
@@ -38,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<ExecutionCommand> {
     private final ExecutionService executionService;
     private final ExecutionStateStore executionStateStore;
+    private final ExecutionDelayStateStore executionDelayStateStore;
     private final FlowMetaStoreInterface flowMetaStore;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
@@ -50,6 +54,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
     public ExecutionCommandMessageHandler(
         ExecutionService executionService,
         ExecutionStateStore executionStateStore,
+        ExecutionDelayStateStore executionDelayStateStore,
         FlowMetaStoreInterface flowMetaStore,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
@@ -59,6 +64,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
         KillSwitchActionService killSwitchActionService) {
         this.executionService = executionService;
         this.executionStateStore = executionStateStore;
+        this.executionDelayStateStore = executionDelayStateStore;
         this.flowMetaStore = flowMetaStore;
         this.taskOutputService = taskOutputService;
         this.executionOutputService = executionOutputService;
@@ -103,6 +109,8 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         executionService.pause(execution);
                     case Unqueue unqueueCommand ->
                         executionService.unqueue(execution, unqueueCommand.state());
+                    case Reschedule rescheduleCommand ->
+                        reschedule(execution, rescheduleCommand);
                     case ForceRun ignored ->
                         executionService.forceRun(execution, executorContext.getFlow());
                     case ChangeTaskRunState changeTaskRunStateCommand ->
@@ -121,7 +129,7 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + message); // should never happen, would be a bug
                 };
-                return newExecution != null ? executorContext.withExecution(migrateOutputs(newExecution), "ExecutionCommandMessageHandler") : null;
+                return newExecution != null ? executorContext.withExecution(migrateOutputs(flow, newExecution), "ExecutionCommandMessageHandler") : null;
             } catch (Exception e) {
                 log.error("Unable to process event for execution {}: ignoring {} command with eventId {}", message.executionId(), message.getClass().getSimpleName(), message.eventId(), e);
                 outcome = AsyncOperationProcessedEvent.Outcome.FAILED;
@@ -131,6 +139,24 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                 asyncOperationService.emitProcessedIfAsync(message, message.tenantId(), message.executionId(), outcome, error);
             }
         });
+    }
+
+    private Execution reschedule(Execution execution, Reschedule command) {
+        if (!executionService.canBeRescheduled(execution)) {
+            throw new IllegalStateException("Cannot reschedule execution '%s': it has already started or was never scheduled.".formatted(execution.getId()));
+        }
+
+        var executionDelay = ExecutionDelay.builder()
+            .executionId(execution.getId())
+            .date(command.scheduleDate())
+            .state(State.Type.CREATED)
+            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
+            .build();
+        if (!executionDelayStateStore.saveUnlessProcessing(executionDelay)) {
+            throw new IllegalStateException("Cannot reschedule execution '%s': its scheduled start is being processed.".formatted(execution.getId()));
+        }
+
+        return executionService.reschedule(execution, command.scheduleDate());
     }
 
     private Optional<ExecutorContext> handleCreate(Create command) {
@@ -276,9 +302,9 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
      * uniformly with the modern storage.
      */
     @SuppressWarnings("deprecation")
-    private Execution migrateOutputs(Execution execution) throws InternalException {
+    private Execution migrateOutputs(Flow flow, Execution execution) throws InternalException {
         if (execution.getOutputs() != null) {
-            executionOutputService.saveOutputs(execution, execution.getOutputs());
+            executionOutputService.saveOutputs(log, flow, execution, execution.getOutputs());
             execution = execution.withOutputs(null);
         }
 

@@ -8,7 +8,7 @@
         @click="emit('add', $event)"
     >
         <span class="block-empty-drop-lead">
-            <PlusCircleOutline class="block-empty-drop-ico" />
+            <Plus class="block-empty-drop-ico" />
             {{ leadLabel }}
         </span>
 
@@ -19,7 +19,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
 
     const {t} = useI18n()
 
@@ -49,7 +49,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .block-empty-drop {
         display: flex;
         background: transparent;

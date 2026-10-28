@@ -25,12 +25,6 @@
         return {counts: terminated, total, running: terminal.value ? 0 : running}
     })
 
-    const hasNoCounts = computed(() => {
-        const entry = tree.loopOutputs(props.node.taskRun.id)
-        return entry !== undefined && !entry.failed && bar.value === undefined
-    })
-    const polling = computed(() => !terminal.value && !hasNoCounts.value)
-
     let timer: ReturnType<typeof setInterval> | undefined
 
     function stopPolling() {
@@ -38,7 +32,7 @@
         timer = undefined
     }
 
-    watch(polling, (active) => {
+    watch(() => !terminal.value, (active) => {
         stopPolling()
         if (active) timer = setInterval(() => tree.loadLoopOutputs(props.node), LOOP_OUTPUTS_REFRESH_MS / 2)
     }, {immediate: true})

@@ -128,13 +128,15 @@
     }
 
     .row-label {
+        --gantt-label-gap: var(--ks-spacing-2);
+
         flex: 1 1 0;
         min-width: 6rem;
         overflow-x: clip;
         align-self: stretch;
         display: flex;
         align-items: center;
-        gap: var(--ks-spacing-2);
+        gap: var(--gantt-label-gap);
 
         code {
             color: var(--ks-text-primary);
@@ -157,13 +159,13 @@
             position: absolute;
             top: 0;
             bottom: 0;
-            left: 50%;
+            left: calc(50% + var(--gantt-label-gap));
             width: var(--ks-border-width-thin);
             background: var(--ks-border-strong);
         }
 
         &.is-lineage::before {
-            left: calc(50% - var(--ks-border-width-thin) / 2);
+            left: calc(50% + var(--gantt-label-gap) - var(--ks-border-width-thin) / 2);
             width: var(--ks-border-width-base);
             background: var(--ks-border-focus);
         }

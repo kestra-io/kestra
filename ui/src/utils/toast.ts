@@ -47,7 +47,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
     function MarkdownWrap(message:string) {
         return h(KsMarkdown, {content: message})
     }
-    
+
     return {
         confirm: function(message:string, callback: () => Promise<unknown> | unknown, type = "warning" as const, showCancelButton = true) {
             return KsMessageBox

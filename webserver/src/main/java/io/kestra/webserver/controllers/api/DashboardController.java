@@ -213,6 +213,29 @@ public class DashboardController {
         return fetchChartData(fetchChartDataQuery);
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "charts/state-counts")
+    @Operation(tags = { "Dashboards" }, summary = "Count the executions of a chart by state")
+    public ChartStateCounts previewChartStateCounts(
+        @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest) throws IOException {
+        return fetchChartStateCounts(buildChartPreviewDataQuery(previewRequest));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{id}/charts/{chartId}/state-counts")
+    @Operation(tags = { "Dashboards" }, summary = "Count the executions of a dashboard chart by state")
+    public ChartStateCounts dashboardChartStateCounts(
+        @Parameter(description = "The dashboard id") @PathVariable String id,
+        @Parameter(description = "The chart id") @PathVariable String chartId,
+        @RequestBody(description = "The dashboard filters to apply, some can override chart definition like labels & namespace") @Body ChartFiltersOverrides globalFilter) throws IOException {
+        var fetchChartDataQuery = buildDashboardChardDataQuery(id, chartId, globalFilter);
+        if (fetchChartDataQuery == null) {
+            return null;
+        }
+
+        return fetchChartStateCounts(fetchChartDataQuery);
+    }
+
     private FetchChartDataQuery buildChartPreviewDataQuery(PreviewRequest previewRequest) {
         String tenantId = tenantService.resolveTenant();
         Chart<?> chart = YamlParser.parse(previewRequest.chart(), Chart.class);
@@ -293,6 +316,21 @@ public class DashboardController {
         throw new IllegalArgumentException("Only data charts can be generated.");
     }
 
+    protected ChartStateCounts fetchChartStateCounts(FetchChartDataQuery fetchChartDataQuery) throws IOException {
+        if (!(fetchChartDataQuery.chart() instanceof DataChart<?, ?> dataChart)) {
+            throw new IllegalArgumentException("Only data charts can be counted by state.");
+        }
+
+        return new ChartStateCounts(this.chartDataService.generateStateCounts(
+            fetchChartDataQuery.tenantId(),
+            dataChart,
+            fetchChartDataQuery.filters(),
+            fetchChartDataQuery.startDate(),
+            fetchChartDataQuery.endDate(),
+            fetchChartDataQuery.queryTimeout()
+        ));
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = { "Dashboards" }, summary = "Export a dashboard chart data")
@@ -365,6 +403,12 @@ public class DashboardController {
         static ChartData of(ArrayListTotal<Map<String, Object>> rows, List<QueryFilter.Field> ignoredFilters) {
             return new ChartData(rows, rows.getTotal(), ignoredFilters);
         }
+    }
+
+    /**
+     * @param counts the number of executions per state name, without an entry for a state that has none
+     */
+    public record ChartStateCounts(@NotNull Map<String, Long> counts) {
     }
 
     @Getter

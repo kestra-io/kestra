@@ -52,6 +52,7 @@
             "filters[flowId][EQUALS]": props.execution.flowId,
             sort: "state.startDate:desc",
             size: 1,
+            commit: false,
         };
 
         const [newerRes, olderRes] = await Promise.all([

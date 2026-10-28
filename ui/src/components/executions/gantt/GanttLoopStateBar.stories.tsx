@@ -126,7 +126,7 @@ export const RunningWithNotStartedRemainder: Story = {
         await waitForBars(canvasElement, 1)
 
         const bar = canvasElement.querySelector("[data-test='loop-state-bar']")!
-        expect(bar.getAttribute("aria-label")).toBe("4,812 success, 3 failed, 12 running, 173 not started")
+        expect(bar.getAttribute("aria-label")).toBe("4,812 SUCCESS, 3 FAILED, 12 RUNNING, 173 not started")
     },
 }
 
@@ -144,7 +144,7 @@ export const TerminalAndNested: Story = {
         await waitForBars(canvasElement, 2)
 
         const labels = [...canvasElement.querySelectorAll("[data-test='loop-state-bar']")].map((bar) => bar.getAttribute("aria-label"))
-        expect(labels).toEqual(["4,997 success, 3 failed", "40 success"])
+        expect(labels).toEqual(["4,997 SUCCESS, 3 FAILED", "40 SUCCESS"])
     },
 }
 

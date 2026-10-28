@@ -1,5 +1,3 @@
-import type {StateCounts} from "./loopOutcome"
-
 export interface StateBarSegment {
     state: string;
     count: number;
@@ -46,8 +44,8 @@ const STATE_COLORS = new Map(ORDERED_STATE_COLORS)
 
 const isPositive = (count: unknown): count is number => typeof count === "number" && Number.isFinite(count) && count > 0
 
-export function stateBarSegments(counts: StateCounts | undefined, {total, running}: StateBarOptions = {}): StateBarSegment[] {
-    const merged: StateCounts = {...counts}
+export function stateBarSegments(counts: Record<string, number> | undefined, {total, running}: StateBarOptions = {}): StateBarSegment[] {
+    const merged: Record<string, number> = {...counts}
     if (isPositive(running)) {
         merged[RUNNING_STATE] = (isPositive(merged[RUNNING_STATE]) ? merged[RUNNING_STATE] : 0) + running
     }

@@ -21,7 +21,7 @@ export const AllSuccess: Story = {
     play: async ({canvasElement}) => {
         const bar = within(canvasElement).getByRole("img")
 
-        expect(bar.getAttribute("aria-label")).toBe("480 success")
+        expect(bar.getAttribute("aria-label")).toBe("480 SUCCESS")
         expect(bar.querySelectorAll("[data-test='loop-state-bar-segment']")).toHaveLength(1)
     },
 }
@@ -33,7 +33,7 @@ export const OneFailureInTenThousand: Story = {
         const bar = within(canvasElement).getByRole("img")
 
         expect(failed.getBoundingClientRect().width).toBeGreaterThanOrEqual(3)
-        expect(bar.getAttribute("aria-label")).toBe("9,999 success, 1 failed")
+        expect(bar.getAttribute("aria-label")).toBe("9,999 SUCCESS, 1 FAILED")
     },
 }
 
@@ -42,7 +42,7 @@ export const RunningWithNotStarted: Story = {
     play: async ({canvasElement}) => {
         const bar = within(canvasElement).getByRole("img")
 
-        expect(bar.getAttribute("aria-label")).toBe("4,812 success, 3 failed, 12 running, 173 not started")
+        expect(bar.getAttribute("aria-label")).toBe("4,812 SUCCESS, 3 FAILED, 12 RUNNING, 173 not started")
     },
 }
 
@@ -71,19 +71,76 @@ export const NoCounts: Story = {
     },
 }
 
+const legendShown = () => {
+    const legend = document.body.querySelector<HTMLElement>("[data-test='loop-state-bar-legend']")
+    return legend !== null && getComputedStyle(legend.closest<HTMLElement>(".ks-tooltip") ?? legend).display !== "none"
+}
+
+const SETTLE_MS = 400
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, SETTLE_MS))
+
 export const LegendOnKeyboardFocus: Story = {
     args: {counts: {SUCCESS: 30, FAILED: 2}, total: 40},
     play: async ({canvasElement}) => {
-        const legendShown = () => {
-            const legend = document.body.querySelector<HTMLElement>("[data-test='loop-state-bar-legend']")
-            return legend !== null && getComputedStyle(legend.closest<HTMLElement>(".ks-tooltip") ?? legend).display !== "none"
-        }
-
         await userEvent.tab()
 
         expect(within(canvasElement).getByRole("img")).toHaveFocus()
         await waitFor(() => expect(legendShown()).toBe(true))
         await userEvent.keyboard("{Escape}")
         await waitFor(() => expect(legendShown()).toBe(false))
+    },
+}
+
+export const LegendClosesAfterAClick: Story = {
+    args: {counts: {SUCCESS: 30, FAILED: 2}},
+    play: async ({canvasElement}) => {
+        const bar = within(canvasElement).getByRole("img")
+
+        await userEvent.click(bar)
+        await userEvent.unhover(bar)
+        await settle()
+
+        expect(legendShown()).toBe(false)
+    },
+}
+
+export const LegendStaysOpenWhileHoveringIt: Story = {
+    args: {counts: {SUCCESS: 30, FAILED: 2}},
+    play: async ({canvasElement}) => {
+        const bar = within(canvasElement).getByRole("img")
+
+        await userEvent.hover(bar)
+        await waitFor(() => expect(legendShown()).toBe(true))
+        await userEvent.hover(document.body.querySelector<HTMLElement>("[data-test='loop-state-bar-legend']")!)
+        await settle()
+        expect(legendShown()).toBe(true)
+
+        await userEvent.unhover(document.body.querySelector<HTMLElement>("[data-test='loop-state-bar-legend']")!)
+        await userEvent.hover(canvasElement)
+        await waitFor(() => expect(legendShown()).toBe(false))
+    },
+}
+
+export const EscapeClosesAHoverLegend: Story = {
+    args: {counts: {SUCCESS: 30, FAILED: 2}},
+    play: async ({canvasElement}) => {
+        await userEvent.hover(within(canvasElement).getByRole("img"))
+        await waitFor(() => expect(legendShown()).toBe(true))
+
+        await userEvent.keyboard("{Escape}")
+
+        await waitFor(() => expect(legendShown()).toBe(false))
+    },
+}
+
+export const HitAreaExtendsBeyondTheBar: Story = {
+    args: {counts: {SUCCESS: 30, FAILED: 2}},
+    play: async ({canvasElement}) => {
+        const {left, bottom, width} = within(canvasElement).getByRole("img").getBoundingClientRect()
+
+        const below = document.elementFromPoint(left + width / 2, bottom + 1)
+
+        expect(below?.closest("[data-test='loop-state-bar']")).not.toBeNull()
     },
 }

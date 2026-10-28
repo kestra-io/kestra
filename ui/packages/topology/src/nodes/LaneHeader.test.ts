@@ -142,7 +142,7 @@ describe("LaneHeader loop state bar", () => {
     it("shouldShowTheLoopOwnIterationsIncludingRunningAndNotStarted", () => {
         const wrapper = mountLane({per_region: lane({iterationCount: 10, runningIterations: 2, terminatedIterations: {FAILED: 1, SUCCESS: 5}, state: "RUNNING"})})
 
-        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("5 success, 1 failed, 2 running, 2 not started")
+        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("5 SUCCESS, 1 FAILED, 2 RUNNING, 2 not started")
     })
 
     it("shouldShowTheNestedLoopIterationsOfTheOuterLoopCounts", () => {
@@ -154,7 +154,7 @@ describe("LaneHeader loop state bar", () => {
             {uid: "outer.per_region"},
         )
 
-        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("7 success, 1 failed")
+        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("7 SUCCESS, 1 FAILED")
     })
 
     it("shouldShowNothingOnceTheLaneIsScopedToAnIteration", () => {

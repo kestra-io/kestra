@@ -21,7 +21,7 @@
                     onlyIcon
                 />
             </div>
-            <div class="lane-labels">
+            <div class="lane-labels" data-test="lane-labels">
                 <span class="lane-type" :title="typeTooltip">{{ typeLine }}</span>
                 <span class="lane-id">{{ idLabel }}</span>
             </div>
@@ -83,6 +83,7 @@
         loopOutcome,
         nestedLoopIterationCounts,
         nestedLoopIterationSummary,
+        summarizeTaskRuns,
         isLoopTaskType,
         type LoopChip,
     } from "../utils/loopOutcome"
@@ -210,10 +211,8 @@
         const lane = loopLane.value
         if (!lane) return undefined
         if (lane.status === "nested") {
-            const lanes = loopLanes?.value ?? {}
-            return nestedLoopIterationSummary(lane, laneUid.value, lanes)
-                ? {counts: nestedLoopIterationCounts(lane, laneUid.value, lanes)}
-                : undefined
+            const counts = nestedLoopIterationCounts(lane, laneUid.value, loopLanes?.value ?? {})
+            return summarizeTaskRuns(counts) ? {counts} : undefined
         }
         if (!outcome.value || lane.scopedNumber !== undefined) return undefined
         return {counts: lane.terminatedIterations, running: lane.runningIterations, total: lane.iterationCount}
@@ -321,7 +320,7 @@
     }
 
     .lane-header--with-bar {
-        padding-bottom: calc(var(--ks-spacing-1) + 2px);
+        padding-bottom: calc(var(--ks-spacing-1) * 1.5);
     }
 
     .lane-header:focus-visible {

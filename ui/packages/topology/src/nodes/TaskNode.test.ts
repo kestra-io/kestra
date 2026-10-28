@@ -386,7 +386,7 @@ describe("TaskNode inside a loop", () => {
     it("should draw every state of its runs next to the summary", () => {
         const wrapper = mountInLoop(lane({taskRunStateCounts: {"my-task": {SUCCESS: 9, SKIPPED: 2, FAILED: 3}}}))
 
-        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("9 success, 3 failed, 2 skipped")
+        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("9 SUCCESS, 3 FAILED, 2 SKIPPED")
     })
 
     it("should show no number and no bar when the counts are unavailable", () => {

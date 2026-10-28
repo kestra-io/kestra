@@ -14,7 +14,5 @@
   "src/stores/logs.cursor.spec.ts": 1,
   "src/stores/logs.searchRace.spec.ts": 5,
   "src/utils/flowableBlockOps.spec.ts": 8,
-  "src/utils/posthog.ts": 11,
-  "src/utils/recipeToYaml.spec.ts": 14,
-  "src/utils/utils.ts": 14
+  "src/utils/recipeToYaml.spec.ts": 14
 }

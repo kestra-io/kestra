@@ -471,33 +471,36 @@ export function getParentNamespaces(namespace: string): string[] {
     return parents
 }
 
-export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>): any {
+export function resolve$ref<T = unknown>(fullSchema: Record<string, unknown>, obj: T): T {
     if (obj === undefined || obj === null) {
         return obj
     }
-    if (obj.$ref) {
-        return getValueAtJsonPath(fullSchema, obj.$ref)
+    if ((obj as unknown as { $ref?: unknown })?.$ref) {
+        return getValueAtJsonPath(fullSchema, (obj as unknown as { $ref: string }).$ref) as T
     }
     return obj
 }
 
-export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string): any {
+export function getValueAtJsonPath<T = unknown>(fullSchema: Record<string, unknown>, path: string): T {
     if (!fullSchema || !path || typeof path !== "string") {
-        return undefined
+        return undefined as T
     }
 
     const keys = path.replace(/^#\//, "").split("/")
-    let current: any = fullSchema
+    let current: unknown = fullSchema
 
     for (const key of keys) {
         if (current && typeof current === "object" && key in current) {
-            current = resolve$ref(fullSchema, current[key])
+            const next = (current as Record<string, unknown>)[key]
+            current = next && typeof next === "object"
+                ? resolve$ref(fullSchema, next)
+                : next
         } else {
-            return undefined
+            return undefined as T
         }
     }
 
-    return current
+    return current as T
 }
 
 export function deepEqual(x: unknown, y: unknown): boolean {

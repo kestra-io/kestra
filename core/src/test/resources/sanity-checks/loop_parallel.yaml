@@ -1,0 +1,23 @@
+id: loop_parallel
+namespace: sanitychecks.core
+labels:
+  tier: tier1
+description: |
+  Run iterations concurrently with `concurrencyLimit: 0` (unlimited) and parallelise the
+  per-iteration task group with an inner `Parallel`.
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    concurrencyLimit: 0
+    tasks:
+      - id: parallel
+        type: io.kestra.plugin.core.flow.Parallel
+        tasks:
+          - id: log
+            type: io.kestra.plugin.core.log.Log
+            message: "Processing {{ item.value }}"
+          - id: done
+            type: io.kestra.plugin.core.debug.Return
+            format: "done {{ item.value }}"

@@ -81,6 +81,7 @@ class DistinctFilterTest {
     void shouldPreserveNullWhenInputIsNull() throws IllegalVariableEvaluationException {
         assertThat(new DistinctFilter().apply(null, Map.of(), null, null, 0)).isNull();
         assertThat(variableRenderer.render("{{ null | distinct }}", Map.of())).isEmpty();
+        assertThat(variableRenderer.renderTyped("{{ null | distinct }}", Map.of())).isNull();
     }
 
     @ParameterizedTest

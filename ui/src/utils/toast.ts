@@ -29,7 +29,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
                 [
                     // Through KsMarkdown like every other toast body: the messages come from the API and can echo
                     // user-provided ids, so they get the same sanitizing instead of a raw innerHTML.
-                    h(KsTableColumn, {label: "Message", formatter: (row: {message: string}) => h(KsMarkdown, {content: row.message})}),
+                    h(KsTableColumn, {label: t("toast_message_column"), formatter: (row: {message: string}) => h(KsMarkdown, {content: row.message})}),
                 ],
             )
         } else {

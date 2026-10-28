@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
 import org.reactivestreams.Publisher;
 
 import io.kestra.core.async.AsyncOperationsConfiguration;
@@ -89,6 +90,7 @@ public class ExecutionService {
     private final FlowParsingService flowParsingService;
     private final TaskOutputService taskOutputService;
     private final ExecutionOutputService executionOutputService;
+    private final SearchableOutputRepositoryInterface searchableOutputRepository;
     private final CheckpointRepositoryInterface checkpointRepository;
     private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     private final BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -110,6 +112,7 @@ public class ExecutionService {
         FlowParsingService flowParsingService,
         TaskOutputService taskOutputService,
         ExecutionOutputService executionOutputService,
+        SearchableOutputRepositoryInterface searchableOutputRepository,
         CheckpointRepositoryInterface checkpointRepository,
         DispatchQueueInterface<ExecutionCommand> executionCommandQueue,
         BroadcastQueueInterface<ExecutionKilled> killQueue,
@@ -128,6 +131,7 @@ public class ExecutionService {
         this.flowParsingService = Objects.requireNonNull(flowParsingService);
         this.taskOutputService = Objects.requireNonNull(taskOutputService);
         this.executionOutputService = Objects.requireNonNull(executionOutputService);
+        this.searchableOutputRepository = Objects.requireNonNull(searchableOutputRepository);
         this.checkpointRepository = Objects.requireNonNull(checkpointRepository);
         this.executionCommandQueue = Objects.requireNonNull(executionCommandQueue);
         this.killQueue = Objects.requireNonNull(killQueue);
@@ -855,6 +859,7 @@ public class ExecutionService {
                     builder.taskOutputsCount(this.taskOutputService.purge(executions));
                     builder.executionOutputsCount(this.executionOutputService.purge(executions));
                     builder.checkpointsCount(this.checkpointRepository.purge(executions));
+                    builder.searchableOutputsCount(this.searchableOutputRepository.purge(executions));
                 }
 
                 if (purgeLog) {
@@ -1373,6 +1378,8 @@ public class ExecutionService {
 
         @Builder.Default
         private int executionOutputsCount = 0;
+        @Builder.Default
+        private int searchableOutputsCount = 0;
 
         @Builder.Default
         private int checkpointsCount = 0;

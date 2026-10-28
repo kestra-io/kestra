@@ -135,11 +135,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> or(SelectConditionStep<Record> query, Map<F, String> fieldsMapping, Or<F> filter) {
-        SelectConditionStep<Record> orQuery = query;
-        for (AbstractFilter<F> subFilter : filter.getValues()) {
-            orQuery = orQuery.or(this.buildWhere(fieldsMapping, subFilter));
-        }
-        return orQuery;
+        return query.and(orCondition(fieldsMapping, filter));
     }
 
     @Override

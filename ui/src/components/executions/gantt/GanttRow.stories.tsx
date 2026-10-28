@@ -23,7 +23,7 @@ function guideLineCentreX(guide: Element) {
     return rect(guide).left + parseFloat(line.left) + parseFloat(line.width) / 2;
 }
 
-const meta = {
+const meta: Meta<typeof GanttRow> = {
     title: "Components/Executions/Gantt/GanttRow",
     component: GanttRow,
     parameters: {layout: "padded"},
@@ -61,10 +61,10 @@ const meta = {
             </div>
         `,
     }),
-} satisfies Meta<typeof GanttRow>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof GanttRow>;
 
 export const GuidesAlignWithParentChevrons: Story = {
     play: async ({canvasElement}: {canvasElement: HTMLElement}) => {

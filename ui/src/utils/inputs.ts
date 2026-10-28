@@ -158,7 +158,7 @@ export function normalize(type: InputType | undefined, value: any) {
             .minute(Number(minutes))
             .second(Number(seconds))
             .toString()
-    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
+    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "TABLE" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }
@@ -170,4 +170,9 @@ export function normalize(type: InputType | undefined, value: any) {
         res = res.toString()
     }
     return res
+}
+
+export function hasMissingRequiredInputs(flowInputs: ({id?: string; required?: boolean} | undefined)[] | undefined, values: Record<string, unknown> | null | undefined): boolean {
+    const requiredIds = (flowInputs ?? []).filter(input => input?.required !== false).map(input => input?.id)
+    return requiredIds.some(id => id === undefined || values?.[id] === null || values?.[id] === undefined)
 }

@@ -145,6 +145,7 @@
     "update": "更新",
     "confirmation": "确认",
     "toast confirm": "您确定吗？",
+    "toast_message_column": "消息",
     "common": {
       "back": "返回",
       "openInNewTab": "在新标签页中打开"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
     "replayed": "执行已重放",
+    "reused_task_run": {
+      "label": "已复用",
+      "tooltip": "此 execution 不会再次运行。它已于 {date} 运行，其 logs 和 outputs 来自该次运行。"
+    },
     "replay the execution": "重放 flow {flowId} 的执行 {executionId}",
     "prefill inputs": "预填",
     "current": "当前",
@@ -509,9 +514,68 @@
       "invalid": "图形错误",
       "invalid_description": "加载图表时发生错误。请检查源代码中的错误。",
       "load_error": "无法加载拓扑图。请重试。",
+      "expand_subflow_error": "无法展开 subflow",
       "add-task": "添加 task",
       "add-trigger": "添加 trigger",
-      "child-count": "{count} 个 task | {count} 个 task"
+      "child-count": "{count} 个 task | {count} 个 task",
+      "loop": {
+        "not-run": "未运行",
+        "pick-first": "请先选择 {loop}",
+        "picker-label": "{loop} 的迭代",
+        "search-by-index": "按索引搜索",
+        "all-iterations": "所有迭代",
+        "iteration-index": "索引 {index}",
+        "iteration-value-index": "{value} · 索引 {index}",
+        "previous-iteration": "上一个迭代",
+        "next-iteration": "下一个迭代",
+        "previous-page": "上一页",
+        "next-page": "下一页",
+        "failed-group": "失败 · {count}",
+        "other-group": "其他迭代",
+        "matching": "匹配",
+        "failure-forbidden": "您无权访问此迭代。",
+        "failure-not-found": "此迭代已不存在。",
+        "failure-ambiguous": "此循环在本次执行中运行了多次，因此无法区分其迭代。",
+        "failure-not-located": "无法定位失败的迭代。",
+        "failure-unknown": "无法加载迭代。",
+        "scope": "范围",
+        "whole-execution": "整个执行",
+        "clear-scopes": "清除范围",
+        "jump-to-first-failure": "跳转到第一个失败",
+        "loops-with-failures": "存在失败的循环",
+        "task-runs": "{runs} 次运行 | {runs} 次运行",
+        "task-runs-failed": "{runs} 次运行 · {failed} 次失败 | {runs} 次运行 · {failed} 次失败",
+        "retry": "重试",
+        "load-more": "加载更多",
+        "retry-loading": "重试加载迭代"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total} 个中 {failed} 个失败",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} 个失败 · {total} 个中 {notStarted} 个未开始",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total} 个中 {done} 个已完成",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total} 个中 {done} 个已完成 · {failed} 个失败",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} 个迭代 | {total} 个迭代",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "显示任务日志",
     "show task condition": "显示任务条件",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "修订版 {revision}",
       "attempts": "{count} 次尝试 | {count} 次尝试",
-      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task"
+      "tasks": "{completed}/{count} 个 task | {completed}/{count} 个 task",
+      "searchable_values": "可搜索的值",
+      "more_searchable_values": "+{count} 个更多可搜索值"
     },
     "execution_mobile": {
       "failed_task": "失败的 task",
@@ -547,7 +613,13 @@
     "namespaces": "命名空间",
     "tasks": "任务",
     "executions duration (in minutes)": "总执行持续时间（分钟）",
-    "last 48 hours": "最近48小时",
+    "task runs": "Task 运行",
+    "task runs duration (in minutes)": "总 Task 运行持续时间（分钟）",
+    "last 24 hours": "过去 24 小时",
+    "last 7 days": "过去 7 天",
+    "last 30 days": "过去 30 天",
+    "since {date}": "自 {date} 起",
+    "usage period": "使用期限",
     "email": "电子邮件",
     "password": "密码",
     "confirm password": "确认密码",
@@ -576,6 +648,7 @@
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "表达式",
+      "searchable": "可搜索的",
       "tree": "树",
       "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",
@@ -1768,7 +1841,18 @@
       "compact": "默认视图",
       "compact_details": "按任务分组显示任务日志",
       "fullscreen": "全屏日志",
-      "exit_fullscreen": "退出全屏"
+      "exit_fullscreen": "退出全屏",
+      "loop": {
+        "this-execution": "此执行",
+        "with-iterations": "包含循环迭代",
+        "batch-range": "失败的迭代 {from}–{to}（共 {total} 次）",
+        "empty-title": "没有匹配的日志",
+        "empty-description": "在此执行或其失败的循环迭代中，没有日志匹配所选级别。降低级别以查看更多。",
+        "scope-to": "将图形和日志限定到 {scope}",
+        "show-in-overview": "在概览中显示",
+        "show-in-overview-for": "在概览中显示 {scope}",
+        "mode-label": "日志来源"
+      }
     },
     "execution_deletion": {
       "logs": "删除日志",

@@ -1,11 +1,13 @@
 import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {useMiscStore} from "override/stores/misc"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {labelComparatorLabels} from "./labelComparatorLabels"
 
 export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
+    const miscStore = useMiscStore()
 
     return computed(() => {
         return {
@@ -67,9 +69,11 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
                     groupable: false,
+                    removable: false,
+                    clearedValue: miscStore.configs?.chartDefaultDuration ?? "PT24H",
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions")
-                        return VALUES.RELATIVE_DATE
+                        return VALUES.RELATIVE_DATE_OR_ALL_TIME
                     },
                     dateFilterOptions: [
                         {value: "START_DATE", label: t("filter.timeRange.dateFilter.startDate")},

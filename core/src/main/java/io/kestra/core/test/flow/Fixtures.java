@@ -21,8 +21,7 @@ public class Fixtures {
 
     private Map<String, String> files;
 
-    @Valid
-    private List<TaskFixture> tasks;
+    private List<@Valid TaskFixture> tasks;
 
     @Valid
     private TriggerFixture trigger;

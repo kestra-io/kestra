@@ -10,7 +10,7 @@
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <i18n-t keypath="resume from breakpoint title" tag="span">
+            <i18n-t keypath="resume from breakpoint title" tag="span" scope="global">
                 <template #id><code>{{ execution.id }}</code></template>
             </i18n-t>
         </template>
@@ -43,7 +43,7 @@
 <script setup lang="ts">
     import {computed, ref, onMounted} from "vue"
     import Play from "vue-material-design-icons/Play.vue"
-    import {useExecutionsStore} from "../../../../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -53,12 +53,9 @@
 
     defineOptions({inheritAttrs: false})
 
-    const props = defineProps({
-        execution: {
-            type: Object,
-            required: true,
-        },
-    })
+    const props = defineProps<{
+        execution: Execution
+    }>()
 
     const {t} = useI18n()
     const executionsStore = useExecutionsStore()
@@ -103,7 +100,7 @@
                 store: true,
             })
             if (props.execution.breakpoints) {
-                selectedBreakpoints.value = props.execution.breakpoints.map((b: any) => b.value ? `${b.id}.${b.value}` : b.id)
+                selectedBreakpoints.value = props.execution.breakpoints.map((b) => b.value ? `${b.id}.${b.value}` : b.id)
             }
         }
     })

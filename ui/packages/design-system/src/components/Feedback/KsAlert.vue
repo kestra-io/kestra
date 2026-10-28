@@ -16,7 +16,12 @@
     </ElAlert>
 </template>
 
+<script lang="ts">
+    export const KS_ALERT_TYPES = ["success", "warning", "info", "error"] as const
+    export type KsAlertType = typeof KS_ALERT_TYPES[number]
+</script>
 <script setup lang="ts">
+    import {computed} from "vue"
     import {ElAlert} from "element-plus"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
@@ -28,7 +33,7 @@
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        type?: "success" | "warning" | "info" | "error"
+        type?: KsAlertType
         title?: string
         description?: string
         closable?: boolean
@@ -42,6 +47,13 @@
 
     const filteredProps = useFilteredProps(props, ["banner"])
 
+    // Element Plus renders an untyped alert as info. KsAlert.test.ts checks these tokens exist.
+    const alertType = computed(() => props.type ?? "info")
+    const borderColor = computed(() => `var(--ks-border-${alertType.value})`)
+    const backgroundColor = computed(() => `var(--ks-bg-${alertType.value})`)
+    const textColor = computed(() => `var(--ks-text-${alertType.value})`)
+    const iconColor = computed(() => `var(--ks-icon-${alertType.value})`)
+
     defineSlots<{
         default?(): unknown
         title?(): unknown
@@ -52,7 +64,9 @@
     @use '../../assets/styles/el-ns' as *;
     @use 'element-plus/theme-chalk/src/alert' as *;
     @use "element-plus/theme-chalk/src/common/var" as *;
+</style>
 
+<style>
     .kel-alert {
         --kel-alert-icon-size: 1.5rem;
         --kel-alert-icon-large-size: 1.5rem;
@@ -73,20 +87,20 @@
             --ks-alert-first-line-font-size: var(--kel-alert-description-font-size);
         }
 
-         .kel-alert__title {
+        & .kel-alert__title {
             line-height: var(--ks-line-height-base);
         }
 
-        .kel-alert__description {
+        & .kel-alert__description {
             line-height: var(--ks-line-height-base);
         }
 
-        .kel-alert__icon {
+        & .kel-alert__icon {
             height: var(--kel-alert-icon-size);
             align-self: flex-start;
 
-            .material-design-icon,
-            .material-design-icon > .material-design-icon__svg {
+            & .material-design-icon,
+            & .material-design-icon > .material-design-icon__svg {
                 height: var(--kel-alert-icon-size);
                 width: var(--kel-alert-icon-size);
             }
@@ -96,31 +110,33 @@
             padding-block: max(0px, calc((var(--kel-alert-icon-size) - var(--ks-line-height-base) * var(--ks-alert-first-line-font-size)) / 2));
         }
 
-        .kel-alert__close-btn {
+        & .kel-alert__close-btn {
             top: 50%;
             transform: translateY(-50%);
             color: var(--ks-icon-muted);
         }
 
-        .kel-alert__title.with-description {
+        & .kel-alert__title.with-description {
             font-weight: bold;
         }
 
-        @each $type in (success, info, warning, error) {
-            &.kel-alert--#{$type}.is-light {
-                border: 1px solid var(--ks-border-#{$type});
-                background-color: var(--ks-bg-#{$type});
-                #{--kel-color-#{$type}}: var(--ks-text-#{$type});
+        &.is-light {
+            border: 1px solid v-bind(borderColor);
+            background-color: v-bind(backgroundColor);
+            color: v-bind(textColor);
 
-                &.is-banner {
-                    border-width: 0 0 1px;
-                    border-radius: 0;
-                    #{--kel-color-#{$type}}: var(--ks-text-primary);
-                }
+            & .kel-alert__description {
+                color: inherit;
+            }
 
-                .kel-alert__icon {
-                    color: var(--ks-icon-#{$type});
-                }
+            & .kel-alert__icon {
+                color: v-bind(iconColor);
+            }
+
+            &.is-banner {
+                border-width: 0 0 1px;
+                border-radius: 0;
+                color: var(--ks-text-primary);
             }
         }
     }

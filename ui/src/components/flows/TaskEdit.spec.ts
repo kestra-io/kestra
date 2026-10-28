@@ -13,9 +13,11 @@ vi.mock("../../stores/api", () => ({
     useApiStore: () => ({posthogEvents}),
 }))
 
-const {pluginsStoreState, insertedChipText} = vi.hoisted(() => ({
+const {pluginsStoreState, insertedChipText, loadPlugin, validateTask} = vi.hoisted(() => ({
     pluginsStoreState: {plugin: undefined as {schema?: {outputs?: {properties?: Record<string, unknown>}}} | undefined},
     insertedChipText: vi.fn(),
+    loadPlugin: vi.fn(() => Promise.resolve()),
+    validateTask: vi.fn(() => Promise.resolve({})),
 }))
 
 vi.mock("../../stores/plugins", () => ({
@@ -25,7 +27,7 @@ vi.mock("../../stores/plugins", () => ({
             return pluginsStoreState.plugin
         },
         editorPlugin: undefined,
-        load: vi.fn(() => Promise.resolve()),
+        load: loadPlugin,
     }),
 }))
 
@@ -40,7 +42,7 @@ vi.mock("../../stores/flow", () => ({
         flow: {namespace: "company.team"},
         flowParsed: {},
         taskErrors: undefined,
-        validateTask: vi.fn(() => Promise.resolve({})),
+        validateTask,
     }),
 }))
 
@@ -354,6 +356,33 @@ describe("TaskEdit", () => {
 
         const namespace = useContextSections.mock.calls[0][0] as {value: string | undefined}
         expect(namespace.value).toBe("company.team")
+    })
+
+    it("leaves out what only a flow task has when the block is outside a flow", async () => {
+        pluginsStoreState.plugin = {schema: {outputs: {properties: {uri: {type: "string"}}}}}
+        loadPlugin.mockClear()
+        validateTask.mockClear()
+        const wrapper = i18nMount(TaskEdit, {
+            messages: {close: "Close"},
+            props: {
+                task: {id: "env", type: "STRING"},
+                section: "tasks",
+                flowId: "",
+                namespace: "company.team",
+                presentation: "panel",
+                outsideFlow: true,
+            },
+            global: {plugins: [KestraDesignSystem]},
+        })
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.findAllComponents({name: "TaskEditData"})).toHaveLength(0)
+        const namespace = useContextSections.mock.calls[0][0] as {value: string | undefined}
+        expect(namespace.value).toBeUndefined()
+        expect(loadPlugin).not.toHaveBeenCalled()
+        expect(validateTask).not.toHaveBeenCalled()
+
+        pluginsStoreState.plugin = undefined
     })
 
     describe("chip drop telemetry", () => {

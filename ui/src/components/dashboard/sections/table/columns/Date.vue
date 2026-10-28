@@ -37,7 +37,7 @@
     )
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .date {
         display: inline-block;
         max-width: 100%;

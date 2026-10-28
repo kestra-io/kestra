@@ -101,7 +101,6 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {useFlowStore} from "../../stores/flow"
     import {useFlowEditorActions} from "../flows/useFlowEditorActions"
-    import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useProductTourStore} from "../../stores/productTour"
@@ -228,7 +227,6 @@
     })
 
     onMounted(() => {
-        useDocStore().docId = "flowEditor"
         if(props.flow){
             pluginsStore.lazyLoadSchemaType({type: "flow"})
         }
@@ -449,7 +447,7 @@
     } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source)
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .editor-tab {
         height: 100%;
         display: flex;

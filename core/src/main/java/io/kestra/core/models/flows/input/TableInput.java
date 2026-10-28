@@ -37,7 +37,8 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
         description = "Each column is a regular input declaration (e.g. `INT` with `min`/`max`, `STRING` with a `validator`) " +
             "applied to the corresponding key of every row. The value is a list of objects, referenced as " +
             "`{{ inputs.myTable[0].myColumn }}`. Columns cannot be of type `TABLE`, `ARRAY`, `FORM`, `FILE`, `SECRET`, " +
-            "`JSON`, `ION` or `YAML`, and cannot declare `defaults` or `dependsOn`. A column's `prefill` fills the new rows, " +
+            "`JSON`, `ION` or `YAML`, and cannot declare `defaults` or `dependsOn`. A column is required unless it sets `required: false`, " +
+            "so an empty cell is refused in `defaults` and at execution. A column's `prefill` fills the new rows, " +
             "and a `SELECT` or `MULTISELECT` column can take its values from an `expression`, rendered with the inputs listed " +
             "in the table's `dependsOn`. This input type is only available in the Enterprise Edition."
     )
@@ -89,7 +90,7 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
                 filters.stream().filter(filter -> !filter.matches(cells)).findFirst().ifPresent(
                     filter -> violations.add(
                         ManualConstraintViolation.of(
-                            "row " + (row + 1) + ", column `" + filter.column() + "`: it doesn't match the filter `" + filter.operation() + " " + filter.value() + "`",
+                            "row %d, column `%s`: it doesn't match the filter `%s %s`".formatted(row + 1, filter.column(), filter.operation(), filter.value()),
                             this,
                             TableInput.class,
                             getId() + "[" + row + "]." + filter.column(),
@@ -104,7 +105,7 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
         if (!Boolean.TRUE.equals(allowRowDuplication) && rows.size() > matching) {
             violations.add(
                 ManualConstraintViolation.of(
-                    "it must have at most `" + matching + "` rows, the rows of `defaults` matching the filters, unless `allowRowDuplication` is set",
+                    "it must have at most `%d` rows, the rows of `defaults` matching the filters, unless `allowRowDuplication` is set".formatted(matching),
                     this,
                     TableInput.class,
                     getId(),

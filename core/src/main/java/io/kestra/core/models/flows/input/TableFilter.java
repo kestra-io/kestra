@@ -34,7 +34,7 @@ public record TableFilter(
 
     public boolean matches(Map<?, ?> row) {
         Object cell = row.get(column);
-        List<?> values = value instanceof Collection<?> collection ? collection.stream().toList() : Collections.singletonList(value);
+        List<?> values = value == null ? List.of() : value instanceof Collection<?> collection ? collection.stream().toList() : Collections.singletonList(value);
         return switch (operation) {
             case EQUALS, IN -> values.stream().anyMatch(candidate -> same(cell, candidate));
             case NOT_EQUALS, NOT_IN -> values.stream().noneMatch(candidate -> same(cell, candidate));

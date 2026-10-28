@@ -78,6 +78,9 @@ inputs:
       - column: region
         operation: EQUALS
         value: eu
+      - column: size
+        operation: IN
+        value: []
 
 tasks:
   - id: hello

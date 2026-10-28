@@ -47,6 +47,16 @@ class TableFilterTest {
     }
 
     @Test
+    void shouldTreatAValueRenderedToNothingAsAnEmptyList() {
+        Map<String, Object> row = Map.of("type", "null", "name", "annulled");
+
+        assertThat(new TableFilter("type", EQUALS, null).matches(row)).isFalse();
+        assertThat(new TableFilter("type", IN, null).matches(row)).isFalse();
+        assertThat(new TableFilter("name", CONTAINS, null).matches(row)).isFalse();
+        assertThat(new TableFilter("type", NOT_IN, null).matches(row)).isTrue();
+    }
+
+    @Test
     void shouldLookAValueUpInAListCellOrAText() {
         assertThat(matches("tags", CONTAINS, "edge")).isTrue();
         assertThat(matches("tags", CONTAINS, List.of("db", "web"))).isTrue();

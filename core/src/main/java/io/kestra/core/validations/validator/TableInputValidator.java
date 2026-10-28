@@ -1,6 +1,7 @@
 package io.kestra.core.validations.validator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +39,10 @@ public class TableInputValidator implements ConstraintValidator<TableInputValida
         Set<String> columnIds = new HashSet<>(ListUtils.emptyOnNull(value.getColumns()).stream().map(Input::getId).toList());
         ListUtils.emptyOnNull(value.getFilters()).stream()
             .filter(filter -> filter.column() != null && !columnIds.contains(filter.column()))
-            .forEach(filter -> violations.add("filter on `" + filter.column() + "` is not about a declared column"));
+            .forEach(filter -> violations.add("filter on `%s` is not about a declared column".formatted(filter.column())));
+        ListUtils.emptyOnNull(value.getFilters()).stream()
+            .filter(filter -> filter.value() instanceof Collection<?> values && values.isEmpty())
+            .forEach(filter -> violations.add("filter on `%s` has an empty list to compare the cells to".formatted(filter.column())));
         if (value.getMinRows() != null && value.getMaxRows() != null && value.getMinRows() > value.getMaxRows()) {
             violations.add("`minRows` cannot be greater than `maxRows`");
         }

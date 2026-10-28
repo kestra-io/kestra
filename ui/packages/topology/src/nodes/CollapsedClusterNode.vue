@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition" :style="handleStyle" />
+    <Handle type="source" :position="sourcePosition" :style="statusRowHandleStyle(sourcePosition, reservesStatusRow)" />
     <LaneHeader
         v-if="data.isFlowableLane"
         class="collapsed-lane"
@@ -61,7 +61,7 @@
             </span>
         </div>
     </div>
-    <Handle type="target" :position="targetPosition" :style="handleStyle" />
+    <Handle type="target" :position="targetPosition" :style="statusRowHandleStyle(targetPosition, reservesStatusRow)" />
 </template>
 
 <script setup lang="ts">
@@ -75,6 +75,7 @@
     } from "@kestra-io/design-system"
     import {EVENTS, CLUSTER_TAG_STATUS, NODE_SIZES} from "../utils/constants"
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
+    import {statusRowHandleStyle} from "../utils/nodeHandles"
     import * as Utils from "../utils/utils"
     import LaneHeader, {type LaneTaskNode} from "./LaneHeader.vue"
 
@@ -123,11 +124,6 @@
         reservesStatusRow.value ? {height: `calc(100% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT}px)`} : undefined,
     )
 
-    const handleStyle = computed(() =>
-        reservesStatusRow.value && (sourcePosition === Position.Right || sourcePosition === Position.Left)
-            ? {top: `calc(50% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT / 2}px)`}
-            : undefined,
-    )
 
     const badgeStyle = computed(() => {
         const status = CLUSTER_TAG_STATUS[data.color] ?? "info"

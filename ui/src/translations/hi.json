@@ -677,7 +677,9 @@
       "load_error": "यह दृश्य लोड नहीं किया जा सका।",
       "retry": "पुनः प्रयास करें",
       "no_logs": "इस task run के लिए कोई log दर्ज नहीं है।",
-      "no_artifacts": "यह Task कोई artifact प्रदान नहीं करता।"
+      "no_artifacts": "यह Task कोई artifact प्रदान नहीं करता।",
+      "task_source": "Task स्रोत",
+      "worker_info": "Worker जानकारी"
     },
     "execution_artifacts": {
       "title": "Artifacts",

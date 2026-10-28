@@ -2,6 +2,7 @@ import {computed, ref, shallowRef, watch, type Ref} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {loadTaskRunOutputs} from "../../../composables/useTaskRunOutputs"
+import {defaultTaskRunLogLevel} from "../taskRunLogLevel"
 
 export type LoadStatus = "idle" | "loading" | "ready" | "error"
 
@@ -43,7 +44,7 @@ interface PopupDataSource {
     executionId: () => string | undefined
     taskId: () => string
     taskRunId: () => string | undefined
-    logTaskRunIds: () => string[]
+    logTargets: () => {taskRunId: string, attemptNumber?: number}[]
     taskRunState: () => string | undefined
 }
 
@@ -73,12 +74,14 @@ export function useTaskRunPopupData(source: PopupDataSource) {
     )
 
     const logsCount = useLoadable(
-        () => baseKey.value && `${baseKey.value}|${source.logTaskRunIds().join(",")}`,
+        () => baseKey.value && `${baseKey.value}|${source.logTargets().map(({taskRunId, attemptNumber}) => `${taskRunId}:${attemptNumber}`).join(",")}`,
         async () => {
-            const pages = await Promise.all(source.logTaskRunIds().map((taskRunId) => LogsAPI.searchLogs({
+            const pages = await Promise.all(source.logTargets().map(({taskRunId, attemptNumber}) => LogsAPI.searchLogs({
                 filters: [
                     {field: "executionId", operation: "EQUALS", value: source.executionId() as string},
                     {field: "taskRunId", operation: "EQUALS", value: taskRunId},
+                    {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: defaultTaskRunLogLevel()},
+                    ...(attemptNumber === undefined ? [] : [{field: "attemptNumber" as const, operation: "EQUALS" as const, value: String(attemptNumber)}]),
                 ],
                 page: 1,
                 size: 1,

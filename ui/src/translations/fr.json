@@ -677,7 +677,9 @@
       "load_error": "Impossible de charger cette vue.",
       "retry": "Réessayer",
       "no_logs": "Aucun log enregistré pour cette exécution de task.",
-      "no_artifacts": "Cette task ne fournit pas d'artifact."
+      "no_artifacts": "Cette task ne fournit pas d'artifact.",
+      "task_source": "Source de la task",
+      "worker_info": "Infos du worker"
     },
     "execution_artifacts": {
       "title": "Artifacts",

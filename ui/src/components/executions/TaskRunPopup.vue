@@ -24,9 +24,9 @@
                         </div>
                         <div class="popup-meta">
                             <code v-if="taskType" data-test="task-run-popup-type">{{ taskType }}</code>
-                            <span v-if="duration" class="popup-meta-item" data-test="task-run-popup-duration">
+                            <span v-if="histories.length" class="popup-meta-item" data-test="task-run-popup-duration">
                                 <KsIcon size="xs"><TimerOutline /></KsIcon>
-                                {{ duration }}
+                                <Duration :histories="histories" :interval="100" :attemptCount="attemptCount" :subject="taskId" />
                             </span>
                             <span class="popup-meta-item" data-test="task-run-popup-attempt">
                                 <KsIcon size="xs"><SourceBranch /></KsIcon>
@@ -53,80 +53,105 @@
                         </template>
                     </KsDropdown>
 
-                    <Restart
-                        :key="`restart-${runKey}`"
-                        isReplay
-                        tooltipPosition="bottom"
-                        :execution="execution"
-                        :taskRun="currentTaskRun"
-                        :attemptIndex="attemptIndex"
-                        @follow="emit('follow', $event)"
-                    />
-                    <ChangeStatus
-                        :key="`change-status-${runKey}`"
-                        labeled
-                        :execution="execution"
-                        :taskRun="currentTaskRunWithExecution"
-                        :attemptIndex="attemptIndex"
-                        @follow="emit('follow', $event)"
-                    />
-                    <TaskEdit
-                        v-if="canReadFlow"
-                        labeled
-                        readOnly
-                        :taskId="taskId"
-                        section="tasks"
-                        :flowId="execution.flowId"
-                        :namespace="execution.namespace"
-                        :revision="execution.flowRevision"
-                        :flowSource="flowSource"
-                    />
-                    <WorkerInfo
-                        v-if="hasWorkerId"
-                        component="KsButton"
-                        labeled
-                        :taskRun="currentTaskRun"
-                    />
-                    <Interrupt
-                        :key="`interrupt-${runKey}`"
-                        labeled
-                        :execution="execution"
-                        :taskRun="currentTaskRun"
-                        :attemptIndex="attemptIndex"
-                        @follow="emit('follow', $event)"
-                    />
+                    <span class="popup-action">
+                        <Restart
+                            :key="`restart-${runKey}`"
+                            isReplay
+                            size="small"
+                            tooltipPosition="bottom"
+                            :execution="execution"
+                            :taskRun="currentTaskRun"
+                            :attemptIndex="attemptIndex"
+                            @follow="emit('follow', $event)"
+                        />
+                    </span>
+                    <span class="popup-action">
+                        <ChangeStatus
+                            :key="`change-status-${runKey}`"
+                            labeled
+                            size="small"
+                            :execution="execution"
+                            :taskRun="currentTaskRunWithExecution"
+                            :attemptIndex="attemptIndex"
+                            @follow="emit('follow', $event)"
+                        />
+                    </span>
+                    <span class="popup-action">
+                        <TaskEdit
+                            v-if="canReadFlow"
+                            labeled
+                            readOnly
+                            buttonSize="small"
+                            :label="$t('task_run_popup.task_source')"
+                            :taskId="taskId"
+                            section="tasks"
+                            :flowId="execution.flowId"
+                            :namespace="execution.namespace"
+                            :revision="execution.flowRevision"
+                            :flowSource="flowSource"
+                        />
+                    </span>
+                    <span class="popup-action">
+                        <WorkerInfo
+                            v-if="hasWorkerId"
+                            component="KsButton"
+                            labeled
+                            size="small"
+                            :label="$t('task_run_popup.worker_info')"
+                            :taskRun="currentTaskRun"
+                        />
+                    </span>
+                    <span class="popup-action">
+                        <Interrupt
+                            :key="`interrupt-${runKey}`"
+                            labeled
+                            size="small"
+                            :execution="execution"
+                            :taskRun="currentTaskRun"
+                            :attemptIndex="attemptIndex"
+                            @follow="emit('follow', $event)"
+                        />
+                    </span>
 
-                    <TaskRunActions
-                        overflow
-                        :taskRun="currentTaskRun"
-                        :taskRuns="taskRuns"
-                        :execution="execution"
-                        :flow="flow"
-                        :taskType="taskType"
-                        :attemptIndex="attemptIndex"
-                        :nodeActions="overflowActions"
-                        @follow="emit('follow', $event)"
-                        @update-logs="onLogsDeleted"
-                        @dismiss="close"
-                    />
+                    <span class="popup-action">
+                        <TaskRunActions
+                            overflow
+                            :taskRun="currentTaskRun"
+                            :taskRuns="taskRuns"
+                            :execution="execution"
+                            :flow="flow"
+                            :taskType="taskType"
+                            :attemptIndex="attemptIndex"
+                            :nodeActions="overflowActions"
+                            @follow="emit('follow', $event)"
+                            @update-logs="onLogsDeleted"
+                            @dismiss="close"
+                        />
+                    </span>
 
-                    <KsIconButton
-                        :tooltip="fullscreenLabel"
-                        :aria-label="fullscreenLabel"
-                        :aria-pressed="isFullscreen"
-                        data-test="task-run-popup-fullscreen"
-                        @click="isFullscreen = !isFullscreen"
-                    >
-                        <component :is="isFullscreen ? FullscreenExit : Fullscreen" />
-                    </KsIconButton>
-                    <KsIconButton
-                        :tooltip="$t('close')"
-                        :aria-label="$t('close')"
-                        data-test="task-run-popup-close"
-                        @click="close"
-                    >
-                        <Close />
-                    </KsIconButton>
+                    <span class="popup-divider" role="separator" />
+
+                    <span class="popup-action">
+                        <KsIconButton
+                            :tooltip="fullscreenLabel"
+                            :aria-label="fullscreenLabel"
+                            :aria-pressed="isFullscreen"
+                            data-test="task-run-popup-fullscreen"
+                            @click="isFullscreen = !isFullscreen"
+                        >
+                            <component :is="isFullscreen ? FullscreenExit : Fullscreen" />
+                        </KsIconButton>
+                    </span>
+                    <span class="popup-action">
+                        <KsIconButton
+                            :tooltip="$t('close')"
+                            :aria-label="$t('close')"
+                            data-test="task-run-popup-close"
+                            @click="close"
+                        >
+                            <Close />
+                        </KsIconButton>
+                    </span>
                 </div>
             </header>
         </template>
@@ -178,6 +203,7 @@
                             :key="`${currentTaskRun.id}-${logsRefresh}`"
                             :executionId="execution.id"
                             :taskRunIds="logTaskRunIds"
+                            hideTaskHeader
                             @follow="emit('follow', $event)"
                         />
                     </div>
@@ -202,6 +228,7 @@
                         </KsAlert>
                         <KsEmpty
                             v-else-if="outputsCount === 0"
+                            class="tab-empty"
                             :imageSize="96"
                             :description="$t('no outputs available')"
                             data-test="task-run-popup-outputs-empty"
@@ -228,6 +255,7 @@
                         <KsSkeleton v-if="artifactsStatus === 'loading'" animated :rows="4" data-test="task-run-popup-artifacts-loading" />
                         <KsEmpty
                             v-else-if="!selectedArtifact"
+                            class="tab-empty"
                             :imageSize="96"
                             :description="$t('task_run_popup.no_artifacts')"
                             data-test="task-run-popup-artifacts-empty"
@@ -249,8 +277,8 @@
 <script setup lang="ts">
     import {computed, inject, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {durationUtils} from "@kestra-io/design-system"
-    import {type NodeAction} from "@kestra-io/topology"
+    import {dayjs} from "@kestra-io/design-system"
+    import {Duration, type NodeAction} from "@kestra-io/topology"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import DiamondStone from "vue-material-design-icons/DiamondStone.vue"
@@ -348,10 +376,9 @@
     const attemptIndex = computed(() => attemptCount.value - 1)
     const runKey = computed(() => `${currentTaskRun.value.id}-${attemptIndex.value}-${currentTaskRun.value.attempts?.[attemptIndex.value]?.state.startDate}`)
 
-    const duration = computed(() => {
-        const iso = currentTaskRun.value.state.duration
-        return iso ? durationUtils.humanDuration(durationUtils.duration(iso)) : undefined
-    })
+    const histories = computed(() =>
+        (currentTaskRun.value.state.histories ?? []).map((history) => ({date: dayjs(history.date), state: history.state})),
+    )
 
     const currentIterationLabel = computed(() =>
         iterationLabel(t, currentTaskRun.value, currentTaskRuns.value.findIndex((run) => run.id === currentTaskRun.value.id) + 1),
@@ -381,7 +408,10 @@
         executionId: () => props.execution.id,
         taskId: () => props.taskId,
         taskRunId: () => currentTaskRun.value.id,
-        logTaskRunIds: () => logTaskRunIds.value,
+        logTargets: () => logTaskRunIds.value.map((taskRunId) => ({
+            taskRunId,
+            attemptNumber: taskRunId === currentTaskRun.value.id ? attemptIndex.value : undefined,
+        })),
         taskRunState: () => currentTaskRun.value.state.current,
     })
 
@@ -419,7 +449,6 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
         gap: var(--ks-spacing-3);
     }
 
@@ -428,6 +457,7 @@
         align-items: center;
         gap: var(--ks-spacing-3);
         min-width: 0;
+        flex: 1 1 auto;
     }
 
     .popup-icon {
@@ -471,8 +501,18 @@
     .popup-actions {
         display: flex;
         align-items: center;
-        flex-wrap: wrap;
+        flex: 0 0 auto;
         gap: var(--ks-spacing-2);
+    }
+
+    .popup-action {
+        display: contents;
+    }
+
+    .popup-divider {
+        align-self: stretch;
+        margin-block: var(--ks-spacing-1);
+        border-left: 1px solid var(--ks-border-default);
     }
 
     .popup-content {
@@ -501,6 +541,10 @@
     .popup-tabs {
         flex: 1;
         min-height: 0;
+    }
+
+    .tab-empty {
+        margin: auto;
     }
 
     .tab-body {

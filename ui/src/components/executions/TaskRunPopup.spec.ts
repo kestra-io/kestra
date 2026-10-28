@@ -1,7 +1,8 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {flushPromises} from "@vue/test-utils"
 import {defineComponent, reactive, ref} from "vue"
 import {setActivePinia} from "pinia"
+import {designSystemI18nReady} from "@kestra-io/design-system"
 
 const api = vi.hoisted(() => ({
     searchByExecution: vi.fn(),
@@ -29,7 +30,8 @@ import en from "../../translations/en.json"
 const stubChild = (name: string, props: string[] = []) => defineComponent({name, props, render: () => null})
 
 function taskRun(id: string, current: string, extra: Record<string, unknown> = {}) {
-    return {id, taskId: "dbt", state: {current, histories: [], duration: "PT2S"}, attempts: [{state: {current}}], ...extra}
+    const histories = [{date: "2026-01-01T00:00:00.000Z", state: "RUNNING"}, {date: "2026-01-01T00:00:02.000Z", state: current}]
+    return {id, taskId: "dbt", state: {current, histories}, attempts: [{state: {current}}], ...extra}
 }
 
 function executionWith(taskRuns: ReturnType<typeof taskRun>[], executionState = "SUCCESS") {
@@ -100,6 +102,8 @@ function mountPopup({execution = executionWith([taskRun("run-1", "SUCCESS")]), m
 const text = (selector: string) => document.body.querySelector(selector)?.textContent?.replace(/\s+/g, " ").trim()
 const tabCount = (tab: string) => text(`[data-test='task-run-popup-tab-${tab}'] [data-test='tab-count']`)
 
+afterAll(() => designSystemI18nReady())
+
 describe("TaskRunPopup", () => {
     beforeEach(() => {
         setActivePinia(routedPinia())
@@ -131,8 +135,32 @@ describe("TaskRunPopup", () => {
         expect(text("[data-test='task-run-popup-title']")).toBe("dbt")
         expect(text("[data-test='task-run-popup-state']")).toBe("Success")
         expect(text("[data-test='task-run-popup-type']")).toBe("io.kestra.plugin.dbt.cloud.TriggerRun")
-        expect(text("[data-test='task-run-popup-duration']")).toContain("2s")
+        expect(text("[data-test='task-run-popup-duration']")).toContain("2.00s")
         expect(text("[data-test='task-run-popup-attempt']")).toBe("Attempt 2")
+    })
+
+    it("shouldShowTheLiveDurationOfARunningTaskRunInTheHeader", async () => {
+        // Given
+        const histories = [{date: new Date(Date.now() - 5_000).toISOString(), state: "RUNNING"}]
+        const execution = executionWith([taskRun("run-1", "RUNNING", {state: {current: "RUNNING", histories}})], "RUNNING")
+
+        // When
+        mountPopup({execution})
+        await flushPromises()
+
+        // Then
+        expect(document.body.querySelector("[data-test='task-run-popup-duration'] [data-test='duration-value']")).not.toBeNull()
+    })
+
+    it("shouldKeepTheHeaderActionsInOneRowOfUniformlySpacedButtons", async () => {
+        // When
+        mountPopup()
+        await flushPromises()
+
+        // Then
+        const actions = document.body.querySelector(".popup-actions")!
+        expect(actions.querySelectorAll(".popup-action > *").length).toBeGreaterThan(0)
+        expect([...actions.querySelectorAll("button + button")]).toHaveLength(0)
     })
 
     it("shouldDisableInterruptWithoutHidingItWhenTheTaskRunIsNotRunning", async () => {
@@ -187,7 +215,11 @@ describe("TaskRunPopup", () => {
         // Then
         expect(api.searchByExecution).toHaveBeenCalledWith(expect.objectContaining({executionId: "exec-1", taskId: "dbt", taskRunId: "run-1", page: 1, size: 1}))
         expect(api.searchLogs).toHaveBeenCalledWith(expect.objectContaining({
-            filters: expect.arrayContaining([expect.objectContaining({field: "taskRunId", value: "run-1"})]),
+            filters: expect.arrayContaining([
+                expect.objectContaining({field: "taskRunId", value: "run-1"}),
+                expect.objectContaining({field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: "INFO"}),
+                expect.objectContaining({field: "attemptNumber", value: "0"}),
+            ]),
             size: 1,
         }))
         expect(api.loadTaskRunOutputs).toHaveBeenCalledWith("exec-1", "run-1")

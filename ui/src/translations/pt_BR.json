@@ -677,7 +677,9 @@
       "load_error": "Não foi possível carregar esta visualização.",
       "retry": "Tentar novamente",
       "no_logs": "Nenhum log registrado para esta execução de task.",
-      "no_artifacts": "Esta task não fornece nenhum artifact."
+      "no_artifacts": "Esta task não fornece nenhum artifact.",
+      "task_source": "Origem da task",
+      "worker_info": "Informações do worker"
     },
     "execution_artifacts": {
       "title": "Artifacts",

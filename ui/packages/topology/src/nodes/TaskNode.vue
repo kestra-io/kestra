@@ -1,5 +1,5 @@
 <template>
-    <Handle type="source" :position="sourcePosition" :style="handleStyle" />
+    <Handle type="source" :position="sourcePosition" :style="sourceHandleStyle" />
     <BasicNode
         :id="id"
         :data="dataWithLink"
@@ -80,7 +80,7 @@
             </slot>
         </template>
     </BasicNode>
-    <Handle type="target" :position="targetPosition" :style="handleStyle" />
+    <Handle type="target" :position="targetPosition" :style="targetHandleStyle" />
 </template>
 
 <script setup lang="ts">
@@ -94,7 +94,8 @@
         type PluginIconData,
         type PluginIconMap,
     } from "@kestra-io/design-system"
-    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "../utils/constants"
+    import {type CustomActionConfig, type ShowDetailsConfig, EVENTS} from "../utils/constants"
+    import {statusRowHandleStyle} from "../utils/nodeHandles"
     import Duration from "../misc/Duration.vue"
     import * as Utils from "../utils/utils"
     import {getStatusStyle, pickWorstState} from "../utils/status"
@@ -310,11 +311,8 @@
         isRootExecutionTask.value ? artifactCounts?.value[taskId.value ?? ""] ?? 0 : 0,
     )
 
-    const handleStyle = computed(() =>
-        execution?.value && (props.sourcePosition === Position.Right || props.sourcePosition === Position.Left)
-            ? {top: `calc(50% - ${NODE_SIZES.TASK_STATUS_ROW_HEIGHT / 2}px)`}
-            : undefined,
-    )
+    const sourceHandleStyle = computed(() => statusRowHandleStyle(props.sourcePosition, Boolean(execution?.value)))
+    const targetHandleStyle = computed(() => statusRowHandleStyle(props.targetPosition, Boolean(execution?.value)))
 
     const state = computed(() => {
         if (!taskRuns.value?.length) {
@@ -464,7 +462,8 @@ button.playground-button {
     height: 1.25rem;
     padding: 0 var(--ks-spacing-2);
     border-radius: var(--ks-radius-base);
-    background-color: color-mix(in srgb, var(--chip-color) 16%, transparent);
+    background-color: var(--ks-bg-surface);
+    background-image: linear-gradient(color-mix(in srgb, var(--chip-color) 16%, transparent), color-mix(in srgb, var(--chip-color) 16%, transparent));
     color: var(--chip-color);
     line-height: 1;
 }
@@ -483,7 +482,8 @@ button.playground-button {
     padding: 0 var(--ks-spacing-2);
     border: none;
     border-radius: var(--ks-radius-base);
-    background-color: color-mix(in srgb, var(--ks-text-link) 16%, transparent);
+    background-color: var(--ks-bg-surface);
+    background-image: linear-gradient(color-mix(in srgb, var(--ks-text-link) 16%, transparent), color-mix(in srgb, var(--ks-text-link) 16%, transparent));
     color: var(--ks-text-link);
     font-size: var(--ks-font-size-2xs);
     font-weight: var(--ks-font-weight-semibold);

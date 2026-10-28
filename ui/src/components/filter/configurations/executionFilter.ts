@@ -77,9 +77,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.kind.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
+                    allLabel: t("filter.execution_kind.standard"),
+                    allDescription: t("filter.execution_kind.standard_description"),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.KINDS
+                        return VALUES.KINDS.filter(kind => kind.value !== "NORMAL")
                     },
                 },
                 {

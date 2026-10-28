@@ -23,13 +23,17 @@ class ApiLoopRunTest {
             0,
             null,
             "EMEA",
-            List.of(new LoopRun.Parent(1, null, "Q1", true)),
+            List.of(new LoopRun.Parent("exec-1", "task-parent", 1, null, "Q1", true)),
+            "root-exec",
             true
         );
 
         var api = ApiLoopRun.of(loopRun);
 
         assertThat(api.taskId()).isEqualTo("outer");
+        assertThat(api.rootExecutionId()).isEqualTo("root-exec");
         assertThat(api.parents().getFirst().value()).isEqualTo("Q1");
+        assertThat(api.parents().getFirst().executionId()).isEqualTo("exec-1");
+        assertThat(api.parents().getFirst().taskId()).isEqualTo("task-parent");
     }
 }

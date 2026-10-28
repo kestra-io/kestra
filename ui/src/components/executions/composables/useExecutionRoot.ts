@@ -32,16 +32,8 @@ export function buildLoopBreadcrumbs(
     const crumbs: KsBreadcrumbItem[] = []
 
     let rootId = loopRun.rootExecutionId
-    if (!rootId) {
-        if (!loopRun.parents || loopRun.parents.length === 0) {
-            rootId = execution.parentId
-        } else {
-            let ancestor = loopRun.parent
-            while (ancestor?.loopRun) {
-                ancestor = ancestor.loopRun.parent
-            }
-            rootId = ancestor?.id
-        }
+    if (!rootId && (!loopRun.parents || loopRun.parents.length === 0)) {
+        rootId = execution.parentId
     }
 
     if (rootId) {
@@ -58,10 +50,8 @@ export function buildLoopBreadcrumbs(
         })
     }
 
-    const hasParentExecutionIds = loopRun.parents?.some(p => Boolean(p.executionId))
-
-    if (hasParentExecutionIds) {
-        loopRun.parents!.forEach(p => {
+    if (loopRun.parents) {
+        loopRun.parents.forEach(p => {
             if (!p.executionId) return
 
             crumbs.push({
@@ -76,26 +66,6 @@ export function buildLoopBreadcrumbs(
                 },
             })
         })
-    } else if (loopRun.parent) {
-        const intermediateCrumbs: KsBreadcrumbItem[] = []
-        const visitedIds = new Set<string>()
-        let ancestor: Execution | undefined = loopRun.parent
-        while (ancestor?.loopRun && !visitedIds.has(ancestor.id)) {
-            visitedIds.add(ancestor.id)
-            intermediateCrumbs.unshift({
-                label: formatLoopCrumbLabel(ancestor.loopRun.taskId, ancestor.loopRun.value, ancestor.loopRun.index),
-                link: {
-                    name: "executions/update",
-                    params: {
-                        namespace,
-                        flowId,
-                        id: ancestor.id,
-                    },
-                },
-            })
-            ancestor = ancestor.loopRun.parent
-        }
-        crumbs.push(...intermediateCrumbs)
     }
 
     if (loopRun.taskId) {

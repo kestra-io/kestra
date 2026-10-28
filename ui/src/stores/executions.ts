@@ -332,9 +332,15 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    /** Sequence number for committing searches: a response that is no longer the newest may
+     * resolve after it and must not overwrite the list. */
+    let latestExecutionsSearch = 0;
+
     const findExecutions = (options: { commit?: boolean } & Record<string, any>) => {
-        return axios.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
-            if (options.commit !== false) {
+        const search = options.commit === false ? undefined : ++latestExecutionsSearch;
+        // no timeout: a slow search must still fill the list rather than leave it empty
+        return axios.get(`${apiUrl()}/executions/search`, {params: options, timeout: 0}).then(response => {
+            if (options.commit !== false && search === latestExecutionsSearch) {
                 executions.value = response.data.results;
                 total.value = response.data.total;
             }

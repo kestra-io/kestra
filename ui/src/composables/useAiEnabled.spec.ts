@@ -1,18 +1,16 @@
 import {describe, it, expect, beforeEach, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
-const get = vi.fn()
-vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({get, post: vi.fn()})}))
-vi.mock("override/utils/route", () => ({apiUrl: () => "", apiUrlWithoutTenants: () => ""}))
-vi.mock("../../../src/stores/api", () => ({useApiStore: () => ({flushQueuedEvents: vi.fn()})}))
+const configuration = vi.hoisted(() => vi.fn())
+vi.mock("@kestra-io/kestra-sdk/misc", () => ({configuration}))
 
-import {useMiscStore} from "../../../src/override/stores/misc"
-import {aiEnabledGuard, useAiEnabled} from "../../../src/composables/useAiEnabled"
+import {useMiscStore} from "override/stores/misc"
+import {aiEnabledGuard, useAiEnabled} from "./useAiEnabled"
 
 describe("useAiEnabled", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
-        get.mockReset()
+        configuration.mockReset()
     })
 
     it("hides the Copilot only once the backend reports it disabled", () => {
@@ -25,7 +23,7 @@ describe("useAiEnabled", () => {
     })
 
     it("redirects away from the Copilot page when AI is disabled", async () => {
-        get.mockResolvedValue({data: {isAiEnabled: false}})
+        configuration.mockResolvedValue({isAiEnabled: false})
 
         expect(await aiEnabledGuard()).toEqual({name: "home"})
     })
@@ -34,6 +32,6 @@ describe("useAiEnabled", () => {
         useMiscStore().configs = {isAiEnabled: true} as ReturnType<typeof useMiscStore>["configs"]
 
         expect(await aiEnabledGuard()).toBe(true)
-        expect(get).not.toHaveBeenCalled()
+        expect(configuration).not.toHaveBeenCalled()
     })
 })

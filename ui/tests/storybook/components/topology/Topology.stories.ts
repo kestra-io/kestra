@@ -1,5 +1,6 @@
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
 import {expect, waitFor} from "storybook/test"
+import {KsButton} from "@kestra-io/design-system"
 import {NODE_SIZES, Topology, type FlowGraph, type LoopLaneData} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
@@ -635,7 +636,17 @@ const LOOP_STATE_LANES: Record<string, LoopLaneData> = {
 }
 
 export const LoopStateProgress: StoryObj<typeof Topology> = {
-    render: Template,
+    render: (args) => ({
+        components: {Topology, KsButton},
+        setup: () => ({args}),
+        template: `
+            <div style="height: 600px; width: 100%;">
+                <Topology v-bind="args">
+                    <template #loopScope><KsButton size="small">All iterations</KsButton></template>
+                </Topology>
+            </div>
+        `,
+    }),
     args: {
         id: "story-loop-state-progress",
         source: NESTED_LOOP_SOURCE,
@@ -649,6 +660,10 @@ export const LoopStateProgress: StoryObj<typeof Topology> = {
         const labels = () => [...canvasElement.querySelectorAll("[data-test='loop-state-bar']")].map((bar) => bar.getAttribute("aria-label"))
 
         await waitFor(() => expect(labels()).toHaveLength(4))
+        for (const header of canvasElement.querySelectorAll("[data-test='topology-lane-header']")) {
+            const bar = header.querySelector("[data-test='loop-state-bar']")
+            if (bar) expect(header.querySelector(".lane-labels")!.getBoundingClientRect().bottom).toBeLessThanOrEqual(bar.getBoundingClientRect().top)
+        }
         expect(labels()).toEqual(expect.arrayContaining([
             "2,800 success, 3 failed, 20 skipped, 12 running, 165 not started",
             "9,999 success, 1 failed, 4 running",

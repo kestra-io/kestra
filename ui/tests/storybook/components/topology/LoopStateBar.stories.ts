@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {expect, within} from "storybook/test"
+import {expect, userEvent, waitFor, within} from "storybook/test"
 import LoopStateBar from "../../../../packages/topology/src/nodes/LoopStateBar.vue"
 
 const meta: Meta<typeof LoopStateBar> = {
@@ -68,5 +68,22 @@ export const NoCounts: Story = {
     args: {},
     play: async ({canvasElement}) => {
         expect(canvasElement.querySelector("[data-test='loop-state-bar']")).toBeNull()
+    },
+}
+
+export const LegendOnKeyboardFocus: Story = {
+    args: {counts: {SUCCESS: 30, FAILED: 2}, total: 40},
+    play: async ({canvasElement}) => {
+        const legendShown = () => {
+            const legend = document.body.querySelector<HTMLElement>("[data-test='loop-state-bar-legend']")
+            return legend !== null && getComputedStyle(legend.closest<HTMLElement>(".ks-tooltip") ?? legend).display !== "none"
+        }
+
+        await userEvent.tab()
+
+        expect(within(canvasElement).getByRole("img")).toHaveFocus()
+        await waitFor(() => expect(legendShown()).toBe(true))
+        await userEvent.keyboard("{Escape}")
+        await waitFor(() => expect(legendShown()).toBe(false))
     },
 }

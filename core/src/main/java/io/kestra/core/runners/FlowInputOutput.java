@@ -508,6 +508,10 @@ public class FlowInputOutput {
                 try {
                     var parsedInput = parseData(execution, input, value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
+                    if (!resolvable.get().isDefault() && input instanceof TableInput table && parsedInput.isPresent() && parsedInput.get().getValue() instanceof List<?> rows) {
+                        Object defaults = input.getDefaults() == null ? null : resolveDefaultValue(input, nonDecryptingContext.get());
+                        table.validateSubmittedRows(rows, defaults instanceof List<?> list ? list : List.of());
+                    }
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;

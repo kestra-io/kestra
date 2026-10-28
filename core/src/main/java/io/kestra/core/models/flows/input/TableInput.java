@@ -1,7 +1,9 @@
 package io.kestra.core.models.flows.input;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -14,6 +16,7 @@ import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.TableInputValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -52,7 +55,8 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
 
     @Schema(
         title = "The conditions a row of `defaults` must match to be shown and passed to the execution.",
-        description = "Only the rows matching every filter are kept, and no row can be added. The filters are rendered again " +
+        description = "Only the rows matching every filter are kept. A submitted value is refused when one of its rows doesn't match, " +
+            "or when it has more rows than the matching `defaults` while `allowRowDuplication` is off. The filters are rendered again " +
             "whenever an input listed in `dependsOn` changes."
     )
     private List<@Valid TableFilter> filters;
@@ -71,6 +75,47 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
         return rows.stream()
             .filter(row -> !(row instanceof Map<?, ?> cells) || filters.stream().allMatch(filter -> filter.matches(cells)))
             .toList();
+    }
+
+    public void validateSubmittedRows(List<?> rows, List<?> defaults) throws ConstraintViolationException {
+        if (ListUtils.isEmpty(filters)) {
+            return;
+        }
+
+        Set<ConstraintViolation<?>> violations = new LinkedHashSet<>();
+        for (int index = 0; index < rows.size(); index++) {
+            if (rows.get(index) instanceof Map<?, ?> cells) {
+                int row = index;
+                filters.stream().filter(filter -> !filter.matches(cells)).findFirst().ifPresent(
+                    filter -> violations.add(
+                        ManualConstraintViolation.of(
+                            "row " + (row + 1) + ", column `" + filter.column() + "`: it doesn't match the filter `" + filter.operation() + " " + filter.value() + "`",
+                            this,
+                            TableInput.class,
+                            getId() + "[" + row + "]." + filter.column(),
+                            cells.get(filter.column())
+                        )
+                    )
+                );
+            }
+        }
+
+        int matching = matchingRows(ListUtils.emptyOnNull(defaults)).size();
+        if (!Boolean.TRUE.equals(allowRowDuplication) && rows.size() > matching) {
+            violations.add(
+                ManualConstraintViolation.of(
+                    "it must have at most `" + matching + "` rows, the rows of `defaults` matching the filters, unless `allowRowDuplication` is set",
+                    this,
+                    TableInput.class,
+                    getId(),
+                    rows
+                )
+            );
+        }
+
+        if (!violations.isEmpty()) {
+            throw ManualConstraintViolation.toConstraintViolationException(violations);
+        }
     }
 
     @Override

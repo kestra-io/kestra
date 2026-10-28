@@ -1657,6 +1657,10 @@ class FlowInputOutputTest {
     }
 
     private static TableInput componentsFilteredBy(TableFilter.Operation operation, Object value) {
+        return componentsFilteredByBuilder(operation, value).build();
+    }
+
+    private static TableInput.TableInputBuilder<?, ?> componentsFilteredByBuilder(TableFilter.Operation operation, Object value) {
         return TableInput.builder()
             .id("components")
             .type(Type.TABLE)
@@ -1670,8 +1674,7 @@ class FlowInputOutputTest {
                 Map.of("type", "linux", "name", "db")
             )))
             .dependsOn(new DependsOn(List.of("component_types"), null))
-            .filters(List.of(new TableFilter("type", operation, value)))
-            .build();
+            .filters(List.of(new TableFilter("type", operation, value)));
     }
 
     @Test
@@ -1687,19 +1690,56 @@ class FlowInputOutputTest {
         assertThat(((TableInput) table.input()).getFilters().getFirst().value()).isEqualTo(List.of("linux"));
     }
 
-    @Test
-    void shouldKeepTheRowsSubmittedForAFilteredTable() {
+    private List<InputAndValue> submitComponents(TableInput components, String rows) {
         MultiselectInput types = MultiselectInput.builder().id("component_types").type(Type.MULTISELECT).values(List.of(ValueOption.from("linux"), ValueOption.from("windows"))).build();
-        TableInput components = componentsFilteredBy(TableFilter.Operation.NOT_IN, "{{ inputs.component_types }}");
-
-        List<InputAndValue> values = flowInputOutput.resolveInputs(
+        return flowInputOutput.resolveInputs(
             List.<Input<?>>of(types, components),
             null,
             DEFAULT_TEST_EXECUTION,
-            Map.of("component_types", List.of("linux"), "components", "[{\"type\": \"linux\", \"name\": \"web\"}]")
+            Map.of("component_types", List.of("linux"), "components", rows)
         );
+    }
 
-        assertThat(values.get(1).value()).isEqualTo(List.of(Map.of("type", "linux", "name", "web")));
+    @Test
+    void shouldAcceptSubmittedRowsMatchingTheFilters() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).isNull();
+        assertThat(table.value()).isEqualTo(List.of(Map.of("type", "linux", "name", "db")));
+    }
+
+    @Test
+    void shouldRefuseASubmittedRowNotMatchingTheFilters() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"windows\", \"name\": \"ad\"}]").get(1);
+
+        assertThat(table.exceptions()).singleElement().satisfies(exception -> {
+            assertThat(exception.getMessage()).contains("row 2, column `type`: it doesn't match the filter `IN [linux]`");
+            assertThat(exception.getPath()).isEqualTo("components[1].type");
+        });
+    }
+
+    @Test
+    void shouldRefuseMoreSubmittedRowsThanTheMatchingDefaultsWithoutRowDuplication() {
+        TableInput components = componentsFilteredBy(TableFilter.Operation.IN, "{{ inputs.component_types }}");
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).extracting(InputOutputValidationException::getMessage).singleElement().asString()
+            .contains("it must have at most `2` rows");
+    }
+
+    @Test
+    void shouldAcceptADuplicatedRowWhenRowDuplicationIsAllowed() {
+        TableInput components = componentsFilteredByBuilder(TableFilter.Operation.IN, "{{ inputs.component_types }}").allowRowDuplication(true).build();
+
+        InputAndValue table = submitComponents(components, "[{\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"web\"}, {\"type\": \"linux\", \"name\": \"db\"}]").get(1);
+
+        assertThat(table.exceptions()).isNull();
+        assertThat((List<?>) table.value()).hasSize(3);
     }
 
     @Test

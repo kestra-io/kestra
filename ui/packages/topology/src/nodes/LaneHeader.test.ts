@@ -7,7 +7,7 @@ import type {LoopLaneData} from "../utils/loopOutcome"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
 import en from "../../../../src/translations/en.json"
 
-const LOOP = {uid: "per_region", task: {id: "per_region", type: "io.kestra.plugin.core.flow.Loop"}}
+const loopNode = (uid: string) => ({uid, task: {id: uid.split(".").pop() as string, type: "io.kestra.plugin.core.flow.Loop"}})
 
 const lane = (overrides: Partial<LoopLaneData>): LoopLaneData => ({
     taskId: "per_region",
@@ -16,11 +16,11 @@ const lane = (overrides: Partial<LoopLaneData>): LoopLaneData => ({
     ...overrides,
 })
 
-function mountLane(lanes: Record<string, LoopLaneData>, options: {layout?: "bar" | "card"; slots?: Record<string, string>} = {}) {
+function mountLane(lanes: Record<string, LoopLaneData>, options: {layout?: "bar" | "card"; slots?: Record<string, string>; uid?: string} = {}) {
     return i18nMount(LaneHeader, {
         locales: en,
         slots: options.slots,
-        props: {taskNode: LOOP, color: "flowable-task", layout: options.layout, childTaskIds: ["a", "b"], executionId: "execution-id", isReadOnly: true},
+        props: {taskNode: loopNode(options.uid ?? "per_region"), color: "flowable-task", layout: options.layout, childTaskIds: ["a", "b"], executionId: "execution-id", isReadOnly: true},
         global: {
             stubs: {NodeMenu: true},
             provide: {
@@ -135,5 +135,37 @@ describe("LaneHeader loop outcome", () => {
 
         expect(wrapper.find("[data-test='loop-outcome']").exists()).toBe(false)
         expect(wrapper.find(".lane-count").text()).toBe("2 tasks")
+    })
+})
+
+describe("LaneHeader loop state bar", () => {
+    it("shouldShowTheLoopOwnIterationsIncludingRunningAndNotStarted", () => {
+        const wrapper = mountLane({per_region: lane({iterationCount: 10, runningIterations: 2, terminatedIterations: {FAILED: 1, SUCCESS: 5}, state: "RUNNING"})})
+
+        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("5 success, 1 failed, 2 running, 2 not started")
+    })
+
+    it("shouldShowTheNestedLoopIterationsOfTheOuterLoopCounts", () => {
+        const wrapper = mountLane(
+            {
+                outer: lane({taskId: "outer", loopIterationCounts: {per_region: {SUCCESS: 7, FAILED: 1}}}),
+                "outer.per_region": lane({status: "nested"}),
+            },
+            {uid: "outer.per_region"},
+        )
+
+        expect(wrapper.find("[data-test='loop-state-bar']").attributes("aria-label")).toBe("7 success, 1 failed")
+    })
+
+    it("shouldShowNothingOnceTheLaneIsScopedToAnIteration", () => {
+        const wrapper = mountLane({per_region: lane({scopedNumber: 1, iterationCount: 4, terminatedIterations: {SUCCESS: 4}, state: "SUCCESS"})})
+
+        expect(wrapper.find("[data-test='loop-state-bar']").exists()).toBe(false)
+    })
+
+    it("shouldShowNothingWhileTheCountsAreNotReady", () => {
+        expect(mountLane({per_region: lane({status: "loading"})}).find("[data-test='loop-state-bar']").exists()).toBe(false)
+        expect(mountLane({per_region: lane({status: "nested"})}).find("[data-test='loop-state-bar']").exists()).toBe(false)
+        expect(mountLane({}).find("[data-test='loop-state-bar']").exists()).toBe(false)
     })
 })

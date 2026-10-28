@@ -1,6 +1,6 @@
 import type {Meta, StoryFn, StoryObj} from "@storybook/vue3-vite"
 import {expect, waitFor} from "storybook/test"
-import {NODE_SIZES, Topology, type FlowGraph} from "@kestra-io/topology"
+import {NODE_SIZES, Topology, type FlowGraph, type LoopLaneData} from "@kestra-io/topology"
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json"
 import eachSequential from "../../../fixtures/flowgraphs/each-sequential.json"
 import switchCaseLabels from "../../../fixtures/flowgraphs/switch-case-labels.json"
@@ -607,5 +607,53 @@ export const NestedFlowableLanes: StoryObj<typeof Topology> = {
         expect(inner.left).toBeGreaterThanOrEqual(outer.left)
         expect(inner.bottom).toBeLessThanOrEqual(outer.bottom)
         expect(inner.right).toBeLessThanOrEqual(outer.right)
+    },
+}
+
+const LOOP_STATE_EXECUTION = {
+    ...NESTED_LOOP_EXECUTION,
+    id: "story-execution-loop-state",
+    state: {current: "RUNNING"},
+}
+
+const LOOP_STATE_LANES: Record<string, LoopLaneData> = {
+    "root.per_region": {
+        taskId: "per_region",
+        status: "ready",
+        parentScoped: false,
+        iterationCount: 3000,
+        runningIterations: 12,
+        terminatedIterations: {SUCCESS: 2800, FAILED: 3, SKIPPED: 20},
+        state: "RUNNING",
+        loopIterationCounts: {per_quarter: {SUCCESS: 9999, FAILED: 1, RUNNING: 4}},
+        taskRunStateCounts: {
+            fetch_sales: {SUCCESS: 9990, FAILED: 1, SKIPPED: 9},
+            summarize: {SUCCESS: 9000, SKIPPED: 990, RUNNING: 10},
+        },
+    },
+    "root.per_region.per_quarter": {taskId: "per_quarter", status: "nested", parentScoped: false},
+}
+
+export const LoopStateProgress: StoryObj<typeof Topology> = {
+    render: Template,
+    args: {
+        id: "story-loop-state-progress",
+        source: NESTED_LOOP_SOURCE,
+        flowGraph: withExecutionId(nestedLoopDemo, LOOP_STATE_EXECUTION.id) as unknown as FlowGraph,
+        isReadOnly: true,
+        isHorizontal: true,
+        execution: LOOP_STATE_EXECUTION,
+        loopLanes: LOOP_STATE_LANES,
+    },
+    play: async ({canvasElement}) => {
+        const labels = () => [...canvasElement.querySelectorAll("[data-test='loop-state-bar']")].map((bar) => bar.getAttribute("aria-label"))
+
+        await waitFor(() => expect(labels()).toHaveLength(4))
+        expect(labels()).toEqual(expect.arrayContaining([
+            "2,800 success, 3 failed, 20 skipped, 12 running, 165 not started",
+            "9,999 success, 1 failed, 4 running",
+            "9,990 success, 1 failed, 9 skipped",
+            "9,000 success, 990 skipped, 10 running",
+        ]))
     },
 }

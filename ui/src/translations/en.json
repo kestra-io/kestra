@@ -610,6 +610,10 @@
           "mid": "{total}",
           "min": "{total}"
         }
+      },
+      "loop-state-bar": {
+        "item": "{count} {state}",
+        "not-started": "not started"
       }
     },
     "show task logs": "Show task logs",

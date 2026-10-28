@@ -149,16 +149,29 @@ describe("GanttLoopStateBar", () => {
         expect(tree.loopOutputs("tr-a")?.outputs).toEqual(outputsByTaskRun["tr-a"])
     })
 
-    it("shouldNotPollWhileTheLoopIsTerminalOrCarriesNoCounts", async () => {
+    it("shouldNotPollWhileTheLoopIsTerminal", async () => {
         mountBar(loopNode("tr-a", "SUCCESS"))
-        loadTaskRunOutputs.mockResolvedValue({})
-        mountBar(loopNode("tr-old", "RUNNING"))
         await flushPromises()
-        expect(loadTaskRunOutputs).toHaveBeenCalledTimes(2)
 
         await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS * 4)
 
-        expect(loadTaskRunOutputs).toHaveBeenCalledTimes(2)
+        expect(loadTaskRunOutputs).toHaveBeenCalledTimes(1)
         expect(vi.getTimerCount()).toBe(0)
+    })
+
+    it("shouldKeepPollingARunningLoopWhoseOutputsHaveNoCountsYetUntilTheyAppear", async () => {
+        loadTaskRunOutputs.mockImplementation(async () => {
+            requestedAt.push(Date.now())
+            return requestedAt.length < 3 ? {} : outputsByTaskRun["tr-b"]
+        })
+        const wrapper = mountBar(loopNode("tr-b", "RUNNING"))
+        await flushPromises()
+        expect(wrapper.find("[data-test='loop-state-bar']").exists()).toBe(false)
+
+        await vi.advanceTimersByTimeAsync(LOOP_OUTPUTS_REFRESH_MS * 3)
+
+        expect(requestedAt.length).toBeGreaterThanOrEqual(3)
+        requestedAt.slice(1).forEach((time, index) => expect(time - requestedAt[index]).toBeGreaterThanOrEqual(LOOP_OUTPUTS_REFRESH_MS))
+        expect(segmentsOf(wrapper)).toEqual([["SUCCESS", "3"], ["RUNNING", "2"], ["NOT_STARTED", "5"]])
     })
 })

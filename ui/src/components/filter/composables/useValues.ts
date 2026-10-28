@@ -1,7 +1,7 @@
 import {useI18n} from "vue-i18n";
 import {computed} from "vue";
 import {useMiscStore} from "override/stores/misc";
-import {FilterValue} from "../utils/filterTypes";
+import {ALL_TIME_RANGE, FilterValue} from "../utils/filterTypes";
 
 import {State} from "@kestra-io/ui-libs";
 import {auditLogTypes} from "../../../models/auditLogTypes";
@@ -47,8 +47,10 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ];
 
+    const RELATIVE_DATE_OR_ALL_TIME = [...RELATIVE_DATE, {label: t("datepicker.allTime"), value: ALL_TIME_RANGE}];
+
     const getRelativeDateLabel = (value: string): string => {
-        const item = RELATIVE_DATE.find((item) => item.value === value);
+        const item = RELATIVE_DATE_OR_ALL_TIME.find((item) => item.value === value);
         return item ? item.label : value;
     };
 
@@ -107,6 +109,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         STATUSES: buildFromArray(["PENDING", "ACCEPTED", "EXPIRED"]),
         AGGREGATIONS: buildFromArray(["SUM", "AVG", "MIN", "MAX"]),
         RELATIVE_DATE,
+        RELATIVE_DATE_OR_ALL_TIME,
         TRIGGER_STATES:[
         {label: t("filter.triggerState.enabled"), value: "enabled"},
         {label: t("filter.triggerState.disabled"), value: "disabled"}

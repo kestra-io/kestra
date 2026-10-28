@@ -13,14 +13,29 @@ import lombok.Data;
 @Data
 @Builder
 public class TimeLineSearch {
+    public static final String ALL_TIME = "ALL";
+
     private ZonedDateTime startDate;
     private ZonedDateTime endDate;
     private Duration timeRange;
 
+    public static boolean isAllTime(QueryFilter filter) {
+        return filter.field() == QueryFilter.Field.TIME_RANGE && ALL_TIME.equalsIgnoreCase(String.valueOf(filter.value()));
+    }
+
     public static TimeLineSearch extractFrom(List<QueryFilter> filters) {
+        return extractFrom(filters, false);
+    }
+
+    /**
+     * @param allowAllTime when {@code true}, a {@code timeRange} of {@value #ALL_TIME} leaves the start date unbounded;
+     *                     otherwise it is ignored and the 8-day default applies.
+     */
+    public static TimeLineSearch extractFrom(List<QueryFilter> filters, boolean allowAllTime) {
         ZonedDateTime startDate = null;
         ZonedDateTime endDate = null;
         Duration timeRange = null;
+        boolean allTime = false;
 
         for (QueryFilter filter : filters) {
             if (filter.field() == null) {
@@ -29,11 +44,17 @@ public class TimeLineSearch {
             switch (filter.field()) {
                 case START_DATE -> startDate = ZonedDateTime.parse(filter.value().toString());
                 case END_DATE -> endDate = ZonedDateTime.parse(filter.value().toString());
-                case TIME_RANGE -> timeRange = parseDuration(filter.value().toString());
+                case TIME_RANGE -> {
+                    if (isAllTime(filter)) {
+                        allTime = true;
+                    } else {
+                        timeRange = parseDuration(filter.value().toString());
+                    }
+                }
             }
         }
 
-        if ((startDate != null || endDate != null) && timeRange != null) {
+        if ((startDate != null || endDate != null) && (timeRange != null || allTime)) {
             throw new IllegalArgumentException("Parameters 'startDate'/'endDate' and 'timeRange' are mutually exclusive");
         }
 
@@ -41,7 +62,7 @@ public class TimeLineSearch {
             startDate = ZonedDateTime.now().minus(timeRange);
         }
 
-        if (startDate == null) {
+        if (startDate == null && !(allTime && allowAllTime)) {
             // this default startDate filter is there to avoid flooding the database in case of failure on our side
             startDate = ZonedDateTime.now().minusDays(8);
         }

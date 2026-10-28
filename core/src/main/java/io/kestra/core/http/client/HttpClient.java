@@ -223,7 +223,7 @@ public class HttpClient implements Closeable {
                 .loadTrustMaterial(null, (chain, authType) -> true)
                 .build();
 
-            return new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+            return new SSLConnectionSocketFactory(sslContext, new String[] {"TLSv1.3", "TLSv1.2"}, null, NoopHostnameVerifier.INSTANCE);
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             throw new IllegalArgumentException(e);
         }

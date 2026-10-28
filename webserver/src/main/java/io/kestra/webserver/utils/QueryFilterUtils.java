@@ -115,16 +115,27 @@ public class QueryFilterUtils {
      * </ul>
      */
     public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter) {
+        return replaceTimeRangeWithComputedDateFilter(filters, dateFilter, false);
+    }
+
+    /**
+     * Same as {@link #replaceTimeRangeWithComputedDateFilter(List, DateFilter)}, but with {@code allowAllTime} a
+     * {@code timeRange} of {@value TimeLineSearch#ALL_TIME} is dropped instead of bounded by the 8-day default.
+     */
+    public static List<QueryFilter> replaceTimeRangeWithComputedDateFilter(List<QueryFilter> filters, DateFilter dateFilter, boolean allowAllTime) {
         if (dateFilter == null) {
             dateFilter = DateFilter.START_DATE;
         }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters, allowAllTime);
         DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
         ZonedDateTime resolvedDate = timeLineSearch.getStartDate();
+        List<QueryFilter> boundedFilters = allowAllTime
+            ? filters.stream().filter(filter -> !TimeLineSearch.isAllTime(filter)).toList()
+            : filters;
 
         List<QueryFilter> updatedFilters = switch (dateFilter) {
-            case END_DATE -> updateFiltersForEndDate(filters, resolvedDate);
-            default -> updateFilters(filters, resolvedDate);
+            case END_DATE -> updateFiltersForEndDate(boundedFilters, resolvedDate);
+            default -> updateFilters(boundedFilters, resolvedDate);
         };
 
         validateTimeline(updatedFilters);

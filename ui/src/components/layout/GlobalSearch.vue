@@ -48,7 +48,11 @@
                                                     @click="onItemClick(item)"
                                                 >
                                                     <div class="result-title d-flex gap-2 nav-item-title">
-                                                        <component v-if="item.icon?.element" :is="{...item.icon.element}" class="align-middle" />
+                                                        <component
+                                                            v-if="item.icon?.element"
+                                                            :is="{...item.icon.element}"
+                                                            class="result-icon"
+                                                        />
                                                         <span v-if="item.parentTitle" class="result-parent">
                                                             <template v-for="(part, partIndex) in highlightMatch(item.parentTitle, query)" :key="partIndex">
                                                                 <mark v-if="part.match" class="result-match">{{ part.text }}</mark>
@@ -71,13 +75,13 @@
                                                     </div>
                                                     <span
                                                         v-if="index === activeIndex && item.executionsHref"
-                                                        class="result-hint d-none d-sm-flex align-items-center"
+                                                        class="result-hint"
                                                     >
                                                         <kbd>↵</kbd> {{ $t("global_search.open_flow") }}
                                                     </span>
                                                     <span
                                                         v-else-if="index === activeIndex"
-                                                        class="result-hint d-none d-sm-flex align-items-center"
+                                                        class="result-hint"
                                                     >
                                                         <span>{{ $t("jump to") }}</span>
                                                     </span>
@@ -86,7 +90,7 @@
                                                     v-if="index === activeIndex && item.executionsHref"
                                                     link
                                                     size="small"
-                                                    class="result-action d-none d-sm-inline-flex"
+                                                    class="result-action"
                                                     @click.stop="openExecutions(item)"
                                                 >
                                                     <kbd>→</kbd> {{ $t("executions") }}
@@ -709,7 +713,12 @@
             width: 100%;
         }
 
+        .result-icon {
+            vertical-align: middle;
+        }
+
         .result-action {
+            display: none;
             flex: 0 0 auto;
             color: var(--ks-text-secondary);
             white-space: nowrap;
@@ -792,9 +801,12 @@
             font-size: var(--ks-font-size-sm);
             white-space: nowrap;
             transition: none;
+        }
 
-            @media (min-width: 576px) {
-                display: flex;
+        @media (min-width: 576px) {
+            .result-hint,
+            .result-action {
+                display: inline-flex;
             }
         }
 

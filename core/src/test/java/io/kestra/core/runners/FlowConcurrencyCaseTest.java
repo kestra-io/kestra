@@ -296,6 +296,41 @@ public class FlowConcurrencyCaseTest {
         }
     }
 
+    public void flowConcurrencyKilledWithAfterExecution(String tenantId) throws QueueException, InterruptedException {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-killed-after-execution", Optional.empty())
+            .orElseThrow();
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue-killed-after-execution", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        try {
+            killQueue.emit(
+                ExecutionKilledExecution
+                    .builder()
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .executionId(execution1.getId())
+                    .isOnKillCascade(true)
+                    .tenantId(tenantId)
+                    .build()
+            );
+
+            Execution killed = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.KILLED) && e.findTaskRunsByTaskId("log").stream().anyMatch(t -> t.getState().isTerminated()), execution1);
+            assertThat(killed.getState().getCurrent()).isEqualTo(Type.KILLED);
+
+            Execution running = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.RUNNING), execution2);
+            assertThat(running.getState().getCurrent()).isEqualTo(Type.RUNNING);
+
+            Thread.sleep(100);
+            Execution queued = runnerUtils.awaitExecution(e -> e.getState().isQueued(), execution3);
+            assertThat(queued.getState().getCurrent()).isEqualTo(Type.QUEUED);
+        } finally {
+            runnerUtils.killExecution(execution2);
+            runnerUtils.killExecution(execution3);
+            runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed-after-execution");
+        }
+    }
+
     public void flowConcurrencyQueueKilled(String tenantId) throws QueueException, InterruptedException {
         Flow flow = flowRepository
             .findById(tenantId, NAMESPACE, "flow-concurrency-queue-killed", Optional.empty())

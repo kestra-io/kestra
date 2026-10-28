@@ -126,7 +126,7 @@ class SubflowKillTest {
     }
 
     @Test
-    void shouldFailTheParentWithoutRunningNextTasksWhenTheSubflowExecutionIsCancelled() {
+    void shouldContinueWhenTheSubflowExecutionIsCancelled() {
         // Given
         harness.registerFlow(child);
         FlowWithSource parent = parent("transmitFailed: true", true);
@@ -138,25 +138,8 @@ class SubflowKillTest {
         cancelChild(created);
 
         // Then
-        assertThat(executedTasks).containsExactly("on_error");
-        assertThat(harness).hasExecutionInState(created, State.Type.FAILED);
-    }
-
-    @Test
-    void shouldContinueWhenTheSubflowExecutionIsCancelledAndTheSubflowAllowsFailure() {
-        // Given
-        harness.registerFlow(child);
-        FlowWithSource parent = parent("transmitFailed: true\nallowFailure: true", true);
-        harness.registerFlow(parent);
-        Execution created = Executions.created(parent);
-        harness.run(created, runningChildWorker());
-
-        // When
-        cancelChild(created);
-
-        // Then
         assertThat(executedTasks).containsExactly("after");
-        assertThat(harness).hasExecutionInState(created, State.Type.WARNING);
+        assertThat(harness).hasExecutionInState(created, State.Type.CANCELLED);
     }
 
     @Test

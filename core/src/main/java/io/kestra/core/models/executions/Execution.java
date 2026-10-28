@@ -751,20 +751,19 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     public boolean hasFailed(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
-            .anyMatch(taskRun -> taskRun.getState().isFailed() || isKilledOrCancelledWithoutExecutionKill(taskRun, resolvedTasks));
+            .anyMatch(taskRun -> taskRun.getState().isFailed() || isKilledWithoutExecutionKill(taskRun, resolvedTasks));
     }
 
     /**
-     * A killed or cancelled executable task run (e.g. Subflow) in an execution that is not being killed or cancelled is a failure transmitted from its child execution; worker task runs are excluded as a worker can kill them before the execution is KILLING.
+     * A killed executable task run (e.g. Subflow) in an execution that is not being killed is a failure transmitted from its child execution; worker task runs are excluded as a worker can kill them before the execution is KILLING.
      */
-    private boolean isKilledOrCancelledWithoutExecutionKill(TaskRun taskRun, List<ResolvedTask> resolvedTasks) {
-        State.Type current = taskRun.getState().getCurrent();
-        if ((!current.isKilled() && current != State.Type.CANCELLED) || resolvedTasks == null) {
+    private boolean isKilledWithoutExecutionKill(TaskRun taskRun, List<ResolvedTask> resolvedTasks) {
+        if (!taskRun.getState().getCurrent().isKilled() || resolvedTasks == null) {
             return false;
         }
 
         State.Type executionState = this.state.getCurrent();
-        if (executionState.isKilled() || executionState == State.Type.KILLING || executionState == State.Type.CANCELLED) {
+        if (executionState.isKilled() || executionState == State.Type.KILLING) {
             return false;
         }
 
@@ -776,7 +775,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             // NOTE: we check on isFailed first to avoid the costly shouldBeRetried() method
-            .anyMatch(taskRun -> (taskRun.getState().isFailed() && shouldNotBeRetried(resolvedTasks, parentTaskRun, taskRun)) || isKilledOrCancelledWithoutExecutionKill(taskRun, resolvedTasks));
+            .anyMatch(taskRun -> (taskRun.getState().isFailed() && shouldNotBeRetried(resolvedTasks, parentTaskRun, taskRun)) || isKilledWithoutExecutionKill(taskRun, resolvedTasks));
     }
 
     private static boolean shouldNotBeRetried(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun, TaskRun taskRun) {
@@ -818,10 +817,10 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         State.Type state = terminalState;
         for (TaskRun taskRun : taskRuns) {
             State.Type current = taskRun.getState().getCurrent();
-            if (current == State.Type.KILLED && !isKilledOrCancelledWithoutExecutionKill(taskRun, currentTasks)) {
+            if (current == State.Type.KILLED && !isKilledWithoutExecutionKill(taskRun, currentTasks)) {
                 state = State.Type.KILLED;
                 break; // highest priority, no need to continue
-            } else if ((current == State.Type.FAILED || isKilledOrCancelledWithoutExecutionKill(taskRun, currentTasks)) && state != State.Type.KILLED) {
+            } else if ((current == State.Type.FAILED || current == State.Type.KILLED) && state != State.Type.KILLED) {
                 state = State.Type.FAILED;
             } else if (current == State.Type.CANCELLED && state != State.Type.KILLED && state != State.Type.FAILED) {
                 state = State.Type.CANCELLED;

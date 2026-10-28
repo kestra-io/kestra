@@ -37,7 +37,8 @@ public class SelectInput extends Input<String> implements RenderableInput {
     String expression;
 
     @Schema(
-        title = "If the user can provide a custom value."
+        title = "If the user can provide a custom value.",
+        description = "When a value is provided at execution creation, the `expression` is not rendered."
     )
     @NotNull
     @Builder.Default

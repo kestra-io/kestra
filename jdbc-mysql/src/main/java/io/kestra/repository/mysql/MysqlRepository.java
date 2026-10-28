@@ -20,6 +20,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.repository.CaseInsensitiveSearch;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
@@ -58,7 +59,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
             Field<String> f = DSL.field(fieldName, String.class);
             // COALESCE ensures NULL fields evaluate to false rather than NULL,
             // so NOT(...LIKE...) works correctly for nullable columns like execution_id.
-            likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).like(pattern, '\\'));
+            likeCondition = likeCondition.or(DSL.coalesce(f, DSL.inline("")).collate(CaseInsensitiveSearch.MYSQL_COLLATION).like(pattern, '\\'));
         }
 
         String booleanQuery = Arrays.stream(query.split("\\p{IsPunct}|\\s+"))

@@ -95,6 +95,7 @@
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"
                                     :title="$t('close')"
+                                    data-test="tab-close"
                                 />
                             </button>
                             <div v-else class="potential-container">
@@ -133,7 +134,7 @@
                         </button>
 
                         <KsDropdown trigger="click" placement="bottom-end">
-                            <KsButton :icon="DotsVertical" link class="me-2 tab-icon" :aria-label="$t('panel actions')" />
+                            <KsButton :icon="DotsVertical" link class="tab-icon panel-actions-button" :aria-label="$t('panel actions')" />
                             <template #dropdown>
                                 <KsDropdownMenu>
                                     <KsDropdownItem
@@ -732,7 +733,7 @@
     }
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .panel-maximized {
         position: relative;
         background: var(--ks-bg-base);
@@ -902,6 +903,10 @@
         color: var(--ks-icon-muted);
     }
 
+    .panel-actions-button {
+        margin-inline-end: var(--ks-spacing-2);
+    }
+
     .small-text {
         font-size: var(--ks-font-size-xs);
     }
@@ -985,13 +990,13 @@
     }
 
     .default-theme{
-        :deep(.kel-splitter-panel) {
+        & :deep(.kel-splitter-panel) {
             background-color: var(--ks-bg-surface);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
-        :deep(.kel-splitter__splitter){
+        & :deep(.kel-splitter__splitter){
             border-left-color: var(--ks-border-default);
             background-color: var(--ks-bg-surface);
             &:before, &:after{
@@ -999,7 +1004,7 @@
             }
         }
 
-       :deep(.kel-splitter-bar) {
+       & :deep(.kel-splitter-bar) {
            z-index: 1;
        }
     }

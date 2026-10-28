@@ -73,7 +73,7 @@
     const watchableStates = ["FAILED", "WARNING", "SUCCESS", "KILLED", "PAUSED"]
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .execution-panel {
         display: flex;
         flex-direction: column;

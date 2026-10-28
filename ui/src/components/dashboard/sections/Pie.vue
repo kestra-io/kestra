@@ -43,6 +43,7 @@
     import type {Column} from "../types.ts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
+    import {getLanguageTag} from "../../../utils/utils"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
@@ -102,7 +103,7 @@
     const total = computed(() => pieData.value.reduce((acc, item) => acc + Number(item.value), 0))
 
     const totalValue = computed(() =>
-        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(),
+        isDuration ? durationUtils.humanDuration(total.value) : total.value.toLocaleString(getLanguageTag()),
     )
 
     const showSuccessRatio = computed(() => !isDuration && pieData.value.some((item) => item.name === "SUCCESS"))
@@ -150,7 +151,7 @@
     watch(() => route.params.filters, () => refresh(), {deep: true})
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     .pie {
         display: flex;
         flex-direction: column;
@@ -184,17 +185,17 @@
         max-width: min(52%, 7rem);
         text-align: center;
         line-height: 1.2;
+    }
 
-        &__total {
-            font-size: var(--ks-font-size-3xl);
-            color: var(--ks-text-primary);
-            font-weight: 700;
-            white-space: nowrap;
-        }
+    .pie-center-label__total {
+        font-size: var(--ks-font-size-3xl);
+        color: var(--ks-text-primary);
+        font-weight: 700;
+        white-space: nowrap;
+    }
 
-        &__success {
-            font-size: var(--ks-font-size-2xs);
-            color: var(--ks-text-success);
-        }
+    .pie-center-label__success {
+        font-size: var(--ks-font-size-2xs);
+        color: var(--ks-text-success);
     }
 </style>

@@ -114,7 +114,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
     .card {
         --ks-dag-status: var(--ks-status-neutral);
 

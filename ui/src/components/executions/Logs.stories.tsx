@@ -1,5 +1,5 @@
 import {vueRouter} from "storybook-vue3-router";
-import type {Meta, StoryObj} from "@storybook/vue3";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import type {LogEntry, StateHistory} from "@kestra-io/kestra-sdk";
 import {userEvent, waitFor, within} from "storybook/test";
 import {useExecutionsStore, type Execution} from "../../stores/executions";
@@ -158,9 +158,10 @@ function makeDecorators(rawView = true, sourceLogs = FAKE_LOGS, execution = FAKE
                     tasks: execution.taskRunList.map(task => ({id: task.taskId, type: "io.kestra.plugin.core.log.Log"})),
                 } as typeof executionsStore.flow;
 
-                executionsStore.loadLogs = async ({params}) => {
-                    const gte = params?.["filters[level][GREATER_THAN_OR_EQUAL_TO]"];
-                    const lte = params?.["filters[level][LESS_THAN_OR_EQUAL_TO]"];
+                executionsStore.loadLogs = async ({filters}) => {
+                    const levelValue = (operation: string) => filters?.find(f => f.field === "level" && f.operation === operation)?.value;
+                    const gte = levelValue("GREATER_THAN_OR_EQUAL_TO");
+                    const lte = levelValue("LESS_THAN_OR_EQUAL_TO");
                     let filtered: typeof sourceLogs;
                     if (lte) {
                         const maxIdx = LEVEL_ORDER.indexOf(lte as Level);

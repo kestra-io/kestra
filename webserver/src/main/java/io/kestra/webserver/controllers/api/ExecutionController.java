@@ -705,7 +705,13 @@ public class ExecutionController {
         String path,
         MultipartBody parts,
         HttpRequest<?> request) {
-        Flow flow = resolveWebhook(maybeFlow, key).flow();
+        Flow flow;
+        try {
+            flow = resolveWebhook(maybeFlow, key).flow();
+        } catch (RuntimeException e) {
+            // The parts are already bound: unless they are read, their bytes stay in direct memory (GHSA-2355-646m-8m98).
+            return webhookBodyService.discard(parts).then(Mono.error(e));
+        }
 
         // Minted before the parts are read, so that they are stored under the execution that will carry them.
         String executionId = IdUtils.create();

@@ -5,7 +5,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -45,6 +47,8 @@ import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
+import io.micronaut.runtime.server.EmbeddedServer;
+import io.netty.util.internal.PlatformDependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,6 +72,9 @@ class ExecutionControllerTest {
     @Inject
     @Client("/")
     private ReactorHttpClient client;
+
+    @Inject
+    private EmbeddedServer embeddedServer;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
 
@@ -215,6 +222,46 @@ class ExecutionControllerTest {
         assertThat(exception.getMessage())
             .as("the 404 message must not distinguish a draft-only flow from a wrong webhook key (GHSA-6wcq-4vx6-rx53)")
             .contains("Webhook not found");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook.yaml" })
+    void shouldNotRetainRequestBodyWhenMultipartWebhookIsRejected() throws Exception {
+        String boundary = "webhook-leak-boundary";
+        byte[] head = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"part.bin\"\r\nContent-Type: application/octet-stream\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] payload = new byte[head.length + 128 * 1024 + tail.length];
+        System.arraycopy(head, 0, payload, 0, head.length);
+        System.arraycopy(tail, 0, payload, payload.length - tail.length, tail.length);
+
+        List<String> paths = List.of(
+            "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/wrong-key",
+            "/api/v1/main/executions/webhook/not-found/not-found/wrong-key"
+        );
+        int requests = 200;
+        long before = PlatformDependent.usedDirectMemory();
+
+        for (String path : paths) {
+            for (int i = 0; i < requests; i++) {
+                // a new connection each time: a reused one would stall on the unread body of the previous request
+                try (HttpClient http = HttpClient.newHttpClient()) {
+                    java.net.http.HttpResponse<Void> response = http.send(
+                        java.net.http.HttpRequest.newBuilder(URI.create(embeddedServer.getURL() + path))
+                            .timeout(Duration.ofSeconds(30))
+                            .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                            .POST(java.net.http.HttpRequest.BodyPublishers.ofByteArray(payload))
+                            .build(),
+                        java.net.http.HttpResponse.BodyHandlers.discarding()
+                    );
+                    assertThat(response.statusCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+                }
+            }
+        }
+
+        long retained = PlatformDependent.usedDirectMemory() - before;
+        assertThat(retained)
+            .as("the bodies of %d rejected requests of %d KiB must not stay in direct memory", paths.size() * requests, 128)
+            .isLessThan(32L * 1024 * 1024);
     }
 
     @Test

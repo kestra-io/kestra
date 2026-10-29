@@ -1513,7 +1513,7 @@
       },
       "promote": {
         "title": "Promover Flows entre Entornos",
-        "message": "Kestra Enterprise Edition te permite promover flows de un entorno a otro —como de desarrollo a staging y a producción— directamente desde la UI, sin necesidad de Git o pipelines de CI/CD. Revisa un diff de exactamente lo que cambiará antes de promover, protege objetivos sensibles con una puerta de confirmación, detecta desviaciones de un vistazo y mantén un historial completo de quién promovió qué, dónde y cuándo."
+        "message": "Kestra Enterprise Edition te permite promover flows de un entorno a otro, como de desarrollo a staging y a producción, directamente desde la UI, sin necesidad de Git o pipelines de CI/CD. Revisa un diff de exactamente lo que cambiará antes de promover, protege objetivos sensibles con una puerta de confirmación, detecta desviaciones de un vistazo y mantén un historial completo de quién promovió qué, dónde y cuándo."
       },
       "dashboards": {
         "header": "Dashboards Personalizados",
@@ -1577,7 +1577,7 @@
         },
         "policies": {
           "title": "Aplicar Reglas de Gobernanza en este namespace",
-          "message": "En Kestra Enterprise Edition, las Políticas te permiten definir reglas que se aplican a cada flow en este namespace y sus hijos — inyectar valores predeterminados compartidos, restringir valores de propiedad, bloquear plugins y requerir labels de cumplimiento, con cada cambio totalmente visible para los autores del flow."
+          "message": "En Kestra Enterprise Edition, las Políticas te permiten definir reglas que se aplican a cada flow en este namespace y sus hijos: inyectar valores predeterminados compartidos, restringir valores de propiedad, bloquear plugins y requerir labels de cumplimiento, con cada cambio totalmente visible para los autores del flow."
         },
         "reusable-inputs": {
           "label": "Inputs Reutilizables",
@@ -2355,7 +2355,7 @@
         },
         "cancelled": "Turno cancelado",
         "error": {
-          "turnCap": "Esta conversación alcanzó su límite — inicia un nuevo chat.",
+          "turnCap": "Esta conversación alcanzó su límite. Inicia un nuevo chat.",
           "turnInProgress": "Un turno ya está en curso.",
           "request": "La solicitud falló. Inténtelo de nuevo, por favor.",
           "generic": "Algo salió mal. Por favor, inténtelo de nuevo."
@@ -2418,7 +2418,7 @@
           "applied": "Aplicado",
           "previewBanner": "Revisando un cambio sugerido por la IA: el editor es de solo lectura hasta que lo apliques o lo descartes.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe — los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
+          "applyConfirm": "¿Guardar el flow {namespace}.{id} como una revisión en borrador para revisión? Se creará, o se añadirá una nueva revisión en borrador si ya existe. Los borradores no serán recogidos por triggers ni subflows hasta que se publiquen.",
           "applyConfirmDashboard": "Aplicar el panel de control {id}? Se creará, o se sobrescribirá si ya existe.",
           "applyError": "No se pudo aplicar el flow. Por favor, inténtalo de nuevo.",
           "applyErrorDashboard": "No se pudo aplicar el dashboard. Por favor, inténtelo de nuevo.",
@@ -2657,7 +2657,7 @@
     },
     "invalid_source_code": "Código fuente no válido",
     "source_search": {
-      "cannot_select_read_only": "No se puede seleccionar — no tienes permiso de edición en {namespace} / {id}",
+      "cannot_select_read_only": "No se puede seleccionar: no tienes permiso de edición en {namespace} / {id}",
       "collapse_all": "Contraer todo",
       "confirm_bar_excluded": "{count} coincidencia más no se modificará. | {count} coincidencias más no se modificarán.",
       "confirm_bar_message": "Reemplazar {matches} en {flows} flows editables. Se omitirán {skipped} flows de solo lectura.",
@@ -2673,11 +2673,11 @@
       "empty_title": "Encuentra un valor en flows, archivos y keys",
       "error_title": "Expresión regular inválida",
       "examples_aria": "Consultas de ejemplo",
-      "exclusion_flows_readonly": "Flows — {count} coincidencia de solo lectura: necesitas el permiso FLOW · UPDATE. | Flows — {count} coincidencias de solo lectura: necesitas el permiso FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} coincidencia: solo búsqueda, no se puede reemplazar. | {type} — {count} coincidencias: solo búsqueda, no se pueden reemplazar.",
+      "exclusion_flows_readonly": "Flows · {count} coincidencia de solo lectura: necesitas el permiso FLOW · UPDATE. | Flows · {count} coincidencias de solo lectura: necesitas el permiso FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} coincidencia: solo búsqueda, no se puede reemplazar. | {type} · {count} coincidencias: solo búsqueda, no se pueden reemplazar.",
       "exclusion_title": "{count} coincidencia está excluida de Reemplazar todo | {count} coincidencias están excluidas de Reemplazar todo",
       "expand_all": "Expandir todo",
-      "file_match_notice": "La ruta del archivo coincidió. El contenido del archivo no se busca — abre el archivo para buscar dentro de él.",
+      "file_match_notice": "La ruta del archivo coincidió. El contenido del archivo no se busca. Abre el archivo para buscar dentro de él.",
       "files_progress_banner_failed": "Los archivos del namespace se buscan uno por uno. {done} de {total} completados, {failed} con error. El total todavía cambiará.",
       "files_progress_banner_ok": "Los archivos del namespace se buscan uno por uno. {done} de {total} completados. El total todavía cambiará.",
       "flow_only_toggle_hint": "Coincidir mayúsculas, palabra completa y expresión regular solo se aplican a flows. Las rutas de archivos y las keys siempre coinciden como texto plano.",
@@ -2754,10 +2754,10 @@
       "show_replace": "Mostrar reemplazar",
       "summary": "{matches} coincidencias en {flows} flows",
       "summary_cross": "{matches} en {resources} de {types}",
-      "tag_keys_only_never": "Solo keys — los valores nunca se muestran ni se buscan",
-      "tag_keys_only_values": "Solo keys — los valores no se buscan",
-      "tag_paths_only": "Solo rutas — el contenido del archivo no se busca",
-      "tag_search_only": "Solo búsqueda — no se reemplaza",
+      "tag_keys_only_never": "Solo keys: los valores nunca se muestran ni se buscan",
+      "tag_keys_only_values": "Solo keys: los valores no se buscan",
+      "tag_paths_only": "Solo rutas: el contenido del archivo no se busca",
+      "tag_search_only": "Solo búsqueda: no se reemplaza",
       "tag_source_code": "Código fuente",
       "truncated_flows": "Se muestran las primeras {shown} de {total} coincidencias. Reemplazar todo solo se aplica a las coincidencias mostradas: acota primero la consulta.",
       "truncated_type": "primeras {shown} de {total}",

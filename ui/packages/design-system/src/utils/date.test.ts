@@ -143,3 +143,20 @@ describe("currentTimezone", () => {
     })
 })
 
+
+describe("dateFilter timezone", () => {
+    afterEach(() => {
+        localStorage.removeItem(TIMEZONE_STORAGE_KEY)
+        vi.restoreAllMocks()
+    })
+
+    test("should format in the stored timezone", () => {
+        localStorage.setItem(TIMEZONE_STORAGE_KEY, "Pacific/Kiritimati")
+        expect(dateFilter("2026-07-24T12:00:00Z", "YYYY-MM-DD HH:mm")).toBe("2026-07-25 02:00")
+    })
+
+    test("should format in the browser timezone when none is stored", () => {
+        vi.spyOn(dayjs.tz, "guess").mockReturnValue("Pacific/Kiritimati")
+        expect(dateFilter("2026-07-24T12:00:00Z", "YYYY-MM-DD HH:mm")).toBe("2026-07-25 02:00")
+    })
+})

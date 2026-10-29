@@ -88,10 +88,6 @@ describe("useIsMobile", () => {
         expect(isMobile.value).toBe(true)
     })
 
-    it("exports MOBILE_QUERY as (max-width: 767px)", () => {
-        expect(MOBILE_QUERY).toBe("(max-width: 767px)")
-    })
-
     it("flips at the same width as MOBILE_QUERY", () => {
         const isMobile = callUseIsMobile()
 

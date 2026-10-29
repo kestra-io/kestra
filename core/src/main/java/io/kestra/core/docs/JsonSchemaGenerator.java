@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -58,6 +59,7 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.TimezoneId;
 
 import io.micronaut.core.annotation.Nullable;
@@ -93,8 +95,10 @@ public class JsonSchemaGenerator {
     // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
     // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
     private static final String TIMEZONE_OFFSET_PATTERN = "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
-    // A value holding a Pebble expression, accepted next to the literal format of an output asset property.
-    private static final String PEBBLE_EXPRESSION_PATTERN = ".*\\{\\{.*\\}\\}.*";
+    // A value holding a Pebble block, written for ECMA-262 since editors evaluate schema patterns in JavaScript.
+    private static final String PEBBLE_EXPRESSION_PATTERN = IntStream.range(0, PebbleUtil.openingBlockDelimiters().size())
+        .mapToObj(i -> escapeRegex(PebbleUtil.openingBlockDelimiters().get(i)) + ".*" + escapeRegex(PebbleUtil.closingBlockDelimiters().get(i)))
+        .collect(Collectors.joining("|", ".*(", ").*"));
 
     private final PluginRegistry pluginRegistry;
 
@@ -107,6 +111,28 @@ public class JsonSchemaGenerator {
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls) {
         return this.schemas(cls, false);
+    }
+
+    // Only the flow schema gets this: the plugin schema keeps a top-level enum, which the no-code editor renders as a dropdown.
+    private void acceptExpressionOnDynamicEnums(ObjectNode objectNode) {
+        objectNode.findParents("enum").forEach(jsonNode ->
+        {
+            if (jsonNode instanceof ObjectNode oNode && oNode.path("$dynamic").asBoolean(false) && !oNode.has("anyOf")) {
+                ArrayNode anyOf = oNode.putArray("anyOf");
+                ObjectNode enumBranch = anyOf.addObject();
+                if (oNode.has("type")) {
+                    enumBranch.set("type", oNode.remove("type"));
+                }
+                enumBranch.set("enum", oNode.remove("enum"));
+                anyOf.addObject()
+                    .put("type", "string")
+                    .put("pattern", PEBBLE_EXPRESSION_PATTERN);
+            }
+        });
+    }
+
+    private static String escapeRegex(String literal) {
+        return literal.replaceAll("[\\\\^$.*+?()\\[\\]{}|/]", "\\\\$0");
     }
 
     private void replaceOneOfWithAnyOf(ObjectNode objectNode) {
@@ -145,6 +171,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
+            acceptExpressionOnDynamicEnums(objectNode);
 
             // Strip edition-restricted input types before collapsing discriminator wrappers: the
             // strip logic removes a whole allOf branch (the one carrying the `type` const), which

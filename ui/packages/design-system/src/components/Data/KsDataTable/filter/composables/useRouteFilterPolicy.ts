@@ -128,6 +128,8 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             return
         }
 
+        settleNow()
+
         router.replace({
             query: options.writeToRoute(route.query, value),
         })

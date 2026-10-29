@@ -2355,7 +2355,7 @@
         },
         "cancelled": "Tour annulé",
         "error": {
-          "turnCap": "Cette conversation a atteint sa limite. Démarrez une nouvelle discussion.",
+          "turnCap": "Cette conversation a atteint sa limite : démarrez une nouvelle discussion.",
           "turnInProgress": "Un tour est déjà en cours.",
           "request": "La requête a échoué. Veuillez réessayer.",
           "generic": "Une erreur est survenue. Veuillez réessayer."

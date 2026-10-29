@@ -2355,7 +2355,7 @@
         },
         "cancelled": "Tura anulowana",
         "error": {
-          "turnCap": "Ta rozmowa osiągnęła swój limit. Rozpocznij nowy czat.",
+          "turnCap": "Ta rozmowa osiągnęła swój limit: rozpocznij nowy czat.",
           "turnInProgress": "Tura jest już w toku.",
           "request": "Żądanie nie powiodło się. Spróbuj ponownie.",
           "generic": "Coś poszło nie tak. Spróbuj ponownie."

@@ -2355,7 +2355,7 @@
         },
         "cancelled": "轮次已取消",
         "error": {
-          "turnCap": "此对话已达上限。开启新对话。",
+          "turnCap": "此对话已达上限：开启新对话。",
           "turnInProgress": "一个周期已在进行中。",
           "request": "请求失败。请重试。",
           "generic": "出错了。请重试。"

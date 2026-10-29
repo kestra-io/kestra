@@ -2355,7 +2355,7 @@
         },
         "cancelled": "Giro annullato",
         "error": {
-          "turnCap": "Questa conversazione ha raggiunto il limite. Inizia una nuova chat.",
+          "turnCap": "Questa conversazione ha raggiunto il limite: inizia una nuova chat.",
           "turnInProgress": "Un turno è già in corso.",
           "request": "La richiesta è fallita. Riprova.",
           "generic": "Qualcosa è andato storto. Riprova."

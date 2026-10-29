@@ -2355,7 +2355,7 @@
         },
         "cancelled": "Turn cancelled",
         "error": {
-          "turnCap": "This conversation reached its limit. Start a new chat.",
+          "turnCap": "This conversation reached its limit: start a new chat.",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

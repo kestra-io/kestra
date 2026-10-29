@@ -8,7 +8,7 @@ import {useI18n} from "vue-i18n"
 
 import {decodeSearchParams} from "@kestra-io/design-system"
 
-import {Chart, type ChartResults} from "../types.ts"
+import {Chart, type ChartResults, type ChartStateCounts} from "../types.ts"
 import {chartLoadQueue} from "./chartLoadQueue"
 import {ChartFiltersOverrides, QueryFilter, QueryFilterField} from "@kestra-io/kestra-sdk"
 
@@ -112,11 +112,34 @@ export function useChartGenerator(dashboardId: string | undefined, props: {chart
         }
     };
 
+    async function generateStateCounts(customFilters?: QueryFilter[]): Promise<ChartStateCounts | undefined> {
+        if (providedResults) return undefined
+
+        const parameters: ChartFiltersOverrides = {filters: customFilters ?? props.filters.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [])}
+
+        return chartLoadQueue.enqueue(() => {
+            if (!isMounted) return Promise.resolve(undefined)
+
+            if (!props.showDefault) {
+                if (!dashboardId) {
+                    throw new Error("to count charts from backend we need a dashboard id")
+                }
+                return dashboardStore.stateCounts(dashboardId, props.chart.id, parameters)
+            }
+
+            if (!props.chart.content) {
+                throw new Error("Chart content must exist for preview.")
+            }
+
+            return dashboardStore.chartPreviewStateCounts({chart: props.chart.content, globalFilter: parameters})
+        })
+    }
+
     onMounted(async () => {
         if (includeHooks) await generate()
     })
 
-    return {percentageShown, EMPTY_TEXT, data, loading, generate}
+    return {percentageShown, EMPTY_TEXT, data, loading, generate, generateStateCounts}
 }
 
 export * from "../types"

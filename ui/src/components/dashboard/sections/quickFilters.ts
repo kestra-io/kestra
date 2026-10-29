@@ -59,3 +59,10 @@ export const stateFilterForTab = (chart: Chart, key: QuickFilterTabKey): QueryFi
     }
     return {field: "state", operation: "IN", value: [...tab.states]}
 }
+
+export const countsByTab = (stateCounts: Record<string, number>): Record<QuickFilterTabKey, number> =>
+    Object.fromEntries(QUICK_FILTER_TABS.map((tab) => [
+        tab.key,
+        (tab.states.length ? tab.states.map((state) => stateCounts[state] ?? 0) : Object.values(stateCounts))
+            .reduce((sum, count) => sum + count, 0),
+    ])) as Record<QuickFilterTabKey, number>

@@ -1144,61 +1144,6 @@ class TriggerEventHandlerTest {
     }
 
     @Test
-    void shouldNotApplyRepeatedPollingResultForSameDispatchEpoch() {
-        // GIVEN
-        TriggerState dispatched = triggerState.nextDispatchEpoch(CLOCK).locked(CLOCK, true);
-        triggerStateStore.save(dispatched);
-        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
-        TriggerEvaluationResult failed = new TriggerEvaluationResult(
-            "stable-execution", State.Type.FAILED, null, null, 1, null, null
-        );
-        TriggerEvaluated first = new TriggerEvaluated(triggerId, failed, dispatched.getDispatchEpoch());
-        TriggerEvaluated retry = new TriggerEvaluated(triggerId, failed, dispatched.getDispatchEpoch());
-
-        // WHEN
-        handler.handle(CLOCK, TEST_VNODE, first);
-        Instant nextEvaluationDate = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow().getNextEvaluationDate();
-        handler.handle(CLOCK, TEST_VNODE, retry);
-
-        // THEN
-        TriggerState updated = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow();
-        assertThat(updated.getNextEvaluationDate()).isEqualTo(nextEvaluationDate);
-        assertThat(updated.getLastEventId()).isEqualTo(first.eventId());
-        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
-    }
-
-    @Test
-    void shouldApplyPollingResultsFromDistinctDispatchEpochs() {
-        // GIVEN
-        TriggerState firstDispatch = triggerState.nextDispatchEpoch(CLOCK).locked(CLOCK, true);
-        triggerStateStore.save(firstDispatch);
-        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
-        TriggerEvaluated first = new TriggerEvaluated(
-            triggerId,
-            new TriggerEvaluationResult("first-execution", State.Type.FAILED, null, null, 1, null, null),
-            firstDispatch.getDispatchEpoch()
-        );
-
-        // WHEN
-        handler.handle(CLOCK, TEST_VNODE, first);
-        TriggerState nextDispatch = triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow().nextDispatchEpoch(CLOCK);
-        triggerStateStore.save(nextDispatch);
-        TriggerEvaluated second = new TriggerEvaluated(
-            triggerId,
-            new TriggerEvaluationResult("second-execution", State.Type.FAILED, null, null, 1, null, null),
-            nextDispatch.getDispatchEpoch()
-        );
-        handler.handle(CLOCK, TEST_VNODE, second);
-
-        // THEN
-        assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(2);
-        assertThat(triggerExecutionPublisher.executions().get(0).evaluation().executionId()).isEqualTo("first-execution");
-        assertThat(triggerExecutionPublisher.executions().get(1).evaluation().executionId()).isEqualTo("second-execution");
-        assertThat(triggerStateStore.findByIdWithoutAcl(triggerId).orElseThrow().getLastEvaluatedDispatchEpoch())
-            .isEqualTo(nextDispatch.getDispatchEpoch());
-    }
-
-    @Test
     void shouldNotPublishExecutionGivenNullEvaluationWhenHandled() {
         // GIVEN
         triggerStateStore.save(triggerState);

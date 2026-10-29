@@ -1,5 +1,6 @@
 package io.kestra.controller.grpc.services;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -18,6 +19,7 @@ import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.State;
@@ -31,6 +33,7 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 
@@ -39,6 +42,7 @@ import io.grpc.stub.StreamObserver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.event.Level;
 
 @Singleton
 @Slf4j
@@ -289,30 +293,16 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     void processPollingTriggerResult(WorkerTriggerResult workerTriggerResult) {
         TriggerEvaluationResult evaluation = workerTriggerResult.evaluation();
-        TriggerEvaluated triggerEvaluated = new TriggerEvaluated(
-            workerTriggerResult.id(), evaluation, workerTriggerResult.dispatchEpoch(),
-            workerTriggerResult.resultId() == null ? io.kestra.core.events.EventId.create() : workerTriggerResult.resultId()
-        );
+        TriggerEvaluated triggerEvaluated = new TriggerEvaluated(workerTriggerResult.id(), evaluation, Instant.now(), EventId.create());
         try {
             triggerEventQueue.send(triggerEvaluated);
         } catch (KestraRuntimeException e) {
-            if (evaluation == null || !isOversizedOrUnsupported(e)) {
+            if (!isOversizedOrUnsupported(e)) {
                 throw e;
             }
 
-            log.warn("Polling trigger result {} cannot be published as-is; publishing a bounded FAILED evaluation instead.", workerTriggerResult.id(), e);
-            TriggerEvaluationResult failed = new TriggerEvaluationResult(
-                evaluation.executionId(),
-                State.Type.FAILED,
-                null,
-                null,
-                evaluation.flowRevision(),
-                evaluation.scheduleDate(),
-                null
-            );
-            triggerEventQueue.send(new TriggerEvaluated(
-                workerTriggerResult.id(), failed, triggerEvaluated.timestamp(), triggerEvaluated.eventId(), triggerEvaluated.dispatchEpoch()
-            ));
+            Logs.logTrigger(workerTriggerResult.id(), Level.ERROR, "Unable to publish polling trigger result: {}", e.getMessage(), e);
+            triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), null));
         }
         workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
     }

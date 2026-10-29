@@ -446,11 +446,6 @@ public class TriggerEventHandler {
     void onTriggerEvaluated(Clock clock, TriggerEvaluated event) {
         findTriggerState(event).ifPresent(state ->
         {
-            if (event.dispatchEpoch() != null && (event.dispatchEpoch() < state.getDispatchEpoch()
-                || (state.getLastEvaluatedDispatchEpoch() != null && event.dispatchEpoch() <= state.getLastEvaluatedDispatchEpoch()))) {
-                return;
-            }
-
             Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
             if (data.getLeft() == null) {
                 return;
@@ -475,9 +470,6 @@ public class TriggerEventHandler {
                     .workerId(clock, null);
             }
 
-            if (event.dispatchEpoch() != null) {
-                newState = newState.lastEvaluatedDispatchEpoch(clock, event.dispatchEpoch());
-            }
             newState = newState.lastEventId(clock, event.eventId());
             triggerStateStore.save(newState);
 

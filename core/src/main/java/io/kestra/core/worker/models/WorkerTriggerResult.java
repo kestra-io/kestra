@@ -3,7 +3,6 @@ package io.kestra.core.worker.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import io.kestra.core.events.EventId;
 import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.WorkerTrigger;
@@ -18,19 +17,13 @@ import jakarta.annotation.Nullable;
  * @param type the trigger type.
  * @param evaluation the lightweight trigger evaluation result, or {@code null} if the trigger did not match.
  * @param dispatchEpoch the dispatch generation echoed from the {@link WorkerTrigger}.
- * @param resultId the stable identity of this result across delivery retries.
  */
 public record WorkerTriggerResult(
     @JsonProperty
     @JsonDeserialize(as = TriggerId.Default.class) TriggerId id,
     @JsonProperty TriggerType type,
     @JsonProperty @Nullable TriggerEvaluationResult evaluation,
-    @JsonProperty long dispatchEpoch,
-    @JsonProperty @Nullable EventId resultId) {
-
-    public WorkerTriggerResult(TriggerId id, TriggerType type, @Nullable TriggerEvaluationResult evaluation, long dispatchEpoch) {
-        this(id, type, evaluation, dispatchEpoch, EventId.create());
-    }
+    @JsonProperty long dispatchEpoch) {
 
     /**
      * Create a new {@link WorkerTriggerResult} from a {@link WorkerTrigger} and a {@link TriggerEvaluationResult}.
@@ -44,8 +37,7 @@ public record WorkerTriggerResult(
             trigger.triggerId(),
             TriggerType.from(trigger.getTrigger()),
             evaluation,
-            trigger.getDispatchEpoch(),
-            EventId.create()
+            trigger.getDispatchEpoch()
         );
     }
 }

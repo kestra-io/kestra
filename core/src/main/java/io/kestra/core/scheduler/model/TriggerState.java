@@ -50,32 +50,6 @@ public final class TriggerState implements TriggerId {
     private final Instant lastTriggeredDate;
     private final String executionId;
     private final long dispatchEpoch;
-    private final Long lastEvaluatedDispatchEpoch;
-
-    public TriggerState(
-        String tenantId,
-        String namespace,
-        String flowId,
-        String triggerId,
-        Instant updatedAt,
-        Instant evaluatedAt,
-        Instant nextEvaluationDate,
-        Backfill backfill,
-        List<State.Type> stopAfter,
-        boolean disabled,
-        boolean sourceDisabled,
-        int vnode,
-        boolean locked,
-        String workerId,
-        TriggerType type,
-        EventId lastEventId,
-        Instant lastTriggeredDate,
-        String executionId,
-        long dispatchEpoch
-    ) {
-        this(tenantId, namespace, flowId, triggerId, updatedAt, evaluatedAt, nextEvaluationDate, backfill, stopAfter, disabled,
-            sourceDisabled, vnode, locked, workerId, type, lastEventId, lastTriggeredDate, executionId, dispatchEpoch, null);
-    }
 
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -145,8 +119,7 @@ public final class TriggerState implements TriggerId {
             null,
             null,
             null,
-            0L,
-            null
+            0L
         );
     }
 
@@ -393,10 +366,6 @@ public final class TriggerState implements TriggerId {
             .build();
     }
 
-    public TriggerState lastEvaluatedDispatchEpoch(final Clock clock, Long dispatchEpoch) {
-        return update(clock).lastEvaluatedDispatchEpoch(dispatchEpoch).build();
-    }
-
     /**
      * Checks whether this state carries a backfill that is currently paused.
      * <p>
@@ -445,8 +414,7 @@ public final class TriggerState implements TriggerId {
             .lastEventId(lastEventId)
             .lastTriggeredDate(lastTriggeredDate)
             .executionId(executionId)
-            .dispatchEpoch(dispatchEpoch)
-            .lastEvaluatedDispatchEpoch(lastEvaluatedDispatchEpoch);
+            .dispatchEpoch(dispatchEpoch);
     }
 
     // Lombok hack to properly generate Javadoc

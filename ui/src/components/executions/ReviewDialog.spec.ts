@@ -147,6 +147,22 @@ describe("ReviewDialog", () => {
         expect((review.mock.calls[0][0].formData as FormData).get("kestra_review_comment")).toBe("ship it")
     })
 
+    it("tells its caller the decision once the review is sent, and not when the server rejects it", async () => {
+        const wrapper = mountDialog()
+        await flushPromises()
+
+        await wrapper.find("[data-test='review-deny']").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.emitted("reviewed")).toEqual([["DENY"]])
+
+        validateReview.mockResolvedValue({inputs: [{errors: [{message: "too small"}]}]})
+        await wrapper.find("[data-test='review-approve']").trigger("click")
+        await flushPromises()
+
+        expect(wrapper.emitted("reviewed")).toEqual([["DENY"]])
+    })
+
     it("labels each decision with the translated default unless the task names it", async () => {
         const wrapper = mountDialog({approve: "Ship it"})
         await flushPromises()

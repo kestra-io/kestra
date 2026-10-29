@@ -43,8 +43,8 @@ public class SearchPluginsTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "search-plugins",
-        value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get-plugin-schema. "
+        name = "search_plugins",
+        value = "Search the installed Kestra plugins (tasks, triggers, conditions...) by keyword, matching plugin type names and titles (at most 50 results). Read-only; use this to find the right plugin type before fetching its schema with get_plugin_schema. "
             + "Returns an object { plugins } where `plugins` is an array of { type, title } (empty when nothing matches); `type` is the fully-qualified plugin class and `title` may be null."
     )
     public Result searchPlugins(

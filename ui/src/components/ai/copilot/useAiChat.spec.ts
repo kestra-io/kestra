@@ -105,7 +105,7 @@ describe("useAiChat", () => {
     it("suspends on a proposed_action and exposes it for confirmation", async () => {
         const chat = useAiChat()
         nextFrames = [
-            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}},
+            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart_execution", family: "MUTATE", summary: "Restart"}},
             {event: "done", data: {status: "AWAITING_CONFIRMATION"}},
         ]
         await chat.sendChat({prompt: "restart it", mode: "EDIT"})
@@ -117,13 +117,13 @@ describe("useAiChat", () => {
     it("resolves a pending proposal via confirm and records the tool result", async () => {
         const chat = useAiChat()
         nextFrames = [
-            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}},
+            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart_execution", family: "MUTATE", summary: "Restart"}},
             {event: "done", data: {status: "AWAITING_CONFIRMATION"}},
         ]
         await chat.sendChat({prompt: "restart it", mode: "EDIT"})
 
         nextFrames = [
-            {event: "tool_result", data: {tool: "restart-execution", outcome: "ok"}},
+            {event: "tool_result", data: {tool: "restart_execution", outcome: "ok"}},
             {event: "done", data: {status: "IDLE"}},
         ]
         // The resumed turn runs a fresh model call, so confirm must forward the provider it was given.
@@ -185,8 +185,8 @@ describe("useAiChat", () => {
             uid: "t1", mode: "EDIT", status: "AWAITING_CONFIRMATION", pendingConfirmationId: "c1",
             messages: [
                 {uid: "a", role: "USER", type: "TEXT", content: "restart it"},
-                {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart-execution on exec-1",
-                    toolCall: {tool: "restart-execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
+                {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart_execution on exec-1",
+                    toolCall: {tool: "restart_execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
             ],
         }})
         const chat = useAiChat()
@@ -198,8 +198,8 @@ describe("useAiChat", () => {
         expect(chat.canSend.value).toBe(false)
         expect(chat.pendingConfirmation.value).toMatchObject({
             confirmationId: "c1",
-            summary: "Run restart-execution on exec-1",
-            tool: "restart-execution",
+            summary: "Run restart_execution on exec-1",
+            tool: "restart_execution",
         })
     })
 
@@ -290,8 +290,8 @@ describe("useAiChat", () => {
     it("renders a tool_call then its tool_result during an auto-run", async () => {
         const chat = useAiChat()
         nextFrames = [
-            {event: "tool_call", data: {tool: "read-execution", family: "READ", arguments: {id: "e1"}}},
-            {event: "tool_result", data: {tool: "read-execution", outcome: "ok"}},
+            {event: "tool_call", data: {tool: "read_execution", family: "READ", arguments: {id: "e1"}}},
+            {event: "tool_result", data: {tool: "read_execution", outcome: "ok"}},
             {event: "token", data: {text: "Here you go."}},
             {event: "done", data: {status: "IDLE"}},
         ]
@@ -299,7 +299,7 @@ describe("useAiChat", () => {
         const types = chat.messages.value.map((m) => m.type)
         expect(types).toContain("TOOL_CALL")
         expect(types).toContain("TOOL_RESULT")
-        expect(chat.messages.value.find((m) => m.type === "TOOL_CALL")?.toolCall?.tool).toBe("read-execution")
+        expect(chat.messages.value.find((m) => m.type === "TOOL_CALL")?.toolCall?.tool).toBe("read_execution")
     })
 
     it("renders an artefact_draft as an inline ARTEFACT_DRAFT message", async () => {
@@ -396,7 +396,7 @@ describe("useAiChat", () => {
     it("does not set the emptyTurn notice when the turn suspends on a proposal", async () => {
         const chat = useAiChat()
         nextFrames = [
-            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}},
+            {event: "proposed_action", data: {confirmationId: "c1", tool: "restart_execution", family: "MUTATE", summary: "Restart"}},
             {event: "done", data: {status: "AWAITING_CONFIRMATION"}},
         ]
         await chat.sendChat({prompt: "restart it", mode: "EDIT"})
@@ -540,8 +540,8 @@ describe("useAiChat", () => {
             uid: "t2", mode: "EDIT", status: "AWAITING_CONFIRMATION", pendingConfirmationId: "cf-9",
             messages: [
                 {uid: "a", role: "USER", type: "TEXT", content: "restart it"},
-                {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart-execution on exec-1",
-                 toolCall: {tool: "restart-execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
+                {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart_execution on exec-1",
+                 toolCall: {tool: "restart_execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
             ],
         }})
         const chat = useAiChat()
@@ -549,8 +549,8 @@ describe("useAiChat", () => {
         expect(chat.status.value).toBe("AWAITING_CONFIRMATION")
         expect(chat.pendingConfirmation.value).toMatchObject({
             confirmationId: "cf-9",
-            summary: "Run restart-execution on exec-1",
-            tool: "restart-execution",
+            summary: "Run restart_execution on exec-1",
+            tool: "restart_execution",
         })
     })
 

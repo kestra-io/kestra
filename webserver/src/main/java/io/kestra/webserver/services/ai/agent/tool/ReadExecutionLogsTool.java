@@ -39,7 +39,7 @@ public class ReadExecutionLogsTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "read-execution-logs",
+        name = "read_execution_logs",
         value = "Read the logs of a Kestra execution. `executionId` scopes to one execution; the optional per-field filters narrow the results (e.g. by task or level). Use this to diagnose why an execution failed or to summarize a run. "
             + "Returns an object { executionId, logs } where `logs` is an array of { timestamp, level, taskId, message } (empty when nothing matches); `taskId` is null for execution-level logs."
     )

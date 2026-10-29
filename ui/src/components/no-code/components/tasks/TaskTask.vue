@@ -64,7 +64,7 @@
         return [blockSchemaPathInjected.value, "properties", props.root.split(".").pop()].join("/")
     })
 
-    const localSchema = computed<Schema | undefined>(() => getValueAtJsonPath(fullSchema.value as unknown as Record<string, unknown>, blockSchemaPath.value))
+    const localSchema = computed<Schema | undefined>(() => getValueAtJsonPath(fullSchema.value as Record<string, unknown>, blockSchemaPath.value))
 
     const fieldTitle = computed(() => {
         const schema = localSchema.value

@@ -2210,6 +2210,7 @@
         "plural": "대시보드"
       },
       "default": "기본 대시보드",
+      "set_default": "기본값으로 설정",
       "empty": "결과가 표시되지 않습니다.",
       "edition": {
         "label": "대시보드 편집",

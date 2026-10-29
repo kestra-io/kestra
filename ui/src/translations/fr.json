@@ -2210,6 +2210,7 @@
         "plural": "Tableaux de bord"
       },
       "default": "Tableau de bord par défaut",
+      "set_default": "Définir par défaut",
       "empty": "Il n'y a aucun résultat à afficher.",
       "edition": {
         "label": "Modifier le tableau de bord",

@@ -2210,6 +2210,7 @@
         "plural": "Dashboards"
       },
       "default": "Default Dashboard",
+      "set_default": "Set as default",
       "empty": "There are no results to be shown.",
       "edition": {
         "label": "Edit Dashboard",

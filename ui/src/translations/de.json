@@ -2210,6 +2210,7 @@
         "plural": "Dashboards"
       },
       "default": "Standard-Dashboard",
+      "set_default": "Als Standard festlegen",
       "empty": "Es gibt keine Ergebnisse.",
       "edition": {
         "label": "Dashboard bearbeiten",

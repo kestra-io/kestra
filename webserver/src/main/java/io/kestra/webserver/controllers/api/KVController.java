@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -20,7 +21,6 @@ import io.kestra.core.services.KVService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.TypeConverter;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -164,10 +164,10 @@ public class KVController {
     public void setKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key,
-        @Parameter(description = "The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)") @Nullable @Header("ttl") String ttl,
+        @Parameter(description = "The time-to-live of the key, as an ISO-8601 duration (e.g. PT1H)") @Nullable @Header("ttl") Duration ttl,
         @Parameter(description = "The description of the key") @Nullable @Header("description") String description,
         @RequestBody(description = "The value of the key") @Body String value) throws IOException {
-        KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
+        KVMetadata metadata = new KVMetadata(description, ttl);
         try {
             try (JsonParser parser = JacksonMapper.ofIon().createParser(value)) {
                 JsonNode jsonNode = JacksonMapper.ofIon().readTree(parser);

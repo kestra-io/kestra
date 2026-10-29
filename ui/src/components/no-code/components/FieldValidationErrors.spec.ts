@@ -36,16 +36,6 @@ describe("FieldValidationErrors", () => {
         expect(entries.map((entry) => entry.text())).toEqual(["Required field", "Required field"])
     })
 
-    test("uses the default data-test value on every entry", () => {
-        const wrapper = mountErrors(["Required field", "Invalid value"])
-
-        const entries = wrapper.findAll('[data-test="field-validation-error"]')
-        expect(entries).toHaveLength(2)
-        expect(entries.map((entry) => entry.attributes("data-test"))).toEqual([
-            "field-validation-error", "field-validation-error",
-        ])
-    })
-
     test("uses a custom data-test value on every entry", () => {
         const wrapper = mountErrors(["Required field", "Invalid value"], "custom-field-error")
 

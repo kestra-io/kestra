@@ -81,6 +81,12 @@ public class Flow extends AbstractFlow implements HasUID {
         return this._finally;
     }
 
+    @Schema(hidden = false)
+    @Override
+    public List<Output> getOutputs() {
+        return super.getOutputs();
+    }
+
     List<@Valid Task> afterExecution;
 
     List<@Valid AbstractTrigger> triggers;

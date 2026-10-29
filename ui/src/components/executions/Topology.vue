@@ -116,10 +116,9 @@
         {immediate: true},
     )
 
-    // `outputs` (e.g. a subflow's executionId) is added by the backend at runtime but is missing from the generated SDK `TaskRun` type.
-    type TaskRunWithOutputs = NonNullable<Execution["taskRunList"]>[number] & {
-        outputs?: {executionId?: string; [key: string]: unknown}
-    }
+    type TaskRun = NonNullable<Execution["taskRunList"]>[number]
+
+    const childLookups = new Map<string, number>()
 
     const throttledExecutionUpdate = throttle(function(subflow: string, subflowExecution: Execution) {
         const previousExecution = executionsStore.subflowsExecutions[subflow]
@@ -242,20 +241,45 @@
             return
         }
 
-        const taskIdMatchingTaskrun = (parentExecution.taskRunList ?? []).filter((taskRun): taskRun is TaskRunWithOutputs => taskRun.taskId === stringUtils.afterLastDot(subflow))?.[0]
-        const executionId = taskIdMatchingTaskrun?.outputs?.executionId
-
-        if (!executionId) {
-            if (taskIdMatchingTaskrun?.state?.current === State.SUCCESS) {
-                // Generating more than 1 subflow execution, we're not showing anything
-                loadGraph(true)
-                return
-            }
-
+        const taskRun = (parentExecution.taskRunList ?? []).find(run => run.taskId === stringUtils.afterLastDot(subflow))
+        if (!taskRun) {
             delaySSE(!!generateGraphOnWaiting, subflow)
             return
         }
 
+        const lookup = (childLookups.get(subflow) ?? 0) + 1
+        childLookups.set(subflow, lookup)
+        findChildExecutionId(taskRun)
+            .catch(() => undefined)
+            .then(executionId => {
+                if (unmounted || childLookups.get(subflow) !== lookup || !expandedSubflows.value.includes(subflow) || subflow in sseBySubflow.value) {
+                    return
+                }
+
+                if (executionId) {
+                    subscribeToSubflow(subflow, executionId)
+                } else if (taskRun.state?.current && !State.isRunning(taskRun.state.current)) {
+                    loadGraph(true)
+                } else {
+                    delaySSE(!!generateGraphOnWaiting, subflow)
+                }
+            })
+    }
+
+    // Task-run outputs are no longer embedded in the execution (and stay empty while the subflow runs), so the child is found through the trigger it records.
+    async function findChildExecutionId(taskRun: TaskRun): Promise<string | undefined> {
+        const response = await executionsStore.findExecutions({
+            "filters[triggerExecutionId][EQUALS]": taskRun.executionId,
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": taskRun.state?.startDate,
+            sort: "state.startDate:asc",
+            size: 100,
+            commit: false,
+        })
+
+        return response.results?.find(child => child.trigger?.variables?.taskRunId === taskRun.id)?.id
+    }
+
+    function subscribeToSubflow(subflow: string, executionId: string) {
         // subscribeToExecution (not followExecution) is required here — followExecution treats
         // its target as *the* displayed execution: it nulls executionsStore.execution, closes,
         // and overwrites the shared subscription handle. Expanding a subflow would silently kill

@@ -27,6 +27,25 @@ export const NAMESPACE_TAB_NAMES = [
     "audit-logs",
 ]
 
+const TAB_DOC_IDS: Record<string, string> = {
+    blueprints: "blueprints",
+    overview: "namespaces",
+    edit: "namespace.management",
+    flows: "flows",
+    executions: "executions",
+    dependencies: "namespaces",
+    secrets: "secrets",
+    credentials: "credentials",
+    assets: "asset",
+    variables: "variables",
+    policies: "policies",
+    kv: "kv",
+    "reusable-inputs": "reusable-inputs",
+    files: "files",
+    history: "namespace.management",
+    "audit-logs": "auditlogs",
+}
+
 /**
  * Namespace tabs render via the vertical sidebar (RouteTabsSidebar + Tabs.vue's
  * `TabBody`), not `<router-view>`, so these children carry no `component` — they
@@ -39,6 +58,6 @@ export function createNamespaceTabRoutes(names: string[] = NAMESPACE_TAB_NAMES):
     return names.map((name) => ({
         name: `${NAMESPACE_PARENT_ROUTE}/${name}`,
         path: name,
-        meta: {tab: name},
+        meta: {tab: name, docId: TAB_DOC_IDS[name]},
     })) as unknown as RouteRecordRaw[]
 }

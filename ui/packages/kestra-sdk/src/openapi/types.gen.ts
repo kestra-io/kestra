@@ -1886,6 +1886,73 @@ export type PebbleFunctionArgument = {
     defaultValue?: string | null;
 };
 
+export type PlaygroundClient = {
+    /**
+     * How often the panel should report, as an ISO 8601 duration
+     */
+    reportEvery: string;
+};
+
+/**
+ * Why a Playground run reuses nothing; #NONE when it replays the run it builds on.
+ */
+export type PlaygroundFreshReason = 'NONE' | 'WHOLE_FLOW' | 'NO_PREVIOUS_RUN' | 'BUILD_ON_NOTHING' | 'INPUTS_CHANGED' | 'LABELS_CHANGED' | 'VARIABLES_CHANGED' | 'NOT_REACHED' | 'UNKNOWN';
+
+/**
+ * A replay of `buildOnExecutionId` from `replayFromTaskRunId`, or a fresh run when `freshReason` is not NONE.
+ */
+export type PlaygroundPlan = {
+    buildOnExecutionId?: string | null;
+    replayFromTaskRunId?: string | null;
+    replayFromTaskId?: string | null;
+    reusedTaskIds: Array<string>;
+    breakpoints: Array<string>;
+    freshReason: PlaygroundFreshReason;
+};
+
+export type PlaygroundPlanRequest = {
+    /**
+     * The flow revision to run, a draft included
+     */
+    revision: number;
+    /**
+     * The task to run up to or from; none runs the whole flow
+     */
+    taskId?: string | null;
+    /**
+     * Whether the run stops before the tasks after taskId, or goes to the end; UP_TO when missing
+     */
+    mode?: PlaygroundRunMode | null;
+    /**
+     * LATEST (the default), NOTHING, or the id of one of the caller's runs
+     */
+    buildOn?: string | null;
+};
+
+export type PlaygroundReusedTaskRuns = {
+    taskRuns: {
+        [key: string]: PlaygroundServiceReusedTaskRun;
+    };
+};
+
+/**
+ * Whether the run stops before the tasks after taskId, or goes to the end; UP_TO when missing
+ */
+export type PlaygroundRunMode = 'UP_TO' | 'FROM' | 'UNKNOWN';
+
+export type PlaygroundServiceReusedTaskRun = {
+    executionId: string;
+    taskRunId: string;
+};
+
+export type PlaygroundTaskRunContext = {
+    variables: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+};
+
 export type Plugin = {
     name?: string;
     title?: string;
@@ -9484,6 +9551,305 @@ export type GenerateFlowGraphResponses = {
 };
 
 export type GenerateFlowGraphResponse = GenerateFlowGraphResponses[keyof GenerateFlowGraphResponses];
+
+export type PlanPlaygroundRunData = {
+    body: PlaygroundPlanRequest;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        id: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/plan';
+};
+
+export type PlanPlaygroundRunErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * If the flow revision or the run to build on is not found
+     */
+    404: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type PlanPlaygroundRunError = PlanPlaygroundRunErrors[keyof PlanPlaygroundRunErrors];
+
+export type PlanPlaygroundRunResponses = {
+    /**
+     * planPlaygroundRun 200 response
+     */
+    200: PlaygroundPlan;
+};
+
+export type PlanPlaygroundRunResponse = PlanPlaygroundRunResponses[keyof PlanPlaygroundRunResponses];
+
+export type ListPlaygroundRunsData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        id: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs';
+};
+
+export type ListPlaygroundRunsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListPlaygroundRunsError = ListPlaygroundRunsErrors[keyof ListPlaygroundRunsErrors];
+
+export type ListPlaygroundRunsResponses = {
+    /**
+     * listPlaygroundRuns 200 response
+     */
+    200: PagedResultsApiLightExecution;
+};
+
+export type ListPlaygroundRunsResponse = ListPlaygroundRunsResponses[keyof ListPlaygroundRunsResponses];
+
+export type ReleasePlaygroundClientData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        id: string;
+        /**
+         * The Playground run id
+         */
+        executionId: string;
+        /**
+         * An id the panel picks once per browser tab
+         */
+        clientId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs/{executionId}/clients/{clientId}';
+};
+
+export type ReleasePlaygroundClientErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReleasePlaygroundClientError = ReleasePlaygroundClientErrors[keyof ReleasePlaygroundClientErrors];
+
+export type ReleasePlaygroundClientResponses = {
+    /**
+     * releasePlaygroundClient 200 response
+     */
+    200: PlaygroundClient;
+};
+
+export type ReleasePlaygroundClientResponse = ReleasePlaygroundClientResponses[keyof ReleasePlaygroundClientResponses];
+
+export type ReportPlaygroundClientData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        id: string;
+        /**
+         * The Playground run id
+         */
+        executionId: string;
+        /**
+         * An id the panel picks once per browser tab
+         */
+        clientId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs/{executionId}/clients/{clientId}';
+};
+
+export type ReportPlaygroundClientErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReportPlaygroundClientError = ReportPlaygroundClientErrors[keyof ReportPlaygroundClientErrors];
+
+export type ReportPlaygroundClientResponses = {
+    /**
+     * reportPlaygroundClient 200 response
+     */
+    200: PlaygroundClient;
+};
+
+export type ReportPlaygroundClientResponse = ReportPlaygroundClientResponses[keyof ReportPlaygroundClientResponses];
+
+export type GetTaskRunContextData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        id: string;
+        /**
+         * The Playground run id
+         */
+        executionId: string;
+        /**
+         * The task run id
+         */
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs/{executionId}/context/{taskRunId}';
+};
+
+export type GetTaskRunContextErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetTaskRunContextError = GetTaskRunContextErrors[keyof GetTaskRunContextErrors];
+
+export type GetTaskRunContextResponses = {
+    /**
+     * getTaskRunContext 200 response
+     */
+    200: PlaygroundTaskRunContext;
+};
+
+export type GetTaskRunContextResponse = GetTaskRunContextResponses[keyof GetTaskRunContextResponses];
+
+export type ListReusedTaskRunsData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        id: string;
+        /**
+         * The Playground run id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/{namespace}/{id}/playground/runs/{executionId}/reused';
+};
+
+export type ListReusedTaskRunsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListReusedTaskRunsError = ListReusedTaskRunsErrors[keyof ListReusedTaskRunsErrors];
+
+export type ListReusedTaskRunsResponses = {
+    /**
+     * listReusedTaskRuns 200 response
+     */
+    200: PlaygroundReusedTaskRuns;
+};
+
+export type ListReusedTaskRunsResponse = ListReusedTaskRunsResponses[keyof ListReusedTaskRunsResponses];
 
 export type DeleteRevisionsData = {
     body?: never;

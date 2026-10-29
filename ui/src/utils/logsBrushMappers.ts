@@ -72,7 +72,8 @@ export function pixelSelectionToBucketIndices(
     return start <= end ? {start, end} : {start: end, end: start}
 }
 
-function withoutTimeFilters(routeQuery: LocationQueryRaw, timeRange: string | undefined): LocationQueryRaw {
+/** Drops every relative and absolute time filter, then sets `timeRange` as the relative one when given. */
+export function withoutTimeFilters(routeQuery: LocationQueryRaw, timeRange: string | undefined): LocationQueryRaw {
     const query = normalizeRouteTimeRangeFilter(routeQuery, timeRange)
     for (const key of Object.keys(query)) {
         if (ABSOLUTE_DATE_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) delete query[key]

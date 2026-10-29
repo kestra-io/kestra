@@ -8,10 +8,10 @@ import Banner from "./Banner.vue"
 import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import {useMiscStore} from "override/stores/misc"
 import {i18nMount} from "../../../../tests/unit/i18nMount"
-import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+import * as SearchableDataAPI from "@kestra-io/kestra-sdk/searchable-data"
 
-vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
-    listSearchableOutputs: vi.fn().mockResolvedValue({results: [], total: 0}),
+vi.mock("@kestra-io/kestra-sdk/searchable-data", () => ({
+    listSearchableData: vi.fn().mockResolvedValue({results: [], total: 0}),
 }))
 
 const triggerScope = reactive({visible: false, enabled: false})
@@ -75,7 +75,7 @@ function mountBanner(execution = buildExecution()) {
 
 describe("Banner", () => {
     beforeEach(() => {
-        vi.mocked(OutputsAPI.listSearchableOutputs).mockResolvedValue({results: [], total: 0})
+        vi.mocked(SearchableDataAPI.listSearchableData).mockResolvedValue({results: [], total: 0})
         setActivePinia(createPinia())
         triggerScope.visible = false
         triggerScope.enabled = false
@@ -142,22 +142,22 @@ describe("Banner", () => {
     })
 
     test("lists the first searchable outputs under the labels", async () => {
-        vi.mocked(OutputsAPI.listSearchableOutputs).mockResolvedValue({
-            results: [{outputId: "customerId", value: "CUST-12"}, {outputId: "orderIds", value: "ORD-7000"}],
+        vi.mocked(SearchableDataAPI.listSearchableData).mockResolvedValue({
+            results: [{dataId: "customerId", value: "CUST-12"}, {dataId: "orderIds", value: "ORD-7000"}],
             total: 2,
         })
         const wrapper = mountBanner()
         await flushPromises()
 
-        expect(OutputsAPI.listSearchableOutputs).toHaveBeenCalledWith({executionId: "execution-id", page: 1, size: 10})
+        expect(SearchableDataAPI.listSearchableData).toHaveBeenCalledWith({executionId: "execution-id", page: 1, size: 10})
         expect(wrapper.find("[data-test=searchable-outputs]").text()).toContain("customerId: CUST-12")
         expect(wrapper.find("[data-test=searchable-outputs]").text()).toContain("orderIds: ORD-7000")
         expect(wrapper.find("[data-test=more-searchable-outputs]").exists()).toBe(false)
     })
 
     test("tells how many searchable outputs are not displayed", async () => {
-        vi.mocked(OutputsAPI.listSearchableOutputs).mockResolvedValue({
-            results: [{outputId: "orderIds", value: "ORD-7000"}],
+        vi.mocked(SearchableDataAPI.listSearchableData).mockResolvedValue({
+            results: [{dataId: "orderIds", value: "ORD-7000"}],
             total: 1234,
         })
         const wrapper = mountBanner()
@@ -167,11 +167,11 @@ describe("Banner", () => {
     })
 
     test("clears the searchable outputs of the previous execution while the next one loads", async () => {
-        vi.mocked(OutputsAPI.listSearchableOutputs).mockResolvedValueOnce({results: [{outputId: "orderIds", value: "first"}], total: 1})
+        vi.mocked(SearchableDataAPI.listSearchableData).mockResolvedValueOnce({results: [{dataId: "orderIds", value: "first"}], total: 1})
         const execution = reactive(buildExecution())
         const wrapper = i18nMount(Banner, {props: {execution}, global: globalConfig})
         await flushPromises()
-        vi.mocked(OutputsAPI.listSearchableOutputs).mockReturnValueOnce(new Promise(() => undefined))
+        vi.mocked(SearchableDataAPI.listSearchableData).mockReturnValueOnce(new Promise(() => undefined))
 
         execution.id = "another-execution"
         await flushPromises()
@@ -183,7 +183,7 @@ describe("Banner", () => {
         const empty = mountBanner()
         await flushPromises()
 
-        vi.mocked(OutputsAPI.listSearchableOutputs).mockRejectedValue({status: 404})
+        vi.mocked(SearchableDataAPI.listSearchableData).mockRejectedValue({status: 404})
         const failing = mountBanner()
         await flushPromises()
 
@@ -192,18 +192,18 @@ describe("Banner", () => {
     })
 
     test("ignores a searchable outputs response that a newer load has superseded", async () => {
-        let resolveFirst: (value: {results: {outputId: string; value: string}[]; total: number}) => void = () => undefined
-        vi.mocked(OutputsAPI.listSearchableOutputs)
+        let resolveFirst: (value: {results: {dataId: string; value: string}[]; total: number}) => void = () => undefined
+        vi.mocked(SearchableDataAPI.listSearchableData)
             .mockImplementationOnce(() => new Promise((resolve) => {
                 resolveFirst = resolve
             }))
-            .mockResolvedValueOnce({results: [{outputId: "orderIds", value: "fresh"}], total: 1})
+            .mockResolvedValueOnce({results: [{dataId: "orderIds", value: "fresh"}], total: 1})
         const execution = reactive(buildExecution("RUNNING"))
         const wrapper = i18nMount(Banner, {props: {execution}, global: globalConfig})
 
         execution.state.current = "SUCCESS"
         await flushPromises()
-        resolveFirst({results: [{outputId: "orderIds", value: "stale"}], total: 1})
+        resolveFirst({results: [{dataId: "orderIds", value: "stale"}], total: 1})
         await flushPromises()
 
         expect(wrapper.find("[data-test=searchable-outputs]").text()).toContain("orderIds: fresh")

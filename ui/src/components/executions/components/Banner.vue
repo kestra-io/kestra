@@ -127,10 +127,10 @@
                     <div class="list">
                         <span
                             v-for="(output, index) in searchableOutputs"
-                            :key="`${output.outputId}-${index}`"
+                            :key="`${output.dataId}-${index}`"
                             class="label-tag searchable-tag"
-                            :title="`${output.outputId}: ${output.value}`"
-                        >{{ output.outputId }}: {{ output.value }}</span>
+                            :title="`${output.dataId}: ${output.value}`"
+                        >{{ output.dataId }}: {{ output.value }}</span>
                         <span v-if="remainingSearchableOutputs > 0" class="more-searchable" data-test="more-searchable-outputs">
                             {{ $t("execution_banner.more_searchable_values", {count: $n(remainingSearchableOutputs)}) }}
                         </span>
@@ -173,8 +173,8 @@
     import {useI18n} from "vue-i18n"
 
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
-    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
-    import type {OutputControllerSearchableOutputInformation} from "@kestra-io/kestra-sdk"
+    import * as SearchableDataAPI from "@kestra-io/kestra-sdk/searchable-data"
+    import type {SearchableDataControllerSearchableDataInformation} from "@kestra-io/kestra-sdk"
 
     import {Execution, useExecutionsStore} from "../../../stores/executions"
     import {useExecutionSummary} from "../../../composables/useExecutionSummary"
@@ -258,7 +258,7 @@
 
     const SEARCHABLE_OUTPUTS_LIMIT = 10
 
-    const searchableOutputs = ref<OutputControllerSearchableOutputInformation[]>([])
+    const searchableOutputs = ref<SearchableDataControllerSearchableDataInformation[]>([])
     const searchableOutputsTotal = ref(0)
     const remainingSearchableOutputs = computed(() => searchableOutputsTotal.value - searchableOutputs.value.length)
 
@@ -276,7 +276,7 @@
                 superseded = true
             })
 
-            const page = await OutputsAPI.listSearchableOutputs({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
+            const page = await SearchableDataAPI.listSearchableData({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
                 .catch((e: unknown) => {
                     handledIf(e, [403, 404])
                     return undefined

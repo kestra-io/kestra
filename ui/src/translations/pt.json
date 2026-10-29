@@ -30,7 +30,7 @@
         "email_sub": "Enviar uma notificação por e-mail",
         "email_to_placeholder": "destinatário{'@'}seu-domínio.com",
         "custom_label": "Personalizado",
-        "custom_note": "Uma task de placeholder é adicionada — troque-a por qualquer plugin de notificação no editor.",
+        "custom_note": "Uma task de placeholder é adicionada. Troque-a por qualquer plugin de notificação no editor.",
         "custom_sub": "Adicione sua própria task de notificação",
         "plugin_unavailable": "Plugin não instalado",
         "slack_channel_placeholder": "#alertas",
@@ -1101,7 +1101,7 @@
     "flow must not be empty": "O flow não deve estar vazio",
     "flow creation denied in namespace": "Você não tem permissão para criar flows no namespace `{namespace}`.",
     "readonly property": "Propriedade somente leitura",
-    "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas — elas agora estão definidas para seus valores iniciais. Se você deseja renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
+    "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas: elas agora estão definidas para seus valores iniciais. Se você deseja renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
     "flow metadata locked": "`id` e `namespace` não podem ser alterados depois que um flow é criado.",
     "avg": "Média",
     "sum": "Soma",
@@ -1176,7 +1176,7 @@
     "hostname": "Nome do host",
     "file preview truncated": "Conteúdo exibido foi truncado",
     "file unavailable": "Arquivo indisponível",
-    "file unavailable description": "Este arquivo não está mais disponível — pode ter sido removido ou expirado.",
+    "file unavailable description": "Este arquivo não está mais disponível. Pode ter sido removido ou expirado.",
     "row count": "Contagem de linhas",
     "encoding": "Codificação",
     "show": "Mostrar",
@@ -1513,7 +1513,7 @@
       },
       "promote": {
         "title": "Promover Flows Entre Ambientes",
-        "message": "O Kestra Enterprise Edition permite promover flows de um ambiente para outro — como de desenvolvimento para staging e para produção — diretamente da UI, sem a necessidade de Git ou pipelines de CI/CD. Revise um diff do que exatamente será alterado antes de promover, proteja alvos sensíveis com um portão de confirmação, identifique desvios rapidamente e mantenha um histórico completo de quem promoveu o quê, onde e quando."
+        "message": "O Kestra Enterprise Edition permite promover flows de um ambiente para outro, como de desenvolvimento para staging e para produção, diretamente da UI, sem a necessidade de Git ou pipelines de CI/CD. Revise um diff do que exatamente será alterado antes de promover, proteja alvos sensíveis com um portão de confirmação, identifique desvios rapidamente e mantenha um histórico completo de quem promoveu o quê, onde e quando."
       },
       "dashboards": {
         "header": "Dashboards Personalizados",
@@ -1551,7 +1551,7 @@
       "policies": {
         "header": "Políticas de Governança",
         "label": "Políticas",
-        "message": "As políticas permitem que as equipes de plataforma gerenciem e apliquem regras centralmente em todos os flows — injetar padrões compartilhados, bloquear plugins, limitar valores de propriedade e exigir labels de conformidade. As regras se aplicam no nível do tenant ou namespace com rollout em fases, e cada valor injetado ou substituído permanece visível para os autores do flow.",
+        "message": "As políticas permitem que as equipes de plataforma gerenciem e apliquem regras centralmente em todos os flows: injetar padrões compartilhados, bloquear plugins, limitar valores de propriedade e exigir labels de conformidade. As regras se aplicam no nível do tenant ou namespace com rollout em fases, e cada valor injetado ou substituído permanece visível para os autores do flow.",
         "title": "Governe Todos os Flow com Políticas"
       },
       "namespace": {
@@ -1577,7 +1577,7 @@
         },
         "policies": {
           "title": "Aplicar Regras de Governança Neste namespace",
-          "message": "Na Kestra Enterprise Edition, Políticas permitem definir regras que se aplicam a cada flow neste namespace e seus filhos — injetar padrões compartilhados, restringir valores de propriedade, bloquear plugins e exigir labels de conformidade, com cada alteração totalmente visível para os autores do flow."
+          "message": "Na Kestra Enterprise Edition, Políticas permitem definir regras que se aplicam a cada flow neste namespace e seus filhos: injetar padrões compartilhados, restringir valores de propriedade, bloquear plugins e exigir labels de conformidade, com cada alteração totalmente visível para os autores do flow."
         },
         "reusable-inputs": {
           "label": "Inputs Reutilizáveis",
@@ -2210,6 +2210,7 @@
         "plural": "Dashboards"
       },
       "default": "Dashboard Padrão",
+      "set_default": "Definir como padrão",
       "empty": "Não há resultados para serem exibidos.",
       "edition": {
         "label": "Editar Dashboard",
@@ -2355,7 +2356,7 @@
         },
         "cancelled": "Rodada cancelada",
         "error": {
-          "turnCap": "Esta conversa atingiu o limite — inicie um novo chat.",
+          "turnCap": "Esta conversa atingiu o limite: inicie um novo chat.",
           "turnInProgress": "Uma rodada já está em andamento.",
           "request": "A solicitação falhou. Tente novamente.",
           "generic": "Algo deu errado. Por favor, tente novamente."
@@ -2416,9 +2417,9 @@
           "dismiss": "Descartar",
           "dismissed": "Descartado",
           "applied": "Aplicado",
-          "previewBanner": "A rever uma alteração sugerida pela IA — o editor é apenas de leitura até aplicares ou descartares a alteração.",
+          "previewBanner": "A rever uma alteração sugerida pela IA. O editor é apenas de leitura até aplicares ou descartares a alteração.",
           "applyTitle": "Aplicar flow",
-          "applyConfirm": "Guardar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Será criado, ou será adicionada uma nova revisão de rascunho se já existir — os rascunhos não são acionados por triggers nem subflows até serem publicados.",
+          "applyConfirm": "Guardar o flow {namespace}.{id} como uma revisão de rascunho para revisão? Será criado, ou será adicionada uma nova revisão de rascunho se já existir. Os rascunhos não são acionados por triggers nem subflows até serem publicados.",
           "applyConfirmDashboard": "Aplicar o painel {id}? Será criado, ou sobrescrito se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyErrorDashboard": "Não foi possível aplicar o dashboard. Por favor, tente novamente.",
@@ -2497,7 +2498,7 @@
         "hidden_consumer": "Flow oculto",
         "ungrouped": "Não agrupado",
         "hub": {
-          "notice": "Este nó tem {count} relações — apenas as mais recentes são mostradas para manter o gráfico legível.",
+          "notice": "Este nó tem {count} relações. Apenas as mais recentes são mostradas para manter o gráfico legível.",
           "expand": "Carregar mais relações",
           "expand_failed": "Não foi possível carregar mais relações. Tente novamente."
         },
@@ -2657,7 +2658,7 @@
     },
     "invalid_source_code": "Código-fonte inválido",
     "source_search": {
-      "cannot_select_read_only": "Não é possível selecionar — você não tem permissão de edição em {namespace} / {id}",
+      "cannot_select_read_only": "Não é possível selecionar: você não tem permissão de edição em {namespace} / {id}",
       "collapse_all": "Recolher tudo",
       "confirm_bar_excluded": "Mais {count} correspondência não será alterada. | Mais {count} correspondências não serão alteradas.",
       "confirm_bar_message": "Substituir {matches} em {flows} flows editáveis. {skipped} flows somente leitura serão ignorados.",
@@ -2673,11 +2674,11 @@
       "empty_title": "Encontre um valor em flows, ficheiros e keys",
       "error_title": "Expressão regular inválida",
       "examples_aria": "Consultas de exemplo",
-      "exclusion_flows_readonly": "Flows — {count} correspondência só de leitura: precisa da permissão FLOW · UPDATE. | Flows — {count} correspondências só de leitura: precisa da permissão FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} correspondência: apenas pesquisa, não pode ser substituída. | {type} — {count} correspondências: apenas pesquisa, não podem ser substituídas.",
+      "exclusion_flows_readonly": "Flows · {count} correspondência só de leitura: precisa da permissão FLOW · UPDATE. | Flows · {count} correspondências só de leitura: precisa da permissão FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} correspondência: apenas pesquisa, não pode ser substituída. | {type} · {count} correspondências: apenas pesquisa, não podem ser substituídas.",
       "exclusion_title": "{count} correspondência está excluída de Substituir tudo | {count} correspondências estão excluídas de Substituir tudo",
       "expand_all": "Expandir tudo",
-      "file_match_notice": "O caminho do ficheiro correspondeu. O conteúdo do ficheiro não é pesquisado — abra o ficheiro para pesquisar dentro dele.",
+      "file_match_notice": "O caminho do ficheiro correspondeu. O conteúdo do ficheiro não é pesquisado. Abra o ficheiro para pesquisar dentro dele.",
       "files_progress_banner_failed": "Os ficheiros do namespace são pesquisados um namespace de cada vez. {done} de {total} concluídos, {failed} falharam. O total ainda vai mudar.",
       "files_progress_banner_ok": "Os ficheiros do namespace são pesquisados um namespace de cada vez. {done} de {total} concluídos. O total ainda vai mudar.",
       "flow_only_toggle_hint": "Maiúsculas/minúsculas, palavra completa e expressão regular aplicam-se apenas a flows. Os caminhos de ficheiros e as keys correspondem sempre a texto simples.",
@@ -2754,10 +2755,10 @@
       "show_replace": "Mostrar substituição",
       "summary": "{matches} correspondências em {flows} flows",
       "summary_cross": "{matches} em {resources} em {types}",
-      "tag_keys_only_never": "Apenas keys — os valores nunca são mostrados nem pesquisados",
-      "tag_keys_only_values": "Apenas keys — os valores não são pesquisados",
-      "tag_paths_only": "Apenas caminhos — o conteúdo do ficheiro não é pesquisado",
-      "tag_search_only": "Apenas pesquisa — não substituído",
+      "tag_keys_only_never": "Apenas keys: os valores nunca são mostrados nem pesquisados",
+      "tag_keys_only_values": "Apenas keys: os valores não são pesquisados",
+      "tag_paths_only": "Apenas caminhos: o conteúdo do ficheiro não é pesquisado",
+      "tag_search_only": "Apenas pesquisa: não substituído",
       "tag_source_code": "Código-fonte",
       "truncated_flows": "A mostrar as primeiras {shown} de {total} correspondências. Substituir tudo só se aplica às correspondências mostradas, restrinja primeiro a pesquisa.",
       "truncated_type": "primeiras {shown} de {total}",

@@ -32,6 +32,7 @@
     import {useBlueprintsStore} from "../../stores/blueprints"
     import {getRandomID} from "../../utils/id"
     import {useFlowStore} from "../../stores/flow"
+    import {useUnsavedChangesStore} from "../../stores/unsavedChanges"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import useRouteContext from "../../composables/useRouteContext"
 
@@ -50,6 +51,7 @@
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
+    const unsavedChangesStore = useUnsavedChangesStore()
 
     const setupError = ref<string>()
 
@@ -175,9 +177,20 @@
     flowStore.isCreating = true
     initialize()
 
-    // The page is reused when the Copilot opens a draft from `flows/create` itself, so setup does not run again.
-    watch(() => route.query.copilotDraft, (draft) => {
-        if (draft) initialize()
+    // The page is reused when the Copilot opens a draft from `flows/create` itself, so setup does not run again
+    // and the router guard, which only compares paths, does not ask before the edits are replaced.
+    watch(() => route.query.copilotDraft, async (draft) => {
+        if (!draft) return
+
+        if (unsavedChangesStore.unsavedChange) {
+            if (!await unsavedChangesStore.showDialog()) {
+                sessionStorage.removeItem(COPILOT_DRAFT_KEY)
+                return
+            }
+            unsavedChangesStore.unsavedChange = false
+        }
+
+        initialize()
     })
 
     onBeforeUnmount(() => {

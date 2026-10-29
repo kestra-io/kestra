@@ -2,7 +2,7 @@ import {createRouter, createWebHistory} from "vue-router"
 import type {App} from "vue"
 import type {NavigationGuardReturn, RouteLocationNormalized, RouteLocationNormalizedLoaded, RouteRecordRaw, Router} from "vue-router"
 import {configure} from "vue-gtag"
-import type {I18nOptions} from "vue-i18n";
+import type {I18nOptions} from "vue-i18n"
 import {loadLocaleMessages, setI18nLanguage, setupI18n, type TranslationProvider} from "../translations/i18n"
 import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"

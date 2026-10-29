@@ -3,7 +3,7 @@ import {dayjs} from "@kestra-io/design-system"
 import type {RouteLocationNamedRaw} from "vue-router"
 import {
     type CurrentStateExecution,
-    findFirstFailedTaskRun, findTaskRunsByState, loopIterationsRoute, statePredicate, taskRunPath, waitFor
+    findFirstFailedTaskRun, findTaskRunsByState, loopIterationsRoute, statePredicate, taskRunPath, waitFor,
 } from "./executionUtils"
 import {queryHasTimeBound} from "../components/executions/timeRangeWiden"
 import type {Execution} from "../stores/executions"

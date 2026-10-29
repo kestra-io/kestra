@@ -94,7 +94,7 @@ function resolveFlowExecution(properties: EventProperties): string {
 }
 
 function resolveOnboarding(properties: EventProperties): string {
-    const onboarding = properties.onboarding;
+    const onboarding = properties.onboarding
     return lookup(ONBOARDING_NAMES, onboarding?.event)
         ?? lookup(ONBOARDING_NAMES, onboarding?.action)
         ?? "onboarding"

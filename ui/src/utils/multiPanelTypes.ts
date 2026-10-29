@@ -1,4 +1,4 @@
-import type {Component} from "vue";
+import type {Component} from "vue"
 
 export interface Tab {
     uid: string

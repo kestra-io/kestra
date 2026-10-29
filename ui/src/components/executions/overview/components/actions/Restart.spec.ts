@@ -114,6 +114,7 @@ describe("Restart (replay revision check)", () => {
         executionsStore.loadFlowForExecution = vi.fn().mockResolvedValue({inputs: []})
         executionsStore.validateReplay = vi.fn(validateReplay) as typeof executionsStore.validateReplay
         executionsStore.replayExecution = vi.fn().mockResolvedValue({id: "replayed", namespace: "tests", flowId: "flow1"}) as typeof executionsStore.replayExecution
+        executionsStore.loadReplayValues = vi.fn().mockResolvedValue([])
 
         const wrapper = mount(Restart, {
             props: {
@@ -182,5 +183,81 @@ describe("Restart (replay revision check)", () => {
         expect(executionsStore.validateReplay).not.toHaveBeenCalled()
         expect(wrapper.find("[data-test='replay-check-valid']").exists()).toBe(false)
         expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeUndefined()
+    })
+})
+
+describe("Restart (replay with overrides)", () => {
+    const taskRun = {id: "tr1", taskId: "adjust", attempts: [{}]}
+    const values = [
+        {expression: "outputs.fetch.values.code != 'KR-0412'", kind: "EXPRESSION", value: true},
+        {expression: "outputs.fetch.values.code", kind: "EXPRESSION", value: "KR-0412 "},
+        {expression: "outputs.fetch.values.delta", kind: "BLOCK", value: null},
+    ]
+
+    async function openReplayDialog() {
+        setActivePinia(createPinia())
+        const executionsStore = useExecutionsStore()
+        const flowStore = useFlowStore()
+        flowStore.revisions = [{revision: 1}, {revision: 2}] as typeof flowStore.revisions
+        flowStore.loadRevisions = vi.fn()
+        executionsStore.loadFlowForExecution = vi.fn().mockResolvedValue({inputs: []})
+        executionsStore.validateReplay = vi.fn().mockResolvedValue(undefined) as typeof executionsStore.validateReplay
+        executionsStore.loadReplayValues = vi.fn().mockResolvedValue(values) as typeof executionsStore.loadReplayValues
+        executionsStore.replayExecutionWithOverrides = vi.fn().mockResolvedValue({id: "replayed", namespace: "tests", flowId: "flow1"}) as typeof executionsStore.replayExecutionWithOverrides
+
+        const wrapper = mount(Restart, {
+            props: {
+                isReplay: true,
+                taskRun,
+                attemptIndex: 0,
+                execution: {id: "exec1", namespace: "tests", flowId: "flow1", flowRevision: 1, state: {current: "FAILED"}},
+            },
+            global: {
+                plugins: [createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: en}), KestraDesignSystem],
+                stubs: {KsDialog: {template: "<div><slot /><slot name='footer' /></div>"}},
+            },
+        })
+        mounted.push(wrapper)
+
+        await wrapper.find("button").trigger("click")
+        await vi.waitFor(() => expect(wrapper.findAll("[data-test='replay-override']")).toHaveLength(3))
+
+        return {wrapper, executionsStore}
+    }
+
+    it("shouldReplayWithOnlyTheValuesThatWereChanged", async () => {
+        const {wrapper, executionsStore} = await openReplayDialog()
+
+        await wrapper.find("input[aria-label='outputs.fetch.values.code']").setValue("KR-0412")
+
+        expect(wrapper.findAll("[data-test='replay-override-rendered']")[1].text()).toBe("Rendered \"KR-0412 \"")
+        expect(wrapper.find("[data-test='replay-override-locked']").text()).toContain("Inside an if or for block")
+        expect(wrapper.find("[data-test='replay-confirm']").text()).toBe("Replay with 1 override")
+
+        await wrapper.find("[data-test='replay-confirm']").trigger("click")
+
+        expect(executionsStore.replayExecutionWithOverrides).toHaveBeenCalledWith({
+            executionId: "exec1",
+            taskRunId: "tr1",
+            overrides: {"outputs.fetch.values.code": "KR-0412"},
+        })
+    })
+
+    it("shouldBlockTheReplayWhileAnOverrideDoesNotMatchTheTypeOfWhatTheExpressionRendered", async () => {
+        const {wrapper} = await openReplayDialog()
+
+        await wrapper.find("input[aria-label=\"outputs.fetch.values.code != 'KR-0412'\"]").setValue("maybe")
+
+        expect(wrapper.find("[data-test='replay-override-error']").text()).toBe("Enter true or false.")
+        expect(wrapper.find("[data-test='replay-confirm']").attributes("disabled")).toBeDefined()
+    })
+
+    it("shouldNotOfferOverridesOnAnotherRevision", async () => {
+        const {wrapper} = await openReplayDialog()
+
+        await wrapper.findAll("input[type='radio']")[1].setValue(true)
+
+        expect(wrapper.find("[data-test='replay-overrides']").exists()).toBe(false)
+        expect(wrapper.find("[data-test='replay-overrides-other-revision']").exists()).toBe(true)
     })
 })

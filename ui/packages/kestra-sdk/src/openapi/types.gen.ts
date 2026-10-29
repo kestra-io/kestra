@@ -20,12 +20,6 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -376,6 +370,7 @@ export type ApiTaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    overrides?: TaskRunOverrides | null;
 };
 
 export type ApiThreadDetail = {
@@ -896,6 +891,22 @@ export type ExecutionControllerLastExecutionResponse = {
     status: StateType;
 };
 
+export type ExecutionControllerOverriddenValues = {
+    values?: Array<TaskRunOverride>;
+};
+
+export type ExecutionControllerReplayValues = {
+    values?: Array<ReplayOverrideServiceReplayValue>;
+};
+
+export type ExecutionControllerReplayWithOverridesRequest = {
+    overrides: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+};
+
 export type ExecutionControllerSetLabelsByIdsRequest = {
     executionsId: Array<string>;
     executionLabels: Array<Label>;
@@ -1042,12 +1053,6 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1064,6 +1069,12 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1142,12 +1153,6 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1169,6 +1174,12 @@ export type FlowForExecution = AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<OutputForExecution>;
     tasks: Array<TaskForExecution>;
     errors?: Array<TaskForExecution>;
     finally?: Array<TaskForExecution>;
@@ -1321,12 +1332,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1342,6 +1347,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1739,6 +1750,15 @@ export type OutputControllerTaskOutputInformation = {
     value?: string;
     iteration?: number;
     inline?: boolean;
+};
+
+export type OutputForExecution = {
+    id: string;
+    description?: string;
+    type: Type;
+    displayName?: string;
+    required?: boolean;
+    searchable?: boolean;
 };
 
 /**
@@ -2204,6 +2224,16 @@ export type Relation = {
 
 export type RelationType = 'SEQUENTIAL' | 'CHOICE' | 'ERROR' | 'FINALLY' | 'AFTER_EXECUTION' | 'PARALLEL' | 'DYNAMIC';
 
+export type ReplayOverrideServiceKind = 'EXPRESSION' | 'BLOCK' | 'CONSTANT' | 'SECRET' | 'FILE';
+
+export type ReplayOverrideServiceReplayValue = {
+    expression?: string;
+    kind?: ReplayOverrideServiceKind;
+    value?: {
+        [key: string]: unknown;
+    };
+};
+
 export type Sla = {
     id: string;
     type: SlaType;
@@ -2477,12 +2507,30 @@ export type TaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    overrides?: TaskRunOverrides | null;
 };
 
 export type TaskRunAttempt = {
     state: State;
     workerId?: string | null;
     logFile?: string | null;
+};
+
+export type TaskRunOverride = {
+    key: string;
+    value?: {
+        [key: string]: unknown;
+    };
+    originalValue?: {
+        [key: string]: unknown;
+    };
+};
+
+export type TaskRunOverrides = {
+    id: string;
+    keys: Array<string>;
+    editedBy?: string | null;
+    editedAt: string;
 };
 
 export type TaskRunStatistic = {
@@ -2730,6 +2778,7 @@ export type ApiTaskRunWritable = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    overrides?: TaskRunOverrides | null;
 };
 
 export type EventExecutionStatusEventWritable = {
@@ -2832,6 +2881,7 @@ export type TaskRunWritable = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+    overrides?: TaskRunOverrides | null;
 };
 
 export type TaskRunAttemptWritable = {
@@ -7245,6 +7295,57 @@ export type ReplayExecutionWithinputsResponses = {
 
 export type ReplayExecutionWithinputsResponse = ReplayExecutionWithinputsResponses[keyof ReplayExecutionWithinputsResponses];
 
+export type ReplayExecutionWithOverridesData = {
+    /**
+     * The values to render, by expression
+     */
+    body: ExecutionControllerReplayWithOverridesRequest;
+    path: {
+        /**
+         * the original execution id to clone
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/replay-with-overrides';
+};
+
+export type ReplayExecutionWithOverridesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution cannot be replayed
+     */
+    409: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplayExecutionWithOverridesError = ReplayExecutionWithOverridesErrors[keyof ReplayExecutionWithOverridesErrors];
+
+export type ReplayExecutionWithOverridesResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReplayExecutionWithOverridesResponse = ReplayExecutionWithOverridesResponses[keyof ReplayExecutionWithOverridesResponses];
+
 export type ValidateReplayExecutionData = {
     body?: never;
     path: {
@@ -7946,6 +8047,92 @@ export type GetExecutionFlowGraphResponses = {
 };
 
 export type GetExecutionFlowGraphResponse = GetExecutionFlowGraphResponses[keyof GetExecutionFlowGraphResponses];
+
+export type GetTaskRunOverridesData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/taskruns/{taskRunId}/overrides';
+};
+
+export type GetTaskRunOverridesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type GetTaskRunOverridesError = GetTaskRunOverridesErrors[keyof GetTaskRunOverridesErrors];
+
+export type GetTaskRunOverridesResponses = {
+    /**
+     * getTaskRunOverrides 200 response
+     */
+    200: ExecutionControllerOverriddenValues;
+};
+
+export type GetTaskRunOverridesResponse = GetTaskRunOverridesResponses[keyof GetTaskRunOverridesResponses];
+
+export type ReplayValuesData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        /**
+         * The taskrun id
+         */
+        taskRunId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/{executionId}/taskruns/{taskRunId}/replay-values';
+};
+
+export type ReplayValuesErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReplayValuesError = ReplayValuesErrors[keyof ReplayValuesErrors];
+
+export type ReplayValuesResponses = {
+    /**
+     * replayValues 200 response
+     */
+    200: ExecutionControllerReplayValues;
+};
+
+export type ReplayValuesResponse = ReplayValuesResponses[keyof ReplayValuesResponses];
 
 export type CreateExecutionData = {
     /**

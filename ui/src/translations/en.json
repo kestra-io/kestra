@@ -454,6 +454,32 @@
         "confirm_from_task": "Replay from task",
         "confirm_whole": "Replay whole execution"
     },
+    "replayOverrides": {
+      "title": "Override expressions",
+      "description": "What the expressions of task {taskId} rendered in this execution. Set one to run the task with that value instead: its definition stays as it is, the tasks before it are reused, and every other task renders real data.",
+      "load_error": "Could not load the expressions of task {taskId}.",
+      "empty": "Task {taskId} renders no expression in its own properties.",
+      "rendered": "Rendered {value}",
+      "other_revision": "Expressions can only be overridden on the original flow revision.",
+      "confirm": "Replay with {count} override | Replay with {count} overrides",
+      "locked": {
+        "BLOCK": "Inside an if or for block, which is part of the task's logic. Change it with a new revision.",
+        "CONSTANT": "Reads nothing from the execution, so it is part of the definition. Change it with a new revision.",
+        "SECRET": "Reads a secret or the KV store at run time.",
+        "FILE": "Reads or renders a file from internal storage."
+      },
+      "error": {
+        "number": "Enter a number.",
+        "boolean": "Enter true or false.",
+        "json": "Enter valid JSON."
+      },
+      "recorded": "{count} overridden expression | {count} overridden expressions",
+      "recorded_title": "Expressions set on replay",
+      "recorded_original": "Rendered",
+      "recorded_value": "Replayed with",
+      "recorded_by": "Set by {user} on {date}",
+      "recorded_hidden": "Reading the values takes the permission to read outputs."
+    },
     "change execution state done": "Execution state updated",
     "mark as": "Mark as {status}",
     "unqueue as": "Unqueue as {status}",

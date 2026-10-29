@@ -4,8 +4,8 @@
         :title="taskId"
         :fullscreen="isFullscreen"
         :showClose="false"
-        width="1200px"
-        top="6vh"
+        width="1280px"
+        top="12vh"
         fill
         appendToBody
         destroyOnClose
@@ -19,7 +19,7 @@
                     </span>
                     <div class="popup-titles">
                         <div class="popup-title-row">
-                            <KsText tag="strong" data-test="task-run-popup-title">{{ taskId }}</KsText>
+                            <KsText tag="strong" class="popup-title" data-test="task-run-popup-title">{{ taskId }}</KsText>
                             <KsExecutionStatus size="small" :status="currentTaskRun.state.current" data-test="task-run-popup-state" />
                         </div>
                         <div class="popup-meta">
@@ -38,7 +38,7 @@
 
                 <div class="popup-actions">
                     <KsDropdown v-if="currentTaskRuns.length > 1" trigger="click" :persistent="true">
-                        <KsButton size="small" data-test="task-run-popup-picker">
+                        <KsButton data-test="task-run-popup-picker">
                             {{ currentIterationLabel }}
                             <KsIcon size="xs"><ChevronDown /></KsIcon>
                         </KsButton>
@@ -57,7 +57,6 @@
                         <Restart
                             :key="`restart-${runKey}`"
                             isReplay
-                            size="small"
                             tooltipPosition="bottom"
                             :execution="execution"
                             :taskRun="currentTaskRun"
@@ -69,7 +68,6 @@
                         <ChangeStatus
                             :key="`change-status-${runKey}`"
                             labeled
-                            size="small"
                             :execution="execution"
                             :taskRun="currentTaskRunWithExecution"
                             :attemptIndex="attemptIndex"
@@ -81,7 +79,6 @@
                             v-if="canReadFlow"
                             labeled
                             readOnly
-                            buttonSize="small"
                             :label="$t('task_run_popup.task_source')"
                             :taskId="taskId"
                             section="tasks"
@@ -96,7 +93,6 @@
                             v-if="hasWorkerId"
                             component="KsButton"
                             labeled
-                            size="small"
                             :label="$t('task_run_popup.worker_info')"
                             :taskRun="currentTaskRun"
                         />
@@ -105,7 +101,6 @@
                         <Interrupt
                             :key="`interrupt-${runKey}`"
                             labeled
-                            size="small"
                             :execution="execution"
                             :taskRun="currentTaskRun"
                             :attemptIndex="attemptIndex"
@@ -163,7 +158,7 @@
                 </KsScrollbar>
             </div>
 
-            <KsTabs v-model="tab" class="popup-tabs" paneScroll data-test="task-run-popup-tabs">
+            <KsTabs v-model="tab" type="box" class="popup-tabs" paneScroll data-test="task-run-popup-tabs">
                 <KsTabPane name="metrics" lazy>
                     <template #label>
                         <TaskRunPopupTabLabel
@@ -205,7 +200,7 @@
                     </div>
                 </KsTabPane>
 
-                <KsTabPane name="outputs" lazy>
+                <KsTabPane name="outputs" lazy class="popup-pane--fill">
                     <template #label>
                         <TaskRunPopupTabLabel
                             :label="$t('outputs')"
@@ -233,11 +228,13 @@
                             v-else
                             :key="currentTaskRun.id"
                             :scope="{execution, taskId, outputs: outputs.value.value}"
+                            sidebarWidth="31%"
+                            debugWidth="25%"
                         />
                     </div>
                 </KsTabPane>
 
-                <KsTabPane name="artifacts" lazy>
+                <KsTabPane name="artifacts" lazy class="popup-pane--fill">
                     <template #label>
                         <TaskRunPopupTabLabel
                             :label="$t('execution_artifacts.title')"
@@ -446,6 +443,9 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--ks-spacing-3);
+        margin-inline: calc(var(--ks-spacing-4) * -1);
+        padding: 0 var(--ks-spacing-4) var(--ks-spacing-4);
+        border-bottom: 1px solid var(--ks-border-default);
     }
 
     .popup-identity {
@@ -474,6 +474,11 @@
         min-width: 0;
     }
 
+    .popup-title {
+        font-size: var(--ks-font-size-lg);
+        font-weight: var(--ks-font-weight-semibold);
+    }
+
     .popup-title-row,
     .popup-meta {
         display: flex;
@@ -484,7 +489,7 @@
 
     .popup-meta {
         color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
+        font-size: var(--ks-font-size-sm);
         font-weight: var(--ks-font-weight-regular);
     }
 
@@ -512,7 +517,6 @@
     }
 
     .popup-content {
-        --popup-fill-height: calc(65vh - 8rem);
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-3);
@@ -520,7 +524,6 @@
         min-height: 0;
 
         &.popup-content--fullscreen {
-            --popup-fill-height: calc(100vh - 14rem);
             height: auto;
             flex: 1;
         }
@@ -549,14 +552,19 @@
         margin: auto;
     }
 
+    .popup-pane--fill {
+        height: 100%;
+    }
+
     .tab-body {
-        padding-block: var(--ks-spacing-3);
+        padding-block: var(--ks-spacing-4);
 
         &.tab-body--fill {
             display: flex;
-            height: var(--popup-fill-height);
+            box-sizing: border-box;
+            height: 100%;
             min-height: 0;
-            padding-block: var(--ks-spacing-3) 0;
+            padding-block: var(--ks-spacing-4) 0;
         }
     }
 </style>

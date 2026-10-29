@@ -222,13 +222,19 @@
     import FilePreview from "../FilePreview.vue"
     import LoopIterationsNotice from "../LoopIterationsNotice.vue"
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         scope?: {
             execution: Execution;
             taskId: string;
             outputs: Record<string, unknown>;
         };
-    }>()
+        sidebarWidth?: string;
+        debugWidth?: string;
+    }>(), {
+        scope: undefined,
+        sidebarWidth: "25%",
+        debugWidth: "30%",
+    })
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
@@ -640,8 +646,8 @@
 
     /* --------------------------------- Layout -------------------------------- */
 
-    const leftWidth = ref("25%")
-    const rightWidth = ref("30%")
+    const leftWidth = ref(props.sidebarWidth)
+    const rightWidth = ref(props.debugWidth)
     const isMobile = useIsMobile()
 
     const [DefineViewer, ReuseViewer] = createReusableTemplate()

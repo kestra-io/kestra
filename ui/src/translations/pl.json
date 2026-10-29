@@ -1018,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "Powrót do Dashboardu",
-    "copy all logs": "Skopiuj wszystkie logi",
     "copy logs": "Kopiuj logi",
     "fix_with_ai": "Napraw za pomocą AI",
     "download logs": "Pobierz logi",
@@ -1177,7 +1176,7 @@
     "hostname": "Nazwa hosta",
     "file preview truncated": "Wyświetlana zawartość została skrócona",
     "file unavailable": "Plik niedostępny",
-    "file unavailable description": "Ten plik nie jest już dostępny — mógł zostać usunięty lub wygasł.",
+    "file unavailable description": "Ten plik nie jest już dostępny. Mógł zostać usunięty lub wygasł.",
     "row count": "Liczba wierszy",
     "encoding": "Kodowanie",
     "show": "Pokaż",
@@ -1514,7 +1513,7 @@
       },
       "promote": {
         "title": "Promuj Flowy między środowiskami",
-        "message": "Kestra Enterprise Edition umożliwia promowanie Flow z jednego środowiska do drugiego — na przykład z dev do staging, a następnie do production — bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
+        "message": "Kestra Enterprise Edition umożliwia promowanie Flow z jednego środowiska do drugiego, na przykład z dev do staging, a następnie do production, bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
       },
       "dashboards": {
         "header": "Niestandardowe Dashboardy",
@@ -2211,6 +2210,7 @@
         "plural": "Dashboardy"
       },
       "default": "Domyślny Dashboard",
+      "set_default": "Ustaw jako domyślny",
       "empty": "Brak wyników do wyświetlenia.",
       "edition": {
         "label": "Edytuj Dashboard",
@@ -2356,7 +2356,7 @@
         },
         "cancelled": "Tura anulowana",
         "error": {
-          "turnCap": "Ta rozmowa osiągnęła swój limit — rozpocznij nowy czat.",
+          "turnCap": "Ta rozmowa osiągnęła swój limit: rozpocznij nowy czat.",
           "turnInProgress": "Tura jest już w toku.",
           "request": "Żądanie nie powiodło się. Spróbuj ponownie.",
           "generic": "Coś poszło nie tak. Spróbuj ponownie."
@@ -2417,9 +2417,9 @@
           "dismiss": "Odrzuć",
           "dismissed": "Odrzucono",
           "applied": "Zastosowano",
-          "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI — edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
+          "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI. Edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
           "applyTitle": "Zastosuj Flow",
-          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza — wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
+          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza. Wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyError": "Nie udało się zastosować Flow. Spróbuj ponownie.",
           "applyErrorDashboard": "Nie udało się zastosować Dashboardu. Spróbuj ponownie.",
@@ -2498,7 +2498,7 @@
         "hidden_consumer": "Ukryty Flow",
         "ungrouped": "Bez grupy",
         "hub": {
-          "notice": "Ten węzeł ma {count} relacji — pokazano tylko najnowsze, aby wykres był czytelny.",
+          "notice": "Ten węzeł ma {count} relacji. Pokazano tylko najnowsze, aby wykres był czytelny.",
           "expand": "Załaduj więcej relacji",
           "expand_failed": "Nie można załadować więcej relacji. Spróbuj ponownie."
         },
@@ -2658,7 +2658,7 @@
     },
     "invalid_source_code": "Nieprawidłowy kod źródłowy",
     "source_search": {
-      "cannot_select_read_only": "Nie można wybrać — brak uprawnień do edycji dla {namespace} / {id}",
+      "cannot_select_read_only": "Nie można wybrać: brak uprawnień do edycji dla {namespace} / {id}",
       "collapse_all": "Zwiń wszystko",
       "confirm_bar_excluded": "{count} inne dopasowanie nie zostanie zmienione. | {count} inne dopasowania nie zostaną zmienione. | {count} innych dopasowań nie zostanie zmienionych.",
       "confirm_bar_message": "Zastąp {matches} w {flows} edytowalnych Flowach. {skipped} Flowów tylko do odczytu zostanie pominiętych.",
@@ -2674,11 +2674,11 @@
       "empty_title": "Znajdź wartość we Flowach, plikach i Keyach",
       "error_title": "Nieprawidłowe wyrażenie regularne",
       "examples_aria": "Przykładowe zapytania",
-      "exclusion_flows_readonly": "Flows — {count} dopasowanie tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows — {count} dopasowania tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows — {count} dopasowań tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} dopasowanie: tylko wyszukiwanie, nie można zamienić. | {type} — {count} dopasowania: tylko wyszukiwanie, nie można zamienić. | {type} — {count} dopasowań: tylko wyszukiwanie, nie można zamienić.",
+      "exclusion_flows_readonly": "Flows · {count} dopasowanie tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows · {count} dopasowania tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows · {count} dopasowań tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} dopasowanie: tylko wyszukiwanie, nie można zamienić. | {type} · {count} dopasowania: tylko wyszukiwanie, nie można zamienić. | {type} · {count} dopasowań: tylko wyszukiwanie, nie można zamienić.",
       "exclusion_title": "{count} dopasowanie jest wykluczone z opcji Zamień wszystko | {count} dopasowania są wykluczone z opcji Zamień wszystko | {count} dopasowań jest wykluczonych z opcji Zamień wszystko",
       "expand_all": "Rozwiń wszystko",
-      "file_match_notice": "Ścieżka pliku pasuje. Zawartość pliku nie jest przeszukiwana — otwórz plik, aby przeszukać jego zawartość.",
+      "file_match_notice": "Ścieżka pliku pasuje. Zawartość pliku nie jest przeszukiwana. Otwórz plik, aby przeszukać jego zawartość.",
       "files_progress_banner_failed": "Pliki namespace są przeszukiwane po jednym namespace naraz. Ukończono {done} z {total}, {failed} nie powiodło się. Suma może się jeszcze zmienić.",
       "files_progress_banner_ok": "Pliki namespace są przeszukiwane po jednym namespace naraz. Ukończono {done} z {total}. Suma może się jeszcze zmienić.",
       "flow_only_toggle_hint": "Uwzględnianie wielkości liter, całe słowo i wyrażenie regularne dotyczą tylko Flowów. Ścieżki plików i Keye są zawsze dopasowywane jako zwykły tekst.",
@@ -2755,10 +2755,10 @@
       "show_replace": "Pokaż zamianę",
       "summary": "{matches} dopasowań w {flows} Flowach",
       "summary_cross": "{matches} w {resources} w {types}",
-      "tag_keys_only_never": "Tylko klucze — wartości nigdy nie są wyświetlane ani przeszukiwane",
-      "tag_keys_only_values": "Tylko klucze — wartości nie są przeszukiwane",
-      "tag_paths_only": "Tylko ścieżki — zawartość pliku nie jest przeszukiwana",
-      "tag_search_only": "Tylko wyszukiwanie — nie zamieniane",
+      "tag_keys_only_never": "Tylko klucze: wartości nigdy nie są wyświetlane ani przeszukiwane",
+      "tag_keys_only_values": "Tylko klucze: wartości nie są przeszukiwane",
+      "tag_paths_only": "Tylko ścieżki: zawartość pliku nie jest przeszukiwana",
+      "tag_search_only": "Tylko wyszukiwanie: nie zamieniane",
       "tag_source_code": "Kod źródłowy",
       "truncated_flows": "Wyświetlono pierwsze {shown} z {total} dopasowań. „Zamień wszystko” dotyczy tylko wyświetlonych dopasowań, najpierw zawęź zapytanie.",
       "truncated_type": "pierwsze {shown} z {total}",

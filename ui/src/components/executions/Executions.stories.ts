@@ -1,13 +1,3 @@
-import {vi} from "vitest"
-
-// executionsStore.findExecutions() calls ExecutionsAPI.searchExecutions() directly, which goes
-// through the SDK's own internal client rather than the axios instance setMockClient() swaps -
-// so it has to be intercepted at the submodule level.
-const mockState = vi.hoisted(() => ({data: {results: [], total: 0} as PagedResultsApiLightExecution}))
-vi.mock("@kestra-io/kestra-sdk/executions", () => ({
-    searchExecutions: async () => mockState.data,
-}))
-
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {vueRouter} from "storybook-vue3-router"
 import Executions from "./Executions.vue"
@@ -16,7 +6,7 @@ import {useAuthStore} from "override/stores/auth"
 import fixture from "../../../tests/storybook/components/executions/Executions.fixture.json"
 import fixtureS from "../../../tests/storybook/components/executions/Executions-s.fixture.json"
 import {setMockClient, type AxiosLikeClient, type PagedResultsApiLightExecution} from "@kestra-io/kestra-sdk"
-import {mockResponse} from "../../../.storybook/apiMock"
+import {mockResponse, mockStoryApiRoutes} from "../../../.storybook/apiMock"
 
 function getDecorators(data: PagedResultsApiLightExecution) {
     return [
@@ -37,7 +27,7 @@ function getDecorators(data: PagedResultsApiLightExecution) {
                     miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"],
                     }
-                    mockState.data = data
+                    mockStoryApiRoutes({"GET /executions/search": data})
 
                     const axios: Partial<AxiosLikeClient> = {}
                     axios.get = async function<T>() {

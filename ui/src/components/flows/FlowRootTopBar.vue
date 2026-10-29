@@ -2,7 +2,7 @@
     <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title" :bookmarkLabel="routeInfo.bookmarkLabel">
         <template #title>
             <template v-if="isDeleted">
-                <Alert class="deleted-icon" />{{ $t('deleted_label') }}
+                <Alert class="deleted-icon" /><span class="deleted-label">{{ $t('deleted_label') }}</span>
             </template>
             <Lock v-else-if="!isAllowedToEdit" class="lock-icon gray-700" />
             <span :class="{'body-color': isDeleted}">
@@ -50,6 +50,10 @@
 </script>
 
 <style scoped>
+.deleted-label {
+    margin-inline-end: var(--ks-spacing-1);
+}
+
 .deleted-icon {
     color: var(--ks-text-warning);
     margin-right: var(--ks-spacing-2);

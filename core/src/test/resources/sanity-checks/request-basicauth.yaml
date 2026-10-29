@@ -1,16 +1,16 @@
 id: request-basicauth
-namespace: sanitycheck.plugin.core.http
+namespace: sanitychecks.core
 
 tasks:
   - id: request
     type: io.kestra.plugin.core.http.Request
-    uri: https://testpages.eviltester.com/styled/auth/basic-auth-results.html
+    uri: https://postman-echo.com/basic-auth
     method: GET
     options:
        auth:
          type: BASIC
-         username: authorized
-         password: password001
+         username: postman
+         password: password
 
   - id: assert
     type: io.kestra.plugin.core.execution.Assert

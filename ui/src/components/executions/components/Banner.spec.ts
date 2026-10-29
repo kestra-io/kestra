@@ -5,9 +5,9 @@ import {flushPromises} from "@vue/test-utils"
 import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 import Banner from "./Banner.vue"
-import {useExecutionsStore, type Execution} from "../../../../stores/executions"
+import {useExecutionsStore, type Execution} from "../../../stores/executions"
 import {useMiscStore} from "override/stores/misc"
-import {i18nMount} from "../../../../../tests/unit/i18nMount"
+import {i18nMount} from "../../../../tests/unit/i18nMount"
 import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
 vi.mock("@kestra-io/kestra-sdk/outputs", () => ({

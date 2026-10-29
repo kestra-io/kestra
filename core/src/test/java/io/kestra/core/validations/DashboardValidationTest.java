@@ -1,22 +1,23 @@
-package io.kestra.core.models.dashboards;
+package io.kestra.core.validations;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@MicronautTest
+@KestraTest
 class DashboardValidationTest {
     @Inject
     private ModelValidator modelValidator;
 
     @Test
-    void shouldRejectChartsSharingAnId() {
+    void shouldRejectDashboardWhenChartsShareAnId() {
         Dashboard dashboard = YamlParser.parse(
             """
                 id: dashboard

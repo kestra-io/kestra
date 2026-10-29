@@ -1,4 +1,5 @@
 import {describe, test, expect, vi, beforeEach, afterAll} from "vitest"
+import {reactive} from "vue"
 import {mount, flushPromises} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia, setActivePinia} from "pinia"
@@ -7,7 +8,7 @@ import {COPILOT_DRAFT_KEY, RECIPE_PRESET_KEY} from "../../../../src/utils/storag
 import {storageKeys} from "../../../../src/utils/constants"
 import {useMiscStore} from "../../../../src/override/stores/misc"
 
-const route = {params: {} as Record<string, string>, query: {} as Record<string, string>}
+const route = reactive({params: {} as Record<string, string>, query: {} as Record<string, string>})
 
 vi.mock("vue-router", () => ({
     useRoute: () => route,
@@ -124,6 +125,23 @@ describe("FlowCreate copilot hand-off", () => {
         // Then
         expect(flowStore.flow?.id).toBe("copilot-flow")
         expect(flowStore.flow?.namespace).toBe("company.team")
+        expect(sessionStorage.getItem(COPILOT_DRAFT_KEY)).toBeNull()
+    })
+
+    test("loads a draft handed over while the create page is already open", async () => {
+        // Given
+        mountCreate()
+        await flushPromises()
+        const starterId = flowStore.flow?.id
+        sessionStorage.setItem(COPILOT_DRAFT_KEY, "id: copilot-flow\nnamespace: company.team\n")
+
+        // When
+        route.query = {copilotDraft: "1730000000000"}
+        await flushPromises()
+
+        // Then
+        expect(starterId).not.toBe("copilot-flow")
+        expect(flowStore.flow?.id).toBe("copilot-flow")
         expect(sessionStorage.getItem(COPILOT_DRAFT_KEY)).toBeNull()
     })
 

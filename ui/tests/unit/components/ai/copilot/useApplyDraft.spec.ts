@@ -91,7 +91,7 @@ describe("useApplyDraft", () => {
         expect(sessionStorage.getItem(COPILOT_DRAFT_KEY)).toBe("id: my-flow\nnamespace: company.team")
         expect(push).toHaveBeenCalledWith(expect.objectContaining({
             name: "flows/create",
-            query: {copilotDraft: "true"},
+            query: {copilotDraft: expect.stringMatching(/^\d+$/)},
             params: {tenant: "main"},
         }))
     })

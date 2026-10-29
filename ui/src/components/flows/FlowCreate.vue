@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, ref} from "vue"
+    import {computed, onBeforeUnmount, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import * as YAML_UTILS from "@kestra-io/topology/flow-yaml-utils"
@@ -80,7 +80,7 @@
         const recipePresetFlow = route.query.recipePreset === "true"
             ? sessionStorage.getItem(RECIPE_PRESET_KEY) ?? ""
             : ""
-        const copilotDraftFlow = route.query.copilotDraft === "true"
+        const copilotDraftFlow = route.query.copilotDraft
             ? sessionStorage.getItem(COPILOT_DRAFT_KEY) ?? ""
             : ""
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
@@ -174,6 +174,11 @@
 
     flowStore.isCreating = true
     initialize()
+
+    // The page is reused when the Copilot opens a draft from `flows/create` itself, so setup does not run again.
+    watch(() => route.query.copilotDraft, (draft) => {
+        if (draft) initialize()
+    })
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined

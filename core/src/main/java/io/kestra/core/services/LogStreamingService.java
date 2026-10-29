@@ -1,17 +1,22 @@
 package io.kestra.core.services;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.utils.Either;
+import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 
 import io.micronaut.http.sse.Event;
@@ -20,6 +25,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 /**
@@ -121,6 +127,26 @@ public class LogStreamingService {
     }
 
     /**
+     * Stream the given past logs of an execution, then its live logs matching {@code filters}.
+     * The caller must call {@link #unregisterSubscriber(String, String)} with the same ids once the stream ends.
+     */
+    public Flux<Event<FollowLogEvent>> follow(String executionId, String subscriberId, Flux<LogEntry> history, List<QueryFilter> filters) {
+        Set<Long> pastKeys = ConcurrentHashMap.newKeySet();
+
+        Flux<Event<FollowLogEvent>> past = history
+            .map(FollowLogEvent::from)
+            .doOnNext(event -> pastKeys.add(logKey(event)))
+            .map(event -> Event.of(event).id("progress"));
+        // resuming the log queue replays the logs emitted while it was paused, so some were already sent as past logs
+        Flux<Event<FollowLogEvent>> live = Flux.<Event<FollowLogEvent>> create(sink -> registerSubscriber(executionId, subscriberId, sink, filters), FluxSink.OverflowStrategy.BUFFER)
+            .filter(event -> !pastKeys.contains(logKey(event.getData())));
+
+        // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
+        return Flux.concat(past, live)
+            .startWith(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
+    }
+
+    /**
      * Register a subscriber to an execution logs. The provided {@code filters} are applied to
      * every event before it is forwarded; an empty or {@code null} list forwards everything.
      * All subscribers must ensure to call {@link #unregisterSubscriber(String, String)} to avoid any memory leak.
@@ -166,5 +192,11 @@ public class LogStreamingService {
         if (queueSubscriber != null) {
             queueSubscriber.close();
         }
+    }
+
+    private static long logKey(FollowLogEvent event) {
+        // repositories store timestamps with different precisions, so a log read back may lose its sub-millisecond part
+        Instant timestamp = event.timestamp() == null ? null : event.timestamp().truncatedTo(ChronoUnit.MILLIS);
+        return Hashing.hashToLong(String.join("\u0000", event.taskRunId(), String.valueOf(event.attemptNumber()), String.valueOf(timestamp), event.message()));
     }
 }

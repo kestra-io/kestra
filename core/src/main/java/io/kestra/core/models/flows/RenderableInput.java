@@ -18,6 +18,12 @@ public interface RenderableInput {
     Input<?> render(@NotNull Function<String, Object> renderer);
 
     /**
+     * Whether a value outside the rendered list is accepted. When it is, the list is not rendered
+     * for an execution that already provides a value.
+     */
+    Boolean getAllowCustomValue();
+
+    /**
      * Static helper method that will render an input only if it implements
      * the {@link RenderableInput} interface.
      *

@@ -94,9 +94,7 @@
         cancelPendingRefresh = deferToIdle(refreshStats)
     }
 
-    onUnmounted(() => {
-        cancelPendingRefresh?.()
-    })
+    onUnmounted(() => { cancelPendingRefresh?.() })
 
     watch(
         () => [flowStore.flow?.namespace, flowStore.flow?.id] as const,

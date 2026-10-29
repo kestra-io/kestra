@@ -305,7 +305,7 @@ export function useKsEditor(
         return model
     }
 
-    function needReload(newValue?: { renderSideBySide?: boolean }, oldValue?: { renderSideBySide?: boolean }) {
+    function needReload(newValue?: {renderSideBySide?: boolean}, oldValue?: {renderSideBySide?: boolean}) {
         return oldValue?.renderSideBySide !== newValue?.renderSideBySide
     }
 
@@ -385,7 +385,7 @@ export function useKsEditor(
             if (!moveCursorCmdDisposable) {
                 moveCursorCmdDisposable = monaco.editor.registerCommand(
                     "moveCursor",
-                    (_acc, args?: { lineNumber: number, column: number }) => {
+                    (_acc, args?: {lineNumber: number, column: number}) => {
                         const ed = localEditor.value
                         if (!ed || !args?.lineNumber || !args?.column) return
                         ed.setPosition({lineNumber: args.lineNumber, column: args.column})
@@ -396,7 +396,7 @@ export function useKsEditor(
             }
 
             let localBackspaceTimeout: number | null = null
-            let suggestController: { model: { state: 0 | 1 | 2 }, cancelSuggestWidget: () => void } | undefined
+            let suggestController: {model: {state: 0 | 1 | 2}, cancelSuggestWidget: () => void} | undefined
 
             flowYamlEditor.attach(localEditor.value, () => suggestController?.model.state !== 0)
 
@@ -421,7 +421,7 @@ export function useKsEditor(
             }
 
             suggestController = localEditor.value.getContribution("editor.contrib.suggestController") as unknown as {
-                model: { state: 0 | 1 | 2 }, cancelSuggestWidget: () => void
+                model: {state: 0 | 1 | 2}, cancelSuggestWidget: () => void
             }
 
             localEditor.value.onDidChangeModelContent(e => {
@@ -551,7 +551,7 @@ export function useKsEditor(
 
         const monacoEl = editorRef.value
         if (monacoEl) {
-            ; (monacoEl as EditorTestElement).__setValueInTests = (value: string) => {
+            ;(monacoEl as EditorTestElement).__setValueInTests = (value: string) => {
                 if (!isCodeEditor(ed)) return
                 ed?.setValue(value)
             }

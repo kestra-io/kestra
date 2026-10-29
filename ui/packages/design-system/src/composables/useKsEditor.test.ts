@@ -1,6 +1,7 @@
-import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {defineComponent, ref} from "vue"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {defineComponent, h, ref} from "vue"
 import {flushPromises, mount} from "@vue/test-utils"
+import {useKsEditor} from "./useKsEditor"
 import type {KsEditorEmit, KsEditorTemplateRefs, ResolvedKsEditorProps} from "../utils/editorTypes"
 
 const {markerTrigger, onDidChangeMarkers, getModelMarkers, markerDispose} = vi.hoisted(() => {
@@ -39,7 +40,12 @@ vi.mock("monaco-editor/editor/editor.api", () => ({
         onDidChangeMarkers,
         getModelMarkers,
         create: vi.fn(() => ({
-            getModel: () => ({uri: {toString: () => "inmemory://test.yaml"}}),
+            getModel: () => ({
+                uri: {toString: () => "inmemory://test.yaml"},
+                dispose: vi.fn(),
+                getValue: vi.fn(() => ""),
+                setValue: vi.fn(),
+            }),
             getEditorType: () => "vs.editor.ICodeEditor",
             dispose: vi.fn(),
             setValue: vi.fn(),
@@ -164,8 +170,6 @@ vi.mock("./PlaceholderContentWidget", () => ({
     },
 }))
 
-import {useKsEditor} from "./useKsEditor"
-
 function mountEditor(emit: KsEditorEmit) {
     const props = {
         modelValue: "",
@@ -187,10 +191,10 @@ function mountEditor(emit: KsEditorEmit) {
     const Comp = defineComponent({
         setup() {
             useKsEditor(props, emit, refs)
-            return () => null
+            return () => h("div")
         },
     })
-    mount(Comp)
+    return mount(Comp)
 }
 
 describe("useKsEditor validation listener", () => {
@@ -212,15 +216,11 @@ describe("useKsEditor validation listener", () => {
     })
 
     afterEach(() => {
-        vi.restoreAllMocks()
-    })
-
-    afterAll(() => {
         vi.unstubAllGlobals()
     })
 
     it("filters out backend-validation and errors, emitting only mapped schema warnings", async () => {
-        mountEditor(mockEmit as unknown as KsEditorEmit)
+        const wrapper = mountEditor(mockEmit as unknown as KsEditorEmit)
         await flushPromises()
 
         getModelMarkers.mockReturnValue([
@@ -235,31 +235,43 @@ describe("useKsEditor validation listener", () => {
         expect(mockEmit).toHaveBeenCalledWith("editor-warnings", [
             {line: 10, message: "Missing tasks"},
         ])
+
+        wrapper.unmount()
+    })
+
+    it("emits an empty list when the warnings are gone", async () => {
+        const wrapper = mountEditor(mockEmit as unknown as KsEditorEmit)
+        await flushPromises()
+
+        getModelMarkers.mockReturnValue([])
+        markerTrigger([{toString: () => "inmemory://test.yaml"}])
+
+        expect(mockEmit).toHaveBeenCalledWith("editor-warnings", [])
+
+        wrapper.unmount()
     })
 
     it("ignores marker changes if the URI does not match the active model", async () => {
-        mountEditor(mockEmit as unknown as KsEditorEmit)
+        const wrapper = mountEditor(mockEmit as unknown as KsEditorEmit)
         await flushPromises()
 
         markerTrigger([{toString: () => "inmemory://other-file.yaml"}])
 
         expect(getModelMarkers).not.toHaveBeenCalled()
         expect(mockEmit).not.toHaveBeenCalledWith("editor-warnings", expect.anything())
+
+        wrapper.unmount()
     })
 
     it("disposes the onDidChangeMarkers listener when the editor unmounts", async () => {
         const wrapper = mountEditor(mockEmit as unknown as KsEditorEmit)
         await flushPromises()
 
-
         expect(onDidChangeMarkers).toHaveBeenCalledTimes(1)
         expect(markerDispose).not.toHaveBeenCalled()
 
-
         wrapper.unmount()
-
 
         expect(markerDispose).toHaveBeenCalledTimes(1)
     })
 })
-

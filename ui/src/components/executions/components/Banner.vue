@@ -109,15 +109,32 @@
         </div>
 
         <div class="execution-banner__footer">
-            <div class="execution-banner__labels">
-                <LabelMultiple class="icon" />
-                <div class="list">
-                    <SetLabels :execution />
-                    <span
-                        v-for="(label, idx) in execution.labels"
-                        :key="idx"
-                        class="label-tag"
-                    >{{ label.key }}: {{ label.value }}</span>
+            <div class="execution-banner__tags">
+                <div class="execution-banner__labels">
+                    <LabelMultiple class="icon" />
+                    <div class="list">
+                        <SetLabels :execution />
+                        <span
+                            v-for="(label, idx) in execution.labels"
+                            :key="idx"
+                            class="label-tag"
+                        >{{ label.key }}: {{ label.value }}</span>
+                    </div>
+                </div>
+
+                <div v-if="searchableOutputs.length" class="execution-banner__searchable" data-test="searchable-outputs">
+                    <Magnify class="icon" :title="$t('execution_banner.searchable_values')" />
+                    <div class="list">
+                        <span
+                            v-for="(output, index) in searchableOutputs"
+                            :key="`${output.outputId}-${index}`"
+                            class="label-tag searchable-tag"
+                            :title="`${output.outputId}: ${output.value}`"
+                        >{{ output.outputId }}: {{ output.value }}</span>
+                        <span v-if="remainingSearchableOutputs > 0" class="more-searchable" data-test="more-searchable-outputs">
+                            {{ $t("execution_banner.more_searchable_values", {count: $n(remainingSearchableOutputs)}) }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -144,25 +161,27 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
 
     import {dayjs, KsExecutionStatus, State} from "@kestra-io/design-system"
+    import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
+    import type {OutputControllerSearchableOutputInformation} from "@kestra-io/kestra-sdk"
 
-    import {Execution, useExecutionsStore} from "../../../../stores/executions"
-    import {useExecutionSummary} from "../../../../composables/useExecutionSummary"
+    import {Execution, useExecutionsStore} from "../../../stores/executions"
+    import {useExecutionSummary} from "../../../composables/useExecutionSummary"
     import {useMiscStore} from "override/stores/misc"
-    import * as Utils from "../../../../utils/utils"
-    import {useToast} from "../../../../utils/toast"
-    import {handledIf} from "../../../../utils/kestraHttp"
-    import {createLink} from "../utils/links"
+    import * as Utils from "../../../utils/utils"
+    import {useToast} from "../../../utils/toast"
+    import {handledIf} from "../../../utils/kestraHttp"
+    import {createLink} from "../overview/utils/links"
     import {executionBannerRelations} from "override/components/executions/overview/OverviewExtensions"
 
-    import ChangeExecutionStatus from "../../ChangeExecutionStatus.vue"
-    import SetLabels from "../../SetLabels.vue"
+    import ChangeExecutionStatus from "../ChangeExecutionStatus.vue"
+    import SetLabels from "../SetLabels.vue"
     import {Duration} from "@kestra-io/topology"
     import RunTimeline from "./RunTimeline.vue"
-    import ParentExecutionLink from "./ParentExecutionLink.vue"
+    import ParentExecutionLink from "../overview/components/ParentExecutionLink.vue"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue"
@@ -173,6 +192,7 @@
     import History from "vue-material-design-icons/History.vue"
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue"
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import Replay from "vue-material-design-icons/Replay.vue"
     import Creation from "vue-material-design-icons/Creation.vue"
@@ -213,6 +233,39 @@
         props.execution.taskRunList?.filter(
             (tr) => !State.isRunning(tr.state?.current ?? "CREATED"),
         ).length ?? 0,
+    )
+
+    const SEARCHABLE_OUTPUTS_LIMIT = 10
+
+    const searchableOutputs = ref<OutputControllerSearchableOutputInformation[]>([])
+    const searchableOutputsTotal = ref(0)
+    const remainingSearchableOutputs = computed(() => searchableOutputsTotal.value - searchableOutputs.value.length)
+
+    // Outputs are written as the execution progresses, so reload when its state changes too.
+    watch(
+        () => [props.execution.id, props.execution.state.current] as const,
+        async ([executionId], previous, onCleanup) => {
+            if (executionId !== previous?.[0]) {
+                searchableOutputs.value = []
+                searchableOutputsTotal.value = 0
+            }
+
+            let superseded = false
+            onCleanup(() => {
+                superseded = true
+            })
+
+            const page = await OutputsAPI.listSearchableOutputs({executionId, page: 1, size: SEARCHABLE_OUTPUTS_LIMIT})
+                .catch((e: unknown) => {
+                    handledIf(e, [403, 404])
+                    return undefined
+                })
+            if (superseded) return
+
+            searchableOutputs.value = page?.results ?? []
+            searchableOutputsTotal.value = page?.total ?? 0
+        },
+        {immediate: true},
     )
 
     const copyLogs = () => {
@@ -284,7 +337,15 @@
         font-size: var(--ks-font-size-sm);
     }
 
-    .execution-banner__labels {
+    .execution-banner__tags {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        min-width: 0;
+    }
+
+    .execution-banner__labels,
+    .execution-banner__searchable {
         display: flex;
         align-items: flex-start;
         gap: var(--ks-spacing-2);
@@ -310,6 +371,7 @@
         align-items: center;
         gap: var(--ks-spacing-2);
         flex-shrink: 0;
+        align-self: flex-start;
         margin-right: calc(-1 * var(--ks-spacing-2));
     }
 
@@ -520,6 +582,19 @@
         white-space: nowrap;
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
+    }
+
+    .searchable-tag {
+        display: inline-block;
+        max-width: 20rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .more-searchable {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
     }
 
     .date-tooltip {

@@ -796,7 +796,7 @@ function deleteFlowAndDependencies() {
 
                 if ([404, 422].includes(status) && subflows && subflows.length > 0) {
                     coreStore.message = {
-                        title: "Couldn't expand subflow",
+                        title: t("topology-graph.expand_subflow_error"),
                         content: asProblem(error)?.detail,
                         variant: "error",
                     }

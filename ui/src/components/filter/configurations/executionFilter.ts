@@ -74,9 +74,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.kind.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "radio",
+                    allLabel: t("filter.execution_kind.standard"),
+                    allDescription: t("filter.execution_kind.standard_description"),
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
-                        return VALUES.KINDS
+                        return VALUES.KINDS.filter(kind => kind.value !== "NORMAL")
                     },
                 },
                 {
@@ -155,6 +157,19 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.IS_NULL,
                     ],
                     comparatorLabels: labelComparatorLabels(t),
+                    valueType: "key-value",
+                    showComparatorSelection: true,
+                },
+                {
+                    key: "outputs",
+                    label: t("filter.outputs.label"),
+                    description: t("filter.outputs.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
                     valueType: "key-value",
                     showComparatorSelection: true,
                 },

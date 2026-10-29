@@ -113,7 +113,6 @@
     import {useApiStore} from "../../../stores/api"
     import {useBlueprintsStore} from "../../../stores/blueprints"
     import {useCoreStore} from "../../../stores/core"
-    import {useDocStore} from "../../../stores/doc"
     import {usePluginsStore} from "../../../stores/plugins"
 
     import useRestoreUrl from "../../../composables/useRestoreUrl"
@@ -154,7 +153,6 @@
     const apiStore = useApiStore()
     const blueprintsStore = useBlueprintsStore()
     const coreStore = useCoreStore()
-    const docStore = useDocStore()
     const pluginsStore = usePluginsStore()
 
     const {loadInit} = useRestoreUrl()
@@ -324,7 +322,6 @@
 
     onMounted(() => {
         syncFromRoute()
-        docStore.docId = `blueprints.${props.blueprintType}`
         ensureInstalledPluginsLoaded()
         pluginsStore.fetchIcons()
     })

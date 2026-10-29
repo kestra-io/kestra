@@ -7,7 +7,6 @@
         </span>
         <KsTag
             v-else-if="status === 'error'"
-            round
             size="small"
             type="warning"
             :title="$t('task_run_popup.count_error')"
@@ -15,7 +14,7 @@
         >
             !
         </KsTag>
-        <KsTag v-else-if="status === 'ready'" round size="small" data-test="tab-count">
+        <KsTag v-else-if="status === 'ready'" size="small" data-test="tab-count">
             {{ count }}
         </KsTag>
     </span>
@@ -38,6 +37,7 @@
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-sm);
     }
 
     .tab-label-skeleton {

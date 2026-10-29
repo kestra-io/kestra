@@ -367,6 +367,8 @@
 
     .node-core--execution .main-content {
         width: 273px;
+        height: 52px;
+        padding-bottom: var(--ks-spacing-1);
     }
 
     .node-core--with-footer {
@@ -393,7 +395,7 @@
     .node-status-row {
         display: flex;
         flex: 0 0 auto;
-        align-items: center;
+        align-items: flex-end;
         justify-content: flex-end;
         gap: var(--ks-spacing-1);
     }
@@ -435,7 +437,7 @@
         align-items: center;
         gap: var(--ks-spacing-1);
         min-width: 0;
-        font-size: var(--ks-font-size-2xs);
+        font-size: var(--ks-font-size-xs);
         color: var(--ks-text-secondary);
     }
 

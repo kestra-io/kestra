@@ -475,7 +475,7 @@ button.playground-button {
 }
 
 .status-chip__text {
-    font-size: var(--ks-font-size-2xs);
+    font-size: var(--ks-font-size-xs);
     font-weight: var(--ks-font-weight-semibold);
     white-space: nowrap;
 }
@@ -490,7 +490,7 @@ button.playground-button {
     border-radius: var(--ks-radius-base);
     --chip-tint: color-mix(in srgb, var(--ks-text-link) 16%, transparent);
     color: var(--ks-text-link);
-    font-size: var(--ks-font-size-2xs);
+    font-size: var(--ks-font-size-xs);
     font-weight: var(--ks-font-weight-semibold);
     line-height: 1;
     white-space: nowrap;

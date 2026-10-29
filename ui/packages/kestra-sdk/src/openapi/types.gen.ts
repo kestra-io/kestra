@@ -20,12 +20,6 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1059,12 +1053,6 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1081,6 +1069,12 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1159,12 +1153,6 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1186,6 +1174,12 @@ export type FlowForExecution = AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<OutputForExecution>;
     tasks: Array<TaskForExecution>;
     errors?: Array<TaskForExecution>;
     finally?: Array<TaskForExecution>;
@@ -1338,12 +1332,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1359,6 +1347,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1756,6 +1750,15 @@ export type OutputControllerTaskOutputInformation = {
     value?: string;
     iteration?: number;
     inline?: boolean;
+};
+
+export type OutputForExecution = {
+    id: string;
+    description?: string;
+    type: Type;
+    displayName?: string;
+    required?: boolean;
+    searchable?: boolean;
 };
 
 /**

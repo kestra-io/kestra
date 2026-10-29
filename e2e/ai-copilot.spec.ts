@@ -230,7 +230,7 @@ test.describe("AI Copilot", () => {
         await page.locator(D.draftOpen).click()
         // Hands the drafted YAML to the flow create editor through sessionStorage, keeping it out of the
         // URL (a refresh of a URL carrying raw `|` characters made the server answer with a 500).
-        await page.waitForURL(/\/flows\/new\?copilotDraft=true$/)
+        await page.waitForURL(/\/flows\/new\?copilotDraft=\d+$/)
         expect(new URL(page.url()).searchParams.has("blueprintSourceYaml")).toBe(false)
         await expect(page.getByTestId("monaco-editor").getByText("id: demo")).toBeVisible()
     })

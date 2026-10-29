@@ -96,15 +96,15 @@ export const InputTypes: Story = {
         const input = await waitFor(() => within(can.getByTestId("input-form-resource_type")).getByRole("combobox"), {timeout: 4000, interval: 500});
 
         await userEvent.click(input);
-        await userEvent.click(popups.getByText("Second value"));
+        await userEvent.click(await popups.findByText("Second value"));
 
         await waitFor(function testSelect() {
             expect(can.getByTestId("test-content").textContent).toContain("Second value");
         });
 
         await userEvent.click(within(can.getByTestId("input-form-resource_type_multi")).getByRole("combobox"));
-        await userEvent.click(popups.getByText("Fifth value"));
-        await userEvent.click(popups.getByText("Seventh value"));
+        await userEvent.click(await popups.findByText("Fifth value"));
+        await userEvent.click(await popups.findByText("Seventh value"));
 
         await userEvent.keyboard("{esc}");
 

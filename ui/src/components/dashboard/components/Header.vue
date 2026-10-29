@@ -147,7 +147,7 @@
         })
     }
 
-    const routeInfo = computed(() => ({title: props.dashboard?.title || t("overview")}))
+    const routeInfo = computed(() => ({title: props.dashboard?.title || t("dashboards.default")}))
 
     import useRouteContext from "../../../composables/useRouteContext"
     useRouteContext(routeInfo)

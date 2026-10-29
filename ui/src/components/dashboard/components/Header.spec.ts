@@ -1,5 +1,5 @@
 import {describe, it, expect, beforeEach, afterEach, vi} from "vitest"
-import {mount} from "@vue/test-utils"
+import {flushPromises, mount} from "@vue/test-utils"
 import type {KsBreadcrumbLoader} from "@kestra-io/design-system"
 
 let edition = "EE"
@@ -35,13 +35,13 @@ vi.mock("../../../utils/toast", () => ({
 
 import Header from "./Header.vue"
 
-const TopNavBar = {props: ["titleSiblings", "breadcrumb"], template: "<div><slot name=\"actions\" /></div>"}
+const TopNavBar = {props: ["title", "titleSiblings", "breadcrumb"], template: "<div><slot name=\"actions\" /></div>"}
 
 const stubs = {
     TopNavBar,
     Dashboards: {template: "<div class=\"selector\" />"},
     NavBarActionsDropdown: {template: "<div class=\"kebab\"><slot /></div>"},
-    NavBarAction: {props: ["label", "type"], template: "<button :data-type=\"type\" @click=\"$emit('click')\">{{ label }}</button>"},
+    NavBarAction: {props: ["label", "type", "icon"], template: "<button :data-type=\"type\" :data-icon=\"icon?.name\" @click=\"$emit('click')\">{{ label }}</button>"},
 }
 
 const DASHBOARDS = [
@@ -57,6 +57,8 @@ function mountHeader(dashboard?: Record<string, unknown>) {
 }
 
 const kebabItems = (wrapper: ReturnType<typeof mountHeader>) => wrapper.find(".kebab").findAll("button").map((b) => b.text())
+
+const kebabAction = (wrapper: ReturnType<typeof mountHeader>, label: string) => wrapper.find(".kebab").findAll("button").find((b) => b.text() === label)!
 
 const siblingsOf = (wrapper: ReturnType<typeof mountHeader>) => wrapper.findComponent(TopNavBar).props("titleSiblings") as KsBreadcrumbLoader | undefined
 
@@ -82,6 +84,23 @@ describe("dashboard Header actions", () => {
         const wrapper = mountHeader({id: "custom"})
 
         expect(kebabItems(wrapper)).toEqual(["dashboards.edition.label", "dashboards.set_default", "delete", "dashboards.creation.label"])
+    })
+
+    it("titles the untitled default dashboard like its breadcrumb entry", () => {
+        const wrapper = mountHeader({id: "default"})
+
+        expect(wrapper.findComponent(TopNavBar).props("title")).toBe("dashboards.default")
+    })
+
+    it("sets the open dashboard as the tenant default and fills its bookmark", async () => {
+        const wrapper = mountHeader({id: "custom"})
+        expect(kebabAction(wrapper, "dashboards.set_default").attributes("data-icon")).toBe("BookmarkOutlineIcon")
+
+        await kebabAction(wrapper, "dashboards.set_default").trigger("click")
+        await flushPromises()
+
+        expect(saveDefaults).toHaveBeenCalledWith({defaultHomeDashboard: "custom"})
+        expect(kebabAction(wrapper, "dashboards.set_default").attributes("data-icon")).toBe("BookmarkIcon")
     })
 
     it("keeps the locked selector and offers no kebab or breadcrumb switch in OSS", () => {
@@ -115,7 +134,7 @@ describe("dashboard Header actions", () => {
     it("deletes the open dashboard after confirmation and goes back to the default one", async () => {
         const wrapper = mountHeader({id: "custom", title: "Custom"})
 
-        await wrapper.find(".kebab").findAll("button")[2].trigger("click")
+        await kebabAction(wrapper, "delete").trigger("click")
         await Promise.resolve()
 
         expect(deleteDashboard).toHaveBeenCalledWith("custom")

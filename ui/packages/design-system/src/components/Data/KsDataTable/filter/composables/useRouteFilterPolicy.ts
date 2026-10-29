@@ -124,7 +124,11 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             return
         }
 
-        if (isSameValue(value, routeValue.value) && !hasUnsupportedRouteValue.value) {
+        if (
+            !normalizationPending.value &&
+            isSameValue(value, routeValue.value) &&
+            !hasUnsupportedRouteValue.value
+        ) {
             return
         }
 

@@ -172,6 +172,25 @@ describe("useRouteFilterPolicy", () => {
             expect(policy.effectiveValue.value).toEqual(minLevel("TRACE"))
         })
 
+        test("shouldSettleRouteAndRevertToFallbackWhenFilterIsClearedWhileNormalizationIsInFlight", () => {
+            routerStub.autoApply = false
+            const policy = startPolicy(() =>
+                useRouteFilterPolicy<LevelFilterValue>({
+                    ...resolverOptions,
+                    defaultValue: () => minLevel("DEBUG"),
+                    fallbackValue: () => minLevel("TRACE"),
+                    applyDefaultIfMissing: () => true,
+                }))
+
+            expect(policy.isRouteSettled.value).toBe(false)
+            expect(policy.effectiveValue.value).toEqual(minLevel("DEBUG"))
+
+            policy.setRouteValue(undefined)
+
+            expect(policy.isRouteSettled.value).toBe(true)
+            expect(policy.effectiveValue.value).toEqual(minLevel("TRACE"))
+        })
+
         test("shouldNotWriteTheDefaultValueToTheQueryWhenApplyDefaultIfMissingIsFalse", () => {
             const policy = startPolicy(() =>
                 useRouteFilterPolicy<LevelFilterValue>({

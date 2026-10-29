@@ -1,19 +1,25 @@
 package io.kestra.core.services;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.MapUtils;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -24,6 +30,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class TaskOutputService extends AbstractOutputService {
+    private static final String OVERRIDE_VALUES = "values";
+    private static final TypeReference<List<TaskRunOverride>> OVERRIDE_VALUES_TYPE = new TypeReference<>() {
+    };
+
     private final TaskOutputRepositoryInterface outputRepository;
 
     public TaskOutputService(TaskOutputRepositoryInterface outputRepository, StorageInterface storageInterface, NamespaceFactory namespaceFactory,
@@ -219,6 +229,41 @@ public class TaskOutputService extends AbstractOutputService {
      */
     public int purge(List<Execution> executions) {
         return this.outputRepository.purgeByExecutionIds(executions.stream().map(Execution::getId).toList());
+    }
+
+    /**
+     * Saves the values a replay overrode for a task run under their own id, so they are read with the outputs' permission.
+     */
+    public TaskRunOverrides saveOverrides(TaskRun taskRun, List<TaskRunOverride> values, @Nullable String editedBy) throws InternalException {
+        var overrides = new TaskRunOverrides(IdUtils.create(), values.stream().map(TaskRunOverride::key).toList(), editedBy, Instant.now());
+        saveOutputs(overridesHolder(taskRun, overrides), Map.of(OVERRIDE_VALUES, values));
+        return overrides;
+    }
+
+    public List<TaskRunOverride> getOverrides(TaskRun taskRun) throws InternalException {
+        if (taskRun.getOverrides() == null) {
+            return List.of();
+        }
+        Object values = getOutputs(overridesHolder(taskRun, taskRun.getOverrides())).get(OVERRIDE_VALUES);
+        return values == null ? List.of() : JacksonMapper.ofJson().convertValue(values, OVERRIDE_VALUES_TYPE);
+    }
+
+    /**
+     * Copies the overridden values of a task run reused by a new execution, so they outlive the purge of the original one.
+     */
+    public TaskRun copyOverrides(TaskRun originalTaskRun, TaskRun newTaskRun) throws InternalException {
+        if (originalTaskRun.getOverrides() == null) {
+            return newTaskRun;
+        }
+        TaskRunOverrides original = originalTaskRun.getOverrides();
+        var copy = new TaskRunOverrides(IdUtils.create(), original.keys(), original.editedBy(), original.editedAt());
+        saveOutputs(overridesHolder(newTaskRun, copy), Map.of(OVERRIDE_VALUES, getOverrides(originalTaskRun)));
+        return newTaskRun.withOverrides(copy);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static TaskRun overridesHolder(TaskRun taskRun, TaskRunOverrides overrides) {
+        return taskRun.toBuilder().id(overrides.id()).outputs(null).build();
     }
 
     public void copyOutputs(TaskRun originalTaskRun, TaskRun newTaskRun) {

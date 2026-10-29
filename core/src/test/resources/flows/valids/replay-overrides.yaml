@@ -1,0 +1,43 @@
+id: replay-overrides
+namespace: io.kestra.tests
+
+inputs:
+  - id: day
+    type: DATE
+    defaults: "2026-10-12"
+  - id: limits
+    type: ARRAY
+    itemType: INT
+    defaults: [10, 20]
+
+variables:
+  schema: erp
+
+tasks:
+  - id: fetch
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      code: "KR-0412 "
+      delta: -12
+      limit: "{{ inputs.limits[0] }}"
+
+  - id: check
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.fetch.values.delta < 0 }}"
+    then:
+      - id: reserve
+        type: io.kestra.plugin.core.debug.Return
+        format: "reserve {{ outputs.fetch.values.code }}"
+    else:
+      - id: restock
+        type: io.kestra.plugin.core.debug.Return
+        format: "restock {{ outputs.fetch.values.code }}"
+
+  - id: adjust
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ outputs.fetch.values.code != 'KR-0412' }}"
+    errorMessage: "store {{ outputs.fetch.values.code }} does not exist in {{ vars.schema }} on {{ inputs.day }}"
+
+  - id: notify
+    type: io.kestra.plugin.core.debug.Return
+    format: "adjusted {{ outputs.fetch.values.code }}"

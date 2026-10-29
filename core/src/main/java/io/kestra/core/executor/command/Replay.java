@@ -1,6 +1,7 @@
 package io.kestra.core.executor.command;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,12 +10,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.events.Actor;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRunOverride;
 
 import jakarta.annotation.Nullable;
 import lombok.With;
 
 /**
- * Command to replay an existing execution, optionally from a specific task run with new inputs.
+ * Command to replay an existing execution, optionally from a specific task run with new inputs or with overridden values for that task run.
  * The new execution is created with a pre-generated {@code executionId}, and the source execution
  * is identified by {@code sourceExecutionId}.
  */
@@ -32,6 +34,7 @@ public record Replay(
     @With @JsonProperty @Nullable Integer revision,
     @With @JsonProperty @Nullable String breakpoints,
     @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable Map<String, Object> inputs,
+    @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable List<TaskRunOverride> overrides,
     @With @Nullable Actor actor) implements ExecutionCommand {
 
     /**
@@ -59,6 +62,7 @@ public record Replay(
             revision,
             breakpoints,
             sourceExecution.getInputs(),
+            null,
             null
         );
     }

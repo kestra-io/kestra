@@ -454,6 +454,42 @@
         "confirm_from_task": "Replay from task",
         "confirm_whole": "Replay whole execution"
     },
+    "replayOverrides": {
+        "title": "Override values",
+        "description": "Values task {taskId} reads in its own properties. Set one to run the task on it: the tasks before it are reused, and every other task reads real data.",
+        "load_error": "Could not load the values task {taskId} reads.",
+        "empty": "Task {taskId} reads no input or output in its own properties.",
+        "original": "Original: {value}",
+        "other_revision": "Values can only be overridden on the original flow revision.",
+        "confirm": "Replay with {count} override | Replay with {count} overrides",
+        "kind": {
+            "INPUT": "Input",
+            "OUTPUT": "Output of {taskId}",
+            "SECRET": "Secret",
+            "FILE": "File",
+            "FLOW_VARIABLE": "Flow variable",
+            "TRIGGER": "Trigger"
+        },
+        "locked": {
+            "SECRET": "Secrets are read from the secret manager at run time.",
+            "FILE": "Files are read from internal storage and cannot be overridden.",
+            "FLOW_VARIABLE": "Flow variables are part of the flow. Change them with a new revision.",
+            "TRIGGER": "Trigger data comes from the event that started the execution."
+        },
+        "error": {
+            "number": "Enter a number.",
+            "boolean": "Enter true or false.",
+            "date": "Enter a date as YYYY-MM-DD.",
+            "datetime": "Enter a date and time, such as 2026-10-12T08:00:00Z.",
+            "json": "Enter valid JSON."
+        },
+        "recorded": "{count} overridden value | {count} overridden values",
+        "recorded_title": "Values set on replay",
+        "recorded_original": "Original",
+        "recorded_value": "Replayed with",
+        "recorded_by": "Set by {user} on {date}",
+        "recorded_hidden": "Reading the values takes the permission to read outputs."
+    },
     "change execution state done": "Execution state updated",
     "mark as": "Mark as {status}",
     "unqueue as": "Unqueue as {status}",

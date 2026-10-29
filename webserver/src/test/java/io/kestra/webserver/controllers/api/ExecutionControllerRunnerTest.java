@@ -42,12 +42,14 @@ import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.junit.assertions.Problems;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunOverride;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.FlowInterface;
@@ -63,6 +65,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.ReplayOverrideService;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
@@ -74,9 +77,10 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.errors.ProblemDetail;
 import io.kestra.webserver.errors.ProblemError;
+import io.kestra.webserver.errors.ProblemTypes;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ActorResolver;
@@ -89,8 +93,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
-import io.kestra.core.junit.assertions.Problems;
-import io.kestra.webserver.errors.ProblemTypes;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
@@ -237,7 +239,11 @@ class ExecutionControllerRunnerTest {
 
         ZonedDateTime soon = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(2);
         Execution rescheduled = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8), null),
+            HttpRequest.POST(
+                "/api/v1/main/executions/" + scheduled.getId() + "/actions/reschedule?scheduleDate="
+                    + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(soon), StandardCharsets.UTF_8),
+                null
+            ),
             Execution.class
         );
 
@@ -273,7 +279,11 @@ class ExecutionControllerRunnerTest {
         var conflict = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                HttpRequest.POST("/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate=" + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8), null)
+                HttpRequest.POST(
+                    "/api/v1/main/executions/" + notScheduled.getId() + "/actions/reschedule?scheduleDate="
+                        + URLEncoder.encode(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(ZonedDateTime.now().plusHours(1)), StandardCharsets.UTF_8),
+                    null
+                )
             )
         );
         assertThat(conflict.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
@@ -1132,6 +1142,161 @@ class ExecutionControllerRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldRunReplayedTaskOnOverriddenValueWhileLaterTasksReadRealData() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+        assertThat(failed.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        replayWithOverrides(failed, "adjust", Map.of("outputs.fetch.values.code", "KR-0412"));
+        Execution replay = awaitReplayOverrides(failed);
+
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        TaskRun adjust = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(adjust.getOverrides().keys()).containsExactly("outputs.fetch.values.code");
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/executions/" + replay.getId()), String.class))
+            .contains("\"keys\":[\"outputs.fetch.values.code\"]");
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), adjust.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("outputs.fetch.values.code", "KR-0412", "KR-0412 "));
+        assertThat(taskOutputService.getOutputs(replay.findTaskRunsByTaskId("notify").getFirst().toBuilder().tenantId(TENANT_ID).build()))
+            .containsEntry("value", "adjusted KR-0412 ");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldKeepOverriddenValuesOfReusedTaskRunWhenReplayingFromLaterTask() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+        replayWithOverrides(failed, "adjust", Map.of("outputs.fetch.values.code", "KR-0412"));
+        Execution overridden = awaitReplayOverrides(failed);
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/%s/actions/replay?taskRunId=%s".formatted(overridden.getId(), overridden.findTaskRunsByTaskId("notify").getFirst().getId()),
+                null
+            ),
+            Execution.class
+        );
+        Execution replay = awaitReplayOverrides(overridden);
+
+        TaskRun reused = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(reused.getOverrides().id()).isNotEqualTo(overridden.findTaskRunsByTaskId("adjust").getFirst().getOverrides().id());
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), reused.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("outputs.fetch.values.code", "KR-0412", "KR-0412 "));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldTakeOtherBranchWhenReplayingFlowableWithOverriddenCondition() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        replayWithOverrides(failed, "check", Map.of("outputs.fetch.values.delta", 5));
+        Execution replay = awaitReplayOverrides(failed);
+
+        assertThat(replay.findTaskRunsByTaskId("reserve")).isEmpty();
+        assertThat(taskOutputService.getOutputs(replay.findTaskRunsByTaskId("restock").getFirst().toBuilder().tenantId(TENANT_ID).build()))
+            .containsEntry("value", "restock KR-0412 ");
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.FAILED);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldListOnlyOwnPropertiesWhenListingReplayValuesOfFlowable() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        assertThat(replayValues(failed, "check")).containsExactly(
+            new ReplayOverrideService.ReplayValue("outputs.fetch.values.delta", ReplayOverrideService.Kind.OUTPUT, null, -12)
+        );
+        assertThat(replayValues(failed, "adjust")).containsExactly(
+            new ReplayOverrideService.ReplayValue("outputs.fetch.values.code", ReplayOverrideService.Kind.OUTPUT, null, "KR-0412 "),
+            new ReplayOverrideService.ReplayValue("vars.schema", ReplayOverrideService.Kind.FLOW_VARIABLE, null, "erp"),
+            new ReplayOverrideService.ReplayValue("inputs.day", ReplayOverrideService.Kind.INPUT, io.kestra.core.models.flows.Type.DATE, "2026-10-12")
+        );
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldRejectOverrideOfValueThatIsNotAnInputOrOutputReadByTheTask() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        var notRead = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "adjust", Map.of("outputs.fetch.values.delta", 5)));
+        var variable = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "adjust", Map.of("vars.schema", "other")));
+
+        assertThat(notRead.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notRead.getResponse().getBody(String.class).orElse("")).contains("does not read it in its own properties");
+        assertThat(variable.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(variable.getResponse().getBody(String.class).orElse("")).contains("only inputs and outputs can be overridden");
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldParseInputOverrideAsItsDeclaredTypeAndRejectOneThatDoesNotFit() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        var notADate = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "adjust", Map.of("inputs.day", "12/10/2026")));
+        assertThat(notADate.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notADate.getResponse().getBody(String.class).orElse("")).contains("Cannot override 'inputs.day'");
+
+        replayWithOverrides(failed, "adjust", Map.of("inputs.day", "2026-10-13"));
+        Execution replay = awaitReplayOverrides(failed);
+        TaskRun adjust = replay.findTaskRunsByTaskId("adjust").getFirst();
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), adjust.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("inputs.day", "2026-10-13", "2026-10-12"));
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/replay-overrides.yaml" })
+    void shouldValidateWholeInputWhenOverridingValueInsideIt() throws Exception {
+        Execution failed = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "replay-overrides");
+
+        var notAnInt = assertThrows(HttpClientResponseException.class, () -> replayWithOverrides(failed, "fetch", Map.of("inputs.limits[0]", "ten")));
+        assertThat(notAnInt.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(notAnInt.getResponse().getBody(String.class).orElse("")).contains("Cannot override 'inputs.limits[0]'");
+
+        replayWithOverrides(failed, "fetch", Map.of("inputs.limits[0]", "15"));
+        Execution replay = awaitReplayOverrides(failed);
+        TaskRun fetch = replay.findTaskRunsByTaskId("fetch").getFirst();
+        assertThat(
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/overrides".formatted(replay.getId(), fetch.getId())),
+                ExecutionController.OverriddenValues.class
+            ).values()
+        ).containsExactly(new TaskRunOverride("inputs.limits[0]", 15, 10));
+    }
+
+    private void replayWithOverrides(Execution execution, String taskId, Map<String, Object> overrides) {
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/%s/actions/replay-with-overrides?taskRunId=%s".formatted(execution.getId(), execution.findTaskRunsByTaskId(taskId).getFirst().getId()),
+                Map.of("overrides", overrides)
+            ),
+            Execution.class
+        );
+    }
+
+    private Execution awaitReplayOverrides(Execution source) throws QueueException {
+        Flow flow = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "replay-overrides").orElseThrow();
+        return runnerUtils.awaitChildExecution(flow, source, Duration.ofSeconds(15));
+    }
+
+    private List<ReplayOverrideService.ReplayValue> replayValues(Execution execution, String taskId) {
+        return client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/main/executions/%s/taskruns/%s/replay-values".formatted(execution.getId(), execution.findTaskRunsByTaskId(taskId).getFirst().getId())),
+            ExecutionController.ReplayValues.class
+        ).values();
     }
 
     @Test

@@ -281,7 +281,7 @@ class ExecutionControllerTest {
         System.arraycopy(head, 0, payload, 0, head.length);
         System.arraycopy(tail, 0, payload, payload.length - tail.length, tail.length);
 
-        int requests = 100;
+        int requests = 50;
 
         // the first requests of a JVM grow the pool of direct buffers, which is not a leak
         for (int i = 0; i < 40; i++) {
@@ -298,7 +298,7 @@ class ExecutionControllerTest {
             long retained = PlatformDependent.usedDirectMemory() - before;
             assertThat(retained)
                 .as("the bodies of %d rejected requests of 512 KiB sent to %s must not stay in direct memory (%d bytes retained)", requests, path, retained)
-                .isLessThan(12L * 1024 * 1024);
+                .isLessThan(5L * 1024 * 1024);
         }
     }
 

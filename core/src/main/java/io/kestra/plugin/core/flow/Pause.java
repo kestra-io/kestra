@@ -61,8 +61,8 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: before_approval
-                    type: io.kestra.plugin.core.debug.Return
-                    format: Output data that needs to be validated by a human
+                    type: io.kestra.plugin.core.log.Log
+                    message: Output data that needs to be validated by a human
 
                   - id: pause
                     type: io.kestra.plugin.core.flow.Pause
@@ -75,8 +75,8 @@ import lombok.experimental.SuperBuilder;
                       - echo "Manual approval received! Continuing the execution..."
 
                   - id: post_resume
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
                 """
         ),
         @Example(
@@ -151,8 +151,8 @@ import lombok.experimental.SuperBuilder;
                     behavior: WARN
 
                   - id: post_resume
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
                 """
         )
     }
@@ -188,7 +188,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Schema(
         title = "Inputs to be passed to the execution when it's resumed",
-        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task."
+        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. Defaults and descriptions can use Pebble expressions referencing the paused execution's inputs and earlier task outputs. Users can override the evaluated defaults before resuming. You can access those values in downstream tasks using the `onResume` output of the Pause task."
     )
     @PluginProperty
     private List<@Valid Input<?>> onResume;

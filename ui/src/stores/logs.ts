@@ -61,7 +61,7 @@ export interface LogsDownloadResult {
 /** A log line as the UI holds it: the server fields, plus the display index the log views assign. */
 export type Log = LogEntry & {index?: number}
 
-export const useLogsStore = defineStore("logs", () => {
+function setupLogsStore() {
     const logs = ref<Log[]>()
     const total = ref(0)
     const paginationType = ref<"OFFSET" | "CURSOR">("OFFSET")
@@ -251,4 +251,10 @@ export const useLogsStore = defineStore("logs", () => {
         downloadLogs,
         levelCounts,
     }
-})
+}
+
+export const useLogsStore = defineStore("logs", setupLogsStore)
+
+export function useScopedLogsStore(scope: string) {
+    return defineStore(`logs-${scope}`, setupLogsStore)()
+}

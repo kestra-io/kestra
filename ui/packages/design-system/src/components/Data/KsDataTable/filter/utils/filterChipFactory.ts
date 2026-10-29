@@ -90,6 +90,14 @@ export const createCustomRangeFilter = (
         meta,
     )
 
+export const createNumberRangeFilter = (
+    key: string,
+    config: FilterKeyConfig,
+    min: string,
+    max: string,
+): AppliedFilter =>
+    createAppliedFilter(key, config, Comparators.BETWEEN, [min, max], `${min} - ${max}`, keyOfComparator(Comparators.BETWEEN))
+
 export const processFieldValue = (
     config: FilterKeyConfig,
     params: DecodedParam[],

@@ -29,8 +29,26 @@ const meta: Meta<typeof KsUpload> = {
 export default meta
 type Story = StoryObj<typeof KsUpload>
 
+export const Playground: Story = {
+    render: (args) => ({
+        components: {KsUpload, KsButton},
+        setup() {
+            return {args}
+        },
+        template: `
+            <div style="padding:24px;width:360px">
+                <ks-upload v-bind="args">
+                    <ks-button type="primary">Click to upload</ks-button>
+                </ks-upload>
+            </div>
+        `,
+    }),
+    args: {action: "#", accept: "", autoUpload: true, drag: false, multiple: false, limit: 5, showFileList: true},
+}
+
 /** Default upload button */
 export const Default: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsUpload, KsButton},
         template: `
@@ -50,6 +68,7 @@ export const Default: Story = {
 
 /** Drag and drop upload area */
 export const DragAndDrop: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsUpload},
         template: `
@@ -73,6 +92,7 @@ export const DragAndDrop: Story = {
 
 /** With file list and limit */
 export const WithFileList: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsUpload, KsButton},
         setup() {
@@ -97,6 +117,7 @@ export const WithFileList: Story = {
 
 /** Without file list display */
 export const NoFileList: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsUpload, KsButton},
         template: `
@@ -111,6 +132,7 @@ export const NoFileList: Story = {
 
 /** Accept specific file types */
 export const AcceptTypes: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsUpload, KsButton},
         template: `

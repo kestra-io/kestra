@@ -32,7 +32,7 @@
                     />
                     <div class="delete-container">
                         <button @click="removeItem(index)" class="remove-entry">
-                            {{ te(`no_code.remove.${root}`) ? $t(`no_code.remove.${root}`) : $t('no_code.remove.default') }} <DeleteOutline />
+                            {{ te(`no_code.remove.${root}`) ? $t(`no_code.remove.${root}`) : $t('no_code.remove.default') }} <Delete />
                         </button>
                     </div>
                 </template>
@@ -61,8 +61,8 @@
                         :disabled
                     />
                 </KsCol>
-                <KsCol :span="2" class="delete">
-                    <DeleteOutline @click="removeItem(index)" />
+                <KsCol :span="2" class="col align-self-center delete">
+                    <Delete @click="removeItem(index)" />
                 </KsCol>
             </KsRow>
         </template>
@@ -74,7 +74,7 @@
     import {computed, ref, watch, nextTick, onBeforeUnmount} from "vue"
     import {rowKey, debounce} from "@kestra-io/design-system"
     import {useI18n} from "vue-i18n"
-    import {DeleteOutline} from "../../utils/icons"
+    import {Delete} from "../../utils/icons"
 
     import InputText from "../inputs/InputText.vue"
     import TaskExpression from "./TaskExpression.vue"
@@ -194,9 +194,8 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
+<style scoped src="../../styles/code.css" />
+<style scoped>
 .task-container{
     margin-bottom: 1rem;
 }

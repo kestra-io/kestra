@@ -1,11 +1,14 @@
 <template>
     <div class="multi-select-panel">
         <div class="panel-header">
-            <div v-if="props.searchable" class="search-section">
+            <div class="search-section">
                 <KsInput
+                    ref="searchInput"
                     v-model="searchQuery"
-                    size="default"
+                    size="small"
+                    borderless
                     clearable
+                    @keydown.enter="(event: KeyboardEvent) => !event.isComposing && selectVisibleOptions()"
                     :placeholder="$t('filter.search options')"
                     :prefixIcon="Magnify"
                 />
@@ -70,6 +73,12 @@
                                     @click="handleOptionChange(group.options[0].value, !modelValue.includes(group.options[0].value))"
                                 >
                                     <KsExecutionStatus :status="group.options[0].value" size="small" />
+                                    <KsBadge
+                                        v-if="group.options[0].count !== undefined"
+                                        :value="formatCount(group.options[0].count!)"
+                                        type="neutral"
+                                        inline
+                                    />
                                 </button>
                             </div>
                         </div>
@@ -106,6 +115,12 @@
                                         :style="{background: `var(${group.token})`}"
                                     />
                                     <span class="group-label-text">{{ $t(group.labelKey) }}</span>
+                                    <KsBadge
+                                        v-if="groupTotal(group) !== undefined"
+                                        :value="formatCount(groupTotal(group)!)"
+                                        type="neutral"
+                                        inline
+                                    />
                                     <span
                                         class="group-count"
                                         :class="{active: isGroupPartiallySelected(group) || isGroupFullySelected(group)}"
@@ -134,6 +149,12 @@
                                         <KsExecutionStatus
                                             :status="option.value"
                                             size="small"
+                                        />
+                                        <KsBadge
+                                            v-if="option.count !== undefined"
+                                            :value="formatCount(option.count!)"
+                                            type="neutral"
+                                            inline
                                         />
                                     </div>
                                     <KsCheckbox
@@ -166,6 +187,12 @@
                 >
                     <div class="option-content">
                         <span class="option-label">{{ option.label }}</span>
+                        <KsBadge
+                            v-if="option.count !== undefined"
+                            :value="formatCount(option.count!)"
+                            type="neutral"
+                            inline
+                        />
                     </div>
                     <KsCheckbox
                         :modelValue="modelValue.includes(option.value)"
@@ -189,18 +216,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue"
+    import {computed, nextTick, onMounted, ref, watch} from "vue"
     import {Magnify, InformationOutline, ChevronDown} from "../utils/icons"
     import KsExecutionStatus from "../../../KsExecutionStatus/KsExecutionStatus.vue"
     import {resolveStateGroups, type ResolvedGroup} from "../utils/stateGroups"
+    import {formatCount} from "../utils/helpers"
+    import type {FilterValue} from "../utils/filterTypes"
 
     const props = defineProps<{
         label?: string;
         filterKey?: string;
         modelValue: string[];
-        searchable?: boolean;
         placeholder?: string;
-        options: {value: string; label: string}[];
+        options: FilterValue[];
         /** When true, emit `update:search` instead of filtering options locally — parent reloads via valueProvider. */
         serverSideSearch?: boolean;
     }>()
@@ -213,6 +241,9 @@
     }>()
 
     const searchQuery = ref("")
+    const searchInput = ref<{focus: () => void} | null>(null)
+
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
     const expandedGroups = ref<Set<string>>(new Set())
 
     watch(searchQuery, (value) => {
@@ -282,6 +313,15 @@
         emits("update:modelValue", [...values])
     }
 
+    // Matched locally even with server-side search, so Enter never acts on a list the reload has not replaced yet.
+    const selectVisibleOptions = () => {
+        const query = searchQuery.value.trim().toLowerCase()
+        if (!query) return
+        const visible = (isStateFilter.value ? visibleGroups.value.flatMap(group => group.options) : props.options)
+            .filter(option => option.label.toLowerCase().includes(query) || option.value.toLowerCase().includes(query))
+        emits("update:modelValue", [...new Set([...props.modelValue, ...visible.map(option => option.value)])])
+    }
+
     const handleDeselectAll = () => {
         const targets = isStateFilter.value ? props.options : filteredOptions.value
         const values = new Set(props.modelValue)
@@ -305,6 +345,11 @@
         expandedGroups.value = next
     }
 
+    const groupTotal = (group: ResolvedGroup) => {
+        const counted = group.options.filter(o => o.count !== undefined)
+        return counted.length ? counted.reduce((sum, o) => sum + (o.count ?? 0), 0) : undefined
+    }
+
     const groupSelectedCount = (group: ResolvedGroup) =>
         group.options.filter(o => props.modelValue.includes(o.value)).length
 
@@ -323,14 +368,14 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .multi-select-panel {
     height: fit-content;
     max-height: 360px;
     display: flex;
     flex-direction: column;
 
-    .panel-header {
+    & .panel-header {
         border-bottom: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;
@@ -338,19 +383,19 @@
         z-index: 1;
         background-color: var(--ks-bg-surface);
 
-        .search-section {
-            padding: 1rem;
-            padding-bottom: 0.5rem;
+        & .search-section {
+            padding: var(--ks-spacing-2) var(--ks-spacing-4);
+            border-bottom: 1px solid var(--ks-border-default);
         }
 
-        .controls-section {
+        & .controls-section {
             display: flex;
             align-items: center;
             gap: 0;
             padding: var(--ks-spacing-2) var(--ks-spacing-4);
             margin-bottom: var(--ks-spacing-1);
 
-            .select-all-btn {
+            & .select-all-btn {
                 background: none;
                 border: none;
                 padding: 0;
@@ -360,21 +405,21 @@
                 flex: 1;
                 font-family: inherit;
 
-                .select-all-box {
+                & .select-all-box {
                     pointer-events: none;
                 }
 
-                :deep(.kel-checkbox__label) {
+                & :deep(.kel-checkbox__label) {
                     font-size: var(--ks-font-size-xs);
                     color: var(--ks-text-secondary);
                 }
 
-                :deep(.kel-checkbox.is-checked .kel-checkbox__label) {
+                & :deep(.kel-checkbox.is-checked .kel-checkbox__label) {
                     color: var(--ks-text-primary);
                 }
             }
 
-            .clear-btn {
+            & .clear-btn {
                 background: none;
                 border: none;
                 padding: 0;
@@ -391,7 +436,7 @@
         }
     }
 
-    .options-list {
+    & .options-list {
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
@@ -401,7 +446,7 @@
             scrollbar-color: var(--ks-border-subtle) transparent;
         }
 
-        .option-item {
+        & .option-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -419,13 +464,14 @@
                 background-color: var(--ks-bg-hover-elevated);
             }
 
-            .option-content {
+            & .option-content {
                 display: flex;
                 align-items: center;
+                gap: var(--ks-spacing-2);
                 flex: 1;
                 min-width: 0;
 
-                .option-label {
+                & .option-label {
                     font-size: var(--ks-font-size-sm);
                     font-weight: 400;
                     word-break: break-word;
@@ -433,25 +479,25 @@
             }
         }
 
-        .no-options {
+        & .no-options {
             text-align: center;
             color: var(--ks-text-dim);
             font-size: var(--ks-font-size-sm);
 
-            :deep(.kel-alert__icon) {
+            & :deep(.kel-alert__icon) {
                 color: var(--ks-text-info);
                 font-size: var(--ks-font-size-xl);
             }
         }
 
-        .state-group {
+        & .state-group {
             border-bottom: 1px solid var(--ks-border-subtle);
 
             &:last-child {
                 border-bottom: none;
             }
 
-            .group-row {
+            & .group-row {
                 display: flex;
                 align-items: center;
                 padding: var(--ks-spacing-1) var(--ks-spacing-2) var(--ks-spacing-1) var(--ks-spacing-3);
@@ -461,7 +507,7 @@
                 }
             }
 
-            .group-toggle {
+            & .group-toggle {
                 background: none;
                 border: none;
                 padding: var(--ks-spacing-1);
@@ -470,12 +516,12 @@
                 align-items: center;
                 flex-shrink: 0;
 
-                .group-toggle-box {
+                & .group-toggle-box {
                     pointer-events: none;
                 }
             }
 
-            .group-label-btn {
+            & .group-label-btn {
                 display: flex;
                 align-items: center;
                 gap: var(--ks-spacing-2);
@@ -495,14 +541,14 @@
                 }
             }
 
-            .group-swatch {
+            & .group-swatch {
                 width: 9px;
                 height: 9px;
                 border-radius: 3px;
                 flex-shrink: 0;
             }
 
-            .group-label-text {
+            & .group-label-text {
                 font-size: var(--ks-font-size-sm);
                 font-weight: 600;
                 color: var(--ks-text-primary);
@@ -510,7 +556,7 @@
                 min-width: 0;
             }
 
-            .group-count {
+            & .group-count {
                 font-size: var(--ks-font-size-xs);
                 font-weight: 600;
                 padding: 1px var(--ks-spacing-2);
@@ -526,7 +572,7 @@
                 }
             }
 
-            .group-expand-btn {
+            & .group-expand-btn {
                 width: 28px;
                 height: 28px;
                 flex-shrink: 0;
@@ -549,7 +595,7 @@
                     outline-offset: 1px;
                 }
 
-                .expand-icon {
+                & .expand-icon {
                     transition: transform 0.15s ease;
                 }
             }
@@ -562,10 +608,10 @@
                 transform: rotate(-90deg);
             }
 
-            .group-options {
+            & .group-options {
                 padding-bottom: var(--ks-spacing-1);
 
-                .option-item {
+                & .option-item {
                     padding-left: var(--ks-spacing-6);
                     border-bottom: 1px solid var(--ks-border-subtle);
 
@@ -577,7 +623,7 @@
         }
     }
 
-    :deep(.kel-input__inner) {
+    & :deep(.kel-input__inner) {
         font-size: var(--ks-font-size-sm);
     }
 }

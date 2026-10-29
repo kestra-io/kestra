@@ -145,6 +145,7 @@
     "update": "Aggiorna",
     "confirmation": "Conferma",
     "toast confirm": "Sei sicuro?",
+    "toast_message_column": "Messaggio",
     "common": {
       "back": "Indietro",
       "openInNewTab": "Apri in una nuova scheda"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "Crea un'esecuzione simile a partire dall'inizio",
     "replay latest revision": "Ripeti utilizzando l'ultima revisione",
     "replayed": "L'esecuzione è Ripetuta",
+    "reused_task_run": {
+      "label": "Riutilizzato",
+      "tooltip": "Non eseguito di nuovo in questa Execution. È stato eseguito il {date} e i suoi log e output provengono da quella esecuzione."
+    },
     "replay the execution": "Ripeti l'esecuzione {executionId} per il flow {flowId}",
     "prefill inputs": "Precompila",
     "current": "corrente",
@@ -509,9 +514,68 @@
       "invalid": "Errore del grafico",
       "invalid_description": "Si è verificato un errore durante il caricamento del grafico. Si prega di controllare il codice sorgente per errori.",
       "load_error": "Impossibile caricare il grafico della topologia. Riprova.",
+      "expand_subflow_error": "Impossibile espandere il subflow",
       "add-task": "Aggiungi task",
       "add-trigger": "Aggiungi trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Non eseguito",
+        "pick-first": "Scegli prima {loop}",
+        "picker-label": "Iterazione di {loop}",
+        "search-by-index": "Cerca per indice",
+        "all-iterations": "Tutte le iterazioni",
+        "iteration-index": "indice {index}",
+        "iteration-value-index": "{value} · indice {index}",
+        "previous-iteration": "Iterazione precedente",
+        "next-iteration": "Iterazione successiva",
+        "previous-page": "Pagina precedente",
+        "next-page": "Pagina successiva",
+        "failed-group": "Fallite · {count}",
+        "other-group": "Altre iterazioni",
+        "matching": "Corrispondenza",
+        "failure-forbidden": "Non hai accesso a questa iterazione.",
+        "failure-not-found": "Questa iterazione non esiste più.",
+        "failure-ambiguous": "Questo ciclo è stato eseguito più volte in questa esecuzione, quindi le sue iterazioni non sono distinguibili.",
+        "failure-not-located": "Impossibile individuare l'iterazione con errore.",
+        "failure-unknown": "Impossibile caricare le iterazioni.",
+        "scope": "Ambito",
+        "whole-execution": "Intera esecuzione",
+        "clear-scopes": "Cancella ambiti",
+        "jump-to-first-failure": "Vai al primo errore",
+        "loops-with-failures": "Cicli con errori",
+        "task-runs": "{runs} esecuzione | {runs} esecuzioni",
+        "task-runs-failed": "{runs} esecuzione · {failed} fallite | {runs} esecuzioni · {failed} fallite",
+        "retry": "Riprova",
+        "load-more": "Carica altro",
+        "retry-loading": "Riprova a caricare le iterazioni"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} di {total} fallite",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} fallite · {notStarted} non avviate su {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} di {total} completate",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} di {total} completate · {failed} fallite",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iterazione | {total} iterazioni",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Mostra task logs",
     "show task condition": "Mostra condizione del task",
@@ -522,7 +586,9 @@
     "execution_banner": {
       "revision": "Revisione {revision}",
       "attempts": "{count} tentativo | {count} tentativi",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks",
+      "searchable_values": "Valori ricercabili",
+      "more_searchable_values": "+{count} altri valori ricercabili"
     },
     "execution_mobile": {
       "failed_task": "Task non riuscita",
@@ -547,7 +613,13 @@
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Durata totale delle esecuzioni (in minuti)",
-    "last 48 hours": "ultime 48 ore",
+    "task runs": "Esecuzioni Task",
+    "task runs duration (in minutes)": "Durata totale dei Task Run (in minuti)",
+    "last 24 hours": "ultime 24 ore",
+    "last 7 days": "ultimi 7 giorni",
+    "last 30 days": "ultimi 30 giorni",
+    "since {date}": "dal {date}",
+    "usage period": "Periodo di utilizzo",
     "email": "Email",
     "password": "Password",
     "confirm password": "Conferma password",
@@ -562,11 +634,21 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variabili",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Nessun task di questo flow fornisce un artifact.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
+      "tasks": "nessun task | {count} task | {count} task",
+      "fullscreen": "Schermo intero",
+      "exit_fullscreen": "Esci dalla modalità a schermo intero"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Cerca Key o value...",
       "tasks_outputs": "Tasks outputs",
       "expression": "Espressione",
+      "searchable": "Cercabile",
       "tree": "Albero",
       "raw_json": "JSON grezzo",
       "select_prompt": "Seleziona una variabile per ispezionarne la value.",
@@ -936,7 +1018,6 @@
       }
     },
     "back_to_dashboard": "Torna alla dashboard",
-    "copy all logs": "Copia tutti i Log",
     "copy logs": "Copia logs",
     "fix_with_ai": "Correggi con AI",
     "download logs": "Scarica logs",
@@ -1398,6 +1479,12 @@
           "third": "Riavvia l'istanza di Kestra in modo che il segreto venga caricato."
         }
       },
+      "credentials": {
+        "label": "Credenziali",
+        "header": "Credenziali",
+        "title": "Autenticati una volta, riutilizzala in ogni task",
+        "message": "Nella Kestra Enterprise Edition, l'autenticazione server-to-server può essere configurata una volta come credenziale, in modo che i token di accesso vengano richiesti e aggiornati in fase di esecuzione invece di essere hardcoded nei tuoi flows. Le credenziali possono essere create a livello di tenant o namespace e referenziate da qualsiasi task."
+      },
       "apps": {
         "title": "Crea App personalizzate con Kestra",
         "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione.",
@@ -1476,6 +1563,10 @@
           "title": "Gestisci i Segreti in Modo Sicuro",
           "message": "In Kestra Enterprise Edition, puoi archiviare e controllare i segreti a livello di namespace, riducendo al minimo i rischi e garantendo che le credenziali di ogni team rimangano isolate. Grazie alla gerarchia nidificata, puoi anche configurare le credenziali in un namespace padre, che verranno ereditate da tutti i namespace figli. Il supporto per i gestori di segreti dedicati e le impostazioni di autorizzazione granulari a livello di namespace rafforzano ulteriormente la sicurezza e la conformità."
         },
+        "credentials": {
+          "title": "Limita le credenziali a questo namespace",
+          "message": "Nella Kestra Enterprise Edition, puoi configurare le credenziali a livello di namespace, così i task di questo namespace e dei suoi figli richiedono e aggiornano i token di accesso in fase di esecuzione invece di salvarli nei flow. Una credenziale definita in un namespace padre viene ereditata da tutti i namespace figli."
+        },
         "assets": {
           "title": "Centralizza la gestione delle risorse",
           "message": "Nella Kestra Enterprise Edition, Assets mantiene un inventario aggiornato delle risorse con cui i tuoi workflow interagiscono. Queste risorse possono essere tabelle di database, macchine virtuali, file o qualsiasi sistema esterno con cui lavori."
@@ -1487,6 +1578,11 @@
         "policies": {
           "title": "Applicare le Regole di Governance in questo Namespace",
           "message": "In Kestra Enterprise Edition, le politiche ti consentono di definire regole che si applicano a ogni flow in questo namespace e ai suoi figli — iniettare impostazioni predefinite condivise, limitare i values delle proprietà, bloccare i plugin e richiedere labels di conformità, con ogni modifica completamente visibile agli autori dei flow."
+        },
+        "reusable-inputs": {
+          "label": "Input Riutilizzabili",
+          "title": "Definisci gli Input una Volta, Riutilizzali Ovunque",
+          "message": "Nella Kestra Enterprise Edition, gli input riutilizzabili ti permettono di definire una volta un gruppo con nome di input tipizzati a livello di namespace e di referenziarlo in qualsiasi flow. Un set in un namespace padre è disponibile per i namespace figli, così i team condividono le stesse definizioni di input invece di ripeterle in ogni flow."
         },
         "history": {
           "title": "Gestisci la Cronologia delle Revisioni in un Unico Luogo",
@@ -1744,7 +1840,18 @@
       "compact": "Vista predefinita",
       "compact_details": "Mostra i task logs in una vista compatta raggruppata per ogni task",
       "fullscreen": "Logs a schermo intero",
-      "exit_fullscreen": "Esci dalla modalità a schermo intero"
+      "exit_fullscreen": "Esci dalla modalità a schermo intero",
+      "loop": {
+        "this-execution": "Questa esecuzione",
+        "with-iterations": "Con le iterazioni del loop",
+        "batch-range": "Iterazioni fallite {from}–{to} di {total}",
+        "empty-title": "Nessun log corrispondente",
+        "empty-description": "Nessun log corrisponde al livello selezionato in questa esecuzione o nelle sue iterazioni del loop fallite. Abbassa il livello per vederne di più.",
+        "scope-to": "Limita il grafo e i log a {scope}",
+        "show-in-overview": "Mostra nella panoramica",
+        "show-in-overview-for": "Mostra {scope} nella panoramica",
+        "mode-label": "Origine dei log"
+      }
     },
     "execution_deletion": {
       "logs": "Elimina logs",
@@ -2115,11 +2222,8 @@
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "others": "Altri",
       "viewAll": "Vedi tutti",
-      "export": "Esporta",
-      "exportEmpty": "Questo grafico non ha dati da esportare.",
       "exportTo": {
-        "csv": "Esporta in CSV",
-        "ion": "Esporta in ION"
+        "csv": "Esporta in CSV"
       },
       "ignoredFilters": "Il filtro {filters} non si applica a questo grafico. | I filtri {filters} non si applicano a questo grafico.",
       "show_all_statuses": "Mostra tutti gli stati",

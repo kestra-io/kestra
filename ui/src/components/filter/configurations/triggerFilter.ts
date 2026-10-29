@@ -32,7 +32,6 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         ],
                         valueType: "multi-select" as const,
                         valueProvider: namespaceValueProvider(),
-                        searchable: true,
                     },
                 ] : []) as FilterConfiguration["keys"],
                 ...(routeFamily(route.name) !== "flows/update" ? [{
@@ -108,7 +107,6 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.ENDS_WITH,
                     ],
                     valueType: "text",
-                    searchable: true,
                 },
                 {
                     key: "triggerState",

@@ -36,6 +36,26 @@ class SetTest {
     TestRunContextFactory runContextFactory;
 
     @Test
+    void shouldKeepPebbleExpressionWhenRenderedValueContainsOne() throws Exception {
+        var namespaceId = "io.kestra." + IdUtils.create();
+        var runContext = this.runContextFactory.of(
+            namespaceId, Map.of("inputs", Map.of("payload", "{{ 1 + 1 }}"))
+        );
+
+        var set = Set.builder()
+            .id(Set.class.getSimpleName())
+            .type(Set.class.getName())
+            .namespace(Property.ofValue(namespaceId))
+            .key(Property.ofValue("test-key"))
+            .value(Property.ofExpression("{{ inputs.payload }}"))
+            .build();
+
+        set.run(runContext);
+
+        assertThat(runContext.namespaceKv(namespaceId).getValue("test-key").orElseThrow().value()).isEqualTo("{{ 1 + 1 }}");
+    }
+
+    @Test
     void shouldSetKVGivenNoNamespace() throws Exception {
         // Given
         Set set = Set.builder()

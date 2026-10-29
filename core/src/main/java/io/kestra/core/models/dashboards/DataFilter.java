@@ -39,6 +39,7 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
     @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     private String type;
 
+    @NotNull
     private Map<String, @Valid C> columns;
 
     @Setter

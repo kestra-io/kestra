@@ -154,6 +154,7 @@
     const pickerVisible = ref(false)
     const pickerTargetIndex = ref<number | undefined>(undefined)
     const pickerCurrentRef = ref<string | undefined>(undefined)
+    const pickerCurrent = ref<Implementation | undefined>(undefined)
 
     const pickerTitle = computed(() => t("block_editor.plugin_implementation.choose_title", {label: label.value}))
 
@@ -181,12 +182,13 @@
             return
         }
         pickerTargetIndex.value = index
+        pickerCurrent.value = current
         pickerCurrentRef.value = findBranchByType(branches.value, typeOf(current), current)?.ref
         pickerVisible.value = true
     }
 
     function onPickerSelect(branch: ImplementationBranch) {
-        commit(newImplementation(branch, branches.value), pickerTargetIndex.value)
+        commit(newImplementation(branch, branches.value, pickerCurrent.value), pickerTargetIndex.value)
         pickerVisible.value = false
     }
 

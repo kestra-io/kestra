@@ -10,6 +10,7 @@ const P = "io.kestra.plugin.ai.provider.";
 const T = "io.kestra.plugin.ai.tool.";
 const R = "io.kestra.plugin.ai.retriever.";
 const O = "io.kestra.plugin.ai.domain.";
+const D = "io.kestra.plugin.core.dashboard.";
 
 const definitions: Record<string, Schema> = {
     [`${P}GoogleGemini`]: {
@@ -73,6 +74,42 @@ const definitions: Record<string, Schema> = {
         },
         required: ["endpoint"],
     },
+    [`${D}chart.Table_Triggers`]: {
+        type: "object",
+        properties: {
+            type: {const: `${D}chart.Table`},
+            id: {type: "string"},
+            chartOptions: {type: "object", properties: {displayName: {type: "string"}}},
+            data: {$ref: `#/definitions/${D}data.Triggers`},
+        },
+        required: ["id", "data"],
+    },
+    [`${D}chart.Table_Executions`]: {
+        type: "object",
+        properties: {
+            type: {const: `${D}chart.Table`},
+            id: {type: "string"},
+            chartOptions: {type: "object", properties: {displayName: {type: "string"}}},
+            data: {$ref: `#/definitions/${D}data.Executions`},
+        },
+        required: ["id", "data"],
+    },
+    [`${D}data.Triggers`]: {
+        type: "object",
+        properties: {
+            type: {const: `${D}data.Triggers`},
+            columns: {type: "object", additionalProperties: {type: "object"}},
+        },
+        required: ["columns"],
+    },
+    [`${D}data.Executions`]: {
+        type: "object",
+        properties: {
+            type: {const: `${D}data.Executions`},
+            columns: {type: "object", additionalProperties: {type: "object"}},
+        },
+        required: ["columns"],
+    },
 };
 
 const meta: Meta<typeof TaskPluginImplementation> = {
@@ -110,6 +147,7 @@ const providerSchema = {anyOf: [{$ref: `#/definitions/${P}GoogleGemini`}, {$ref:
 const toolsSchema = {type: "array", items: {anyOf: [{$ref: `#/definitions/${T}TavilyWebSearch`}, {$ref: `#/definitions/${T}KestraFlow`}]}} as Schema;
 const observabilitySchema = {$ref: `#/definitions/${O}LangfuseObservability`} as Schema;
 const contentRetrieversSchema = {type: "array", items: {anyOf: [{$ref: `#/definitions/${R}EmbeddingStoreRetriever`}]}} as Schema;
+const chartsSchema = {type: "array", items: {anyOf: [{$ref: `#/definitions/${D}chart.Table_Triggers`}, {$ref: `#/definitions/${D}chart.Table_Executions`}]}} as Schema;
 
 // App markup uses `data-test`, testing-library's `getByTestId` reads `data-testid` — the story's
 // own `<pre data-testid="result">` is the only element meant to be queried that way.
@@ -248,5 +286,37 @@ export const UnresolvableType: Story = {
 
         const result = canvas.getByTestId("result");
         expect(JSON.parse(result.textContent ?? "null")).toEqual({type: `${P}Groq`, modelName: "llama-3.3-70b-versatile"});
+    },
+};
+
+export const ChangeDataSource: Story = {
+    render: renderWithResult,
+    args: {
+        modelValue: [
+            {
+                id: "next_executions",
+                type: `${D}chart.Table`,
+                chartOptions: {displayName: "Next executions"},
+                data: {type: `${D}data.Triggers`, columns: {nextExec: {field: "NEXT_EXECUTION_DATE"}}},
+            },
+        ],
+        schema: chartsSchema,
+        required: false,
+        root: "charts",
+    },
+    async play({canvasElement}) {
+        await waitFor(() => expect(byTest(canvasElement, "plugin-implementation-change")).toBeTruthy());
+        await fireEvent.click(byTest(canvasElement, "plugin-implementation-change")!);
+        await fireEvent.click(await within(document.body).findByRole("option", {name: /Table \(Executions\)/}));
+
+        const result = within(canvasElement).getByTestId("result");
+        await waitFor(() => expect(JSON.parse(result.textContent ?? "null")).toEqual([
+            {
+                id: "next_executions",
+                type: `${D}chart.Table`,
+                chartOptions: {displayName: "Next executions"},
+                data: {type: `${D}data.Executions`},
+            },
+        ]));
     },
 };

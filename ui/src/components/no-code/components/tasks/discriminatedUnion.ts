@@ -154,10 +154,11 @@ export function branchDisplayName(branch: ImplementationBranch, branches: Implem
     return qualifier ? `${name} (${qualifier})` : name
 }
 
-/** The value a freshly picked branch starts from: its `type`, and for an ambiguous branch the nested implementation that tells it apart. */
-export function newImplementation(branch: ImplementationBranch, branches: ImplementationBranch[]): Record<string, unknown> {
+/** The value a freshly picked branch starts from: its `type`, and for an ambiguous branch the nested implementation that tells it apart, on top of `current` when that is already the same class. */
+export function newImplementation(branch: ImplementationBranch, branches: ImplementationBranch[], current?: Record<string, unknown>): Record<string, unknown> {
     if (!isAmbiguous(branch, branches)) return {type: branch.type}
     return {
+        ...(current?.type === branch.type ? current : {}),
         type: branch.type,
         ...Object.fromEntries(Object.entries(branch.nested).map(([key, nestedType]) => [key, {type: nestedType}])),
     }

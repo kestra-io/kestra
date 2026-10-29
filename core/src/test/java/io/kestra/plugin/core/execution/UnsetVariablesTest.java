@@ -1,10 +1,13 @@
 package io.kestra.plugin.core.execution;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -95,6 +98,43 @@ class UnsetVariablesTest {
         Execution execution = task.update(execution(), runContextFactory.of(Map.of()));
 
         assertThat(execution.getVariables()).containsOnlyKeys("first", "second");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "missing", "missing.child" })
+    void shouldIgnoreMissingVariableWhenExecutionVariablesAreNull(String key) throws Exception {
+        UnsetVariables task = JacksonMapper.ofJson().readValue(
+            """
+                {
+                  "id": "unset",
+                  "type": "io.kestra.plugin.core.execution.UnsetVariables",
+                  "ignoreMissing": true,
+                  "variables": ["%s"]
+                }""".formatted(key),
+            UnsetVariables.class
+        );
+
+        Execution execution = task.update(execution().withVariables(null), runContextFactory.of(Map.of()));
+
+        assertThat(execution.getVariables()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "missing", "missing.child" })
+    void shouldFailWithMissingVariableWhenExecutionVariablesAreNull(String key) throws JsonProcessingException {
+        UnsetVariables task = JacksonMapper.ofJson().readValue(
+            """
+                {
+                  "id": "unset",
+                  "type": "io.kestra.plugin.core.execution.UnsetVariables",
+                  "variables": ["%s"]
+                }""".formatted(key),
+            UnsetVariables.class
+        );
+
+        assertThatThrownBy(() -> task.update(execution().withVariables(null), runContextFactory.of(Map.of())))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Variable '%s' not found and `ignoreMissing` is false", key);
     }
 
     @Test

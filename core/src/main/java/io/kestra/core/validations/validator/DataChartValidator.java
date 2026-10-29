@@ -42,6 +42,9 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         var columns = MapUtils.emptyOnNull(dataChart.getData().getColumns());
         Set<String> dataColumns = columns.keySet();
+        if (columns.isEmpty()) {
+            violations.add("`data.columns` is required and must declare at least one column.");
+        }
         if (dataChart.getChartOptions() != null) {
             List<String> neededColumns = dataChart.getChartOptions().neededColumns();
             neededColumns.forEach(column ->

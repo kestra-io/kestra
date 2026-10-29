@@ -35,7 +35,9 @@ public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIVa
         List<String> violations = new ArrayList<>();
 
         var column = dataChart.getData().getColumns();
-        if (column != null) {
+        if (column == null) {
+            violations.add("`data.columns` is required.");
+        } else {
             if (column.getAgg() == null) {
                 violations.add("Agg on column is required.");
             }

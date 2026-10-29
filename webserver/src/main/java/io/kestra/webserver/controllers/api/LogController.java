@@ -2,7 +2,9 @@ package io.kestra.webserver.controllers.api;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.event.Level;
@@ -11,6 +13,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.LogDataStoreInterface.KeyedLog;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
@@ -44,6 +47,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import reactor.core.scheduler.Schedulers;
 
 @Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogDataStoreInterface.class)
@@ -159,26 +163,50 @@ public class LogController {
         String subscriberId = UUID.randomUUID().toString();
         List<QueryFilter> effectiveFilters = buildExecutionFilters(executionId, filters);
 
-        Flux<Event<FollowLogEvent>> flux = Flux.<Event<FollowLogEvent>> create(emitter ->
-        {
+        Flux<Event<FollowLogEvent>> flux = Flux.concat(
             // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
-            emitter.next(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
-
+            Flux.just(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start")),
             // fetch repository first
-            logRepository.findAsync(tenantService.resolveTenant(), effectiveFilters)
-                .toStream()
-                .forEach(logEntry -> emitter.next(Event.of(FollowLogEvent.from(logEntry)).id("progress")));
-
+            history(tenantService.resolveTenant(), effectiveFilters)
+                .map(logEntry -> Event.of(FollowLogEvent.from(logEntry)).id("progress")),
             // consume in realtime — pass the same filter list, the streaming service uses
             // the FollowLogEventMatcher (backed by Searchable<FollowLogEvent>) to apply it
-            logStreamingService.registerSubscriber(executionId, subscriberId, emitter, effectiveFilters);
-        }, FluxSink.OverflowStrategy.BUFFER)
+            Flux.<Event<FollowLogEvent>> create(
+                emitter -> logStreamingService.registerSubscriber(executionId, subscriberId, emitter, effectiveFilters),
+                FluxSink.OverflowStrategy.BUFFER
+            )
+        )
             .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
 
         return sseConnectionMetrics.track(
             flux, "logs",
             () -> logStreamingService.unregisterSubscriber(executionId, subscriberId)
         );
+    }
+
+    // findAsync pushes every row into its buffer as soon as it is read, whatever the client asked for, so the replay
+    // goes through the keyset pages instead: one page is read only when the client has consumed the previous one
+    private Flux<LogEntry> history(String tenantId, List<QueryFilter> filters) {
+        return Flux.<List<KeyedLog>, Optional<KeyedLog>> generate(Optional::empty, (last, sink) ->
+        {
+            List<KeyedLog> page = logRepository.findAfterWithoutAcl(
+                tenantId,
+                filters,
+                last.map(keyed -> keyed.log().getTimestamp()).orElse(Instant.EPOCH),
+                last.map(KeyedLog::key).orElse(null),
+                PageableUtils.MAX_PAGE_SIZE
+            );
+            if (!page.isEmpty()) {
+                sink.next(page);
+            }
+            if (page.size() < PageableUtils.MAX_PAGE_SIZE) {
+                sink.complete();
+            }
+            return page.isEmpty() ? last : Optional.of(page.getLast());
+        })
+            .concatMapIterable(page -> page, 1)
+            .map(KeyedLog::log)
+            .subscribeOn(Schedulers.boundedElastic());
     }
 
     /**

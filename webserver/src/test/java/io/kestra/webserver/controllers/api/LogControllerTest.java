@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,6 +25,7 @@ import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
+import io.kestra.webserver.utils.PageableUtils;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -441,6 +443,41 @@ class LogControllerTest {
             .containsExactlyInAnyOrderElementsOf(
                 testCase.expectedLogs().stream().map(LogEntry::getMessage).toList()
             );
+    }
+
+    @Test
+    void followLogsFromExecutionShouldReplayEveryHistoricalLogAcrossPages() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        String executionId = IdUtils.create();
+        // more than two pages, seven logs per millisecond a microsecond apart, as the worker timestamps them
+        Instant start = Instant.parse("2026-10-27T10:00:00Z");
+        List<LogEntry> logs = IntStream.range(0, PageableUtils.MAX_PAGE_SIZE * 2 + 500)
+            .mapToObj(
+                i -> LogEntry.builder()
+                    .tenantId(tenant)
+                    .namespace("io.kestra.unittest")
+                    .flowId("full")
+                    .executionId(executionId)
+                    .taskId("task")
+                    .level(Level.INFO)
+                    .timestamp(start.plusMillis(i / 7).plusNanos(i % 7 * 1_000L))
+                    .message("log " + i)
+                    .build()
+            )
+            .toList();
+        logRepository.saveBatch(logs);
+
+        List<String> replayed = logController.followLogsFromExecution(executionId, null)
+            .filter(event -> "progress".equals(event.getId()))
+            .take(logs.size())
+            .map(event -> event.getData().message())
+            .collectList()
+            .block(Duration.ofSeconds(30));
+
+        assertThat(replayed)
+            .hasSize(logs.size())
+            .containsExactlyInAnyOrderElementsOf(logs.stream().map(LogEntry::getMessage).toList());
     }
 
     private void seedLogs(String tenant, FiltersTestCase testCase) {

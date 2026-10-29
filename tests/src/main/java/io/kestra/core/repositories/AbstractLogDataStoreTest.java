@@ -556,6 +556,37 @@ public abstract class AbstractLogDataStoreTest {
     }
 
     @Test
+    void findAfterWithoutAcl_paginatesAcrossMicrosecondsOfTheSameMillisecond() {
+        // Given: logs a microsecond apart inside one millisecond, as the worker timestamps them. H2 keeps the
+        // timestamp column to the millisecond, so seeking from the log's own timestamp would skip the rest of it.
+        String tenant = IdUtils.create();
+        Instant at = Instant.parse("2024-06-01T10:00:00.123Z");
+        logDataStore.saveBatch(
+            Stream.iterate(0, i -> i + 1).limit(7)
+                .map(i -> log(Level.INFO, "exec-micro").tenantId(tenant).timestamp(at.plusNanos(i * 1_000L)).message("m" + i).build())
+                .toList()
+        );
+
+        // When: pages of size 2 are read, each seeking strictly after the last row of the previous page
+        List<LogDataStoreInterface.KeyedLog> all = new ArrayList<>();
+        Instant afterTs = at.minusMillis(1);
+        String afterKey = null;
+        while (true) {
+            List<LogDataStoreInterface.KeyedLog> page = logDataStore.findAfterWithoutAcl(tenant, List.of(), afterTs, afterKey, 2);
+            all.addAll(page);
+            if (page.size() < 2) {
+                break;
+            }
+            LogDataStoreInterface.KeyedLog last = page.get(page.size() - 1);
+            afterTs = last.log().getTimestamp();
+            afterKey = last.key();
+        }
+
+        // Then: every log comes back exactly once
+        assertThat(all).extracting(k -> k.log().getMessage()).containsExactlyInAnyOrder("m0", "m1", "m2", "m3", "m4", "m5", "m6");
+    }
+
+    @Test
     void findAsync_returnsNonNormalKindWhenExecutionIdFilter() {
         // Same NORMAL-kind-default exception as find(): an EXECUTION_ID filter always returns that execution's logs.
         List<LogEntry> results = logDataStore.findAsync(kindTenant, List.of(cond(Field.EXECUTION_ID, Op.EQUALS, "exec-loop-kind"))).collectList().block();

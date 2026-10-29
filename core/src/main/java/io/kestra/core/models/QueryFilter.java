@@ -498,7 +498,7 @@ public record QueryFilter(
         RESOURCES("resources") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.IN);
+                return List.of(Op.EQUALS, Op.IN);
             }
         },
         @JsonProperty("details")

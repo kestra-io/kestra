@@ -466,16 +466,17 @@ button.playground-button {
     display: inline-flex;
     align-items: center;
     gap: var(--ks-spacing-1);
-    height: 1.25rem;
+    box-sizing: border-box;
+    height: 1.0625rem;
     padding: 0 var(--ks-spacing-2);
-    border-radius: var(--ks-radius-base);
-    --chip-tint: color-mix(in srgb, var(--chip-color) 16%, transparent);
+    border-radius: var(--ks-radius-sm);
+    --chip-tint: color-mix(in srgb, var(--chip-color) 10%, transparent);
     color: var(--chip-color);
     line-height: 1;
 }
 
 .status-chip__text {
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-2xs);
     font-weight: var(--ks-font-weight-semibold);
     white-space: nowrap;
 }
@@ -484,13 +485,14 @@ button.playground-button {
     display: inline-flex;
     align-items: center;
     gap: var(--ks-spacing-1);
-    height: 1.25rem;
+    box-sizing: border-box;
+    height: 1.0625rem;
     padding: 0 var(--ks-spacing-2);
     border: none;
-    border-radius: var(--ks-radius-base);
-    --chip-tint: color-mix(in srgb, var(--ks-text-link) 16%, transparent);
-    color: var(--ks-text-link);
-    font-size: var(--ks-font-size-xs);
+    border-radius: var(--ks-radius-sm);
+    --chip-tint: color-mix(in srgb, var(--ks-status-running) 10%, transparent);
+    color: var(--ks-status-running);
+    font-size: var(--ks-font-size-2xs);
     font-weight: var(--ks-font-weight-semibold);
     line-height: 1;
     white-space: nowrap;
@@ -498,7 +500,7 @@ button.playground-button {
 }
 
 .artifact-badge__icon {
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-lg);
 }
 
 .retry-marker {
@@ -509,7 +511,7 @@ button.playground-button {
     border-radius: 50%;
     background-color: var(--ks-bg-surface);
     color: var(--ks-status-warning);
-    font-size: var(--ks-font-size-sm);
+    font-size: var(--ks-font-size-lg);
 }
 
 .loop-runs {

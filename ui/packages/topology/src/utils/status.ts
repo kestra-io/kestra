@@ -18,14 +18,14 @@ export interface StatusStyle {
 
 const SUCCESS: StatusStyle = {
     icon: CheckCircleOutline,
-    textVar: "--ks-text-success",
+    textVar: "--ks-status-success",
     bg: "var(--ks-topology-bg-success)",
     border: "var(--ks-border-success)",
 }
 
 const ERROR: StatusStyle = {
     icon: CloseCircleOutline,
-    textVar: "--ks-text-error",
+    textVar: "--ks-status-error",
     bg: "var(--ks-topology-bg-errors)",
     border: "var(--ks-topology-border-errors)",
 }

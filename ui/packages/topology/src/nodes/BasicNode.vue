@@ -17,7 +17,7 @@
         <template v-else>
             <div
                 class="node-core"
-                :style="nodeStyle"
+                :style="cardStyle"
                 :class="[classes, {'node-core--focused': focused, 'node-core--with-footer': $slots.footer}]"
             >
                 <div class="main-content">
@@ -199,6 +199,8 @@
         }
     })
 
+    const cardStyle = computed(() => (isExecution.value ? {borderColor: statusStyle.value?.border} : nodeStyle.value))
+
     const node = computed(() => {
         return props.data.node?.plugin ?? props.data.node?.task ?? props.data.node?.trigger ?? null
     })
@@ -365,10 +367,37 @@
         }
     }
 
-    .node-core--execution .main-content {
-        width: 273px;
-        height: 52px;
-        padding-bottom: var(--ks-spacing-1);
+    .node-core.node-core--execution {
+        width: 251px;
+        box-sizing: border-box;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2);
+        background-color: var(--ks-bg-surface);
+
+        .main-content {
+            width: auto;
+            height: 2.5rem;
+            padding: 0;
+        }
+
+        .icon {
+            border: none;
+            border-radius: var(--ks-radius-base);
+        }
+
+        .node-footer {
+            flex: none;
+            padding: 0;
+        }
+
+        .task-title {
+            font-weight: var(--ks-font-weight-semibold);
+            line-height: 1.34;
+        }
+
+        .node-subtitle {
+            line-height: 1.27;
+        }
     }
 
     .node-core--with-footer {

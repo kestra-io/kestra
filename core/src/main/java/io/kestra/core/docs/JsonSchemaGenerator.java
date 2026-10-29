@@ -112,20 +112,14 @@ public class JsonSchemaGenerator {
         return this.schemas(cls, false);
     }
 
-    // Only the flow schema gets this: the plugin schema keeps a top-level enum, which the no-code editor renders as a dropdown.
+    // Same shape as @TimezoneId, untyped branches the no-code editor renders as one select; the plugin schema keeps its top-level enum for the docs.
     private void acceptExpressionOnDynamicEnums(ObjectNode objectNode) {
         objectNode.findParents("enum").forEach(jsonNode ->
         {
             if (jsonNode instanceof ObjectNode oNode && oNode.path("$dynamic").asBoolean(false) && !oNode.has("anyOf")) {
                 ArrayNode anyOf = oNode.putArray("anyOf");
-                ObjectNode enumBranch = anyOf.addObject();
-                if (oNode.has("type")) {
-                    enumBranch.set("type", oNode.remove("type"));
-                }
-                enumBranch.set("enum", oNode.remove("enum"));
-                anyOf.addObject()
-                    .put("type", "string")
-                    .put("pattern", PEBBLE_EXPRESSION_PATTERN);
+                anyOf.addObject().set("enum", oNode.remove("enum"));
+                anyOf.addObject().put("pattern", PEBBLE_EXPRESSION_PATTERN);
             }
         });
     }

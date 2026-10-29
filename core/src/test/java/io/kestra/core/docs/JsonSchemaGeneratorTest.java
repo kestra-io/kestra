@@ -198,7 +198,13 @@ class JsonSchemaGeneratorTest {
         Helpers.runApplicationContext((applicationContext) ->
         {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
-            com.networknt.schema.Schema schema = SchemaRegistry.withDialect(Dialects.getDraft7()).getSchema(toolsJson(jsonSchemaGenerator.schemas(Flow.class)));
+            Map<String, Object> flowSchema = jsonSchemaGenerator.schemas(Flow.class);
+            com.networknt.schema.Schema schema = SchemaRegistry.withDialect(Dialects.getDraft7()).getSchema(toolsJson(flowSchema));
+
+            // untyped branches, or the no-code editor renders a type switch instead of a select
+            var definitions = (Map<String, Map<String, Object>>) flowSchema.get("definitions");
+            var anyOf = (List<Map<String, Object>>) properties(definitions.get(Log.class.getName())).get("level").get("anyOf");
+            assertThat(anyOf, everyItem(not(hasKey("type"))));
 
             assertThat(validate(schema, flowWithLogLevel("WARN")), is(empty()));
             assertThat(validate(schema, flowWithLogLevel("\"{{ vars.level }}\"")), is(empty()));

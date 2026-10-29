@@ -179,10 +179,11 @@
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
+        deleteRevision?: (revision: number) => Promise<unknown>,
         editRouteQuery?: boolean,
         canDelete?: boolean,
         highlight?: string
-    }>(), {editRouteQuery: true, canDelete: true})
+    }>(), {editRouteQuery: true, canDelete: true, deleteRevision: undefined})
 
     const revealHighlight = (editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined) => {
         if (!props.highlight) return
@@ -318,11 +319,15 @@
 
         toast.confirm(t("delete revision confirm", {revision}), async () => {
             try {
-                await flowStore.deleteRevision({
-                    namespace: route.params.namespace?.toString() || "",
-                    id: route.params.id?.toString() || "",
-                    revision: revision.toString(),
-                })
+                if (props.deleteRevision) {
+                    await props.deleteRevision(revision)
+                } else {
+                    await flowStore.deleteRevision({
+                        namespace: route.params.namespace?.toString() || "",
+                        id: route.params.id?.toString() || "",
+                        revision: revision.toString(),
+                    })
+                }
                 toast.success(t("revision deleted", {revision: revision.toString()}), t("deleted"))
                 emit("deleted", revision)
             } catch (error: unknown) {

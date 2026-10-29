@@ -1,5 +1,6 @@
 package io.kestra.core.test;
 
+import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,6 +16,8 @@ import io.kestra.core.validations.TenantId;
 import io.kestra.core.validations.TestSuiteValidation;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -64,28 +67,44 @@ public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSui
     @Builder.Default
     private boolean disabled = Boolean.FALSE;
 
+    @Min(1)
+    @ServerOwned
+    @Schema(description = "The revision of the test suite, bumped on every save.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Builder.Default
+    private Integer revision = 1;
+
+    @Hidden
+    @ServerOwned
+    @Builder.Default
+    private boolean last = true;
+
+    @Nullable
+    @ServerOwned
+    @Schema(description = "When this revision was saved.", accessMode = Schema.AccessMode.READ_ONLY)
+    private Instant updated;
+
+    @Nullable
+    @ServerOwned
+    @Schema(description = "The username of the user or service account that saved this revision.", accessMode = Schema.AccessMode.READ_ONLY)
+    private String updatedBy;
+
+    /** The current revision keeps the key it had before revisions existed, so stores need no key migration. */
     @Override
     @JsonIgnore
     public String uid() {
-        return IdUtils.fromParts(
-            tenantId,
-            namespace,
-            id
-        );
+        return last ? uidWithoutRevision() : IdUtils.fromParts(tenantId, namespace, id, String.valueOf(revision));
+    }
+
+    @JsonIgnore
+    public String uidWithoutRevision() {
+        return IdUtils.fromParts(tenantId, namespace, id);
     }
 
     public TestSuite update(final String newSource, final TestSuite newTestSuite) {
-        return new TestSuite(
-            newTestSuite.getId(),
-            this.tenantId,
-            newTestSuite.getDescription(),
-            newTestSuite.getNamespace(),
-            newTestSuite.getFlowId(),
-            newSource,
-            newTestSuite.getTestCases(),
-            newTestSuite.isDeleted(),
-            newTestSuite.isDisabled()
-        );
+        return newTestSuite.toBuilder()
+            .tenantId(this.tenantId)
+            .source(newSource)
+            .build();
     }
 
     public TestSuite disable() {

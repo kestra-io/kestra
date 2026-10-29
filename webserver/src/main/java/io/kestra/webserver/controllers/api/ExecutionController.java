@@ -105,6 +105,7 @@ import io.kestra.webserver.services.FileRendererService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.services.WebhookBodyService;
+import io.kestra.webserver.services.playground.PlaygroundService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -220,6 +221,9 @@ public class ExecutionController {
 
     @Inject
     private SseConnectionMetrics sseConnectionMetrics;
+
+    @Inject
+    private PlaygroundService playgroundService;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -1114,6 +1118,7 @@ public class ExecutionController {
                     try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
                         eventPublisher.publishEvent(CrudEvent.create(res.body()));
                     }
+                    playgroundService.onNewRun(res.body());
 
                     var executionUrl = executionUrl(finalCreateCommand.executionFullId());
                     if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
@@ -1649,10 +1654,10 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + processed.error());
         }
 
-        return HttpResponse.ok(
-            executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
-                .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"))
-        );
+        Execution replayed = executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"));
+        playgroundService.onNewRun(replayed);
+        return HttpResponse.ok(replayed);
     }
 
     private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId, @Nullable Actor actor)

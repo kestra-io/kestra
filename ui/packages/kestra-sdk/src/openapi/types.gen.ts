@@ -856,6 +856,7 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError =
     message: string;
     renderError?: boolean;
     path?: string;
+    detail?: string;
 };
 
 export type ExecutionControllerEvalResult = {

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import io.kestra.core.models.flows.Input;
@@ -16,6 +18,7 @@ import io.kestra.core.utils.PebbleUtil;
 import io.kestra.core.validations.TableInputValidation;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -32,6 +35,8 @@ import lombok.experimental.SuperBuilder;
 @EeOnly
 @TableInputValidation
 public class TableInput extends Input<List<?>> implements RenderableInput {
+    private static final Pattern CELL_PATH = Pattern.compile("^\\[(\\d+)](?:\\.(.+))?$");
+
     @Schema(
         title = "The typed columns of the table.",
         description = "Each column is a regular input declaration (e.g. `INT` with `min`/`max`, `STRING` with a `validator`) " +
@@ -78,6 +83,22 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
             .toList();
     }
 
+    /**
+     * Names the cell or row that {@code path} points to, as {@code row 2, column `cpus`: } for {@code id[1].cpus}, so a
+     * message read without the path still says where the error is. Empty when the path is about the whole table.
+     */
+    public String locationOf(@Nullable String path) {
+        if (path == null || !path.startsWith(getId())) {
+            return "";
+        }
+        Matcher cell = CELL_PATH.matcher(path.substring(getId().length()));
+        if (!cell.matches()) {
+            return "";
+        }
+        int row = Integer.parseInt(cell.group(1)) + 1;
+        return cell.group(2) == null ? "row %d: ".formatted(row) : "row %d, column `%s`: ".formatted(row, cell.group(2));
+    }
+
     public void validateSubmittedRows(List<?> rows, List<?> defaults) throws ConstraintViolationException {
         if (ListUtils.isEmpty(filters)) {
             return;
@@ -90,7 +111,7 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
                 filters.stream().filter(filter -> !filter.matches(cells)).findFirst().ifPresent(
                     filter -> violations.add(
                         ManualConstraintViolation.of(
-                            "row %d, column `%s`: it doesn't match the filter `%s %s`".formatted(row + 1, filter.column(), filter.operation(), filter.value()),
+                            "it doesn't match the filter `%s %s`".formatted(filter.operation(), filter.value()),
                             this,
                             TableInput.class,
                             getId() + "[" + row + "]." + filter.column(),

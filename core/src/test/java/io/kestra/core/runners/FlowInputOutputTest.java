@@ -66,6 +66,7 @@ import reactor.core.publisher.Mono;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 @MicronautTest
 class FlowInputOutputTest {
@@ -1568,6 +1569,9 @@ class FlowInputOutputTest {
                 "Invalid value for input `disks`. Cause: row 2, column `mountpoint`: it must match the pattern `^/.*`",
                 "Invalid value for input `disks`. Cause: row 3: expected an object"
             );
+        assertThat(values.getFirst().exceptions())
+            .extracting(InputOutputValidationException::getPath, InputOutputValidationException::getDetail)
+            .contains(tuple("disks[1].size_gb", "it must be less than `2048`"), tuple("disks[2]", "expected an object"));
     }
 
     @Test
@@ -1719,6 +1723,7 @@ class FlowInputOutputTest {
         assertThat(table.exceptions()).singleElement().satisfies(exception -> {
             assertThat(exception.getMessage()).contains("row 2, column `type`: it doesn't match the filter `IN [linux]`");
             assertThat(exception.getPath()).isEqualTo("components[1].type");
+            assertThat(exception.getDetail()).isEqualTo("it doesn't match the filter `IN [linux]`");
         });
     }
 

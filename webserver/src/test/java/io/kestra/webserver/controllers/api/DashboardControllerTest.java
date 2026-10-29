@@ -160,7 +160,7 @@ class DashboardControllerTest {
                     .id(IdUtils.create())
                     .namespace(namespace)
                     .flowId("flow")
-                    .state(State.of(state, List.of()))
+                    .state(new State(state))
                     .build()
             );
         }

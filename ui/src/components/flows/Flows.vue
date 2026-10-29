@@ -211,7 +211,7 @@
                 </KsTableColumn>
 
                 <KsTableColumn
-                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION)"
+                    v-else-if="colProp === 'state' && user?.hasAny(resource.EXECUTION) && canViewCharts"
                     prop="state"
                     :label="$t('execution statistics')"
                     className="row-graph"
@@ -357,6 +357,7 @@
     import {useFlowStore} from "../../stores/flow"
     import {useApiStore} from "../../stores/api"
     import {useAuthStore} from "override/stores/auth"
+    import {useCanViewDashboardCharts} from "../../composables/useCanViewDashboardCharts"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
@@ -493,6 +494,7 @@
     })
 
     const user = computed(() => authStore.user)
+    const canViewCharts = useCanViewDashboardCharts(() => props.namespace)
     const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value)
     const canCreate = computed(() => user?.value?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
     const routeNamespace = computed(() => route.query.namespace as string | undefined)

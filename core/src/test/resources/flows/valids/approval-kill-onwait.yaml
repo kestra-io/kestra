@@ -1,0 +1,10 @@
+id: approval-kill-onwait
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    onWait:
+      - id: wait
+        type: io.kestra.plugin.core.flow.Sleep
+        duration: PT30S

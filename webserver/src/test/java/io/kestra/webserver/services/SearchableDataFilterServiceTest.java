@@ -11,7 +11,7 @@ import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
-import io.kestra.core.searchable.SearchableOutputRepositoryInterface;
+import io.kestra.core.searchable.SearchableDataRepositoryInterface;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,12 +22,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class ExecutionOutputFilterServiceTest {
-    private final SearchableOutputRepositoryInterface repository = mock(SearchableOutputRepositoryInterface.class);
-    private final ExecutionOutputFilterService service = new ExecutionOutputFilterService(repository);
+class SearchableDataFilterServiceTest {
+    private final SearchableDataRepositoryInterface repository = mock(SearchableDataRepositoryInterface.class);
+    private final SearchableDataFilterService service = new SearchableDataFilterService(repository);
 
     private static QueryFilter outputs(Op operation, Object value) {
-        return QueryFilter.builder().field(Field.OUTPUTS).operation(operation).value(value).build();
+        return QueryFilter.builder().field(Field.SEARCHABLE_DATA).operation(operation).value(value).build();
     }
 
     private static QueryFilter idIn(String... ids) {
@@ -130,8 +130,8 @@ class ExecutionOutputFilterServiceTest {
     @Test
     void shouldFailWhenTooManyExecutionsMatch() {
         // Given
-        when(repository.findExecutionIds(eq("main"), anyString(), eq(Op.EQUALS), any(), eq(ExecutionOutputFilterService.MAX_EXECUTIONS + 1)))
-            .thenReturn(IntStream.rangeClosed(0, ExecutionOutputFilterService.MAX_EXECUTIONS).mapToObj(String::valueOf).toList());
+        when(repository.findExecutionIds(eq("main"), anyString(), eq(Op.EQUALS), any(), eq(SearchableDataFilterService.MAX_EXECUTIONS + 1)))
+            .thenReturn(IntStream.rangeClosed(0, SearchableDataFilterService.MAX_EXECUTIONS).mapToObj(String::valueOf).toList());
 
         // When / Then
         assertThatThrownBy(() -> service.resolve("main", List.of(outputs(Op.EQUALS, Map.of("output", "value")))))

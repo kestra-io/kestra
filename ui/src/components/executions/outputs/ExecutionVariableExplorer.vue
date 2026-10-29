@@ -277,6 +277,12 @@
             .map((output) => output.id),
     ))
 
+    const searchableInputIds = computed(() => new Set(
+        (executionsStore.flow?.inputs ?? [])
+            .filter((input) => input.searchable === true)
+            .map((input) => input.id),
+    ))
+
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
         if (!record) return []
         return Object.entries(record).map(([label, value]) => ({
@@ -434,7 +440,7 @@
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(triggerRecord(exec?.trigger), "trigger")},
-            {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
+            {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs").map((item) => ({...item, searchable: searchableInputIds.value.has(item.label)}))},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
             {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(flowOutputs.value, "outputs").map((item) => ({...item, searchable: searchableOutputIds.value.has(item.label)}))},
         ]
@@ -474,7 +480,10 @@
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const selectedFlowOutputId = ref<string>()
-    const selectedSearchable = computed(() => selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
+    const selectedFlowInputId = ref<string>()
+    const selectedSearchable = computed(() =>
+        (selectedFlowOutputId.value !== undefined && searchableOutputIds.value.has(selectedFlowOutputId.value))
+        || (selectedFlowInputId.value !== undefined && searchableInputIds.value.has(selectedFlowInputId.value)))
     const selectedTaskId = ref<string | undefined>(undefined)
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
@@ -540,9 +549,11 @@
         previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
-        const isFlowOutput = sections.value.find((section) =>
-            section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
+        const sectionKey = sections.value.find((section) =>
+            section.items.some(i => i.expression === item.expression))?.key
+        const isFlowOutput = sectionKey === "flowOutputs"
         selectedFlowOutputId.value = isFlowOutput ? item.label : undefined
+        selectedFlowInputId.value = sectionKey === "inputs" ? item.label : undefined
         const baseExpressionPath = isFlowOutput
             ? `execution.${item.expression}`
             : item.expression

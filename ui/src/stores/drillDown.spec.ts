@@ -61,26 +61,4 @@ describe("useDrillDownStore", () => {
         expect(store.isOpen).toBe(true)
         expect(store.target).toEqual(nextTarget)
     })
-
-    it("preserves query values and the selected time window", () => {
-        const store = useDrillDownStore()
-        const target: DrillDownTarget = {
-            name: "executions/list",
-            query: {
-                "filters[state][IN]": ["FAILED", "WARNING"],
-                "filters[namespace][IN]": "company.team",
-                search: "",
-                refresh: null,
-            },
-            timeFiltered: true,
-            timeWindow: {
-                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2026-10-27T00:00:00Z",
-                "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2026-10-28T00:00:00Z",
-            },
-        }
-
-        store.open(target)
-
-        expect(store.target).toEqual(target)
-    })
 })

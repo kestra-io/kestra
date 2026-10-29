@@ -107,10 +107,12 @@ describe("currentLocale and setLocale", () => {
     })
 
     test("should fall back to default when an unknown or malformed locale is provided rather than throwing", async () => {
-        await setLocale("unknown-locale")
+        await setLocale("fr")
+        await expect(setLocale("unknown-locale")).resolves.toBeUndefined()
         expect(currentLocale()).toBe("en")
 
-        await setLocale("")
+        await setLocale("fr")
+        await expect(setLocale("")).resolves.toBeUndefined()
         expect(currentLocale()).toBe("en")
     })
 })

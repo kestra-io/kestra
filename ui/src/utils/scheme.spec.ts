@@ -29,6 +29,8 @@ afterEach(() => {
 
 describe("getSchemes", () => {
     it("resolves the CSS custom property for every execution state and log level", () => {
+        expect(Object.keys(executionColors)).not.toHaveLength(0)
+        expect(Object.keys(logColors)).not.toHaveLength(0)
         expect(getSchemes()).toEqual({executions: executionColors, logs: logColors})
     })
 

@@ -1692,6 +1692,7 @@ class FlowInputOutputTest {
         assertThat(table.exceptions()).isNull();
         assertThat(table.value()).isEqualTo(List.of(Map.of("type", "linux", "name", "web"), Map.of("type", "linux", "name", "db")));
         assertThat(((TableInput) table.input()).getFilters().getFirst().value()).isEqualTo(List.of("linux"));
+        assertThat(((TableInput) table.input()).getMatchingDefaults()).containsExactly(0, 2);
     }
 
     private List<InputAndValue> submitComponents(TableInput components, String rows) {

@@ -463,6 +463,14 @@ public class FlowInputOutput {
                     // Descriptions can contain literal Pebble examples with unavailable variables.
                 }
             }
+            if (input instanceof TableInput table && !ListUtils.isEmpty(table.getFilters()) && table.getDefaults() != null) {
+                try {
+                    input = table.withMatchingDefaults(resolveDefaultValue(table, nonDecryptingContext.get()) instanceof List<?> rows ? rows : List.of());
+                } catch (Exception e) {
+                    resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
+                    return resolvable.get();
+                }
+            }
             resolvable.setInput(input);
 
             // Reject a file upload bound to an input that doesn't accept one.
@@ -509,8 +517,7 @@ public class FlowInputOutput {
                     var parsedInput = parseData(execution, input, value);
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     if (!resolvable.get().isDefault() && input instanceof TableInput table && parsedInput.isPresent() && parsedInput.get().getValue() instanceof List<?> rows) {
-                        Object defaults = input.getDefaults() == null ? null : resolveDefaultValue(input, nonDecryptingContext.get());
-                        table.validateSubmittedRows(rows, defaults instanceof List<?> list ? list : List.of());
+                        table.validateSubmittedRows(rows);
                     }
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {

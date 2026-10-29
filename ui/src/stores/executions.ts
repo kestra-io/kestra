@@ -89,6 +89,8 @@ export interface InputMetaData {
     maxRows?: number;
     filters?: TableFilter[];
     allowRowDuplication?: boolean;
+    /** The indexes of the rows of `defaults` matching the rendered filters, set by the server. */
+    matchingDefaults?: number[];
 }
 
 export interface TableFilter {

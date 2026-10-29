@@ -9,6 +9,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.kestra.core.models.annotations.ServerOwned;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -74,13 +77,30 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
     @Builder.Default
     private Boolean allowRowDuplication = false;
 
+    @Schema(
+        title = "The indexes of the rows of `defaults` matching the rendered `filters`.",
+        description = "Set when the inputs of an execution are resolved, so a form shows the same rows as the execution receives."
+    )
+    @ServerOwned
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private List<Integer> matchingDefaults;
+
     public List<?> matchingRows(List<?> rows) {
         if (ListUtils.isEmpty(filters)) {
             return rows;
         }
-        return rows.stream()
-            .filter(row -> !(row instanceof Map<?, ?> cells) || filters.stream().allMatch(filter -> filter.matches(cells)))
-            .toList();
+        return rows.stream().filter(this::matches).toList();
+    }
+
+    /** A copy of this table that records which rows of {@code defaults} match its filters. */
+    public TableInput withMatchingDefaults(List<?> defaults) {
+        TableInput copy = JacksonMapper.toMap(JacksonMapper.toMap(this), TableInput.class);
+        copy.matchingDefaults = IntStream.range(0, defaults.size()).filter(index -> matches(defaults.get(index))).boxed().toList();
+        return copy;
+    }
+
+    private boolean matches(Object row) {
+        return !(row instanceof Map<?, ?> cells) || ListUtils.emptyOnNull(filters).stream().allMatch(filter -> filter.matches(cells));
     }
 
     /**
@@ -99,7 +119,7 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
         return cell.group(2) == null ? "row %d: ".formatted(row) : "row %d, column `%s`: ".formatted(row, cell.group(2));
     }
 
-    public void validateSubmittedRows(List<?> rows, List<?> defaults) throws ConstraintViolationException {
+    public void validateSubmittedRows(List<?> rows) throws ConstraintViolationException {
         if (ListUtils.isEmpty(filters)) {
             return;
         }
@@ -122,7 +142,7 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
             }
         }
 
-        int matching = matchingRows(ListUtils.emptyOnNull(defaults)).size();
+        int matching = ListUtils.emptyOnNull(matchingDefaults).size();
         if (!Boolean.TRUE.equals(allowRowDuplication) && rows.size() > matching) {
             violations.add(
                 ManualConstraintViolation.of(

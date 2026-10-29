@@ -4,12 +4,13 @@
         :title="taskId"
         :fullscreen="isFullscreen"
         :showClose="false"
-        width="1280px"
-        top="12vh"
+        :width="POPUP_LAYOUT.width"
+        :top="POPUP_LAYOUT.top"
         fill
         appendToBody
         destroyOnClose
         data-test="task-run-popup"
+        @closed="emit('closed')"
     >
         <template #header>
             <header class="popup-header">
@@ -151,7 +152,7 @@
             </header>
         </template>
 
-        <div class="popup-content" :class="{'popup-content--fullscreen': isFullscreen}">
+        <div class="popup-content" :class="{'popup-content--fullscreen': isFullscreen}" :style="{'--popup-content-height': POPUP_LAYOUT.contentHeight}">
             <div v-if="description" class="popup-description" data-test="task-run-popup-description">
                 <KsScrollbar :maxHeight="96">
                     <KsMarkdown :content="description" />
@@ -258,6 +259,7 @@
                             :artifact="selectedArtifact"
                             :siblings="taskArtifacts"
                             :execution="execution"
+                            :taskRunId="currentTaskRun.id"
                             @select="selectedArtifactKey = $event"
                         />
                     </div>
@@ -321,10 +323,13 @@
         initialTab: "logs",
     })
 
+    const POPUP_LAYOUT = {width: "1280px", top: "12vh", contentHeight: "65vh"} as const
+
     const open = defineModel<boolean>({default: false})
 
     const emit = defineEmits<{
         follow: [event: unknown]
+        closed: []
     }>()
 
     const MAX_CHILD_LOG_RUNS = 20
@@ -458,8 +463,8 @@
 
     .popup-icon {
         flex: 0 0 auto;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: var(--ks-spacing-7);
+        height: var(--ks-spacing-7);
         padding: var(--ks-spacing-1);
         box-sizing: border-box;
         border: 1px solid var(--ks-border-default);
@@ -520,7 +525,7 @@
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-3);
-        height: 65vh;
+        height: var(--popup-content-height);
         min-height: 0;
 
         &.popup-content--fullscreen {

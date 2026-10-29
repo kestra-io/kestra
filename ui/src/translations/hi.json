@@ -541,7 +541,7 @@
     "refresh": "ताज़ा करें",
     "filter by status": "{status} स्थिति द्वारा निष्पादन फ़िल्टर करें",
     "topology-graph": {
-      "retried": "इस task को पुनः प्रयास किया गया था",
+      "retried": "यह Task पुनः प्रयास किया गया था",
       "artifacts": "कोई artifact नहीं | {count} artifact | {count} artifacts",
       "graph-orientation": "ग्राफ़ अभिविन्यास",
       "zoom-in": "ज़ूम इन करें",
@@ -673,11 +673,11 @@
     "variables": "वेरिएबल्स",
     "task_run_popup": {
       "open": "Task विवरण",
-      "count_error": "संख्या लोड नहीं की जा सकी",
-      "load_error": "यह दृश्य लोड नहीं किया जा सका।",
+      "count_error": "गिनती लोड नहीं की जा सकी",
+      "load_error": "इस दृश्य को लोड नहीं किया जा सका।",
       "retry": "पुनः प्रयास करें",
-      "child_runs_capped": "केवल पहले {count} child task run के log दिखाए गए हैं।",
-      "no_artifacts": "यह Task कोई artifact प्रदान नहीं करता।",
+      "child_runs_capped": "केवल पहले {count} चाइल्ड Task रन के log दिखा रहा है।",
+      "no_artifacts": "यह Task कोई artifact प्रदान नहीं करता है।",
       "task_source": "Task स्रोत",
       "worker_info": "Worker जानकारी"
     },
@@ -691,7 +691,7 @@
       "exit_fullscreen": "पूर्णस्क्रीन से बाहर निकलें"
     },
     "variable_explorer": {
-      "task_outputs": "Task outputs",
+      "task_outputs": "Task आउटपुट",
       "title": "इनपुट/आउटपुट",
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",

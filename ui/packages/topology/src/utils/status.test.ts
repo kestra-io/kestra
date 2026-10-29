@@ -3,9 +3,9 @@ import {computeAggregateState, getStatusStyle, pickWorstState} from "./status"
 
 describe("getStatusStyle", () => {
     test.each([
-        ["success", "--ks-status-success", "var(--ks-topology-bg-success)", "var(--ks-border-success)"],
-        ["failed", "--ks-status-error", "var(--ks-topology-bg-errors)", "var(--ks-topology-border-errors)"],
-        ["killed", "--ks-status-error", "var(--ks-topology-bg-errors)", "var(--ks-topology-border-errors)"],
+        ["success", "--ks-text-success", "var(--ks-topology-bg-success)", "var(--ks-border-success)"],
+        ["failed", "--ks-text-error", "var(--ks-topology-bg-errors)", "var(--ks-topology-border-errors)"],
+        ["killed", "--ks-text-error", "var(--ks-topology-bg-errors)", "var(--ks-topology-border-errors)"],
         ["running", "--ks-status-running", "var(--ks-topology-bg-running)", "var(--ks-topology-border-running)"],
         ["killing", "--ks-status-pending", "var(--ks-topology-bg-killing)", "var(--ks-topology-border-killing)"],
         ["skipped", "--ks-status-neutral", undefined, undefined],
@@ -16,6 +16,15 @@ describe("getStatusStyle", () => {
         expect(style?.textVar).toBe(textVar)
         expect(style?.bg).toBe(bg)
         expect(style?.border).toBe(border)
+    })
+
+    test.each([
+        ["success", "--ks-status-success"],
+        ["failed", "--ks-status-error"],
+        ["killed", "--ks-status-error"],
+        ["running", undefined],
+    ])("gives the %s chip its own colour without recolouring the lane state text", (state, chipVar) => {
+        expect(getStatusStyle(state)?.chipVar).toBe(chipVar)
     })
 
     test("matches states case-insensitively", () => {

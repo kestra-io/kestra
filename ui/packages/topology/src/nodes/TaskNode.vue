@@ -65,7 +65,7 @@
                 class="status-chip"
                 data-test="node-status-chip"
                 :data-state="state"
-                :style="{'--chip-color': `var(${statusStyle.textVar})`}"
+                :style="{'--chip-color': `var(${statusStyle.chipVar ?? statusStyle.textVar})`}"
             >
                 <component :is="statusStyle.icon" class="status-chip__icon" />
                 <span v-if="statusStyle.label" class="status-chip__text">{{ $t(statusStyle.label) }}</span>
@@ -467,7 +467,6 @@ button.playground-button {
     align-items: center;
     gap: var(--ks-spacing-1);
     box-sizing: border-box;
-    height: 1.0625rem;
     padding: 0 var(--ks-spacing-2);
     border-radius: var(--ks-radius-sm);
     --chip-tint: color-mix(in srgb, var(--chip-color) 10%, transparent);
@@ -486,7 +485,6 @@ button.playground-button {
     align-items: center;
     gap: var(--ks-spacing-1);
     box-sizing: border-box;
-    height: 1.0625rem;
     padding: 0 var(--ks-spacing-2);
     border: none;
     border-radius: var(--ks-radius-sm);

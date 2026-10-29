@@ -137,7 +137,7 @@
     import {useValues} from "../filter/composables/useValues"
     import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
-    import {dateUtils, dayjs, KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, deepMerge} from "@kestra-io/design-system"
 
     const {loadInit} = useRestoreUrl()
     import Sections from "../dashboard/sections/Sections.vue"
@@ -173,7 +173,7 @@
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
-    import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, type BrushRange} from "../../utils/logsBrushMappers"
+    import {buildBrushClearQuery, buildBrushTimeRangeQuery, readBrushRange, withoutTimeFilters, type BrushRange} from "../../utils/logsBrushMappers"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -372,7 +372,12 @@
         downloadLevel.value = level?.direction === "min" || level?.direction === "max"
             ? level.value
             : undefined
-        downloadTimeRange.value = selectedTimeRange.value ?? undefined
+        // An embedded wrapper (e.g. the dashboard drill-down) gets its own filters, so the dialog has to
+        // start from their range and not from the host page's URL, or an untouched dialog would swap it.
+        const embeddedRange = props.filters?.["filters[timeRange][EQUALS]"]
+        downloadTimeRange.value = props.filters
+            ? (typeof embeddedRange === "string" ? embeddedRange : undefined)
+            : selectedTimeRange.value ?? undefined
         downloadOpen.value = true
     }
 
@@ -381,7 +386,7 @@
             page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls,
             level: _l, startDate: _sd, endDate: _ed, ...routeFilters
         } = route.query
-        const params: Record<string, unknown> = props.filters ? {...props.filters} : {...routeFilters}
+        const params: LocationQueryRaw = props.filters ? {...props.filters} : {...routeFilters}
 
         if (isFlowEdit.value) {
             params["filters[namespace][EQUALS]"] = routeNamespace.value
@@ -397,19 +402,13 @@
             params["filters[level][GREATER_THAN_OR_EQUAL_TO]"] = downloadLevel.value
         }
 
-        if (downloadTimeRange.value) {
-            params.startDate = dateUtils.toIsoKeepOffset(
-                dayjs().subtract(dayjs.duration(downloadTimeRange.value).as("milliseconds")),
-            )
-            params.endDate = dateUtils.toIsoKeepOffset(dayjs())
-        } else {
-            if (_sd) params.startDate = _sd
-            if (_ed) params.endDate = _ed
-        }
-        params.sort = "timestamp:desc"
+        // Only `filters[...]` keys reach the backend, so the dialog's range has to replace the
+        // page's time filters there, the same way the level is swapped above.
+        const query = downloadTimeRange.value ? withoutTimeFilters(params, downloadTimeRange.value) : params
+        query.sort = "timestamp:desc"
 
         downloading.value = true
-        logsStore.downloadLogs(params)
+        logsStore.downloadLogs(query)
             .then((result) => {
                 downloadOpen.value = false
 

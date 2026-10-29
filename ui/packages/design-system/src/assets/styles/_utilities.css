@@ -105,10 +105,6 @@
     margin-top: 0.5rem !important;
 }
 
-.mt-3 {
-    margin-top: 1rem !important;
-}
-
 .me-0 {
     margin-right: 0 !important;
 }
@@ -213,9 +209,6 @@
 
 
 
-.text-danger {
-    color: inherit !important;
-}
 
 
 @media (min-width: 768px) {

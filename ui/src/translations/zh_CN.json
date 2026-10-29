@@ -2210,6 +2210,7 @@
         "plural": "仪表板"
       },
       "default": "默认仪表板",
+      "set_default": "设为默认",
       "empty": "没有结果显示。",
       "edition": {
         "label": "编辑仪表板",

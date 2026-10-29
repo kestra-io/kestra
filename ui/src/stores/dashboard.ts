@@ -10,7 +10,7 @@ import * as Utils from "../utils/utils"
 import {handledIf} from "../utils/kestraHttp"
 import {validationErrorLines, type ValidationError} from "../utils/validationErrors"
 import {routeFamily} from "../utils/routeFamily"
-import type {Dashboard, Chart, DashboardSettings} from "../components/dashboard/types.ts"
+import type {Dashboard, Chart, ChartStateCounts, DashboardSettings} from "../components/dashboard/types.ts"
 import {removeRefPrefix, usePluginsStore, type JsonSchemaDef, type RootJsonSchema} from "./plugins"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {useBookmarksStore} from "./bookmarks"
@@ -283,6 +283,21 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
     }
 
+    async function stateCounts(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
+        try {
+            const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/${id}/charts/${chartId}/state-counts`, parameters)
+            return data
+        } catch (e: unknown) {
+            if (handledIf(e, [404])) return undefined
+            throw e
+        }
+    }
+
+    async function chartPreviewStateCounts(request: {chart: string; globalFilter: ChartFiltersOverrides}) {
+        const {data} = await axios.post<ChartStateCounts>(`${apiUrl()}/dashboards/charts/state-counts`, request)
+        return data
+    }
+
     async function validateChart(source: string) {
         const {data} = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, yaml)
         chartErrors.value = validationErrorLines(data.errors)
@@ -396,6 +411,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         delete: deleteDashboard,
         validateDashboard,
         generate,
+        stateCounts,
+        chartPreviewStateCounts,
         validateChart,
         chartPreview,
         export: exportDashboard,

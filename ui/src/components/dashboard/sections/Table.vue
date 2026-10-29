@@ -1,6 +1,6 @@
 <template>
     <div class="table-root">
-        <TableQuickFilter :chart="props.chart" @change="onQuickFilterChange" />
+        <TableQuickFilter :chart="props.chart" :counts="tabCounts" @change="onQuickFilterChange" />
 
         <Motion
             as="div"
@@ -60,7 +60,7 @@
     import type {Chart, ChartResults, Column} from "../types.ts"
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
     import TableQuickFilter from "./TableQuickFilter.vue"
-    import {stateFilterForTab} from "./quickFilters"
+    import {type QuickFilterTabKey, countsByTab, hasQuickFilters, stateFilterForTab} from "./quickFilters"
     import Date from "./table/columns/Date.vue"
     import Duration from "./table/columns/Duration.vue"
     import Link from "./table/columns/Link.vue"
@@ -147,7 +147,20 @@
         {writeDefaults: false},
     )
 
-    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
+    const {EMPTY_TEXT, generate, generateStateCounts} = useChartGenerator(props.dashboardId, props, false)
+
+    const tabCounts = ref<Partial<Record<QuickFilterTabKey, number>>>({})
+
+    const getTabCounts = async () => {
+        if (!hasQuickFilters(props.chart)) return
+
+        try {
+            const result = await generateStateCounts()
+            tabCounts.value = result ? countsByTab(result.counts) : {}
+        } catch {
+            tabCounts.value = {}
+        }
+    }
 
     const getData = async () => {
         const pagination = isPaginationEnabled(props.chart)
@@ -179,7 +192,9 @@
     }
 
     function refresh() {
-        return getData()
+        const loaded = getData()
+        loaded.then(getTabCounts, () => undefined)
+        return loaded
     }
 
     function exportParameters() {

@@ -25,3 +25,7 @@ export const bulkActionComponents: Component[] = []
 // itself on its own feature flag / permissions. Rendered just before Delete, so the
 // destructive action stays last.
 export const overflowActionComponents: Component[] = []
+
+// Undefined in OSS, where Review opens the review dialog on the execution. EE replaces it to send the
+// reviewer to the approval's case instead. The component receives the `execution` prop.
+export const reviewActionComponent: Component | undefined = undefined

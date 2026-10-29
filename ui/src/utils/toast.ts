@@ -49,8 +49,7 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
     }
 
     return {
-        confirm: function(message:string, callback: () => Promise<unknown> | unknown, type = "warning" as const, showCancelButton = true) {
-        confirm: function(message: string | Component, callback: () => Promise<any>, type = "warning" as const, showCancelButton = true) {
+        confirm: function(message: string | Component, callback: () => Promise<unknown> | unknown, type = "warning" as const, showCancelButton = true) {
             return KsMessageBox
                 .confirm(typeof message === "string" ? MarkdownWrap(message || t("toast confirm")) : h(message), t("confirmation"), {type, showCancelButton})
                 .then(() => callback())

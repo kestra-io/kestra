@@ -61,6 +61,13 @@ public abstract class AbstractFlow implements FlowInterface {
     @PluginProperty(dynamic = true)
     List<@Valid Output> outputs;
 
+    // Hidden here and re-exposed by each subclass, otherwise FlowForExecution would inherit Output's required value through allOf.
+    @Schema(hidden = true)
+    @Override
+    public List<Output> getOutputs() {
+        return outputs;
+    }
+
     @NotNull
     @Builder.Default
     @Schema(

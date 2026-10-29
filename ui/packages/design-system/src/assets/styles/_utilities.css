@@ -100,10 +100,6 @@
     margin-top: 0.5rem !important;
 }
 
-.mt-3 {
-    margin-top: 1rem !important;
-}
-
 .me-0 {
     margin-right: 0 !important;
 }
@@ -149,14 +145,6 @@
     padding-bottom: 1rem !important;
 }
 
-.pt-0 {
-    padding-top: 0 !important;
-}
-
-.pe-2 {
-    padding-right: 0.5rem !important;
-}
-
 .gap-1 {
     gap: 0.25rem !important;
 }
@@ -189,10 +177,6 @@
     text-align: left !important;
 }
 
-.text-nowrap {
-    white-space: nowrap !important;
-}
-
 .text-break {
     word-wrap: break-word !important;
     word-break: break-word !important;
@@ -204,9 +188,6 @@
 
 
 
-.text-danger {
-    color: inherit !important;
-}
 
 
 @media (min-width: 768px) {

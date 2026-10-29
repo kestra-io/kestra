@@ -25,7 +25,7 @@ export const Default: Story = {
         setup() { return {args} },
         template: "<div style=\"padding:24px;max-width:440px\"><KsDrillRow v-bind=\"args\" @open=\"() => {}\" /></div>",
     }),
-    args: {label: "country", type: "array<object>", preview: "SELECT · 3 values · required"},
+    args: {label: "country", type: "array<object>", preview: "SELECT · 3 values · required", disabled: false, ariaLabel: "Open country"},
 }
 
 export const NoPreview: Story = {
@@ -56,6 +56,7 @@ export const Disabled: Story = {
 }
 
 export const List: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDrillRow},
         template: `
@@ -70,6 +71,7 @@ export const List: Story = {
 }
 
 export const CustomPreviewSlot: Story = {
+    parameters: {controls: {disable: true}},
     render: () => ({
         components: {KsDrillRow},
         template: `

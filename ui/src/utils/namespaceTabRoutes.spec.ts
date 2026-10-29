@@ -4,9 +4,9 @@ import {createNamespaceTabRoutes, NAMESPACE_TAB_NAMES} from "./namespaceTabRoute
 describe("createNamespaceTabRoutes", () => {
     it("creates one named child route per supplied tab in the supplied order", () => {
         expect(createNamespaceTabRoutes(["files", "overview", "flows"])).toEqual([
-            {name: "namespaces/update/files", path: "files", meta: {tab: "files"}},
-            {name: "namespaces/update/overview", path: "overview", meta: {tab: "overview"}},
-            {name: "namespaces/update/flows", path: "flows", meta: {tab: "flows"}},
+            {name: "namespaces/update/files", path: "files", meta: {tab: "files", docId: "files"}},
+            {name: "namespaces/update/overview", path: "overview", meta: {tab: "overview", docId: "namespaces"}},
+            {name: "namespaces/update/flows", path: "flows", meta: {tab: "flows", docId: "flows"}},
         ])
     })
 
@@ -16,7 +16,7 @@ describe("createNamespaceTabRoutes", () => {
         expect(routes).toHaveLength(NAMESPACE_TAB_NAMES.length)
         expect(routes.map((route) => route.path)).toEqual(NAMESPACE_TAB_NAMES)
         for (const [index, tab] of NAMESPACE_TAB_NAMES.entries()) {
-            expect(routes[index]).toEqual({
+            expect(routes[index]).toMatchObject({
                 name: `namespaces/update/${tab}`,
                 path: tab,
                 meta: {tab},

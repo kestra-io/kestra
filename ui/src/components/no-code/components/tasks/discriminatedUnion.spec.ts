@@ -1,9 +1,11 @@
 import {describe, expect, it} from "vitest"
 import {
+    branchDisplayName,
     findBranchByType,
     getImplementationBranches,
     humanizeClassName,
     humanizePropertyKey,
+    newImplementation,
     resolveImplementationLabel,
     summarizeImplementationValue,
 } from "./discriminatedUnion"
@@ -210,5 +212,43 @@ describe("summarizeImplementationValue with nested implementations", () => {
 
     it("leaves out a value with no usable one-line form", () => {
         expect(textsOf({embeddingProvider: {noType: true}, maxResults: 3})).toEqual(["3"])
+    })
+})
+
+describe("a generic plugin class with one definition per type argument", () => {
+    const KPI = "io.kestra.plugin.core.dashboard.chart.KPI"
+    const executionsKey = `${KPI}_io.kestra.plugin.core.dashboard.data.IExecutions-Fields___`
+    const flowsKey = `${KPI}_io.kestra.plugin.core.dashboard.data.IFlows-Fields___`
+    const definitions: Record<string, Schema> = {
+        [executionsKey]: {type: "object", properties: {type: {const: KPI}, data: {$ref: "#/definitions/io.kestra.plugin.core.dashboard.data.ExecutionsKPI"}}},
+        [flowsKey]: {type: "object", properties: {type: {const: KPI}, data: {$ref: "#/definitions/io.kestra.plugin.core.dashboard.data.FlowsKPI"}}},
+        "io.kestra.plugin.core.dashboard.data.ExecutionsKPI": {type: "object", properties: {type: {const: "io.kestra.plugin.core.dashboard.data.ExecutionsKPI"}}},
+        "io.kestra.plugin.core.dashboard.data.FlowsKPI": {type: "object", properties: {type: {const: "io.kestra.plugin.core.dashboard.data.FlowsKPI"}}},
+    }
+    const branches = getImplementationBranches({anyOf: [{$ref: `#/definitions/${executionsKey}`}, {$ref: `#/definitions/${flowsKey}`}]}, definitions) ?? []
+
+    it("uses the discriminator as the type, not the mangled definition key", () => {
+        expect(branches.map((branch) => branch.type)).toEqual([KPI, KPI])
+    })
+
+    it("tells the branches apart by the data source in their name", () => {
+        expect(branches.map((branch) => branchDisplayName(branch, branches))).toEqual(["KPI (Executions KPI)", "KPI (Flows KPI)"])
+    })
+
+    it("starts a picked branch with its type and the data source that identifies it", () => {
+        expect(newImplementation(branches[1], branches)).toEqual({type: KPI, data: {type: "io.kestra.plugin.core.dashboard.data.FlowsKPI"}})
+    })
+
+    it("resolves a stored value to the branch of its data source", () => {
+        const found = findBranchByType(branches, KPI, {type: KPI, data: {type: "io.kestra.plugin.core.dashboard.data.FlowsKPI"}})
+
+        expect(found?.ref).toBe(flowsKey)
+    })
+
+    it("keeps a plain class name unqualified and picks it with just its type", () => {
+        const plain = getImplementationBranches({anyOf: [{$ref: "#/definitions/io.kestra.plugin.ai.provider.OpenAI"}, {$ref: "#/definitions/io.kestra.plugin.ai.provider.GoogleGemini"}]}, providerDefinitions) ?? []
+
+        expect(branchDisplayName(plain[0], plain)).toBe("Open AI")
+        expect(newImplementation(plain[0], plain)).toEqual({type: "io.kestra.plugin.ai.provider.OpenAI"})
     })
 })

@@ -104,6 +104,7 @@
     import {collapseEmptyValues} from "./MixinTask"
     import {DATA_TYPES_MAP_INJECTION_KEY, FIELD_VALIDATION_ERRORS_INJECTION_KEY} from "../../injectionKeys"
     import {hasErrorUnder} from "../../../../utils/validationErrors"
+    import type {Schema} from "./getTaskComponent"
 
     defineOptions({
         inheritAttrs: false,
@@ -111,12 +112,11 @@
 
     const {t, te} = useI18n()
 
-    type Model = Record<string, any> | undefined;
-    type Schema = { required?: string[]; [k: string]: any } | undefined;
+    type Model = Record<string, unknown> | undefined;
 
     const props = defineProps<{
         merge?: boolean;
-        properties?: any;
+        properties?: Record<string, Schema>;
         metadataInputs?: boolean;
         modelValue?: Model | null;
         required?: boolean;
@@ -151,7 +151,7 @@
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"]
 
-    type Entry = [string, any];
+    type Entry = [string, Schema];
 
     function sortProperties(properties: Entry[], required?: string[]): Entry[] {
         if (!properties?.length) return []
@@ -181,25 +181,25 @@
         })
     }
 
-    function isDeprecated(value: any) {
+    function isDeprecated(value: Schema): boolean {
         if(value?.allOf){
             return value.allOf.some(isDeprecated)
         }
-        return value?.$deprecated
+        return Boolean(value?.$deprecated)
     }
 
-    function isPartOfGroup(value: any, groups: string[]) {
+    function isPartOfGroup(value: Schema, groups: string[]): boolean {
         if (value?.$group) return groups.includes(value.$group)
         if (value?.allOf) {
-            return value.allOf.some((item: any) => isPartOfGroup(item, groups))
+            return value.allOf.some((item) => isPartOfGroup(item, groups))
         }
         if (value?.anyOf) {
-            return value.anyOf.some((item: any) => isPartOfGroup(item, groups))
+            return value.anyOf.some((item) => isPartOfGroup(item, groups))
         }
         return false
     }
 
-    function getGroup(value: any): string | null {
+    function getGroup(value: Schema): string | null {
         if (value?.allOf) {
             for (const item of value.allOf) {
                 const g = getGroup(item)
@@ -215,7 +215,7 @@
         return value?.$group ?? null
     }
 
-    function getIndex(value: any): number {
+    function getIndex(value: Schema): number {
         if (value?.allOf) {
             for (const item of value.allOf) {
                 const i = getIndex(item)
@@ -239,7 +239,7 @@
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties)
         return propertiesProc
-            ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
+            ? Object.entries(propertiesProc).filter(([key, value]) => {
                 return value && !(props.filterType && key === "type") && !Array.isArray(value)
             })
             : []
@@ -300,7 +300,7 @@
     })
 
     const deprecatedProperties = computed<Entry[]>(() => {
-        const obj = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>) : {}
+        const obj: Record<string, unknown> = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue : {}
         return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined)
     })
 
@@ -313,7 +313,7 @@
     const errorsAt = (key: string): string[] =>
         validationErrors?.value.get(props.root ? `${props.root}.${key}` : key) ?? []
 
-    const unknownProperties = computed<Entry[]>(() => unknownPropertiesOf(
+    const unknownProperties = computed<[string, unknown][]>(() => unknownPropertiesOf(
         props.modelValue,
         props.properties ?? props.schema?.properties,
         Boolean(props.schema?.additionalProperties),
@@ -341,21 +341,21 @@
         openedForErrors = erroredGroups.value
     }, {immediate: true})
 
-    function onInput(value: any) {
+    function onInput(value: Model) {
         emit("update:modelValue", collapseEmptyValues(value))
     }
 
-    function onObjectInput(propertyName: string, value: any) {
-        const currentValue = (typeof props.modelValue === "object" && props.modelValue !== null ? {...(props.modelValue as Record<string, any>)} : {})
+    function onObjectInput(propertyName: string, value: unknown) {
+        const currentValue: Record<string, unknown> = typeof props.modelValue === "object" && props.modelValue !== null ? {...props.modelValue} : {}
         currentValue[propertyName] = value
         onInput(currentValue)
     }
 
-    function fieldProps(key: string, schema: any) {
-        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? (props.modelValue as Record<string, any>)[key] : undefined
+    function fieldProps(key: string, schema: Schema) {
+        const mv = (typeof props.modelValue === "object" && props.modelValue !== null) ? props.modelValue[key] : undefined
         return {
             modelValue: mv,
-            "onUpdate:modelValue": (value: any) => onObjectInput(key, value),
+            "onUpdate:modelValue": (value: unknown) => onObjectInput(key, value),
             root: props.root,
             fieldKey: key,
             task: props.modelValue,

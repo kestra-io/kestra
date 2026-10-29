@@ -2446,8 +2446,14 @@
       "run_task_and_downstream": "Run task & downstream",
       "run_all_tasks": "Run All Tasks",
       "history": "Last 10 runs",
-      "clear_history": "Clear history",
-      "tooltip_persistence": "If you turn Playground off and back on, the information remains as long as you stay on the page."
+      "clear_history": "Start the next run fresh",
+      "tooltip_persistence": "Playground runs are kept on the server: after a reload or a tab change, the next run builds on the run you left. Turning Playground off ends the current run.",
+      "context": {
+        "title": "Context",
+        "task_run": "Task run",
+        "empty": "Run a task to see the variables each task sees.",
+        "error": "The context of this task run could not be loaded."
+      }
     },
     "submit": "Submit",
     "accept": "Accept",

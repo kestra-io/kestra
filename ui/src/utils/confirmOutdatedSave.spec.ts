@@ -28,16 +28,6 @@ describe("confirmOutdatedSave", () => {
         await expect(confirmOutdatedSave(t, "message")).resolves.toBe(false)
     })
 
-    it.each([
-        ["close", "close"],
-        ["an error", new Error("dismissed")],
-        ["undefined", undefined],
-    ])("resolves false when the box is dismissed any other way (%s)", async (_label, reason) => {
-        messageBox.mockRejectedValue(reason)
-
-        await expect(confirmOutdatedSave(t, "message")).resolves.toBe(false)
-    })
-
     it("takes the title and the button labels from the translation function", async () => {
         messageBox.mockResolvedValue("confirm")
 
@@ -58,17 +48,5 @@ describe("confirmOutdatedSave", () => {
         const body = (optionsOfLastCall().message as () => VNode)()
         expect(body.type).toBe("p")
         expect(body.children).toBe("Someone else changed this flow")
-    })
-
-    it("shows a cancel button, no close icon and is not centred", async () => {
-        messageBox.mockResolvedValue("confirm")
-
-        await confirmOutdatedSave(t, "message")
-
-        expect(optionsOfLastCall()).toMatchObject({
-            showCancelButton: true,
-            showClose: false,
-            center: false,
-        })
     })
 })

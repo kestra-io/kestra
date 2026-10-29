@@ -541,7 +541,7 @@
     "refresh": "Aggiorna",
     "filter by status": "Filtra le esecuzioni per stato {status}",
     "topology-graph": {
-      "retried": "Questo task è stato rieseguito",
+      "retried": "Questo Task è stato ritentato",
       "artifacts": "nessun artifact | {count} artifact | {count} artifacts",
       "graph-orientation": "Orientamento del grafico",
       "zoom-in": "Zoom avanti",
@@ -672,14 +672,14 @@
     "input": "Input",
     "variables": "Variabili",
     "task_run_popup": {
-      "open": "Dettagli del task",
+      "open": "Dettagli Task",
       "count_error": "Impossibile caricare il conteggio",
       "load_error": "Impossibile caricare questa vista.",
       "retry": "Riprova",
-      "child_runs_capped": "Vengono mostrati solo i log delle prime {count} esecuzioni figlie del task.",
-      "no_artifacts": "Questo task non fornisce alcun artifact.",
-      "task_source": "Sorgente del task",
-      "worker_info": "Info worker"
+      "child_runs_capped": "Vengono mostrati solo i log delle prime {count} esecuzioni di Task figlie.",
+      "no_artifacts": "Questo Task non fornisce un artifact.",
+      "task_source": "Sorgente Task",
+      "worker_info": "Informazioni Worker"
     },
     "execution_artifacts": {
       "title": "Artifacts",
@@ -691,7 +691,7 @@
       "exit_fullscreen": "Esci dalla modalità a schermo intero"
     },
     "variable_explorer": {
-      "task_outputs": "Task outputs",
+      "task_outputs": "Output del Task",
       "title": "Input/Output",
       "search_placeholder": "Cerca Key o value...",
       "tasks_outputs": "Tasks outputs",

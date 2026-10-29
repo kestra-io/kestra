@@ -163,7 +163,7 @@ describe("LowCodeEditor task popup", () => {
         expect(actions[0].divided).toBe(true)
     })
 
-    it("shouldCloseThePopupWhenItAsksTo", async () => {
+    it("shouldKeepThePopupMountedUntilItsCloseTransitionEnds", async () => {
         // Given
         const wrapper = mountEditor()
         await flushPromises()
@@ -171,6 +171,15 @@ describe("LowCodeEditor task popup", () => {
 
         // When
         wrapper.findComponent({name: "TaskRunPopup"}).vm.$emit("update:modelValue", false)
+        await flushPromises()
+
+        // Then
+        const popup = wrapper.findComponent({name: "TaskRunPopup"})
+        expect(popup.exists()).toBe(true)
+        expect(popup.props("modelValue")).toBe(false)
+
+        // When
+        popup.vm.$emit("closed")
         await flushPromises()
 
         // Then

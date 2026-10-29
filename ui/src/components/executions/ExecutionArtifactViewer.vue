@@ -29,7 +29,7 @@
         <div class="artifacts-viewer-body">
             <RemoteComponent
                 v-if="hasResolvedComponent(artifact.taskType)"
-                :key="artifact.key"
+                :key="`${artifact.key}-${taskRunId ?? ''}`"
                 :taskType="artifact.taskType"
                 :task="task"
                 :execution="execution"
@@ -63,9 +63,11 @@
         artifact: ExecutionArtifact
         siblings: ExecutionArtifact[]
         execution?: Execution
+        taskRunId?: string
         fullscreen?: boolean
     }>(), {
         execution: undefined,
+        taskRunId: undefined,
         fullscreen: undefined,
     })
 
@@ -80,7 +82,7 @@
     pluginsStore.fetchIcons()
 
     const {RemoteComponent, tasks, hasResolvedComponent, hasFailedComponent} = inject(EXECUTION_ARTIFACTS_KEY)!
-    const {fetchOutputs, fetchMetrics, fetchEndpoint} = useArtifactFetchers(() => props.execution)
+    const {fetchOutputs, fetchMetrics, fetchEndpoint} = useArtifactFetchers(() => props.execution, () => props.taskRunId)
 
     const tenant = computed(() => typeof route.params.tenant === "string" ? route.params.tenant : undefined)
     const task = computed(() => tasks.value.find((candidate) => candidate.id === props.artifact.taskId))

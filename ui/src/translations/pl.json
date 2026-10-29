@@ -673,10 +673,10 @@
     "variables": "Zmienne",
     "task_run_popup": {
       "open": "Szczegóły Taska",
-      "count_error": "Nie udało się załadować liczby",
-      "load_error": "Nie udało się załadować tego widoku.",
-      "retry": "Spróbuj ponownie",
-      "child_runs_capped": "Wyświetlane są tylko Logi pierwszych {count} podrzędnych Task Runów.",
+      "count_error": "Nie można załadować liczby",
+      "load_error": "Nie można załadować tego widoku.",
+      "retry": "Ponów",
+      "child_runs_capped": "Wyświetlanie logów tylko pierwszych {count} podrzędnych Task Runów.",
       "no_artifacts": "Ten Task nie dostarcza Artifactu.",
       "task_source": "Źródło Taska",
       "worker_info": "Informacje o Workerze"

@@ -289,6 +289,7 @@
             :nodeActions="taskPopup.actions"
             :initialTab="taskPopup.tab"
             @follow="emit('follow', $event)"
+            @closed="taskPopup = null"
         />
 
         <Restart
@@ -463,12 +464,7 @@
         return execution && taskRun ? {execution, taskRun, taskRuns} : undefined
     }
     const taskPopup = ref<TaskPopupTarget | null>(null)
-    const isTaskPopupOpen = computed({
-        get: () => taskPopup.value !== null,
-        set: (open) => {
-            if (!open) taskPopup.value = null
-        },
-    })
+    const isTaskPopupOpen = ref(false)
     const taskPopupExecution = computed(() => {
         const executionId = taskPopup.value?.executionId
         if (!executionId) return undefined
@@ -488,6 +484,7 @@
                 .map((a, i) => i === 0 ? {...a, divided: true} : a),
             tab: event.tab ?? "logs",
         }
+        isTaskPopupOpen.value = true
     }
 
     const onShowArtifacts = (event: {id?: string; task?: unknown; execution?: {id?: string}; actions: NodeAction[]}) =>

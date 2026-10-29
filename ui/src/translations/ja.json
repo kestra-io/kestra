@@ -541,7 +541,7 @@
     "refresh": "更新",
     "filter by status": "{status}ステータスで実行をフィルタリング",
     "topology-graph": {
-      "retried": "このTaskは再試行されました",
+      "retried": "このTaskはリトライされました",
       "artifacts": "artifactなし | {count} artifact | {count} artifacts",
       "graph-orientation": "グラフの向き",
       "zoom-in": "ズームイン",
@@ -672,12 +672,12 @@
     "input": "Input",
     "variables": "変数",
     "task_run_popup": {
-      "open": "Taskの詳細",
-      "count_error": "件数を読み込めませんでした",
+      "open": "Task詳細",
+      "count_error": "カウントを読み込めませんでした",
       "load_error": "このビューを読み込めませんでした。",
       "retry": "再試行",
-      "child_runs_capped": "最初の{count}件の子task実行のlogのみ表示しています。",
-      "no_artifacts": "このTaskはartifactを提供していません。",
+      "child_runs_capped": "最初の {count} 個の子 Task Run の log のみを表示しています。",
+      "no_artifacts": "このTaskはArtifactを提供しません。",
       "task_source": "Taskソース",
       "worker_info": "Worker情報"
     },

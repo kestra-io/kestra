@@ -673,11 +673,11 @@
     "variables": "Variablen",
     "task_run_popup": {
       "open": "Task-Details",
-      "count_error": "Die Anzahl konnte nicht geladen werden",
+      "count_error": "Anzahl konnte nicht geladen werden",
       "load_error": "Diese Ansicht konnte nicht geladen werden.",
-      "retry": "Erneut versuchen",
-      "child_runs_capped": "Es werden nur die Logs der ersten {count} untergeordneten Task-Runs angezeigt.",
-      "no_artifacts": "Dieser Task stellt kein Artifact bereit.",
+      "retry": "Wiederholen",
+      "child_runs_capped": "Es werden nur die Logs der ersten {count} untergeordneten Task Runs angezeigt.",
+      "no_artifacts": "Diese Task stellt kein Artifact bereit.",
       "task_source": "Task-Quelle",
       "worker_info": "Worker-Info"
     },

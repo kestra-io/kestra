@@ -10,6 +10,7 @@ import RotatingDots from "../assets/icons/RotatingDots.vue"
 export interface StatusStyle {
     icon: Component;
     textVar: string;
+    chipVar?: string;
     bg?: string;
     border?: string;
     dimIcon?: boolean;
@@ -18,14 +19,16 @@ export interface StatusStyle {
 
 const SUCCESS: StatusStyle = {
     icon: CheckCircleOutline,
-    textVar: "--ks-status-success",
+    textVar: "--ks-text-success",
+    chipVar: "--ks-status-success",
     bg: "var(--ks-topology-bg-success)",
     border: "var(--ks-border-success)",
 }
 
 const ERROR: StatusStyle = {
     icon: CloseCircleOutline,
-    textVar: "--ks-status-error",
+    textVar: "--ks-text-error",
+    chipVar: "--ks-status-error",
     bg: "var(--ks-topology-bg-errors)",
     border: "var(--ks-topology-border-errors)",
 }

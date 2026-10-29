@@ -63,6 +63,7 @@
 
     const REVIEW_COMMENT_PART = "kestra_review_comment"
     const REVIEW_COMMENT_PLACEHOLDER = "-"
+    const emit = defineEmits<{reviewed: [decision: ReviewDecision]}>()
 
     const {t} = useI18n()
     const executionsStore = useExecutionsStore()
@@ -150,6 +151,7 @@
                 await executionsStore.review(options)
                 visible.value = false
                 toast.success(t("approval.review done"))
+                emit("reviewed", decision)
             } finally {
                 submitting.value = false
             }

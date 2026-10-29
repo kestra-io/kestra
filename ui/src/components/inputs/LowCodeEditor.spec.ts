@@ -99,4 +99,29 @@ describe("LowCodeEditor plugin UI lookup", () => {
         expect(requestedTypes).toContain("io.kestra.plugin.core.log.Log")
         wrapper.unmount()
     })
+
+    test("requests the plugin UI of a task its parent generates, which only the graph holds", async () => {
+        const deploy = `
+id: deploy
+namespace: company.team
+tasks:
+  - id: deploy
+    type: io.kestra.plugin.ee.terraform.Deploy
+`
+        flowStore.flowYaml = deploy
+        flowStore.flowParsed = YAML_UTILS.parse<ParsedFlow>(deploy)
+        const node = (id: string, type: string) => ({uid: id, type: "io.kestra.core.models.hierarchies.GraphTask", task: {id, type}})
+
+        const wrapper = i18nMount(LowCodeEditor, {
+            props: {
+                flowGraph: {nodes: [node("deploy", "io.kestra.plugin.ee.terraform.Deploy"), node("deploy_plan", "io.kestra.plugin.ee.terraform.Plan")], edges: [], clusters: []},
+                isReadOnly: true,
+            },
+            global: {stubs: {teleport: true}},
+        })
+        await flushPromises()
+
+        expect(requestedTypes).toContain("io.kestra.plugin.ee.terraform.Plan")
+        wrapper.unmount()
+    })
 })

@@ -746,13 +746,17 @@
     watch(
         () => props.flowGraph,
         async (flowGraph) => {
-            if (flowStore.flowParsed?.tasks?.length) return
+            const graphTasks: FlowTask[] = (flowGraph?.nodes ?? []).flatMap((n) => n.task?.type ? [n.task] : [])
+            if (flowStore.flowParsed?.tasks?.length) {
+                // A task its parent generates at run time is a node of the graph but not a task of the YAML.
+                const authored = new Set(getAllTasks(flowStore.flowParsed.tasks).map((task: FlowTask) => task.id))
+                const generated = graphTasks.filter((task) => !authored.has(task.id))
+                if (generated.length) await resolveTaskTopologyDetails(generated)
+                return
+            }
             // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
             const sourceParsed = props.source ? YAML_UTILS.parse<ParsedFlow>(props.source) : null
-            const tasks: FlowTask[] = sourceParsed?.tasks?.length
-                ? sourceParsed.tasks
-                : (flowGraph?.nodes ?? []).flatMap((n) => n.task?.type ? [n.task] : [])
-            await resolveTaskTopologyDetails(tasks)
+            await resolveTaskTopologyDetails(sourceParsed?.tasks?.length ? sourceParsed.tasks : graphTasks)
         },
         {immediate: true},
     )

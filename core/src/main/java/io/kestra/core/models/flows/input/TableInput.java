@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.kestra.core.models.annotations.ServerOwned;
@@ -158,6 +159,13 @@ public class TableInput extends Input<List<?>> implements RenderableInput {
         if (!violations.isEmpty()) {
             throw ManualConstraintViolation.toConstraintViolationException(violations);
         }
+    }
+
+    /** The filters and the column values are always rendered, since a submitted value is checked against them. */
+    @JsonIgnore
+    @Override
+    public Boolean getAllowCustomValue() {
+        return false;
     }
 
     @Override

@@ -1,0 +1,13 @@
+id: approval-finally-no-branch
+namespace: io.kestra.tests
+
+tasks:
+  - id: approval
+    type: io.kestra.plugin.core.flow.Approval
+    finally:
+      - id: cleanup
+        type: io.kestra.plugin.core.log.Log
+        message: "Cleanup"
+  - id: last
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}}"

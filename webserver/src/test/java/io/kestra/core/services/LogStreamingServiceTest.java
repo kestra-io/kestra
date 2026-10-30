@@ -7,12 +7,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 import org.slf4j.event.Level;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.utils.IdUtils;
@@ -71,6 +73,49 @@ class LogStreamingServiceTest {
         assertThat(received)
             .usingRecursiveFieldByFieldElementComparatorOnFields("executionId", "level", "taskId", "taskRunId", "attemptNumber", "message")
             .containsExactlyInAnyOrderElementsOf(testCase.expectedEvents());
+    }
+
+    @Test
+    void shouldSendEachLogOnceWhenALogAlreadySentFromHistoryIsAlsoReceivedLive() throws Exception {
+        // Given
+        String executionId = IdUtils.create();
+        String subscriberId = IdUtils.create();
+        LogEntry pastLog = logEntry(executionId, "past line");
+        queue.emit(FollowLogEvent.from(pastLog));
+        List<String> received = new CopyOnWriteArrayList<>();
+
+        // When
+        service.follow(executionId, subscriberId, Flux.just(pastLog), List.of())
+            .filter(event -> "progress".equals(event.getId()))
+            .doFinally(sig -> service.unregisterSubscriber(executionId, subscriberId))
+            .subscribe(event -> received.add(event.getData().message()));
+        queue.emit(FollowLogEvent.from(logEntry(executionId, "live line")));
+
+        // Then
+        try {
+            Awaitility.await()
+                .atMost(Duration.ofSeconds(5))
+                .pollInterval(50, TimeUnit.MILLISECONDS)
+                .until(() -> received.contains("live line"));
+        } finally {
+            service.unregisterSubscriber(executionId, subscriberId);
+        }
+
+        assertThat(received).containsExactly("past line", "live line");
+    }
+
+    private static LogEntry logEntry(String executionId, String message) {
+        return LogEntry.builder()
+            .namespace("io.kestra.demo")
+            .flowId("demo-flow")
+            .taskId("load-data")
+            .executionId(executionId)
+            .taskRunId("task-run-1")
+            .attemptNumber(0)
+            .timestamp(Instant.now())
+            .level(Level.INFO)
+            .message(message)
+            .build();
     }
 
     private static final FollowLogEvent traceEvent = event(Level.TRACE, "load-data", "task-run-1", 0, "trace line");

@@ -467,6 +467,41 @@
     "resumed confirm": "실행 <code>{id}</code>을(를) 다시 시작하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resume from breakpoint title": "{id} 실행을 중단점에서 재개",
+    "approval": {
+      "review": "검토",
+      "title": "Execution {id}의 {task} 검토",
+      "approve": "승인",
+      "deny": "거부",
+      "comment": "설명",
+      "comment hint": {
+        "optional": "선택 사항.",
+        "always": "댓글이 필요합니다.",
+        "on approve": "승인하려면 댓글이 필요합니다.",
+        "on deny": "거부하려면 주석이 필요합니다."
+      },
+      "comment required": "이 결정에는 주석이 필요합니다.",
+      "inputs invalid": "일부 입력이 유효하지 않습니다: {errors}",
+      "review done": "귀하의 검토가 기록되었습니다.",
+      "reviewed": {
+        "title": "실행 {id}에 대한 승인 요청",
+        "explanation": "이 승인 요청은 더 이상 검토를 기다리지 않습니다.",
+        "decision": "결정",
+        "by": "결정 기준",
+        "on": "결정됨",
+        "decisions": {
+          "approved": "승인됨",
+          "denied": "거부됨",
+          "expired": "만료됨"
+        }
+      },
+      "cancel request": "요청 취소",
+      "cancel confirm": "execution {id}에 대한 승인 요청을 취소하시겠습니까? 결정 branch는 실행되지 않습니다.",
+      "cancel done": "승인 요청이 취소되었습니다.",
+      "banner": {
+        "pausing": "이 실행은 승인 요청을 준비 중이며 검토를 위해 일시 중지됩니다.",
+        "paused": "이 Execution은 검토를 기다리고 있습니다. 계속하려면 승인하거나 거부하세요."
+      }
+    },
     "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
     "breakpoints": "중단점",
     "pause": "일시 중지",
@@ -1146,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "오류가 감지되었습니다.",
     "warning detected": "경고가 감지되었습니다.",
+    "schema warning": "라인 {line}: {message}",
     "informative notice": "노트(s)",
     "open": "열기",
     "admin": "관리자",
@@ -1176,7 +1212,7 @@
     "hostname": "호스트 이름",
     "file preview truncated": "표시된 내용이 잘렸습니다",
     "file unavailable": "파일을 사용할 수 없음",
-    "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다 — 삭제되었거나 만료되었을 수 있습니다.",
+    "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다. 삭제되었거나 만료되었을 수 있습니다.",
     "row count": "행 수",
     "encoding": "인코딩",
     "show": "보기",
@@ -1285,6 +1321,7 @@
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
     "relative start date": "상대적 시작 날짜",
+    "now": "지금",
     "absolute": "절대적",
     "backfill": "Backfill",
     "Set labels": "라벨 설정",
@@ -1577,7 +1614,7 @@
         },
         "policies": {
           "title": "이 namespace 전체에 거버넌스 규칙 적용",
-          "message": "Kestra Enterprise Edition에서, 정책을 통해 이 namespace 및 하위 namespace의 모든 flow에 적용되는 규칙을 정의할 수 있습니다 — 공유 기본값을 주입하고, 속성 값을 제한하며, plugins를 차단하고, 규정 준수 labels를 요구할 수 있으며, 모든 변경 사항은 flow 작성자에게 완전히 표시됩니다."
+          "message": "Kestra Enterprise Edition에서, 정책을 통해 이 namespace 및 하위 namespace의 모든 flow에 적용되는 규칙을 정의할 수 있습니다: 공유 기본값을 주입하고, 속성 값을 제한하며, plugins를 차단하고, 규정 준수 labels를 요구할 수 있으며, 모든 변경 사항은 flow 작성자에게 완전히 표시됩니다."
         },
         "reusable-inputs": {
           "label": "재사용 가능한 입력",
@@ -1913,12 +1950,45 @@
     "iterations": "반복",
     "load_10_more": "10개 더 불러오기",
     "show_all_executions": "모든 실행 보기",
-    "failed_iterations_only": "실패한 반복만",
     "loop_iterations_shown": "{total}개 중 {shown}개 표시됨",
     "loop_iterations_load_error": "반복 로드 실패",
     "retry": "다시 시도",
     "no_iterations": "아직 반복이 없습니다",
     "no_failed_iterations": "실패한 반복이 없습니다",
+    "gantt_tree_label": "실행 타임라인",
+    "gantt_row_expand": "{name} 펼치기",
+    "gantt_row_collapse": "{name} 접기",
+    "gantt_failed_only": "실패만",
+    "gantt_go_to_first_failure": "첫 번째 실패로 이동",
+    "gantt_loop_iterations_count": "반복 {count}개",
+    "gantt_loop_failed_count": "{count}개 실패",
+    "gantt_loop_show_failed": "실패한 반복만 표시",
+    "gantt_loop_show_all": "모든 반복 표시",
+    "gantt_loop_show_all_iterations": "반복 {count}개 모두 표시",
+    "gantt_loop_loading": "반복 불러오는 중…",
+    "gantt_iteration_no_tasks": "이 반복에는 아직 Task 실행이 없습니다",
+    "gantt_iteration_no_failed_tasks": "이 반복에는 실패한 Task 실행이 없습니다",
+    "gantt_panel": {
+      "label": "Task 실행 세부 정보",
+      "lineage": "flow 내 위치",
+      "previous_iteration": "이전 반복",
+      "next_iteration": "다음 반복",
+      "open_iteration": "반복 열기",
+      "iteration_position": "{loop}의 {total}개 중 {position}번째",
+      "first_failure": "첫 번째 실패",
+      "go_to_failure": "실패로 이동",
+      "task_runs": "Task 실행",
+      "iteration": "반복",
+      "value": "Value",
+      "index": "인덱스",
+      "index_of": "{total}개 중 #{index}",
+      "execution": "실행",
+      "filter_all": "전체 {count}",
+      "filter_failed": "실패 {count}",
+      "filter_success": "성공 {count}",
+      "search_value": "정확한 value로 검색",
+      "range": "{total}개 중 {from}–{to}"
+    },
     "loop_iterations_notice": {
       "logs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 로그는 여기에 표시되지 않습니다.",
       "outputs": "루프 반복은 별도의 하위 실행으로 실행되므로 해당 출력은 여기에 표시되지 않습니다.",
@@ -2210,6 +2280,7 @@
         "plural": "대시보드"
       },
       "default": "기본 대시보드",
+      "set_default": "기본값으로 설정",
       "empty": "결과가 표시되지 않습니다.",
       "edition": {
         "label": "대시보드 편집",
@@ -2355,7 +2426,7 @@
         },
         "cancelled": "회차 취소됨",
         "error": {
-          "turnCap": "이 대화는 한도에 도달했습니다 — 새 채팅을 시작하세요.",
+          "turnCap": "이 대화는 한도에 도달했습니다: 새 채팅을 시작하세요.",
           "turnInProgress": "회차가 이미 진행 중입니다.",
           "request": "요청이 실패했습니다. 다시 시도해 주세요.",
           "generic": "문제가 발생했습니다. 다시 시도해주세요."
@@ -2416,9 +2487,9 @@
           "dismiss": "무시",
           "dismissed": "무시됨",
           "applied": "적용됨",
-          "previewBanner": "AI가 제안한 변경 사항을 검토 중입니다 — 적용하거나 무시할 때까지 에디터는 읽기 전용입니다.",
+          "previewBanner": "AI가 제안한 변경 사항을 검토 중입니다. 적용하거나 무시할 때까지 에디터는 읽기 전용입니다.",
           "applyTitle": "flow 적용",
-          "applyConfirm": "{namespace}.{id}를 검토를 위한 드래프트 리비전으로 저장하시겠습니까? 생성되거나, 이미 존재하는 경우 새 드래프트 리비전이 추가됩니다 — 드래프트는 게시되기 전까지 trigger나 subflow에서 사용되지 않습니다.",
+          "applyConfirm": "{namespace}.{id}를 검토를 위한 드래프트 리비전으로 저장하시겠습니까? 생성되거나, 이미 존재하는 경우 새 드래프트 리비전이 추가됩니다. 드래프트는 게시되기 전까지 trigger나 subflow에서 사용되지 않습니다.",
           "applyConfirmDashboard": "대시보드 {id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
           "applyError": "flow를 적용할 수 없습니다. 다시 시도해주세요.",
           "applyErrorDashboard": "대시보드를 적용할 수 없었습니다. 다시 시도해 주세요.",
@@ -2673,11 +2744,11 @@
       "empty_title": "flow, 파일, key에서 값 찾기",
       "error_title": "유효하지 않은 정규 표현식",
       "examples_aria": "예시 쿼리",
-      "exclusion_flows_readonly": "flow — 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다. | flow — 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다.",
-      "exclusion_search_only": "{type} — 일치 {count}개: 검색 전용이라 바꿀 수 없습니다. | {type} — 일치 {count}개: 검색 전용이라 바꿀 수 없습니다.",
+      "exclusion_flows_readonly": "flow · 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다. | flow · 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다.",
+      "exclusion_search_only": "{type} · 일치 {count}개: 검색 전용이라 바꿀 수 없습니다. | {type} · 일치 {count}개: 검색 전용이라 바꿀 수 없습니다.",
       "exclusion_title": "{count}개의 일치 항목이 모두 바꾸기에서 제외됩니다 | {count}개의 일치 항목이 모두 바꾸기에서 제외됩니다",
       "expand_all": "모두 확장",
-      "file_match_notice": "파일 경로가 일치했습니다. 파일 내용은 검색되지 않습니다 — 안을 검색하려면 파일을 여세요.",
+      "file_match_notice": "파일 경로가 일치했습니다. 파일 내용은 검색되지 않습니다. 안을 검색하려면 파일을 여세요.",
       "files_progress_banner_failed": "namespace 파일은 한 번에 하나씩 검색됩니다. {total}개 중 {done}개 완료, {failed}개 실패. 총계는 계속 바뀝니다.",
       "files_progress_banner_ok": "namespace 파일은 한 번에 하나씩 검색됩니다. {total}개 중 {done}개 완료. 총계는 계속 바뀝니다.",
       "flow_only_toggle_hint": "대소문자 구분, 단어 단위, 정규식은 flow에만 적용됩니다. 파일 경로와 key는 항상 일반 텍스트로 일치합니다.",
@@ -2754,10 +2825,10 @@
       "show_replace": "바꾸기 표시",
       "summary": "{flows}개의 flow에서 {matches}개 일치",
       "summary_cross": "{types}, {resources}에서 {matches}",
-      "tag_keys_only_never": "key만 — 값은 표시되거나 검색되지 않습니다",
-      "tag_keys_only_values": "key만 — 값은 검색되지 않습니다",
-      "tag_paths_only": "경로만 — 파일 내용은 검색되지 않습니다",
-      "tag_search_only": "검색 전용 — 바뀌지 않습니다",
+      "tag_keys_only_never": "key만: 값은 표시되거나 검색되지 않습니다",
+      "tag_keys_only_values": "key만: 값은 검색되지 않습니다",
+      "tag_paths_only": "경로만: 파일 내용은 검색되지 않습니다",
+      "tag_search_only": "검색 전용: 바뀌지 않습니다",
       "tag_source_code": "소스 코드",
       "truncated_flows": "전체 {total}개 중 처음 {shown}개의 일치 항목을 표시합니다. 모두 바꾸기는 표시된 항목에만 적용되므로 먼저 검색어를 좁히세요.",
       "truncated_type": "{total}개 중 {shown}개",
@@ -2953,6 +3024,56 @@
     "iteration": "반복",
     "iteration_number": "반복 {number}",
     "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?",
-    "not started": "시작되지 않음"
+    "not started": "시작되지 않음",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "전체",
+        "total": "실행 {count}개 | 실행 {count}개",
+        "failed": "{count}개 실패"
+      },
+      "toolbar": {
+        "panBack": "뒤로 이동",
+        "panForward": "앞으로 이동",
+        "zoomIn": "확대",
+        "zoomOut": "축소",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "이 페이지 열기",
+        "runsCount": "실행 {count}개 | 실행 {count}개",
+        "failedCount": "{count}개 실패"
+      },
+      "bucket": {
+        "hint": "집계됨: 확대하면 실행 단위 상세 정보가 표시됩니다",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "실행 열기",
+        "showOnlyFlow": "이 flow만 표시"
+      },
+      "empty": {
+        "description": "선택한 기간과 필터에 해당하는 실행이 없습니다.",
+        "resetFilters": "필터 재설정",
+        "widenRange": "7일로 확장"
+      },
+      "error": {
+        "title": "타임라인을 불러오지 못했습니다",
+        "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
+      },
+      "truncated": {
+        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다. 모두 보려면 기간이나 필터를 좁혀 보세요."
+      },
+      "scrubber": {
+        "label": "시간 경과에 따른 Execution 밀도, 범위를 선택하려면 드래그하세요.",
+        "ignoredFilters": "밀도 막대에는 다음 필터가 적용되지 않습니다: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "카운트",
+      "timeline": "타임라인"
+    }
   }
 }

@@ -25,13 +25,13 @@ export function isIon(value: unknown): boolean {
     return isFile(value) && typeof value === "string" && value.toLowerCase().endsWith(".ion")
 }
 
-export function flatten(object: Record<string, any>) {
-    const result: Record<string, any> = {}
+export function flatten<T = unknown>(object: Record<string, T>) {
+    const result: Record<string, unknown> = {}
 
     // Accumulate into one object: the previous `concat(...keys.map())` and
     // `Object.assign({}, ...leaves)` spread one argument per key, which threw RangeError
     // above ~100k leaves and left the outputs table unrenderable (kestra-io/kestra#19316).
-    function collectLeaves(child: Record<string, any> | null, path: string[]): void {
+    function collectLeaves(child: Record<string, unknown> | null, path: string[]): void {
         if (child === null) {
             result[path.join(".")] = null
             return
@@ -48,18 +48,18 @@ export function flatten(object: Record<string, any>) {
 
         for (const key of keys) {
             if (typeof child[key] === "object") {
-                collectLeaves(child[key], path.concat([key]))
+                collectLeaves(child[key] as Record<string, unknown> | null, path.concat([key]))
             } else {
                 result[path.concat([key]).join(".")] = child[key]
             }
         }
     }
 
-    collectLeaves(object, [])
+    collectLeaves(object as Record<string, unknown>, [])
     return result
 }
 
-export function executionVars(data: Record<string, any>) {
+export function executionVars<T = unknown>(data: Record<string, T>) {
     if (data === undefined) {
         return []
     }
@@ -69,7 +69,7 @@ export function executionVars(data: Record<string, any>) {
     return Object.keys(flat).map(key => {
         const rawValue = flat[key]
         if (key === "variables.executionId") {
-            return {key, value: rawValue, subflow: true}
+            return {key, value: rawValue as string | object | boolean | number, subflow: true}
         }
 
         if (typeof rawValue === "string" && rawValue.match(/\d{4}-\d{2}-\d{2}/)) {
@@ -83,7 +83,7 @@ export function executionVars(data: Record<string, any>) {
             return {key, value: number(rawValue)}
         }
 
-        return {key, value: rawValue}
+        return {key, value: rawValue as string | object | boolean | number}
 
     })
 }
@@ -273,14 +273,13 @@ export function number(n: number) {
 }
 
 export function hexToRgba(hex: string, opacity: number) {
-    let c: any
     if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-        c = hex.substring(1).split("")
-        if (c.length === 3) {
-            c = [c[0], c[0], c[1], c[1], c[2], c[2]]
+        let chars = hex.substring(1).split("")
+        if (chars.length === 3) {
+            chars = [chars[0], chars[0], chars[1], chars[1], chars[2], chars[2]]
         }
-        c = "0x" + c.join("")
-        return "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + "," + (opacity || 1) + ")"
+        const num = Number("0x" + chars.join(""))
+        return "rgba(" + [(num >> 16) & 255, (num >> 8) & 255, num & 255].join(",") + "," + (opacity || 1) + ")"
     }
     throw new Error("Bad Hex")
 }
@@ -405,7 +404,7 @@ export function splitFirst(str: string, separator: string) {
     return str.split(separator).slice(1).join(separator)
 }
 
-export function asArray(objOrArray: any | any[]) {
+export function asArray<T = unknown>(objOrArray: T | T[] | undefined): T[] {
     if (objOrArray === undefined) {
         return []
     }
@@ -417,11 +416,11 @@ export async function copy(text: string) {
     await copyToClipboard(text)
 }
 
-export function toFormData(obj: FormData | Record<string, any>) {
+export function toFormData(obj: FormData | Record<string, unknown>) {
     if (!(obj instanceof FormData)) {
         const formData = new FormData()
         for (const key in obj) {
-            formData.append(key, obj[key])
+            formData.append(key, obj[key] as string | Blob)
         }
         return formData
     }
@@ -472,39 +471,42 @@ export function getParentNamespaces(namespace: string): string[] {
     return parents
 }
 
-export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {
+export function resolve$ref<T = unknown>(fullSchema: Record<string, unknown>, obj: T): T {
     if (obj === undefined || obj === null) {
         return obj
     }
-    if (obj.$ref) {
-        return getValueAtJsonPath(fullSchema, obj.$ref)
+    if ((obj as unknown as { $ref?: unknown })?.$ref) {
+        return getValueAtJsonPath(fullSchema, (obj as unknown as { $ref: string }).$ref) as T
     }
     return obj
 }
 
-export function getValueAtJsonPath(fullSchema: Record<string, any>, path: string): any {
+export function getValueAtJsonPath<T = unknown>(fullSchema: Record<string, unknown>, path: string): T {
     if (!fullSchema || !path || typeof path !== "string") {
-        return undefined
+        return undefined as T
     }
 
     const keys = path.replace(/^#\//, "").split("/")
-    let current = fullSchema
+    let current: unknown = fullSchema
 
     for (const key of keys) {
-        if (current && key in current) {
-            current = resolve$ref(fullSchema, current[key])
+        if (current && typeof current === "object" && key in current) {
+            const next = (current as Record<string, unknown>)[key]
+            current = next && typeof next === "object"
+                ? resolve$ref(fullSchema, next)
+                : next
         } else {
-            return undefined
+            return undefined as T
         }
     }
 
-    return current
+    return current as T
 }
 
-export function deepEqual(x: any, y: any): boolean {
+export function deepEqual(x: unknown, y: unknown): boolean {
     const ok = Object.keys, tx = typeof x, ty = typeof y
     return x && y && tx === "object" && tx === ty ? (
         ok(x).length === ok(y).length &&
-        ok(x).every(key => deepEqual(x[key], y[key]))
+        ok(x).every(key => deepEqual((x as Record<string, unknown>)[key], (y as Record<string, unknown>)[key]))
     ) : (x === y)
 }

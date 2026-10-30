@@ -41,7 +41,19 @@ public record TriggerEvaluationResult(
     @JsonProperty @Nullable Integer flowRevision,
     @JsonProperty @Nullable Instant scheduleDate,
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @Schema(implementation = Object.class) Map<String, Object> inputs) {
+    @Schema(implementation = Object.class) Map<String, Object> inputs,
+    @JsonProperty @Nullable String traceParent) {
+
+    public TriggerEvaluationResult(
+        String executionId,
+        State.Type stateType,
+        ExecutionTrigger trigger,
+        @Nullable List<Label> labels,
+        @Nullable Integer flowRevision,
+        @Nullable Instant scheduleDate,
+        Map<String, Object> inputs) {
+        this(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs, null);
+    }
 
     /**
      * Extracts a lightweight result from a full {@link Execution} (worker-side).
@@ -57,7 +69,8 @@ public record TriggerEvaluationResult(
             execution.getLabels(),
             execution.getFlowRevision(),
             execution.getScheduleDate(),
-            execution.getInputs()
+            execution.getInputs(),
+            execution.getTraceParent()
         );
     }
 
@@ -65,14 +78,21 @@ public record TriggerEvaluationResult(
      * Returns a copy with a different state type.
      */
     public TriggerEvaluationResult withState(State.Type state) {
-        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision, scheduleDate, inputs);
+        return new TriggerEvaluationResult(executionId, state, trigger, labels, flowRevision, scheduleDate, inputs, traceParent);
     }
 
     /**
      * Returns a copy with a different schedule date.
      */
     public TriggerEvaluationResult withScheduleDate(Instant scheduleDate) {
-        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs);
+        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs, traceParent);
+    }
+
+    /**
+     * Returns a copy carrying the given W3C {@code traceparent}, so the created execution joins the upstream trace.
+     */
+    public TriggerEvaluationResult withTraceParent(@Nullable String traceParent) {
+        return new TriggerEvaluationResult(executionId, stateType, trigger, labels, flowRevision, scheduleDate, inputs, traceParent);
     }
 
     /**
@@ -97,6 +117,7 @@ public record TriggerEvaluationResult(
             .labels(labels)
             .scheduleDate(scheduleDate)
             .inputs(inputs)
+            .traceParent(traceParent)
             .build();
     }
 }

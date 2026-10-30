@@ -125,7 +125,7 @@
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
-    import {overflowActionComponents} from "override/components/executions/executionsExtensions"
+    import {overflowActionComponents, reviewActionComponent} from "override/components/executions/executionsExtensions"
 
     defineProps<{
         routeInfo: {
@@ -166,7 +166,7 @@
         kill: {component: Kill},
         pause: {component: Pause},
         resume: {component: Resume},
-        review: {component: Review},
+        review: {component: reviewActionComponent ?? Review},
         cancelApproval: {component: CancelApproval},
         resumeFromBreakpoint: {component: ResumeFromBreakpoint},
         unqueue: {component: Unqueue},

@@ -25,6 +25,7 @@ vi.mock("override/components/executions/executionsExtensions", () => ({
     getExtraColumns: () => [],
     cellComponents: {},
     bulkActionComponents: [],
+    reviewActionComponent: undefined,
     overflowActionComponents: [extraOverflowAction],
 }))
 

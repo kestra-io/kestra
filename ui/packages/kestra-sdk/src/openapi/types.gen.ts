@@ -20,12 +20,6 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -435,6 +429,13 @@ export type ApiTriggerState = {
     kind?: TriggerType;
 };
 
+export type ApprovalCommentRequired = 'NEVER' | 'ALWAYS' | 'ON_DENY' | 'ON_APPROVE';
+
+export type ApprovalDecisions = {
+    approve?: PropertyString;
+    deny?: PropertyString;
+};
+
 export type ArtefactDraft = {
     draftId?: string;
     kind?: ArtefactKind;
@@ -471,6 +472,8 @@ export type Asset = {
     };
     /**
      * The day-2 actions offered on this asset, each backing onto a flow.
+     *
+     * Assets and flows are decoupled, and actions edited from the UI or the API are not written back to the flow. When `assetActions` is declared in a flow, the actions stored on the asset are replaced by the declared ones on each execution, and edits made from the UI or the API are overwritten. When it is omitted, the stored actions are kept. It's up to you to manage the actions of an asset either as code in the flow or from the UI and the API.
      */
     assetActions?: Array<FlowAction>;
 };
@@ -689,6 +692,7 @@ export type DailyExecutionStatistics = {
         CREATED?: number;
         SUBMITTED?: number;
         RUNNING?: number;
+        PAUSING?: number;
         PAUSED?: number;
         RESTARTED?: number;
         KILLING?: number;
@@ -833,6 +837,13 @@ export type Execution = {
     loopRun?: LoopRun | null;
 };
 
+export type ExecutionControllerApiReviewAllowed = {
+    /**
+     * Whether the current user may review or cancel the Approval task run
+     */
+    allowed?: boolean;
+};
+
 export type ExecutionControllerApiValidateExecutionInputsResponse = {
     id: string;
     namespace: string;
@@ -893,6 +904,8 @@ export type ExecutionControllerLastExecutionResponse = {
     startDate: string;
     status: StateType;
 };
+
+export type ExecutionControllerReviewDecision = 'APPROVE' | 'DENY';
 
 export type ExecutionControllerSetLabelsByIdsRequest = {
     executionsId: Array<string>;
@@ -1040,12 +1053,6 @@ export type Flow = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1062,6 +1069,12 @@ export type Flow = AbstractFlow & {
     workerSelector?: WorkerSelector;
     deleted: boolean;
     finally?: Array<Task>;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1140,12 +1153,6 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1167,6 +1174,12 @@ export type FlowForExecution = AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<OutputForExecution>;
     tasks: Array<TaskForExecution>;
     errors?: Array<TaskForExecution>;
     finally?: Array<TaskForExecution>;
@@ -1319,12 +1332,6 @@ export type FlowWithSource = Flow & AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     /**
-     * Output values available and exposes to other flows.
-     *
-     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
-     */
-    outputs?: Array<Output>;
-    /**
      * Whether the flow is disabled.
      *
      * A disabled flow does not run: its triggers are paused and new executions are rejected.
@@ -1340,6 +1347,12 @@ export type FlowWithSource = Flow & AbstractFlow & {
      */
     workerSelector?: WorkerSelector;
     deleted: boolean;
+    /**
+     * Output values available and exposes to other flows.
+     *
+     * Output values make information about the execution of your Flow available and expose for other Kestra flows to use. Output values are similar to return values in programming languages.
+     */
+    outputs?: Array<Output>;
     variables?: {
         [key: string]: unknown;
     };
@@ -1723,6 +1736,12 @@ export type Output = {
     type: Type;
     displayName?: string;
     required?: boolean;
+    searchable?: boolean;
+};
+
+export type OutputControllerSearchableOutputInformation = {
+    outputId?: string;
+    value?: string;
 };
 
 export type OutputControllerTaskOutputInformation = {
@@ -1731,6 +1750,15 @@ export type OutputControllerTaskOutputInformation = {
     value?: string;
     iteration?: number;
     inline?: boolean;
+};
+
+export type OutputForExecution = {
+    id: string;
+    description?: string;
+    type: Type;
+    displayName?: string;
+    required?: boolean;
+    searchable?: boolean;
 };
 
 /**
@@ -1818,6 +1846,14 @@ export type PagedResultsMetricEntry = {
  */
 export type PagedResultsNamespace = {
     results: Array<NamespaceLight>;
+    total: number;
+};
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsOutputControllerSearchableOutputInformation = {
+    results: Array<OutputControllerSearchableOutputInformation>;
     total: number;
 };
 
@@ -2108,6 +2144,13 @@ export type ProblemError = {
     type?: string;
 };
 
+export type PropertyApprovalCommentRequired = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: ApprovalCommentRequired;
+};
+
 export type PropertyAssetFailureBehavior = ({
     [key: string]: unknown;
 } | string) & {
@@ -2167,7 +2210,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'flowNamespace' | 'targetNamespace' | 'targetAssetType' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'outputs' | 'assetExpiry' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'origin' | 'sourceId' | 'targetId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'loopRunValue' | 'operationId' | 'operationOutcome' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'instance_owner' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -2354,7 +2397,7 @@ export type StateHistory = {
     date: string;
 };
 
-export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
+export type StateType = 'CREATED' | 'SUBMITTED' | 'RUNNING' | 'PAUSING' | 'PAUSED' | 'RESTARTED' | 'KILLING' | 'SUCCESS' | 'WARNING' | 'FAILED' | 'KILLED' | 'CANCELLED' | 'QUEUED' | 'RETRYING' | 'RETRIED' | 'SKIPPED' | 'BREAKPOINT' | 'RESUBMITTED';
 
 export type Task = {
     id: string;
@@ -2441,6 +2484,8 @@ export type TaskForExecution = {
     tasks?: Array<TaskForExecution>;
     inputs?: Array<InputObject>;
     subflowId?: ExecutableTaskSubflowId;
+    decisions?: ApprovalDecisions;
+    commentRequired?: PropertyApprovalCommentRequired;
 };
 
 export type TaskRun = {
@@ -6738,6 +6783,62 @@ export type GetExecutionResponses = {
 
 export type GetExecutionResponse = GetExecutionResponses[keyof GetExecutionResponses];
 
+export type CancelApprovalData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/cancel-approval';
+};
+
+export type CancelApprovalErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type CancelApprovalError = CancelApprovalErrors[keyof CancelApprovalErrors];
+
+export type CancelApprovalResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type CancelApprovalResponse = CancelApprovalResponses[keyof CancelApprovalResponses];
+
 export type UpdateExecutionStatusData = {
     body?: never;
     path: {
@@ -7520,6 +7621,180 @@ export type ValidateResumeExecutionInputsResponses = {
 };
 
 export type ValidateResumeExecutionInputsResponse = ValidateResumeExecutionInputsResponses[keyof ValidateResumeExecutionInputsResponses];
+
+export type ReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review';
+};
+
+export type ReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ReviewExecutionError = ReviewExecutionErrors[keyof ReviewExecutionErrors];
+
+export type ReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Execution;
+};
+
+export type ReviewExecutionResponse = ReviewExecutionResponses[keyof ReviewExecutionResponses];
+
+export type IsReviewAllowedData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/allowed';
+};
+
+export type IsReviewAllowedErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the execution does not exist
+     */
+    404: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type IsReviewAllowedError = IsReviewAllowedErrors[keyof IsReviewAllowedErrors];
+
+export type IsReviewAllowedResponses = {
+    /**
+     * On success
+     */
+    200: ExecutionControllerApiReviewAllowed;
+};
+
+export type IsReviewAllowedResponse = IsReviewAllowedResponses[keyof IsReviewAllowedResponses];
+
+export type ValidateReviewExecutionData = {
+    /**
+     * The reviewer inputs, plus the optional `kestra_review_comment` part
+     */
+    body?: Array<Blob | File>;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query: {
+        /**
+         * The Approval task run id
+         */
+        taskRunId: string;
+        /**
+         * The decision
+         */
+        decision: ExecutionControllerReviewDecision;
+    };
+    url: '/api/v1/{tenant}/executions/{executionId}/actions/review/validate';
+};
+
+export type ValidateReviewExecutionErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * if the task run does not exist in the execution
+     */
+    404: ProblemDetail;
+    /**
+     * if the task run is not paused, it was already decided or cancelled
+     */
+    409: ProblemDetail;
+    /**
+     * if the task run is not an Approval or the decision is refused
+     */
+    422: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ValidateReviewExecutionError = ValidateReviewExecutionErrors[keyof ValidateReviewExecutionErrors];
+
+export type ValidateReviewExecutionResponses = {
+    /**
+     * On success
+     */
+    200: Array<ExecutionControllerApiValidateExecutionInputsResponse>;
+};
+
+export type ValidateReviewExecutionResponse = ValidateReviewExecutionResponses[keyof ValidateReviewExecutionResponses];
 
 export type UpdateTaskRunStateData = {
     /**
@@ -9787,6 +10062,10 @@ export type ListLogsFromExecutionData = {
          */
         size?: number | null;
         /**
+         * The sort of the page, defaults to `timestamp:asc`
+         */
+        sort?: Array<string> | null;
+        /**
          * Filters
          */
         filters?: Array<QueryFilter> | null;
@@ -11523,6 +11802,54 @@ export type GetExecutionOutputsResponses = {
 
 export type GetExecutionOutputsResponse = GetExecutionOutputsResponses[keyof GetExecutionOutputsResponses];
 
+export type ListSearchableOutputsData = {
+    body?: never;
+    path: {
+        /**
+         * The execution id
+         */
+        executionId: string;
+        tenant: string;
+    };
+    query?: {
+        /**
+         * The current page
+         */
+        page?: number;
+        /**
+         * The current page size
+         */
+        size?: number;
+    };
+    url: '/api/v1/{tenant}/outputs/searchable/{executionId}';
+};
+
+export type ListSearchableOutputsErrors = {
+    /**
+     * Authentication required
+     */
+    401: ProblemDetail;
+    /**
+     * Access denied
+     */
+    403: ProblemDetail;
+    /**
+     * Internal server error
+     */
+    500: ProblemDetail;
+};
+
+export type ListSearchableOutputsError = ListSearchableOutputsErrors[keyof ListSearchableOutputsErrors];
+
+export type ListSearchableOutputsResponses = {
+    /**
+     * listSearchableOutputs 200 response
+     */
+    200: PagedResultsOutputControllerSearchableOutputInformation;
+};
+
+export type ListSearchableOutputsResponse = ListSearchableOutputsResponses[keyof ListSearchableOutputsResponses];
+
 export type GetTaskOutputsInformationData = {
     body?: never;
     path: {
@@ -12712,7 +13039,12 @@ export type GetUsagesData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * The rolling window, in days, the execution figures cover
+         */
+        days?: number;
+    };
     url: '/api/v1/{tenant}/usages/all';
 };
 

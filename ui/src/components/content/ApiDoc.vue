@@ -1,16 +1,15 @@
 <template>
     <rapi-doc
         v-if="ready"
-        :specUrl="docStore.resourceUrl('kestra.yml')"
-        :theme="theme"
-        renderStyle="view"
-        showHeader="false"
-        showInfo="false"
-        allowAuthentication="false"
-        allowServerSelection="false"
-        allowTry="false"
-        regularFont="Inter"
-        monoFont="JetBrains Mono"
+        :spec-url="docStore.resourceUrl('kestra.yml')"
+        :color-scheme="theme"
+        theme="violet"
+        render-style="view"
+        show-header="false"
+        show-info="false"
+        allow-authentication="false"
+        allow-server-selection="false"
+        allow-try="false"
     />
 </template>
 
@@ -34,5 +33,7 @@
     rapi-doc {
         background: transparent;
         width: 100%;
+        --font-regular: var(--ks-font-family-sans);
+        --font-mono: var(--ks-font-family-mono);
     }
 </style>

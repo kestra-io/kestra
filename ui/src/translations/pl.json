@@ -145,6 +145,7 @@
     "update": "Aktualizuj",
     "confirmation": "Potwierdzenie",
     "toast confirm": "Czy na pewno?",
+    "toast_message_column": "Wiadomość",
     "common": {
       "back": "Wstecz",
       "openInNewTab": "Otwórz w nowej karcie"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "Utwórz podobną egzekucję, zaczynając od początku",
     "replay latest revision": "Replay z najnowszą wersją",
     "replayed": "Uruchomiono Replay egzekucji",
+    "reused_task_run": {
+      "label": "Ponownie użyte",
+      "tooltip": "Nie uruchomiono ponownie w tej egzekucji. Uruchomiono {date}, a jego logi i outputy pochodzą z tego uruchomienia."
+    },
     "replay the execution": "Replay egzekucji {executionId} dla Flow {flowId}",
     "prefill inputs": "Wypełnij",
     "current": "bieżący",
@@ -462,6 +467,41 @@
     "resumed confirm": "Czy na pewno chcesz wznowić egzekucję <code>{id}</code>?",
     "resumed done": "Egzekucja została wznowiona",
     "resume from breakpoint title": "Wznów egzekucję {id} od Breakpointa",
+    "approval": {
+      "review": "Przegląd",
+      "title": "Przejrzyj {task} egzekucji {id}",
+      "approve": "Zatwierdź",
+      "deny": "Odmów",
+      "comment": "Komentarz",
+      "comment hint": {
+        "optional": "Opcjonalnie.",
+        "always": "Komentarz jest wymagany.",
+        "on approve": "Komentarz jest wymagany do zatwierdzenia.",
+        "on deny": "Komentarz jest wymagany, aby odrzucić."
+      },
+      "comment required": "Komentarz jest wymagany dla tej decyzji.",
+      "inputs invalid": "Niektóre Inputy są nieprawidłowe: {errors}",
+      "review done": "Twoja recenzja została zapisana",
+      "reviewed": {
+        "title": "Żądanie zatwierdzenia egzekucji {id}",
+        "explanation": "To żądanie zatwierdzenia nie czeka już na recenzję.",
+        "decision": "Decyzja",
+        "by": "Zdecydowano przez",
+        "on": "Zdecydowano na",
+        "decisions": {
+          "approved": "Zatwierdzono",
+          "denied": "Odmówiono",
+          "expired": "Wygasłe"
+        }
+      },
+      "cancel request": "Anuluj żądanie",
+      "cancel confirm": "Czy na pewno chcesz anulować prośbę o zatwierdzenie egzekucji {id}? Żadna gałąź decyzyjna nie zostanie uruchomiona.",
+      "cancel done": "Żądanie zatwierdzenia zostało anulowane",
+      "banner": {
+        "pausing": "Ta egzekucja przygotowuje prośbę o zatwierdzenie i zostanie wstrzymana do przeglądu.",
+        "paused": "Ta egzekucja czeka na weryfikację. Zatwierdź lub odrzuć, aby kontynuować."
+      }
+    },
     "resume from breakpoint done": "Egzekucja została wznowiona od Breakpointa",
     "breakpoints": "Breakpointy",
     "pause": "Wstrzymaj",
@@ -509,9 +549,68 @@
       "invalid": "Błąd grafu",
       "invalid_description": "Wystąpił błąd podczas ładowania grafu. Proszę sprawdzić kod źródłowy pod kątem błędów.",
       "load_error": "Nie udało się załadować grafu topologii. Spróbuj ponownie.",
+      "expand_subflow_error": "Nie można rozwinąć Subflow",
       "add-task": "Dodaj task",
       "add-trigger": "Dodaj trigger",
-      "child-count": "{count} task | {count} tasks"
+      "child-count": "{count} task | {count} tasks",
+      "loop": {
+        "not-run": "Nie uruchomiono",
+        "pick-first": "Najpierw wybierz {loop}",
+        "picker-label": "Iteracja pętli {loop}",
+        "search-by-index": "Szukaj według indeksu",
+        "all-iterations": "Wszystkie iteracje",
+        "iteration-index": "indeks {index}",
+        "iteration-value-index": "{value} · indeks {index}",
+        "previous-iteration": "Poprzednia iteracja",
+        "next-iteration": "Następna iteracja",
+        "previous-page": "Poprzednia strona",
+        "next-page": "Następna strona",
+        "failed-group": "Nieudane · {count}",
+        "other-group": "Pozostałe iteracje",
+        "matching": "Dopasowanie",
+        "failure-forbidden": "Nie masz dostępu do tej iteracji.",
+        "failure-not-found": "Ta iteracja już nie istnieje.",
+        "failure-ambiguous": "Ta pętla została wykonana w tym wykonaniu kilka razy, więc jej iteracji nie można rozróżnić.",
+        "failure-not-located": "Nie udało się zlokalizować nieudanej iteracji.",
+        "failure-unknown": "Nie udało się załadować iteracji.",
+        "scope": "Zakres",
+        "whole-execution": "Całe wykonanie",
+        "clear-scopes": "Wyczyść zakresy",
+        "jump-to-first-failure": "Przejdź do pierwszego błędu",
+        "loops-with-failures": "Pętle z błędami",
+        "task-runs": "{runs} uruchomienie | {runs} uruchomienia | {runs} uruchomień",
+        "task-runs-failed": "{runs} uruchomienie · {failed} nieudanych | {runs} uruchomienia · {failed} nieudanych | {runs} uruchomień · {failed} nieudanych",
+        "retry": "Ponów",
+        "load-more": "Załaduj więcej",
+        "retry-loading": "Ponów ładowanie iteracji"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{failed} z {total} nieudanych",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed} nieudanych · {notStarted} nieuruchomionych z {total}",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{done} z {total} zakończonych",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{done} z {total} zakończonych · {failed} nieudanych",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "{total} iteracja | {total} iteracje | {total} iteracji",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Pokaż logi Taska",
     "show task condition": "Pokaż warunek Taska",
@@ -522,7 +621,9 @@
     "execution_banner": {
       "revision": "Wersja {revision}",
       "attempts": "{count} próba | {count} próby | {count} prób",
-      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks"
+      "tasks": "{completed}/{count} task | {completed}/{count} tasks | {completed}/{count} tasks",
+      "searchable_values": "Wartości do wyszukania",
+      "more_searchable_values": "+{count} więcej wartości do wyszukania"
     },
     "execution_mobile": {
       "failed_task": "Nieudany task",
@@ -547,7 +648,13 @@
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Całkowity czas trwania egzekucji (w minutach)",
-    "last 48 hours": "ostatnie 48 godzin",
+    "task runs": "Uruchomienia Tasków",
+    "task runs duration (in minutes)": "Całkowity czas trwania Task Runów (w minutach)",
+    "last 24 hours": "ostatnie 24 godziny",
+    "last 7 days": "ostatnie 7 dni",
+    "last 30 days": "ostatnie 30 dni",
+    "since {date}": "od {date}",
+    "usage period": "Okres użytkowania",
     "email": "E-mail",
     "password": "Hasło",
     "confirm password": "Potwierdź hasło",
@@ -562,11 +669,21 @@
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Zmienne",
+    "execution_artifacts": {
+      "title": "Artifacts",
+      "empty": "Żaden Task tego Flow nie dostarcza Artifactu.",
+      "count": "{artifacts} · {tasks}",
+      "artifacts": "brak Artifactów | {count} Artifact | {count} Artifacty | {count} Artifactów",
+      "tasks": "brak Tasków | {count} Task | {count} Taski | {count} Tasków",
+      "fullscreen": "Pełny ekran",
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
+    },
     "variable_explorer": {
       "title": "Input/Output",
       "search_placeholder": "Szukaj Key lub Value…",
       "tasks_outputs": "Outputy Tasków",
       "expression": "Wyrażenie",
+      "searchable": "Możliwe do wyszukania",
       "tree": "Drzewo",
       "raw_json": "Surowy JSON",
       "select_prompt": "Wybierz zmienną, aby sprawdzić jej Value.",
@@ -936,7 +1053,6 @@
       }
     },
     "back_to_dashboard": "Powrót do Dashboardu",
-    "copy all logs": "Skopiuj wszystkie logi",
     "copy logs": "Kopiuj logi",
     "fix_with_ai": "Napraw za pomocą AI",
     "download logs": "Pobierz logi",
@@ -1095,7 +1211,7 @@
     "hostname": "Nazwa hosta",
     "file preview truncated": "Wyświetlana zawartość została skrócona",
     "file unavailable": "Plik niedostępny",
-    "file unavailable description": "Ten plik nie jest już dostępny — mógł zostać usunięty lub wygasł.",
+    "file unavailable description": "Ten plik nie jest już dostępny. Mógł zostać usunięty lub wygasł.",
     "row count": "Liczba wierszy",
     "encoding": "Kodowanie",
     "show": "Pokaż",
@@ -1204,6 +1320,7 @@
     "backfill executions": "Egzekucje Backfillu",
     "execute backfill": "Wykonaj Backfill",
     "relative start date": "Względna data rozpoczęcia",
+    "now": "Teraz",
     "absolute": "Absolutny",
     "backfill": "Backfill",
     "Set labels": "Ustaw etykiety",
@@ -1432,7 +1549,7 @@
       },
       "promote": {
         "title": "Promuj Flowy między środowiskami",
-        "message": "Kestra Enterprise Edition umożliwia promowanie Flow z jednego środowiska do drugiego — na przykład z dev do staging, a następnie do production — bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
+        "message": "Kestra Enterprise Edition umożliwia promowanie Flow z jednego środowiska do drugiego, na przykład z dev do staging, a następnie do production, bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
       },
       "dashboards": {
         "header": "Niestandardowe Dashboardy",
@@ -1759,7 +1876,18 @@
       "compact": "Widok domyślny",
       "compact_details": "Pokaż logi Tasków w kompaktowym widoku pogrupowanym według Taska",
       "fullscreen": "Logs na pełnym ekranie",
-      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego"
+      "exit_fullscreen": "Wyjdź z trybu pełnoekranowego",
+      "loop": {
+        "this-execution": "To wykonanie",
+        "with-iterations": "Z iteracjami pętli",
+        "batch-range": "Nieudane iteracje {from}–{to} z {total}",
+        "empty-title": "Brak pasujących logów",
+        "empty-description": "Żaden log nie pasuje do wybranego poziomu w tym wykonaniu ani w jego nieudanych iteracjach pętli. Obniż poziom, aby zobaczyć więcej.",
+        "scope-to": "Ogranicz graf i logi do {scope}",
+        "show-in-overview": "Pokaż w przeglądzie",
+        "show-in-overview-for": "Pokaż {scope} w przeglądzie",
+        "mode-label": "Źródło logów"
+      }
     },
     "execution_deletion": {
       "logs": "Usuń logi",
@@ -2118,6 +2246,7 @@
         "plural": "Dashboardy"
       },
       "default": "Domyślny Dashboard",
+      "set_default": "Ustaw jako domyślny",
       "empty": "Brak wyników do wyświetlenia.",
       "edition": {
         "label": "Edytuj Dashboard",
@@ -2130,11 +2259,8 @@
       "no_description_hint": "Dodaj opis do tego Flow, aby udokumentować, co robi.<br>Markdown jest obsługiwany.",
       "others": "Inne",
       "viewAll": "Pokaż wszystko",
-      "export": "Eksportuj",
-      "exportEmpty": "Ten wykres nie ma danych do wyeksportowania.",
       "exportTo": {
-        "csv": "Eksportuj do CSV",
-        "ion": "Eksportuj do ION"
+        "csv": "Eksportuj do CSV"
       },
       "ignoredFilters": "Filtr {filters} nie dotyczy tego wykresu. | Filtry {filters} nie dotyczą tego wykresu.",
       "show_all_statuses": "Pokaż wszystkie statusy",
@@ -2266,7 +2392,7 @@
         },
         "cancelled": "Tura anulowana",
         "error": {
-          "turnCap": "Ta rozmowa osiągnęła swój limit — rozpocznij nowy czat.",
+          "turnCap": "Ta rozmowa osiągnęła swój limit: rozpocznij nowy czat.",
           "turnInProgress": "Tura jest już w toku.",
           "request": "Żądanie nie powiodło się. Spróbuj ponownie.",
           "generic": "Coś poszło nie tak. Spróbuj ponownie."
@@ -2327,9 +2453,9 @@
           "dismiss": "Odrzuć",
           "dismissed": "Odrzucono",
           "applied": "Zastosowano",
-          "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI — edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
+          "previewBanner": "Przeglądasz zmianę zasugerowaną przez AI. Edytor jest tylko do odczytu, dopóki jej nie zastosujesz lub nie odrzucisz.",
           "applyTitle": "Zastosuj Flow",
-          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza — wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
+          "applyConfirm": "Zapisać Flow {namespace}.{id} jako wersję roboczą do przeglądu? Zostanie utworzony lub, jeśli już istnieje, zostanie dodana nowa wersja robocza. Wersje robocze nie są uruchamiane przez triggery ani subflow, dopóki nie zostaną opublikowane.",
           "applyConfirmDashboard": "Zastosować Dashboard {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
           "applyError": "Nie udało się zastosować Flow. Spróbuj ponownie.",
           "applyErrorDashboard": "Nie udało się zastosować Dashboardu. Spróbuj ponownie.",
@@ -2408,7 +2534,7 @@
         "hidden_consumer": "Ukryty Flow",
         "ungrouped": "Bez grupy",
         "hub": {
-          "notice": "Ten węzeł ma {count} relacji — pokazano tylko najnowsze, aby wykres był czytelny.",
+          "notice": "Ten węzeł ma {count} relacji. Pokazano tylko najnowsze, aby wykres był czytelny.",
           "expand": "Załaduj więcej relacji",
           "expand_failed": "Nie można załadować więcej relacji. Spróbuj ponownie."
         },
@@ -2568,7 +2694,7 @@
     },
     "invalid_source_code": "Nieprawidłowy kod źródłowy",
     "source_search": {
-      "cannot_select_read_only": "Nie można wybrać — brak uprawnień do edycji dla {namespace} / {id}",
+      "cannot_select_read_only": "Nie można wybrać: brak uprawnień do edycji dla {namespace} / {id}",
       "collapse_all": "Zwiń wszystko",
       "confirm_bar_excluded": "{count} inne dopasowanie nie zostanie zmienione. | {count} inne dopasowania nie zostaną zmienione. | {count} innych dopasowań nie zostanie zmienionych.",
       "confirm_bar_message": "Zastąp {matches} w {flows} edytowalnych Flowach. {skipped} Flowów tylko do odczytu zostanie pominiętych.",
@@ -2584,11 +2710,11 @@
       "empty_title": "Znajdź wartość we Flowach, plikach i Keyach",
       "error_title": "Nieprawidłowe wyrażenie regularne",
       "examples_aria": "Przykładowe zapytania",
-      "exclusion_flows_readonly": "Flows — {count} dopasowanie tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows — {count} dopasowania tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows — {count} dopasowań tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE.",
-      "exclusion_search_only": "{type} — {count} dopasowanie: tylko wyszukiwanie, nie można zamienić. | {type} — {count} dopasowania: tylko wyszukiwanie, nie można zamienić. | {type} — {count} dopasowań: tylko wyszukiwanie, nie można zamienić.",
+      "exclusion_flows_readonly": "Flows · {count} dopasowanie tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows · {count} dopasowania tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE. | Flows · {count} dopasowań tylko do odczytu: potrzebujesz uprawnienia FLOW · UPDATE.",
+      "exclusion_search_only": "{type} · {count} dopasowanie: tylko wyszukiwanie, nie można zamienić. | {type} · {count} dopasowania: tylko wyszukiwanie, nie można zamienić. | {type} · {count} dopasowań: tylko wyszukiwanie, nie można zamienić.",
       "exclusion_title": "{count} dopasowanie jest wykluczone z opcji Zamień wszystko | {count} dopasowania są wykluczone z opcji Zamień wszystko | {count} dopasowań jest wykluczonych z opcji Zamień wszystko",
       "expand_all": "Rozwiń wszystko",
-      "file_match_notice": "Ścieżka pliku pasuje. Zawartość pliku nie jest przeszukiwana — otwórz plik, aby przeszukać jego zawartość.",
+      "file_match_notice": "Ścieżka pliku pasuje. Zawartość pliku nie jest przeszukiwana. Otwórz plik, aby przeszukać jego zawartość.",
       "files_progress_banner_failed": "Pliki namespace są przeszukiwane po jednym namespace naraz. Ukończono {done} z {total}, {failed} nie powiodło się. Suma może się jeszcze zmienić.",
       "files_progress_banner_ok": "Pliki namespace są przeszukiwane po jednym namespace naraz. Ukończono {done} z {total}. Suma może się jeszcze zmienić.",
       "flow_only_toggle_hint": "Uwzględnianie wielkości liter, całe słowo i wyrażenie regularne dotyczą tylko Flowów. Ścieżki plików i Keye są zawsze dopasowywane jako zwykły tekst.",
@@ -2665,10 +2791,10 @@
       "show_replace": "Pokaż zamianę",
       "summary": "{matches} dopasowań w {flows} Flowach",
       "summary_cross": "{matches} w {resources} w {types}",
-      "tag_keys_only_never": "Tylko klucze — wartości nigdy nie są wyświetlane ani przeszukiwane",
-      "tag_keys_only_values": "Tylko klucze — wartości nie są przeszukiwane",
-      "tag_paths_only": "Tylko ścieżki — zawartość pliku nie jest przeszukiwana",
-      "tag_search_only": "Tylko wyszukiwanie — nie zamieniane",
+      "tag_keys_only_never": "Tylko klucze: wartości nigdy nie są wyświetlane ani przeszukiwane",
+      "tag_keys_only_values": "Tylko klucze: wartości nie są przeszukiwane",
+      "tag_paths_only": "Tylko ścieżki: zawartość pliku nie jest przeszukiwana",
+      "tag_search_only": "Tylko wyszukiwanie: nie zamieniane",
       "tag_source_code": "Kod źródłowy",
       "truncated_flows": "Wyświetlono pierwsze {shown} z {total} dopasowań. „Zamień wszystko” dotyczy tylko wyświetlonych dopasowań, najpierw zawęź zapytanie.",
       "truncated_type": "pierwsze {shown} z {total}",
@@ -2864,6 +2990,56 @@
     "iteration": "Iteracja",
     "iteration_number": "Iteracja {number}",
     "delete_log_iteration": "Czy na pewno chcesz usunąć dziennik dla {iteration}?",
-    "not started": "Nierozpoczęte"
+    "not started": "Nierozpoczęte",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Wszystkie",
+        "total": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failed": "{count} nieudanych"
+      },
+      "toolbar": {
+        "panBack": "Przewiń wstecz",
+        "panForward": "Przewiń do przodu",
+        "zoomIn": "Przybliż",
+        "zoomOut": "Oddal",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Otwórz tę stronę",
+        "runsCount": "{count} wykonanie | {count} wykonania | {count} wykonań",
+        "failedCount": "{count} nieudanych"
+      },
+      "bucket": {
+        "hint": "Zagregowane: przybliż, aby zobaczyć szczegóły wykonania",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Otwórz wykonanie",
+        "showOnlyFlow": "Pokaż tylko ten flow"
+      },
+      "empty": {
+        "description": "Brak wykonań w wybranym zakresie i filtrach.",
+        "resetFilters": "Zresetuj filtry",
+        "widenRange": "Rozszerz do 7 dni"
+      },
+      "error": {
+        "title": "Nie udało się załadować osi czasu",
+        "description": "Wystąpił błąd podczas ładowania wykonań dla tego zakresu."
+      },
+      "truncated": {
+        "description": "Wyświetlane są najnowsze {shown} z {total} wykonań. Zawęź zakres czasu lub filtry, aby zobaczyć wszystkie."
+      },
+      "scrubber": {
+        "label": "Gęstość egzekucji w czasie, przeciągnij, aby wybrać zakres",
+        "ignoredFilters": "Pasek gęstości nie stosuje tych filtrów: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Liczniki",
+      "timeline": "Oś czasu"
+    }
   }
 }

@@ -20,6 +20,7 @@ const meta: Meta<typeof KsDataTable> = {
     component: KsDataTable,
     tags: ["autodocs"],
     parameters: {
+        controls: {disable: true},
         docs: {
             description: {
                 component: "KsDataTable is an all-in-one data table with built-in pagination, row selection (with shift-click range), loading state, and optional filter navbar.",

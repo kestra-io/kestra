@@ -241,6 +241,7 @@ Rules:
 - All icons come from [`vue-material-design-icons`](https://github.com/robcresswell/vue-material-design-icons) via `<KsIcon>` (or `<KsIconButton>` for clickable icons).
 - Never inline raw SVG, font-icon classes, or emoji as UI state. If a needed icon is missing, propose adding it to the DS rather than dropping an SVG into a feature folder.
 - Pass `name` (the kebab-case Material name); size and color come from props or the surrounding token context — don't override with inline `style`.
+- **One icon per action, in OSS and EE alike.** Before picking an icon for an action (delete, edit, save, run, import…), follow the pattern already used for that action in the codebase: the icon most places use for it, not a variant of it.
 - **Two file-type icon sets coexist on purpose, so don't merge them.** `fileUtils.fileIcon()` (behind `KsFileTag`) maps an extension to a monochrome `vue-material-design-icons` component, which inherits `--ks-icon-*` and so recolors per theme and per tag variant. `ui/src/components/utils/icons/Type.vue` renders the colored `material-file-icons` SVGs for the namespace file explorer, where the brand colors are the point. That package is a `ui/` dependency the design system does not have, and it bakes its colors into a base64 `<img>` that no token can reach, so it cannot be used from a `Ks*` component.
 
 ### Performance
@@ -291,6 +292,7 @@ Install the repo hooks once with `.github/.hooks/setup_hooks.sh` and the second 
 - A test that exercises a failure path the code reports with `console.error` stubs it (`vi.spyOn(console, "error").mockImplementation(() => {})`) and restores it, and ideally asserts on the call; output from a passing test is noise that hides the warning worth reading.
 - Use `data-test="..."` selectors for E2E tests with **Playwright**. Never select on `.el-*` or `.ks-*` class names — those are not stable contracts and will break on Element Plus / DS upgrades.
 - Storybook stories cover: each variant prop, dark mode, edge cases (empty content, very long text, error state). A `*.stories.ts` file with one default story is not enough.
+- The storybook project runs every story file in one shared iframe (`isolate: false`), since a fresh iframe per file crashed Chromium on CI. API data for a story goes through `mockStoryApiRoutes()` from `.storybook/apiMock.ts`, never `vi.mock()` (eslint rejects it in a story file), and an error thrown while a story renders fails that story. Wait for what a click opens (`findBy*`, `waitFor`) instead of relying on a fresh iframe being slow enough.
 - Visual regressions caught in Storybook are cheaper to fix than caught in production.
 - A test only earns its place when it can fail for a reason a reviewer would care about. Don't test that a prop is passed through, that a computed returns its own input, or that a `Ks*` component renders: the template is only restated by those assertions, and they are broken by every refactor. Delete a Vitest test once a story covers the same behavior, and say so in the PR description.
 
@@ -403,7 +405,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsInput` / `KsPassword` | Text and password inputs |
+| `KsInput` / `KsPassword` | Text and password inputs; `borderless` drops the border, background and side padding so a search sits flush in a list row (KsFilter "Add filters") |
 | `KsInputNumber` | Numeric input with increment / decrement |
 | `KsSelect` / `KsOption` / `KsOptionGroup` | Dropdown select |
 | `KsAutocomplete` | Autocomplete input with suggestions |
@@ -425,9 +427,9 @@ If your `<style>` block needs to exist:
 |-----------|---------|
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
-| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
+| `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. A filter key with `valueType: "number"` takes a number input; adding `Comparators.BETWEEN` to its comparators offers a min/max pair, sent as `GREATER_THAN_OR_EQUAL_TO` + `LESS_THAN_OR_EQUAL_TO` since the API has no between. A value option's `count` shows as a compact neutral badge next to it in the value lists. A filter key with `valueType: "radio"` takes `allLabel` / `allDescription` to name and describe its default option; selecting it omits the filter from the query. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". Pass `mobileColumns` (`{leading?, title, titleAside?, meta?, metaAside?, actions?}`, each naming a column `prop`, or the `columnKey` of a prop-less actions column) to render a card per row below 768px: `leading` is a status dot, `title` is bold, `titleAside` sits on its right, `meta` columns share the second line joined by a dot and `metaAside` closes it; `actions` is a corner cell on the first line; unlisted columns are hidden, bulk selection is desktop-only (the selection column is not shown on cards), and the regular table returns from 768px. |
 | `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover. Pass `noIcon` in dense embedded tables (e.g. dashboard chart tables, ~90px columns) where the icon's 20px costs more than it tells |
-| `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it |
+| `KsBadge` | Small indicator badge; `size="small"` shrinks the pill so it sits on an icon button instead of covering it; `type="neutral"` is a grey pill for counts next to content (the KsFilter value counts) |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag. Pass `truncate` to clip a long label with an ellipsis instead of letting the tag outgrow its container |
 | `KsAvatar` | Avatar with fallback |
@@ -437,7 +439,7 @@ If your `<style>` block needs to exist:
 | `KsSkeleton` | Skeleton loader |
 | `KsId` | Copyable ID display |
 | `KsDateAgo` | Relative time display ("2 hours ago") |
-| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label |
+| `KsSegmented` | Segmented control; object options may carry an `icon` component, rendered before the label. `variant="neutral"` swaps the primary-coloured selection for a grey one with wider segments |
 | `KsCollapse` / `KsCollapseItem` | Collapsible sections |
 | `KsFileTag` | Storage URI rendered as a file reference: a `KsTag` whose symbol comes from the extension, with a readable name (`name`, defaulting to the URI's last segment); the full URI stays in the tooltip |
 | `KsTree` | Hierarchical tree view |
@@ -464,6 +466,7 @@ If your `<style>` block needs to exist:
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu; pass `danger` on an item to give a destructive or exit action (delete, log out) the error-coloured hover |
 | `KsTopNavBar` | Top navigation bar; `titleSiblings` reaches the breadcrumb's current page |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
+| `KsSelectableListItem` | Button list item with title, optional subtitle and leading slot, selected and disabled states |
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation. An item's `siblings` loader (or `children` on the first item, and the `titleSiblings` prop for the current page) adds a chevron whose hover menu lists that level, headed by the level above (its `scope` when the label is not the right name for its content); an entry with a `children` loader flies out its own content to the right, as deep as the tree goes. Level loaders run as soon as the bar renders and an empty result shows no chevron; fly-outs load on hover. Namespace and flow pages build theirs with `useNamespaceBreadcrumb` |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 

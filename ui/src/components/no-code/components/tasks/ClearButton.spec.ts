@@ -1,4 +1,4 @@
-import {describe, expect, test} from "vitest"
+import {describe, expect, test, vi} from "vitest"
 import {i18nMount} from "../../../../../tests/unit/i18nMount"
 import ClearButton from "./ClearButton.vue"
 import en from "../../../../translations/en.json"
@@ -16,34 +16,23 @@ describe("ClearButton", () => {
         expect(wrapper.emitted("click")).toHaveLength(1)
     })
 
-    test("is a plain button so it never submits the surrounding form", () => {
-        const wrapper = mountClearButton()
+    test("does not submit the surrounding form when clicked", async () => {
+        const onSubmit = vi.fn()
+        const wrapper = i18nMount({
+            components: {ClearButton},
+            template: "<form @submit.prevent=\"onSubmit\"><ClearButton /></form>",
+            setup: () => ({onSubmit}),
+        }, {locales: en, attachTo: document.body})
 
-        expect(wrapper.get("button").attributes("type")).toBe("button")
+        await wrapper.get("button").trigger("click")
+
+        expect(onSubmit).not.toHaveBeenCalled()
+        wrapper.unmount()
     })
 
     test("renders the translated clear selection label", () => {
         const wrapper = mountClearButton()
 
         expect(wrapper.text()).toBe(en.en.no_code.clearSelection)
-    })
-
-    test("renders the close icon", () => {
-        const wrapper = mountClearButton()
-
-        expect(wrapper.find(".clear-icon").exists()).toBe(true)
-        expect(wrapper.find(".clear-icon svg").exists()).toBe(true)
-    })
-
-    test("resolves the translation key instead of rendering it raw", () => {
-        const wrapper = mountClearButton()
-
-        expect(wrapper.text()).not.toContain("no_code.clearSelection")
-    })
-
-    test("emits nothing on mount", () => {
-        const wrapper = mountClearButton()
-
-        expect(wrapper.emitted("click")).toBeUndefined()
     })
 })

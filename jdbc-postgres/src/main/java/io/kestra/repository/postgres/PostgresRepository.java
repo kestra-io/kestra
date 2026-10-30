@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -37,6 +39,7 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
 @Requires(property = "kestra.server-type", notEquals = "WORKER")
 @EachBean(JdbcTableConfig.class)
 public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
+    private static final Pattern FULLTEXT_TERM_PATTERN = Pattern.compile("[a-zA-Z\\d]+");
 
     @Inject
     public PostgresRepository(@Parameter JdbcTableConfig jdbcTableConfig,
@@ -54,7 +57,21 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             throw new IllegalArgumentException("Invalid fullTextCondition" + fields);
         }
 
-        return DSL.condition(fields.getFirst() + " @@ FULLTEXT_SEARCH(?)", query);
+        String field = fields.getFirst();
+        Condition fulltextCondition = DSL.condition(field + " @@ FULLTEXT_SEARCH(?)", query);
+        Condition substringCondition = DSL.trueCondition();
+        Matcher matcher = FULLTEXT_TERM_PATTERN.matcher(query);
+        boolean hasTerm = false;
+
+        while (matcher.find()) {
+            hasTerm = true;
+            substringCondition = substringCondition.and(DSL.condition(
+                "EXISTS (SELECT 1 FROM UNNEST(TSVECTOR_TO_ARRAY(" + field + ")) AS lexeme(value) WHERE value ILIKE ?)",
+                "%" + matcher.group() + "%"
+            ));
+        }
+
+        return hasTerm ? fulltextCondition.or(substringCondition) : fulltextCondition;
     }
 
     @SneakyThrows

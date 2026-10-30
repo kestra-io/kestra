@@ -63,7 +63,9 @@ public class ReplaceFilter implements Filter {
         Map<String, Object> resultMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
             Object value = entry.getValue();
-            if (value instanceof String stringValue) {
+            if (value == null) {
+                resultMap.put(entry.getKey(), null);
+            } else if (value instanceof String stringValue) {
                 resultMap.put(entry.getKey(), processString(stringValue, replacePair, regexp));
             } else if (value instanceof Map) {
                 resultMap.put(entry.getKey(), processMap((Map<String, Object>) value, replacePair, regexp));
@@ -80,7 +82,9 @@ public class ReplaceFilter implements Filter {
     private Object processList(List<Object> inputList, Map<?, ?> replacePair, boolean regexp) {
         List<Object> resultList = new ArrayList<>();
         for (Object item : inputList) {
-            if (item instanceof String stringValue) {
+            if (item == null) {
+                resultList.add(null);
+            } else if (item instanceof String stringValue) {
                 resultList.add(processString(stringValue, replacePair, regexp));
             } else if (item instanceof Map) {
                 resultList.add(processMap((Map<String, Object>) item, replacePair, regexp));

@@ -38,19 +38,33 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
 
     private volatile PluginRegistry pluginRegistry;
 
+    private final Class<?> baseType;
+
     /**
      * Creates a new {@link PluginDeserializer} instance.
      */
     public PluginDeserializer() {
+        this(Plugin.class);
+    }
+
+    /**
+     * Creates a new {@link PluginDeserializer} instance.
+     *
+     * @param baseType The type every resolved plugin class must be assignable to.
+     */
+    public PluginDeserializer(final Class<?> baseType) {
+        this.baseType = baseType;
     }
 
     /**
      * Creates a new {@link PluginDeserializer} instance.
      *
      * @param pluginRegistry The {@link PluginRegistry}.
+     * @param baseType The type every resolved plugin class must be assignable to.
      */
-    PluginDeserializer(final PluginRegistry pluginRegistry) {
+    PluginDeserializer(final PluginRegistry pluginRegistry, final Class<?> baseType) {
         this.pluginRegistry = pluginRegistry;
+        this.baseType = baseType;
     }
 
     /**
@@ -105,6 +119,12 @@ public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
         if (pluginType == null) {
             String type = Optional.ofNullable(identifier).orElse("<null>");
             throwInvalidTypeException(context, type);
+        } else if (!baseType.isAssignableFrom(pluginType)) {
+            throw context.invalidTypeIdException(
+                context.constructType(baseType),
+                identifier,
+                "Plugin type '" + identifier + "' is not a " + baseType.getSimpleName()
+            );
         } else if (Plugin.class.isAssignableFrom(pluginType)) {
             log.trace(
                 "Read plugin for: {}",

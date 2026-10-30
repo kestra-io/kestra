@@ -145,6 +145,7 @@
     "update": "업데이트",
     "confirmation": "확인",
     "toast confirm": "확실합니까?",
+    "toast_message_column": "메시지",
     "common": {
       "back": "뒤로",
       "openInNewTab": "새 탭에서 열기"
@@ -384,6 +385,10 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replayed": "실행이 다시 재생됩니다.",
+    "reused_task_run": {
+      "label": "재사용됨",
+      "tooltip": "이 Execution에서 다시 실행되지 않습니다. {date}에 실행되었으며, 해당 Log 및 Output은 해당 실행에서 가져옵니다."
+    },
     "replay the execution": "flow {flowId}의 실행 {executionId}을(를) 다시 실행합니다.",
     "prefill inputs": "미리 채우기",
     "current": "현재",
@@ -462,6 +467,41 @@
     "resumed confirm": "실행 <code>{id}</code>을(를) 다시 시작하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resume from breakpoint title": "{id} 실행을 중단점에서 재개",
+    "approval": {
+      "review": "검토",
+      "title": "Execution {id}의 {task} 검토",
+      "approve": "승인",
+      "deny": "거부",
+      "comment": "설명",
+      "comment hint": {
+        "optional": "선택 사항.",
+        "always": "댓글이 필요합니다.",
+        "on approve": "승인하려면 댓글이 필요합니다.",
+        "on deny": "거부하려면 주석이 필요합니다."
+      },
+      "comment required": "이 결정에는 주석이 필요합니다.",
+      "inputs invalid": "일부 입력이 유효하지 않습니다: {errors}",
+      "review done": "귀하의 검토가 기록되었습니다.",
+      "reviewed": {
+        "title": "실행 {id}에 대한 승인 요청",
+        "explanation": "이 승인 요청은 더 이상 검토를 기다리지 않습니다.",
+        "decision": "결정",
+        "by": "결정 기준",
+        "on": "결정됨",
+        "decisions": {
+          "approved": "승인됨",
+          "denied": "거부됨",
+          "expired": "만료됨"
+        }
+      },
+      "cancel request": "요청 취소",
+      "cancel confirm": "execution {id}에 대한 승인 요청을 취소하시겠습니까? 결정 branch는 실행되지 않습니다.",
+      "cancel done": "승인 요청이 취소되었습니다.",
+      "banner": {
+        "pausing": "이 실행은 승인 요청을 준비 중이며 검토를 위해 일시 중지됩니다.",
+        "paused": "이 Execution은 검토를 기다리고 있습니다. 계속하려면 승인하거나 거부하세요."
+      }
+    },
     "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
     "breakpoints": "중단점",
     "pause": "일시 중지",
@@ -509,9 +549,68 @@
       "invalid": "그래프 오류",
       "invalid_description": "그래프를 로드하는 중 오류가 발생했습니다. 소스 코드에서 오류를 확인하세요.",
       "load_error": "토폴로지 그래프를 로드할 수 없습니다. 다시 시도하세요.",
+      "expand_subflow_error": "subflow를 확장할 수 없습니다.",
       "add-task": "Task 추가",
       "add-trigger": "Trigger 추가",
-      "child-count": "task {count}개 | task {count}개"
+      "child-count": "task {count}개 | task {count}개",
+      "loop": {
+        "not-run": "실행 안 됨",
+        "pick-first": "먼저 {loop}을(를) 선택하세요",
+        "picker-label": "{loop}의 반복",
+        "search-by-index": "인덱스로 검색",
+        "all-iterations": "모든 반복",
+        "iteration-index": "인덱스 {index}",
+        "iteration-value-index": "{value} · 인덱스 {index}",
+        "previous-iteration": "이전 반복",
+        "next-iteration": "다음 반복",
+        "previous-page": "이전 페이지",
+        "next-page": "다음 페이지",
+        "failed-group": "실패 · {count}",
+        "other-group": "기타 반복",
+        "matching": "일치",
+        "failure-forbidden": "이 반복에 대한 액세스 권한이 없습니다.",
+        "failure-not-found": "이 반복은 더 이상 존재하지 않습니다.",
+        "failure-ambiguous": "이 루프는 이 실행에서 여러 번 실행되어 반복을 구분할 수 없습니다.",
+        "failure-not-located": "실패한 반복을 찾을 수 없습니다.",
+        "failure-unknown": "반복을 불러오지 못했습니다.",
+        "scope": "범위",
+        "whole-execution": "전체 실행",
+        "clear-scopes": "범위 지우기",
+        "jump-to-first-failure": "첫 번째 실패로 이동",
+        "loops-with-failures": "실패가 있는 루프",
+        "task-runs": "{runs}회 실행 | {runs}회 실행",
+        "task-runs-failed": "{runs}회 실행 · {failed}회 실패 | {runs}회 실행 · {failed}회 실패",
+        "retry": "다시 시도",
+        "load-more": "더 보기",
+        "retry-loading": "반복 불러오기 다시 시도"
+      },
+      "loop-chip": {
+        "failed": {
+          "full": "{total}개 중 {failed}개 실패",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "failed-not-started": {
+          "full": "{failed}개 실패 · {total}개 중 {notStarted}개 시작 안 됨",
+          "mid": "{failed} / {total}",
+          "min": "{failed}"
+        },
+        "progress": {
+          "full": "{total}개 중 {done}개 완료",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "progress-failed": {
+          "full": "{total}개 중 {done}개 완료 · {failed}개 실패",
+          "mid": "{done} / {total}",
+          "min": "{done}"
+        },
+        "success": {
+          "full": "반복 {total}개 | 반복 {total}개",
+          "mid": "{total}",
+          "min": "{total}"
+        }
+      }
     },
     "show task logs": "Task Logs 보기",
     "show task condition": "작업 상태 표시",
@@ -522,7 +621,9 @@
     "execution_banner": {
       "revision": "수정본 {revision}",
       "attempts": "{count}회 시도 | {count}회 시도",
-      "tasks": "task {completed}/{count}개 | task {completed}/{count}개"
+      "tasks": "task {completed}/{count}개 | task {completed}/{count}개",
+      "searchable_values": "검색 가능한 값",
+      "more_searchable_values": "+{count}개의 검색 가능한 값 더보기"
     },
     "execution_mobile": {
       "failed_task": "실패한 task",
@@ -547,7 +648,13 @@
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "총 실행 시간 (분 단위)",
-    "last 48 hours": "지난 48시간",
+    "task runs": "Task 실행",
+    "task runs duration (in minutes)": "총 Task 실행 기간 (분)",
+    "last 24 hours": "지난 24시간",
+    "last 7 days": "지난 7일",
+    "last 30 days": "지난 30일",
+    "since {date}": "{date} 이후",
+    "usage period": "사용 기간",
     "email": "이메일",
     "password": "비밀번호",
     "confirm password": "비밀번호 확인",
@@ -576,6 +683,7 @@
       "search_placeholder": "Key 또는 value 검색...",
       "tasks_outputs": "Tasks outputs",
       "expression": "표현식",
+      "searchable": "검색 가능",
       "tree": "트리",
       "raw_json": "원시 JSON",
       "select_prompt": "value를 확인할 변수를 선택하세요.",
@@ -945,7 +1053,6 @@
       }
     },
     "back_to_dashboard": "대시보드로 돌아가기",
-    "copy all logs": "모든 Log 복사",
     "copy logs": "Logs 복사",
     "fix_with_ai": "AI로 수정",
     "download logs": "Logs 다운로드",
@@ -1104,7 +1211,7 @@
     "hostname": "호스트 이름",
     "file preview truncated": "표시된 내용이 잘렸습니다",
     "file unavailable": "파일을 사용할 수 없음",
-    "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다 — 삭제되었거나 만료되었을 수 있습니다.",
+    "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다. 삭제되었거나 만료되었을 수 있습니다.",
     "row count": "행 수",
     "encoding": "인코딩",
     "show": "보기",
@@ -1213,6 +1320,7 @@
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
     "relative start date": "상대적 시작 날짜",
+    "now": "지금",
     "absolute": "절대적",
     "backfill": "Backfill",
     "Set labels": "라벨 설정",
@@ -1505,7 +1613,7 @@
         },
         "policies": {
           "title": "이 namespace 전체에 거버넌스 규칙 적용",
-          "message": "Kestra Enterprise Edition에서, 정책을 통해 이 namespace 및 하위 namespace의 모든 flow에 적용되는 규칙을 정의할 수 있습니다 — 공유 기본값을 주입하고, 속성 값을 제한하며, plugins를 차단하고, 규정 준수 labels를 요구할 수 있으며, 모든 변경 사항은 flow 작성자에게 완전히 표시됩니다."
+          "message": "Kestra Enterprise Edition에서, 정책을 통해 이 namespace 및 하위 namespace의 모든 flow에 적용되는 규칙을 정의할 수 있습니다: 공유 기본값을 주입하고, 속성 값을 제한하며, plugins를 차단하고, 규정 준수 labels를 요구할 수 있으며, 모든 변경 사항은 flow 작성자에게 완전히 표시됩니다."
         },
         "reusable-inputs": {
           "label": "재사용 가능한 입력",
@@ -1768,7 +1876,18 @@
       "compact": "기본 보기",
       "compact_details": "각 task별로 그룹화된 간결한 보기로 task logs 표시",
       "fullscreen": "Logs 전체 화면으로 보기",
-      "exit_fullscreen": "전체 화면 종료"
+      "exit_fullscreen": "전체 화면 종료",
+      "loop": {
+        "this-execution": "이 실행",
+        "with-iterations": "루프 반복 포함",
+        "batch-range": "실패한 반복 {total}개 중 {from}–{to}",
+        "empty-title": "일치하는 로그 없음",
+        "empty-description": "이 실행 또는 실패한 루프 반복에 선택한 수준과 일치하는 로그가 없습니다. 더 보려면 수준을 낮추세요.",
+        "scope-to": "그래프와 로그를 {scope}(으)로 범위 지정",
+        "show-in-overview": "개요에서 보기",
+        "show-in-overview-for": "개요에서 {scope} 보기",
+        "mode-label": "로그 소스"
+      }
     },
     "execution_deletion": {
       "logs": "Logs 삭제",
@@ -2127,6 +2246,7 @@
         "plural": "대시보드"
       },
       "default": "기본 대시보드",
+      "set_default": "기본값으로 설정",
       "empty": "결과가 표시되지 않습니다.",
       "edition": {
         "label": "대시보드 편집",
@@ -2272,7 +2392,7 @@
         },
         "cancelled": "회차 취소됨",
         "error": {
-          "turnCap": "이 대화는 한도에 도달했습니다 — 새 채팅을 시작하세요.",
+          "turnCap": "이 대화는 한도에 도달했습니다: 새 채팅을 시작하세요.",
           "turnInProgress": "회차가 이미 진행 중입니다.",
           "request": "요청이 실패했습니다. 다시 시도해 주세요.",
           "generic": "문제가 발생했습니다. 다시 시도해주세요."
@@ -2333,9 +2453,9 @@
           "dismiss": "무시",
           "dismissed": "무시됨",
           "applied": "적용됨",
-          "previewBanner": "AI가 제안한 변경 사항을 검토 중입니다 — 적용하거나 무시할 때까지 에디터는 읽기 전용입니다.",
+          "previewBanner": "AI가 제안한 변경 사항을 검토 중입니다. 적용하거나 무시할 때까지 에디터는 읽기 전용입니다.",
           "applyTitle": "flow 적용",
-          "applyConfirm": "{namespace}.{id}를 검토를 위한 드래프트 리비전으로 저장하시겠습니까? 생성되거나, 이미 존재하는 경우 새 드래프트 리비전이 추가됩니다 — 드래프트는 게시되기 전까지 trigger나 subflow에서 사용되지 않습니다.",
+          "applyConfirm": "{namespace}.{id}를 검토를 위한 드래프트 리비전으로 저장하시겠습니까? 생성되거나, 이미 존재하는 경우 새 드래프트 리비전이 추가됩니다. 드래프트는 게시되기 전까지 trigger나 subflow에서 사용되지 않습니다.",
           "applyConfirmDashboard": "대시보드 {id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
           "applyError": "flow를 적용할 수 없습니다. 다시 시도해주세요.",
           "applyErrorDashboard": "대시보드를 적용할 수 없었습니다. 다시 시도해 주세요.",
@@ -2590,11 +2710,11 @@
       "empty_title": "flow, 파일, key에서 값 찾기",
       "error_title": "유효하지 않은 정규 표현식",
       "examples_aria": "예시 쿼리",
-      "exclusion_flows_readonly": "flow — 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다. | flow — 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다.",
-      "exclusion_search_only": "{type} — 일치 {count}개: 검색 전용이라 바꿀 수 없습니다. | {type} — 일치 {count}개: 검색 전용이라 바꿀 수 없습니다.",
+      "exclusion_flows_readonly": "flow · 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다. | flow · 읽기 전용 일치 {count}개: FLOW · UPDATE 권한이 필요합니다.",
+      "exclusion_search_only": "{type} · 일치 {count}개: 검색 전용이라 바꿀 수 없습니다. | {type} · 일치 {count}개: 검색 전용이라 바꿀 수 없습니다.",
       "exclusion_title": "{count}개의 일치 항목이 모두 바꾸기에서 제외됩니다 | {count}개의 일치 항목이 모두 바꾸기에서 제외됩니다",
       "expand_all": "모두 확장",
-      "file_match_notice": "파일 경로가 일치했습니다. 파일 내용은 검색되지 않습니다 — 안을 검색하려면 파일을 여세요.",
+      "file_match_notice": "파일 경로가 일치했습니다. 파일 내용은 검색되지 않습니다. 안을 검색하려면 파일을 여세요.",
       "files_progress_banner_failed": "namespace 파일은 한 번에 하나씩 검색됩니다. {total}개 중 {done}개 완료, {failed}개 실패. 총계는 계속 바뀝니다.",
       "files_progress_banner_ok": "namespace 파일은 한 번에 하나씩 검색됩니다. {total}개 중 {done}개 완료. 총계는 계속 바뀝니다.",
       "flow_only_toggle_hint": "대소문자 구분, 단어 단위, 정규식은 flow에만 적용됩니다. 파일 경로와 key는 항상 일반 텍스트로 일치합니다.",
@@ -2671,10 +2791,10 @@
       "show_replace": "바꾸기 표시",
       "summary": "{flows}개의 flow에서 {matches}개 일치",
       "summary_cross": "{types}, {resources}에서 {matches}",
-      "tag_keys_only_never": "key만 — 값은 표시되거나 검색되지 않습니다",
-      "tag_keys_only_values": "key만 — 값은 검색되지 않습니다",
-      "tag_paths_only": "경로만 — 파일 내용은 검색되지 않습니다",
-      "tag_search_only": "검색 전용 — 바뀌지 않습니다",
+      "tag_keys_only_never": "key만: 값은 표시되거나 검색되지 않습니다",
+      "tag_keys_only_values": "key만: 값은 검색되지 않습니다",
+      "tag_paths_only": "경로만: 파일 내용은 검색되지 않습니다",
+      "tag_search_only": "검색 전용: 바뀌지 않습니다",
       "tag_source_code": "소스 코드",
       "truncated_flows": "전체 {total}개 중 처음 {shown}개의 일치 항목을 표시합니다. 모두 바꾸기는 표시된 항목에만 적용되므로 먼저 검색어를 좁히세요.",
       "truncated_type": "{total}개 중 {shown}개",
@@ -2870,6 +2990,56 @@
     "iteration": "반복",
     "iteration_number": "반복 {number}",
     "delete_log_iteration": "{iteration}의 로그를 삭제하시겠습니까?",
-    "not started": "시작되지 않음"
+    "not started": "시작되지 않음",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "전체",
+        "total": "실행 {count}개 | 실행 {count}개",
+        "failed": "{count}개 실패"
+      },
+      "toolbar": {
+        "panBack": "뒤로 이동",
+        "panForward": "앞으로 이동",
+        "zoomIn": "확대",
+        "zoomOut": "축소",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "이 페이지 열기",
+        "runsCount": "실행 {count}개 | 실행 {count}개",
+        "failedCount": "{count}개 실패"
+      },
+      "bucket": {
+        "hint": "집계됨: 확대하면 실행 단위 상세 정보가 표시됩니다",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "실행 열기",
+        "showOnlyFlow": "이 flow만 표시"
+      },
+      "empty": {
+        "description": "선택한 기간과 필터에 해당하는 실행이 없습니다.",
+        "resetFilters": "필터 재설정",
+        "widenRange": "7일로 확장"
+      },
+      "error": {
+        "title": "타임라인을 불러오지 못했습니다",
+        "description": "이 기간의 실행을 불러오는 중 오류가 발생했습니다."
+      },
+      "truncated": {
+        "description": "최신 {total}개 중 {shown}개의 실행을 표시하고 있습니다. 모두 보려면 기간이나 필터를 좁혀 보세요."
+      },
+      "scrubber": {
+        "label": "시간 경과에 따른 Execution 밀도, 범위를 선택하려면 드래그하세요.",
+        "ignoredFilters": "밀도 막대에는 다음 필터가 적용되지 않습니다: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "카운트",
+      "timeline": "타임라인"
+    }
   }
 }

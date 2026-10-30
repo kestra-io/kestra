@@ -183,11 +183,16 @@ export const useFlowStore = defineStore("flow", () => {
         unsavedChangesStore.unsavedChange = newValue
     })
 
+    // Publishing a draft, or demoting a flow to a draft, is a save even when the source is unchanged.
+    function hasPendingSave(draft: boolean) {
+        return isCreating.value || haveChange.value || draft !== (flow.value?.draft ?? false)
+    }
+
     async function saveAll(draft?: boolean): Promise<FlowSaveOutcome> {
         saveAttempted.value = true
         const isDraft = draft ?? flow.value?.draft ?? false
 
-        if (!haveChange.value && !isCreating.value) {
+        if (!hasPendingSave(isDraft)) {
             return "no_op"
         }
 
@@ -329,7 +334,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
         if (inFlightSave) return inFlightSave
-        if (!isCreating.value && !haveChange.value) return "no_op"
+        if (!hasPendingSave(draft)) return "no_op"
         inFlightSave = performSave(draft)
         try {
             return await inFlightSave
@@ -506,7 +511,7 @@ export const useFlowStore = defineStore("flow", () => {
     let latestFlowLoadKey: string | undefined
 
     async function loadFlow(
-        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean },
+        options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, optional?: boolean },
     ) {
         const key = `${options.namespace}/${options.id}`
         if (options.store !== false) {
@@ -525,6 +530,10 @@ export const useFlowStore = defineStore("flow", () => {
             // A deleted flow answers 404 with a problem document rather than the flow, and the one
             // caller (subflow-input autocompletion) only reads `inputs`, so an empty flow stands in.
             if (options.deleted && (e as KestraHttpError).status === 404) {
+                return {} as Flow & {exception?: string}
+            }
+            // A caller that only enriches its own view with the flow (the execution topology) does without it when forbidden.
+            if (options.optional && handledIf(e, [403])) {
                 return {} as Flow & {exception?: string}
             }
             throw e
@@ -671,7 +680,11 @@ export const useFlowStore = defineStore("flow", () => {
             return inFlight
         }
 
-        const request = requestDependencies(options, onlyCount)
+        // A count only feeds a badge, so a user who cannot read the dependencies sees none rather than an error.
+        const request = requestDependencies(options, onlyCount).catch((e: unknown): Awaited<ReturnType<typeof requestDependencies>> => {
+            if (!handledIf(e, [403])) throw e
+            return {count: 0}
+        })
         inFlightDependencyCounts.set(key, request)
         // Both handlers, so this derived promise never becomes an unhandled rejection.
         const settle = () => {
@@ -796,7 +809,7 @@ function deleteFlowAndDependencies() {
 
                 if ([404, 422].includes(status) && subflows && subflows.length > 0) {
                     coreStore.message = {
-                        title: "Couldn't expand subflow",
+                        title: t("topology-graph.expand_subflow_error"),
                         content: asProblem(error)?.detail,
                         variant: "error",
                     }

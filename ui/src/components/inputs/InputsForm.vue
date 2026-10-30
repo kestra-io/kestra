@@ -824,7 +824,7 @@
                     acc.push({
                         ...it.input,
                         errors: it.errors,
-                        value: it.value || it.input.prefill,
+                        value: it.value === "" ? it.input.prefill : (it.value ?? it.input.prefill),
                         isDefault: it.isDefault,
                     })
                 }

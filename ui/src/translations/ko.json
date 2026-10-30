@@ -2222,7 +2222,8 @@
       "close_all_panels": "모든 패널 닫기",
       "exit_fullscreen": "전체 화면 종료",
       "fullscreen": "전체 화면",
-      "split_panel": "패널 분할"
+      "split_panel": "패널 분할",
+      "split_panel_no_room": "다른 패널을 위한 공간이 부족합니다."
     },
     "search_docs": "검색",
     "no_results_found": "결과를 찾을 수 없습니다",

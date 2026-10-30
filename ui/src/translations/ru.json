@@ -2222,7 +2222,8 @@
       "close_all_panels": "Закрыть все панели",
       "exit_fullscreen": "Выйти из полноэкранного режима",
       "fullscreen": "На весь экран",
-      "split_panel": "Разделить панель"
+      "split_panel": "Разделить панель",
+      "split_panel_no_room": "Недостаточно места для другой панели"
     },
     "search_docs": "Поиск",
     "no_results_found": "Результаты не найдены",

@@ -1,9 +1,16 @@
-import {beforeEach, describe, expect, test} from "vitest"
+import {beforeEach, describe, expect, test, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
-import {markRaw} from "vue"
+import {markRaw, ref} from "vue"
 import KestraDesignSystem from "@kestra-io/design-system"
 import MultiPanelTabs from "./MultiPanelTabs.vue"
 import {i18nMount} from "../../tests/unit/i18nMount"
+
+const splitterWidth = ref(0)
+
+vi.mock("@vueuse/core", async (importOriginal) => ({
+    ...await importOriginal<typeof import("@vueuse/core")>(),
+    useElementSize: () => ({width: splitterWidth, height: ref(0)}),
+}))
 
 const IconStub = markRaw({template: "<span class='icon-stub' />"})
 const PaneStub = markRaw({name: "PaneStub", template: "<div class='pane-stub' />"})
@@ -76,5 +83,53 @@ describe("MultiPanelTabs maximize", () => {
         // Maximize must be dropped, not silently reassigned to the shifted panel
         expect(wrapper.findAll(".content-panel").length).toBe(2)
         expect(wrapper.find("[data-test='panel-maximize'][aria-pressed='true']").exists()).toBe(false)
+    })
+
+    test("activating a tab in a hidden panel exits fullscreen so the tab is shown", async () => {
+        const second = makePanel("b")
+        const other = {uid: "c", button: {label: "c", icon: IconStub}, component: PaneStub}
+        second.tabs.push(other)
+        const wrapper = i18nMount(MultiPanelTabs, {
+            global: globalConfig,
+            props: {modelValue: [makePanel("a"), second]},
+        })
+        await wrapper.findAll("[data-test='panel-maximize']")[0].trigger("click")
+
+        const vm = wrapper.vm as unknown as {panels: {activeTab: unknown}[]}
+        vm.panels[1].activeTab = other
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.findAll(".content-panel").length).toBe(2)
+    })
+})
+
+describe("MultiPanelTabs split", () => {
+    beforeEach(() => setActivePinia(createPinia()))
+
+    function mountWithTwoTabs() {
+        const first = makePanel("a")
+        const second = {uid: "c", button: {label: "c", icon: IconStub}, component: PaneStub}
+        first.tabs.push(second)
+        return i18nMount(MultiPanelTabs, {
+            global: globalConfig,
+            props: {modelValue: [first, makePanel("b")]},
+        })
+    }
+
+    test("disables the split when a third panel would fall below the minimum width", () => {
+        splitterWidth.value = 900
+        const split = mountWithTwoTabs().find("[data-test='panel-split']")
+
+        expect(split.attributes("disabled")).toBeDefined()
+        expect(split.attributes("title")).toBe("multi_panel_editor.split_panel_no_room")
+    })
+
+    test("splits the active tab into a new panel when there is room", async () => {
+        splitterWidth.value = 1600
+        const wrapper = mountWithTwoTabs()
+
+        await wrapper.find("[data-test='panel-split']").trigger("click")
+
+        expect(wrapper.findAll(".content-panel").length).toBe(3)
     })
 })

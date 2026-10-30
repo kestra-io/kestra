@@ -2222,7 +2222,8 @@
       "close_all_panels": "Cerrar todos los paneles",
       "exit_fullscreen": "Salir de pantalla completa",
       "fullscreen": "Pantalla completa",
-      "split_panel": "Dividir panel"
+      "split_panel": "Dividir panel",
+      "split_panel_no_room": "No hay suficiente espacio para otro panel"
     },
     "search_docs": "Buscar",
     "no_results_found": "No se encontraron resultados",

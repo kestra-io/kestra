@@ -3074,6 +3074,7 @@
     "chart mode": {
       "counts": "Counts",
       "timeline": "Timeline"
-    }
+    },
+    "root_execution": "Root execution"
   }
 }

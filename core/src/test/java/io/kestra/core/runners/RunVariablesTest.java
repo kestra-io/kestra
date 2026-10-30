@@ -477,7 +477,8 @@ class RunVariablesTest {
             .withState(State.Type.SUCCESS);
         LoopRun loopRun = new LoopRun(
             parentExecution, "loop-task", IdUtils.create(), 0, "loop-key", "loop-value",
-            List.of(new LoopRun.Parent(0, null, "v0", false), new LoopRun.Parent(1, "pk", "v1", false)),
+            List.of(new LoopRun.Parent("executionId0", "taskId0", 0, null, "v0", false), new LoopRun.Parent("executionId1", "taskId1", 1, "pk", "v1", false)),
+            parentExecution.getId(),
             false
         );
 

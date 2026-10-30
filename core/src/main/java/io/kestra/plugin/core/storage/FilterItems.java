@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +30,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Schema(
     title = "Filter line-oriented files with a Pebble expression.",
@@ -115,17 +118,14 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
         final PebbleExpressionPredicate predicate = getExpressionPredication(runContext);
 
         final Path path = runContext.workingDir().createTempFile(".ion");
-        long processedItemsTotal = 0L;
-        long droppedItemsTotal = 0L;
+        final AtomicLong processedItemsTotal = new AtomicLong();
+        final AtomicLong droppedItemsTotal = new AtomicLong();
         try (
             final OutputStream output = new BufferedOutputStream(new FileOutputStream(path.toFile()), FileSerde.BUFFER_SIZE);
             final var input = new BufferedInputStream(runContext.storage().getFile(from), FileSerde.BUFFER_SIZE)
         ) {
-
-            var records = new java.util.ArrayList<>();
-            FileSerde.read(input, records::add);
-
-            for (Object record : records) {
+            FileSerde.read(input, throwConsumer(record ->
+            {
                 String item = PebbleExpressionPredicate.MAPPER.writeValueAsString(record);
                 IllegalVariableEvaluationException exception = null;
                 Boolean match = null;
@@ -164,16 +164,16 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
 
                 switch (action) {
                     case INCLUDE -> FileSerde.write(output, record);
-                    case EXCLUDE -> droppedItemsTotal++;
+                    case EXCLUDE -> droppedItemsTotal.incrementAndGet();
                 }
-                processedItemsTotal++;
-            }
+                processedItemsTotal.incrementAndGet();
+            }));
         }
         URI uri = runContext.storage().putFile(path.toFile());
         return Output.builder()
             .uri(uri)
-            .processedItemsTotal(processedItemsTotal)
-            .droppedItemsTotal(droppedItemsTotal)
+            .processedItemsTotal(processedItemsTotal.get())
+            .droppedItemsTotal(droppedItemsTotal.get())
             .build();
     }
 

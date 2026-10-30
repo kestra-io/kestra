@@ -206,10 +206,10 @@ public class ExecutorService {
             //then set the execution to killed
             executor = this.handleKilling(executor);
 
-            // process next task if not killing, killed or queued
+            // process next task if not killing, killed, queued or already terminated (an SLA may end it while afterExecution tasks are pending)
             if (
                 executor.getExecution().getState().getCurrent() != State.Type.KILLING && executor.getExecution().getState().getCurrent() != State.Type.KILLED
-                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED
+                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED && !executor.getExecution().getState().isTerminated()
             ) {
                 executor = this.handleNext(executor);
             }

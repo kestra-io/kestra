@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Integration check that {@code search-plugins} runs against the real plugin registry: a keyword
+ * Integration check that {@code search_plugins} runs against the real plugin registry: a keyword
  * matches an installed plugin type, and a keyword that matches nothing returns an empty list.
  */
 @KestraTest(environments = "memory")

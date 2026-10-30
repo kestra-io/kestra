@@ -1,6 +1,7 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,10 +13,12 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -68,17 +71,50 @@ class ListFlowsToolTest {
         assertThat(result.flows()).allMatch(flow -> NAMESPACE.equals(flow.namespace()));
     }
 
+    @Test
+    void shouldReturnTotalBeyondReturnedFlows() throws Exception {
+        // Given — more flows in a namespace than the tool returns
+        String tenant = "listflowstotal";
+        String namespace = "io.kestra.test.ai.total";
+        int flowCount = 52;
+        for (int i = 0; i < flowCount; i++) {
+            createFlowIn(tenant, namespace, IdUtils.create());
+        }
+        QueryFilterToolExecutor executor = new QueryFilterToolExecutor(
+            tool,
+            ListFlowsTool.class.getMethod("listFlows", List.class, AgentCallContext.Context.class)
+        );
+        ToolExecutionRequest request = ToolExecutionRequest.builder()
+            .id("call-1")
+            .name("list_flows")
+            .arguments("""
+                { "NAMESPACE": { "operator": "EQUALS", "value": "%s" } }""".formatted(namespace))
+            .build();
+
+        // When — the model calls the tool as it would through the catalog
+        String json = executor.executeWithContext(request, AgentCallContext.into(AgentCallContext.Context.ofTenant(tenant))).resultText();
+
+        // Then — the model sees one page of flows plus the real total
+        Map<String, Object> result = JacksonMapper.toMap(json);
+        assertThat((List<?>) result.get("flows")).hasSize(50);
+        assertThat(((Number) result.get("total")).longValue()).isEqualTo(flowCount);
+    }
+
     private void createFlow(final String flowId) {
         createFlowIn(NAMESPACE, flowId);
     }
 
     private void createFlowIn(final String namespace, final String flowId) {
+        createFlowIn(MAIN_TENANT, namespace, flowId);
+    }
+
+    private void createFlowIn(final String tenant, final String namespace, final String flowId) {
         flowRepository.create(
             GenericFlow.of(
                 Flow.builder()
                     .id(flowId)
                     .namespace(namespace)
-                    .tenantId(MAIN_TENANT)
+                    .tenantId(tenant)
                     .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("ok")).build()))
                     .build()
             )

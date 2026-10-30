@@ -36,7 +36,7 @@ public class ReadFlowTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "read-flow", value = "Read the source of a Kestra flow. Read-only; use this to inspect a flow's definition before explaining, diagnosing or proposing changes to it. "
+        name = "read_flow", value = "Read the source of a Kestra flow. Read-only; use this to inspect a flow's definition before explaining, diagnosing or proposing changes to it. "
             + "Returns an object { namespace, id, revision, source } where `source` is the flow's YAML and `revision` is the revision that was read."
     )
     public Result readFlow(

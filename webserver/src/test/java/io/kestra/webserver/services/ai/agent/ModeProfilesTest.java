@@ -52,15 +52,15 @@ class ModeProfilesTest {
     void shouldAdvertiseAuthoringToolsInEveryModeIncludingAsk() {
         // Given — a READ platform tool and an authoring tool (no family)
         List<ToolCatalog.ToolEntry> entries = List.of(
-            entry("read-flow", new TestReadTool()),
-            authoringEntry("author-flow")
+            entry("read_flow", new TestReadTool()),
+            authoringEntry("author_flow")
         );
 
         // When / Then — authoring escapes family gating: Ask advertises it alongside the reads
         for (AgentMode mode : AgentMode.values()) {
             assertThat(newModeProfiles(entries, ALLOW_ALL).resolve(mode, TENANT, null).allowedToolNames())
                 .as("mode %s", mode)
-                .contains("author-flow");
+                .contains("author_flow");
         }
     }
 
@@ -69,20 +69,20 @@ class ModeProfilesTest {
         // Given — two platform READ tools, one of which the caller may not use, and a docs MCP entry
         // (no platform tool) that is outside permission evaluation
         List<ToolCatalog.ToolEntry> entries = List.of(
-            entry("read-flow", new TestReadTool()),
-            entry("read-execution", new TestReadTool()),
-            entry("search-docs", null)
+            entry("read_flow", new TestReadTool()),
+            entry("read_execution", new TestReadTool()),
+            entry("search_docs", null)
         );
-        AgentToolPermissionEvaluator denyExecutions = (entry, tenant, principal) -> !"read-execution".equals(entry.name());
+        AgentToolPermissionEvaluator denyExecutions = (entry, tenant, principal) -> !"read_execution".equals(entry.name());
 
         // When — the coarse specsFor(mode, principal) pre-filter resolves the Ask profile
         ModeProfiles.ResolvedProfile profile = newModeProfiles(entries, denyExecutions)
             .resolve(AgentMode.ASK, TENANT, null);
 
         // Then — the denied tool is not advertised nor runtime-allowed; permission-less tools always are
-        assertThat(profile.allowedToolNames()).containsExactlyInAnyOrder("read-flow", "search-docs");
+        assertThat(profile.allowedToolNames()).containsExactlyInAnyOrder("read_flow", "search_docs");
         assertThat(profile.toolSpecifications()).extracting(ToolSpecification::name)
-            .containsExactlyInAnyOrder("read-flow", "search-docs");
+            .containsExactlyInAnyOrder("read_flow", "search_docs");
     }
 
     private static ModeProfiles newModeProfiles(final List<ToolCatalog.ToolEntry> entries, final AgentToolPermissionEvaluator evaluator) {

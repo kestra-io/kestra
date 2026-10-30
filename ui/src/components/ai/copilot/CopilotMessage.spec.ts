@@ -65,16 +65,16 @@ describe("CopilotMessage", () => {
     it("renders a collapsible tool_call with its name in the title and args as JSON", () => {
         const w = mountMessage({
             id: "3", role: "TOOL", type: "TOOL_CALL",
-            toolCall: {tool: "read-execution", family: "READ", arguments: {id: "exec-1"}},
+            toolCall: {tool: "read_execution", family: "READ", arguments: {id: "exec-1"}},
         })
-        expect(w.find(".copilot-tool-label").text()).toContain("read-execution")
+        expect(w.find(".copilot-tool-label").text()).toContain("read_execution")
         expect(w.find(".copilot-tool-args").text()).toContain("\"id\": \"exec-1\"")
     })
 
     it("spins the tool_call header only while the step is running", () => {
         const message: ChatMessage = {
             id: "3r", role: "TOOL", type: "TOOL_CALL",
-            toolCall: {tool: "read-execution", family: "READ", arguments: {}},
+            toolCall: {tool: "read_execution", family: "READ", arguments: {}},
         }
         const running = mount(CopilotMessage, {props: {message, isRunning: true}, global: mountGlobal})
         expect(running.find(".copilot-tool-spinner").exists()).toBe(true)
@@ -85,7 +85,7 @@ describe("CopilotMessage", () => {
     it("renders an ok tool_result with a success message", () => {
         const w = mountMessage({
             id: "4", role: "TOOL", type: "TOOL_RESULT",
-            toolResult: {tool: "restart-execution", outcome: "ok"},
+            toolResult: {tool: "restart_execution", outcome: "ok"},
         })
         expect(w.find(".copilot-tool-result").exists()).toBe(true)
         expect(w.text()).toContain("completed")
@@ -94,7 +94,7 @@ describe("CopilotMessage", () => {
     it("renders a rejected tool_result with the rejected message", () => {
         const w = mountMessage({
             id: "5", role: "TOOL", type: "TOOL_RESULT",
-            toolResult: {tool: "restart-execution", outcome: "rejected"},
+            toolResult: {tool: "restart_execution", outcome: "rejected"},
         })
         expect(w.text()).toContain("rejected")
     })
@@ -102,7 +102,7 @@ describe("CopilotMessage", () => {
     it("renders an errored tool_result with the failed message", () => {
         const w = mountMessage({
             id: "5b", role: "TOOL", type: "TOOL_RESULT",
-            toolResult: {tool: "read-execution", outcome: "error"},
+            toolResult: {tool: "read_execution", outcome: "error"},
         })
         expect(w.text()).toContain("failed")
         // An error is not a success — it must not render as ok.
@@ -113,10 +113,10 @@ describe("CopilotMessage", () => {
         const w = mountMessage({
             id: "5c", role: "TOOL", type: "TOOL_RESULT",
             toolResult: {outcome: "ok", result: {executionId: "exec-1", state: "SUCCESS"}},
-            toolCall: {tool: "read-execution", kind: "PLATFORM", family: "READ", arguments: {}},
+            toolCall: {tool: "read_execution", kind: "PLATFORM", family: "READ", arguments: {}},
         })
         // Tool name resolves from the paired toolCall when the persisted result map has no `tool`.
-        expect(w.text()).toContain("read-execution")
+        expect(w.text()).toContain("read_execution")
         expect(w.find("[data-test=\"copilot-tool-result-detail\"]").exists()).toBe(true)
         expect(w.text()).toContain("exec-1")
         expect(w.text()).toContain("SUCCESS")
@@ -125,7 +125,7 @@ describe("CopilotMessage", () => {
     it("shows the error message as detail on an errored tool_result", () => {
         const w = mountMessage({
             id: "5d", role: "TOOL", type: "TOOL_RESULT",
-            toolResult: {tool: "read-flow", outcome: "error", error: "Flow not found: x"},
+            toolResult: {tool: "read_flow", outcome: "error", error: "Flow not found: x"},
         })
         expect(w.find("[data-test=\"copilot-tool-result-detail\"]").exists()).toBe(true)
         expect(w.text()).toContain("Flow not found: x")
@@ -134,7 +134,7 @@ describe("CopilotMessage", () => {
     it("has no detail collapsible on a live tool_result carrying only the outcome", () => {
         const w = mountMessage({
             id: "5e", role: "TOOL", type: "TOOL_RESULT",
-            toolResult: {tool: "list-flows", outcome: "ok"},
+            toolResult: {tool: "list_flows", outcome: "ok"},
         })
         expect(w.find("[data-test=\"copilot-tool-result-detail\"]").exists()).toBe(false)
     })
@@ -175,7 +175,7 @@ describe("CopilotMessage", () => {
     it("renders a resolved PROPOSED_ACTION inline as a read-only card (no confirm/reject buttons)", () => {
         const w = mountMessage({
             id: "8", role: "ASSISTANT", type: "PROPOSED_ACTION",
-            proposedAction: {confirmationId: "c1", tool: "restart-execution", family: "ACT", summary: "Restart execution exec-1", arguments: {executionId: "exec-1"}},
+            proposedAction: {confirmationId: "c1", tool: "restart_execution", family: "ACT", summary: "Restart execution exec-1", arguments: {executionId: "exec-1"}},
         })
         const card = w.find("[data-test=\"copilot-proposed-history\"]")
         expect(card.exists()).toBe(true)
@@ -189,7 +189,7 @@ describe("CopilotMessage", () => {
     it("suppresses the PROPOSED_ACTION inline when it is the pending one", () => {
         const w = mount(CopilotMessage, {
             props: {
-                message: {id: "9", role: "ASSISTANT", type: "PROPOSED_ACTION", proposedAction: {confirmationId: "c2", tool: "restart-execution", summary: "x", arguments: {}}},
+                message: {id: "9", role: "ASSISTANT", type: "PROPOSED_ACTION", proposedAction: {confirmationId: "c2", tool: "restart_execution", summary: "x", arguments: {}}},
                 isPending: true,
             },
             global: mountGlobal,

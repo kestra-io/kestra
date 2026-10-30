@@ -50,7 +50,7 @@ public class RestartExecutionTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "restart-execution", value = "Restart a failed or paused Kestra execution from its failed tasks. The execution must be in a terminated or paused state. "
+        name = "restart_execution", value = "Restart a failed or paused Kestra execution from its failed tasks. The execution must be in a terminated or paused state. "
             + "Blocks until the executor accepts the restart, then returns an object { executionId }. A successful return means the restart was accepted and the execution is re-running; "
             + "its state then changes asynchronously, so do NOT assume the final state from this call — tell the user to watch the execution page for progress."
     )

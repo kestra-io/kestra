@@ -45,16 +45,17 @@ public class ListExecutionsTool implements AiPlatformTool {
     }
 
     @Tool(
-        name = "list-executions",
-        value = "List the most recent Kestra executions matching the given per-field filters (newest first, at most 50). Read-only; use this to find executions of interest before inspecting one with read-execution. "
-            + "Returns an object { executions } where `executions` is an array of { id, namespace, flowId, state, startDate, duration } (empty when nothing matches); `duration` is an ISO-8601 duration or null."
+        name = "list_executions",
+        value = "List the most recent Kestra executions matching the given per-field filters (newest first, at most " + MAX_RESULTS + "). Read-only; use this to find executions of interest before inspecting one with read_execution. "
+            + "Returns an object { executions, total } where `executions` is an array of { id, namespace, flowId, state, startDate, duration } (empty when nothing matches); `duration` is an ISO-8601 duration or null. "
+            + "`total` is the number of all matching executions, which can exceed the length of `executions`."
     )
     public Result listExecutions(
         @QueryFilterFormat(QueryFilter.Resource.EXECUTION) List<QueryFilter> filters,
         final AgentCallContext.Context context) {
         String tenant = context.tenant();
 
-        List<Execution> executions = executionRepository.find(
+        var executions = executionRepository.find(
             PageableUtils.from(1, MAX_RESULTS, List.of(Execution.STATE_START_DATE_FIELD + ":desc"), executionRepository.sortMapping()),
             tenant,
             executionOutputFilterService.resolve(tenant, filters)
@@ -63,7 +64,8 @@ public class ListExecutionsTool implements AiPlatformTool {
         return new Result(
             executions.stream()
                 .map(ListExecutionsTool::toSummary)
-                .toList()
+                .toList(),
+            executions.getTotal()
         );
     }
 
@@ -79,7 +81,7 @@ public class ListExecutionsTool implements AiPlatformTool {
         );
     }
 
-    public record Result(List<ExecutionSummary> executions) {
+    public record Result(List<ExecutionSummary> executions, long total) {
     }
 
     public record ExecutionSummary(String id, String namespace, String flowId, String state, String startDate, String duration) {

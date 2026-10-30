@@ -449,7 +449,7 @@ describe("CopilotChat", () => {
     it("renders the proposed-action card and confirms on approve, forwarding the selected provider", async () => {
         // The resumed turn needs the same provider as the chat turn, so approve must pass it through.
         vi.mocked(providersMock).mockResolvedValueOnce([{id: "gemini-legacy", isDefault: true}])
-        state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart-execution", family: "MUTATE", summary: "Restart"}
+        state.pendingConfirmation.value = {confirmationId: "c1", tool: "restart_execution", family: "MUTATE", summary: "Restart"}
         const w = mountChat()
         await flushPromises() // let the provider list resolve so selectedProvider is set
         const card = w.findComponent({name: "ProposedActionCard"})
@@ -847,7 +847,7 @@ describe("CopilotChat", () => {
     it("spins the in-flight tool call while streaming, and stops once its result arrives", async () => {
         state.messages.value = [
             {id: "u1", role: "USER", type: "TEXT", content: "make a flow"},
-            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author-flow", kind: "AUTHORING", arguments: {}}},
+            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author_flow", kind: "AUTHORING", arguments: {}}},
         ]
         state.streaming.value = true
         const w = mountChat()
@@ -858,7 +858,7 @@ describe("CopilotChat", () => {
         // Its result arrives → the tool call is no longer the last message, so the spinner clears.
         state.messages.value = [
             ...state.messages.value,
-            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author-flow", outcome: "ok"}},
+            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author_flow", outcome: "ok"}},
         ]
         await flushPromises()
         expect(w.find(".copilot-tool-spinner").exists()).toBe(false)

@@ -1,5 +1,7 @@
 package io.kestra.executor;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -38,12 +40,16 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowTriggerService {
+    private static final String TRIGGER_NOT_STARTED = "the downstream flow will not be started";
+    private static final String DEPENDENCY_NOT_SATISFIED = "this execution does not count towards its `dependsOn`";
+
     private final ConditionService conditionService;
     private final RunContextFactory runContextFactory;
     private final FlowService flowService;
     private final FlowMetaStoreInterface flowMetaStore;
     private final ExecutionOutputService executionOutputService;
     private final ExecutionDepthConfiguration executionDepthConfiguration;
+    private final FlowTriggerErrorLogThrottle errorLogThrottle = new FlowTriggerErrorLogThrottle(Duration.ofMinutes(5), Clock.systemUTC());
 
     public FlowTriggerService(ConditionService conditionService, RunContextFactory runContextFactory, FlowService flowService, FlowMetaStoreInterface flowMetaStore,
         ExecutionOutputService executionOutputService,
@@ -190,7 +196,7 @@ public class FlowTriggerService {
             } catch (InternalException e) {
                 // an unrenderable dependsOn `when` is a misconfiguration: log it on both the evaluated execution
                 // and the flow that owns the trigger, and treat the dependency as not matched
-                logUnrenderableWhen(runContext, flowWithMultipleCondition.getFlow(), flowWithMultipleCondition.getTrigger(), e);
+                logUnrenderableWhen(runContext, flowWithMultipleCondition.getFlow(), flowWithMultipleCondition.getTrigger(), DEPENDENCY_NOT_SATISFIED, e);
                 met = false;
             } catch (RuntimeException e) {
                 // any other evaluation error is logged and treated as a non-match, never propagated
@@ -287,7 +293,7 @@ public class FlowTriggerService {
                 try {
                     return conditionService.isTriggerConditionMet(flowWithFlowTrigger.getTrigger(), runContext);
                 } catch (IllegalVariableEvaluationException e) {
-                    logUnrenderableWhen(runContext, flowWithFlowTrigger.getFlow(), flowWithFlowTrigger.getTrigger(), e);
+                    logUnrenderableWhen(runContext, flowWithFlowTrigger.getFlow(), flowWithFlowTrigger.getTrigger(), TRIGGER_NOT_STARTED, e);
                     return false;
                 }
             })
@@ -300,23 +306,29 @@ public class FlowTriggerService {
      * <ul>
      *     <li>a WARN on the evaluated (upstream) execution — not its error, but it surfaces that a trigger
      *     listening to it could not be evaluated;</li>
-     *     <li>an ERROR on the flow that owns the trigger — this is its own misconfiguration.</li>
+     *     <li>an ERROR on the flow that owns the trigger — this is its own misconfiguration. It is throttled per
+     *     trigger revision, since the trigger is evaluated against every upstream execution.</li>
      * </ul>
      */
-    private void logUnrenderableWhen(RunContext upstreamRunContext, Flow flow, AbstractTrigger trigger, InternalException error) {
+    private void logUnrenderableWhen(RunContext upstreamRunContext, Flow flow, AbstractTrigger trigger, String consequence, InternalException error) {
         upstreamRunContext.logger().warn(
-            "Could not evaluate the `when` condition of flow trigger '{}' on flow '{}.{}', the downstream flow will not be started: {}",
+            "Could not evaluate the `when` condition of flow trigger '{}' on flow '{}.{}', {}: {}",
             trigger.getId(),
             flow.getNamespace(),
             flow.getId(),
+            consequence,
             error.getMessage()
         );
-        runContextFactory.of(flow, trigger).logger().error(
-            "The `when` condition of flow trigger '{}' could not be rendered, the downstream flow will not be started: {}",
-            trigger.getId(),
-            error.getMessage(),
-            error
-        );
+        if (errorLogThrottle.shouldLog(flow.uid() + "_" + trigger.getId())) {
+            runContextFactory.of(flow, trigger).logger().error(
+                "The `when` condition of flow trigger '{}' could not be rendered, {}: {} (logged at most once every {} minutes until the flow is updated)",
+                trigger.getId(),
+                consequence,
+                error.getMessage(),
+                errorLogThrottle.window().toMinutes(),
+                error
+            );
+        }
     }
 
     @AllArgsConstructor

@@ -35,6 +35,19 @@ class OpenapiTest {
         assertThat(outputItems(schemas, "Flow")).isNotEmpty().allSatisfy(items -> assertThat(required(schemas, items)).contains("value"));
     }
 
+    @Test
+    void shouldDocumentTtlAndDescriptionHeadersWhenSettingKeyValue() throws IOException {
+        JsonNode parameters = spec().path("paths").path("/api/v1/{tenant}/namespaces/{namespace}/kv/{key}").path("put").path("parameters");
+
+        List<String> headers = new ArrayList<>();
+        parameters.forEach(parameter -> {
+            if ("header".equals(parameter.path("in").asText())) {
+                headers.add(parameter.path("name").asText());
+            }
+        });
+        assertThat(headers).contains("ttl", "description");
+    }
+
     private static JsonNode spec() throws IOException {
         try (InputStream stream = new ResourceResolver().getResourceAsStream("classpath:META-INF/swagger/kestra.yml").orElseThrow()) {
             return JacksonMapper.ofYaml().readTree(stream);

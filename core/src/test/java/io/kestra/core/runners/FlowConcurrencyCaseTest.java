@@ -2,17 +2,22 @@ package io.kestra.core.runners;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.awaitility.core.ConditionTimeoutException;
 
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.models.flows.State.Type;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -45,6 +50,9 @@ public class FlowConcurrencyCaseTest {
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
+
+    @Inject
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     public void flowConcurrencyCancel(String tenantId) throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
@@ -180,6 +188,76 @@ public class FlowConcurrencyCaseTest {
         assertThat(executionResult2.getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(executionResult2.getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
         assertThat(executionResult2.getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
+    }
+
+    public void flowConcurrencyFailRestarted(String tenantId) throws Exception {
+        // a failed execution: its last task fails on its first attempt only, so a restart that runs would succeed
+        Execution failed = runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-fail-restarted");
+        assertThat(failed.getState().getCurrent()).isEqualTo(Type.FAILED);
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-fail-restarted", Optional.empty())
+            .orElseThrow();
+        Execution running = runnerUtils.runOneUntilRunning(
+            tenantId, NAMESPACE, "flow-concurrency-fail-restarted", null,
+            (f, e) -> Map.of("sleep", "PT30S"), Duration.ofSeconds(30)
+        );
+        try {
+            // restarted while the only slot is taken: the gate must fail it instead of running it
+            Execution restarted = runnerUtils.restartExecution(
+                e -> e.getState().getHistories().stream().anyMatch(history -> history.getState() == Type.RESTARTED) && e.getState().isTerminated(),
+                executionService.restart(failed, flow, null)
+            );
+
+            assertThat(restarted.getState().getCurrent()).isEqualTo(Type.FAILED);
+            assertThat(restarted.findTaskRunsByTaskId("fail-first-attempt").getFirst().getState().getCurrent()).isEqualTo(Type.FAILED);
+            // and the rejected restart must not give back the slot held by the running execution
+            Await.await()
+                .during(Duration.ofSeconds(2))
+                .atMost(Duration.ofSeconds(5))
+                .until(() -> concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-fail-restarted").orElseThrow().getRunning() == 1);
+        } finally {
+            runnerUtils.killExecution(running);
+        }
+    }
+
+    public void flowConcurrencyQueueForced(String tenantId, Function<Execution, ExecutionCommand> force) throws Exception {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue-forced", Optional.empty())
+            .orElseThrow();
+        Execution running = runnerUtils.runOneUntilRunning(
+            tenantId, NAMESPACE, "flow-concurrency-queue-forced", null,
+            (f, e) -> Map.of("sleep", "PT30S"), Duration.ofSeconds(30)
+        );
+        Execution forced = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution waiting = runnerUtils.emitAndAwaitExecution(
+            e -> e.getState().isQueued(),
+            Execution.newExecution(flow, (f, e) -> Map.of("sleep", "PT30S"), null, Optional.empty())
+        );
+        try {
+            // the forced execution bypasses the gate, so it takes no slot
+            executionCommandQueue.emit(force.apply(forced));
+            runnerUtils.awaitExecution(e -> e.getState().isTerminated(), forced);
+
+            // and its end must not give one back: the other queued execution keeps waiting for the running one
+            AtomicReference<String> lastObserved = new AtomicReference<>();
+            try {
+                Await.await()
+                    .during(Duration.ofSeconds(2))
+                    .atMost(Duration.ofSeconds(5))
+                    .until(() ->
+                    {
+                        Type waitingState = executionRepository.findById(tenantId, waiting.getId()).orElseThrow().getState().getCurrent();
+                        int runningCount = concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-queue-forced").orElseThrow().getRunning();
+                        lastObserved.set("the other queued execution was %s and the running counter %d".formatted(waitingState, runningCount));
+                        return waitingState == Type.QUEUED && runningCount == 1;
+                    });
+            } catch (ConditionTimeoutException e) {
+                fail("Expected the other execution to stay QUEUED with a running counter of 1, but " + lastObserved.get());
+            }
+        } finally {
+            runnerUtils.killExecution(waiting);
+            runnerUtils.killExecution(running);
+        }
     }
 
     public void flowConcurrencyQueueAfterExecution(String tenantId) throws QueueException {

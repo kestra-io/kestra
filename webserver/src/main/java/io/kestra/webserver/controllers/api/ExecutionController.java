@@ -35,6 +35,7 @@ import io.kestra.core.events.Actor;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.FlowNotFoundException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
@@ -83,6 +84,8 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.*;
+import io.kestra.plugin.core.flow.Approval;
+import io.kestra.plugin.core.flow.PausableTask;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
@@ -121,6 +124,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.server.multipart.MultipartBody;
 import io.micronaut.http.server.types.files.StreamedFile;
@@ -514,7 +518,7 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete execution files in the internal storage", required = false) @QueryValue(defaultValue = "true") Boolean deleteStorage) throws IOException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isPresent()) {
-            executionService.delete(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
+            deleteWithApprovals(execution.get(), deleteLogs, deleteMetrics, deleteStorage);
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -555,6 +559,15 @@ public class ExecutionController {
         return deleteExecutions(executions, includeNonTerminated, deleteLogs, deleteMetrics, deleteStorage);
     }
 
+    private void deleteWithApprovals(Execution execution, boolean deleteLogs, boolean deleteMetrics, boolean deleteStorage) throws IOException {
+        try {
+            executionService.cancelOpenApprovals(execution, flowRepository.findByExecutionWithoutAcl(execution));
+        } catch (RuntimeException e) {
+            log.warn("Unable to close the approval requests of the execution '{}' before deleting it", execution.getId(), e);
+        }
+        executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage);
+    }
+
     private HttpResponse<?> deleteExecutions(List<Execution> executions, Boolean includeNonTerminated, Boolean deleteLogs, Boolean deleteMetrics, Boolean deleteStorage) throws IOException {
         validateBulkExecutionACL(executions, BulkOperation.DELETE);
 
@@ -576,7 +589,7 @@ public class ExecutionController {
         }
 
         executions
-            .forEach(throwConsumer(execution -> executionService.delete(execution, deleteLogs, deleteMetrics, deleteStorage)));
+            .forEach(throwConsumer(execution -> deleteWithApprovals(execution, deleteLogs, deleteMetrics, deleteStorage)));
 
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
@@ -2103,7 +2116,15 @@ public class ExecutionController {
     }
 
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution, Flow flow) {
-        io.kestra.plugin.core.flow.Pause.Resumed resumed = createResumed();
+        try {
+            if (executionService.isPausedOnApproval(execution, flow)) {
+                throw new ConflictException(ExecutionService.APPROVAL_RESUME_REFUSED.formatted(execution.getId()));
+            }
+        } catch (InternalException | FlowProcessingException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+
+        io.kestra.plugin.core.flow.PausableTask.Resumed resumed = createResumed();
         Actor actor = actorResolver.resolve();
 
         this.resumeCounter.increment();
@@ -2118,8 +2139,184 @@ public class ExecutionController {
             .map(r -> (HttpResponse<?>) r);
     }
 
-    protected io.kestra.plugin.core.flow.Pause.Resumed createResumed() {
-        return io.kestra.plugin.core.flow.Pause.Resumed.now();
+    protected io.kestra.plugin.core.flow.PausableTask.Resumed createResumed() {
+        return io.kestra.plugin.core.flow.PausableTask.Resumed.now();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/cancel-approval")
+    @Operation(tags = { "Executions" }, summary = "Cancel an Approval request without a decision.")
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "404", description = "if the task run does not exist in the execution")
+    @ApiResponse(responseCode = "409", description = "if the task run is not paused, it was already decided or cancelled")
+    @ApiResponse(responseCode = "422", description = "if the task run is not an Approval")
+    public Mono<HttpResponse<?>> cancelApproval(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The Approval task run id") @QueryValue String taskRunId) throws Exception {
+        Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, true);
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        requirePausedApproval(execution, flow, taskRunId);
+        executionService.validateCancelApproval(execution, flow, taskRunId);
+
+        io.kestra.plugin.core.flow.PausableTask.Resumed resumed = createResumed();
+
+        return awaitBlockingAction(
+            execution.getId(), "Cancel approval",
+            (operationId, actor) -> executionCommandQueue.emit(Resume.cancelApproval(execution, taskRunId, resumed).withOperationId(operationId))
+        ).map(r -> (HttpResponse<?>) r);
+    }
+
+    public enum ReviewDecision {
+        APPROVE(PausableTask.Decision.Type.APPROVED),
+        DENY(PausableTask.Decision.Type.DENIED);
+
+        private final PausableTask.Decision.Type type;
+
+        ReviewDecision(PausableTask.Decision.Type type) {
+            this.type = type;
+        }
+    }
+
+    private static final String REVIEW_COMMENT_PART = "kestra_review_comment";
+
+    private record ReviewBody(@Nullable String comment, List<CompletedPart> inputs) {
+        Publisher<CompletedPart> inputsPublisher() {
+            return inputs.isEmpty() ? null : Flux.fromIterable(inputs);
+        }
+    }
+
+    public record ApiReviewAllowed(@Schema(description = "Whether the current user may review or cancel the Approval task run") boolean allowed) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/{executionId}/actions/review/allowed")
+    @Operation(tags = { "Executions" }, summary = "Tell whether the current user may review or cancel an Approval task run")
+    @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "404", description = "if the execution does not exist")
+    public ApiReviewAllowed isReviewAllowed(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The Approval task run id") @QueryValue String taskRunId) {
+        // OSS has no assignments, so every caller allowed on the route may review, whatever the task run.
+        executionService.getExecution(tenantService.resolveTenant(), executionId, true);
+        return new ApiReviewAllowed(true);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/review/validate", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = { "Executions" }, summary = "Validate a review of an Approval task run. The reviewer comment is the multipart part named `kestra_review_comment`, any other part is an input of the Approval task.")
+    @ApiResponse(responseCode = "200", description = "On success")
+    @ApiResponse(responseCode = "404", description = "if the task run does not exist in the execution")
+    @ApiResponse(responseCode = "409", description = "if the task run is not paused, it was already decided or cancelled")
+    @ApiResponse(responseCode = "422", description = "if the task run is not an Approval or the decision is refused")
+    @SingleResult
+    public Publisher<ApiValidateExecutionInputsResponse> validateReviewExecution(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The Approval task run id") @QueryValue String taskRunId,
+        @Parameter(description = "The decision") @QueryValue ReviewDecision decision,
+        @RequestBody(description = "The reviewer inputs, plus the optional `kestra_review_comment` part") @Nullable @Body MultipartBody body) {
+        Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, true);
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+
+        return readReviewBody(body).flatMap(
+            reviewBody -> validateReview(execution, flow, taskRunId, new PausableTask.Decision(decision.type, reviewBody.comment()))
+                .then(executionService.validateForReview(execution, flow, taskRunId, reviewBody.inputsPublisher()))
+        )
+            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), List.of(), values));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/actions/review", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(
+        tags = { "Executions" }, summary = "Approve or deny an Approval task run. The reviewer comment is the multipart part named `kestra_review_comment`, any other part is an input of the Approval task.",
+        extensions = @Extension(
+            name = "x-sdk-customization",
+            properties = {
+                @ExtensionProperty(name = "x-multipart", value = "true")
+            }
+        )
+    )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = Execution.class)) })
+    @ApiResponse(responseCode = "404", description = "if the task run does not exist in the execution")
+    @ApiResponse(responseCode = "409", description = "if the task run is not paused, it was already decided or cancelled")
+    @ApiResponse(responseCode = "422", description = "if the task run is not an Approval or the decision is refused")
+    @SingleResult
+    public Publisher<HttpResponse<?>> reviewExecution(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The Approval task run id") @QueryValue String taskRunId,
+        @Parameter(description = "The decision") @QueryValue ReviewDecision decision,
+        @RequestBody(description = "The reviewer inputs, plus the optional `kestra_review_comment` part") @Nullable @Body MultipartBody body) {
+        Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, true);
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return reviewFoundExecution(body, execution, flow, taskRunId, decision);
+    }
+
+    protected Mono<HttpResponse<?>> reviewFoundExecution(@Nullable MultipartBody body, Execution execution, Flow flow, String taskRunId, ReviewDecision reviewDecision) {
+        io.kestra.plugin.core.flow.PausableTask.Resumed resumed = createResumed();
+        Actor actor = actorResolver.resolve();
+
+        this.resumeCounter.increment();
+
+        return readReviewBody(body).flatMap(reviewBody ->
+        {
+            PausableTask.Decision decision = new PausableTask.Decision(reviewDecision.type, reviewBody.comment());
+            return validateReview(execution, flow, taskRunId, decision)
+                .then(executionService.readReviewInputs(execution, flow, taskRunId, reviewBody.inputsPublisher()))
+                .flatMap(
+                    reviewInputs -> awaitBlockingAction(
+                        execution.getId(), "Review", actor,
+                        (operationId, reviewActor) -> executionCommandQueue.emit(Resume.decide(execution, taskRunId, decision, resumed, reviewInputs).withOperationId(operationId).withActor(reviewActor))
+                    )
+                )
+                .<HttpResponse<?>> map(r -> r);
+        });
+    }
+
+    private Mono<ReviewBody> readReviewBody(@Nullable MultipartBody body) {
+        if (body == null) {
+            return Mono.just(new ReviewBody(null, List.of()));
+        }
+        return Flux.from(body).collectList().map(parts ->
+        {
+            String comment = null;
+            List<CompletedPart> inputs = new ArrayList<>();
+            for (CompletedPart part : parts) {
+                if (REVIEW_COMMENT_PART.equals(part.getName())) {
+                    try {
+                        comment = new String(part.getBytes(), StandardCharsets.UTF_8);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                } else {
+                    inputs.add(part);
+                }
+            }
+            return new ReviewBody(comment, inputs);
+        });
+    }
+
+    private static void requirePausedApproval(Execution execution, Flow flow, String taskRunId) {
+        TaskRun taskRun = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .filter(t -> t.getId().equals(taskRunId))
+            .findFirst()
+            .orElseThrow(() -> new NoSuchElementException("Task run '%s' not found in execution '%s'.".formatted(taskRunId, execution.getId())));
+        if (!(flow.findTaskByTaskIdOrNull(taskRun.getTaskId()) instanceof Approval)) {
+            throw new IllegalArgumentException("Task run '%s' is not an Approval task.".formatted(taskRunId));
+        }
+        if (taskRun.getState().getCurrent() == State.Type.PAUSING) {
+            throw new ConflictException("Task run '%s' is still running its onWait tasks, it can be reviewed once they end.".formatted(taskRunId));
+        }
+        if (taskRun.getState().getCurrent() != State.Type.PAUSED) {
+            throw new ConflictException("Task run '%s' is not paused, it was already decided or cancelled.".formatted(taskRunId));
+        }
+    }
+
+    private Mono<Void> validateReview(Execution execution, Flow flow, String taskRunId, PausableTask.Decision decision) {
+        return Mono.<Void> fromCallable(() ->
+        {
+            requirePausedApproval(execution, flow, taskRunId);
+            executionService.validateDecision(execution, flow, taskRunId, decision);
+            return null;
+        });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2184,6 +2381,10 @@ public class ExecutionController {
             } else if (!validateExecutionACL(execution)) {
                 invalids.add(
                     executionProblem(execution.getId(), "user don't have the authorisation to resume this execution", ProblemTypes.FORBIDDEN)
+                );
+            } else if (isPausedOnApproval(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "execution is paused on an Approval task, use the review action", ProblemTypes.CONFLICT)
                 );
             }
         }
@@ -2752,6 +2953,9 @@ public class ExecutionController {
         if (execution.getState().isTerminated()) {
             throw new ConflictException("Cannot force run execution: only non-terminated executions can be force run.");
         }
+        if (isPausedOnApproval(execution)) {
+            throw new ConflictException(ExecutionService.APPROVAL_RESUME_REFUSED.formatted(executionId));
+        }
 
         this.forceRunCounter.increment();
 
@@ -2813,6 +3017,17 @@ public class ExecutionController {
         return forceRunExecutions(executions);
     }
 
+    private boolean isPausedOnApproval(Execution execution) {
+        if (!execution.getState().isPaused()) {
+            return false;
+        }
+        try {
+            return executionService.isPausedOnApproval(execution, flowRepository.findByExecutionWithoutAcl(execution));
+        } catch (InternalException | FlowProcessingException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
     private MutableHttpResponse<ApiAsyncOperationResponse> forceRunExecutions(List<Execution> executions) throws QueueException {
         validateBulkExecutionACL(executions, BulkOperation.FORCE_RUN);
 
@@ -2826,6 +3041,10 @@ public class ExecutionController {
             } else if (!validateExecutionACL(execution)) {
                 invalids.add(
                     executionProblem(execution.getId(), "user don't have the authorisation to force run this execution", ProblemTypes.FORBIDDEN)
+                );
+            } else if (isPausedOnApproval(execution)) {
+                invalids.add(
+                    executionProblem(execution.getId(), "execution is paused on an Approval task, use the review action", ProblemTypes.CONFLICT)
                 );
             }
         }

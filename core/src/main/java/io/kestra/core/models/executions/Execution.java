@@ -321,6 +321,25 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         );
     }
 
+    /** Sets {@code taskRun} and each of its parents to {@code state}, leaving the execution state itself unchanged. */
+    public Execution withTaskRunStateCascaded(TaskRun taskRun, State.Type state) {
+        try {
+            TaskRun newTaskRun = taskRun.withState(state);
+            Execution newExecution = this.withTaskRun(newTaskRun);
+            // a loop iteration's top-level task runs point to the Loop task run, which lives in the parent execution
+            Optional<TaskRun> parent = newExecution.findTaskRunByTaskRunIdIfPresent(newTaskRun.getParentTaskRunId());
+            while (parent.isPresent()) {
+                newTaskRun = parent.get().withStateAndAttempt(state);
+                newExecution = newExecution.withTaskRun(newTaskRun);
+                parent = newExecution.findTaskRunByTaskRunIdIfPresent(newTaskRun.getParentTaskRunId());
+            }
+            return newExecution;
+        } catch (InternalException e) {
+            log.warn("Unable to update the taskrun state", e);
+            return this;
+        }
+    }
+
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
         List<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
 

@@ -156,31 +156,52 @@ export const DeleteSelectedRevision: Story = {
         const flowStore = useFlowStore();
         spyOn(flowStore, "deleteRevision").mockResolvedValue(undefined);
 
-        await waitFor(() =>
-            expect(canvasElement.querySelectorAll(".revision-grid-col").length).toBe(2)
-        );
-
-        const [leftOptions] = await selectorOptions(canvasElement);
-
-        const rev3Option = leftOptions.find(opt => opt.textContent?.includes("3"));
-        expect(rev3Option).toBeDefined();
-        const trashIcon = (rev3Option!.querySelector("span[role='img']") ?? rev3Option!.querySelector("svg")) as Element;
-        expect(trashIcon).not.toBeNull();
-        (trashIcon as HTMLElement).click();
-
-        await waitFor(() => {
-            const confirmBtn = document.querySelector(
-                "[role='dialog'][aria-label='Confirmation'] button.kel-button--primary"
-            ) as HTMLElement;
-            expect(confirmBtn).not.toBeNull();
-            confirmBtn.click();
-        });
-
-        await waitFor(() =>
-            expect(canvasElement.querySelector(".revision-grid-col")).not.toBeNull()
-        );
+        await deleteRevisionThree(canvasElement);
     }
 };
+
+const deleteRevisionMock = fn(() => Promise.resolve());
+
+export const DeleteThroughHandler: Story = {
+    render: deletionRender,
+    args: {
+        ...DeleteSelectedRevision.args,
+        deleteRevision: deleteRevisionMock,
+    },
+    async play({canvasElement}) {
+        const flowStore = useFlowStore();
+        const flowDeletion = spyOn(flowStore, "deleteRevision").mockResolvedValue(undefined);
+
+        await deleteRevisionThree(canvasElement);
+
+        await waitFor(() => expect(deleteRevisionMock).toHaveBeenCalledWith(3));
+        await expect(flowDeletion).not.toHaveBeenCalled();
+    }
+};
+
+async function deleteRevisionThree(canvasElement: HTMLElement) {
+    await waitFor(() =>
+        expect(canvasElement.querySelectorAll(".revision-grid-col").length).toBe(2)
+    );
+
+    const [leftOptions] = await selectorOptions(canvasElement);
+
+    const rev3Option = leftOptions.find(opt => opt.textContent?.includes("3"));
+    expect(rev3Option).toBeDefined();
+    const trashIcon = (rev3Option!.querySelector("span[role='img']") ?? rev3Option!.querySelector("svg")) as Element;
+    expect(trashIcon).not.toBeNull();
+    // A confirmation closed by an earlier story can linger in the shared DOM, so wait for the one this click opens.
+    const confirmations = () => within(document.body).queryAllByRole("dialog", {name: "Confirmation"});
+    const openedBefore = confirmations().length;
+    (trashIcon as HTMLElement).click();
+
+    await waitFor(() => expect(confirmations().length).toBeGreaterThan(openedBefore));
+    await userEvent.click(within(confirmations()[confirmations().length - 1]).getByRole("button", {name: "OK"}));
+
+    await waitFor(() =>
+        expect(canvasElement.querySelector(".revision-grid-col")).not.toBeNull()
+    );
+}
 
 let delayedSource: Promise<string>;
 let finishSource: (source: string) => void;

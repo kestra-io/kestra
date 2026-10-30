@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import java.util.Optional;
 
-import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.mcp.McpServerCache;
 import io.kestra.mcp.McpServerHandlerTransport;
@@ -73,12 +72,16 @@ public class McpToolController {
 
         String tenantId = tenantService.resolveTenant();
 
-        Optional<McpServer> mcpServer = mcpServerCache.get(tenantId, id);
+        Optional<McpServerCache.ResolvedServer> mcpServer = mcpServerCache.resolve(tenantId, id);
         if (mcpServer.isEmpty()) {
             return Mono.just(HttpResponse.notFound());
         }
-        if (mcpServer.get().disabled()) {
+        if (mcpServer.get().server().disabled()) {
             return Mono.just(HttpResponse.status(HttpStatus.SERVICE_UNAVAILABLE));
+        }
+        if (!handlerRegistry.supports(mcpServer.get().toolSource())) {
+            log.warn("MCP server '{}' needs a {} tool source, but none is registered", id, mcpServer.get().toolSource());
+            return Mono.just(HttpResponse.notFound());
         }
 
         var transportContext = sessionFactory.build(

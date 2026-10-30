@@ -78,13 +78,15 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
 
     protected io.kestra.core.models.flows.State.Type callJob(AbstractWorkerCallable workerJobCallable) {
         this.currentWorkerCallable.set(workerJobCallable);
-        // Propagate an interrupt that arrived before currentWorkerCallable was set
-        // (between register() and here, interrupt() was a no-op).
+        // Propagate an interrupt or a stop that arrived before currentWorkerCallable was set
+        // (between register() and here, interrupt() and stop() were no-ops).
         State.Type pendingState = pendingInterruptState.get();
         if (pendingState != null) {
             workerJobCallable.kill(pendingState);
         } else if (pendingTimeoutKill.get()) {
             workerJobCallable.kill(null);
+        } else if (stopped.get()) {
+            workerJobCallable.signalStop();
         }
         try {
             return tracer.inCurrentContext(

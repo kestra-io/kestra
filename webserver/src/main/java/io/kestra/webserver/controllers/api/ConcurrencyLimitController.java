@@ -6,6 +6,7 @@ import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.responses.PagedResults;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
@@ -16,6 +17,10 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import java.util.Objects;
 
 @Controller("/api/v1/{tenant}/concurrency-limit")
 public class ConcurrencyLimitController {
@@ -43,22 +48,20 @@ public class ConcurrencyLimitController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put("/{namespace}/{flowId}")
-    @Operation(tags = { "Flows" }, summary = "Update a flow concurrency limit")
-    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(String namespace, String flowId, @Body @Valid ConcurrencyLimit concurrencyLimit) {
+    @Put
+    @Operation(tags = { "Flows" }, summary = "Update a flow, namespace or tenant concurrency limit", description = "Leave the namespace and the flow empty to target the tenant limit, and the flow empty to target a namespace limit.")
+    public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body @Valid ConcurrencyLimitUpdateRequest request) {
         String tenantId = tenantService.resolveTenant();
-        var existing = concurrencyLimitRepository.findById(tenantId, namespace, flowId);
-        if (existing.isEmpty()) {
+        String namespace = Objects.requireNonNullElse(request.namespace(), "");
+        String flowId = Objects.requireNonNullElse(request.flowId(), "");
+        if (concurrencyLimitRepository.findById(tenantId, namespace, flowId).isEmpty()) {
             return HttpResponse.notFound();
         }
 
-        // The path identifies the resource; a body naming another flow must not retarget it.
-        ConcurrencyLimit toUpdate = ConcurrencyLimit.builder()
-            .tenantId(tenantId)
-            .namespace(namespace)
-            .flowId(flowId)
-            .running(concurrencyLimit.getRunning())
-            .build();
-        return HttpResponse.ok(concurrencyLimitRepository.update(toUpdate));
+        return HttpResponse.ok(concurrencyLimitRepository.update(
+            ConcurrencyLimit.builder().tenantId(tenantId).namespace(namespace).flowId(flowId).running(request.running()).build()
+        ));
     }
+
+    public record ConcurrencyLimitUpdateRequest(@Nullable String namespace, @Nullable String flowId, @NotNull @PositiveOrZero Integer running) {}
 }

@@ -711,7 +711,8 @@
     },
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
-      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit."
+      "warning": "Changing the running counter may corrupt concurrency, so executions may exceed the allowed limit.",
+      "save_error": "Failed to update the concurrency limit, the previous value is kept."
     },
     "flowConcurrency": {
       "loadError": "Failed to load the concurrency limit of this flow.",

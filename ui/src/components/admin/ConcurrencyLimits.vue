@@ -16,7 +16,7 @@
                         :label="k"
                     >
                         <template #default="scope">
-                            <button v-if="k === 'running'" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
+                            <button v-if="k === 'running' && canReset(scope.row as ConcurrencyLimit)" class="edit-running" @click="openDialog(scope.row as ConcurrencyLimit)">
                                 {{ scope.row[k] }}
                                 <IconEdit />
                             </button>
@@ -55,10 +55,16 @@
     import useRouteContext from "../../composables/useRouteContext"
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
-    import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
+    import {apiUrlWithTenant} from "override/utils/route"
+    import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
 
     const {t} = useI18n()
     const route = useRoute()
+    const authStore = useAuthStore()
+    const toast = useToast()
 
     const baseUrl = computed(() => apiUrlWithTenant(route))
 
@@ -97,6 +103,16 @@
 
     const isEditDirty = computed(() => editingRow.value != null && newRunningCount.value !== editingRow.value.running)
 
+    function canReset(row: ConcurrencyLimit) {
+        const user = authStore.user
+        if (user?.instanceOwner) {
+            return true
+        }
+        return Boolean(row.namespace === ""
+            ? user?.isAllowedGlobal(resource.FLOW, action.UPDATE_CONCURRENCY_LIMIT)
+            : user?.isAllowed(resource.FLOW, action.UPDATE_CONCURRENCY_LIMIT, row.namespace))
+    }
+
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true
         newRunningCount.value = row.running
@@ -104,11 +120,22 @@
     }
 
     async function saveEditRunning(){
-        if(editingRow.value){
-            editingRow.value.running = newRunningCount.value
-            await axios.put(`${apiUrlWithoutTenants()}/${editingRow.value.tenantId}/concurrency-limit/${editingRow.value.namespace}/${editingRow.value.flowId}`, editingRow.value)
+        const row = editingRow.value
+        if(!row){
+            return
+        }
+        try {
+            await axios.put(`${baseUrl.value}/concurrency-limit`, {
+                namespace: row.namespace,
+                flowId: row.flowId,
+                running: newRunningCount.value,
+            })
+        } catch {
+            toast.error(t("concurrency_limit.save_error"))
+            return
         }
         editRunning.value = false
+        await loadData()
     }
 
     watch(baseUrl, () => loadData(), {immediate: true})

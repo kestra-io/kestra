@@ -89,7 +89,6 @@
 
     .card-text-wrap {
         overflow: hidden;
-        min-width: 0;
     }
 
     .card-title {

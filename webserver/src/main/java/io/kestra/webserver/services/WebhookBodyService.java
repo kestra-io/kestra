@@ -126,44 +126,6 @@ public class WebhookBodyService {
     }
 
     /**
-     * Read and release the parts of a {@code multipart/form-data} webhook request that will not be used.
-     * <p>
-     * A request that is rejected without its parts being read must still consume them: the bytes already received
-     * stay in direct memory until then, and cancelling the stream does not release them. Failures while reading are
-     * ignored, as the caller is already answering with the reason the request was rejected.
-     *
-     * @param parts the parts of the request, {@code null} if it has none
-     */
-    public Mono<Void> discard(MultipartBody parts) {
-        if (parts == null) {
-            return Mono.empty();
-        }
-
-        return Flux.from(parts)
-            .publishOn(Schedulers.boundedElastic())
-            .doOnNext(part ->
-            {
-                try {
-                    if (part instanceof CompletedFileUpload fileUpload) {
-                        try (InputStream content = fileUpload.getInputStream()) {
-                            content.transferTo(OutputStream.nullOutputStream());
-                        }
-                    } else {
-                        part.getBytes();
-                    }
-                } catch (IOException e) {
-                    log.debug("Unable to read a discarded part of a webhook request.", e);
-                }
-            })
-            .onErrorResume(e ->
-            {
-                log.debug("Unable to read the rest of a discarded webhook request.", e);
-                return Mono.empty();
-            })
-            .then();
-    }
-
-    /**
      * Delete what a webhook call stored, for a call that ends without creating an execution. Nothing else would
      * ever purge it, as the execution the files are scoped to will not exist.
      * <p>

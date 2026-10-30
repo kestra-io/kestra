@@ -32,6 +32,8 @@ export default class PlaceholderContentWidget implements monaco.editor.IContentW
             this.domNode.style.pointerEvents = "none"
             this.domNode.textContent = this.placeholder
             this.domNode.style.fontStyle = "italic"
+            this.domNode.style.whiteSpace = "pre"
+            this.domNode.style.color = "var(--ks-placeholder-color)"
             this.editor.applyFontInfo(this.domNode)
         }
 

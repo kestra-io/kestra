@@ -280,7 +280,22 @@ public abstract class AbstractScheduler implements Scheduler {
 
                     WorkerTriggerResult workerTriggerResult = either.getLeft();
                     if (workerTriggerResult.getTrigger() instanceof RealtimeTriggerInterface && workerTriggerResult.getExecution().isPresent()) {
-                        this.emitExecution(workerTriggerResult.getExecution().get(), workerTriggerResult.getTriggerContext());
+                        Execution execution = workerTriggerResult.getExecution().get();
+                        this.emitExecution(execution, workerTriggerResult.getTriggerContext());
+
+                        if (execution.getState().getCurrent() == State.Type.FAILED) {
+                            ZonedDateTime nextExecutionDate;
+                            try {
+                                nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                            } catch (InvalidTriggerConfigurationException e) {
+                                disableInvalidTrigger(workerTriggerResult.getTriggerContext(), e);
+                                return;
+                            }
+                            this.triggerState.update(
+                                Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate)
+                                    .resetExecution(State.Type.FAILED, nextExecutionDate)
+                            );
+                        }
                     } else if (workerTriggerResult.getExecution().isPresent()) {
                         SchedulerExecutionWithTrigger triggerExecution = new SchedulerExecutionWithTrigger(
                             workerTriggerResult.getExecution().get(),

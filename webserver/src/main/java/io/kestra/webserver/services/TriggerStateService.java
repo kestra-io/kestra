@@ -3,7 +3,6 @@ package io.kestra.webserver.services;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -17,6 +16,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.notification.NotificationService;
 import io.kestra.core.notification.model.AsyncOperationType;
@@ -158,7 +158,7 @@ public class TriggerStateService {
      * @return the refreshed trigger state.
      * @throws NotFoundException if the trigger, its flow, or the trigger definition within that flow does not exist.
      * @throws QueueException if the execution-killed event cannot be emitted.
-     * @throws ConflictException if the reset failed.
+     * @throws ConflictException if the scheduler does not manage the trigger, or if the reset failed.
      */
     public TriggerState resetTrigger(final TriggerId triggerId) throws NotFoundException, QueueException, ConflictException {
         getTriggerState(triggerId);
@@ -355,7 +355,7 @@ public class TriggerStateService {
      * @param recoverMissedSchedules when {@code true}, missed schedules are recovered on enable according to the
      *        trigger's own configuration; {@code null} or {@code false} means they are skipped.
      * @throws NotFoundException if the flow or trigger does not exist.
-     * @throws ConflictException if the change failed.
+     * @throws ConflictException if the scheduler does not manage the trigger, or if the change failed.
      */
     public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled, @Nullable Boolean recoverMissedSchedules) throws NotFoundException, ConflictException {
         validateToggleable(trigger);
@@ -368,7 +368,8 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables the given triggers. Missing triggers are silently skipped.
+     * Enables or disables the given triggers. Missing triggers, and triggers the scheduler does not manage, are
+     * silently skipped.
      */
     public ApiAsyncOperationResponse toggleAllByIds(@Nullable String userId, String tenantId, List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         List<TriggerId> toggleable = triggers.stream()
@@ -377,7 +378,7 @@ public class TriggerStateService {
                 try {
                     validateToggleable(id);
                     return true;
-                } catch (NotFoundException e) {
+                } catch (NotFoundException | ConflictException e) {
                     return false;
                 }
             })
@@ -391,23 +392,19 @@ public class TriggerStateService {
     }
 
     /**
-     * Enables or disables triggers matching the given filters.
+     * Enables or disables triggers matching the given filters. Triggers the scheduler does not manage are silently
+     * skipped.
      */
     public ApiAsyncOperationResponse toggleAllMatching(@Nullable String userId, String tenant, List<QueryFilter> filters, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         String operationId = IdUtils.create();
         List<String> toggledIds = triggerRepository.find(tenant, filters)
-            .map(trigger ->
+            .map(TriggerId::of)
+            .filter(this::isFlowBackedTrigger)
+            .map(id ->
             {
-                TriggerId id = TriggerId.of(trigger);
-                try {
-                    validateToggleable(id);
-                    triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId));
-                    return id.uid();
-                } catch (NotFoundException ignored) {
-                    return null;
-                }
+                triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId));
+                return id.uid();
             })
-            .filter(Objects::nonNull)
             .collectList()
             .blockOptional()
             .orElse(List.of());
@@ -441,7 +438,7 @@ public class TriggerStateService {
      * type was recorded carries none, and is left to the scheduler rather than rejected here.
      */
     private static void validateBackfillable(TriggerId triggerId, TriggerState state) {
-        if (TriggerType.POLLING.equals(state.getType()) || TriggerType.REALTIME.equals(state.getType())) {
+        if (state.getType() != null && TriggerType.SCHEDULE != state.getType()) {
             throw new ValidationErrorException(
                 List.of(
                     "Backfills are only supported on schedule triggers, but trigger %s is '%s'."
@@ -465,14 +462,20 @@ public class TriggerStateService {
             .orElseThrow(() -> new NoSuchElementException("Trigger disappeared after " + action + ": " + triggerId));
     }
 
-    private void validateToggleable(TriggerId triggerId) throws NotFoundException {
+    private void validateToggleable(TriggerId triggerId) throws NotFoundException, ConflictException {
         Flow flow = flowRepository.findById(triggerId.getTenantId(), triggerId.getNamespace(), triggerId.getFlowId())
             .orElseThrow(() -> new NotFoundException("Flow not found for trigger: %s".formatted(triggerId)));
 
-        ListUtils.emptyOnNull(flow.getTriggers()).stream()
+        AbstractTrigger trigger = ListUtils.emptyOnNull(flow.getTriggers()).stream()
             .filter(t -> t.getId().equals(triggerId.getTriggerId()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
+
+        if (!TriggerType.isEvaluatedByScheduler(TriggerType.from(trigger))) {
+            throw new ConflictException(
+                "Trigger %s is not managed by the scheduler, change it in the flow source instead.".formatted(triggerId)
+            );
+        }
     }
 
     /**
@@ -482,7 +485,7 @@ public class TriggerStateService {
         try {
             validateToggleable(triggerId);
             return true;
-        } catch (NotFoundException e) {
+        } catch (NotFoundException | ConflictException e) {
             return false;
         }
     }

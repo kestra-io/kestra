@@ -204,6 +204,40 @@ class ExecutionTest {
     }
 
     @Test
+    void hasTaskRunJoinableLateResultAfterTheExecutorEndedIt() {
+        Execution execution = Execution.builder()
+            .taskRunList(
+                Collections.singletonList(
+                    TaskRun.builder()
+                        .id("test")
+                        .state(
+                            new State(
+                                State.Type.FAILED, new State()
+                                    .withState(State.Type.SUBMITTED)
+                            )
+                        )
+                        .build()
+                )
+            )
+            .build();
+
+        assertThat(
+            execution.hasTaskRunJoinable(
+                TaskRun.builder()
+                    .id("test")
+                    .state(
+                        new State(
+                            State.Type.SUCCESS, new State()
+                                .withState(State.Type.SUBMITTED)
+                                .withState(State.Type.RUNNING)
+                        )
+                    )
+                    .build()
+            )
+        ).isFalse();
+    }
+
+    @Test
     void shouldFindLastNotTerminatedWhenLastTaskRunIsTerminated() {
         // Given a task run list whose last run is terminated (SUCCESS) but is preceded by a running one
         Execution execution = Execution.builder()

@@ -669,6 +669,34 @@ class TriggerSchedulerTest {
     }
 
     @Test
+    void shouldNotDispatchRealtimeTriggerOfDeletedFlowAfterWorkerLost() throws Exception {
+        // region [GIVEN] — the flow of a realtime trigger was deleted, and its state was released
+        // (unlocked, no worker) after the worker holding it was lost, e.g. across a restart
+        FlowWithSource deletedFlow = Fixtures.flowWithTrigger(
+            TestRealTimeTrigger.builder()
+                .id("realtime")
+                .type(TestRealTimeTrigger.class.getName())
+                .build()
+        ).toDeleted();
+        TriggerState releasedState = TriggerState
+            .of(Fixtures.triggerId("realtime"), TriggerType.REALTIME, null, 0)
+            .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
+        triggerStateStore.save(releasedState);
+
+        TriggerWorkerJobPublisher publisher = Mockito.mock(TriggerWorkerJobPublisher.class);
+        Mockito.when(publisher.send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(true);
+        TriggerScheduler scheduler = newTriggerScheduler(List.of(deletedFlow), publisher);
+        // endregion [GIVEN]
+
+        // WHEN — the scheduler runs its next cycle
+        scheduler.onSchedule(SchedulerClock.getClock(), SchedulerClock.now().toInstant(), NODES_ASSIGNMENTS);
+
+        // THEN — no worker job is dispatched for the deleted flow, and its stale state is removed
+        Mockito.verify(publisher, Mockito.never()).send(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        assertThat(triggerStateStore.findByIdWithoutAcl(Fixtures.triggerId("realtime"))).isEmpty();
+    }
+
+    @Test
     void shouldScheduleScheduleTriggerWithBackfill() {
         // region [GIVEN]
         FlowWithSource flow = Fixtures.flowWithSchedulePT15M(TEST_TZ);

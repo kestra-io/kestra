@@ -2,6 +2,8 @@ package io.kestra.core.services;
 
 import java.util.Optional;
 
+import com.google.common.base.Throwables;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -14,8 +16,11 @@ import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 
 import io.micronaut.core.annotation.Nullable;
+import io.pebbletemplates.pebble.error.AttributeNotFoundException;
+import io.pebbletemplates.pebble.error.RootAttributeNotFoundException;
 import jakarta.inject.Singleton;
 
 /**
@@ -46,30 +51,44 @@ public class ConditionService {
      * @return true if the trigger <code>when</code>condition is valid for the given flow and run context.
      */
     public boolean isValid(AbstractTrigger trigger, Flow flow, RunContext runContext) {
-        return !isNotValid(flow, runContext, trigger.getWhen());
+        try {
+            return isTriggerConditionMet(trigger, runContext);
+        } catch (IllegalVariableEvaluationException e) {
+            logException(flow, trigger.getWhen(), runContext, e);
+            return false;
+        }
     }
 
     /**
-     * Evaluates a trigger <code>when</code> and returns whether it is met, <b>without</b> swallowing a
-     * rendering failure the way {@link #isValid(AbstractTrigger, Flow, RunContext)} does. The caller is
-     * expected to surface the misconfiguration (e.g. by failing the triggered execution) rather than
-     * treating an unrenderable expression as a silent non-match.
+     * Evaluates a trigger <code>when</code>, treating missing nested attributes as non-matches for Flow and Webhook triggers.
      *
-     * @throws IllegalVariableEvaluationException if the <code>when</code> cannot be rendered
+     * @throws IllegalVariableEvaluationException if the <code>when</code> cannot be rendered for any other reason
      */
     public boolean isTriggerConditionMet(AbstractTrigger trigger, RunContext runContext) throws IllegalVariableEvaluationException {
-        return !TruthUtils.isFalsy(runContext.render(trigger.getWhen()));
+        try {
+            return !TruthUtils.isFalsy(runContext.render(trigger.getWhen()));
+        } catch (IllegalVariableEvaluationException e) {
+            if ((trigger instanceof io.kestra.plugin.core.trigger.Flow || trigger instanceof AbstractWebhookTrigger) && isMissingNestedAttribute(e)) {
+                return false;
+            }
+            throw e;
+        }
     }
 
     /**
-     * Evaluates a single condition and returns whether it is met, <b>without</b> swallowing an
-     * evaluation failure the way {@link #isValid(Condition, FlowInterface, Execution, RunContext)} does.
-     * Used to surface an unrenderable <code>dependsOn</code> <code>when</code> instead of dropping it.
+     * Evaluates a Flow dependency, treating missing nested attributes as non-matches.
      *
-     * @throws InternalException if the condition cannot be evaluated (e.g. an unrenderable <code>when</code>)
+     * @throws InternalException if the condition cannot be evaluated for any other reason
      */
     public boolean isConditionMet(Condition condition, FlowInterface flow, Execution execution, RunContext runContext) throws InternalException {
-        return condition.test(this.conditionContext(runContext, flow, execution));
+        try {
+            return condition.test(this.conditionContext(runContext, flow, execution));
+        } catch (IllegalVariableEvaluationException e) {
+            if (isMissingNestedAttribute(e)) {
+                return false;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -107,14 +126,9 @@ public class ConditionService {
             .build();
     }
 
-    private boolean isNotValid(FlowInterface flow, RunContext runContext, String when) {
-        try {
-            return TruthUtils.isFalsy(runContext.render(when));
-        } catch (IllegalVariableEvaluationException e) {
-            logException(flow, when, runContext, e);
-
-            return true;
-        }
+    private boolean isMissingNestedAttribute(IllegalVariableEvaluationException exception) {
+        return Throwables.getCausalChain(exception).stream()
+            .anyMatch(cause -> cause instanceof AttributeNotFoundException && !(cause instanceof RootAttributeNotFoundException));
     }
 
     private void logException(FlowInterface flow, Object condition, RunContext runContext, Exception e) {

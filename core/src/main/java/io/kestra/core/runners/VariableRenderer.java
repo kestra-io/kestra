@@ -46,7 +46,8 @@ public class VariableRenderer {
             return new IllegalVariableEvaluationException(
                 "Unable to find `" + current.getAttributeName() +
                     "` used in the expression `" + current.getFileName() +
-                    "` at line " + current.getLineNumber()
+                    "` at line " + current.getLineNumber(),
+                current
             );
         }
 

@@ -1181,6 +1181,7 @@
     "kestra": "Kestra",
     "error detected": "Fehler erkannt.",
     "warning detected": "Warnung(en) erkannt.",
+    "schema warning": "Zeile {line}: {message}",
     "informative notice": "Hinweis(e)",
     "open": "Öffnen",
     "admin": "Admin",
@@ -1320,6 +1321,7 @@
     "backfill executions": "Backfill-Executions",
     "execute backfill": "Backfill ausführen",
     "relative start date": "Relatives Startdatum",
+    "now": "Jetzt",
     "absolute": "Absolut",
     "backfill": "Backfill",
     "Set labels": "Labels festlegen",
@@ -2989,6 +2991,56 @@
     "iteration": "Iteration",
     "iteration_number": "Iteration {number}",
     "delete_log_iteration": "Sind Sie sicher, dass Sie das Protokoll für {iteration} löschen möchten?",
-    "not started": "Nicht gestartet"
+    "not started": "Nicht gestartet",
+    "executionsTimeline": {
+      "bar": {
+        "label": "{flow}: {state}"
+      },
+      "breadcrumb": {
+        "all": "Alle",
+        "total": "{count} Ausführung | {count} Ausführungen",
+        "failed": "{count} fehlgeschlagen"
+      },
+      "toolbar": {
+        "panBack": "Zurück schwenken",
+        "panForward": "Vorwärts schwenken",
+        "zoomIn": "Vergrößern",
+        "zoomOut": "Verkleinern",
+        "range": "{start} → {end} ({duration})"
+      },
+      "row": {
+        "openOwnPage": "Diese Seite öffnen",
+        "runsCount": "{count} Ausführung | {count} Ausführungen",
+        "failedCount": "{count} fehlgeschlagen"
+      },
+      "bucket": {
+        "hint": "Aggregiert: zum Vergrößern für Details auf Ausführungsebene",
+        "stateCount": "{state}: {count}"
+      },
+      "popover": {
+        "openExecution": "Ausführung öffnen",
+        "showOnlyFlow": "Nur diesen Flow anzeigen"
+      },
+      "empty": {
+        "description": "Keine Ausführungen im gewählten Zeitraum und Filtern.",
+        "resetFilters": "Filter zurücksetzen",
+        "widenRange": "Auf 7 Tage erweitern"
+      },
+      "error": {
+        "title": "Zeitachse konnte nicht geladen werden",
+        "description": "Beim Laden der Ausführungen für diesen Zeitraum ist ein Fehler aufgetreten."
+      },
+      "truncated": {
+        "description": "Zeigt die neuesten {shown} von {total} Ausführungen. Schränken Sie den Zeitraum oder die Filter ein, um alle zu sehen."
+      },
+      "scrubber": {
+        "label": "Execution-Dichte im Zeitverlauf, zum Auswählen eines Bereichs ziehen",
+        "ignoredFilters": "Die Dichteleiste wendet diese Filter nicht an: {filters}"
+      }
+    },
+    "chart mode": {
+      "counts": "Anzahl",
+      "timeline": "Zeitachse"
+    }
   }
 }
